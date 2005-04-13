@@ -8,7 +8,7 @@ require 'test/unit'
 
 class TestFunctions < Test::Unit::TestCase
     def test_retrieve
-        vars = %w{operatingsystem}
+        vars = %w{operatingsystem operatingsystemrelease}
 
         vars.each { |var|
             value = nil
