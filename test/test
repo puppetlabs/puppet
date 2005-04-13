@@ -8,8 +8,13 @@
 $:.unshift '.'
 $:.unshift '../lib'
 
-require 'blinktest.rb'
+# if we're not in the library trunk, then add that to the lib search path
+if Dir.getwd !~ %r{blink/library}
+    $:.unshift '../../../library/trunk/lib/'
+    $:.unshift '../../../library/trunk/test/'
+end
 
+require 'blinktest.rb'
 
 require 'getoptlong'
 

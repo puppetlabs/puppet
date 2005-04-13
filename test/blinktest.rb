@@ -38,12 +38,13 @@ unless defined? BlinkTestSuite
     end
 
     def textfiles
-        files = Dir.entries("text").reject { |file|
+        textdir = File.join($blinkbase,"test","parser","text")
+        files = Dir.entries(File.join(textdir)).reject { |file|
             file =~ %r{\.swp}
         }.reject { |file|
             file =~ %r{\.disabled}
         }.collect { |file|
-            File.join("text",file)
+            File.join(textdir,file)
         }.find_all { |file|
             FileTest.file?(file)
         }.each { |file|
