@@ -1,0 +1,19 @@
+$Id$
+
+Tests are organized into a dual hierarchy: each subdirectory is
+considered a test suite, and each file in the subdirectory is considered
+a test case.  You can use any test case as an example of how to write
+more of them, but basically the only requirements are that they each have
+their own class names, their names each match /tc_.+\.r/, and that they have
+the following header:
+
+if __FILE__ == $0
+    $:.unshift '..'
+    $:.unshift '../../lib'
+    $blinkbase = "../.."
+end
+
+To run all tests, just type './test'.  To run an individual suite, run
+'./test <suite>'.  To run an individual case, cd into the suite
+subdirectory and run './tc_<case>.rb'.  Tests are basically guaranteed
+not to work without cd'ing into the subdirectory.
