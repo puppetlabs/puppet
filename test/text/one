@@ -1,5 +1,0 @@
-# $Id$
-
-service["sleeper"] {
-    :running => "1",
-}

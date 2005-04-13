@@ -1,9 +1,0 @@
-# $Id$
-
-fact["videocard"] {
-    :interpreter => "/bin/sh",
-    :code => "lspci  | grep VGA",
-    :os => "Linux"
-}
-platform = retrieve("platform")
-card = retrieve("videocard")
