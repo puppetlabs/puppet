@@ -1,4 +1,8 @@
-$:.unshift '../lib' if __FILE__ == $0 # Make this library first!
+if __FILE__ == $0
+    $:.unshift '..'
+    $:.unshift '../../lib'
+    $blinkbase = "../.."
+end
 
 require 'blink'
 require 'blink/oparse'

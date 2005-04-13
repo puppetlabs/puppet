@@ -1,4 +1,8 @@
-$:.unshift '../lib' if __FILE__ == $0 # Make this library first!
+if __FILE__ == $0
+    $:.unshift '..'
+    $:.unshift '../../lib'
+    $blinkbase = "../.."
+end
 
 require 'blink'
 require 'test/unit'
@@ -11,7 +15,7 @@ class TestSymlink < Test::Unit::TestCase
     # objects in a central store
     def setup
         @symlink = nil
-        @path = "../examples/root/etc/symlink"
+        @path = File.join($blinkbase,"examples/root/etc/symlink")
 
         Kernel.system("rm -f %s" % @path)
         Blink[:debug] = 1

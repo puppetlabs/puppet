@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+
+#------------------------------------------------------------
+# $Id$
+#
+# run any or all test suites
+
+$:.unshift '.'
+$:.unshift '../lib'
+
+require 'blinktest.rb'
+
+
+require 'getoptlong'
+
+	#[ "--size",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
+result = GetoptLong.new(
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+)
+
+usage = "USAGE: %s [--help] <testsuite> <testsuite> .." % $0
+
+result.each { |opt,arg|
+	case opt
+		when "--help"
+			puts usage
+			exit
+		else
+			raise "Invalid option '#{opt}'"
+	end
+}
+
+$blinkbase = ".."
+
+suites = nil
+
+if ARGV.length != 0
+    suites = ARGV
+else
+    suites = BlinkTestSuite.list
+end
+
+suites.each { |suite|
+    BlinkTestSuite.new(suite)
+}

@@ -1,23 +1,37 @@
 # $Id$
 
-unless defined? TestSuite
+unless defined? BlinkTestSuite
     $VERBOSE = true
 
     $:.unshift File.join(Dir.getwd, '../lib')
 
-    class TestSuite
+    class BlinkTestSuite
         attr_accessor :subdir
 
-        def initialize(files)
-            files.collect { |file|
-                if file =~ /\.rb/
-                    file
-                else
-                    "tc_" + file + ".rb"
-                end
+        def BlinkTestSuite.list
+            Dir.entries(".").find_all { |file|
+                FileTest.directory?(file) and file !~ /^\./
+            }
+        end
+
+        def initialize(name)
+            unless FileTest.directory?(name)
+                puts "TestSuites are directories containing test cases"
+                puts "no such directory: %s" % name
+                exit(65)
+            end
+
+            # load each of the files
+            Dir.entries(name).collect { |file|
+                File.join(name,file)
+            }.find_all { |file|
+                FileTest.file?(file) and file =~ /tc_.+\.rb$/
             }.sort { |a,b|
-                File.stat(a) <=> File.stat(b)
+                # in the order they were modified, so the last modified files
+                # are loaded and thus displayed last
+                File.stat(b) <=> File.stat(a)
             }.each { |file|
+                puts "requiring %s" % file
                 require file
             }
         end
@@ -36,8 +50,4 @@ unless defined? TestSuite
             yield file
         }
     end
-end
-
-if __FILE__ == $0 # if we're executing the top-level library...
-    TestSuite.new(Dir.glob("ts_*"))
 end

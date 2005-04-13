@@ -1,4 +1,8 @@
-$:.unshift '../lib' if __FILE__ == $0 # Make this library first!
+if __FILE__ == $0
+    $:.unshift '..'
+    $:.unshift '../../lib'
+    $blinkbase = "../.."
+end
 
 require 'blink'
 require 'test/unit'
@@ -20,7 +24,7 @@ class TestService < Test::Unit::TestCase
                     :running => 1
                 )
                 Blink::Objects::Service.addpath(
-                    File.expand_path("../examples/root/etc/init.d")
+                    File.join($blinkbase,"examples/root/etc/init.d")
                 )
             end
             @sleeper = Blink::Objects::Service["sleeper"]

@@ -1,4 +1,8 @@
-$:.unshift '../lib' if __FILE__ == $0 # Make this library first!
+if __FILE__ == $0
+    $:.unshift '..'
+    $:.unshift '../../lib'
+    $blinkbase = "../.."
+end
 
 require 'blink'
 require 'test/unit'
@@ -11,7 +15,7 @@ class TestFile < Test::Unit::TestCase
     # objects in a central store
     def setup
         @file = nil
-        @path = "../examples/root/etc/configfile"
+        @path = File.join($blinkbase,"examples/root/etc/configfile")
         Blink[:debug] = 1
         assert_nothing_raised() {
             unless Blink::Objects::File.has_key?(@path)

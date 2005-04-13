@@ -1,4 +1,8 @@
-$:.unshift '../lib' if __FILE__ == $0 # Make this library first!
+if __FILE__ == $0
+    $:.unshift '..'
+    $:.unshift '../../lib'
+    $blinkbase = "../.."
+end
 
 require 'blink'
 require 'test/unit'
@@ -26,12 +30,13 @@ class TestBasic < Test::Unit::TestCase
         }
 
         assert_nothing_raised() {
-            unless Blink::Objects::File.has_key?("../examples/root/etc/configfile")
+            cfile = File.join($blinkbase,"examples/root/etc/configfile")
+            unless Blink::Objects::File.has_key?(cfile)
                 Blink::Objects::File.new(
-                    :path => "../examples/root/etc/configfile"
+                    :path => cfile
                 )
             end
-            @configfile = Blink::Objects::File["../examples/root/etc/configfile"]
+            @configfile = Blink::Objects::File[cfile]
         }
         assert_nothing_raised() {
             unless Blink::Objects::Service.has_key?("sleeper")
@@ -40,7 +45,7 @@ class TestBasic < Test::Unit::TestCase
                     :running => 1
                 )
                 Blink::Objects::Service.addpath(
-                    File.expand_path("../examples/root/etc/init.d")
+                    File.join($blinkbase,"examples/root/etc/init.d")
                 )
             end
             @sleeper = Blink::Objects::Service["sleeper"]
@@ -72,7 +77,7 @@ class TestBasic < Test::Unit::TestCase
         )
 
         assert_equal(
-            "../examples/root/etc/configfile",
+            File.join($blinkbase,"examples/root/etc/configfile"),
             @configfile.name
         )
 
