@@ -21,7 +21,7 @@ module Blink
         end
 
         def Fact.[](name)
-            Facter[name]
+            Facter[name].value
         end
     end
 end
