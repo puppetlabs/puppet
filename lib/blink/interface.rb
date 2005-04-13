@@ -2,7 +2,8 @@
 
 # $Id$
 
-# our duck type interface
+# our duck type interface -- if your object doesn't match this interface,
+# it won't work
 
 # all of our first-class objects (objects, attributes, and components) will
 # respond to these methods
