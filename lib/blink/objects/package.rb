@@ -193,5 +193,49 @@ module Blink
                 end
             }
         }
+
+        # this is how we retrieve packages
+        class PackageSource
+            attr_accessor :uri
+            attr_writer :retrieve
+
+            @@sources = Hash.new(false)
+
+            def PackageSource.get(file)
+                type = file.sub(%r{:.+},'')
+                source = nil
+                if source = @@sources[type]
+                    return source.retrieve(file)
+                else
+                    raise "Unknown package source: %s" % type
+                end
+            end
+
+            def initialize(name)
+                if block_given?
+                    yield self
+                end
+
+                @@sources[name] = self
+            end
+
+            def retrieve(path)
+                @retrieve.call(path)
+            end
+
+        end
+
+        PackageSource.new("file") { |obj|
+            obj.retrieve = proc { |path|
+                # this might not work for windows...
+                file = path.sub(%r{^file://},'')
+
+                if FileTest.exists?(file)
+                    return file
+                else
+                    raise "File %s does not exist" % file
+                end
+            }
+        }
     end # Blink::Objects
 end

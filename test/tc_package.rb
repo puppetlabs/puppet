@@ -25,3 +25,11 @@ class TestPackagingType < Test::Unit::TestCase
     end
 end
 
+class TestPackageSource < Test::Unit::TestCase
+    def test_filesource
+        assert_equal(
+            "/tmp/fakepackage",
+            Blink::Objects::PackageSource.get("file:///tmp/fakepackage")
+        )
+    end
+end
