@@ -10,7 +10,7 @@ module Blink
         @@functions = Hash.new(nil)
 
         #---------------------------------------------------------------
-        def [](name)
+        def Function.[](name)
             return @@functions[name]
         end
         #---------------------------------------------------------------
