@@ -1,0 +1,99 @@
+Phase I:
+	Context
+	The only place you can discover non-object state
+		e.g., hard classes, schedules, hostgroups, etc.
+
+Phase II:
+	Objects
+	Build the objects up based on developed Context
+	This step stores triggers with the objects but cannot yet react to them
+
+Phase III:
+	Run
+	Results in a list of operations
+
+Phase IV:
+	Check:
+	Results in list of dirty objects
+
+Phase V:
+	Fix
+	Does all of the work
+	Results in triggers being pulled
+		(triggers are just operations, aren't they?)
+
+Phase V:
+	Run triggers
+	Might result in more triggers
+		mmm, recursion
+
+Phase I:
+	Build the data structures which we will or will not use
+
+Phase II:
+	Decide which data structures we will use, and add all hooks for triggers
+	and such
+
+Phase III:
+	Analyze the system for compliance with what we think it's supposed to
+	look like
+
+Phase IV:
+	Do all the work that we've determined needs to be done
+
+Phase V:
+	React with any triggers, ad infinitum
+
+-------------
+The entire thing needs to be OO based, and every object needs to have both
+an 'as_string' and an 'as_boolean' method that gets implicitly called.
+
+Methods each active object needs to have:
+	boolean
+		is the object configured
+	on
+		enables the object
+	off
+		disables the object
+	prepare?
+		uh, does stuff in preparation
+	check
+		compares configured state to server state
+	converge (still a bad name)
+		converges server state to configured state
+
+---------------
+What kind of builtin objects do I need?
+
+FileConfig
+	Straight monitoring of a file and verifying on-disk config (perms, et al)
+	Classes to set or actions to trigger if the file changes
+		need to differentiate inode changes from data changes
+FileChunk
+	Some kind of format that can be filled in with values
+		Needs to be able to specify fixed or variable fields, yuck
+CreatedFile
+	Collections of chunks
+		Do the chunks have to be ordered?  Does that order come from order in
+		the file or some other way?  Probably have a separated "ordered file"
+		object
+	Compares to the file on disk
+		It'd be really, really nice to have this in a database somewhere
+	Classes to set or actions to trigger if the file changes
+
+Process
+	Describes a running process to the greatest extent possible
+	Classes to set or actions to trigger if anything happens with the process
+
+Link
+	something similar to cfengine's Copy, something that says 'always make sure
+	this file is pinned to some other file'
+		It'd be cool if this system would automagically pin every file on the
+		system to a central repository, so you really could say every file
+		on the system was managed
+			or at least, every file that exists in the central repository
+
+Package
+	Maintains the list of installed packages, and has some means for retrieving
+	packages from a central location
+

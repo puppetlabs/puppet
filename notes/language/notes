@@ -1,0 +1,7 @@
+Selectors:
+    should they always error if a host interprets without a value?
+        e.g., should they always have what amounts to a default?
+            otherwise, we'll get valueless statements
+
+Truth:
+    we need to handle true/falseness

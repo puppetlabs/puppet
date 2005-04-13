@@ -1,0 +1,57 @@
+# $Id: cron2.bl,v 1.1 2003/06/19 06:29:53 luke Exp $
+
+# some data definitions
+
+# this kind of sucks because i have two very different syntaxes:
+# one for inside the object, and one for outside
+# that doesn't really seem to make sense.....
+
+# is there a way around it?  can i scope all variables automatically
+# inside the objects?
+
+# there's a difference between a collector that joins members of an object
+# and a collector that joins multiple objects together, right?
+cron("cfengine") = {
+	comment => "This is cfengine";
+	command => "/usr/local/sbin/cfexecd -F";
+	minute => ( 0,30 );
+	user => user("root") || "root"; # this sucks
+};
+
+# this is less pure, but it's less muddy at the same time, somehow
+# hmmm
+cron("cfengine") = {
+	$comment = "This is cfengine";
+	$command = "/usr/local/sbin/cfexecd -F";
+	$minute = ( 0,30 );
+	$user = user("root") || "root"; # this sucks; is it a code reference?
+	# a string? i have no idea
+};
+
+# are these hash members? am i assigning a hash, or filling in the members
+# on an object?
+chunk("cronjob") = {
+	separator => "\n";
+	requires => cron;
+	members => (comment || name, command);
+};
+
+# this ends up abstracting the members
+# how do i get to the username now?
+# a chunk is formatting for an individual object; there doesn't need to
+# be an abstraction
+chunk("cronline") = {
+	separator => " ";
+	requires => chunk("cronjob");
+	members => (minute || "*", hour || "*", mday || "*", month || "*", wday || "*",
+		command);
+};
+
+pile("crontab") = {
+	separator => "\n";
+	members => chunk("cronline")->user(user);
+};
+
+# and then some actual logic, and stuff
+
+

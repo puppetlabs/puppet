@@ -1,0 +1,9 @@
+# $Id$
+
+platform = :sunos
+
+platform = "this is a string of text"
+
+apache = service["apache"] {
+    :running => "1"
+}

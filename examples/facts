@@ -1,0 +1,47 @@
+platform? {
+    :sunos => { thing("name"){ :param => "value" } }
+}
+
+thing("name") {
+    :param => platform{
+        :sunos => "sunosvalue"
+        :aix => "aixvalue"
+        :default => "defaultvalue"
+    }
+}
+
+thing("name") {
+    :param => test ? true : false
+    :param => platform? <
+        :sunos => "sunosvalue"
+        :aix => "aixvalue"
+        hostname?(:myhost) => "hostvalue"
+    >
+    true : false
+}
+
+string = case platform
+    when :sunos then "sunosvalue"
+    when :aix then "aixvalue"
+    when :aix then "aixvalue"
+end
+
+string = platform ? {
+    :sunos => :value1
+    :aix => :value2
+    :hpux => :value3
+}
+
+if platform == :sunos then "sunosvalue"
+string = Fact["platform"] ? {
+    :sunos => "sunosvalue"
+}
+
+platform = retrieve("platform")
+
+                      -----------------------
+                     / :sunos => :sunosvalue \
+string = platform?  <  :aix   => :aixvalue    >
+                     \ :hpux  => :hpuxvalue  /
+                      -----------------------
+

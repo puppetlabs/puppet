@@ -1,0 +1,43 @@
+1. How do I specify delayed evaluation?
+
+This is essentially a question of a simple syntax for stored procedures.
+
+2. How do I specify "call this method on yourself"?
+	ruby's method works relatively well, but i wish i could leave out
+	the "|me|" stuff
+
+This is just a bit more complexity onto the stored procedure syntax.  It is
+different than storing a non-object procedure, so the syntax does have to
+reflect that.
+
+3. Do I support implicit lists, e.g.:
+	cron.user('root').each { do stuff }
+
+	something like "any instance method when called on the class produces a
+	list of all instances which meet the criteria of the call"
+		this gets muddied if i want to use variable sigils
+
+	if i do support lists, do i try to support roll-back?
+		definitely not in the first version....
+
+	or rather, if i support lists, do i support them as facts?  do 
+	lvalues in this case ever actually do anything, such that they would need
+	to be rolled back?
+
+	really, this isn't something that would be rolled back, because i'm stating
+	that something is a certain way based on logic in the script, not the state
+	of the real system
+		at this point; that might change...
+
+4. The difference between object initialization and later method calls
+
+5. Why _shouldn't_ I just use Ruby?
+	no standard 'to_b' method
+	specifically ordered
+
+6. Parsing ordering
+	Will I actually be able to abstract that aspect?  I kinda doubt it.
+
+7. Module interface
+	I need something, preferably something that has hooks to other languages.
+	I can begin without one, but there definitely needs to be support for it.

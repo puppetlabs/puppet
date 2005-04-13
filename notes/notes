@@ -1,0 +1,44 @@
+things i need:
+	locking
+	automatic reexecution for any object
+		with a reread of all config stuff? is this even possible?
+	state maintenance
+	event handling and subscription
+	failure propagation
+
+my basic process:
+	load the configs
+		create each object tree in a stack
+		register each event, with subscriptions and paths
+		register all callbacks
+	run a recursive check on each tree
+		depth-first? configurable?
+		do checks result in events or methods or what?
+			should checks return methods which just get executed in order?
+			but then what do events cause?  don't i have to register callbacks?
+			what if the callbacks cause a change which kicks off an event? can
+			i worry about infinite loops?
+
+			and i can't just register all the callbacks upfront
+				but all callbacks will be registered before any work is done
+	execute each fix
+	execute resulting callbacks
+	destruct each object tree
+
+hmmm
+	do i need object trees with callbacks? how do they relate?
+	currently they just seem to give containers first crack at responding
+	to an event
+	i'm looking for closure-like performance from each tree
+	how much should the checks know? they obviously shouldn't know much
+		they should not need to know the event that a fix will kick off, the
+		fix should know that
+	so it looks like i'm trying to decide between idempotent operations and
+	idempotent processes
+		if a fix gets called, it should just fix; it shouldn't need to check
+		whether it's necessary
+	tree vs array
+		should everything stay in the tree? what does "containment" really mean?
+			should i just save containment for later? because it's really about
+			forcing all changes to go through the container, rather than
+			direct modification

@@ -1,0 +1,32 @@
+$Id$
+
+Introduction
+============
+There are currently three main components to Blink:
+
+Objects
+-------
+These are the "primitives" of the language.  If you want to affect the system,
+these are the only way to do it.  Their base class is in blink/objects.rb, and
+they all inherit directly from that class.
+
+Attributes
+----------
+Each of the Objects are basically a collection of attributes.  The attributes
+themselves are how the system is actually modified -- e.g., you set
+'file("/etc/passwd").owner = X', which modifies an attribute value, and that
+results in the system itelf being modified.
+
+Each attribute derives from blink/attribute.rb, but most attributes are actually
+defined in the same file as the class that uses them (e.g., blink/objects/file.rb).
+
+The Wrapper
+-----------
+At the top level is the Blink module.  It doesn't do much right now
+
+Starting
+========
+You can start with bin/blinker, but it's probably better to just start in test/.
+I've been writing simple unit tests for most of the work I've done, so you can
+see how things do (and should) work by looking in there.  Just run 'ruby
+<testfile>'.

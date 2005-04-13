@@ -1,0 +1,30 @@
+#!/home/luke/cvs/blink/bin/blink
+
+# okay, we'll have a constraint system later, and it will look something like
+# the following:
+
+# Constraint.isbinary = sub { |path| -x path }
+#	binary.constrain(isbinary)
+#	protocol.constrain { |string|
+#		string == "udp" || string == "tcp"
+#	}
+
+class Base {
+	strings = format
+
+}
+
+class Inetd {
+	strings = wait, endpoint, command, binary, protocol, uid, name
+
+}
+
+Inetd::telnet = {
+	wait => "nowait",
+	endpoint => "stream",
+	command => "in.telnetd",
+	binary => "/usr/sbin/in.telnetd",
+	protocol => "tcp6",
+	uid => "root",
+	name => "telnet",
+}

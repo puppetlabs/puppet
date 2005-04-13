@@ -1,0 +1,3 @@
+# $Id$
+
+platform = retrieve("platform")

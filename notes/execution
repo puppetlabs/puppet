@@ -1,0 +1,28 @@
+execution path:
+
+parse the entire file recursively
+	imports are definitely inline
+
+
+
+what I'm trying to resolve is:
+	can the entire thing be parsed and then executed, or do the objects
+	need to be able to take into account the results of execution?
+		most other languages make a clear differentation between values
+		and executables, so why shouldn't we?  as long as we support some
+		kind of executable, it should be fine
+	i need to keep in mind that the definitions of operations and objects
+	will not actually change as a result of execution, merely the details
+		does this matter?
+
+objects are created during parsing
+	this means that i have the choice of:
+		--not creating operations at parse time
+		--dealing with this nasty interface to parse-time operations
+			if we don't have this nasty interface, then execution can't affect
+			the contents of operations
+				would that make sense? a file with multiple operations whose
+				different operations can change the values
+
+here's the crucial question:
+	is there a difference between executing the code and performing the operations?

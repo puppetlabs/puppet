@@ -1,0 +1,25 @@
+#! /bin/sh
+
+PATH=$PATH:/home/luke/svn/blink/examples/root/bin
+
+case "$1" in
+    start)
+        sleeper
+	;;
+    stop)
+        kill `ps -ef | grep -v grep | grep sleeper | grep perl | awk '{print $2}'`
+	;;
+    status)
+        if sh -c "ps -ef | grep -v grep | grep -v init.d | grep sleeper"; then
+            exit 0
+        else
+            exit 1
+        fi
+	;;
+  *)
+	echo "Usage: $N {start|stop|restart|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

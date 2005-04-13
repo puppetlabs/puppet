@@ -1,0 +1,97 @@
+#!/usr/bin/perl -w
+
+###
+# sleep indefinitely as a debug
+
+use strict;
+use Getopt::Long;
+use Pod::Usage;
+
+#-----------------------------------------------------------------
+sub daemonize
+{
+	 use POSIX 'setsid';
+	 $| = 1;
+	 chdir '/'					  or die "Can't chdir to /: $!\n";
+	 open STDIN, "/dev/null"		or die "Can't read /dev/null: $!\n";
+	 open STDOUT, "> /dev/null"	 or die "Can't write to /dev/null: $!\n";
+	 defined(my $pid = fork())	  or die "Can't fork: $!\n";
+	 #print STDERR $pid, "\n";
+	 exit if $pid;
+	 setsid						 or die "Can't start a new session: $!\n";
+	 open STDERR, ">&STDOUT"		or die "Can't dup stdout: $!\n";
+}
+#-----------------------------------------------------------------
+
+my ($help,$opt_result,$debug,$fun);
+
+$opt_result = GetOptions
+(
+	"help" => \$help,
+	"debug" => \$debug,
+	"fun" => \$fun,
+);
+
+if (! $opt_result)
+{
+	pod2usage('-exitval' => 1, '-verbose' => 0);
+	exit(1);
+}
+
+if ($help)
+{
+	pod2usage('-exitval' => 1, '-verbose' => 2);
+	exit;
+}
+
+unless ($debug) {
+	daemonize();
+}
+
+while(1){
+	sleep 600;
+}
+
+=head1 NAME
+
+template - this is a template script and should be copied and modded
+
+=head1 SYNOPSIS
+
+template [-help]
+
+=head1 DESCRIPTION
+
+B<template> is a stub script.
+
+=head1 OPTIONS
+
+=over 4
+
+=item help
+
+Prints out help page.
+
+=back
+
+B<Example>
+
+template
+
+=head1 BUGS
+
+This script shouldn't be modified, or has apparently not been documented.
+
+=head1 SEE ALSO
+
+L<Cat>
+
+=head1 AUTHOR
+
+Luke A. Kanies, luke.kanies@cat.com
+
+=for html <hr>
+
+I<$Id$>
+
+=cut
