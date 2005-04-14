@@ -16,12 +16,7 @@ case "$1" in
 	;;
     status)
         output=`ps -ef | grep -v grep | grep -v init.d | grep sleeper`
-        retvalue=$?
-        if [ -n "$output" ]; then
-            exit 0
-        else
-            exit 1
-        fi
+        exit $?
 	;;
   *)
 	echo "Usage: $N {start|stop|restart|force-reload}" >&2
