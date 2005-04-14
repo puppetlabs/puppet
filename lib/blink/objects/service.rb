@@ -109,17 +109,20 @@ module Blink
             end
 
             # it'd be nice if i didn't throw the output away...
+            # this command returns true if the exit code is 0, and returns
+            # false otherwise
             def initcmd(cmd)
                 script = self.initscript
 
-                Blink.debug "Running '%s %s' as initcmd for '%s'" %
-                    [script,cmd,self]
-
-                rvalue = Kernel.system("%s status" %
-                        [self.initscript])
+                #Blink.debug "Executing '%s %s' as initcmd for '%s'" %
+                #    [script,cmd,self]
 
                 rvalue = Kernel.system("%s %s" %
-                        [self.initscript,cmd])
+                        [script,cmd])
+
+                #Blink.debug "'%s' ran with exit status '%s'" %
+                #    [cmd,rvalue]
+
 
                 rvalue
             end
