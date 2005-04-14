@@ -32,8 +32,20 @@ module Blink
     # the hash that determines how our system behaves
     @@config = Hash.new(false)
 
-    # produce debugging info
-	def Blink.debug(ary)
+
+    msglevels = [:debug,:verbose,:notice,:warning,:error]
+
+    # handle the different message levels
+    msglevels.each { |level|
+        define_method(level,proc { |args|
+            Blink.message(level,args)
+        })
+        module_function level
+        # default to enabling all notice levels except debug
+        @@config[level] = true unless level == :debug
+    }
+
+	def Blink.message(level,ary)
 		msg = ""
 		if ary.class == String
 			msg = ary
@@ -41,9 +53,9 @@ module Blink
 			msg = ary.join(" ")
 		end
 
-		if @@config[:debug]
+		if @@config[level]
 			Blink::Message.new(
-				:level => :debug,
+				:level => level,
 				:source => "Blink",
 				:message => msg
 			)
