@@ -60,4 +60,8 @@ class TestSymlink < Test::Unit::TestCase
         }
         assert(@symlink.insync?())
     end
+
+    def teardown
+        Kernel.system("rm -f %s" % @path)
+    end
 end
