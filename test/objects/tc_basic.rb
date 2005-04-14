@@ -31,24 +31,24 @@ class TestBasic < Test::Unit::TestCase
 
         assert_nothing_raised() {
             cfile = File.join($blinkbase,"examples/root/etc/configfile")
-            unless Blink::Objects::File.has_key?(cfile)
-                Blink::Objects::File.new(
+            unless Blink::Types::File.has_key?(cfile)
+                Blink::Types::File.new(
                     :path => cfile
                 )
             end
-            @configfile = Blink::Objects::File[cfile]
+            @configfile = Blink::Types::File[cfile]
         }
         assert_nothing_raised() {
-            unless Blink::Objects::Service.has_key?("sleeper")
-                Blink::Objects::Service.new(
+            unless Blink::Types::Service.has_key?("sleeper")
+                Blink::Types::Service.new(
                     :name => "sleeper",
                     :running => 1
                 )
-                Blink::Objects::Service.addpath(
+                Blink::Types::Service.addpath(
                     File.join($blinkbase,"examples/root/etc/init.d")
                 )
             end
-            @sleeper = Blink::Objects::Service["sleeper"]
+            @sleeper = Blink::Types::Service["sleeper"]
         }
         assert_nothing_raised() {
             @component.push(

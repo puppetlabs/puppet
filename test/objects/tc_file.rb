@@ -18,12 +18,12 @@ class TestFile < Test::Unit::TestCase
         @path = File.join($blinkbase,"examples/root/etc/configfile")
         Blink[:debug] = 1
         assert_nothing_raised() {
-            unless Blink::Objects::File.has_key?(@path)
-                Blink::Objects::File.new(
+            unless Blink::Types::File.has_key?(@path)
+                Blink::Types::File.new(
                     :path => @path
                 )
             end
-            @file = Blink::Objects::File[@path]
+            @file = Blink::Types::File[@path]
         }
     end
 
