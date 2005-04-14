@@ -237,8 +237,11 @@ module Blink
 			# this probably won't stay, but until this leaves the console,
 			# i'm going to use coloring...
 			#return "#{@time} #{@source} (#{@level}): #{@message}"
-			return @@colors[@level] + "%s %s (%s): %s" % [
-				@time, @source, @level, @message
+			#return @@colors[@level] + "%s %s (%s): %s" % [
+			#	@time, @source, @level, @message
+			#] + RESET
+			return @@colors[@level] + "%s (%s): %s" % [
+				@source, @level, @message
 			] + RESET
 		end
 	end
