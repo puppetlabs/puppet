@@ -86,8 +86,8 @@ module Blink
         end
     end
 
-    class Objects
-        class Symlink < Objects
+    class Types
+        class Symlink < Types
             attr_reader :stat, :path, :params
             # class instance variable
             @params = [
@@ -100,7 +100,7 @@ module Blink
 
             @name = :symlink
             @namevar = :path
-        end # Blink::Objects::File
-    end # Blink::Objects
+        end # Blink::Types::File
+    end # Blink::Types
 
 end

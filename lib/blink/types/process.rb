@@ -60,8 +60,8 @@ module Blink
             end
         end
     end
-	class Objects
-		class BProcess < Objects
+	class Types
+		class BProcess < Types
 			attr_reader :stat, :path
 			@params = [:start, :stop, :user, :pattern, :binary, :arguments]
             @name = :process
@@ -80,7 +80,7 @@ module Blink
 				:pattern => :pattern
 			})
 
-		end # Blink::Objects::BProcess
-	end # Blink::Objects
+		end # Blink::Types::BProcess
+	end # Blink::Types
 
 end

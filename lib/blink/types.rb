@@ -12,7 +12,7 @@ require 'blink/interface'
 #   See attribute.rb for how work is actually done.
 
 module Blink
-	class Objects
+	class Types
         include Enumerable
 		@objects = Hash.new
 		@@allobjects = Array.new # and then an array for all objects
@@ -28,7 +28,7 @@ module Blink
 
 		#---------------------------------------------------------------
 		# retrieve a named object
-		def Objects.[](name)
+		def Types.[](name)
 			if @objects.has_key?(name)
 				return @objects[name]
 			else
@@ -40,12 +40,12 @@ module Blink
 		#---------------------------------------------------------------
 		# this is special, because it can be equivalent to running new
 		# this allows cool syntax like Blink::File["/etc/inetd.conf"] = ...
-		def Objects.[]=(name,object)
+		def Types.[]=(name,object)
             newobj = nil
-            if object.is_a?(Blink::Objects)
+            if object.is_a?(Blink::Types)
                 newobj = object
             else
-                raise "must pass a Blink::Objects object"
+                raise "must pass a Blink::Types object"
             end
 
 			if @objects.has_key?(newobj.name)
@@ -61,14 +61,14 @@ module Blink
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
-        def Objects.has_key?(name)
+        def Types.has_key?(name)
             return @objects.has_key?(name)
         end
 		#---------------------------------------------------------------
 
 		#-----------------------------------
 		# all objects total
-		def Objects.push(object)
+		def Types.push(object)
 			@@allobjects.push object
 			Blink.debug("adding %s of type %s to master list" %
                 [object.name,object.class])
@@ -78,7 +78,7 @@ module Blink
 		#-----------------------------------
         # this is meant to be run multiple times, e.g., when a new
         # type is defined at run-time
-        def Objects.buildtypehash
+        def Types.buildtypehash
             @@typeary.each { |otype|
                 if @@typehash.include?(otype.name)
                     if @@typehash[otype.name] != otype
@@ -94,7 +94,7 @@ module Blink
 		#-----------------------------------
         # this should make it so our subclasses don't have to worry about
         # defining these class instance variables
-		def Objects.inherited(sub)
+		def Types.inherited(sub)
             sub.module_eval %q{
                 @objects = Hash.new
                 @actions = Hash.new
@@ -109,23 +109,23 @@ module Blink
 		#-----------------------------------
 
 		#-----------------------------------
-        # this is used for mapping object types (e.g., Blink::Objects::File)
+        # this is used for mapping object types (e.g., Blink::Types::File)
         # to names (e.g., "file")
-        def Objects.name
+        def Types.name
             return @name
         end
 		#-----------------------------------
 
 		#-----------------------------------
 		# some simple stuff to make it easier to get a name from everyone
-		def Objects.namevar
+		def Types.namevar
 			return @namevar
 		end
 		#-----------------------------------
 
 		#-----------------------------------
 		# accessor for the list of acceptable params
-		def Objects.classparams
+		def Types.classparams
 			return @params
 		end
 		#-----------------------------------
@@ -133,7 +133,7 @@ module Blink
 		#-----------------------------------
 		# our param list is by class, so we need to convert it to names
         # (see blink/objects/file.rb for an example of how params are defined)
-		def Objects.classparambyname
+		def Types.classparambyname
             unless defined? @paramsbyname
                 @paramsbyname = Hash.new { |hash,key|
                     fail TypeError.new(
@@ -405,7 +405,7 @@ module Blink
 			self.class[name] = self
 
             # and then add it to the master list
-            Blink::Objects.push(self)
+            Blink::Types.push(self)
 
 			@notify = Hash.new
 			#@encloses = Array.new
@@ -414,10 +414,10 @@ module Blink
 			#@opsgenned = false
 
 			# XXX i've no idea wtf is going on with enclosures
-			#if self.class == Blink::Objects::Root
+			#if self.class == Blink::Types::Root
 			#	Blink.debug "not enclosing root (#{self.class}) in self"
 			#else
-			#	Blink::Objects.root.encloses(self)
+			#	Blink::Types.root.encloses(self)
 			#end
 		end
 		# initialize
@@ -510,5 +510,5 @@ module Blink
 		#-----------------------------------
 
 		#---------------------------------------------------------------
-	end # Blink::Objects
+	end # Blink::Types
 end
