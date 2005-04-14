@@ -145,7 +145,7 @@ module Blink
 
     # a class for storing state
     # not currently used
-	class State
+	class Storage
 		include Singleton
 		@@config = "/var/tmp/blinkstate"
 		@@state = Hash.new
@@ -155,7 +155,7 @@ module Blink
 			self.load
 		end
 
-		def State.load
+		def Storage.load
 			puts "loading state"
 			return unless File.exists?(@@config)
 			File.open(@@config) { |file|
@@ -171,14 +171,14 @@ module Blink
 			}
 		end
 
-		def State.state(myclass)
+		def Storage.state(myclass)
 			unless defined? @@state[myclass]
 				@@state[myclass] = Hash.new
 			end
 			return @@state[myclass]
 		end
 
-		def State.store
+		def Storage.store
 			File.open(@@config, File::CREAT|File::WRONLY, 0644) { |file|
 				@@state.each { |key, value|
 					file.puts([self.class,key,value].join(@@splitchar))
@@ -243,5 +243,18 @@ module Blink
 			] + RESET
 		end
 	end
+    #------------------------------------------------------------
+
+    #------------------------------------------------------------
+    class Modification
+        attr_accessor :object, :type, :from, :to
+
+        def initialize(object)
+            @object = object
+            @type = object.class
+            @from = object.is?
+            @to = object.should?
+        end
+    end
     #------------------------------------------------------------
 end
