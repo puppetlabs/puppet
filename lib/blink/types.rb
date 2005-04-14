@@ -2,7 +2,10 @@
 
 # $Id$
 
+# included so we can test object types
 require 'blink/state'
+
+# this is our base class
 require 'blink/interface'
 
 #---------------------------------------------------------------
@@ -30,8 +33,8 @@ module Blink
 		# all objects total
 		def Types.push(object)
 			@@allobjects.push object
-			Blink.debug("adding %s of type %s to master list" %
-                [object.name,object.class])
+			#Blink.debug("adding %s of type %s to master list" %
+            #    [object.name,object.class])
 		end
 		#-----------------------------------
 
@@ -98,7 +101,7 @@ module Blink
                 @paramsbyname = Hash.new { |hash,key|
                     fail TypeError.new(
                         "Parameter %s is invalid for class %s" %
-                        [key.to_s,self.class.to_s]
+                        [key.to_s,self]
                     )
                 }
                 @params.each { |param|
@@ -149,7 +152,7 @@ module Blink
 
             attrclass = self.class.classparambyname[param]
 
-            Blink.debug("creating state of type '%s'" % attrclass)
+            #Blink.debug("creating state of type '%s'" % attrclass)
             # any given object can normally only have one of any given state
             # type, but it might have many Symbol states 
             #
@@ -356,8 +359,8 @@ module Blink
 
             hash.each { |param,value|
                 @monitor.push(param)
-                Blink.debug("adding param '%s' with value '%s'" %
-                    [param,value])
+                #Blink.debug("adding param '%s' with value '%s'" %
+                #    [param,value])
                 self[param] = value
             }
 
@@ -392,7 +395,7 @@ module Blink
 			#name = nameattr.value
             #Blink.debug "returning %s from attr %s and namevar %s" % [name,nameattr,namevar]
 			#return name
-			return @states[self.class.namevar].value
+			return @states[self.class.namevar].is
 		end
 		#-----------------------------------
 

@@ -13,9 +13,7 @@ module Blink
 	class State
         include Comparable
 
-		attr_accessor :value
-		attr_accessor :should
-		attr_accessor :object
+		attr_accessor :is, :should, :object
 
 		#-----------------------------------
         # every state class must tell us what it's name will be (as a symbol)
@@ -29,10 +27,10 @@ module Blink
 
 		#-----------------------------------
         # we aren't actually comparing the states themselves, we're only
-        # comparing the "should" value with the "real" value
+        # comparing the "should" value with the "is" value
         def insync?
-            Blink.debug "%s value is %s, should be %s" % [self,self.value,self.should]
-            self.value == self.should
+            Blink.debug "%s value is %s, should be %s" % [self,self.is,self.should]
+            self.is == self.should
         end
 		#-----------------------------------
 
@@ -49,10 +47,10 @@ module Blink
         # or a comparison between an object and the live system -- we'll
         # let the object decide that, rather than us
 		#def <=>(other)
-        #    if (self.value.respond_to?(:<=>))
-        #        return self.value <=> other
+        #    if (self.is.respond_to?(:<=>))
+        #        return self.is <=> other
         #    else
-        #        fail TypeError.new("class #{self.value.class} does not respond to <=>")
+        #        fail TypeError.new("class #{self.is.class} does not respond to <=>")
         #    end
 		#end
 		#-----------------------------------
@@ -87,7 +85,7 @@ module Blink
         #
         # see objects.rb for how this is used
         class Symbol
-            attr_reader :value
+            attr_reader :is
             attr_reader :should
 
             def initialize(symbol)
@@ -107,7 +105,7 @@ module Blink
             end
 
             def should=(value)
-                @value = value
+                @is = value
                 @should = value
             end
 
@@ -115,8 +113,8 @@ module Blink
                 true
             end
 
-            def value=(value)
-                @value = value
+            def is=(value)
+                @is = value
                 @should = value
             end
         end
@@ -128,7 +126,7 @@ module Blink
     class MetaState
         include Comparable
         attr_accessor :parent
-        attr_accessor :value
+        attr_accessor :is
 
         def <=>(other)
 			raise "'<=>' method was not overridden by %s" % self.class

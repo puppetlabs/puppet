@@ -52,11 +52,11 @@ module Blink
                 stat = nil
 
                 if FileTest.symlink?(self.object[:path])
-                    self.value = File.readlink(self.object[:path])
-                    Blink.debug("link value is '%s'" % self.value)
+                    self.is = File.readlink(self.object[:path])
+                    Blink.debug("link value is '%s'" % self.is)
                     return
                 else
-                    self.value = nil
+                    self.is = nil
                     return
                 end
             end

@@ -3,41 +3,48 @@
 # $Id$
 
 module Blink
+    class State
+        class PackageInstalled < Blink::State
+            @name = :install
+
+            def retrieve
+                self.is = Blink::PackageType[object.format][object.name]
+                Blink.debug "package install state is %d" % self.is
+            end
+
+            def sync
+                begin
+                    raise "cannot sync package states yet"
+                rescue
+                    raise "failed to sync #{@params[:file]}: #{$!}"
+                end
+
+                #self.object.newevent(:event => :inode_changed)
+            end
+        end
+    end
+
     class Types
         # packages are complicated because each package format has completely
         # different commands.  We need some way to convert specific packages
         # into the general package object...
         class Package < Types
             attr_reader :version, :format
-            # class instance variable
             @params = [
-                :install,
+                Blink::State::PackageInstalled,
                 :format,
-                :version
+                :name,
+                :status,
+                :version,
+                :category,
+                :platform,
+                :root,
+                :vendor,
+                :description
             ]
 
             @name = :package
             @namevar = :name
-
-            # this is already being done in objects.rb
-            #def Package.inhereted(sub)
-            #    sub.module_eval %q{
-            #        @objects = Hash.new
-            #        @actions = Hash.new
-            #    }
-            #end
-
-            def initialize(hash)
-            end
-
-            def retrieve
-            end
-            
-            def insync?
-            end
-
-            def sync
-            end
         end # Blink::Types::Package
 
         class PackagingType
@@ -51,6 +58,11 @@ module Blink
                 else
                     raise "no such type %s" % name
                 end
+            end
+
+            # whether a package is installed or not
+            def [](name)
+                return @packages[name]
             end
 
             [:list, :install, :remove, :check].each { |method|

@@ -14,9 +14,9 @@ module Blink
             @name = :running
 
             def retrieve
-                self.value = self.running()
+                self.is = self.running()
                 Blink.debug "Running value for '%s' is '%s'" %
-                    [self.object.name,self.value]
+                    [self.object.name,self.is]
             end
 
             # should i cache this info?

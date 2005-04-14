@@ -26,7 +26,7 @@ module Blink
                     raise "File '%s' does not exist: #{$!}" % self.object[:path]
                 end
 
-                self.value = stat.uid
+                self.is = stat.uid
                 unless self.should.is_a?(Integer)
                     begin
                         user = Etc.getpwnam(self.should)
@@ -40,7 +40,7 @@ module Blink
                         raise "Could not get any info on user %s" % self.should
                     end
                 end
-                Blink.debug "chown state is %d" % self.value
+                Blink.debug "chown state is %d" % self.is
             end
 
             #def <=>(other)
@@ -52,12 +52,12 @@ module Blink
             #        end
             #    end
 #
-#                self.value <=> other
+#                self.is <=> other
 #            end
 
             def sync
                 begin
-                    File.chown(value,-1,self.object[:path])
+                    File.chown(self.should,-1,self.object[:path])
                 rescue
                     raise "failed to sync #{@params[:file]}: #{$!}"
                 end
@@ -83,8 +83,8 @@ module Blink
                     raise "File %s could not be stat'ed: %s" % [self.object[:path],error]
                 end
 
-                self.value = stat.mode & 007777
-                Blink.debug "chmod state is %o" % self.value
+                self.is = stat.mode & 007777
+                Blink.debug "chmod state is %o" % self.is
             end
 
             def sync
@@ -107,13 +107,13 @@ module Blink
             @name = :setuid
 
             def <=>(other)
-                self.value <=> @parent.value[11]
+                self.is <=> @parent.value[11]
             end
 
             # this just doesn't seem right...
             def sync
                 tmp = 0
-                if self.value == true
+                if self.is == true
                     tmp = 1
                 end
                 @parent.value[11] = tmp
@@ -135,7 +135,7 @@ module Blink
                     raise "File #{self.object[:path]} does not exist: #{$!}"
                 end
 
-                self.value = stat.gid
+                self.is = stat.gid
 
                 # we probably shouldn't actually modify the 'should' value
                 # but i don't see a good way around it right now
@@ -156,7 +156,7 @@ module Blink
                         raise "Could not get any info on group %s" % self.should
                     end
                 end
-                Blink.debug "chgrp state is %d" % self.value
+                Blink.debug "chgrp state is %d" % self.is
             end
 
 #            def <=>(other)
@@ -177,7 +177,7 @@ module Blink
 #                end
 #
 #                #puts self.should
-#                self.value <=> other
+#                self.is <=> other
 #            end
 
             def sync

@@ -105,8 +105,8 @@ module Blink
 				raise "'#{newobj.name}' already exists in " +
                     "class '#{newobj.class}': #{@objects[newobj.name]}"
 			else
-                Blink.debug("adding %s of type %s to class list" %
-                    [object.name,object.class])
+                #Blink.debug("adding %s of type %s to class list" %
+                #    [object.name,object.class])
 				@objects[newobj.name] = newobj
 			end
 		end
