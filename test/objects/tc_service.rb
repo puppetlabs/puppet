@@ -15,6 +15,8 @@ class TestService < Test::Unit::TestCase
     # objects in a central store
     def setup
         @sleeper = nil
+        script = File.join($blinkbase,"examples/root/etc/init.d/sleeper")
+        @status = script + " status"
 
         Blink[:debug] = 1
         assert_nothing_raised() {
@@ -32,46 +34,39 @@ class TestService < Test::Unit::TestCase
     end
 
     def test_process_start
+        # start it
         assert_nothing_raised() {
             @sleeper[:running] = 1
         }
         assert_nothing_raised() {
             @sleeper.retrieve
         }
-        assert_equal(
-            Kernel.system("../examples/root/etc/init.d/sleeper status"),
-            @sleeper.insync?()
-        )
+        assert(!@sleeper.insync?())
         assert_nothing_raised() {
             @sleeper.sync
         }
         assert_nothing_raised() {
             @sleeper.retrieve
         }
-        assert_equal(
-            Kernel.system("../examples/root/etc/init.d/sleeper status"),
-            @sleeper.insync?
-        )
-    end
+        assert(@sleeper.insync?)
 
-    def test_process_evaluate
+        # now stop it
         assert_nothing_raised() {
-            @sleeper[:running] = 1
+            @sleeper[:running] = 0
         }
-        assert_nothing_raised() {
-            @sleeper.evaluate
-        }
-        # it really feels like this should be implicit...
         assert_nothing_raised() {
             @sleeper.retrieve
         }
-        assert_equal(
-            Kernel.system("../examples/root/etc/init.d/sleeper status"),
-            @sleeper.insync?()
-        )
-        assert_equal(
-            true,
-            @sleeper.insync?()
-        )
+        assert(!@sleeper.insync?())
+        assert_nothing_raised() {
+            @sleeper.sync
+        }
+        assert_nothing_raised() {
+            @sleeper.retrieve
+        }
+        assert(@sleeper.insync?)
+    end
+    def teardown
+        Kernel.system("pkill sleeper")
     end
 end
