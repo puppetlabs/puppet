@@ -3,13 +3,14 @@
 # $Id$
 
 require 'singleton'
-require 'blink/component'
-require 'blink/interface'
-require 'blink/selector'
-require 'blink/types'
-require 'blink/types/service'
-require 'blink/types/file'
-require 'blink/types/symlink'
+#require 'blink/component'
+#require 'blink/interface'
+#require 'blink/selector'
+#require 'blink/types/service'
+#require 'blink/types/file'
+#require 'blink/types/symlink'
+
+# XXX see the bottom of the file for further inclusions
 
 PINK="[0;31m"
 GREEN="[0;32m"
@@ -258,3 +259,5 @@ module Blink
     end
     #------------------------------------------------------------
 end
+
+require 'blink/types'

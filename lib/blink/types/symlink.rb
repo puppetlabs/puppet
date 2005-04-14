@@ -3,7 +3,7 @@
 # $Id$
 
 require 'etc'
-require 'blink/state'
+require 'blink/types/state'
 require 'blink/types/file'
 
 module Blink

@@ -3,10 +3,12 @@
 # $Id$
 
 # included so we can test object types
-require 'blink/state'
+require 'blink/types/state'
 
 # this is our base class
 require 'blink/interface'
+
+# XXX see the bottom of the file for the rest of the inclusions
 
 #---------------------------------------------------------------
 # This class is the abstract base class for the mechanism for organizing
@@ -475,3 +477,8 @@ module Blink
 		#---------------------------------------------------------------
 	end # Blink::Types
 end
+require 'blink/types/service'
+require 'blink/types/file'
+require 'blink/types/symlink'
+require 'blink/types/package'
+require 'blink/component'
