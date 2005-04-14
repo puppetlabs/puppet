@@ -34,6 +34,7 @@ module Blink
                     # we, uh, don't do anything
                 end
             end
+            self.retrieve
         end
 		#---------------------------------------------------------------
 
@@ -42,7 +43,7 @@ module Blink
         [:sync,:retrieve].each { |method|
             self.send(:define_method,method) {
                 self.each { |subobj|
-                    Blink.debug("sending '%s' to '%s'" % [method,subobj])
+                    #Blink.debug("sending '%s' to '%s'" % [method,subobj])
                     subobj.send(method)
                 }
             }

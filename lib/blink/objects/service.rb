@@ -78,8 +78,7 @@ module Blink
                 :pattern
             ]
 
-			@objects = Hash.new
-			@actions = Hash.new
+            @name = :service
 			@namevar = :name
 
             @searchpaths = Array.new

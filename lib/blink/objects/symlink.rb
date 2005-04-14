@@ -98,8 +98,7 @@ module Blink
                 :path
             ]
 
-            @objects = Hash.new
-            @actions = Hash.new
+            @name = :symlink
             @namevar = :path
         end # Blink::Objects::File
     end # Blink::Objects

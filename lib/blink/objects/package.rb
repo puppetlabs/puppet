@@ -16,6 +16,7 @@ module Blink
                 :version
             ]
 
+            @name = :package
             @namevar = :name
 
             # this is already being done in objects.rb

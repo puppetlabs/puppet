@@ -205,8 +205,7 @@ module Blink
                 :path
             ]
 
-            @objects = Hash.new
-            @actions = Hash.new
+            @name = :file
             @namevar = :path
         end # Blink::Objects::File
     end # Blink::Objects

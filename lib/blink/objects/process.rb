@@ -7,29 +7,6 @@ require 'blink/operation/processes'
 # I'm only working on services, not processes, right now
 
 module Blink
-	class Objects
-		class BProcess < Objects
-			attr_reader :stat, :path
-			@params = [:start, :stop, :user, :pattern, :binary, :arguments] # class instance variable
-
-			@objects = Hash.new
-			@namevar = :pattern
-
-			Blink::Relation.new(self, Blink::Operation::Start, {
-				:user => :user,
-				:pattern => :pattern,
-				:binary => :binary,
-				:arguments => :arguments
-			})
-
-			Blink::Relation.new(self, Blink::Operation::Stop, {
-				:user => :user,
-				:pattern => :pattern
-			})
-
-		end # Blink::Objects::BProcess
-	end # Blink::Objects
-
     class Attribute
         class ProcessRunning < Attribute
             def retrieve
@@ -83,4 +60,27 @@ module Blink
             end
         end
     end
+	class Objects
+		class BProcess < Objects
+			attr_reader :stat, :path
+			@params = [:start, :stop, :user, :pattern, :binary, :arguments]
+            @name = :process
+
+			@namevar = :pattern
+
+			Blink::Relation.new(self, Blink::Operation::Start, {
+				:user => :user,
+				:pattern => :pattern,
+				:binary => :binary,
+				:arguments => :arguments
+			})
+
+			Blink::Relation.new(self, Blink::Operation::Stop, {
+				:user => :user,
+				:pattern => :pattern
+			})
+
+		end # Blink::Objects::BProcess
+	end # Blink::Objects
+
 end

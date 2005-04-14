@@ -5,7 +5,11 @@
 require 'blink/attribute'
 require 'blink/interface'
 
-puts Blink.class
+#---------------------------------------------------------------
+# This class is the abstract base class for the mechanism for organizing
+# work.  No work is actually done by this class or its subclasses; rather,
+# the subclasses include attributes which do the actual work.
+#   See attribute.rb for how work is actually done.
 
 module Blink
 	class Objects < Blink::Interface
@@ -13,7 +17,9 @@ module Blink
 		@objects = Hash.new
 		@@allobjects = Array.new # and then an array for all objects
 
-		@@types = Hash.new { |hash,key|
+
+        @@typeary = []
+		@@typehash = Hash.new { |hash,key|
             raise "Object type %s not found" % key
         }
 
@@ -24,8 +30,25 @@ module Blink
 		# all objects total
 		def Objects.push(object)
 			@@allobjects.push object
-			Blink.debug("adding %s of type %s to master list" % [object.name,object.class])
+			Blink.debug("adding %s of type %s to master list" %
+                [object.name,object.class])
 		end
+		#-----------------------------------
+
+		#-----------------------------------
+        # this is meant to be run multiple times, e.g., when a new
+        # type is defined at run-time
+        def Objects.buildtypehash
+            @@typeary.each { |otype|
+                if @@typehash.include?(otype.name)
+                    if @@typehash[otype.name] != otype
+                        Blink.warning("Object type %s is already defined" % otype.name)
+                    end
+                else
+                    @@typehash[otype.name] = otype
+                end
+            }
+        end
 		#-----------------------------------
 
 		#-----------------------------------
@@ -37,13 +60,20 @@ module Blink
                 @actions = Hash.new
             }
 
-            if @@types.include?(sub.name)
-                Blink.notice("Redefining object type %s" % sub.name)
-            else
-                #Blink.debug("Defining object type %s" % sub.name)
-            end
-            @@types[sub.name] = sub
+            # add it to the master list
+            # unfortunately we can't yet call sub.name, because the #inherited
+            # method gets called before any commands in the class definition
+            # get executed, which, um, sucks
+            @@typeary.push(sub)
 		end
+		#-----------------------------------
+
+		#-----------------------------------
+        # this is used for mapping object types (e.g., Blink::Objects::File)
+        # to names (e.g., "file")
+        def Objects.name
+            return @name
+        end
 		#-----------------------------------
 
 		#-----------------------------------
@@ -264,6 +294,7 @@ module Blink
         # this is a wrapper, doing all of the work that should be done
         # and none that shouldn't
         def evaluate
+            raise "don't call evaluate; it's disabled"
         end
 		#-----------------------------------
 
