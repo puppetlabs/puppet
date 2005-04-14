@@ -5,12 +5,17 @@
 require 'blink/attribute'
 require 'blink/interface'
 
+puts Blink.class
 
 module Blink
 	class Objects < Blink::Interface
         include Enumerable
-		@objects = Hash.new # a class instance variable
-		@@allobjects = Array.new # and then a hash for all objects
+		@objects = Hash.new
+		@@allobjects = Array.new # and then an array for all objects
+
+		@@types = Hash.new { |hash,key|
+            raise "Object type %s not found" % key
+        }
 
 		#---------------------------------------------------------------
 		# the class methods
@@ -31,6 +36,13 @@ module Blink
                 @objects = Hash.new
                 @actions = Hash.new
             }
+
+            if @@types.include?(sub.name)
+                Blink.notice("Redefining object type %s" % sub.name)
+            else
+                #Blink.debug("Defining object type %s" % sub.name)
+            end
+            @@types[sub.name] = sub
 		end
 		#-----------------------------------
 
