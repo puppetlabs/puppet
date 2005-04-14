@@ -6,10 +6,10 @@ require 'singleton'
 require 'blink/component'
 require 'blink/interface'
 require 'blink/selector'
-require 'blink/objects'
-require 'blink/objects/service'
-require 'blink/objects/file'
-require 'blink/objects/symlink'
+require 'blink/types'
+require 'blink/types/service'
+require 'blink/types/file'
+require 'blink/types/symlink'
 
 PINK="[0;31m"
 GREEN="[0;32m"
