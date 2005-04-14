@@ -1,6 +1,11 @@
-#! /bin/sh
+#!/bin/sh
 
-PATH=$PATH:/home/luke/svn/blink/examples/root/bin
+# $Id$
+
+script=$0
+path=`echo $script | sed 's/etc..*/bin/'`
+
+PATH=$PATH:$path
 
 case "$1" in
     start)
@@ -10,7 +15,9 @@ case "$1" in
         kill `ps -ef | grep -v grep | grep sleeper | grep perl | awk '{print $2}'`
 	;;
     status)
-        if sh -c "ps -ef | grep -v grep | grep -v init.d | grep sleeper"; then
+        output=`ps -ef | grep -v grep | grep -v init.d | grep sleeper`
+        retvalue=$?
+        if [ -n "$output" ]; then
             exit 0
         else
             exit 1
