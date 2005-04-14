@@ -4,14 +4,14 @@
 
 require 'digest/md5'
 require 'etc'
-require 'blink/attribute'
+require 'blink/state'
 
 module Blink
-    # we first define all of the attribute that our file will use
+    # we first define all of the state that our file will use
     # because the objects must be defined for us to use them in our
     # definition of the file object
-    class Attribute
-        class FileUID < Blink::Attribute
+    class State
+        class FileUID < Blink::State
             require 'etc'
             attr_accessor :file
             @name = :owner
@@ -66,10 +66,10 @@ module Blink
             end
         end
 
-        # this attribute should actually somehow turn into many attributes,
+        # this state should actually somehow turn into many states,
         # one for each bit in the mode
-        # I think MetaAttributes are the answer, but I'm not quite sure
-        class FileMode < Blink::Attribute
+        # I think MetaStates are the answer, but I'm not quite sure
+        class FileMode < Blink::State
             require 'etc'
 
             @name = :mode
@@ -98,11 +98,11 @@ module Blink
         end
 
         # not used until I can figure out how to solve the problem with
-        # metaattributes
-        class FileSetUID < Blink::Attribute
+        # metastates
+        class FileSetUID < Blink::State
             require 'etc'
 
-            @parent = Blink::Attribute::FileMode
+            @parent = Blink::State::FileMode
 
             @name = :setuid
 
@@ -120,7 +120,7 @@ module Blink
             end
         end
 
-        class FileGroup < Blink::Attribute
+        class FileGroup < Blink::State
             require 'etc'
 
             @name = :group
@@ -198,10 +198,10 @@ module Blink
             attr_reader :stat, :path, :params
             # class instance variable
             @params = [
-                Blink::Attribute::FileUID,
-                Blink::Attribute::FileGroup,
-                Blink::Attribute::FileMode,
-                Blink::Attribute::FileSetUID,
+                Blink::State::FileUID,
+                Blink::State::FileGroup,
+                Blink::State::FileMode,
+                Blink::State::FileSetUID,
                 :path
             ]
 

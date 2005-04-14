@@ -1,14 +1,11 @@
 #!/usr/local/bin/ruby -w
 
-require 'blink/operation'
-require 'blink/operation/processes'
-
 # DISABLED
 # I'm only working on services, not processes, right now
 
 module Blink
-    class Attribute
-        class ProcessRunning < Attribute
+    class State
+        class ProcessRunning < State
             def retrieve
                 running = 0
                 regex = Regexp.new(@params[:pattern])

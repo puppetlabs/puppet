@@ -3,14 +3,14 @@
 # $Id$
 
 module Blink
-	# this is a virtual base class for attributes
-    # attributes are self-contained building blocks for objects
+	# this is a virtual base class for states
+    # states are self-contained building blocks for objects
 
-    # Attributes can currently only be used for comparing a virtual "should" value
+    # States can currently only be used for comparing a virtual "should" value
     # against the real state of the system.  For instance, you could verify that
     # a file's owner is what you want, but you could not create two file objects
     # and use these methods to verify that they have the same owner
-	class Attribute
+	class State
         include Comparable
 
 		attr_accessor :value
@@ -18,17 +18,17 @@ module Blink
 		attr_accessor :object
 
 		#-----------------------------------
-        # every attribute class must tell us what it's name will be (as a symbol)
-        # this determines how we will refer to the attribute during usage
-        # e.g., the Owner attribute for Files might say its name is :owner;
+        # every state class must tell us what it's name will be (as a symbol)
+        # this determines how we will refer to the state during usage
+        # e.g., the Owner state for Files might say its name is :owner;
         # this means that we can say "file[:owner] = 'yayness'"
-        def Attribute.name
+        def State.name
             return @name
         end
 		#-----------------------------------
 
 		#-----------------------------------
-        # we aren't actually comparing the attributes themselves, we're only
+        # we aren't actually comparing the states themselves, we're only
         # comparing the "should" value with the "real" value
         def insync?
             Blink.debug "%s value is %s, should be %s" % [self,self.value,self.should]
@@ -43,9 +43,9 @@ module Blink
 		#-----------------------------------
 
 		#-----------------------------------
-        # DISABLED: we aren't comparing attributes, just attribute values
+        # DISABLED: we aren't comparing states, just state values
 		# are we in sync?
-        # this could be a comparison between two attributes on two objects,
+        # this could be a comparison between two states on two objects,
         # or a comparison between an object and the live system -- we'll
         # let the object decide that, rather than us
 		#def <=>(other)
@@ -58,7 +58,7 @@ module Blink
 		#-----------------------------------
 
 		#-----------------------------------
-        # each attribute class must define the name() method
+        # each state class must define the name() method
         def name
             return self.class.name
         end
@@ -78,12 +78,12 @@ module Blink
 		#-----------------------------------
 
 		#-----------------------------------
-        # this class is for attributes that don't reflect on disk,
+        # this class is for states that don't reflect on disk,
         # like 'path' on files and 'name' on processes
-        # these are basically organizational attributes, not functional ones
+        # these are basically organizational states, not functional ones
         #
         # we provide stub methods, so that from the outside it looks like
-        # other attributes
+        # other states
         #
         # see objects.rb for how this is used
         class Symbol
@@ -123,9 +123,9 @@ module Blink
 	end
 
     # this class is supposed to be used to solve cases like file modes,
-    # where one command (stat) retrieves enough data to cover many attributes
+    # where one command (stat) retrieves enough data to cover many states
     # (e.g., setuid, setgid, world-read, etc.)
-    class MetaAttribute
+    class MetaState
         include Comparable
         attr_accessor :parent
         attr_accessor :value

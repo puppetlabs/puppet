@@ -2,17 +2,17 @@
 
 # $Id$
 
-require 'blink/attribute'
+require 'blink/state'
 require 'blink/interface'
 
 #---------------------------------------------------------------
 # This class is the abstract base class for the mechanism for organizing
 # work.  No work is actually done by this class or its subclasses; rather,
-# the subclasses include attributes which do the actual work.
-#   See attribute.rb for how work is actually done.
+# the subclasses include states which do the actual work.
+#   See state.rb for how work is actually done.
 
 module Blink
-	class Types
+	class Types < Blink::Interface
         include Enumerable
 		@objects = Hash.new
 		@@allobjects = Array.new # and then an array for all objects
@@ -25,46 +25,6 @@ module Blink
 
 		#---------------------------------------------------------------
 		# the class methods
-
-		#---------------------------------------------------------------
-		# retrieve a named object
-		def Types.[](name)
-			if @objects.has_key?(name)
-				return @objects[name]
-			else
-				raise "Object '#{name}' does not exist"
-			end
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# this is special, because it can be equivalent to running new
-		# this allows cool syntax like Blink::File["/etc/inetd.conf"] = ...
-		def Types.[]=(name,object)
-            newobj = nil
-            if object.is_a?(Blink::Types)
-                newobj = object
-            else
-                raise "must pass a Blink::Types object"
-            end
-
-			if @objects.has_key?(newobj.name)
-                puts @objects
-				raise "'#{newobj.name}' already exists in " +
-                    "class '#{newobj.class}': #{@objects[newobj.name]}"
-			else
-                Blink.debug("adding %s of type %s to class list" %
-                    [object.name,object.class])
-				@objects[newobj.name] = newobj
-			end
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-        def Types.has_key?(name)
-            return @objects.has_key?(name)
-        end
-		#---------------------------------------------------------------
 
 		#-----------------------------------
 		# all objects total
@@ -144,7 +104,7 @@ module Blink
                 @params.each { |param|
                     if param.is_a? Symbol
                         # store the Symbol class, not the symbol itself
-                        symbolattr = Blink::Attribute::Symbol.new(param)
+                        symbolattr = Blink::State::Symbol.new(param)
 
                         @paramsbyname[param] = symbolattr
                     elsif param.respond_to?(:name)
@@ -168,8 +128,8 @@ module Blink
 		#-----------------------------------
 		# parameter access and stuff
 		def [](param)
-			if @attributes.has_key?(param)
-				return @attributes[param].should
+			if @states.has_key?(param)
+				return @states[param].should
 			else
 				raise "Undefined parameter '#{param}' in #{self}"
 			end
@@ -177,38 +137,38 @@ module Blink
 		#-----------------------------------
 
 		#-----------------------------------
-        # because all object parameters are actually attributes, we
+        # because all object parameters are actually states, we
         # have to do some shenanigans to make it look from the outside
-        # like @attributes is just a simple hash
+        # like @states is just a simple hash
         # the Symbol stuff is especially a bit hackish
         def []=(param,value)
-            if @attributes.has_key?(param)
-                @attributes[param].should = value
+            if @states.has_key?(param)
+                @states[param].should = value
                 return
             end
 
             attrclass = self.class.classparambyname[param]
 
-            Blink.debug("creating attribute of type '%s'" % attrclass)
-            # any given object can normally only have one of any given attribute
-            # type, but it might have many Symbol attributes 
+            Blink.debug("creating state of type '%s'" % attrclass)
+            # any given object can normally only have one of any given state
+            # type, but it might have many Symbol states 
             #
-            # so, we need to make sure that the @attributes hash behaves
-            # the same whether it has a unique attribute or a bunch of Symbol
-            # attributes
-            if attrclass.is_a?(Blink::Attribute::Symbol)
+            # so, we need to make sure that the @states hash behaves
+            # the same whether it has a unique state or a bunch of Symbol
+            # states
+            if attrclass.is_a?(Blink::State::Symbol)
                 attrclass.should = value
-                @attributes[param] = attrclass
+                @states[param] = attrclass
             else
                 attr = attrclass.new(value)
                 attr.object = self
                 if attr.is_a?(Array)
                     attr.each { |xattr|
-                        @attributes[xattr.name] = attr
+                        @states[xattr.name] = attr
                     }
                 else
                     Blink.debug "Creating attr %s in %s" % [attr.name,self]
-                    @attributes[attr.name] = attr
+                    @states[attr.name] = attr
                 end
             end
         end
@@ -229,12 +189,12 @@ module Blink
 		#-----------------------------------
 
 		#-----------------------------------
-		# removing attributes
+		# removing states
 		def delete(attr)
-			if @attributes.has_key?(attr)
-				@attributes.delete(attr)
+			if @states.has_key?(attr)
+				@states.delete(attr)
 			else
-				raise "Undefined attribute '#{attr}' in #{self}"
+				raise "Undefined state '#{attr}' in #{self}"
 			end
 		end
 		#-----------------------------------
@@ -261,7 +221,7 @@ module Blink
 			unless block_given?
 				raise "'Each' was not given a block"
 			end
-            @attributes.each { |name,attr|
+            @states.each { |name,attr|
 				#Blink.debug "'%s' yielding '%s' of type '%s'" % [self,attr,attr.class]
                 yield(attr)
             }
@@ -358,9 +318,9 @@ module Blink
 		#-----------------------------------
 		# yay
 		def initialize(*args)
-            # params are for classes, attributes are for instances
+            # params are for classes, states are for instances
             # hokey but true
-			@attributes = Hash.new
+			@states = Hash.new
             @monitor = Array.new
 
             # default to always syncing
@@ -373,12 +333,12 @@ module Blink
                     self.class.to_s)
             end
 
-            # if they passed in a list of attributes they're interested in,
+            # if they passed in a list of states they're interested in,
             # we mark them as "interesting"
             # XXX maybe we should just consider params set to nil as 'interesting'
             #
             # this isn't used as much as it should be, but the idea is that
-            # the "interesting" attributes would be the ones retrieved during a
+            # the "interesting" states would be the ones retrieved during a
             # 'retrieve' call
             if hash.include?(:check)
                 @monitor = hash[:check].dup
@@ -386,7 +346,7 @@ module Blink
             end
 
             # we have to set the name of our object before anything else,
-            # because it might be used in creating the other attributes
+            # because it might be used in creating the other states
             if hash.has_key?(self.class.namevar)
                 self[self.class.namevar] = hash[self.class.namevar]
                 hash.delete(self.class.namevar)
@@ -427,12 +387,12 @@ module Blink
 		def name
             #namevar = self.class.namevar
             #Blink.debug "namevar is '%s'" % namevar
-            #nameattr = @attributes[namevar]
+            #nameattr = @states[namevar]
             #Blink.debug "nameattr is '%s'" % nameattr
 			#name = nameattr.value
             #Blink.debug "returning %s from attr %s and namevar %s" % [name,nameattr,namevar]
 			#return name
-			return @attributes[self.class.namevar].value
+			return @states[self.class.namevar].value
 		end
 		#-----------------------------------
 

@@ -9,8 +9,8 @@
 # which is why they have a search path for initscripts and such
 
 module Blink
-    class Attribute
-        class ServiceRunning < Attribute
+    class State
+        class ServiceRunning < State
             @name = :running
 
             def retrieve
@@ -73,7 +73,7 @@ module Blink
 		class Service < Types
 			attr_reader :stat
 			@params = [
-                Blink::Attribute::ServiceRunning,
+                Blink::State::ServiceRunning,
                 :name,
                 :pattern
             ]

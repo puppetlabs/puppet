@@ -5,10 +5,10 @@
 # our duck type interface -- if your object doesn't match this interface,
 # it won't work
 
-# all of our first-class objects (objects, attributes, and components) will
+# all of our first-class objects (objects, states, and components) will
 # respond to these methods
-# although attributes don't inherit from Blink::Interface
-#   although maybe Blink::Attribute should...
+# although states don't inherit from Blink::Interface
+#   although maybe Blink::State should...
 
 # the default behaviour that this class provides is to just call a given
 # method on each contained object, e.g., in calling 'sync', we just run:
@@ -48,6 +48,17 @@ module Blink
                 }
             }
         }
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        def presync
+            self.each { |contained|
+                # this gets right to the heart of our question:
+                # do all subclasses of Interface contain all of their
+                # content in contained objects?
+                Blink::Modification.new(contained)
+            }
+        end
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------

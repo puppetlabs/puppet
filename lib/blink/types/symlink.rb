@@ -3,14 +3,14 @@
 # $Id$
 
 require 'etc'
-require 'blink/attribute'
-require 'blink/objects/file'
+require 'blink/state'
+require 'blink/types/file'
 
 module Blink
     # okay, how do we deal with parameters that don't have operations
     # associated with them?
-    class Attribute
-        class SymlinkTarget < Blink::Attribute
+    class State
+        class SymlinkTarget < Blink::State
             require 'etc'
             attr_accessor :file
 
@@ -91,10 +91,10 @@ module Blink
             attr_reader :stat, :path, :params
             # class instance variable
             @params = [
-                Blink::Attribute::FileUID,
-                Blink::Attribute::FileGroup,
-                Blink::Attribute::FileMode,
-                Blink::Attribute::SymlinkTarget,
+                Blink::State::FileUID,
+                Blink::State::FileGroup,
+                Blink::State::FileMode,
+                Blink::State::SymlinkTarget,
                 :path
             ]
 
