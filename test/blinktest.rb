@@ -31,7 +31,6 @@ unless defined? BlinkTestSuite
                 # are loaded and thus displayed last
                 File.stat(b) <=> File.stat(a)
             }.each { |file|
-                puts "requiring %s" % file
                 require file
             }
         end
