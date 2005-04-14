@@ -9,9 +9,14 @@
 # currently a very thin veneer on 'facter'
 
 require 'facter'
+require 'blink/types'
 
 module Blink
-	class Fact
+	class Fact < Blink::Interface
+        def Fact.[](name)
+            Facter[name].value
+        end
+
         # just pass the block to 'add'
         # the block has to do things like set the interpreter,
         # the code (which can be a ruby block), and maybe the
@@ -20,8 +25,29 @@ module Blink
             Facter[name].add(&block)
         end
 
-        def Fact.[](name)
-            Facter[name].value
+        def Fact.name
+            return :fact
+        end
+
+        def Fact.namevar
+            return :name
+        end
+
+        Blink::Types.newtype(self)
+
+        def initialize(hash)
+            name = hash[:name]
+            hash.delete(:name)
+            Fact.add(name) { |fact|
+                p fact
+                hash.each { |key,value|
+                    method = key + "="
+                    #if key.is_a?(String)
+                    #    key = key.intern
+                    #end
+                    fact.send(method,value)
+                }
+            }
         end
     end
 end
