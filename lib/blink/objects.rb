@@ -12,7 +12,7 @@ require 'blink/interface'
 #   See attribute.rb for how work is actually done.
 
 module Blink
-	class Objects < Blink::Interface
+	class Objects
         include Enumerable
 		@objects = Hash.new
 		@@allobjects = Array.new # and then an array for all objects
@@ -25,6 +25,46 @@ module Blink
 
 		#---------------------------------------------------------------
 		# the class methods
+
+		#---------------------------------------------------------------
+		# retrieve a named object
+		def Objects.[](name)
+			if @objects.has_key?(name)
+				return @objects[name]
+			else
+				raise "Object '#{name}' does not exist"
+			end
+		end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+		# this is special, because it can be equivalent to running new
+		# this allows cool syntax like Blink::File["/etc/inetd.conf"] = ...
+		def Objects.[]=(name,object)
+            newobj = nil
+            if object.is_a?(Blink::Objects)
+                newobj = object
+            else
+                raise "must pass a Blink::Objects object"
+            end
+
+			if @objects.has_key?(newobj.name)
+                puts @objects
+				raise "'#{newobj.name}' already exists in " +
+                    "class '#{newobj.class}': #{@objects[newobj.name]}"
+			else
+                Blink.debug("adding %s of type %s to class list" %
+                    [object.name,object.class])
+				@objects[newobj.name] = newobj
+			end
+		end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        def Objects.has_key?(name)
+            return @objects.has_key?(name)
+        end
+		#---------------------------------------------------------------
 
 		#-----------------------------------
 		# all objects total
