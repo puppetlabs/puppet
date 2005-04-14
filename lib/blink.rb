@@ -2,8 +2,6 @@
 
 # $Id$
 
-require 'digest/md5'
-require 'etc'
 require 'singleton'
 require 'blink/component'
 require 'blink/interface'
