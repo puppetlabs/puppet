@@ -25,7 +25,14 @@ module Blink
 
         @@typeary = []
 		@@typehash = Hash.new { |hash,key|
-            raise "Object type %s not found" % key
+            if key.is_a?(String)
+                key = key.intern
+            end
+            if hash.include?(key)
+                hash[key]
+            else
+                raise "Object type %s not found" % key
+            end
         }
 
 		#---------------------------------------------------------------
@@ -89,6 +96,22 @@ module Blink
 		#-----------------------------------
 
 		#-----------------------------------
+        def Types.newtype(type)
+            @@typeary.push(type)
+            if @@typehash.has_key?(type.name)
+                Blink.notice("Redefining object type %s" % type.name)
+            end
+            @@typehash[type.name] = type
+        end
+		#-----------------------------------
+
+		#-----------------------------------
+        def Types.type(type)
+            @@typehash[type]
+        end
+		#-----------------------------------
+
+		#-----------------------------------
 		# accessor for the list of acceptable params
 		def Types.classparams
 			return @params
@@ -101,10 +124,17 @@ module Blink
 		def Types.classparambyname
             unless defined? @paramsbyname
                 @paramsbyname = Hash.new { |hash,key|
-                    fail TypeError.new(
-                        "Parameter %s is invalid for class %s" %
-                        [key.to_s,self]
-                    )
+                    if key.is_a?(String)
+                        key = key.intern
+                    end
+                    if hash.include?(key)
+                        hash[key]
+                    else
+                        fail TypeError.new(
+                            "Parameter %s is invalid for class %s" %
+                            [key.to_s,self]
+                        )
+                    end
                 }
                 @params.each { |param|
                     if param.is_a? Symbol
@@ -356,6 +386,8 @@ module Blink
                 self[self.class.namevar] = hash[self.class.namevar]
                 hash.delete(self.class.namevar)
             else
+                p hash
+                p self.class.namevar
                 raise TypeError.new("A name must be provided at initialization time")
             end
 
