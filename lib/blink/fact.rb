@@ -9,12 +9,18 @@
 # currently a very thin veneer on 'facter'
 
 require 'facter'
+require 'blink'
 require 'blink/types'
 
 module Blink
 	class Fact < Blink::Interface
         def Fact.[](name)
-            Facter[name].value
+            fact = Facter[name]
+            if fact.value.nil?
+                raise "Could not retrieve fact %s" % name
+            end
+            Blink.debug("fact: got %s from %s for %s" % [fact.value,fact,name])
+            return fact.value
         end
 
         # just pass the block to 'add'
@@ -35,16 +41,22 @@ module Blink
 
         Blink::Types.newtype(self)
 
+        # we're adding a new resolution mechanism here; this is just how
+        # types work
+        # we don't have any real interest in the returned object
         def initialize(hash)
             name = hash[:name]
             hash.delete(:name)
             Fact.add(name) { |fact|
-                p fact
+                method = nil
                 hash.each { |key,value|
-                    method = key + "="
-                    #if key.is_a?(String)
-                    #    key = key.intern
-                    #end
+                    if key.is_a?(String)
+                        method = key + "="
+                    elsif key.is_a?(Symbol)
+                        method = key.id2name + "="
+                    else
+                        raise "Key must be either string or symbol"
+                    end
                     fact.send(method,value)
                 }
             }

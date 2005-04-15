@@ -15,11 +15,14 @@ module Blink
         attr_accessor :objects
 
         class Local
-            def callfunc(name,*args)
+            def callfunc(name,args)
                 if function = Blink::Function[name]
-                    return function.call(*args)
+                    #Blink.debug("calling function %s" % function)
+                    value = function.call(args)
+                    #Blink.debug("from %s got %s" % [name,value])
+                    return value
                 else
-                    return nil
+                    raise "Function '%s' not found" % name
                 end
             end
 
@@ -31,7 +34,6 @@ module Blink
                     # create a Blink object from the list...
                     if type = Blink::Types.type(object.type)
                         namevar = type.namevar
-                        Blink.notice("%s namevar is %s" % [type.name,namevar])
                         if namevar != :name
                             object[namevar] = object[:name]
                             object.delete(:name)

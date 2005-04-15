@@ -27,4 +27,7 @@ class TestClient < Test::Unit::TestCase
             )
         }
     end
+
+    def test_files
+    end
 end

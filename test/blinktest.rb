@@ -46,7 +46,8 @@ unless defined? BlinkTestSuite
             File.join(textdir,file)
         }.find_all { |file|
             FileTest.file?(file)
-        }.each { |file|
+        }.sort.each { |file|
+            puts "Processing %s" % file
             yield file
         }
     end

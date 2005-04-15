@@ -16,8 +16,8 @@ module Blink
         #---------------------------------------------------------------
 
         #---------------------------------------------------------------
-        def call(*args)
-            @code.call(*args)
+        def call(args)
+            @code.call(args)
         end
         #---------------------------------------------------------------
 
@@ -36,6 +36,37 @@ module Blink
     Function.new("retrieve", proc { |fact|
         require 'blink/fact'
 
-        return Fact[fact]
+        value = Fact[fact]
+        Blink.debug("retrieved %s as %s" % [fact,value])
+        value
+    })
+
+    Function.new("addfact", proc { |args|
+        require 'blink/fact'
+        #Blink.debug("running addfact")
+
+        hash = nil
+        if args.is_a?(Array)
+            hash = Hash[*args]
+        end
+        name = nil
+        if hash.has_key?("name")
+            name = hash["name"]
+            hash.delete("name")
+        elsif hash.has_key?(:name)
+            name = hash[:name]
+            hash.delete(:name)
+        else
+            raise "Functions must have names"
+        end
+        #Blink.debug("adding fact %s" % name)
+        newfact = Fact.add(name) { |fact|
+            hash.each { |key,value|
+                method = key + "="
+                fact.send(method,value)
+            }
+        }
+
+        #Blink.debug("got fact %s" % newfact)
     })
 end
