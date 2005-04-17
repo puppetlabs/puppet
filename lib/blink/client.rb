@@ -29,20 +29,27 @@ module Blink
             def objects=(list)
                 Blink::Types.buildtypehash # refresh the list of available types
 
-                objects = []
-                list.each { |object|
+                objects = list.collect { |object|
                     # create a Blink object from the list...
+                    #puts "yayness"
                     if type = Blink::Types.type(object.type)
                         namevar = type.namevar
                         if namevar != :name
                             object[namevar] = object[:name]
                             object.delete(:name)
                         end
-                        obj = type.new(object)
+                        type.new(object)
                     else
                         raise "Could not find object type %s" % object.type
                     end
                 }
+
+                # okay, we have a list of all of the objects we're supposed
+                # to execute
+                # here's where we collect the rollbacks and record them, i guess
+                # the objects should deal internally with whether we're running
+                # under no-op, or whether a given object itself should be no-op
+                #objects.each { |obj| puts obj.class }
             end
         end
     end
