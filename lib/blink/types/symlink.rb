@@ -19,40 +19,40 @@ module Blink
             def create
                 begin
                     Blink.debug("Creating symlink '%s' to '%s'" %
-                        [self.object[:path],self.should])
-                    unless File.symlink(self.should,self.object[:path])
+                        [self.object[:path].is,self.should])
+                    unless File.symlink(self.should,self.object[:path].is)
                         raise TypeError.new("Could not create symlink '%s'" %
-                            self.object[:path])
+                            self.object[:path].is)
                     end
                 rescue => detail
                     raise TypeError.new("Cannot create symlink '%s': %s" %
-                        [self.object[:path],detail])
+                        [self.object[:path].is,detail])
                 end
             end
 
             def remove
-                if FileTest.symlink?(self.object[:path])
-                    Blink.debug("Removing symlink '%s'" % self.object[:path])
+                if FileTest.symlink?(self.object[:path].is)
+                    Blink.debug("Removing symlink '%s'" % self.object[:path].is)
                     begin
-                        File.unlink(self.object[:path])
+                        File.unlink(self.object[:path].is)
                     rescue
                         raise TypeError.new("Failed to remove symlink '%s'" %
-                            self.object[:path])
+                            self.object[:path].is)
                     end
-                elsif FileTest.exists?(self.object[:path])
+                elsif FileTest.exists?(self.object[:path].is)
                     raise TypeError.new("Cannot remove normal file '%s'" %
-                        self.object[:path])
+                        self.object[:path].is)
                 else
                     Blink.debug("Symlink '%s' does not exist" %
-                        self.object[:path])
+                        self.object[:path].is)
                 end
             end
 
             def retrieve
                 stat = nil
 
-                if FileTest.symlink?(self.object[:path])
-                    self.is = File.readlink(self.object[:path])
+                if FileTest.symlink?(self.object[:path].is)
+                    self.is = File.readlink(self.object[:path].is)
                     Blink.debug("link value is '%s'" % self.is)
                     return
                 else
@@ -67,15 +67,15 @@ module Blink
                 if self.should.nil?
                     self.remove()
                 else # it should exist and be a symlink
-                    if FileTest.symlink?(self.object[:path])
-                        path = File.readlink(self.object[:path])
+                    if FileTest.symlink?(self.object[:path].is)
+                        path = File.readlink(self.object[:path].is)
                         if path != self.should
                             self.remove()
                             self.create()
                         end
-                    elsif FileTest.exists?(self.object[:path])
+                    elsif FileTest.exists?(self.object[:path].is)
                         raise TypeError.new("Cannot replace normal file '%s'" %
-                            self.object[:path])
+                            self.object[:path].is)
                     else
                         self.create()
                     end

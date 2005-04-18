@@ -164,7 +164,7 @@ module Blink
 		# parameter access and stuff
 		def [](param)
 			if @states.has_key?(param)
-				return @states[param].should
+				return @states[param]
 			else
 				raise "Undefined parameter '#{param}' in #{self}"
 			end

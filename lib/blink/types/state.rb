@@ -85,8 +85,7 @@ module Blink
         #
         # see objects.rb for how this is used
         class Symbol
-            attr_reader :is
-            attr_reader :should
+            attr_reader :is, :should
 
             def initialize(symbol)
                 @symbol = symbol
@@ -116,6 +115,10 @@ module Blink
             def is=(value)
                 @is = value
                 @should = value
+            end
+
+            def to_s
+                return @is
             end
         end
 	end

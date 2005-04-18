@@ -13,11 +13,11 @@ module Blink
             end
 
             def sync
-                begin
+                #begin
                     raise "cannot sync package states yet"
-                rescue
-                    raise "failed to sync #{@params[:file]}: #{$!}"
-                end
+                #rescue
+                #    raise "failed to sync #{@params[:file]}: #{$!}"
+                #end
 
                 #self.object.newevent(:event => :inode_changed)
             end

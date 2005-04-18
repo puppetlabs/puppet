@@ -20,10 +20,10 @@ module Blink
                 stat = nil
 
                 begin
-                    stat = File.stat(self.object[:path])
+                    stat = File.stat(self.object[:path].is)
                 rescue
                     # this isn't correct, but what the hell
-                    raise "File '%s' does not exist: #{$!}" % self.object[:path]
+                    raise "File '%s' does not exist: #{$!}" % self.object[:path].is
                 end
 
                 self.is = stat.uid
@@ -57,9 +57,9 @@ module Blink
 
             def sync
                 begin
-                    File.chown(self.should,-1,self.object[:path])
+                    File.chown(self.should,-1,self.object[:path].is)
                 rescue
-                    raise "failed to sync #{@params[:file]}: #{$!}"
+                    raise "failed to sync #{self.object[:path].is}: #{$!}"
                 end
 
                 self.object.newevent(:event => :inode_changed)
@@ -78,9 +78,9 @@ module Blink
                 stat = nil
 
                 begin
-                    stat = File.stat(self.object[:path])
+                    stat = File.stat(self.object[:path].is)
                 rescue => error
-                    raise "File %s could not be stat'ed: %s" % [self.object[:path],error]
+                    raise "File %s could not be stat'ed: %s" % [self.object[:path].is,error]
                 end
 
                 self.is = stat.mode & 007777
@@ -89,9 +89,9 @@ module Blink
 
             def sync
                 begin
-                    File.chmod(self.should,self.object[:path])
+                    File.chmod(self.should,self.object[:path].is)
                 rescue
-                    raise "failed to chmod #{self.object[:path]}: #{$!}"
+                    raise "failed to chmod #{self.object[:path].is}: #{$!}"
                 end
                 self.object.newevent(:event => :inode_changed)
             end
@@ -129,10 +129,10 @@ module Blink
                 stat = nil
 
                 begin
-                    stat = File.stat(self.object[:path])
+                    stat = File.stat(self.object[:path].is)
                 rescue
                     # this isn't correct, but what the hell
-                    raise "File #{self.object[:path]} does not exist: #{$!}"
+                    raise "File #{self.object[:path].is} does not exist: #{$!}"
                 end
 
                 self.is = stat.gid
@@ -184,10 +184,10 @@ module Blink
                 Blink.debug "setting chgrp state to %d" % self.should
                 begin
                     # set owner to nil so it's ignored
-                    File.chown(nil,self.should,self.object[:path])
+                    File.chown(nil,self.should,self.object[:path].is)
                 rescue
                     raise "failed to chgrp %s to %s: %s" %
-                        [self.object[:path], self.should, $!]
+                        [self.object[:path].is, self.should, $!]
                 end
                 self.object.newevent(:event => :inode_changed)
             end
