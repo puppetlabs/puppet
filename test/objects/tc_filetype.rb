@@ -5,7 +5,7 @@ if __FILE__ == $0
 end
 
 require 'blink'
-require 'blink/types/filetype'
+require 'blink/type/filetype'
 require 'test/unit'
 
 # $Id$
@@ -30,7 +30,7 @@ class TestFileType < Test::Unit::TestCase
         if @passwdtype.nil?
             assert_nothing_raised() {
                 @passwdtype = Blink::FileType.newtype(
-                    :name => "passwd",
+                    :name => "user",
                     :recordsplit => ":",
                     :fields => %w{name password uid gid gcos home shell},
                     :namevar => "name"

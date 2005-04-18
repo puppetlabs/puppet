@@ -20,12 +20,12 @@ class TestSymlink < Test::Unit::TestCase
         Kernel.system("rm -f %s" % @path)
         Blink[:debug] = 1
         assert_nothing_raised() {
-            unless Blink::Types::Symlink.has_key?(@path)
-                Blink::Types::Symlink.new(
+            unless Blink::Type::Symlink.has_key?(@path)
+                Blink::Type::Symlink.new(
                     :path => @path
                 )
             end
-            @symlink = Blink::Types::Symlink[@path]
+            @symlink = Blink::Type::Symlink[@path]
         }
     end
 

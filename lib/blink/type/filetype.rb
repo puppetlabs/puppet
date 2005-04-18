@@ -212,7 +212,7 @@ module Blink
         # objects
         def retrieve
             str = ""
-            File.open(@file) { |fname|
+            ::File.open(@file) { |fname|
                 fname.each { |line|
                     str += line
                 }
@@ -249,7 +249,7 @@ module Blink
 
 		#---------------------------------------------------------------
         def write
-            File.open(@file, "w") { |file|
+            ::File.open(@file, "w") { |file|
                 file.write(self.to_s)
             }
         end

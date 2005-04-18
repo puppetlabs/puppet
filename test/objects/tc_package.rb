@@ -4,7 +4,7 @@ if __FILE__ == $0
     $blinkbase = "../.."
 end
 
-require 'blink/types/package'
+require 'blink/type/package'
 require 'test/unit'
 require 'facter'
 
@@ -24,7 +24,7 @@ class TestPackagingType < Test::Unit::TestCase
         end
 
         assert_nothing_raised() {
-            Blink::Types::PackagingType[type].list
+            Blink::Type::PackagingType[type].list
         }
     end
 end
@@ -33,7 +33,7 @@ class TestPackageSource < Test::Unit::TestCase
     def test_filesource
         assert_equal(
             "/tmp/fakepackage",
-            Blink::Types::PackageSource.get("file:///tmp/fakepackage")
+            Blink::Type::PackageSource.get("file:///tmp/fakepackage")
         )
     end
 end

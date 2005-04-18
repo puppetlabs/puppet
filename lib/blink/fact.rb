@@ -10,7 +10,7 @@
 
 require 'facter'
 require 'blink'
-require 'blink/types'
+require 'blink/type'
 
 module Blink
 	class Fact < Blink::Type

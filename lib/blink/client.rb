@@ -6,7 +6,7 @@
 
 require 'blink'
 require 'blink/function'
-require 'blink/types'
+require 'blink/type'
 
 module Blink
     class ClientError < RuntimeError; end
@@ -27,8 +27,6 @@ module Blink
             end
 
             def objects=(list)
-                Blink::Type.buildtypehash # refresh the list of available types
-
                 objects = list.collect { |object|
                     # create a Blink object from the list...
                     #puts "yayness"

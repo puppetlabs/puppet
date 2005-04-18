@@ -20,16 +20,16 @@ class TestService < Test::Unit::TestCase
 
         Blink[:debug] = 1
         assert_nothing_raised() {
-            unless Blink::Types::Service.has_key?("sleeper")
-                Blink::Types::Service.new(
+            unless Blink::Type::Service.has_key?("sleeper")
+                Blink::Type::Service.new(
                     :name => "sleeper",
                     :running => 1
                 )
-                Blink::Types::Service.addpath(
+                Blink::Type::Service.addpath(
                     File.join($blinkbase,"examples/root/etc/init.d")
                 )
             end
-            @sleeper = Blink::Types::Service["sleeper"]
+            @sleeper = Blink::Type::Service["sleeper"]
         }
     end
 

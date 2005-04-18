@@ -6,9 +6,9 @@ require 'singleton'
 #require 'blink/component'
 #require 'blink/interface'
 #require 'blink/selector'
-#require 'blink/types/service'
-#require 'blink/types/file'
-#require 'blink/types/symlink'
+#require 'blink/type/service'
+#require 'blink/type/file'
+#require 'blink/type/symlink'
 
 # XXX see the bottom of the file for further inclusions
 
@@ -260,4 +260,4 @@ module Blink
     #------------------------------------------------------------
 end
 
-require 'blink/types'
+require 'blink/type'
