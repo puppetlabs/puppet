@@ -4,7 +4,7 @@
 
 require 'digest/md5'
 require 'etc'
-require 'blink/types/state'
+require 'blink/type/state'
 
 module Blink
     # we first define all of the state that our file will use

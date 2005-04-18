@@ -5,10 +5,10 @@
 # parse and write configuration files using objects with minimal parsing abilities
 
 require 'etc'
-require 'blink/interface'
+require 'blink/type'
 
 module Blink
-    class FileType < Blink::Interface
+    class FileType < Blink::Type
         include Enumerable
 
         attr_accessor :file, :splitchar, :childtype
@@ -258,7 +258,7 @@ module Blink
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    class FileRecord < Blink::Interface
+    class FileRecord < Blink::Type
         attr_accessor :fields, :namevar, :splitchar, :object
 
         @@subclasses = {}

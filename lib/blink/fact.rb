@@ -13,7 +13,7 @@ require 'blink'
 require 'blink/types'
 
 module Blink
-	class Fact < Blink::Interface
+	class Fact < Blink::Type
         def Fact.[](name)
             fact = Facter[name]
             if fact.value.nil?

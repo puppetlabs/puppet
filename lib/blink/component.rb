@@ -5,10 +5,10 @@
 # the object allowing us to build complex structures
 # this thing contains everything else, including itself
 
-require 'blink/interface'
+require 'blink/type'
 
 module Blink
-	class Component < Blink::Interface
+	class Component < Blink::Type
         attr_accessor :name
 
         @objects = Hash.new(nil)

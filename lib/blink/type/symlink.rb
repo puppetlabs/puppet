@@ -3,8 +3,8 @@
 # $Id$
 
 require 'etc'
-require 'blink/types/state'
-require 'blink/types/file'
+require 'blink/type/state'
+require 'blink/type/file'
 
 module Blink
     # okay, how do we deal with parameters that don't have operations
