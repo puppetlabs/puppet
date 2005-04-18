@@ -26,6 +26,13 @@ module Blink
 		#-----------------------------------
 
 		#-----------------------------------
+        # return the full path to us, for logging and rollback
+        def fqpath
+            return @object.fqpath, self.name
+        end
+		#-----------------------------------
+
+		#-----------------------------------
         # we aren't actually comparing the states themselves, we're only
         # comparing the "should" value with the "is" value
         def insync?
