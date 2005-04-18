@@ -5,19 +5,19 @@ if __FILE__ == $0
 end
 
 require 'blink'
-require 'blink/oparse'
+require 'blink/types/filetype'
 require 'test/unit'
 
 # $Id$
 
-class TestOParse < Test::Unit::TestCase
+class TestFileType < Test::Unit::TestCase
     def setup
         Blink[:debug] = 1
 
-        @passwdtype = Blink::OParse["passwd"]
+        @passwdtype = Blink::FileType["passwd"]
         if @passwdtype.nil?
             assert_nothing_raised() {
-                @passwdtype = Blink::OParse.newtype(
+                @passwdtype = Blink::FileType.newtype(
                     :name => "passwd",
                     :recordsplit => ":",
                     :fields => %w{name password uid gid gcos home shell},
@@ -26,10 +26,10 @@ class TestOParse < Test::Unit::TestCase
             }
         end
 
-        @passwdtype = Blink::OParse["passwd"]
+        @passwdtype = Blink::FileType["passwd"]
         if @passwdtype.nil?
             assert_nothing_raised() {
-                @passwdtype = Blink::OParse.newtype(
+                @passwdtype = Blink::FileType.newtype(
                     :name => "passwd",
                     :recordsplit => ":",
                     :fields => %w{name password uid gid gcos home shell},
