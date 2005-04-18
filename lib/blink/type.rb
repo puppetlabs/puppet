@@ -79,13 +79,16 @@ module Blink
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
+        def Type.eachtype
+            @@typeary.each { |type| yield type }
+        end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
         # this should make it so our subclasses don't have to worry about
         # defining these class instance variables
 		def Type.inherited(sub)
-            sub.module_eval %q{
-                @objects = Hash.new
-                @actions = Hash.new
-            }
+            sub.initvars
 
             # add it to the master list
             # unfortunately we can't yet call sub.name, because the #inherited
@@ -93,6 +96,15 @@ module Blink
             # get executed, which, um, sucks
             @@typeary.push(sub)
 		end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        # this is so we don't have to eval this code
+        # init all of our class instance variables
+        def Type.initvars
+            @objects = Hash.new
+            @actions = Hash.new
+        end
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
