@@ -13,7 +13,7 @@ require 'blink'
 require 'blink/type'
 
 module Blink
-	class Fact < Blink::Type
+	class Fact
         def Fact.[](name)
             fact = Facter[name]
             if fact.value.nil?
@@ -39,7 +39,7 @@ module Blink
             return :name
         end
 
-        Blink::Type.newtype(self)
+        #Blink::Type.newtype(self)
 
         # we're adding a new resolution mechanism here; this is just how
         # types work
