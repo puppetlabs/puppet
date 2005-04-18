@@ -145,8 +145,9 @@ module Blink
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
+        # create a new record with a block
         def add(&block)
-            obj = self.class.childtype.new(&block)
+            obj = self.class.childtype.new(self,&block)
             Blink.debug("adding %s" % obj.name)
             @childary.push(obj)
             @childhash[obj.name] = obj
@@ -162,6 +163,7 @@ module Blink
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
+        # remove a record
         def delete(name)
             if @childhash.has_key?(name)
                 child = @childhash[name]
@@ -183,11 +185,7 @@ module Blink
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
-        def fqpath
-        end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
+        # create a new file
         def initialize(file)
             @file = file
 
@@ -210,6 +208,8 @@ module Blink
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
+        # read the whole file in and turn it into each of the appropriate
+        # objects
         def retrieve
             str = ""
             File.open(@file) { |fname|
@@ -219,7 +219,7 @@ module Blink
             }
 
             @childary = str.split(self.class.regex).collect { |record|
-                child = self.class.childtype.new
+                child = self.class.childtype.new(self)
                 child.record = record
                 #puts "adding child %s" % child.name
                 child
@@ -259,7 +259,7 @@ module Blink
 
     #---------------------------------------------------------------
     class FileRecord < Blink::Interface
-        attr_accessor :fields, :namevar, :splitchar
+        attr_accessor :fields, :namevar, :splitchar, :object
 
         @@subclasses = {}
 
@@ -276,6 +276,19 @@ module Blink
         #---------------------------------------------------------------
 
         #---------------------------------------------------------------
+        def FileRecord.name=(name)
+            @name = name
+        end
+        #---------------------------------------------------------------
+
+        #---------------------------------------------------------------
+        def FileRecord.name
+            return @name
+        end
+        #---------------------------------------------------------------
+
+        #---------------------------------------------------------------
+        # create a new record type
         def FileRecord.newtype(*args)
             options = [:name, :splitchar, :fields, :namevar]
 
@@ -302,6 +315,7 @@ module Blink
             klass.fields = arghash[:fields]
             klass.splitchar = arghash[:splitchar]
             klass.namevar = arghash[:namevar]
+            klass.name = arghash[:name]
 
             return klass
         end
@@ -370,7 +384,8 @@ module Blink
         #---------------------------------------------------------------
 
         #---------------------------------------------------------------
-        def initialize
+        def initialize(object)
+            @object = object
             @fields = {}
             if block_given?
                 yield self
@@ -407,6 +422,15 @@ module Blink
                     @fields[field]
                 end
             }.join(self.class.splitchar)
+        end
+        #---------------------------------------------------------------
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    class FileRecordState < Blink::State
+        #---------------------------------------------------------------
+        def initialize
         end
         #---------------------------------------------------------------
     end
