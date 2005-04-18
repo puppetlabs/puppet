@@ -17,13 +17,66 @@
 # to use this interface, just define an 'each' method and 'include Blink::Interface'
 module Blink
 	class Interface
-        # each subclass of Blink::Interface must create a class-local @objects
-        # variable
-        @objects = Hash.new # this one won't be used, since this class is abstract
-
         # this is a bit of a hack, but it'll work for now
         attr_accessor :performoperation
         attr_writer :noop
+
+		@@allobjects = Array.new # an array for all objects
+
+		#---------------------------------------------------------------
+		#---------------------------------------------------------------
+        # these objects are used for mapping type names (e.g., 'file')
+        # to actual object classes; because Interface.inherited is
+        # called before the <subclass>.name method is defined, we need
+        # to store each class in an array, and then later actually iterate
+        # across that array and make a map
+        @@typeary = []
+		@@typehash = Hash.new { |hash,key|
+            if key.is_a?(String)
+                key = key.intern
+            end
+            if hash.include?(key)
+                hash[key]
+            else
+                raise "Object type %s not found" % key
+            end
+        }
+
+		#---------------------------------------------------------------
+        def Interface.newtype(type)
+            @@typeary.push(type)
+            if @@typehash.has_key?(type.name)
+                Blink.notice("Redefining object type %s" % type.name)
+            end
+            @@typehash[type.name] = type
+        end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        def Interface.type(type)
+            @@typehash[type]
+        end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        # this is meant to be run multiple times, e.g., when a new
+        # type is defined at run-time
+        def Interface.buildtypehash
+            unless @@typeary.length == @@typehash.length
+                @@typeary.each { |otype|
+                    if @@typehash.include?(otype.name)
+                        if @@typehash[otype.name] != otype
+                            Blink.warning("Object type %s is already defined" %
+                                otype.name)
+                        end
+                    else
+                        @@typehash[otype.name] = otype
+                    end
+                }
+            end
+        end
+		#---------------------------------------------------------------
+		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
 		# retrieve a named object
@@ -37,8 +90,6 @@ module Blink
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
-		# this is special, because it can be equivalent to running new
-		# this allows cool syntax like Blink::File["/etc/inetd.conf"] = ...
 		def Interface.[]=(name,object)
             newobj = nil
             if object.is_a?(Blink::Interface)
@@ -60,15 +111,49 @@ module Blink
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
+		# all objects total
+		def Interface.push(object)
+			@@allobjects.push object
+			#Blink.debug("adding %s of type %s to master list" %
+            #    [object.name,object.class])
+		end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+		# some simple stuff to make it easier to get a name from everyone
+		def Interface.namevar
+			return @namevar
+		end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
         def Interface.has_key?(name)
             return @objects.has_key?(name)
         end
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
-        # a left-recursive path again?
-        def change(ary)
-            
+        # this should make it so our subclasses don't have to worry about
+        # defining these class instance variables
+		def Interface.inherited(sub)
+            sub.module_eval %q{
+                @objects = Hash.new
+                @actions = Hash.new
+            }
+
+            # add it to the master list
+            # unfortunately we can't yet call sub.name, because the #inherited
+            # method gets called before any commands in the class definition
+            # get executed, which, um, sucks
+            @@typeary.push(sub)
+		end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        # this is used for mapping object types (e.g., Blink::Types::File)
+        # to names (e.g., "file")
+        def Interface.name
+            return @name
         end
 		#---------------------------------------------------------------
 
@@ -88,6 +173,7 @@ module Blink
 
 		#---------------------------------------------------------------
         # return the full path to us, for logging and rollback
+        # some classes (e.g., FileTypeRecords) will have to override this
         def fqpath
             return self.class, self.name
         end
