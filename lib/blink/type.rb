@@ -3,6 +3,7 @@
 # $Id$
 
 # included so we can test object types
+require 'blink'
 require 'blink/type/state'
 
 
@@ -68,8 +69,8 @@ module Blink
             @@typeary.each { |otype|
                 if @@typehash.include?(otype.name)
                     if @@typehash[otype.name] != otype
-                        Blink.warning("Object type %s is already defined" %
-                            otype.name)
+                        Blink.warning("Object type %s is already defined (%s vs %s)" %
+                            [otype.name,@@typehash[otype.name],otype])
                     end
                 else
                     @@typehash[otype.name] = otype
@@ -90,6 +91,7 @@ module Blink
 		def Type.inherited(sub)
             sub.initvars
 
+            Blink.debug("subtype %s just created" % sub)
             # add it to the master list
             # unfortunately we can't yet call sub.name, because the #inherited
             # method gets called before any commands in the class definition
@@ -117,6 +119,7 @@ module Blink
 
 		#---------------------------------------------------------------
         def Type.newtype(type)
+            raise "Type.newtype called, but I don't know why"
             @@typeary.push(type)
             if @@typehash.has_key?(type.name)
                 Blink.notice("Redefining object type %s" % type.name)
@@ -147,6 +150,7 @@ module Blink
 			if @objects.has_key?(name)
 				return @objects[name]
 			else
+                p @objects
 				raise "Object '#{name}' does not exist"
 			end
 		end
@@ -302,7 +306,7 @@ module Blink
             }
 
             # add this object to the specific class's list of objects
-			self.class[name] = self
+			self.class[self.name] = self
 
             # and then add it to the master list
             Blink::Type.push(self)

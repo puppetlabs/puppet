@@ -11,6 +11,9 @@ module Blink
     class FileType < Blink::Type
         include Enumerable
 
+        @namevar = :notused
+        @name = :filetype
+
         attr_accessor :file, :splitchar, :childtype
 
         @@classes = Hash.new(nil)
@@ -34,8 +37,20 @@ module Blink
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
+        def FileType.name
+            return @name
+        end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
         def FileType.name=(name)
             @name = name
+        end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        def FileType.namevar
+            return :notused
         end
 		#---------------------------------------------------------------
 
@@ -95,7 +110,7 @@ module Blink
 
             # now create the record type
             klass.childtype = Blink::FileRecord.newtype(
-                :name => arghash[:name],
+                :name => arghash[:name] + "_record",
                 :splitchar => arghash[:recordsplit],
                 :fields => arghash[:fields],
                 :namevar => arghash[:namevar]
@@ -103,7 +118,7 @@ module Blink
             klass.splitchar = arghash[:linesplit]
             klass.name = arghash[:name]
 
-            Blink.debug("adding class %s" % arghash[:name])
+            Blink.debug("adding class %s as a subclass of %s" % [arghash[:name],self])
             @@classes[arghash[:name]] = klass
 
             return klass
@@ -260,6 +275,9 @@ module Blink
     #---------------------------------------------------------------
     class FileRecord < Blink::Type
         attr_accessor :fields, :namevar, :splitchar, :object
+
+        @namevar = :notused
+        @name = :filerecord
 
         @@subclasses = {}
 

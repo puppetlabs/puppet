@@ -11,7 +11,17 @@ module Blink
 	class Component < Blink::Type
         attr_accessor :name
 
-        @objects = Hash.new(nil)
+        @name = :component
+        @namevar = :name
+        @params = [
+            :name
+        ]
+
+		#---------------------------------------------------------------
+        def [](object)
+            @subobjects[object]
+        end
+		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
         # our components are effectively arrays, with a bit extra functionality
@@ -23,16 +33,19 @@ module Blink
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
-        def initialize(*args)
-            args = Hash[*args]
-
-            unless args.include?(:name)
+        def initialize(hash)
+            #super(hash)
+            begin
+                @name = hash[:name]
+            rescue
                 fail TypeError.new("Components must be provided a name")
-            else
-                self.name = args[:name]
             end
 
-            Component[self.name] = self
+            unless @name
+                fail TypeError.new("Components must be provided a name")
+            end
+
+            self.class[self.name] = self
 
             @subobjects = []
         end
@@ -47,9 +60,9 @@ module Blink
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
-        def to_s
-            return self.name
-        end
+        #def to_s
+        #    return self.name
+        #end
 		#---------------------------------------------------------------
 	end
 end

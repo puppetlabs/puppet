@@ -5,6 +5,7 @@ if __FILE__ == $0
 end
 
 require 'blink'
+require 'blink/type'
 require 'blink/type/filetype'
 require 'test/unit'
 
@@ -19,18 +20,6 @@ class TestFileType < Test::Unit::TestCase
             assert_nothing_raised() {
                 @passwdtype = Blink::FileType.newtype(
                     :name => "passwd",
-                    :recordsplit => ":",
-                    :fields => %w{name password uid gid gcos home shell},
-                    :namevar => "name"
-                )
-            }
-        end
-
-        @passwdtype = Blink::FileType["passwd"]
-        if @passwdtype.nil?
-            assert_nothing_raised() {
-                @passwdtype = Blink::FileType.newtype(
-                    :name => "user",
                     :recordsplit => ":",
                     :fields => %w{name password uid gid gcos home shell},
                     :namevar => "name"
@@ -110,6 +99,6 @@ class TestFileType < Test::Unit::TestCase
 
         assert(file.insync?)
 
-        #Kernel.system("rm /tmp/oparsepasswd")
+        Kernel.system("rm /tmp/oparsepasswd")
     end
 end
