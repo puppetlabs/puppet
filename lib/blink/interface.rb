@@ -23,60 +23,7 @@ module Blink
 
         # this is a bit of a hack, but it'll work for now
         attr_accessor :performoperation
-
-		#---------------------------------------------------------------
-        def evaluate
-            self.retrieve
-            unless self.insync?
-                if @performoperation == :sync
-                    self.sync
-                else
-                    # we, uh, don't do anything
-                end
-            end
-            self.retrieve
-        end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-        # set up the "interface" methods
-        [:sync,:retrieve].each { |method|
-            self.send(:define_method,method) {
-                self.each { |subobj|
-                    #Blink.debug("sending '%s' to '%s'" % [method,subobj])
-                    subobj.send(method)
-                }
-            }
-        }
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-        def presync
-            self.each { |contained|
-                # this gets right to the heart of our question:
-                # do all subclasses of Interface contain all of their
-                # content in contained objects?
-                Blink::Modification.new(contained)
-            }
-        end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-        # if all contained objects are in sync, then we're in sync
-        def insync?
-            insync = true
-
-            self.each { |obj|
-                unless obj.insync?
-                    Blink.debug("%s is not in sync" % obj)
-                    insync = false
-                end
-            }
-
-            Blink.debug("%s sync status is %s" % [self,insync])
-            return insync
-        end
-		#---------------------------------------------------------------
+        attr_writer :noop
 
 		#---------------------------------------------------------------
 		# retrieve a named object
@@ -115,6 +62,81 @@ module Blink
 		#---------------------------------------------------------------
         def Interface.has_key?(name)
             return @objects.has_key?(name)
+        end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        # a left-recursive path again?
+        def change(ary)
+            
+        end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        def evaluate
+            self.retrieve
+            unless self.insync?
+                if @performoperation == :sync
+                    self.sync
+                else
+                    # we, uh, don't do anything
+                end
+            end
+            self.retrieve
+        end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        # return the full path to us, for logging and rollback
+        def fqpath
+            return self.class, self.name
+        end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        # if all contained objects are in sync, then we're in sync
+        def insync?
+            insync = true
+
+            self.each { |obj|
+                unless obj.insync?
+                    Blink.debug("%s is not in sync" % obj)
+                    insync = false
+                end
+            }
+
+            Blink.debug("%s sync status is %s" % [self,insync])
+            return insync
+        end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        # should we actually do anything?
+        def noop
+            return self.noop || Blink[:noop] || false
+        end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        # set up the "interface" methods
+        [:sync,:retrieve].each { |method|
+            self.send(:define_method,method) {
+                self.each { |subobj|
+                    #Blink.debug("sending '%s' to '%s'" % [method,subobj])
+                    subobj.send(method)
+                }
+            }
+        }
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
+        def presync
+            self.each { |contained|
+                # this gets right to the heart of our question:
+                # do all subclasses of Interface contain all of their
+                # content in contained objects?
+                Blink::Modification.new(contained)
+            }
         end
 		#---------------------------------------------------------------
 	end
