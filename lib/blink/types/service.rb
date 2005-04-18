@@ -69,8 +69,8 @@ module Blink
             end
         end
     end
-	class Types
-		class Service < Types
+	class Type
+		class Service < Type
 			attr_reader :stat
 			@params = [
                 Blink::State::ServiceRunning,
@@ -133,6 +133,6 @@ module Blink
                     @initscript = Service.search(self.name)
                 end
             end
-		end # Blink::Types::BProcess
-	end # Blink::Types
+		end # Blink::Type::Service
+	end # Blink::Type
 end

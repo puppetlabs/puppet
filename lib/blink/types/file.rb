@@ -193,8 +193,8 @@ module Blink
             end
         end
     end
-    class Types
-        class File < Types
+    class Type
+        class File < Type
             attr_reader :stat, :path, :params
             # class instance variable
             @params = [
@@ -207,7 +207,7 @@ module Blink
 
             @name = :file
             @namevar = :path
-        end # Blink::Types::File
-    end # Blink::Types
+        end # Blink::Type::File
+    end # Blink::Type
 
 end

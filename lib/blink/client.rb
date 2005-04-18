@@ -27,12 +27,12 @@ module Blink
             end
 
             def objects=(list)
-                Blink::Types.buildtypehash # refresh the list of available types
+                Blink::Type.buildtypehash # refresh the list of available types
 
                 objects = list.collect { |object|
                     # create a Blink object from the list...
                     #puts "yayness"
-                    if type = Blink::Types.type(object.type)
+                    if type = Blink::Type.type(object.type)
                         namevar = type.namevar
                         if namevar != :name
                             object[namevar] = object[:name]

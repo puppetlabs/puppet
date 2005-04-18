@@ -39,7 +39,7 @@ module Blink
             return :name
         end
 
-        Blink::Types.newtype(self)
+        Blink::Type.newtype(self)
 
         # we're adding a new resolution mechanism here; this is just how
         # types work

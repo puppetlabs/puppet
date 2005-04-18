@@ -24,11 +24,11 @@ module Blink
         end
     end
 
-    class Types
+    class Type
         # packages are complicated because each package format has completely
         # different commands.  We need some way to convert specific packages
         # into the general package object...
-        class Package < Types
+        class Package < Type
             attr_reader :version, :format
             @params = [
                 Blink::State::PackageInstalled,
@@ -45,7 +45,7 @@ module Blink
 
             @name = :package
             @namevar = :name
-        end # Blink::Types::Package
+        end # Blink::Type::Package
 
         class PackagingType
             attr_writer :list, :install, :remove, :check
@@ -120,7 +120,7 @@ module Blink
                             fields.zip(match.captures) { |field,value|
                                 hash[field] = value
                             }
-                            packages.push Blink::Types::Package.new(hash)
+                            packages.push Blink::Type::Package.new(hash)
                         else
                             raise "failed to match dpkg line %s" % line
                         end
@@ -174,7 +174,7 @@ module Blink
                     process.each { |line|
                         case line
                         when /^$/ then
-                            packages.push Blink::Types::Package.new(hash)
+                            packages.push Blink::Type::Package.new(hash)
                             hash.clear
                         when /\s*(\w+):\s+(.+)/
                             name = $1
@@ -250,5 +250,5 @@ module Blink
                 end
             }
         }
-    end # Blink::Types
+    end # Blink::Type
 end
