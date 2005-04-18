@@ -8,43 +8,43 @@ require 'etc'
 require 'blink/interface'
 
 module Blink
-    class OParse < Blink::Interface
+    class FileType < Blink::Interface
         include Enumerable
 
         attr_accessor :file, :splitchar, :childtype
 
         @@classes = Hash.new(nil)
 
-        def OParse.[](name)
+        def FileType.[](name)
             return @@classes[name]
         end
 
-        def OParse.childtype=(childtype)
+        def FileType.childtype=(childtype)
             @childtype = childtype
         end
 
-        def OParse.childtype
+        def FileType.childtype
             return @childtype
         end
 
-        def OParse.name=(name)
+        def FileType.name=(name)
             @name = name
         end
 
-        def OParse.regex
+        def FileType.regex
             return @regex
         end
 
-        def OParse.splitchar=(splitchar)
+        def FileType.splitchar=(splitchar)
             @regex = %r{#{splitchar}}
             @splitchar = splitchar
         end
 
-        def OParse.splitchar
+        def FileType.splitchar
             return @splitchar
         end
 
-        def OParse.newtype(arghash)
+        def FileType.newtype(arghash)
             options = [:name, :linesplit, :recordsplit, :fields, :namevar]
 
             #arghash = Hash[*args]
@@ -74,12 +74,12 @@ module Blink
 
             # create the file type
             module_eval "
-                class %s < OParse
+                class %s < FileType
                 end" % klassname
             klass = eval(klassname)
 
             # now create the record type
-            klass.childtype = Blink::OLine.newtype(
+            klass.childtype = Blink::FileRecord.newtype(
                 :name => arghash[:name],
                 :splitchar => arghash[:recordsplit],
                 :fields => arghash[:fields],
@@ -209,21 +209,21 @@ module Blink
         end
     end
 
-    class OLine < Blink::Interface
+    class FileRecord < Blink::Interface
         attr_accessor :fields, :namevar, :splitchar
 
         @@subclasses = {}
 
-        def OLine.fields=(ary)
+        def FileRecord.fields=(ary)
             @fields = ary
         end
 
-        def OLine.fields
+        def FileRecord.fields
             return @fields
         end
 
-        #def OLine.newtype(name,splitchar,fields,namevar)
-        def OLine.newtype(*args)
+        #def FileRecord.newtype(name,splitchar,fields,namevar)
+        def FileRecord.newtype(*args)
             options = [:name, :splitchar, :fields, :namevar]
 
             arghash = Hash[*args]
@@ -242,7 +242,7 @@ module Blink
             klassname = arghash[:name].capitalize
 
             module_eval "
-                class %s < OLine
+                class %s < FileRecord
                 end" % klassname
             klass = eval(klassname)
 
@@ -253,24 +253,24 @@ module Blink
             return klass
         end
 
-        def OLine.namevar=(field)
+        def FileRecord.namevar=(field)
             @namevar = field
         end
 
-        def OLine.namevar
+        def FileRecord.namevar
             return @namevar
         end
 
-        def OLine.regex
+        def FileRecord.regex
             return @regex
         end
 
-        def OLine.splitchar=(char)
+        def FileRecord.splitchar=(char)
             @splitchar = char
             @regex = %r{#{char}}
         end
 
-        def OLine.splitchar
+        def FileRecord.splitchar
             return @splitchar
         end
 
