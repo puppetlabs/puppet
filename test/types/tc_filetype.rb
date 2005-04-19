@@ -136,8 +136,9 @@ class TestFileType < Test::Unit::TestCase
     def test_syslog_nochange
         file = nil
         type = nil
+        syslog = File.join($blinkbase, "examples/root/etc/debian-syslog.conf")
         assert_nothing_raised() {
-            file = @syslogtype.new("/etc/syslog.conf")
+            file = @syslogtype.new(syslog)
         }
         assert_nothing_raised() {
             file.retrieve
@@ -146,14 +147,10 @@ class TestFileType < Test::Unit::TestCase
         assert(file.insync?)
 
         contents = ""
-        ::File.open("/etc/syslog.conf") { |ofile|
+        ::File.open(syslog) { |ofile|
             ofile.each { |line|
                 contents += line
             }
-        }
-
-        file.each { |record|
-            puts "%s [%s]" % [record.class,record]
         }
         #assert_equal(
         #    contents,
