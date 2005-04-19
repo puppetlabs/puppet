@@ -286,8 +286,8 @@ module Blink
 			@actions = Hash.new
 			#@opsgenned = false
 
-            # default to always syncing
-            @performoperation = :sync
+            # default to performing action
+            @noop = false
 
             # if they passed in a list of states they're interested in,
             # we mark them as "interesting"
@@ -468,11 +468,20 @@ module Blink
         def evaluate
             self.retrieve
             unless self.insync?
-                if @performoperation == :sync
-                    self.sync
+                if self.noop
+                    Blink.verbose("%s is noop" % self)
                 else
-                    # we, uh, don't do anything
+                    self.each { |state|
+                        #Blink.notice("getting state change on %s" % state)
+                        statechange = Blink::StateChange.new(state)
+                        puts statechange
+                    }
                 end
+                #if @performoperation == :sync
+                #    self.sync
+                #else
+                #    # we, uh, don't do anything
+                #end
             end
             self.retrieve
         end
@@ -498,7 +507,7 @@ module Blink
 		#---------------------------------------------------------------
         # should we actually do anything?
         def noop
-            return self.noop || Blink[:noop] || false
+            return @noop || Blink[:noop] || false
         end
 		#---------------------------------------------------------------
 
@@ -664,3 +673,4 @@ require 'blink/type/file'
 require 'blink/type/symlink'
 require 'blink/type/package'
 require 'blink/component'
+require 'blink/statechange'

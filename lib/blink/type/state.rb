@@ -94,6 +94,10 @@ module Blink
         class Symbol
             attr_reader :is, :should
 
+            def fqpath
+                return "Symbol"
+            end
+
             def initialize(symbol)
                 @symbol = symbol
             end

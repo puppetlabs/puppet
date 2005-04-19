@@ -44,10 +44,13 @@ module Blink
 
                 # okay, we have a list of all of the objects we're supposed
                 # to execute
-                # here's where we collect the rollbacks and record them, i guess
-                # the objects should deal internally with whether we're running
-                # under no-op, or whether a given object itself should be no-op
-                #objects.each { |obj| puts obj.class }
+                # here's where we collect the rollbacks and record them
+                # that means that we need, at the least:
+                #   - a standard mechanism for specifying that an object is no-op
+                #   - a standard object that is considered a rollback object
+                objects.each { |obj|
+                    obj.evaluate
+                }
             end
         end
     end
