@@ -27,7 +27,6 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
     #---------------------------------------------------------------
     def FileRecord.fields=(ary)
         @fields = ary
-        Blink.debug "fields are '%s'" % @fields
     end
     #---------------------------------------------------------------
 
