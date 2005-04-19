@@ -63,6 +63,20 @@ module Blink
         }
 
 		#---------------------------------------------------------------
+        # a test for whether this type is allowed to have instances
+        # on clients
+        # subclasses can just set '@abstract = true' to mark themselves
+        # as abstract
+        def Type.abstract
+            if defined? @abstract
+                return @abstract
+            else
+                return false
+            end
+        end
+		#---------------------------------------------------------------
+
+		#---------------------------------------------------------------
         # this is meant to be run multiple times, e.g., when a new
         # type is defined at run-time
         def Type.buildtypehash

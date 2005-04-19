@@ -5,8 +5,8 @@ if __FILE__ == $0
 end
 
 require 'blink'
-require 'blink/type'
-require 'blink/type/filetype'
+require 'blink/type/typegen/filetype'
+require 'blink/type/typegen/filerecord'
 require 'test/unit'
 
 # $Id$
@@ -15,10 +15,10 @@ class TestFileType < Test::Unit::TestCase
     def setup
         Blink[:debug] = 1
 
-        @passwdtype = Blink::FileType["passwd"]
+        @passwdtype = Blink::Type::FileType["passwd"]
         if @passwdtype.nil?
             assert_nothing_raised() {
-                @passwdtype = Blink::FileType.newtype(
+                @passwdtype = Blink::Type::FileType.newtype(
                     :name => "passwd",
                     :recordsplit => ":",
                     :fields => %w{name password uid gid gcos home shell},
@@ -41,7 +41,7 @@ class TestFileType < Test::Unit::TestCase
         assert(file.insync?)
 
         contents = ""
-        File.open("/etc/passwd") { |ofile|
+        ::File.open("/etc/passwd") { |ofile|
             ofile.each { |line|
                 contents += line
             }
