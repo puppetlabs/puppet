@@ -19,13 +19,32 @@ class TestFileType < Test::Unit::TestCase
         if @passwdtype.nil?
             assert_nothing_raised() {
                 @passwdtype = Blink::Type::FileType.newtype(
-                    :name => "passwd",
-                    :recordsplit => ":",
+                    :name => "passwd"
+                )
+                @passwdtype.addrecord(
+                    :name => "user",
+                    :splitchar => ":",
                     :fields => %w{name password uid gid gcos home shell},
                     :namevar => "name"
                 )
             }
         end
+
+        @passwdtype = Blink::Type::FileType["passwd"]
+        if @passwdtype.nil?
+            assert_nothing_raised() {
+                @passwdtype = Blink::Type::FileType.newtype(
+                    :name => "passwd"
+                )
+                @passwdtype.addrecord(
+                    :name => "user",
+                    :splitchar => ":",
+                    :fields => %w{name password uid gid gcos home shell},
+                    :namevar => "name"
+                )
+            }
+        end
+
     end
 
     def test_passwd1_nochange
@@ -68,7 +87,7 @@ class TestFileType < Test::Unit::TestCase
         assert(file.insync?)
 
         assert_nothing_raised() {
-            file.add { |obj|
+            file.add("user") { |obj|
                 obj["name"] = "yaytest"
                 obj["password"] = "x"
                 obj["uid"] = "10000"

@@ -10,7 +10,7 @@ require 'blink/type/typegen'
 class Blink::Type::FileType < Blink::Type::TypeGenerator
     attr_accessor :childtype
 
-    @options = [:name, :linesplit, :recordsplit, :fields, :namevar]
+    @options = [:name, :linesplit]
     @abstract = true
 
     @name = :filetype
@@ -22,12 +22,12 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
         end
         klass = super(hash)
 
-        klass.childtype = Blink::Type::FileRecord.newtype(
-            :name => hash[:name] + "_record",
-            :splitchar => hash[:recordsplit],
-            :fields => hash[:fields],
-            :namevar => hash[:namevar]
-        )
+        #klass.childtype = Blink::Type::FileRecord.newtype(
+        #    :name => hash[:name] + "_record",
+        #    :splitchar => hash[:recordsplit],
+        #    :fields => hash[:fields],
+        #    :namevar => hash[:namevar]
+        #)
         #klass.addrecord(
         #    :name => hash[:name] + "_record",
         #    :splitchar => hash[:recordsplit],
@@ -45,7 +45,15 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
         unless defined? @records
             @records = {}
         end
-        @records[hash[:name]] = Blink::Type::FileRecord.newtype(hash)
+        hash[:filetype] = self
+        recordtype = Blink::Type::FileRecord.newtype(hash)
+        @records[recordtype.name] = recordtype
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def FileType.records
+        return @records
     end
     #---------------------------------------------------------------
 
@@ -119,8 +127,8 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
 
     #---------------------------------------------------------------
     # create a new record with a block
-    def add(&block)
-        obj = self.class.childtype.new(self,&block)
+    def add(type,&block)
+        obj = self.class.records[type].new(self,&block)
         Blink.debug("adding %s" % obj.name)
         @childary.push(obj)
         @childhash[obj.name] = obj
@@ -191,11 +199,20 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
             }
         }
 
-        @childary = str.split(self.class.regex).collect { |record|
-            child = self.class.childtype.new(self)
-            child.record = record
+        @childary = str.split(self.class.regex).collect { |line|
+            childobj = self.class.records.each { |name,recordtype|
+                if child = recordtype.match(self,line)
+                    break child
+                end
+            }
+            #child = self.class.childtype.new(self)
+            #child.record = record
             #puts "adding child %s" % child.name
-            child
+            if childobj.nil?
+                Blink.warning("%s: could not match %s" % [self.name,line])
+                next
+            end
+            childobj
         }
 
         @childary.each { |child|

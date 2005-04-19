@@ -12,16 +12,19 @@ require 'blink/type/typegen'
 class Blink::Type::FileRecord < Blink::Type::TypeGenerator
     attr_accessor :fields, :namevar, :splitchar, :object
 
-    @options = [:name, :splitchar, :fields, :namevar]
+    @options = [:name, :splitchar, :fields, :namevar, :filetype]
     @abstract = true
 
     @name = :filerecord
 
     #---------------------------------------------------------------
-    #def FileRecord.newtype(hash)
-    #    klass = super(hash)
-    #    return klass
-    #end
+    def FileRecord.newtype(hash)
+        shortname = hash[:name]
+        hash[:name] = hash[:filetype].name.capitalize + hash[:name].capitalize
+        klass = super(hash)
+        klass.name = shortname
+        return klass
+    end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
@@ -33,6 +36,30 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
     #---------------------------------------------------------------
     def FileRecord.fields
         return @fields
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def FileRecord.filetype
+        @filetype
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def FileRecord.filetype=(filetype)
+        @filetype = filetype
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def FileRecord.match(object,line)
+        if @regex.match(line)
+            child = self.new(object)
+            child.record = line
+            return child
+        else
+            return nil
+        end
     end
     #---------------------------------------------------------------
 
