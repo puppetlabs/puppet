@@ -62,13 +62,15 @@ class Blink::Type::TypeGenerator < Blink::Type
                     [key,self]
             end
         }
-        @options.each { |option|
-            unless arghash.include?(option)
-                p arghash
-                raise "Must pass %s to class %s" %
-                    [option,self]
-            end
-        }
+
+        # turn off automatically checking all arguments
+        #@options.each { |option|
+        #    unless arghash.include?(option)
+        #        p arghash
+        #        raise "Must pass %s to class %s" %
+        #            [option,self]
+        #    end
+        #}
 
         if @subclasses.include?(arghash[:name])
             raise "File type %s already exists" % arghash[:name]
@@ -85,7 +87,7 @@ class Blink::Type::TypeGenerator < Blink::Type
 
         @subclasses[arghash[:name]] = klass
 
-        @options.each { |option|
+        arghash.each { |option,value|
             method = option.id2name + "="
             if klass.respond_to?(method)
                 #Blink.debug "Setting %s on %s to '%s'" % [option,klass,arghash[option]]

@@ -24,23 +24,35 @@ class TestFileType < Test::Unit::TestCase
                 @passwdtype.addrecord(
                     :name => "user",
                     :splitchar => ":",
-                    :fields => %w{name password uid gid gcos home shell},
-                    :namevar => "name"
+                    :fields => %w{name password uid gid gcos home shell}
                 )
             }
         end
 
-        @passwdtype = Blink::Type::FileType["passwd"]
-        if @passwdtype.nil?
+        @syslogtype = Blink::Type::FileType["syslog"]
+        if @syslogtype.nil?
             assert_nothing_raised() {
-                @passwdtype = Blink::Type::FileType.newtype(
-                    :name => "passwd"
+                @syslogtype = Blink::Type::FileType.newtype(
+                    :escapednewlines => true,
+                    :name => "syslog"
                 )
-                @passwdtype.addrecord(
-                    :name => "user",
-                    :splitchar => ":",
-                    :fields => %w{name password uid gid gcos home shell},
-                    :namevar => "name"
+                @syslogtype.addrecord(
+                    :name => "data",
+                    :regex => %r{^([^#\s]+)\s+(\S+)$},
+                    :joinchar => "\t",
+                    :fields => %w{logs dest}
+                )
+                @syslogtype.addrecord(
+                    :name => "comment",
+                    :regex => %r{^(#.*)$},
+                    :joinchar => "", # not really necessary...
+                    :fields => %w{comment}
+                )
+                @syslogtype.addrecord(
+                    :name => "blank",
+                    :regex => %r{^(\s*)$},
+                    :joinchar => "", # not really necessary...
+                    :fields => %w{blank}
                 )
             }
         end
@@ -119,5 +131,34 @@ class TestFileType < Test::Unit::TestCase
         assert(file.insync?)
 
         Kernel.system("rm /tmp/oparsepasswd")
+    end
+
+    def test_syslog_nochange
+        file = nil
+        type = nil
+        assert_nothing_raised() {
+            file = @syslogtype.new("/etc/syslog.conf")
+        }
+        assert_nothing_raised() {
+            file.retrieve
+        }
+
+        assert(file.insync?)
+
+        contents = ""
+        ::File.open("/etc/syslog.conf") { |ofile|
+            ofile.each { |line|
+                contents += line
+            }
+        }
+
+        file.each { |record|
+            puts "%s [%s]" % [record.class,record]
+        }
+        #assert_equal(
+        #    contents,
+        #    file.to_s
+        #)
+
     end
 end

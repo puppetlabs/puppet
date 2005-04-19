@@ -12,7 +12,7 @@ require 'blink/type/typegen'
 class Blink::Type::FileRecord < Blink::Type::TypeGenerator
     attr_accessor :fields, :namevar, :splitchar, :object
 
-    @options = [:name, :splitchar, :fields, :namevar, :filetype]
+    @options = [:name, :splitchar, :fields, :namevar, :filetype, :regex, :joinchar]
     @abstract = true
 
     @name = :filerecord
@@ -52,13 +52,35 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def FileRecord.joinchar=(char)
+        @joinchar = char
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def FileRecord.joinchar
+        unless defined? @joinchar
+            @joinchar = nil
+        end
+        @joinchar
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     def FileRecord.match(object,line)
-        if @regex.match(line)
-            child = self.new(object)
-            child.record = line
-            return child
-        else
+        matchobj = nil
+        begin
+            matchobj = self.regex.match(line)
+        rescue RegexpError => detail
+            raise
+        end
+
+        if matchobj.nil?
             return nil
+        else
+            child = self.new(object)
+            child.match = matchobj
+            return child
         end
     end
     #---------------------------------------------------------------
@@ -76,7 +98,37 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def FileRecord.regex=(regex)
+        @regex = regex
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     def FileRecord.regex
+        # the only time @regex is allowed to be nil is if @splitchar is defined
+        if @regex.nil?
+            if @splitchar.nil?
+                raise "%s defined incorrectly -- splitchar or regex must be specified" %
+                    self
+            else
+                ary = []
+                text = @fields.collect { |field|
+                    "([^%s]*)" % @splitchar
+                }.join(@splitchar)
+                begin
+                    @regex = Regexp.new(text)
+                rescue RegexpError => detail
+                    raise "Could not create splitregex from %s" % @splitchar
+                end
+                Blink.debug("Created regexp %s" % @regex)
+            end
+        elsif @regex.is_a?(String)
+            begin
+                @regex = Regexp.new(@regex)
+            rescue RegexpError => detail
+                raise "Could not create splitregex from %s" % @regex
+            end
+        end
         return @regex
     end
     #---------------------------------------------------------------
@@ -84,7 +136,7 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
     #---------------------------------------------------------------
     def FileRecord.splitchar=(char)
         @splitchar = char
-        @regex = %r{#{char}}
+        #@regex = %r{#{char}}
     end
     #---------------------------------------------------------------
 
@@ -136,8 +188,23 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def match=(matchobj)
+        @match = matchobj
+        #puts "captures are [%s]" % [matchobj.captures]
+        self.class.fields.zip(matchobj.captures) { |field,value|
+            @fields[field] = value
+            #puts "%s => %s" % [field,@fields[field]]
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     def record=(record)
-        ary = record.split(self.class.regex)
+        begin
+            ary = record.split(self.class.regex)
+        rescue RegexpError=> detail
+            raise RegexpError.new(detail)
+        end
         self.class.fields.each { |field|
             @fields[field] = ary.shift
             #puts "%s => %s" % [field,@fields[field]]
@@ -163,7 +230,7 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
             else
                 @fields[field]
             end
-        }.join(self.class.splitchar)
+        }.join(self.class.joinchar || self.class.splitchar)
     end
     #---------------------------------------------------------------
 end
