@@ -107,11 +107,11 @@ module Blink
             end
 
             def retrieve
-                true
+                return true
             end
 
             def insync?
-                true
+                return true
             end
 
             def should=(value)
@@ -120,7 +120,7 @@ module Blink
             end
 
             def sync
-                true
+                return true
             end
 
             def is=(value)

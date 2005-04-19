@@ -466,24 +466,24 @@ module Blink
 
 		#---------------------------------------------------------------
         def evaluate
-            self.retrieve
-            unless self.insync?
-                if self.noop
-                    Blink.verbose("%s is noop" % self)
-                else
-                    self.each { |state|
-                        #Blink.notice("getting state change on %s" % state)
-                        statechange = Blink::StateChange.new(state)
-                        puts statechange
-                    }
+            self.each { |state|
+                state.retrieve
+                unless state.insync?
+                    change = Blink::StateChange.new(state)
+
+                    if self.noop
+                        Blink.verbose("NOOP: %s" % change.to_s)
+                    else
+                        # what?
+                    end
                 end
                 #if @performoperation == :sync
                 #    self.sync
                 #else
                 #    # we, uh, don't do anything
                 #end
-            end
-            self.retrieve
+                state.retrieve
+            }
         end
 		#---------------------------------------------------------------
 
