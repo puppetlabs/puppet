@@ -45,7 +45,13 @@ class Blink::Transaction
 
     #---------------------------------------------------------------
     def run
-        @tree.evaluate(self)
+        if @tree.is_a?(Array)
+            @tree.each { |item|
+                item.evaluate(self)
+            }
+        else
+            @tree.evaluate(self)
+        end
         self.evaluate
     end
     #---------------------------------------------------------------

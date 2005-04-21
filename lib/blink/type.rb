@@ -461,7 +461,7 @@ class Blink::Type < Blink::Element
     # we always descend into the children before we evaluate our current
     # states
     def evaluate(transaction)
-        self.each { |child| child.evaluate }
+        self.each { |child| child.evaluate(transaction) }
     end
     #---------------------------------------------------------------
 

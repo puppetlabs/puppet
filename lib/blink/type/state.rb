@@ -37,7 +37,7 @@ class Blink::State < Blink::Element
     def evaluate(transaction)
         self.retrieve
         unless self.insync?
-            transaction.change(Blink::StateChange.new(state))
+            transaction.change(Blink::StateChange.new(self))
         end
     end
     #---------------------------------------------------------------
