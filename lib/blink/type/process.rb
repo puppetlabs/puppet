@@ -21,13 +21,13 @@ module Blink
                     # this isn't correct, but what the hell
                     Blink::Message.new(
                         :level => :error,
-                        :source => self.object,
+                        :source => self.parent,
                         :message => "Failed to run ps"
                     )
                 end
 
                 self.state = running
-                Blink.debug "there are #{running} #{self.object} processes for start"
+                Blink.debug "there are #{running} #{self.parent} processes for start"
             end
 
             def <=>(other)
@@ -49,7 +49,7 @@ module Blink
                     string = @params[:binary] + (@params[:arguments] || "")
                     Blink::Message.new(
                         :level => :notice,
-                        :source => self.object,
+                        :source => self.parent,
                         :message => "starting"
                     )
                     Kernel.exec(string)
@@ -60,7 +60,7 @@ module Blink
 	class Type
 		class BProcess < Type
 			attr_reader :stat, :path
-			@params = [:start, :stop, :user, :pattern, :binary, :arguments]
+			@parameters = [:start, :stop, :user, :pattern, :binary, :arguments]
             @name = :process
 
 			@namevar = :pattern

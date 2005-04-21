@@ -3,7 +3,8 @@
 # $Id$
 
 require 'blink'
-require 'blink/type'
+require 'blink/element'
+require 'blink/statechange'
 
 #---------------------------------------------------------------
 # this is a virtual base class for states
@@ -13,15 +14,14 @@ require 'blink/type'
 # against the real state of the system.  For instance, you could verify that
 # a file's owner is what you want, but you could not create two file objects
 # and use these methods to verify that they have the same owner
+module Blink
 class Blink::State < Blink::Element
-    include Comparable
-
     attr_accessor :is, :should, :parent
 
     @virtual = true
 
     #---------------------------------------------------------------
-    # every state class must tell us what it's name will be (as a symbol)
+    # every state class must tell us what its name will be (as a symbol)
     # this determines how we will refer to the state during usage
     # e.g., the Owner state for Files might say its name is :owner;
     # this means that we can say "file[:owner] = 'yayness'"
@@ -45,7 +45,7 @@ class Blink::State < Blink::Element
     #---------------------------------------------------------------
     # return the full path to us, for logging and rollback
     def fqpath
-        return @object.fqpath, self.name
+        return @parent.fqpath, self.name
     end
     #---------------------------------------------------------------
 
@@ -96,7 +96,8 @@ class Blink::State < Blink::Element
 
     #---------------------------------------------------------------
     def to_s
-        return @object.name.to_s + " -> " + self.name.to_s
+        return @parent.name.to_s + " -> " + self.name.to_s
     end
     #---------------------------------------------------------------
+end
 end

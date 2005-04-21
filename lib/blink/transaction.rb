@@ -45,7 +45,7 @@ class Blink::Transaction
 
     #---------------------------------------------------------------
     def run
-        tree.evaluate(self)
+        @tree.evaluate(self)
         self.evaluate
     end
     #---------------------------------------------------------------

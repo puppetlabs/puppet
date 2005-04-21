@@ -16,15 +16,15 @@ module Blink
             def retrieve
                 self.is = self.running()
                 Blink.debug "Running value for '%s' is '%s'" %
-                    [self.object.name,self.is]
+                    [self.parent.name,self.is]
             end
 
             # should i cache this info?
             def running
                 begin
-                    status = self.object.initcmd("status")
+                    status = self.parent.initcmd("status")
                     Blink.debug "initcmd status for '%s' is '%s'" %
-                        [self.object.name,status]
+                        [self.parent.name,status]
 
                     if status # the command succeeded
                         return 1
@@ -48,19 +48,19 @@ module Blink
                 if self.should > 0
                     if status < 1
                         Blink.debug "Starting '%s'" % self
-                        unless self.object.initcmd("start")
+                        unless self.parent.initcmd("start")
                             raise "Failed to start %s" % self.name
                         end
                     else
                         Blink.debug "'%s' is already running, yo" % self
                         #Blink.debug "Starting '%s'" % self
-                        #unless self.object.initcmd("start")
+                        #unless self.parent.initcmd("start")
                         #    raise "Failed to start %s" % self.name
                         #end
                     end
                 elsif status > 0
                     Blink.debug "Stopping '%s'" % self
-                    unless self.object.initcmd("stop")
+                    unless self.parent.initcmd("stop")
                         raise "Failed to stop %s" % self.name
                     end
                 else
@@ -72,8 +72,10 @@ module Blink
 	class Type
 		class Service < Type
 			attr_reader :stat
-			@params = [
-                Blink::State::ServiceRunning,
+			@states = [
+                Blink::State::ServiceRunning
+            ]
+			@parameters = [
                 :name,
                 :pattern
             ]

@@ -19,7 +19,7 @@ module Blink
                 #    raise "failed to sync #{@params[:file]}: #{$!}"
                 #end
 
-                #self.object.newevent(:event => :inode_changed)
+                #self.parent.newevent(:event => :inode_changed)
             end
         end
     end
@@ -30,8 +30,10 @@ module Blink
         # into the general package object...
         class Package < Type
             attr_reader :version, :format
-            @params = [
-                Blink::State::PackageInstalled,
+            @states = [
+                Blink::State::PackageInstalled
+            ]
+            @parameters = [
                 :format,
                 :name,
                 :status,

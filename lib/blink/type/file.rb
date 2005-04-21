@@ -20,10 +20,10 @@ module Blink
                 stat = nil
 
                 begin
-                    stat = File.stat(self.object[:path].is)
+                    stat = File.stat(self.parent[:path])
                 rescue
                     # this isn't correct, but what the hell
-                    raise "File '%s' does not exist: #{$!}" % self.object[:path].is
+                    raise "File '%s' does not exist: #{$!}" % self.parent[:path]
                 end
 
                 self.is = stat.uid
@@ -31,7 +31,7 @@ module Blink
                     begin
                         user = Etc.getpwnam(self.should)
                         if user.gid == ""
-                            raise "Could not retrieve uid for %s" % self.object
+                            raise "Could not retrieve uid for %s" % self.parent
                         end
                         Blink.debug "converting %s to integer %d" %
                             [self.should,user.uid]
@@ -57,12 +57,12 @@ module Blink
 
             def sync
                 begin
-                    File.chown(self.should,-1,self.object[:path].is)
+                    File.chown(self.should,-1,self.parent[:path])
                 rescue
-                    raise "failed to sync #{self.object[:path].is}: #{$!}"
+                    raise "failed to sync #{self.parent[:path]}: #{$!}"
                 end
 
-                self.object.newevent(:event => :inode_changed)
+                #self.parent.newevent(:event => :inode_changed)
             end
         end
 
@@ -78,9 +78,9 @@ module Blink
                 stat = nil
 
                 begin
-                    stat = File.stat(self.object[:path].is)
+                    stat = File.stat(self.parent[:path])
                 rescue => error
-                    raise "File %s could not be stat'ed: %s" % [self.object[:path].is,error]
+                    raise "File %s could not be stat'ed: %s" % [self.parent[:path],error]
                 end
 
                 self.is = stat.mode & 007777
@@ -89,11 +89,11 @@ module Blink
 
             def sync
                 begin
-                    File.chmod(self.should,self.object[:path].is)
+                    File.chmod(self.should,self.parent[:path])
                 rescue
-                    raise "failed to chmod #{self.object[:path].is}: #{$!}"
+                    raise "failed to chmod #{self.parent[:path]}: #{$!}"
                 end
-                self.object.newevent(:event => :inode_changed)
+                #self.parent.newevent(:event => :inode_changed)
             end
         end
 
@@ -129,10 +129,10 @@ module Blink
                 stat = nil
 
                 begin
-                    stat = File.stat(self.object[:path].is)
+                    stat = File.stat(self.parent[:path])
                 rescue
                     # this isn't correct, but what the hell
-                    raise "File #{self.object[:path].is} does not exist: #{$!}"
+                    raise "File #{self.parent[:path]} does not exist: #{$!}"
                 end
 
                 self.is = stat.gid
@@ -147,7 +147,7 @@ module Blink
                         # this is retarded
                         #p group
                         if group.gid == ""
-                            raise "Could not retrieve gid for %s" % self.object
+                            raise "Could not retrieve gid for %s" % self.parent
                         end
                         Blink.debug "converting %s to integer %d" %
                             [self.should,group.gid]
@@ -184,12 +184,12 @@ module Blink
                 Blink.debug "setting chgrp state to %d" % self.should
                 begin
                     # set owner to nil so it's ignored
-                    File.chown(nil,self.should,self.object[:path].is)
+                    File.chown(nil,self.should,self.parent[:path])
                 rescue
                     raise "failed to chgrp %s to %s: %s" %
-                        [self.object[:path].is, self.should, $!]
+                        [self.parent[:path], self.should, $!]
                 end
-                self.object.newevent(:event => :inode_changed)
+                #self.parent.newevent(:event => :inode_changed)
             end
         end
     end
@@ -197,11 +197,14 @@ module Blink
         class File < Type
             attr_reader :stat, :path, :params
             # class instance variable
-            @params = [
+            @states = [
                 Blink::State::FileUID,
                 Blink::State::FileGroup,
                 Blink::State::FileMode,
-                Blink::State::FileSetUID,
+                Blink::State::FileSetUID
+            ]
+
+            @parameters = [
                 :path
             ]
 

@@ -19,40 +19,40 @@ module Blink
             def create
                 begin
                     Blink.debug("Creating symlink '%s' to '%s'" %
-                        [self.object[:path].is,self.should])
-                    unless File.symlink(self.should,self.object[:path].is)
+                        [self.parent[:path],self.should])
+                    unless File.symlink(self.should,self.parent[:path])
                         raise TypeError.new("Could not create symlink '%s'" %
-                            self.object[:path].is)
+                            self.parent[:path])
                     end
                 rescue => detail
                     raise TypeError.new("Cannot create symlink '%s': %s" %
-                        [self.object[:path].is,detail])
+                        [self.parent[:path],detail])
                 end
             end
 
             def remove
-                if FileTest.symlink?(self.object[:path].is)
-                    Blink.debug("Removing symlink '%s'" % self.object[:path].is)
+                if FileTest.symlink?(self.parent[:path])
+                    Blink.debug("Removing symlink '%s'" % self.parent[:path])
                     begin
-                        File.unlink(self.object[:path].is)
+                        File.unlink(self.parent[:path])
                     rescue
                         raise TypeError.new("Failed to remove symlink '%s'" %
-                            self.object[:path].is)
+                            self.parent[:path])
                     end
-                elsif FileTest.exists?(self.object[:path].is)
+                elsif FileTest.exists?(self.parent[:path])
                     raise TypeError.new("Cannot remove normal file '%s'" %
-                        self.object[:path].is)
+                        self.parent[:path])
                 else
                     Blink.debug("Symlink '%s' does not exist" %
-                        self.object[:path].is)
+                        self.parent[:path])
                 end
             end
 
             def retrieve
                 stat = nil
 
-                if FileTest.symlink?(self.object[:path].is)
-                    self.is = File.readlink(self.object[:path].is)
+                if FileTest.symlink?(self.parent[:path])
+                    self.is = File.readlink(self.parent[:path])
                     Blink.debug("link value is '%s'" % self.is)
                     return
                 else
@@ -67,21 +67,21 @@ module Blink
                 if self.should.nil?
                     self.remove()
                 else # it should exist and be a symlink
-                    if FileTest.symlink?(self.object[:path].is)
-                        path = File.readlink(self.object[:path].is)
+                    if FileTest.symlink?(self.parent[:path])
+                        path = File.readlink(self.parent[:path])
                         if path != self.should
                             self.remove()
                             self.create()
                         end
-                    elsif FileTest.exists?(self.object[:path].is)
+                    elsif FileTest.exists?(self.parent[:path])
                         raise TypeError.new("Cannot replace normal file '%s'" %
-                            self.object[:path].is)
+                            self.parent[:path])
                     else
                         self.create()
                     end
                 end
 
-                self.object.newevent(:event => :inode_changed)
+                #self.parent.newevent(:event => :inode_changed)
             end
         end
     end
@@ -90,11 +90,14 @@ module Blink
         class Symlink < Type
             attr_reader :stat, :path, :params
             # class instance variable
-            @params = [
+            @states = [
                 Blink::State::FileUID,
                 Blink::State::FileGroup,
                 Blink::State::FileMode,
-                Blink::State::SymlinkTarget,
+                Blink::State::SymlinkTarget
+            ]
+
+            @parameters = [
                 :path
             ]
 

@@ -7,6 +7,7 @@
 require 'blink'
 require 'blink/function'
 require 'blink/type'
+require 'blink/transaction'
 
 module Blink
     class ClientError < RuntimeError; end
@@ -48,9 +49,9 @@ module Blink
                 # that means that we need, at the least:
                 #   - a standard mechanism for specifying that an object is no-op
                 #   - a standard object that is considered a rollback object
-                objects.each { |obj|
-                    obj.evaluate
-                }
+                #objects.each { |obj|
+                #    obj.evaluate
+                #}
 
                 transaction = Blink::Transaction.new(objects)
                 transaction.run

@@ -22,6 +22,8 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
         end
         klass = super(hash)
 
+        klass.escapednewlines = true
+
         #klass.childtype = Blink::Type::FileRecord.newtype(
         #    :name => hash[:name] + "_record",
         #    :splitchar => hash[:recordsplit],
@@ -71,7 +73,7 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
 
     #---------------------------------------------------------------
     def FileType.escapednewlines
-        if @escnlines.nil?
+        if ! defined? @escnlines or @escnlines.nil?
             return false
         else
             return @escnlines

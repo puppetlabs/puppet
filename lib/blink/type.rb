@@ -4,41 +4,11 @@
 
 # included so we can test object types
 require 'blink'
+require 'blink/element'
 require 'blink/type/state'
 
 
 # XXX see the bottom of the file for the rest of the inclusions
-
-#---------------------------------------------------------------
-# the base class for both types and states
-# very little functionality; basically just defines the interface
-# and provides a few simple across-the-board functions like 'noop'
-class Blink::Element
-    attr_writer :noop
-
-    #---------------------------------------------------------------
-    # all of our subclasses must respond to each of these methods...
-    @@interface_methods = [
-        :retrieve, :insync?, :sync, :fqpath, :evaluate, :refresh
-    ]
-
-    # so raise an error if a method that isn't overridden gets called
-    @@interface_methods.each { |method|
-        self.send(:define_method,method) {
-            raise "%s has not overridden %s" % [self.class,method]
-        }
-    }
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # for testing whether we should actually do anything
-    def noop
-        return @noop || Blink[:noop] || false
-    end
-    #---------------------------------------------------------------
-
-end
-#---------------------------------------------------------------
 
 #---------------------------------------------------------------
 # This class is the abstract base class for the mechanism for organizing
@@ -60,6 +30,7 @@ end
 
 # to use this interface, just define an 'each' method and 'include Blink::Type'
 
+module Blink
 class Blink::Type < Blink::Element
     attr_accessor :children, :parameters, :parent, :states
     include Enumerable
@@ -149,6 +120,8 @@ class Blink::Type < Blink::Element
     def Type.initvars
         @objects = Hash.new
         @actions = Hash.new
+        @validstates = {}
+        @validparameters = {}
     end
     #---------------------------------------------------------------
 
@@ -250,7 +223,7 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Branch.buildstatehash
+    def Type.buildstatehash
         unless defined? @validstates
             @validstates = Hash.new(false)
         end
@@ -270,7 +243,7 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Branch.validstate(name)
+    def Type.validstate(name)
         unless @validstates.length == @states.length
             self.buildstatehash
         end
@@ -283,8 +256,8 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Branch.validparameter(name)
-        return @validparameter.include?(name)
+    def Type.validparameter(name)
+        return @parameters.include?(name)
     end
     #---------------------------------------------------------------
 
@@ -369,8 +342,8 @@ class Blink::Type < Blink::Element
 
     #---------------------------------------------------------------
     def initialize(hash)
-        @childary = []
-        @childhash = {}
+        @children = []
+
         @parent = nil
         @noop = false
 
@@ -526,6 +499,7 @@ class Blink::Type < Blink::Element
     }
     #---------------------------------------------------------------
 end # Blink::Type
+end
 
 require 'blink/type/service'
 require 'blink/type/file'
