@@ -377,6 +377,8 @@ class Blink::Type < Blink::Element
         # because it might be used in creating the other states
         if hash.has_key?(self.class.namevar)
             self[self.class.namevar] = hash[self.class.namevar]
+            #Blink.notice("%s: namevar [%s], hash name [%s], name [%s], name2 [%s]" %
+            #    [self.class,self.class.namevar,hash[self.class.namevar],self.name,self[self.class.namevar]])
             hash.delete(self.class.namevar)
         else
             #p hash
@@ -392,6 +394,7 @@ class Blink::Type < Blink::Element
         }
 
         # add this object to the specific class's list of objects
+        #Blink.notice("Adding [%s] to %s" % [self.name,self.class])
         self.class[self.name] = self
 
         # and then add it to the master list
@@ -438,6 +441,12 @@ class Blink::Type < Blink::Element
         [@children,@states.values].flatten.each { |child|
             yield child
         }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def push(*child)
+        @children.push(*child)
     end
     #---------------------------------------------------------------
 
@@ -505,5 +514,5 @@ require 'blink/type/service'
 require 'blink/type/file'
 require 'blink/type/symlink'
 require 'blink/type/package'
-require 'blink/component'
+require 'blink/type/component'
 require 'blink/statechange'

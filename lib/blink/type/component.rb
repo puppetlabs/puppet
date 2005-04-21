@@ -9,13 +9,13 @@ require 'blink/type'
 
 module Blink
 	class Component < Blink::Type
-        attr_accessor :name
-
         @name = :component
         @namevar = :name
 
         @parameters = [
             :name
         ]
+
+        @states = []
 	end
 end
