@@ -8,10 +8,11 @@
 
 module Blink
 	class StateChange
-        attr_accessor :is, :should, :type, :path
+        attr_accessor :is, :should, :type, :path, :state
 
 		#---------------------------------------------------------------
         def initialize(state)
+            @state = state
             @path = state.fqpath
             @is = state.is
             @should = state.should

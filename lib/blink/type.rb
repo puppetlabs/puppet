@@ -10,6 +10,37 @@ require 'blink/type/state'
 # XXX see the bottom of the file for the rest of the inclusions
 
 #---------------------------------------------------------------
+# the base class for both types and states
+# very little functionality; basically just defines the interface
+# and provides a few simple across-the-board functions like 'noop'
+class Blink::Element
+    attr_writer :noop
+
+    #---------------------------------------------------------------
+    # all of our subclasses must respond to each of these methods...
+    @@interface_methods = [
+        :retrieve, :insync?, :sync, :fqpath, :evaluate, :refresh
+    ]
+
+    # so raise an error if a method that isn't overridden gets called
+    @@interface_methods.each { |method|
+        self.send(:define_method,method) {
+            raise "%s has not overridden %s" % [self.class,method]
+        }
+    }
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # for testing whether we should actually do anything
+    def noop
+        return @noop || Blink[:noop] || false
+    end
+    #---------------------------------------------------------------
+
+end
+#---------------------------------------------------------------
+
+#---------------------------------------------------------------
 # This class is the abstract base class for the mechanism for organizing
 # work.  No work is actually done by this class or its subclasses; rather,
 # the subclasses include states which do the actual work.
@@ -29,645 +60,473 @@ require 'blink/type/state'
 
 # to use this interface, just define an 'each' method and 'include Blink::Type'
 
-module Blink
-	class Type
-        include Enumerable
-        # this is a bit of a hack, but it'll work for now
-        attr_accessor :performoperation
-        attr_writer :noop
+class Blink::Type < Blink::Element
+    attr_accessor :children, :parameters, :parent, :states
+    include Enumerable
 
-		@@allobjects = Array.new # an array for all objects
+    @@allobjects = Array.new # an array for all objects
+    @abstract = true
 
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
-		# class methods dealing with Type management
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+    # class methods dealing with Type management
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-        # these objects are used for mapping type names (e.g., 'file')
-        # to actual object classes; because Type.inherited is
-        # called before the <subclass>.name method is defined, we need
-        # to store each class in an array, and then later actually iterate
-        # across that array and make a map
-        @@typeary = []
-		@@typehash = Hash.new { |hash,key|
-            if key.is_a?(String)
-                key = key.intern
-            end
-            if hash.include?(key)
-                hash[key]
+    #---------------------------------------------------------------
+    # these objects are used for mapping type names (e.g., 'file')
+    # to actual object classes; because Type.inherited is
+    # called before the <subclass>.name method is defined, we need
+    # to store each class in an array, and then later actually iterate
+    # across that array and make a map
+    @@typeary = []
+    @@typehash = Hash.new { |hash,key|
+        if key.is_a?(String)
+            key = key.intern
+        end
+        if hash.include?(key)
+            hash[key]
+        else
+            raise "Object type %s not found" % key
+        end
+    }
+
+    #---------------------------------------------------------------
+    # a test for whether this type is allowed to have instances
+    # on clients
+    # subclasses can just set '@abstract = true' to mark themselves
+    # as abstract
+    def Type.abstract
+        if defined? @abstract
+            return @abstract
+        else
+            return false
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # this is meant to be run multiple times, e.g., when a new
+    # type is defined at run-time
+    def Type.buildtypehash
+        @@typeary.each { |otype|
+            if @@typehash.include?(otype.name)
+                if @@typehash[otype.name] != otype
+                    Blink.warning("Object type %s is already defined (%s vs %s)" %
+                        [otype.name,@@typehash[otype.name],otype])
+                end
             else
-                raise "Object type %s not found" % key
+                @@typehash[otype.name] = otype
             end
         }
+    end
+    #---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-        # a test for whether this type is allowed to have instances
-        # on clients
-        # subclasses can just set '@abstract = true' to mark themselves
-        # as abstract
-        def Type.abstract
-            if defined? @abstract
-                return @abstract
-            else
-                return false
-            end
+    #---------------------------------------------------------------
+    def Type.eachtype
+        @@typeary.each { |type| yield type }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # this should make it so our subclasses don't have to worry about
+    # defining these class instance variables
+    def Type.inherited(sub)
+        sub.initvars
+
+        Blink.debug("subtype %s just created" % sub)
+        # add it to the master list
+        # unfortunately we can't yet call sub.name, because the #inherited
+        # method gets called before any commands in the class definition
+        # get executed, which, um, sucks
+        @@typeary.push(sub)
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # this is so we don't have to eval this code
+    # init all of our class instance variables
+    def Type.initvars
+        @objects = Hash.new
+        @actions = Hash.new
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # this is used for mapping object types (e.g., Blink::Type::File)
+    # to names (e.g., "file")
+    def Type.name
+        return @name
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def Type.newtype(type)
+        raise "Type.newtype called, but I don't know why"
+        @@typeary.push(type)
+        if @@typehash.has_key?(type.name)
+            Blink.notice("Redefining object type %s" % type.name)
         end
-		#---------------------------------------------------------------
+        @@typehash[type.name] = type
+    end
+    #---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-        # this is meant to be run multiple times, e.g., when a new
-        # type is defined at run-time
-        def Type.buildtypehash
-            @@typeary.each { |otype|
-                if @@typehash.include?(otype.name)
-                    if @@typehash[otype.name] != otype
-                        Blink.warning("Object type %s is already defined (%s vs %s)" %
-                            [otype.name,@@typehash[otype.name],otype])
-                    end
-                else
-                    @@typehash[otype.name] = otype
-                end
-            }
+    #---------------------------------------------------------------
+    def Type.type(type)
+        unless @@typeary.length == @@typehash.length
+            Type.buildtypehash
         end
-		#---------------------------------------------------------------
+        @@typehash[type]
+    end
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-        def Type.eachtype
-            @@typeary.each { |type| yield type }
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+    # class methods dealing with type instance management
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # retrieve a named object
+    def Type.[](name)
+        if @objects.has_key?(name)
+            return @objects[name]
+        else
+            p @objects
+            raise "Object '#{name}' does not exist"
         end
-		#---------------------------------------------------------------
+    end
+    #---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-        # this should make it so our subclasses don't have to worry about
-        # defining these class instance variables
-		def Type.inherited(sub)
-            sub.initvars
-
-            Blink.debug("subtype %s just created" % sub)
-            # add it to the master list
-            # unfortunately we can't yet call sub.name, because the #inherited
-            # method gets called before any commands in the class definition
-            # get executed, which, um, sucks
-            @@typeary.push(sub)
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-        # this is so we don't have to eval this code
-        # init all of our class instance variables
-        def Type.initvars
-            @objects = Hash.new
-            @actions = Hash.new
+    #---------------------------------------------------------------
+    def Type.[]=(name,object)
+        newobj = nil
+        if object.is_a?(Blink::Type)
+            newobj = object
+        else
+            raise "must pass a Blink::Type object"
         end
-		#---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-        # this is used for mapping object types (e.g., Blink::Type::File)
-        # to names (e.g., "file")
-        def Type.name
-            return @name
-        end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-        def Type.newtype(type)
-            raise "Type.newtype called, but I don't know why"
-            @@typeary.push(type)
-            if @@typehash.has_key?(type.name)
-                Blink.notice("Redefining object type %s" % type.name)
-            end
-            @@typehash[type.name] = type
-        end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-        def Type.type(type)
-            unless @@typeary.length == @@typehash.length
-                Type.buildtypehash
-            end
-            @@typehash[type]
-        end
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
-		# class methods dealing with type instance management
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# retrieve a named object
-		def Type.[](name)
-			if @objects.has_key?(name)
-				return @objects[name]
-			else
-                p @objects
-				raise "Object '#{name}' does not exist"
-			end
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		def Type.[]=(name,object)
-            newobj = nil
-            if object.is_a?(Blink::Type)
-                newobj = object
-            else
-                raise "must pass a Blink::Type object"
-            end
-
-			if @objects.has_key?(newobj.name)
-                puts @objects
-				raise "'#{newobj.name}' already exists in " +
-                    "class '#{newobj.class}': #{@objects[newobj.name]}"
-			else
-                #Blink.debug("adding %s of type %s to class list" %
-                #    [object.name,object.class])
-				@objects[newobj.name] = newobj
-			end
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# all objects total
-		def Type.push(object)
-			@@allobjects.push object
-			#Blink.debug("adding %s of type %s to master list" %
+        if @objects.has_key?(newobj.name)
+            puts @objects
+            raise "'#{newobj.name}' already exists in " +
+                "class '#{newobj.class}': #{@objects[newobj.name]}"
+        else
+            #Blink.debug("adding %s of type %s to class list" %
             #    [object.name,object.class])
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# some simple stuff to make it easier to get a name from everyone
-		def Type.namevar
-			return @namevar
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-        def Type.has_key?(name)
-            return @objects.has_key?(name)
+            @objects[newobj.name] = newobj
         end
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
+    end
+    #---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
-		# class methods dealing with contained states
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
+    #---------------------------------------------------------------
+    # all objects total
+    def Type.push(object)
+        @@allobjects.push object
+        #Blink.debug("adding %s of type %s to master list" %
+        #    [object.name,object.class])
+    end
+    #---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-		# accessor for the list of acceptable params
-		def Type.classparams
-			return @params
-		end
-		#---------------------------------------------------------------
+    #---------------------------------------------------------------
+    # some simple stuff to make it easier to get a name from everyone
+    def Type.namevar
+        return @namevar
+    end
+    #---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-		# our param list is by class, so we need to convert it to names
-        # (see blink/objects/file.rb for an example of how params are defined)
-		def Type.classparambyname
-            unless defined? @paramsbyname
-                @paramsbyname = Hash.new { |hash,key|
-                    if key.is_a?(String)
-                        key = key.intern
-                    end
-                    if hash.include?(key)
-                        hash[key]
-                    else
-                        fail TypeError.new(
-                            "Parameter %s is invalid for class %s" %
-                            [key.to_s,self]
-                        )
-                    end
-                }
-                @params.each { |param|
-                    if param.is_a? Symbol
-                        # store the Symbol class, not the symbol itself
-                        symbolattr = Blink::State::Symbol.new(param)
+    #---------------------------------------------------------------
+    def Type.has_key?(name)
+        return @objects.has_key?(name)
+    end
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
 
-                        @paramsbyname[param] = symbolattr
-                    elsif param.respond_to?(:name)
-                        # these are already classes
-                        @paramsbyname[param.name] = param
-                    else
-                        fail TypeError.new(
-                            "Parameter %s is invalid; it must be a class or symbol" %
-                            param.to_s
-                        )
-                    end
-                }
-            end
-			return @paramsbyname
-		end
-		#---------------------------------------------------------------
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+    # class and instance methods dealing with parameters and states
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
-		# instance methods related to instance intrinics
-        # e.g., initialize() and name()
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# flesh out our instance
-		def initialize(hash)
-            # params are for classes, states are for instances
-            # hokey but true
-			@states = Hash.new
-            @monitor = Array.new
-			@notify = Hash.new
-			#@encloses = Array.new
-			#@enclosedby = Array.new
-			@actions = Hash.new
-			#@opsgenned = false
-
-            # default to performing action
-            @noop = false
-
-            # if they passed in a list of states they're interested in,
-            # we mark them as "interesting"
-            # XXX maybe we should just consider params set to nil as 'interesting'
-            #
-            # this isn't used as much as it should be, but the idea is that
-            # the "interesting" states would be the ones retrieved during a
-            # 'retrieve' call
-            if hash.include?(:check)
-                @monitor = hash[:check].dup
-                hash.delete(:check)
-            end
-
-            # we have to set the name of our object before anything else,
-            # because it might be used in creating the other states
-            if hash.has_key?(self.class.namevar)
-                self[self.class.namevar] = hash[self.class.namevar]
-                hash.delete(self.class.namevar)
-            else
-                #p hash
-                #p self.class.namevar
-                raise TypeError.new("A name must be provided at initialization time")
-            end
-
-            hash.each { |param,value|
-                @monitor.push(param)
-                #Blink.debug("adding param '%s' with value '%s'" %
-                #    [param,value])
-                self[param] = value
-            }
-
-            # add this object to the specific class's list of objects
-			self.class[self.name] = self
-
-            # and then add it to the master list
-            Blink::Type.push(self)
-
-		end
-		# initialize
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-        # return the full path to us, for logging and rollback
-        # some classes (e.g., FileTypeRecords) will have to override this
-        def fqpath
-            return self.class, self.name
+    #---------------------------------------------------------------
+    def Branch.buildstatehash
+        unless defined? @validstates
+            @validstates = Hash.new(false)
         end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		def name
-			return @states[self.class.namevar].is
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		def to_s
-			self.name
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
-		# instance methods dealing with contained states
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# state access and stuff
-		def [](state)
-			if @states.has_key?(state)
-				return @states[state]
-			else
-				raise "Undefined state '#{state}' in #{self}"
-			end
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-        # because all object parameters are actually states, we
-        # have to do some shenanigans to make it look from the outside
-        # like @states is just a simple hash
-        # the Symbol stuff is especially a bit hackish
-        def []=(state,value)
-            if @states.has_key?(state)
-                @states[state].should = value
-                return
-            end
-
-            attrclass = self.class.classparambyname[state]
-
-            #Blink.debug("creating state of type '%s'" % attrclass)
-            # any given object can normally only have one of any given state
-            # type, but it might have many Symbol states 
-            #
-            # so, we need to make sure that the @states hash behaves
-            # the same whether it has a unique state or a bunch of Symbol
-            # states
-            if attrclass.is_a?(Blink::State::Symbol)
-                attrclass.should = value
-                @states[state] = attrclass
-            else
-                attr = attrclass.new(value)
-                attr.object = self
-                if attr.is_a?(Array)
-                    attr.each { |xattr|
-                        @states[xattr.name] = attr
-                    }
+        @states.each { |stateklass|
+            name = stateklass.name
+            if @validstates.include?(name) 
+                if @validstates[name] != stateklass
+                    raise "Redefining state %s(%s) in %s" % [name,stateklass,self]
                 else
-                    Blink.debug "Creating attr %s in %s" % [attr.name,self]
-                    @states[attr.name] = attr
+                    # it's already there, so don't bother
+                end
+            else
+                @validstates[name] = stateklass
+            end
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def Branch.validstate(name)
+        unless @validstates.length == @states.length
+            self.buildstatehash
+        end
+        if @validstates.include?(name)
+            return @validstates[name]
+        else
+            return false
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def Branch.validparameter(name)
+        return @validparameter.include?(name)
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # this abstracts accessing parameters and states, and normalizes
+    # access to always be symbols, not strings
+    def [](name)
+        mname = name
+        if name.is_a?(String)
+            mname = name.intern
+        end
+        if @states.include?(mname)
+            # if they're using [], they don't know if we're a state or a string
+            # thus, return a string
+            # if they want the actual state object, they should use state()
+            return @states[mname].is
+        elsif @parameters.include?(mname)
+            return @parameters[mname]
+        else
+            raise "Invalid parameter %s" % mname
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # this abstracts setting parameters and states, and normalizes
+    # access to always be symbols, not strings
+    def []=(name,value)
+        mname = name
+        if name.is_a?(String)
+            mname = name.intern
+        end
+
+        if stateklass = self.class.validstate(mname) 
+            if value.is_a?(Blink::State)
+                @states[mname] = value
+            else
+                if @states.include?(mname)
+                    @states[mname].should = value
+                else
+                    @states[mname] = stateklass.new(value)
+                    @states[mname].parent = self
                 end
             end
+        elsif self.class.validparameter(mname)
+            @parameters[mname] = value
+        else
+            raise "Invalid parameter %s" % mname
         end
-		#---------------------------------------------------------------
+    end
+    #---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-		# removing states
-		def delete(attr)
-			if @states.has_key?(attr)
-				@states.delete(attr)
-			else
-				raise "Undefined state '#{attr}' in #{self}"
-			end
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# this can only be used with blocks that are
-		# valid on operations and objects, as it iterates over both of
-		# them
-		# essentially, the interface defined by Blink::Type is used here
-		def each
-			ret = false
-			nodepth = 0
-			unless block_given?
-				raise "'Each' was not given a block"
-			end
-            @states.each { |name,attr|
-				#Blink.debug "'%s' yielding '%s' of type '%s'" % [self,attr,attr.class]
-                yield(attr)
-            }
-            # DISABLED
-            # until we're clear on what 'enclosure' means, this is
-            # all disabled
-
-			#if @encloses.length > 0
-			#	Blink.debug "#{self} encloses #{@encloses}"
-			##end
-			#if defined? Blink['depthfirst']
-			#	self.eachobj { |enclosed|
-			#		Blink.debug "yielding #{self} to object #{enclosed}"
-			#		ret |= yield(enclosed)
-			#	}
-			#	nodepth = 1
-			#end
-			#self.eachop { |op|
-			#	Blink.debug "yielding #{self} to op #{op}"
-			#	ret |= yield(op)
-			#}
-			#if ! defined? Blink['depthfirst'] and nodepth != 1
-			#	self.eachobj { |enclosed|
-			#		Blink.debug "yielding #{self} to object #{enclosed}"
-			#		ret |= yield(enclosed)
-			#	}
-			#end
-			#return ret
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
-		# instance methods dealing with actually doing work
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-        def evaluate
-            self.each { |state|
-                state.retrieve
-                unless state.insync?
-                    change = Blink::StateChange.new(state)
-
-                    if self.noop
-                        Blink.verbose("NOOP: %s" % change.to_s)
-                    else
-                        # what?
-                    end
-                end
-                #if @performoperation == :sync
-                #    self.sync
-                #else
-                #    # we, uh, don't do anything
-                #end
-                state.retrieve
-            }
+    #---------------------------------------------------------------
+    # removing states
+    def delete(attr)
+        if @states.has_key?(attr)
+            @states.delete(attr)
+        else
+            raise "Undefined state '#{attr}' in #{self}"
         end
-		#---------------------------------------------------------------
+    end
+    #---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-        # if all contained objects are in sync, then we're in sync
-        def insync?
-            insync = true
+    #---------------------------------------------------------------
+    def state(name)
+        return @states[name]
+    end
+    #---------------------------------------------------------------
 
-            self.each { |obj|
-                unless obj.insync?
-                    Blink.debug("%s is not in sync" % obj)
-                    insync = false
-                end
-            }
+    #---------------------------------------------------------------
+    def parameter(name)
+        return @parameters[name]
+    end
+    #---------------------------------------------------------------
 
-            Blink.debug("%s sync status is %s" % [self,insync])
-            return insync
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+    # instance methods related to instance intrinics
+    # e.g., initialize() and name()
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def initialize(hash)
+        @childary = []
+        @childhash = {}
+        @parent = nil
+        @noop = false
+
+        # these are not currently used
+        @monitor = Array.new
+        @notify = Hash.new
+        @actions = Hash.new
+
+        # if they passed in a list of states they're interested in,
+        # we mark them as "interesting"
+        # XXX maybe we should just consider params set to nil as 'interesting'
+        #
+        # this isn't used as much as it should be, but the idea is that
+        # the "interesting" states would be the ones retrieved during a
+        # 'retrieve' call
+        if hash.include?(:check)
+            @monitor = hash[:check].dup
+            hash.delete(:check)
         end
-		#---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-        # should we actually do anything?
-        def noop
-            return @noop || Blink[:noop] || false
+        # states and parameters are treated equivalently from the outside:
+        # as name-value pairs (using [] and []=)
+        # internally, however, parameters are merely a hash, while states
+        # point to State objects
+        # further, the lists of valid states and parameters are defined
+        # at the class level
+        @states = Hash.new(false)
+        @parameters = Hash.new(false)
+
+        # we have to set the name of our object before anything else,
+        # because it might be used in creating the other states
+        if hash.has_key?(self.class.namevar)
+            self[self.class.namevar] = hash[self.class.namevar]
+            hash.delete(self.class.namevar)
+        else
+            #p hash
+            #p self.class.namevar
+            raise TypeError.new("A name must be provided at initialization time")
         end
-		#---------------------------------------------------------------
 
-		#---------------------------------------------------------------
-        # set up the "interface" methods
-        [:sync,:retrieve].each { |method|
-            self.send(:define_method,method) {
-                self.each { |subobj|
-                    #Blink.debug("sending '%s' to '%s'" % [method,subobj])
-                    subobj.send(method)
-                }
+        hash.each { |param,value|
+            @monitor.push(param)
+            #Blink.debug("adding param '%s' with value '%s'" %
+            #    [param,value])
+            self[param] = value
+        }
+
+        # add this object to the specific class's list of objects
+        self.class[self.name] = self
+
+        # and then add it to the master list
+        Blink::Type.push(self)
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # return the full path to us, for logging and rollback
+    # some classes (e.g., FileTypeRecords) will have to override this
+    def fqpath
+        return self.class, self.name
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # this might result from a state or from a parameter
+    def name
+        return self[self.class.namevar]
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def to_s
+        self.name
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+    # instance methods dealing with contained states
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # iterate across all children, and then iterate across states
+    # we do children first so we're sure that all dependent objects
+    # are checked first
+    # we ignore parameters here, because they only modify how work gets
+    # done, they don't ever actually result in work specifically
+    def each
+        # we're only interested in the actual states, not the name/state
+        # pairs
+        [@children,@states.values].flatten.each { |child|
+            yield child
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+    # instance methods dealing with actually doing work
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # this method is responsible for collecting state changes
+    # we always descend into the children before we evaluate our current
+    # states
+    def evaluate(transaction)
+        self.each { |child| child.evaluate }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # if all contained objects are in sync, then we're in sync
+    def insync?
+        insync = true
+
+        self.each { |obj|
+            unless obj.insync?
+                Blink.debug("%s is not in sync" % obj)
+                insync = false
+            end
+        }
+
+        Blink.debug("%s sync status is %s" % [self,insync])
+        return insync
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # this method is responsible for handling changes in dependencies
+    # for instance, restarting a service if a config file is changed
+    # in general, we just hand the method up to our parent, but for
+    # objects that might need to refresh, they'll override this method
+    # XXX at this point, if all dependent objects change, then this method
+    # might get called for each change
+    def refresh(transaction)
+        unless @parent.nil?
+            @parent.refresh(transaction)
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # set up the "interface" methods
+    [:sync,:retrieve].each { |method|
+        self.send(:define_method,method) {
+            self.each { |subobj|
+                #Blink.debug("sending '%s' to '%s'" % [method,subobj])
+                subobj.send(method)
             }
         }
-		#---------------------------------------------------------------
+    }
+    #---------------------------------------------------------------
+end # Blink::Type
 
-		#---------------------------------------------------------------
-        def presync
-            self.each { |contained|
-                # this gets right to the heart of our question:
-                # do all subclasses of Type contain all of their
-                # content in contained objects?
-                Blink::Modification.new(contained)
-            }
-        end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
-		# instance methods handling actions and enclosure
-        # these are basically not used right now
-		#---------------------------------------------------------------
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# return action array
-		# these are actions to use for responding to events
-		# no, this probably isn't the best way, because we're providing
-        # access to the actual hash, which is silly
-		def action
-            if not defined? @actions
-                puts "defining action hash"
-                @actions = Hash.new
-            end
-			@actions
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# this allows each object to act like both a node and
-		# a branch
-		# but each object contains two types of objects: operations and other
-		# objects....
-		def eachobj
-			unless block_given?
-				raise "Eachobj was not given a block"
-			end
-			@encloses.each { |object|
-				yield(object)
-			}
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# store the object that immediately encloses us
-		def enclosedby(obj)
-			@enclosedby.push(obj)
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		def enclosed?
-			defined? @enclosedby
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# store a enclosed object
-		def encloses(obj)
-			obj.enclosedby(self)
-			#obj.subscribe(self,'*')
-			@encloses.push(obj)
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# call an event
-		# this is called on subscribers by the trigger method from the obj
-		# which sent the event
-		# event handling should probably be taking place in a central process,
-		# but....
-		def event(event,obj)
-			Blink.debug "#{self} got event #{event} from #{obj}"
-			if @actions.key?(event)
-				Blink.debug "calling it"
-				@actions[event].call(self,obj,event)
-			else
-				p @actions
-			end
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		def newevent(args)
-			if args[:event].nil?
-				raise "newevent called wrong on #{self}"
-			end
-
-			return Blink::Event.new(
-				:event => args[:event],
-				:object => self
-			)
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# subscribe to an event or all events
-		# this entire event system is a hack job and needs to
-		# be replaced with a central event handler
-		def subscribe(args,&block)
-			obj = args[:object]
-			event = args[:event] || '*'.intern
-			if obj.nil? or event.nil?
-				raise "subscribe was called wrongly; #{obj} #{event}"
-			end
-			obj.action[event] = block
-			#events.each { |event|
-				unless @notify.key?(event)
-					@notify[event] = Array.new
-				end
-				unless @notify[event].include?(obj)
-					Blink.debug "pushing event '%s' for object '%s'" % [event,obj]
-					@notify[event].push(obj)
-				end
-			#	}
-			#else
-			#	@notify['*'.intern].push(obj)
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-		# initiate a response to an event
-		def trigger(event)
-			subscribers = Array.new
-			if @notify.include?('*') and @notify['*'].length > 0
-				@notify['*'].each { |obj| subscribers.push(obj) }
-			end
-			if (@notify.include?(event) and (! @notify[event].empty?) )
-				@notify[event].each { |obj| subscribers.push(obj) }
-			end
-			Blink.debug "triggering #{event}"
-			subscribers.each { |obj|
-				Blink.debug "calling #{event} on #{obj}"
-				obj.event(event,self)
-			}
-		end
-		#---------------------------------------------------------------
-
-		#---------------------------------------------------------------
-	end # Blink::Type
-end
 require 'blink/type/service'
 require 'blink/type/file'
 require 'blink/type/symlink'
