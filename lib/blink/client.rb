@@ -51,6 +51,9 @@ module Blink
                 objects.each { |obj|
                     obj.evaluate
                 }
+
+                transaction = Blink::Transaction.new(objects)
+                transaction.run
             end
         end
     end
