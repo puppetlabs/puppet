@@ -35,7 +35,7 @@ result.each { |opt,arg|
 	end
 }
 
-$blinkbase = ".."
+$blinkbase = "../../../language/trunk"
 
 suites = nil
 

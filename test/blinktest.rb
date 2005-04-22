@@ -37,8 +37,8 @@ unless defined? BlinkTestSuite
     end
 
     def textfiles
-        textdir = File.join($blinkbase,"test","parser","text")
-        files = Dir.entries(File.join(textdir)).reject { |file|
+        textdir = File.join($blinkbase,"examples","code")
+        files = Dir.entries(textdir).reject { |file|
             file =~ %r{\.swp}
         }.reject { |file|
             file =~ %r{\.disabled}

@@ -1,7 +1,7 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../.."
+    $blinkbase = "../../../../language/trunk"
 end
 
 require 'blink/type/package'
