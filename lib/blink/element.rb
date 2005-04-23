@@ -30,6 +30,9 @@ class Blink::Element
     #---------------------------------------------------------------
     # for testing whether we should actually do anything
     def noop
+        unless defined? @noop
+            @noop = false
+        end
         return @noop || Blink[:noop] || false
     end
     #---------------------------------------------------------------
