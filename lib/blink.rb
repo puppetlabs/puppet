@@ -44,13 +44,8 @@ module Blink
         @@config[level] = true unless level == :debug
     }
 
-	def Blink.message(level,ary)
-		msg = ""
-		if ary.class == String
-			msg = ary
-		else
-			msg = ary.join(" ")
-		end
+	def Blink.message(level,*ary)
+		msg = ary.join(" ")
 
 		if @@config[level]
 			Blink::Message.new(
