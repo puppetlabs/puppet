@@ -305,7 +305,7 @@ class Blink::Type < Blink::Element
         elsif self.class.validparameter(mname)
             @parameters[mname] = value
         else
-            raise "Invalid parameter %s" % mname
+            raise "Invalid parameter %s" % [mname]
         end
     end
     #---------------------------------------------------------------
