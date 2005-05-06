@@ -33,11 +33,19 @@ module Blink
                     #puts "yayness"
                     if type = Blink::Type.type(object.type)
                         namevar = type.namevar
+                        #puts object.inspect
                         if namevar != :name
                             object[namevar] = object[:name]
                             object.delete(:name)
                         end
-                        type.new(object)
+                        begin
+                            type.new(object)
+                        rescue => detail
+                            puts "Failed to create object: %s" % detail 
+                            puts object.class
+                            puts object.inspect
+                            exit
+                        end
                     else
                         raise "Could not find object type %s" % object.type
                     end

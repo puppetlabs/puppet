@@ -381,9 +381,10 @@ class Blink::Type < Blink::Element
             #    [self.class,self.class.namevar,hash[self.class.namevar],self.name,self[self.class.namevar]])
             hash.delete(self.class.namevar)
         else
-            #p hash
-            #p self.class.namevar
-            raise TypeError.new("A name must be provided at initialization time")
+            p hash
+            p self.class.namevar
+            raise TypeError.new("A name must be provided to %s at initialization time" %
+                self.class)
         end
 
         hash.each { |param,value|
