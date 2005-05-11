@@ -26,7 +26,7 @@ module Blink
 
             def sync
                 begin
-                    File.open(self.path,"w") { # just create an empty file
+                    File.open(self.parent[:path],"w") { # just create an empty file
                     }
                 rescue => detail
                     raise detail
@@ -43,9 +43,7 @@ module Blink
             def retrieve
                 stat = nil
 
-                begin
-                    stat = File.stat(self.parent[:path])
-                rescue
+                unless stat = self.parent.stat
                     self.is = -1
                     Blink.debug "chown state is %d" % self.is
                     return
@@ -69,18 +67,22 @@ module Blink
             end
 
             def sync
-                begin
-                    stat = File.stat(self.parent[:path])
-                rescue => error
+                if @is == -1
+                    self.parent.stat(true)
+                    self.retrieve
+                    Blink.notice "%s: after refresh, is '%s'" % [self.class.name,@is]
+                end
+
+                unless self.parent.stat
                     Blink.error "File '%s' does not exist; cannot chown" %
                         self.parent[:path]
-                    return
                 end
 
                 begin
                     File.chown(self.should,-1,self.parent[:path])
-                rescue
-                    raise "failed to sync #{self.parent[:path]}: #{$!}"
+                rescue => detail
+                    raise "failed to chown '%s' to '%s': %s" %
+                        [self.parent[:path],self.should,detail]
                 end
 
                 #self.parent.newevent(:event => :inode_changed)
@@ -108,22 +110,24 @@ module Blink
             def retrieve
                 stat = nil
 
-                begin
-                    stat = File.stat(self.parent[:path])
-                    self.is = stat.mode & 007777
-                rescue => error
+                unless stat = self.parent.stat
                     # a value we know we'll never get in reality
                     self.is = -1
                     return
                 end
+                self.is = stat.mode & 007777
 
                 Blink.debug "chmod state is %o" % self.is
             end
 
             def sync
-                begin
-                    stat = File.stat(self.parent[:path])
-                rescue => error
+                if @is == -1
+                    self.parent.stat(true)
+                    self.retrieve
+                    Blink.notice "%s: after refresh, is '%s'" % [self.class.name,@is]
+                end
+
+                unless self.parent.stat
                     Blink.error "File '%s' does not exist; cannot chmod" %
                         self.parent[:path]
                     return
@@ -153,6 +157,11 @@ module Blink
 
             # this just doesn't seem right...
             def sync
+                unless defined? @is or @is == -1
+                    self.parent.stat(true)
+                    self.retrieve
+                    Blink.notice "%s: should is '%s'" % [self.class.name,self.should]
+                end
                 tmp = 0
                 if self.is == true
                     tmp = 1
@@ -169,9 +178,7 @@ module Blink
             def retrieve
                 stat = nil
 
-                begin
-                    stat = File.stat(self.parent[:path])
-                rescue
+                unless stat = self.parent.stat
                     self.is = -1
                     Blink.debug "chgrp state is %d" % self.is
                     return
@@ -202,10 +209,14 @@ module Blink
             end
 
             def sync
-                Blink.debug "setting chgrp state to %d" % self.should
-                begin
-                    stat = File.stat(self.parent[:path])
-                rescue => error
+                Blink.debug "setting chgrp state to %s" % self.should
+                if @is == -1
+                    self.parent.stat(true)
+                    self.retrieve
+                    Blink.notice "%s: after refresh, is '%s'" % [self.class.name,@is]
+                end
+
+                unless self.parent.stat
                     Blink.error "File '%s' does not exist; cannot chgrp" %
                         self.parent[:path]
                     return
@@ -224,7 +235,7 @@ module Blink
     end
     class Type
         class File < Type
-            attr_reader :stat, :path, :params
+            attr_reader :params
             # class instance variable
             @states = [
                 Blink::State::FileCreate,
@@ -240,6 +251,25 @@ module Blink
 
             @name = :file
             @namevar = :path
+
+            def initialize(hash)
+                super
+                @stat = nil
+            end
+
+            def stat(refresh = false)
+                if @stat.nil? or refresh == true
+                    begin
+                        @stat = ::File.stat(self[:path])
+                    rescue => error
+                        Blink.debug "Failed to stat %s: %s" %
+                            [self[:path],error]
+                        @stat = nil
+                    end
+                end
+
+                return @stat
+            end
 
             def sync
                 if self.create and ! FileTest.exist?(self.path)
