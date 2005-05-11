@@ -35,8 +35,11 @@ class Blink::State < Blink::Element
     # which will demonstrably not work with states that are part of a larger
     # whole, like FileRecordStates
     def evaluate(transaction)
+        Blink.verbose "evaluating %s" % self
         self.retrieve
-        unless self.insync?
+        if self.insync?
+            Blink.verbose "%s is in sync" % self
+        else
             transaction.change(Blink::StateChange.new(self))
         end
     end

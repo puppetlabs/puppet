@@ -21,6 +21,7 @@ class Blink::Transaction
     # for now, just store the changes for executing linearly
     # later, we might execute them as we receive them
     def change(change)
+        Blink.notice "adding change"
         @changes.push change
     end
     #---------------------------------------------------------------
@@ -37,6 +38,7 @@ class Blink::Transaction
 
     #---------------------------------------------------------------
     def initialize(tree)
+        Blink.notice "tree is %s" % [tree]
         @tree = tree
         @collect = true
         @changes = []
@@ -46,13 +48,16 @@ class Blink::Transaction
     #---------------------------------------------------------------
     def run
         if @tree.is_a?(Array)
+            Blink.notice "running array transaction"
             @tree.each { |item|
                 item.evaluate(self)
             }
         else
+            Blink.notice "running transaction"
             @tree.evaluate(self)
         end
-        self.evaluate
+        Blink.notice "[%s]" % [@changes]
+        #self.evaluate
     end
     #---------------------------------------------------------------
 end

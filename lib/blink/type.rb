@@ -462,7 +462,14 @@ class Blink::Type < Blink::Element
     # we always descend into the children before we evaluate our current
     # states
     def evaluate(transaction)
-        self.each { |child| child.evaluate(transaction) }
+        self.each { |child|
+            if child.is_a?(Blink::State)
+                Blink.verbose "Got state"
+            else
+                Blink.verbose "type is %s" % self.class
+            end
+            child.evaluate(transaction)
+        }
     end
     #---------------------------------------------------------------
 

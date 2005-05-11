@@ -28,18 +28,24 @@ module Blink
             end
 
             def objects=(list)
-                objects = list.collect { |object|
+                objects = []
+                list.collect { |object|
+                    Blink.verbose "object %s" % [object]
                     # create a Blink object from the list...
                     #puts "yayness"
                     if type = Blink::Type.type(object.type)
                         namevar = type.namevar
-                        #puts object.inspect
+                        puts object.inspect
                         if namevar != :name
                             object[namevar] = object[:name]
                             object.delete(:name)
                         end
+                        puts object.inspect
                         begin
-                            type.new(object)
+                            puts object.inspect
+                            typeobj = type.new(object)
+                            Blink.verbose "object %s is %s" % [object,typeobj]
+                            objects.push typeobj
                         rescue => detail
                             puts "Failed to create object: %s" % detail 
                             puts object.class
@@ -50,6 +56,7 @@ module Blink
                         raise "Could not find object type %s" % object.type
                     end
                 }
+                Blink.verbose "object length is %s" % objects.length
 
                 # okay, we have a list of all of the objects we're supposed
                 # to execute
