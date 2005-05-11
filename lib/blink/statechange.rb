@@ -21,13 +21,19 @@ module Blink
 
 		#---------------------------------------------------------------
         def forward
-            @type.change(@path,@is,@should)
+            Blink.notice "moving change forward"
+            if @state.noop
+                Blink.notice "change noop is %s" % @state.noop
+            else
+                @state.sync
+            end
         end
 		#---------------------------------------------------------------
 
 		#---------------------------------------------------------------
         def backward
-            @type.change(@path,@should,@is)
+            raise "Moving statechanges backward is currently unsupported"
+            #@type.change(@path,@should,@is)
         end
 		#---------------------------------------------------------------
         

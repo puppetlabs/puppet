@@ -70,6 +70,18 @@ class Blink::State < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # for testing whether we should actually do anything
+    def noop
+        unless defined? @noop
+            @noop = false
+        end
+        tmp = @noop || self.parent.noop || Blink[:noop] || false
+        Blink.notice "noop is %s" % tmp
+        return tmp
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     def refresh(transaction)
         self.retrieve
 

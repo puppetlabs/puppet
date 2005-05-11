@@ -38,6 +38,9 @@ unless defined? BlinkTestSuite
 
     def textfiles
         textdir = File.join($blinkbase,"examples","code")
+        # only parse this one file now
+        yield File.join(textdir,"head")
+        return
         files = Dir.entries(textdir).reject { |file|
             file =~ %r{\.swp}
         }.reject { |file|

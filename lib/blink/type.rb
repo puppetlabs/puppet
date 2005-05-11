@@ -183,8 +183,8 @@ class Blink::Type < Blink::Element
 
         if @objects.has_key?(newobj.name)
             puts @objects
-            raise "'#{newobj.name}' already exists in " +
-                "class '#{newobj.class}': #{@objects[newobj.name]}"
+            raise "Object '%s' of type '%s' already exists" %
+                [newobj.name,newobj.class.name]
         else
             #Blink.debug("adding %s of type %s to class list" %
             #    [object.name,object.class])
@@ -239,6 +239,12 @@ class Blink::Type < Blink::Element
                 @validstates[name] = stateklass
             end
         }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def Type.states
+        return @states
     end
     #---------------------------------------------------------------
 
@@ -364,6 +370,12 @@ class Blink::Type < Blink::Element
             hash.delete(:check)
         end
 
+        if hash.include?("noop")
+            Blink.notice "deleting noop (%s)" % hash["noop"]
+            @noop = hash["noop"]
+            hash.delete("noop")
+        end
+
         # states and parameters are treated equivalently from the outside:
         # as name-value pairs (using [] and []=)
         # internally, however, parameters are merely a hash, while states
@@ -437,9 +449,19 @@ class Blink::Type < Blink::Element
     # we ignore parameters here, because they only modify how work gets
     # done, they don't ever actually result in work specifically
     def each
-        # we're only interested in the actual states, not the name/state
-        # pairs
-        [@children,@states.values].flatten.each { |child|
+        # we want to return the states in the order that each type
+        # specifies it, because it may (as in the case of File#create)
+        # be important
+        tmpstates = []
+        self.class.states.each { |state|
+            if @states.include?(state.name)
+                tmpstates.push(@states[state.name])
+            end
+        }
+        unless tmpstates.length == @states.length
+            raise "Something went very wrong with tmpstates creation"
+        end
+        [@children,tmpstates].flatten.each { |child|
             yield child
         }
     end
@@ -463,11 +485,6 @@ class Blink::Type < Blink::Element
     # states
     def evaluate(transaction)
         self.each { |child|
-            if child.is_a?(Blink::State)
-                Blink.verbose "Got state"
-            else
-                Blink.verbose "type is %s" % self.class
-            end
             child.evaluate(transaction)
         }
     end

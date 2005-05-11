@@ -11,6 +11,30 @@ module Blink
     # because the objects must be defined for us to use them in our
     # definition of the file object
     class State
+        class FileCreate < Blink::State
+            require 'etc'
+            attr_accessor :file
+            @name = :create
+
+            def retrieve
+                stat = nil
+
+                self.is = FileTest.exist?(self.parent[:path])
+                Blink.debug "exists state is %s" % self.is
+            end
+
+
+            def sync
+                begin
+                    File.open(self.path,"w") { # just create an empty file
+                    }
+                rescue => detail
+                    raise detail
+                end
+                #self.parent.newevent(:event => :inode_changed)
+            end
+        end
+
         class FileUID < Blink::State
             require 'etc'
             attr_accessor :file
@@ -22,8 +46,9 @@ module Blink
                 begin
                     stat = File.stat(self.parent[:path])
                 rescue
-                    # this isn't correct, but what the hell
-                    raise "File '%s' does not exist: #{$!}" % self.parent[:path]
+                    self.is = -1
+                    Blink.debug "chown state is %d" % self.is
+                    return
                 end
 
                 self.is = stat.uid
@@ -31,31 +56,27 @@ module Blink
                     begin
                         user = Etc.getpwnam(self.should)
                         if user.gid == ""
-                            raise "Could not retrieve uid for %s" % self.parent
+                            raise "Could not retrieve uid for '%s'" % self.parent
                         end
-                        Blink.debug "converting %s to integer %d" %
+                        Blink.debug "converting %s to integer '%d'" %
                             [self.should,user.uid]
                         self.should = user.uid
                     rescue
-                        raise "Could not get any info on user %s" % self.should
+                        raise "Could not get any info on user '%s'" % self.should
                     end
                 end
                 Blink.debug "chown state is %d" % self.is
             end
 
-            #def <=>(other)
-            #    if other.is_a?(Integer)
-            #        begin
-            #            other = Etc.getpwnam(other).uid
-            #        rescue
-            #            raise "Could not get uid for #{@params[:uid]}"
-            #        end
-            #    end
-#
-#                self.is <=> other
-#            end
-
             def sync
+                begin
+                    stat = File.stat(self.parent[:path])
+                rescue => error
+                    Blink.error "File '%s' does not exist; cannot chown" %
+                        self.parent[:path]
+                    return
+                end
+
                 begin
                     File.chown(self.should,-1,self.parent[:path])
                 rescue
@@ -74,20 +95,40 @@ module Blink
 
             @name = :mode
 
+            def initialize(should)
+                # this is pretty hackish, but i need to make sure the number is in
+                # octal, yet the number can only be specified as a string right now
+                unless should =~ /^0/
+                    should = "0" + should
+                end
+                should = Integer(should)
+                super(should)
+            end
+
             def retrieve
                 stat = nil
 
                 begin
                     stat = File.stat(self.parent[:path])
+                    self.is = stat.mode & 007777
                 rescue => error
-                    raise "File %s could not be stat'ed: %s" % [self.parent[:path],error]
+                    # a value we know we'll never get in reality
+                    self.is = -1
+                    return
                 end
 
-                self.is = stat.mode & 007777
                 Blink.debug "chmod state is %o" % self.is
             end
 
             def sync
+                begin
+                    stat = File.stat(self.parent[:path])
+                rescue => error
+                    Blink.error "File '%s' does not exist; cannot chmod" %
+                        self.parent[:path]
+                    return
+                end
+
                 begin
                     File.chmod(self.should,self.parent[:path])
                 rescue
@@ -131,8 +172,9 @@ module Blink
                 begin
                     stat = File.stat(self.parent[:path])
                 rescue
-                    # this isn't correct, but what the hell
-                    raise "File #{self.parent[:path]} does not exist: #{$!}"
+                    self.is = -1
+                    Blink.debug "chgrp state is %d" % self.is
+                    return
                 end
 
                 self.is = stat.gid
@@ -159,29 +201,16 @@ module Blink
                 Blink.debug "chgrp state is %d" % self.is
             end
 
-#            def <=>(other)
-#                # unless we're numeric...
-#                if other.is_a?(Integer)
-#                    begin
-#                        group = Etc.getgrnam(other)
-#                        # yeah, don't ask me
-#                        # this is retarded
-#                        #p group
-#                        other = group.gid
-#                        if other == ""
-#                            raise "Could not retrieve gid for %s" % other
-#                        end
-#                    rescue
-#                        raise "Could not get any info on group %s" % other
-#                    end
-#                end
-#
-#                #puts self.should
-#                self.is <=> other
-#            end
-
             def sync
                 Blink.debug "setting chgrp state to %d" % self.should
+                begin
+                    stat = File.stat(self.parent[:path])
+                rescue => error
+                    Blink.error "File '%s' does not exist; cannot chgrp" %
+                        self.parent[:path]
+                    return
+                end
+
                 begin
                     # set owner to nil so it's ignored
                     File.chown(nil,self.should,self.parent[:path])
@@ -198,6 +227,7 @@ module Blink
             attr_reader :stat, :path, :params
             # class instance variable
             @states = [
+                Blink::State::FileCreate,
                 Blink::State::FileUID,
                 Blink::State::FileGroup,
                 Blink::State::FileMode,
@@ -210,6 +240,18 @@ module Blink
 
             @name = :file
             @namevar = :path
+
+            def sync
+                if self.create and ! FileTest.exist?(self.path)
+                    begin
+                        File.open(self.path,"w") { # just create an empty file
+                        }
+                    rescue => detail
+                        raise detail
+                    end
+                end
+                super
+            end
         end # Blink::Type::File
     end # Blink::Type
 

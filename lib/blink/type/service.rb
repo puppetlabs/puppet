@@ -13,6 +13,25 @@ module Blink
         class ServiceRunning < State
             @name = :running
 
+            # this whole thing is annoying
+            # i should probably just be using booleans, but for now, i'm not...
+            def initialize(should)
+                if should == false
+                    should = 0
+                elsif should == true
+                    should = 1
+                elsif should == "1" or should == 1
+                    should = 1
+                elsif should == "0" or should == 0
+                    should = 0
+                else
+                    Blink.warning "%s: interpreting '%s' as false" %
+                        [self.class,should]
+                    should = 0
+                end
+                super(should)
+            end
+
             def retrieve
                 self.is = self.running()
                 Blink.debug "Running value for '%s' is '%s'" %
@@ -49,7 +68,7 @@ module Blink
                     if status < 1
                         Blink.debug "Starting '%s'" % self
                         unless self.parent.initcmd("start")
-                            raise "Failed to start %s" % self.name
+                            raise "Failed to start '%s'" % self.parent.name
                         end
                     else
                         Blink.debug "'%s' is already running, yo" % self
@@ -107,6 +126,7 @@ module Blink
                     # if we've gotten this far, we found a valid script
                     return fqname
                 }
+                raise "Could not find init script for '%s'" % name
             end
 
             # it'd be nice if i didn't throw the output away...
@@ -115,14 +135,14 @@ module Blink
             def initcmd(cmd)
                 script = self.initscript
 
-                #Blink.debug "Executing '%s %s' as initcmd for '%s'" %
-                #    [script,cmd,self]
+                Blink.debug "Executing '%s %s' as initcmd for '%s'" %
+                    [script,cmd,self]
 
                 rvalue = Kernel.system("%s %s" %
                         [script,cmd])
 
-                #Blink.debug "'%s' ran with exit status '%s'" %
-                #    [cmd,rvalue]
+                Blink.debug "'%s' ran with exit status '%s'" %
+                    [cmd,rvalue]
 
 
                 rvalue
