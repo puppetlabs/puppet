@@ -99,6 +99,10 @@ module Blink
                 :pattern
             ]
 
+            @functions = [
+                :addpath
+            ]
+
             @name = :service
 			@namevar = :name
 

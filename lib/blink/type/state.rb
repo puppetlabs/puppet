@@ -56,7 +56,8 @@ class Blink::State < Blink::Element
     # we aren't actually comparing the states themselves, we're only
     # comparing the "should" value with the "is" value
     def insync?
-        Blink.debug "%s value is %s, should be %s" % [self,self.is,self.should]
+        Blink.debug "%s value is '%s', should be '%s'" %
+            [self,self.is.inspect,self.should.inspect]
         self.is == self.should
     end
     #---------------------------------------------------------------

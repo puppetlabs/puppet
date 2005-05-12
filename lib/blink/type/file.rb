@@ -43,7 +43,7 @@ module Blink
             def retrieve
                 stat = nil
 
-                unless stat = self.parent.stat
+                unless stat = self.parent.stat(true)
                     self.is = -1
                     Blink.debug "chown state is %d" % self.is
                     return
@@ -100,17 +100,19 @@ module Blink
             def initialize(should)
                 # this is pretty hackish, but i need to make sure the number is in
                 # octal, yet the number can only be specified as a string right now
-                unless should =~ /^0/
-                    should = "0" + should
+                unless should.is_a?(Integer) # i've already converted it correctly
+                    unless should =~ /^0/
+                        should = "0" + should
+                    end
+                    should = Integer(should)
                 end
-                should = Integer(should)
                 super(should)
             end
 
             def retrieve
                 stat = nil
 
-                unless stat = self.parent.stat
+                unless stat = self.parent.stat(true)
                     # a value we know we'll never get in reality
                     self.is = -1
                     return
@@ -178,7 +180,7 @@ module Blink
             def retrieve
                 stat = nil
 
-                unless stat = self.parent.stat
+                unless stat = self.parent.stat(true)
                     self.is = -1
                     Blink.debug "chgrp state is %d" % self.is
                     return
@@ -246,16 +248,12 @@ module Blink
             ]
 
             @parameters = [
-                :path
+                :path,
+                :recurse
             ]
 
             @name = :file
             @namevar = :path
-
-            def initialize(hash)
-                super
-                @stat = nil
-            end
 
             def stat(refresh = false)
                 if @stat.nil? or refresh == true
@@ -271,8 +269,65 @@ module Blink
                 return @stat
             end
 
+            def initialize(hash)
+                arghash = hash.dup
+                super
+                @stat = nil
+                Blink.notice arghash.inspect
+
+                # if recursion is enabled and we're a directory...
+                if @parameters[:recurse] and self.stat.directory?
+                    recurse = self[:recurse]
+                    # we might have a string, rather than a number
+                    if recurse.is_a?(String)
+                        if recurse =~ /^[0-9]+$/
+                            recurse = Integer(recurse)
+                        elsif recurse =~ /^inf/ # infinite recursion
+                            recurse = true
+                        end
+                    end
+
+                    # unless we're at the end of the recursion
+                    if recurse != 0
+                        arghash.delete("recurse")
+                        if recurse.is_a?(Integer)
+                            recurse -= 1 # reduce the level of recursion
+                        end
+
+                        arghash[:recurse] = recurse
+
+                        # now make each contained file/dir a child
+                        unless defined? @children
+                            @children = []
+                        end
+
+                        Dir.foreach(self[:path]) { |file|
+                            next if file =~ /^\.\.?/ # skip . and ..
+
+                            arghash[:path] = ::File.join(self[:path],file)
+
+                            # if one of these files already exists, we're going to
+                            # fail here, because this will try to clobber, which is bad
+                            # mmmkay
+                            #@children.push self.class.new(arghash)
+                            child = nil
+                            # if the file already exists...
+                            if child = self.class[arghash[:path]]
+                                arghash.each { |var,value|
+                                    next if var == :path
+                                    child[var] = value
+                                }
+                            else # create it anew
+                                child = self.class.new(arghash)
+                            end
+                            @children.push child
+                        }
+                    end
+                end
+            end
+
             def sync
-                if self.create and ! FileTest.exist?(self.path)
+                if @states[:create] and ! FileTest.exist?(self.path)
                     begin
                         File.open(self.path,"w") { # just create an empty file
                         }
