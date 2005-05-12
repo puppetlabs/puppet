@@ -39,6 +39,8 @@ module Blink
                             object.delete(:name)
                         end
                         begin
+                            # this will fail if the type already exists
+                            # which may or may not be a good thing...
                             typeobj = type.new(object)
                             objects.push typeobj
                         rescue => detail

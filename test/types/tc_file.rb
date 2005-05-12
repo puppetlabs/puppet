@@ -58,6 +58,7 @@ class TestFile < Test::Unit::TestCase
 
     def test_group
         [%x{groups}.chomp.split(/ /), Process.groups].flatten.each { |group|
+            puts "Testing %s" % group
             assert_nothing_raised() {
                 @file[:group] = group
             }

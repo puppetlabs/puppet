@@ -166,8 +166,7 @@ class Blink::Type < Blink::Element
         if @objects.has_key?(name)
             return @objects[name]
         else
-            p @objects
-            raise "Object '#{name}' does not exist"
+            return nil
         end
     end
     #---------------------------------------------------------------
@@ -283,7 +282,7 @@ class Blink::Type < Blink::Element
         elsif @parameters.include?(mname)
             return @parameters[mname]
         else
-            raise "Invalid parameter %s" % mname
+            raise "Invalid parameter %s%s" % [mname]
         end
     end
     #---------------------------------------------------------------
@@ -371,7 +370,6 @@ class Blink::Type < Blink::Element
         end
 
         if hash.include?("noop")
-            Blink.notice "deleting noop (%s)" % hash["noop"]
             @noop = hash["noop"]
             hash.delete("noop")
         end

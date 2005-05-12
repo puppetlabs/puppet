@@ -273,7 +273,6 @@ module Blink
                 arghash = hash.dup
                 super
                 @stat = nil
-                Blink.notice arghash.inspect
 
                 # if recursion is enabled and we're a directory...
                 if @parameters[:recurse] and self.stat.directory?
