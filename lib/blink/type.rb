@@ -38,6 +38,10 @@ class Blink::Type < Blink::Element
     @@allobjects = Array.new # an array for all objects
     @abstract = true
 
+    @name = :blink # a little fakery, since Blink itself isn't a type
+
+    @allowedmethods = [:noop,:debug]
+
     #---------------------------------------------------------------
     #---------------------------------------------------------------
     # class methods dealing with Type management
@@ -50,7 +54,7 @@ class Blink::Type < Blink::Element
     # called before the <subclass>.name method is defined, we need
     # to store each class in an array, and then later actually iterate
     # across that array and make a map
-    @@typeary = []
+    @@typeary = [self]
     @@typehash = Hash.new { |hash,key|
         if key.is_a?(String)
             key = key.intern
@@ -83,6 +87,18 @@ class Blink::Type < Blink::Element
         else
             return false
         end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def noop(ary)
+        Blink[:noop] = ary.shift
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def debug(ary)
+        Blink[:debug] = ary.shift
     end
     #---------------------------------------------------------------
 
