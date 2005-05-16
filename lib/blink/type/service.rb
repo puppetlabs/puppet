@@ -127,9 +127,9 @@ module Blink
                 raise "Could not find init script for '%s'" % name
             end
 
-            def Service.setpath(*ary)
+            def Service.setpath(ary)
                 # verify each of the paths exists
-                ary.flatten!
+                #ary.flatten!
                 @searchpaths = ary.find_all { |dir|
                     retvalue = false
                     begin
