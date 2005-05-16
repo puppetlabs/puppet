@@ -54,7 +54,7 @@ class Blink::Type < Blink::Element
     # called before the <subclass>.name method is defined, we need
     # to store each class in an array, and then later actually iterate
     # across that array and make a map
-    @@typeary = [self]
+    @@typeary = [self] # so that the allowedmethods stuff works
     @@typehash = Hash.new { |hash,key|
         if key.is_a?(String)
             key = key.intern
