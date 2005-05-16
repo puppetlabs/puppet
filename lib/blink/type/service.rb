@@ -100,7 +100,7 @@ module Blink
             ]
 
             @functions = [
-                :addpath
+                :setpath
             ]
 
             @name = :service
@@ -129,12 +129,13 @@ module Blink
 
             def Service.setpath(*ary)
                 # verify each of the paths exists
+                ary.flatten!
                 @searchpaths = ary.find_all { |dir|
                     retvalue = false
                     begin
                         retvalue = ::File.stat(dir).directory?
                     rescue => detail
-                        Blink.notice("Directory %s does not exist: %s" % [dir,detail])
+                        Blink.verbose("Directory %s does not exist: %s" % [dir,detail])
                         # just ignore it
                     end
                     # disallow relative paths
@@ -143,10 +144,6 @@ module Blink
                     #end
                     retvalue
                 }
-                #unless @searchpaths.include?(path)
-                #    # XXX should we check to see if the path exists?
-                #    @searchpaths.push(path)
-                #end
             end
 
             # it'd be nice if i didn't throw the output away...

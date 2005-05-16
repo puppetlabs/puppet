@@ -85,7 +85,11 @@ module Blink
             @evalcount += 0
             if type = Blink::Type.type(self.type)
                 # call the settings
-                if type.allowedmethod(self.name)
+                name = self.name
+                unless name.is_a?(Symbol)
+                    name = name.intern
+                end
+                if type.allowedmethod(name)
                     type.send(self.name,self.args)
                 else
                     Blink.error("%s does not respond to %s" % [self.type,self.name])
