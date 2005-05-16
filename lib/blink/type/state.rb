@@ -31,16 +31,16 @@ class Blink::State < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # this assumes the controlling process will actually execute the change
-    # which will demonstrably not work with states that are part of a larger
-    # whole, like FileRecordStates
-    def evaluate(transaction)
+    # if we're not in sync, return a statechange capable of putting us
+    # in sync
+    def evaluate
         Blink.verbose "evaluating %s" % self
         self.retrieve
         if self.insync?
             Blink.verbose "%s is in sync" % self
+            return nil
         else
-            transaction.change(Blink::StateChange.new(self))
+            return Blink::StateChange.new(self)
         end
     end
     #---------------------------------------------------------------

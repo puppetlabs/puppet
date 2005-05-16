@@ -12,8 +12,11 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
 
     @options = [:name, :linesplit, :escapednewlines]
     @abstract = true
+    @metaclass = true
 
     @name = :filetype
+
+    @modsystem = true
 
     #---------------------------------------------------------------
     def FileType.newtype(hash)

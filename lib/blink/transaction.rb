@@ -14,46 +14,50 @@ require 'blink/statechange'
 
 #---------------------------------------------------------------
 class Blink::Transaction
-    attr_accessor :collect  # do we collect the changes and perform them
-                            # all at once?
-
     #---------------------------------------------------------------
     # for now, just store the changes for executing linearly
     # later, we might execute them as we receive them
     def change(change)
-        @changes.push change
+        @children.push change
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
     def evaluate
-        Blink.notice "evaluating %s changes" % @changes.length
-        @changes.each { |change|
-            msg = change.forward
+        Blink.notice "executing %s changes" % @children.length
+
+        @children.each { |change|
+            if change.is_a?(Blink::StateChange)
+                begin
+                    change.forward
+                rescue => detail
+                    Blink.error("%s failed: %s" % [change,detail])
+                    # at this point, we would normally roll back the transaction
+                    # but, um, i don't know how to do that yet
+                end
+            elsif change.is_a?(Blink::Transaction)
+                change.evaluate
+            else
+                raise "Transactions cannot handle objects of type %s" % child.class
+            end
         }
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # this should only be called by a Blink::Container object now
+    # and it should only receive an array
     def initialize(tree)
         @tree = tree
-        @collect = true
-        @changes = []
-    end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    def run
-        Blink.notice "running transaction"
-        if @tree.is_a?(Array)
-            @tree.each { |item|
-                item.evaluate(self)
-            }
-        else
-            @tree.evaluate(self)
-        end
-        Blink.notice "finished transaction"
-        self.evaluate
+        # change collection is in-band, and message generation is out-of-band
+        # of course, exception raising is also out-of-band
+        @children = @tree.collect { |child|
+            # not all of the children will return a change
+            child.evaluate
+        }.flatten.reject { |child|
+            child.nil? # remove empties
+        }
     end
     #---------------------------------------------------------------
 end

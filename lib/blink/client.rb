@@ -8,6 +8,7 @@ require 'blink'
 require 'blink/function'
 require 'blink/type'
 require 'blink/transaction'
+require 'blink/transportable'
 
 module Blink
     class ClientError < RuntimeError; end
@@ -27,45 +28,19 @@ module Blink
                 end
             end
 
-            def objects=(list)
-                objects = []
-                list.collect { |object|
-                    # create a Blink object from the list...
-                    #puts "yayness"
-                    if type = Blink::Type.type(object.type)
-                        namevar = type.namevar
-                        if namevar != :name
-                            object[namevar] = object[:name]
-                            object.delete(:name)
-                        end
-                        begin
-                            # this will fail if the type already exists
-                            # which may or may not be a good thing...
-                            typeobj = type.new(object)
-                            objects.push typeobj
-                        rescue => detail
-                            puts "Failed to create object: %s" % detail 
-                            #puts object.class
-                            #puts object.inspect
-                            exit
-                        end
-                    else
-                        raise "Could not find object type %s" % object.type
-                    end
-                }
+            # this method is how the client receives the tree of Transportable
+            # objects
+            # for now, just descend into the tree and perform and necessary
+            # manipulations
+            def objects=(tree)
+                container = tree.to_type
 
-                # okay, we have a list of all of the objects we're supposed
-                # to execute
-                # here's where we collect the rollbacks and record them
-                # that means that we need, at the least:
-                #   - a standard mechanism for specifying that an object is no-op
-                #   - a standard object that is considered a rollback object
-                #objects.each { |obj|
-                #    obj.evaluate
-                #}
-
-                transaction = Blink::Transaction.new(objects)
-                transaction.run
+                # for now we just evaluate the top-level container, but eventually
+                # there will be schedules and such associated with each object,
+                # and probably with the container itself
+                transaction = container.evaluate
+                #transaction = Blink::Transaction.new(objects)
+                transaction.evaluate
             end
         end
     end

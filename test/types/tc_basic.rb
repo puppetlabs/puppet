@@ -21,12 +21,7 @@ class TestBasic < Test::Unit::TestCase
         Blink[:debug] = 1
 
         assert_nothing_raised() {
-            unless Blink::Component.has_key?("sleeper")
-                Blink::Component.new(
-                    :name => "sleeper"
-                )
-            end
-            @component = Blink::Component["sleeper"]
+            @component = Blink::Component.new
         }
 
         assert_nothing_raised() {
@@ -62,7 +57,7 @@ class TestBasic < Test::Unit::TestCase
     end
 
     def test_name_calls
-        [@component,@sleeper,@configfile].each { |obj|
+        [@sleeper,@configfile].each { |obj|
             assert_nothing_raised(){
                 obj.name
             }
@@ -71,11 +66,6 @@ class TestBasic < Test::Unit::TestCase
 
     def test_name_equality
         #puts "Component is %s, id %s" % [@component, @component.object_id]
-        assert_equal(
-            "sleeper",
-            @component.name
-        )
-
         assert_equal(
             File.join($blinkbase,"examples/root/etc/configfile"),
             @configfile.name
@@ -88,11 +78,30 @@ class TestBasic < Test::Unit::TestCase
     end
 
     def test_object_retrieval
-        [@component,@sleeper,@configfile].each { |obj|
+        [@sleeper,@configfile].each { |obj|
             assert_equal(
                 obj.class[obj.name].object_id,
                 obj.object_id
             )
+        }
+    end
+
+    def test_transaction
+        transaction = nil
+        assert_nothing_raised() {
+            transaction = @component.evaluate
+        }
+        assert_nothing_raised() {
+            transaction.evaluate
+        }
+        assert_nothing_raised() {
+            @sleeper[:running] = 0
+        }
+        assert_nothing_raised() {
+            transaction = @component.evaluate
+        }
+        assert_nothing_raised() {
+            transaction.evaluate
         }
     end
 end

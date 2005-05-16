@@ -6,12 +6,11 @@
 # this thing contains everything else, including itself
 
 require 'blink'
-require 'blink/element'
-require 'blink/transaction'
 require 'blink/type'
+require 'blink/transaction'
 
 module Blink
-	class Container < Blink::Element
+	class Component < Blink::Element
         @name = :container
 
         def initialize

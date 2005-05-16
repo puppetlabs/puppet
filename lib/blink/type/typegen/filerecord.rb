@@ -14,6 +14,7 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
 
     @options = [:name, :splitchar, :fields, :namevar, :filetype, :regex, :joinchar]
     @abstract = true
+    @metaclass = true
 
     @name = :filerecord
 

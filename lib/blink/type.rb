@@ -126,6 +126,16 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def Type.metaclass
+        if defined? @metaclass
+            return @metaclass
+        else
+            return false
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # this is used for mapping object types (e.g., Blink::Type::File)
     # to names (e.g., "file")
     def Type.name
@@ -340,7 +350,7 @@ class Blink::Type < Blink::Element
 
     #---------------------------------------------------------------
     #---------------------------------------------------------------
-    # instance methods related to instance intrinics
+    # instance methods related to instance intrinsics
     # e.g., initialize() and name()
     #---------------------------------------------------------------
     #---------------------------------------------------------------
@@ -348,6 +358,7 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
     def initialize(hash)
         @children = []
+        @evalcount = 0
 
         @parent = nil
         @noop = false
@@ -481,9 +492,18 @@ class Blink::Type < Blink::Element
     # this method is responsible for collecting state changes
     # we always descend into the children before we evaluate our current
     # states
-    def evaluate(transaction)
-        self.each { |child|
-            child.evaluate(transaction)
+    # this returns any changes resulting from testing, thus 'collect'
+    # rather than 'each'
+    def evaluate
+        # if we're a metaclass and we've already evaluated once...
+        if self.metaclass and @evalcount > 0
+            return
+        end
+        @evalcount += 1
+        # these might return messages, but the main action is through
+        # setting changes in the transactions
+        self.collect { |child|
+            child.evaluate
         }
     end
     #---------------------------------------------------------------
@@ -502,6 +522,15 @@ class Blink::Type < Blink::Element
 
         Blink.debug("%s sync status is %s" % [self,insync])
         return insync
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # do we actually do work, or do we modify the system instead?
+    # instances of a metaclass only get executed once per client process,
+    # while instances of normal classes get run every time
+    def metaclass
+        return self.class.metaclass
     end
     #---------------------------------------------------------------
 
