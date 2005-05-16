@@ -51,13 +51,13 @@ module Blink
             if type = Blink::Type.type(self.type)
                 namevar = type.namevar
                 if namevar != :name
-                    object[namevar] = object[:name]
-                    object.delete(:name)
+                    self[namevar] = self[:name]
+                    self.delete(:name)
                 end
                 begin
                     # this will fail if the type already exists
                     # which may or may not be a good thing...
-                    retobj = type.new(object)
+                    retobj = type.new(self)
                 rescue => detail
                     Blink.error "Failed to create object: %s" % detail 
                     #puts object.class
@@ -65,7 +65,7 @@ module Blink
                     #exit
                 end
             else
-                raise "Could not find object type %s" % object.type
+                raise "Could not find object type %s" % self.type
             end
 
             return retobj
@@ -81,7 +81,7 @@ module Blink
             @evalcount = 0
         end
 
-        def evaluate(transaction)
+        def evaluate
             @evalcount += 0
             if type = Blink::Type.type(self.type)
                 # call the settings
@@ -99,7 +99,7 @@ module Blink
         def to_type
             # this container will contain the equivalent of all objects at
             # this level
-            container = Blink::Container.new
+            container = Blink::Component.new
             nametable = {}
 
             self.each { |child|
@@ -109,7 +109,7 @@ module Blink
                 if child.is_a?(Blink::TransBucket)
                     # just perform the same operation on any children
                     container.push(child.to_type)
-                elsif child.is_a?(Blink::Setting)
+                elsif child.is_a?(Blink::TransSetting)
                     # XXX this is wrong, but for now just evaluate the settings
                     child.evaluate
                 elsif child.is_a?(Blink::TransObject)
@@ -119,8 +119,8 @@ module Blink
                     # unique
                     name = [child[:name],child[:type]].join("--")
 
-                    if namecheck.include?(name)
-                        object = namecheck[name]
+                    if nametable.include?(name)
+                        object = nametable[name]
                         child.each { |var,value|
                             # don't rename; this shouldn't be possible anyway
                             next if var == :name
@@ -131,13 +131,13 @@ module Blink
                     else # the object does not exist yet in our scope
                         # now we have the object instantiated, in our scope
                         object = child.to_type
-                        namecheck[name] = object
+                        nametable[name] = object
 
                         # this sets the order of the object
                         container.push object
                     end
                 else
-                    raise "Client#mkobjects cannot handle objects of type %s" %
+                    raise "TransBucket#to_type cannot handle objects of type %s" %
                         child.class
                 end
             }
