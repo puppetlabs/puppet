@@ -39,7 +39,7 @@ class TestBasic < Test::Unit::TestCase
                     :name => "sleeper",
                     :running => 1
                 )
-                Blink::Type::Service.addpath(
+                Blink::Type::Service.setpath(
                     File.join($blinkbase,"examples/root/etc/init.d")
                 )
             end

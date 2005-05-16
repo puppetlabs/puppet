@@ -85,7 +85,11 @@ module Blink
             @evalcount += 0
             if type = Blink::Type.type(self.type)
                 # call the settings
-                type.send(self.name,self.args)
+                if type.allowedmethod(self.name)
+                    type.send(self.name,self.args)
+                else
+                    Blink.error("%s does not respond to %s" % [self.type,self.name])
+                end
             else
                 raise "Could not find object type %s" % setting.type
             end

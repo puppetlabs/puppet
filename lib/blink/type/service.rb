@@ -107,13 +107,7 @@ module Blink
 			@namevar = :name
 
             @searchpaths = Array.new
-
-            def Service.addpath(path)
-                unless @searchpaths.include?(path)
-                    # XXX should we check to see if the path exists?
-                    @searchpaths.push(path)
-                end
-            end
+            @allowedmethods = [:setpath]
 
             def Service.search(name)
                 @searchpaths.each { |path|
@@ -131,6 +125,28 @@ module Blink
                     return fqname
                 }
                 raise "Could not find init script for '%s'" % name
+            end
+
+            def Service.setpath(*ary)
+                # verify each of the paths exists
+                @searchpaths = ary.find_all { |dir|
+                    retvalue = false
+                    begin
+                        retvalue = ::File.stat(dir).directory?
+                    rescue => detail
+                        Blink.notice("Directory %s does not exist: %s" % [dir,detail])
+                        # just ignore it
+                    end
+                    # disallow relative paths
+                    #if dir !~ /^\//
+                    #    retvalue = false
+                    #end
+                    retvalue
+                }
+                #unless @searchpaths.include?(path)
+                #    # XXX should we check to see if the path exists?
+                #    @searchpaths.push(path)
+                #end
             end
 
             # it'd be nice if i didn't throw the output away...

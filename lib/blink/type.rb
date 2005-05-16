@@ -77,6 +77,16 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def Type.allowedmethod(method)
+        if defined? @allowedmethods and @allowedmethods.include?(method)
+            return true
+        else
+            return false
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # this is meant to be run multiple times, e.g., when a new
     # type is defined at run-time
     def Type.buildtypehash
