@@ -16,14 +16,14 @@ class TestClient < Test::Unit::TestCase
     def test_local
         client = nil
         assert_nothing_raised() {
-            client = Blink::Client::Local.new()
+            client = Blink::Client.new(:Local => true)
         }
 
         facts = %w{operatingsystem operatingsystemrelease}
         facts.each { |fact|
             assert_equal(
                 Blink::Fact[fact],
-                client.callfunc("retrieve",fact)
+                client.callfunc("fact",fact)
             )
         }
     end

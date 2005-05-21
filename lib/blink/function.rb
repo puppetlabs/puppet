@@ -33,7 +33,7 @@ module Blink
         #---------------------------------------------------------------
     end
 
-    Function.new("retrieve", proc { |fact|
+    Function.new("fact", proc { |fact|
         require 'blink/fact'
 
         value = Fact[fact]

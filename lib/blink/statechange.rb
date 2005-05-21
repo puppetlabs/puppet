@@ -23,8 +23,10 @@ module Blink
         def forward
             Blink.notice "moving change forward"
             if @state.noop
+                Blink.notice "%s is noop" % @state
                 Blink.notice "change noop is %s" % @state.noop
             else
+                Blink.notice "Calling sync on %s" % @state
                 @state.sync
             end
         end
@@ -45,7 +47,7 @@ module Blink
 
 		#---------------------------------------------------------------
         def to_s
-            return "%s: %s => %s" % [@path,@is,@should]
+            return "%s: %s => %s" % [@state,@is,@should]
         end
 		#---------------------------------------------------------------
 	end
