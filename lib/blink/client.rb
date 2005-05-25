@@ -53,7 +53,7 @@ module Blink
             Blink.debug "server is %s" % @url
             #client.loadproperty('files/sslclient.properties')
             Blink.notice("getting config")
-            objects = @driver.getconfig(Blink::Fact["hostname"])
+            objects = @driver.getconfig(self)
             self.config(objects)
         end
 
