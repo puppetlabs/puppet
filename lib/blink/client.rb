@@ -26,11 +26,11 @@ module Blink
             @nil = nil
             @url = hash[:Server]
             if hash.include?(:Listen) and hash[:Listen] == false
-                Blink.notice "We're local"
+                Blink.notice "We're a local client"
                 @localonly = true
                 @driver = @url
             else
-                Blink.notice "We're networked"
+                Blink.notice "We're a networked client"
                 @localonly = false
                 @driver = SOAP::RPC::Driver.new(@url, 'urn:blink-server')
                 @driver.add_method("getconfig", "name")
@@ -53,7 +53,12 @@ module Blink
             Blink.debug "server is %s" % @url
             #client.loadproperty('files/sslclient.properties')
             Blink.notice("getting config")
-            objects = @driver.getconfig(self)
+            objects = nil
+            if @localonly
+                objects = @driver.getconfig(self)
+            else
+                objects = @driver.getconfig(Blink::Fact["hostname"])
+            end
             self.config(objects)
         end
 

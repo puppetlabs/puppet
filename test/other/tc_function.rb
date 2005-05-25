@@ -17,7 +17,7 @@ class TestFunctions < Test::Unit::TestCase
         vars.each { |var|
             value = nil
             assert_nothing_raised() {
-                value = Blink::Function["retrieve"].call(var)
+                value = Blink::Function["fact"].call(var)
             }
 
             assert_equal(

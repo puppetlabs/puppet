@@ -11,8 +11,9 @@ require 'test/unit'
 
 # $Id$
 
-class TestFileType < Test::Unit::TestCase
-    def setup
+#class TestFileType < Test::Unit::TestCase
+class TestFileType
+    def disabled_setup
         Blink[:debug] = 1
 
         @passwdtype = Blink::Type::FileType["passwd"]
@@ -59,7 +60,7 @@ class TestFileType < Test::Unit::TestCase
 
     end
 
-    def test_passwd1_nochange
+    def disabled_test_passwd1_nochange
         file = nil
         type = nil
         assert_nothing_raised() {
@@ -85,7 +86,7 @@ class TestFileType < Test::Unit::TestCase
 
     end
 
-    def test_passwd2_change
+    def disabled_test_passwd2_change
         file = nil
         type = nil
         Kernel.system("cp /etc/passwd /tmp/oparsepasswd")
@@ -133,7 +134,7 @@ class TestFileType < Test::Unit::TestCase
         Kernel.system("rm /tmp/oparsepasswd")
     end
 
-    def test_syslog_nochange
+    def disabled_test_syslog_nochange
         file = nil
         type = nil
         syslog = File.join($blinkbase, "examples/root/etc/debian-syslog.conf")

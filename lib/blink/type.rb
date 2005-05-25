@@ -39,6 +39,7 @@ class Blink::Type < Blink::Element
     @abstract = true
 
     @name = :blink # a little fakery, since Blink itself isn't a type
+    @namevar = :notused
 
     @allowedmethods = [:noop,:debug]
 
@@ -236,6 +237,25 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # remove all type instances
+    def Type.allclear
+        @@typeary.each { |subtype|
+            Blink.notice "Clearing %s of objects" % subtype
+            subtype.clear
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # per-type clearance
+    def Type.clear
+        if defined? @objects
+            @objects.clear
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # all objects total
     def Type.push(object)
         @@allobjects.push object
@@ -247,6 +267,9 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
     # some simple stuff to make it easier to get a name from everyone
     def Type.namevar
+        unless defined? @namevar and ! @namevar.nil?
+            raise "Class %s has no namevar defined" % self
+        end
         return @namevar
     end
     #---------------------------------------------------------------
