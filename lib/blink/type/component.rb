@@ -29,6 +29,7 @@ module Blink
         def push(*ary)
             ary.each { |child|
                 unless child.is_a?(Blink::Element)
+                    Blink.notice "Got object of type %s" % child.class
                     raise "Containers can only contain Blink::Elements"
                 end
                 @children.push child

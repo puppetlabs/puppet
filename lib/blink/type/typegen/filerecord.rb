@@ -12,18 +12,24 @@ require 'blink/type/typegen'
 class Blink::Type::FileRecord < Blink::Type::TypeGenerator
     attr_accessor :fields, :namevar, :splitchar, :object
 
-    @options = [:name, :splitchar, :fields, :namevar, :filetype, :regex, :joinchar]
+    @parameters = [:name, :splitchar, :fields, :namevar, :filetype, :regex, :joinchar]
     @abstract = true
     @metaclass = true
 
+    @namevar = :name
     @name = :filerecord
 
     #---------------------------------------------------------------
     def FileRecord.newtype(hash)
-        shortname = hash[:name]
-        hash[:name] = hash[:filetype].name.capitalize + hash[:name].capitalize
+        #shortname = hash[:name]
+        #hash[:name] = hash[:filetype].name.capitalize + hash[:name].capitalize
         klass = super(hash)
-        klass.name = shortname
+        #klass.name = shortname
+        klass.parameters = hash[:fields]
+        #klass.namevar = hash[:namevar]
+        klass.filetype = hash[:filetype]
+        hash.delete(:fields)
+        hash.delete(:namevar)
         return klass
     end
     #---------------------------------------------------------------
@@ -48,7 +54,13 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
 
     #---------------------------------------------------------------
     def FileRecord.filetype=(filetype)
-        @filetype = filetype
+        if filetype.is_a?(String)
+            @filetype = Blink::Type::FileType[filetype]
+        elsif filetype.is_a?(Blink::Type::FileType)
+            @filetype = filetype
+        else
+            raise "Cannot use objects of type %s as filetypes" % filetype 
+        end
     end
     #---------------------------------------------------------------
 
@@ -83,18 +95,6 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
             child.match = matchobj
             return child
         end
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def FileRecord.namevar=(field)
-        @namevar = field
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def FileRecord.namevar
-        return @namevar
     end
     #---------------------------------------------------------------
 
@@ -148,15 +148,15 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def [](field)
-        @fields[field]
-    end
+    #def [](field)
+    #    @parameters[field]
+    #end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def []=(field,value)
-        @fields[field] = value
-    end
+    #def []=(field,value)
+    #    @parameters[field] = value
+    #end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
@@ -168,7 +168,7 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
         unless self.name == other.name
             return false
         end
-        @fields.keys { |field|
+        @parameters.keys { |field|
             unless self[field] == other[field]
                 Blink.debug("%s -> %s has changed" % [self.name, field])
                 return false
@@ -179,12 +179,16 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def initialize(object)
-        @object = object
-        @fields = {}
-        if block_given?
-            yield self
+    def initialize(hash)
+        if self.class == Blink::Type::FileRecord
+            self.class.newtype(hash)
+            return
         end
+        @parameters = {}
+        #if block_given?
+        #    yield self
+        #end
+        super(hash)
     end
     #---------------------------------------------------------------
 
@@ -193,8 +197,8 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
         @match = matchobj
         #puts "captures are [%s]" % [matchobj.captures]
         self.class.fields.zip(matchobj.captures) { |field,value|
-            @fields[field] = value
-            #puts "%s => %s" % [field,@fields[field]]
+            @parameters[field] = value
+            #puts "%s => %s" % [field,@parameters[field]]
         }
     end
     #---------------------------------------------------------------
@@ -207,18 +211,19 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
             raise RegexpError.new(detail)
         end
         self.class.fields.each { |field|
-            @fields[field] = ary.shift
-            #puts "%s => %s" % [field,@fields[field]]
+            @parameters[field] = ary.shift
+            #puts "%s => %s" % [field,@parameters[field]]
         }
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
     def name
-        if @fields.include?(self.class.namevar)
-            return @fields[self.class.namevar]
+        if @parameters.include?(self.class.namevar)
+            return @parameters[self.class.namevar]
         else
-            raise "No namevar for objects of type %s" % self.class.to_s
+            raise "No namevar '%s' for objects of type %s" %
+                [self.class.namevar,self.class.to_s]
         end
     end
     #---------------------------------------------------------------
@@ -226,10 +231,10 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
     #---------------------------------------------------------------
     def to_s
         ary = self.class.fields.collect { |field|
-            if ! @fields.include?(field)
+            if ! @parameters.include?(field)
                 raise "Object %s is missing field %s" % [self.name,field]
             else
-                @fields[field]
+                @parameters[field]
             end
         }.join(self.class.joinchar || self.class.splitchar)
     end

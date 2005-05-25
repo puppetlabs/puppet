@@ -10,10 +10,11 @@ require 'blink/type/typegen'
 class Blink::Type::FileType < Blink::Type::TypeGenerator
     attr_accessor :childtype
 
-    @options = [:name, :linesplit, :escapednewlines]
-    @abstract = true
+    @parameters = [:name, :linesplit, :escapednewlines]
+    #@abstract = true
     @metaclass = true
 
+    @namevar = :name
     @name = :filetype
 
     @modsystem = true
@@ -23,9 +24,14 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
         unless hash.include?(:linesplit)
             hash[:linesplit] = "\n"
         end
+
+        # i don't think there's any reason to 'super' this
+        #klass = Blink::Type::TypeGenerator.newtype(hash)
         klass = super(hash)
 
         klass.escapednewlines = true
+        klass.namevar = :name
+        klass.parameters = [:name, :path, :complete]
 
         #klass.childtype = Blink::Type::FileRecord.newtype(
         #    :name => hash[:name] + "_record",
@@ -119,14 +125,14 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def [](name)
-        return @childhash[name]
-    end
+    #def [](name)
+    #    return @childhash[name]
+    #end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def []=(name,value)
-    end
+    #def []=(name,value)
+    #end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
@@ -194,11 +200,22 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
 
     #---------------------------------------------------------------
     # create a new file
-    def initialize(file)
-        @file = file
+    def initialize(hash)
+        # if we are the FileType object itself, we create a new type
+        # otherwise, we create an instance of an existing type
+        # yes, this should be more straightforward
+        if self.class == Blink::Type::FileType
+            self.class.newtype(hash)
+            return
+        end
+        Blink.debug "Creating new '%s' file with path '%s' and name '%s'" %
+            [self.class.name,hash["path"],hash[:name]]
+        Blink.debug hash.inspect
+        @file = hash["path"]
 
         @childary = []
         @childhash = {}
+        super
     end
     #---------------------------------------------------------------
 
@@ -216,9 +233,9 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def name
-        return @file
-    end
+    #def name
+    #    return @file
+    #end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------

@@ -22,6 +22,8 @@ module Blink
     class Client < SOAP::RPC::HTTPServer
         def initialize(hash)
             # to whom do we connect?
+            @server = nil
+            @nil = nil
             @url = hash[:Server]
             if hash.include?(:Listen) and hash[:Listen] == false
                 Blink.notice "We're local"
@@ -61,9 +63,7 @@ module Blink
         # manipulations
         def config(tree)
             Blink.notice("Calling config")
-            Blink.verbose tree.inspect
             container = Marshal::load(tree).to_type
-            #Blink.verbose container.inspect
 
             # for now we just evaluate the top-level container, but eventually
             # there will be schedules and such associated with each object,

@@ -7,10 +7,12 @@
 require 'etc'
 require 'blink/type'
 
-class Blink::Type::TypeGenerator < Blink::Type
+module Blink
+    class Type
+class TypeGenerator < Blink::Type
     include Enumerable
 
-    @namevar = :notused
+    @namevar = :name
     @name = :typegen
     @abstract = true
 
@@ -22,13 +24,17 @@ class Blink::Type::TypeGenerator < Blink::Type
 
     #---------------------------------------------------------------
     def TypeGenerator.inherited(subclass)
-        subclass.initvars
+        #subclass.initvars
+        super(subclass)
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # we don't need to 'super' here because type.rb already runs initvars
+    # in Type#inherited
     def TypeGenerator.initvars
         @subclasses = Hash.new(nil)
+        super
     end
     #---------------------------------------------------------------
 
@@ -46,25 +52,42 @@ class Blink::Type::TypeGenerator < Blink::Type
 
     #---------------------------------------------------------------
     def TypeGenerator.namevar
-        return :notused
+        return @namevar || :name
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def TypeGenerator.namevar=(namevar)
+        Blink.debug "Setting namevar for %s to %s" % [self,namevar]
+        unless namevar.is_a? Symbol
+            namevar = namevar.intern
+        end
+        @namevar = namevar
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
     def TypeGenerator.newtype(arghash)
-        unless defined? @options
+        unless defined? @parameters
             raise "Type %s is set up incorrectly" % self
         end
 
         arghash.each { |key,value|
-            unless @options.include?(key)
+            if key.class != Symbol
+                # convert to a symbol
+                arghash[key.intern] = value
+                arghash.delete key
+                key = key.intern
+            end
+            unless @parameters.include?(key)
                 raise "Invalid argument %s on class %s" %
                     [key,self]
             end
+
         }
 
         # turn off automatically checking all arguments
-        #@options.each { |option|
+        #@parameters.each { |option|
         #    unless arghash.include?(option)
         #        p arghash
         #        raise "Must pass %s to class %s" %
@@ -100,7 +123,7 @@ class Blink::Type::TypeGenerator < Blink::Type
         # i couldn't get the method definition stuff to work
         # oh well
         # probably wouldn't want it in the end anyway
-        #@options.each { |option|
+        #@parameters.each { |option|
         #    writer = option.id2name + "="
         #    readproc = proc { eval("@" + option.id2name) }
         #    klass.send(:define_method,option,readproc)
@@ -109,8 +132,12 @@ class Blink::Type::TypeGenerator < Blink::Type
         #    klass.send(writer,hash[option])
         #}
 
+        #Blink::Type.inherited(klass)
+        Blink::Type.buildtypehash
         return klass
     end
     #---------------------------------------------------------------
 end
 #---------------------------------------------------------------
+end
+end

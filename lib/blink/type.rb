@@ -133,7 +133,7 @@ class Blink::Type < Blink::Element
     def Type.inherited(sub)
         sub.initvars
 
-        Blink.debug("subtype %s just created" % sub)
+        #Blink.notice("subtype %s(%s) just created" % [sub,sub.superclass])
         # add it to the master list
         # unfortunately we can't yet call sub.name, because the #inherited
         # method gets called before any commands in the class definition
@@ -148,8 +148,13 @@ class Blink::Type < Blink::Element
     def Type.initvars
         @objects = Hash.new
         @actions = Hash.new
+        #Blink.verbose "initing validstates for %s" % self
         @validstates = {}
         @validparameters = {}
+
+        unless defined? @states
+            @states = {}
+        end
     end
     #---------------------------------------------------------------
 
@@ -280,8 +285,28 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # this is probably only used by FileRecord objects
+    def Type.parameters=(params)
+        Blink.notice "setting parameters to [%s]" % params.join(" ")
+        @parameters = params.collect { |param|
+            if param.class == Symbol
+                param
+            else
+                param.intern
+            end
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     def Type.states
         return @states
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def Type.validstates
+        return @validstates
     end
     #---------------------------------------------------------------
 
@@ -396,6 +421,14 @@ class Blink::Type < Blink::Element
         @notify = Hash.new
         @actions = Hash.new
 
+        # convert all strings to symbols
+        hash.each { |var,value|
+            unless var.is_a? Symbol
+                hash[var.intern] = value
+                hash.delete(var)
+            end
+        }
+
         # if they passed in a list of states they're interested in,
         # we mark them as "interesting"
         # XXX maybe we should just consider params set to nil as 'interesting'
@@ -408,9 +441,9 @@ class Blink::Type < Blink::Element
             hash.delete(:check)
         end
 
-        if hash.include?("noop")
-            @noop = hash["noop"]
-            hash.delete("noop")
+        if hash.include?(:noop)
+            @noop = hash[:noop]
+            hash.delete(:noop)
         end
 
         # states and parameters are treated equivalently from the outside:
@@ -523,6 +556,10 @@ class Blink::Type < Blink::Element
     # this returns any changes resulting from testing, thus 'collect'
     # rather than 'each'
     def evaluate
+        unless defined? @evalcount
+            Blink.error "No evalcount defined on '%s' of type '%s'" %
+                [self.name,self.class]
+        end
         # if we're a metaclass and we've already evaluated once...
         if self.metaclass and @evalcount > 0
             return
@@ -596,3 +633,6 @@ require 'blink/type/symlink'
 require 'blink/type/package'
 require 'blink/type/component'
 require 'blink/statechange'
+require 'blink/type/typegen'
+require 'blink/type/typegen/filetype'
+require 'blink/type/typegen/filerecord'

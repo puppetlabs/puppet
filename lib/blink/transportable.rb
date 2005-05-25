@@ -54,16 +54,17 @@ module Blink
                     self[namevar] = self[:name]
                     self.delete(:name)
                 end
-                begin
+                p self
+                #begin
                     # this will fail if the type already exists
                     # which may or may not be a good thing...
                     retobj = type.new(self)
-                rescue => detail
-                    Blink.error "Failed to create object: %s" % detail 
-                    #puts object.class
-                    #puts object.inspect
-                    #exit
-                end
+                #rescue => detail
+                #    Blink.error "Failed to create %s: %s" % [type.name,detail]
+                #    puts self.class
+                #    puts self.inspect
+                #    exit
+                #end
             else
                 raise "Could not find object type %s" % self.type
             end
@@ -125,7 +126,7 @@ module Blink
                     # exists in our scope
                     # this assumes that type/name combinations are globally
                     # unique
-                    name = [child[:name],child[:type]].join("--")
+                    name = [child[:name],child.type].join("--")
 
                     if nametable.include?(name)
                         object = nametable[name]
@@ -133,6 +134,7 @@ module Blink
                             # don't rename; this shouldn't be possible anyway
                             next if var == :name
 
+                            Blink.notice "Adding %s to %s" % [var,name]
                             # override any existing values
                             object[var] = value
                         }
