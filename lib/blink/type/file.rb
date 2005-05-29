@@ -32,7 +32,7 @@ module Blink
                 rescue => detail
                     raise detail
                 end
-                #self.parent.newevent(:event => :inode_changed)
+                return :file_created
             end
         end
 
@@ -87,7 +87,7 @@ module Blink
                         [self.parent[:path],self.should,detail]
                 end
 
-                #self.parent.newevent(:event => :inode_changed)
+                return :inode_changed
             end
         end
 
@@ -143,7 +143,7 @@ module Blink
                 rescue
                     raise "failed to chmod #{self.parent[:path]}: #{$!}"
                 end
-                #self.parent.newevent(:event => :inode_changed)
+                return :inode_changed
             end
         end
 
@@ -236,7 +236,7 @@ module Blink
                     raise "failed to chgrp %s to %s: %s" %
                         [self.parent[:path], self.should, $!]
                 end
-                #self.parent.newevent(:event => :inode_changed)
+                return :inode_changed
             end
         end
     end

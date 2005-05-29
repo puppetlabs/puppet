@@ -16,7 +16,7 @@ class TestClient < Test::Unit::TestCase
     def test_local
         client = nil
         assert_nothing_raised() {
-            client = Blink::Client.new(:Local => true)
+            client = Blink::Client.new(:Listen => false)
         }
 
         facts = %w{operatingsystem operatingsystemrelease}

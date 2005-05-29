@@ -67,7 +67,9 @@ module Blink
                 if self.should > 0
                     if status < 1
                         Blink.debug "Starting '%s'" % self
-                        unless self.parent.initcmd("start")
+                        if self.parent.initcmd("start")
+                            return :service_started
+                        else
                             raise "Failed to start '%s'" % self.parent.name
                         end
                     else
@@ -79,7 +81,9 @@ module Blink
                     end
                 elsif status > 0
                     Blink.debug "Stopping '%s'" % self
-                    unless self.parent.initcmd("stop")
+                    if self.parent.initcmd("stop")
+                        return :service_stopped
+                    else
                         raise "Failed to stop %s" % self.name
                     end
                 else
@@ -171,6 +175,10 @@ module Blink
                 else
                     @initscript = Service.search(self.name)
                 end
+            end
+
+            def refresh
+                self.initcmd("restart")
             end
 		end # Blink::Type::Service
 	end # Blink::Type

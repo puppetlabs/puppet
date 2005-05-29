@@ -19,7 +19,7 @@ module Blink
                 #    raise "failed to sync #{@params[:file]}: #{$!}"
                 #end
 
-                #self.parent.newevent(:event => :inode_changed)
+                #return :package_installed
             end
         end
     end

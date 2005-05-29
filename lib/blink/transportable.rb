@@ -37,7 +37,7 @@ module Blink
         end
 
         def longname
-            return [object.type,object[:name]].join('--')
+            return [self.type,self[:name]].join('--')
         end
 
         def name
@@ -101,6 +101,8 @@ module Blink
     #------------------------------------------------------------
     # just a linear container for objects
     class TransBucket < Array
+        attr_accessor :name
+
         def to_type
             # this container will contain the equivalent of all objects at
             # this level

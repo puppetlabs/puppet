@@ -5,6 +5,7 @@
 # included so we can test object types
 require 'blink'
 require 'blink/element'
+require 'blink/event'
 require 'blink/type/state'
 
 
@@ -517,14 +518,21 @@ class Blink::Type < Blink::Element
 
         # we have to set the name of our object before anything else,
         # because it might be used in creating the other states
-        if hash.has_key?(self.class.namevar)
-            self[self.class.namevar] = hash[self.class.namevar]
-            #Blink.notice("%s: namevar [%s], hash name [%s], name [%s], name2 [%s]" %
-            #    [self.class,self.class.namevar,hash[self.class.namevar],self.name,self[self.class.namevar]])
-            hash.delete(self.class.namevar)
+        namevar = self.class.namevar
+
+        # if they're not using :name for the namevar but we got :name (probably
+        # from the parser)
+        if namevar != :name and hash.include?(:name)
+            self[namevar] = hash[:name]
+            hash.delete(:name)
+        # else if we got the namevar
+        elsif hash.has_key?(namevar)
+            self[namevar] = hash[namevar]
+            hash.delete(namevar)
+        # else something's screwy
         else
             p hash
-            p self.class.namevar
+            p namevar
             raise TypeError.new("A name must be provided to %s at initialization time" %
                 self.class)
         end
@@ -681,17 +689,35 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # this is a tad weird, because we specify the requirements on the
-    # "parent" object, but it's the child object that needs to know
-    # which objects to notify; i.e., object A requires object B, so if
-    # object B gets modified it needs to notify object A.
+    # for each object we require, subscribe to all events that it
+    # generates
+    # we might reduce the level of subscription eventually, but for now...
     def metarequire(requires)
         unless requires.is_a?(Array)
             requires = [requires]
         end
-        requires.each { |object|
-            Blink.debug("%s requires %s" % [self.name,object.name])
-            object.addnotify(self)
+        requires.each { |rname|
+            # we just have a name and a type, and we need to convert it
+            # to an object...
+            type = nil
+            object = nil
+            tname = rname[0]
+            unless type = Blink::Type.type(tname)
+                raise "Could not find type %s" % tname
+            end
+            name = rname[1]
+            unless object = type[name]
+                raise "Could not retrieve object '%s' of type '%s'" %
+                    [name,type]
+            end
+            Blink.debug("%s requires %s" % [self.name,object])
+            Blink::Event.subscribe(
+                :source => object,
+                :event => '*',
+                :target => self,
+                :method => :refresh
+            )
+            #object.addnotify(self)
         }
     end
     #---------------------------------------------------------------

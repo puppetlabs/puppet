@@ -50,6 +50,13 @@ class TestService < Test::Unit::TestCase
         }
         assert(@sleeper.insync?)
 
+        # test refreshing it
+        assert_nothing_raised() {
+            @sleeper.refresh
+        }
+
+        assert(@sleeper.respond_to?(:refresh))
+
         # now stop it
         assert_nothing_raised() {
             @sleeper[:running] = 0

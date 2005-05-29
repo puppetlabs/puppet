@@ -120,25 +120,6 @@ module Blink
 		@@config[param] = value
 	end
 
-    # a simple class for creating callbacks
-	class Event
-		attr_reader :event, :object
-		attr_writer :event, :object
-
-		def initialize(args)
-			@event = args[:event]
-			@object = args[:object]
-
-			if @event.nil? or @object.nil?
-				raise "Event.new called incorrectly"
-			end
-		end
-
-		def trigger
-			@object.trigger(@event)
-		end
-	end
-
     # a class for storing state
     # not currently used
 	class Storage

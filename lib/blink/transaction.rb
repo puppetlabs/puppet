@@ -45,29 +45,32 @@ class Transaction
 
         @changes.each { |change|
             if change.is_a?(Blink::StateChange)
+                change.transaction = self
                 begin
                     change.forward
-                    @@changed.push change.state.parent
+                    #@@changed.push change.state.parent
                 rescue => detail
                     Blink.error("%s failed: %s" % [change,detail])
                     # at this point, we would normally do error handling
                     # but i haven't decided what to do for that yet
                     # so just record that a sync failed for a given object
-                    @@failures[change.state.parent] += 1
+                    #@@failures[change.state.parent] += 1
                     # this still could get hairy; what if file contents changed,
                     # but a chmod failed?  how would i handle that error? dern
                 end
             elsif change.is_a?(Blink::Transaction)
-                # nothing...?
+                # yay, recursion
+                change.evaluate
             else
                 raise "Transactions cannot handle objects of type %s" % child.class
             end
         }
 
         if @toplevel # if we're the top transaction, perform the refreshes
-            notifies = @@changed.uniq.collect { |object|
-                object.notify
-            }.flatten.uniq
+            Blink::Event.process
+            #notifies = @@changed.uniq.collect { |object|
+            #    object.notify
+            #}.flatten.uniq
 
             # now we have the entire list of objects to notify
         else

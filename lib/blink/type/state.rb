@@ -90,14 +90,14 @@ class Blink::State < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def refresh(transaction)
-        self.retrieve
+    #def refresh(transaction)
+    #    self.retrieve
 
         # we definitely need some way to batch these refreshes, so a
         # given object doesn't get refreshed multiple times in a single
         # run
-        @parent.refresh
-    end
+    #    @parent.refresh
+    #end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------

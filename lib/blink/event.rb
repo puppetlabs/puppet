@@ -7,10 +7,93 @@ require 'blink'
 require 'blink/type'
 
 module Blink
-    # a simple class for creating callbacks
+    # events are transient packets of information; they result in one or more (or none)
+    # subscriptions getting triggered, and then they get cleared
+    # eventually, these will be passed on to some central event system
 	class Event
-		attr_reader :event, :object
-		attr_writer :event, :object
+        # subscriptions are permanent associations determining how different
+        # objects react to an event
+        class Subscription
+            attr_accessor :source, :event, :target, :method
+
+            def initialize(hash)
+                @triggered = false
+
+                hash.each { |method,value|
+                    # assign each value appropriately
+                    # this is probably wicked-slow
+                    self.send(method.to_s + "=",value)
+                }
+                Blink.warning "New Subscription: '%s' => '%s'" %
+                    [@source,@event]
+            end
+
+            # the transaction is passed in so that we can notify it if
+            # something fails
+            def trigger(transaction)
+                # we need some mechanism for only triggering a subscription
+                # once per transaction, but, um, we don't want it to only
+                # be once per process lifetime
+                # so, for now, just trigger as many times as we can, rather than
+                # as few...
+                unless @triggered
+                    Blink.verbose "'%s' generated '%s'; triggering '%s' on '%s'" %
+                        [@source,@event,@method,@target]
+                    begin
+                        if @target.respond_to?(@method)
+                            @target.send(@method)
+                        else
+                            Blink.verbose "'%s' of type '%s' does not respond to '%s'" %
+                                [@target,@target.class,@method.inspect]
+                        end
+                    rescue => detail
+                        # um, what the heck do i do when an object fails to refresh?
+                        # shouldn't that result in the transaction rolling back?
+                        # XXX yeah, it should
+                        Blink.error "'%s' failed to refresh: '%s'" %
+                            [@target,detail]
+                        raise
+                        #raise "We need to roll '%s' transaction back" %
+                            #transaction
+                    end
+                    #@triggered = true
+                end
+            end
+        end
+
+		attr_accessor :event, :object, :transaction
+
+        @@events = []
+
+        @@subscriptions = []
+
+        def Event.process
+            Blink.warning "Processing events"
+            @@events.each { |event|
+                @@subscriptions.find_all { |sub|
+                    #Blink.warning "Sub source: '%s'; event object: '%s'" %
+                    #    [sub.source.inspect,event.object.inspect]
+                    sub.source == event.object and
+                        (sub.event == event.event or
+                         sub.event == :ALL_EVENTS)
+                }.each { |sub|
+                    Blink.notice "Found sub"
+                    sub.trigger(event.transaction)
+                }
+            }
+
+            @@events.clear
+        end
+
+        def Event.subscribe(hash)
+            if hash[:event] == '*'
+                hash[:event] = :ALL_EVENTS
+            end
+            sub = Subscription.new(hash)
+
+            # add to the correct area
+            @@subscriptions.push sub
+        end
 
 		def initialize(args)
             unless args.include?(:event) and args.include?(:object)
@@ -19,10 +102,14 @@ module Blink
 
 			@event = args[:event]
 			@object = args[:object]
-		end
+			@transaction = args[:transaction]
 
-		def trigger
-			@object.trigger(@event)
+            Blink.warning "New Event: '%s' => '%s'" %
+                [@object,@event]
+
+            # initially, just stuff all instances into a central bucket
+            # to be handled as a batch
+            @@events.push self
 		end
 	end
 end
@@ -32,7 +119,7 @@ end
 # here i'm separating out the methods dealing with handling events
 # currently not in use, so...
 
-class Blink::Type
+class Blink::NotUsed
     #---------------------------------------------------------------
     # return action array
     # these are actions to use for responding to events
