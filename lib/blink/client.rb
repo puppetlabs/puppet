@@ -70,11 +70,15 @@ module Blink
             Blink.notice("Calling config")
             container = Marshal::load(tree).to_type
 
+            # this is a gross hack... but i don't see a good way around it
+            # set all of the variables to empty
+            Blink::Transaction.init
             # for now we just evaluate the top-level container, but eventually
             # there will be schedules and such associated with each object,
             # and probably with the container itself
             transaction = container.evaluate
             #transaction = Blink::Transaction.new(objects)
+            transaction.toplevel = true
             transaction.evaluate
             self.shutdown
         end

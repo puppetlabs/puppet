@@ -31,6 +31,13 @@ class Blink::State < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # which event gets generated if this state change happens
+    def State.generates
+        return @event
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # if we're not in sync, return a statechange capable of putting us
     # in sync
     def evaluate

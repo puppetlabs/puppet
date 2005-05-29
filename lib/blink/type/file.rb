@@ -15,6 +15,7 @@ module Blink
             require 'etc'
             attr_accessor :file
             @name = :create
+            @event = :file_created
 
             def retrieve
                 stat = nil
@@ -39,6 +40,7 @@ module Blink
             require 'etc'
             attr_accessor :file
             @name = :owner
+            @event = :inode_changed
 
             def retrieve
                 stat = nil
@@ -96,6 +98,7 @@ module Blink
             require 'etc'
 
             @name = :mode
+            @event = :inode_changed
 
             def initialize(should)
                 # this is pretty hackish, but i need to make sure the number is in
@@ -152,6 +155,7 @@ module Blink
             @parent = Blink::State::FileMode
 
             @name = :setuid
+            @event = :inode_changed
 
             def <=>(other)
                 self.is <=> @parent.value[11]
@@ -176,6 +180,7 @@ module Blink
             require 'etc'
 
             @name = :group
+            @event = :inode_changed
 
             def retrieve
                 stat = nil

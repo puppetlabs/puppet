@@ -2,13 +2,7 @@
 
 # $Id$
 
-# the interpreter
-#
-# this builds our virtual pinball machine, into which we'll place our host-specific
-# information and out of which we'll receive our host-specific configuration
-
 require 'blink'
-
 
 module Blink
     #------------------------------------------------------------
@@ -17,6 +11,16 @@ module Blink
 
         @@ohash = {}
         @@oarray = []
+
+        def TransObject.add(object)
+            @@oarray.push object
+
+            # this is just so we can check, at parse time, whether a required
+            # object has already been mentioned when it is listed as required
+            # because we're ordered, as long as an object gets made before its
+            # dependent objects will get synced later
+            @@ohash[object.longname] = object
+        end
 
         def TransObject.clear
             @@oarray.clear
@@ -29,13 +33,11 @@ module Blink
         def initialize(name,type)
             self[:name] = name
             @type = type
-            #if @@ohash.include?(name)
-            #    raise "%s already exists" % name
-            #else
-            #    @@ohash[name] = self
-            #    @@oarray.push(self)
-            #end
-            @@oarray.push self
+            self.class.add(self)
+        end
+
+        def longname
+            return [object.type,object[:name]].join('--')
         end
 
         def name
@@ -49,12 +51,6 @@ module Blink
         def to_type
             retobj = nil
             if type = Blink::Type.type(self.type)
-                namevar = type.namevar
-                if namevar != :name
-                    self[namevar] = self[:name]
-                    self.delete(:name)
-                end
-                p self
                 #begin
                     # this will fail if the type already exists
                     # which may or may not be a good thing...

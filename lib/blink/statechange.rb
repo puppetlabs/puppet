@@ -13,6 +13,7 @@ module Blink
 		#---------------------------------------------------------------
         def initialize(state)
             @state = state
+            #@state.parent.newchange
             @path = state.fqpath
             @is = state.is
             @should = state.should
@@ -27,7 +28,11 @@ module Blink
                 Blink.notice "change noop is %s" % @state.noop
             else
                 Blink.notice "Calling sync on %s" % @state
-                @state.sync
+                begin
+                    @state.sync
+                rescue => detail
+                    Blink.error "%s failed: %s" % [self.to_s,detail]
+                end
             end
         end
 		#---------------------------------------------------------------

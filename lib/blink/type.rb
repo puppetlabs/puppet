@@ -43,6 +43,12 @@ class Blink::Type < Blink::Element
 
     @allowedmethods = [:noop,:debug]
 
+    @@metaparams = [
+        :onerror,
+        :schedule,
+        :require
+    ]
+
     #---------------------------------------------------------------
     #---------------------------------------------------------------
     # class methods dealing with Type management
@@ -308,6 +314,13 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # Is the parameter in question a meta-parameter?
+    def Type.metaparam(param)
+        @@metaparams.include?(param)
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # this is probably only used by FileRecord objects
     def Type.parameters=(params)
         Blink.notice "setting parameters to [%s]" % params.join(" ")
@@ -382,7 +395,10 @@ class Blink::Type < Blink::Element
             mname = name.intern
         end
 
-        if stateklass = self.class.validstate(mname) 
+        if Blink::Type.metaparam(mname)
+            # call the metaparam method 
+            self.send(("meta" + mname.id2name),value)
+        elsif stateklass = self.class.validstate(mname) 
             if value.is_a?(Blink::State)
                 @states[mname] = value
             else
@@ -436,14 +452,35 @@ class Blink::Type < Blink::Element
         @children = []
         @evalcount = 0
 
-        @parent = nil
         @noop = false
 
-        # these are not currently used
-        @monitor = Array.new
-        @notify = Hash.new
-        @actions = Hash.new
+        # which objects to notify when we change
+        @notify = []
 
+        # keeping stats for the total number of changes, and how many were
+        # completely sync'ed
+        # this isn't really sufficient either, because it adds lots of special cases
+        # such as failed changes
+        # it also doesn't distinguish between changes from the current transaction
+        # vs. changes over the process lifetime
+        @totalchanges = 0
+        @syncedchanges = 0
+        @failedchanges = 0
+
+        # which attributes we care about even though they don't have
+        # values
+        # this isn't used right now, and isn't likely to be until we support
+        # querying
+        @monitor = Array.new
+
+        #namevar = self.class.namevar
+        #if namevar != :name
+        #    unless hash.include?(namevar)
+        #        raise "Objects of %s type must be passed %s" % [self.class,namevar]
+        #    end
+        #    hash[namevar] = hash[:name]
+        #    hash.delete(:name)
+        #end
         # convert all strings to symbols
         hash.each { |var,value|
             unless var.is_a? Symbol
@@ -573,6 +610,12 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def newchange
+        @totalchanges += 1
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # this method is responsible for collecting state changes
     # we always descend into the children before we evaluate our current
     # states
@@ -588,8 +631,9 @@ class Blink::Type < Blink::Element
             return
         end
         @evalcount += 1
-        # these might return messages, but the main action is through
-        # setting changes in the transactions
+
+        # collect changes and return them
+        # these changes could be from child objects or from contained states
         self.collect { |child|
             child.evaluate
         }
@@ -623,16 +667,50 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # this method is responsible for handling changes in dependencies
-    # for instance, restarting a service if a config file is changed
-    # in general, we just hand the method up to our parent, but for
-    # objects that might need to refresh, they'll override this method
-    # XXX at this point, if all dependent objects change, then this method
-    # might get called for each change
-    def refresh(transaction)
-        unless @parent.nil?
-            @parent.refresh(transaction)
+    #---------------------------------------------------------------
+    # Meta-parameter methods:  These methods deal with the results
+    # of specifying metaparameters
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def metaonerror(response)
+        Blink.debug("Would have called metaonerror")
+        @onerror = response
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # this is a tad weird, because we specify the requirements on the
+    # "parent" object, but it's the child object that needs to know
+    # which objects to notify; i.e., object A requires object B, so if
+    # object B gets modified it needs to notify object A.
+    def metarequire(requires)
+        unless requires.is_a?(Array)
+            requires = [requires]
         end
+        requires.each { |object|
+            Blink.debug("%s requires %s" % [self.name,object.name])
+            object.addnotify(self)
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def addnotify(object)
+        @notify.push object
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def notify
+        @notify
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def metaschedule(schedule)
+        @schedule = schedule
     end
     #---------------------------------------------------------------
 
@@ -656,6 +734,6 @@ require 'blink/type/symlink'
 require 'blink/type/package'
 require 'blink/type/component'
 require 'blink/statechange'
-require 'blink/type/typegen'
-require 'blink/type/typegen/filetype'
-require 'blink/type/typegen/filerecord'
+#require 'blink/type/typegen'
+#require 'blink/type/typegen/filetype'
+#require 'blink/type/typegen/filerecord'
