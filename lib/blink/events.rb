@@ -6,6 +6,27 @@
 require 'blink'
 require 'blink/type'
 
+module Blink
+    # a simple class for creating callbacks
+	class Event
+		attr_reader :event, :object
+		attr_writer :event, :object
+
+		def initialize(args)
+            unless args.include?(:event) and args.include?(:object)
+				raise "Event.new called incorrectly"
+			end
+
+			@event = args[:event]
+			@object = args[:object]
+		end
+
+		def trigger
+			@object.trigger(@event)
+		end
+	end
+end
+
 
 #---------------------------------------------------------------
 # here i'm separating out the methods dealing with handling events
@@ -40,19 +61,6 @@ class Blink::Type
         else
             p @actions
         end
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def newevent(args)
-        if args[:event].nil?
-            raise "newevent called wrong on #{self}"
-        end
-
-        return Blink::Event.new(
-            :event => args[:event],
-            :object => self
-        )
     end
     #---------------------------------------------------------------
 
