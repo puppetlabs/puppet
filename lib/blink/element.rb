@@ -16,7 +16,7 @@ class Blink::Element
     #---------------------------------------------------------------
     # all of our subclasses must respond to each of these methods...
     @@interface_methods = [
-        :retrieve, :insync?, :sync, :fqpath, :evaluate, :refresh
+        :retrieve, :insync?, :sync, :fqpath, :evaluate
     ]
 
     # so raise an error if a method that isn't overridden gets called

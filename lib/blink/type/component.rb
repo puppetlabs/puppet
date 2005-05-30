@@ -13,7 +13,7 @@ module Blink
 	class Component < Blink::Type
         include Enumerable
 
-        @name = :container
+        @name = :component
         @namevar = :name
 
         @states = []
@@ -51,6 +51,14 @@ module Blink
 
         def name
             return "%s[%s]" % [@parameters[:type],@parameters[:name]]
+        end
+
+        def refresh
+            @children.collect { |child|
+                if child.respond_to?(:refresh)
+                    child.refresh
+                end
+            }
         end
 
         def retrieve
