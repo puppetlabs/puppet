@@ -87,6 +87,8 @@ class Transaction
         @tree = tree
         @toplevel = false
 
+        @triggered = Hash.new(0)
+
         # of course, this won't work on the second run
         unless defined? @@failures
             @toplevel = true
@@ -130,6 +132,12 @@ class Transaction
                 raise "Transactions cannot handle objects of type %s" % child.class
             end
         }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def triggered(sub)
+        @triggered[sub] += 1
     end
     #---------------------------------------------------------------
 end

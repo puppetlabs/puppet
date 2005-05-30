@@ -138,4 +138,54 @@ class TestTransactions < Test::Unit::TestCase
             transaction.evaluate
         }
     end
+
+    def test_both
+        transaction = nil
+        file = newfile()
+        service = newservice()
+        states = {}
+        check = [:group,:mode]
+        file[:check] = check
+
+        service[:running] = 1
+        service.sync
+
+        component = newcomp(file,service)
+
+        # 'requires' expects an array of arrays
+        service[:require] = [[file.class.name,file.name]]
+
+        assert_nothing_raised() {
+            file.retrieve
+            service.retrieve
+        }
+
+        check.each { |state|
+            states[state] = file[state]
+        }
+        assert_nothing_raised() {
+            file[:group] = @groups[1]
+            file[:mode] = "755"
+        }
+        assert_nothing_raised() {
+            transaction = component.evaluate
+        }
+
+        # this should cause a restart of the service
+        assert_nothing_raised() {
+            transaction.evaluate
+        }
+
+        # now set everything back to how it was
+        assert_nothing_raised() {
+            service[:running] = 0
+            service.sync
+            check.each { |state|
+                file[state] = states[state]
+            }
+            file.sync
+        }
+
+    end
+
 end

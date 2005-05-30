@@ -31,12 +31,15 @@ module Blink
             # the transaction is passed in so that we can notify it if
             # something fails
             def trigger(transaction)
-                # we need some mechanism for only triggering a subscription
-                # once per transaction, but, um, we don't want it to only
-                # be once per process lifetime
-                # so, for now, just trigger as many times as we can, rather than
-                # as few...
-                unless @triggered
+                # this is potentially incomplete, because refreshing an object
+                # could theoretically kick off an event, which would not get run
+                # or, because we're executing the first subscription rather than
+                # the last, a later-refreshed object could somehow be connected
+                # to the "old" object rather than "new"
+                # but we're pretty far from that being a problem
+                if transaction.triggered(self) > 1
+                    Blink.verbose "%s has already run" % self
+                else
                     Blink.verbose "'%s' generated '%s'; triggering '%s' on '%s'" %
                         [@source,@event,@method,@target]
                     begin
@@ -56,7 +59,6 @@ module Blink
                         #raise "We need to roll '%s' transaction back" %
                             #transaction
                     end
-                    #@triggered = true
                 end
             end
         end
