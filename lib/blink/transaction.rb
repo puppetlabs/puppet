@@ -74,6 +74,7 @@ class Transaction
 
             # now we have the entire list of objects to notify
         else
+            Blink.notice "I'm not top-level"
             # these are the objects that need to be refreshed
             #return @refresh.uniq
         end

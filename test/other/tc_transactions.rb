@@ -24,6 +24,8 @@ class TestTransactions < Test::Unit::TestCase
         assert_nothing_raised() {
             Blink::Type.allclear
         }
+
+        print "\n\n"
     end
 
     def newfile
@@ -54,10 +56,10 @@ class TestTransactions < Test::Unit::TestCase
         }
     end
 
-    def newcomp(*args)
+    def newcomp(name,*args)
         comp = nil
         assert_nothing_raised() {
-            comp = Blink::Component.new
+            comp = Blink::Component.new(:name => name)
         }
 
         args.each { |arg|
@@ -84,7 +86,7 @@ class TestTransactions < Test::Unit::TestCase
             states[state] = file[state]
         }
 
-        component = newcomp(file)
+        component = newcomp("file",file)
         assert_nothing_raised() {
             file[:group] = @groups[1]
             file[:mode] = "755"
@@ -113,7 +115,7 @@ class TestTransactions < Test::Unit::TestCase
         service = newservice
         service[:check] = [:running]
 
-        component = newcomp(service)
+        component = newcomp("service",service)
 
         assert_nothing_raised() {
             service.retrieve
@@ -150,7 +152,7 @@ class TestTransactions < Test::Unit::TestCase
         service[:running] = 1
         service.sync
 
-        component = newcomp(file,service)
+        component = newcomp("both",file,service)
 
         # 'requires' expects an array of arrays
         service[:require] = [[file.class.name,file.name]]
@@ -169,6 +171,7 @@ class TestTransactions < Test::Unit::TestCase
         }
         assert_nothing_raised() {
             transaction = component.evaluate
+            transaction.toplevel = true
         }
 
         # this should cause a restart of the service
@@ -185,7 +188,59 @@ class TestTransactions < Test::Unit::TestCase
             }
             file.sync
         }
+    end
 
+    def test_twocomps
+        transaction = nil
+        file = newfile()
+        service = newservice()
+        states = {}
+        check = [:group,:mode]
+        file[:check] = check
+
+        service[:running] = 1
+        service.sync
+
+        fcomp = newcomp("file",file)
+        scomp = newcomp("service",service)
+
+        component = newcomp("both",fcomp,scomp)
+
+        # 'requires' expects an array of arrays
+        #component[:require] = [[file.class.name,file.name]]
+        service[:require] = [[fcomp.class.name,fcomp.name]]
+
+        assert_nothing_raised() {
+            file.retrieve
+            service.retrieve
+        }
+
+        check.each { |state|
+            states[state] = file[state]
+        }
+        assert_nothing_raised() {
+            file[:group] = @groups[1]
+            file[:mode] = "755"
+        }
+        assert_nothing_raised() {
+            transaction = component.evaluate
+            transaction.toplevel = true
+        }
+
+        # this should cause a restart of the service
+        assert_nothing_raised() {
+            transaction.evaluate
+        }
+
+        # now set everything back to how it was
+        assert_nothing_raised() {
+            service[:running] = 0
+            service.sync
+            check.each { |state|
+                file[state] = states[state]
+            }
+            file.sync
+        }
     end
 
 end

@@ -14,6 +14,12 @@ class TestBasic < Test::Unit::TestCase
         Blink[:debug] = true
     end
 
+    def teardown
+        assert_nothing_raised() {
+            Blink::Type.allclear
+        }
+    end
+
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store
@@ -48,9 +54,9 @@ class TestBasic < Test::Unit::TestCase
         return @sleeper
     end
 
-    def component(*args)
+    def component(name,*args)
         assert_nothing_raised() {
-            @component = Blink::Component.new
+            @component = Blink::Component.new(:name => name)
         }
 
         args.each { |arg|
@@ -94,7 +100,7 @@ class TestBasic < Test::Unit::TestCase
     end
 
     def test_component
-        component = component(file(),service())
+        component = component("a",file(),service())
 
         assert_nothing_raised() {
             component.retrieve

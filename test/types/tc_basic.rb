@@ -21,7 +21,7 @@ class TestBasic < Test::Unit::TestCase
         Blink[:debug] = 1
 
         assert_nothing_raised() {
-            @component = Blink::Component.new
+            @component = Blink::Component.new(:name => "component")
         }
 
         assert_nothing_raised() {

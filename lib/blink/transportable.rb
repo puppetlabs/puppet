@@ -101,7 +101,7 @@ module Blink
     #------------------------------------------------------------
     # just a linear container for objects
     class TransBucket < Array
-        attr_accessor :name
+        attr_accessor :name, :type
 
         def to_type
             # this container will contain the equivalent of all objects at

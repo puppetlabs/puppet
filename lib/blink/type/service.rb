@@ -16,14 +16,11 @@ module Blink
             # this whole thing is annoying
             # i should probably just be using booleans, but for now, i'm not...
             def should=(should)
-                if should == false
+                case should
+                when false,0,"0":
                     should = 0
-                elsif should == true
+                when true,1,"1":
                     should = 1
-                elsif should == "1" or should == 1
-                    should = 1
-                elsif should == "0" or should == 0
-                    should = 0
                 else
                     Blink.warning "%s: interpreting '%s' as false" %
                         [self.class,should]

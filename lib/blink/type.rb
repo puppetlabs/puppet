@@ -402,6 +402,7 @@ class Blink::Type < Blink::Element
             self.send(("meta" + mname.id2name),value)
         elsif stateklass = self.class.validstate(mname) 
             if value.is_a?(Blink::State)
+                Blink.debug "'%s' got handed a state for '%s'" % [self,mname]
                 @states[mname] = value
             else
                 if @states.include?(mname)

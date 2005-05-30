@@ -74,7 +74,7 @@ class Blink::State < Blink::Element
         @is = nil
 
         if should.length > 0 # we got passed an argument
-            @should = should.shift
+            self.should = should.shift
         else # we got passed no argument
             # leave @should undefined
         end
@@ -124,7 +124,7 @@ class Blink::State < Blink::Element
 
     #---------------------------------------------------------------
     def to_s
-        return @parent.name.to_s + " -> " + self.name.to_s
+        return "%s(%s)" % [@parent.name,self.name]
     end
     #---------------------------------------------------------------
 end

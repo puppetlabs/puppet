@@ -25,7 +25,7 @@ module Blink
 		#---------------------------------------------------------------
         def go
             if @state.noop
-                Blink.notice "%s is noop" % @state
+                #Blink.notice "%s is noop" % @state
                 return nil
             end
 
@@ -67,7 +67,7 @@ module Blink
 
 		#---------------------------------------------------------------
         def forward
-            Blink.notice "moving change forward"
+            #Blink.notice "moving change forward"
 
             unless defined? @transaction
                 raise "StateChange '%s' tried to be executed outside of transaction" %

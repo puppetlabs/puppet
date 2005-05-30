@@ -10,17 +10,22 @@ require 'blink/type'
 require 'blink/transaction'
 
 module Blink
-	class Component < Blink::Element
+	class Component < Blink::Type
         include Enumerable
 
         @name = :container
+        @namevar = :name
+
+        @states = []
+        @parameters = [:name]
 
         def each
             @children.each { |child| yield child }
         end
 
-        def initialize
+        def initialize(*args)
             @children = []
+            super
         end
 
         # now we decide whether a transaction is dumb, and just accepts
@@ -46,6 +51,10 @@ module Blink
             self.collect { |child|
                 child.retrieve
             }
+        end
+
+        def to_s
+            return "component(%s)" % self.name
         end
 	end
 end
