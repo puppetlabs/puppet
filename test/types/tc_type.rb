@@ -11,6 +11,10 @@ require 'test/unit'
 
 class TestType < Test::Unit::TestCase
     def test_typemethods
+        assert_nothing_raised() {
+            Blink::Type.buildstatehash
+        }
+
         Blink::Type.eachtype { |type|
             name = nil
             assert_nothing_raised() {
@@ -28,6 +32,18 @@ class TestType < Test::Unit::TestCase
 
             assert(
                 type.namevar
+            )
+
+            assert_not_nil(
+                type.states
+            )
+
+            assert_not_nil(
+                type.validstates
+            )
+
+            assert(
+                type.validparameter(type.namevar)
             )
         }
     end

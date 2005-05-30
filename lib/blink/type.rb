@@ -42,6 +42,9 @@ class Blink::Type < Blink::Element
     @name = :blink # a little fakery, since Blink itself isn't a type
     @namevar = :notused
 
+    @states = []
+    @parameters = [:notused]
+
     @allowedmethods = [:noop,:debug]
 
     @@metaparams = [
