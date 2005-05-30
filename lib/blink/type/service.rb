@@ -15,7 +15,7 @@ module Blink
 
             # this whole thing is annoying
             # i should probably just be using booleans, but for now, i'm not...
-            def initialize(should)
+            def should=(should)
                 if should == false
                     should = 0
                 elsif should == true
@@ -29,7 +29,7 @@ module Blink
                         [self.class,should]
                     should = 0
                 end
-                super(should)
+                @should = should
             end
 
             def retrieve

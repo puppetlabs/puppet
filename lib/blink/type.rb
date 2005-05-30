@@ -47,6 +47,7 @@ class Blink::Type < Blink::Element
     @@metaparams = [
         :onerror,
         :schedule,
+        :check,
         :require
     ]
 
@@ -453,6 +454,15 @@ class Blink::Type < Blink::Element
         @children = []
         @evalcount = 0
 
+        # states and parameters are treated equivalently from the outside:
+        # as name-value pairs (using [] and []=)
+        # internally, however, parameters are merely a hash, while states
+        # point to State objects
+        # further, the lists of valid states and parameters are defined
+        # at the class level
+        @states = Hash.new(false)
+        @parameters = Hash.new(false)
+
         @noop = false
 
         # which objects to notify when we change
@@ -468,21 +478,6 @@ class Blink::Type < Blink::Element
         @syncedchanges = 0
         @failedchanges = 0
 
-        # which attributes we care about even though they don't have
-        # values
-        # this isn't used right now, and isn't likely to be until we support
-        # querying
-        @monitor = Array.new
-
-        #namevar = self.class.namevar
-        #if namevar != :name
-        #    unless hash.include?(namevar)
-        #        raise "Objects of %s type must be passed %s" % [self.class,namevar]
-        #    end
-        #    hash[namevar] = hash[:name]
-        #    hash.delete(:name)
-        #end
-        # convert all strings to symbols
         hash.each { |var,value|
             unless var.is_a? Symbol
                 hash[var.intern] = value
@@ -490,31 +485,10 @@ class Blink::Type < Blink::Element
             end
         }
 
-        # if they passed in a list of states they're interested in,
-        # we mark them as "interesting"
-        # XXX maybe we should just consider params set to nil as 'interesting'
-        #
-        # this isn't used as much as it should be, but the idea is that
-        # the "interesting" states would be the ones retrieved during a
-        # 'retrieve' call
-        if hash.include?(:check)
-            @monitor = hash[:check].dup
-            hash.delete(:check)
-        end
-
         if hash.include?(:noop)
             @noop = hash[:noop]
             hash.delete(:noop)
         end
-
-        # states and parameters are treated equivalently from the outside:
-        # as name-value pairs (using [] and []=)
-        # internally, however, parameters are merely a hash, while states
-        # point to State objects
-        # further, the lists of valid states and parameters are defined
-        # at the class level
-        @states = Hash.new(false)
-        @parameters = Hash.new(false)
 
         # we have to set the name of our object before anything else,
         # because it might be used in creating the other states
@@ -538,7 +512,6 @@ class Blink::Type < Blink::Element
         end
 
         hash.each { |param,value|
-            @monitor.push(param)
             #Blink.debug("adding param '%s' with value '%s'" %
             #    [param,value])
             self[param] = value
@@ -569,6 +542,14 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def retrieve
+        self.collect { |child|
+            child.retrieve
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     def to_s
         self.name
     end
@@ -581,15 +562,8 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # iterate across all children, and then iterate across states
-    # we do children first so we're sure that all dependent objects
-    # are checked first
-    # we ignore parameters here, because they only modify how work gets
-    # done, they don't ever actually result in work specifically
-    def each
-        # we want to return the states in the order that each type
-        # specifies it, because it may (as in the case of File#create)
-        # be important
+    def eachstate
+        Blink.debug "have %s states" % @states.length
         tmpstates = []
         self.class.states.each { |state|
             if @states.include?(state.name)
@@ -599,8 +573,27 @@ class Blink::Type < Blink::Element
         unless tmpstates.length == @states.length
             raise "Something went very wrong with tmpstates creation"
         end
-        [@children,tmpstates].flatten.each { |child|
+        tmpstates.each { |state|
+            yield state
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # iterate across all children, and then iterate across states
+    # we do children first so we're sure that all dependent objects
+    # are checked first
+    # we ignore parameters here, because they only modify how work gets
+    # done, they don't ever actually result in work specifically
+    def each
+        # we want to return the states in the order that each type
+        # specifies it, because it may (as in the case of File#create)
+        # be important
+        @children.each { |child|
             yield child
+        }
+        self.eachstate { |state|
+            yield state
         }
     end
     #---------------------------------------------------------------
@@ -679,6 +672,35 @@ class Blink::Type < Blink::Element
     # Meta-parameter methods:  These methods deal with the results
     # of specifying metaparameters
     #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # this just marks states that we definitely want to retrieve values
+    # on
+    def metacheck(args)
+        unless args.is_a?(Array)
+            args = [args]
+        end
+
+        # these are states that we might not have values for but we want to retrieve
+        # values for anyway
+        args.each { |state|
+            unless state.is_a?(Symbol)
+                state = state.intern
+            end
+            next if @states.include?(state)
+
+            stateklass = nil
+            unless stateklass = self.class.validstate(state)
+                raise "%s is not a valid state for %s" % [state,self.class]
+            end
+
+            # XXX it's probably a bad idea to have code this important in
+            # two places
+            @states[state] = stateklass.new()
+            @states[state].parent = self
+        }
+    end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------

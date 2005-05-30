@@ -104,6 +104,34 @@ class Transaction
         }
     end
     #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def rollback
+        @changes.each { |change|
+            if change.is_a?(Blink::StateChange)
+                next unless change.run
+                #change.transaction = self
+                begin
+                    change.backward
+                    #@@changed.push change.state.parent
+                rescue => detail
+                    Blink.error("%s rollback failed: %s" % [change,detail])
+                    # at this point, we would normally do error handling
+                    # but i haven't decided what to do for that yet
+                    # so just record that a sync failed for a given object
+                    #@@failures[change.state.parent] += 1
+                    # this still could get hairy; what if file contents changed,
+                    # but a chmod failed?  how would i handle that error? dern
+                end
+            elsif change.is_a?(Blink::Transaction)
+                # yay, recursion
+                change.rollback
+            else
+                raise "Transactions cannot handle objects of type %s" % child.class
+            end
+        }
+    end
+    #---------------------------------------------------------------
 end
 end
 #---------------------------------------------------------------

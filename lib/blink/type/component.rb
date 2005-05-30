@@ -11,7 +11,13 @@ require 'blink/transaction'
 
 module Blink
 	class Component < Blink::Element
+        include Enumerable
+
         @name = :container
+
+        def each
+            @children.each { |child| yield child }
+        end
 
         def initialize
             @children = []
@@ -33,6 +39,12 @@ module Blink
                     raise "Containers can only contain Blink::Elements"
                 end
                 @children.push child
+            }
+        end
+
+        def retrieve
+            self.collect { |child|
+                child.retrieve
             }
         end
 	end

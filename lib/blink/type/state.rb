@@ -70,9 +70,14 @@ class Blink::State < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def initialize(should)
+    def initialize(*should)
         @is = nil
-        @should = should
+
+        if should.length > 0 # we got passed an argument
+            @should = should.shift
+        else # we got passed no argument
+            # leave @should undefined
+        end
         @parent = nil
     end
     #---------------------------------------------------------------

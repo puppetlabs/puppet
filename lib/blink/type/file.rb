@@ -52,19 +52,22 @@ module Blink
                 end
 
                 self.is = stat.uid
-                unless self.should.is_a?(Integer)
-                    begin
-                        user = Etc.getpwnam(self.should)
-                        if user.gid == ""
-                            raise "Could not retrieve uid for '%s'" % self.parent
+                if defined? @should
+                    unless @should.is_a?(Integer)
+                        begin
+                            user = Etc.getpwnam(@should)
+                            if user.gid == ""
+                                raise "Could not retrieve uid for '%s'" % self.parent
+                            end
+                            Blink.debug "converting %s to integer '%d'" %
+                                [@should,user.uid]
+                            @should = user.uid
+                        rescue
+                            raise "Could not get any info on user '%s'" % @should
                         end
-                        Blink.debug "converting %s to integer '%d'" %
-                            [self.should,user.uid]
-                        self.should = user.uid
-                    rescue
-                        raise "Could not get any info on user '%s'" % self.should
                     end
                 end
+
                 Blink.debug "chown state is %d" % self.is
             end
 
@@ -100,7 +103,7 @@ module Blink
             @name = :mode
             @event = :inode_changed
 
-            def initialize(should)
+            def should=(should)
                 # this is pretty hackish, but i need to make sure the number is in
                 # octal, yet the number can only be specified as a string right now
                 unless should.is_a?(Integer) # i've already converted it correctly
@@ -109,7 +112,7 @@ module Blink
                     end
                     should = Integer(should)
                 end
-                super(should)
+                @should = should
             end
 
             def retrieve
@@ -196,20 +199,22 @@ module Blink
                 # we probably shouldn't actually modify the 'should' value
                 # but i don't see a good way around it right now
                 # mmmm, should
-                unless self.should.is_a?(Integer)
-                    begin
-                        group = Etc.getgrnam(self.should)
-                        # yeah, don't ask me
-                        # this is retarded
-                        #p group
-                        if group.gid == ""
-                            raise "Could not retrieve gid for %s" % self.parent
+                if defined? @should
+                    unless self.should.is_a?(Integer)
+                        begin
+                            group = Etc.getgrnam(self.should)
+                            # yeah, don't ask me
+                            # this is retarded
+                            #p group
+                            if group.gid == ""
+                                raise "Could not retrieve gid for %s" % self.parent
+                            end
+                            Blink.debug "converting %s to integer %d" %
+                                [self.should,group.gid]
+                            self.should = group.gid
+                        rescue
+                            raise "Could not get any info on group %s" % self.should
                         end
-                        Blink.debug "converting %s to integer %d" %
-                            [self.should,group.gid]
-                        self.should = group.gid
-                    rescue
-                        raise "Could not get any info on group %s" % self.should
                     end
                 end
                 Blink.debug "chgrp state is %d" % self.is

@@ -23,7 +23,7 @@ class TestBasic < Test::Unit::TestCase
             unless Blink::Type::File.has_key?(cfile)
                 Blink::Type::File.new(
                     :path => cfile,
-                    :check => [:mode, :owner, :group]
+                    :check => [:mode, :owner]
                 )
             end
             @configfile = Blink::Type::File[cfile]
@@ -67,6 +67,14 @@ class TestBasic < Test::Unit::TestCase
         #p yayfile
         yayfile.eachstate { |state|
             assert_nil(state.is)
+        }
+
+        assert_nothing_raised() {
+            yayfile.retrieve
+        }
+
+        assert_nothing_raised() {
+            yayfile[:check] = :group
         }
 
         assert_nothing_raised() {
