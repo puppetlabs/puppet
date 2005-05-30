@@ -236,9 +236,9 @@ class Blink::Type < Blink::Element
         end
 
         if @objects.has_key?(newobj.name)
-            puts @objects
-            raise "Object '%s' of type '%s' already exists" %
-                [newobj.name,newobj.class.name]
+            raise "Object '%s' of type '%s' already exists with id '%s' vs. '%s'" %
+                [newobj.name,newobj.class.name,
+                    @objects[newobj.name].object_id,newobj.object_id]
         else
             #Blink.debug("adding %s of type %s to class list" %
             #    [object.name,object.class])
@@ -366,6 +366,9 @@ class Blink::Type < Blink::Element
 
     #---------------------------------------------------------------
     def Type.validparameter(name)
+        unless defined? @parameters
+            raise "Class %s has not defined parameters" % self
+        end
         return @parameters.include?(name)
     end
     #---------------------------------------------------------------
@@ -457,6 +460,8 @@ class Blink::Type < Blink::Element
     def initialize(hash)
         @children = []
         @evalcount = 0
+
+        @subscriptions = []
 
         # states and parameters are treated equivalently from the outside:
         # as name-value pairs (using [] and []=)
@@ -708,9 +713,26 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def metaonerror(response)
-        Blink.debug("Would have called metaonerror")
-        @onerror = response
+    def subscribe(hash)
+        if hash[:event] == '*'
+            hash[:event] = :ALL_EVENTS
+        end
+
+        hash[:source] = self
+        sub = Blink::Event::Subscription.new(hash)
+
+        # add to the correct area
+        @subscriptions.push sub
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # return all of the subscriptions to a given event
+    def subscribers?(event)
+        @subscriptions.find_all { |sub|
+            sub.event == event.event or
+                sub.event == :ALL_EVENTS
+        }
     end
     #---------------------------------------------------------------
 
@@ -737,8 +759,9 @@ class Blink::Type < Blink::Element
                     [name,type]
             end
             Blink.debug("%s requires %s" % [self.name,object])
-            Blink::Event.subscribe(
-                :source => object,
+
+            # for now, we only support this one method, 'refresh'
+            object.subscribe(
                 :event => '*',
                 :target => self,
                 :method => :refresh
@@ -749,14 +772,9 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def addnotify(object)
-        @notify.push object
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def notify
-        @notify
+    def metaonerror(response)
+        Blink.debug("Would have called metaonerror")
+        @onerror = response
     end
     #---------------------------------------------------------------
 

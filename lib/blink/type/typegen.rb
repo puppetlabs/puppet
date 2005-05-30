@@ -16,6 +16,9 @@ class TypeGenerator < Blink::Type
     @name = :typegen
     @abstract = true
 
+    @parameters = [:name]
+    @states = []
+
     #---------------------------------------------------------------
     def TypeGenerator.[](name)
         return @subclasses[name]

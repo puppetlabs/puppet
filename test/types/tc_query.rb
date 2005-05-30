@@ -9,7 +9,7 @@ require 'test/unit'
 
 # $Id$
 
-class TestBasic < Test::Unit::TestCase
+class TestQuery < Test::Unit::TestCase
     def setup
         Blink[:debug] = true
     end
@@ -104,12 +104,6 @@ class TestBasic < Test::Unit::TestCase
 
         assert_nothing_raised() {
             component.retrieve
-        }
-    end
-
-    def teardown
-        assert_nothing_raised() {
-            Blink::Type.allclear
         }
     end
 end

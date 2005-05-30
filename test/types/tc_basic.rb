@@ -21,7 +21,7 @@ class TestBasic < Test::Unit::TestCase
         Blink[:debug] = 1
 
         assert_nothing_raised() {
-            @component = Blink::Component.new(:name => "component")
+            @component = Blink::Component.new(:name => "yaytest")
         }
 
         assert_nothing_raised() {
@@ -56,8 +56,13 @@ class TestBasic < Test::Unit::TestCase
         #puts "ConfigFile is %s, id %s" % [@configfile, @configfile.object_id]
     end
 
+    def teardown
+        Blink::Type.allclear
+    end
+
     def test_name_calls
         [@sleeper,@configfile].each { |obj|
+            Blink.error "obj is %s" % obj
             assert_nothing_raised(){
                 obj.name
             }

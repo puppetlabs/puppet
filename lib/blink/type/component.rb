@@ -17,15 +17,16 @@ module Blink
         @namevar = :name
 
         @states = []
-        @parameters = [:name]
+        @parameters = [:name,:type]
 
         def each
             @children.each { |child| yield child }
         end
 
-        def initialize(*args)
+        def initialize(args)
             @children = []
-            super
+            super(args)
+            Blink.verbose "Made component with name %s" % self.name
         end
 
         # now we decide whether a transaction is dumb, and just accepts
@@ -33,8 +34,9 @@ module Blink
         # for now, because i've already got this implemented, let transactions
         # collect the changes themselves
         def evaluate
-            return transaction = Blink::Transaction.new(@children)
-            #transaction.run
+            transaction = Blink::Transaction.new(@children)
+            transaction.component = self
+            return transaction
         end
 
         def push(*ary)
@@ -45,6 +47,10 @@ module Blink
                 end
                 @children.push child
             }
+        end
+
+        def name
+            return "%s[%s]" % [@parameters[:type],@parameters[:name]]
         end
 
         def retrieve

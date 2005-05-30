@@ -103,10 +103,43 @@ module Blink
     class TransBucket < Array
         attr_accessor :name, :type
 
+        def push(*args)
+            args.each { |arg|
+                case arg
+                when Blink::TransBucket, Blink::TransObject, Blink::TransSetting
+                    # nada
+                else
+                    raise "TransBuckets cannot handle objects of type %s" %
+                        arg.class
+                end
+            }
+            super
+        end
+
         def to_type
             # this container will contain the equivalent of all objects at
             # this level
-            container = Blink::Component.new
+            #container = Blink::Component.new(:name => @name, :type => @type)
+            unless defined? @name
+                raise "TransBuckets must have names"
+            end
+            unless defined? @type
+                Blink.verbose "TransBucket '%s' has no type" % @name
+            end
+            hash = {
+                :name => @name,
+                :type => @type
+            }
+            if defined? @parameters
+                @parameters.each { |param,value|
+                    Blink.warning "Defining %s on %s of type %s" %
+                        [param,@name,@type]
+                    hash[param] = value
+                }
+            else
+                Blink.warning "%s has no parameters" % @name
+            end
+            container = Blink::Component.new(hash)
             nametable = {}
 
             self.each { |child|
@@ -153,6 +186,13 @@ module Blink
             # at this point, no objects at are level are still Transportable
             # objects
             return container
+        end
+
+        def param(param,value)
+            unless defined? @parameters
+                @parameters = {}
+            end
+            @parameters[param] = value
         end
 
     end

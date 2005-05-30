@@ -15,7 +15,7 @@ require 'blink/statechange'
 #---------------------------------------------------------------
 module Blink
 class Transaction
-    attr_accessor :toplevel
+    attr_accessor :toplevel, :component
 
     #---------------------------------------------------------------
     # a bit of a gross hack; a global list of objects that have failed to sync,
@@ -43,11 +43,12 @@ class Transaction
     def evaluate
         Blink.notice "executing %s changes or transactions" % @changes.length
 
-        @changes.each { |change|
+        return @changes.collect { |change|
             if change.is_a?(Blink::StateChange)
                 change.transaction = self
+                events = nil
                 begin
-                    change.forward
+                    events = [change.forward].flatten
                     #@@changed.push change.state.parent
                 rescue => detail
                     Blink.error("%s failed: %s" % [change,detail])
@@ -58,26 +59,26 @@ class Transaction
                     # this still could get hairy; what if file contents changed,
                     # but a chmod failed?  how would i handle that error? dern
                 end
+
+                # first handle the subscriptions on individual objects
+                events.each { |event|
+                    change.state.parent.subscribers?(event).each { |sub|
+                        sub.trigger(self)
+                    }
+                }
+                events
             elsif change.is_a?(Blink::Transaction)
-                # yay, recursion
                 change.evaluate
             else
                 raise "Transactions cannot handle objects of type %s" % child.class
             end
+        }.flatten.each { |event|
+            # this handles subscriptions on the components, rather than
+            # on idividual objects
+            self.component.subscribers?(event).each { |sub|
+                sub.trigger(self)
+            }
         }
-
-        if @toplevel # if we're the top transaction, perform the refreshes
-            Blink::Event.process
-            #notifies = @@changed.uniq.collect { |object|
-            #    object.notify
-            #}.flatten.uniq
-
-            # now we have the entire list of objects to notify
-        else
-            Blink.notice "I'm not top-level"
-            # these are the objects that need to be refreshed
-            #return @refresh.uniq
-        end
     end
     #---------------------------------------------------------------
 
@@ -137,8 +138,16 @@ class Transaction
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def triggercount(sub)
+        Blink.notice "Triggercount on %s is %s" % [sub,@triggered[sub]]
+        return @triggered[sub]
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     def triggered(sub)
         @triggered[sub] += 1
+        Blink.notice "%s was triggered; count is %s" % [sub,@triggered[sub]]
     end
     #---------------------------------------------------------------
 end

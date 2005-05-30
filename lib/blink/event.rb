@@ -37,10 +37,10 @@ module Blink
                 # the last, a later-refreshed object could somehow be connected
                 # to the "old" object rather than "new"
                 # but we're pretty far from that being a problem
-                if transaction.triggered(self) > 1
+                if transaction.triggercount(self) > 0
                     Blink.verbose "%s has already run" % self
                 else
-                    Blink.verbose "'%s' generated '%s'; triggering '%s' on '%s'" %
+                    Blink.verbose "'%s' matched '%s'; triggering '%s' on '%s'" %
                         [@source,@event,@method,@target]
                     begin
                         if @target.respond_to?(@method)
@@ -53,12 +53,13 @@ module Blink
                         # um, what the heck do i do when an object fails to refresh?
                         # shouldn't that result in the transaction rolling back?
                         # XXX yeah, it should
-                        Blink.error "'%s' failed to refresh: '%s'" %
-                            [@target,detail]
+                        Blink.error "'%s' failed to %s: '%s'" %
+                            [@target,@method,detail]
                         raise
                         #raise "We need to roll '%s' transaction back" %
                             #transaction
                     end
+                    transaction.triggered(self)
                 end
             end
         end

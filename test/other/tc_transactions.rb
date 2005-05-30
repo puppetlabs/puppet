@@ -179,6 +179,26 @@ class TestTransactions < Test::Unit::TestCase
             transaction.evaluate
         }
 
+        fakevent = Blink::Event.new(
+            :event => :ALL_EVENTS,
+            :object => self,
+            :transaction => transaction,
+            :message => "yay"
+        )
+
+        sub = nil
+        assert_nothing_raised() {
+            sub = file.subscribers?(fakevent)
+        }
+
+        assert(sub)
+
+        # assert we got exactly one trigger on this subscription
+        # in other words, we don't want a single event to cause many
+        # restarts
+        # XXX i don't have a good way to retrieve this information...
+        #assert_equal(1,transaction.triggercount(sub))
+
         # now set everything back to how it was
         assert_nothing_raised() {
             service[:running] = 0
@@ -231,6 +251,25 @@ class TestTransactions < Test::Unit::TestCase
         assert_nothing_raised() {
             transaction.evaluate
         }
+
+        fakevent = Blink::Event.new(
+            :event => :ALL_EVENTS,
+            :object => self,
+            :transaction => transaction,
+            :message => "yay"
+        )
+
+        sub = nil
+        assert_nothing_raised() {
+            sub = fcomp.subscribers?(fakevent)
+        }
+
+        assert(sub)
+
+        # assert we got exactly one trigger on this subscription
+        # XXX this doesn't work, because the sub is being triggered in
+        # a contained transaction, not this one
+        #assert_equal(1,transaction.triggercount(sub))
 
         # now set everything back to how it was
         assert_nothing_raised() {
