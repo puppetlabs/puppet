@@ -32,7 +32,7 @@ require 'blink/type/state'
 # to use this interface, just define an 'each' method and 'include Blink::Type'
 
 module Blink
-class Blink::Type < Blink::Element
+class Type < Blink::Element
     attr_accessor :children, :parameters, :parent, :states
     include Enumerable
 
@@ -45,7 +45,7 @@ class Blink::Type < Blink::Element
     @states = []
     @parameters = [:notused]
 
-    @allowedmethods = [:noop,:debug]
+    @allowedmethods = [:noop,:debug,:statefile]
 
     @@metaparams = [
         :onerror,
@@ -99,6 +99,12 @@ class Blink::Type < Blink::Element
         else
             return false
         end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def Type.statefile(file)
+        Blink[:statefile] = file
     end
     #---------------------------------------------------------------
 
@@ -414,8 +420,12 @@ class Blink::Type < Blink::Element
                 if @states.include?(mname)
                     @states[mname].should = value
                 else
-                    @states[mname] = stateklass.new(value)
-                    @states[mname].parent = self
+                    @states[mname] = stateklass.new(
+                        :parent => self,
+                        :should => value
+                    )
+                    #Blink.notice "Adding parent to %s" % mname
+                    #@states[mname].parent = self
                 end
             end
         elsif self.class.validparameter(mname)
@@ -505,11 +515,11 @@ class Blink::Type < Blink::Element
 
         # if they're not using :name for the namevar but we got :name (probably
         # from the parser)
-        if namevar != :name and hash.include?(:name)
+        if namevar != :name and hash.include?(:name) and ! hash[:name].nil?
             self[namevar] = hash[:name]
             hash.delete(:name)
         # else if we got the namevar
-        elsif hash.has_key?(namevar)
+        elsif hash.has_key?(namevar) and ! hash[namevar].nil?
             self[namevar] = hash[namevar]
             hash.delete(namevar)
         # else something's screwy
@@ -559,6 +569,14 @@ class Blink::Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def sync
+        self.collect { |child|
+            child.sync
+        }.flatten
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     def to_s
         self.name
     end
@@ -572,7 +590,7 @@ class Blink::Type < Blink::Element
 
     #---------------------------------------------------------------
     def eachstate
-        Blink.debug "have %s states" % @states.length
+        Blink.debug "%s has %s states" % [self,@states.length]
         tmpstates = []
         self.class.states.each { |state|
             if @states.include?(state.name)
@@ -706,8 +724,11 @@ class Blink::Type < Blink::Element
 
             # XXX it's probably a bad idea to have code this important in
             # two places
-            @states[state] = stateklass.new()
-            @states[state].parent = self
+            @states[state] = stateklass.new(
+                :parent => self
+            )
+            #@states[state] = stateklass.new()
+            #@states[state].parent = self
         }
     end
     #---------------------------------------------------------------
@@ -782,18 +803,6 @@ class Blink::Type < Blink::Element
     def metaschedule(schedule)
         @schedule = schedule
     end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # set up the "interface" methods
-    [:sync,:retrieve].each { |method|
-        self.send(:define_method,method) {
-            self.each { |subobj|
-                #Blink.debug("sending '%s' to '%s'" % [method,subobj])
-                subobj.send(method)
-            }
-        }
-    }
     #---------------------------------------------------------------
 end # Blink::Type
 end

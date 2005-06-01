@@ -70,15 +70,19 @@ class Blink::State < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def initialize(*should)
+    def initialize(hash)
         @is = nil
 
-        if should.length > 0 # we got passed an argument
-            self.should = should.shift
+        unless hash.include?(:parent)
+            raise "State %s was not passed a parent" % self
+        end
+        @parent = hash[:parent]
+
+        if hash.include?(:should)
+            self.should = hash[:should]
         else # we got passed no argument
             # leave @should undefined
         end
-        @parent = nil
     end
     #---------------------------------------------------------------
 

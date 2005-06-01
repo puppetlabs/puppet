@@ -17,11 +17,20 @@ module Blink
             @name = :create
             @event = :file_created
 
+            def should=(value)
+                # default to just about anything meaning 'true'
+                if value == false or value.nil?
+                    @should = false
+                else
+                    @should = true
+                end
+            end
+
             def retrieve
                 stat = nil
 
                 self.is = FileTest.exist?(self.parent[:path])
-                Blink.debug "exists state is %s" % self.is
+                Blink.debug "'exists' state is %s" % self.is
             end
 
 
@@ -36,6 +45,83 @@ module Blink
             end
         end
 
+        class FileChecksum < Blink::State
+            @name = :checksum
+            @event = :file_modified
+
+            def should=(value)
+                @checktype = value
+                state = Blink::Storage.state(self)
+                if hash = state[self.parent[:path]]
+                    if hash.include?(@checktype)
+                        @should = hash[@checktype]
+                    else
+                        Blink.verbose "Found checksum for %s but not of type %s" %
+                            [self.parent[:path],@checktype]
+                        @should = nil
+                    end
+                else
+                    Blink.debug "No checksum for %s" % self.parent[:path]
+                end
+            end
+
+            def retrieve
+                unless defined? @checktype
+                    @checktype = "md5"
+                end
+
+                sum = ""
+                case @checktype
+                when "md5":
+                    File.open(self.parent[:path]) { |file|
+                        sum = Digest::MD5.hexdigest(file.read)
+                    }
+                when "md5lite":
+                    File.open(self.parent[:path]) { |file|
+                        sum = Digest::MD5.hexdigest(file.read(512))
+                    }
+                when "timestamp","mtime":
+                    sum = File.stat(self.parent[:path]).mtime
+                when "time":
+                    sum = File.stat(self.parent[:path]).ctime
+                end
+
+                self.is = sum
+
+                Blink.debug "checksum state is %s" % self.is
+            end
+
+
+            # at this point, we don't actually modify the system, we just kick
+            # off an event if we detect a change
+            def sync
+                if self.updatesum
+                    return :file_modified
+                else
+                    return nil
+                end
+            end
+
+            def updatesum
+                state = Blink::Storage.state(self)
+                unless state.include?(self.parent[:path])
+                    state[self.parent[:path]] = Hash.new
+                end
+                # if we're replacing, vs. updating
+                if state[self.parent[:path]].include?(@checktype)
+                    Blink.debug "Replacing checksum %s with %s" %
+                        [state[self.parent[:path]][@checktype],@is]
+                    result = true
+                else
+                    Blink.verbose "Creating checksum %s for %s of type %s" %
+                        [@is,self.parent[:path],@checktype]
+                    result = false
+                end
+                state[self.parent[:path]][@checktype] = @is
+                return result
+            end
+        end
+
         class FileUID < Blink::State
             require 'etc'
             attr_accessor :file
@@ -43,13 +129,7 @@ module Blink
             @event = :inode_changed
 
             def retrieve
-                stat = nil
-
-                unless stat = self.parent.stat(true)
-                    self.is = -1
-                    Blink.debug "chown state is %d" % self.is
-                    return
-                end
+                stat = self.parent.stat(true)
 
                 self.is = stat.uid
                 if defined? @should
@@ -116,13 +196,7 @@ module Blink
             end
 
             def retrieve
-                stat = nil
-
-                unless stat = self.parent.stat(true)
-                    # a value we know we'll never get in reality
-                    self.is = -1
-                    return
-                end
+                stat = self.parent.stat(true)
                 self.is = stat.mode & 007777
 
                 Blink.debug "chmod state is %o" % self.is
@@ -176,6 +250,7 @@ module Blink
                     tmp = 1
                 end
                 @parent.value[11] = tmp
+                return :inode_changed
             end
         end
 
@@ -186,13 +261,7 @@ module Blink
             @event = :inode_changed
 
             def retrieve
-                stat = nil
-
-                unless stat = self.parent.stat(true)
-                    self.is = -1
-                    Blink.debug "chgrp state is %d" % self.is
-                    return
-                end
+                stat = self.parent.stat(true)
 
                 self.is = stat.gid
 
@@ -254,6 +323,7 @@ module Blink
                 Blink::State::FileUID,
                 Blink::State::FileGroup,
                 Blink::State::FileMode,
+                Blink::State::FileChecksum,
                 Blink::State::FileSetUID
             ]
 
@@ -264,6 +334,18 @@ module Blink
 
             @name = :file
             @namevar = :path
+
+            # a wrapper method to make sure the file exists before doing anything
+            def retrieve
+                unless stat = self.stat(true)
+                    Blink.verbose "File %s does not exist" % self[:path]
+                    @states.each { |name,state|
+                        state.is = -1
+                    }
+                    return
+                end
+                super
+            end
 
             def stat(refresh = false)
                 if @stat.nil? or refresh == true
@@ -315,10 +397,6 @@ module Blink
 
                             arghash[:path] = ::File.join(self[:path],file)
 
-                            # if one of these files already exists, we're going to
-                            # fail here, because this will try to clobber, which is bad
-                            # mmmkay
-                            #@children.push self.class.new(arghash)
                             child = nil
                             # if the file already exists...
                             if child = self.class[arghash[:path]]
@@ -333,18 +411,6 @@ module Blink
                         }
                     end
                 end
-            end
-
-            def sync
-                if @states[:create] and ! FileTest.exist?(self.path)
-                    begin
-                        File.open(self.path,"w") { # just create an empty file
-                        }
-                    rescue => detail
-                        raise detail
-                    end
-                end
-                super
             end
         end # Blink::Type::File
     end # Blink::Type
