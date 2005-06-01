@@ -52,6 +52,7 @@ class Transaction
                     #@@changed.push change.state.parent
                 rescue => detail
                     Blink.error("%s failed: %s" % [change,detail])
+                    raise
                     # at this point, we would normally do error handling
                     # but i haven't decided what to do for that yet
                     # so just record that a sync failed for a given object
@@ -60,19 +61,25 @@ class Transaction
                     # but a chmod failed?  how would i handle that error? dern
                 end
 
-                # first handle the subscriptions on individual objects
-                events.each { |event|
-                    change.state.parent.subscribers?(event).each { |sub|
-                        sub.trigger(self)
+                if events.nil?
+                    Blink.verbose "No events returned?"
+                else
+                    # first handle the subscriptions on individual objects
+                    events.each { |event|
+                        change.state.parent.subscribers?(event).each { |sub|
+                            sub.trigger(self)
+                        }
                     }
-                }
+                end
                 events
             elsif change.is_a?(Blink::Transaction)
                 change.evaluate
             else
                 raise "Transactions cannot handle objects of type %s" % child.class
             end
-        }.flatten.each { |event|
+        }.flatten.reject { |event|
+            event.nil?
+        }.each { |event|
             # this handles subscriptions on the components, rather than
             # on idividual objects
             self.component.subscribers?(event).each { |sub|

@@ -12,6 +12,7 @@ module Blink
     class State
         class ServiceRunning < State
             @name = :running
+            #@event = :file_created
 
             # this whole thing is annoying
             # i should probably just be using booleans, but for now, i'm not...
@@ -61,11 +62,12 @@ module Blink
                 end
                 Blink.debug "'%s' status is '%s' and should be '%s'" %
                     [self,status,should]
+                event = nil
                 if self.should > 0
                     if status < 1
                         Blink.debug "Starting '%s'" % self
                         if self.parent.initcmd("start")
-                            return :service_started
+                            event = :service_started
                         else
                             raise "Failed to start '%s'" % self.parent.name
                         end
@@ -79,13 +81,15 @@ module Blink
                 elsif status > 0
                     Blink.debug "Stopping '%s'" % self
                     if self.parent.initcmd("stop")
-                        return :service_stopped
+                        event = :service_stopped
                     else
                         raise "Failed to stop %s" % self.name
                     end
                 else
                     Blink.debug "Not running '%s' and shouldn't be running" % self
                 end
+
+                return event
             end
         end
     end

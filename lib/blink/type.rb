@@ -33,7 +33,7 @@ require 'blink/type/state'
 
 module Blink
 class Type < Blink::Element
-    attr_accessor :children, :parameters, :parent, :states
+    attr_accessor :children, :parameters, :parent
     include Enumerable
 
     @@allobjects = Array.new # an array for all objects
@@ -562,8 +562,10 @@ class Type < Blink::Element
 
     #---------------------------------------------------------------
     def retrieve
-        self.collect { |child|
-            child.retrieve
+        # it's important to use the method here, so we always get
+        # them back in the right order
+        self.states.collect { |state|
+            state.retrieve
         }
     end
     #---------------------------------------------------------------
@@ -572,6 +574,8 @@ class Type < Blink::Element
     def sync
         self.collect { |child|
             child.sync
+        }.reject { |event|
+            ! (event.is_a?(Symbol) or event.is_a?(String))
         }.flatten
     end
     #---------------------------------------------------------------
@@ -589,7 +593,7 @@ class Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def eachstate
+    def states
         Blink.debug "%s has %s states" % [self,@states.length]
         tmpstates = []
         self.class.states.each { |state|
@@ -600,7 +604,13 @@ class Type < Blink::Element
         unless tmpstates.length == @states.length
             raise "Something went very wrong with tmpstates creation"
         end
-        tmpstates.each { |state|
+        return tmpstates
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def eachstate
+        self.states.each { |state|
             yield state
         }
     end
@@ -660,11 +670,25 @@ class Type < Blink::Element
         end
         @evalcount += 1
 
-        # collect changes and return them
-        # these changes could be from child objects or from contained states
-        self.collect { |child|
+        changes = @children.collect { |child|
             child.evaluate
         }
+
+        # this only operates on states, not states + children
+        self.retrieve
+        unless self.insync?
+            changes << self.states.find_all { |state|
+                ! state.insync?
+            }.collect { |state|
+                Blink::StateChange.new(state)
+            }
+        end
+        # collect changes and return them
+        # these changes could be from child objects or from contained states
+        #self.collect { |child|
+        #    child.evaluate
+        #}
+        return changes
     end
     #---------------------------------------------------------------
 
@@ -673,9 +697,9 @@ class Type < Blink::Element
     def insync?
         insync = true
 
-        self.each { |obj|
-            unless obj.insync?
-                Blink.debug("%s is not in sync" % obj)
+        self.states.each { |state|
+            unless state.insync?
+                Blink.debug("%s is not in sync" % state)
                 insync = false
             end
         }

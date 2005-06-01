@@ -35,12 +35,12 @@ module Blink
                 
                 # default to a simple event type
                 if event.nil?
-                    event = @state.parent.name.id2name + "_changed"
+                    event = @state.parent.class.name.id2name + "_changed"
                 elsif ! event.is_a?(Symbol)
                     Blink.notice "State '%s' returned invalid event '%s'; resetting to default" %
                         [@state.class,event]
 
-                    event = @state.parent.name.id2name + "_changed"
+                    event = @state.parent.class.name.id2name + "_changed"
                 end
 
                 # i should maybe include object type, but the event type
@@ -53,10 +53,15 @@ module Blink
                 )
             rescue => detail
                 Blink.error "%s failed: %s" % [self.to_s,detail]
+                raise
                 # there should be a way to ask the state what type of event
                 # it would have generated, but...
+                pname = @state.parent.class.name.id2name
+                #if pname.is_a?(Symbol)
+                #    pname = pname.id2name
+                #end
                 return Blink::Event.new(
-                    :event => @state.parent.name.id2name + "_failed",
+                    :event => pname + "_failed",
                     :object => @state.parent,
                     :transaction => @transaction,
                     :message => "Failed: " + self.to_s

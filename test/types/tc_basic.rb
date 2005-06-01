@@ -25,25 +25,22 @@ class TestBasic < Test::Unit::TestCase
         }
 
         assert_nothing_raised() {
-            cfile = File.join($blinkbase,"examples/root/etc/configfile")
-            unless Blink::Type::File.has_key?(cfile)
-                Blink::Type::File.new(
-                    :path => cfile
-                )
-            end
-            @configfile = Blink::Type::File[cfile]
+            @filepath = "/tmp/testfile"
+            system("rm -f %s" % @filepath)
+            @configfile = Blink::Type::File.new(
+                :path => @filepath,
+                :create => true,
+                :checksum => "md5"
+            )
         }
         assert_nothing_raised() {
-            unless Blink::Type::Service.has_key?("sleeper")
-                Blink::Type::Service.new(
-                    :name => "sleeper",
-                    :running => 1
-                )
-                Blink::Type::Service.setpath(
-                    File.join($blinkbase,"examples/root/etc/init.d")
-                )
-            end
-            @sleeper = Blink::Type::Service["sleeper"]
+            @sleeper = Blink::Type::Service.new(
+                :name => "sleeper",
+                :running => 1
+            )
+            Blink::Type::Service.setpath(
+                File.join($blinkbase,"examples/root/etc/init.d")
+            )
         }
         assert_nothing_raised() {
             @component.push(
@@ -58,6 +55,7 @@ class TestBasic < Test::Unit::TestCase
 
     def teardown
         Blink::Type.allclear
+        system("rm -f %s" % @filepath)
     end
 
     def test_name_calls
@@ -72,7 +70,7 @@ class TestBasic < Test::Unit::TestCase
     def test_name_equality
         #puts "Component is %s, id %s" % [@component, @component.object_id]
         assert_equal(
-            File.join($blinkbase,"examples/root/etc/configfile"),
+            @filepath,
             @configfile.name
         )
 
