@@ -31,9 +31,11 @@ end
 
 class TestPackageSource < Test::Unit::TestCase
     def test_filesource
+        system("touch /tmp/fakepackage")
         assert_equal(
             "/tmp/fakepackage",
             Blink::Type::PackageSource.get("file:///tmp/fakepackage")
         )
+        system("rm -f /tmp/fakepackage")
     end
 end
