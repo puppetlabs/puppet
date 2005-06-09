@@ -271,18 +271,27 @@ module Blink
                 if defined? @should
                     unless self.should.is_a?(Integer)
                         begin
+                            require 'blink/fact'
                             group = Etc.getgrnam(self.should)
-                            # yeah, don't ask me
-                            # this is retarded
-                            #p group
-                            if group.gid == ""
+                            # apparently os x is six shades of weird
+                            os = Blink::Fact["Operatingsystem"]
+
+                            gid = ""
+                            case os
+                            when "Darwin":
+                                gid = group.passwd
+                            else
+                                gid = group.gid
+                            end
+                            if gid == ""
                                 raise "Could not retrieve gid for %s" % self.parent
                             end
                             Blink.debug "converting %s to integer %d" %
-                                [self.should,group.gid]
-                            self.should = group.gid
+                                [self.should,gid]
+                            self.should = gid
                         rescue
-                            raise "Could not get any info on group %s" % self.should
+                            #raise "Could not get any info on group %s" % self.should
+                            raise
                         end
                     end
                 end
