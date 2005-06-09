@@ -2,13 +2,15 @@
 
 # $Id$
 
+require 'blink/type/state'
+
 module Blink
     class State
         class PackageInstalled < Blink::State
             @name = :install
 
             def retrieve
-                self.is = Blink::PackageType[object.format][object.name]
+                self.is = Blink::PackageType[@object.format][@object.name]
                 Blink.debug "package install state is %d" % self.is
             end
 

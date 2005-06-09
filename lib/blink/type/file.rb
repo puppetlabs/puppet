@@ -415,4 +415,27 @@ module Blink
         end # Blink::Type::File
     end # Blink::Type
 
+    class FileSource
+        attr_accessor :name
+
+        @sources = Hash.new(nil)
+
+        def FileSource.[]=(name,sub)
+            @sources[name] = sub
+        end
+
+        def FileSource.[](name)
+            return @sources[name]
+        end
+
+        def initialize(name)
+            @name = name
+
+            if block_given?
+                yield self
+            end
+
+            FileSource[name] = self
+        end
+    end
 end

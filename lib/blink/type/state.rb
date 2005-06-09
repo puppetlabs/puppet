@@ -15,7 +15,7 @@ require 'blink/statechange'
 # a file's owner is what you want, but you could not create two file objects
 # and use these methods to verify that they have the same owner
 module Blink
-class Blink::State < Blink::Element
+class State < Blink::Element
     attr_accessor :is, :should, :parent
 
     @virtual = true

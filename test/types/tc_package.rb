@@ -4,7 +4,7 @@ if __FILE__ == $0
     $blinkbase = "../../../../language/trunk"
 end
 
-require 'blink/type/package'
+require 'blink'
 require 'test/unit'
 require 'facter'
 
