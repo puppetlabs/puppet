@@ -380,12 +380,21 @@ class Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def Type.validparam(name)
+        self.validstate(name) or self.validparameter(name) or false
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # this abstracts accessing parameters and states, and normalizes
     # access to always be symbols, not strings
     def [](name)
         mname = name
         if name.is_a?(String)
             mname = name.intern
+        end
+        unless self.class.validparam(name)
+            raise "Invalid parameter %s" % [mname]
         end
         if @states.include?(mname)
             # if they're using [], they don't know if we're a state or a string
@@ -395,7 +404,7 @@ class Type < Blink::Element
         elsif @parameters.include?(mname)
             return @parameters[mname]
         else
-            raise "Invalid parameter %s%s" % [mname]
+            return nil
         end
     end
     #---------------------------------------------------------------
