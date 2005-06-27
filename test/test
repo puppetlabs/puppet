@@ -9,12 +9,12 @@ $:.unshift '.'
 $:.unshift '../lib'
 
 # if we're not in the library trunk, then add that to the lib search path
-if Dir.getwd !~ %r{blink/library}
+if Dir.getwd !~ %r{puppet/library}
     $:.unshift '../../../library/trunk/lib/'
     $:.unshift '../../../library/trunk/test/'
 end
 
-require 'blinktest.rb'
+require 'puppetest.rb'
 
 require 'getoptlong'
 
@@ -35,16 +35,16 @@ result.each { |opt,arg|
 	end
 }
 
-$blinkbase = "../../../language/trunk"
+$puppetbase = "../../../language/trunk"
 
 suites = nil
 
 if ARGV.length != 0
     suites = ARGV
 else
-    suites = BlinkTestSuite.list
+    suites = PuppetTestSuite.list
 end
 
 suites.each { |suite|
-    BlinkTestSuite.new(suite)
+    PuppetTestSuite.new(suite)
 }
