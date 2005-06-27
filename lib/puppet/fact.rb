@@ -9,17 +9,17 @@
 # currently a very thin veneer on 'facter'
 
 require 'facter'
-require 'blink'
-require 'blink/type'
+require 'puppet'
+require 'puppet/type'
 
-module Blink
+module Puppet
 	class Fact
         def Fact.[](name)
             fact = Facter[name]
             if fact.value.nil?
                 raise "Could not retrieve fact %s" % name
             end
-            Blink.debug("fact: got %s from %s for %s" % [fact.value,fact,name])
+            Puppet.debug("fact: got %s from %s for %s" % [fact.value,fact,name])
             return fact.value
         end
 
@@ -39,7 +39,7 @@ module Blink
             return :name
         end
 
-        #Blink::Type.newtype(self)
+        #Puppet::Type.newtype(self)
 
         # we're adding a new resolution mechanism here; this is just how
         # types work

@@ -5,11 +5,11 @@
 # parse and write configuration files using objects with minimal parsing abilities
 
 require 'etc'
-require 'blink/type'
+require 'puppet/type'
 
-module Blink
+module Puppet
     class Type
-class TypeGenerator < Blink::Type
+class TypeGenerator < Puppet::Type
     include Enumerable
 
     @namevar = :name
@@ -61,7 +61,7 @@ class TypeGenerator < Blink::Type
 
     #---------------------------------------------------------------
     def TypeGenerator.namevar=(namevar)
-        Blink.debug "Setting namevar for %s to %s" % [self,namevar]
+        Puppet.debug "Setting namevar for %s to %s" % [self,namevar]
         unless namevar.is_a? Symbol
             namevar = namevar.intern
         end
@@ -105,7 +105,7 @@ class TypeGenerator < Blink::Type
         klassname = arghash[:name].capitalize
 
         # create the file type
-        Blink::Type.module_eval "
+        Puppet::Type.module_eval "
             class %s < %s
             end" % [klassname,self]
         klass = eval(klassname)
@@ -116,10 +116,10 @@ class TypeGenerator < Blink::Type
         arghash.each { |option,value|
             method = option.id2name + "="
             if klass.respond_to?(method)
-                #Blink.debug "Setting %s on %s to '%s'" % [option,klass,arghash[option]]
+                #Puppet.debug "Setting %s on %s to '%s'" % [option,klass,arghash[option]]
                 klass.send(method,arghash[option])
             else
-                Blink.debug "%s does not respond to %s" % [klass,method]
+                Puppet.debug "%s does not respond to %s" % [klass,method]
             end
         }
 
@@ -135,8 +135,8 @@ class TypeGenerator < Blink::Type
         #    klass.send(writer,hash[option])
         #}
 
-        #Blink::Type.inherited(klass)
-        Blink::Type.buildtypehash
+        #Puppet::Type.inherited(klass)
+        Puppet::Type.buildtypehash
         return klass
     end
     #---------------------------------------------------------------

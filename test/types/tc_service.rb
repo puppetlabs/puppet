@@ -1,10 +1,10 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../../../../language/trunk"
+    $puppetbase = "../../../../language/trunk"
 end
 
-require 'blink'
+require 'puppet'
 require 'test/unit'
 
 # $Id$
@@ -15,21 +15,21 @@ class TestService < Test::Unit::TestCase
     # objects in a central store
     def setup
         @sleeper = nil
-        script = File.join($blinkbase,"examples/root/etc/init.d/sleeper")
+        script = File.join($puppetbase,"examples/root/etc/init.d/sleeper")
         @status = script + " status"
 
-        Blink[:debug] = 1
+        Puppet[:debug] = 1
         assert_nothing_raised() {
-            unless Blink::Type::Service.has_key?("sleeper")
-                Blink::Type::Service.new(
+            unless Puppet::Type::Service.has_key?("sleeper")
+                Puppet::Type::Service.new(
                     :name => "sleeper",
                     :running => 1
                 )
-                Blink::Type::Service.setpath(
-                    File.join($blinkbase,"examples/root/etc/init.d")
+                Puppet::Type::Service.setpath(
+                    File.join($puppetbase,"examples/root/etc/init.d")
                 )
             end
-            @sleeper = Blink::Type::Service["sleeper"]
+            @sleeper = Puppet::Type::Service["sleeper"]
         }
     end
 

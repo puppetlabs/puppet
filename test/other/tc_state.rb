@@ -1,39 +1,39 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../../../../language/trunk"
+    $puppetbase = "../../../../language/trunk"
 end
 
-require 'blink'
+require 'puppet'
 require 'test/unit'
 
 # $Id$
 
 class TestStorage < Test::Unit::TestCase
     def setup
-        Blink[:debug] = true
-        Blink[:statefile] = "/var/tmp/blinkteststate"
+        Puppet[:debug] = true
+        Puppet[:statefile] = "/var/tmp/puppetteststate"
     end
 
     def test_simple
         state = nil
         assert_nothing_raised {
-            Blink::Storage.load
+            Puppet::Storage.load
         }
         assert_nothing_raised {
-            state = Blink::Storage.state(Blink::Type)
+            state = Puppet::Storage.state(Puppet::Type)
         }
         assert(state)
         state["/etc/passwd"] = ["md5","9ebebe0c02445c40b9dc6871b64ee416"]
         assert_nothing_raised {
-            Blink::Storage.store
+            Puppet::Storage.store
         }
         assert_nothing_raised {
-            Blink::Storage.load
+            Puppet::Storage.load
         }
         assert_equal(
             ["md5","9ebebe0c02445c40b9dc6871b64ee416"],
-            Blink::Storage.state(Blink::Type)["/etc/passwd"]
+            Puppet::Storage.state(Puppet::Type)["/etc/passwd"]
         )
     end
 
@@ -41,20 +41,20 @@ class TestStorage < Test::Unit::TestCase
         file = nil
         state = nil
         assert_nothing_raised {
-            file = Blink::Type::File.new(
+            file = Puppet::Type::File.new(
                 :path => "/etc/passwd"
             )
         }
         assert_nothing_raised {
-            Blink::Storage.load
+            Puppet::Storage.load
         }
         assert_nothing_raised {
-            state = Blink::Storage.state(file)
+            state = Puppet::Storage.state(file)
         }
         assert(state)
     end
 
     def teardown
-        system("rm -f %s" % Blink[:statefile])
+        system("rm -f %s" % Puppet[:statefile])
     end
 end

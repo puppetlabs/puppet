@@ -3,10 +3,10 @@
 # $Id$
 
 # included so we can test object types
-require 'blink'
-require 'blink/type'
+require 'puppet'
+require 'puppet/type'
 
-module Blink
+module Puppet
     # events are transient packets of information; they result in one or more (or none)
     # subscriptions getting triggered, and then they get cleared
     # eventually, these will be passed on to some central event system
@@ -24,7 +24,7 @@ module Blink
                     # this is probably wicked-slow
                     self.send(method.to_s + "=",value)
                 }
-                Blink.warning "New Subscription: '%s' => '%s'" %
+                Puppet.warning "New Subscription: '%s' => '%s'" %
                     [@source,@event]
             end
 
@@ -38,22 +38,22 @@ module Blink
                 # to the "old" object rather than "new"
                 # but we're pretty far from that being a problem
                 if transaction.triggercount(self) > 0
-                    Blink.verbose "%s has already run" % self
+                    Puppet.verbose "%s has already run" % self
                 else
-                    Blink.verbose "'%s' matched '%s'; triggering '%s' on '%s'" %
+                    Puppet.verbose "'%s' matched '%s'; triggering '%s' on '%s'" %
                         [@source,@event,@method,@target]
                     begin
                         if @target.respond_to?(@method)
                             @target.send(@method)
                         else
-                            Blink.verbose "'%s' of type '%s' does not respond to '%s'" %
+                            Puppet.verbose "'%s' of type '%s' does not respond to '%s'" %
                                 [@target,@target.class,@method.inspect]
                         end
                     rescue => detail
                         # um, what the heck do i do when an object fails to refresh?
                         # shouldn't that result in the transaction rolling back?
                         # XXX yeah, it should
-                        Blink.error "'%s' failed to %s: '%s'" %
+                        Puppet.error "'%s' failed to %s: '%s'" %
                             [@target,@method,detail]
                         raise
                         #raise "We need to roll '%s' transaction back" %
@@ -71,16 +71,16 @@ module Blink
         @@subscriptions = []
 
         def Event.process
-            Blink.warning "Processing events"
+            Puppet.warning "Processing events"
             @@events.each { |event|
                 @@subscriptions.find_all { |sub|
-                    #Blink.warning "Sub source: '%s'; event object: '%s'" %
+                    #Puppet.warning "Sub source: '%s'; event object: '%s'" %
                     #    [sub.source.inspect,event.object.inspect]
                     sub.source == event.object and
                         (sub.event == event.event or
                          sub.event == :ALL_EVENTS)
                 }.each { |sub|
-                    Blink.notice "Found sub"
+                    Puppet.notice "Found sub"
                     sub.trigger(event.transaction)
                 }
             }
@@ -107,7 +107,7 @@ module Blink
 			@object = args[:object]
 			@transaction = args[:transaction]
 
-            Blink.warning "New Event: '%s' => '%s'" %
+            Puppet.warning "New Event: '%s' => '%s'" %
                 [@object,@event]
 
             # initially, just stuff all instances into a central bucket
@@ -122,7 +122,7 @@ end
 # here i'm separating out the methods dealing with handling events
 # currently not in use, so...
 
-class Blink::NotUsed
+class Puppet::NotUsed
     #---------------------------------------------------------------
     # return action array
     # these are actions to use for responding to events
@@ -144,9 +144,9 @@ class Blink::NotUsed
     # event handling should probably be taking place in a central process,
     # but....
     def event(event,obj)
-        Blink.debug "#{self} got event #{event} from #{obj}"
+        Puppet.debug "#{self} got event #{event} from #{obj}"
         if @actions.key?(event)
-            Blink.debug "calling it"
+            Puppet.debug "calling it"
             @actions[event].call(self,obj,event)
         else
             p @actions
@@ -170,7 +170,7 @@ class Blink::NotUsed
                 @notify[event] = Array.new
             end
             unless @notify[event].include?(obj)
-                Blink.debug "pushing event '%s' for object '%s'" % [event,obj]
+                Puppet.debug "pushing event '%s' for object '%s'" % [event,obj]
                 @notify[event].push(obj)
             end
         #	}
@@ -189,13 +189,13 @@ class Blink::NotUsed
         if (@notify.include?(event) and (! @notify[event].empty?) )
             @notify[event].each { |obj| subscribers.push(obj) }
         end
-        Blink.debug "triggering #{event}"
+        Puppet.debug "triggering #{event}"
         subscribers.each { |obj|
-            Blink.debug "calling #{event} on #{obj}"
+            Puppet.debug "calling #{event} on #{obj}"
             obj.event(event,self)
         }
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-end # Blink::Type
+end # Puppet::Type

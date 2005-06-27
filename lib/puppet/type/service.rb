@@ -8,7 +8,7 @@
 # can only be managed through the interface of an init script
 # which is why they have a search path for initscripts and such
 
-module Blink
+module Puppet
     class State
         class ServiceRunning < State
             @name = :running
@@ -23,7 +23,7 @@ module Blink
                 when true,1,"1":
                     should = 1
                 else
-                    Blink.warning "%s: interpreting '%s' as false" %
+                    Puppet.warning "%s: interpreting '%s' as false" %
                         [self.class,should]
                     should = 0
                 end
@@ -32,7 +32,7 @@ module Blink
 
             def retrieve
                 self.is = self.running()
-                Blink.debug "Running value for '%s' is '%s'" %
+                Puppet.debug "Running value for '%s' is '%s'" %
                     [self.parent.name,self.is]
             end
 
@@ -40,7 +40,7 @@ module Blink
             def running
                 begin
                     status = self.parent.initcmd("status")
-                    Blink.debug "initcmd status for '%s' is '%s'" %
+                    Puppet.debug "initcmd status for '%s' is '%s'" %
                         [self.parent.name,status]
 
                     if status # the command succeeded
@@ -60,33 +60,33 @@ module Blink
                 else
                     status = 0
                 end
-                Blink.debug "'%s' status is '%s' and should be '%s'" %
+                Puppet.debug "'%s' status is '%s' and should be '%s'" %
                     [self,status,should]
                 event = nil
                 if self.should > 0
                     if status < 1
-                        Blink.debug "Starting '%s'" % self
+                        Puppet.debug "Starting '%s'" % self
                         if self.parent.initcmd("start")
                             event = :service_started
                         else
                             raise "Failed to start '%s'" % self.parent.name
                         end
                     else
-                        Blink.debug "'%s' is already running, yo" % self
-                        #Blink.debug "Starting '%s'" % self
+                        Puppet.debug "'%s' is already running, yo" % self
+                        #Puppet.debug "Starting '%s'" % self
                         #unless self.parent.initcmd("start")
                         #    raise "Failed to start %s" % self.name
                         #end
                     end
                 elsif status > 0
-                    Blink.debug "Stopping '%s'" % self
+                    Puppet.debug "Stopping '%s'" % self
                     if self.parent.initcmd("stop")
                         event = :service_stopped
                     else
                         raise "Failed to stop %s" % self.name
                     end
                 else
-                    Blink.debug "Not running '%s' and shouldn't be running" % self
+                    Puppet.debug "Not running '%s' and shouldn't be running" % self
                 end
 
                 return event
@@ -97,7 +97,7 @@ module Blink
 		class Service < Type
 			attr_reader :stat
 			@states = [
-                Blink::State::ServiceRunning
+                Puppet::State::ServiceRunning
             ]
 			@parameters = [
                 :name,
@@ -116,13 +116,13 @@ module Blink
 
             def Service.search(name)
                 @searchpaths.each { |path|
-                    # must specify that we want the top-level File, not Blink::...::File
+                    # must specify that we want the top-level File, not Puppet::...::File
                     fqname = ::File.join(path,name)
                     begin
                         stat = ::File.stat(fqname)
                     rescue
                         # should probably rescue specific errors...
-                        Blink.debug("Could not find %s in %s" % [name,path])
+                        Puppet.debug("Could not find %s in %s" % [name,path])
                         next
                     end
 
@@ -140,7 +140,7 @@ module Blink
                     begin
                         retvalue = ::File.stat(dir).directory?
                     rescue => detail
-                        Blink.verbose("Directory %s does not exist: %s" % [dir,detail])
+                        Puppet.verbose("Directory %s does not exist: %s" % [dir,detail])
                         # just ignore it
                     end
                     # disallow relative paths
@@ -157,13 +157,13 @@ module Blink
             def initcmd(cmd)
                 script = self.initscript
 
-                Blink.debug "Executing '%s %s' as initcmd for '%s'" %
+                Puppet.debug "Executing '%s %s' as initcmd for '%s'" %
                     [script,cmd,self]
 
                 rvalue = Kernel.system("%s %s" %
                         [script,cmd])
 
-                Blink.debug "'%s' ran with exit status '%s'" %
+                Puppet.debug "'%s' ran with exit status '%s'" %
                     [cmd,rvalue]
 
 
@@ -181,6 +181,6 @@ module Blink
             def refresh
                 self.initcmd("restart")
             end
-		end # Blink::Type::Service
-	end # Blink::Type
+		end # Puppet::Type::Service
+	end # Puppet::Type
 end

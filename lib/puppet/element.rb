@@ -3,14 +3,14 @@
 # $Id$
 
 # included so we can test object types
-require 'blink'
+require 'puppet'
 
 
 #---------------------------------------------------------------
 # the base class for both types and states
 # very little functionality; basically just defines the interface
 # and provides a few simple across-the-board functions like 'noop'
-class Blink::Element
+class Puppet::Element
     attr_writer :noop
 
     #---------------------------------------------------------------
@@ -33,7 +33,7 @@ class Blink::Element
         unless defined? @noop
             @noop = false
         end
-        return @noop || Blink[:noop] || false
+        return @noop || Puppet[:noop] || false
     end
     #---------------------------------------------------------------
 

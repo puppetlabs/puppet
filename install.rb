@@ -51,8 +51,8 @@ def glob(list)
 end
 
   # Set these values to what you want installed.
-bins  = %w{bin/blinker}
-rdoc  = glob(%w{bin/blinker lib/**/*.rb README ChangeLog Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
+bins  = %w{bin/puppeter}
+rdoc  = glob(%w{bin/puppeter lib/**/*.rb README ChangeLog Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
 ri    = glob(%w(bin/**/*.rb lib/**/*.rb)).reject { |e| e=~ /\.(bat|cmd)$/ }
 libs  = glob(%w{lib/**/*.rb})
 tests = glob(%w{tests/**/*.rb})

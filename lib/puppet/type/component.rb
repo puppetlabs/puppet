@@ -5,12 +5,12 @@
 # the object allowing us to build complex structures
 # this thing contains everything else, including itself
 
-require 'blink'
-require 'blink/type'
-require 'blink/transaction'
+require 'puppet'
+require 'puppet/type'
+require 'puppet/transaction'
 
-module Blink
-	class Component < Blink::Type
+module Puppet
+	class Component < Puppet::Type
         include Enumerable
 
         @name = :component
@@ -26,7 +26,7 @@ module Blink
         def initialize(args)
             @children = []
             super(args)
-            Blink.verbose "Made component with name %s" % self.name
+            Puppet.verbose "Made component with name %s" % self.name
         end
 
         # now we decide whether a transaction is dumb, and just accepts
@@ -34,16 +34,16 @@ module Blink
         # for now, because i've already got this implemented, let transactions
         # collect the changes themselves
         def evaluate
-            transaction = Blink::Transaction.new(@children)
+            transaction = Puppet::Transaction.new(@children)
             transaction.component = self
             return transaction
         end
 
         def push(*ary)
             ary.each { |child|
-                unless child.is_a?(Blink::Element)
-                    Blink.notice "Got object of type %s" % child.class
-                    raise "Containers can only contain Blink::Elements"
+                unless child.is_a?(Puppet::Element)
+                    Puppet.notice "Got object of type %s" % child.class
+                    raise "Containers can only contain Puppet::Elements"
                 end
                 @children.push child
             }

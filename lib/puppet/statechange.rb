@@ -6,7 +6,7 @@
 
 # enables no-op and logging/rollback
 
-module Blink
+module Puppet
 	class StateChange
         attr_accessor :is, :should, :type, :path, :state, :transaction, :run
 
@@ -25,7 +25,7 @@ module Blink
 		#---------------------------------------------------------------
         def go
             if @state.noop
-                #Blink.notice "%s is noop" % @state
+                #Puppet.notice "%s is noop" % @state
                 return nil
             end
 
@@ -37,7 +37,7 @@ module Blink
                 if event.nil?
                     event = @state.parent.class.name.id2name + "_changed"
                 elsif ! event.is_a?(Symbol)
-                    Blink.notice "State '%s' returned invalid event '%s'; resetting to default" %
+                    Puppet.notice "State '%s' returned invalid event '%s'; resetting to default" %
                         [@state.class,event]
 
                     event = @state.parent.class.name.id2name + "_changed"
@@ -45,14 +45,14 @@ module Blink
 
                 # i should maybe include object type, but the event type
                 # should basically point to that, right?
-                return Blink::Event.new(
+                return Puppet::Event.new(
                     :event => event,
                     :object => @state.parent,
                     :transaction => @transaction,
                     :message => self.to_s
                 )
             rescue => detail
-                Blink.error "%s failed: %s" % [self.to_s,detail]
+                Puppet.error "%s failed: %s" % [self.to_s,detail]
                 raise
                 # there should be a way to ask the state what type of event
                 # it would have generated, but...
@@ -60,7 +60,7 @@ module Blink
                 #if pname.is_a?(Symbol)
                 #    pname = pname.id2name
                 #end
-                return Blink::Event.new(
+                return Puppet::Event.new(
                     :event => pname + "_failed",
                     :object => @state.parent,
                     :transaction => @transaction,
@@ -72,7 +72,7 @@ module Blink
 
 		#---------------------------------------------------------------
         def forward
-            #Blink.notice "moving change forward"
+            #Puppet.notice "moving change forward"
 
             unless defined? @transaction
                 raise "StateChange '%s' tried to be executed outside of transaction" %
@@ -88,7 +88,7 @@ module Blink
             @state.should = @is
             @state.retrieve
 
-            Blink.notice "Rolling %s backward" % self
+            Puppet.notice "Rolling %s backward" % self
             return self.go
 
             #raise "Moving statechanges backward is currently unsupported"

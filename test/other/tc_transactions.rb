@@ -1,17 +1,17 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../../../../language/trunk"
+    $puppetbase = "../../../../language/trunk"
 end
 
-require 'blink'
+require 'puppet'
 require 'test/unit'
 
 # $Id$
 
 class TestTransactions < Test::Unit::TestCase
     def setup
-        Blink[:debug] = true
+        Puppet[:debug] = true
 
         @groups = %x{groups}.chomp.split(/ /)
         unless @groups.length > 1
@@ -22,7 +22,7 @@ class TestTransactions < Test::Unit::TestCase
 
     def teardown
         assert_nothing_raised() {
-            Blink::Type.allclear
+            Puppet::Type.allclear
         }
 
         print "\n\n"
@@ -30,36 +30,36 @@ class TestTransactions < Test::Unit::TestCase
 
     def newfile
         assert_nothing_raised() {
-            cfile = File.join($blinkbase,"examples/root/etc/configfile")
-            unless Blink::Type::File.has_key?(cfile)
-                Blink::Type::File.new(
+            cfile = File.join($puppetbase,"examples/root/etc/configfile")
+            unless Puppet::Type::File.has_key?(cfile)
+                Puppet::Type::File.new(
                     :path => cfile,
                     :check => [:mode, :owner, :group]
                 )
             end
-            return Blink::Type::File[cfile]
+            return Puppet::Type::File[cfile]
         }
     end
 
     def newservice
         assert_nothing_raised() {
-            unless Blink::Type::Service.has_key?("sleeper")
-                Blink::Type::Service.new(
+            unless Puppet::Type::Service.has_key?("sleeper")
+                Puppet::Type::Service.new(
                     :name => "sleeper",
                     :check => [:running]
                 )
-                Blink::Type::Service.setpath(
-                    File.join($blinkbase,"examples/root/etc/init.d")
+                Puppet::Type::Service.setpath(
+                    File.join($puppetbase,"examples/root/etc/init.d")
                 )
             end
-            return Blink::Type::Service["sleeper"]
+            return Puppet::Type::Service["sleeper"]
         }
     end
 
     def newcomp(name,*args)
         comp = nil
         assert_nothing_raised() {
-            comp = Blink::Component.new(:name => name)
+            comp = Puppet::Component.new(:name => name)
         }
 
         args.each { |arg|
@@ -179,7 +179,7 @@ class TestTransactions < Test::Unit::TestCase
             transaction.evaluate
         }
 
-        fakevent = Blink::Event.new(
+        fakevent = Puppet::Event.new(
             :event => :ALL_EVENTS,
             :object => self,
             :transaction => transaction,
@@ -252,7 +252,7 @@ class TestTransactions < Test::Unit::TestCase
             transaction.evaluate
         }
 
-        fakevent = Blink::Event.new(
+        fakevent = Puppet::Event.new(
             :event => :ALL_EVENTS,
             :object => self,
             :transaction => transaction,

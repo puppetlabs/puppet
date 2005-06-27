@@ -1,14 +1,14 @@
 # $Id$
 
-unless defined? BlinkTestSuite
+unless defined? PuppetTestSuite
     $VERBOSE = true
 
     $:.unshift File.join(Dir.getwd, '../lib')
 
-    class BlinkTestSuite
+    class PuppetTestSuite
         attr_accessor :subdir
 
-        def BlinkTestSuite.list
+        def PuppetTestSuite.list
             Dir.entries(".").find_all { |file|
                 FileTest.directory?(file) and file !~ /^\./
             }
@@ -37,7 +37,7 @@ unless defined? BlinkTestSuite
     end
 
     def textfiles
-        textdir = File.join($blinkbase,"examples","code")
+        textdir = File.join($puppetbase,"examples","code")
         # only parse this one file now
         yield File.join(textdir,"head")
         return

@@ -2,10 +2,10 @@
 
 # $Id$
 
-require 'blink'
-require 'blink/fact'
+require 'puppet'
+require 'puppet/fact'
 
-module Blink
+module Puppet
     class Function
         @@functions = Hash.new(nil)
 
@@ -34,16 +34,16 @@ module Blink
     end
 
     Function.new("fact", proc { |fact|
-        require 'blink/fact'
+        require 'puppet/fact'
 
         value = Fact[fact]
-        Blink.debug("retrieved %s as %s" % [fact,value])
+        Puppet.debug("retrieved %s as %s" % [fact,value])
         value
     })
 
     Function.new("addfact", proc { |args|
-        require 'blink/fact'
-        #Blink.debug("running addfact")
+        require 'puppet/fact'
+        #Puppet.debug("running addfact")
 
         hash = nil
         if args.is_a?(Array)
@@ -59,7 +59,7 @@ module Blink
         else
             raise "Functions must have names"
         end
-        #Blink.debug("adding fact %s" % name)
+        #Puppet.debug("adding fact %s" % name)
         newfact = Fact.add(name) { |fact|
             hash.each { |key,value|
                 method = key + "="
@@ -67,6 +67,6 @@ module Blink
             }
         }
 
-        #Blink.debug("got fact %s" % newfact)
+        #Puppet.debug("got fact %s" % newfact)
     })
 end

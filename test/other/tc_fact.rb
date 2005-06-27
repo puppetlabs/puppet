@@ -1,20 +1,20 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../../../../language/trunk/"
+    $puppetbase = "../../../../language/trunk/"
 end
 
-require 'blink/fact'
+require 'puppet/fact'
 require 'test/unit'
 
 # $Id$
 
 class TestFacts < Test::Unit::TestCase
     def test_newfact
-        Blink[:debug] = true if __FILE__ == $0
+        Puppet[:debug] = true if __FILE__ == $0
         fact = nil
         assert_nothing_raised() {
-            fact = Blink::Fact.new(
+            fact = Puppet::Fact.new(
                 :name => "funtest",
                 :code => "echo funtest",
                 :interpreter => "/bin/sh"
@@ -22,7 +22,7 @@ class TestFacts < Test::Unit::TestCase
         }
         assert_equal(
             "funtest",
-            Blink::Fact["funtest"]
+            Puppet::Fact["funtest"]
         )
     end
 end

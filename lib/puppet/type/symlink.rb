@@ -3,14 +3,14 @@
 # $Id$
 
 require 'etc'
-require 'blink/type/state'
-require 'blink/type/file'
+require 'puppet/type/state'
+require 'puppet/type/file'
 
-module Blink
+module Puppet
     # okay, how do we deal with parameters that don't have operations
     # associated with them?
     class State
-        class SymlinkTarget < Blink::State
+        class SymlinkTarget < Puppet::State
             require 'etc'
             attr_accessor :file
 
@@ -18,7 +18,7 @@ module Blink
 
             def create
                 begin
-                    Blink.debug("Creating symlink '%s' to '%s'" %
+                    Puppet.debug("Creating symlink '%s' to '%s'" %
                         [self.parent[:path],self.should])
                     unless File.symlink(self.should,self.parent[:path])
                         raise TypeError.new("Could not create symlink '%s'" %
@@ -32,7 +32,7 @@ module Blink
 
             def remove
                 if FileTest.symlink?(self.parent[:path])
-                    Blink.debug("Removing symlink '%s'" % self.parent[:path])
+                    Puppet.debug("Removing symlink '%s'" % self.parent[:path])
                     begin
                         File.unlink(self.parent[:path])
                     rescue
@@ -43,7 +43,7 @@ module Blink
                     raise TypeError.new("Cannot remove normal file '%s'" %
                         self.parent[:path])
                 else
-                    Blink.debug("Symlink '%s' does not exist" %
+                    Puppet.debug("Symlink '%s' does not exist" %
                         self.parent[:path])
                 end
             end
@@ -53,7 +53,7 @@ module Blink
 
                 if FileTest.symlink?(self.parent[:path])
                     self.is = File.readlink(self.parent[:path])
-                    Blink.debug("link value is '%s'" % self.is)
+                    Puppet.debug("link value is '%s'" % self.is)
                     return
                 else
                     self.is = nil
@@ -91,10 +91,10 @@ module Blink
             attr_reader :stat, :path, :params
             # class instance variable
             @states = [
-                Blink::State::FileUID,
-                Blink::State::FileGroup,
-                Blink::State::FileMode,
-                Blink::State::SymlinkTarget
+                Puppet::State::FileUID,
+                Puppet::State::FileGroup,
+                Puppet::State::FileMode,
+                Puppet::State::SymlinkTarget
             ]
 
             @parameters = [
@@ -103,7 +103,7 @@ module Blink
 
             @name = :symlink
             @namevar = :path
-        end # Blink::Type::Symlink
-    end # Blink::Type
+        end # Puppet::Type::Symlink
+    end # Puppet::Type
 
 end

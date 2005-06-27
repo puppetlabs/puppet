@@ -1,10 +1,10 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../../../../language/trunk"
+    $puppetbase = "../../../../language/trunk"
 end
 
-require 'blink'
+require 'puppet'
 require 'test/unit'
 
 # $Id$
@@ -15,19 +15,19 @@ class TestFile < Test::Unit::TestCase
     # objects in a central store
     def setup
         @file = nil
-        @path = File.join($blinkbase,"examples/root/etc/configfile")
-        Blink[:debug] = 1
-        Blink[:statefile] = "/var/tmp/blinkstate"
+        @path = File.join($puppetbase,"examples/root/etc/configfile")
+        Puppet[:debug] = 1
+        Puppet[:statefile] = "/var/tmp/puppetstate"
         assert_nothing_raised() {
-            @file = Blink::Type::File.new(
+            @file = Puppet::Type::File.new(
                 :path => @path
             )
         }
     end
 
     def teardown
-        Blink::Type::File.clear
-        system("rm -f %s" % Blink[:statefile])
+        Puppet::Type::File.clear
+        system("rm -f %s" % Puppet[:statefile])
     end
 
     def test_owner
@@ -84,7 +84,7 @@ class TestFile < Test::Unit::TestCase
         %w{a b c d}.collect { |name| "/tmp/createst%s" % name }.each { |path|
             file =nil
             assert_nothing_raised() {
-                file = Blink::Type::File.new(
+                file = Puppet::Type::File.new(
                     :path => path,
                     :create => true
                 )
@@ -142,7 +142,7 @@ class TestFile < Test::Unit::TestCase
                 }
                 # okay, we now know that we have a file...
                 assert_nothing_raised() {
-                    file = Blink::Type::File.new(
+                    file = Puppet::Type::File.new(
                         :path => path,
                         :checksum => type
                     )
@@ -177,7 +177,7 @@ class TestFile < Test::Unit::TestCase
                     events.include?(:file_modified)
                 )
                 assert_nothing_raised() {
-                    Blink::Type::File.clear
+                    Puppet::Type::File.clear
                 }
                 assert_nothing_raised() {
                     system("rm -f %s" % path)

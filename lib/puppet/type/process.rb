@@ -3,7 +3,7 @@
 # DISABLED
 # I'm only working on services, not processes, right now
 
-module Blink
+module Puppet
     class State
         class ProcessRunning < State
             def retrieve
@@ -19,7 +19,7 @@ module Blink
                     }
                 rescue
                     # this isn't correct, but what the hell
-                    Blink::Message.new(
+                    Puppet::Message.new(
                         :level => :error,
                         :source => self.parent,
                         :message => "Failed to run ps"
@@ -27,7 +27,7 @@ module Blink
                 end
 
                 self.state = running
-                Blink.debug "there are #{running} #{self.parent} processes for start"
+                Puppet.debug "there are #{running} #{self.parent} processes for start"
             end
 
             def <=>(other)
@@ -47,7 +47,7 @@ module Blink
                     Process.uid = uid
                     Process.euid = uid
                     string = @params[:binary] + (@params[:arguments] || "")
-                    Blink::Message.new(
+                    Puppet::Message.new(
                         :level => :notice,
                         :source => self.parent,
                         :message => "starting"
@@ -65,19 +65,19 @@ module Blink
 
 			@namevar = :pattern
 
-			Blink::Relation.new(self, Blink::Operation::Start, {
+			Puppet::Relation.new(self, Puppet::Operation::Start, {
 				:user => :user,
 				:pattern => :pattern,
 				:binary => :binary,
 				:arguments => :arguments
 			})
 
-			Blink::Relation.new(self, Blink::Operation::Stop, {
+			Puppet::Relation.new(self, Puppet::Operation::Stop, {
 				:user => :user,
 				:pattern => :pattern
 			})
 
-		end # Blink::Type::BProcess
-	end # Blink::Type
+		end # Puppet::Type::BProcess
+	end # Puppet::Type
 
 end

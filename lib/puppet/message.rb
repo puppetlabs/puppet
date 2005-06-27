@@ -1,6 +1,6 @@
 # $Id$
 
-module Blink
+module Puppet
     #------------------------------------------------------------
     # provide feedback of various types to the user
     # modeled after syslog messages
@@ -25,7 +25,7 @@ module Blink
 		def initialize(args)
 			unless args.include?(:level) && args.include?(:message) &&
 						args.include?(:source) 
-				raise "Blink::Message called incorrectly"
+				raise "Puppet::Message called incorrectly"
 			end
 
 			if args[:level].class == String
@@ -45,7 +45,7 @@ module Blink
 			end
 
 			@@messages.push(self)
-			Blink.newmessage(self)
+			Puppet.newmessage(self)
 		end
 
 		def to_s

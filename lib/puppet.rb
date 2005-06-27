@@ -21,14 +21,14 @@ RESET="[0m"
 # preferences for things like debugging
 #
 # it's also a place to find top-level commands like 'debug'
-module Blink
+module Puppet
     # the hash that determines how our system behaves
     @@config = Hash.new(false)
 
-    @@config[:blinkroot] = "/var/blink"
-    @@config[:logdir] = "/var/blink/log"
-    @@config[:logfile] = "/var/blink/log/blink.log"
-    @@config[:statefile] = "/var/blink/log/state"
+    @@config[:puppetroot] = "/var/puppet"
+    @@config[:logdir] = "/var/puppet/log"
+    @@config[:logfile] = "/var/puppet/log/puppet.log"
+    @@config[:statefile] = "/var/puppet/log/state"
 
 
     loglevels = [:debug,:verbose,:notice,:warning,:error]
@@ -38,27 +38,27 @@ module Blink
     # pick one, and it and all above it will be logged
     loglevels.each { |level|
         define_method(level,proc { |args|
-            Blink.message(level,args)
+            Puppet.message(level,args)
         })
         module_function level
         # default to enabling all notice levels except debug
         @@config[level] = true unless level == :debug
     }
 
-	def Blink.message(level,*ary)
+	def Puppet.message(level,*ary)
 		msg = ary.join(" ")
 
 		if @@config[level]
-			Blink::Message.new(
+			Puppet::Message.new(
 				:level => level,
-				:source => "Blink",
+				:source => "Puppet",
 				:message => msg
 			)
 		end
 	end
 
     # set up our configuration
-	def Blink.init(args)
+	def Puppet.init(args)
 		args.each {|p,v|
 			@@config[p] = v
 		}
@@ -66,22 +66,22 @@ module Blink
 
     # just print any messages we get
     # we should later behave differently depending on the message
-	def Blink.newmessage(msg)
+	def Puppet.newmessage(msg)
 		puts msg
 	end
 
 	# configuration parameter access and stuff
-	def Blink.[](param)
+	def Puppet.[](param)
 		return @@config[param]
 	end
 
 	# configuration parameter access and stuff
-	def Blink.[]=(param,value)
+	def Puppet.[]=(param,value)
 		@@config[param] = value
 	end
 
 end
 
-require 'blink/storage'
-require 'blink/message'
-require 'blink/type'
+require 'puppet/storage'
+require 'puppet/message'
+require 'puppet/type'

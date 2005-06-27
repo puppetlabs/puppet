@@ -1,14 +1,14 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../../../../language/trunk/"
+    $puppetbase = "../../../../language/trunk/"
 end
 
-require 'blink'
-require 'blink/client'
-require 'blink/fact'
+require 'puppet'
+require 'puppet/client'
+require 'puppet/fact'
 require 'test/unit'
-require 'blinktest.rb'
+require 'puppettest.rb'
 
 # $Id$
 
@@ -16,13 +16,13 @@ class TestClient < Test::Unit::TestCase
     def test_local
         client = nil
         assert_nothing_raised() {
-            client = Blink::Client.new(:Listen => false)
+            client = Puppet::Client.new(:Listen => false)
         }
 
         facts = %w{operatingsystem operatingsystemrelease}
         facts.each { |fact|
             assert_equal(
-                Blink::Fact[fact],
+                Puppet::Fact[fact],
                 client.callfunc("fact",fact)
             )
         }

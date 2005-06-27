@@ -1,22 +1,22 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../../../../language/trunk"
+    $puppetbase = "../../../../language/trunk"
 end
 
-require 'blink'
+require 'puppet'
 require 'test/unit'
 
 # $Id$
 
 class TestQuery < Test::Unit::TestCase
     def setup
-        Blink[:debug] = true
+        Puppet[:debug] = true
     end
 
     def teardown
         assert_nothing_raised() {
-            Blink::Type.allclear
+            Puppet::Type.allclear
         }
     end
 
@@ -25,30 +25,30 @@ class TestQuery < Test::Unit::TestCase
     # objects in a central store
     def file
         assert_nothing_raised() {
-            cfile = File.join($blinkbase,"examples/root/etc/configfile")
-            unless Blink::Type::File.has_key?(cfile)
-                Blink::Type::File.new(
+            cfile = File.join($puppetbase,"examples/root/etc/configfile")
+            unless Puppet::Type::File.has_key?(cfile)
+                Puppet::Type::File.new(
                     :path => cfile,
                     :check => [:mode, :owner]
                 )
             end
-            @configfile = Blink::Type::File[cfile]
+            @configfile = Puppet::Type::File[cfile]
         }
         return @configfile
     end
 
     def service
         assert_nothing_raised() {
-            unless Blink::Type::Service.has_key?("sleeper")
-                Blink::Type::Service.new(
+            unless Puppet::Type::Service.has_key?("sleeper")
+                Puppet::Type::Service.new(
                     :name => "sleeper",
                     :check => [:running]
                 )
-                Blink::Type::Service.setpath(
-                    File.join($blinkbase,"examples/root/etc/init.d")
+                Puppet::Type::Service.setpath(
+                    File.join($puppetbase,"examples/root/etc/init.d")
                 )
             end
-            @sleeper = Blink::Type::Service["sleeper"]
+            @sleeper = Puppet::Type::Service["sleeper"]
         }
 
         return @sleeper
@@ -56,7 +56,7 @@ class TestQuery < Test::Unit::TestCase
 
     def component(name,*args)
         assert_nothing_raised() {
-            @component = Blink::Component.new(:name => name)
+            @component = Puppet::Component.new(:name => name)
         }
 
         args.each { |arg|

@@ -4,10 +4,10 @@
 
 # parse and write configuration files using objects with minimal parsing abilities
 
-require 'blink/type'
-require 'blink/type/typegen'
+require 'puppet/type'
+require 'puppet/type/typegen'
 
-class Blink::Type::FileType < Blink::Type::TypeGenerator
+class Puppet::Type::FileType < Puppet::Type::TypeGenerator
     attr_accessor :childtype
 
     @parameters = [:name, :linesplit, :escapednewlines]
@@ -26,14 +26,14 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
         end
 
         # i don't think there's any reason to 'super' this
-        #klass = Blink::Type::TypeGenerator.newtype(hash)
+        #klass = Puppet::Type::TypeGenerator.newtype(hash)
         klass = super(hash)
 
         klass.escapednewlines = true
         klass.namevar = :name
         klass.parameters = [:name, :path, :complete]
 
-        #klass.childtype = Blink::Type::FileRecord.newtype(
+        #klass.childtype = Puppet::Type::FileRecord.newtype(
         #    :name => hash[:name] + "_record",
         #    :splitchar => hash[:recordsplit],
         #    :fields => hash[:fields],
@@ -63,7 +63,7 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
             hash[:namevar] = hash[:fields][0]
         end
 
-        recordtype = Blink::Type::FileRecord.newtype(hash)
+        recordtype = Puppet::Type::FileRecord.newtype(hash)
         @records[recordtype.name] = recordtype
     end
     #---------------------------------------------------------------
@@ -140,14 +140,14 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
     # so i'm sticking with 'equals' until those make sense
     def ==(other)
         unless self.children.length == other.children.length
-            Blink.debug("file has %s records instead of %s" %
+            Puppet.debug("file has %s records instead of %s" %
                 [self.children.length, other.children.length])
             return self.children.length == other.children.length
         end
         equal = true
         self.zip(other.children) { |schild,ochild|
             unless schild == ochild
-                Blink.debug("%s has changed in %s" %
+                Puppet.debug("%s has changed in %s" %
                     [schild.name,self.name])
                 equal = false
                 break
@@ -162,7 +162,7 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
     # create a new record with a block
     def add(type,&block)
         obj = self.class.records[type].new(self,&block)
-        Blink.debug("adding %s" % obj.name)
+        Puppet.debug("adding %s" % obj.name)
         @childary.push(obj)
         @childhash[obj.name] = obj
 
@@ -204,13 +204,13 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
         # if we are the FileType object itself, we create a new type
         # otherwise, we create an instance of an existing type
         # yes, this should be more straightforward
-        if self.class == Blink::Type::FileType
+        if self.class == Puppet::Type::FileType
             self.class.newtype(hash)
             return
         end
-        Blink.debug "Creating new '%s' file with path '%s' and name '%s'" %
+        Puppet.debug "Creating new '%s' file with path '%s' and name '%s'" %
             [self.class.name,hash["path"],hash[:name]]
-        Blink.debug hash.inspect
+        Puppet.debug hash.inspect
         @file = hash["path"]
 
         @childary = []
@@ -261,15 +261,15 @@ class Blink::Type::FileType < Blink::Type::TypeGenerator
                 end
             }
             if childobj.nil?
-                Blink.warning("%s: could not match %s" % [self.name,line])
-                #Blink.warning("could not match %s" % line)
+                Puppet.warning("%s: could not match %s" % [self.name,line])
+                #Puppet.warning("could not match %s" % line)
                 next
             end
 
             begin
-                Blink.debug("got child: %s(%s)" % [childobj.class,childobj.to_s])
+                Puppet.debug("got child: %s(%s)" % [childobj.class,childobj.to_s])
             rescue NoMethodError
-                Blink.warning "Failed: %s" % childobj
+                Puppet.warning "Failed: %s" % childobj
             end
             childobj
         }.reject { |child|

@@ -9,11 +9,11 @@
 #   - first we recurse down the tree and collect changes
 #   - then we walk back up the tree through 'refresh' after the changes
 
-require 'blink'
-require 'blink/statechange'
+require 'puppet'
+require 'puppet/statechange'
 
 #---------------------------------------------------------------
-module Blink
+module Puppet
 class Transaction
     attr_accessor :toplevel, :component
 
@@ -41,17 +41,17 @@ class Transaction
     # thus, an object gets defined, then mentioned as a dependency, and the objects
     # are synced in that order automatically
     def evaluate
-        Blink.notice "executing %s changes or transactions" % @changes.length
+        Puppet.notice "executing %s changes or transactions" % @changes.length
 
         return @changes.collect { |change|
-            if change.is_a?(Blink::StateChange)
+            if change.is_a?(Puppet::StateChange)
                 change.transaction = self
                 events = nil
                 begin
                     events = [change.forward].flatten
                     #@@changed.push change.state.parent
                 rescue => detail
-                    Blink.error("%s failed: %s" % [change,detail])
+                    Puppet.error("%s failed: %s" % [change,detail])
                     raise
                     # at this point, we would normally do error handling
                     # but i haven't decided what to do for that yet
@@ -62,7 +62,7 @@ class Transaction
                 end
 
                 if events.nil?
-                    Blink.verbose "No events returned?"
+                    Puppet.verbose "No events returned?"
                 else
                     # first handle the subscriptions on individual objects
                     events.each { |event|
@@ -72,7 +72,7 @@ class Transaction
                     }
                 end
                 events
-            elsif change.is_a?(Blink::Transaction)
+            elsif change.is_a?(Puppet::Transaction)
                 change.evaluate
             else
                 raise "Transactions cannot handle objects of type %s" % child.class
@@ -90,7 +90,7 @@ class Transaction
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # this should only be called by a Blink::Container object now
+    # this should only be called by a Puppet::Container object now
     # and it should only receive an array
     def initialize(tree)
         @tree = tree
@@ -106,7 +106,7 @@ class Transaction
         # change collection is in-band, and message generation is out-of-band
         # of course, exception raising is also out-of-band
         @changes = @tree.collect { |child|
-            # these children are all Blink::Type instances
+            # these children are all Puppet::Type instances
             # not all of the children will return a change, and Containers
             # return transactions
             child.evaluate
@@ -119,14 +119,14 @@ class Transaction
     #---------------------------------------------------------------
     def rollback
         @changes.each { |change|
-            if change.is_a?(Blink::StateChange)
+            if change.is_a?(Puppet::StateChange)
                 next unless change.run
                 #change.transaction = self
                 begin
                     change.backward
                     #@@changed.push change.state.parent
                 rescue => detail
-                    Blink.error("%s rollback failed: %s" % [change,detail])
+                    Puppet.error("%s rollback failed: %s" % [change,detail])
                     # at this point, we would normally do error handling
                     # but i haven't decided what to do for that yet
                     # so just record that a sync failed for a given object
@@ -134,7 +134,7 @@ class Transaction
                     # this still could get hairy; what if file contents changed,
                     # but a chmod failed?  how would i handle that error? dern
                 end
-            elsif change.is_a?(Blink::Transaction)
+            elsif change.is_a?(Puppet::Transaction)
                 # yay, recursion
                 change.rollback
             else
@@ -146,7 +146,7 @@ class Transaction
 
     #---------------------------------------------------------------
     def triggercount(sub)
-        Blink.notice "Triggercount on %s is %s" % [sub,@triggered[sub]]
+        Puppet.notice "Triggercount on %s is %s" % [sub,@triggered[sub]]
         return @triggered[sub]
     end
     #---------------------------------------------------------------
@@ -154,7 +154,7 @@ class Transaction
     #---------------------------------------------------------------
     def triggered(sub)
         @triggered[sub] += 1
-        Blink.notice "%s was triggered; count is %s" % [sub,@triggered[sub]]
+        Puppet.notice "%s was triggered; count is %s" % [sub,@triggered[sub]]
     end
     #---------------------------------------------------------------
 end

@@ -1,10 +1,10 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../../../../language/trunk"
+    $puppetbase = "../../../../language/trunk"
 end
 
-require 'blink'
+require 'puppet'
 require 'test/unit'
 require 'facter'
 
@@ -24,7 +24,7 @@ class TestPackagingType < Test::Unit::TestCase
         end
 
         assert_nothing_raised() {
-            Blink::PackagingType[type].list
+            Puppet::PackagingType[type].list
         }
     end
 end
@@ -34,7 +34,7 @@ class TestPackageSource < Test::Unit::TestCase
         system("touch /tmp/fakepackage")
         assert_equal(
             "/tmp/fakepackage",
-            Blink::PackageSource.get("file:///tmp/fakepackage")
+            Puppet::PackageSource.get("file:///tmp/fakepackage")
         )
         system("rm -f /tmp/fakepackage")
     end
@@ -42,11 +42,11 @@ end
 
 class TestPackages < Test::Unit::TestCase
     def setup
-        @list = Blink::Type::Package.getpkglist
+        @list = Puppet::Type::Package.getpkglist
     end
 
     def teardown
-        Blink::Type::Package.clear
+        Puppet::Type::Package.clear
     end
 
     def test_checking

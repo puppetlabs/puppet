@@ -3,10 +3,10 @@
 # $Id$
 
 # included so we can test object types
-require 'blink'
-require 'blink/element'
-require 'blink/event'
-require 'blink/type/state'
+require 'puppet'
+require 'puppet/element'
+require 'puppet/event'
+require 'puppet/type/state'
 
 
 # XXX see the bottom of the file for the rest of the inclusions
@@ -22,24 +22,24 @@ require 'blink/type/state'
 
 # all of our first-class objects (objects, states, and components) will
 # respond to these methods
-# although states don't inherit from Blink::Type
-#   although maybe Blink::State should...
+# although states don't inherit from Puppet::Type
+#   although maybe Puppet::State should...
 
 # the default behaviour that this class provides is to just call a given
 # method on each contained object, e.g., in calling 'sync', we just run:
 # object.each { |subobj| subobj.sync() }
 
-# to use this interface, just define an 'each' method and 'include Blink::Type'
+# to use this interface, just define an 'each' method and 'include Puppet::Type'
 
-module Blink
-class Type < Blink::Element
+module Puppet
+class Type < Puppet::Element
     attr_accessor :children, :parameters, :parent
     include Enumerable
 
     @@allobjects = Array.new # an array for all objects
     @abstract = true
 
-    @name = :blink # a little fakery, since Blink itself isn't a type
+    @name = :puppet # a little fakery, since Puppet itself isn't a type
     @namevar = :notused
 
     @states = []
@@ -104,7 +104,7 @@ class Type < Blink::Element
 
     #---------------------------------------------------------------
     def Type.statefile(file)
-        Blink[:statefile] = file
+        Puppet[:statefile] = file
     end
     #---------------------------------------------------------------
 
@@ -112,13 +112,13 @@ class Type < Blink::Element
     # ill thought-out
     # this needs to return @noop
     #def noop(ary)
-    #    Blink[:noop] = ary.shift
+    #    Puppet[:noop] = ary.shift
     #end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
     #def debug(ary)
-    #    Blink[:debug] = ary.shift
+    #    Puppet[:debug] = ary.shift
     #end
     #---------------------------------------------------------------
 
@@ -129,7 +129,7 @@ class Type < Blink::Element
         @@typeary.each { |otype|
             if @@typehash.include?(otype.name)
                 if @@typehash[otype.name] != otype
-                    Blink.warning("Object type %s is already defined (%s vs %s)" %
+                    Puppet.warning("Object type %s is already defined (%s vs %s)" %
                         [otype.name,@@typehash[otype.name],otype])
                 end
             else
@@ -151,7 +151,7 @@ class Type < Blink::Element
     def Type.inherited(sub)
         sub.initvars
 
-        #Blink.notice("subtype %s(%s) just created" % [sub,sub.superclass])
+        #Puppet.notice("subtype %s(%s) just created" % [sub,sub.superclass])
         # add it to the master list
         # unfortunately we can't yet call sub.name, because the #inherited
         # method gets called before any commands in the class definition
@@ -166,7 +166,7 @@ class Type < Blink::Element
     def Type.initvars
         @objects = Hash.new
         @actions = Hash.new
-        #Blink.verbose "initing validstates for %s" % self
+        #Puppet.verbose "initing validstates for %s" % self
         @validstates = {}
         @validparameters = {}
 
@@ -187,7 +187,7 @@ class Type < Blink::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # this is used for mapping object types (e.g., Blink::Type::File)
+    # this is used for mapping object types (e.g., Puppet::Type::File)
     # to names (e.g., "file")
     def Type.name
         return @name
@@ -199,7 +199,7 @@ class Type < Blink::Element
         raise "Type.newtype called, but I don't know why"
         @@typeary.push(type)
         if @@typehash.has_key?(type.name)
-            Blink.notice("Redefining object type %s" % type.name)
+            Puppet.notice("Redefining object type %s" % type.name)
         end
         @@typehash[type.name] = type
     end
@@ -235,10 +235,10 @@ class Type < Blink::Element
     #---------------------------------------------------------------
     def Type.[]=(name,object)
         newobj = nil
-        if object.is_a?(Blink::Type)
+        if object.is_a?(Puppet::Type)
             newobj = object
         else
-            raise "must pass a Blink::Type object"
+            raise "must pass a Puppet::Type object"
         end
 
         if @objects.has_key?(newobj.name)
@@ -246,7 +246,7 @@ class Type < Blink::Element
                 [newobj.name,newobj.class.name,
                     @objects[newobj.name].object_id,newobj.object_id]
         else
-            #Blink.debug("adding %s of type %s to class list" %
+            #Puppet.debug("adding %s of type %s to class list" %
             #    [object.name,object.class])
             @objects[newobj.name] = newobj
         end
@@ -257,7 +257,7 @@ class Type < Blink::Element
     # remove all type instances
     def Type.allclear
         @@typeary.each { |subtype|
-            Blink.notice "Clearing %s of objects" % subtype
+            Puppet.notice "Clearing %s of objects" % subtype
             subtype.clear
         }
     end
@@ -276,7 +276,7 @@ class Type < Blink::Element
     # all objects total
     def Type.push(object)
         @@allobjects.push object
-        #Blink.debug("adding %s of type %s to master list" %
+        #Puppet.debug("adding %s of type %s to master list" %
         #    [object.name,object.class])
     end
     #---------------------------------------------------------------
@@ -334,7 +334,7 @@ class Type < Blink::Element
     #---------------------------------------------------------------
     # this is probably only used by FileRecord objects
     def Type.parameters=(params)
-        Blink.notice "setting parameters to [%s]" % params.join(" ")
+        Puppet.notice "setting parameters to [%s]" % params.join(" ")
         @parameters = params.collect { |param|
             if param.class == Symbol
                 param
@@ -418,12 +418,12 @@ class Type < Blink::Element
             mname = name.intern
         end
 
-        if Blink::Type.metaparam(mname)
+        if Puppet::Type.metaparam(mname)
             # call the metaparam method 
             self.send(("meta" + mname.id2name),value)
         elsif stateklass = self.class.validstate(mname) 
-            if value.is_a?(Blink::State)
-                Blink.debug "'%s' got handed a state for '%s'" % [self,mname]
+            if value.is_a?(Puppet::State)
+                Puppet.debug "'%s' got handed a state for '%s'" % [self,mname]
                 @states[mname] = value
             else
                 if @states.include?(mname)
@@ -433,7 +433,7 @@ class Type < Blink::Element
                         :parent => self,
                         :should => value
                     )
-                    #Blink.notice "Adding parent to %s" % mname
+                    #Puppet.notice "Adding parent to %s" % mname
                     #@states[mname].parent = self
                 end
             end
@@ -540,17 +540,17 @@ class Type < Blink::Element
         end
 
         hash.each { |param,value|
-            #Blink.debug("adding param '%s' with value '%s'" %
+            #Puppet.debug("adding param '%s' with value '%s'" %
             #    [param,value])
             self[param] = value
         }
 
         # add this object to the specific class's list of objects
-        #Blink.notice("Adding [%s] to %s" % [self.name,self.class])
+        #Puppet.notice("Adding [%s] to %s" % [self.name,self.class])
         self.class[self.name] = self
 
         # and then add it to the master list
-        Blink::Type.push(self)
+        Puppet::Type.push(self)
     end
     #---------------------------------------------------------------
 
@@ -603,7 +603,7 @@ class Type < Blink::Element
 
     #---------------------------------------------------------------
     def states
-        Blink.debug "%s has %s states" % [self,@states.length]
+        Puppet.debug "%s has %s states" % [self,@states.length]
         tmpstates = []
         self.class.states.each { |state|
             if @states.include?(state.name)
@@ -670,7 +670,7 @@ class Type < Blink::Element
     # rather than 'each'
     def evaluate
         unless defined? @evalcount
-            Blink.error "No evalcount defined on '%s' of type '%s'" %
+            Puppet.error "No evalcount defined on '%s' of type '%s'" %
                 [self.name,self.class]
         end
         # if we're a metaclass and we've already evaluated once...
@@ -689,7 +689,7 @@ class Type < Blink::Element
             changes << self.states.find_all { |state|
                 ! state.insync?
             }.collect { |state|
-                Blink::StateChange.new(state)
+                Puppet::StateChange.new(state)
             }
         end
         # collect changes and return them
@@ -708,12 +708,12 @@ class Type < Blink::Element
 
         self.states.each { |state|
             unless state.insync?
-                Blink.debug("%s is not in sync" % state)
+                Puppet.debug("%s is not in sync" % state)
                 insync = false
             end
         }
 
-        Blink.debug("%s sync status is %s" % [self,insync])
+        Puppet.debug("%s sync status is %s" % [self,insync])
         return insync
     end
     #---------------------------------------------------------------
@@ -773,7 +773,7 @@ class Type < Blink::Element
         end
 
         hash[:source] = self
-        sub = Blink::Event::Subscription.new(hash)
+        sub = Puppet::Event::Subscription.new(hash)
 
         # add to the correct area
         @subscriptions.push sub
@@ -804,7 +804,7 @@ class Type < Blink::Element
             type = nil
             object = nil
             tname = rname[0]
-            unless type = Blink::Type.type(tname)
+            unless type = Puppet::Type.type(tname)
                 raise "Could not find type %s" % tname
             end
             name = rname[1]
@@ -812,7 +812,7 @@ class Type < Blink::Element
                 raise "Could not retrieve object '%s' of type '%s'" %
                     [name,type]
             end
-            Blink.debug("%s requires %s" % [self.name,object])
+            Puppet.debug("%s requires %s" % [self.name,object])
 
             # for now, we only support this one method, 'refresh'
             object.subscribe(
@@ -827,7 +827,7 @@ class Type < Blink::Element
 
     #---------------------------------------------------------------
     def metaonerror(response)
-        Blink.debug("Would have called metaonerror")
+        Puppet.debug("Would have called metaonerror")
         @onerror = response
     end
     #---------------------------------------------------------------
@@ -837,15 +837,15 @@ class Type < Blink::Element
         @schedule = schedule
     end
     #---------------------------------------------------------------
-end # Blink::Type
+end # Puppet::Type
 end
 
-require 'blink/type/service'
-require 'blink/type/file'
-require 'blink/type/symlink'
-require 'blink/type/package'
-require 'blink/type/component'
-require 'blink/statechange'
-#require 'blink/type/typegen'
-#require 'blink/type/typegen/filetype'
-#require 'blink/type/typegen/filerecord'
+require 'puppet/type/service'
+require 'puppet/type/file'
+require 'puppet/type/symlink'
+require 'puppet/type/package'
+require 'puppet/type/component'
+require 'puppet/statechange'
+#require 'puppet/type/typegen'
+#require 'puppet/type/typegen/filetype'
+#require 'puppet/type/typegen/filerecord'

@@ -1,21 +1,21 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../../../../language/trunk"
+    $puppetbase = "../../../../language/trunk"
 end
 
 # $Id$
 
-require 'blink/type'
+require 'puppet/type'
 require 'test/unit'
 
 class TestType < Test::Unit::TestCase
     def test_typemethods
         assert_nothing_raised() {
-            Blink::Type.buildstatehash
+            Puppet::Type.buildstatehash
         }
 
-        Blink::Type.eachtype { |type|
+        Puppet::Type.eachtype { |type|
             name = nil
             assert_nothing_raised() {
                 name = type.name
@@ -27,7 +27,7 @@ class TestType < Test::Unit::TestCase
 
             assert_equal(
                 type,
-                Blink::Type.type(name)
+                Puppet::Type.type(name)
             )
 
             assert(

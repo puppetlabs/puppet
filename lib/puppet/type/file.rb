@@ -4,14 +4,14 @@
 
 require 'digest/md5'
 require 'etc'
-require 'blink/type/state'
+require 'puppet/type/state'
 
-module Blink
+module Puppet
     # we first define all of the state that our file will use
     # because the objects must be defined for us to use them in our
     # definition of the file object
     class State
-        class FileCreate < Blink::State
+        class FileCreate < Puppet::State
             require 'etc'
             attr_accessor :file
             @name = :create
@@ -30,7 +30,7 @@ module Blink
                 stat = nil
 
                 self.is = FileTest.exist?(self.parent[:path])
-                Blink.debug "'exists' state is %s" % self.is
+                Puppet.debug "'exists' state is %s" % self.is
             end
 
 
@@ -45,23 +45,23 @@ module Blink
             end
         end
 
-        class FileChecksum < Blink::State
+        class FileChecksum < Puppet::State
             @name = :checksum
             @event = :file_modified
 
             def should=(value)
                 @checktype = value
-                state = Blink::Storage.state(self)
+                state = Puppet::Storage.state(self)
                 if hash = state[self.parent[:path]]
                     if hash.include?(@checktype)
                         @should = hash[@checktype]
                     else
-                        Blink.verbose "Found checksum for %s but not of type %s" %
+                        Puppet.verbose "Found checksum for %s but not of type %s" %
                             [self.parent[:path],@checktype]
                         @should = nil
                     end
                 else
-                    Blink.debug "No checksum for %s" % self.parent[:path]
+                    Puppet.debug "No checksum for %s" % self.parent[:path]
                 end
             end
 
@@ -88,7 +88,7 @@ module Blink
 
                 self.is = sum
 
-                Blink.debug "checksum state is %s" % self.is
+                Puppet.debug "checksum state is %s" % self.is
             end
 
 
@@ -103,17 +103,17 @@ module Blink
             end
 
             def updatesum
-                state = Blink::Storage.state(self)
+                state = Puppet::Storage.state(self)
                 unless state.include?(self.parent[:path])
                     state[self.parent[:path]] = Hash.new
                 end
                 # if we're replacing, vs. updating
                 if state[self.parent[:path]].include?(@checktype)
-                    Blink.debug "Replacing checksum %s with %s" %
+                    Puppet.debug "Replacing checksum %s with %s" %
                         [state[self.parent[:path]][@checktype],@is]
                     result = true
                 else
-                    Blink.verbose "Creating checksum %s for %s of type %s" %
+                    Puppet.verbose "Creating checksum %s for %s of type %s" %
                         [@is,self.parent[:path],@checktype]
                     result = false
                 end
@@ -122,7 +122,7 @@ module Blink
             end
         end
 
-        class FileUID < Blink::State
+        class FileUID < Puppet::State
             require 'etc'
             attr_accessor :file
             @name = :owner
@@ -139,7 +139,7 @@ module Blink
                             if user.gid == ""
                                 raise "Could not retrieve uid for '%s'" % self.parent
                             end
-                            Blink.debug "converting %s to integer '%d'" %
+                            Puppet.debug "converting %s to integer '%d'" %
                                 [@should,user.uid]
                             @should = user.uid
                         rescue
@@ -148,18 +148,18 @@ module Blink
                     end
                 end
 
-                Blink.debug "chown state is %d" % self.is
+                Puppet.debug "chown state is %d" % self.is
             end
 
             def sync
                 if @is == -1
                     self.parent.stat(true)
                     self.retrieve
-                    Blink.notice "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    Puppet.notice "%s: after refresh, is '%s'" % [self.class.name,@is]
                 end
 
                 unless self.parent.stat
-                    Blink.error "File '%s' does not exist; cannot chown" %
+                    Puppet.error "File '%s' does not exist; cannot chown" %
                         self.parent[:path]
                 end
 
@@ -177,7 +177,7 @@ module Blink
         # this state should actually somehow turn into many states,
         # one for each bit in the mode
         # I think MetaStates are the answer, but I'm not quite sure
-        class FileMode < Blink::State
+        class FileMode < Puppet::State
             require 'etc'
 
             @name = :mode
@@ -199,18 +199,18 @@ module Blink
                 stat = self.parent.stat(true)
                 self.is = stat.mode & 007777
 
-                Blink.debug "chmod state is %o" % self.is
+                Puppet.debug "chmod state is %o" % self.is
             end
 
             def sync
                 if @is == -1
                     self.parent.stat(true)
                     self.retrieve
-                    Blink.notice "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    Puppet.notice "%s: after refresh, is '%s'" % [self.class.name,@is]
                 end
 
                 unless self.parent.stat
-                    Blink.error "File '%s' does not exist; cannot chmod" %
+                    Puppet.error "File '%s' does not exist; cannot chmod" %
                         self.parent[:path]
                     return
                 end
@@ -226,10 +226,10 @@ module Blink
 
         # not used until I can figure out how to solve the problem with
         # metastates
-        class FileSetUID < Blink::State
+        class FileSetUID < Puppet::State
             require 'etc'
 
-            @parent = Blink::State::FileMode
+            @parent = Puppet::State::FileMode
 
             @name = :setuid
             @event = :inode_changed
@@ -243,7 +243,7 @@ module Blink
                 unless defined? @is or @is == -1
                     self.parent.stat(true)
                     self.retrieve
-                    Blink.notice "%s: should is '%s'" % [self.class.name,self.should]
+                    Puppet.notice "%s: should is '%s'" % [self.class.name,self.should]
                 end
                 tmp = 0
                 if self.is == true
@@ -254,7 +254,7 @@ module Blink
             end
         end
 
-        class FileGroup < Blink::State
+        class FileGroup < Puppet::State
             require 'etc'
 
             @name = :group
@@ -271,10 +271,10 @@ module Blink
                 if defined? @should
                     unless self.should.is_a?(Integer)
                         begin
-                            require 'blink/fact'
+                            require 'puppet/fact'
                             group = Etc.getgrnam(self.should)
                             # apparently os x is six shades of weird
-                            os = Blink::Fact["Operatingsystem"]
+                            os = Puppet::Fact["Operatingsystem"]
 
                             gid = ""
                             case os
@@ -286,7 +286,7 @@ module Blink
                             if gid == ""
                                 raise "Could not retrieve gid for %s" % self.parent
                             end
-                            Blink.debug "converting %s to integer %d" %
+                            Puppet.debug "converting %s to integer %d" %
                                 [self.should,gid]
                             self.should = gid
                         rescue
@@ -295,19 +295,19 @@ module Blink
                         end
                     end
                 end
-                Blink.debug "chgrp state is %d" % self.is
+                Puppet.debug "chgrp state is %d" % self.is
             end
 
             def sync
-                Blink.debug "setting chgrp state to %s" % self.should
+                Puppet.debug "setting chgrp state to %s" % self.should
                 if @is == -1
                     self.parent.stat(true)
                     self.retrieve
-                    Blink.notice "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    Puppet.notice "%s: after refresh, is '%s'" % [self.class.name,@is]
                 end
 
                 unless self.parent.stat
-                    Blink.error "File '%s' does not exist; cannot chgrp" %
+                    Puppet.error "File '%s' does not exist; cannot chgrp" %
                         self.parent[:path]
                     return
                 end
@@ -328,12 +328,12 @@ module Blink
             attr_reader :params
             # class instance variable
             @states = [
-                Blink::State::FileCreate,
-                Blink::State::FileUID,
-                Blink::State::FileGroup,
-                Blink::State::FileMode,
-                Blink::State::FileChecksum,
-                Blink::State::FileSetUID
+                Puppet::State::FileCreate,
+                Puppet::State::FileUID,
+                Puppet::State::FileGroup,
+                Puppet::State::FileMode,
+                Puppet::State::FileChecksum,
+                Puppet::State::FileSetUID
             ]
 
             @parameters = [
@@ -347,7 +347,7 @@ module Blink
             # a wrapper method to make sure the file exists before doing anything
             def retrieve
                 unless stat = self.stat(true)
-                    Blink.verbose "File %s does not exist" % self[:path]
+                    Puppet.verbose "File %s does not exist" % self[:path]
                     @states.each { |name,state|
                         state.is = -1
                     }
@@ -361,7 +361,7 @@ module Blink
                     begin
                         @stat = ::File.stat(self[:path])
                     rescue => error
-                        Blink.debug "Failed to stat %s: %s" %
+                        Puppet.debug "Failed to stat %s: %s" %
                             [self[:path],error]
                         @stat = nil
                     end
@@ -421,8 +421,8 @@ module Blink
                     end
                 end
             end
-        end # Blink::Type::File
-    end # Blink::Type
+        end # Puppet::Type::File
+    end # Puppet::Type
 
     class FileSource
         attr_accessor :name

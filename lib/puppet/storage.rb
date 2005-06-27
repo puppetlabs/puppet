@@ -1,6 +1,6 @@
 # $Id$
 
-module Blink
+module Puppet
     # a class for storing state
 	class Storage
 		include Singleton
@@ -15,9 +15,9 @@ module Blink
 
 		def Storage.load
             # XXX I should probably use a better default state dir
-            Blink[:statefile] ||= "/var/tmp/blinkstate"
-			return unless File.exists?(Blink[:statefile])
-			File.open(Blink[:statefile]) { |file|
+            Puppet[:statefile] ||= "/var/tmp/puppetstate"
+			return unless File.exists?(Puppet[:statefile])
+			File.open(Puppet[:statefile]) { |file|
 				file.gets { |line|
 					myclass, key, value = line.split(@@splitchar)
 
@@ -35,7 +35,7 @@ module Blink
 		end
 
 		def Storage.store
-			File.open(Blink[:statefile], File::CREAT|File::WRONLY, 0600) { |file|
+			File.open(Puppet[:statefile], File::CREAT|File::WRONLY, 0600) { |file|
 				@@state.each { |klass, thash|
                     thash.each { |key,value|
                         mvalue = Marshal::dump(value)

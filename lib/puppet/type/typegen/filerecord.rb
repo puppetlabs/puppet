@@ -5,11 +5,11 @@
 # parse and write configuration files using objects with minimal parsing abilities
 
 require 'etc'
-require 'blink/type'
-require 'blink/type/typegen'
+require 'puppet/type'
+require 'puppet/type/typegen'
 
 #---------------------------------------------------------------
-class Blink::Type::FileRecord < Blink::Type::TypeGenerator
+class Puppet::Type::FileRecord < Puppet::Type::TypeGenerator
     attr_accessor :fields, :namevar, :splitchar, :object
 
     @parameters = [:name, :splitchar, :fields, :namevar, :filetype, :regex, :joinchar]
@@ -55,8 +55,8 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
     #---------------------------------------------------------------
     def FileRecord.filetype=(filetype)
         if filetype.is_a?(String)
-            @filetype = Blink::Type::FileType[filetype]
-        elsif filetype.is_a?(Blink::Type::FileType)
+            @filetype = Puppet::Type::FileType[filetype]
+        elsif filetype.is_a?(Puppet::Type::FileType)
             @filetype = filetype
         else
             raise "Cannot use objects of type %s as filetypes" % filetype 
@@ -121,7 +121,7 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
                 rescue RegexpError => detail
                     raise "Could not create splitregex from %s" % @splitchar
                 end
-                Blink.debug("Created regexp %s" % @regex)
+                Puppet.debug("Created regexp %s" % @regex)
             end
         elsif @regex.is_a?(String)
             begin
@@ -170,7 +170,7 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
         end
         @parameters.keys { |field|
             unless self[field] == other[field]
-                Blink.debug("%s -> %s has changed" % [self.name, field])
+                Puppet.debug("%s -> %s has changed" % [self.name, field])
                 return false
             end
         }
@@ -180,7 +180,7 @@ class Blink::Type::FileRecord < Blink::Type::TypeGenerator
 
     #---------------------------------------------------------------
     def initialize(hash)
-        if self.class == Blink::Type::FileRecord
+        if self.class == Puppet::Type::FileRecord
             self.class.newtype(hash)
             return
         end

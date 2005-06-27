@@ -1,28 +1,28 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../../../../language/trunk"
+    $puppetbase = "../../../../language/trunk"
 end
 
-require 'blink/selector'
+require 'puppet/selector'
 require 'test/unit'
 
 # $Id$
 
 class TestSelector < Test::Unit::TestCase
     def setup
-        @os = Blink::Fact["operatingsystem"]
-        @hostname = Blink::Fact["hostname"]
+        @os = Puppet::Fact["operatingsystem"]
+        @hostname = Puppet::Fact["hostname"]
     end
 
     def test_values
-        Blink[:debug] = 1
+        Puppet[:debug] = 1
 
         selector = nil
         assert_nothing_raised() {
-            selector = Blink::Selector.new { |select|
+            selector = Puppet::Selector.new { |select|
                 select.add("value1") {
-                    Blink::Fact["hostname"] == @hostname
+                    Puppet::Fact["hostname"] == @hostname
                 }
             }
         }

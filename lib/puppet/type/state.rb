@@ -2,9 +2,9 @@
 
 # $Id$
 
-require 'blink'
-require 'blink/element'
-require 'blink/statechange'
+require 'puppet'
+require 'puppet/element'
+require 'puppet/statechange'
 
 #---------------------------------------------------------------
 # this is a virtual base class for states
@@ -14,8 +14,8 @@ require 'blink/statechange'
 # against the real state of the system.  For instance, you could verify that
 # a file's owner is what you want, but you could not create two file objects
 # and use these methods to verify that they have the same owner
-module Blink
-class State < Blink::Element
+module Puppet
+class State < Puppet::Element
     attr_accessor :is, :should, :parent
 
     @virtual = true
@@ -41,13 +41,13 @@ class State < Blink::Element
     # if we're not in sync, return a statechange capable of putting us
     # in sync
     def evaluate
-        Blink.verbose "evaluating %s" % self
+        Puppet.verbose "evaluating %s" % self
         self.retrieve
         if self.insync?
-            Blink.verbose "%s is in sync" % self
+            Puppet.verbose "%s is in sync" % self
             return nil
         else
-            return Blink::StateChange.new(self)
+            return Puppet::StateChange.new(self)
         end
     end
     #---------------------------------------------------------------
@@ -63,7 +63,7 @@ class State < Blink::Element
     # we aren't actually comparing the states themselves, we're only
     # comparing the "should" value with the "is" value
     def insync?
-        Blink.debug "%s value is '%s', should be '%s'" %
+        Puppet.debug "%s value is '%s', should be '%s'" %
             [self,self.is.inspect,self.should.inspect]
         self.is == self.should
     end
@@ -92,8 +92,8 @@ class State < Blink::Element
         unless defined? @noop
             @noop = false
         end
-        tmp = @noop || self.parent.noop || Blink[:noop] || false
-        Blink.notice "noop is %s" % tmp
+        tmp = @noop || self.parent.noop || Puppet[:noop] || false
+        Puppet.notice "noop is %s" % tmp
         return tmp
     end
     #---------------------------------------------------------------

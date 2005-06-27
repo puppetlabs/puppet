@@ -1,10 +1,10 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../../../../language/trunk"
+    $puppetbase = "../../../../language/trunk"
 end
 
-require 'blink'
+require 'puppet'
 require 'test/unit'
 
 # $Id$
@@ -18,28 +18,28 @@ class TestBasic < Test::Unit::TestCase
         @configfile = nil
         @sleeper = nil
 
-        Blink[:debug] = 1
+        Puppet[:debug] = 1
 
         assert_nothing_raised() {
-            @component = Blink::Component.new(:name => "yaytest")
+            @component = Puppet::Component.new(:name => "yaytest")
         }
 
         assert_nothing_raised() {
             @filepath = "/tmp/testfile"
             system("rm -f %s" % @filepath)
-            @configfile = Blink::Type::File.new(
+            @configfile = Puppet::Type::File.new(
                 :path => @filepath,
                 :create => true,
                 :checksum => "md5"
             )
         }
         assert_nothing_raised() {
-            @sleeper = Blink::Type::Service.new(
+            @sleeper = Puppet::Type::Service.new(
                 :name => "sleeper",
                 :running => 1
             )
-            Blink::Type::Service.setpath(
-                File.join($blinkbase,"examples/root/etc/init.d")
+            Puppet::Type::Service.setpath(
+                File.join($puppetbase,"examples/root/etc/init.d")
             )
         }
         assert_nothing_raised() {
@@ -54,13 +54,13 @@ class TestBasic < Test::Unit::TestCase
     end
 
     def teardown
-        Blink::Type.allclear
+        Puppet::Type.allclear
         system("rm -f %s" % @filepath)
     end
 
     def test_name_calls
         [@sleeper,@configfile].each { |obj|
-            Blink.error "obj is %s" % obj
+            Puppet.error "obj is %s" % obj
             assert_nothing_raised(){
                 obj.name
             }

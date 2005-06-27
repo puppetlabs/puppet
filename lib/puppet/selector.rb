@@ -2,10 +2,10 @@
 
 # $Id$
 
-require 'blink'
-require 'blink/fact'
+require 'puppet'
+require 'puppet/fact'
 
-module Blink
+module Puppet
     #---------------------------------------------------------------
     # this class will provide something like a 'select' statement, but it will
     # return a value

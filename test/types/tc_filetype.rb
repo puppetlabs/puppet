@@ -1,12 +1,12 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../../../../language/trunk"
+    $puppetbase = "../../../../language/trunk"
 end
 
-require 'blink'
-require 'blink/type/typegen/filetype'
-require 'blink/type/typegen/filerecord'
+require 'puppet'
+require 'puppet/type/typegen/filetype'
+require 'puppet/type/typegen/filerecord'
 require 'test/unit'
 
 # $Id$
@@ -14,12 +14,12 @@ require 'test/unit'
 #class TestFileType < Test::Unit::TestCase
 class TestFileType
     def disabled_setup
-        Blink[:debug] = 1
+        Puppet[:debug] = 1
 
-        @passwdtype = Blink::Type::FileType["passwd"]
+        @passwdtype = Puppet::Type::FileType["passwd"]
         if @passwdtype.nil?
             assert_nothing_raised() {
-                @passwdtype = Blink::Type::FileType.newtype(
+                @passwdtype = Puppet::Type::FileType.newtype(
                     :name => "passwd"
                 )
                 @passwdtype.addrecord(
@@ -30,10 +30,10 @@ class TestFileType
             }
         end
 
-        @syslogtype = Blink::Type::FileType["syslog"]
+        @syslogtype = Puppet::Type::FileType["syslog"]
         if @syslogtype.nil?
             assert_nothing_raised() {
-                @syslogtype = Blink::Type::FileType.newtype(
+                @syslogtype = Puppet::Type::FileType.newtype(
                     :escapednewlines => true,
                     :name => "syslog"
                 )
@@ -137,7 +137,7 @@ class TestFileType
     def disabled_test_syslog_nochange
         file = nil
         type = nil
-        syslog = File.join($blinkbase, "examples/root/etc/debian-syslog.conf")
+        syslog = File.join($puppetbase, "examples/root/etc/debian-syslog.conf")
         assert_nothing_raised() {
             file = @syslogtype.new(syslog)
         }

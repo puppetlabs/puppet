@@ -1,11 +1,11 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $blinkbase = "../../../../language/trunk"
+    $puppetbase = "../../../../language/trunk"
 end
 
-require 'blink/function'
-require 'blink/fact'
+require 'puppet/function'
+require 'puppet/fact'
 require 'test/unit'
 
 # $Id$
@@ -17,11 +17,11 @@ class TestFunctions < Test::Unit::TestCase
         vars.each { |var|
             value = nil
             assert_nothing_raised() {
-                value = Blink::Function["fact"].call(var)
+                value = Puppet::Function["fact"].call(var)
             }
 
             assert_equal(
-                Blink::Fact[var],
+                Puppet::Fact[var],
                 value
             )
         }
