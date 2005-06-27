@@ -14,7 +14,7 @@ if Dir.getwd !~ %r{puppet/library}
     $:.unshift '../../../library/trunk/test/'
 end
 
-require 'puppetest.rb'
+require 'puppettest.rb'
 
 require 'getoptlong'
 
