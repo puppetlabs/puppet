@@ -82,6 +82,7 @@ module Puppet
                     when "Linux":
                         case Puppet::Fact["distro"]
                             when "Debian": @@types = ["dpkg"]
+                            when "RedHat": @@types = ["rpm"]
                             else
                                 raise "No default type for " + Puppet::Fact["distro"]
                         end
