@@ -115,10 +115,10 @@ module Puppet
                     }
                     hash.each { |var,value|
                         if states.include?(var)
-                            Puppet.verbose "%s is a set state" % var.inspect
+                            Puppet.debug "%s is a set state" % var.inspect
                             states[var].is = value
                         else
-                            Puppet.verbose "%s is not a set state" % var.inspect
+                            Puppet.debug "%s is not a set state" % var.inspect
                             if object[var] and object[var] != value
                                 Puppet.warning "Overriding %s => %s on %s with %s" %
                                     [var,object[var],name,value]
@@ -128,12 +128,12 @@ module Puppet
 
                             # swap the values if we're a state
                             if states.include?(var)
-                                Puppet.verbose "Swapping %s because it's a state" % var
+                                Puppet.debug "Swapping %s because it's a state" % var
                                 states[var].is = value
                                 states[var].should = nil
                             else
-                                Puppet.verbose "%s is not a state" % var.inspect
-                                Puppet.verbose "States are %s" % states.keys.collect { |st|
+                                Puppet.debug "%s is not a state" % var.inspect
+                                Puppet.debug "States are %s" % states.keys.collect { |st|
                                     st.inspect
                                 }.join(" ")
                             end
@@ -286,10 +286,10 @@ module Puppet
                 # of information
                 process.each { |line|
                     case line
-                    when /^$/ then
+                    when /^$/:
                         packages.push Puppet::Type::Package.installedpkg(hash)
                         hash.clear
-                    when /\s*(\w+):\s+(.+)/
+                    when /\s*(\w+):\s+(.+)/:
                         name = $1
                         value = $2
                         if names.include?(name)
@@ -297,7 +297,7 @@ module Puppet
                         else
                             raise "Could not find %s" % name
                         end
-                    when /\s+\d+.+/
+                    when /\s+\d+.+/:
                         # nothing; we're ignoring the FILES info
                     end
                 }

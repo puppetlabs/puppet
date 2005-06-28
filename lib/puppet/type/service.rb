@@ -140,7 +140,7 @@ module Puppet
                     begin
                         retvalue = ::File.stat(dir).directory?
                     rescue => detail
-                        Puppet.verbose("Directory %s does not exist: %s" % [dir,detail])
+                        Puppet.debug("Directory %s does not exist: %s" % [dir,detail])
                         # just ignore it
                     end
                     # disallow relative paths

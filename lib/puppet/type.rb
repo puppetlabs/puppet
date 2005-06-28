@@ -166,7 +166,7 @@ class Type < Puppet::Element
     def Type.initvars
         @objects = Hash.new
         @actions = Hash.new
-        #Puppet.verbose "initing validstates for %s" % self
+        #Puppet.debug "initing validstates for %s" % self
         @validstates = {}
         @validparameters = {}
 
@@ -670,7 +670,7 @@ class Type < Puppet::Element
     # rather than 'each'
     def evaluate
         unless defined? @evalcount
-            Puppet.error "No evalcount defined on '%s' of type '%s'" %
+            Puppet.err "No evalcount defined on '%s' of type '%s'" %
                 [self.name,self.class]
         end
         # if we're a metaclass and we've already evaluated once...

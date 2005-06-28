@@ -52,7 +52,7 @@ module Puppet
                     :message => self.to_s
                 )
             rescue => detail
-                Puppet.error "%s failed: %s" % [self.to_s,detail]
+                Puppet.err "%s failed: %s" % [self.to_s,detail]
                 raise
                 # there should be a way to ask the state what type of event
                 # it would have generated, but...

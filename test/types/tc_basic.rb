@@ -60,7 +60,7 @@ class TestBasic < Test::Unit::TestCase
 
     def test_name_calls
         [@sleeper,@configfile].each { |obj|
-            Puppet.error "obj is %s" % obj
+            Puppet.debug "obj is %s" % obj
             assert_nothing_raised(){
                 obj.name
             }

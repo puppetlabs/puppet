@@ -26,7 +26,7 @@ module Puppet
         def initialize(args)
             @children = []
             super(args)
-            Puppet.verbose "Made component with name %s" % self.name
+            Puppet.debug "Made component with name %s" % self.name
         end
 
         # now we decide whether a transaction is dumb, and just accepts

@@ -56,7 +56,7 @@ module Puppet
                     if hash.include?(@checktype)
                         @should = hash[@checktype]
                     else
-                        Puppet.verbose "Found checksum for %s but not of type %s" %
+                        Puppet.debug "Found checksum for %s but not of type %s" %
                             [self.parent[:path],@checktype]
                         @should = nil
                     end
@@ -113,7 +113,7 @@ module Puppet
                         [state[self.parent[:path]][@checktype],@is]
                     result = true
                 else
-                    Puppet.verbose "Creating checksum %s for %s of type %s" %
+                    Puppet.debug "Creating checksum %s for %s of type %s" %
                         [@is,self.parent[:path],@checktype]
                     result = false
                 end
@@ -159,7 +159,7 @@ module Puppet
                 end
 
                 unless self.parent.stat
-                    Puppet.error "File '%s' does not exist; cannot chown" %
+                    Puppet.err "File '%s' does not exist; cannot chown" %
                         self.parent[:path]
                 end
 
@@ -210,7 +210,7 @@ module Puppet
                 end
 
                 unless self.parent.stat
-                    Puppet.error "File '%s' does not exist; cannot chmod" %
+                    Puppet.err "File '%s' does not exist; cannot chmod" %
                         self.parent[:path]
                     return
                 end
@@ -307,7 +307,7 @@ module Puppet
                 end
 
                 unless self.parent.stat
-                    Puppet.error "File '%s' does not exist; cannot chgrp" %
+                    Puppet.err "File '%s' does not exist; cannot chgrp" %
                         self.parent[:path]
                     return
                 end
@@ -347,7 +347,7 @@ module Puppet
             # a wrapper method to make sure the file exists before doing anything
             def retrieve
                 unless stat = self.stat(true)
-                    Puppet.verbose "File %s does not exist" % self[:path]
+                    Puppet.debug "File %s does not exist" % self[:path]
                     @states.each { |name,state|
                         state.is = -1
                     }

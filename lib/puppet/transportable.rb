@@ -56,7 +56,7 @@ module Puppet
                     # which may or may not be a good thing...
                     retobj = type.new(self)
                 #rescue => detail
-                #    Puppet.error "Failed to create %s: %s" % [type.name,detail]
+                #    Puppet.err "Failed to create %s: %s" % [type.name,detail]
                 #    puts self.class
                 #    puts self.inspect
                 #    exit
@@ -89,7 +89,7 @@ module Puppet
                 if type.allowedmethod(name)
                     type.send(self.name,self.args)
                 else
-                    Puppet.error("%s does not respond to %s" % [self.type,self.name])
+                    Puppet.err("%s does not respond to %s" % [self.type,self.name])
                 end
             else
                 raise "Could not find object type %s" % setting.type
@@ -124,7 +124,7 @@ module Puppet
                 raise "TransBuckets must have names"
             end
             unless defined? @type
-                Puppet.verbose "TransBucket '%s' has no type" % @name
+                Puppet.debug "TransBucket '%s' has no type" % @name
             end
             hash = {
                 :name => @name,

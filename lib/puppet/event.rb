@@ -38,22 +38,22 @@ module Puppet
                 # to the "old" object rather than "new"
                 # but we're pretty far from that being a problem
                 if transaction.triggercount(self) > 0
-                    Puppet.verbose "%s has already run" % self
+                    Puppet.debug "%s has already run" % self
                 else
-                    Puppet.verbose "'%s' matched '%s'; triggering '%s' on '%s'" %
+                    Puppet.debug "'%s' matched '%s'; triggering '%s' on '%s'" %
                         [@source,@event,@method,@target]
                     begin
                         if @target.respond_to?(@method)
                             @target.send(@method)
                         else
-                            Puppet.verbose "'%s' of type '%s' does not respond to '%s'" %
+                            Puppet.debug "'%s' of type '%s' does not respond to '%s'" %
                                 [@target,@target.class,@method.inspect]
                         end
                     rescue => detail
                         # um, what the heck do i do when an object fails to refresh?
                         # shouldn't that result in the transaction rolling back?
                         # XXX yeah, it should
-                        Puppet.error "'%s' failed to %s: '%s'" %
+                        Puppet.err "'%s' failed to %s: '%s'" %
                             [@target,@method,detail]
                         raise
                         #raise "We need to roll '%s' transaction back" %

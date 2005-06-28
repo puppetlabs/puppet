@@ -51,7 +51,7 @@ class Transaction
                     events = [change.forward].flatten
                     #@@changed.push change.state.parent
                 rescue => detail
-                    Puppet.error("%s failed: %s" % [change,detail])
+                    Puppet.err("%s failed: %s" % [change,detail])
                     raise
                     # at this point, we would normally do error handling
                     # but i haven't decided what to do for that yet
@@ -62,7 +62,7 @@ class Transaction
                 end
 
                 if events.nil?
-                    Puppet.verbose "No events returned?"
+                    Puppet.debug "No events returned?"
                 else
                     # first handle the subscriptions on individual objects
                     events.each { |event|
@@ -126,7 +126,7 @@ class Transaction
                     change.backward
                     #@@changed.push change.state.parent
                 rescue => detail
-                    Puppet.error("%s rollback failed: %s" % [change,detail])
+                    Puppet.err("%s rollback failed: %s" % [change,detail])
                     # at this point, we would normally do error handling
                     # but i haven't decided what to do for that yet
                     # so just record that a sync failed for a given object
