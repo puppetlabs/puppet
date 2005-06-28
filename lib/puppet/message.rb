@@ -7,20 +7,18 @@ module Puppet
     # each level of message prints in a different color
 	class Message
 		@@messages = Array.new
-		@@levels = [ :debug, :verbose, :notice, :warning, :error ]
 		@@colors = {
 			:debug => SLATE,
-			:verbose => ORANGE,
+			:info => ORANGE,
 			:notice => PINK,
 			:warning => GREEN,
-			:error => YELLOW
+			:err => YELLOW,
+            :alert => RESET,
+            :emerg => RESET,
+            :crit => RESET
 		}
 
 		attr_accessor :level, :message, :source
-
-        def Message.loglevels
-            return @@levels
-        end
 
 		def initialize(args)
 			unless args.include?(:level) && args.include?(:message) &&
