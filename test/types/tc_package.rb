@@ -18,7 +18,12 @@ class TestPackagingType < Test::Unit::TestCase
         when "SunOS"
             type = "sunpkg"
         when "Linux"
-            type = "dpkg"
+            case Facter["distro"].value
+            when "Debian": type = "dpkg"
+            when "RedHat": type = "rpm"
+            else
+                raise "No default type for " + Facter["distro"].to_s
+            end
         else
             type = :invalid
         end

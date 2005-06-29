@@ -19,7 +19,7 @@ module Puppet
 		@@messages = Array.new
 
         @@levels = [:debug,:info,:notice,:warning,:err,:alert,:emerg,:crit]
-        @@loglevel = :notice
+        @@loglevel = 2
         @@logdest = :console
 
 		@@colors = {

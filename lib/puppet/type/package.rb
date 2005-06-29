@@ -260,6 +260,57 @@ module Puppet
         }
     }
 
+    PackagingType.new("rpm") { |type|
+        type.list = proc {
+            packages = []
+
+            # dpkg only prints as many columns as you have available
+            # which means we don't get all of the info
+            # stupid stupid
+            oldcol = ENV["COLUMNS"]
+            ENV["COLUMNS"] = "500"
+
+            # list out all of the packages
+            open("| rpm -q -a --qf '%{NAME} %{VERSION}\n'") { |process|
+                # our regex for matching dpkg output
+                regex = %r{^(\S+)\s+(\S+)}
+                fields = [:name, :version]
+                hash = {}
+
+                # now turn each returned line into a package object
+                process.each { |line|
+                    if match = regex.match(line)
+                        hash.clear
+
+                        fields.zip(match.captures) { |field,value|
+                            hash[field] = value
+                        }
+                        packages.push Puppet::Type::Package.installedpkg(hash)
+                    else
+                        raise "failed to match rpm line %s" % line
+                    end
+                }
+            }
+            ENV["COLUMNS"] = oldcol
+
+            return packages
+        }
+
+        # we need package retrieval mechanisms before we can have package
+        # installation mechanisms...
+        #type.install = proc { |pkg|
+        #    raise "installation not implemented yet"
+        #}
+
+        type.remove = proc { |pkg|
+            cmd = "rpm -e %s" % pkg.name
+            output = %x{#{cmd}}
+            if $? != 0
+                raise output
+            end
+        }
+    }
+
     PackagingType.new("sunpkg") { |type|
         type.list = proc {
             packages = []
