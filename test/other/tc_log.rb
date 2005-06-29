@@ -98,4 +98,13 @@ class TestLog < Test::Unit::TestCase
             }
         }
     end
+
+    def test_output
+        Puppet[:debug] = false
+        assert(Puppet.err("This is an error").is_a?(Puppet::Log))
+        assert(Puppet.debug("This is debugging").nil?)
+        Puppet[:debug] = true
+        assert(Puppet.err("This is an error").is_a?(Puppet::Log))
+        assert(Puppet.debug("This is debugging").is_a?(Puppet::Log))
+    end
 end
