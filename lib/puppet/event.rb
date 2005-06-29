@@ -130,7 +130,7 @@ class Puppet::NotUsed
     # access to the actual hash, which is silly
     def action
         if not defined? @actions
-            puts "defining action hash"
+            Puppet.debug "defining action hash"
             @actions = Hash.new
         end
         @actions

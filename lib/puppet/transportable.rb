@@ -51,16 +51,14 @@ module Puppet
         def to_type
             retobj = nil
             if type = Puppet::Type.type(self.type)
-                #begin
+                begin
                     # this will fail if the type already exists
                     # which may or may not be a good thing...
                     retobj = type.new(self)
-                #rescue => detail
-                #    Puppet.err "Failed to create %s: %s" % [type.name,detail]
-                #    puts self.class
-                #    puts self.inspect
-                #    exit
-                #end
+                rescue => detail
+                    Puppet.err "Failed to create %s: %s" % [type.name,detail]
+                    return nil
+                end
             else
                 raise "Could not find object type %s" % self.type
             end

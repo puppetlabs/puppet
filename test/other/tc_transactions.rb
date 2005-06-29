@@ -25,7 +25,7 @@ class TestTransactions < Test::Unit::TestCase
             Puppet::Type.allclear
         }
 
-        print "\n\n"
+        print "\n\n" if Puppet[:debug]
     end
 
     def newfile

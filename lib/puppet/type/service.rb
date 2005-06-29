@@ -132,6 +132,10 @@ module Puppet
                 raise "Could not find init script for '%s'" % name
             end
 
+            def Service.searchpath
+                return @searchpaths
+            end
+
             def Service.setpath(ary)
                 # verify each of the paths exists
                 #ary.flatten!
