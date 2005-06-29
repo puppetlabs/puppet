@@ -18,9 +18,7 @@ module Puppet
         end
 
         def Metric.clear
-            @@metrics = {}
-            @@eventmetrics = nil
-            @@typemetrics = nil
+            Metric.init
         end
 
         def Metric.gather
@@ -226,7 +224,6 @@ module Puppet
                 RRD.graph(*args)
             rescue => detail
                 Puppet.err "Failed to graph %s: %s" % [self.name,detail]
-                exit
             end
         end
 
@@ -241,12 +238,10 @@ module Puppet
                 args.push value[2]
             }
             arg = args.join(":")
-            Puppet.debug "Updating %s with %s" % [self.name,arg]
             begin
                 RRD.update(self.path,args.join(":"))
             rescue => detail
                 Puppet.err "Failed to update %s: %s" % [self.name,detail]
-                exit
             end
         end
     end

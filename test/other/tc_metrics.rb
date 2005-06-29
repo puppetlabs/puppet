@@ -15,17 +15,19 @@ class TestMetric < Test::Unit::TestCase
 
     def gendata
         totalmax = 1000
-        changemax = 10000
+        changemax = 1000
         eventmax = 10
         maxdiff = 10
 
         types = [Puppet::Type::File, Puppet::Type::Package, Puppet::Type::Service]
         data = [:total, :managed, :outofsync, :changed, :totalchanges]
-        events = [:file_changed, :package_installed, :service_restarted]
+        events = [:file_changed, :package_installed, :service_started]
 
         # if this is the first set of data points...
-        typedata = {}
-        eventdata = {}
+        typedata = Hash.new { |typehash,type|
+            typehash[type] = Hash.new(0)
+        }
+        eventdata = Hash.new(0)
         types.each { |type|
             name = type.name
             typedata[type] = {}
@@ -50,7 +52,7 @@ class TestMetric < Test::Unit::TestCase
     end
 
     def teardown
-        #system("rm -rf rrdtests")
+        system("rm -rf rrdtests")
     end
 
     def test_fakedata
