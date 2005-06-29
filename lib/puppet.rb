@@ -18,12 +18,16 @@ module Puppet
     # the hash that determines how our system behaves
     @@config = Hash.new(false)
 
-    @@config[:puppetroot] = "/var/puppet"
-    @@config[:rrddir] = "/var/puppet/rrd"
     @@config[:rrdgraph] = false
-    @@config[:logdir] = "/var/puppet/log"
-    @@config[:logfile] = "/var/puppet/log/puppet.log"
-    @@config[:statefile] = "/var/puppet/log/state"
+    if Process.uid == 0
+        @@config[:puppetroot] = "/var/puppet"
+    else
+        @@config[:puppetroot] = File.expand_path("~/.puppet")
+    end
+    @@config[:rrddir] = File.join(@@config[:puppetroot],"rrd")
+    @@config[:logdir] = File.join(@@config[:puppetroot],"log")
+    @@config[:logfile] = File.join(@@config[:puppetroot],"log/puppet.log")
+    @@config[:statefile] = File.join(@@config[:puppetroot],"log/state")
 
 
     # handle the different message levels
@@ -47,21 +51,33 @@ module Puppet
 
 	# configuration parameter access and stuff
 	def Puppet.[](param)
-		return @@config[param]
+        case param
+        when :debug:
+            if Puppet::Log.level == :debug
+                return true
+            else
+                return false
+            end
+        when :loglevel:
+            return Puppet::Log.level
+        else
+            return @@config[param]
+        end
 	end
 
 	# configuration parameter access and stuff
 	def Puppet.[]=(param,value)
-		@@config[param] = value
         case param
         when :debug:
             if value
-                Puppet::Log.level(:debug)
+                Puppet::Log.level=(:debug)
             else
-                Puppet::Log.level(:notice)
+                Puppet::Log.level=(:notice)
             end
         when :loglevel:
-            Puppet::Log.level(value)
+            Puppet::Log.level=(value)
+        else
+            @@config[param] = value
         end
 	end
 

@@ -83,7 +83,11 @@ module Puppet
             end
         end
 
-        def Log.level(level)
+        def Log.level
+            return @@levels[@@loglevel]
+        end
+
+        def Log.level=(level)
             unless level.is_a?(Symbol)
                 level = level.intern
             end

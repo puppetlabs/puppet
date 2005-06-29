@@ -48,7 +48,7 @@ class TestMetric < Test::Unit::TestCase
     def setup
         Puppet[:rrddir] = File.join(Dir.getwd,"rrdtests")
         Puppet[:rrdgraph] = true
-        Puppet[:loglevel] = :debug
+        Puppet[:loglevel] = :debug if __FILE__ == $0
     end
 
     def teardown

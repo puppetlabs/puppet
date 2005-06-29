@@ -18,7 +18,7 @@ class TestBasic < Test::Unit::TestCase
         @configfile = nil
         @sleeper = nil
 
-        Puppet[:debug] = 1
+        Puppet[:loglevel] = :debug if __FILE__ == $0
 
         assert_nothing_raised() {
             @component = Puppet::Component.new(:name => "yaytest")

@@ -11,7 +11,7 @@ require 'test/unit'
 
 class TestQuery < Test::Unit::TestCase
     def setup
-        Puppet[:debug] = true
+        Puppet[:loglevel] = :debug if __FILE__ == $0
     end
 
     def teardown

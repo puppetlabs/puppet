@@ -16,6 +16,7 @@ class TestLog < Test::Unit::TestCase
     def teardown
         system("rm -f %s" % @@logfile)
         Puppet::Log.destination(:console)
+        Puppet[:loglevel] = :notice
     end
 
     def getlevels

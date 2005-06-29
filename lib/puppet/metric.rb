@@ -22,14 +22,14 @@ module Puppet
         end
 
         def Metric.gather
-            metrics = Metric.init
+            Metric.init
 
             # first gather stats about all of the types
             Puppet::Type.eachtype { |type|
                 type.each { |instance|
-                    metrics[type][:total] += 1
+                    @@typemetrics[type][:total] += 1
                     if instance.managed
-                        metrics[type][:managed] += 1
+                        @@typemetrics[type][:managed] += 1
                     end
                 }
             }

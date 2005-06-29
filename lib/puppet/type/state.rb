@@ -93,7 +93,7 @@ class State < Puppet::Element
             @noop = false
         end
         tmp = @noop || self.parent.noop || Puppet[:noop] || false
-        Puppet.notice "noop is %s" % tmp
+        Puppet.debug "noop is %s" % tmp
         return tmp
     end
     #---------------------------------------------------------------

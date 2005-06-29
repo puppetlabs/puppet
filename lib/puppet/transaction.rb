@@ -42,7 +42,7 @@ class Transaction
     # thus, an object gets defined, then mentioned as a dependency, and the objects
     # are synced in that order automatically
     def evaluate
-        Puppet.notice "executing %s changes or transactions" % @changes.length
+        Puppet.debug "executing %s changes or transactions" % @changes.length
 
         return @changes.collect { |change|
             if change.is_a?(Puppet::StateChange)
@@ -147,7 +147,7 @@ class Transaction
 
     #---------------------------------------------------------------
     def triggercount(sub)
-        Puppet.notice "Triggercount on %s is %s" % [sub,@triggered[sub]]
+        Puppet.debug "Triggercount on %s is %s" % [sub,@triggered[sub]]
         return @triggered[sub]
     end
     #---------------------------------------------------------------
@@ -155,7 +155,7 @@ class Transaction
     #---------------------------------------------------------------
     def triggered(sub)
         @triggered[sub] += 1
-        Puppet.notice "%s was triggered; count is %s" % [sub,@triggered[sub]]
+        Puppet.debug "%s was triggered; count is %s" % [sub,@triggered[sub]]
     end
     #---------------------------------------------------------------
 end

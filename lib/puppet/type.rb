@@ -152,7 +152,7 @@ class Type < Puppet::Element
     def Type.inherited(sub)
         sub.initvars
 
-        #Puppet.notice("subtype %s(%s) just created" % [sub,sub.superclass])
+        #Puppet.debug("subtype %s(%s) just created" % [sub,sub.superclass])
         # add it to the master list
         # unfortunately we can't yet call sub.name, because the #inherited
         # method gets called before any commands in the class definition
@@ -200,7 +200,7 @@ class Type < Puppet::Element
         raise "Type.newtype called, but I don't know why"
         @@typeary.push(type)
         if @@typehash.has_key?(type.name)
-            Puppet.notice("Redefining object type %s" % type.name)
+            Puppet.debug("Redefining object type %s" % type.name)
         end
         @@typehash[type.name] = type
     end
@@ -258,7 +258,7 @@ class Type < Puppet::Element
     # remove all type instances
     def Type.allclear
         @@typeary.each { |subtype|
-            Puppet.notice "Clearing %s of objects" % subtype
+            Puppet.debug "Clearing %s of objects" % subtype
             subtype.clear
         }
     end
@@ -276,7 +276,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     def Type.each
         return unless defined? @objects
-        @objects.each { |instance|
+        @objects.each { |name,instance|
             yield instance
         }
     end
@@ -344,7 +344,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     # this is probably only used by FileRecord objects
     def Type.parameters=(params)
-        Puppet.notice "setting parameters to [%s]" % params.join(" ")
+        Puppet.debug "setting parameters to [%s]" % params.join(" ")
         @parameters = params.collect { |param|
             if param.class == Symbol
                 param
@@ -443,7 +443,7 @@ class Type < Puppet::Element
                         :parent => self,
                         :should => value
                     )
-                    #Puppet.notice "Adding parent to %s" % mname
+                    #Puppet.debug "Adding parent to %s" % mname
                     #@states[mname].parent = self
                 end
             end
@@ -556,7 +556,7 @@ class Type < Puppet::Element
         }
 
         # add this object to the specific class's list of objects
-        #Puppet.notice("Adding [%s] to %s" % [self.name,self.class])
+        #Puppet.debug("Adding [%s] to %s" % [self.name,self.class])
         self.class[self.name] = self
 
         # and then add it to the master list
@@ -619,15 +619,14 @@ class Type < Puppet::Element
         if defined? @managed
             return @managed
         else
+            @managed = false
             self.states.each { |state|
                 if state.should
                     @managed = true
-                else
-                    @managed = false
                 end
             }
+            return @managed
         end
-        return @managed
     end
     #---------------------------------------------------------------
 

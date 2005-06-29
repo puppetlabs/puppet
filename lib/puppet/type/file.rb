@@ -155,7 +155,7 @@ module Puppet
                 if @is == -1
                     self.parent.stat(true)
                     self.retrieve
-                    Puppet.notice "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
                 end
 
                 unless self.parent.stat
@@ -206,7 +206,7 @@ module Puppet
                 if @is == -1
                     self.parent.stat(true)
                     self.retrieve
-                    Puppet.notice "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
                 end
 
                 unless self.parent.stat
@@ -243,7 +243,7 @@ module Puppet
                 unless defined? @is or @is == -1
                     self.parent.stat(true)
                     self.retrieve
-                    Puppet.notice "%s: should is '%s'" % [self.class.name,self.should]
+                    Puppet.debug "%s: should is '%s'" % [self.class.name,self.should]
                 end
                 tmp = 0
                 if self.is == true
@@ -303,7 +303,7 @@ module Puppet
                 if @is == -1
                     self.parent.stat(true)
                     self.retrieve
-                    Puppet.notice "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
                 end
 
                 unless self.parent.stat

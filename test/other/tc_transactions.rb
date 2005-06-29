@@ -11,7 +11,7 @@ require 'test/unit'
 
 class TestTransactions < Test::Unit::TestCase
     def setup
-        Puppet[:debug] = true
+        Puppet[:loglevel] = :debug if __FILE__ == $0
 
         @groups = %x{groups}.chomp.split(/ /)
         unless @groups.length > 1

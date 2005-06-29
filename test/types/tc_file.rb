@@ -16,7 +16,7 @@ class TestFile < Test::Unit::TestCase
     def setup
         @file = nil
         @path = File.join($puppetbase,"examples/root/etc/configfile")
-        Puppet[:debug] = 1
+        Puppet[:loglevel] = :debug if __FILE__ == $0
         Puppet[:statefile] = "/var/tmp/puppetstate"
         assert_nothing_raised() {
             @file = Puppet::Type::File.new(

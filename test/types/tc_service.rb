@@ -18,7 +18,7 @@ class TestService < Test::Unit::TestCase
         script = File.join($puppetbase,"examples/root/etc/init.d/sleeper")
         @status = script + " status"
 
-        Puppet[:debug] = 1
+        Puppet[:loglevel] = :debug if __FILE__ == $0
         assert_nothing_raised() {
             unless Puppet::Type::Service.has_key?("sleeper")
                 Puppet::Type::Service.new(

@@ -14,7 +14,7 @@ require 'test/unit'
 #class TestFileType < Test::Unit::TestCase
 class TestFileType
     def disabled_setup
-        Puppet[:debug] = 1
+        Puppet[:loglevel] = :debug if __FILE__ == $0
 
         @passwdtype = Puppet::Type::FileType["passwd"]
         if @passwdtype.nil?

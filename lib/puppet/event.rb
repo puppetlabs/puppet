@@ -24,7 +24,7 @@ module Puppet
                     # this is probably wicked-slow
                     self.send(method.to_s + "=",value)
                 }
-                Puppet.warning "New Subscription: '%s' => '%s'" %
+                Puppet.debug "New Subscription: '%s' => '%s'" %
                     [@source,@event]
             end
 
@@ -71,16 +71,16 @@ module Puppet
         @@subscriptions = []
 
         def Event.process
-            Puppet.warning "Processing events"
+            Puppet.debug "Processing events"
             @@events.each { |event|
                 @@subscriptions.find_all { |sub|
-                    #Puppet.warning "Sub source: '%s'; event object: '%s'" %
+                    #Puppet.debug "Sub source: '%s'; event object: '%s'" %
                     #    [sub.source.inspect,event.object.inspect]
                     sub.source == event.object and
                         (sub.event == event.event or
                          sub.event == :ALL_EVENTS)
                 }.each { |sub|
-                    Puppet.notice "Found sub"
+                    Puppet.debug "Found subscription to %s" % event
                     sub.trigger(event.transaction)
                 }
             }

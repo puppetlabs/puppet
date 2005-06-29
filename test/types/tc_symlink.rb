@@ -18,7 +18,7 @@ class TestSymlink < Test::Unit::TestCase
         @path = File.join($puppetbase,"examples/root/etc/symlink")
 
         Kernel.system("rm -f %s" % @path)
-        Puppet[:debug] = 1
+        Puppet[:loglevel] = :debug if __FILE__ == $0
         assert_nothing_raised() {
             unless Puppet::Type::Symlink.has_key?(@path)
                 Puppet::Type::Symlink.new(

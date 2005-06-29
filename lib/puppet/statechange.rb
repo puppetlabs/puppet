@@ -25,7 +25,7 @@ module Puppet
 		#---------------------------------------------------------------
         def go
             if @state.noop
-                #Puppet.notice "%s is noop" % @state
+                #Puppet.debug "%s is noop" % @state
                 return nil
             end
 
@@ -37,7 +37,7 @@ module Puppet
                 if event.nil?
                     event = @state.parent.class.name.id2name + "_changed"
                 elsif ! event.is_a?(Symbol)
-                    Puppet.notice "State '%s' returned invalid event '%s'; resetting to default" %
+                    Puppet.warning "State '%s' returned invalid event '%s'; resetting to default" %
                         [@state.class,event]
 
                     event = @state.parent.class.name.id2name + "_changed"
@@ -72,7 +72,7 @@ module Puppet
 
 		#---------------------------------------------------------------
         def forward
-            #Puppet.notice "moving change forward"
+            #Puppet.debug "moving change forward"
 
             unless defined? @transaction
                 raise "StateChange '%s' tried to be executed outside of transaction" %

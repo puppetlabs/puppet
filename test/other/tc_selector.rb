@@ -13,11 +13,11 @@ class TestSelector < Test::Unit::TestCase
     def setup
         @os = Puppet::Fact["operatingsystem"]
         @hostname = Puppet::Fact["hostname"]
+
+        Puppet[:loglevel] = :debug if __FILE__ == $0
     end
 
     def test_values
-        Puppet[:debug] = 1
-
         selector = nil
         assert_nothing_raised() {
             selector = Puppet::Selector.new { |select|

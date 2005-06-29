@@ -132,12 +132,12 @@ module Puppet
             }
             if defined? @parameters
                 @parameters.each { |param,value|
-                    Puppet.warning "Defining %s on %s of type %s" %
+                    Puppet.debug "Defining %s on %s of type %s" %
                         [param,@name,@type]
                     hash[param] = value
                 }
             else
-                Puppet.warning "%s has no parameters" % @name
+                Puppet.debug "%s has no parameters" % @name
             end
             container = Puppet::Component.new(hash)
             nametable = {}
@@ -165,7 +165,7 @@ module Puppet
                             # don't rename; this shouldn't be possible anyway
                             next if var == :name
 
-                            Puppet.notice "Adding %s to %s" % [var,name]
+                            Puppet.debug "Adding %s to %s" % [var,name]
                             # override any existing values
                             object[var] = value
                         }

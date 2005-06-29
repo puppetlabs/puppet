@@ -42,7 +42,7 @@ module Puppet
         def push(*ary)
             ary.each { |child|
                 unless child.is_a?(Puppet::Element)
-                    Puppet.notice "Got object of type %s" % child.class
+                    Puppet.debug "Got object of type %s" % child.class
                     raise "Containers can only contain Puppet::Elements"
                 end
                 @children.push child
