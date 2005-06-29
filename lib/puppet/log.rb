@@ -47,12 +47,14 @@ module Puppet
         def Log.create(level,*ary)
             msg = ary.join(" ")
 
-            if @@levels.index(@@loglevel) >= @@levels.index(level)
-                Puppet::Log.new(
+            if @@levels.index(level) >= @@loglevel 
+                return Puppet::Log.new(
                     :level => level,
                     :source => "Puppet",
                     :message => msg
                 )
+            else
+                return nil
             end
         end
 
@@ -86,11 +88,11 @@ module Puppet
                 level = level.intern
             end
 
-            unless @@loglevels.include?(level)
+            unless @@levels.include?(level)
                 raise "Invalid loglevel %s" % level
             end
 
-            @@loglevel = @@loglevels.index(level)
+            @@loglevel = @@levels.index(level)
         end
 
         def Log.newmessage(msg)

@@ -107,7 +107,7 @@ module Puppet
 			@object = args[:object]
 			@transaction = args[:transaction]
 
-            Puppet.warning "New Event: '%s' => '%s'" %
+            Puppet.info "%s: %s" %
                 [@object,@event]
 
             # initially, just stuff all instances into a central bucket

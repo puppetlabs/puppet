@@ -10,6 +10,7 @@ require 'puppet/type'
 require 'puppet/fact'
 require 'puppet/transaction'
 require 'puppet/transportable'
+require 'puppet/metric'
 require 'http-access2'
 require 'soap/rpc/driver'
 require 'soap/rpc/httpserver'
@@ -80,6 +81,12 @@ module Puppet
             #transaction = Puppet::Transaction.new(objects)
             transaction.toplevel = true
             transaction.evaluate
+            Puppet::Metric.gather
+            Puppet::Metric.tally
+            Metric.store
+            if @@config[:rrdgraph] == true
+                #Metric.store
+            end
             self.shutdown
         end
 

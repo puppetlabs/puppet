@@ -23,6 +23,7 @@ class Transaction
     # failed
     def Transaction.init
         @@failures = Hash.new(0)
+        Puppet::Metric.init
         @@changed = []
     end
     #---------------------------------------------------------------

@@ -19,6 +19,8 @@ module Puppet
     @@config = Hash.new(false)
 
     @@config[:puppetroot] = "/var/puppet"
+    @@config[:rrddir] = "/var/puppet/rrd"
+    @@config[:rrdgraph] = false
     @@config[:logdir] = "/var/puppet/log"
     @@config[:logfile] = "/var/puppet/log/puppet.log"
     @@config[:statefile] = "/var/puppet/log/state"
@@ -51,6 +53,16 @@ module Puppet
 	# configuration parameter access and stuff
 	def Puppet.[]=(param,value)
 		@@config[param] = value
+        case param
+        when :debug:
+            if value
+                Puppet::Log.level(:debug)
+            else
+                Puppet::Log.level(:notice)
+            end
+        when :loglevel:
+            Puppet::Log.level(value)
+        end
 	end
 
 end

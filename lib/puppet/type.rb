@@ -6,6 +6,7 @@
 require 'puppet'
 require 'puppet/element'
 require 'puppet/event'
+require 'puppet/metric'
 require 'puppet/type/state'
 
 
@@ -269,6 +270,15 @@ class Type < Puppet::Element
         if defined? @objects
             @objects.clear
         end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def Type.each
+        return unless defined? @objects
+        @objects.each { |instance|
+            yield instance
+        }
     end
     #---------------------------------------------------------------
 
@@ -581,11 +591,13 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     def sync
-        self.collect { |child|
+        events = self.collect { |child|
             child.sync
         }.reject { |event|
             ! (event.is_a?(Symbol) or event.is_a?(String))
         }.flatten
+
+        Puppet::Metric.addevents(self.class,self,events)
     end
     #---------------------------------------------------------------
 
@@ -599,6 +611,23 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     # instance methods dealing with contained states
     #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def managed
+        if defined? @managed
+            return @managed
+        else
+            self.states.each { |state|
+                if state.should
+                    @managed = true
+                else
+                    @managed = false
+                end
+            }
+        end
+        return @managed
+    end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
@@ -686,6 +715,8 @@ class Type < Puppet::Element
         # this only operates on states, not states + children
         self.retrieve
         unless self.insync?
+            # add one to the number of out-of-sync instances
+            Puppet::Metric.add(self.class,self,:outofsync,1)
             changes << self.states.find_all { |state|
                 ! state.insync?
             }.collect { |state|
@@ -697,6 +728,9 @@ class Type < Puppet::Element
         #self.collect { |child|
         #    child.evaluate
         #}
+
+        # now record how many changes we've resulted in
+        Puppet::Metric.add(self.class,self,:changes,changes.length)
         return changes
     end
     #---------------------------------------------------------------
