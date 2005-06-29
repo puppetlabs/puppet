@@ -598,6 +598,7 @@ class Type < Puppet::Element
         }.flatten
 
         Puppet::Metric.addevents(self.class,self,events)
+        return events
     end
     #---------------------------------------------------------------
 
