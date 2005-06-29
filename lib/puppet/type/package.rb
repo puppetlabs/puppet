@@ -72,7 +72,7 @@ module Puppet
                     array = [array]
                 end
                 @@types = array
-                Puppet.warning "Types are %s" % array.join(" ")
+                Puppet.debug "Types are %s" % array.join(" ")
             end
 
             def Package.getpkglist
@@ -111,7 +111,7 @@ module Puppet
                 if object = Package[name]
                     states = {}
                     object.states.each { |state|
-                        Puppet.warning "Adding %s" % state.name.inspect
+                        Puppet.debug "Adding %s" % state.name.inspect
                         states[state.name] = state
                     }
                     hash.each { |var,value|
