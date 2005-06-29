@@ -27,7 +27,7 @@ class TestBasic < Test::Unit::TestCase
         assert_nothing_raised() {
             @filepath = "/tmp/testfile"
             system("rm -f %s" % @filepath)
-            @configfile = Puppet::Type::File.new(
+            @configfile = Puppet::Type::PFile.new(
                 :path => @filepath,
                 :create => true,
                 :checksum => "md5"

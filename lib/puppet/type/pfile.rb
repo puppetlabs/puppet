@@ -11,7 +11,7 @@ module Puppet
     # because the objects must be defined for us to use them in our
     # definition of the file object
     class State
-        class FileCreate < Puppet::State
+        class PFileCreate < Puppet::State
             require 'etc'
             attr_accessor :file
             @name = :create
@@ -45,7 +45,7 @@ module Puppet
             end
         end
 
-        class FileChecksum < Puppet::State
+        class PFileChecksum < Puppet::State
             @name = :checksum
             @event = :file_modified
 
@@ -122,7 +122,7 @@ module Puppet
             end
         end
 
-        class FileUID < Puppet::State
+        class PFileUID < Puppet::State
             require 'etc'
             attr_accessor :file
             @name = :owner
@@ -159,7 +159,7 @@ module Puppet
                 end
 
                 unless self.parent.stat
-                    Puppet.err "File '%s' does not exist; cannot chown" %
+                    Puppet.err "PFile '%s' does not exist; cannot chown" %
                         self.parent[:path]
                 end
 
@@ -177,7 +177,7 @@ module Puppet
         # this state should actually somehow turn into many states,
         # one for each bit in the mode
         # I think MetaStates are the answer, but I'm not quite sure
-        class FileMode < Puppet::State
+        class PFileMode < Puppet::State
             require 'etc'
 
             @name = :mode
@@ -210,7 +210,7 @@ module Puppet
                 end
 
                 unless self.parent.stat
-                    Puppet.err "File '%s' does not exist; cannot chmod" %
+                    Puppet.err "PFile '%s' does not exist; cannot chmod" %
                         self.parent[:path]
                     return
                 end
@@ -226,10 +226,10 @@ module Puppet
 
         # not used until I can figure out how to solve the problem with
         # metastates
-        class FileSetUID < Puppet::State
+        class PFileSetUID < Puppet::State
             require 'etc'
 
-            @parent = Puppet::State::FileMode
+            @parent = Puppet::State::PFileMode
 
             @name = :setuid
             @event = :inode_changed
@@ -254,7 +254,7 @@ module Puppet
             end
         end
 
-        class FileGroup < Puppet::State
+        class PFileGroup < Puppet::State
             require 'etc'
 
             @name = :group
@@ -307,7 +307,7 @@ module Puppet
                 end
 
                 unless self.parent.stat
-                    Puppet.err "File '%s' does not exist; cannot chgrp" %
+                    Puppet.err "PFile '%s' does not exist; cannot chgrp" %
                         self.parent[:path]
                     return
                 end
@@ -324,16 +324,16 @@ module Puppet
         end
     end
     class Type
-        class File < Type
+        class PFile < Type
             attr_reader :params
             # class instance variable
             @states = [
-                Puppet::State::FileCreate,
-                Puppet::State::FileUID,
-                Puppet::State::FileGroup,
-                Puppet::State::FileMode,
-                Puppet::State::FileChecksum,
-                Puppet::State::FileSetUID
+                Puppet::State::PFileCreate,
+                Puppet::State::PFileUID,
+                Puppet::State::PFileGroup,
+                Puppet::State::PFileMode,
+                Puppet::State::PFileChecksum,
+                Puppet::State::PFileSetUID
             ]
 
             @parameters = [
@@ -347,7 +347,7 @@ module Puppet
             # a wrapper method to make sure the file exists before doing anything
             def retrieve
                 unless stat = self.stat(true)
-                    Puppet.debug "File %s does not exist" % self[:path]
+                    Puppet.debug "PFile %s does not exist" % self[:path]
                     @states.each { |name,state|
                         state.is = -1
                     }
@@ -359,7 +359,7 @@ module Puppet
             def stat(refresh = false)
                 if @stat.nil? or refresh == true
                     begin
-                        @stat = ::File.stat(self[:path])
+                        @stat = File.stat(self[:path])
                     rescue => error
                         Puppet.debug "Failed to stat %s: %s" %
                             [self[:path],error]
@@ -404,7 +404,7 @@ module Puppet
                         Dir.foreach(self[:path]) { |file|
                             next if file =~ /^\.\.?/ # skip . and ..
 
-                            arghash[:path] = ::File.join(self[:path],file)
+                            arghash[:path] = File.join(self[:path],file)
 
                             child = nil
                             # if the file already exists...
@@ -421,19 +421,19 @@ module Puppet
                     end
                 end
             end
-        end # Puppet::Type::File
+        end # Puppet::Type::PFile
     end # Puppet::Type
 
-    class FileSource
+    class PFileSource
         attr_accessor :name
 
         @sources = Hash.new(nil)
 
-        def FileSource.[]=(name,sub)
+        def PFileSource.[]=(name,sub)
             @sources[name] = sub
         end
 
-        def FileSource.[](name)
+        def PFileSource.[](name)
             return @sources[name]
         end
 
@@ -444,7 +444,7 @@ module Puppet
                 yield self
             end
 
-            FileSource[name] = self
+            PFileSource[name] = self
         end
     end
 end

@@ -4,7 +4,7 @@
 
 require 'etc'
 require 'puppet/type/state'
-require 'puppet/type/file'
+require 'puppet/type/pfile'
 
 module Puppet
     # okay, how do we deal with parameters that don't have operations
@@ -91,9 +91,9 @@ module Puppet
             attr_reader :stat, :path, :params
             # class instance variable
             @states = [
-                Puppet::State::FileUID,
-                Puppet::State::FileGroup,
-                Puppet::State::FileMode,
+                Puppet::State::PFileUID,
+                Puppet::State::PFileGroup,
+                Puppet::State::PFileMode,
                 Puppet::State::SymlinkTarget
             ]
 

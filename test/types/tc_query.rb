@@ -26,13 +26,13 @@ class TestQuery < Test::Unit::TestCase
     def file
         assert_nothing_raised() {
             cfile = File.join($puppetbase,"examples/root/etc/configfile")
-            unless Puppet::Type::File.has_key?(cfile)
-                Puppet::Type::File.new(
+            unless Puppet::Type::PFile.has_key?(cfile)
+                Puppet::Type::PFile.new(
                     :path => cfile,
                     :check => [:mode, :owner]
                 )
             end
-            @configfile = Puppet::Type::File[cfile]
+            @configfile = Puppet::Type::PFile[cfile]
         }
         return @configfile
     end

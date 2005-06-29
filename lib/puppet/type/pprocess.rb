@@ -5,7 +5,7 @@
 
 module Puppet
     class State
-        class ProcessRunning < State
+        class PProcessRunning < State
             def retrieve
                 running = 0
                 regex = Regexp.new(@params[:pattern])
@@ -44,8 +44,8 @@ module Puppet
                     uid = Etc.getpwnam(@params[:user]).uid
                 end
                 Kernel.fork {
-                    Process.uid = uid
-                    Process.euid = uid
+                    PProcess.uid = uid
+                    PProcess.euid = uid
                     string = @params[:binary] + (@params[:arguments] || "")
                     Puppet::Message.new(
                         :level => :notice,
@@ -58,7 +58,7 @@ module Puppet
         end
     end
 	class Type
-		class BProcess < Type
+		class PProcess < Type
 			attr_reader :stat, :path
 			@parameters = [:start, :stop, :user, :pattern, :binary, :arguments]
             @name = :process
@@ -77,7 +77,7 @@ module Puppet
 				:pattern => :pattern
 			})
 
-		end # Puppet::Type::BProcess
+		end # Puppet::Type::PProcess
 	end # Puppet::Type
 
 end

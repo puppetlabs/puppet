@@ -875,7 +875,7 @@ end # Puppet::Type
 end
 
 require 'puppet/type/service'
-require 'puppet/type/file'
+require 'puppet/type/pfile'
 require 'puppet/type/symlink'
 require 'puppet/type/package'
 require 'puppet/type/component'

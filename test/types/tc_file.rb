@@ -19,14 +19,14 @@ class TestFile < Test::Unit::TestCase
         Puppet[:loglevel] = :debug if __FILE__ == $0
         Puppet[:statefile] = "/var/tmp/puppetstate"
         assert_nothing_raised() {
-            @file = Puppet::Type::File.new(
+            @file = Puppet::Type::PFile.new(
                 :path => @path
             )
         }
     end
 
     def teardown
-        Puppet::Type::File.clear
+        Puppet::Type::PFile.clear
         system("rm -f %s" % Puppet[:statefile])
     end
 
@@ -84,7 +84,7 @@ class TestFile < Test::Unit::TestCase
         %w{a b c d}.collect { |name| "/tmp/createst%s" % name }.each { |path|
             file =nil
             assert_nothing_raised() {
-                file = Puppet::Type::File.new(
+                file = Puppet::Type::PFile.new(
                     :path => path,
                     :create => true
                 )
@@ -142,7 +142,7 @@ class TestFile < Test::Unit::TestCase
                 }
                 # okay, we now know that we have a file...
                 assert_nothing_raised() {
-                    file = Puppet::Type::File.new(
+                    file = Puppet::Type::PFile.new(
                         :path => path,
                         :checksum => type
                     )
@@ -177,7 +177,7 @@ class TestFile < Test::Unit::TestCase
                     events.include?(:file_modified)
                 )
                 assert_nothing_raised() {
-                    Puppet::Type::File.clear
+                    Puppet::Type::PFile.clear
                 }
                 assert_nothing_raised() {
                     system("rm -f %s" % path)
