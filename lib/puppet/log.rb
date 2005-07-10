@@ -62,7 +62,11 @@ module Puppet
             return @@levels.dup
         end
 
-        def Log.destination(dest)
+        def Log.destination
+            return @@logdest
+        end
+
+        def Log.destination=(dest)
             if dest == "syslog" || dest == :syslog
                 unless defined? @@syslog
                     @@syslog = Syslog.open("puppet")
