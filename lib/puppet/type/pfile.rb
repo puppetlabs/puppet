@@ -73,10 +73,18 @@ module Puppet
                 sum = ""
                 case @checktype
                 when "md5":
+                    if FileTest.directory?(self.parent[:path])
+                        Blink.verbose "Cannot MD5 sum directory %s" %
+                            self.parent[:path]
+                    end
                     File.open(self.parent[:path]) { |file|
                         sum = Digest::MD5.hexdigest(file.read)
                     }
                 when "md5lite":
+                    if FileTest.directory?(self.parent[:path])
+                        Blink.verbose "Cannot MD5 sum directory %s" %
+                            self.parent[:path]
+                    end
                     File.open(self.parent[:path]) { |file|
                         sum = Digest::MD5.hexdigest(file.read(512))
                     }
@@ -376,7 +384,8 @@ module Puppet
                 @stat = nil
 
                 # if recursion is enabled and we're a directory...
-                if @parameters[:recurse] and self.stat.directory?
+                if @parameters[:recurse] and FileTest.exist?(self[:path]) and
+                    self.stat.directory?
                     recurse = self[:recurse]
                     # we might have a string, rather than a number
                     if recurse.is_a?(String)
