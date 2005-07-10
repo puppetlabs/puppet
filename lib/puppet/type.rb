@@ -390,31 +390,27 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.validparam(name)
-        self.validstate(name) or self.validparameter(name) or false
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
     # this abstracts accessing parameters and states, and normalizes
     # access to always be symbols, not strings
     def [](name)
-        mname = name
         if name.is_a?(String)
-            mname = name.intern
+            name = name.intern
         end
-        unless self.class.validparam(name)
-            raise "Invalid parameter %s" % [mname]
-        end
-        if @states.include?(mname)
-            # if they're using [], they don't know if we're a state or a string
-            # thus, return a string
-            # if they want the actual state object, they should use state()
-            return @states[mname].is
-        elsif @parameters.include?(mname)
-            return @parameters[mname]
+
+        if self.class.validstate(name)
+            if @states.include?(name)
+                return @states[name].is
+            else
+                return nil
+            end
+        elsif self.class.validparameter(name)
+            if @parameters.include?(name)
+                return @parameters[name]
+            else
+                return nil
+            end
         else
-            return nil
+            raise TypeError.new("Invalid parameter %s" % [name])
         end
     end
     #---------------------------------------------------------------
