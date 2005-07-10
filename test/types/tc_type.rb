@@ -56,6 +56,7 @@ class TestType < Test::Unit::TestCase
             file = Puppet::Type::PFile.new(
                 :path => path,
                 :create => true,
+                :recurse => true,
                 :checksum => "md5"
             )
         }
@@ -71,11 +72,24 @@ class TestType < Test::Unit::TestCase
             file = Puppet::Type::PFile.new(
                 "path" => path,
                 "create" => true,
+                "recurse" => true,
                 "checksum" => "md5"
             )
         }
         assert_nothing_raised() {
             file.retrieve
+        }
+        assert_nothing_raised() {
+            file[:path]
+        }
+        assert_nothing_raised() {
+            file["path"]
+        }
+        assert_nothing_raised() {
+            file[:recurse]
+        }
+        assert_nothing_raised() {
+            file["recurse"]
         }
         assert_nothing_raised() {
             file.sync
