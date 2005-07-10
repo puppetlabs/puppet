@@ -43,7 +43,7 @@ module Puppet
 
                 hash[:BindAddress] ||= "0.0.0.0"
                 hash[:Port] ||= 17444
-                hash[:Debug] ||= true
+                #hash[:Debug] ||= true
                 hash[:AccessLog] ||= []
 
                 super(hash)
