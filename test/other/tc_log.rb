@@ -15,7 +15,7 @@ class TestLog < Test::Unit::TestCase
 
     def teardown
         system("rm -f %s" % @@logfile)
-        Puppet::Log.destination(:console)
+        Puppet::Log.destination=(:console)
         Puppet[:loglevel] = :notice
     end
 
@@ -45,7 +45,7 @@ class TestLog < Test::Unit::TestCase
         levels = nil
         levels = getlevels
         assert_nothing_raised() {
-            Puppet::Log.destination(@@logfile)
+            Puppet::Log.destination=(@@logfile)
         }
         msgs = mkmsgs(levels)
         assert(msgs.length == levels.length)
@@ -67,7 +67,7 @@ class TestLog < Test::Unit::TestCase
             }
         }
         assert_nothing_raised() {
-            Puppet::Log.destination("syslog")
+            Puppet::Log.destination=("syslog")
         }
         # there's really no way to verify that we got syslog messages...
         msgs = mkmsgs(levels)
@@ -82,7 +82,7 @@ class TestLog < Test::Unit::TestCase
             levels = Puppet::Log.levels
         }
         assert_nothing_raised() {
-            Puppet::Log.destination(:console)
+            Puppet::Log.destination=(:console)
         }
         msgs = mkmsgs(levels)
         assert(msgs.length == levels.length)
@@ -91,7 +91,7 @@ class TestLog < Test::Unit::TestCase
 
     def test_levelmethods
         assert_nothing_raised() {
-            Puppet::Log.destination("/dev/null")
+            Puppet::Log.destination=("/dev/null")
         }
         getlevels.each { |level|
             assert_nothing_raised() {
