@@ -47,4 +47,38 @@ class TestType < Test::Unit::TestCase
             )
         }
     end
+
+    def test_stringvssymbols
+        file = nil
+        path = "/tmp/testfile"
+        assert_nothing_raised() {
+            system("rm -f %s" % path)
+            file = Puppet::Type::PFile.new(
+                :path => path,
+                :create => true,
+                :checksum => "md5"
+            )
+        }
+        assert_nothing_raised() {
+            file.retrieve
+        }
+        assert_nothing_raised() {
+            file.sync
+        }
+        Puppet::Type::PFile.clear
+        assert_nothing_raised() {
+            system("rm -f %s" % path)
+            file = Puppet::Type::PFile.new(
+                "path" => path,
+                "create" => true,
+                "checksum" => "md5"
+            )
+        }
+        assert_nothing_raised() {
+            file.retrieve
+        }
+        assert_nothing_raised() {
+            file.sync
+        }
+    end
 end
