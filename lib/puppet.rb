@@ -29,7 +29,6 @@ module Puppet
     @@config[:logfile] = File.join(@@config[:puppetroot],"log/puppet.log")
     @@config[:statefile] = File.join(@@config[:puppetroot],"log/state")
 
-
     # handle the different message levels
     # XXX this should be redone to treat log-levels like radio buttons
     # pick one, and it and all above it will be logged
@@ -38,16 +37,16 @@ module Puppet
             Puppet::Log.create(level,args)
         })
         module_function level
-        # default to enabling all notice levels except debug
-        @@config[level] = true unless level == :notice
+    #    # default to enabling all notice levels except debug
+    #    @@config[level] = true unless level == :notice
     }
 
     # set up our configuration
-	def Puppet.init(args)
-		args.each {|p,v|
-			@@config[p] = v
-		}
-	end
+	#def Puppet.init(args)
+	#	args.each {|p,v|
+	#		@@config[p] = v
+	#	}
+	#end
 
 	# configuration parameter access and stuff
 	def Puppet.[](param)
@@ -60,6 +59,8 @@ module Puppet
             end
         when :loglevel:
             return Puppet::Log.level
+        when :logdest:
+            return Puppet::Log.destination
         else
             return @@config[param]
         end
@@ -76,6 +77,8 @@ module Puppet
             end
         when :loglevel:
             Puppet::Log.level=(value)
+        when :logdest:
+            Puppet::Log.destination=(value)
         else
             @@config[param] = value
         end
