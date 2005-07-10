@@ -48,6 +48,7 @@ module Puppet
                             self.parent[:command]
                     )
                 end
+                self.is = nil
             end
 
             def sync
@@ -60,10 +61,7 @@ module Puppet
 
                 ENV["PATH"] = tmppath
 
-                Puppet.debug("%s: status: %s; returns: %s" %
-                    [self.parent[:command],status.exitstatus, self.should]
-                )
-                if status.exitstatus != self.should
+                if status.exitstatus.to_s != self.should.to_s
                     Puppet.err("%s returned %s" %
                         [self.parent[:command],status.exitstatus])
 
@@ -80,9 +78,6 @@ module Puppet
 
     class Type
         class Exec < Type
-            attr_reader :command, :user, :returns
-            # class instance variable
-            
             # this is kind of hackish, using the return value as the
             # state, but apparently namevars can't also be states
             # who knew?
@@ -101,9 +96,19 @@ module Puppet
 
             def initialize(hash)
                 # default to erroring on a non-zero return
-                unless hash.include?("returns") or hash.include?(:returns)
-                    hash["returns"] = 0
+                if hash.include?("returns") 
+                    if hash["returns"].is_a?(Fixnum)
+                        hash["returns"] = hash["returns"].to_s
+                    end
+                elsif hash.include?(:returns) 
+                    if hash["returns"].is_a?(Fixnum)
+                        hash[:returns] = hash[:returns].to_s
+                    end
+                else
+                    Puppet.debug("setting return to 0")
+                    hash[:returns] = "0"
                 end
+
 
                 super
 

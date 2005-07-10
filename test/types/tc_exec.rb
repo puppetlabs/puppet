@@ -36,6 +36,36 @@ class TestExec < Test::Unit::TestCase
         assert_equal([:executed_command],output)
     end
 
+    def test_numvsstring
+        command = nil
+        output = nil
+        assert_nothing_raised {
+            command = Puppet::Type::Exec.new(
+                :command => "/bin/echo",
+                :returns => 0
+            )
+        }
+        assert_nothing_raised {
+            command.retrieve
+        }
+        assert_nothing_raised {
+            output = command.sync
+        }
+        Puppet::Type::Exec.clear
+        assert_nothing_raised {
+            command = Puppet::Type::Exec.new(
+                :command => "/bin/echo",
+                :returns => "0"
+            )
+        }
+        assert_nothing_raised {
+            command.retrieve
+        }
+        assert_nothing_raised {
+            output = command.sync
+        }
+    end
+
     def test_path_or_qualified
         command = nil
         output = nil
