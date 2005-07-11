@@ -120,7 +120,7 @@ class TestExec < Test::Unit::TestCase
         }
     end
 
-    def test_xcwdsettings
+    def test_cwdsettings
         command = nil
         assert_nothing_raised {
             command = Puppet::Type::Exec.new(

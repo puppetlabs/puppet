@@ -76,18 +76,30 @@ module Puppet
                     if FileTest.directory?(self.parent[:path])
                         Puppet.info "Cannot MD5 sum directory %s" %
                             self.parent[:path]
+
+                        # because we cannot sum directories, just remove
+                        # the state entirely
+                        self.parent.delete(self.name)
+                        return
+                    else
+                        File.open(self.parent[:path]) { |file|
+                            sum = Digest::MD5.hexdigest(file.read)
+                        }
                     end
-                    File.open(self.parent[:path]) { |file|
-                        sum = Digest::MD5.hexdigest(file.read)
-                    }
                 when "md5lite":
                     if FileTest.directory?(self.parent[:path])
                         Puppet.info "Cannot MD5 sum directory %s" %
                             self.parent[:path]
+
+                        # because we cannot sum directories, just remove
+                        # the state entirely
+                        self.parent.delete(self.name)
+                        return
+                    else
+                        File.open(self.parent[:path]) { |file|
+                            sum = Digest::MD5.hexdigest(file.read(512))
+                        }
                     end
-                    File.open(self.parent[:path]) { |file|
-                        sum = Digest::MD5.hexdigest(file.read(512))
-                    }
                 when "timestamp","mtime":
                     sum = File.stat(self.parent[:path]).mtime
                 when "time":

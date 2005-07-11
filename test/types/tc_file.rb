@@ -126,7 +126,7 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    def test_zchecksums
+    def test_checksums
         types = %w{md5 md5lite timestamp ctime}
         files = %w{/tmp/sumtest}
         types.each { |type|
@@ -184,5 +184,41 @@ class TestFile < Test::Unit::TestCase
                 }
             }
         }
+    end
+
+    def cyclefile(path)
+        file = nil
+        assert_nothing_raised {
+            file = Puppet::Type::PFile.new(
+                :path => path,
+                :recurse => true,
+                :checksum => "md5"
+            )
+        }
+        assert_nothing_raised {
+            file.retrieve
+        }
+        assert_nothing_raised {
+            file.sync
+        }
+    end
+
+    def test_recursion
+        path = "/tmp/filerecursetest"
+        tmpfile = File.join(path,"testing")
+        system("mkdir -p #{path}")
+        cyclefile(path)
+        Puppet::Type::PFile.clear
+        File.open(tmpfile, File::WRONLY|File::CREAT|File::APPEND) { |of|
+            of.puts "yayness"
+        }
+        cyclefile(path)
+        Puppet::Type::PFile.clear
+        File.open(tmpfile, File::WRONLY|File::APPEND) { |of|
+            of.puts "goodness"
+        }
+        cyclefile(path)
+        Puppet::Type::PFile.clear
+        system("rm -rf #{path}")
     end
 end

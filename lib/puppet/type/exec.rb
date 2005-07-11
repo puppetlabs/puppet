@@ -161,6 +161,11 @@ module Puppet
                     return self.state(:returns).output
                 end
             end
+
+            # this might be a very, very bad idea...
+            def refresh
+                self.state(:returns).sync
+            end
         end
     end
 end
