@@ -74,7 +74,7 @@ module Puppet
                 case @checktype
                 when "md5":
                     if FileTest.directory?(self.parent[:path])
-                        Puppet.verbose "Cannot MD5 sum directory %s" %
+                        Puppet.info "Cannot MD5 sum directory %s" %
                             self.parent[:path]
                     end
                     File.open(self.parent[:path]) { |file|
@@ -82,7 +82,7 @@ module Puppet
                     }
                 when "md5lite":
                     if FileTest.directory?(self.parent[:path])
-                        Puppet.verbose "Cannot MD5 sum directory %s" %
+                        Puppet.info "Cannot MD5 sum directory %s" %
                             self.parent[:path]
                     end
                     File.open(self.parent[:path]) { |file|
