@@ -249,6 +249,7 @@ class Type < Puppet::Element
         end
 
         if @objects.has_key?(newobj.name)
+            #p @objects
             raise "Object '%s' of type '%s' already exists with id '%s' vs. '%s'" %
                 [newobj.name,newobj.class.name,
                     @objects[newobj.name].object_id,newobj.object_id]
@@ -443,6 +444,8 @@ class Type < Puppet::Element
                 if @states.include?(mname)
                     @states[mname].should = value
                 else
+                    #Puppet.warning "Creating state %s for %s" %
+                    #    [stateklass.name,self.name]
                     @states[mname] = stateklass.new(
                         :parent => self,
                         :should => value
@@ -532,24 +535,7 @@ class Type < Puppet::Element
             hash.delete(:noop)
         end
 
-        # we have to set the name of our object before anything else,
-        # because it might be used in creating the other states
-        namevar = self.class.namevar
-
-        # if they're not using :name for the namevar but we got :name (probably
-        # from the parser)
-        if namevar != :name and hash.include?(:name) and ! hash[:name].nil?
-            self[namevar] = hash[:name]
-            hash.delete(:name)
-        # else if we got the namevar
-        elsif hash.has_key?(namevar) and ! hash[namevar].nil?
-            self[namevar] = hash[namevar]
-            hash.delete(namevar)
-        # else something's screwy
-        else
-            raise TypeError.new("A name must be provided to %s at initialization time" %
-                self.class)
-        end
+        self.nameclean(hash)
 
         hash.each { |param,value|
             #Puppet.debug("adding param '%s' with value '%s'" %
@@ -558,7 +544,7 @@ class Type < Puppet::Element
         }
 
         # add this object to the specific class's list of objects
-        #Puppet.debug("Adding [%s] to %s" % [self.name,self.class])
+        #puts caller
         self.class[self.name] = self
 
         # and then add it to the master list
@@ -578,6 +564,30 @@ class Type < Puppet::Element
     # this might result from a state or from a parameter
     def name
         return self[self.class.namevar]
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # fix any namevar => param translations
+    def nameclean(hash)
+        # we have to set the name of our object before anything else,
+        # because it might be used in creating the other states
+        namevar = self.class.namevar
+
+        # if they're not using :name for the namevar but we got :name (probably
+        # from the parser)
+        if namevar != :name and hash.include?(:name) and ! hash[:name].nil?
+            self[namevar] = hash[:name]
+            hash.delete(:name)
+        # else if we got the namevar
+        elsif hash.has_key?(namevar) and ! hash[namevar].nil?
+            self[namevar] = hash[namevar]
+            hash.delete(namevar)
+        # else something's screwy
+        else
+            raise TypeError.new("A name must be provided to %s at initialization time" %
+                self.class)
+        end
     end
     #---------------------------------------------------------------
 
