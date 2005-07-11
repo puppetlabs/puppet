@@ -38,7 +38,13 @@ module Puppet
 				file.each { |line|
 					myclass, key, value = line.split(@@splitchar)
 
-					@@state[eval(myclass)][key] = Marshal::load(value)
+                    begin
+                        @@state[eval(myclass)][key] = Marshal::load(value)
+                    rescue => detail
+                        raise RuntimeError, "Failed to load value for %s::%s => %s" % [
+                            myclass,key,detail
+                        ], caller
+                    end
 				}
 			}
 

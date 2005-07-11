@@ -26,7 +26,7 @@ class TestFile < Test::Unit::TestCase
     end
 
     def teardown
-        Puppet::Type::PFile.clear
+        Puppet::Type.allclear
         system("rm -f %s" % Puppet[:statefile])
     end
 
@@ -126,11 +126,18 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    def test_checksums
+    def test_xchecksums
         types = %w{md5 md5lite timestamp ctime}
         files = %w{/tmp/sumtest}
+        assert_nothing_raised() {
+            Puppet::Storage.init
+        #    Puppet::Storage.load
+        }
         types.each { |type|
             files.each { |path|
+                if Puppet[:debug]
+                    Puppet.info "Testing %s on %s" % [type,path]
+                end
                 file = nil
                 events = nil
                 assert_nothing_raised() {
@@ -166,6 +173,14 @@ class TestFile < Test::Unit::TestCase
                     }
                     #system("cat %s" % path)
                 }
+                Puppet::Type::PFile.clear
+                # now recreate the file
+                assert_nothing_raised() {
+                    file = Puppet::Type::PFile.new(
+                        :path => path,
+                        :checksum => type
+                    )
+                }
                 assert_nothing_raised() {
                     file.evaluate
                 }
@@ -184,11 +199,15 @@ class TestFile < Test::Unit::TestCase
                 }
             }
         }
+        # clean up so i don't screw up other tests
+        Puppet::Storage.clear
     end
 
     def cyclefile(path)
         file = nil
         changes = nil
+        comp = nil
+        trans = nil
         assert_nothing_raised {
             file = Puppet::Type::PFile.new(
                 :path => path,
@@ -196,15 +215,20 @@ class TestFile < Test::Unit::TestCase
                 :checksum => "md5"
             )
         }
+        comp = Puppet::Component.new(
+            :name => "component"
+        )
+        comp.push file
         assert_nothing_raised {
-            changes = file.evaluate
+            trans = comp.evaluate
         }
-        changes.each { |change|
-            change.go
+        assert_nothing_raised {
+            trans.evaluate
         }
         #assert_nothing_raised {
         #    file.sync
         #}
+        Puppet::Type.allclear
     end
 
     def test_recursion
@@ -212,17 +236,14 @@ class TestFile < Test::Unit::TestCase
         tmpfile = File.join(path,"testing")
         system("mkdir -p #{path}")
         cyclefile(path)
-        Puppet::Type::PFile.clear
         File.open(tmpfile, File::WRONLY|File::CREAT|File::APPEND) { |of|
             of.puts "yayness"
         }
         cyclefile(path)
-        Puppet::Type::PFile.clear
         File.open(tmpfile, File::WRONLY|File::APPEND) { |of|
             of.puts "goodness"
         }
         cyclefile(path)
-        Puppet::Type::PFile.clear
         system("rm -rf #{path}")
     end
 end

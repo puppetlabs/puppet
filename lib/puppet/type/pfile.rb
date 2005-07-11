@@ -55,15 +55,15 @@ module Puppet
                 if hash = state[self.parent[:path]]
                     if hash.include?(@checktype)
                         @should = hash[@checktype]
-                        Puppet.warning "Found checksum %s for %s" %
+                        Puppet.debug "Found checksum %s for %s" %
                             [@should,self.parent[:path]]
                     else
-                        Puppet.warning "Found checksum for %s but not of type %s" %
+                        Puppet.debug "Found checksum for %s but not of type %s" %
                             [self.parent[:path],@checktype]
                         @should = nil
                     end
                 else
-                    Puppet.warning "No checksum for %s" % self.parent[:path]
+                    Puppet.debug "No checksum for %s" % self.parent[:path]
                 end
             end
 
@@ -121,13 +121,19 @@ module Puppet
                     Puppet.err "@is is nil"
                 end
                 if self.updatesum
+                    # set the @should value to the new @is value
+                    # most important for testing
+                    @should = @is
                     return :file_modified
                 else
+                    # set the @should value, because it starts out as nil
+                    @should = @is
                     return nil
                 end
             end
 
             def updatesum
+                result = false
                 state = Puppet::Storage.state(self)
                 unless state.include?(self.parent[:path])
                     Puppet.debug "Initializing state hash for %s" %
@@ -137,6 +143,9 @@ module Puppet
                 end
                 # if we're replacing, vs. updating
                 if state[self.parent[:path]].include?(@checktype)
+                    unless defined? @should
+                        raise "@should is not initialized for %s, even though we found a checksum" % self.parent[:path]
+                    end
                     Puppet.debug "Replacing checksum %s with %s" %
                         [state[self.parent[:path]][@checktype],@is]
                     Puppet.debug "@is: %s; @should: %s" % [@is,@should]
