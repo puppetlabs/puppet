@@ -29,10 +29,7 @@ module Puppet
             Puppet.debug "Made component with name %s" % self.name
         end
 
-        # now we decide whether a transaction is dumb, and just accepts
-        # changes from the container, or whether it collects them itself
-        # for now, because i've already got this implemented, let transactions
-        # collect the changes themselves
+        # just turn the container into a transaction
         def evaluate
             transaction = Puppet::Transaction.new(@children)
             transaction.component = self
