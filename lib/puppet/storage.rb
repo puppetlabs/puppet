@@ -35,6 +35,21 @@ module Puppet
 		end
 
 		def Storage.store
+            unless FileTest.directory?(File.dirname(Puppet[:statefile]))
+                begin
+                    Puppet.recmkdir(Puppet[:statefile])
+                    Puppet.info "Creating state directory %s" %
+                        File.basename(Puppet[:statefile])
+                rescue => detail
+                    Puppet.err "Could not create state file: %s" % detail
+                    return
+                end
+            end
+
+            unless FileTest.exist?(Puppet[:statefile])
+                Puppet.info "Creating state file %s" % Puppet[:statefile]
+            end
+
 			File.open(Puppet[:statefile], File::CREAT|File::WRONLY, 0600) { |file|
 				@@state.each { |klass, thash|
                     thash.each { |key,value|

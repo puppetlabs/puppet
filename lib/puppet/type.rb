@@ -118,9 +118,15 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    #def debug(ary)
-    #    Puppet[:debug] = ary.shift
-    #end
+    def debug(ary)
+        value = ary.shift
+        if value == "true" or value == true
+            value = true
+        else
+            value = value
+        end
+        Puppet[:debug] = value
+    end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------

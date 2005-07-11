@@ -49,7 +49,7 @@ class TestLog < Test::Unit::TestCase
         }
         msgs = mkmsgs(levels)
         assert(msgs.length == levels.length)
-        Puppet::Log.close
+        Puppet::Log.flush
         count = 0
         assert_nothing_raised() {
             File.open(@@logfile) { |of|
@@ -107,5 +107,17 @@ class TestLog < Test::Unit::TestCase
         Puppet[:debug] = true
         assert(Puppet.err("This is an error").is_a?(Puppet::Log))
         assert(Puppet.debug("This is debugging").is_a?(Puppet::Log))
+    end
+
+    def test_creatingdirs
+        curdest = Puppet[:logdest]
+
+        Puppet[:logdest] = "/tmp/logtesting/logfile"
+        Puppet.info "testing logs"
+        assert(FileTest.directory?("/tmp/logtesting"))
+        assert(FileTest.file?("/tmp/logtesting/logfile"))
+
+        system("rm -rf /tmp/logtesting")
+        Puppet[:logdest] = curdest
     end
 end

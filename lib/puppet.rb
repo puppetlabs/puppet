@@ -84,6 +84,21 @@ module Puppet
         end
 	end
 
+    def Puppet.recmkdir(dir,mode = 0755)
+        tmp = dir.sub(/^\//,'')
+        path = [File::SEPARATOR]
+        tmp.split(File::SEPARATOR).each { |dir|
+            path.push dir
+            if ! FileTest.exist?(File.join(path))
+                Dir.mkdir(File.join(path), mode)
+            elsif FileTest.directory?(File.join(path))
+                next
+            else FileTest.exist?(File.join(path))
+                raise "Cannot create %s: basedir %s is a file" %
+                    [dir, File.join(path)]
+            end
+        }
+    end
 end
 
 require 'puppet/storage'

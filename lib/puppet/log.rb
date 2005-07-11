@@ -44,6 +44,12 @@ module Puppet
             end
         end
 
+        def Log.flush
+            if defined? @@logfile
+                @@logfile.flush
+            end
+        end
+
         def Log.create(level,*ary)
             msg = ary.join(" ")
 
@@ -67,7 +73,7 @@ module Puppet
         end
 
         def Log.destination=(dest)
-            if dest == "syslog" || dest == :syslog
+            if dest == "syslog" or dest == :syslog
                 unless defined? @@syslog
                     @@syslog = Syslog.open("puppet")
                 end
@@ -76,13 +82,37 @@ module Puppet
                 if defined? @@logfile
                     @@logfile.close
                 end
+
+                @@logpath = dest
+
+                # first make sure the directory exists
+                unless FileTest.exist?(File.dirname(dest))
+                    begin
+                        Puppet.recmkdir(File.dirname(dest))
+                        Puppet.info "Creating log directory %s" %
+                            File.dirname(dest)
+                    rescue => detail
+                        Log.destination = :console
+                        Puppet.err "Could not create log directory: %s" %
+                            detail
+                        return
+                    end
+                end
+
                 begin
-                    @@logfile = File.open(dest,"w")
+                    # create the log file, if it doesn't already exist
+                    @@logfile = File.open(dest,File::WRONLY|File::CREAT|File::APPEND)
                 rescue => detail
-                    raise
+                    Log.destination = :console
+                    Puppet.err "Could not create log file: %s" %
+                        detail
+                    return
                 end
                 @@logdest = :file
             else
+                unless @@logdest == :console or @@logdest == "console"
+                    Puppet.notice "Invalid log setting %s; setting log destination to 'console'" % @@logdest
+                end
                 @@logdest = :console
             end
         end
