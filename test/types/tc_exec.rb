@@ -119,4 +119,23 @@ class TestExec < Test::Unit::TestCase
             )
         }
     end
+
+    def test_xcwdsettings
+        command = nil
+        assert_nothing_raised {
+            command = Puppet::Type::Exec.new(
+                :command => "pwd",
+                :cwd => "/tmp",
+                :path => "/usr/bin:/bin:/usr/sbin:/sbin",
+                :returns => 0
+            )
+        }
+        assert_nothing_raised {
+            command.retrieve
+        }
+        assert_nothing_raised {
+            command.sync
+        }
+        assert_equal("/tmp\n",command.output)
+    end
 end

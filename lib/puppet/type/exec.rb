@@ -3,7 +3,6 @@
 # $Id$
 
 require 'puppet/type/state'
-require 'puppet/type/pfile'
 
 module Puppet
     # okay, how do we deal with parameters that don't have operations
@@ -11,6 +10,8 @@ module Puppet
     class State
         # this always runs
         class Returns < Puppet::State
+            attr_reader :output
+
             @name = :returns
 
             # because this command always runs,
@@ -52,23 +53,48 @@ module Puppet
             end
 
             def sync
+                olddir = nil
+                unless self.parent[:cwd].nil?
+                    Puppet.debug "Resetting cwd to %s" % self.parent[:cwd]
+                    olddir = Dir.getwd
+                    begin
+                        Dir.chdir(self.parent[:cwd])
+                    rescue => detail
+                        raise "Failed to set cwd: %s" % detail
+                    end
+                end
+
                 tmppath = ENV["PATH"]
                 ENV["PATH"] = self.parent[:path]
 
                 # capture both stdout and stderr
-                output = %x{#{self.parent[:command]} 2>&1}
+                @output = %x{#{self.parent[:command]} 2>&1}
                 status = $?
 
-                ENV["PATH"] = tmppath
-
+                loglevel = :info
                 if status.exitstatus.to_s != self.should.to_s
                     Puppet.err("%s returned %s" %
                         [self.parent[:command],status.exitstatus])
 
-                    # and log
-                    output.split(/\n/).each { |line|
-                        Puppet.info("%s: %s" % [self.parent[:command],line])
-                    }
+                    # if we've had a failure, up the log level
+                    loglevel = :err
+                end
+
+                # and log
+                @output.split(/\n/).each { |line|
+                    Puppet.send(loglevel, "%s: %s" % [self.parent[:command],line])
+                }
+
+                # reset things to how we found them
+                ENV["PATH"] = tmppath
+
+                unless olddir.nil?
+                    begin
+                        Dir.chdir(olddir)
+                    rescue => detail
+                        Puppet.err("Could not reset cwd to %s: %s" %
+                            [olddir,detail])
+                    end
                 end
 
                 return :executed_command
@@ -88,6 +114,7 @@ module Puppet
             @parameters = [
                 :path,
                 :user,
+                :cwd,
                 :command
             ]
 
@@ -109,7 +136,6 @@ module Puppet
                     hash[:returns] = "0"
                 end
 
-
                 super
 
                 if self[:command].nil?
@@ -125,6 +151,14 @@ module Puppet
                         )
                         raise error
                     end
+                end
+            end
+
+            def output
+                if self.state(:returns).nil?
+                    return nil
+                else
+                    return self.state(:returns).output
                 end
             end
         end
