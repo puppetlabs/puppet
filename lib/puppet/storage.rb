@@ -4,26 +4,44 @@ module Puppet
     # a class for storing state
 	class Storage
 		include Singleton
-		@@state = Hash.new { |hash,key|
-            hash[key] = Hash.new(nil)
-        }
-		@@splitchar = "\t"
 		
 		def initialize
 			self.class.load
 		end
 
+        def Storage.clear
+            @@state = nil
+            Storage.init
+        end
+
+        def Storage.init
+            @@state = Hash.new { |hash,key|
+                hash[key] = Hash.new(nil)
+            }
+            @@splitchar = "\t"
+        end
+
+        self.init
+
 		def Storage.load
-            # XXX I should probably use a better default state dir
-            Puppet[:statefile] ||= "/var/tmp/puppetstate"
-			return unless File.exists?(Puppet[:statefile])
+            if Puppet[:statefile].nil?
+                raise "Somehow the statefile is nil"
+            end
+
+			unless File.exists?(Puppet[:statefile])
+                Puppet.info "Statefile %s does not exist" % Puppet[:statefile]
+                return
+            end
+            Puppet.debug "Loading statefile %s" % Puppet[:statefile]
 			File.open(Puppet[:statefile]) { |file|
-				file.gets { |line|
+				file.each { |line|
 					myclass, key, value = line.split(@@splitchar)
 
-					@@state[myclass][key] = Marshal::load(value)
+					@@state[eval(myclass)][key] = Marshal::load(value)
 				}
 			}
+
+            Puppet.debug "Loaded state is %s" % @@state.inspect
 		end
 
 		def Storage.state(myclass)
@@ -39,7 +57,7 @@ module Puppet
                 begin
                     Puppet.recmkdir(Puppet[:statefile])
                     Puppet.info "Creating state directory %s" %
-                        File.basename(Puppet[:statefile])
+                        File.dirname(Puppet[:statefile])
                 rescue => detail
                     Puppet.err "Could not create state file: %s" % detail
                     return
@@ -58,6 +76,8 @@ module Puppet
                     }
 				}
 			}
+
+            Puppet.debug "Stored state is %s" % @@state.inspect
 		end
 	end
 end
