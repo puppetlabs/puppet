@@ -114,6 +114,10 @@ module Puppet
             # to be handled as a batch
             @@events.push self
 		end
+
+        def to_s
+            return self.event
+        end
 	end
 end
 
@@ -197,5 +201,4 @@ class Puppet::NotUsed
     end
     #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
 end # Puppet::Type
