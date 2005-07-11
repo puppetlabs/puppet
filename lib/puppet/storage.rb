@@ -15,6 +15,7 @@ module Puppet
         end
 
         def Storage.init
+            Puppet.debug "Initializing Storage"
             @@state = Hash.new { |hash,key|
                 hash[key] = Hash.new(nil)
             }

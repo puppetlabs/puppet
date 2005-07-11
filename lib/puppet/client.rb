@@ -69,11 +69,18 @@ module Puppet
         # manipulations
         def config(tree)
             Puppet.debug("Calling config")
+
+            # XXX this is kind of a problem; if the user changes the state file
+            # after this, then we have to reload the file and everything...
+            Puppet::Storage.init
+            Puppet::Storage.load
+
             container = Marshal::load(tree).to_type
 
             # this is a gross hack... but i don't see a good way around it
             # set all of the variables to empty
             Puppet::Transaction.init
+
             # for now we just evaluate the top-level container, but eventually
             # there will be schedules and such associated with each object,
             # and probably with the container itself
@@ -87,6 +94,7 @@ module Puppet
                 Metric.store
                 Metric.graph
             end
+            Puppet::Storage.store
             self.shutdown
         end
 

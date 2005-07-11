@@ -36,13 +36,13 @@ class TestFile < Test::Unit::TestCase
                 @file[:owner] = user
             }
             assert_nothing_raised() {
-                @file.retrieve
+                @file.evaluate
             }
             assert_nothing_raised() {
                 @file.sync
             }
             assert_nothing_raised() {
-                @file.retrieve
+                @file.evaluate
             }
             assert(@file.insync?())
         }
@@ -50,7 +50,7 @@ class TestFile < Test::Unit::TestCase
             @file[:owner] = "root"
         }
         assert_nothing_raised() {
-            @file.retrieve
+            @file.evaluate
         }
         # we might already be in sync
         assert(!@file.insync?())
@@ -65,13 +65,13 @@ class TestFile < Test::Unit::TestCase
                 @file[:group] = group
             }
             assert_nothing_raised() {
-                @file.retrieve
+                @file.evaluate
             }
             assert_nothing_raised() {
                 @file.sync
             }
             assert_nothing_raised() {
-                @file.retrieve
+                @file.evaluate
             }
             assert(@file.insync?())
             assert_nothing_raised() {
@@ -90,13 +90,13 @@ class TestFile < Test::Unit::TestCase
                 )
             }
             assert_nothing_raised() {
-                file.retrieve
+                file.evaluate
             }
             assert_nothing_raised() {
                 file.sync
             }
             assert_nothing_raised() {
-                file.retrieve
+                file.evaluate
             }
             assert(file.insync?())
             assert_nothing_raised() {
@@ -111,13 +111,13 @@ class TestFile < Test::Unit::TestCase
                 @file[:mode] = mode
             }
             assert_nothing_raised() {
-                @file.retrieve
+                @file.evaluate
             }
             assert_nothing_raised() {
                 @file.sync
             }
             assert_nothing_raised() {
-                @file.retrieve
+                @file.evaluate
             }
             assert(@file.insync?())
             assert_nothing_raised() {
@@ -148,7 +148,7 @@ class TestFile < Test::Unit::TestCase
                     )
                 }
                 assert_nothing_raised() {
-                    file.retrieve
+                    file.evaluate
                 }
                 assert_nothing_raised() {
                     events = file.sync
@@ -167,7 +167,7 @@ class TestFile < Test::Unit::TestCase
                     #system("cat %s" % path)
                 }
                 assert_nothing_raised() {
-                    file.retrieve
+                    file.evaluate
                 }
                 assert_nothing_raised() {
                     events = file.sync
@@ -188,6 +188,7 @@ class TestFile < Test::Unit::TestCase
 
     def cyclefile(path)
         file = nil
+        changes = nil
         assert_nothing_raised {
             file = Puppet::Type::PFile.new(
                 :path => path,
@@ -196,11 +197,14 @@ class TestFile < Test::Unit::TestCase
             )
         }
         assert_nothing_raised {
-            file.retrieve
+            changes = file.evaluate
         }
-        assert_nothing_raised {
-            file.sync
+        changes.each { |change|
+            change.go
         }
+        #assert_nothing_raised {
+        #    file.sync
+        #}
     end
 
     def test_recursion

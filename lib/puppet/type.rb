@@ -398,6 +398,8 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     # this abstracts accessing parameters and states, and normalizes
     # access to always be symbols, not strings
+    # XXX this returns a _value_, not an object
+    # if you want a state object, use <type>.state(<state>)
     def [](name)
         if name.is_a?(String)
             name = name.intern
@@ -545,8 +547,6 @@ class Type < Puppet::Element
             hash.delete(namevar)
         # else something's screwy
         else
-            p hash
-            p namevar
             raise TypeError.new("A name must be provided to %s at initialization time" %
                 self.class)
         end
@@ -733,7 +733,7 @@ class Type < Puppet::Element
 
         # now record how many changes we've resulted in
         Puppet::Metric.add(self.class,self,:changes,changes.length)
-        return changes
+        return changes.flatten
     end
     #---------------------------------------------------------------
 

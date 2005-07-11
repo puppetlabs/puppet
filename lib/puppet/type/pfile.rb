@@ -55,13 +55,15 @@ module Puppet
                 if hash = state[self.parent[:path]]
                     if hash.include?(@checktype)
                         @should = hash[@checktype]
+                        Puppet.warning "Found checksum %s for %s" %
+                            [@should,self.parent[:path]]
                     else
-                        Puppet.debug "Found checksum for %s but not of type %s" %
+                        Puppet.warning "Found checksum for %s but not of type %s" %
                             [self.parent[:path],@checktype]
                         @should = nil
                     end
                 else
-                    Puppet.debug "No checksum for %s" % self.parent[:path]
+                    Puppet.warning "No checksum for %s" % self.parent[:path]
                 end
             end
 
@@ -101,9 +103,9 @@ module Puppet
                         }
                     end
                 when "timestamp","mtime":
-                    sum = File.stat(self.parent[:path]).mtime
+                    sum = File.stat(self.parent[:path]).mtime.to_s
                 when "time":
-                    sum = File.stat(self.parent[:path]).ctime
+                    sum = File.stat(self.parent[:path]).ctime.to_s
                 end
 
                 self.is = sum
@@ -115,6 +117,9 @@ module Puppet
             # at this point, we don't actually modify the system, we just kick
             # off an event if we detect a change
             def sync
+                if @is.nil?
+                    Puppet.err "@is is nil"
+                end
                 if self.updatesum
                     return :file_modified
                 else
@@ -125,16 +130,20 @@ module Puppet
             def updatesum
                 state = Puppet::Storage.state(self)
                 unless state.include?(self.parent[:path])
+                    Puppet.debug "Initializing state hash for %s" %
+                        self.parent[:path]
+
                     state[self.parent[:path]] = Hash.new
                 end
                 # if we're replacing, vs. updating
                 if state[self.parent[:path]].include?(@checktype)
                     Puppet.debug "Replacing checksum %s with %s" %
                         [state[self.parent[:path]][@checktype],@is]
+                    Puppet.debug "@is: %s; @should: %s" % [@is,@should]
                     result = true
                 else
                     Puppet.debug "Creating checksum %s for %s of type %s" %
-                        [@is,self.parent[:path],@checktype]
+                        [self.is,self.parent[:path],@checktype]
                     result = false
                 end
                 state[self.parent[:path]][@checktype] = @is
