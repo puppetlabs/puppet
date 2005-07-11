@@ -24,9 +24,9 @@ module Puppet
 
 		@@colors = {
 			:debug => SLATE,
-			:info => ORANGE,
+			:info => GREEN,
 			:notice => PINK,
-			:warning => GREEN,
+			:warning => ORANGE,
 			:err => YELLOW,
             :alert => BLUE,
             :emerg => RESET,
