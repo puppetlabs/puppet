@@ -414,7 +414,7 @@ module Puppet
                 @stat = nil
 
                 # if recursion is enabled and we're a directory...
-                if @parameters[:recurse] and FileTest.exist?(self[:path]) and
+                if @parameters[:recurse] and FileTest.exist?(self.name) and
                     self.stat.directory?
                     recurse = self[:recurse]
                     # we might have a string, rather than a number
@@ -440,10 +440,13 @@ module Puppet
                             @children = []
                         end
 
-                        Dir.foreach(self[:path]) { |file|
+                        # make sure we don't have any remaining ':name' params
+                        self.nameclean(arghash)
+
+                        Dir.foreach(self.name) { |file|
                             next if file =~ /^\.\.?/ # skip . and ..
 
-                            arghash[:path] = File.join(self[:path],file)
+                            arghash[:path] = File.join(self.name,file)
 
                             child = nil
                             # if the file already exists...
@@ -453,6 +456,8 @@ module Puppet
                                     child[var] = value
                                 }
                             else # create it anew
+                                #Puppet.notice "Creating new file with args %s" %
+                                #    arghash.inspect
                                 child = self.class.new(arghash)
                             end
                             @children.push child

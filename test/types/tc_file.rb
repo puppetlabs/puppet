@@ -20,7 +20,7 @@ class TestFile < Test::Unit::TestCase
         Puppet[:statefile] = "/var/tmp/puppetstate"
         assert_nothing_raised() {
             @file = Puppet::Type::PFile.new(
-                :path => @path
+                :name => @path
             )
         }
     end
@@ -28,6 +28,17 @@ class TestFile < Test::Unit::TestCase
     def teardown
         Puppet::Type.allclear
         system("rm -f %s" % Puppet[:statefile])
+    end
+
+    def initstorage
+        Puppet::Storage.init
+        Puppet::Storage.load
+    end
+
+    def clearstorage
+        Puppet::Storage.store
+        Puppet::Storage.clear
+        initstorage()
     end
 
     def test_owner
@@ -85,7 +96,7 @@ class TestFile < Test::Unit::TestCase
             file =nil
             assert_nothing_raised() {
                 file = Puppet::Type::PFile.new(
-                    :path => path,
+                    :name => path,
                     :create => true
                 )
             }
@@ -126,7 +137,7 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    def test_xchecksums
+    def test_checksums
         types = %w{md5 md5lite timestamp ctime}
         files = %w{/tmp/sumtest}
         assert_nothing_raised() {
@@ -150,7 +161,7 @@ class TestFile < Test::Unit::TestCase
                 # okay, we now know that we have a file...
                 assert_nothing_raised() {
                     file = Puppet::Type::PFile.new(
-                        :path => path,
+                        :name => path,
                         :checksum => type
                     )
                 }
@@ -177,7 +188,7 @@ class TestFile < Test::Unit::TestCase
                 # now recreate the file
                 assert_nothing_raised() {
                     file = Puppet::Type::PFile.new(
-                        :path => path,
+                        :name => path,
                         :checksum => type
                     )
                 }
@@ -204,31 +215,37 @@ class TestFile < Test::Unit::TestCase
     end
 
     def cyclefile(path)
-        file = nil
-        changes = nil
-        comp = nil
-        trans = nil
-        assert_nothing_raised {
-            file = Puppet::Type::PFile.new(
-                :path => path,
-                :recurse => true,
-                :checksum => "md5"
+        # i had problems with using :name instead of :path
+        [:name,:path].each { |param|
+            file = nil
+            changes = nil
+            comp = nil
+            trans = nil
+
+            initstorage
+            assert_nothing_raised {
+                file = Puppet::Type::PFile.new(
+                    param => path,
+                    :recurse => true,
+                    :checksum => "md5"
+                )
+            }
+            comp = Puppet::Component.new(
+                :name => "component"
             )
+            comp.push file
+            assert_nothing_raised {
+                trans = comp.evaluate
+            }
+            assert_nothing_raised {
+                trans.evaluate
+            }
+            #assert_nothing_raised {
+            #    file.sync
+            #}
+            clearstorage
+            Puppet::Type.allclear
         }
-        comp = Puppet::Component.new(
-            :name => "component"
-        )
-        comp.push file
-        assert_nothing_raised {
-            trans = comp.evaluate
-        }
-        assert_nothing_raised {
-            trans.evaluate
-        }
-        #assert_nothing_raised {
-        #    file.sync
-        #}
-        Puppet::Type.allclear
     end
 
     def test_recursion
