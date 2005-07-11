@@ -28,7 +28,7 @@ class TestExec < Test::Unit::TestCase
             )
         }
         assert_nothing_raised {
-            command.retrieve
+            command.evaluate
         }
         assert_nothing_raised {
             output = command.sync
@@ -46,7 +46,7 @@ class TestExec < Test::Unit::TestCase
             )
         }
         assert_nothing_raised {
-            command.retrieve
+            command.evaluate
         }
         assert_nothing_raised {
             output = command.sync
@@ -59,7 +59,7 @@ class TestExec < Test::Unit::TestCase
             )
         }
         assert_nothing_raised {
-            command.retrieve
+            command.evaluate
         }
         assert_nothing_raised {
             output = command.sync
@@ -131,11 +131,53 @@ class TestExec < Test::Unit::TestCase
             )
         }
         assert_nothing_raised {
-            command.retrieve
+            command.evaluate
         }
         assert_nothing_raised {
             command.sync
         }
         assert_equal("/tmp\n",command.output)
+    end
+
+    def test_refreshonly
+        file = nil
+        cmd = nil
+        tmpfile = "/tmp/testing"
+        trans = nil
+        File.open(tmpfile, File::WRONLY|File::CREAT|File::APPEND) { |of|
+            of.puts "yayness"
+        }
+        file = Puppet::Type::PFile.new(
+            :path => tmpfile,
+            :checksum => "md5"
+        )
+        assert_nothing_raised {
+            cmd = Puppet::Type::Exec.new(
+                :command => "pwd",
+                :path => "/usr/bin:/bin:/usr/sbin:/sbin",
+                :require => [[file.class.name,file.name]],
+                :refreshonly => true
+            )
+        }
+        comp = Puppet::Component.new(:name => "RefreshTest")
+        [file,cmd].each { |obj|
+            comp.push obj
+        }
+        assert_nothing_raised {
+            trans = comp.evaluate
+        }
+        events = nil
+        assert_nothing_raised {
+            events = trans.evaluate.collect { |event|
+                event.event
+            }
+        }
+        
+        # verify that only the file_changed event was kicked off, not the
+        # command_executed
+        assert_equal(
+            ["file_changed"],
+            events
+        )
     end
 end

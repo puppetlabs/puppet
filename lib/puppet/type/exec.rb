@@ -49,7 +49,15 @@ module Puppet
                             self.parent[:command]
                     )
                 end
-                self.is = nil
+
+                if self.parent[:refreshonly]
+                    # if refreshonly is enabled, then set things so we
+                    # won't sync
+                    self.is = self.should
+                else
+                    # else, just set it to something we know it won't be
+                    self.is = nil
+                end
             end
 
             def sync
@@ -115,6 +123,7 @@ module Puppet
                 :path,
                 :user,
                 :cwd,
+                :refreshonly,
                 :command
             ]
 
