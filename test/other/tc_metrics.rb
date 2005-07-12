@@ -11,71 +11,82 @@ require 'test/unit'
 
 # $Id$
 
-class TestMetric < Test::Unit::TestCase
+$haverrd = true
+begin
+    require 'RRD'
+rescue LoadError
+    $haverrd = false
+end
 
-    def gendata
-        totalmax = 1000
-        changemax = 1000
-        eventmax = 10
-        maxdiff = 10
+if $haverrd
+    class TestMetric < Test::Unit::TestCase
 
-        types = [Puppet::Type::PFile, Puppet::Type::Package, Puppet::Type::Service]
-        data = [:total, :managed, :outofsync, :changed, :totalchanges]
-        events = [:file_changed, :package_installed, :service_started]
+        def gendata
+            totalmax = 1000
+            changemax = 1000
+            eventmax = 10
+            maxdiff = 10
 
-        # if this is the first set of data points...
-        typedata = Hash.new { |typehash,type|
-            typehash[type] = Hash.new(0)
-        }
-        eventdata = Hash.new(0)
-        types.each { |type|
-            name = type.name
-            typedata[type] = {}
-            typedata[type][:total] = rand(totalmax)
-            typedata[type][:managed] = rand(typedata[type][:total])
-            typedata[type][:outofsync] = rand(typedata[type][:managed])
-            typedata[type][:changed] = rand(typedata[type][:outofsync])
-            typedata[type][:totalchanges] = rand(changemax)
-        }
+            types = [Puppet::Type::PFile, Puppet::Type::Package, Puppet::Type::Service]
+            data = [:total, :managed, :outofsync, :changed, :totalchanges]
+            events = [:file_changed, :package_installed, :service_started]
 
-        events.each { |event|
-            eventdata[event] = rand(eventmax)
-        }
+            # if this is the first set of data points...
+            typedata = Hash.new { |typehash,type|
+                typehash[type] = Hash.new(0)
+            }
+            eventdata = Hash.new(0)
+            types.each { |type|
+                name = type.name
+                typedata[type] = {}
+                typedata[type][:total] = rand(totalmax)
+                typedata[type][:managed] = rand(typedata[type][:total])
+                typedata[type][:outofsync] = rand(typedata[type][:managed])
+                typedata[type][:changed] = rand(typedata[type][:outofsync])
+                typedata[type][:totalchanges] = rand(changemax)
+            }
 
-        return [typedata,eventdata]
-    end
+            events.each { |event|
+                eventdata[event] = rand(eventmax)
+            }
 
-    def setup
-        Puppet[:rrddir] = File.join(Dir.getwd,"rrdtests")
-        Puppet[:rrdgraph] = true
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-    end
+            return [typedata,eventdata]
+        end
 
-    def teardown
-        system("rm -rf rrdtests")
-    end
+        def setup
+            Puppet[:rrddir] = File.join(Dir.getwd,"rrdtests")
+            Puppet[:rrdgraph] = true
+            Puppet[:loglevel] = :debug if __FILE__ == $0
+        end
 
-    def test_fakedata
-        assert_nothing_raised { Puppet::Metric.init }
-        time = Time.now.to_i
-        start = time
-        10.times {
+        def teardown
+            system("rm -rf rrdtests")
+        end
+
+        def test_fakedata
+            assert_nothing_raised { Puppet::Metric.init }
+            time = Time.now.to_i
+            start = time
+            10.times {
+                assert_nothing_raised { Puppet::Metric.load(gendata) }
+                assert_nothing_raised { Puppet::Metric.tally }
+                assert_nothing_raised { Puppet::Metric.store(time) }
+                assert_nothing_raised { Puppet::Metric.clear }
+                time += 300
+            }
             assert_nothing_raised { Puppet::Metric.load(gendata) }
             assert_nothing_raised { Puppet::Metric.tally }
             assert_nothing_raised { Puppet::Metric.store(time) }
-            assert_nothing_raised { Puppet::Metric.clear }
-            time += 300
-        }
-        assert_nothing_raised { Puppet::Metric.load(gendata) }
-        assert_nothing_raised { Puppet::Metric.tally }
-        assert_nothing_raised { Puppet::Metric.store(time) }
-        assert_nothing_raised { Puppet::Metric.graph([start,time]) }
+            assert_nothing_raised { Puppet::Metric.graph([start,time]) }
 
-        File.open(File.join(Puppet[:rrddir],"index.html"),"w") { |of|
-            of.puts "<html><body>"
-            Puppet::Metric.each { |metric|
-                of.puts "<img src=%s.png><br>" % metric.name
+            File.open(File.join(Puppet[:rrddir],"index.html"),"w") { |of|
+                of.puts "<html><body>"
+                Puppet::Metric.each { |metric|
+                    of.puts "<img src=%s.png><br>" % metric.name
+                }
             }
-        }
+        end
     end
+else
+    $stderr.puts "Missing RRD library -- skipping metric tests"
 end
