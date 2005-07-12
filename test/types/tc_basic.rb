@@ -21,7 +21,10 @@ class TestBasic < Test::Unit::TestCase
         Puppet[:loglevel] = :debug if __FILE__ == $0
 
         assert_nothing_raised() {
-            @component = Puppet::Component.new(:name => "yaytest")
+            @component = Puppet::Component.new(
+                :name => "yaytest",
+                :type => "testing"
+            )
         }
 
         assert_nothing_raised() {
@@ -105,6 +108,14 @@ class TestBasic < Test::Unit::TestCase
         }
         assert_nothing_raised() {
             transaction.evaluate
+        }
+    end
+
+    def test_paths
+        [@configfile,@sleeper,@component].each { |obj|
+            assert_nothing_raised {
+                assert(obj.path.is_a?(Array))
+            }
         }
     end
 end

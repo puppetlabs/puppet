@@ -38,8 +38,13 @@ Component
 
         def initialize(args)
             @children = []
+
+            # it makes sense to have a more reasonable default here than 'false'
+            unless args.include?(:type) or args.include?("type")
+                args[:type] = "component"
+            end
             super(args)
-            debug "Made component with name %s" % self.name
+            debug "Made component with name %s and type %s" % [self.name, self[:type]]
         end
 
         # just turn the container into a transaction
@@ -49,6 +54,11 @@ Component
             return transaction
         end
 
+        def name
+            return self[:name]
+            #return "%s[%s]" % [self[:type],self[:name]]
+        end
+
         def push(*ary)
             ary.each { |child|
                 unless child.is_a?(Puppet::Element)
@@ -56,11 +66,8 @@ Component
                     raise "Containers can only contain Puppet::Elements"
                 end
                 @children.push child
+                child.parent = self
             }
-        end
-
-        def name
-            return "%s[%s]" % [@parameters[:type],@parameters[:name]]
         end
 
         def refresh

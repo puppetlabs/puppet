@@ -615,7 +615,11 @@ class Type < Puppet::Element
     # return the full path to us, for logging and rollback
     # some classes (e.g., FileTypeRecords) will have to override this
     def path
-        return [self.class, self.name].flatten
+        if defined? @parent
+            return [@parent.name, self.name].flatten
+        else
+            return [self.name]
+        end
     end
     #---------------------------------------------------------------
 

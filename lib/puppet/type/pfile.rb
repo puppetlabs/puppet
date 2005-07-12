@@ -213,7 +213,8 @@ module Puppet
                 # unless we're fully qualified or we've specifically allowed
                 # relative links.  Relative links are currently disabled, until
                 # someone actually asks for them
-                unless @should =~ /^\// or self.parent[:relativelinks]
+                #unless @should =~ /^\// or self.parent[:relativelinks]
+                unless @should =~ /^\//
                     @should = File.expand_path @should
                 end
             end
