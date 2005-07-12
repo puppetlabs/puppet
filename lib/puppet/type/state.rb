@@ -21,19 +21,20 @@ class State < Puppet::Element
     @virtual = true
 
     #---------------------------------------------------------------
-    # every state class must tell us what its name will be (as a symbol)
-    # this determines how we will refer to the state during usage
-    # e.g., the Owner state for Files might say its name is :owner;
-    # this means that we can say "file[:owner] = 'yayness'"
-    def State.name
-        return @name
+    # which event gets generated if this state change happens; not currently
+    # called
+    def self.generates
+        return @event
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # which event gets generated if this state change happens
-    def State.generates
-        return @event
+    # every state class must tell us what its name will be (as a symbol)
+    # this determines how we will refer to the state during usage
+    # e.g., the Owner state for Files might say its name is :owner;
+    # this means that we can say "file[:owner] = 'yayness'"
+    def self.name
+        return @name
     end
     #---------------------------------------------------------------
 
@@ -53,23 +54,7 @@ class State < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # return the full path to us, for logging and rollback
-    def path
-        return [@parent.path, self.name].flatten
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # we aren't actually comparing the states themselves, we're only
-    # comparing the "should" value with the "is" value
-    def insync?
-        debug "%s value is '%s', should be '%s'" %
-            [self,self.is.inspect,self.should.inspect]
-        self.is == self.should
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
+    # initialize our state
     def initialize(hash)
         @is = nil
 
@@ -87,26 +72,13 @@ class State < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # for testing whether we should actually do anything
-    def noop
-        unless defined? @noop
-            @noop = false
-        end
-        tmp = @noop || self.parent.noop || Puppet[:noop] || false
-        debug "noop is %s" % tmp
-        return tmp
+    # we aren't actually comparing the states themselves, we're only
+    # comparing the "should" value with the "is" value
+    def insync?
+        debug "%s value is '%s', should be '%s'" %
+            [self,self.is.inspect,self.should.inspect]
+        self.is == self.should
     end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    #def refresh(transaction)
-    #    self.retrieve
-
-        # we definitely need some way to batch these refreshes, so a
-        # given object doesn't get refreshed multiple times in a single
-        # run
-    #    @parent.refresh
-    #end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
@@ -120,9 +92,22 @@ class State < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # retrieve the current state from the running system
-    def retrieve
-        raise "'retrieve' method was not overridden by %s" % self.class
+    # for testing whether we should actually do anything
+    def noop
+        unless defined? @noop
+            @noop = false
+        end
+        tmp = @noop || self.parent.noop || Puppet[:noop] || false
+        debug "noop is %s" % tmp
+        return tmp
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # return the full path to us, for logging and rollback; not currently
+    # used
+    def path
+        return [@parent.path, self.name].flatten
     end
     #---------------------------------------------------------------
 

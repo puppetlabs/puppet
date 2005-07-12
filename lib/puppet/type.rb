@@ -227,7 +227,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # remove all type instances
+    # remove all type instances; this is mostly only useful for testing
     def self.allclear
         @@typeary.each { |subtype|
             debug "Clearing %s of objects" % subtype
@@ -237,7 +237,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # per-type clearance
+    # remove all of the instances of a single type
     def self.clear
         if defined? @objects
             @objects.clear
@@ -246,6 +246,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # iterate across each of the type's instances
     def self.each
         return unless defined? @objects
         @objects.each { |name,instance|
@@ -255,13 +256,14 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # does the type have an object with the given name?
     def self.has_key?(name)
         return @objects.has_key?(name)
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # all objects total
+    # add an object to the master list of Type instances
     def self.push(object)
         @@allobjects.push object
         #debug("adding %s of type %s to master list" %
@@ -279,6 +281,7 @@ class Type < Puppet::Element
     public
 
     #---------------------------------------------------------------
+    # build a per-Type hash, mapping the states to their names
     def self.buildstatehash
         unless defined? @validstates
             @validstates = Hash.new(false)
@@ -299,7 +302,8 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # this is probably only used by FileRecord objects
+    # set the parameters for a type; probably only used by FileRecord
+    # objects
     def self.parameters=(params)
         debug "setting parameters to [%s]" % params.join(" ")
         @parameters = params.collect { |param|
@@ -313,7 +317,31 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # this abstracts accessing parameters and states, and normalizes
+    # does the name reflect a valid state?
+    def self.validstate?(name)
+        unless @validstates.length == @states.length
+            self.buildstatehash
+        end
+        if @validstates.include?(name)
+            return @validstates[name]
+        else
+            return false
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # does the name reflect a valid parameter?
+    def self.validparameter?(name)
+        unless defined? @parameters
+            raise "Class %s has not defined parameters" % self
+        end
+        return @parameters.include?(name)
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # abstract accessing parameters and states, and normalize
     # access to always be symbols, not strings
     # XXX this returns a _value_, not an object
     # if you want a state object, use <type>.state(<state>)
@@ -341,7 +369,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # this abstracts setting parameters and states, and normalizes
+    # abstract setting parameters and states, and normalize
     # access to always be symbols, not strings
     def []=(name,value)
         mname = name
@@ -379,7 +407,8 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # removing states
+    # remove a state from the object; useful in testing or in cleanup
+    # when an error has been encountered
     def delete(attr)
         if @states.has_key?(attr)
             @states.delete(attr)
@@ -390,38 +419,91 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def state(name)
-        return @states[name]
+    # iterate across all children, and then iterate across states
+    # we do children first so we're sure that all dependent objects
+    # are checked first
+    # we ignore parameters here, because they only modify how work gets
+    # done, they don't ever actually result in work specifically
+    def each
+        # we want to return the states in the order that each type
+        # specifies it, because it may (as in the case of File#create)
+        # be important
+        @children.each { |child|
+            yield child
+        }
+        self.eachstate { |state|
+            yield state
+        }
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # iterate across the existing states
+    def eachstate
+        states.each { |state|
+            yield state
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # is the instance a managed instance?  A 'yes' here means that
+    # the instance was created from the language, vs. being created
+    # in order resolve other questions, such as finding a package
+    # in a list
+    def managed?
+        if defined? @managed
+            return @managed
+        else
+            @managed = false
+            states.each { |state|
+                if state.should
+                    @managed = true
+                end
+            }
+            return @managed
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # return the value of a parameter
     def parameter(name)
         return @parameters[name]
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def self.validstate?(name)
-        unless @validstates.length == @states.length
-            self.buildstatehash
-        end
-        if @validstates.include?(name)
-            return @validstates[name]
-        else
-            return false
-        end
+    def push(*child)
+        @children.push(*child)
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def self.validparameter?(name)
-        unless defined? @parameters
-            raise "Class %s has not defined parameters" % self
-        end
-        return @parameters.include?(name)
+    # return an actual type by name; to return the value, use 'inst[name]'
+    def state(name)
+        return @states[name]
     end
     #---------------------------------------------------------------
+
+    private
+
+    #---------------------------------------------------------------
+    def states
+        debug "%s has %s states" % [self,@states.length]
+        tmpstates = []
+        self.class.states.each { |state|
+            if @states.include?(state.name)
+                tmpstates.push(@states[state.name])
+            end
+        }
+        unless tmpstates.length == @states.length
+            raise "Something went very wrong with tmpstates creation"
+        end
+        return tmpstates
+    end
+    #---------------------------------------------------------------
+
 
     #---------------------------------------------------------------
     #---------------------------------------------------------------
@@ -433,6 +515,7 @@ class Type < Puppet::Element
     public
 
     #---------------------------------------------------------------
+    # initialize the type instance
     def initialize(hash)
         @children = []
         @evalcount = 0
@@ -493,46 +576,9 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # return the full path to us, for logging and rollback
-    # some classes (e.g., FileTypeRecords) will have to override this
-    def path
-        return [self.path, self.name].flatten
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # this might result from a state or from a parameter
+    # derive the instance name based on class.namevar
     def name
         return self[self.class.namevar]
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def retrieve
-        # it's important to use the method here, so we always get
-        # them back in the right order
-        states.collect { |state|
-            state.retrieve
-        }
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def sync
-        events = self.collect { |child|
-            child.sync
-        }.reject { |event|
-            ! (event.is_a?(Symbol) or event.is_a?(String))
-        }.flatten
-
-        Puppet::Metric.addevents(self.class,self,events)
-        return events
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def to_s
-        self.name
     end
     #---------------------------------------------------------------
 
@@ -561,77 +607,42 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    #---------------------------------------------------------------
-    # instance methods dealing with contained states
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
-
-    public
-
-    #---------------------------------------------------------------
-    def managed
-        if defined? @managed
-            return @managed
-        else
-            @managed = false
-            states.each { |state|
-                if state.should
-                    @managed = true
-                end
-            }
-            return @managed
-        end
+    # return the full path to us, for logging and rollback
+    # some classes (e.g., FileTypeRecords) will have to override this
+    def path
+        return [self.class, self.name].flatten
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def eachstate
-        states.each { |state|
-            yield state
+    # retrieve the current value of all contained states
+    def retrieve
+        # it's important to use the method here, as it follows the order
+        # in which they're defined in the object
+        states.collect { |state|
+            state.retrieve
         }
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # iterate across all children, and then iterate across states
-    # we do children first so we're sure that all dependent objects
-    # are checked first
-    # we ignore parameters here, because they only modify how work gets
-    # done, they don't ever actually result in work specifically
-    def each
-        # we want to return the states in the order that each type
-        # specifies it, because it may (as in the case of File#create)
-        # be important
-        @children.each { |child|
-            yield child
-        }
-        self.eachstate { |state|
-            yield state
-        }
+    # sync the changes to disk, and return the events generated by the changes
+    def sync
+        events = self.collect { |child|
+            child.sync
+        }.reject { |event|
+            ! (event.is_a?(Symbol) or event.is_a?(String))
+        }.flatten
+
+        Puppet::Metric.addevents(self.class,self,events)
+        return events
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def push(*child)
-        @children.push(*child)
-    end
-    #---------------------------------------------------------------
-
-    private
-
-    #---------------------------------------------------------------
-    def states
-        debug "%s has %s states" % [self,@states.length]
-        tmpstates = []
-        self.class.states.each { |state|
-            if @states.include?(state.name)
-                tmpstates.push(@states[state.name])
-            end
-        }
-        unless tmpstates.length == @states.length
-            raise "Something went very wrong with tmpstates creation"
-        end
-        return tmpstates
+    # convert to a string
+    def to_s
+        self.name
     end
     #---------------------------------------------------------------
 

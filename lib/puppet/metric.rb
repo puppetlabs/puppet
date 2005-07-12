@@ -28,7 +28,7 @@ module Puppet
             Puppet::Type.eachtype { |type|
                 type.each { |instance|
                     @@typemetrics[type][:total] += 1
-                    if instance.managed
+                    if instance.managed?
                         @@typemetrics[type][:managed] += 1
                     end
                 }
