@@ -19,6 +19,19 @@ module Puppet
         @states = []
         @parameters = [:name,:type]
 
+        # yeah, this doc stuff is all pretty worthless right now
+        @doc = %{
+Component
+---------
+}
+
+        @paramdoc = {
+            :name => %{
+},
+            :type => %{
+}
+        }
+
         def each
             @children.each { |child| yield child }
         end

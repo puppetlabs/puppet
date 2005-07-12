@@ -91,6 +91,7 @@ class Type < Puppet::Element
     # the Type class attribute accessors
     class << self
         attr_reader :name, :namevar, :states, :validstates, :parameters
+        attr_reader :doc
     end
 
     #---------------------------------------------------------------
@@ -139,6 +140,10 @@ class Type < Puppet::Element
         @actions = Hash.new
         @validstates = {}
         @validparameters = {}
+
+        unless defined? @doc
+            @doc = ""
+        end
 
         unless defined? @states
             @states = {}
@@ -490,7 +495,7 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     def states
-        debug "%s has %s states" % [self,@states.length]
+        #debug "%s has %s states" % [self,@states.length]
         tmpstates = []
         self.class.states.each { |state|
             if @states.include?(state.name)
@@ -725,6 +730,14 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def self.eachmetaparam
+        @@metaparams.each { |param|
+            yield param
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # this just marks states that we definitely want to retrieve values
     # on
     def metacheck(args)
@@ -833,6 +846,18 @@ class Type < Puppet::Element
     def metaschedule(schedule)
         @schedule = schedule
     end
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+    # Documentation methods
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+    def self.paramdoc?(param)
+        @paramdoc[param]
+    end
+    #---------------------------------------------------------------
     #---------------------------------------------------------------
 end # Puppet::Type
 end
