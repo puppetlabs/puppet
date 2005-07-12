@@ -137,6 +137,39 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
+    # just test normal links
+    def test_normal_links
+        link = "/tmp/puppetlink"
+        assert_nothing_raised() {
+            @file[:link] = link
+        }
+        # assert we got a fully qualified link
+        assert(@file.state(:link).should =~ /^\//)
+
+        # assert we aren't linking to ourselves
+        assert(File.expand_path(@file.state(:link).link) !=
+            File.expand_path(@file[:path]))
+
+        # assert the should value does point to us
+        assert_equal(File.expand_path(@file.state(:link).should),
+            File.expand_path(@file[:path]))
+
+        assert_nothing_raised() {
+            @file.evaluate
+        }
+        assert_nothing_raised() {
+            @file.sync
+        }
+        assert_nothing_raised() {
+            @file.evaluate
+        }
+        assert(@file.insync?())
+        assert_nothing_raised() {
+            @file.delete(:link)
+        }
+        system("rm -f %s" % link)
+    end
+
     def test_checksums
         types = %w{md5 md5lite timestamp ctime}
         files = %w{/tmp/sumtest}

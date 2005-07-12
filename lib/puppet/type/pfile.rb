@@ -13,7 +13,6 @@ module Puppet
     class State
         class PFileCreate < Puppet::State
             require 'etc'
-            attr_accessor :file
             @name = :create
             @event = :file_created
 
@@ -160,9 +159,79 @@ module Puppet
             end
         end
 
+        class PFileLink < Puppet::State
+            require 'etc'
+            attr_reader :link
+
+            @name = :link
+
+            # create the link
+            def self.create(file,link)
+                begin
+                    debug("Creating symlink '%s' to '%s'" % [file, link])
+                    unless File.symlink(file,link)
+                        raise TypeError.new("Could not create symlink '%s'" % link)
+                    end
+                rescue => detail
+                    raise TypeError.new("Cannot create symlink '%s': %s" %
+                        [file,detail])
+                end
+            end
+
+            # remove an existing link
+            def self.remove(link)
+                if FileTest.symlink?(link)
+                    debug("Removing symlink '%s'" % link)
+                    begin
+                        File.unlink(link)
+                    rescue
+                        raise TypeError.new("Failed to remove symlink '%s'" % link)
+                    end
+                elsif FileTest.exists?(link)
+                    raise TypeError.new("Cannot remove normal file '%s'" % link)
+                else
+                    debug("Symlink '%s' does not exist" % link)
+                end
+            end
+
+            def retrieve
+                if FileTest.symlink?(@link)
+                    self.is = File.readlink(@link)
+                    return
+                else
+                    self.is = nil
+                    return
+                end
+            end
+
+            # we know the link should exist, but it should also point back
+            # to us
+            def should=(link)
+                @link = link
+                @should = self.parent[:path]
+
+                # unless we're fully qualified or we've specifically allowed
+                # relative links.  Relative links are currently disabled, until
+                # someone actually asks for them
+                unless @should =~ /^\// or self.parent[:relativelinks]
+                    @should = File.expand_path @should
+                end
+            end
+
+            # this is somewhat complicated, because it could exist and be
+            # a file
+            def sync
+                if @is
+                    self.class.remove(@is)
+                end
+                self.class.create(@should,@link)
+
+                return :link_created
+            end
+        end
+
         class PFileUID < Puppet::State
             require 'etc'
-            attr_accessor :file
             @name = :owner
             @event = :inode_changed
 
@@ -371,7 +440,8 @@ module Puppet
                 Puppet::State::PFileGroup,
                 Puppet::State::PFileMode,
                 Puppet::State::PFileChecksum,
-                Puppet::State::PFileSetUID
+                Puppet::State::PFileSetUID,
+                Puppet::State::PFileLink,
             ]
 
             @parameters = [
