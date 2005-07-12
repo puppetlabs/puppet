@@ -43,7 +43,7 @@ class TestType < Test::Unit::TestCase
             )
 
             assert(
-                type.validparameter(type.namevar)
+                type.validparameter?(type.namevar)
             )
         }
     end

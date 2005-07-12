@@ -54,8 +54,8 @@ class State < Puppet::Element
 
     #---------------------------------------------------------------
     # return the full path to us, for logging and rollback
-    def fqpath
-        return @parent.fqpath, self.name
+    def path
+        return [@parent.path, self.name].flatten
     end
     #---------------------------------------------------------------
 

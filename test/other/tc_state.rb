@@ -5,6 +5,7 @@ if __FILE__ == $0
 end
 
 require 'puppet'
+require 'puppet/storage'
 require 'test/unit'
 
 # $Id$

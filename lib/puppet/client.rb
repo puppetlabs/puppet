@@ -21,6 +21,7 @@ module Puppet
     class ClientError < RuntimeError; end
     #---------------------------------------------------------------
     class Client < SOAP::RPC::HTTPServer
+        include Puppet
         def initialize(hash)
             # to whom do we connect?
             @server = nil

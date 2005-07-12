@@ -13,8 +13,7 @@ module Puppet
 		#---------------------------------------------------------------
         def initialize(state)
             @state = state
-            #@state.parent.newchange
-            @path = state.fqpath
+            @path = [state.path,"change"].flatten
             @is = state.is
             @should = state.should
 

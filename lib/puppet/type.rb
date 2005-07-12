@@ -37,17 +37,24 @@ class Type < Puppet::Element
     attr_accessor :children, :parameters, :parent
     include Enumerable
 
-    @@allobjects = Array.new # an array for all objects
-    @abstract = true
+    # an array to contain all instances of Type
+    @@allobjects = Array.new
 
-    @name = :puppet # a little fakery, since Puppet itself isn't a type
+    # a little fakery, since Puppet itself isn't a type
+    @name = :puppet
+
+    # set it to something to silence the tests, but otherwise not used
     @namevar = :notused
 
+    # again, silence the tests; the :notused has to be there because it's
+    # the namevar
     @states = []
     @parameters = [:notused]
 
+    # the methods that can be called from within the language
     @allowedmethods = [:noop,:debug,:statefile]
 
+    # the parameters that all instances will accept
     @@metaparams = [
         :onerror,
         :schedule,
@@ -60,6 +67,8 @@ class Type < Puppet::Element
     # class methods dealing with Type management
     #---------------------------------------------------------------
     #---------------------------------------------------------------
+
+    public
 
     #---------------------------------------------------------------
     # these objects are used for mapping type names (e.g., 'file')
@@ -79,59 +88,15 @@ class Type < Puppet::Element
         end
     }
 
-    #---------------------------------------------------------------
-    # a test for whether this type is allowed to have instances
-    # on clients
-    # subclasses can just set '@abstract = true' to mark themselves
-    # as abstract
-    def self.abstract
-        if defined? @abstract
-            return @abstract
-        else
-            return false
-        end
+    # the Type class attribute accessors
+    class << self
+        attr_reader :name, :namevar, :states, :validstates, :parameters
     end
-    #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def self.allowedmethod(method)
-        if defined? @allowedmethods and @allowedmethods.include?(method)
-            return true
-        else
-            return false
-        end
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def self.statefile(file)
-        Puppet[:statefile] = file
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # ill thought-out
-    # this needs to return @noop
-    #def noop(ary)
-    #    Puppet[:noop] = ary.shift
-    #end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    #def debug(ary)
-    #    value = ary.shift
-    #    if value == "true" or value == true
-    #        value = true
-    #    else
-    #        value = false
-    #    end
-    #    Puppet[:debug] = value
-    #end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # this is meant to be run multiple times, e.g., when a new
-    # type is defined at run-time
+    # Create @@typehash from @@typeary.  This is meant to be run
+    # multiple times -- whenever it is discovered that the two
+    # objects have differents lengths.
     def self.buildtypehash
         @@typeary.each { |otype|
             if @@typehash.include?(otype.name)
@@ -147,14 +112,14 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # iterate across all of the subclasses of Type
     def self.eachtype
         @@typeary.each { |type| yield type }
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # this should make it so our subclasses don't have to worry about
-    # defining these class instance variables
+    # The work that gets done for every subclass of Type
     def self.inherited(sub)
         sub.initvars
 
@@ -168,12 +133,10 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # this is so we don't have to eval this code
-    # init all of our class instance variables
+    # all of the variables that must be initialized for each subclass
     def self.initvars
         @objects = Hash.new
         @actions = Hash.new
-        #debug "initing validstates for %s" % self
         @validstates = {}
         @validparameters = {}
 
@@ -184,35 +147,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def self.metaclass
-        if defined? @metaclass
-            return @metaclass
-        else
-            return false
-        end
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # this is used for mapping object types (e.g., Puppet::Type::File)
-    # to names (e.g., "file")
-    def self.name
-        return @name
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def self.newtype(type)
-        raise "Type.newtype called, but I don't know why"
-        @@typeary.push(type)
-        if @@typehash.has_key?(type.name)
-            debug("Redefining object type %s" % type.name)
-        end
-        @@typehash[type.name] = type
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
+    # return a Type instance by name
     def self.type(type)
         unless @@typeary.length == @@typehash.length
             Type.buildtypehash
@@ -224,12 +159,42 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     #---------------------------------------------------------------
-    # class methods dealing with type instance management
+    # class methods dealing with allowedmethods
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    public
+
+    #---------------------------------------------------------------
+    # Test whether a given method can be called from within the puppet
+    # language
+    def self.allowedmethod(method)
+        if defined? @allowedmethods and @allowedmethods.include?(method)
+            return true
+        else
+            return false
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # set the statefile for storing our running state
+    def self.statefile(file)
+        Puppet[:statefile] = file
+    end
     #---------------------------------------------------------------
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # retrieve a named object
+    #---------------------------------------------------------------
+    # class methods dealing with type instance management
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    public
+
+    #---------------------------------------------------------------
+    # retrieve a named instance of the current type
     def self.[](name)
         if @objects.has_key?(name)
             return @objects[name]
@@ -240,6 +205,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # add an instance by name to the class list of instances
     def self.[]=(name,object)
         newobj = nil
         if object.is_a?(Puppet::Type)
@@ -249,7 +215,6 @@ class Type < Puppet::Element
         end
 
         if @objects.has_key?(newobj.name)
-            #p @objects
             raise "Object '%s' of type '%s' already exists with id '%s' vs. '%s'" %
                 [newobj.name,newobj.class.name,
                     @objects[newobj.name].object_id,newobj.object_id]
@@ -290,27 +255,17 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def self.has_key?(name)
+        return @objects.has_key?(name)
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # all objects total
     def self.push(object)
         @@allobjects.push object
         #debug("adding %s of type %s to master list" %
         #    [object.name,object.class])
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # some simple stuff to make it easier to get a name from everyone
-    def self.namevar
-        unless defined? @namevar and ! @namevar.nil?
-            raise "Class %s has no namevar defined" % self
-        end
-        return @namevar
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def self.has_key?(name)
-        return @objects.has_key?(name)
     end
     #---------------------------------------------------------------
     #---------------------------------------------------------------
@@ -320,6 +275,8 @@ class Type < Puppet::Element
     # class and instance methods dealing with parameters and states
     #---------------------------------------------------------------
     #---------------------------------------------------------------
+
+    public
 
     #---------------------------------------------------------------
     def self.buildstatehash
@@ -342,19 +299,6 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # Is the parameter in question a meta-parameter?
-    def self.metaparam(param)
-        @@metaparams.include?(param)
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def self.parameters
-        return @parameters
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
     # this is probably only used by FileRecord objects
     def self.parameters=(params)
         debug "setting parameters to [%s]" % params.join(" ")
@@ -369,40 +313,6 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def self.states
-        return @states
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def self.validstates
-        return @validstates
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def self.validstate(name)
-        unless @validstates.length == @states.length
-            self.buildstatehash
-        end
-        if @validstates.include?(name)
-            return @validstates[name]
-        else
-            return false
-        end
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def self.validparameter(name)
-        unless defined? @parameters
-            raise "Class %s has not defined parameters" % self
-        end
-        return @parameters.include?(name)
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
     # this abstracts accessing parameters and states, and normalizes
     # access to always be symbols, not strings
     # XXX this returns a _value_, not an object
@@ -412,13 +322,13 @@ class Type < Puppet::Element
             name = name.intern
         end
 
-        if self.class.validstate(name)
+        if self.class.validstate?(name)
             if @states.include?(name)
                 return @states[name].is
             else
                 return nil
             end
-        elsif self.class.validparameter(name)
+        elsif self.class.validparameter?(name)
             if @parameters.include?(name)
                 return @parameters[name]
             else
@@ -439,10 +349,10 @@ class Type < Puppet::Element
             mname = name.intern
         end
 
-        if Puppet::Type.metaparam(mname)
+        if Puppet::Type.metaparam?(mname)
             # call the metaparam method 
             self.send(("meta" + mname.id2name),value)
-        elsif stateklass = self.class.validstate(mname) 
+        elsif stateklass = self.class.validstate?(mname) 
             if value.is_a?(Puppet::State)
                 debug "'%s' got handed a state for '%s'" % [self,mname]
                 @states[mname] = value
@@ -460,7 +370,7 @@ class Type < Puppet::Element
                     #@states[mname].parent = self
                 end
             end
-        elsif self.class.validparameter(mname)
+        elsif self.class.validparameter?(mname)
             @parameters[mname] = value
         else
             raise "Invalid parameter %s" % [mname]
@@ -492,11 +402,35 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def self.validstate?(name)
+        unless @validstates.length == @states.length
+            self.buildstatehash
+        end
+        if @validstates.include?(name)
+            return @validstates[name]
+        else
+            return false
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def self.validparameter?(name)
+        unless defined? @parameters
+            raise "Class %s has not defined parameters" % self
+        end
+        return @parameters.include?(name)
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     #---------------------------------------------------------------
     # instance methods related to instance intrinsics
     # e.g., initialize() and name()
     #---------------------------------------------------------------
     #---------------------------------------------------------------
+
+    public
 
     #---------------------------------------------------------------
     def initialize(hash)
@@ -561,8 +495,8 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     # return the full path to us, for logging and rollback
     # some classes (e.g., FileTypeRecords) will have to override this
-    def fqpath
-        return self.class, self.name
+    def path
+        return [self.path, self.name].flatten
     end
     #---------------------------------------------------------------
 
@@ -570,6 +504,35 @@ class Type < Puppet::Element
     # this might result from a state or from a parameter
     def name
         return self[self.class.namevar]
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def retrieve
+        # it's important to use the method here, so we always get
+        # them back in the right order
+        states.collect { |state|
+            state.retrieve
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def sync
+        events = self.collect { |child|
+            child.sync
+        }.reject { |event|
+            ! (event.is_a?(Symbol) or event.is_a?(String))
+        }.flatten
+
+        Puppet::Metric.addevents(self.class,self,events)
+        return events
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def to_s
+        self.name
     end
     #---------------------------------------------------------------
 
@@ -598,39 +561,12 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def retrieve
-        # it's important to use the method here, so we always get
-        # them back in the right order
-        self.states.collect { |state|
-            state.retrieve
-        }
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def sync
-        events = self.collect { |child|
-            child.sync
-        }.reject { |event|
-            ! (event.is_a?(Symbol) or event.is_a?(String))
-        }.flatten
-
-        Puppet::Metric.addevents(self.class,self,events)
-        return events
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def to_s
-        self.name
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
     #---------------------------------------------------------------
     # instance methods dealing with contained states
     #---------------------------------------------------------------
     #---------------------------------------------------------------
+
+    public
 
     #---------------------------------------------------------------
     def managed
@@ -638,7 +574,7 @@ class Type < Puppet::Element
             return @managed
         else
             @managed = false
-            self.states.each { |state|
+            states.each { |state|
                 if state.should
                     @managed = true
                 end
@@ -649,24 +585,8 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def states
-        debug "%s has %s states" % [self,@states.length]
-        tmpstates = []
-        self.class.states.each { |state|
-            if @states.include?(state.name)
-                tmpstates.push(@states[state.name])
-            end
-        }
-        unless tmpstates.length == @states.length
-            raise "Something went very wrong with tmpstates creation"
-        end
-        return tmpstates
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
     def eachstate
-        self.states.each { |state|
+        states.each { |state|
             yield state
         }
     end
@@ -697,17 +617,31 @@ class Type < Puppet::Element
     end
     #---------------------------------------------------------------
 
+    private
+
+    #---------------------------------------------------------------
+    def states
+        debug "%s has %s states" % [self,@states.length]
+        tmpstates = []
+        self.class.states.each { |state|
+            if @states.include?(state.name)
+                tmpstates.push(@states[state.name])
+            end
+        }
+        unless tmpstates.length == @states.length
+            raise "Something went very wrong with tmpstates creation"
+        end
+        return tmpstates
+    end
+    #---------------------------------------------------------------
+
     #---------------------------------------------------------------
     #---------------------------------------------------------------
     # instance methods dealing with actually doing work
     #---------------------------------------------------------------
     #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    def newchange
-        @totalchanges += 1
-    end
-    #---------------------------------------------------------------
+    public
 
     #---------------------------------------------------------------
     # this method is responsible for collecting state changes
@@ -721,9 +655,9 @@ class Type < Puppet::Element
                 [self.name,self.class]
         end
         # if we're a metaclass and we've already evaluated once...
-        if self.metaclass and @evalcount > 0
-            return
-        end
+        #if self.metaclass and @evalcount > 0
+        #    return
+        #end
         @evalcount += 1
 
         changes = @children.collect { |child|
@@ -735,7 +669,7 @@ class Type < Puppet::Element
         unless self.insync?
             # add one to the number of out-of-sync instances
             Puppet::Metric.add(self.class,self,:outofsync,1)
-            changes << self.states.find_all { |state|
+            changes << states.find_all { |state|
                 ! state.insync?
             }.collect { |state|
                 Puppet::StateChange.new(state)
@@ -746,6 +680,8 @@ class Type < Puppet::Element
         #self.collect { |child|
         #    child.evaluate
         #}
+
+        changes.flatten!
 
         # now record how many changes we've resulted in
         Puppet::Metric.add(self.class,self,:changes,changes.length)
@@ -758,7 +694,7 @@ class Type < Puppet::Element
     def insync?
         insync = true
 
-        self.states.each { |state|
+        states.each { |state|
             unless state.insync?
                 debug("%s is not in sync" % state)
                 insync = false
@@ -767,15 +703,6 @@ class Type < Puppet::Element
 
         debug("%s sync status is %s" % [self,insync])
         return insync
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # do we actually do work, or do we modify the system instead?
-    # instances of a metaclass only get executed once per client process,
-    # while instances of normal classes get run every time
-    def metaclass
-        return self.class.metaclass
     end
     #---------------------------------------------------------------
 
@@ -803,7 +730,7 @@ class Type < Puppet::Element
             next if @states.include?(state)
 
             stateklass = nil
-            unless stateklass = self.class.validstate(state)
+            unless stateklass = self.class.validstate?(state)
                 raise "%s is not a valid state for %s" % [state,self.class]
             end
 
@@ -839,6 +766,13 @@ class Type < Puppet::Element
             sub.event == event.event or
                 sub.event == :ALL_EVENTS
         }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # Is the parameter in question a meta-parameter?
+    def self.metaparam?(param)
+        @@metaparams.include?(param)
     end
     #---------------------------------------------------------------
 

@@ -17,7 +17,7 @@ class Puppet::Element
     #---------------------------------------------------------------
     # all of our subclasses must respond to each of these methods...
     @@interface_methods = [
-        :retrieve, :insync?, :sync, :fqpath, :evaluate
+        :retrieve, :insync?, :sync, :path, :evaluate
     ]
 
     # so raise an error if a method that isn't overridden gets called
