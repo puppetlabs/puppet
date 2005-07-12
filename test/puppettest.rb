@@ -1,8 +1,6 @@
 # $Id$
 
 unless defined? PuppetTestSuite
-    $VERBOSE = true
-
     $:.unshift File.join(Dir.getwd, '../lib')
 
     class PuppetTestSuite
