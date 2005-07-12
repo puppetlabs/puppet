@@ -33,7 +33,7 @@ module Puppet
                 Puppet.info "Statefile %s does not exist" % Puppet[:statefile]
                 return
             end
-            Puppet.debug "Loading statefile %s" % Puppet[:statefile]
+            #Puppet.debug "Loading statefile %s" % Puppet[:statefile]
 			File.open(Puppet[:statefile]) { |file|
 				file.each { |line|
 					myclass, key, value = line.split(@@splitchar)
@@ -48,7 +48,7 @@ module Puppet
 				}
 			}
 
-            Puppet.debug "Loaded state is %s" % @@state.inspect
+            #Puppet.debug "Loaded state is %s" % @@state.inspect
 		end
 
 		def self.state(myclass)
@@ -84,7 +84,7 @@ module Puppet
 				}
 			}
 
-            Puppet.debug "Stored state is %s" % @@state.inspect
+            #Puppet.debug "Stored state is %s" % @@state.inspect
 		end
 	end
 end
