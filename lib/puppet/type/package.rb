@@ -110,7 +110,7 @@ module Puppet
                 # if it already exists, modify the existing one
                 if object = Package[name]
                     states = {}
-                    object.states.each { |state|
+                    object.eachstate { |state|
                         debug "Adding %s" % state.name.inspect
                         states[state.name] = state
                     }
@@ -121,7 +121,7 @@ module Puppet
                         else
                             debug "%s is not a set state" % var.inspect
                             if object[var] and object[var] != value
-                                warning "Overriding %s => %s on %s with %s" %
+                                Puppet.warning "Overriding %s => %s on %s with %s" %
                                     [var,object[var],name,value]
                             end
 
