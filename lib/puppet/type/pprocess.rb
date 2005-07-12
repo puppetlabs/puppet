@@ -27,7 +27,7 @@ module Puppet
                 end
 
                 self.state = running
-                Puppet.debug "there are #{running} #{self.parent} processes for start"
+                debug "there are #{running} #{self.parent} processes for start"
             end
 
             def <=>(other)

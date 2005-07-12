@@ -84,7 +84,7 @@ class Type < Puppet::Element
     # on clients
     # subclasses can just set '@abstract = true' to mark themselves
     # as abstract
-    def Type.abstract
+    def self.abstract
         if defined? @abstract
             return @abstract
         else
@@ -94,7 +94,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.allowedmethod(method)
+    def self.allowedmethod(method)
         if defined? @allowedmethods and @allowedmethods.include?(method)
             return true
         else
@@ -104,7 +104,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.statefile(file)
+    def self.statefile(file)
         Puppet[:statefile] = file
     end
     #---------------------------------------------------------------
@@ -118,25 +118,25 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def debug(ary)
-        value = ary.shift
-        if value == "true" or value == true
-            value = true
-        else
-            value = value
-        end
-        Puppet[:debug] = value
-    end
+    #def debug(ary)
+    #    value = ary.shift
+    #    if value == "true" or value == true
+    #        value = true
+    #    else
+    #        value = false
+    #    end
+    #    Puppet[:debug] = value
+    #end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
     # this is meant to be run multiple times, e.g., when a new
     # type is defined at run-time
-    def Type.buildtypehash
+    def self.buildtypehash
         @@typeary.each { |otype|
             if @@typehash.include?(otype.name)
                 if @@typehash[otype.name] != otype
-                    Puppet.warning("Object type %s is already defined (%s vs %s)" %
+                    warning("Object type %s is already defined (%s vs %s)" %
                         [otype.name,@@typehash[otype.name],otype])
                 end
             else
@@ -147,7 +147,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.eachtype
+    def self.eachtype
         @@typeary.each { |type| yield type }
     end
     #---------------------------------------------------------------
@@ -155,10 +155,10 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     # this should make it so our subclasses don't have to worry about
     # defining these class instance variables
-    def Type.inherited(sub)
+    def self.inherited(sub)
         sub.initvars
 
-        #Puppet.debug("subtype %s(%s) just created" % [sub,sub.superclass])
+        #debug("subtype %s(%s) just created" % [sub,sub.superclass])
         # add it to the master list
         # unfortunately we can't yet call sub.name, because the #inherited
         # method gets called before any commands in the class definition
@@ -170,10 +170,10 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     # this is so we don't have to eval this code
     # init all of our class instance variables
-    def Type.initvars
+    def self.initvars
         @objects = Hash.new
         @actions = Hash.new
-        #Puppet.debug "initing validstates for %s" % self
+        #debug "initing validstates for %s" % self
         @validstates = {}
         @validparameters = {}
 
@@ -184,7 +184,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.metaclass
+    def self.metaclass
         if defined? @metaclass
             return @metaclass
         else
@@ -196,24 +196,24 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     # this is used for mapping object types (e.g., Puppet::Type::File)
     # to names (e.g., "file")
-    def Type.name
+    def self.name
         return @name
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.newtype(type)
+    def self.newtype(type)
         raise "Type.newtype called, but I don't know why"
         @@typeary.push(type)
         if @@typehash.has_key?(type.name)
-            Puppet.debug("Redefining object type %s" % type.name)
+            debug("Redefining object type %s" % type.name)
         end
         @@typehash[type.name] = type
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.type(type)
+    def self.type(type)
         unless @@typeary.length == @@typehash.length
             Type.buildtypehash
         end
@@ -230,7 +230,7 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     # retrieve a named object
-    def Type.[](name)
+    def self.[](name)
         if @objects.has_key?(name)
             return @objects[name]
         else
@@ -240,7 +240,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.[]=(name,object)
+    def self.[]=(name,object)
         newobj = nil
         if object.is_a?(Puppet::Type)
             newobj = object
@@ -254,7 +254,7 @@ class Type < Puppet::Element
                 [newobj.name,newobj.class.name,
                     @objects[newobj.name].object_id,newobj.object_id]
         else
-            #Puppet.debug("adding %s of type %s to class list" %
+            #debug("adding %s of type %s to class list" %
             #    [object.name,object.class])
             @objects[newobj.name] = newobj
         end
@@ -263,9 +263,9 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     # remove all type instances
-    def Type.allclear
+    def self.allclear
         @@typeary.each { |subtype|
-            Puppet.debug "Clearing %s of objects" % subtype
+            debug "Clearing %s of objects" % subtype
             subtype.clear
         }
     end
@@ -273,7 +273,7 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     # per-type clearance
-    def Type.clear
+    def self.clear
         if defined? @objects
             @objects.clear
         end
@@ -281,7 +281,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.each
+    def self.each
         return unless defined? @objects
         @objects.each { |name,instance|
             yield instance
@@ -291,16 +291,16 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     # all objects total
-    def Type.push(object)
+    def self.push(object)
         @@allobjects.push object
-        #Puppet.debug("adding %s of type %s to master list" %
+        #debug("adding %s of type %s to master list" %
         #    [object.name,object.class])
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
     # some simple stuff to make it easier to get a name from everyone
-    def Type.namevar
+    def self.namevar
         unless defined? @namevar and ! @namevar.nil?
             raise "Class %s has no namevar defined" % self
         end
@@ -309,7 +309,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.has_key?(name)
+    def self.has_key?(name)
         return @objects.has_key?(name)
     end
     #---------------------------------------------------------------
@@ -322,7 +322,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.buildstatehash
+    def self.buildstatehash
         unless defined? @validstates
             @validstates = Hash.new(false)
         end
@@ -343,15 +343,21 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     # Is the parameter in question a meta-parameter?
-    def Type.metaparam(param)
+    def self.metaparam(param)
         @@metaparams.include?(param)
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def self.parameters
+        return @parameters
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # this is probably only used by FileRecord objects
-    def Type.parameters=(params)
-        Puppet.debug "setting parameters to [%s]" % params.join(" ")
+    def self.parameters=(params)
+        debug "setting parameters to [%s]" % params.join(" ")
         @parameters = params.collect { |param|
             if param.class == Symbol
                 param
@@ -363,19 +369,19 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.states
+    def self.states
         return @states
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.validstates
+    def self.validstates
         return @validstates
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.validstate(name)
+    def self.validstate(name)
         unless @validstates.length == @states.length
             self.buildstatehash
         end
@@ -388,7 +394,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def Type.validparameter(name)
+    def self.validparameter(name)
         unless defined? @parameters
             raise "Class %s has not defined parameters" % self
         end
@@ -438,19 +444,19 @@ class Type < Puppet::Element
             self.send(("meta" + mname.id2name),value)
         elsif stateklass = self.class.validstate(mname) 
             if value.is_a?(Puppet::State)
-                Puppet.debug "'%s' got handed a state for '%s'" % [self,mname]
+                debug "'%s' got handed a state for '%s'" % [self,mname]
                 @states[mname] = value
             else
                 if @states.include?(mname)
                     @states[mname].should = value
                 else
-                    #Puppet.warning "Creating state %s for %s" %
+                    #warning "Creating state %s for %s" %
                     #    [stateklass.name,self.name]
                     @states[mname] = stateklass.new(
                         :parent => self,
                         :should => value
                     )
-                    #Puppet.debug "Adding parent to %s" % mname
+                    #debug "Adding parent to %s" % mname
                     #@states[mname].parent = self
                 end
             end
@@ -538,7 +544,7 @@ class Type < Puppet::Element
         self.nameclean(hash)
 
         hash.each { |param,value|
-            #Puppet.debug("adding param '%s' with value '%s'" %
+            #debug("adding param '%s' with value '%s'" %
             #    [param,value])
             self[param] = value
         }
@@ -644,7 +650,7 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     def states
-        Puppet.debug "%s has %s states" % [self,@states.length]
+        debug "%s has %s states" % [self,@states.length]
         tmpstates = []
         self.class.states.each { |state|
             if @states.include?(state.name)
@@ -711,7 +717,7 @@ class Type < Puppet::Element
     # rather than 'each'
     def evaluate
         unless defined? @evalcount
-            Puppet.err "No evalcount defined on '%s' of type '%s'" %
+            err "No evalcount defined on '%s' of type '%s'" %
                 [self.name,self.class]
         end
         # if we're a metaclass and we've already evaluated once...
@@ -754,12 +760,12 @@ class Type < Puppet::Element
 
         self.states.each { |state|
             unless state.insync?
-                Puppet.debug("%s is not in sync" % state)
+                debug("%s is not in sync" % state)
                 insync = false
             end
         }
 
-        Puppet.debug("%s sync status is %s" % [self,insync])
+        debug("%s sync status is %s" % [self,insync])
         return insync
     end
     #---------------------------------------------------------------
@@ -858,7 +864,7 @@ class Type < Puppet::Element
                 raise "Could not retrieve object '%s' of type '%s'" %
                     [name,type]
             end
-            Puppet.debug("%s requires %s" % [self.name,object])
+            debug("%s requires %s" % [self.name,object])
 
             # for now, we only support this one method, 'refresh'
             object.subscribe(
@@ -873,7 +879,7 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     def metaonerror(response)
-        Puppet.debug("Would have called metaonerror")
+        debug("Would have called metaonerror")
         @onerror = response
     end
     #---------------------------------------------------------------

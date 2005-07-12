@@ -56,7 +56,7 @@ module Puppet
                     # which may or may not be a good thing...
                     retobj = type.new(self)
                 rescue => detail
-                    Puppet.err "Failed to create %s: %s" % [type.name,detail]
+                    err "Failed to create %s: %s" % [type.name,detail]
                     return nil
                 end
             else
@@ -87,7 +87,7 @@ module Puppet
                 if type.allowedmethod(name)
                     type.send(self.name,self.args)
                 else
-                    Puppet.err("%s does not respond to %s" % [self.type,self.name])
+                    err("%s does not respond to %s" % [self.type,self.name])
                 end
             else
                 raise "Could not find object type %s" % setting.type
@@ -122,7 +122,7 @@ module Puppet
                 raise "TransBuckets must have names"
             end
             unless defined? @type
-                Puppet.debug "TransBucket '%s' has no type" % @name
+                debug "TransBucket '%s' has no type" % @name
             end
             hash = {
                 :name => @name,
@@ -130,12 +130,12 @@ module Puppet
             }
             if defined? @parameters
                 @parameters.each { |param,value|
-                    Puppet.debug "Defining %s on %s of type %s" %
+                    debug "Defining %s on %s of type %s" %
                         [param,@name,@type]
                     hash[param] = value
                 }
             else
-                Puppet.debug "%s has no parameters" % @name
+                debug "%s has no parameters" % @name
             end
             container = Puppet::Component.new(hash)
             nametable = {}
@@ -163,7 +163,7 @@ module Puppet
                             # don't rename; this shouldn't be possible anyway
                             next if var == :name
 
-                            Puppet.debug "Adding %s to %s" % [var,name]
+                            debug "Adding %s to %s" % [var,name]
                             # override any existing values
                             object[var] = value
                         }

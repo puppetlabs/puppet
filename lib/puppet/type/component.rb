@@ -26,7 +26,7 @@ module Puppet
         def initialize(args)
             @children = []
             super(args)
-            Puppet.debug "Made component with name %s" % self.name
+            debug "Made component with name %s" % self.name
         end
 
         # just turn the container into a transaction
@@ -39,7 +39,7 @@ module Puppet
         def push(*ary)
             ary.each { |child|
                 unless child.is_a?(Puppet::Element)
-                    Puppet.debug "Got object of type %s" % child.class
+                    debug "Got object of type %s" % child.class
                     raise "Containers can only contain Puppet::Elements"
                 end
                 @children.push child

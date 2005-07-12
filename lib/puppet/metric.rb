@@ -223,7 +223,7 @@ module Puppet
             begin
                 RRD.graph(*args)
             rescue => detail
-                Puppet.err "Failed to graph %s: %s" % [self.name,detail]
+                err "Failed to graph %s: %s" % [self.name,detail]
             end
         end
 
@@ -241,7 +241,7 @@ module Puppet
             begin
                 RRD.update(self.path,args.join(":"))
             rescue => detail
-                Puppet.err "Failed to update %s: %s" % [self.name,detail]
+                err "Failed to update %s: %s" % [self.name,detail]
             end
         end
     end

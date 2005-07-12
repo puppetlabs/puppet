@@ -37,13 +37,13 @@ module Puppet
         require 'puppet/fact'
 
         value = Fact[fact]
-        Puppet.debug("retrieved %s as %s" % [fact,value])
+        debug("retrieved %s as %s" % [fact,value])
         value
     })
 
     Function.new("addfact", proc { |args|
         require 'puppet/fact'
-        #Puppet.debug("running addfact")
+        #debug("running addfact")
 
         hash = nil
         if args.is_a?(Array)
@@ -59,7 +59,7 @@ module Puppet
         else
             raise "Functions must have names"
         end
-        #Puppet.debug("adding fact %s" % name)
+        #debug("adding fact %s" % name)
         newfact = Fact.add(name) { |fact|
             hash.each { |key,value|
                 method = key + "="
@@ -67,6 +67,6 @@ module Puppet
             }
         }
 
-        #Puppet.debug("got fact %s" % newfact)
+        #debug("got fact %s" % newfact)
     })
 end

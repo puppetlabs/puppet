@@ -30,7 +30,7 @@ module Puppet
                 stat = nil
 
                 self.is = FileTest.exist?(self.parent[:path])
-                Puppet.debug "'exists' state is %s" % self.is
+                debug "'exists' state is %s" % self.is
             end
 
 
@@ -55,15 +55,15 @@ module Puppet
                 if hash = state[self.parent[:path]]
                     if hash.include?(@checktype)
                         @should = hash[@checktype]
-                        Puppet.debug "Found checksum %s for %s" %
+                        debug "Found checksum %s for %s" %
                             [@should,self.parent[:path]]
                     else
-                        Puppet.debug "Found checksum for %s but not of type %s" %
+                        debug "Found checksum for %s but not of type %s" %
                             [self.parent[:path],@checktype]
                         @should = nil
                     end
                 else
-                    Puppet.debug "No checksum for %s" % self.parent[:path]
+                    debug "No checksum for %s" % self.parent[:path]
                 end
             end
 
@@ -76,7 +76,7 @@ module Puppet
                 case @checktype
                 when "md5":
                     if FileTest.directory?(self.parent[:path])
-                        Puppet.info "Cannot MD5 sum directory %s" %
+                        info "Cannot MD5 sum directory %s" %
                             self.parent[:path]
 
                         # because we cannot sum directories, just remove
@@ -90,7 +90,7 @@ module Puppet
                     end
                 when "md5lite":
                     if FileTest.directory?(self.parent[:path])
-                        Puppet.info "Cannot MD5 sum directory %s" %
+                        info "Cannot MD5 sum directory %s" %
                             self.parent[:path]
 
                         # because we cannot sum directories, just remove
@@ -110,7 +110,7 @@ module Puppet
 
                 self.is = sum
 
-                Puppet.debug "checksum state is %s" % self.is
+                debug "checksum state is %s" % self.is
             end
 
 
@@ -118,7 +118,7 @@ module Puppet
             # off an event if we detect a change
             def sync
                 if @is.nil?
-                    Puppet.err "@is is nil"
+                    err "@is is nil"
                 end
                 if self.updatesum
                     # set the @should value to the new @is value
@@ -136,7 +136,7 @@ module Puppet
                 result = false
                 state = Puppet::Storage.state(self)
                 unless state.include?(self.parent[:path])
-                    Puppet.debug "Initializing state hash for %s" %
+                    debug "Initializing state hash for %s" %
                         self.parent[:path]
 
                     state[self.parent[:path]] = Hash.new
@@ -146,12 +146,12 @@ module Puppet
                     unless defined? @should
                         raise "@should is not initialized for %s, even though we found a checksum" % self.parent[:path]
                     end
-                    Puppet.debug "Replacing checksum %s with %s" %
+                    debug "Replacing checksum %s with %s" %
                         [state[self.parent[:path]][@checktype],@is]
-                    Puppet.debug "@is: %s; @should: %s" % [@is,@should]
+                    debug "@is: %s; @should: %s" % [@is,@should]
                     result = true
                 else
-                    Puppet.debug "Creating checksum %s for %s of type %s" %
+                    debug "Creating checksum %s for %s of type %s" %
                         [self.is,self.parent[:path],@checktype]
                     result = false
                 end
@@ -177,7 +177,7 @@ module Puppet
                             if user.gid == ""
                                 raise "Could not retrieve uid for '%s'" % self.parent
                             end
-                            Puppet.debug "converting %s to integer '%d'" %
+                            debug "converting %s to integer '%d'" %
                                 [@should,user.uid]
                             @should = user.uid
                         rescue
@@ -186,18 +186,18 @@ module Puppet
                     end
                 end
 
-                Puppet.debug "chown state is %d" % self.is
+                debug "chown state is %d" % self.is
             end
 
             def sync
                 if @is == -1
                     self.parent.stat(true)
                     self.retrieve
-                    Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    debug "%s: after refresh, is '%s'" % [self.class.name,@is]
                 end
 
                 unless self.parent.stat
-                    Puppet.err "PFile '%s' does not exist; cannot chown" %
+                    err "PFile '%s' does not exist; cannot chown" %
                         self.parent[:path]
                 end
 
@@ -237,18 +237,18 @@ module Puppet
                 stat = self.parent.stat(true)
                 self.is = stat.mode & 007777
 
-                Puppet.debug "chmod state is %o" % self.is
+                debug "chmod state is %o" % self.is
             end
 
             def sync
                 if @is == -1
                     self.parent.stat(true)
                     self.retrieve
-                    Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    debug "%s: after refresh, is '%s'" % [self.class.name,@is]
                 end
 
                 unless self.parent.stat
-                    Puppet.err "PFile '%s' does not exist; cannot chmod" %
+                    err "PFile '%s' does not exist; cannot chmod" %
                         self.parent[:path]
                     return
                 end
@@ -281,7 +281,7 @@ module Puppet
                 unless defined? @is or @is == -1
                     self.parent.stat(true)
                     self.retrieve
-                    Puppet.debug "%s: should is '%s'" % [self.class.name,self.should]
+                    debug "%s: should is '%s'" % [self.class.name,self.should]
                 end
                 tmp = 0
                 if self.is == true
@@ -324,7 +324,7 @@ module Puppet
                             if gid == ""
                                 raise "Could not retrieve gid for %s" % self.parent
                             end
-                            Puppet.debug "converting %s to integer %d" %
+                            debug "converting %s to integer %d" %
                                 [self.should,gid]
                             self.should = gid
                         rescue
@@ -333,19 +333,19 @@ module Puppet
                         end
                     end
                 end
-                Puppet.debug "chgrp state is %d" % self.is
+                debug "chgrp state is %d" % self.is
             end
 
             def sync
-                Puppet.debug "setting chgrp state to %s" % self.should
+                debug "setting chgrp state to %s" % self.should
                 if @is == -1
                     self.parent.stat(true)
                     self.retrieve
-                    Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    debug "%s: after refresh, is '%s'" % [self.class.name,@is]
                 end
 
                 unless self.parent.stat
-                    Puppet.err "PFile '%s' does not exist; cannot chgrp" %
+                    err "PFile '%s' does not exist; cannot chgrp" %
                         self.parent[:path]
                     return
                 end
@@ -385,7 +385,7 @@ module Puppet
             # a wrapper method to make sure the file exists before doing anything
             def retrieve
                 unless stat = self.stat(true)
-                    Puppet.debug "PFile %s does not exist" % self[:path]
+                    debug "PFile %s does not exist" % self[:path]
                     @states.each { |name,state|
                         state.is = -1
                     }
@@ -399,7 +399,7 @@ module Puppet
                     begin
                         @stat = File.stat(self[:path])
                     rescue => error
-                        Puppet.debug "Failed to stat %s: %s" %
+                        debug "Failed to stat %s: %s" %
                             [self[:path],error]
                         @stat = nil
                     end
@@ -456,7 +456,7 @@ module Puppet
                                     child[var] = value
                                 }
                             else # create it anew
-                                #Puppet.notice "Creating new file with args %s" %
+                                #notice "Creating new file with args %s" %
                                 #    arghash.inspect
                                 child = self.class.new(arghash)
                             end

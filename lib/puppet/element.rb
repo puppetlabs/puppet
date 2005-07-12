@@ -11,6 +11,7 @@ require 'puppet'
 # very little functionality; basically just defines the interface
 # and provides a few simple across-the-board functions like 'noop'
 class Puppet::Element
+    include Puppet
     attr_writer :noop
 
     #---------------------------------------------------------------

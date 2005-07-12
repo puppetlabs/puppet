@@ -18,7 +18,7 @@ module Puppet
 
             def create
                 begin
-                    Puppet.debug("Creating symlink '%s' to '%s'" %
+                    debug("Creating symlink '%s' to '%s'" %
                         [self.parent[:path],self.should])
                     unless File.symlink(self.should,self.parent[:path])
                         raise TypeError.new("Could not create symlink '%s'" %
@@ -32,7 +32,7 @@ module Puppet
 
             def remove
                 if FileTest.symlink?(self.parent[:path])
-                    Puppet.debug("Removing symlink '%s'" % self.parent[:path])
+                    debug("Removing symlink '%s'" % self.parent[:path])
                     begin
                         File.unlink(self.parent[:path])
                     rescue
@@ -43,7 +43,7 @@ module Puppet
                     raise TypeError.new("Cannot remove normal file '%s'" %
                         self.parent[:path])
                 else
-                    Puppet.debug("Symlink '%s' does not exist" %
+                    debug("Symlink '%s' does not exist" %
                         self.parent[:path])
                 end
             end
@@ -53,7 +53,7 @@ module Puppet
 
                 if FileTest.symlink?(self.parent[:path])
                     self.is = File.readlink(self.parent[:path])
-                    Puppet.debug("link value is '%s'" % self.is)
+                    debug("link value is '%s'" % self.is)
                     return
                 else
                     self.is = nil

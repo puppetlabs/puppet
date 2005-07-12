@@ -27,11 +27,11 @@ module Puppet
             @nil = nil
             @url = hash[:Server]
             if hash.include?(:Listen) and hash[:Listen] == false
-                Puppet.debug "We're a local client"
+                debug "We're a local client"
                 @localonly = true
                 @driver = @url
             else
-                Puppet.debug "We're a networked client"
+                debug "We're a networked client"
                 @localonly = false
                 @driver = SOAP::RPC::Driver.new(@url, 'urn:puppet-server')
                 @driver.add_method("getconfig", "name")
@@ -39,7 +39,7 @@ module Puppet
             unless @localonly
                 hash.delete(:Server)
 
-                Puppet.debug "Server is %s" % @url
+                debug "Server is %s" % @url
 
                 hash[:BindAddress] ||= "0.0.0.0"
                 hash[:Port] ||= 17444
@@ -51,9 +51,9 @@ module Puppet
         end
 
         def getconfig
-            Puppet.debug "server is %s" % @url
+            debug "server is %s" % @url
             #client.loadproperty('files/sslclient.properties')
-            Puppet.debug("getting config")
+            debug("getting config")
             objects = nil
             if @localonly
                 objects = @driver.getconfig(self)
@@ -68,7 +68,7 @@ module Puppet
         # for now, just descend into the tree and perform and necessary
         # manipulations
         def config(tree)
-            Puppet.debug("Calling config")
+            debug("Calling config")
 
             # XXX this is kind of a problem; if the user changes the state file
             # after this, then we have to reload the file and everything...
@@ -99,11 +99,11 @@ module Puppet
         end
 
         def callfunc(name,args)
-            Puppet.debug("Calling callfunc on %s" % name)
+            debug("Calling callfunc on %s" % name)
             if function = Puppet::Function[name]
-                #Puppet.debug("calling function %s" % function)
+                #debug("calling function %s" % function)
                 value = function.call(args)
-                #Puppet.debug("from %s got %s" % [name,value])
+                #debug("from %s got %s" % [name,value])
                 return value
             else
                 raise "Function '%s' not found" % name

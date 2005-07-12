@@ -63,7 +63,7 @@ module Puppet
             def sync
                 olddir = nil
                 unless self.parent[:cwd].nil?
-                    Puppet.debug "Resetting cwd to %s" % self.parent[:cwd]
+                    debug "Resetting cwd to %s" % self.parent[:cwd]
                     olddir = Dir.getwd
                     begin
                         Dir.chdir(self.parent[:cwd])
@@ -81,7 +81,7 @@ module Puppet
 
                 loglevel = :info
                 if status.exitstatus.to_s != self.should.to_s
-                    Puppet.err("%s returned %s" %
+                    err("%s returned %s" %
                         [self.parent[:command],status.exitstatus])
 
                     # if we've had a failure, up the log level
@@ -100,7 +100,7 @@ module Puppet
                     begin
                         Dir.chdir(olddir)
                     rescue => detail
-                        Puppet.err("Could not reset cwd to %s: %s" %
+                        err("Could not reset cwd to %s: %s" %
                             [olddir,detail])
                     end
                 end
@@ -141,7 +141,7 @@ module Puppet
                         hash[:returns] = hash[:returns].to_s
                     end
                 else
-                    Puppet.debug("setting return to 0")
+                    debug("setting return to 0")
                     hash[:returns] = "0"
                 end
 

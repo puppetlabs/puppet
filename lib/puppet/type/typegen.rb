@@ -61,7 +61,7 @@ class TypeGenerator < Puppet::Type
 
     #---------------------------------------------------------------
     def TypeGenerator.namevar=(namevar)
-        Puppet.debug "Setting namevar for %s to %s" % [self,namevar]
+        debug "Setting namevar for %s to %s" % [self,namevar]
         unless namevar.is_a? Symbol
             namevar = namevar.intern
         end
@@ -116,10 +116,10 @@ class TypeGenerator < Puppet::Type
         arghash.each { |option,value|
             method = option.id2name + "="
             if klass.respond_to?(method)
-                #Puppet.debug "Setting %s on %s to '%s'" % [option,klass,arghash[option]]
+                #debug "Setting %s on %s to '%s'" % [option,klass,arghash[option]]
                 klass.send(method,arghash[option])
             else
-                Puppet.debug "%s does not respond to %s" % [klass,method]
+                debug "%s does not respond to %s" % [klass,method]
             end
         }
 

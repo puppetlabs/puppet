@@ -41,10 +41,10 @@ class State < Puppet::Element
     # if we're not in sync, return a statechange capable of putting us
     # in sync
     def evaluate
-        Puppet.debug "evaluating %s" % self
+        debug "evaluating %s" % self
         self.retrieve
         if self.insync?
-            Puppet.debug "%s is in sync" % self
+            debug "%s is in sync" % self
             return nil
         else
             return Puppet::StateChange.new(self)
@@ -63,7 +63,7 @@ class State < Puppet::Element
     # we aren't actually comparing the states themselves, we're only
     # comparing the "should" value with the "is" value
     def insync?
-        Puppet.debug "%s value is '%s', should be '%s'" %
+        debug "%s value is '%s', should be '%s'" %
             [self,self.is.inspect,self.should.inspect]
         self.is == self.should
     end
@@ -93,7 +93,7 @@ class State < Puppet::Element
             @noop = false
         end
         tmp = @noop || self.parent.noop || Puppet[:noop] || false
-        Puppet.debug "noop is %s" % tmp
+        debug "noop is %s" % tmp
         return tmp
     end
     #---------------------------------------------------------------

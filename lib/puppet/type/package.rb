@@ -15,7 +15,7 @@ module Puppet
                 unless @parent.class.listed
                     @parent.class.getpkglist
                 end
-                Puppet.debug "package install state is %s" % self.is
+                debug "package install state is %s" % self.is
             end
 
             def sync
@@ -72,7 +72,7 @@ module Puppet
                     array = [array]
                 end
                 @@types = array
-                Puppet.debug "Types are %s" % array.join(" ")
+                debug "Types are %s" % array.join(" ")
             end
 
             def Package.getpkglist
@@ -111,17 +111,17 @@ module Puppet
                 if object = Package[name]
                     states = {}
                     object.states.each { |state|
-                        Puppet.debug "Adding %s" % state.name.inspect
+                        debug "Adding %s" % state.name.inspect
                         states[state.name] = state
                     }
                     hash.each { |var,value|
                         if states.include?(var)
-                            Puppet.debug "%s is a set state" % var.inspect
+                            debug "%s is a set state" % var.inspect
                             states[var].is = value
                         else
-                            Puppet.debug "%s is not a set state" % var.inspect
+                            debug "%s is not a set state" % var.inspect
                             if object[var] and object[var] != value
-                                Puppet.warning "Overriding %s => %s on %s with %s" %
+                                warning "Overriding %s => %s on %s with %s" %
                                     [var,object[var],name,value]
                             end
 
@@ -129,12 +129,12 @@ module Puppet
 
                             # swap the values if we're a state
                             if states.include?(var)
-                                Puppet.debug "Swapping %s because it's a state" % var
+                                debug "Swapping %s because it's a state" % var
                                 states[var].is = value
                                 states[var].should = nil
                             else
-                                Puppet.debug "%s is not a state" % var.inspect
-                                Puppet.debug "States are %s" % states.keys.collect { |st|
+                                debug "%s is not a state" % var.inspect
+                                debug "States are %s" % states.keys.collect { |st|
                                     st.inspect
                                 }.join(" ")
                             end
@@ -166,8 +166,8 @@ module Puppet
             if @@types.include?(name)
                 return @@types[name]
             else
-                Puppet.warning name.inspect
-                Puppet.warning @@types.keys.collect { |key|
+                warning name.inspect
+                warning @@types.keys.collect { |key|
                     key.inspect
                 }.join(" ")
                 return nil

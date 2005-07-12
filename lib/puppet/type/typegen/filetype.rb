@@ -140,14 +140,14 @@ class Puppet::Type::FileType < Puppet::Type::TypeGenerator
     # so i'm sticking with 'equals' until those make sense
     def ==(other)
         unless self.children.length == other.children.length
-            Puppet.debug("file has %s records instead of %s" %
+            debug("file has %s records instead of %s" %
                 [self.children.length, other.children.length])
             return self.children.length == other.children.length
         end
         equal = true
         self.zip(other.children) { |schild,ochild|
             unless schild == ochild
-                Puppet.debug("%s has changed in %s" %
+                debug("%s has changed in %s" %
                     [schild.name,self.name])
                 equal = false
                 break
@@ -162,7 +162,7 @@ class Puppet::Type::FileType < Puppet::Type::TypeGenerator
     # create a new record with a block
     def add(type,&block)
         obj = self.class.records[type].new(self,&block)
-        Puppet.debug("adding %s" % obj.name)
+        debug("adding %s" % obj.name)
         @childary.push(obj)
         @childhash[obj.name] = obj
 
@@ -208,9 +208,9 @@ class Puppet::Type::FileType < Puppet::Type::TypeGenerator
             self.class.newtype(hash)
             return
         end
-        Puppet.debug "Creating new '%s' file with path '%s' and name '%s'" %
+        debug "Creating new '%s' file with path '%s' and name '%s'" %
             [self.class.name,hash["path"],hash[:name]]
-        Puppet.debug hash.inspect
+        debug hash.inspect
         @file = hash["path"]
 
         @childary = []
@@ -261,15 +261,15 @@ class Puppet::Type::FileType < Puppet::Type::TypeGenerator
                 end
             }
             if childobj.nil?
-                Puppet.warning("%s: could not match %s" % [self.name,line])
-                #Puppet.warning("could not match %s" % line)
+                warning("%s: could not match %s" % [self.name,line])
+                #warning("could not match %s" % line)
                 next
             end
 
             begin
-                Puppet.debug("got child: %s(%s)" % [childobj.class,childobj.to_s])
+                debug("got child: %s(%s)" % [childobj.class,childobj.to_s])
             rescue NoMethodError
-                Puppet.warning "Failed: %s" % childobj
+                warning "Failed: %s" % childobj
             end
             childobj
         }.reject { |child|

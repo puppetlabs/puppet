@@ -121,7 +121,7 @@ class Puppet::Type::FileRecord < Puppet::Type::TypeGenerator
                 rescue RegexpError => detail
                     raise "Could not create splitregex from %s" % @splitchar
                 end
-                Puppet.debug("Created regexp %s" % @regex)
+                debug("Created regexp %s" % @regex)
             end
         elsif @regex.is_a?(String)
             begin
@@ -170,7 +170,7 @@ class Puppet::Type::FileRecord < Puppet::Type::TypeGenerator
         end
         @parameters.keys { |field|
             unless self[field] == other[field]
-                Puppet.debug("%s -> %s has changed" % [self.name, field])
+                debug("%s -> %s has changed" % [self.name, field])
                 return false
             end
         }

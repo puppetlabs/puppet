@@ -18,20 +18,7 @@ module Puppet
     # the hash that determines how our system behaves
     @@config = Hash.new(false)
 
-    @@config[:rrdgraph] = false
-    if Process.uid == 0
-        @@config[:puppetroot] = "/var/puppet"
-    else
-        @@config[:puppetroot] = File.expand_path("~/.puppet")
-    end
-    @@config[:rrddir] = File.join(@@config[:puppetroot],"rrd")
-    @@config[:logdir] = File.join(@@config[:puppetroot],"log")
-    @@config[:logfile] = File.join(@@config[:puppetroot],"log/puppet.log")
-    @@config[:statefile] = File.join(@@config[:puppetroot],"log/state")
-
     # handle the different message levels
-    # XXX this should be redone to treat log-levels like radio buttons
-    # pick one, and it and all above it will be logged
     Puppet::Log.levels.each { |level|
         define_method(level,proc { |args|
             Puppet::Log.create(level,args)
@@ -41,15 +28,11 @@ module Puppet
     #    @@config[level] = true unless level == :notice
     }
 
-    # set up our configuration
-	#def Puppet.init(args)
-	#	args.each {|p,v|
-	#		@@config[p] = v
-	#	}
-	#end
+    # I keep wanting to use Puppet.error
+    alias :error :err
 
 	# configuration parameter access and stuff
-	def Puppet.[](param)
+	def self.[](param)
         case param
         when :debug:
             if Puppet::Log.level == :debug
@@ -67,7 +50,7 @@ module Puppet
 	end
 
 	# configuration parameter access and stuff
-	def Puppet.[]=(param,value)
+	def self.[]=(param,value)
         case param
         when :debug:
             if value
@@ -84,7 +67,7 @@ module Puppet
         end
 	end
 
-    def Puppet.recmkdir(dir,mode = 0755)
+    def self.recmkdir(dir,mode = 0755)
         tmp = dir.sub(/^\//,'')
         path = [File::SEPARATOR]
         tmp.split(File::SEPARATOR).each { |dir|
@@ -99,6 +82,18 @@ module Puppet
             end
         }
     end
+
+    self[:rrdgraph] = false
+    if Process.uid == 0
+        self[:puppetroot] = "/var/puppet"
+    else
+        self[:puppetroot] = File.expand_path("~/.puppet")
+    end
+
+    self[:rrddir] = File.join(self[:puppetroot],"rrd")
+    self[:logdir] = File.join(self[:puppetroot],"log")
+    self[:logfile] = File.join(self[:puppetroot],"log/puppet.log")
+    self[:statefile] = File.join(self[:puppetroot],"log/state")
 end
 
 require 'puppet/storage'
