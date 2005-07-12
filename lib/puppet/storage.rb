@@ -9,12 +9,12 @@ module Puppet
 			self.class.load
 		end
 
-        def Storage.clear
+        def self.clear
             @@state = nil
             Storage.init
         end
 
-        def Storage.init
+        def self.init
             Puppet.debug "Initializing Storage"
             @@state = Hash.new { |hash,key|
                 hash[key] = Hash.new(nil)
@@ -24,7 +24,7 @@ module Puppet
 
         self.init
 
-		def Storage.load
+		def self.load
             if Puppet[:statefile].nil?
                 raise "Somehow the statefile is nil"
             end
@@ -51,7 +51,7 @@ module Puppet
             Puppet.debug "Loaded state is %s" % @@state.inspect
 		end
 
-		def Storage.state(myclass)
+		def self.state(myclass)
             unless myclass.is_a? Class
                 myclass = myclass.class
             end
@@ -59,7 +59,7 @@ module Puppet
             return result
 		end
 
-		def Storage.store
+		def self.store
             unless FileTest.directory?(File.dirname(Puppet[:statefile]))
                 begin
                     Puppet.recmkdir(Puppet[:statefile])

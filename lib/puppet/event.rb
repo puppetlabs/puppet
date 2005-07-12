@@ -11,9 +11,11 @@ module Puppet
     # subscriptions getting triggered, and then they get cleared
     # eventually, these will be passed on to some central event system
 	class Event
+        include Puppet
         # subscriptions are permanent associations determining how different
         # objects react to an event
         class Subscription
+            include Puppet
             attr_accessor :source, :event, :target, :method
 
             def initialize(hash)
@@ -24,7 +26,7 @@ module Puppet
                     # this is probably wicked-slow
                     self.send(method.to_s + "=",value)
                 }
-                Puppet.debug "New Subscription: '%s' => '%s'" %
+                debug "New Subscription: '%s' => '%s'" %
                     [@source,@event]
             end
 
@@ -38,22 +40,22 @@ module Puppet
                 # to the "old" object rather than "new"
                 # but we're pretty far from that being a problem
                 if transaction.triggercount(self) > 0
-                    Puppet.debug "%s has already run" % self
+                    debug "%s has already run" % self
                 else
-                    Puppet.debug "'%s' matched '%s'; triggering '%s' on '%s'" %
+                    debug "'%s' matched '%s'; triggering '%s' on '%s'" %
                         [@source,@event,@method,@target]
                     begin
                         if @target.respond_to?(@method)
                             @target.send(@method)
                         else
-                            Puppet.debug "'%s' of type '%s' does not respond to '%s'" %
+                            debug "'%s' of type '%s' does not respond to '%s'" %
                                 [@target,@target.class,@method.inspect]
                         end
                     rescue => detail
                         # um, what the heck do i do when an object fails to refresh?
                         # shouldn't that result in the transaction rolling back?
                         # XXX yeah, it should
-                        Puppet.err "'%s' failed to %s: '%s'" %
+                        err "'%s' failed to %s: '%s'" %
                             [@target,@method,detail]
                         raise
                         #raise "We need to roll '%s' transaction back" %
@@ -70,17 +72,17 @@ module Puppet
 
         @@subscriptions = []
 
-        def Event.process
-            Puppet.debug "Processing events"
+        def self.process
+            debug "Processing events"
             @@events.each { |event|
                 @@subscriptions.find_all { |sub|
-                    #Puppet.debug "Sub source: '%s'; event object: '%s'" %
+                    #debug "Sub source: '%s'; event object: '%s'" %
                     #    [sub.source.inspect,event.object.inspect]
                     sub.source == event.object and
                         (sub.event == event.event or
                          sub.event == :ALL_EVENTS)
                 }.each { |sub|
-                    Puppet.debug "Found subscription to %s" % event
+                    debug "Found subscription to %s" % event
                     sub.trigger(event.transaction)
                 }
             }
@@ -88,7 +90,7 @@ module Puppet
             @@events.clear
         end
 
-        def Event.subscribe(hash)
+        def self.subscribe(hash)
             if hash[:event] == '*'
                 hash[:event] = :ALL_EVENTS
             end
@@ -107,7 +109,7 @@ module Puppet
 			@object = args[:object]
 			@transaction = args[:transaction]
 
-            Puppet.info "%s: %s" %
+            info "%s: %s" %
                 [@object,@event]
 
             # initially, just stuff all instances into a central bucket
@@ -134,7 +136,7 @@ class Puppet::NotUsed
     # access to the actual hash, which is silly
     def action
         if not defined? @actions
-            Puppet.debug "defining action hash"
+            debug "defining action hash"
             @actions = Hash.new
         end
         @actions
@@ -148,9 +150,9 @@ class Puppet::NotUsed
     # event handling should probably be taking place in a central process,
     # but....
     def event(event,obj)
-        Puppet.debug "#{self} got event #{event} from #{obj}"
+        debug "#{self} got event #{event} from #{obj}"
         if @actions.key?(event)
-            Puppet.debug "calling it"
+            debug "calling it"
             @actions[event].call(self,obj,event)
         else
             p @actions
@@ -174,7 +176,7 @@ class Puppet::NotUsed
                 @notify[event] = Array.new
             end
             unless @notify[event].include?(obj)
-                Puppet.debug "pushing event '%s' for object '%s'" % [event,obj]
+                debug "pushing event '%s' for object '%s'" % [event,obj]
                 @notify[event].push(obj)
             end
         #	}
@@ -193,9 +195,9 @@ class Puppet::NotUsed
         if (@notify.include?(event) and (! @notify[event].empty?) )
             @notify[event].each { |obj| subscribers.push(obj) }
         end
-        Puppet.debug "triggering #{event}"
+        debug "triggering #{event}"
         subscribers.each { |obj|
-            Puppet.debug "calling #{event} on #{obj}"
+            debug "calling #{event} on #{obj}"
             obj.event(event,self)
         }
     end

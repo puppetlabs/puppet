@@ -5,7 +5,7 @@
 require 'singleton'
 require 'puppet/log'
 
-# XXX see the bottom of the file for further inclusions
+# see the bottom of the file for further inclusions
 
 #------------------------------------------------------------
 # the top-level module
@@ -18,14 +18,12 @@ module Puppet
     # the hash that determines how our system behaves
     @@config = Hash.new(false)
 
-    # handle the different message levels
+    # define helper messages for each of the message levels
     Puppet::Log.levels.each { |level|
         define_method(level,proc { |args|
             Puppet::Log.create(level,args)
         })
         module_function level
-    #    # default to enabling all notice levels except debug
-    #    @@config[level] = true unless level == :notice
     }
 
     # I keep wanting to use Puppet.error
@@ -96,5 +94,5 @@ module Puppet
     self[:statefile] = File.join(self[:puppetroot],"log/state")
 end
 
-require 'puppet/storage'
 require 'puppet/type'
+require 'puppet/storage'

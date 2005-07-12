@@ -1,13 +1,5 @@
 # $Id$
 
-PINK="[0;31m"
-GREEN="[0;32m"
-YELLOW="[0;33m"
-SLATE="[0;34m"
-ORANGE="[0;35m"
-BLUE="[0;36m"
-RESET="[0m"
-
 require 'syslog'
 
 module Puppet
@@ -16,6 +8,14 @@ module Puppet
     # modeled after syslog messages
     # each level of message prints in a different color
 	class Log
+        PINK="[0;31m"
+        GREEN="[0;32m"
+        YELLOW="[0;33m"
+        SLATE="[0;34m"
+        ORANGE="[0;35m"
+        BLUE="[0;36m"
+        RESET="[0m"
+
 		@@messages = Array.new
 
         @@levels = [:debug,:info,:notice,:warning,:err,:alert,:emerg,:crit]
