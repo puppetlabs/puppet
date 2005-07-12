@@ -55,8 +55,8 @@ Component
         end
 
         def name
-            return self[:name]
-            #return "%s[%s]" % [self[:type],self[:name]]
+            #return self[:name]
+            return "%s[%s]" % [self[:type],self[:name]]
         end
 
         def push(*ary)
