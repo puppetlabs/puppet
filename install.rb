@@ -51,8 +51,8 @@ def glob(list)
 end
 
   # Set these values to what you want installed.
-bins  = %w{bin/puppeter}
-rdoc  = glob(%w{bin/puppeter lib/**/*.rb README ChangeLog Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
+bins  = glob(%w{bin/**/*})
+rdoc  = glob(%w{bin/**/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
 ri    = glob(%w(bin/**/*.rb lib/**/*.rb)).reject { |e| e=~ /\.(bat|cmd)$/ }
 libs  = glob(%w{lib/**/*.rb})
 tests = glob(%w{tests/**/*.rb})
@@ -154,7 +154,7 @@ end
 #
 def build_rdoc(files)
   r = RDoc::RDoc.new
-  r.document(["--main", "README", "--title", "Diff::LCS -- A Diff Algorithm",
+  r.document(["--main", "README", "--title", "Puppet -- Site Configuration Management",
               "--line-numbers"] + files)
 
 rescue RDoc::RDocError => e
@@ -165,11 +165,13 @@ end
 
 def build_ri(files)
   ri = RDoc::RDoc.new
-  ri.document(["--ri-site", "--merge"] + files)
+  #ri.document (["--ri-site", "--merge"] + files)
+  ri.document(["--ri-site"] + files)
 rescue RDoc::RDocError => e
   $stderr.puts e.message
 rescue Exception => e
   $stderr.puts "Couldn't build Ri documentation\n#{e.message}"
+  $stderr.puts "Continuing with install..."
 end
 
 def run_tests(test_list)
