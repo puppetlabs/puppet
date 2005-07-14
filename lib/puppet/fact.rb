@@ -19,7 +19,7 @@ module Puppet
             if fact.value.nil?
                 raise "Could not retrieve fact %s" % name
             end
-            debug("fact: got %s from %s for %s" % [fact.value,fact,name])
+            Puppet.debug("fact: got %s from %s for %s" % [fact.value,fact,name])
             return fact.value
         end
 
