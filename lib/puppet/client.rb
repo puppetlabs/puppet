@@ -28,11 +28,11 @@ module Puppet
             @nil = nil
             @url = hash[:Server]
             if hash.include?(:Listen) and hash[:Listen] == false
-                debug "We're a local client"
+                Puppet.debug "We're a local client"
                 @localonly = true
                 @driver = @url
             else
-                debug "We're a networked client"
+                Puppet.debug "We're a networked client"
                 @localonly = false
                 @driver = SOAP::RPC::Driver.new(@url, 'urn:puppet-server')
                 @driver.add_method("getconfig", "name")
@@ -40,7 +40,7 @@ module Puppet
             unless @localonly
                 hash.delete(:Server)
 
-                debug "Server is %s" % @url
+                Puppet.debug "Server is %s" % @url
 
                 hash[:BindAddress] ||= "0.0.0.0"
                 hash[:Port] ||= 17444
@@ -52,9 +52,9 @@ module Puppet
         end
 
         def getconfig
-            debug "server is %s" % @url
+            Puppet.debug "server is %s" % @url
             #client.loadproperty('files/sslclient.properties')
-            debug("getting config")
+            Puppet.debug("getting config")
             objects = nil
             if @localonly
                 objects = @driver.getconfig(self)
@@ -69,7 +69,7 @@ module Puppet
         # for now, just descend into the tree and perform and necessary
         # manipulations
         def config(tree)
-            debug("Calling config")
+            Puppet.debug("Calling config")
 
             # XXX this is kind of a problem; if the user changes the state file
             # after this, then we have to reload the file and everything...
@@ -100,7 +100,7 @@ module Puppet
         end
 
         def callfunc(name,args)
-            debug("Calling callfunc on %s" % name)
+            Puppet.debug("Calling callfunc on %s" % name)
             if function = Puppet::Function[name]
                 #debug("calling function %s" % function)
                 value = function.call(args)
