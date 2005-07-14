@@ -81,11 +81,15 @@ module Puppet
                     when "SunOS": @@types = ["sunpkg"]
                     when "Linux":
                         case Puppet::Fact["distro"]
+                            when "Gentoo": raise "No support for gentoo yet"
                             when "Debian": @@types = ["dpkg"]
                             when "RedHat": @@types = ["rpm"]
                             when "Fedora": @@types = ["rpm"]
                             else
-                                raise "No default type for " + Puppet::Fact["distro"]
+                                #raise "No default type for " + Puppet::Fact["distro"]
+                                Puppet.warning "Using rpm as default type for %s" %
+                                    Puppet::Fact["distro"]
+                                @@types = ["rpm"]
                         end
                     else
                         raise "No default type for " + Puppet::Fact["operatingsystem"]
