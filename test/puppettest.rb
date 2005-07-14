@@ -1,5 +1,6 @@
 # $Id$
 
+
 unless defined? PuppetTestSuite
     $:.unshift File.join(Dir.getwd, '../lib')
 
