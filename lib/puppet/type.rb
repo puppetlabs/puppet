@@ -182,10 +182,32 @@ class Type < Puppet::Element
     end
     #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    # set the statefile for storing our running state
-    def self.statefile(file)
-        Puppet[:statefile] = file
+    def Type.debug(value)
+        if value == "false" or value == false or value == 0 or value == "0"
+            Puppet[:debug] = false
+        else
+            #Puppet[:debug] = true
+            puts "Got %s for debug value" % value
+            if value == true
+                raise "Crap! got a true!"
+            end
+        end
+    end
+
+    def Type.noop(value)
+        if value == "false" or value == false
+            Puppet[:noop] = false
+        else
+            Puppet[:noop] = true
+        end
+    end
+
+    def Type.statefile(value)
+        if value =~ /^\//
+            Puppet[:statefile] = value
+        else
+            raise "Statefile %s must be fully qualified" % value
+        end
     end
     #---------------------------------------------------------------
     #---------------------------------------------------------------
@@ -849,42 +871,6 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     def metaschedule(schedule)
         @schedule = schedule
-    end
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
-    # methods that can get called directly by the language
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
-
-    def Type.debug(value)
-        if value == "false" or value == false or value == 0 or value == "0"
-            Puppet[:debug] = false
-        else
-            #Puppet[:debug] = true
-            puts "Got %s for debug value" % value
-            if value == true
-                raise "Crap! got a true!"
-            end
-        end
-    end
-
-    def Type.noop(value)
-        if value == "false" or value == false
-            Puppet[:noop] = false
-        else
-            Puppet[:noop] = true
-        end
-    end
-
-    def Type.statefile(value)
-        if value =~ /^\//
-            Puppet[:statefile] = value
-        else
-            raise "Statefile %s must be fully qualified" % value
-        end
     end
     #---------------------------------------------------------------
     #---------------------------------------------------------------
