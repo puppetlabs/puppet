@@ -85,7 +85,14 @@ module Puppet
                     name = name.intern
                 end
                 if type.allowedmethod(name)
-                    type.send(self.name,self.args)
+                    Puppet.debug "Sending %s->%s(%s)" %
+                        [type.name,self.name,self.args]
+                    begin
+                        type.send(self.name,self.args)
+                    rescue => detail
+                        raise "Failed to execute '%s.%s(%s)'" %
+                            [type,self.name,self.args]
+                    end
                 else
                     err("%s does not respond to %s" % [self.type,self.name])
                 end
@@ -122,7 +129,7 @@ module Puppet
                 raise "TransBuckets must have names"
             end
             unless defined? @type
-                debug "TransBucket '%s' has no type" % @name
+                Puppet.debug "TransBucket '%s' has no type" % @name
             end
             hash = {
                 :name => @name,
@@ -130,12 +137,12 @@ module Puppet
             }
             if defined? @parameters
                 @parameters.each { |param,value|
-                    debug "Defining %s on %s of type %s" %
+                    Puppet.debug "Defining %s on %s of type %s" %
                         [param,@name,@type]
                     hash[param] = value
                 }
             else
-                debug "%s has no parameters" % @name
+                Puppet.debug "%s has no parameters" % @name
             end
             container = Puppet::Component.new(hash)
             nametable = {}
@@ -163,7 +170,7 @@ module Puppet
                             # don't rename; this shouldn't be possible anyway
                             next if var == :name
 
-                            debug "Adding %s to %s" % [var,name]
+                            Puppet.debug "Adding %s to %s" % [var,name]
                             # override any existing values
                             object[var] = value
                         }
