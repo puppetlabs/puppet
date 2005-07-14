@@ -235,7 +235,7 @@ class Type < Puppet::Element
     # remove all type instances; this is mostly only useful for testing
     def self.allclear
         @@typeary.each { |subtype|
-            debug "Clearing %s of objects" % subtype
+            Puppet.debug "Clearing %s of objects" % subtype
             subtype.clear
         }
     end
@@ -310,7 +310,7 @@ class Type < Puppet::Element
     # set the parameters for a type; probably only used by FileRecord
     # objects
     def self.parameters=(params)
-        debug "setting parameters to [%s]" % params.join(" ")
+        Puppet.debug "setting parameters to [%s]" % params.join(" ")
         @parameters = params.collect { |param|
             if param.class == Symbol
                 param
@@ -387,7 +387,7 @@ class Type < Puppet::Element
             self.send(("meta" + mname.id2name),value)
         elsif stateklass = self.class.validstate?(mname) 
             if value.is_a?(Puppet::State)
-                debug "'%s' got handed a state for '%s'" % [self,mname]
+                Puppet.debug "'%s' got handed a state for '%s'" % [self,mname]
                 @states[mname] = value
             else
                 if @states.include?(mname)
@@ -716,12 +716,12 @@ class Type < Puppet::Element
 
         states.each { |state|
             unless state.insync?
-                debug("%s is not in sync" % state)
+                Puppet.debug("%s is not in sync" % state)
                 insync = false
             end
         }
 
-        debug("%s sync status is %s" % [self,insync])
+        Puppet.debug("%s sync status is %s" % [self,insync])
         return insync
     end
     #---------------------------------------------------------------
@@ -826,7 +826,7 @@ class Type < Puppet::Element
                 raise "Could not retrieve object '%s' of type '%s'" %
                     [name,type]
             end
-            debug("%s requires %s" % [self.name,object])
+            Puppet.debug("%s requires %s" % [self.name,object])
 
             # for now, we only support this one method, 'refresh'
             object.subscribe(
@@ -841,7 +841,7 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     def metaonerror(response)
-        debug("Would have called metaonerror")
+        Puppet.debug("Would have called metaonerror")
         @onerror = response
     end
     #---------------------------------------------------------------
@@ -860,10 +860,14 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     def Type.debug(value)
-        if value == "false" or value == false
+        if value == "false" or value == false or value == 0 or value == "0"
             Puppet[:debug] = false
         else
-            Puppet[:debug] = true
+            #Puppet[:debug] = true
+            puts "Got %s for debug value" % value
+            if value == true
+                raise "Crap! got a true!"
+            end
         end
     end
 
