@@ -855,6 +855,38 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     #---------------------------------------------------------------
+    # methods that can get called directly by the language
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    def Type.debug(value)
+        if value == "false" or value == false
+            Puppet[:debug] = false
+        else
+            Puppet[:debug] = true
+        end
+    end
+
+    def Type.noop(value)
+        if value == "false" or value == false
+            Puppet[:noop] = false
+        else
+            Puppet[:noop] = true
+        end
+    end
+
+    def Type.statefile(value)
+        if value =~ /^\//
+            Puppet[:statefile] = value
+        else
+            raise "Statefile %s must be fully qualified" % value
+        end
+    end
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
     # Documentation methods
     #---------------------------------------------------------------
     #---------------------------------------------------------------
