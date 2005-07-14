@@ -22,7 +22,9 @@ class TestPackagingType < Test::Unit::TestCase
             when "Debian": type = "dpkg"
             when "RedHat": type = "rpm"
             else
-                raise "No default type for " + Facter["distro"].to_s
+                #raise "No default type for " + Facter["distro"].to_s
+                Puppet.warning "Defaulting to 'rpm' for packaging"
+                type = "rpm"
             end
         else
             type = :invalid
