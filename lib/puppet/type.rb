@@ -84,7 +84,7 @@ class Type < Puppet::Element
         if hash.include?(key)
             hash[key]
         else
-            raise "Object type %s not found" % key
+            raise TypeError.new("Object type %s not found" % key)
         end
     }
 
@@ -364,6 +364,19 @@ class Type < Puppet::Element
             raise "Class %s has not defined parameters" % self
         end
         return @parameters.include?(name)
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def self.validarg?(name)
+        if name.is_a?(String)
+            name = name.intern
+        end
+        if self.validstate?(name) or self.validparameter?(name) or self.metaparam?(name)
+            return true
+        else
+            return false
+        end
     end
     #---------------------------------------------------------------
 
