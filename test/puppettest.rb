@@ -39,7 +39,23 @@ unless defined? PuppetTestSuite
         textdir = File.join($puppetbase,"examples","code")
         # only parse this one file now
         yield File.join(textdir,"head")
-        return
+#        files = Dir.entries(textdir).reject { |file|
+#            file =~ %r{\.swp}
+#        }.reject { |file|
+#            file =~ %r{\.disabled}
+#        }.collect { |file|
+#            File.join(textdir,file)
+#        }.find_all { |file|
+#            FileTest.file?(file)
+#        }.sort.each { |file|
+#            puts "Processing %s" % file
+#            yield file
+#        }
+    end
+
+    def failers
+        textdir = File.join($puppetbase,"examples","code", "failers")
+        # only parse this one file now
         files = Dir.entries(textdir).reject { |file|
             file =~ %r{\.swp}
         }.reject { |file|
@@ -49,7 +65,7 @@ unless defined? PuppetTestSuite
         }.find_all { |file|
             FileTest.file?(file)
         }.sort.each { |file|
-            puts "Processing %s" % file
+            Puppet.debug "Processing %s" % file
             yield file
         }
     end
