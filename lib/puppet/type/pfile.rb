@@ -117,7 +117,7 @@ module Puppet
             # off an event if we detect a change
             def sync
                 if @is.nil?
-                    err "@is is nil"
+                    Puppet.err "@is is nil"
                 end
                 if self.updatesum
                     # set the @should value to the new @is value
@@ -267,7 +267,7 @@ module Puppet
                 end
 
                 unless self.parent.stat
-                    err "PFile '%s' does not exist; cannot chown" %
+                    Puppet.err "PFile '%s' does not exist; cannot chown" %
                         self.parent[:path]
                 end
 
@@ -318,7 +318,7 @@ module Puppet
                 end
 
                 unless self.parent.stat
-                    err "PFile '%s' does not exist; cannot chmod" %
+                    Puppet.err "PFile '%s' does not exist; cannot chmod" %
                         self.parent[:path]
                     return
                 end
@@ -415,7 +415,7 @@ module Puppet
                 end
 
                 unless self.parent.stat
-                    err "PFile '%s' does not exist; cannot chgrp" %
+                    Puppet.err "PFile '%s' does not exist; cannot chgrp" %
                         self.parent[:path]
                     return
                 end

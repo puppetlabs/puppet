@@ -51,14 +51,7 @@ module Puppet
         def to_type
             retobj = nil
             if type = Puppet::Type.type(self.type)
-                begin
-                    # this will fail if the type already exists
-                    # which may or may not be a good thing...
-                    retobj = type.new(self)
-                rescue => detail
-                    err "Failed to create %s: %s" % [type.name,detail]
-                    return nil
-                end
+                retobj = type.new(self)
             else
                 raise "Could not find object type %s" % self.type
             end
@@ -162,6 +155,10 @@ module Puppet
                     # exists in our scope
                     # this assumes that type/name combinations are globally
                     # unique
+
+                    # XXX this still might be wrong, because it doesn't search
+                    # up scopes
+                    # either that, or it's redundant
                     name = [child[:name],child.type].join("--")
 
                     if nametable.include?(name)
@@ -176,7 +173,20 @@ module Puppet
                         }
                     else # the object does not exist yet in our scope
                         # now we have the object instantiated, in our scope
-                        object = child.to_type
+                        begin
+                            object = child.to_type
+                        rescue Puppet::Error => except
+                            Puppet.err "Failed to create %s: %s" %
+                                [child.type,except.message]
+                            if Puppet[:debug]
+                                puts except.stack
+                            end
+                            next
+                        rescue => except
+                            Puppet.err "Failed to create %s %s: %s" %
+                                [child.type,child.inspect,except.message]
+                            next
+                        end
                         nametable[name] = object
 
                         # this sets the order of the object

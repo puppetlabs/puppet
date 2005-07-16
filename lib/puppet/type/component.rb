@@ -63,7 +63,8 @@ Component
             ary.each { |child|
                 unless child.is_a?(Puppet::Element)
                     debug "Got object of type %s" % child.class
-                    raise "Containers can only contain Puppet::Elements"
+                    raise "Containers can only contain Puppet::Elements, not %s" %
+                        child.class
                 end
                 @children.push child
                 child.parent = self

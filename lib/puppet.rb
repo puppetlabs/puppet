@@ -15,6 +15,12 @@ require 'puppet/log'
 #
 # it's also a place to find top-level commands like 'debug'
 module Puppet
+    class Error < RuntimeError
+        attr_accessor :stack
+    end
+
+    class DevError < Error; end
+
     # the hash that determines how our system behaves
     @@config = Hash.new(false)
 
