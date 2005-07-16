@@ -101,7 +101,8 @@ module Puppet
             ]
 			@parameters = [
                 :name,
-                :pattern
+                :pattern,
+                :path
             ]
 
             @functions = [
@@ -114,12 +115,21 @@ module Puppet
             @searchpaths = Array.new
             @allowedmethods = [:setpath]
 
-            def Service.search(name)
+            def initialize(hash)
+                super
+
+                if hash[:path]
+                    self.setpath(hash[:path])
+                else
+                    raise "You must specify a search path for service %s" % self.name
+                end
+            end
+
+            def search(name)
                 @searchpaths.each { |path|
-                    # must specify that we want the top-level File, not Puppet::...::File
-                    fqname = ::File.join(path,name)
+                    fqname = File.join(path,name)
                     begin
-                        stat = ::File.stat(fqname)
+                        stat = File.stat(fqname)
                     rescue
                         # should probably rescue specific errors...
                         debug("Could not find %s in %s" % [name,path])
@@ -132,17 +142,13 @@ module Puppet
                 raise "Could not find init script for '%s'" % name
             end
 
-            def Service.searchpath
-                return @searchpaths
-            end
-
-            def Service.setpath(ary)
+            def setpath(ary)
                 # verify each of the paths exists
                 #ary.flatten!
                 @searchpaths = ary.find_all { |dir|
                     retvalue = false
                     begin
-                        retvalue = ::File.stat(dir).directory?
+                        retvalue = File.stat(dir).directory?
                     rescue => detail
                         debug("Directory %s does not exist: %s" % [dir,detail])
                         # just ignore it
@@ -178,7 +184,7 @@ module Puppet
                 if defined? @initscript
                     return @initscript
                 else
-                    @initscript = Service.search(self.name)
+                    @initscript = self.search(self.name)
                 end
             end
 

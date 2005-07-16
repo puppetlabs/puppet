@@ -23,10 +23,8 @@ class TestService < Test::Unit::TestCase
             unless Puppet::Type::Service.has_key?("sleeper")
                 Puppet::Type::Service.new(
                     :name => "sleeper",
+                    :path => File.join($puppetbase,"examples/root/etc/init.d"),
                     :running => 1
-                )
-                Puppet::Type::Service.setpath(
-                    File.join($puppetbase,"examples/root/etc/init.d")
                 )
             end
             @sleeper = Puppet::Type::Service["sleeper"]
