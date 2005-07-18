@@ -26,7 +26,7 @@ module Puppet
         def Client.facts
             facts = {}
             Facter.each { |name,fact|
-                facts[name] = fact
+                facts[name] = fact.downcase
             }
 
             facts
