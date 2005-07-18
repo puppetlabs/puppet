@@ -7,7 +7,8 @@
 require 'puppet'
 require 'puppet/function'
 require 'puppet/type'
-require 'puppet/fact'
+#require 'puppet/fact'
+require 'facter'
 require 'puppet/transaction'
 require 'puppet/transportable'
 require 'puppet/metric'
@@ -22,6 +23,15 @@ module Puppet
     #---------------------------------------------------------------
     class Client < SOAP::RPC::HTTPServer
         include Puppet
+        def Client.facts
+            facts = {}
+            Facter.each { |name,fact|
+                facts[name] = fact
+            }
+
+            facts
+        end
+
         def initialize(hash)
             # to whom do we connect?
             @server = nil
@@ -35,7 +45,7 @@ module Puppet
                 Puppet.debug "We're a networked client"
                 @localonly = false
                 @driver = SOAP::RPC::Driver.new(@url, 'urn:puppet-server')
-                @driver.add_method("getconfig", "name")
+                @driver.add_method("getconfig", "name", "facts")
             end
             unless @localonly
                 hash.delete(:Server)
@@ -56,10 +66,15 @@ module Puppet
             #client.loadproperty('files/sslclient.properties')
             Puppet.debug("getting config")
             objects = nil
+
+            facts = Client.facts
+            Puppet.info "Facts are %s" % facts.inspect
+            textfacts = Marshal::dump(facts)
+
             if @localonly
-                objects = @driver.getconfig(self)
+                objects = @driver.getconfig(self,facts)
             else
-                objects = @driver.getconfig(Puppet::Fact["hostname"])
+                objects = @driver.getconfig(facts["hostname"],textfacts)
             end
             self.config(objects)
         end

@@ -46,10 +46,8 @@ class TestTransactions < Test::Unit::TestCase
             unless Puppet::Type::Service.has_key?("sleeper")
                 Puppet::Type::Service.new(
                     :name => "sleeper",
+                    :path => File.join($puppetbase,"examples/root/etc/init.d"),
                     :check => [:running]
-                )
-                Puppet::Type::Service.setpath(
-                    File.join($puppetbase,"examples/root/etc/init.d")
                 )
             end
             return Puppet::Type::Service["sleeper"]

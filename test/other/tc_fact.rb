@@ -5,6 +5,7 @@ if __FILE__ == $0
 end
 
 require 'puppet/fact'
+require 'facter'
 require 'test/unit'
 
 # $Id$
@@ -23,6 +24,12 @@ class TestFacts < Test::Unit::TestCase
         assert_equal(
             "funtest",
             Puppet::Fact["funtest"]
+        )
+    end
+
+    def test_os
+        assert_equal(Facter["operatingsystem"].value,
+            Puppet::Fact["operatingsystem"]
         )
     end
 end

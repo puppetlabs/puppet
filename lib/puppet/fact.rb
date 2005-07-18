@@ -16,6 +16,7 @@ module Puppet
 	class Fact
         def Fact.[](name)
             fact = Facter[name]
+            Puppet.debug "Got fact of type %s" % fact.class
             if fact.value.nil?
                 raise "Could not retrieve fact %s" % name
             end

@@ -39,10 +39,8 @@ class TestBasic < Test::Unit::TestCase
         assert_nothing_raised() {
             @sleeper = Puppet::Type::Service.new(
                 :name => "sleeper",
+                :path => File.join($puppetbase,"examples/root/etc/init.d"),
                 :running => 1
-            )
-            Puppet::Type::Service.setpath(
-                File.join($puppetbase,"examples/root/etc/init.d")
             )
         }
         assert_nothing_raised() {

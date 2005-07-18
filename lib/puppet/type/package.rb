@@ -171,8 +171,8 @@ module Puppet
             if @@types.include?(name)
                 return @@types[name]
             else
-                warning name.inspect
-                warning @@types.keys.collect { |key|
+                Puppet.warning name.inspect
+                Puppet.warning @@types.keys.collect { |key|
                     key.inspect
                 }.join(" ")
                 return nil
