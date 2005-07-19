@@ -419,7 +419,7 @@ class Type < Puppet::Element
 
         if Puppet::Type.metaparam?(mname)
             # call the metaparam method 
-            self.send(("meta" + mname.id2name),value)
+            self.send(("meta" + mname.id2name + "="),value)
         elsif stateklass = self.class.validstate?(mname) 
             if value.is_a?(Puppet::State)
                 Puppet.debug "'%s' got handed a state for '%s'" % [self,mname]
@@ -439,7 +439,14 @@ class Type < Puppet::Element
                 end
             end
         elsif self.class.validparameter?(mname)
-            @parameters[mname] = value
+            # if they've got a method to handle the parameter, then do it that way
+            method = "param" + mname.id2name + "="
+            if self.respond_to?(method)
+                self.send(method,value)
+            else
+                # else just set it
+                @parameters[mname] = value
+            end
         else
             raise "Invalid parameter %s" % [mname]
         end
@@ -786,7 +793,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     # this just marks states that we definitely want to retrieve values
     # on
-    def metacheck(args)
+    def metacheck=(args)
         unless args.is_a?(Array)
             args = [args]
         end
@@ -850,7 +857,7 @@ class Type < Puppet::Element
     # for each object we require, subscribe to all events that it
     # generates
     # we might reduce the level of subscription eventually, but for now...
-    def metarequire(requires)
+    def metarequire=(requires)
         unless requires.is_a?(Array)
             requires = [requires]
         end
@@ -882,14 +889,14 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def metaonerror(response)
+    def metaonerror=(response)
         Puppet.debug("Would have called metaonerror")
         @onerror = response
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def metaschedule(schedule)
+    def metaschedule=(schedule)
         @schedule = schedule
     end
     #---------------------------------------------------------------
