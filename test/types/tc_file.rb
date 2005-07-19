@@ -353,6 +353,7 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised {
             comp.sync
         }
+        assert(FileTest.exists?(topath))
         from = File.open(frompath) { |o| o.read }
         to = File.open(topath) { |o| o.read }
         assert_equal(from,to)
@@ -362,7 +363,7 @@ class TestFile < Test::Unit::TestCase
     end
 
     def test_xcomplicatedlocalsource
-        path = "/tmp/filesourcetest"
+        path = "/tmp/complsourcetest"
         @@tmpfiles.push path
         system("mkdir -p #{path}")
         fromdir = File.join(path,"fromdir")

@@ -242,9 +242,11 @@ class Type < Puppet::Element
         end
 
         if @objects.has_key?(newobj.name)
-            raise "Object '%s' of type '%s' already exists with id '%s' vs. '%s'" %
+            raise Puppet::Error.new(
+                "Object '%s' of type '%s' already exists with id '%s' vs. '%s'" %
                 [newobj.name,newobj.class.name,
                     @objects[newobj.name].object_id,newobj.object_id]
+            )
         else
             #debug("adding %s of type %s to class list" %
             #    [object.name,object.class])
@@ -475,12 +477,19 @@ class Type < Puppet::Element
         # we want to return the states in the order that each type
         # specifies it, because it may (as in the case of File#create)
         # be important
-        @children.each { |child|
-            yield child
-        }
+        if self.class.depthfirst?
+            @children.each { |child|
+                yield child
+            }
+        end
         self.eachstate { |state|
             yield state
         }
+        unless self.class.depthfirst?
+            @children.each { |child|
+                yield child
+            }
+        end
     end
     #---------------------------------------------------------------
 
@@ -517,19 +526,30 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     # return the value of a parameter
     def parameter(name)
+        unless name.is_a? Symbol
+            name = name.intern
+        end
         return @parameters[name]
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def push(*child)
-        @children.push(*child)
+    def push(*childs)
+        unless defined? @children
+            @children = []
+        end
+        childs.each { |child|
+            @children.push(child)
+        }
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
     # return an actual type by name; to return the value, use 'inst[name]'
     def state(name)
+        unless name.is_a? Symbol
+            name = name.intern
+        end
         return @states[name]
     end
     #---------------------------------------------------------------
@@ -608,6 +628,7 @@ class Type < Puppet::Element
 
         self.nameclean(hash)
 
+        # this should probably do all states and then all parameters, right?
         hash.each { |param,value|
             #debug("adding param '%s' with value '%s'" %
             #    [param,value])
@@ -651,6 +672,8 @@ class Type < Puppet::Element
             raise TypeError.new("A name must be provided to %s at initialization time" %
                 self.class)
         end
+
+        #return hash
     end
     #---------------------------------------------------------------
 
@@ -708,6 +731,18 @@ class Type < Puppet::Element
     public
 
     #---------------------------------------------------------------
+    # this is a retarded hack method to get around the difference between
+    # component children and file children
+    def self.depthfirst?
+        if defined? @depthfirst
+            return @depthfirst
+        else
+            return true
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # this method is responsible for collecting state changes
     # we always descend into the children before we evaluate our current
     # states
@@ -725,9 +760,17 @@ class Type < Puppet::Element
         #end
         @evalcount += 1
 
-        changes = @children.collect { |child|
-            child.evaluate
-        }
+        #changes = @children.collect { |child|
+        #    child.evaluate
+        #}
+
+        changes = []
+        # collect all of the changes from children and states
+        if self.class.depthfirst?
+            changes << self.collect { |child|
+                child.evaluate
+            }
+        end
 
         # this only operates on states, not states + children
         self.retrieve
@@ -740,6 +783,12 @@ class Type < Puppet::Element
                 ! state.insync?
             }.collect { |state|
                 Puppet::StateChange.new(state)
+            }
+        end
+
+        unless self.class.depthfirst?
+            changes << self.collect { |child|
+                child.evaluate
             }
         end
         # collect changes and return them
@@ -791,15 +840,15 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # this just marks states that we definitely want to retrieve values
-    # on
+    # This just marks states that we definitely want to retrieve values
+    # on.  There is currently no way to uncheck a parameter.
     def metacheck=(args)
         unless args.is_a?(Array)
             args = [args]
         end
 
-        # these are states that we might not have values for but we want to retrieve
-        # values for anyway
+        # these are states that we might not have 'should'
+        # values for but we want to retrieve 'is' values for anyway
         args.each { |state|
             unless state.is_a?(Symbol)
                 state = state.intern
