@@ -144,20 +144,8 @@ module Puppet
 
             def setpath(ary)
                 # verify each of the paths exists
-                #ary.flatten!
                 @searchpaths = ary.find_all { |dir|
-                    retvalue = false
-                    begin
-                        retvalue = File.stat(dir).directory?
-                    rescue => detail
-                        debug("Directory %s does not exist: %s" % [dir,detail])
-                        # just ignore it
-                    end
-                    # disallow relative paths
-                    #if dir !~ /^\//
-                    #    retvalue = false
-                    #end
-                    retvalue
+                    FileTest.directory?(dir)
                 }
             end
 

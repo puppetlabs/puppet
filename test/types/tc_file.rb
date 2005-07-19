@@ -14,6 +14,7 @@ class TestFile < Test::Unit::TestCase
     # this is complicated, because we store references to the created
     # objects in a central store
     def setup
+        @@tmpfiles = []
         @file = nil
         @path = File.join($puppetbase,"examples/root/etc/configfile")
         Puppet[:loglevel] = :debug if __FILE__ == $0
@@ -27,6 +28,9 @@ class TestFile < Test::Unit::TestCase
 
     def teardown
         Puppet::Type.allclear
+        @@tmpfiles.each { |file|
+            system("rm -rf %s" % file)
+        }
         system("rm -f %s" % Puppet[:statefile])
     end
 
@@ -110,9 +114,32 @@ class TestFile < Test::Unit::TestCase
                 file.evaluate
             }
             assert(file.insync?())
+            assert(FileTest.file?(path))
+            @@tmpfiles.push path
+        }
+    end
+
+    def test_create_dir
+        %w{a b c d}.collect { |name| "/tmp/createst%s" % name }.each { |path|
+            file = nil
             assert_nothing_raised() {
-                system("rm -f %s" % path)
+                file = Puppet::Type::PFile.new(
+                    :name => path,
+                    :create => "directory"
+                )
             }
+            assert_nothing_raised() {
+                file.evaluate
+            }
+            assert_nothing_raised() {
+                file.sync
+            }
+            assert_nothing_raised() {
+                file.evaluate
+            }
+            assert(file.insync?())
+            assert(FileTest.directory?(path))
+            @@tmpfiles.push path
         }
     end
 
@@ -167,15 +194,21 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised() {
             @file.delete(:link)
         }
-        system("rm -f %s" % link)
+        @@tmpfiles.push link
     end
 
     def test_checksums
         types = %w{md5 md5lite timestamp ctime}
-        files = %w{/tmp/sumtest}
-        assert_nothing_raised() {
-            Puppet::Storage.init
-        #    Puppet::Storage.load
+        exists = "/tmp/sumtest-exists"
+        nonexists = "/tmp/sumtest-nonexists"
+
+        # try it both with files that exist and ones that don't
+        files = [exists, nonexists]
+        initstorage
+        File.open(exists,"w") { |of|
+            10.times { 
+                of.puts rand(100)
+            }
         }
         types.each { |type|
             files.each { |path|
@@ -184,17 +217,11 @@ class TestFile < Test::Unit::TestCase
                 end
                 file = nil
                 events = nil
-                assert_nothing_raised() {
-                    File.open(path,"w") { |of|
-                        10.times { 
-                            of.puts rand(100)
-                        }
-                    }
-                }
                 # okay, we now know that we have a file...
                 assert_nothing_raised() {
                     file = Puppet::Type::PFile.new(
                         :name => path,
+                        :create => true,
                         :checksum => type
                     )
                 }
@@ -238,9 +265,7 @@ class TestFile < Test::Unit::TestCase
                 assert_nothing_raised() {
                     Puppet::Type::PFile.clear
                 }
-                assert_nothing_raised() {
-                    system("rm -f %s" % path)
-                }
+                @@tmpfiles.push path
             }
         }
         # clean up so i don't screw up other tests
@@ -294,6 +319,87 @@ class TestFile < Test::Unit::TestCase
             of.puts "goodness"
         }
         cyclefile(path)
-        system("rm -rf #{path}")
+        @@tmpfiles.push path
+    end
+
+    def test_simplelocalsource
+        path = "/tmp/filesourcetest"
+        system("mkdir -p #{path}")
+        frompath = File.join(path,"source")
+        topath = File.join(path,"dest")
+        fromfile = nil
+        tofile = nil
+        trans = nil
+
+        File.open(frompath, File::WRONLY|File::CREAT|File::APPEND) { |of|
+            of.puts "yayness"
+        }
+        assert_nothing_raised {
+            tofile = Puppet::Type::PFile.new(
+                :name => topath,
+                :source => frompath
+            )
+        }
+        comp = Puppet::Component.new(
+            :name => "component"
+        )
+        comp.push tofile
+        assert_nothing_raised {
+            trans = comp.evaluate
+        }
+        assert_nothing_raised {
+            trans.evaluate
+        }
+        assert_nothing_raised {
+            comp.sync
+        }
+        from = File.open(frompath) { |o| o.read }
+        to = File.open(topath) { |o| o.read }
+        assert_equal(from,to)
+        clearstorage
+        Puppet::Type.allclear
+        @@tmpfiles.push path
+    end
+
+    def test_xcomplicatedlocalsource
+        path = "/tmp/filesourcetest"
+        @@tmpfiles.push path
+        system("mkdir -p #{path}")
+        fromdir = File.join(path,"fromdir")
+        frompath = File.join(fromdir,"source")
+        todir = File.join(path,"todir")
+        topath = File.join(todir,"source")
+        fromfile = nil
+        tofile = nil
+        trans = nil
+
+        Dir.mkdir(fromdir)
+        File.open(frompath, File::WRONLY|File::CREAT|File::APPEND) { |of|
+            of.puts "yayness"
+        }
+
+        assert_nothing_raised {
+            tofile = Puppet::Type::PFile.new(
+                :name => todir,
+                :recurse => true,
+                :source => fromdir
+            )
+        }
+        comp = Puppet::Component.new(
+            :name => "component"
+        )
+        comp.push tofile
+        assert_nothing_raised {
+            trans = comp.evaluate
+        }
+        assert_nothing_raised {
+            trans.evaluate
+        }
+        assert(FileTest.file?(topath))
+        from = File.open(frompath) { |o| o.read }
+        to = File.open(topath) { |o| o.read }
+        assert_equal(from,to)
+        clearstorage
+        Puppet::Type.allclear
     end
 end

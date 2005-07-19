@@ -26,7 +26,7 @@ module Puppet
                     # this is probably wicked-slow
                     self.send(method.to_s + "=",value)
                 }
-                debug "New Subscription: '%s' => '%s'" %
+                Puppet.debug "New Subscription: '%s' => '%s'" %
                     [@source,@event]
             end
 
@@ -39,23 +39,24 @@ module Puppet
                 # the last, a later-refreshed object could somehow be connected
                 # to the "old" object rather than "new"
                 # but we're pretty far from that being a problem
+                event = nil
                 if transaction.triggercount(self) > 0
-                    debug "%s has already run" % self
+                    Puppet.debug "%s has already run" % self
                 else
-                    debug "'%s' matched '%s'; triggering '%s' on '%s'" %
+                    Puppet.debug "'%s' matched '%s'; triggering '%s' on '%s'" %
                         [@source,@event,@method,@target]
                     begin
                         if @target.respond_to?(@method)
-                            @target.send(@method)
+                            event = @target.send(@method)
                         else
-                            debug "'%s' of type '%s' does not respond to '%s'" %
+                            Puppet.debug "'%s' of type '%s' does not respond to '%s'" %
                                 [@target,@target.class,@method.inspect]
                         end
                     rescue => detail
                         # um, what the heck do i do when an object fails to refresh?
                         # shouldn't that result in the transaction rolling back?
                         # XXX yeah, it should
-                        err "'%s' failed to %s: '%s'" %
+                        Puppet.err "'%s' failed to %s: '%s'" %
                             [@target,@method,detail]
                         raise
                         #raise "We need to roll '%s' transaction back" %
@@ -63,6 +64,7 @@ module Puppet
                     end
                     transaction.triggered(self)
                 end
+                return event
             end
         end
 
@@ -73,7 +75,7 @@ module Puppet
         @@subscriptions = []
 
         def self.process
-            debug "Processing events"
+            Puppet.debug "Processing events"
             @@events.each { |event|
                 @@subscriptions.find_all { |sub|
                     #debug "Sub source: '%s'; event object: '%s'" %
@@ -82,7 +84,7 @@ module Puppet
                         (sub.event == event.event or
                          sub.event == :ALL_EVENTS)
                 }.each { |sub|
-                    debug "Found subscription to %s" % event
+                    Puppet.debug "Found subscription to %s" % event
                     sub.trigger(event.transaction)
                 }
             }
@@ -136,7 +138,7 @@ class Puppet::NotUsed
     # access to the actual hash, which is silly
     def action
         if not defined? @actions
-            debug "defining action hash"
+            Puppet.debug "defining action hash"
             @actions = Hash.new
         end
         @actions
@@ -150,9 +152,9 @@ class Puppet::NotUsed
     # event handling should probably be taking place in a central process,
     # but....
     def event(event,obj)
-        debug "#{self} got event #{event} from #{obj}"
+        Puppet.debug "#{self} got event #{event} from #{obj}"
         if @actions.key?(event)
-            debug "calling it"
+            Puppet.debug "calling it"
             @actions[event].call(self,obj,event)
         else
             p @actions
@@ -176,7 +178,7 @@ class Puppet::NotUsed
                 @notify[event] = Array.new
             end
             unless @notify[event].include?(obj)
-                debug "pushing event '%s' for object '%s'" % [event,obj]
+                Puppet.debug "pushing event '%s' for object '%s'" % [event,obj]
                 @notify[event].push(obj)
             end
         #	}
@@ -195,9 +197,9 @@ class Puppet::NotUsed
         if (@notify.include?(event) and (! @notify[event].empty?) )
             @notify[event].each { |obj| subscribers.push(obj) }
         end
-        debug "triggering #{event}"
+        Puppet.debug "triggering #{event}"
         subscribers.each { |obj|
-            debug "calling #{event} on #{obj}"
+            Puppet.debug "calling #{event} on #{obj}"
             obj.event(event,self)
         }
     end

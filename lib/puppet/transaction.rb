@@ -37,10 +37,13 @@ class Transaction
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    # i don't need to worry about ordering, because it's not possible to specify
-    # an object as a dependency unless it's already been mentioned within the language
-    # thus, an object gets defined, then mentioned as a dependency, and the objects
-    # are synced in that order automatically
+    # okay, here's the deal:
+    # a given transaction maps directly to a component, and each transaction
+    # will only ever receive changes from its respective component
+    # so, when looking for subscribers, we need to first see if the object
+    # that actually changed had any direct subscribers
+    # then, we need to pass the event to the object's containing component,
+    # to see if it or any of its parents have subscriptions on the event
     def evaluate
         Puppet.debug "executing %s changes or transactions" % @changes.length
 
@@ -49,6 +52,8 @@ class Transaction
                 change.transaction = self
                 events = nil
                 begin
+                    # use an array, so that changes can return more than one
+                    # event if they want
                     events = [change.forward].flatten
                     #@@changed.push change.state.parent
                 rescue => detail
@@ -82,7 +87,7 @@ class Transaction
             event.nil?
         }.each { |event|
             # this handles subscriptions on the components, rather than
-            # on idividual objects
+            # on individual objects
             self.component.subscribers?(event).each { |sub|
                 sub.trigger(self)
             }

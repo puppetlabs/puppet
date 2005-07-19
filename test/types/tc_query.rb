@@ -29,7 +29,7 @@ class TestQuery < Test::Unit::TestCase
             unless Puppet::Type::PFile.has_key?(cfile)
                 Puppet::Type::PFile.new(
                     :path => cfile,
-                    :check => [:mode, :owner]
+                    :check => [:mode, :owner, :checksum]
                 )
             end
             @configfile = Puppet::Type::PFile[cfile]

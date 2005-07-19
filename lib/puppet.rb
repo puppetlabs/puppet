@@ -17,6 +17,15 @@ require 'puppet/log'
 module Puppet
     class Error < RuntimeError
         attr_accessor :stack
+        def initialize(message)
+            @message = message
+
+            @stack = caller
+        end
+
+        def to_s
+            return @message
+        end
     end
 
     class DevError < Error; end
