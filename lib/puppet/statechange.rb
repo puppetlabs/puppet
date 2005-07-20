@@ -46,6 +46,7 @@ module Puppet
                 # should basically point to that, right?
                 return Puppet::Event.new(
                     :event => event,
+                    :state => @state.name,
                     :object => @state.parent,
                     :transaction => @transaction,
                     :message => self.to_s
@@ -61,6 +62,7 @@ module Puppet
                 #end
                 return Puppet::Event.new(
                     :event => pname + "_failed",
+                    :state => @state.name,
                     :object => @state.parent,
                     :transaction => @transaction,
                     :message => "Failed: " + self.to_s

@@ -107,12 +107,13 @@ module Puppet
 				raise "Event.new called incorrectly"
 			end
 
+			@state = args[:state]
 			@event = args[:event]
 			@object = args[:object]
 			@transaction = args[:transaction]
 
-            info "%s: %s" %
-                [@object,@event]
+            Puppet.info "%s: %s(%s)" %
+                [@object,@state,@event]
 
             # initially, just stuff all instances into a central bucket
             # to be handled as a batch

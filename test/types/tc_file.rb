@@ -30,6 +30,7 @@ class TestFile < Test::Unit::TestCase
     def teardown
         Puppet::Type.allclear
         @@tmpfiles.each { |file|
+            system("chmod -R 755 %s" % file)
             system("rm -rf %s" % file)
         }
         system("rm -f %s" % Puppet[:statefile])
@@ -424,11 +425,13 @@ class TestFile < Test::Unit::TestCase
         # verify the file list is the same
         fromlist = nil
         FileUtils.cd(fromdir) {
-            fromlist = %x{find .}.chomp.split(/\n/)
+            fromlist = %x{find . 2>/dev/null}.chomp.split(/\n/).reject { |file|
+                ! FileTest.readable?(file)
+            }
         }
         tolist = nil
         FileUtils.cd(todir) {
-            tolist = %x{find .}.chomp.split(/\n/)
+            tolist = %x{find . 2>/dev/null}.chomp.split(/\n/)
         }
         assert_equal(fromlist,tolist)
 
@@ -458,7 +461,7 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    def test_xcomplicatedlocalsource
+    def test_complicatedlocalsource
         path = "/tmp/complsourcetest"
         @@tmpfiles.push path
         system("mkdir -p #{path}")
@@ -471,15 +474,77 @@ class TestFile < Test::Unit::TestCase
         }
 
         todir = File.join(path,"todir")
-        fromfile = nil
         tofile = nil
         trans = nil
 
         assert_nothing_raised {
             tofile = Puppet::Type::PFile.new(
                 :name => todir,
-                :recurse => true,
-                :source => fromdir
+                "recurse" => true,
+                "source" => fromdir
+            )
+        }
+        comp = Puppet::Component.new(
+            :name => "component"
+        )
+        comp.push tofile
+        assert_nothing_raised {
+            trans = comp.evaluate
+        }
+        assert_nothing_raised {
+            trans.evaluate
+        }
+        assert_trees_equal(fromdir,todir)
+        clearstorage
+        Puppet::Type.allclear
+    end
+
+    def test_xcopywithfailures
+        path = "/tmp/failuresourcetest"
+        @@tmpfiles.push path
+        system("mkdir -p #{path}")
+
+        # okay, let's create a directory structure
+        fromdir = File.join(path,"fromdir")
+        Dir.mkdir(fromdir)
+        FileUtils.cd(fromdir) {
+            mkranddirsandfiles()
+        }
+
+        todir = File.join(path,"todir")
+        tofile = nil
+        trans = nil
+
+        fromlist = nil
+        FileUtils.cd(fromdir) {
+            fromlist = %x{find .}.chomp.split(/\n/)
+        }
+
+        # and then do some verification that the files are actually set up
+        # the same
+        checked = 0
+        fromlist.reverse.each_with_index { |file,i|
+            fromfile = File.join(fromdir,file)
+            fromstat = File.stat(fromdir)
+            if checked < 10 and i % 3 == 0
+                begin
+                    if fromstat.ftype == "directory"
+                        File.new(fromfile).chmod(0111)
+                    else
+                        File.new(fromfile).chmod(0000)
+                    end
+                rescue # we probably won't be able to open our own secured files
+                    next
+                end
+                checked += 1
+            end
+        }
+
+        assert_nothing_raised {
+            tofile = Puppet::Type::PFile.new(
+                :name => todir,
+                "recurse" => true,
+                "source" => fromdir
             )
         }
         comp = Puppet::Component.new(

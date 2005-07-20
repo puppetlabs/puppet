@@ -7,7 +7,7 @@ require 'puppet'
 module Puppet
     #------------------------------------------------------------
     class TransObject < Hash
-        attr_accessor :type
+        attr_accessor :type, :name
 
         @@ohash = {}
         @@oarray = []
@@ -33,6 +33,7 @@ module Puppet
         def initialize(name,type)
             self[:name] = name
             @type = type
+            @name = name
             self.class.add(self)
         end
 
@@ -40,9 +41,9 @@ module Puppet
             return [self.type,self[:name]].join('--')
         end
 
-        def name
-            return self[:name]
-        end
+        #def name
+        #    return self[:name]
+        #end
 
         def to_s
             return "%s(%s) => %s" % [@type,self[:name],super]
@@ -176,15 +177,25 @@ module Puppet
                         begin
                             object = child.to_type
                         rescue Puppet::Error => except
-                            Puppet.err "Failed to create %s: %s" %
-                                [child.type,except.message]
+                            Puppet.err "Failed to create %s %s: %s" %
+                                [child.type,child.name,except.message]
+                            if Puppet[:debug]
+                                puts except.stack
+                            end
+                            next
+                        rescue Puppet::Error => except
+                            Puppet.err "Failed to create %s %s: %s" %
+                                [child.type,child.name,except.message]
                             if Puppet[:debug]
                                 puts except.stack
                             end
                             next
                         rescue => except
                             Puppet.err "Failed to create %s %s: %s" %
-                                [child.type,child.inspect,except.message]
+                                [child.type,child.name,except.message]
+                            if Puppet[:debug]
+                                puts caller
+                            end
                             next
                         end
                         nametable[name] = object

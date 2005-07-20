@@ -112,8 +112,8 @@ module Puppet
                 case @checktype
                 when "md5":
                     if FileTest.directory?(self.parent[:path])
-                        Puppet.info "Cannot MD5 sum directory %s" %
-                            self.parent[:path]
+                        #Puppet.info "Cannot MD5 sum directory %s" %
+                        #    self.parent[:path]
 
                         # because we cannot sum directories, just delete ourselves
                         # from the file
@@ -127,8 +127,8 @@ module Puppet
                     end
                 when "md5lite":
                     if FileTest.directory?(self.parent[:path])
-                        Puppet.info "Cannot MD5 sum directory %s" %
-                            self.parent[:path]
+                        #Puppet.info "Cannot MD5 sum directory %s" %
+                        #    self.parent[:path]
 
                         # because we cannot sum directories, just delete ourselves
                         # from the file
@@ -176,7 +176,8 @@ module Puppet
                     # if we still can't retrieve a checksum, it means that
                     # the file still doesn't exist
                     if @is == -1
-                        Puppet.warning "File %s still does not exist" % self.parent.name
+                        Puppet.warning "File %s does not exist -- cannot checksum" %
+                            self.parent.name
                         return nil
                     end
                 end
@@ -661,8 +662,8 @@ module Puppet
                 #Puppet::State::PFileSource,
             @states = [
                 Puppet::State::PFileCreate,
-                Puppet::State::PFileChecksum,
                 Puppet::State::PFileCopy,
+                Puppet::State::PFileChecksum,
                 Puppet::State::PFileUID,
                 Puppet::State::PFileGroup,
                 Puppet::State::PFileMode,
@@ -684,37 +685,25 @@ module Puppet
 
             @depthfirst = false
 
+            def self.newchild(hash)
+            end
+
             def initialize(hash)
                 if hash.include?("recurse")
                     hash[:recurse] = hash["recurse"]
                     hash.delete("recurse")
                 end
-                @arghash = hash.dup
-                super
-                #self.nameclean(@arghash)
-                #Puppet.err "arghash is %s" % @arghash.inspect
 
                 @stat = nil
 
-                # yay, super-hack!
-                #if @states.include?(:create)
-                #    if @states[:create].should == "directory"
-                #        if @states.include?(:source)
-                #            Puppet.warning "Deleting source for directory %s" %
-                #                self.name
-                #            @states.delete(:source)
-                #        end
-#
-#                        if @states.include?(:checksum)
-#                            Puppet.warning "Deleting checksum for directory %s" %
-#                                self.name
-#                            @states.delete(:checksum)
-#                        end
-#                    else
-#                        Puppet.info "Create is %s for %s" %
-#                            [@states[:create].should,self.name]
-#                    end
-#                end
+                @arghash = hash.dup
+                @arghash.each { |var,value|
+                    if var.is_a?(String)
+                        @arghash[var.intern] = value
+                        @arghash.delete(var)
+                    end
+                }
+                super
             end
 
             # pinning is like recursion, except that it's recursion across
@@ -730,12 +719,12 @@ module Puppet
                 if @source =~ /^file:\/\/(\/.+)/
                     @source = $1
                 elsif @source =~ /(\w+):\/\/(\/.+)/
-                    raise Puppet::Error("Protocol %s not supported" % $1)
+                    raise Puppet::Error.new("Protocol %s not supported" % $1)
                 end
 
                 # verify that the source exists
                 unless FileTest.exists?(@source)
-                    raise Puppet::Error(
+                    raise Puppet::Error.new(
                         "Files must exist to be sources; %s does not" % @source
                     )
                 end
@@ -745,9 +734,9 @@ module Puppet
                 # recursive creation of all of the objects, and then all the
                 # children of the tree will just pull existing objects
                 if obj = self.class[@source]
-                    Puppet.info "%s is already in memory" % @source
+                    #Puppet.info "%s is already in memory" % @source
                     if obj.managed?
-                        raise Puppet::Error(
+                        raise Puppet::Error.new(
                             "You cannot currently use managed files as sources;" +
                             "%s is managed" % @source
                         )
@@ -765,7 +754,7 @@ module Puppet
                         @sourceobj[:check] = check
                     end
                 else # the obj does not exist yet...
-                    Puppet.info "%s is not in memory" % @source
+                    #Puppet.info "%s is not in memory" % @source
                     args = {}
 
                     args[:check] = pinparams
@@ -785,7 +774,15 @@ module Puppet
                     # now create the tree of objects
                     # if recursion is turned on, this will create the whole tree
                     # and we'll just pick it up as our own recursive stuff
-                    @sourceobj = self.class.new(args)
+                    begin
+                        @sourceobj = self.class.new(args)
+                    rescue => detail
+                        # ok, so we somehow need to mark that we shouldn't
+                        # actually be copying the file...
+                        Puppet.notice "Cannot copy %s: %s" % [@source,detail]
+                        #self.delete(:copy)
+                        return
+                    end
                 end
 
                 # okay, now we've got the object; retrieve its values, so we
@@ -805,37 +802,37 @@ module Puppet
                     self[:create] = "directory"
                     # see amazingly crappy hack in initialize()
                     #self.delete(:source)
-                    Puppet.info "Not sourcing checksum of directory %s" % @source
+                    #Puppet.info "Not sourcing checksum of directory %s" % @source
 
                     # now, make sure that if they've got children we model those, too
                     curchildren = {}
                     if defined? @children
-                        Puppet.info "Collecting info about existing children"
+                        #Puppet.info "Collecting info about existing children"
                         @children.each { |child|
                             name = File.basename(child.name)
                             curchildren[name] = child
                         }
                     end
                     @sourceobj.each { |child|
-                        Puppet.info "Looking at %s => %s" %
-                            [@sourceobj.name, child.name]
+                        #Puppet.info "Looking at %s => %s" %
+                        #    [@sourceobj.name, child.name]
                         if child.is_a?(Puppet::Type::PFile)
                             name = File.basename(child.name)
 
                             if curchildren.include?(name) # the file's in both places
                                 # set the source accordingly
-                                Puppet.info "Adding %s as an existing child" % name
+                                #Puppet.info "Adding %s as an existing child" % name
                                 curchildren[name][:source] = child.name
                             else # they have it but we don't
                                 # XXX we have serious probability of repeating
                                 # bugs in paramrecurse
-                                Puppet.info "Adding %s as a new child" % child.name
+                                #Puppet.info "Adding %s as a new child" % child.name
                                 fullname = File.join(self.name, name)
                                 newchild = nil
 
                                 if newchild = self.class[fullname]
-                                    Puppet.info "%s is already being managed" %
-                                        fullname
+                                    #Puppet.info "%s is already being managed" %
+                                    #    fullname
                                     # first pin the file
                                     newchild[:source] = child.name
 
@@ -850,8 +847,6 @@ module Puppet
                                         end
                                     }
                                 else # create it anew
-                                    Puppet.info "Managing %s" % fullname
-
                                     # told you we'd repeat the name bugs from recurse
                                     args = {:name => fullname}
                                     @arghash.each { |var,value|
@@ -861,8 +856,17 @@ module Puppet
                                         args[var] = value
                                     }
                                     args[:source] = child.name
-                                    Puppet.info "Creating child with %s" % args.inspect
-                                    newchild = self.class.new(args)
+                                    #Puppet.info "Creating child with %s" % args.inspect
+                                    begin
+                                        newchild = self.class.new(args)
+                                    rescue => detail
+                                        Puppet.notice "Cannot copy %s: %s" % [@source,detail]
+                                        #self.delete(:copy)
+                                        next
+                                        #raise Puppet::Error.new(
+                                        #    "Cannot copy %s: %s" % [@source,detail]
+                                        #)
+                                    end
                                 end
                                 self.push newchild
                             end
@@ -912,12 +916,11 @@ module Puppet
             def paramrecurse=(value)
                 @parameters[:recurse] = value
                 unless FileTest.exist?(self.name) and self.stat.directory?
-                    Puppet.info "%s is not a directory; not recursing" %
-                        self.name
+                    #Puppet.info "%s is not a directory; not recursing" %
+                    #    self.name
                     return
                 end
 
-                Puppet.err "Recursing!"
                 recurse = value
                 # we might have a string, rather than a number
                 if recurse.is_a?(String)
@@ -957,7 +960,14 @@ module Puppet
                         else # create it anew
                             #notice "Creating new file with args %s" %
                             #    @arghash.inspect
-                            child = self.class.new(@arghash)
+                            begin
+                                child = self.class.new(@arghash)
+                            rescue => detail
+                                Puppet.notice(
+                                    "Cannot manage %s: %s" % [@arghash[:path],detail]
+                                )
+                                next
+                            end
                         end
                         self.push child
                     }
