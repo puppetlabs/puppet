@@ -766,13 +766,14 @@ class Type < Puppet::Element
 
         changes = []
         # collect all of the changes from children and states
-        if self.class.depthfirst?
-            changes << self.collect { |child|
-                child.evaluate
-            }
-        end
+        #if self.class.depthfirst?
+        #    changes << self.collect { |child|
+        #        child.evaluate
+        #    }
+        #end
 
         # this only operates on states, not states + children
+        Puppet.warning "Calling retrieve on %s" % self.name
         self.retrieve
         unless self.insync?
             # add one to the number of out-of-sync instances
@@ -786,11 +787,14 @@ class Type < Puppet::Element
             }
         end
 
-        unless self.class.depthfirst?
-            changes << self.collect { |child|
-                child.evaluate
-            }
-        end
+        changes << @children.collect { |child|
+            child.evaluate
+        }
+        #unless self.class.depthfirst?
+        #    changes << self.collect { |child|
+        #        child.evaluate
+        #    }
+        #end
         # collect changes and return them
         # these changes could be from child objects or from contained states
         #self.collect { |child|

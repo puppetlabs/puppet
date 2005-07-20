@@ -6,6 +6,7 @@ end
 
 require 'puppet'
 require 'test/unit'
+require 'fileutils'
 
 # $Id$
 
@@ -362,22 +363,117 @@ class TestFile < Test::Unit::TestCase
         @@tmpfiles.push path
     end
 
+    def randlist(list)
+        num = rand(4)
+        if num == 0
+            num = 1
+        end
+        set = []
+
+        ret = []
+        num.times { |index|
+            item = list[rand(list.length)]
+            if set.include?(item)
+                redo
+            end
+
+            ret.push item
+        }
+        return ret
+    end
+
+    def mkranddirsandfiles(dirs = nil,files = nil,depth = 4)
+        if depth < 0
+            return
+        end
+
+        unless dirs
+            dirs = %w{This Is A Set Of Directories}
+        end
+
+        unless files
+            files = %w{and this is a set of files}
+        end
+
+        tfiles = randlist(files)
+        tdirs = randlist(dirs)
+
+        tfiles.each { |file|
+            File.open(file, "w") { |of|
+                4.times {
+                    of.puts rand(100)
+                }
+            }
+        }
+
+        tdirs.each { |dir|
+            # it shouldn't already exist, but...
+            unless FileTest.exists?(dir)
+                Dir.mkdir(dir)
+                FileUtils.cd(dir) {
+                    mkranddirsandfiles(dirs,files,depth - 1)
+                }
+            end
+        }
+    end
+
+    def assert_trees_equal(fromdir,todir)
+        assert(FileTest.directory?(fromdir))
+        assert(FileTest.directory?(todir))
+
+        # verify the file list is the same
+        fromlist = nil
+        FileUtils.cd(fromdir) {
+            fromlist = %x{find .}.chomp.split(/\n/)
+        }
+        tolist = nil
+        FileUtils.cd(todir) {
+            tolist = %x{find .}.chomp.split(/\n/)
+        }
+        assert_equal(fromlist,tolist)
+
+        # and then do some verification that the files are actually set up
+        # the same
+        checked = 0
+        fromlist.each_with_index { |file,i|
+            fromfile = File.join(fromdir,file)
+            tofile = File.join(todir,file)
+            fromstat = File.stat(fromfile)
+            tostat = File.stat(tofile)
+            [:ftype,:gid,:mode,:uid].each { |method|
+                assert_equal(
+                    fromstat.send(method),
+                    tostat.send(method)
+                )
+
+                next if fromstat.ftype == "directory"
+                if checked < 10 and i % 3 == 0
+                    from = File.open(fromfile) { |f| f.read }
+                    to = File.open(tofile) { |f| f.read }
+
+                    assert_equal(from,to)
+                    checked += 1
+                end
+            }
+        }
+    end
+
     def test_xcomplicatedlocalsource
         path = "/tmp/complsourcetest"
         @@tmpfiles.push path
         system("mkdir -p #{path}")
+
+        # okay, let's create a directory structure
         fromdir = File.join(path,"fromdir")
-        frompath = File.join(fromdir,"source")
+        Dir.mkdir(fromdir)
+        FileUtils.cd(fromdir) {
+            mkranddirsandfiles()
+        }
+
         todir = File.join(path,"todir")
-        topath = File.join(todir,"source")
         fromfile = nil
         tofile = nil
         trans = nil
-
-        Dir.mkdir(fromdir)
-        File.open(frompath, File::WRONLY|File::CREAT|File::APPEND) { |of|
-            of.puts "yayness"
-        }
 
         assert_nothing_raised {
             tofile = Puppet::Type::PFile.new(
@@ -396,10 +492,7 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised {
             trans.evaluate
         }
-        assert(FileTest.file?(topath))
-        from = File.open(frompath) { |o| o.read }
-        to = File.open(topath) { |o| o.read }
-        assert_equal(from,to)
+        assert_trees_equal(fromdir,todir)
         clearstorage
         Puppet::Type.allclear
     end
