@@ -605,8 +605,12 @@ class Type < Puppet::Element
         # point to State objects
         # further, the lists of valid states and parameters are defined
         # at the class level
-        @states = Hash.new(false)
-        @parameters = Hash.new(false)
+        unless defined? @states
+            @states = Hash.new(false)
+        end
+        unless defined? @parameters
+            @parameters = Hash.new(false)
+        end
 
         @noop = false
 
@@ -820,7 +824,7 @@ class Type < Puppet::Element
         # now record how many changes we've resulted in
         Puppet::Metric.add(self.class,self,:changes,changes.length)
         if changes.length > 0
-            Puppet.info "%s resulted in %s changes" %
+            Puppet.info "%s: %s change(s)" %
                 [self.name, changes.length]
         end
         return changes.flatten

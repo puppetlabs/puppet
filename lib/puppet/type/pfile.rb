@@ -121,9 +121,19 @@ module Puppet
                         self.parent.delete(self.name)
                         return
                     else
-                        File.open(self.parent[:path]) { |file|
-                            sum = Digest::MD5.hexdigest(file.read)
-                        }
+                        begin
+                            File.open(self.parent[:path]) { |file|
+                                sum = Digest::MD5.hexdigest(file.read)
+                            }
+                        rescue Errno::EACCES => detail
+                            Puppet.notice "Cannot checksum %s: permission denied" %
+                                self.parent.name
+                            self.parent.delete(self.class.name)
+                        rescue => detail
+                            Puppet.notice "Cannot checksum %s: %s" %
+                                detail
+                            self.parent.delete(self.class.name)
+                        end
                     end
                 when "md5lite":
                     if FileTest.directory?(self.parent[:path])
@@ -537,13 +547,11 @@ module Puppet
 
             def retrieve
                 sum = nil
-                unless sum = self.parent.state(:checksum)
-                    raise Puppet::Error.new(
-                        "Cannot copy without knowing the sum state of %s" %
-                        self.parent.path
-                    )
+                if sum = self.parent.state(:checksum)
+                    @is = sum.is
+                else
+                    @is = -1
                 end
-                @is = sum.is
             end
 
             def should=(source)
@@ -575,17 +583,27 @@ module Puppet
             end
 
             def sync
+                if @is == -1
+                    self.retrieve # try again
+                    if @is == -1
+                        if @is == @should
+                            return nil
+                        end
+                    end
+                end
                 @backed = false
+                bak = self.parent[:backup] || ".puppet-bak"
+
                 # try backing ourself up before we overwrite
                 if FileTest.file?(self.parent.name)
                     if bucket = self.parent[:filebucket]
                         bucket.backup(self.parent.name)
                         @backed = true
-                    elsif str = self.parent[:backup]
+                    elsif self.parent[:backup]
                         # back the file up
                         begin
                             FileUtils.cp(self.parent.name,
-                                self.parent.name + self.parent[:backup])
+                                self.parent.name + bak)
                             @backed = true
                         rescue => detail
                             # since they said they want a backup, let's error out
@@ -595,6 +613,10 @@ module Puppet
                             raise error
                         end
                     end
+                end
+
+                unless self.parent[:backup]
+                    @backed = true
                 end
 
                 # okay, we've now got whatever backing up done we might need
@@ -607,10 +629,10 @@ module Puppet
                             if FileTest.exists?(self.parent.name)
                                 # get the file here
                                 FileUtils.cp(@source, self.parent.name + ".tmp")
-                                if FileTest.exists?(self.parent.name + ".puppet-bak")
+                                if FileTest.exists?(self.parent.name + bak)
                                     Puppet.warning "Deleting backup of %s" %
                                         self.parent.name
-                                    File.unlink(self.parent.name + ".puppet-bak")
+                                    File.unlink(self.parent.name + bak)
                                 end
                                 # rename the existing one
                                 File.rename(
@@ -624,7 +646,10 @@ module Puppet
                                 )
                                 # if we've made a backup, then delete the old file
                                 if @backed
-                                    File.unlink(self.parent.name + ".puppet-bak")
+                                    #Puppet.err "Unlinking backup"
+                                    File.unlink(self.parent.name + bak)
+                                #else
+                                    #Puppet.err "Not unlinking backup"
                                 end
                             else
                                 # the easy case
@@ -674,10 +699,10 @@ module Puppet
 
             @parameters = [
                 :path,
+                :backup,
                 :source,
                 :recurse,
-                :filebucket,
-                :backup
+                :filebucket
             ]
 
             @name = :file
@@ -690,7 +715,21 @@ module Puppet
                 @arghash.delete(self.class.namevar)
 
                 @stat = nil
+                @parameters = Hash.new(false)
+
+                # default to a string, which is true
+                @parameters[:backup] = ".puppet-bak"
                 super
+            end
+
+            def parambackup=(value)
+                if value == false or value == "false"
+                    @parameters[:backup] = false
+                elsif value == true or value == "true"
+                    @parameters[:backup] = ".puppet-bak"
+                else
+                    @parameters[:backup] = value
+                end
             end
 
             def newchild(path, hash = {})
@@ -756,7 +795,6 @@ module Puppet
                                 [path,detail.message]
                         )
                         Puppet.debug args.inspect
-                        puts detail.stack
                         child = nil
                     rescue => detail
                         Puppet.notice(
@@ -764,7 +802,6 @@ module Puppet
                                 [path,detail]
                         )
                         Puppet.debug args.inspect
-                        Puppet.err detail.class
                         child = nil
                     end
                 end
@@ -1015,6 +1052,11 @@ module Puppet
                         "Uh, somehow trying to manage non-dir %s" % self.name
                     )
                 end
+                unless FileTest.readable? self.name
+                    Puppet.notice "Cannot manage %s: permission denied" % self.name
+                    return
+                end
+
                 Dir.foreach(self.name) { |file|
                     next if file =~ /^\.\.?/ # skip . and ..
                     # XXX it's right here

@@ -416,7 +416,7 @@ class TestFile < Test::Unit::TestCase
         return ret
     end
 
-    def mkranddirsandfiles(dirs = nil,files = nil,depth = 2)
+    def mkranddirsandfiles(dirs = nil,files = nil,depth = 3)
         if depth < 0
             return
         end
@@ -451,6 +451,14 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
+    def file_list(dir)
+        list = nil
+        FileUtils.cd(dir) {
+            list = %x{find . 2>/dev/null}.chomp.split(/\n/)
+        }
+        return list
+    end
+
     def assert_trees_equal(fromdir,todir)
         assert(FileTest.directory?(fromdir))
         assert(FileTest.directory?(todir))
@@ -462,10 +470,8 @@ class TestFile < Test::Unit::TestCase
                 ! FileTest.readable?(file)
             }
         }
-        tolist = nil
-        FileUtils.cd(todir) {
-            tolist = %x{find . 2>/dev/null}.chomp.split(/\n/)
-        }
+        tolist = file_list(todir)
+
         assert_equal(fromlist,tolist)
 
         # and then do some verification that the files are actually set up
@@ -494,24 +500,14 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    def delete_random_files(dir)
+    def random_files(dir)
         checked = 0
-        list = nil
-        FileUtils.cd(dir) {
-            list = %x{find . 2>/dev/null}.chomp.split(/\n/)
-        }
+        list = file_list(dir)
         list.reverse.each_with_index { |file,i|
             path = File.join(dir,file)
             stat = File.stat(dir)
-            if checked < 10 and i % 3 == 0
-                begin
-                    if stat.ftype == "directory"
-                    else
-                        File.unlink(path)
-                    end
-                rescue => detail
-                    # we probably won't be able to open our own secured files
-                    puts detail
+            if checked < 10 and (i % 3) == 2
+                unless yield path
                     next
                 end
                 checked += 1
@@ -519,103 +515,100 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    def test_xcomplicatedlocalsource
-        path = "/tmp/Complsourcetest"
-        @@tmpfiles.push path
-        system("mkdir -p #{path}")
-
-        # okay, let's create a directory structure
-        fromdir = File.join(path,"fromdir")
-        Dir.mkdir(fromdir)
-        FileUtils.cd(fromdir) {
-            mkranddirsandfiles()
-        }
-
-        2.times { |index|
-            Puppet.err "Take %s" % index
-            initstorage
-            todir = File.join(path,"Todir")
-            tofile = nil
-            trans = nil
-
-            assert_nothing_raised {
-                tofile = Puppet::Type::PFile.new(
-                    :name => todir,
-                    "recurse" => true,
-                    "source" => fromdir
-                )
-            }
-            comp = Puppet::Component.new(
-                :name => "component"
-            )
-            comp.push tofile
-            assert_nothing_raised {
-                trans = comp.evaluate
-            }
-            assert_nothing_raised {
-                trans.evaluate
-            }
-
-            # until we have characterized how backups work, just get
-            # rid of them
-            FileUtils.cd(todir) {
-                %x{find . -name '*puppet-bak'}.chomp.split(/\n/).each { |file|
+    def delete_random_files(dir)
+        random_files(dir) { |file|
+            stat = File.stat(file)
+            begin
+                if stat.ftype == "directory"
+                    false
+                else
                     File.unlink(file)
-                }
-            }
-            assert_trees_equal(fromdir,todir)
-            clearstorage
-            Puppet::Type.allclear
-            delete_random_files(todir)
+                    true
+                end
+            rescue => detail
+                # we probably won't be able to open our own secured files
+                puts detail
+                false
+            end
         }
-
     end
 
-    def test_copywithfailures
-        path = "/tmp/Failuresourcetest"
-        @@tmpfiles.push path
-        system("mkdir -p #{path}")
-
-        # okay, let's create a directory structure
-        fromdir = File.join(path,"fromdir")
-        Dir.mkdir(fromdir)
-        FileUtils.cd(fromdir) {
-            mkranddirsandfiles()
+    def add_random_files(dir)
+        added = []
+        random_files(dir) { |file|
+            stat = File.stat(file)
+            begin
+                if stat.ftype == "directory"
+                    name = File.join(file,"file" + rand(100).to_s)
+                    File.open(name, "w") { |f|
+                        f.puts rand(10)
+                    }
+                    added << name
+                else
+                    false
+                end
+            rescue => detail
+                # we probably won't be able to open our own secured files
+                puts detail
+                false
+            end
         }
+        return added
+    end
 
-        todir = File.join(path,"Todir")
+    def modify_random_files(dir)
+        modded = []
+        random_files(dir) { |file|
+            stat = File.stat(file)
+            begin
+                if stat.ftype == "directory"
+                    false
+                else
+                    File.open(file, "w") { |f|
+                        f.puts rand(10)
+                    }
+                    modded << name
+                    true
+                end
+            rescue => detail
+                # we probably won't be able to open our own secured files
+                puts detail
+                false
+            end
+        }
+        return modded
+    end
+
+    def readonly_random_files(dir)
+        modded = []
+        random_files(dir) { |file|
+            stat = File.stat(file)
+            begin
+                if stat.ftype == "directory"
+                    File.new(file).chmod(0111)
+                else
+                    File.new(file).chmod(0000)
+                end
+                modded << file
+            rescue => detail
+                # we probably won't be able to open our own secured files
+                puts detail
+                false
+            end
+        }
+        return modded
+    end
+
+    def recursive_source_test(fromdir, todir)
+        initstorage
         tofile = nil
         trans = nil
-
-        fromlist = nil
-        FileUtils.cd(fromdir) {
-            fromlist = %x{find .}.chomp.split(/\n/)
-        }
-
-        # and then do some verification that the files are actually set up
-        # the same
-        checked = 0
-        fromlist.reverse.each_with_index { |file,i|
-            fromfile = File.join(fromdir,file)
-            fromstat = File.stat(fromdir)
-            if checked < 10 and i % 3 == 0
-                begin
-                    if fromstat.ftype == "directory"
-                        File.new(fromfile).chmod(0111)
-                    else
-                        File.new(fromfile).chmod(0000)
-                    end
-                rescue # we probably won't be able to open our own secured files
-                    next
-                end
-                checked += 1
-            end
-        }
 
         assert_nothing_raised {
             tofile = Puppet::Type::PFile.new(
                 :name => todir,
                 "recurse" => true,
+                "backup" => false,
                 "source" => fromdir
             )
         }
@@ -629,8 +622,95 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised {
             trans.evaluate
         }
-        assert_trees_equal(fromdir,todir)
+
         clearstorage
         Puppet::Type.allclear
     end
+
+    def run_complex_sources
+        path = "/tmp/ComplexSourcesTest"
+        @@tmpfiles.push path
+
+        # first create the source directory
+        system("mkdir -p #{path}")
+
+
+        # okay, let's create a directory structure
+        fromdir = File.join(path,"fromdir")
+        Dir.mkdir(fromdir)
+        FileUtils.cd(fromdir) {
+            mkranddirsandfiles()
+        }
+
+        todir = File.join(path, "todir")
+        recursive_source_test(fromdir, todir)
+
+        return [fromdir,todir]
+    end
+
+    def test_complex_sources_twice
+        fromdir, todir = run_complex_sources
+        assert_trees_equal(fromdir,todir)
+        recursive_source_test(fromdir, todir)
+        assert_trees_equal(fromdir,todir)
+    end
+
+    def test_sources_with_deleted_destfiles
+        fromdir, todir = run_complex_sources
+        # then delete some files
+        delete_random_files(todir)
+
+        # and run
+        recursive_source_test(fromdir, todir)
+
+        # and make sure they're still equal
+        assert_trees_equal(fromdir,todir)
+    end
+
+    def test_sources_with_readonly_destfiles
+        fromdir, todir = run_complex_sources
+        readonly_random_files(todir)
+        recursive_source_test(fromdir, todir)
+
+        # and make sure they're still equal
+        assert_trees_equal(fromdir,todir)
+    end
+
+    def test_sources_with_modified_dest_files
+        fromdir, todir = run_complex_sources
+
+        # then modify some files
+        modify_random_files(todir)
+
+        recursive_source_test(fromdir, todir)
+
+        # and make sure they're still equal
+        assert_trees_equal(fromdir,todir)
+    end
+
+    def test_sources_with_added_destfiles
+        fromdir, todir = run_complex_sources
+        # and finally, add some new files
+        add_random_files(todir)
+
+        recursive_source_test(fromdir, todir)
+
+        fromtree = file_list(fromdir)
+        totree = file_list(todir)
+
+        assert(fromtree != totree)
+
+        # then remove our new files
+        FileUtils.cd(todir) {
+            %x{find . 2>/dev/null}.chomp.split(/\n/).each { |file|
+                if file =~ /file[0-9]+/
+                    File.unlink(file)
+                end
+            }
+        }
+
+        # and make sure they're still equal
+        assert_trees_equal(fromdir,todir)
+    end
+
 end
