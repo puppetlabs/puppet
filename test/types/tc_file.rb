@@ -555,6 +555,14 @@ class TestFile < Test::Unit::TestCase
             assert_nothing_raised {
                 trans.evaluate
             }
+
+            # until we have characterized how backups work, just get
+            # rid of them
+            FileUtils.cd(todir) {
+                %x{find . -name '*puppet-bak'}.chomp.split(/\n/).each { |file|
+                    File.unlink(file)
+                }
+            }
             assert_trees_equal(fromdir,todir)
             clearstorage
             Puppet::Type.allclear

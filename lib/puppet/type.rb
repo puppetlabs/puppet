@@ -819,8 +819,10 @@ class Type < Puppet::Element
 
         # now record how many changes we've resulted in
         Puppet::Metric.add(self.class,self,:changes,changes.length)
-        Puppet.info "%s resulted in %s changes" %
-            [self.name, changes.length]
+        if changes.length > 0
+            Puppet.info "%s resulted in %s changes" %
+                [self.name, changes.length]
+        end
         return changes.flatten
     end
     #---------------------------------------------------------------

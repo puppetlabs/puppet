@@ -85,15 +85,15 @@ module Puppet
                 if hash = state[self.parent[:path]]
                     if hash.include?(@checktype)
                         @should = hash[@checktype]
-                        Puppet.debug "Found checksum %s for %s" %
-                            [@should,self.parent[:path]]
+                        #Puppet.debug "Found checksum %s for %s" %
+                        #    [@should,self.parent[:path]]
                     else
-                        Puppet.debug "Found checksum for %s but not of type %s" %
-                            [self.parent[:path],@checktype]
+                        #Puppet.debug "Found checksum for %s but not of type %s" %
+                        #    [self.parent[:path],@checktype]
                         @should = nil
                     end
-                else
-                    Puppet.debug "No checksum for %s" % self.parent[:path]
+                #else
+                    #Puppet.debug "No checksum for %s" % self.parent[:path]
                 end
             end
 
@@ -707,11 +707,11 @@ module Puppet
                 args[:path] = path
                 unless hash.include?(:source) # it's being manually overridden
                     if args.include?(:source)
-                        Puppet.notice "Rewriting source for %s" % path
+                        #Puppet.notice "Rewriting source for %s" % path
                         name = File.basename(path)
                         dirname = args[:source]
-                        Puppet.notice "Old: %s" % args[:source]
-                        Puppet.notice "New: %s" % File.join(dirname,name)
+                        #Puppet.notice "Old: %s" % args[:source]
+                        #Puppet.notice "New: %s" % File.join(dirname,name)
                         if FileTest.exists?(dirname) and ! FileTest.directory?(dirname)
                             Puppet.err "Cannot make a child of %s" % dirname
                             exit
@@ -734,6 +734,10 @@ module Puppet
                 hash.each { |key,value|
                     args[key] = value
                 }
+
+                #if @states.include?(:checksum)
+                #    args[:checksum] = @states[:checksum].checktype
+                #end
 
                 child = nil
                 if child = self.class[path]
@@ -835,9 +839,6 @@ module Puppet
             # the pinned file's tree, instead of our own
             # if recursion is turned off, then this whole thing is pretty easy
             def paramsource=(source)
-                if File.basename(File.dirname(self.name)) =~ /^[a-z]/
-                    raise Puppet::Error.new("Somehow got lower-case directory")
-                end
                 @parameters[:source] = source
                 @source = source
 
@@ -885,6 +886,60 @@ module Puppet
                     end
                 }
 
+                # now, checksum and copy kind of work in tandem
+                # first, make sure we're using the same mechanisms for retrieving
+                # checksums
+
+                # we'll come out of this with a value set or through an error
+                checktype = nil
+
+                if @states.include?(:checksum) and @sourceobj.state(:checksum)
+                    sourcesum = @sourceobj.state(:checksum)
+                    destsum = @states[:checksum]
+
+                    begin
+                    unless destsum.checktype == sourcesum.checktype
+                        Puppet.warning(("Source file '%s' checksum type %s is " +
+                            "incompatible with destination file '%s' checksum " +
+                            "type '%s'; defaulting to md5 for both") %
+                            [
+                                @sourceobj.name,
+                                sourcesum.checktype.inspect,
+                                self.name,
+                                destsum.checktype.inspect
+                            ]
+                        )
+
+                        # and then, um, default to md5 for everyone?
+                        unless sourcesum.checktype == "md5"
+                            Puppet.warning "Changing checktype on %s to md5" %
+                                @source
+                            sourcesum.should = "md5"
+                        end
+
+                        unless destsum.checktype == "md5"
+                            Puppet.warning "Changing checktype on %s to md5" %
+                                self.name
+                            destsum.should = "md5"
+                        end
+                        checktype = "md5"
+                    end
+                    rescue => detail
+                        Puppet.err detail
+                        exit
+                    end
+                elsif @sourceobj.state(:checksum)
+                    checktype = @sourceobj.state(:checksum).checktype
+                    self[:checksum] = checktype
+                elsif @states.include?(:checksum)
+                    @sourceobj[:checksum] = @states[:checksum].checktype
+                    checktype = @states[:checksum].checktype
+                else
+                    checktype = "md5"
+                end
+
+                @arghash[:checksum] = checktype
+
                 if FileTest.directory?(@source)
                     self[:create] = "directory"
 
@@ -927,52 +982,6 @@ module Puppet
                     }
 
                 else
-                    # checksums are, like, special
-                    if @states.include?(:checksum) and @sourceobj.state(:checksum)
-                        sourcesum = @sourceobj.state(:checksum)
-                        destsum = @states[:checksum]
-
-                        # this is weird, because normally setting a 'should' state
-                        # on checksums just manipulates the contents of the state
-                        # database
-                        begin
-                        if destsum.checktype == sourcesum.checktype
-                            destsum.should = sourcesum.is
-                        else
-                            Puppet.warning(("Source file '%s' checksum type %s is " +
-                                "incompatible with destination file '%s' checksum " +
-                                "type '%s'; defaulting to md5 for both") %
-                                [
-                                    @sourceobj.name,
-                                    sourcesum.checktype.inspect,
-                                    self.name,
-                                    destsum.checktype.inspect
-                                ]
-                            )
-
-                            # and then, um, default to md5 for everyone?
-                            unless sourcesum.checktype == "md5"
-                                Puppet.warning "Changing checktype on %s to md5" %
-                                    file.name
-                                sourcesum.should = "md5"
-                            end
-
-                            unless destsum.checktype == "md5"
-                                Puppet.warning "Changing checktype on %s to md5" %
-                                    self.name
-                                destsum.should = "md5"
-                            end
-                        end
-                        rescue => detail
-                            Puppet.err detail
-                            exit
-                        end
-                    else
-                        self[:check] = [:checksum]
-                        #self[:checksum] = @sourceobj.state(:checksum).checktype
-                        #@states[:checksum].should = @sourceobj[:checksum]
-                    end
-
                     self[:copy] = @sourceobj.name
                 end
             end
