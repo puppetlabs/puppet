@@ -68,7 +68,7 @@ module Puppet
             objects = nil
 
             facts = Client.facts
-            Puppet.info "Facts are %s" % facts.inspect
+            #Puppet.info "Facts are %s" % facts.inspect
             textfacts = Marshal::dump(facts)
 
             if @localonly
