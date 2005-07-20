@@ -326,8 +326,39 @@ class TestFile < Test::Unit::TestCase
         @@tmpfiles.push path
     end
 
+    def test_newchild
+        path = "/tmp/newchilddir"
+        @@tmpfiles.push path
+
+        system("mkdir -p #{path}")
+        File.open(File.join(path,"childtest"), "w") { |of|
+            of.puts "yayness"
+        }
+        file = nil
+        comp = nil
+        trans = nil
+        assert_nothing_raised {
+            file = Puppet::Type::PFile.new(
+                :name => path
+            )
+        }
+        child = nil
+        assert_nothing_raised {
+            child = file.newchild("childtest")
+        }
+        assert(child)
+        assert_nothing_raised {
+            child = file.newchild("childtest")
+        }
+        assert(child)
+        assert_raise(Puppet::DevError) {
+            file.newchild(File.join(path,"childtest"))
+        }
+    end
+
     def test_simplelocalsource
-        path = "/tmp/filesourcetest"
+        path = "/tmp/Filesourcetest"
+        @@tmpfiles.push path
         system("mkdir -p #{path}")
         frompath = File.join(path,"source")
         topath = File.join(path,"dest")
@@ -385,7 +416,7 @@ class TestFile < Test::Unit::TestCase
         return ret
     end
 
-    def mkranddirsandfiles(dirs = nil,files = nil,depth = 4)
+    def mkranddirsandfiles(dirs = nil,files = nil,depth = 2)
         if depth < 0
             return
         end
@@ -489,7 +520,7 @@ class TestFile < Test::Unit::TestCase
     end
 
     def test_xcomplicatedlocalsource
-        path = "/tmp/complsourcetest"
+        path = "/tmp/Complsourcetest"
         @@tmpfiles.push path
         system("mkdir -p #{path}")
 
@@ -500,9 +531,10 @@ class TestFile < Test::Unit::TestCase
             mkranddirsandfiles()
         }
 
-        2.times {
+        2.times { |index|
+            Puppet.err "Take %s" % index
             initstorage
-            todir = File.join(path,"todir")
+            todir = File.join(path,"Todir")
             tofile = nil
             trans = nil
 
@@ -532,7 +564,7 @@ class TestFile < Test::Unit::TestCase
     end
 
     def test_copywithfailures
-        path = "/tmp/failuresourcetest"
+        path = "/tmp/Failuresourcetest"
         @@tmpfiles.push path
         system("mkdir -p #{path}")
 
@@ -543,7 +575,7 @@ class TestFile < Test::Unit::TestCase
             mkranddirsandfiles()
         }
 
-        todir = File.join(path,"todir")
+        todir = File.join(path,"Todir")
         tofile = nil
         trans = nil
 

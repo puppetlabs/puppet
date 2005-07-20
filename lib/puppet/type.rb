@@ -627,13 +627,11 @@ class Type < Puppet::Element
 
         # now get all of the arguments, in a specific order
         order = [self.class.namevar]
+        order << self.class.states.collect { |state| state.name }
         order << self.class.parameters
         order << self.class.eachmetaparam { |param| param }
-        order << self.class.states.collect { |state| state.name }
 
-        order.flatten!
-
-        order.each { |name|
+        order.flatten.each { |name|
             if hash.include?(name)
                 self[name] = hash[name]
                 hash.delete name
