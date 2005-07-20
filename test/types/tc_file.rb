@@ -30,8 +30,10 @@ class TestFile < Test::Unit::TestCase
     def teardown
         Puppet::Type.allclear
         @@tmpfiles.each { |file|
-            system("chmod -R 755 %s" % file)
-            system("rm -rf %s" % file)
+            if FileTest.exists?(file)
+                system("chmod -R 755 %s" % file)
+                system("rm -rf %s" % file)
+            end
         }
         system("rm -f %s" % Puppet[:statefile])
     end
@@ -461,7 +463,32 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    def test_complicatedlocalsource
+    def delete_random_files(dir)
+        checked = 0
+        list = nil
+        FileUtils.cd(dir) {
+            list = %x{find . 2>/dev/null}.chomp.split(/\n/)
+        }
+        list.reverse.each_with_index { |file,i|
+            path = File.join(dir,file)
+            stat = File.stat(dir)
+            if checked < 10 and i % 3 == 0
+                begin
+                    if stat.ftype == "directory"
+                    else
+                        File.unlink(path)
+                    end
+                rescue => detail
+                    # we probably won't be able to open our own secured files
+                    puts detail
+                    next
+                end
+                checked += 1
+            end
+        }
+    end
+
+    def test_xcomplicatedlocalsource
         path = "/tmp/complsourcetest"
         @@tmpfiles.push path
         system("mkdir -p #{path}")
@@ -473,33 +500,38 @@ class TestFile < Test::Unit::TestCase
             mkranddirsandfiles()
         }
 
-        todir = File.join(path,"todir")
-        tofile = nil
-        trans = nil
+        2.times {
+            initstorage
+            todir = File.join(path,"todir")
+            tofile = nil
+            trans = nil
 
-        assert_nothing_raised {
-            tofile = Puppet::Type::PFile.new(
-                :name => todir,
-                "recurse" => true,
-                "source" => fromdir
+            assert_nothing_raised {
+                tofile = Puppet::Type::PFile.new(
+                    :name => todir,
+                    "recurse" => true,
+                    "source" => fromdir
+                )
+            }
+            comp = Puppet::Component.new(
+                :name => "component"
             )
+            comp.push tofile
+            assert_nothing_raised {
+                trans = comp.evaluate
+            }
+            assert_nothing_raised {
+                trans.evaluate
+            }
+            assert_trees_equal(fromdir,todir)
+            clearstorage
+            Puppet::Type.allclear
+            delete_random_files(todir)
         }
-        comp = Puppet::Component.new(
-            :name => "component"
-        )
-        comp.push tofile
-        assert_nothing_raised {
-            trans = comp.evaluate
-        }
-        assert_nothing_raised {
-            trans.evaluate
-        }
-        assert_trees_equal(fromdir,todir)
-        clearstorage
-        Puppet::Type.allclear
+
     end
 
-    def test_xcopywithfailures
+    def test_copywithfailures
         path = "/tmp/failuresourcetest"
         @@tmpfiles.push path
         system("mkdir -p #{path}")

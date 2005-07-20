@@ -40,7 +40,7 @@ module Puppet
                     @is = -1
                 end
 
-                Puppet.debug "'exists' state is %s" % self.is
+                #Puppet.debug "'exists' state is %s" % self.is
             end
 
 
@@ -154,7 +154,7 @@ module Puppet
 
                 self.is = sum
 
-                Puppet.debug "checksum state is %s" % self.is
+                #Puppet.debug "checksum state is %s" % self.is
             end
 
 
@@ -218,7 +218,8 @@ module Puppet
                 if state[self.parent.name].include?(@checktype)
                     unless defined? @should
                         raise Puppet::Error.new(
-                            "@should is not initialized for %s, even though we found a checksum" % self.parent[:path]
+                            ("@should is not initialized for %s, even though we " +
+                            "found a checksum") % self.parent[:path]
                         )
                     end
                     Puppet.debug "Replacing checksum %s with %s" %
@@ -336,8 +337,8 @@ module Puppet
                                         self.parent.name)
                                 raise error
                             end
-                            Puppet.debug "converting %s to integer '%d'" %
-                                [@should,user.uid]
+                            #Puppet.debug "converting %s to integer '%d'" %
+                            #    [@should,user.uid]
                             @should = user.uid
                         rescue => detail
                             error = Puppet::Error.new(
@@ -347,7 +348,7 @@ module Puppet
                     end
                 end
 
-                Puppet.debug "chown state is %d" % self.is
+                #Puppet.debug "chown state is %d" % self.is
             end
 
             def sync
@@ -399,7 +400,7 @@ module Puppet
                 stat = self.parent.stat(true)
                 self.is = stat.mode & 007777
 
-                Puppet.debug "chmod state is %o" % self.is
+                #Puppet.debug "chmod state is %o" % self.is
             end
 
             def sync
@@ -490,8 +491,8 @@ module Puppet
                                     "Could not retrieve gid for %s" % self.parent.name)
                                 raise error
                             end
-                            Puppet.debug "converting %s to integer %d" %
-                                [self.should,gid]
+                            #Puppet.debug "converting %s to integer %d" %
+                            #    [self.should,gid]
                             self.should = gid
                         rescue => detail
                             error = Puppet::Error.new(
@@ -500,7 +501,7 @@ module Puppet
                         end
                     end
                 end
-                Puppet.debug "chgrp state is %d" % self.is
+                #Puppet.debug "chgrp state is %d" % self.is
             end
 
             def sync
@@ -674,9 +675,9 @@ module Puppet
                 #:source,
             @parameters = [
                 :path,
+                :source,
                 :recurse,
                 :filebucket,
-                :source,
                 :backup
             ]
 
@@ -685,24 +686,11 @@ module Puppet
 
             @depthfirst = false
 
-            def self.newchild(hash)
-            end
-
             def initialize(hash)
-                if hash.include?("recurse")
-                    hash[:recurse] = hash["recurse"]
-                    hash.delete("recurse")
-                end
+                @arghash = self.argclean(hash)
+                @arghash.delete(self.class.namevar)
 
                 @stat = nil
-
-                @arghash = hash.dup
-                @arghash.each { |var,value|
-                    if var.is_a?(String)
-                        @arghash[var.intern] = value
-                        @arghash.delete(var)
-                    end
-                }
                 super
             end
 
@@ -727,6 +715,15 @@ module Puppet
                     raise Puppet::Error.new(
                         "Files must exist to be sources; %s does not" % @source
                     )
+                end
+
+                # ...and that it's readable
+                unless FileTest.readable?(@source)
+                    Puppet.notice "Skipping unreadable %s" % @source
+                    #raise Puppet::Error.new(
+                    #    "Files must exist to be sources; %s does not" % @source
+                    #)
+                    return
                 end
 
                 # Check whether we'll be creating the file or whether it already
@@ -932,46 +929,55 @@ module Puppet
                     end
                 end
 
-                # unless we're at the end of the recursion
-                if recurse != 0
-                    @arghash.delete("recurse")
-                    if recurse.is_a?(Integer)
-                        recurse -= 1 # reduce the level of recursion
-                    end
-
-                    @arghash[:recurse] = recurse
-
-
-                    # make sure we don't have any remaining ':name' params
-                    self.nameclean(@arghash)
-
-                    Dir.foreach(self.name) { |file|
-                        next if file =~ /^\.\.?/ # skip . and ..
-
-                        @arghash[:path] = File.join(self.name,file)
-
-                        child = nil
-                        # if the file already exists...
-                        if child = self.class[@arghash[:path]]
-                            @arghash.each { |var,value|
-                                next if var == :path
-                                child[var] = value
-                            }
-                        else # create it anew
-                            #notice "Creating new file with args %s" %
-                            #    @arghash.inspect
-                            begin
-                                child = self.class.new(@arghash)
-                            rescue => detail
-                                Puppet.notice(
-                                    "Cannot manage %s: %s" % [@arghash[:path],detail]
-                                )
-                                next
-                            end
-                        end
-                        self.push child
-                    }
+                # are we at the end of the recursion?
+                if recurse == 0
+                    return
                 end
+
+                @arghash.delete("recurse")
+
+                if recurse.is_a?(Integer)
+                    recurse -= 1 # reduce the level of recursion
+                end
+
+                @arghash[:recurse] = recurse
+
+
+                # make sure we don't have any remaining ':name' params
+                args = self.argclean(@arghash)
+
+                unless FileTest.directory? self.name
+                    raise Puppet::Error.new("Uh, somehow trying to manage non-dir %s" % self.name)
+                end
+                Dir.foreach(self.name) { |file|
+                    next if file =~ /^\.\.?/ # skip . and ..
+                    args = @arghash.dup
+
+                    args[:name] = File.join(self.name,file)
+
+                    child = nil
+                    # if the file already exists...
+                    if child = self.class[args[:name]]
+                        args.each { |var,value|
+                            next if var == :path
+                            next if var == :name
+                            child[var] = value
+                        }
+                    else # create it anew
+                        #notice "Creating new file with args %s" %
+                        #    @arghash.inspect
+                        begin
+                            child = self.class.new(args)
+                        rescue => detail
+                            Puppet.notice(
+                                "Cannot manage %s(%s): %s" %
+                                    [args[:name],args.inspect,detail]
+                            )
+                            next
+                        end
+                    end
+                    self.push child
+                }
             end
 
             # I don't currently understand the problems of dependencies in this space
@@ -989,7 +995,7 @@ module Puppet
             # a wrapper method to make sure the file exists before doing anything
             def retrieve
                 unless stat = self.stat(true)
-                    Puppet.debug "File %s does not exist" % self[:path]
+                    Puppet.debug "File %s does not exist" % self.name
                     @states.each { |name,state|
                         state.is = -1
                     }
@@ -1001,10 +1007,10 @@ module Puppet
             def stat(refresh = false)
                 if @stat.nil? or refresh == true
                     begin
-                        @stat = File.stat(self[:path])
+                        @stat = File.stat(self.name)
                     rescue => error
                         Puppet.debug "Failed to stat %s: %s" %
-                            [self[:path],error]
+                            [self.name,error]
                         @stat = nil
                     end
                 end

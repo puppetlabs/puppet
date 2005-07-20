@@ -57,6 +57,7 @@ class Type < Puppet::Element
     # the parameters that all instances will accept
     @@metaparams = [
         :onerror,
+        :noop,
         :schedule,
         :check,
         :require
@@ -392,6 +393,9 @@ class Type < Puppet::Element
             name = name.intern
         end
 
+        if name == :name
+            name = self.class.namevar
+        end
         if self.class.validstate?(name)
             if @states.include?(name)
                 return @states[name].is
@@ -414,43 +418,48 @@ class Type < Puppet::Element
     # abstract setting parameters and states, and normalize
     # access to always be symbols, not strings
     def []=(name,value)
-        mname = name
         if name.is_a?(String)
-            mname = name.intern
+            name = name.intern
         end
 
-        if Puppet::Type.metaparam?(mname)
+        if name == :name
+            name = self.class.namevar
+        end
+        if value.nil?
+            raise Puppet::Error.new("Got nil value for %s" % name)
+        end
+        if Puppet::Type.metaparam?(name)
             # call the metaparam method 
-            self.send(("meta" + mname.id2name + "="),value)
-        elsif stateklass = self.class.validstate?(mname) 
+            self.send(("meta" + name.id2name + "="),value)
+        elsif stateklass = self.class.validstate?(name) 
             if value.is_a?(Puppet::State)
-                Puppet.debug "'%s' got handed a state for '%s'" % [self,mname]
-                @states[mname] = value
+                Puppet.debug "'%s' got handed a state for '%s'" % [self,name]
+                @states[name] = value
             else
-                if @states.include?(mname)
-                    @states[mname].should = value
+                if @states.include?(name)
+                    @states[name].should = value
                 else
                     #Puppet.warning "Creating state %s for %s" %
                     #    [stateklass.name,self.name]
-                    @states[mname] = stateklass.new(
+                    @states[name] = stateklass.new(
                         :parent => self,
                         :should => value
                     )
-                    #debug "Adding parent to %s" % mname
-                    #@states[mname].parent = self
+                    #debug "Adding parent to %s" % name
+                    #@states[name].parent = self
                 end
             end
-        elsif self.class.validparameter?(mname)
+        elsif self.class.validparameter?(name)
             # if they've got a method to handle the parameter, then do it that way
-            method = "param" + mname.id2name + "="
+            method = "param" + name.id2name + "="
             if self.respond_to?(method)
                 self.send(method,value)
             else
                 # else just set it
-                @parameters[mname] = value
+                @parameters[name] = value
             end
         else
-            raise "Invalid parameter %s" % [mname]
+            raise "Invalid parameter %s" % [name]
         end
     end
     #---------------------------------------------------------------
@@ -614,26 +623,27 @@ class Type < Puppet::Element
         @syncedchanges = 0
         @failedchanges = 0
 
-        hash.each { |var,value|
-            unless var.is_a? Symbol
-                hash[var.intern] = value
-                hash.delete(var)
+        hash = self.argclean(hash)
+
+        # now get all of the arguments, in a specific order
+        order = [self.class.namevar]
+        order << self.class.parameters
+        order << self.class.eachmetaparam { |param| param }
+        order << self.class.states.collect { |state| state.name }
+
+        order.flatten!
+
+        order.each { |name|
+            if hash.include?(name)
+                self[name] = hash[name]
+                hash.delete name
             end
         }
 
-        if hash.include?(:noop)
-            @noop = hash[:noop]
-            hash.delete(:noop)
+        if hash.length > 0
+            raise Puppet::Error.new("Class %s does not accept argument(s) %s" %
+                [self.class.name, hash.keys.join(" ")])
         end
-
-        self.nameclean(hash)
-
-        # this should probably do all states and then all parameters, right?
-        hash.each { |param,value|
-            #debug("adding param '%s' with value '%s'" %
-            #    [param,value])
-            self[param] = value
-        }
 
         # add this object to the specific class's list of objects
         #puts caller
@@ -653,27 +663,35 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     # fix any namevar => param translations
-    def nameclean(hash)
+    def argclean(hash)
         # we have to set the name of our object before anything else,
         # because it might be used in creating the other states
+        hash = hash.dup
         namevar = self.class.namevar
+
+        hash.each { |var,value|
+            unless var.is_a? Symbol
+                hash[var.intern] = value
+                hash.delete(var)
+            end
+        }
 
         # if they're not using :name for the namevar but we got :name (probably
         # from the parser)
         if namevar != :name and hash.include?(:name) and ! hash[:name].nil?
-            self[namevar] = hash[:name]
+            #self[namevar] = hash[:name]
+            hash[namevar] = hash[:name]
             hash.delete(:name)
         # else if we got the namevar
         elsif hash.has_key?(namevar) and ! hash[namevar].nil?
-            self[namevar] = hash[namevar]
-            hash.delete(namevar)
+            #self[namevar] = hash[namevar]
+            #hash.delete(namevar)
         # else something's screwy
         else
-            raise TypeError.new("A name must be provided to %s at initialization time" %
-                self.class)
+            # they didn't specify anything related to names
         end
 
-        #return hash
+        return hash
     end
     #---------------------------------------------------------------
 
@@ -816,12 +834,12 @@ class Type < Puppet::Element
 
         states.each { |state|
             unless state.insync?
-                Puppet.debug("%s is not in sync" % state)
+                #Puppet.debug("%s is not in sync" % state)
                 insync = false
             end
         }
 
-        Puppet.debug("%s sync status is %s" % [self,insync])
+        #Puppet.debug("%s sync status is %s" % [self,insync])
         return insync
     end
     #---------------------------------------------------------------
@@ -936,6 +954,18 @@ class Type < Puppet::Element
             )
             #object.addnotify(self)
         }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def metanoop=(noop)
+        if noop == "true" or noop == true
+            @noop = true
+        elsif noop == "false" or noop == false
+            @noop = false
+        else
+            raise Puppet::Error.new("Invalid noop value '%s'" % noop)
+        end
     end
     #---------------------------------------------------------------
 
