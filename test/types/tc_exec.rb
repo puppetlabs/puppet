@@ -170,9 +170,6 @@ class TestExec < Test::Unit::TestCase
         [file,cmd].each { |obj|
             comp.push obj
         }
-        assert_nothing_raised {
-            trans = comp.evaluate
-        }
         events = nil
         assert_nothing_raised {
             trans = comp.evaluate
@@ -189,8 +186,6 @@ class TestExec < Test::Unit::TestCase
         }
         assert_nothing_raised {
             trans = comp.evaluate
-        }
-        assert_nothing_raised {
             events = trans.evaluate.collect { |event|
                 event.event
             }

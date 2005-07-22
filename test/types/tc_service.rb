@@ -31,6 +31,10 @@ class TestService < Test::Unit::TestCase
         }
     end
 
+    def teardown
+        Puppet::Type.allclear
+    end
+
     def test_process_start
         # start it
         assert_nothing_raised() {

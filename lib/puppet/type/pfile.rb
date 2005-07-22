@@ -45,9 +45,6 @@ module Puppet
 
 
             def sync
-                if defined? @synced
-                    Puppet.err "We've already been synced?"
-                end
                 event = nil
                 begin
                     case @should
@@ -68,7 +65,6 @@ module Puppet
                         [@should, detail]
                     raise error
                 end
-                @synced = true
                 return event
             end
         end
@@ -78,6 +74,8 @@ module Puppet
 
             @name = :checksum
             @event = :file_modified
+
+            @unmanaged = true
 
             def should=(value)
                 @checktype = value
@@ -90,9 +88,10 @@ module Puppet
                     else
                         #Puppet.debug "Found checksum for %s but not of type %s" %
                         #    [@parent[:path],@checktype]
-                        @should = nil
+                        @should = -1
                     end
-                #else
+                else
+                    @should = -1
                     #Puppet.debug "No checksum for %s" % @parent[:path]
                 end
             end
@@ -110,7 +109,7 @@ module Puppet
 
                 sum = ""
                 case @checktype
-                when "md5":
+                when "md5", "md5lite":
                     if FileTest.directory?(@parent[:path])
                         #Puppet.info "Cannot MD5 sum directory %s" %
                         #    @parent[:path]
@@ -123,7 +122,19 @@ module Puppet
                     else
                         begin
                             File.open(@parent[:path]) { |file|
-                                sum = Digest::MD5.hexdigest(file.read)
+                                text = nil
+                                if @checktype == "md5"
+                                    text = file.read
+                                else
+                                    text = file.read(512)
+                                end
+                                if text.nil?
+                                    Puppet.info "Not checksumming empty file %s" %
+                                        @parent.name
+                                    sum = 0
+                                else
+                                    sum = Digest::MD5.hexdigest(text)
+                                end
                             }
                         rescue Errno::EACCES => detail
                             Puppet.notice "Cannot checksum %s: permission denied" %
@@ -134,27 +145,6 @@ module Puppet
                                 detail
                             @parent.delete(self.class.name)
                         end
-                    end
-                when "md5lite":
-                    if FileTest.directory?(@parent[:path])
-                        #Puppet.info "Cannot MD5 sum directory %s" %
-                        #    @parent[:path]
-
-                        # because we cannot sum directories, just delete ourselves
-                        # from the file
-                        # is/should so we won't sync
-                        return
-                    else
-                        File.open(@parent[:path]) { |file|
-                            text = file.read(512)
-                            if text.nil?
-                                Puppet.info "Not checksumming empty file %s" %
-                                    @parent.name
-                                sum = 0
-                            else
-                                sum = Digest::MD5.hexdigest(text)
-                            end
-                        }
                     end
                 when "timestamp","mtime":
                     sum = File.stat(@parent[:path]).mtime.to_s
@@ -180,14 +170,18 @@ module Puppet
 
                 if @is == -1
                     self.retrieve
-                    Puppet.debug "%s(%s): after refresh, is '%s'" %
-                        [self.class.name,@parent.name,@is]
+                    #Puppet.debug "%s(%s): after refresh, is '%s'" %
+                    #    [self.class.name,@parent.name,@is]
 
                     # if we still can't retrieve a checksum, it means that
                     # the file still doesn't exist
                     if @is == -1
-                        Puppet.warning "File %s does not exist -- cannot checksum" %
-                            @parent.name
+                        # if they're copying, then we won't worry about the file
+                        # not existing yet
+                        unless @parent.state(:copy) or @parent.state(:create)
+                            Puppet.warning "File %s does not exist -- cannot checksum" %
+                                @parent.name
+                        end
                         return nil
                     end
                 end
@@ -234,7 +228,7 @@ module Puppet
                     end
                     Puppet.debug "Replacing checksum %s with %s" %
                         [state[@parent.name][@checktype],@is]
-                    Puppet.debug "@is: %s; @should: %s" % [@is,@should]
+                    #Puppet.debug "@is: %s; @should: %s" % [@is,@should]
                     result = true
                 else
                     Puppet.debug "Creating checksum %s for %s of type %s" %
@@ -422,11 +416,11 @@ module Puppet
                 if @is == -1
                     @parent.stat(true)
                     self.retrieve
-                    Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    #Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
                 end
 
                 unless @parent.stat
-                    Puppet.err "PFile '%s' does not exist; cannot chown" %
+                    Puppet.err "File '%s' does not exist; cannot chown" %
                         @parent[:path]
                 end
 
@@ -498,13 +492,13 @@ module Puppet
                 if @is == -1
                     @parent.stat(true)
                     self.retrieve
-                    Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    #Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
                 end
 
                 unless @parent.stat
-                    Puppet.err "PFile '%s' does not exist; cannot chmod" %
+                    Puppet.err "File '%s' does not exist; cannot chmod" %
                         @parent[:path]
-                    return
+                    return nil
                 end
 
                 unless defined? @fixed
@@ -566,10 +560,10 @@ module Puppet
                 # we probably shouldn't actually modify the 'should' value
                 # but i don't see a good way around it right now
                 # mmmm, should
-                if defined? @should
-                else
-                    @parent.delete(self.name)
-                end
+                #if defined? @should
+                #else
+                #    @parent.delete(self.name)
+                #end
             end
 
             def should=(value)
@@ -632,13 +626,13 @@ module Puppet
                 if @is == -1
                     @parent.stat(true)
                     self.retrieve
-                    Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    #Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
                 end
 
                 unless @parent.stat
-                    Puppet.err "PFile '%s' does not exist; cannot chgrp" %
+                    Puppet.err "File '%s' does not exist; cannot chgrp" %
                         @parent[:path]
-                    return
+                    return nil
                 end
 
                 begin
@@ -661,10 +655,6 @@ module Puppet
             def retrieve
                 sum = nil
                 if sum = @parent.state(:checksum)
-                    if @parent.name =~ /e\/dav_fs.load/
-                        puts caller
-                        Puppet.notice "Ah: %s" % @parent.name
-                    end
                     if sum.is
                         if sum.is == -1
                             sum.retrieve
@@ -705,21 +695,15 @@ module Puppet
             end
 
             def sync
-                if @is.nil?
-                    Puppet.err "@is is nil"
-                end
                 if @is == -1
                     self.retrieve # try again
                     if @is == @should
                         return nil
-                    else
-                        Puppet.err "@is: %s; @should: %s" % [@is, @should]
                     end
                 end
                 @backed = false
                 bak = @parent[:backup] || ".puppet-bak"
 
-                Puppet.notice "@is: %s; @should: %s" % [@is, @should]
                 # try backing ourself up before we overwrite
                 if FileTest.file?(@parent.name)
                     if bucket = @parent[:filebucket]
@@ -745,6 +729,8 @@ module Puppet
                     @backed = true
                 end
 
+                #Puppet.notice "@is: %s; @should: %s" % [@is,@should]
+                #Puppet.err "@is: %s; @should: %s" % [@is,@should]
                 # okay, we've now got whatever backing up done we might need
                 # so just copy the files over
                 if @local
@@ -814,8 +800,8 @@ module Puppet
                 #Puppet::State::PFileSource,
             @states = [
                 Puppet::State::PFileCreate,
-                Puppet::State::PFileCopy,
                 Puppet::State::PFileChecksum,
+                Puppet::State::PFileCopy,
                 Puppet::State::PFileUID,
                 Puppet::State::PFileGroup,
                 Puppet::State::PFileMode,
@@ -1059,6 +1045,7 @@ module Puppet
             # if recursion is turned off, then this whole thing is pretty easy
             def paramsource=(source)
                 @parameters[:source] = source
+                @arghash.delete(:source)
                 @source = source
 
                 # verify we support the proto
@@ -1088,54 +1075,14 @@ module Puppet
                     return
                 end
 
-#                    # okay, we now have the whole source tree in memory, being modelled
-#                    # now we just need to compare it with what we have, to see
-#                    # if we're missing any files
-#
-#                    # we're assuming that 'paramrecurse=' has already been called
-#
-#                    if FileTest.directory?(@source)
-#                        mkchilds = @sourceobj.reject { |schild|
-#                            schild.is_a?(Puppet::State)
-#                        }.collect { |schild|
-#                            File.basename(schild.name)
-#                        }
-#
-#                        @children.each { |child|
-#                            name = File.basename(child.name)
-#                            if mkchilds.include?(name)
-#                                mkchilds.delete(name)
-#                            end
-#                        }
-#
-#                        # okay, now we know which ones we still need to make
-#                        mkchilds.each { |child|
-#                            Puppet.notice "Making non-existent file %s" % child
-#                            child = self.newchild(child)
-#                            self.push child
-#                        }
-#                    end
-#
-#                    @srcbase = @source
-#
-#                    # now, the sourceobj models the entire tree at once
-#                    # and we've already recursed through what exists locally
-#                end
-#
-#                # Check whether we'll be creating the file or whether it already
-#                # exists.  The root of the destination tree will cause the
-#                # recursive creation of all of the objects, and then all the
-#                # children of the tree will just pull existing objects
-#                unless @sourceobj = self.newsource(@source)
-#                    return
-#                end
-
                 # okay, now we've got the object; retrieve its values, so we
                 # can make them our 'should' values
                 @sourceobj.retrieve
 
                 @@pinparams.each { |state|
                     next if state == :checksum
+                    next if Process.uid != 0 and state == :owner
+                    next if Process.uid != 0 and state == :group
                     unless @states.include?(state)
                         # this copies the source's 'is' value to our 'should'
                         # but doesn't override existing settings
@@ -1157,7 +1104,6 @@ module Puppet
                     sourcesum = @sourceobj.state(:checksum)
                     destsum = @states[:checksum]
 
-                    begin
                     unless destsum.checktype == sourcesum.checktype
                         Puppet.warning(("Source file '%s' checksum type %s is " +
                             "incompatible with destination file '%s' checksum " +
@@ -1183,10 +1129,6 @@ module Puppet
                             destsum.should = "md5"
                         end
                         checktype = "md5"
-                    end
-                    rescue => detail
-                        Puppet.err detail
-                        exit
                     end
                 elsif @sourceobj.state(:checksum)
                     checktype = @sourceobj.state(:checksum).checktype
@@ -1331,6 +1273,10 @@ module Puppet
                 if @stat.nil? or refresh == true
                     begin
                         @stat = File.stat(self.name)
+                    rescue Errno::ENOENT => error
+                        #Puppet.debug "Failed to stat %s: No such file or directory" %
+                        #    [self.name]
+                        @stat = nil
                     rescue => error
                         Puppet.debug "Failed to stat %s: %s" %
                             [self.name,error]

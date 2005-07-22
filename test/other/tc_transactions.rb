@@ -5,14 +5,30 @@ if __FILE__ == $0
 end
 
 require 'puppet'
+require 'puppettest'
 require 'test/unit'
 
 # $Id$
 
 class TestTransactions < Test::Unit::TestCase
-    def setup
-        Puppet[:loglevel] = :debug if __FILE__ == $0
+    def cycle(comp)
+        assert_nothing_raised {
+            trans = comp.evaluate
+        }
+        events = nil
+        assert_nothing_raised {
+            events = trans.evaluate.collect { |e|
+                e.event
+            }
+        }
+        return events
+    end
 
+    def setup
+        Puppet::Type.allclear
+        @@tmpfiles = []
+        Puppet[:loglevel] = :debug if __FILE__ == $0
+        Puppet[:statefile] = "/var/tmp/puppetstate"
         @groups = %x{groups}.chomp.split(/ /)
         unless @groups.length > 1
             p @groups
@@ -21,36 +37,35 @@ class TestTransactions < Test::Unit::TestCase
     end
 
     def teardown
-        assert_nothing_raised() {
-            Puppet::Type.allclear
+        Puppet::Type.allclear
+        @@tmpfiles.each { |file|
+            if FileTest.exists?(file)
+                system("chmod -R 755 %s" % file)
+                system("rm -rf %s" % file)
+            end
         }
-
+        @@tmpfiles.clear
+        system("rm -f %s" % Puppet[:statefile])
         print "\n\n" if Puppet[:debug]
     end
 
-    def newfile
+    def newfile(hash = {})
+        tmpfile = PuppetTestSuite.tempfile()
+        File.open(tmpfile, "w") { |f| f.puts rand(100) }
+        @@tmpfiles.push tmpfile
+        hash[:name] = tmpfile
         assert_nothing_raised() {
-            cfile = File.join($puppetbase,"examples/root/etc/configfile")
-            unless Puppet::Type::PFile.has_key?(cfile)
-                Puppet::Type::PFile.new(
-                    :path => cfile,
-                    :check => [:mode, :owner, :group]
-                )
-            end
-            return Puppet::Type::PFile[cfile]
+            return Puppet::Type::PFile.new(hash)
         }
     end
 
     def newservice
         assert_nothing_raised() {
-            unless Puppet::Type::Service.has_key?("sleeper")
-                Puppet::Type::Service.new(
-                    :name => "sleeper",
-                    :path => File.join($puppetbase,"examples/root/etc/init.d"),
-                    :check => [:running]
-                )
-            end
-            return Puppet::Type::Service["sleeper"]
+            return Puppet::Type::Service.new(
+                :name => "sleeper",
+                :path => File.join($puppetbase,"examples/root/etc/init.d"),
+                :check => [:running]
+            )
         }
     end
 
@@ -69,7 +84,7 @@ class TestTransactions < Test::Unit::TestCase
         return comp
     end
 
-    def test_filetrans
+    def test_filerollback
         transaction = nil
         file = newfile()
         states = {}
@@ -80,9 +95,13 @@ class TestTransactions < Test::Unit::TestCase
             file.retrieve
         }
 
-        check.each { |state|
-            states[state] = file[state]
+        assert_nothing_raised() {
+            check.each { |state|
+                assert(file[state])
+                states[state] = file[state]
+            }
         }
+
 
         component = newcomp("file",file)
         assert_nothing_raised() {
@@ -110,7 +129,7 @@ class TestTransactions < Test::Unit::TestCase
 
     def test_servicetrans
         transaction = nil
-        service = newservice
+        service = newservice()
         service[:check] = [:running]
 
         component = newcomp("service",service)
@@ -196,16 +215,6 @@ class TestTransactions < Test::Unit::TestCase
         # restarts
         # XXX i don't have a good way to retrieve this information...
         #assert_equal(1,transaction.triggercount(sub))
-
-        # now set everything back to how it was
-        assert_nothing_raised() {
-            service[:running] = 0
-            service.sync
-            check.each { |state|
-                file[state] = states[state]
-            }
-            file.sync
-        }
     end
 
     def test_twocomps
@@ -268,16 +277,6 @@ class TestTransactions < Test::Unit::TestCase
         # XXX this doesn't work, because the sub is being triggered in
         # a contained transaction, not this one
         #assert_equal(1,transaction.triggercount(sub))
-
-        # now set everything back to how it was
-        assert_nothing_raised() {
-            service[:running] = 0
-            service.sync
-            check.each { |state|
-                file[state] = states[state]
-            }
-            file.sync
-        }
     end
 
 end

@@ -322,7 +322,8 @@ class Type < Puppet::Element
             name = stateklass.name
             if @validstates.include?(name) 
                 if @validstates[name] != stateklass
-                    raise "Redefining state %s(%s) in %s" % [name,stateklass,self]
+                    raise Puppet::Error.new("Redefining state %s(%s) in %s" %
+                        [name,stateklass,self])
                 else
                     # it's already there, so don't bother
                 end
@@ -531,7 +532,7 @@ class Type < Puppet::Element
         else
             @managed = false
             states.each { |state|
-                if state.should
+                if state.should and ! state.class.unmanaged
                     @managed = true
                 end
             }
@@ -784,10 +785,6 @@ class Type < Puppet::Element
             @evalcount = 0
         end
         @@retrieved[self] += 1
-        if self.name =~ /e\/dav_fs.load/ and @@retrieved[self] > 1
-            Puppet.notice "%s(%s) %s" %
-                [@@retrieved[self], @evalcount, self.path.join(":")]
-        end
         # if we're a metaclass and we've already evaluated once...
         #if self.metaclass and @evalcount > 0
         #    return
@@ -807,19 +804,13 @@ class Type < Puppet::Element
         #end
 
         # this only operates on states, not states + children
-        #self.retrieve
-        #unless self.insync?
+        # it's important that we call retrieve() on the type instance,
+        # not directly on the state, because it allows the type to override
+        # the method, like pfile does
+        self.retrieve
 
         # states() is a private method, returning an ordered list
-        changes << states().each { |state|
-            @@retrieved[state] += 1
-            #if self.name =~ /e\/dav_fs.load/
-            #    Puppet.notice "%s %s" % [@@retrieved[state], state.path]
-            #end
-            #unless @@retrieved[state] > 0
-                state.retrieve
-            #end
-        }.find_all { |state|
+        changes << states().find_all { |state|
             ! state.insync?
         }.collect { |state|
             Puppet::StateChange.new(state)
@@ -852,6 +843,9 @@ class Type < Puppet::Element
         if changes.length > 0
             Puppet.info "%s: %s change(s)" %
                 [self.name, changes.length]
+            #changes.each { |change|
+            #    Puppet.debug "change: %s" % change.state.name
+            #}
         end
         return changes.flatten
     end

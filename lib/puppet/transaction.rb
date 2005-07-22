@@ -54,7 +54,7 @@ class Transaction
                 begin
                     # use an array, so that changes can return more than one
                     # event if they want
-                    events = [change.forward].flatten
+                    events = [change.forward].flatten.reject { |e| e.nil? }
                     #@@changed.push change.state.parent
                 rescue => detail
                     Puppet.err("%s failed: %s" % [change,detail])

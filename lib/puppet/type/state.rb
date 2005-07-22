@@ -20,6 +20,10 @@ class State < Puppet::Element
 
     @virtual = true
 
+    class << self
+        attr_accessor :unmanaged
+    end
+
     #---------------------------------------------------------------
     # which event gets generated if this state change happens; not currently
     # called
@@ -77,6 +81,9 @@ class State < Puppet::Element
     def insync?
         #debug "%s value is '%s', should be '%s'" %
         #    [self,self.is.inspect,self.should.inspect]
+        unless defined? @should
+            return true
+        end
         self.is == self.should
     end
     #---------------------------------------------------------------
