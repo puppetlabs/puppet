@@ -13,10 +13,16 @@ require 'facter'
 class TestExec < Test::Unit::TestCase
     def setup
         Puppet[:loglevel] = :debug if __FILE__ == $0
+        @@tmpfiles = []
     end
 
     def teardown
         Puppet::Type.allclear
+        @@tmpfiles.each { |f|
+            if FileTest.exists?(f)
+                system("rm -rf %s" % f)
+            end
+        }
     end
 
     def test_execution
@@ -142,10 +148,11 @@ class TestExec < Test::Unit::TestCase
     def test_refreshonly
         file = nil
         cmd = nil
-        tmpfile = "/tmp/testing"
+        tmpfile = "/tmp/exectesting"
+        @@tmpfiles.push tmpfile
         trans = nil
-        File.open(tmpfile, File::WRONLY|File::CREAT|File::APPEND) { |of|
-            of.puts "yayness"
+        File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
+            of.puts rand(100)
         }
         file = Puppet::Type::PFile.new(
             :path => tmpfile,
@@ -168,6 +175,22 @@ class TestExec < Test::Unit::TestCase
         }
         events = nil
         assert_nothing_raised {
+            trans = comp.evaluate
+            events = trans.evaluate.collect { |event|
+                event.event
+            }
+        }
+        # the first checksum shouldn't result in a changed file
+        assert_equal([],events)
+        File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
+            of.puts rand(100)
+            of.puts rand(100)
+            of.puts rand(100)
+        }
+        assert_nothing_raised {
+            trans = comp.evaluate
+        }
+        assert_nothing_raised {
             events = trans.evaluate.collect { |event|
                 event.event
             }
@@ -176,7 +199,7 @@ class TestExec < Test::Unit::TestCase
         # verify that only the file_changed event was kicked off, not the
         # command_executed
         assert_equal(
-            ["file_changed"],
+            [:file_modified],
             events
         )
     end
