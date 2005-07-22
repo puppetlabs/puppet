@@ -16,7 +16,7 @@ require 'puppet/log'
 # it's also a place to find top-level commands like 'debug'
 module Puppet
     class Error < RuntimeError
-        attr_accessor :stack
+        attr_accessor :stack, :line, :file
         def initialize(message)
             @message = message
 
