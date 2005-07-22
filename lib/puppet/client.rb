@@ -88,10 +88,24 @@ module Puppet
 
             # XXX this is kind of a problem; if the user changes the state file
             # after this, then we have to reload the file and everything...
-            Puppet::Storage.init
-            Puppet::Storage.load
+            begin
+                Puppet::Storage.init
+                Puppet::Storage.load
+            rescue => detail
+                Puppet.err "Corrupt state file %s" % Puppet[:statefile]
+                begin
+                    File.unlink(Puppet[:statefile])
+                rescue => detail
+                    raise Puppet::Error.new("Cannot remove %s: %s" %
+                        [Puppet[statefile], detail])
+                end
+            end
 
-            container = Marshal::load(tree).to_type
+            if @localonly
+                container = tree.to_type
+            else
+                container = Marshal::load(tree).to_type
+            end
 
             # this is a gross hack... but i don't see a good way around it
             # set all of the variables to empty
