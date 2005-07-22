@@ -8,6 +8,8 @@ require 'puppet'
 require 'test/unit'
 require 'facter'
 
+Puppet[:loglevel] = :debug if __FILE__ == $0
+
 # $Id$
 
 class TestPackagingType < Test::Unit::TestCase

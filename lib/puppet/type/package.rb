@@ -15,7 +15,7 @@ module Puppet
                 unless @parent.class.listed
                     @parent.class.getpkglist
                 end
-                debug "package install state is %s" % self.is
+                Puppet.debug "package install state is %s" % self.is
             end
 
             def sync
@@ -72,7 +72,7 @@ module Puppet
                     array = [array]
                 end
                 @@types = array
-                debug "Types are %s" % array.join(" ")
+                Puppet.debug "Types are %s" % array.join(" ")
             end
 
             def Package.getpkglist
@@ -117,30 +117,30 @@ module Puppet
                 if object = Package[name]
                     states = {}
                     object.eachstate { |state|
-                        debug "Adding %s" % state.name.inspect
+                        Puppet.debug "Adding %s" % state.name.inspect
                         states[state.name] = state
                     }
                     hash.each { |var,value|
                         if states.include?(var)
-                            debug "%s is a set state" % var.inspect
+                            Puppet.debug "%s is a set state" % var.inspect
                             states[var].is = value
                         else
-                            debug "%s is not a set state" % var.inspect
+                            Puppet.debug "%s is not a set state" % var.inspect
                             if object[var] and object[var] != value
                                 Puppet.warning "Overriding %s => %s on %s with %s" %
                                     [var,object[var],name,value]
                             end
 
-                            object.state(var).is = value
+                            #object.state(var).is = value
 
                             # swap the values if we're a state
                             if states.include?(var)
-                                debug "Swapping %s because it's a state" % var
+                                Puppet.debug "Swapping %s because it's a state" % var
                                 states[var].is = value
                                 states[var].should = nil
                             else
-                                debug "%s is not a state" % var.inspect
-                                debug "States are %s" % states.keys.collect { |st|
+                                Puppet.debug "%s is not a state" % var.inspect
+                                Puppet.debug "States are %s" % states.keys.collect { |st|
                                     st.inspect
                                 }.join(" ")
                             end
@@ -296,7 +296,7 @@ module Puppet
             open("| rpm -q -a --qf '%{NAME} %{VERSION}\n'") { |process|
                 # our regex for matching dpkg output
                 regex = %r{^(\S+)\s+(\S+)}
-                fields = [:name, :version]
+                fields = [:name, :install]
                 hash = {}
 
                 # now turn each returned line into a package object
