@@ -61,7 +61,8 @@ class TestPackages < Test::Unit::TestCase
         assert_nothing_raised() {
             pkg = @list[rand(@list.length)]
         }
-        assert(pkg)
+        assert(pkg[:install])
+        assert(! pkg.state(:install).should)
         assert_nothing_raised() {
             pkg.evaluate
         }
@@ -71,6 +72,7 @@ class TestPackages < Test::Unit::TestCase
         assert_nothing_raised() {
             pkg.evaluate
         }
+        assert(pkg.insync?)
         assert_nothing_raised() {
             pkg[:install] = "1.2.3.4"
         }

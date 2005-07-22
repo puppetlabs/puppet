@@ -111,6 +111,7 @@ module Puppet
             def Package.installedpkg(hash)
                 # this is from code, so we don't have to do as much checking
                 name = hash[:name]
+                hash.delete(:name)
 
                 # if it already exists, modify the existing one
                 if object = Package[name]
@@ -130,7 +131,7 @@ module Puppet
                                     [var,object[var],name,value]
                             end
 
-                            object[var] = value
+                            object.state(var).is = value
 
                             # swap the values if we're a state
                             if states.include?(var)
@@ -147,8 +148,24 @@ module Puppet
                     }
                     return object
                 else # just create it
-                    return self.new(hash)
+                    obj = self.new(:name => name)
+                    hash.each { |var,value|
+                        obj.addis(var,value)
+                    }
+                    return obj
                 end
+            end
+
+            def addis(state,value)
+                if stateklass = self.class.validstate?(state)
+                    @states[state] = stateklass.new(:parent => self)
+                    @states[state].is = value
+                elsif self.class.validparameter?(state)
+                    self[state] = value
+                else
+                    raise Puppet::DevError.new("Invalid package state %s" % state)
+                end
+
             end
 
             # okay, there are two ways that a package could be created...
