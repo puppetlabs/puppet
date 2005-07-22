@@ -46,14 +46,28 @@ module Puppet
 
             def sync
                 event = nil
+                mode = nil
+                if mstate = @parent.state(:mode)
+                    mode = mstate.should
+                end
                 begin
                     case @should
                     when "file":
-                        File.open(@parent[:path],"w") { # just create an empty file
-                        }
+                        # just create an empty file
+                        if mode
+                            File.open(@parent[:path],"w", mode) {
+                            }
+                        else
+                            File.open(@parent[:path],"w") {
+                            }
+                        end
                         event = :file_created
                     when "directory":
-                        Dir.mkdir(@parent.name)
+                        if mode
+                            Dir.mkdir(@parent.name,mode)
+                        else
+                            Dir.mkdir(@parent.name)
+                        end
                         event = :directory_created
                     else
                         error = Puppet::Error.new(
@@ -240,89 +254,6 @@ module Puppet
             end
         end
 
-        class PFileLink < Puppet::State
-            require 'etc'
-            attr_reader :link
-
-            @name = :link
-
-            # create the link
-            def self.create(file,link)
-                begin
-                    Puppet.debug("Creating symlink '%s' to '%s'" % [file, link])
-                    unless File.symlink(file,link)
-                        raise Puppet::Error.new(
-                            "Could not create symlink '%s'" % link
-                        )
-                    end
-                rescue => detail
-                    raise Puppet::Error.new(
-                        "Cannot create symlink '%s': %s" % [file,detail]
-                    )
-                end
-            end
-
-            # remove an existing link
-            def self.remove(link)
-                if FileTest.symlink?(link)
-                    Puppet.debug("Removing symlink '%s'" % link)
-                    begin
-                        File.unlink(link)
-                    rescue
-                        raise Puppet::Error.new(
-                            "Failed to remove symlink '%s'" % link
-                        )
-                    end
-                elsif FileTest.exists?(link)
-                    error = Puppet::Error.new(
-                        "Cannot remove normal file '%s'" % link)
-                    raise error
-                else
-                    Puppet.debug("Symlink '%s' does not exist" % link)
-                end
-            end
-
-            def retrieve
-                if FileTest.symlink?(@link)
-                    self.is = File.readlink(@link)
-                    return
-                elsif FileTest.exists?(@link)
-                    Puppet.err "Cannot replace %s with a link" % @link
-                    @should = nil
-                    @is = nil
-                else
-                    self.is = nil
-                    return
-                end
-            end
-
-            # we know the link should exist, but it should also point back
-            # to us
-            def should=(link)
-                @link = link
-                @should = @parent[:path]
-
-                # unless we're fully qualified or we've specifically allowed
-                # relative links.  Relative links are currently disabled, until
-                # someone actually asks for them
-                #unless @should =~ /^\// or @parent[:relativelinks]
-                unless @should =~ /^\//
-                    @should = File.expand_path @should
-                end
-            end
-
-            # this is somewhat complicated, because it could exist and be
-            # a file
-            def sync
-                if @is
-                    self.class.remove(@link)
-                end
-                self.class.create(@should,@link)
-
-                return :link_created
-            end
-        end
-
         class PFileUID < Puppet::State
             require 'etc'
             @name = :owner
@@ -481,6 +412,9 @@ module Puppet
             def retrieve
                 if stat = @parent.stat(true)
                     self.is = stat.mode & 007777
+                    unless defined? @fixed
+                        self.dirfix
+                    end
                 else
                     self.is = -1
                 end
@@ -506,7 +440,7 @@ module Puppet
                 end
 
                 begin
-                    File.chmod(self.should,@parent[:path])
+                    File.chmod(@should,@parent[:path])
                 rescue => detail
                     error = Puppet::Error.new("failed to chmod %s: %s" %
                         [@parent.name, detail.message])
@@ -805,13 +739,13 @@ module Puppet
                 Puppet::State::PFileUID,
                 Puppet::State::PFileGroup,
                 Puppet::State::PFileMode,
-                Puppet::State::PFileSetUID,
-                Puppet::State::PFileLink
+                Puppet::State::PFileSetUID
             ]
 
             @parameters = [
                 :path,
                 :backup,
+                :linkmaker,
                 :recurse,
                 :source,
                 :filebucket
@@ -945,7 +879,22 @@ module Puppet
                 #end
 
                 child = nil
-                if child = self.class[path]
+                klass = nil
+                if @parameters[:linkmaker] and args.include?(:source) and
+                    ! FileTest.directory?(args[:source])
+                    klass = Puppet::Type::Symlink
+
+                    Puppet.debug "%s is a link" % path
+                    # clean up the args a lot for links
+                    old = args.dup
+                    args = {
+                        :target => old[:source],
+                        :path => path
+                    }
+                else
+                    klass = Puppet::Type::PFile
+                end
+                if child = klass[path]
                     #raise "Ruh-roh"
                     args.each { |var,value|
                         next if var == :path
@@ -955,7 +904,7 @@ module Puppet
                 else # create it anew
                     #notice "Creating new file with args %s" % args.inspect
                     begin
-                        child = self.class.new(args)
+                        child = klass.new(args)
                     rescue Puppet::Error => detail
                         Puppet.notice(
                             "Cannot manage %s: %s" %
@@ -1219,7 +1168,6 @@ module Puppet
                 added = []
                 Dir.foreach(self.name) { |file|
                     next if file =~ /^\.\.?/ # skip . and ..
-                    # XXX it's right here
                     if child = self.newchild(file, :recurse => recurse)
                         if @children.include?(child)
                             Puppet.notice "Child already included"
@@ -1238,7 +1186,7 @@ module Puppet
                             @parameters[:source])
                     end
                     Dir.foreach(@parameters[:source]) { |file|
-                        next if file =~ /^\.\.?/ # skip . and ..
+                        next if file =~ /^\.\.?$/ # skip . and ..
                         unless added.include?(file)
                             Puppet.notice "Adding absent source-file %s" % file
                             if child = self.newchild(file,

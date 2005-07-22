@@ -262,7 +262,6 @@ class Type < Puppet::Element
     # remove all type instances; this is mostly only useful for testing
     def self.allclear
         @@typeary.each { |subtype|
-            Puppet.debug "Clearing %s of objects" % subtype
             subtype.clear
         }
     end
@@ -1023,7 +1022,7 @@ end
 require 'puppet/type/service'
 require 'puppet/type/exec'
 require 'puppet/type/pfile'
-#require 'puppet/type/symlink'
+require 'puppet/type/symlink'
 require 'puppet/type/package'
 require 'puppet/type/component'
 require 'puppet/statechange'
