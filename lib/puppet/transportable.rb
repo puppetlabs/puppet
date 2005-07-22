@@ -157,7 +157,6 @@ module Puppet
                         nametable[name] = object
 
                         # this sets the order of the object
-                        Puppet.notice "Pushing %s" % object.name
                         container.push object
                     end
                 else
