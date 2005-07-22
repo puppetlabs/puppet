@@ -15,6 +15,12 @@ module Puppet
             @state = state
             @path = [state.path,"change"].flatten
             @is = state.is
+
+            if state.is == state.should
+                raise Puppet::Error(
+                    "Tried to create a change for in-sync state %s" % state.name
+                )
+            end
             @should = state.should
 
             @run = false
@@ -28,13 +34,21 @@ module Puppet
                 return nil
             end
 
+            if @state.is == @state.should
+                raise Puppet::Error.new(
+                    "Tried to change in-sync state %s" % state.name
+                )
+            end
+
             begin
                 event = @state.sync
                 @run = true
                 
                 # default to a simple event type
                 if event.nil?
-                    event = @state.parent.class.name.id2name + "_changed"
+                    #event = @state.parent.class.name.id2name + "_changed"
+                    # they didn't actually change anything
+                    return
                 elsif ! event.is_a?(Symbol)
                     Puppet.warning "State '%s' returned invalid event '%s'; resetting to default" %
                         [@state.class,event]
@@ -52,7 +66,7 @@ module Puppet
                     :message => self.to_s
                 )
             rescue => detail
-                Puppet.err "%s failed: %s" % [self.to_s,detail]
+                #Puppet.err "%s failed: %s" % [self.to_s,detail]
                 raise
                 # there should be a way to ask the state what type of event
                 # it would have generated, but...
@@ -89,8 +103,10 @@ module Puppet
             @state.should = @is
             @state.retrieve
 
-            Puppet.notice "Rolling %s backward" % self
-            return self.go
+            unless @state.insync?
+                Puppet.notice "Rolling %s backward" % self
+                return self.go
+            end
 
             #raise "Moving statechanges backward is currently unsupported"
             #@type.change(@path,@should,@is)

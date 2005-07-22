@@ -62,9 +62,11 @@ Component
         def push(*ary)
             ary.each { |child|
                 unless child.is_a?(Puppet::Element)
-                    debug "Got object of type %s" % child.class
-                    raise "Containers can only contain Puppet::Elements, not %s" %
+                    Puppet.debug "Got object of type %s" % child.class
+                    raise Puppet::DevError.new(
+                        "Containers can only contain Puppet::Elements, not %s" %
                         child.class
+                    )
                 end
                 @children.push child
                 child.parent = self
@@ -79,11 +81,11 @@ Component
             }
         end
 
-        def retrieve
-            self.collect { |child|
-                child.retrieve
-            }
-        end
+        #def retrieve
+        #    self.collect { |child|
+        #        child.retrieve
+        #    }
+        #end
 
         def to_s
             return "component(%s)" % self.name

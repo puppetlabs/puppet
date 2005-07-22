@@ -63,41 +63,6 @@ module Puppet
     #------------------------------------------------------------
 
     #------------------------------------------------------------
-    class TransSetting
-        attr_accessor :type, :name, :args, :evalcount
-
-        def initialize
-            @evalcount = 0
-        end
-
-        def evaluate
-            @evalcount += 0
-            if type = Puppet::Type.type(self.type)
-                # call the settings
-                name = self.name
-                unless name.is_a?(Symbol)
-                    name = name.intern
-                end
-                if type.allowedmethod(name)
-                    Puppet.debug "Sending %s->%s(%s)" %
-                        [type.name,self.name,self.args]
-                    begin
-                        type.send(self.name,self.args)
-                    rescue => detail
-                        raise "Failed to execute '%s.%s(%s)'" %
-                            [type,self.name,self.args]
-                    end
-                else
-                    err("%s does not respond to %s" % [self.type,self.name])
-                end
-            else
-                raise "Could not find object type %s" % setting.type
-            end
-        end
-    end
-    #------------------------------------------------------------
-
-    #------------------------------------------------------------
     # just a linear container for objects
     class TransBucket < Array
         attr_accessor :name, :type
@@ -148,9 +113,6 @@ module Puppet
                 if child.is_a?(Puppet::TransBucket)
                     # just perform the same operation on any children
                     container.push(child.to_type)
-                elsif child.is_a?(Puppet::TransSetting)
-                    # XXX this is wrong, but for now just evaluate the settings
-                    child.evaluate
                 elsif child.is_a?(Puppet::TransObject)
                     # do a simple little naming hack to see if the object already
                     # exists in our scope
@@ -172,17 +134,11 @@ module Puppet
                             # override any existing values
                             object[var] = value
                         }
+                        object.parent = self
                     else # the object does not exist yet in our scope
                         # now we have the object instantiated, in our scope
                         begin
                             object = child.to_type
-                        rescue Puppet::Error => except
-                            Puppet.err "Failed to create %s %s: %s" %
-                                [child.type,child.name,except.message]
-                            if Puppet[:debug]
-                                puts except.stack
-                            end
-                            next
                         rescue Puppet::Error => except
                             Puppet.err "Failed to create %s %s: %s" %
                                 [child.type,child.name,except.message]
@@ -201,6 +157,7 @@ module Puppet
                         nametable[name] = object
 
                         # this sets the order of the object
+                        Puppet.notice "Pushing %s" % object.name
                         container.push object
                     end
                 else

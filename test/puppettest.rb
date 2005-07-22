@@ -7,10 +7,22 @@ unless defined? PuppetTestSuite
     class PuppetTestSuite
         attr_accessor :subdir
 
-        def PuppetTestSuite.list
+        def self.list
             Dir.entries(".").find_all { |file|
                 FileTest.directory?(file) and file !~ /^\./
             }
+        end
+
+        def self.conffile
+            File.join($puppetbase,"examples/root/etc/configfile")
+        end
+
+        def self.tempfile
+            File.join(self.tmpdir(), "puppetestfile")
+        end
+
+        def self.tmpdir
+            "/tmp"
         end
 
         def initialize(name)

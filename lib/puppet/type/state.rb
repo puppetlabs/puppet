@@ -41,16 +41,16 @@ class State < Puppet::Element
     #---------------------------------------------------------------
     # if we're not in sync, return a statechange capable of putting us
     # in sync
-    def evaluate
-        #debug "evaluating %s" % self
-        self.retrieve
-        if self.insync?
-            #debug "%s is in sync" % self
-            return nil
-        else
-            return Puppet::StateChange.new(self)
-        end
-    end
+    #def evaluate
+    #    #debug "evaluating %s" % self
+    #    self.retrieve
+    #    if self.insync?
+    #        #debug "%s is in sync" % self
+    #        return nil
+    #    else
+    #        return Puppet::StateChange.new(self)
+    #    end
+    #end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------

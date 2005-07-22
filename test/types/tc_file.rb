@@ -7,6 +7,7 @@ end
 require 'puppet'
 require 'test/unit'
 require 'fileutils'
+require 'puppettest'
 
 # $Id$
 
@@ -14,20 +15,54 @@ class TestFile < Test::Unit::TestCase
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store
-    def setup
-        @@tmpfiles = []
-        @file = nil
-        @path = File.join($puppetbase,"examples/root/etc/configfile")
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-        Puppet[:statefile] = "/var/tmp/puppetstate"
-        assert_nothing_raised() {
-            @file = Puppet::Type::PFile.new(
-                :name => @path
-            )
+    def mkfile(hash)
+        file = nil
+        assert_nothing_raised {
+            file = Puppet::Type::PFile.new(hash)
+        }
+        return file
+    end
+
+    def testfile
+        # because luke's home directory is on nfs, it can't be used for testing
+        # as root
+        tmpfile = PuppetTestSuite.tempfile()
+        File.open(tmpfile, "w") { |f| f.puts rand(100) }
+        @@tmpfiles.push tmpfile
+        mkfile(:name => tmpfile)
+    end
+
+    def comp(ary)
+        comp = Puppet::Component.new(
+            :name => "component"
+        )
+        ary.each { |item| comp.push item }
+
+        return comp
+    end
+
+    def cycle(comp)
+        assert_nothing_raised {
+            trans = comp.evaluate
+        }
+        assert_nothing_raised {
+            trans.evaluate
         }
     end
 
+    def setup
+        @@tmpfiles = []
+        Puppet[:loglevel] = :debug if __FILE__ == $0
+        Puppet[:statefile] = "/var/tmp/puppetstate"
+        begin
+            initstorage
+        rescue
+            system("rm -rf %s" % Puppet[:statefile])
+        end
+    end
+
     def teardown
+        clearstorage
         Puppet::Type.allclear
         @@tmpfiles.each { |file|
             if FileTest.exists?(file)
@@ -35,6 +70,7 @@ class TestFile < Test::Unit::TestCase
                 system("rm -rf %s" % file)
             end
         }
+        @@tmpfiles.clear
         system("rm -f %s" % Puppet[:statefile])
     end
 
@@ -46,55 +82,112 @@ class TestFile < Test::Unit::TestCase
     def clearstorage
         Puppet::Storage.store
         Puppet::Storage.clear
-        initstorage()
     end
 
-    def test_owner
-        [Process.uid,%x{whoami}.chomp].each { |user|
-            assert_nothing_raised() {
-                @file[:owner] = user
-            }
-            assert_nothing_raised() {
-                @file.evaluate
-            }
-            assert_nothing_raised() {
-                @file.sync
-            }
-            assert_nothing_raised() {
-                @file.evaluate
-            }
-            assert(@file.insync?())
+    def test_zzowner
+        file = testfile()
+
+        users = {}
+        count = 0
+
+        # collect five users
+        Etc.passwd { |passwd|
+            if count > 5
+                break
+            else
+                count += 1
+            end
+            users[passwd.uid] = passwd.name
         }
-        assert_nothing_raised() {
-            @file[:owner] = "root"
-        }
-        assert_nothing_raised() {
-            @file.evaluate
-        }
-        # we might already be in sync
-        assert(!@file.insync?())
-        assert_nothing_raised() {
-            @file.delete(:owner)
-        }
+
+        fake = {}
+        # find a fake user
+        while true
+            a = rand(1000)
+            begin
+                Etc.getpwuid(a)
+            rescue
+                fake[a] = "fakeuser"
+                break
+            end
+        end
+
+        # we can really only test changing ownership if we're root
+        if Process.uid == 0
+            users.each { |uid, name|
+                assert_nothing_raised() {
+                    file[:owner] = name
+                }
+                changes = []
+                assert_nothing_raised() {
+                    changes << file.evaluate
+                }
+                assert(changes.length > 0)
+                assert_nothing_raised() {
+                    file.sync
+                }
+                assert_nothing_raised() {
+                    file.evaluate
+                }
+                assert(file.insync?())
+                assert_nothing_raised() {
+                    file[:owner] = uid
+                }
+                assert_nothing_raised() {
+                    file.evaluate
+                }
+                # make sure changing to number doesn't cause a sync
+                assert(file.insync?())
+            }
+
+            fake.each { |uid, name|
+                assert_raise(Puppet::Error) {
+                    file[:owner] = name
+                }
+                assert_raise(Puppet::Error) {
+                    file[:owner] = uid
+                }
+            }
+        else
+            uid, name = users.shift
+            us = {}
+            us[uid] = name
+            users.each { |uid, name|
+                # just make sure we don't try to manage users
+                assert_nothing_raised() {
+                    file[:owner] = name
+                }
+                assert_nothing_raised() {
+                    file.retrieve
+                }
+                assert(file.insync?())
+                assert_nothing_raised() {
+                    file.sync
+                }
+            }
+        end
     end
 
     def test_group
+        file = testfile()
         [%x{groups}.chomp.split(/ /), Process.groups].flatten.each { |group|
             assert_nothing_raised() {
-                @file[:group] = group
+                file[:group] = group
+            }
+            assert(file.state(:group))
+            assert(file.state(:group).should)
+            assert_nothing_raised() {
+                file.evaluate
             }
             assert_nothing_raised() {
-                @file.evaluate
+                file.sync
             }
             assert_nothing_raised() {
-                @file.sync
+                file.evaluate
             }
+            assert(file.insync?())
             assert_nothing_raised() {
-                @file.evaluate
-            }
-            assert(@file.insync?())
-            assert_nothing_raised() {
-                @file.delete(:group)
+                file.delete(:group)
             }
         }
     end
@@ -148,22 +241,23 @@ class TestFile < Test::Unit::TestCase
     end
 
     def test_modes
+        file = testfile
         [0644,0755,0777,0641].each { |mode|
             assert_nothing_raised() {
-                @file[:mode] = mode
+                file[:mode] = mode
             }
             assert_nothing_raised() {
-                @file.evaluate
+                file.evaluate
             }
             assert_nothing_raised() {
-                @file.sync
+                file.sync
             }
             assert_nothing_raised() {
-                @file.evaluate
+                file.evaluate
             }
-            assert(@file.insync?())
+            assert(file.insync?())
             assert_nothing_raised() {
-                @file.delete(:mode)
+                file.delete(:mode)
             }
         }
     end
@@ -171,32 +265,34 @@ class TestFile < Test::Unit::TestCase
     # just test normal links
     def test_normal_links
         link = "/tmp/puppetlink"
+        @@tmpfiles.push link
+        file = testfile()
         assert_nothing_raised() {
-            @file[:link] = link
+            file[:link] = link
         }
         # assert we got a fully qualified link
-        assert(@file.state(:link).should =~ /^\//)
+        assert(file.state(:link).should =~ /^\//)
 
         # assert we aren't linking to ourselves
-        assert(File.expand_path(@file.state(:link).link) !=
-            File.expand_path(@file[:path]))
+        assert(File.expand_path(file.state(:link).link) !=
+            File.expand_path(file.name))
 
         # assert the should value does point to us
-        assert_equal(File.expand_path(@file.state(:link).should),
-            File.expand_path(@file[:path]))
+        assert_equal(File.expand_path(file.state(:link).should),
+            File.expand_path(file.name))
 
         assert_nothing_raised() {
-            @file.evaluate
+            file.evaluate
         }
         assert_nothing_raised() {
-            @file.sync
+            file.sync
         }
         assert_nothing_raised() {
-            @file.evaluate
+            file.evaluate
         }
-        assert(@file.insync?())
+        assert(file.insync?())
         assert_nothing_raised() {
-            @file.delete(:link)
+            file.delete(:link)
         }
         @@tmpfiles.push link
     end

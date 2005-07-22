@@ -37,6 +37,8 @@ class Type < Puppet::Element
     attr_accessor :children, :parameters, :parent
     include Enumerable
 
+    @@retrieved = Hash.new(0)
+
     # an array to contain all instances of Type
     @@allobjects = Array.new
 
@@ -441,12 +443,18 @@ class Type < Puppet::Element
                 else
                     #Puppet.warning "Creating state %s for %s" %
                     #    [stateklass.name,self.name]
-                    @states[name] = stateklass.new(
-                        :parent => self,
-                        :should => value
-                    )
-                    #debug "Adding parent to %s" % name
-                    #@states[name].parent = self
+                    begin
+                        # make sure the state doesn't have any errors
+                        newstate = stateklass.new(
+                            :parent => self,
+                            :should => value
+                        )
+                        @states[name] = newstate
+                    rescue => detail
+                        # the state failed, so just ignore it
+                        Puppet.debug "State %s failed: %s" %
+                            [name, detail]
+                    end
                 end
             end
         elsif self.class.validparameter?(name)
@@ -471,7 +479,7 @@ class Type < Puppet::Element
         if @states.has_key?(attr)
             @states.delete(attr)
         else
-            raise "Undefined state '#{attr}' in #{self}"
+            raise Puppet::DevError.new("Undefined state '#{attr}' in #{self}")
         end
     end
     #---------------------------------------------------------------
@@ -549,6 +557,7 @@ class Type < Puppet::Element
         end
         childs.each { |child|
             @children.push(child)
+            child.parent = self
         }
     end
     #---------------------------------------------------------------
@@ -702,7 +711,7 @@ class Type < Puppet::Element
     # some classes (e.g., FileTypeRecords) will have to override this
     def path
         if defined? @parent
-            return [@parent.name, self.name].flatten
+            return [@parent.path, self.name].flatten
         else
             return [self.name]
         end
@@ -768,10 +777,16 @@ class Type < Puppet::Element
     # this returns any changes resulting from testing, thus 'collect'
     # rather than 'each'
     def evaluate
+        #Puppet.err "Evaluating %s" % self.path.join(":")
         unless defined? @evalcount
             Puppet.err "No evalcount defined on '%s' of type '%s'" %
                 [self.name,self.class]
             @evalcount = 0
+        end
+        @@retrieved[self] += 1
+        if self.name =~ /e\/dav_fs.load/ and @@retrieved[self] > 1
+            Puppet.notice "%s(%s) %s" %
+                [@@retrieved[self], @evalcount, self.path.join(":")]
         end
         # if we're a metaclass and we've already evaluated once...
         #if self.metaclass and @evalcount > 0
@@ -792,18 +807,29 @@ class Type < Puppet::Element
         #end
 
         # this only operates on states, not states + children
-        self.retrieve
-        unless self.insync?
+        #self.retrieve
+        #unless self.insync?
+
+        # states() is a private method, returning an ordered list
+        changes << states().each { |state|
+            @@retrieved[state] += 1
+            #if self.name =~ /e\/dav_fs.load/
+            #    Puppet.notice "%s %s" % [@@retrieved[state], state.path]
+            #end
+            #unless @@retrieved[state] > 0
+                state.retrieve
+            #end
+        }.find_all { |state|
+            ! state.insync?
+        }.collect { |state|
+            Puppet::StateChange.new(state)
+        }
+
+        if changes.length > 0
             # add one to the number of out-of-sync instances
             Puppet::Metric.add(self.class,self,:outofsync,1)
-
-            # states() is a private method, returning an ordered list
-            changes << states().find_all { |state|
-                ! state.insync?
-            }.collect { |state|
-                Puppet::StateChange.new(state)
-            }
         end
+        #end
 
         changes << @children.collect { |child|
             child.evaluate
