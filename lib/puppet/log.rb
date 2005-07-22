@@ -148,9 +148,15 @@ module Puppet
                 @@logfile.puts("%s %s (%s): %s" %
                     [msg.time,msg.source,msg.level,msg.to_s])
             else
-                puts @@colors[msg.level] + "%s (%s): %s" % [
-                    msg.source, msg.level, msg.to_s
-                ] + RESET
+                if msg.source == "Puppet"
+                    puts @@colors[msg.level] + "%s: %s" % [
+                        msg.level, msg.to_s
+                    ] + RESET
+                else
+                    puts @@colors[msg.level] + "%s (%s): %s" % [
+                        msg.source, msg.level, msg.to_s
+                    ] + RESET
+                end
             end
         end
 
