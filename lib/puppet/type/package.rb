@@ -367,7 +367,9 @@ module Puppet
                         name = $1
                         value = $2
                         if names.include?(name)
-                            hash[names[name]] = value
+                            unless names[name].nil?
+                                hash[names[name]] = value
+                            end
                         else
                             raise "Could not find %s" % name
                         end
