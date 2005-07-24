@@ -149,9 +149,9 @@ unless defined? PuppetTestSuite
             FileUtils.cd(fromdir) {
                 fromlist = %x{find . 2>/dev/null}.chomp.split(/\n/).reject { |file|
                     ! FileTest.readable?(file)
-                }
+                }.sort
             }
-            tolist = file_list(todir)
+            tolist = file_list(todir).sort
 
             assert_equal(fromlist,tolist)
 

@@ -24,7 +24,12 @@ module Puppet
         end
 
         def to_s
-            return @message
+            if @file and @line
+                return "%s at file %s, line %s" %
+                    [@message, @file, @line]
+            else
+                return @message
+            end
         end
     end
 

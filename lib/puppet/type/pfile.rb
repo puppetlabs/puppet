@@ -339,9 +339,11 @@ module Puppet
 
             def sync
                 unless Process.uid == 0
-                    raise Puppet::Error.new(
-                        "Got told to sync owner as non-root user"
-                    )
+                    # there's a possibility that we never got retrieve() called
+                    # e.g., if the file didn't exist
+                    # thus, just delete ourselves now and don't do any work
+                    @parent.delete(self.name)
+                    return nil
                 end
 
                 if @is == -1

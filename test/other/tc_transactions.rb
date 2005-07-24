@@ -11,6 +11,7 @@ require 'test/unit'
 # $Id$
 
 class TestTransactions < Test::Unit::TestCase
+    include FileTesting
     def cycle(comp)
         assert_nothing_raised {
             trans = comp.evaluate
@@ -50,7 +51,7 @@ class TestTransactions < Test::Unit::TestCase
     end
 
     def newfile(hash = {})
-        tmpfile = PuppetTestSuite.tempfile()
+        tmpfile = tempfile()
         File.open(tmpfile, "w") { |f| f.puts rand(100) }
         @@tmpfiles.push tmpfile
         hash[:name] = tmpfile
