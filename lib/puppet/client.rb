@@ -13,20 +13,23 @@ require 'puppet/transaction'
 require 'puppet/transportable'
 require 'puppet/metric'
 
+$noclientnetworking = false
 begin
     require 'webrick'
     require 'cgi'
     require 'xmlrpc/client'
     require 'xmlrpc/server'
 rescue LoadError => detail
-    $nonetworking = detail
+    $noclientnetworking = detail
 end
 
 module Puppet
     class NetworkClientError < RuntimeError; end
     class ClientError < RuntimeError; end
     #---------------------------------------------------------------
-    unless $nonetworking
+    if $noclientnetworking
+        Puppet.err "Could not load client network libs: %s" % $noclientnetworking
+    else
         class NetworkClient < XMLRPC::Client
             @@methods = [ :getconfig ]
 
