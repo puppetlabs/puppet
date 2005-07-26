@@ -63,7 +63,7 @@ module Puppet
 		def self.store
             unless FileTest.directory?(File.dirname(Puppet[:statefile]))
                 begin
-                    Puppet.recmkdir(Puppet[:statefile])
+                    Puppet.recmkdir(File.dirname(Puppet[:statefile]))
                     Puppet.info "Creating state directory %s" %
                         File.dirname(Puppet[:statefile])
                 rescue => detail
