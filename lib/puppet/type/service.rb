@@ -118,7 +118,7 @@ module Puppet
             @doc = "Manage running services.  Rather than supporting managing
                 individual processes, puppet uses init scripts to simplify
                 specification of how to start, stop, or test processes.  The
-                *path* parameter is provided to enable creation of multiple
+                `path` parameter is provided to enable creation of multiple
                 init script directories, including supporting them for normal
                 users."
             @name = :service

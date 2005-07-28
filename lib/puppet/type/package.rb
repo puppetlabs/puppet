@@ -300,7 +300,8 @@ module Puppet
         class PackageInstalled < Puppet::State
             @name = :install
 
-            @doc = "What state the package should be in.  *true*/*false*/version"
+            @doc = "What state the package should be in.
+                *true*/*false*/``version``"
 
             def retrieve
                 unless defined? @is
@@ -375,7 +376,7 @@ module Puppet
 
             @paramdoc[:name] = "The package name."
             @paramdoc[:type] = "The package format.  Currently supports " +
-                PackagingType.types.collect{|p| "*" + p.to_s + "*"}.join(",") +
+                PackagingType.types.collect{|p| "``" + p.to_s + "``"}.join(", ") +
                 "."
             @paramdoc[:instance] = "A read-only parameter set by the package."
             @paramdoc[:status] = "A read-only parameter set by the package."
@@ -388,7 +389,7 @@ module Puppet
 
             @doc = "Manage packages.  Eventually will support retrieving packages
                 from remote sources but currently only supports packaging
-                systems which can retrieve their own packages, like *apt*."
+                systems which can retrieve their own packages, like ``apt``."
             @name = :package
             @namevar = :name
             @listed = false

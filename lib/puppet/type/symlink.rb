@@ -105,7 +105,7 @@ module Puppet
 
             @paramdoc[:path] = "Path of link to create."
             @paramdoc[:recurse] = "If target is a directory, recursively create
-                directories (using *file*'s *source* parameter) and link all
+                directories (using `file`'s `source` parameter) and link all
                 contained files."
             @doc = "Create symbolic links to existing files."
             @name = :symlink

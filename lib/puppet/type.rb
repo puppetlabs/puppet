@@ -79,11 +79,19 @@ class Type < Puppet::Element
         end
     }
 
-    @@metaparamdoc[:onerror] = "Value to return on an error"
-    @@metaparamdoc[:noop] = "Boolean flag indicating not to change states"
-    @@metaparamdoc[:schedule] = "...to be documented..."
-    @@metaparamdoc[:check] = "... to be documented..."
-    @@metaparamdoc[:require] = "?List? of objects required to be handled first"
+    @@metaparamdoc[:onerror] = "How to handle errors -- roll back innermost
+        transaction, roll back entire transaction, ignore, etc.  Currently
+        non-functional."
+    @@metaparamdoc[:noop] = "Boolean flag indicating whether work should actually
+        be done."
+    @@metaparamdoc[:schedule] = "On what schedule the object should be managed.
+        Currently non-functional."
+    @@metaparamdoc[:check] = "States which should have their values retrieved
+        but which should not actually be modified.  This is currently used
+        internally, but will eventually be used for querying."
+    @@metaparamdoc[:require] = "One or more objects that this object depends on.
+        Changes in the required objects result in the dependent objects being
+        refreshed (e.g., a service will get restarted)."
    
     #---------------------------------------------------------------
     #---------------------------------------------------------------

@@ -141,7 +141,7 @@ module Puppet
 
             @doc = "Executes external commands.  It is critical that all commands
                 executed using this mechanism can be run multiple times without
-                harm."
+                harm, i.e., they are *idempotent*."
             @name = :exec
             @namevar = :command
 

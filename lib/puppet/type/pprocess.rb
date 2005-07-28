@@ -74,7 +74,7 @@ module Puppet
             @paramdoc[:binary] = "The binary to actually execute."
             @paramdoc[:arguments] = "The arguments to pass the binary."
 
-            @doc = "**Disabled.  Use *service* instead.** Manage running
+            @doc = "**Disabled.  Use `service` instead.** Manage running
                 processes."
 
 			@namevar = :pattern
