@@ -10,95 +10,14 @@ module Puppet
     # okay, how do we deal with parameters that don't have operations
     # associated with them?
     class State
-        class PFileLink < Puppet::State
-            require 'etc'
-            attr_reader :link
-
-            @doc = "... to be documented ..."
-            @name = :link
-
-            # create the link
-            def self.create(file,link)
-                begin
-                    Puppet.debug("Creating symlink '%s' to '%s'" % [file, link])
-                    unless File.symlink(file,link)
-                        raise Puppet::Error.new(
-                            "Could not create symlink '%s'" % link
-                        )
-                    end
-                rescue => detail
-                    raise Puppet::Error.new(
-                        "Cannot create symlink '%s': %s" % [file,detail]
-                    )
-                end
-            end
-
-            # remove an existing link
-            def self.remove(link)
-                if FileTest.symlink?(link)
-                    Puppet.debug("Removing symlink '%s'" % link)
-                    begin
-                        File.unlink(link)
-                    rescue
-                        raise Puppet::Error.new(
-                            "Failed to remove symlink '%s'" % link
-                        )
-                    end
-                elsif FileTest.exists?(link)
-                    error = Puppet::Error.new(
-                        "Cannot remove normal file '%s'" % link)
-                    raise error
-                else
-                    Puppet.debug("Symlink '%s' does not exist" % link)
-                end
-            end
-
-            def retrieve
-                if FileTest.symlink?(@link)
-                    self.is = File.readlink(@link)
-                    return
-                elsif FileTest.exists?(@link)
-                    Puppet.err "Cannot replace %s with a link" % @link
-                    @should = nil
-                    @is = nil
-                else
-                    self.is = nil
-                    return
-                end
-            end
-
-            # we know the link should exist, but it should also point back
-            # to us
-            def should=(link)
-                @link = link
-                @should = @parent[:path]
-
-                # unless we're fully qualified or we've specifically allowed
-                # relative links.  Relative links are currently disabled, until
-                # someone actually asks for them
-                #unless @should =~ /^\// or @parent[:relativelinks]
-                unless @should =~ /^\//
-                    @should = File.expand_path @should
-                end
-            end
-
-            # this is somewhat complicated, because it could exist and be
-            # a file
-            def sync
-                if @is
-                    self.class.remove(@link)
-                end
-                self.class.create(@should,@link)
-
-                return :link_created
-            end
-        end
-
         class SymlinkTarget < Puppet::State
             require 'etc'
             attr_accessor :file
 
-            @doc = "String file and path name pointed at by link"
+            @doc = "Create a link to another file.  Currently only symlinks
+                are supported, and attempts to replace normal files with
+                links will currently fail, while existing but incorrect symlinks
+                will be removed."
             @name = :target
 
             def create
@@ -184,9 +103,11 @@ module Puppet
                 :recurse
             ]
 
-            @paramdoc[:path] = "Path of sym link to create"
-            @paramdoc[:recurse] = "If target is dir, recurse and link dir contents."
-            @doc = "Symbolic link of name from path to a target"
+            @paramdoc[:path] = "Path of link to create."
+            @paramdoc[:recurse] = "If target is a directory, recursively create
+                directories (using *file*'s *source* parameter) and link all
+                contained files."
+            @doc = "Create symbolic links to existing files."
             @name = :symlink
             @namevar = :path
 

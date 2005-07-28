@@ -14,7 +14,8 @@ module Puppet
     class State
         class PFileCreate < Puppet::State
             require 'etc'
-            @doc = "boolean flag to create file if it doesn't already exist"
+            @doc = "Whether to create files that don't currently exist.
+                **false**/*true*/*file*/*directory*"
             @name = :create
             @event = :file_created
 
@@ -86,7 +87,8 @@ module Puppet
 
         class PFileChecksum < Puppet::State
             attr_accessor :checktype
-            @doc = "String type of checksum used to validate file contents. Example: md5"
+            @doc = "How to check whether a file has changed.  **md5**/*lite-md5*/
+                *time*/*mtime*"
             @name = :checksum
             @event = :file_modified
 
@@ -257,7 +259,8 @@ module Puppet
 
         class PFileUID < Puppet::State
             require 'etc'
-            @doc = "String owner of file"
+            @doc = "To whom the file should belong.  Argument can be user name or
+                user ID."
             @name = :owner
             @event = :inode_changed
 
@@ -376,7 +379,8 @@ module Puppet
         # I think MetaStates are the answer, but I'm not quite sure
         class PFileMode < Puppet::State
             require 'etc'
-            @doc = "Four digit mode setting: example 0755"
+            @doc = "Mode the file should be.  Currently relatively limited:
+                you must specify the exact mode the file should be."
             @name = :mode
             @event = :inode_changed
 
@@ -454,39 +458,10 @@ module Puppet
             end
         end
 
-        # not used until I can figure out how to solve the problem with
-        # metastates
-        class PFileSetUID < Puppet::State
-            require 'etc'
-            @doc = "Used to set UID"
-            @parent = Puppet::State::PFileMode
-
-            @name = :setuid
-            @event = :inode_changed
-
-            def <=>(other)
-                self.is <=> @parent.value[11]
-            end
-
-            # this just doesn't seem right...
-            def sync
-                unless defined? @is or @is == -1
-                    @parent.stat(true)
-                    self.retrieve
-                    Puppet.debug "%s: should is '%s'" % [self.class.name,self.should]
-                end
-                tmp = 0
-                if self.is == true
-                    tmp = 1
-                end
-                @parent.value[11] = tmp
-                return :inode_changed
-            end
-        end
-
         class PFileGroup < Puppet::State
             require 'etc'
-            @doc = "String group of file"
+            @doc = "Which group should own the file.  Argument can be either group
+                name or group ID."
             @name = :group
             @event = :inode_changed
 
@@ -587,7 +562,10 @@ module Puppet
 
         class PFileCopy < Puppet::State
             attr_accessor :source, :local
-            @doc = "...to be documented..."
+            @doc = "Copy a file over the current file.  Uses *checksum* to
+                determine when a file should be copied.  This is largely a support
+                state for the *source* parameter, which is what should generally
+                be used instead of *copy*."
             @name = :copy
 
             def retrieve
@@ -733,7 +711,8 @@ module Puppet
     class Type
         class PFile < Type
             attr_reader :params, :source, :srcbase
-            @doc = "Allows control of files"
+            @doc = "Manages local files, including setting ownership and
+                permissions, and allowing creation of both files and directories."
             # class instance variable
                 #Puppet::State::PFileSource,
             @states = [
@@ -742,8 +721,7 @@ module Puppet
                 Puppet::State::PFileCopy,
                 Puppet::State::PFileUID,
                 Puppet::State::PFileGroup,
-                Puppet::State::PFileMode,
-                Puppet::State::PFileSetUID
+                Puppet::State::PFileMode
             ]
 
             @parameters = [
@@ -754,12 +732,23 @@ module Puppet
                 :source,
                 :filebucket
             ]
-            @paramdoc[:path] = "..."
-            @paramdoc[:backup] = "..."
-            @paramdoc[:linkmaker] = "..."
-            @paramdoc[:recurse] = "..."
-            @paramdoc[:source] = "..."
-            @paramdoc[:filebucket] = "..."
+            @paramdoc[:path] = "The path to the file to manage.  Must be fully
+                qualified."
+            @paramdoc[:backup] = "Whether files should be backed up before
+                being replaced.  If a *filebucket* is specified, files will be
+                backed up there; else, they will be backed up in the same directory
+                with a *.puppet-bak* extension."
+            @paramdoc[:linkmaker] = "An internal parameter used by the *symlink*
+                type to do recursive link creation."
+            @paramdoc[:recurse] = "Whether and how deeply to do recursive
+                management.  **false**/*true*/*inf*/*number*"
+            @paramdoc[:source] = "Where to retrieve the contents of the files.
+                Currently only supports local copying, but will eventually
+                support multiple protocols for copying.  Arguments are specified
+                using either a full local path or using a URI (currently only
+                *file* is supported as a protocol)."
+            @paramdoc[:filebucket] = "A repository for backing up files, including
+                over the network.  Currently non-functional."
 
             @name = :file
             @namevar = :path

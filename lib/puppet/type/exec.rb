@@ -12,7 +12,8 @@ module Puppet
         class Returns < Puppet::State
             attr_reader :output
 
-            @doc = "..."
+            @doc = "The expected return code.  An error will be returned if the
+                executed command returns something else."
             @name = :returns
 
             # because this command always runs,
@@ -128,13 +129,19 @@ module Puppet
                 :command
             ]
 
-            @paramdoc[:path] = "..."
-            @paramdoc[:user] = "..."
-            @paramdoc[:cwd] = "..."
-            @paramdoc[:refreshonly] = "..."
-            @paramdoc[:command] = "..."
+            @paramdoc[:path] = "The search path used for command execution.
+                Commands must be fully qualified if no path is specified."
+            @paramdoc[:user] = "The user to run the command as.  Currently
+                non-functional."
+            @paramdoc[:cwd] = "The directory from which to run the command.  If
+                this directory does not exist, the command will fail."
+            @paramdoc[:refreshonly] = "The command should only be run as a
+                refresh mechanism for when a dependent object is changed."
+            @paramdoc[:command] = "The actual command to execute."
 
-            @doc = "Allows shell commands to be executed"
+            @doc = "Executes external commands.  It is critical that all commands
+                executed using this mechanism can be run multiple times without
+                harm."
             @name = :exec
             @namevar = :command
 

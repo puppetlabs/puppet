@@ -11,7 +11,7 @@
 module Puppet
     class State
         class ServiceRunning < State
-            @doc = "Boolean flag indicating if service should be running"
+            @doc = "Whether a service should be running.  **true**/*false*"
             @name = :running
             #@event = :file_created
 
@@ -102,19 +102,25 @@ module Puppet
             ]
 			@parameters = [
                 :name,
-                :pattern,
                 :path
             ]
 
-            @paramdoc[:name] = "..."
-            @paramdoc[:pattern] = "..."
-            @paramdoc[:path] = "..."
+            @paramdoc[:name] = "The name of the service to run.  This name
+                is used to find the init script in the search path."
+            @paramdoc[:path] = "The search path for finding init scripts.
+                There is currently no default, but hopefully soon there will
+                be a reasonable default for all platforms."
 
             @functions = [
                 :setpath
             ]
 
-            @doc = "Allows control of services managed by the node"
+            @doc = "Manage running services.  Rather than supporting managing
+                individual processes, puppet uses init scripts to simplify
+                specification of how to start, stop, or test processes.  The
+                *path* parameter is provided to enable creation of multiple
+                init script directories, including supporting them for normal
+                users."
             @name = :service
 			@namevar = :name
 

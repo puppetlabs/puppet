@@ -6,7 +6,7 @@
 module Puppet
     class State
         class PProcessRunning < State
-            @doc = "...to be documented..."
+            @doc = "Whether a process should be running.  **true**/*false*"
             def retrieve
                 running = 0
                 regex = Regexp.new(@params[:pattern])
@@ -63,14 +63,19 @@ module Puppet
 			attr_reader :stat, :path
 			@parameters = [:start, :stop, :user, :pattern, :binary, :arguments]
             @name = :process
-                        @paramdoc[:start] = "...to be documented..."
-                        @paramdoc[:stop] = "...to be documented..."
-                        @paramdoc[:user] = "...to be documented..."
-                        @paramdoc[:pattern] = "...to be documented..."
-                        @paramdoc[:binary] = "...to be documented..."
-                        @paramdoc[:arguments] = "...to be documented..."
 
-                        @doc = "...to be documented..."
+            @paramdoc[:start] = "How to start the process.  Must be a fully
+                qualified path."
+            @paramdoc[:stop] = "How to stop the process.  Must be a fully
+                qualified path."
+            @paramdoc[:user] = "Which user to run the proces as."
+            @paramdoc[:pattern] = "The search pattern to use to determine
+                whether the process is currently running."
+            @paramdoc[:binary] = "The binary to actually execute."
+            @paramdoc[:arguments] = "The arguments to pass the binary."
+
+            @doc = "**Disabled.  Use *service* instead.** Manage running
+                processes."
 
 			@namevar = :pattern
 
