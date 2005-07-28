@@ -14,6 +14,7 @@ module Puppet
     class State
         class PFileCreate < Puppet::State
             require 'etc'
+            @doc = "boolean flag to create file if it doesn't already exist"
             @name = :create
             @event = :file_created
 
@@ -85,7 +86,7 @@ module Puppet
 
         class PFileChecksum < Puppet::State
             attr_accessor :checktype
-
+            @doc = "String type of checksum used to validate file contents. Example: md5"
             @name = :checksum
             @event = :file_modified
 
@@ -256,6 +257,7 @@ module Puppet
 
         class PFileUID < Puppet::State
             require 'etc'
+            @doc = "String owner of file"
             @name = :owner
             @event = :inode_changed
 
@@ -374,7 +376,7 @@ module Puppet
         # I think MetaStates are the answer, but I'm not quite sure
         class PFileMode < Puppet::State
             require 'etc'
-
+            @doc = "Four digit mode setting: example 0755"
             @name = :mode
             @event = :inode_changed
 
@@ -456,7 +458,7 @@ module Puppet
         # metastates
         class PFileSetUID < Puppet::State
             require 'etc'
-
+            @doc = "Used to set UID"
             @parent = Puppet::State::PFileMode
 
             @name = :setuid
@@ -484,7 +486,7 @@ module Puppet
 
         class PFileGroup < Puppet::State
             require 'etc'
-
+            @doc = "String group of file"
             @name = :group
             @event = :inode_changed
 
@@ -585,7 +587,7 @@ module Puppet
 
         class PFileCopy < Puppet::State
             attr_accessor :source, :local
-
+            @doc = "...to be documented..."
             @name = :copy
 
             def retrieve
@@ -731,7 +733,7 @@ module Puppet
     class Type
         class PFile < Type
             attr_reader :params, :source, :srcbase
-
+            @doc = "Allows control of files"
             # class instance variable
                 #Puppet::State::PFileSource,
             @states = [
@@ -752,6 +754,12 @@ module Puppet
                 :source,
                 :filebucket
             ]
+            @paramdoc[:path] = "..."
+            @paramdoc[:backup] = "..."
+            @paramdoc[:linkmaker] = "..."
+            @paramdoc[:recurse] = "..."
+            @paramdoc[:source] = "..."
+            @paramdoc[:filebucket] = "..."
 
             @name = :file
             @namevar = :path

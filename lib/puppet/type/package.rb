@@ -11,6 +11,8 @@ module Puppet
         class PackageInstalled < Puppet::State
             @name = :install
 
+            @doc = "boolean flag for defining the package to be installed"
+
             def retrieve
                 unless defined? @is
                     @parent.retrieve
@@ -82,6 +84,18 @@ module Puppet
                 :description
             ]
 
+            @paramdoc[:name] = "..."
+            @paramdoc[:type] = "..."
+            @paramdoc[:instance] = "..."
+            @paramdoc[:status] = "..."
+            @paramdoc[:version] = "..."
+            @paramdoc[:category] = "..."
+            @paramdoc[:platform] = "..."
+            @paramdoc[:root] = "..."
+            @paramdoc[:vendor] = "..."
+            @paramdoc[:description] = "..."
+
+            @doc = "Allows control of package objects"
             @name = :package
             @namevar = :name
             @listed = false

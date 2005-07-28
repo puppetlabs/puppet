@@ -11,6 +11,7 @@
 module Puppet
     class State
         class ServiceRunning < State
+            @doc = "Boolean flag indicating if service should be running"
             @name = :running
             #@event = :file_created
 
@@ -105,10 +106,15 @@ module Puppet
                 :path
             ]
 
+            @paramdoc[:name] = "..."
+            @paramdoc[:pattern] = "..."
+            @paramdoc[:path] = "..."
+
             @functions = [
                 :setpath
             ]
 
+            @doc = "Allows control of services managed by the node"
             @name = :service
 			@namevar = :name
 

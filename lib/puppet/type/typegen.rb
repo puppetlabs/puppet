@@ -12,12 +12,15 @@ module Puppet
 class TypeGenerator < Puppet::Type
     include Enumerable
 
+    @doc = "..."
     @namevar = :name
     @name = :typegen
     @abstract = true
 
     @parameters = [:name]
     @states = []
+
+    @paramdoc[:name] = "..."
 
     #---------------------------------------------------------------
     def TypeGenerator.[](name)

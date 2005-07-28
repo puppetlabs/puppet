@@ -14,6 +14,7 @@ module Puppet
             require 'etc'
             attr_reader :link
 
+            @doc = "... to be documented ..."
             @name = :link
 
             # create the link
@@ -97,6 +98,7 @@ module Puppet
             require 'etc'
             attr_accessor :file
 
+            @doc = "String file and path name pointed at by link"
             @name = :target
 
             def create
@@ -182,6 +184,9 @@ module Puppet
                 :recurse
             ]
 
+            @paramdoc[:path] = "Path of sym link to create"
+            @paramdoc[:recurse] = "If target is dir, recurse and link dir contents."
+            @doc = "Symbolic link of name from path to a target"
             @name = :symlink
             @namevar = :path
 

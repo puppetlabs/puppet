@@ -35,6 +35,7 @@ require 'puppet/type/state'
 module Puppet
 class Type < Puppet::Element
     attr_accessor :children, :parameters, :parent
+    attr_accessor :paramdoc
     include Enumerable
 
     @@retrieved = Hash.new(0)
@@ -53,6 +54,8 @@ class Type < Puppet::Element
     @states = []
     @parameters = [:notused]
 
+    #@paramdoc = Hash.new
+
     # the methods that can be called from within the language
     @allowedmethods = [:noop,:debug,:statefile]
 
@@ -65,6 +68,23 @@ class Type < Puppet::Element
         :require
     ]
 
+    @@metaparamdoc = Hash.new { |hash,key|
+        if key.is_a?(String)
+            key = key.intern
+        end
+        if hash.include?(key)
+            hash[key]
+        else
+            "Metaparam Documentation for %s not found" % key
+        end
+    }
+
+    @@metaparamdoc[:onerror] = "Value to return on an error"
+    @@metaparamdoc[:noop] = "Boolean flag indicating not to change states"
+    @@metaparamdoc[:schedule] = "...to be documented..."
+    @@metaparamdoc[:check] = "... to be documented..."
+    @@metaparamdoc[:require] = "?List? of objects required to be handled first"
+   
     #---------------------------------------------------------------
     #---------------------------------------------------------------
     # class methods dealing with Type management
@@ -143,6 +163,17 @@ class Type < Puppet::Element
         @actions = Hash.new
         @validstates = {}
         @validparameters = {}
+
+        @paramdoc = Hash.new { |hash,key|
+          if key.is_a?(String)
+            key = key.intern
+          end
+          if hash.include?(key)
+            hash[key]
+          else
+            "Param Documentation for %s not found" % key
+          end
+        }
 
         unless defined? @doc
             @doc = ""
@@ -621,6 +652,19 @@ class Type < Puppet::Element
             @parameters = Hash.new(false)
         end
 
+        #unless defined? @paramdoc
+        #   @paramdoc = Hash.new { |hash,key|
+        #      if key.is_a?(String)
+        #         key = key.intern
+        #      end
+        #      if hash.include?(key)
+        #         hash[key]
+        #      else
+        #         "Param Documentation for %s not found" % key
+        #      end
+        #   }
+        #end
+
         @noop = false
 
         # which objects to notify when we change
@@ -1011,8 +1055,13 @@ class Type < Puppet::Element
     # Documentation methods
     #---------------------------------------------------------------
     #---------------------------------------------------------------
-    def self.paramdoc?(param)
+    def self.paramdoc(param)
         @paramdoc[param]
+    end
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+    def self.metaparamdoc(metaparam)
+        @@metaparamdoc[metaparam]
     end
     #---------------------------------------------------------------
     #---------------------------------------------------------------

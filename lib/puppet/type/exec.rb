@@ -12,6 +12,7 @@ module Puppet
         class Returns < Puppet::State
             attr_reader :output
 
+            @doc = "..."
             @name = :returns
 
             # because this command always runs,
@@ -127,6 +128,13 @@ module Puppet
                 :command
             ]
 
+            @paramdoc[:path] = "..."
+            @paramdoc[:user] = "..."
+            @paramdoc[:cwd] = "..."
+            @paramdoc[:refreshonly] = "..."
+            @paramdoc[:command] = "..."
+
+            @doc = "Allows shell commands to be executed"
             @name = :exec
             @namevar = :command
 

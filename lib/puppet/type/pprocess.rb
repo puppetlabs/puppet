@@ -6,6 +6,7 @@
 module Puppet
     class State
         class PProcessRunning < State
+            @doc = "...to be documented..."
             def retrieve
                 running = 0
                 regex = Regexp.new(@params[:pattern])
@@ -62,6 +63,14 @@ module Puppet
 			attr_reader :stat, :path
 			@parameters = [:start, :stop, :user, :pattern, :binary, :arguments]
             @name = :process
+                        @paramdoc[:start] = "...to be documented..."
+                        @paramdoc[:stop] = "...to be documented..."
+                        @paramdoc[:user] = "...to be documented..."
+                        @paramdoc[:pattern] = "...to be documented..."
+                        @paramdoc[:binary] = "...to be documented..."
+                        @paramdoc[:arguments] = "...to be documented..."
+
+                        @doc = "...to be documented..."
 
 			@namevar = :pattern
 
