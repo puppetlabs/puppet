@@ -140,8 +140,8 @@ module Puppet
             unless FileTest.exist?(dir)
                 tmp = dir.sub(/^\//,'')
                 path = [File::SEPARATOR]
-                tmp.split(File::SEPARATOR).each { |dir|
-                    path.push dir
+                tmp.split(File::SEPARATOR).each { |d|
+                    path.push d
                     unless FileTest.exist?(File.join(path))
                         Dir.mkdir(File.join(path))
                     end
@@ -149,7 +149,7 @@ module Puppet
             end
 
             unless FileTest.directory?(dir)
-                raise "%s must be a directory" % dir
+                raise Puppet::Error.new("%s must be a directory" % dir)
             end
 
             path = self.path

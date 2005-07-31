@@ -754,7 +754,8 @@ module Puppet
                 *file* is supported as a protocol)."
 
             @paramdoc[:filebucket] = "A repository for backing up files, including
-                over the network.  Currently non-functional."
+                over the network.  Argument must the name of an existing
+                filebucket."
 
             @name = :file
             @namevar = :path

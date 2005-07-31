@@ -54,13 +54,13 @@ if $haverrd
         end
 
         def setup
-            Puppet[:rrddir] = File.join(Dir.getwd,"rrdtests")
+            Puppet[:rrddir] = "/tmp/rrdtests"
             Puppet[:rrdgraph] = true
             Puppet[:loglevel] = :debug if __FILE__ == $0
         end
 
         def teardown
-            system("rm -rf rrdtests")
+            system("rm -rf %s" % Puppet[:rrddir])
         end
 
         def test_fakedata
