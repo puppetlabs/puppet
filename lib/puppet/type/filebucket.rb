@@ -1,5 +1,6 @@
-#!/usr/local/bin/ruby -w
 # An interface for managing filebuckets from puppet 
+
+# $Id$
 
 require 'puppet/filebucket'
 
@@ -20,10 +21,10 @@ module Puppet
             @name = :filebucket
 			@namevar = :name
 
-            @@buckets = {}
-
+            # get the actual filebucket object
             def self.bucket(name)
-                @@buckets[name]
+                oname, object = @objects.find { |oname, o| oname == name }
+                return object.bucket
             end
 
             def initialize(hash)
@@ -55,12 +56,10 @@ module Puppet
                         )
                     end
                 end
-
-                @@buckets[self.name] = @bucket
             end
 
-		end # Puppet::Type::Service
-	end # Puppet::Type
+		end
+	end
 end
 
 # $Id$

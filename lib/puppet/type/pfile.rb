@@ -732,21 +732,27 @@ module Puppet
                 :source,
                 :filebucket
             ]
+
             @paramdoc[:path] = "The path to the file to manage.  Must be fully
                 qualified."
+
             @paramdoc[:backup] = "Whether files should be backed up before
-                being replaced.  If a *filebucket* is specified, files will be
+                being replaced.  If a ``filebucket`` is specified, files will be
                 backed up there; else, they will be backed up in the same directory
-                with a *.puppet-bak* extension."
+                with a ``.puppet-bak`` extension."
+
             @paramdoc[:linkmaker] = "An internal parameter used by the *symlink*
                 type to do recursive link creation."
+
             @paramdoc[:recurse] = "Whether and how deeply to do recursive
                 management.  **false**/*true*/*inf*/*number*"
+
             @paramdoc[:source] = "Where to retrieve the contents of the files.
                 Currently only supports local copying, but will eventually
                 support multiple protocols for copying.  Arguments are specified
                 using either a full local path or using a URI (currently only
                 *file* is supported as a protocol)."
+
             @paramdoc[:filebucket] = "A repository for backing up files, including
                 over the network.  Currently non-functional."
 
@@ -826,6 +832,14 @@ module Puppet
                     @parameters[:backup] = ".puppet-bak"
                 else
                     @parameters[:backup] = value
+                end
+            end
+
+            def paramfilebucket=(name)
+                if bucket = Puppet::Type::PFileBucket.bucket(name)
+                    @parameters[:filebucket]  = bucket
+                else
+                    raise Puppet::Error.new("Could not find filebucket %s" % name)
                 end
             end
 
