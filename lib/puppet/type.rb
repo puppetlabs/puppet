@@ -1078,6 +1078,7 @@ end
 
 require 'puppet/type/service'
 require 'puppet/type/exec'
+require 'puppet/type/filebucket'
 require 'puppet/type/pfile'
 require 'puppet/type/symlink'
 require 'puppet/type/package'

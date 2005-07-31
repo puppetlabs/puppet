@@ -24,7 +24,7 @@ class TestFile < Test::Unit::TestCase
         return file
     end
 
-    def testfile
+    def mktestfile
         # because luke's home directory is on nfs, it can't be used for testing
         # as root
         tmpfile = tempfile()
@@ -68,7 +68,7 @@ class TestFile < Test::Unit::TestCase
     end
 
     def test_zzowner
-        file = testfile()
+        file = mktestfile()
 
         users = {}
         count = 0
@@ -152,7 +152,7 @@ class TestFile < Test::Unit::TestCase
     end
 
     def test_group
-        file = testfile()
+        file = mktestfile()
         [%x{groups}.chomp.split(/ /), Process.groups].flatten.each { |group|
             assert_nothing_raised() {
                 file[:group] = group
@@ -224,7 +224,7 @@ class TestFile < Test::Unit::TestCase
     end
 
     def test_modes
-        file = testfile
+        file = mktestfile
         [0644,0755,0777,0641].each { |mode|
             assert_nothing_raised() {
                 file[:mode] = mode
