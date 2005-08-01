@@ -554,5 +554,4 @@ class TestFile < Test::Unit::TestCase
         # and make sure they're still equal
         assert_trees_equal(fromdir,todir)
     end
-
 end
