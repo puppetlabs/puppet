@@ -54,7 +54,7 @@ if $haverrd
         end
 
         def setup
-            Puppet[:rrddir] = "/tmp/rrdtests"
+            Puppet[:rrddir] = File.join(Puppet[:puppetvar], "rrdtesting")
             Puppet[:rrdgraph] = true
             Puppet[:loglevel] = :debug if __FILE__ == $0
         end

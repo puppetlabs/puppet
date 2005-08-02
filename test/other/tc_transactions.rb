@@ -29,7 +29,7 @@ class TestTransactions < Test::Unit::TestCase
         Puppet::Type.allclear
         @@tmpfiles = []
         Puppet[:loglevel] = :debug if __FILE__ == $0
-        Puppet[:statefile] = "/var/tmp/puppetstate"
+        Puppet[:checksumfile] = File.join(Puppet[:statedir], "checksumtestfile")
         @groups = %x{groups}.chomp.split(/ /)
         unless @groups.length > 1
             p @groups
@@ -46,7 +46,7 @@ class TestTransactions < Test::Unit::TestCase
             end
         }
         @@tmpfiles.clear
-        system("rm -f %s" % Puppet[:statefile])
+        system("rm -f %s" % Puppet[:checksumfile])
         print "\n\n" if Puppet[:debug]
     end
 

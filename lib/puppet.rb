@@ -15,6 +15,25 @@ require 'puppet/log'
 #
 # it's also a place to find top-level commands like 'debug'
 module Puppet
+#    if Process.uid == 0
+#        PUPPETCONF = "/etc/puppet"
+#        PUPPETVAR = "/var/puppet"
+#    else
+#        PUPPETCONF = File.expand_path("~/.puppet")
+#        PUPPETVAR = File.expand_path("~/.puppet/var")
+#    end
+#
+#    CERTDIR = File.join(PUPPETCONF, "certs")
+#    CERTFILE = File.join(CERTDIR, "localhost.crt")
+#    CERTKEY = File.join(CERTDIR, "localhost.key")
+#
+#    RRDDIR = File.join(PUPPETROOT,  "rrd")
+#    LOGDIR = File.join(PUPPETROOT,  "log")
+#    LOGFILE = File.join(LOGDIR,  "puppet.log")
+#
+#    STATEDIR = File.join(PUPPETROOT,  "state")
+#    CHECKSUMFILE = File.join(STATEDIR,  "checksums")
+#
     class Error < RuntimeError
         attr_accessor :stack, :line, :file
         def initialize(message)
@@ -51,6 +70,11 @@ module Puppet
 
 	# configuration parameter access and stuff
 	def self.[](param)
+        if param.is_a?(String)
+            param = param.intern
+        elsif ! param.is_a?(Symbol)
+            raise ArgumentError, "Invalid parameter type %s" % param.class
+        end
         case param
         when :debug:
             if Puppet::Log.level == :debug
@@ -63,7 +87,44 @@ module Puppet
         when :logdest:
             return Puppet::Log.destination
         else
-            return @@config[param]
+            if @@config.include?(param)
+                return @@config[param]
+            else
+                # here's where we define our defaults
+                returnval = case param
+                when :puppetconf:
+                    if Process.uid == 0
+                        "/etc/puppet"
+                    else
+                        File.expand_path("~/.puppet/var")
+                    end
+                when :puppetvar:
+                    if Process.uid == 0
+                        "/var/puppet"
+                    else
+                        File.expand_path("~/.puppet")
+                    end
+                when :rrdgraph:     false
+                when :noop:         false
+                when :puppetport:   8139
+                when :masterport:   8140
+                when :rrddir:       File.join(self[:puppetvar],     "rrd")
+                when :logdir:       File.join(self[:puppetvar],     "log")
+                when :bucketdir:    File.join(self[:puppetvar],     "bucket")
+                when :logfile:      File.join(self[:logdir],        "puppet.log")
+                when :statedir:     File.join(self[:puppetvar],     "state")
+                when :checksumfile: File.join(self[:statedir],      "checksums")
+                when :certdir:      File.join(self[:puppetconf],    "certs")
+                when :localcert:    File.join(self[:certdir],       "localhost.crt")
+                when :localkey:     File.join(self[:certdir],       "localhost.key")
+                when :localpub:     File.join(self[:certdir],       "localhost.pub")
+                when :mastercert:   File.join(self[:certdir],       "puppetmaster.crt")
+                when :masterkey:    File.join(self[:certdir],       "puppetmaster.key")
+                when :masterpub:    File.join(self[:certdir],       "puppetmaster.pub")
+                else
+                    raise ArgumentError, "Invalid parameter %s" % param
+                end
+            end
         end
 	end
 
@@ -100,18 +161,6 @@ module Puppet
             end
         }
     end
-
-    self[:rrdgraph] = false
-    if Process.uid == 0
-        self[:puppetroot] = "/var/puppet"
-    else
-        self[:puppetroot] = File.expand_path("~/.puppet")
-    end
-
-    self[:rrddir] = File.join(self[:puppetroot],"rrd")
-    self[:logdir] = File.join(self[:puppetroot],"log")
-    self[:logfile] = File.join(self[:puppetroot],"log/puppet.log")
-    self[:statefile] = File.join(self[:puppetroot],"log/state")
 end
 
 require 'puppet/type'

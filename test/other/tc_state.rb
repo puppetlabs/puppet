@@ -16,11 +16,11 @@ end
 class TestStorage < Test::Unit::TestCase
     def setup
         Puppet[:loglevel] = :debug if __FILE__ == $0
-        Puppet[:statefile] = "/var/tmp/puppetteststate"
+        Puppet[:checksumfile] = "/var/tmp/puppetteststate"
     end
 
     def teardown
-        system("rm -f %s" % Puppet[:statefile])
+        system("rm -f %s" % Puppet[:checksumfile])
         Puppet::Storage.clear
     end
 
@@ -73,7 +73,7 @@ class TestStorage < Test::Unit::TestCase
         state = Puppet::Storage.state(StorageTestingClass)
         state["testing"] = "yayness"
         Puppet::Storage.store
-        assert(FileTest.exists?(Puppet[:statefile]))
+        assert(FileTest.exists?(Puppet[:checksumfile]))
     end
 
     def test_hashstorage

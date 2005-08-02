@@ -36,11 +36,11 @@ class TestFile < Test::Unit::TestCase
     def setup
         @@tmpfiles = []
         Puppet[:loglevel] = :debug if __FILE__ == $0
-        Puppet[:statefile] = "/var/tmp/puppetstate"
+        Puppet[:checksumfile] = File.join(Puppet[:statedir], "checksumtestfile")
         begin
             initstorage
         rescue
-            system("rm -rf %s" % Puppet[:statefile])
+            system("rm -rf %s" % Puppet[:checksumfile])
         end
     end
 
@@ -54,7 +54,7 @@ class TestFile < Test::Unit::TestCase
             end
         }
         @@tmpfiles.clear
-        system("rm -f %s" % Puppet[:statefile])
+        system("rm -f %s" % Puppet[:checksumfile])
     end
 
     def initstorage

@@ -25,16 +25,16 @@ module Puppet
         self.init
 
 		def self.load
-            if Puppet[:statefile].nil?
+            if Puppet[:checksumfile].nil?
                 raise "Somehow the statefile is nil"
             end
 
-			unless File.exists?(Puppet[:statefile])
-                Puppet.info "Statefile %s does not exist" % Puppet[:statefile]
+			unless File.exists?(Puppet[:checksumfile])
+                Puppet.info "Statefile %s does not exist" % Puppet[:checksumfile]
                 return
             end
-            #Puppet.debug "Loading statefile %s" % Puppet[:statefile]
-			File.open(Puppet[:statefile]) { |file|
+            #Puppet.debug "Loading statefile %s" % Puppet[:checksumfile]
+			File.open(Puppet[:checksumfile]) { |file|
 				file.each { |line|
 					myclass, key, value = line.split(@@splitchar)
 
@@ -61,22 +61,22 @@ module Puppet
 		end
 
 		def self.store
-            unless FileTest.directory?(File.dirname(Puppet[:statefile]))
+            unless FileTest.directory?(File.dirname(Puppet[:checksumfile]))
                 begin
-                    Puppet.recmkdir(File.dirname(Puppet[:statefile]))
+                    Puppet.recmkdir(File.dirname(Puppet[:checksumfile]))
                     Puppet.info "Creating state directory %s" %
-                        File.dirname(Puppet[:statefile])
+                        File.dirname(Puppet[:checksumfile])
                 rescue => detail
                     Puppet.err "Could not create state file: %s" % detail
                     return
                 end
             end
 
-            unless FileTest.exist?(Puppet[:statefile])
-                Puppet.info "Creating state file %s" % Puppet[:statefile]
+            unless FileTest.exist?(Puppet[:checksumfile])
+                Puppet.info "Creating state file %s" % Puppet[:checksumfile]
             end
 
-			File.open(Puppet[:statefile], File::CREAT|File::WRONLY, 0600) { |file|
+			File.open(Puppet[:checksumfile], File::CREAT|File::WRONLY, 0600) { |file|
 				@@state.each { |klass, thash|
                     thash.each { |key,value|
                         mvalue = Marshal::dump(value)

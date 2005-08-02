@@ -43,9 +43,7 @@ module Puppet
                         )
                     end
                 else
-                    @parameters[:path] ||= File.join(
-                        Puppet[:puppetroot], "bucket"
-                    )
+                    @parameters[:path] ||= Puppet[:bucketdir]
                     begin
                         @bucket = FileBucket::Dipper.new(
                             :Path => @parameters[:path]

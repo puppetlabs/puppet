@@ -10,9 +10,9 @@ require 'test/unit'
 # $Id$
 
 class TestPuppetDefaults < Test::Unit::TestCase
-    @@dirs = %w{rrddir puppetconf puppetvar logdir statedir certdir}
+    @@dirs = %w{rrddir puppetconf puppetvar logdir statedir certdir bucketdir}
     @@files = %w{logfile checksumfile localcert localkey localpub mastercert masterkey masterpub}
-    @@booleans = %w{rrdgraph}
+    @@booleans = %w{rrdgraph noop}
     def testStringOrParam
         [@@dirs,@@files,@@booleans].flatten.each { |param|
             assert_nothing_raised { Puppet[param] }
@@ -40,7 +40,8 @@ class TestPuppetDefaults < Test::Unit::TestCase
             value = Puppet[param]
 
             unless value =~ confdir or value =~ vardir
-                assert_nothing_raised { raise "%s is in wrong dir" % value }
+                assert_nothing_raised { raise "%s is in wrong dir: %s" %
+                    [param,value] }
             end
         }
     end
@@ -68,7 +69,8 @@ class TestPuppetDefaults < Test::Unit::TestCase
             value = Puppet[param]
 
             unless value !~ notval
-                assert_nothing_raised { raise "%s is in wrong dir" % value }
+                assert_nothing_raised { raise "%s is in wrong dir: %s" %
+                    [param,value] }
             end
         }
     end

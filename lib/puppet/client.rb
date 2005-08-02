@@ -141,9 +141,9 @@ module Puppet
                 Puppet::Storage.init
                 Puppet::Storage.load
             rescue => detail
-                Puppet.err "Corrupt state file %s" % Puppet[:statefile]
+                Puppet.err "Corrupt state file %s" % Puppet[:checksumfile]
                 begin
-                    File.unlink(Puppet[:statefile])
+                    File.unlink(Puppet[:checksumfile])
                     retry
                 rescue => detail
                     raise Puppet::Error.new("Cannot remove %s: %s" %

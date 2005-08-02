@@ -61,7 +61,7 @@ module FileBucket
                 hash.delete(:Path)
             else
                 if defined? Puppet
-                    @bucket = File.join(Puppet[:puppetroot], "bucket")
+                    @bucket = Puppet[:bucketdir]
                 else
                     @bucket = File.expand_path("~/.filebucket")
                 end

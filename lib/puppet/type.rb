@@ -57,7 +57,7 @@ class Type < Puppet::Element
     #@paramdoc = Hash.new
 
     # the methods that can be called from within the language
-    @allowedmethods = [:noop,:debug,:statefile]
+    @allowedmethods = [:noop,:debug,:checksumfile]
 
     # the parameters that all instances will accept
     @@metaparams = [
@@ -246,7 +246,7 @@ class Type < Puppet::Element
 
     def Type.statefile(value)
         if value =~ /^\//
-            Puppet[:statefile] = value
+            Puppet[:checksumfile] = value
         else
             raise "Statefile %s must be fully qualified" % value
         end
@@ -1076,14 +1076,14 @@ class Type < Puppet::Element
 end # Puppet::Type
 end
 
-require 'puppet/type/service'
-require 'puppet/type/exec'
-require 'puppet/type/filebucket'
-require 'puppet/type/pfile'
-require 'puppet/type/symlink'
-require 'puppet/type/package'
-require 'puppet/type/component'
 require 'puppet/statechange'
+require 'puppet/type/component'
+require 'puppet/type/exec'
+require 'puppet/type/package'
+require 'puppet/type/pfile'
+require 'puppet/type/pfilebucket'
+require 'puppet/type/service'
+require 'puppet/type/symlink'
 #require 'puppet/type/typegen'
 #require 'puppet/type/typegen/filetype'
 #require 'puppet/type/typegen/filerecord'
