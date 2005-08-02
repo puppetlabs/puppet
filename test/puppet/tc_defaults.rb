@@ -11,7 +11,9 @@ require 'test/unit'
 
 class TestPuppetDefaults < Test::Unit::TestCase
     @@dirs = %w{rrddir puppetconf puppetvar logdir statedir certdir bucketdir}
-    @@files = %w{logfile checksumfile localcert localkey localpub mastercert masterkey masterpub}
+    @@files = %w{logfile checksumfile localcert localkey localpub 
+        rootcert rootkey rootpub manifest masterlog}
+    @@normals = %w{puppetport masterport server}
     @@booleans = %w{rrdgraph noop}
     def testStringOrParam
         [@@dirs,@@files,@@booleans].flatten.each { |param|
@@ -72,6 +74,21 @@ class TestPuppetDefaults < Test::Unit::TestCase
                 assert_nothing_raised { raise "%s is in wrong dir: %s" %
                     [param,value] }
             end
+        }
+    end
+
+    def test_settingdefaults
+        testvals = {
+            :fakeparam => [:puppetconf, "yaytest"],
+            :anotherparam => proc { File.join(Puppet[:puppetvar], "goodtest") },
+            :string => "a yay string",
+            :boolean => true
+        }
+
+        testvals.each { |param, default|
+            assert_nothing_raised {
+                Puppet.setdefault(param,default)
+            }
         }
     end
 end

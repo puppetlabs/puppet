@@ -99,6 +99,7 @@ module Puppet
                     end
                 end
 
+                Puppet[:logfile] = dest
                 begin
                     # create the log file, if it doesn't already exist
                     @@logfile = File.open(dest,File::WRONLY|File::CREAT|File::APPEND)

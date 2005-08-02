@@ -692,9 +692,12 @@ class Type < Puppet::Element
 
         # now get all of the arguments, in a specific order
         order = [self.class.namevar]
-        order << self.class.states.collect { |state| state.name }
-        order << self.class.parameters
-        order << self.class.eachmetaparam { |param| param }
+        order << [self.class.states.collect { |state| state.name },
+            self.class.parameters,
+            self.class.eachmetaparam { |param| param }].flatten.reject { |param|
+                # we don't want our namevar in there multiple times
+                param == self.class.namevar
+        }
 
         order.flatten.each { |name|
             if hash.include?(name)

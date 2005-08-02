@@ -370,6 +370,34 @@ class TestFile < Test::Unit::TestCase
         @@tmpfiles.push path
     end
 
+    # XXX disabled until i change how dependencies work
+    def disabled_test_recursionwithcreation
+        path = "/tmp/this/directory/structure/does/not/exist"
+        @@tmpfiles.push "/tmp/this"
+
+        file = nil
+        assert_nothing_raised {
+            file = mkfile(
+                :name => path,
+                :recurse => true,
+                :create => true
+            )
+        }
+
+        trans = nil
+        comp = newcomp("recursewithfiles", file) 
+        assert_nothing_raised {
+            trans = comp.evaluate
+        }
+
+        events = nil
+        assert_nothing_raised {
+            events = trans.evaluate.collect { |e| e.event.to_s }
+        }
+
+        puts "events are %s" % events.join(",  ")
+    end
+
     def test_newchild
         path = "/tmp/newchilddir"
         @@tmpfiles.push path

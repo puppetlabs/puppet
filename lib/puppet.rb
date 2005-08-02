@@ -15,25 +15,6 @@ require 'puppet/log'
 #
 # it's also a place to find top-level commands like 'debug'
 module Puppet
-#    if Process.uid == 0
-#        PUPPETCONF = "/etc/puppet"
-#        PUPPETVAR = "/var/puppet"
-#    else
-#        PUPPETCONF = File.expand_path("~/.puppet")
-#        PUPPETVAR = File.expand_path("~/.puppet/var")
-#    end
-#
-#    CERTDIR = File.join(PUPPETCONF, "certs")
-#    CERTFILE = File.join(CERTDIR, "localhost.crt")
-#    CERTKEY = File.join(CERTDIR, "localhost.key")
-#
-#    RRDDIR = File.join(PUPPETROOT,  "rrd")
-#    LOGDIR = File.join(PUPPETROOT,  "log")
-#    LOGFILE = File.join(LOGDIR,  "puppet.log")
-#
-#    STATEDIR = File.join(PUPPETROOT,  "state")
-#    CHECKSUMFILE = File.join(STATEDIR,  "checksums")
-#
     class Error < RuntimeError
         attr_accessor :stack, :line, :file
         def initialize(message)
@@ -43,7 +24,7 @@ module Puppet
         end
 
         def to_s
-            if @file and @line
+            if defined? @file and defined? @line
                 return "%s at file %s, line %s" %
                     [@message, @file, @line]
             else
@@ -68,6 +49,42 @@ module Puppet
     # I keep wanting to use Puppet.error
     alias :error :err
 
+    @defaults = {
+        :rrddir         => [:puppetvar,      "rrd"],
+        :logdir         => [:puppetvar,      "log"],
+        :bucketdir      => [:puppetvar,      "bucket"],
+        :statedir       => [:puppetvar,      "state"],
+
+        # then the files},
+        :manifest       => [:puppetconf,     "manifest.pp"],
+        :logfile        => [:logdir,         "puppet.log"],
+        :masterlog      => [:logdir,         "puppetmaster.log"],
+        :checksumfile   => [:statedir,       "checksums"],
+        :certdir        => [:puppetconf,     "certs"],
+        :rootcert       => [:certdir,        "ca.crt"],
+        :rootkey        => [:certdir,        "ca.key"],
+        :rootpub        => [:certdir,        "ca.pub"],
+        :localcert      => [:certdir,        "localhost.crt"],
+        :localkey       => [:certdir,        "localhost.key"],
+        :localpub       => [:certdir,        "localhost.pub"],
+
+        # and finally the simple answers,
+        :server         => "puppet",
+        :rrdgraph       => false,
+        :noop           => false,
+        :puppetport     => 8139,
+        :masterport     => 8140,
+        :loglevel       => :notice,
+        :logdest        => :file,
+    }
+    if Process.uid == 0
+        @defaults[:puppetconf] = "/etc/puppet"
+        @defaults[:puppetvar] = "/var/puppet"
+    else
+        @defaults[:puppetconf] = File.expand_path("~/.puppet")
+        @defaults[:puppetvar] = File.expand_path("~/.puppet/var")
+    end
+
 	# configuration parameter access and stuff
 	def self.[](param)
         if param.is_a?(String)
@@ -87,40 +104,19 @@ module Puppet
         when :logdest:
             return Puppet::Log.destination
         else
+            # allow manual override
             if @@config.include?(param)
                 return @@config[param]
             else
-                # here's where we define our defaults
-                returnval = case param
-                when :puppetconf:
-                    if Process.uid == 0
-                        "/etc/puppet"
+                if @defaults.include?(param)
+                    default = @defaults[param]
+                    if default.is_a?(Proc)
+                        return default.call()
+                    elsif default.is_a?(Array)
+                        return File.join(self[default[0]], default[1])
                     else
-                        File.expand_path("~/.puppet/var")
+                        return default
                     end
-                when :puppetvar:
-                    if Process.uid == 0
-                        "/var/puppet"
-                    else
-                        File.expand_path("~/.puppet")
-                    end
-                when :rrdgraph:     false
-                when :noop:         false
-                when :puppetport:   8139
-                when :masterport:   8140
-                when :rrddir:       File.join(self[:puppetvar],     "rrd")
-                when :logdir:       File.join(self[:puppetvar],     "log")
-                when :bucketdir:    File.join(self[:puppetvar],     "bucket")
-                when :logfile:      File.join(self[:logdir],        "puppet.log")
-                when :statedir:     File.join(self[:puppetvar],     "state")
-                when :checksumfile: File.join(self[:statedir],      "checksums")
-                when :certdir:      File.join(self[:puppetconf],    "certs")
-                when :localcert:    File.join(self[:certdir],       "localhost.crt")
-                when :localkey:     File.join(self[:certdir],       "localhost.key")
-                when :localpub:     File.join(self[:certdir],       "localhost.pub")
-                when :mastercert:   File.join(self[:certdir],       "puppetmaster.crt")
-                when :masterkey:    File.join(self[:certdir],       "puppetmaster.key")
-                when :masterpub:    File.join(self[:certdir],       "puppetmaster.pub")
                 else
                     raise ArgumentError, "Invalid parameter %s" % param
                 end
@@ -145,6 +141,34 @@ module Puppet
             @@config[param] = value
         end
 	end
+
+    def self.setdefault(param,value)
+        if value.is_a?(Array) 
+            if value[0].is_a?(Symbol) 
+                unless @defaults.include?(value[0])
+                    raise ArgumentError, "Unknown basedir %s for param %s" %
+                        [value[0], param]
+                end
+            else
+                raise ArgumentError, "Invalid default %s for param %s" %
+                    [value.inspect, param]
+            end
+
+            unless value[1].is_a?(String)
+                raise ArgumentError, "Invalid default %s for param %s" %
+                    [value.inspect, param]
+            end
+
+            unless value.length == 2
+                raise ArgumentError, "Invalid default %s for param %s" %
+                    [value.inspect, param]
+            end
+
+            @defaults[param] = value
+        else
+            @defaults[param] = value
+        end
+    end
 
     def self.recmkdir(dir,mode = 0755)
         tmp = dir.sub(/^\//,'')

@@ -11,7 +11,7 @@ require 'test/unit'
 # $Id$
 
 class TestLog < Test::Unit::TestCase
-    @@logfile = "/tmp/puppettest.log"
+    @@logfile = File.join(Puppet[:logdir], "puppettest.log")
 
     def teardown
         system("rm -f %s" % @@logfile)

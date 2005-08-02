@@ -46,7 +46,7 @@ module Puppet
             def initialize(hash)
                 hash[:Path] ||= "/RPC2"
                 hash[:Server] ||= "localhost"
-                hash[:Port] ||= 8080
+                hash[:Port] ||= Puppet[:masterport]
                 super(hash[:Server],hash[:Path],hash[:Port])
             end
         end
