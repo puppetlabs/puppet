@@ -51,7 +51,6 @@ module Puppet
                 mode = nil
                 if mstate = @parent.state(:mode)
                     mode = mstate.should
-                    Puppet.notice "Mode is %s" % mode
                 end
                 begin
                     case @should
