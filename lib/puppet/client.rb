@@ -31,7 +31,7 @@ module Puppet
         Puppet.err "Could not load client network libs: %s" % $noclientnetworking
     else
         class NetworkClient < XMLRPC::Client
-            @@methods = [ :getconfig ]
+            @@methods = [ :getconfig, :getcert ]
 
             @@methods.each { |method|
                 self.send(:define_method,method) { |*args|

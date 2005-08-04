@@ -72,6 +72,8 @@ module Puppet
         :server         => "puppet",
         :rrdgraph       => false,
         :noop           => false,
+        :autosign       => false,
+        :parseonly      => false,
         :puppetport     => 8139,
         :masterport     => 8140,
         :loglevel       => :notice,
