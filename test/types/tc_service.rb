@@ -75,6 +75,15 @@ class TestService < Test::Unit::TestCase
         }
         assert(@sleeper.insync?)
     end
+
+    def testFailOnNoPath
+        assert_raise(Puppet::Error) {
+            Puppet::Type::Service.new(
+                :name => "sleeper"
+            )
+        }
+    end
+
     def teardown
         Kernel.system("pkill sleeper")
     end

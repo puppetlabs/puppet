@@ -130,8 +130,8 @@ module Puppet
             def initialize(hash)
                 super
 
-                unless @searchpaths.length >= 0
-                    raise Puppet::Error(
+                unless defined? @searchpaths and @searchpaths.length >= 0
+                    raise Puppet::Error.new(
                         "You must specify a valid search path for service %s" %
                         self.name
                     )
