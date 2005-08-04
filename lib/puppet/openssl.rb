@@ -33,20 +33,6 @@ module OpenSSL
         return output
     end
 
-    def self.findopenssl
-        if defined? @@openssl
-            return @@openssl
-        end
-        @@openssl = %x{which openssl}.chomp
-
-        if @@openssl == ""
-            $stderr.puts "Could not find openssl in path"
-            exit(12)
-        end
-
-        return @@openssl
-    end
-
     def self.mkdir(dir)
         # this is all a bunch of stupid hackery
         unless FileTest.exists?(dir)
@@ -386,7 +372,7 @@ basicConstraints        = CA:true
                     :key => @keyfile
                 )
             else
-                return self.mkcert
+                return self.mkrootcert
             end
         end
 
@@ -398,8 +384,7 @@ basicConstraints        = CA:true
             end
         end
 
-        def mkcert
-            #"openssl req -x509 -newkey rsa -out cacert.pem -outform PEM -days 1825"
+        def mkrootcert
             cert = Certificate.new(
                 :name => "CAcert",
                 :cert => @certfile,
@@ -409,8 +394,8 @@ basicConstraints        = CA:true
                 :length => 1825
             )
             @cert = cert.mkselfsigned
+            @key = cert.key
 
-            #cert.mkselfsigned
             return cert
         end
 
@@ -469,126 +454,18 @@ basicConstraints        = CA:true
                 f << "%04X" % (serial + 1)
             }
 
-#            newcert = ::OpenSSL::X509::Certificate.new
-#            from = Time.now
-#
-#            newcert.subject = csr.subject
-#            newcert.issuer = csr.subject
-#            newcert.not_before = from
-#            newcert.not_after = from + (@days * 24 * 60 * 60)
-#            newcert.public_key = csr.public_key
-#            newcert.serial = serial
-#            newcert.version = 2 # X509v3
-#
-#            basic_constraint = nil
-#            key_usage = []
-#            ext_key_usage = []
-#
-#            case cert.type
-#            when :ca:
-#                basic_constraint = "CA:TRUE"
-#                key_usage.push %w{cRLSign keyCertSign}
-#            when :terminalsubca:
-#                basic_constraint = "CA:TRUE,pathlen:0"
-#                key_usage %w{cRLSign keyCertSign}
-#            when :server:
-#                basic_constraint = "CA:FALSE"
-#                key_usage << %w{digitalSignature keyEncipherment}
-#            ext_key_usage << "serverAuth"
-#            when :ocsp:
-#                basic_constraint = "CA:FALSE"
-#                key_usage << %w{nonRepudiation digitalSignature}
-#            ext_key_usage << %w{serverAuth OCSPSigning}
-#            when :client:
-#                basic_constraint = "CA:FALSE"
-#                key_usage << %w{nonRepudiation digitalSignature keyEncipherment}
-#            ext_key_usage << %w{clientAuth emailProtection}
-#            else
-#                raise "unknonwn cert type '%s'" % cert.type
-#            end
-#
-#            key_usage.flatten!
-#            ext_key_usage.flatten!
-#
-#            ef = ::OpenSSL::X509::ExtensionFactory.new
-#
-#            ef.subject_certificate = newcert
-#            ef.issuer_certificate = cacert
-#
-#            ex = []
-#            ex << ef.create_extension("basicConstraints", basic_constraint, true)
-#            ex << ef.create_extension("nsComment",
-#                                      "Ruby/OpenSSL Generated Certificate")
-#            ex << ef.create_extension("subjectKeyIdentifier", "hash")
-#            #ex << ef.create_extension("nsCertType", "client,email")
-#            unless key_usage.empty? then
-#              ex << ef.create_extension("keyUsage", key_usage.join(","))
-#            end
-#            #ex << ef.create_extension("authorityKeyIdentifier",
-#            #                          "keyid:always,issuer:always")
-#            #ex << ef.create_extension("authorityKeyIdentifier", "keyid:always")
-#            unless ext_key_usage.empty? then
-#              ex << ef.create_extension("extendedKeyUsage", ext_key_usage.join(","))
-#            end
-#
-#            #if @ca_config[:cdp_location] then
-#            #  ex << ef.create_extension("crlDistributionPoints",
-#            #                            @ca_config[:cdp_location])
-#            #end
-#
-#            #if @ca_config[:ocsp_location] then
-#            #  ex << ef.create_extension("authorityInfoAccess",
-#            #                            "OCSP;" << @ca_config[:ocsp_location])
-#            #end
-#            newcert.extensions = ex
             newcert.sign(ca_keypair, ::OpenSSL::Digest::SHA1.new)
 
             File.open(cert.certfile, "w", 0644) { |f|
                 f << newcert.to_pem
             }
-            #backup_cert_file = @ca_config[:new_certs_dir] + "/cert_#{cert.serial}.pem"
-            #puts "Writing backup cert to #{backup_cert_file}" if $DEBUG
-            #File.open backup_cert_file, "w", 0644 do |f|
-            #  f << newcert.to_pem
-            #end
-
-            # Write cert
-            #dest = cert_config[:hostname] || cert_config[:user]
-            #cert_file = File.join dest, "cert_#{dest}.pem"
-            #puts "Writing cert to #{cert_file}" if $DEBUG
-            #File.open cert_file, "w", 0644 do |f|
-            #  f << cert.to_pem
-            #end
-
             return newcert
-
-#            ossl = Puppet::OpenSSL.findopenssl
-#            sign = [ossl]
-#            sign << "ca" 
-#            sign << "-batch" 
-#            sign << ["-config", self.file]
-#            sign << ["-passin", "file:%s" % @passfile]
-#            sign << ["-out", cert.cert]
-#            sign << ["-infiles", cert.csr]
-#
-#            Puppet::OpenSSL.exec(sign.flatten.join(" "))
-#            # and then verify it
-#
-#            #verify = "%s verify -CAfile %s %s" %
-#            #    [ossl, @certfile, cert.cert]
-#            verify = "%s verify %s" %
-#                [ossl, cert.cert]
-#
-#            Puppet::OpenSSL.exec(verify)
-            #openssl ca -config ca.config -out $CERT -infiles $CSR
-            #echo "CA verifying: $CERT <-> CA cert"
-            #openssl verify -CAfile ca.crt $CERT
         end
     end
 
     class Certificate
         attr_accessor :certfile, :keyfile, :name, :dir, :hash, :csrfile, :type
-        attr_accessor :issuer
+        attr_accessor :key, :cert
 
         @@params2names = {
             :name       => "CN",
@@ -606,7 +483,9 @@ basicConstraints        = CA:true
 
         def delete
             [@certfile,@keyfile,@csrfile].each { |file|
-                FileTest.exists?(file) and File.unlink(file)
+                if FileTest.exists?(file)
+                    File.unlink(file)
+                end
             }
 
             if @hash
@@ -617,8 +496,6 @@ basicConstraints        = CA:true
         end
 
         def exists?
-            puts "testing for %s" % @certfile
-            system("find %s" % @dir)
             FileTest.exists?(@certfile)
         end
 
@@ -700,16 +577,17 @@ basicConstraints        = CA:true
             else
                 @selfsign = false
             end
-
-            @ossl = Puppet::OpenSSL.findopenssl
         end
 
         def mkcert(issuercert, issuername, serial, publickey)
-            puts "called mkcert on %s" % @certfile
-            #puts caller
             unless issuercert or @selfsign
                 raise "Certs must either have an issuer or must be self-signed"
             end
+
+            if self.exists?
+                raise "Cannot replace existing certificate"
+            end
+
             @cert = ::OpenSSL::X509::Certificate.new
             from = Time.now
 
@@ -890,8 +768,8 @@ basicConstraints        = CA:true
         end
 
         def mkselfsigned
-            unless FileTest.exists?(@keyfile)
-                self.mkkey
+            unless @key
+                self.getkey
             end
 
             self.mkcert(nil, self.certname, 0x0, @key.public_key)
