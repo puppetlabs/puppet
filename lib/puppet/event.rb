@@ -112,8 +112,9 @@ module Puppet
 			@object = args[:object]
 			@transaction = args[:transaction]
 
-            Puppet.info "%s: %s(%s)" %
-                [@object,@state,@event]
+            #Puppet.info "%s: %s(%s)" %
+            Puppet.info "%s: %s changed from %s to %s" %
+                [@object,@state.name, @state.is,@state.should]
 
             # initially, just stuff all instances into a central bucket
             # to be handled as a batch
