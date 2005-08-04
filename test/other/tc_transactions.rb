@@ -193,20 +193,29 @@ class TestTransactions < Test::Unit::TestCase
         }
 
         # this should cause a restart of the service
+        events = nil
         assert_nothing_raised() {
-            transaction.evaluate
+            events = transaction.evaluate
         }
 
-        fakevent = Puppet::Event.new(
-            :event => :ALL_EVENTS,
-            :object => self,
-            :transaction => transaction,
-            :message => "yay"
-        )
+        event = events.pop
+
+        assert(event)
+
+        #fakevent = nil
+        #assert_nothing_raised {
+        #    fakevent = Puppet::Event.new(
+        #        :event => :ALL_EVENTS,
+        #        :object => file,
+        #        :state => file.state(:mode),
+        #        :transaction => transaction,
+        #        :message => "yay"
+        #    )
+        #}
 
         sub = nil
         assert_nothing_raised() {
-            sub = file.subscribers?(fakevent)
+            sub = file.subscribers?(event)
         }
 
         assert(sub)
@@ -256,20 +265,29 @@ class TestTransactions < Test::Unit::TestCase
         }
 
         # this should cause a restart of the service
+        events = nil
         assert_nothing_raised() {
-            transaction.evaluate
+            events = transaction.evaluate
         }
 
-        fakevent = Puppet::Event.new(
-            :event => :ALL_EVENTS,
-            :object => self,
-            :transaction => transaction,
-            :message => "yay"
-        )
+        event = events.pop
+
+        assert(event)
+
+        #fakevent = nil
+        #assert_nothing_raised {
+        #    fakevent = Puppet::Event.new(
+        #        :event => :ALL_EVENTS,
+        #        :object => file,
+        #        :state => file.state(:mode),
+        #        :transaction => transaction,
+        #        :message => "yay"
+        #    )
+        #}
 
         sub = nil
         assert_nothing_raised() {
-            sub = fcomp.subscribers?(fakevent)
+            sub = file.subscribers?(event)
         }
 
         assert(sub)

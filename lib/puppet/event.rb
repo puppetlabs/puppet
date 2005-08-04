@@ -103,18 +103,18 @@ module Puppet
         end
 
 		def initialize(args)
-            unless args.include?(:event) and args.include?(:object)
+            unless args.include?(:event) and args.include?(:change)
 				raise "Event.new called incorrectly"
 			end
 
-			@state = args[:state]
+			@change = args[:change]
 			@event = args[:event]
-			@object = args[:object]
+			#@object = args[:object]
 			@transaction = args[:transaction]
 
             #Puppet.info "%s: %s(%s)" %
-            Puppet.info "%s: %s changed from %s to %s" %
-                [@object,@state.name, @state.is,@state.should]
+            #Puppet.info "%s: %s changed from %s to %s" %
+            #    [@object,@state.name, @state.is,@state.should]
 
             # initially, just stuff all instances into a central bucket
             # to be handled as a batch

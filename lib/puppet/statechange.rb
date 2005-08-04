@@ -58,10 +58,12 @@ module Puppet
 
                 # i should maybe include object type, but the event type
                 # should basically point to that, right?
+                    #:state => @state,
+                    #:object => @state.parent,
+                Puppet.info self.to_s
                 return Puppet::Event.new(
                     :event => event,
-                    :state => @state,
-                    :object => @state.parent,
+                    :change => self,
                     :transaction => @transaction,
                     :message => self.to_s
                 )
@@ -74,10 +76,12 @@ module Puppet
                 #if pname.is_a?(Symbol)
                 #    pname = pname.id2name
                 #end
+                    #:state => @state,
+                    #:object => @state.parent,
+                Puppet.info "Failed: " + self.to_s
                 return Puppet::Event.new(
                     :event => pname + "_failed",
-                    :state => @state,
-                    :object => @state.parent,
+                    :change => self,
                     :transaction => @transaction,
                     :message => "Failed: " + self.to_s
                 )
@@ -121,7 +125,8 @@ module Puppet
 
 		#---------------------------------------------------------------
         def to_s
-            return "%s: %s => %s" % [@state,@is,@should]
+            return "%s: %s changed %s to %s" %
+                [@state.parent, @state.name, @is, @should]
         end
 		#---------------------------------------------------------------
 	end
