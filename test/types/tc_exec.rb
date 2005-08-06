@@ -128,10 +128,14 @@ class TestExec < Test::Unit::TestCase
 
     def test_cwdsettings
         command = nil
+        dir = "/tmp"
+        wd = Dir.chdir(dir) {
+            Dir.getwd
+        }
         assert_nothing_raised {
             command = Puppet::Type::Exec.new(
                 :command => "pwd",
-                :cwd => "/tmp",
+                :cwd => dir,
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :returns => 0
             )
@@ -142,7 +146,7 @@ class TestExec < Test::Unit::TestCase
         assert_nothing_raised {
             command.sync
         }
-        assert_equal("/tmp\n",command.output)
+        assert_equal(wd,command.output.chomp)
     end
 
     def test_refreshonly

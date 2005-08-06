@@ -119,6 +119,20 @@ class State < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # because the @should and @is vars might be in weird formats,
+    # we need to set up a mechanism for pretty printing of the values
+    # default to just the values, but this way individual states can
+    # override these methods
+    def is_to_s
+        @is
+    end
+
+    def should_to_s
+        @should
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     def to_s
         return "%s(%s)" % [@parent.name,self.name]
     end

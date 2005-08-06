@@ -441,9 +441,10 @@ module Puppet
                         @@default = :rpm
                     end
                 else
-                    raise Puppet::Error.new(
-                        "No default type for " + Puppet::Fact["operatingsystem"]
-                    )
+                    @@default = nil
+                    #raise Puppet::Error.new(
+                    #    "No default type for " + Puppet::Fact["operatingsystem"]
+                    #)
                 end
             end
 

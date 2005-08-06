@@ -15,6 +15,9 @@ Puppet[:loglevel] = :debug if __FILE__ == $0
 
 $platform = Facter["operatingsystem"].value
 
+unless Puppet::Type::Package.defaulttype
+    puts "No default package type for %s; skipping package tests" % $platform
+else
 class TestPackagingType < Test::Unit::TestCase
     def teardown
         Puppet::Type::Package.clear
@@ -186,4 +189,5 @@ class TestPackages < Test::Unit::TestCase
             assert_equal([:package_removed],events)
         }
     end
+end
 end

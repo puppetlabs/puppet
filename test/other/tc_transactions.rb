@@ -25,6 +25,17 @@ class TestTransactions < Test::Unit::TestCase
         return events
     end
 
+    def ingroup(gid)
+        require 'etc'
+        begin
+            group = Etc.getgrgid(gid)
+        rescue => detail
+            puts "Could not retrieve info for group %s: %s" % [gid, detail]
+        end
+
+        return @groups.include?(group.name)
+    end
+
     def setup
         Puppet::Type.allclear
         @@tmpfiles = []
@@ -53,6 +64,24 @@ class TestTransactions < Test::Unit::TestCase
     def newfile(hash = {})
         tmpfile = tempfile()
         File.open(tmpfile, "w") { |f| f.puts rand(100) }
+
+        # XXX now, because os x apparently somehow allows me to make a file
+        # owned by a group i'm not a member of, i have to verify that
+        # the file i just created is owned by one of my groups
+        # grrr
+        unless ingroup(File.stat(tmpfile).gid)
+            Puppet.info "Somehow created file in non-member group %s; fixing" %
+                File.stat(tmpfile).gid
+
+            require 'etc'
+            firstgr = @groups[0]
+            unless firstgr.is_a?(Integer)
+                str = Etc.getgrnam(firstgr)
+                firstgr = str.gid
+            end
+            File.chown(nil, firstgr, tmpfile)
+        end
+
         @@tmpfiles.push tmpfile
         hash[:name] = tmpfile
         assert_nothing_raised() {
@@ -88,6 +117,7 @@ class TestTransactions < Test::Unit::TestCase
     def test_filerollback
         transaction = nil
         file = newfile()
+
         states = {}
         check = [:group,:mode]
         file[:check] = check

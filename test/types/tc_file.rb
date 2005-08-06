@@ -151,7 +151,7 @@ class TestFile < Test::Unit::TestCase
         end
     end
 
-    def test_group
+    def test_zzgroup
         file = mktestfile()
         [%x{groups}.chomp.split(/ /), Process.groups].flatten.each { |group|
             assert_nothing_raised() {

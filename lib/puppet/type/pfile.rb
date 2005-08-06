@@ -384,6 +384,15 @@ module Puppet
             @name = :mode
             @event = :inode_changed
 
+            # our modes are octal, so print them in decimal instead
+            def is_to_s
+                "%o" % @is
+            end
+
+            def should_to_s
+                "%o" % @should
+            end
+
             def should=(should)
                 # this is pretty hackish, but i need to make sure the number is in
                 # octal, yet the number can only be specified as a string right now
@@ -493,15 +502,19 @@ module Puppet
 
                 begin
                     group = Etc.send(method,value)
-                    # apparently os x is six shades of weird
-                    os = Puppet::Fact["Operatingsystem"]
 
-                    case os
-                    when "Darwin":
-                        gid = group.passwd
-                    else
-                        gid = group.gid
-                    end
+                    # at one time, os x was putting the gid into the passwd
+                    # field of the group struct, but that appears to not
+                    # be the case any more
+                    #os = Puppet::Fact["Operatingsystem"]
+                    #case os
+                    #when "Darwin":
+                    #    #gid = group.passwd
+                    #    gid = group.gid
+                    #else
+                    #end
+
+                    gid = group.gid
                     gname = group.name
 
                     if gid.nil?

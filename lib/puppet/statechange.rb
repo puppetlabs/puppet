@@ -126,7 +126,7 @@ module Puppet
 		#---------------------------------------------------------------
         def to_s
             return "%s: %s changed %s to %s" %
-                [@state.parent, @state.name, @is, @should]
+                [@state.parent, @state.name, @state.is_to_s, @state.should_to_s]
         end
 		#---------------------------------------------------------------
 	end
