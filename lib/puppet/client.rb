@@ -121,7 +121,7 @@ module Puppet
                 end
             end
             if objects.is_a?(Puppet::TransBucket)
-                self.config(objects)
+                return self.config(objects)
             else
                 Puppet.warning objects.inspect
                 raise NetworkClientError.new(objects.class)
@@ -176,6 +176,8 @@ module Puppet
                 Metric.graph
             end
             Puppet::Storage.store
+
+            return transaction
             #self.shutdown
         end
 
