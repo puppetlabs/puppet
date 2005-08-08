@@ -28,6 +28,9 @@ module Puppet
                     @should = "file"
                 when "directory", /^d/:
                     @should = "directory"
+                when "-1", -1:
+                    # this is where a creation is being rolled back
+                    @should = -1
                 else
                     error = Puppet::Error.new "Cannot create files of type %s" %
                         value
@@ -71,6 +74,15 @@ module Puppet
                             Dir.mkdir(@parent.name)
                         end
                         event = :directory_created
+                    when -1:
+                        # this is where the file should be deleted...
+                        unless FileTest.size(@parent.name) == 0
+                            raise Puppet::Error.new(
+                                "Created file %s has since been modified; cannot roll back."
+                            )
+                        end
+
+                        File.unlink(@parent.name)
                     else
                         error = Puppet::Error.new(
                             "Somehow got told to create a %s file" % @should)
