@@ -10,9 +10,9 @@ require 'test/unit'
 # $Id$
 
 class TestPuppetDefaults < Test::Unit::TestCase
-    @@dirs = %w{rrddir puppetconf puppetvar logdir statedir certdir bucketdir}
-    @@files = %w{logfile checksumfile localcert localkey localpub 
-        rootcert rootkey rootpub manifest masterlog}
+    @@dirs = %w{rrddir puppetconf puppetvar logdir statedir}
+    @@files = %w{logfile checksumfile 
+        manifest masterlog}
     @@normals = %w{puppetport masterport server}
     @@booleans = %w{rrdgraph noop}
     def testStringOrParam

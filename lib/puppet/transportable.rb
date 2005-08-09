@@ -54,7 +54,7 @@ module Puppet
             if type = Puppet::Type.type(self.type)
                 retobj = type.new(self)
             else
-                raise "Could not find object type %s" % self.type
+                raise Puppet::Error.new("Could not find object type %s" % self.type)
             end
 
             return retobj
@@ -143,6 +143,7 @@ module Puppet
                             Puppet.err "Failed to create %s %s: %s" %
                                 [child.type,child.name,except.message]
                             if Puppet[:debug]
+                                puts child.inspect
                                 puts except.stack
                             end
                             next
@@ -150,6 +151,7 @@ module Puppet
                             Puppet.err "Failed to create %s %s: %s" %
                                 [child.type,child.name,except.message]
                             if Puppet[:debug]
+                                puts child.inspect
                                 puts caller
                             end
                             next

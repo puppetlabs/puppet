@@ -444,7 +444,9 @@ module Puppet
                 if stat = @parent.stat(true)
                     self.is = stat.mode & 007777
                     unless defined? @fixed
-                        self.dirfix
+                        if defined? @should and @should
+                            self.dirfix
+                        end
                     end
                 else
                     self.is = -1
@@ -503,7 +505,6 @@ module Puppet
             end
 
             def should=(value)
-                require 'puppet/fact'
                 method = nil
                 gid = nil
                 gname = nil

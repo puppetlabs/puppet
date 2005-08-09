@@ -5,14 +5,15 @@ if __FILE__ == $0
 end
 
 require 'puppet/selector'
+require 'facter'
 require 'test/unit'
 
 # $Id$
 
 class TestSelector < Test::Unit::TestCase
     def setup
-        @os = Puppet::Fact["operatingsystem"]
-        @hostname = Puppet::Fact["hostname"]
+        @os = Facter["operatingsystem"].value
+        @hostname = Facter["hostname"].value
 
         Puppet[:loglevel] = :debug if __FILE__ == $0
     end
@@ -22,7 +23,7 @@ class TestSelector < Test::Unit::TestCase
         assert_nothing_raised() {
             selector = Puppet::Selector.new { |select|
                 select.add("value1") {
-                    Puppet::Fact["hostname"] == @hostname
+                    Facter["hostname"].value == @hostname
                 }
             }
         }

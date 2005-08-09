@@ -3,7 +3,6 @@
 # $Id$
 
 require 'puppet/type/state'
-require 'puppet/fact'
 
 module Puppet
     class PackageError < Puppet::Error; end

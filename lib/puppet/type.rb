@@ -701,7 +701,13 @@ class Type < Puppet::Element
 
         order.flatten.each { |name|
             if hash.include?(name)
-                self[name] = hash[name]
+                begin
+                    self[name] = hash[name]
+                rescue => detail
+                    raise Puppet::DevError.new( 
+                        "Could not set %s on %s" % [name, self.class]
+                    )
+                end
                 hash.delete name
             end
         }

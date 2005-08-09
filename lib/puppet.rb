@@ -2,6 +2,8 @@
 
 # $Id$
 
+$VERBOSE = true
+
 require 'singleton'
 require 'puppet/log'
 
@@ -35,9 +37,9 @@ module Puppet
                 str = @message
             end
 
-            if Puppet[:debug] and @stack
-                str += @stack
-            end
+            #if Puppet[:debug] and @stack
+            #    str += @stack.to_s
+            #end
 
             return str
         end
@@ -57,6 +59,7 @@ module Puppet
     }
 
     # I keep wanting to use Puppet.error
+    # XXX this isn't actually working right now
     alias :error :err
 
     @defaults = {
@@ -70,19 +73,23 @@ module Puppet
         :logfile        => [:logdir,         "puppet.log"],
         :masterlog      => [:logdir,         "puppetmaster.log"],
         :checksumfile   => [:statedir,       "checksums"],
-        :certdir        => [:puppetconf,     "certs"],
-        :rootcert       => [:certdir,        "ca.crt"],
-        :rootkey        => [:certdir,        "ca.key"],
-        :rootpub        => [:certdir,        "ca.pub"],
-        :localcert      => [:certdir,        "localhost.crt"],
-        :localkey       => [:certdir,        "localhost.key"],
-        :localpub       => [:certdir,        "localhost.pub"],
+        :ssldir         => [:puppetconf,     "ssl"],
+#        :certdir        => [:ssldir,         "certs"],
+#        :publickeydir   => [:ssldir,         "public_keys"],
+#        :privatekeydir  => [:ssldir,         "private_keys"],
+#        :csrdir         => [:ssldir,         "requests"],
+#        :cadir          => [:ssldir,         "ca"],
+#        :cacert         => [:cadir,          "ca.crt"],
+#        :cakey          => [:cadir,          "ca.key"],
+#        :capub          => [:cadir,          "ca.pub"],
+#        :localcert      => [:ssldir,         "localhost.crt"],
+#        :localkey       => [:ssldir,         "localhost.key"],
+#        :localpub       => [:ssldir,         "localhost.pub"],
 
         # and finally the simple answers,
         :server         => "puppet",
         :rrdgraph       => false,
         :noop           => false,
-        :autosign       => false,
         :parseonly      => false,
         :puppetport     => 8139,
         :masterport     => 8140,
@@ -182,6 +189,8 @@ module Puppet
         end
     end
 
+    # XXX this should all be done using puppet objects, not using
+    # normal mkdir
     def self.recmkdir(dir,mode = 0755)
         tmp = dir.sub(/^\//,'')
         path = [File::SEPARATOR]

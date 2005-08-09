@@ -5,10 +5,10 @@
 # the available clients
 
 require 'puppet'
-require 'puppet/function'
+require 'puppet/sslcertificates'
 require 'puppet/type'
-#require 'puppet/fact'
 require 'facter'
+require 'openssl'
 require 'puppet/transaction'
 require 'puppet/transportable'
 require 'puppet/metric'
@@ -54,7 +54,9 @@ module Puppet
 
     class Client
         include Puppet
-        attr_accessor :local
+        attr_accessor :local, :secureinit
+        attr_reader :fqdn
+
         def Client.facts
             facts = {}
             Facter.each { |name,fact|
@@ -71,7 +73,7 @@ module Puppet
             if hash.include?(:Server)
                 case hash[:Server]
                 when String:
-                    if $nonetworking
+                    if $noclientnetworking
                         raise NetworkClientError.new("Networking not available: %s" %
                             $nonetworking)
                     end
@@ -93,6 +95,72 @@ module Puppet
                 end
             else
                 raise ClientError.new("Must pass :Server to client")
+            end
+
+            if hash.include?(:FQDN)
+                @fqdn = hash[:FQDN]
+            else
+                hostname = Facter["hostname"].value
+                domain = Facter["domain"].value
+                @fqdn = [hostname, domain].join(".")
+            end
+
+            @secureinit = hash[:NoSecureInit] || true
+        end
+
+        def initcerts
+            return unless @secureinit
+            # verify we've got all of the certs set up and such
+
+            # we are not going to encrypt our key, but we need at a minimum
+            # a keyfile and a certfile
+            certfile = File.join(Puppet[:certdir], [@fqdn, "pem"].join("."))
+            keyfile = File.join(Puppet[:privatekeydir], [@fqdn, "pem"].join("."))
+            publickeyfile = File.join(Puppet[:publickeydir], [@fqdn, "pem"].join("."))
+
+            [Puppet[:certdir], Puppet[:privatekeydir], Puppet[:csrdir],
+                Puppet[:publickeydir]].each { |dir|
+                unless FileTest.exists?(dir)
+                    Puppet.recmkdir(dir, 0770)
+                end
+            }
+            if File.exists?(keyfile)
+                # load the key
+                @key = OpenSSL::PKey::RSA.new(File.read(keyfile))
+            else
+                # create a new one and store it
+                Puppet.info "Creating a new SSL key at %s" % keyfile
+                @key = OpenSSL::PKey::RSA.new(Puppet[:keylength])
+                File.open(keyfile, "w", 0660) { |f| f.print @key.to_pem }
+                File.open(publickeyfile, "w", 0660) { |f| f.print @key.public_key.to_pem }
+
+            end
+
+            unless File.exists?(certfile)
+                Puppet.info "Creating a new certificate request for %s" % @fqdn
+                name = OpenSSL::X509::Name.new([["CN", @fqdn]])
+
+                @csr = OpenSSL::X509::Request.new
+                @csr.version = 0
+                @csr.subject = name
+                @csr.public_key = @key.public_key
+                @csr.sign(@key, OpenSSL::Digest::MD5.new)
+
+                Puppet.info "Requesting certificate"
+
+                cert = @driver.getcert(@csr.to_pem)
+
+                if cert.nil?
+                    raise Puppet::Error, "Failed to get certificate"
+                end
+                File.open(certfile, "w", 0660) { |f| f.print cert }
+                begin
+                    @cert = OpenSSL::X509::Certificate.new(cert)
+                rescue => detail
+                    raise Puppet::Error.new(
+                        "Invalid certificate: %s" % detail
+                    )
+                end
             end
         end
 
@@ -180,18 +248,6 @@ module Puppet
             return transaction
             #self.shutdown
         end
-
-        #def callfunc(name,args)
-        #    Puppet.debug("Calling callfunc on %s" % name)
-        #    if function = Puppet::Function[name]
-        #        #debug("calling function %s" % function)
-        #        value = function.call(args)
-        #        #debug("from %s got %s" % [name,value])
-        #        return value
-        #    else
-        #        raise "Function '%s' not found" % name
-        #    end
-        #end
 
         private
 

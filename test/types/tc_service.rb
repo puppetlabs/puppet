@@ -33,6 +33,7 @@ class TestService < Test::Unit::TestCase
 
     def teardown
         Puppet::Type.allclear
+        Kernel.system("pkill sleeper")
     end
 
     def test_process_start
@@ -82,9 +83,5 @@ class TestService < Test::Unit::TestCase
                 :name => "sleeper"
             )
         }
-    end
-
-    def teardown
-        Kernel.system("pkill sleeper")
     end
 end

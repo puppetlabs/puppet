@@ -3,7 +3,6 @@
 # $Id$
 
 require 'puppet'
-require 'puppet/fact'
 
 module Puppet
     #---------------------------------------------------------------
