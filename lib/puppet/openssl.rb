@@ -465,7 +465,7 @@ basicConstraints        = CA:true
 
     class Certificate
         attr_accessor :certfile, :keyfile, :name, :dir, :hash, :csrfile, :type
-        attr_accessor :key, :cert
+        attr_accessor :key, :cert, :csr
 
         @@params2names = {
             :name       => "CN",
@@ -530,6 +530,10 @@ basicConstraints        = CA:true
                     raise "You must specify the directory in which to store certs"
                 end
                 @certfile = File.join(@dir, @name)
+            end
+
+            unless FileTest.directory?(@dir)
+                Puppet::OpenSSL.mkdir(@dir)
             end
 
             unless @certfile =~ /\.pem$/
@@ -681,40 +685,22 @@ basicConstraints        = CA:true
 
         # this only works for servers, not for users
         def mkcsr
-            #cmd = "#{ossl} req -new -key #{@key} -out #{@csrfile}"
-            #self.class.exec(exec)
-
             unless @key
                 self.getkey
             end
 
             name = ::OpenSSL::X509::Name.new self.subject
 
-            csr = ::OpenSSL::X509::Request.new
-            csr.version = 0
-            csr.subject = name
-            csr.public_key = @key.public_key
-            csr.sign(@key, ::OpenSSL::Digest::MD5.new)
+            @csr = ::OpenSSL::X509::Request.new
+            @csr.version = 0
+            @csr.subject = name
+            @csr.public_key = @key.public_key
+            @csr.sign(@key, ::OpenSSL::Digest::MD5.new)
 
             File.open(@csrfile, "w") { |f|
-                f << csr.to_pem
+                f << @csr.to_pem
             }
 
-#            cmd = [@ossl, "req"]
-#            cmd << "-batch"
-#            cmd << "-new"
-#            cmd << ["-newkey", "rsa:1024"]
-#            cmd << ["-subj", self.subject]
-#            cmd << ["-keyout", @key]
-#            cmd << ["-out", @csrfile]
-#
-#            if @encrypt
-#                cmd << ["-passout", "file:" + @encrypt]
-#            else
-#                cmd << "-nodes"
-#            end
-#
-#            Puppet::OpenSSL.exec(cmd.flatten.join(" "))
         end
 
         def mkhash
@@ -773,27 +759,6 @@ basicConstraints        = CA:true
             end
 
             self.mkcert(nil, self.certname, 0x0, @key.public_key)
-#            if self.exists?
-#                unless @replace
-#                    raise "Certificate exists"
-#                end
-#            end
-#
-#            cmd = [@ossl, "req"]
-#            cmd << "-batch"
-#            cmd << ["-subj", self.subject(true)]
-#            cmd << "-new"
-#            cmd << "-x509"
-#            cmd << ["-keyout", @keyfile]
-#            cmd << ["-out", @certfile]
-#
-#            if @encrypt
-#                cmd << ["-passout", "file:" + @encrypt]
-#            else
-#                cmd << "-nodes"
-#            end
-#
-#            Puppet::OpenSSL.exec(cmd.flatten.join(" "))
 #            self.mkhash
         end
 
