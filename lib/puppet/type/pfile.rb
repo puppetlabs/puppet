@@ -62,6 +62,7 @@ module Puppet
                         if mode
                             File.open(@parent[:path],"w", mode) {
                             }
+                            @parent.delete(:mode)
                         else
                             File.open(@parent[:path],"w") {
                             }
@@ -70,6 +71,7 @@ module Puppet
                     when "directory":
                         if mode
                             Dir.mkdir(@parent.name,mode)
+                            @parent.delete(:mode)
                         else
                             Dir.mkdir(@parent.name)
                         end
@@ -424,13 +426,13 @@ module Puppet
                 # if we're a directory, we need to be executable for all cases
                 # that are readable
                 if FileTest.directory?(@parent.name)
-                    if @should & 0400
+                    if @should & 0400 != 0
                         @should |= 0100
                     end
-                    if @should & 040
+                    if @should & 040 != 0
                         @should |= 010
                     end
-                    if @should & 04
+                    if @should & 04 != 0
                         @should |= 01
                     end
                 end
@@ -529,16 +531,16 @@ module Puppet
                     gid = group.gid
                     gname = group.name
 
-                    if gid.nil?
-                        raise Puppet::Error.new(
-                            "Could not retrieve gid for %s" % @parent.name)
-                    end
                 rescue ArgumentError => detail
                     raise Puppet::Error.new(
                         "Could not find group %s" % value)
                 rescue => detail
                     raise Puppet::Error.new(
                         "Could not find group %s: %s" % [self.should,detail])
+                end
+                if gid.nil?
+                    raise Puppet::Error.new(
+                        "Could not retrieve gid for %s" % @parent.name)
                 end
 
                 # now make sure the user is allowed to change to that group
