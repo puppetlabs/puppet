@@ -24,12 +24,22 @@ module Puppet
         end
 
         def to_s
+            str = nil
             if defined? @file and defined? @line
-                return "%s at file %s, line %s" %
+                str = "%s at file %s, line %s" %
                     [@message, @file, @line]
+            elsif defined? @line
+                str = "%s at line %s" %
+                    [@message, @line]
             else
-                return @message
+                str = @message
             end
+
+            if Puppet[:debug] and @stack
+                str += @stack
+            end
+
+            return str
         end
     end
 
