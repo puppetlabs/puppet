@@ -161,6 +161,12 @@ module Puppet
             end
         end
 
+        def Log.reopen
+            if @@logfile
+                Log.destination = @@logpath
+            end
+        end
+
 		attr_accessor :level, :message, :source, :time
 
 		def initialize(args)
