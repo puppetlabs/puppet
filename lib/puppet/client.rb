@@ -12,6 +12,7 @@ require 'openssl'
 require 'puppet/transaction'
 require 'puppet/transportable'
 require 'puppet/metric'
+require 'puppet/daemon'
 
 $noclientnetworking = false
 begin
@@ -31,6 +32,8 @@ module Puppet
         Puppet.err "Could not load client network libs: %s" % $noclientnetworking
     else
         class NetworkClient < XMLRPC::Client
+            include Puppet::Daemon
+
             @@methods = [ :getconfig, :getcert ]
 
             @@methods.each { |method|
@@ -124,6 +127,8 @@ module Puppet
                     Puppet.recmkdir(dir, 0770)
                 end
             }
+
+            inited = false
             if File.exists?(keyfile)
                 # load the key
                 @key = OpenSSL::PKey::RSA.new(File.read(keyfile))
@@ -132,8 +137,9 @@ module Puppet
                 Puppet.info "Creating a new SSL key at %s" % keyfile
                 @key = OpenSSL::PKey::RSA.new(Puppet[:keylength])
                 File.open(keyfile, "w", 0660) { |f| f.print @key.to_pem }
-                File.open(publickeyfile, "w", 0660) { |f| f.print @key.public_key.to_pem }
-
+                File.open(publickeyfile, "w", 0660) { |f|
+                    f.print @key.public_key.to_pem
+                }
             end
 
             unless File.exists?(certfile)
@@ -156,12 +162,15 @@ module Puppet
                 File.open(certfile, "w", 0660) { |f| f.print cert }
                 begin
                     @cert = OpenSSL::X509::Certificate.new(cert)
+                    inited = true
                 rescue => detail
                     raise Puppet::Error.new(
                         "Invalid certificate: %s" % detail
                     )
                 end
             end
+
+            return inited
         end
 
         def getconfig
