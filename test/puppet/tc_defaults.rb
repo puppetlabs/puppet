@@ -15,6 +15,11 @@ class TestPuppetDefaults < Test::Unit::TestCase
         manifest masterlog}
     @@normals = %w{puppetport masterport server}
     @@booleans = %w{rrdgraph noop}
+
+    def testVersion
+        assert( Puppet.version =~ /^[0-9]+(\.[0-9]+)*$/ )
+    end
+
     def testStringOrParam
         [@@dirs,@@files,@@booleans].flatten.each { |param|
             assert_nothing_raised { Puppet[param] }
