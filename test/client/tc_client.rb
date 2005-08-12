@@ -80,9 +80,8 @@ class TestClient < Test::Unit::TestCase
             client = Puppet::Client.new(:Server => server)
         }
         certfile = File.join(Puppet[:certdir], [client.fqdn, "pem"].join("."))
-        assert_raise(Puppet::Error) {
-            client.initcerts
-        }
+        cafile = File.join(Puppet[:certdir], ["ca", "pem"].join("."))
+        assert_nil(client.initcerts)
         assert(! File.exists?(certfile))
 
         ca = nil
@@ -100,8 +99,9 @@ class TestClient < Test::Unit::TestCase
 
         cert = nil
         assert_nothing_raised {
-            cert = ca.sign(csr)
+            cert, cacert = ca.sign(csr)
             File.open(certfile, "w") { |f| f.print cert.to_pem }
+            File.open(cafile, "w") { |f| f.print cacert.to_pem }
         }
 
         # this time it should get the cert correctly

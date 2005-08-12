@@ -76,6 +76,7 @@ module Puppet
 
         # then the files},
         :manifest       => [:puppetconf,     "manifest.pp"],
+        :localconfig    => [:puppetconf,     "localconfig.ma"],
         :logfile        => [:logdir,         "puppet.log"],
         :httplogfile    => [:logdir,         "http.log"],
         :masterlog      => [:logdir,         "puppetmaster.log"],

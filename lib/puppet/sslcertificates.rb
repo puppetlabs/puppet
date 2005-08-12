@@ -49,7 +49,7 @@ module SSLCertificates
                 raise ArgumentError, "mkcert called without %s" % param
             end
         }
-        cert = ::OpenSSL::X509::Certificate.new
+        cert = OpenSSL::X509::Certificate.new
         from = Time.now
 
         cert.subject = hash[:name]
@@ -89,13 +89,13 @@ module SSLCertificates
             key_usage << %w{nonRepudiation digitalSignature keyEncipherment}
         ext_key_usage << %w{clientAuth emailProtection}
         else
-            raise "unknonwn cert type '%s'" % hash[:type]
+            raise Puppet::Error, "unknown cert type '%s'" % hash[:type]
         end
 
         key_usage.flatten!
         ext_key_usage.flatten!
 
-        ef = ::OpenSSL::X509::ExtensionFactory.new
+        ef = OpenSSL::X509::ExtensionFactory.new
 
         if hash[:issuer]
             ef.issuer_certificate = hash[:issuer]
@@ -108,7 +108,7 @@ module SSLCertificates
         ex = []
         ex << ef.create_extension("basicConstraints", basic_constraint, true)
         ex << ef.create_extension("nsComment",
-                                  "Ruby/OpenSSL Generated Certificate")
+                                  "Puppet Ruby/OpenSSL Generated Certificate")
         ex << ef.create_extension("subjectKeyIdentifier", "hash")
         #ex << ef.create_extension("nsCertType", "client,email")
         unless key_usage.empty? then
@@ -132,9 +132,6 @@ module SSLCertificates
         #                            "OCSP;" << @ca_config[:ocsp_location])
         #end
         cert.extensions = ex
-
-        #cmd = "#{ossl} req -nodes -new -x509 -keyout %s -out %s -config %s" %
-        #    [@key, certfile, Puppet::SSLCertificates.config]
 
         # write the cert out
         #File.open(certfile, "w") {  |f| f << cert.to_pem }
@@ -193,6 +190,10 @@ module SSLCertificates
             Puppet.setdefault(param,@@defaults[param])
         }
 
+        def certfile
+            @config[:cacert]
+        end
+
         def host2csrfile(hostname)
             File.join(Puppet[:csrdir], [hostname, "pem"].join("."))
         end
@@ -215,7 +216,7 @@ module SSLCertificates
             self.getcert
             unless FileTest.exists?(@config[:serial])
                 File.open(@config[:serial], "w") { |f|
-                    f << "%04X" % 0
+                    f << "%04X" % 1
                 }
             end
 
@@ -258,10 +259,10 @@ module SSLCertificates
         def getclientcert(host)
             certfile = host2certfile(host)
             unless File.exists?(certfile)
-                return nil
+                return [nil, nil]
             end
 
-            return OpenSSL::X509::Certificate.new(File.read(certfile))
+            return [OpenSSL::X509::Certificate.new(File.read(certfile)), @cert]
         end
 
         def list
@@ -341,24 +342,36 @@ module SSLCertificates
 
         def sign(csr)
             unless csr.is_a?(OpenSSL::X509::Request)
-                raise "CA#sign only accepts OpenSSL::X509::Request objects, not %s" %
+                raise Puppet::Error,
+                    "CA#sign only accepts OpenSSL::X509::Request objects, not %s" %
                     csr.class
             end
 
             unless csr.verify(csr.public_key)
-                raise "CSR sign verification failed"
+                raise Puppet::Error, "CSR sign verification failed"
             end
 
             # i should probably check key length...
 
             # read the ca cert in
-            cacert = ::OpenSSL::X509::Certificate.new(
+            cacert = OpenSSL::X509::Certificate.new(
                 File.read(@config[:cacert])
             )
 
-            ca_keypair = ::OpenSSL::PKey::RSA.new(
-                File.read(@config[:cakey]), @config[:password]
-            )
+            cakey = nil
+            if @config[:password]
+                cakey = OpenSSL::PKey::RSA.new(
+                    File.read(@config[:cakey]), @config[:password]
+                )
+            else
+                cakey = OpenSSL::PKey::RSA.new(
+                    File.read(@config[:cakey])
+                )
+            end
+
+            unless cacert.check_private_key(cakey)
+                raise Puppet::Error, "CA Certificate is invalid"
+            end
 
             serial = File.read(@config[:serial]).chomp.hex
             newcert = SSLCertificates.mkcert(
@@ -367,7 +380,7 @@ module SSLCertificates
                 :days => @config[:ca_days],
                 :issuer => cacert,
                 :serial => serial,
-                :publickey => ca_keypair.public_key
+                :publickey => csr.public_key
             )
 
             # increment the serial
@@ -375,11 +388,11 @@ module SSLCertificates
                 f << "%04X" % (serial + 1)
             }
 
-            newcert.sign(ca_keypair, ::OpenSSL::Digest::SHA1.new)
+            newcert.sign(cakey, OpenSSL::Digest::SHA1.new)
 
             self.storeclientcert(newcert)
 
-            return newcert
+            return [newcert, cacert]
         end
 
         def storeclientcsr(csr)
@@ -425,7 +438,7 @@ module SSLCertificates
         }
 
         def certname
-            ::OpenSSL::X509::Name.new self.subject
+            OpenSSL::X509::Name.new self.subject
         end
 
         def delete
@@ -451,12 +464,12 @@ module SSLCertificates
                 self.mkkey()
             end
             if @password
-                @key = ::OpenSSL::PKey::RSA.new(
+                @key = OpenSSL::PKey::RSA.new(
                     File.read(@keyfile),
                     @password
                 )
             else
-                @key = ::OpenSSL::PKey::RSA.new(
+                @key = OpenSSL::PKey::RSA.new(
                     File.read(@keyfile)
                 )
             end
@@ -549,17 +562,21 @@ module SSLCertificates
                 self.getkey
             end
 
-            name = ::OpenSSL::X509::Name.new self.subject
+            name = OpenSSL::X509::Name.new self.subject
 
-            @csr = ::OpenSSL::X509::Request.new
+            @csr = OpenSSL::X509::Request.new
             @csr.version = 0
             @csr.subject = name
             @csr.public_key = @key.public_key
-            @csr.sign(@key, ::OpenSSL::Digest::MD5.new)
+            @csr.sign(@key, OpenSSL::Digest::SHA1.new)
 
             #File.open(@csrfile, "w") { |f|
             #    f << @csr.to_pem
             #}
+
+            unless @csr.verify(@key.public_key)
+                raise Puppet::Error, "CSR sign verification failed"
+            end
 
             return @csr
         end
@@ -597,12 +614,24 @@ module SSLCertificates
         def mkkey
             # @key is the file
 
-            @key = ::OpenSSL::PKey::RSA.new 1024
+            @key = OpenSSL::PKey::RSA.new(1024)
+#            { |p,n|
+#                case p
+#                when 0; Puppet.info "key info: ."  # BN_generate_prime
+#                when 1; Puppet.info "key info: +"  # BN_generate_prime
+#                when 2; Puppet.info "key info: *"  # searching good prime,  
+#                                          # n = #of try,
+#                                          # but also data from BN_generate_prime
+#                when 3; Puppet.info "key info: \n" # found good prime, n==0 - p, n==1 - q,
+#                                          # but also data from BN_generate_prime
+#                else;   Puppet.info "key info: *"  # BN_generate_prime
+#                end
+#            }
 
             if @password
                 #passwdproc = proc { @password }
                 keytext = @key.export(
-                    ::OpenSSL::Cipher::DES.new(:EDE3, :CBC),
+                    OpenSSL::Cipher::DES.new(:EDE3, :CBC),
                     @password
                 )
                 File.open(@keyfile, "w", 0400) { |f|
@@ -635,7 +664,7 @@ module SSLCertificates
                 :publickey => @key.public_key
             )
 
-            @cert.sign(@key, ::OpenSSL::Digest::SHA1.new) if @selfsign
+            @cert.sign(@key, OpenSSL::Digest::SHA1.new) if @selfsign
         end
 
         def subject(string = false)

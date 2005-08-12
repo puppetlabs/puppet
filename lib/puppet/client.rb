@@ -1,7 +1,5 @@
 #!/usr/local/bin/ruby -w
 
-# $Id$
-
 # the available clients
 
 require 'puppet'
@@ -32,7 +30,7 @@ module Puppet
         Puppet.err "Could not load client network libs: %s" % $noclientnetworking
     else
         class NetworkClient < XMLRPC::Client
-            include Puppet::Daemon
+            #include Puppet::Daemon
 
             @@methods = [ :getconfig, :getcert ]
 
@@ -40,8 +38,13 @@ module Puppet
                 self.send(:define_method,method) { |*args|
                     begin
                         call("puppetmaster.%s" % method.to_s,*args)
+                    rescue XMLRPC::FaultException => detail
+                        Puppet.err "XML Could not call %s: %s" %
+                            [method, detail.faultString]
+                        raise NetworkClientError.new(detail.to_s)
                     rescue => detail
-                        raise NetworkClientError.new(detail)
+                        Puppet.err "Could not call %s: %s" % [method, detail.inspect]
+                        raise NetworkClientError.new(detail.to_s)
                     end
                 }
             }
@@ -50,15 +53,26 @@ module Puppet
                 hash[:Path] ||= "/RPC2"
                 hash[:Server] ||= "localhost"
                 hash[:Port] ||= Puppet[:masterport]
-                super(hash[:Server],hash[:Path],hash[:Port])
+                super(
+                    hash[:Server],
+                    hash[:Path],
+                    hash[:Port],
+                    nil, # proxy_host
+                    nil, # proxy_port
+                    nil, # user
+                    nil, # password
+                    true) # use_ssl
+
+                # from here, i need to add the key, cert, and ca cert
+                # and reorgize how i start the client
             end
         end
     end
 
     class Client
         include Puppet
+        include Puppet::Daemon
         attr_accessor :local, :secureinit
-        attr_reader :fqdn
 
         def Client.facts
             facts = {}
@@ -103,74 +117,10 @@ module Puppet
             if hash.include?(:FQDN)
                 @fqdn = hash[:FQDN]
             else
-                hostname = Facter["hostname"].value
-                domain = Facter["domain"].value
-                @fqdn = [hostname, domain].join(".")
+                self.fqdn
             end
 
             @secureinit = hash[:NoSecureInit] || true
-        end
-
-        def initcerts
-            return unless @secureinit
-            # verify we've got all of the certs set up and such
-
-            # we are not going to encrypt our key, but we need at a minimum
-            # a keyfile and a certfile
-            certfile = File.join(Puppet[:certdir], [@fqdn, "pem"].join("."))
-            keyfile = File.join(Puppet[:privatekeydir], [@fqdn, "pem"].join("."))
-            publickeyfile = File.join(Puppet[:publickeydir], [@fqdn, "pem"].join("."))
-
-            [Puppet[:certdir], Puppet[:privatekeydir], Puppet[:csrdir],
-                Puppet[:publickeydir]].each { |dir|
-                unless FileTest.exists?(dir)
-                    Puppet.recmkdir(dir, 0770)
-                end
-            }
-
-            inited = false
-            if File.exists?(keyfile)
-                # load the key
-                @key = OpenSSL::PKey::RSA.new(File.read(keyfile))
-            else
-                # create a new one and store it
-                Puppet.info "Creating a new SSL key at %s" % keyfile
-                @key = OpenSSL::PKey::RSA.new(Puppet[:keylength])
-                File.open(keyfile, "w", 0660) { |f| f.print @key.to_pem }
-                File.open(publickeyfile, "w", 0660) { |f|
-                    f.print @key.public_key.to_pem
-                }
-            end
-
-            unless File.exists?(certfile)
-                Puppet.info "Creating a new certificate request for %s" % @fqdn
-                name = OpenSSL::X509::Name.new([["CN", @fqdn]])
-
-                @csr = OpenSSL::X509::Request.new
-                @csr.version = 0
-                @csr.subject = name
-                @csr.public_key = @key.public_key
-                @csr.sign(@key, OpenSSL::Digest::MD5.new)
-
-                Puppet.info "Requesting certificate"
-
-                cert = @driver.getcert(@csr.to_pem)
-
-                if cert.nil?
-                    raise Puppet::Error, "Failed to get certificate"
-                end
-                File.open(certfile, "w", 0660) { |f| f.print cert }
-                begin
-                    @cert = OpenSSL::X509::Certificate.new(cert)
-                    inited = true
-                rescue => detail
-                    raise Puppet::Error.new(
-                        "Invalid certificate: %s" % detail
-                    )
-                end
-            end
-
-            return inited
         end
 
         def getconfig
@@ -190,7 +140,27 @@ module Puppet
                 objects = @driver.getconfig(facts)
             else
                 textfacts = CGI.escape(Marshal::dump(facts))
-                textobjects = CGI.unescape(@driver.getconfig(textfacts))
+                textobjects = nil
+                if textobjects = CGI.unescape(@driver.getconfig(textfacts))
+                    # we store the config so that if we can't connect next time, we
+                    # can just run against the most recently acquired copy
+                    confdir = File.dirname(Puppet[:localconfig])
+                    unless FileTest.exists?(confdir)
+                        Puppet.recmkdir(confdir, 0770)
+                    end
+                    File.open(Puppet[:localconfig], "w", 0660) { |f|
+                        f.print textobjects
+                    }
+                else
+                    if FileTest.exists?(Puppet[:localconfig])
+                        textobjects = File.read(Puppet[:localconfig])
+                    else
+                        raise Puppet::Error.new(
+                            "Cannot connect to server and there is no cached configuration"
+                        )
+                    end
+                end
+
                 begin
                     objects = Marshal::load(textobjects)
                 rescue => detail
@@ -257,27 +227,8 @@ module Puppet
             return transaction
             #self.shutdown
         end
-
-        private
-
-        #def on_init
-        #    @default_namespace = 'urn:puppet-client'
-        #    add_method(self, 'config', 'config')
-        #    add_method(self, 'callfunc', 'name', 'arguments')
-        #end
-
-        def cert(filename)
-            OpenSSL::X509::Certificate.new(File.open(File.join(@dir, filename)) { |f|
-                f.read
-            })
-        end
-
-        def key(filename)
-            OpenSSL::PKey::RSA.new(File.open(File.join(@dir, filename)) { |f|
-                f.read
-            })
-        end
-
     end
     #---------------------------------------------------------------
 end
+
+# $Id$
