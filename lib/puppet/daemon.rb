@@ -111,7 +111,8 @@ module Puppet
                 begin
                     cert, cacert = @driver.getcert(@csr.to_pem)
                 rescue => detail
-                    raise Puppet::Error.new("Certificate retrieval failed: %s" % detail)
+                    raise Puppet::Error.new("Certificate retrieval failed: %s" %
+                        detail)
                 end
 
                 if cert.nil? or cert == ""
