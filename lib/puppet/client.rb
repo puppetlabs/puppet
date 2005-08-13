@@ -41,7 +41,8 @@ module Puppet
                     rescue XMLRPC::FaultException => detail
                         Puppet.err "XML Could not call %s: %s" %
                             [method, detail.faultString]
-                        raise NetworkClientError.new(detail.to_s)
+                        raise NetworkClientError.new,
+                            "XMLRPC Error: %s" % detail.faultString
                     rescue => detail
                         Puppet.err "Could not call %s: %s" % [method, detail.inspect]
                         raise NetworkClientError.new(detail.to_s)
@@ -168,7 +169,7 @@ module Puppet
                 end
             end
             if objects.is_a?(Puppet::TransBucket)
-                return self.config(objects)
+                @objects = objects
             else
                 Puppet.warning objects.inspect
                 raise NetworkClientError.new(objects.class)
@@ -179,7 +180,10 @@ module Puppet
         # objects
         # for now, just descend into the tree and perform and necessary
         # manipulations
-        def config(tree)
+        def config
+            unless defined? @objects
+                raise Puppet::Error, "Cannot config; objects not defined"
+            end
             Puppet.debug("Calling config")
 
             # XXX this is kind of a problem; if the user changes the state file
