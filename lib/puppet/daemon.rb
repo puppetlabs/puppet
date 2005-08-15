@@ -18,7 +18,7 @@ module Puppet
             begin
                 $stdin.reopen "/dev/null"
                 $stdout.reopen "/dev/null", "a"
-                $stderr.reopen $stdin
+                $stderr.reopen $stdout
                 Log.reopen
             rescue => detail
                 File.open("/tmp/daemonout", "w") { |f|
