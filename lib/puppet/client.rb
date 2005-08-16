@@ -32,21 +32,40 @@ module Puppet
         class NetworkClient < XMLRPC::Client
             #include Puppet::Daemon
 
-            @@methods = [ :getconfig, :getcert ]
+            @@methods = {
+                "puppetmaster" => [ :getconfig ],
+                "puppetca" => [ :getcert ]
+            }
 
-            @@methods.each { |method|
-                self.send(:define_method,method) { |*args|
-                    begin
-                        call("puppetmaster.%s" % method.to_s,*args)
-                    rescue XMLRPC::FaultException => detail
-                        Puppet.err "XML Could not call %s: %s" %
-                            [method, detail.faultString]
-                        raise NetworkClientError.new,
-                            "XMLRPC Error: %s" % detail.faultString
-                    rescue => detail
-                        Puppet.err "Could not call %s: %s" % [method, detail.inspect]
-                        raise NetworkClientError.new(detail.to_s)
-                    end
+            @@methods.each { |namespace, methods|
+                methods.each { |method|
+                    self.send(:define_method,method) { |*args|
+                        Puppet.info "peer cert is %s" % @http.peer_cert
+                        #Puppet.info "cert is %s" % @http.cert
+                        begin
+                            call("%s.%s" % [namespace, method.to_s],*args)
+                        rescue XMLRPC::FaultException => detail
+                            Puppet.err "XML Could not call %s.%s: %s" %
+                                [namespace, method, detail.faultString]
+                            raise NetworkClientError.new,
+                                "XMLRPC Error: %s" % detail.faultString
+                        rescue => detail
+                            Puppet.err "Could not call %s.%s: %s" %
+                                [namespace, method, detail.inspect]
+                            raise NetworkClientError.new(detail.to_s)
+                        end
+                    }
+                }
+            }
+
+            [:key, :cert, :ca_file].each { |method|
+                setmethod = method.to_s + "="
+                #self.send(:define_method, method) {
+                #    @http.send(method)
+                #}
+                self.send(:define_method, setmethod) { |*args|
+                    Puppet.debug "Setting %s" % method 
+                    @http.send(setmethod, *args)
                 }
             }
 
@@ -54,6 +73,7 @@ module Puppet
                 hash[:Path] ||= "/RPC2"
                 hash[:Server] ||= "localhost"
                 hash[:Port] ||= Puppet[:masterport]
+
                 super(
                     hash[:Server],
                     hash[:Path],
@@ -62,7 +82,29 @@ module Puppet
                     nil, # proxy_port
                     nil, # user
                     nil, # password
-                    true) # use_ssl
+                    true # use_ssl
+                )
+
+                if hash[:Certificate]
+                    Puppet.info "adding cert to @http"
+                    @http.cert = hash[:Certificate]
+                end
+
+                if hash[:Key]
+                    @http.key = hash[:Key]
+                end
+
+                if hash[:CAFile]
+                    @http.ca_file = hash[:CAFile]
+                    store = OpenSSL::X509::Store.new
+                    cacert = OpenSSL::X509::Certificate.new(
+                        File.read(hash[:CAFile])
+                    )
+                    store.add_cert(cacert) 
+                    store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
+                    @http.cert_store = store
+                    @http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+                end
 
                 # from here, i need to add the key, cert, and ca cert
                 # and reorgize how i start the client
@@ -88,6 +130,14 @@ module Puppet
             # to whom do we connect?
             @server = nil
             @nil = nil
+            @secureinit = hash[:NoSecureInit] || true
+
+            if hash.include?(:FQDN)
+                @fqdn = hash[:FQDN]
+            else
+                self.fqdn
+            end
+
             if hash.include?(:Server)
                 case hash[:Server]
                 when String:
@@ -102,6 +152,13 @@ module Puppet
                             args[arg] = hash[arg]
                         end
                     }
+
+                    if self.readcert
+                        args[:Certificate] = @cert
+                        args[:Key] = @key
+                        args[:CAFile] = @cacertfile
+                    end
+
                     @driver = Puppet::NetworkClient.new(args)
                     @local = false
                 when Puppet::Master:
@@ -114,14 +171,6 @@ module Puppet
             else
                 raise ClientError.new("Must pass :Server to client")
             end
-
-            if hash.include?(:FQDN)
-                @fqdn = hash[:FQDN]
-            else
-                self.fqdn
-            end
-
-            @secureinit = hash[:NoSecureInit] || true
         end
 
         def getconfig
@@ -202,11 +251,11 @@ module Puppet
                 end
             end
 
-            container = tree.to_type
+            container = @objects.to_type
             #if @local
-            #    container = tree.to_type
+            #    container = @objects.to_type
             #else
-            #    container = Marshal::load(tree).to_type
+            #    container = Marshal::load(@objects).to_type
             #end
 
             # this is a gross hack... but i don't see a good way around it
@@ -230,6 +279,23 @@ module Puppet
 
             return transaction
             #self.shutdown
+        end
+
+        def initcerts
+            unless self.readcert
+                unless self.requestcert
+                    return nil
+                end
+            end
+
+            unless @driver
+                return true
+            end
+
+            Puppet.info "setting cert and key and such"
+            @driver.cert = @cert
+            @driver.key = @key
+            @driver.ca_file = @cacertfile
         end
     end
     #---------------------------------------------------------------

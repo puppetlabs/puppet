@@ -56,6 +56,7 @@ module SSLCertificates
         if hash[:issuer]
             cert.issuer = hash[:issuer].subject
         else
+            # we're a self-signed cert
             cert.issuer = cert.subject
         end
         cert.not_before = from
@@ -138,6 +139,36 @@ module SSLCertificates
 
         return cert
     end
+
+    def self.mkhash(dir, cert, certfile)
+        hash = "%x" % cert.issuer.hash
+        hashpath = nil
+        10.times { |i|
+            path = File.join(dir, "%s.%s" % [hash, i])
+            if FileTest.exists?(path)
+                if FileTest.symlink?(path)
+                    dest = File.readlink(path)
+                    if dest == certfile
+                        # the correct link already exists
+                        hashpath = path
+                        break
+                    else
+                        next
+                    end
+                else
+                    next
+                end
+            end
+
+            File.symlink(certfile, path)
+
+            hashpath = path
+            break
+        }
+
+        return hashpath
+    end
+
 
 
     class CA
@@ -425,7 +456,7 @@ module SSLCertificates
 
     class Certificate
         attr_accessor :certfile, :keyfile, :name, :dir, :hash, :type
-        attr_accessor :key, :cert, :csr
+        attr_accessor :key, :cert, :csr, :cacert
 
         @@params2names = {
             :name       => "CN",
@@ -491,6 +522,8 @@ module SSLCertificates
                 @dir = hash[:dir] || Puppet[:certdir]
                 @certfile = File.join(@dir, @name)
             end
+
+            @cacertfile ||= File.join(Puppet[:certdir], "ca.pem")
 
             unless FileTest.directory?(@dir)
                 Puppet::SSLCertificates.mkdir(@dir)
@@ -581,36 +614,6 @@ module SSLCertificates
             return @csr
         end
 
-        def mkhash
-            hash = "%x" % @cert.issuer.hash
-            path = nil
-            10.times { |i|
-                path = File.join(@dir, "%s.%s" % [hash, i])
-                if FileTest.exists?(path)
-                    if FileTest.symlink?(path)
-                        dest = File.readlink(path)
-                        if dest == @certfile
-                            # the correct link already exists
-                            puts "hash already exists"
-                            @hash = path
-                            return
-                        else
-                            next
-                        end
-                    else
-                        next
-                    end
-                end
-
-                File.symlink(@certfile, path)
-
-                @hash = path
-                break
-            }
-
-            return path
-        end
-
         def mkkey
             # @key is the file
 
@@ -665,6 +668,8 @@ module SSLCertificates
             )
 
             @cert.sign(@key, OpenSSL::Digest::SHA1.new) if @selfsign
+
+            return @cert
         end
 
         def subject(string = false)
@@ -683,29 +688,44 @@ module SSLCertificates
             end
         end
 
+        # verify that we can track down the cert chain or whatever
+        def verify
+            "openssl verify -verbose -CAfile /home/luke/.puppet/ssl/certs/ca.pem -purpose sslserver culain.madstop.com.pem"
+        end
+
         def write
             files = {
                 @certfile => @cert,
                 @keyfile => @key,
             }
-                #@csrfile => @csr
+            if defined? @cacert
+                files[@cacertfile] = @cacert
+            end
 
             files.each { |file,thing|
                 if defined? thing and thing
                     if FileTest.exists?(file)
-                        newtext = File.open(file) { |f| f.read }
-                        if newtext != thing.to_pem
-                            raise "Cannot replace existing %s" % thing.class
-                        else
-                            next
-                        end
+                        next
                     end
 
-                    File.open(file, "w", 0660) { |f| f.print thing.to_pem }
+                    text = nil
+
+                    if thing.is_a?(OpenSSL::PKey::RSA) and @password
+                        text = thing.export(
+                            OpenSSL::Cipher::DES.new(:EDE3, :CBC),
+                            @password
+                        )
+                    else
+                        text = thing.to_pem
+                    end
+
+                    File.open(file, "w", 0660) { |f| f.print text }
                 end
             }
 
-            self.mkhash
+            if defined? @cacert
+                SSLCertificates.mkhash(Puppet[:certdir], @cacert, @cacertfile)
+            end
         end
     end
 end
