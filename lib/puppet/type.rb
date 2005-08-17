@@ -35,7 +35,7 @@ require 'puppet/type/state'
 module Puppet
 class Type < Puppet::Element
     attr_accessor :children, :parameters, :parent
-    attr_accessor :paramdoc
+    attr_accessor :paramdoc, :file, :line
     include Enumerable
 
     @@retrieved = Hash.new(0)
