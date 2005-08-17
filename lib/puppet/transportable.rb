@@ -7,7 +7,7 @@ require 'puppet'
 module Puppet
     #------------------------------------------------------------
     class TransObject < Hash
-        attr_accessor :type, :name
+        attr_accessor :type, :name, :file, :line
 
         @@ohash = {}
         @@oarray = []
@@ -53,6 +53,8 @@ module Puppet
             retobj = nil
             if type = Puppet::Type.type(self.type)
                 retobj = type.new(self)
+                retobj.file = @file
+                retobj.line = @line
             else
                 raise Puppet::Error.new("Could not find object type %s" % self.type)
             end
@@ -65,7 +67,7 @@ module Puppet
     #------------------------------------------------------------
     # just a linear container for objects
     class TransBucket < Array
-        attr_accessor :name, :type
+        attr_accessor :name, :type, :file, :line
 
         def push(*args)
             args.each { |arg|

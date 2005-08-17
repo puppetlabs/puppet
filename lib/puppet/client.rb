@@ -138,6 +138,12 @@ module Puppet
                 self.fqdn
             end
 
+            if hash.include?(:Cache)
+                @cache = hash[:Cache]
+            else
+                @cache = true
+            end
+
             if hash.include?(:Server)
                 case hash[:Server]
                 when String:
@@ -188,27 +194,46 @@ module Puppet
             objects = nil
             if @local
                 objects = @driver.getconfig(facts)
+
+                if objects == ""
+                    raise Puppet::Error, "Could not retrieve configuration"
+                end
             else
                 textfacts = CGI.escape(Marshal::dump(facts))
-                textobjects = nil
-                if textobjects = CGI.unescape(@driver.getconfig(textfacts))
-                    # we store the config so that if we can't connect next time, we
-                    # can just run against the most recently acquired copy
-                    confdir = File.dirname(Puppet[:localconfig])
-                    unless FileTest.exists?(confdir)
-                        Puppet.recmkdir(confdir, 0770)
+
+                # error handling for this is done in the network client
+                textobjects = @driver.getconfig(textfacts)
+
+                unless textobjects == ""
+                    begin
+                        textobjects = CGI.unescape(textobjects)
+                    rescue => detail
+                        raise Puppet::Error, "Could not CGI.unescape configuration"
                     end
-                    File.open(Puppet[:localconfig], "w", 0660) { |f|
-                        f.print textobjects
-                    }
-                else
-                    if FileTest.exists?(Puppet[:localconfig])
-                        textobjects = File.read(Puppet[:localconfig])
+                end
+
+                if @cache
+                    if textobjects == ""
+                        if FileTest.exists?(Puppet[:localconfig])
+                            textobjects = File.read(Puppet[:localconfig])
+                        else
+                            raise Puppet::Error.new(
+                                "Cannot connect to server and there is no cached configuration"
+                            )
+                        end
                     else
-                        raise Puppet::Error.new(
-                            "Cannot connect to server and there is no cached configuration"
-                        )
+                        # we store the config so that if we can't connect next time, we
+                        # can just run against the most recently acquired copy
+                        confdir = File.dirname(Puppet[:localconfig])
+                        unless FileTest.exists?(confdir)
+                            Puppet.recmkdir(confdir, 0770)
+                        end
+                        File.open(Puppet[:localconfig], "w", 0660) { |f|
+                            f.print textobjects
+                        }
                     end
+                elsif textobjects == ""
+                    raise Puppet::Error, "Could not retrieve configuration"
                 end
 
                 begin
