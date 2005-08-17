@@ -1,5 +1,25 @@
 # $Id$
 
+class TestPuppet < Test::Unit::TestCase
+    def setup
+        @@tmpfiles = []
+        Puppet[:loglevel] = :debug if __FILE__ == $0
+        Puppet::Type.allclear
+    end
+
+    def teardown
+        @@tmpfiles.each { |file|
+            if FileTest.exists?(file)
+                system("chmod -R 755 %s" % file)
+                system("rm -rf %s" % file)
+            end
+        }
+        @@tmpfiles.clear
+    end
+
+    def test_nothing
+    end
+end
 
 unless defined? PuppetTestSuite
     $:.unshift File.join(Dir.getwd, '../lib')
