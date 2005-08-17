@@ -1,4 +1,5 @@
 # $Id$
+require 'test/unit'
 
 class TestPuppet < Test::Unit::TestCase
     def setup
