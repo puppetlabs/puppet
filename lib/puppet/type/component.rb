@@ -10,6 +10,7 @@ require 'puppet/type'
 require 'puppet/transaction'
 
 module Puppet
+    class Type
 	class Component < Puppet::Type
         include Enumerable
 
@@ -19,8 +20,41 @@ module Puppet
         @states = []
         @parameters = [:name,:type]
 
+        # topo sort functions
+        def self.sort(objects)
+            list = []
+            inlist = {}
+
+            objects.each { |obj|
+                self.recurse(obj, inlist, list)
+            }
+
+            return list
+        end
+
+        def self.recurse(obj, inlist, list)
+            return if list.include?(obj.object_id)
+            obj.eachdependency { |req|
+                self.recurse(req, inlist, list)
+            }
+            
+            list << obj
+            inlist[obj.object_id] = true
+        end
+
         def each
             @children.each { |child| yield child }
+        end
+        
+        # this returns a sorted array, not a new component, but that suits me just fine
+        def flatten
+            self.class.sort(@children.collect { |child|
+                if child.is_a?(self.class)
+                    child.flatten
+                else
+                    child
+                end
+            }.flatten)
         end
 
         def initialize(args)
@@ -31,12 +65,25 @@ module Puppet
                 args[:type] = "component"
             end
             super(args)
-            debug "Made component with name %s and type %s" % [self.name, self[:type]]
+            Puppet.debug "Made component with name %s and type %s" %
+                [self.name, self[:type]]
         end
 
+        # the "old" way of doing things
         # just turn the container into a transaction
-        def evaluate
+        def oldevaluate
             transaction = Puppet::Transaction.new(@children)
+            transaction.component = self
+            return transaction
+        end
+
+        # flatten all children, sort them, and evaluate them in order
+        # this is only called on one component over the whole system
+        # this also won't work with scheduling, but eh
+        def evaluate
+            # but what about dependencies?
+
+            transaction = Puppet::Transaction.new(self.flatten)
             transaction.component = self
             return transaction
         end
@@ -78,4 +125,5 @@ module Puppet
             return "component(%s)" % self.name
         end
 	end
+    end
 end

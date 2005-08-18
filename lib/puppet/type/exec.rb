@@ -190,6 +190,10 @@ module Puppet
             def refresh
                 self.state(:returns).sync
             end
+
+            def to_s
+                "exec(%s)" % self.name
+            end
         end
     end
 end

@@ -65,6 +65,7 @@ module Puppet
                     :event => event,
                     :change => self,
                     :transaction => @transaction,
+                    :source => @state.parent,
                     :message => self.to_s
                 )
             rescue => detail
@@ -77,11 +78,11 @@ module Puppet
                 #    pname = pname.id2name
                 #end
                     #:state => @state,
-                    #:object => @state.parent,
                 Puppet.info "Failed: " + self.to_s
                 return Puppet::Event.new(
                     :event => pname + "_failed",
                     :change => self,
+                    :source => @state.parent,
                     :transaction => @transaction,
                     :message => "Failed: " + self.to_s
                 )

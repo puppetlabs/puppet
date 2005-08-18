@@ -10,7 +10,7 @@ require 'puppet/metric'
 require 'puppet/type/state'
 
 
-# XXX see the bottom of the file for the rest of the inclusions
+# see the bottom of the file for the rest of the inclusions
 
 #---------------------------------------------------------------
 # This class is the abstract base class for the mechanism for organizing
@@ -65,6 +65,7 @@ class Type < Puppet::Element
         :noop,
         :schedule,
         :check,
+        :subscribe,
         :require
     ]
 
@@ -90,7 +91,10 @@ class Type < Puppet::Element
         but which should not actually be modified.  This is currently used
         internally, but will eventually be used for querying."
     @@metaparamdoc[:require] = "One or more objects that this object depends on.
-        Changes in the required objects result in the dependent objects being
+        This is used purely for guaranteeing that changes to required objects
+        happen before the dependent object."
+    @@metaparamdoc[:subscribe] = "One or more objects that this object depends on.
+        Changes in the subscribed to objects result in the dependent objects being
         refreshed (e.g., a service will get restarted)."
    
     #---------------------------------------------------------------
@@ -133,7 +137,7 @@ class Type < Puppet::Element
         @@typeary.each { |otype|
             if @@typehash.include?(otype.name)
                 if @@typehash[otype.name] != otype
-                    warning("Object type %s is already defined (%s vs %s)" %
+                    Puppet.warning("Object type %s is already defined (%s vs %s)" %
                         [otype.name,@@typehash[otype.name],otype])
                 end
             else
@@ -646,6 +650,12 @@ class Type < Puppet::Element
         @evalcount = 0
 
         @subscriptions = []
+        @dependencies = []
+
+        # callbacks are per object and event
+        @callbacks = Hash.new { |chash, key|
+            chash[key] = {}
+        }
 
         # states and parameters are treated equivalently from the outside:
         # as name-value pairs (using [] and []=)
@@ -705,7 +715,7 @@ class Type < Puppet::Element
                     self[name] = hash[name]
                 rescue => detail
                     raise Puppet::DevError.new( 
-                        "Could not set %s on %s" % [name, self.class]
+                        "Could not set %s on %s: %s" % [name, self.class, detail]
                     )
                 end
                 hash.delete name
@@ -713,6 +723,7 @@ class Type < Puppet::Element
         }
 
         if hash.length > 0
+            Puppet.debug hash.inspect
             raise Puppet::Error.new("Class %s does not accept argument(s) %s" %
                 [self.class.name, hash.keys.join(" ")])
         end
@@ -976,30 +987,6 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def subscribe(hash)
-        if hash[:event] == '*'
-            hash[:event] = :ALL_EVENTS
-        end
-
-        hash[:source] = self
-        sub = Puppet::Event::Subscription.new(hash)
-
-        # add to the correct area
-        @subscriptions.push sub
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # return all of the subscriptions to a given event
-    def subscribers?(event)
-        @subscriptions.find_all { |sub|
-            sub.event == event.event or
-                sub.event == :ALL_EVENTS
-        }
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
     # Is the parameter in question a meta-parameter?
     def self.metaparam?(param)
         @@metaparams.include?(param)
@@ -1011,33 +998,16 @@ class Type < Puppet::Element
     # generates
     # we might reduce the level of subscription eventually, but for now...
     def metarequire=(requires)
-        unless requires.is_a?(Array)
-            requires = [requires]
-        end
-        requires.each { |rname|
-            # we just have a name and a type, and we need to convert it
-            # to an object...
-            type = nil
-            object = nil
-            tname = rname[0]
-            unless type = Puppet::Type.type(tname)
-                raise "Could not find type %s" % tname
-            end
-            name = rname[1]
-            unless object = type[name]
-                raise "Could not retrieve object '%s' of type '%s'" %
-                    [name,type]
-            end
-            Puppet.debug("%s requires %s" % [self.name,object])
+        self.handledepends(requires, :NONE, nil)
+    end
+    #---------------------------------------------------------------
 
-            # for now, we only support this one method, 'refresh'
-            object.subscribe(
-                :event => '*',
-                :target => self,
-                :method => :refresh
-            )
-            #object.addnotify(self)
-        }
+    #---------------------------------------------------------------
+    # for each object we require, subscribe to all events that it
+    # generates
+    # we might reduce the level of subscription eventually, but for now...
+    def metasubscribe=(requires)
+        self.handledepends(requires, :ALL_EVENTS, :refresh)
     end
     #---------------------------------------------------------------
 
@@ -1065,6 +1035,140 @@ class Type < Puppet::Element
         @schedule = schedule
     end
     #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+    # Subscription and relationship methods
+    #---------------------------------------------------------------
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def addcallback(object, event, method)
+        @callbacks[object][event] = method
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # return all objects subscribed to the current object
+    def eachdependency
+        @dependencies.each { |dep|
+            yield dep
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # return all objects subscribed to the current object
+    def eachsubscriber
+        @subscriptions.each { |sub|
+            yield sub.target
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def handledepends(requires, event, method)
+        unless requires.is_a?(Array)
+            requires = [requires]
+        end
+        requires.each { |rname|
+            # we just have a name and a type, and we need to convert it
+            # to an object...
+            type = nil
+            object = nil
+            tname = rname[0]
+            unless type = Puppet::Type.type(tname)
+                raise Puppet::Error, "Could not find type %s" % tname
+            end
+            name = rname[1]
+            unless object = type[name]
+                raise Puppet::Error, "Could not retrieve object '%s' of type '%s'" %
+                    [name,type]
+            end
+            Puppet.debug("%s subscribes to %s" % [self.name,object])
+
+            unless @dependencies.include?(object)
+                @dependencies << object
+            end
+
+            # pure requires don't call methods
+            next if method.nil?
+
+            # ok, both sides of the connection store some information
+            # we store the method to call when a given subscription is 
+            # triggered, but the source object decides whether 
+            sub = object.subscribe(
+                :event => event,
+                :target => self
+            )
+            if self.respond_to?(method)
+                self.addcallback(object, event, method)
+            end
+            #object.addnotify(self)
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def propagate(event)
+        self.subscribers?(event).each { |object|
+            object.trigger(event, self)
+        }
+
+        if defined? @parent
+            @parent.propagate(event)
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    def subscribe(hash)
+        hash[:source] = self
+        sub = Puppet::Event::Subscription.new(hash)
+
+        # add to the correct area
+        @subscriptions.push sub
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # return all of the subscriptions to a given event
+    def subscribers?(event)
+        @subscriptions.find_all { |sub|
+            sub.event == event.event or
+                sub.event == :ALL_EVENTS
+        }.collect { |sub|
+            sub.target
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # we've received an event
+    # we only support local events right now, so we can pass actual
+    # objects around, including the transaction object
+    # the assumption here is that container objects will pass received
+    # methods on to contained objects
+    # i.e., we don't trigger our children, our refresh() method calls
+    # refresh() on our children
+    def trigger(event, source)
+        trans = event.transaction
+        if @callbacks.include?(source)
+            [:ALL_EVENTS, event.event].each { |eventname|
+                if method = @callbacks[source][eventname]
+                    if trans.triggered?(self, method) > 0
+                        next
+                    end
+                    if self.respond_to?(method)
+                        self.send(method)
+                    end
+
+                    trans.triggered(self, method)
+                end
+            }
+        end
+    end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------

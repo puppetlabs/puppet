@@ -102,7 +102,7 @@ class TestTransactions < Test::Unit::TestCase
     def newcomp(name,*args)
         comp = nil
         assert_nothing_raised() {
-            comp = Puppet::Component.new(:name => name)
+            comp = Puppet::Type::Component.new(:name => name)
         }
 
         args.each { |arg|

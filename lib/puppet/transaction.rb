@@ -45,9 +45,9 @@ class Transaction
     # then, we need to pass the event to the object's containing component,
     # to see if it or any of its parents have subscriptions on the event
     def evaluate
-        Puppet.debug "executing %s changes or transactions" % @changes.length
+        Puppet.debug "executing %s changes " % @changes.length
 
-        return @changes.collect { |change|
+        events = @changes.collect { |change|
             if change.is_a?(Puppet::StateChange)
                 change.transaction = self
                 events = nil
@@ -58,24 +58,12 @@ class Transaction
                     #@@changed.push change.state.parent
                 rescue => detail
                     Puppet.err("%s failed: %s" % [change,detail])
-                    raise
-                    # at this point, we would normally do error handling
-                    # but i haven't decided what to do for that yet
-                    # so just record that a sync failed for a given object
-                    #@@failures[change.state.parent] += 1
-                    # this still could get hairy; what if file contents changed,
-                    # but a chmod failed?  how would i handle that error? dern
+                    next
+                    # FIXME this should support using onerror to determine behaviour
                 end
 
                 if events.nil?
                     Puppet.debug "No events returned?"
-                else
-                    # first handle the subscriptions on individual objects
-                    events.each { |event|
-                        change.state.parent.subscribers?(event).each { |sub|
-                            sub.trigger(self)
-                        }
-                    }
                 end
                 events
             elsif change.is_a?(Puppet::Transaction)
@@ -85,12 +73,11 @@ class Transaction
             end
         }.flatten.reject { |event|
             event.nil?
-        }.each { |event|
-            # this handles subscriptions on the components, rather than
-            # on individual objects
-            self.component.subscribers?(event).each { |sub|
-                sub.trigger(self)
-            }
+        }
+
+        events.each { |event|
+            object = event.source
+            object.propagate(event)
         }
     end
     #---------------------------------------------------------------
@@ -98,11 +85,13 @@ class Transaction
     #---------------------------------------------------------------
     # this should only be called by a Puppet::Container object now
     # and it should only receive an array
-    def initialize(tree)
-        @tree = tree
+    def initialize(objects)
+        @objects = objects
         @toplevel = false
 
-        @triggered = Hash.new(0)
+        @triggered = Hash.new { |hash, key|
+            hash[key] = Hash.new(0)
+        }
 
         # of course, this won't work on the second run
         unless defined? @@failures
@@ -111,7 +100,7 @@ class Transaction
         end
         # change collection is in-band, and message generation is out-of-band
         # of course, exception raising is also out-of-band
-        @changes = @tree.collect { |child|
+        @changes = @objects.collect { |child|
             # these children are all Puppet::Type instances
             # not all of the children will return a change, and Containers
             # return transactions
@@ -151,16 +140,14 @@ class Transaction
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def triggercount(sub)
-        Puppet.debug "Triggercount on %s is %s" % [sub,@triggered[sub]]
-        return @triggered[sub]
+    def triggered(object, method)
+        @triggered[object][method] += 1
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
-    def triggered(sub)
-        @triggered[sub] += 1
-        Puppet.debug "%s was triggered; count is %s" % [sub,@triggered[sub]]
+    def triggered?(object, method)
+        @triggered[object][method]
     end
     #---------------------------------------------------------------
 end

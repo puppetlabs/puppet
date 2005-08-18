@@ -16,18 +16,18 @@ module Puppet
         # objects react to an event
         class Subscription
             include Puppet
-            attr_accessor :source, :event, :target, :method
+            attr_accessor :source, :event, :target
 
             def initialize(hash)
                 @triggered = false
 
-                hash.each { |method,value|
+                hash.each { |param,value|
                     # assign each value appropriately
                     # this is probably wicked-slow
-                    self.send(method.to_s + "=",value)
+                    self.send(param.to_s + "=",value)
                 }
-                Puppet.debug "New Subscription: '%s' => '%s'" %
-                    [@source,@event]
+                #Puppet.debug "New Subscription: '%s' => '%s'" %
+                #    [@source,@event]
             end
 
             # the transaction is passed in so that we can notify it if
@@ -40,6 +40,12 @@ module Puppet
                 # to the "old" object rather than "new"
                 # but we're pretty far from that being a problem
                 event = nil
+
+                if @event == :NONE
+                    # just ignore these subscriptions
+                    return
+                end
+
                 if transaction.triggercount(self) > 0
                     Puppet.debug "%s has already run" % self
                 else
@@ -55,7 +61,8 @@ module Puppet
                     rescue => detail
                         # um, what the heck do i do when an object fails to refresh?
                         # shouldn't that result in the transaction rolling back?
-                        # XXX yeah, it should
+                        # the 'onerror' metaparam will be used to determine
+                        # behaviour in that case
                         Puppet.err "'%s' failed to %s: '%s'" %
                             [@target,@method,detail]
                         raise
@@ -68,12 +75,13 @@ module Puppet
             end
         end
 
-		attr_accessor :event, :object, :transaction
+		attr_accessor :event, :source, :transaction
 
         @@events = []
 
         @@subscriptions = []
 
+        # I think this method is obsolete
         def self.process
             Puppet.debug "Processing events"
             @@events.each { |event|
@@ -92,6 +100,7 @@ module Puppet
             @@events.clear
         end
 
+        # I think this method is obsolete
         def self.subscribe(hash)
             if hash[:event] == '*'
                 hash[:event] = :ALL_EVENTS
@@ -103,13 +112,13 @@ module Puppet
         end
 
 		def initialize(args)
-            unless args.include?(:event) and args.include?(:change)
-				raise "Event.new called incorrectly"
+            unless args.include?(:event) and args.include?(:source)
+				raise Puppet::DevError, "Event.new called incorrectly"
 			end
 
 			@change = args[:change]
 			@event = args[:event]
-			#@object = args[:object]
+			@source = args[:source]
 			@transaction = args[:transaction]
 
             #Puppet.info "%s: %s(%s)" %
@@ -118,93 +127,13 @@ module Puppet
 
             # initially, just stuff all instances into a central bucket
             # to be handled as a batch
-            @@events.push self
+            #@@events.push self
 		end
 
         def to_s
-            return self.event
+            self.event.to_s
         end
 	end
 end
 
 
-#---------------------------------------------------------------
-# here i'm separating out the methods dealing with handling events
-# currently not in use, so...
-
-class Puppet::NotUsed
-    #---------------------------------------------------------------
-    # return action array
-    # these are actions to use for responding to events
-    # no, this probably isn't the best way, because we're providing
-    # access to the actual hash, which is silly
-    def action
-        if not defined? @actions
-            Puppet.debug "defining action hash"
-            @actions = Hash.new
-        end
-        @actions
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # call an event
-    # this is called on subscribers by the trigger method from the obj
-    # which sent the event
-    # event handling should probably be taking place in a central process,
-    # but....
-    def event(event,obj)
-        Puppet.debug "#{self} got event #{event} from #{obj}"
-        if @actions.key?(event)
-            Puppet.debug "calling it"
-            @actions[event].call(self,obj,event)
-        else
-            p @actions
-        end
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # subscribe to an event or all events
-    # this entire event system is a hack job and needs to
-    # be replaced with a central event handler
-    def subscribe(args,&block)
-        obj = args[:object]
-        event = args[:event] || '*'.intern
-        if obj.nil? or event.nil?
-            raise "subscribe was called wrongly; #{obj} #{event}"
-        end
-        obj.action[event] = block
-        #events.each { |event|
-            unless @notify.key?(event)
-                @notify[event] = Array.new
-            end
-            unless @notify[event].include?(obj)
-                Puppet.debug "pushing event '%s' for object '%s'" % [event,obj]
-                @notify[event].push(obj)
-            end
-        #	}
-        #else
-        #	@notify['*'.intern].push(obj)
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # initiate a response to an event
-    def trigger(event)
-        subscribers = Array.new
-        if @notify.include?('*') and @notify['*'].length > 0
-            @notify['*'].each { |obj| subscribers.push(obj) }
-        end
-        if (@notify.include?(event) and (! @notify[event].empty?) )
-            @notify[event].each { |obj| subscribers.push(obj) }
-        end
-        Puppet.debug "triggering #{event}"
-        subscribers.each { |obj|
-            Puppet.debug "calling #{event} on #{obj}"
-            obj.event(event,self)
-        }
-    end
-    #---------------------------------------------------------------
-
-end # Puppet::Type

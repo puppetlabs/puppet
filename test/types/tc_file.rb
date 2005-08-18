@@ -336,7 +336,7 @@ class TestFile < Test::Unit::TestCase
                     :checksum => "md5"
                 )
             }
-            comp = Puppet::Component.new(
+            comp = Puppet::Type::Component.new(
                 :name => "component"
             )
             comp.push file
@@ -447,7 +447,7 @@ class TestFile < Test::Unit::TestCase
                 :source => frompath
             )
         }
-        comp = Puppet::Component.new(
+        comp = Puppet::Type::Component.new(
             :name => "component"
         )
         comp.push tofile
@@ -482,7 +482,7 @@ class TestFile < Test::Unit::TestCase
                 "source" => fromdir
             )
         }
-        comp = Puppet::Component.new(
+        comp = Puppet::Type::Component.new(
             :name => "component"
         )
         comp.push tofile

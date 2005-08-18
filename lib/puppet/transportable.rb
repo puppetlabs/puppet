@@ -105,7 +105,7 @@ module Puppet
             else
                 Puppet.debug "%s has no parameters" % @name
             end
-            container = Puppet::Component.new(hash)
+            container = Puppet::Type::Component.new(hash)
             nametable = {}
 
             self.each { |child|

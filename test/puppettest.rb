@@ -5,7 +5,6 @@ class TestPuppet < Test::Unit::TestCase
     def setup
         @@tmpfiles = []
         Puppet[:loglevel] = :debug if __FILE__ == $0
-        Puppet::Type.allclear
     end
 
     def teardown
@@ -16,6 +15,7 @@ class TestPuppet < Test::Unit::TestCase
             end
         }
         @@tmpfiles.clear
+        Puppet::Type.allclear
     end
 
     def test_nothing
@@ -81,7 +81,7 @@ unless defined? PuppetTestSuite
 
     module FileTesting
         def newcomp(name,*ary)
-            comp = Puppet::Component.new(
+            comp = Puppet::Type::Component.new(
                 :name => name
             )
             ary.each { |item| comp.push item }

@@ -21,7 +21,7 @@ class TestBasic < Test::Unit::TestCase
         Puppet[:loglevel] = :debug if __FILE__ == $0
 
         assert_nothing_raised() {
-            @component = Puppet::Component.new(
+            @component = Puppet::Type::Component.new(
                 :name => "yaytest",
                 :type => "testing"
             )

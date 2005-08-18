@@ -170,7 +170,7 @@ class TestExec < Test::Unit::TestCase
                 :refreshonly => true
             )
         }
-        comp = Puppet::Component.new(:name => "RefreshTest")
+        comp = Puppet::Type::Component.new(:name => "RefreshTest")
         [file,cmd].each { |obj|
             comp.push obj
         }

@@ -54,7 +54,7 @@ class TestQuery < Test::Unit::TestCase
 
     def component(name,*args)
         assert_nothing_raised() {
-            @component = Puppet::Component.new(:name => name)
+            @component = Puppet::Type::Component.new(:name => name)
         }
 
         args.each { |arg|
