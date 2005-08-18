@@ -16,7 +16,7 @@ class TestEvents < TestPuppet
         super
     end
 
-    def test_simplerequire
+    def test_simplesubscribe
         file = Puppet::Type::PFile.new(
             :name => "/tmp/eventtestingA",
             :create => true
@@ -45,7 +45,36 @@ class TestEvents < TestPuppet
         assert_equal(1, trans.triggered?(exec, :refresh))
     end
 
-    def test_zladderrequire
+    def test_simplerequire
+        file = Puppet::Type::PFile.new(
+            :name => "/tmp/eventtestingA",
+            :create => true
+        )
+        exec = Puppet::Type::Exec.new(
+            :name => "echo true",
+            :path => "/usr/bin:/bin",
+            :refreshonly => true,
+            :require => [[file.class.name, file.name]] 
+        )
+
+        @@tmpfiles << "/tmp/eventtestingA"
+
+        comp = Puppet::Type::Component.new(
+            :name => "eventtesting"
+        )
+        comp.push exec
+        trans = comp.evaluate
+        events = nil
+        assert_nothing_raised {
+            events = trans.evaluate
+        }
+
+        assert_equal(1, events.length)
+
+        assert_equal(0, trans.triggered?(exec, :refresh))
+    end
+
+    def test_ladderrequire
         comps = {}
         objects = {}
         fname = "/tmp/eventtestfuntest"
