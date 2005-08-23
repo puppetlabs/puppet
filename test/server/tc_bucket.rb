@@ -13,22 +13,7 @@ require 'puppettest.rb'
 require 'base64'
 
 # $Id$
-
-
-$external = true
-if ARGV[1] and ARGV[1] == "external"
-    $external = true
-else
-    # default to external
-    #$external = false
-end
 class TestBucket < Test::Unit::TestCase
-    def debug(string)
-        if $debug
-            puts([Time.now,string].join(" "))
-        end
-    end
-
     def filelist
         files = []
             #/etc/passwd /etc/syslog.conf /etc/hosts
@@ -57,21 +42,32 @@ class TestBucket < Test::Unit::TestCase
     end
 
     def setup
+        if __FILE__ == $0
+            Puppet[:loglevel] = :debug
+        end
+
         @bucket = File::SEPARATOR + File.join("tmp","filebuckettesting")
+
+        @@tmppids = []
+        @@tmpfiles = [@bucket]
     end
 
     def teardown
-        system("rm -rf %s" % @bucket)
-        if defined? $pid
-            system("kill -9 #{$pid} 2>/dev/null")
-        end
+        @@tmpfiles.each { |file|
+            if FileTest.exists?(file)
+                system("rm -rf %s" % file)
+            end
+        }
+        @@tmppids.each { |pid|
+            system("kill -INT %s" % pid)
+        }
     end
 
     def test_localserver
         files = filelist()
         server =nil
         assert_nothing_raised {
-            server = FileBucket::Bucket.new(
+            server = Puppet::Server::FileBucket.new(
                 :Bucket => @bucket
             )
         }
@@ -99,21 +95,21 @@ class TestBucket < Test::Unit::TestCase
         files = filelist()
 
         tmpdir = File.join(@bucket,"tmpfiledir")
-        FileBucket.mkdir(tmpdir)
+        Puppet.recmkdir(tmpdir)
 
-        server = nil
+        bucket = nil
         client = nil
         threads = []
         assert_nothing_raised {
-            server = FileBucket::Bucket.new(
+            bucket = Puppet::Server::FileBucket.new(
                 :Bucket => @bucket
             )
         }
 
         #sleep(30)
         assert_nothing_raised {
-            client = FileBucket::Dipper.new(
-                :Bucket => server
+            client = Puppet::Client::Dipper.new(
+                :Bucket => bucket
             )
         }
         files.each { |file|
@@ -172,43 +168,31 @@ class TestBucket < Test::Unit::TestCase
         files = filelist()
 
         tmpdir = File.join(@bucket,"tmpfiledir")
-        FileBucket.mkdir(tmpdir)
+        Puppet.recmkdir(tmpdir)
 
         server = nil
         client = nil
-        port = FileBucket::DEFAULTPORT
+        port = Puppet::Server::FileBucket::DEFAULTPORT
         serverthread = nil
-        pid = nil
-        if $external
-            $pid = fork {
-                server = FileBucket::BucketWebserver.new(
-                    :Bucket => @bucket,
-                    :Port => port
-                )
-                trap(:INT) { server.shutdown }
-                trap(:TERM) { server.shutdown }
-                server.start
-            }
-            sleep 3
-            #puts "pid is %s" % pid
-            #exit
-        else
-            assert_nothing_raised {
-                server = FileBucket::BucketWebserver.new(
-                    :Bucket => @bucket,
-                    :Port => port
-                )
-            }
-            assert_nothing_raised() {
-                trap(:INT) { server.shutdown }
-                serverthread = Thread.new {
-                    server.start
+        pid = fork {
+            server = Puppet::Server.new(
+                :Port => port,
+                :Handlers => {
+                    :CA => {}, # so that certs autogenerate
+                    :FileBucket => {
+                        :Bucket => @bucket,
+                    }
                 }
-            }
-        end
+            )
+            trap(:INT) { server.shutdown }
+            trap(:TERM) { server.shutdown }
+            server.start
+        }
+        @@tmppids << pid
+        sleep 3
 
         assert_nothing_raised {
-            client = FileBucket::Dipper.new(
+            client = Puppet::Client::Dipper.new(
                 :Server => "localhost",
                 :Port => port
             )
@@ -266,18 +250,9 @@ class TestBucket < Test::Unit::TestCase
             assert(tsum == csum)
         }
 
-        if $external
-            unless $pid
-                raise "Uh, we don't have a child pid"
-            end
-            system("kill %s" % $pid)
-        else
-            server.shutdown
-
-            # make sure everything's complete before we stop
-            assert_nothing_raised() {
-                serverthread.join(60)
-            }
+        unless pid
+            raise "Uh, we don't have a child pid"
         end
+        system("kill %s" % pid)
     end
 end

@@ -217,7 +217,7 @@ module Puppet
                 self.is = sum
 
                 # if we don't have a 'should' value, then go ahead and mark it
-                if @should == -2
+                if ! defined? @should or @should == -2
                     @should = sum
                     self.updatesum
                 end
@@ -240,6 +240,7 @@ module Puppet
                     self.retrieve
 
                     if @is == @should
+                        Puppet.debug "Checksum is already in sync"
                         return nil
                     end
                     #Puppet.debug "%s(%s): after refresh, is '%s'" %

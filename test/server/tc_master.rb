@@ -62,8 +62,8 @@ class TestMaster < Test::Unit::TestCase
                 )
             }
             assert_nothing_raised() {
-                client = Puppet::Client.new(
-                    :Server => master
+                client = Puppet::Client::MasterClient.new(
+                    :Master => master
                 )
             }
 
@@ -102,8 +102,8 @@ class TestMaster < Test::Unit::TestCase
                 )
             }
             assert_nothing_raised() {
-                client = Puppet::Client.new(
-                    :Server => master
+                client = Puppet::Client::MasterClient.new(
+                    :Master => master
                 )
             }
 

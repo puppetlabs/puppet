@@ -103,7 +103,7 @@ if logfile
 end
 
 begin
-    server = Puppet::Master.new(
+    server = Puppet::Server::Master.new(
         :File => ARGV.shift,
         :Local => true
     )
@@ -113,8 +113,8 @@ rescue => detail
 end
 
 begin
-    client = Puppet::Client.new(
-        :Server => server
+    client = Puppet::Client::MasterClient.new(
+        :Master => server
     )
 rescue => detail
     $stderr.puts detail
@@ -123,6 +123,7 @@ end
 
 begin
     client.getconfig
+    client.config
 rescue => detail
     $stderr.puts detail
     exit(1)

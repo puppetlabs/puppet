@@ -104,4 +104,70 @@ class TestComponent < TestPuppet
             }
         }
     end
+
+    def test_correctsorting
+        tmpfile = "/tmp/comptesting"
+        @@tmpfiles.push tmpfile
+        trans = nil
+        cmd = nil
+        File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
+            of.puts rand(100)
+        }
+        file = Puppet::Type::PFile.new(
+            :path => tmpfile,
+            :checksum => "md5"
+        )
+        assert_nothing_raised {
+            cmd = Puppet::Type::Exec.new(
+                :command => "pwd",
+                :path => "/usr/bin:/bin:/usr/sbin:/sbin",
+                :subscribe => [[file.class.name,file.name]],
+                :refreshonly => true
+            )
+        }
+
+        order = nil
+        assert_nothing_raised {
+            order = Puppet::Type::Component.sort([file, cmd])
+        }
+
+        [cmd, file].each { |obj|
+            assert_equal(1, order.find_all { |o| o.name == obj.name }.length)
+        }
+    end
+
+    def test_correctflattening
+        tmpfile = "/tmp/comptesting"
+        @@tmpfiles.push tmpfile
+        trans = nil
+        cmd = nil
+        File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
+            of.puts rand(100)
+        }
+        file = Puppet::Type::PFile.new(
+            :path => tmpfile,
+            :checksum => "md5"
+        )
+        assert_nothing_raised {
+            cmd = Puppet::Type::Exec.new(
+                :command => "pwd",
+                :path => "/usr/bin:/bin:/usr/sbin:/sbin",
+                :subscribe => [[file.class.name,file.name]],
+                :refreshonly => true
+            )
+        }
+
+        comp = Puppet::Type::Component.new(:name => "RefreshTest")
+        [file,cmd].each { |obj|
+            comp.push obj
+        }
+        objects = nil
+        assert_nothing_raised {
+            objects = comp.flatten
+        }
+
+        [cmd, file].each { |obj|
+            assert_equal(1, objects.find_all { |o| o.name == obj.name }.length)
+        }
+    end
 end

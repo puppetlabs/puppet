@@ -166,10 +166,11 @@ class TestExec < Test::Unit::TestCase
             cmd = Puppet::Type::Exec.new(
                 :command => "pwd",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
-                :require => [[file.class.name,file.name]],
+                :subscribe => [[file.class.name,file.name]],
                 :refreshonly => true
             )
         }
+
         comp = Puppet::Type::Component.new(:name => "RefreshTest")
         [file,cmd].each { |obj|
             comp.push obj
@@ -177,6 +178,9 @@ class TestExec < Test::Unit::TestCase
         events = nil
         assert_nothing_raised {
             trans = comp.evaluate
+
+            sum = file.state(:checksum)
+            assert_equal(sum.is, sum.should)
             events = trans.evaluate.collect { |event|
                 event.event
             }
@@ -190,9 +194,8 @@ class TestExec < Test::Unit::TestCase
         }
         assert_nothing_raised {
             trans = comp.evaluate
-            events = trans.evaluate.collect { |event|
-                event.event
-            }
+            sum = file.state(:checksum)
+            events = trans.evaluate.collect { |event| event.event }
         }
         
         # verify that only the file_changed event was kicked off, not the

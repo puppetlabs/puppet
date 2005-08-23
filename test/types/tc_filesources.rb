@@ -12,7 +12,7 @@ require 'puppettest'
 
 # $Id$
 
-class TestFile < Test::Unit::TestCase
+class TestFileSources < Test::Unit::TestCase
     include FileTesting
     # hmmm
     # this is complicated, because we store references to the created

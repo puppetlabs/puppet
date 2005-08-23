@@ -90,7 +90,7 @@ class TestFileBucket < Test::Unit::TestCase
             bucket = Puppet::Type::PFileBucket.bucket(name)
         }
 
-        assert_instance_of(FileBucket::Dipper, bucket)
+        assert_instance_of(Puppet::Client::Dipper, bucket)
 
         md5 = nil
         newpath = "/tmp/passwd"

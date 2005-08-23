@@ -33,7 +33,7 @@ module Puppet
         end
 
         def self.recurse(obj, inlist, list)
-            return if list.include?(obj.object_id)
+            return if inlist.include?(obj.object_id)
             obj.eachdependency { |req|
                 self.recurse(req, inlist, list)
             }

@@ -399,7 +399,11 @@ class TestFileServer < TestPuppet
                 :Port => port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
-                    :Status => nil
+                    :FileServer => {
+                        :Mount => {
+                            
+                        }
+                    }
                 }
             )
 
@@ -419,14 +423,6 @@ class TestFileServer < TestPuppet
             client = XMLRPC::Client.new("localhost", "/RPC2", port, nil, nil,
                 nil, nil, true, 3)
         }
-        retval = nil
-
-        assert_nothing_raised() {
-            Puppet.notice "calling status"
-            retval = client.call("status.status")
-        }
-
-        assert_equal(1, retval)
     end
 end
 

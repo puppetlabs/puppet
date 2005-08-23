@@ -26,6 +26,7 @@ module Puppet
     #---------------------------------------------------------------
     if $noservernetworking
         Puppet.err "Could not create server: %s" % $noservernetworking
+        class Server; end
     else
         class Server < WEBrick::HTTPServer
             include Puppet::Daemon
@@ -154,3 +155,4 @@ require 'puppet/server/master'
 require 'puppet/server/ca'
 require 'puppet/server/fileserver'
 require 'puppet/server/filebucket'
+require 'puppet/client'

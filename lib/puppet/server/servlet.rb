@@ -38,6 +38,7 @@ class Server
                     obj.call(*args)
                 rescue => detail
                     Puppet.warning obj.inspect
+                    Puppet.warning args.inspect
                     Puppet.err "Could not call: %s" % detail.to_s
                 end
             }
@@ -49,7 +50,7 @@ class Server
                 Puppet.info "client cert is %s" % @request.client_cert
             end
             if @request.server_cert
-                Puppet.info "server cert is %s" % @request.server_cert
+                #Puppet.info "server cert is %s" % @request.server_cert
             end
             #p @request
             begin

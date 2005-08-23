@@ -190,19 +190,24 @@ module Puppet
     # XXX this should all be done using puppet objects, not using
     # normal mkdir
     def self.recmkdir(dir,mode = 0755)
-        tmp = dir.sub(/^\//,'')
-        path = [File::SEPARATOR]
-        tmp.split(File::SEPARATOR).each { |dir|
-            path.push dir
-            if ! FileTest.exist?(File.join(path))
-                Dir.mkdir(File.join(path), mode)
-            elsif FileTest.directory?(File.join(path))
-                next
-            else FileTest.exist?(File.join(path))
-                raise "Cannot create %s: basedir %s is a file" %
-                    [dir, File.join(path)]
-            end
-        }
+        if FileTest.exist?(dir)
+            return false
+        else
+            tmp = dir.sub(/^\//,'')
+            path = [File::SEPARATOR]
+            tmp.split(File::SEPARATOR).each { |dir|
+                path.push dir
+                if ! FileTest.exist?(File.join(path))
+                    Dir.mkdir(File.join(path), mode)
+                elsif FileTest.directory?(File.join(path))
+                    next
+                else FileTest.exist?(File.join(path))
+                    raise "Cannot create %s: basedir %s is a file" %
+                        [dir, File.join(path)]
+                end
+            }
+            return true
+        end
     end
 end
 

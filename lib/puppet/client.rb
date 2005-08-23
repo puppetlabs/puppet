@@ -40,6 +40,7 @@ module Puppet
 
                 interface.methods.each { |ary|
                     method = ary[0]
+                    Puppet.info "Defining %s.%s" % [namespace, method]
                     self.send(:define_method,method) { |*args|
                         #Puppet.info "peer cert is %s" % @http.peer_cert
                         #Puppet.info "cert is %s" % @http.cert
@@ -113,18 +114,19 @@ module Puppet
         end
     end
 
+    # FIXME this still isn't a good design, because none of the handlers overlap
+    # so i could just as easily include them all in the main module
+    # but at least it's better organized for now
     class Client
         include Puppet
+
+        # FIXME the cert stuff should only come up with networking, so it
+        # should be in the network client, not the normal client
         include Puppet::Daemon
-        attr_accessor :local, :secureinit
+        attr_reader :local, :secureinit
 
-        def Client.facts
-            facts = {}
-            Facter.each { |name,fact|
-                facts[name] = fact.downcase
-            }
-
-            facts
+        class << self
+            attr_reader :drivername
         end
 
         def initialize(hash)
@@ -145,186 +147,254 @@ module Puppet
                 @cache = true
             end
 
+            driverparam = self.class.drivername
             if hash.include?(:Server)
-                case hash[:Server]
-                when String:
-                    if $noclientnetworking
-                        raise NetworkClientError.new("Networking not available: %s" %
-                            $nonetworking)
+                if $noclientnetworking
+                    raise NetworkClientError.new("Networking not available: %s" %
+                        $nonetworking)
+                end
+
+                args = {}
+                [:Port, :Server].each { |arg|
+                    if hash.include?(:Port)
+                        args[arg] = hash[arg]
                     end
+                }
 
-                    args = {}
-                    [:Port, :Server].each { |arg|
-                        if hash.include?(:Port)
-                            args[arg] = hash[arg]
-                        end
-                    }
+                if self.readcert
+                    args[:Certificate] = @cert
+                    args[:Key] = @key
+                    args[:CAFile] = @cacertfile
+                end
 
-                    if self.readcert
-                        args[:Certificate] = @cert
-                        args[:Key] = @key
-                        args[:CAFile] = @cacertfile
+                @driver = Puppet::NetworkClient.new(args)
+                @local = false
+            elsif hash.include?(driverparam)
+                @driver = hash[driverparam]
+                @local = true
+            else
+                raise ClientError, "%s must be passed a Server or %s" %
+                    [self.class, driverparam]
+            end
+        end
+
+        class MasterClient < Puppet::Client
+            @drivername = :Master
+
+            def self.facts
+                facts = {}
+                Facter.each { |name,fact|
+                    facts[name] = fact.downcase
+                }
+
+                facts
+            end
+
+            def getconfig
+                #client.loadproperty('files/sslclient.properties')
+                Puppet.debug("getting config")
+
+                facts = self.class.facts
+
+                unless facts.length > 0
+                    raise Puppet::ClientError.new(
+                        "Could not retrieve any facts"
+                    )
+                end
+
+                objects = nil
+                if @local
+                    objects = @driver.getconfig(facts)
+
+                    if objects == ""
+                        raise Puppet::Error, "Could not retrieve configuration"
                     end
-
-                    @driver = Puppet::NetworkClient.new(args)
-                    @local = false
-                when Puppet::Server::Master:
-                    @driver = hash[:Server]
-                    @local = true
                 else
-                    raise ClientError.new("Server must be a hostname or a " +
-                        "Puppet::Server::Master object")
-                end
-            else
-                raise ClientError.new("Must pass :Server to client")
-            end
-        end
+                    textfacts = CGI.escape(Marshal::dump(facts))
 
-        def getconfig
-            #client.loadproperty('files/sslclient.properties')
-            Puppet.debug("getting config")
+                    # error handling for this is done in the network client
+                    textobjects = @driver.getconfig(textfacts)
 
-            facts = Client.facts
-
-            unless facts.length > 0
-                raise Puppet::ClientError.new(
-                    "Could not retrieve any facts"
-                )
-            end
-
-            objects = nil
-            if @local
-                objects = @driver.getconfig(facts)
-
-                if objects == ""
-                    raise Puppet::Error, "Could not retrieve configuration"
-                end
-            else
-                textfacts = CGI.escape(Marshal::dump(facts))
-
-                # error handling for this is done in the network client
-                textobjects = @driver.getconfig(textfacts)
-
-                unless textobjects == ""
-                    begin
-                        textobjects = CGI.unescape(textobjects)
-                    rescue => detail
-                        raise Puppet::Error, "Could not CGI.unescape configuration"
+                    unless textobjects == ""
+                        begin
+                            textobjects = CGI.unescape(textobjects)
+                        rescue => detail
+                            raise Puppet::Error, "Could not CGI.unescape configuration"
+                        end
                     end
-                end
 
-                if @cache
-                    if textobjects == ""
-                        if FileTest.exists?(Puppet[:localconfig])
-                            textobjects = File.read(Puppet[:localconfig])
+                    if @cache
+                        if textobjects == ""
+                            if FileTest.exists?(Puppet[:localconfig])
+                                textobjects = File.read(Puppet[:localconfig])
+                            else
+                                raise Puppet::Error.new(
+                                    "Cannot connect to server and there is no cached configuration"
+                                )
+                            end
                         else
-                            raise Puppet::Error.new(
-                                "Cannot connect to server and there is no cached configuration"
-                            )
+                            # we store the config so that if we can't connect next time, we
+                            # can just run against the most recently acquired copy
+                            confdir = File.dirname(Puppet[:localconfig])
+                            unless FileTest.exists?(confdir)
+                                Puppet.recmkdir(confdir, 0770)
+                            end
+                            File.open(Puppet[:localconfig], "w", 0660) { |f|
+                                f.print textobjects
+                            }
                         end
-                    else
-                        # we store the config so that if we can't connect next time, we
-                        # can just run against the most recently acquired copy
-                        confdir = File.dirname(Puppet[:localconfig])
-                        unless FileTest.exists?(confdir)
-                            Puppet.recmkdir(confdir, 0770)
-                        end
-                        File.open(Puppet[:localconfig], "w", 0660) { |f|
-                            f.print textobjects
-                        }
+                    elsif textobjects == ""
+                        raise Puppet::Error, "Could not retrieve configuration"
                     end
-                elsif textobjects == ""
-                    raise Puppet::Error, "Could not retrieve configuration"
-                end
 
-                begin
-                    objects = Marshal::load(textobjects)
-                rescue => detail
-                    raise Puppet::Error.new("Could not understand configuration")
+                    begin
+                        objects = Marshal::load(textobjects)
+                    rescue => detail
+                        raise Puppet::Error.new("Could not understand configuration")
+                    end
+                end
+                if objects.is_a?(Puppet::TransBucket)
+                    @objects = objects
+                else
+                    Puppet.warning objects.inspect
+                    raise NetworkClientError.new(objects.class)
                 end
             end
-            if objects.is_a?(Puppet::TransBucket)
-                @objects = objects
-            else
-                Puppet.warning objects.inspect
-                raise NetworkClientError.new(objects.class)
+
+            # this method is how the client receives the tree of Transportable
+            # objects
+            # for now, just descend into the tree and perform and necessary
+            # manipulations
+            def config
+                unless defined? @objects
+                    raise Puppet::Error, "Cannot config; objects not defined"
+                end
+                Puppet.debug("Calling config")
+
+                # XXX this is kind of a problem; if the user changes the state file
+                # after this, then we have to reload the file and everything...
+                begin
+                    Puppet::Storage.init
+                    Puppet::Storage.load
+                rescue => detail
+                    Puppet.err "Corrupt state file %s" % Puppet[:checksumfile]
+                    begin
+                        File.unlink(Puppet[:checksumfile])
+                        retry
+                    rescue => detail
+                        raise Puppet::Error.new("Cannot remove %s: %s" %
+                            [Puppet[statefile], detail])
+                    end
+                end
+
+                container = @objects.to_type
+                #if @local
+                #    container = @objects.to_type
+                #else
+                #    container = Marshal::load(@objects).to_type
+                #end
+
+                # this is a gross hack... but i don't see a good way around it
+                # set all of the variables to empty
+                Puppet::Transaction.init
+
+                # for now we just evaluate the top-level container, but eventually
+                # there will be schedules and such associated with each object,
+                # and probably with the container itself
+                transaction = container.evaluate
+                #transaction = Puppet::Transaction.new(objects)
+                transaction.toplevel = true
+                transaction.evaluate
+                Puppet::Metric.gather
+                Puppet::Metric.tally
+                if Puppet[:rrdgraph] == true
+                    Metric.store
+                    Metric.graph
+                end
+                Puppet::Storage.store
+
+                return transaction
+            end
+
+            def initcerts
+                unless self.readcert
+                    unless self.requestcert
+                        return nil
+                    end
+                end
+
+                unless @driver
+                    return true
+                end
+
+                Puppet.info "setting cert and key and such"
+                @driver.cert = @cert
+                @driver.key = @key
+                @driver.ca_file = @cacertfile
             end
         end
 
-        # this method is how the client receives the tree of Transportable
-        # objects
-        # for now, just descend into the tree and perform and necessary
-        # manipulations
-        def config
-            unless defined? @objects
-                raise Puppet::Error, "Cannot config; objects not defined"
-            end
-            Puppet.debug("Calling config")
+        class Dipper < Puppet::Client
+            @drivername = :Bucket
 
-            # XXX this is kind of a problem; if the user changes the state file
-            # after this, then we have to reload the file and everything...
-            begin
-                Puppet::Storage.init
-                Puppet::Storage.load
-            rescue => detail
-                Puppet.err "Corrupt state file %s" % Puppet[:checksumfile]
-                begin
-                    File.unlink(Puppet[:checksumfile])
-                    retry
-                rescue => detail
-                    raise Puppet::Error.new("Cannot remove %s: %s" %
-                        [Puppet[statefile], detail])
+            def initialize(hash = {})
+                if hash.include?(:Path)
+                    bucket = Puppet::Server::FileBucket.new(
+                        :Bucket => hash[:Path]
+                    )
+                    hash.delete(:Path)
+                    hash[:Bucket] = bucket
                 end
+
+                super(hash)
             end
 
-            container = @objects.to_type
-            #if @local
-            #    container = @objects.to_type
-            #else
-            #    container = Marshal::load(@objects).to_type
-            #end
+            def backup(file)
+                unless FileTest.exists?(file)
+                    raise(BucketError, "File %s does not exist" % file, caller)
+                end
+                contents = File.open(file) { |of| of.read }
 
-            # this is a gross hack... but i don't see a good way around it
-            # set all of the variables to empty
-            Puppet::Transaction.init
+                string = Base64.encode64(contents)
+                #puts "string is created"
 
-            # for now we just evaluate the top-level container, but eventually
-            # there will be schedules and such associated with each object,
-            # and probably with the container itself
-            transaction = container.evaluate
-            #transaction = Puppet::Transaction.new(objects)
-            transaction.toplevel = true
-            transaction.evaluate
-            Puppet::Metric.gather
-            Puppet::Metric.tally
-            if Puppet[:rrdgraph] == true
-                Metric.store
-                Metric.graph
+                sum = @driver.addfile(string,file)
+                #puts "file %s is added" % file
+                return sum
             end
-            Puppet::Storage.store
 
-            return transaction
-            #self.shutdown
-        end
+            def restore(file,sum)
+                restore = true
+                if FileTest.exists?(file)
+                    contents = File.open(file) { |of| of.read }
 
-        def initcerts
-            unless self.readcert
-                unless self.requestcert
+                    cursum = Digest::MD5.hexdigest(contents)
+
+                    # if the checksum has changed...
+                    # this might be extra effort
+                    if cursum == sum
+                        restore = false
+                    end
+                end
+
+                if restore
+                    #puts "Restoring %s" % file
+                    newcontents = Base64.decode64(@driver.getfile(sum))
+                    newsum = Digest::MD5.hexdigest(newcontents)
+                    File.open(file,File::WRONLY|File::TRUNC) { |of|
+                        of.print(newcontents)
+                    }
+                    #puts "Done"
+                    return newsum
+                else
                     return nil
                 end
-            end
 
-            unless @driver
-                return true
             end
-
-            Puppet.info "setting cert and key and such"
-            @driver.cert = @cert
-            @driver.key = @key
-            @driver.ca_file = @cacertfile
         end
+
     end
-    #---------------------------------------------------------------
+#---------------------------------------------------------------
 end
 
 # $Id$

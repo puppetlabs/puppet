@@ -1,8 +1,7 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $:.unshift '../../../../language/trunk/lib'
-    $puppetbase = "../../../../language/trunk/"
+    $puppetbase = "../.."
 end
 
 require 'puppet'
@@ -62,7 +61,10 @@ class TestClient < Test::Unit::TestCase
         @@tmppids << spid
         client = nil
         assert_nothing_raised {
-            client = Puppet::Client.new(:Server => "localhost", :Port => port)
+            client = Puppet::Client::MasterClient.new(
+                :Server => "localhost",
+                :Port => port
+            )
         }
         assert_nothing_raised {
             client.initcerts

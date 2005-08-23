@@ -236,7 +236,7 @@ class TestServer < Test::Unit::TestCase
 
         # first use a puppet client object
         assert_nothing_raised() {
-            client = Puppet::Client.new(
+            client = Puppet::Client::MasterClient.new(
                 :Server => "localhost",
                 :Port => port
             )
@@ -255,7 +255,7 @@ class TestServer < Test::Unit::TestCase
         }
         retval = nil
 
-        facts = CGI.escape(Marshal.dump(Puppet::Client.facts))
+        facts = CGI.escape(Marshal.dump(Puppet::Client::MasterClient.facts))
         assert_nothing_raised() {
             Puppet.notice "calling status"
             retval = client.call("puppetmaster.getconfig", facts)

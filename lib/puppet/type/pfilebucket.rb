@@ -33,7 +33,7 @@ module Puppet
                 if @parameters.include?(:server)
                     @parameters[:port] ||= FileBucket::DEFAULTPORT
                     begin
-                        @bucket = FileBucket::Dipper.new( 
+                        @bucket = Puppet::Client::Dipper.new( 
                             :Server => @parameters[:server],
                             :Port => @parameters[:port]
                         )
@@ -45,7 +45,7 @@ module Puppet
                 else
                     @parameters[:path] ||= Puppet[:bucketdir]
                     begin
-                        @bucket = FileBucket::Dipper.new(
+                        @bucket = Puppet::Client::Dipper.new(
                             :Path => @parameters[:path]
                         )
                     rescue => detail

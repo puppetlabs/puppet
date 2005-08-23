@@ -300,8 +300,8 @@ class TestSnippets < Test::Unit::TestCase
                     :File => File.join($snippetbase, file),
                     :Local => true
                 )
-                client = Puppet::Client.new(
-                    :Server => server,
+                client = Puppet::Client::MasterClient.new(
+                    :Master => server,
                     :Cache => false
                 )
 
