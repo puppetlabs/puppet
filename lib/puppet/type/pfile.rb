@@ -1471,7 +1471,7 @@ module Puppet
                 end
 
                 unless stat = self.stat(true)
-                    Puppet.debug "rFile %s does not exist" % self.name
+                    Puppet.debug "File %s does not exist" % self.name
                     @states.each { |name,state|
                         state.is = -1
                     }
