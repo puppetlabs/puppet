@@ -2,7 +2,7 @@
 
 # $Id$
 
-require 'puppet/filebucket'
+require 'puppet/server/filebucket'
 
 module Puppet
 	class Type

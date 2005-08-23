@@ -7,6 +7,7 @@ require 'xmlrpc/server'
 #   http://segment7.net/projects/ruby/QuickCert/
 
 module Puppet
+class Server
     class CAError < Puppet::Error; end
     class CA
         attr_reader :ca
@@ -16,6 +17,8 @@ module Puppet
                 iface.add_method("array getcert(csr)")
             }
         end
+
+        Puppet::Server.addhandler(:CA, self)
 
         def autosign?(hostname)
             # simple values are easy
@@ -152,4 +155,5 @@ module Puppet
             end
         end
     end
+end
 end

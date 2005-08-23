@@ -1,7 +1,6 @@
 if __FILE__ == $0
     $:.unshift '../../lib'
-    $:.unshift '../../../../library/trunk/lib/'
-    $:.unshift '../../../../library/trunk/test/'
+    $:.unshift '..'
     $puppetbase = "../.."
 end
 
@@ -54,7 +53,7 @@ class TestPuppetCA < Test::Unit::TestCase
         @@tmpfiles << Puppet[:ssldir]
         Puppet[:autosign] = false
         assert_nothing_raised {
-            ca = Puppet::CA.new()
+            ca = Puppet::Server::CA.new()
         }
         #Puppet.warning "SSLDir is %s" % Puppet[:ssldir]
         #system("find %s" % Puppet[:ssldir])
@@ -70,7 +69,7 @@ class TestPuppetCA < Test::Unit::TestCase
 
         output = nil
         assert_nothing_raised {
-            output = %x{puppetca --list --ssldir=#{Puppet[:ssldir]} 2>&1}.chomp.split("\n")
+            output = %x{puppetca --list --ssldir=#{Puppet[:ssldir]} 2>&1}.chomp.split("\n").reject { |line| line =~ /warning:/ } # stupid ssl.rb
         }
         #Puppet.warning "SSLDir is %s" % Puppet[:ssldir]
         #system("find %s" % Puppet[:ssldir])

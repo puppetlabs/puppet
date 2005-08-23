@@ -1,14 +1,13 @@
 if __FILE__ == $0
     $:.unshift '../../lib'
-    $:.unshift '../../../../library/trunk/lib/'
-    $:.unshift '../../../../library/trunk/test/'
+    $:.unshift '..'
     $puppetbase = "../.."
     $debug = true
 else
     $debug = false
 end
 
-require 'puppet/filebucket'
+require 'puppet'
 require 'test/unit'
 require 'puppettest.rb'
 require 'base64'

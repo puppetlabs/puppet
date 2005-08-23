@@ -4,14 +4,12 @@ if __FILE__ == $0
     end
 
     $:.unshift '../lib'
-    $:.unshift '../../../library/trunk/lib/'
-    $:.unshift '../../../library/trunk/test/'
     $puppetbase = ".."
 
 end
 
 require 'puppet'
-require 'puppet/fileserver'
+require 'puppet/server/fileserver'
 require 'test/unit'
 require 'puppettest.rb'
 
@@ -34,24 +32,24 @@ class TestFileServer < TestPuppet
     def test_namefailures
         server = nil
         assert_nothing_raised {
-            server = Puppet::FileServer.new(
+            server = Puppet::Server::FileServer.new(
                 :Local => true
             )
         }
 
-        assert_raise(Puppet::FileServerError) {
+        assert_raise(Puppet::Server::FileServerError) {
             server.mount("/tmp", "invalid+name")
         }
 
-        assert_raise(Puppet::FileServerError) {
+        assert_raise(Puppet::Server::FileServerError) {
             server.mount("/tmp", "invalid-name")
         }
 
-        assert_raise(Puppet::FileServerError) {
+        assert_raise(Puppet::Server::FileServerError) {
             server.mount("/tmp", "invalid name")
         }
 
-        assert_raise(Puppet::FileServerError) {
+        assert_raise(Puppet::Server::FileServerError) {
             server.mount("/tmp", "")
         }
     end
@@ -69,10 +67,10 @@ class TestFileServer < TestPuppet
         }
 
         file = nil
-        checks = Puppet::FileServer::CHECKPARAMS
+        checks = Puppet::Server::FileServer::CHECKPARAMS
 
         assert_nothing_raised {
-            server = Puppet::FileServer.new(
+            server = Puppet::Server::FileServer.new(
                 :Local => true
             )
         }
@@ -114,7 +112,7 @@ class TestFileServer < TestPuppet
         file = nil
 
         assert_nothing_raised {
-            server = Puppet::FileServer.new(
+            server = Puppet::Server::FileServer.new(
                 :Local => true
             )
         }
@@ -165,10 +163,10 @@ class TestFileServer < TestPuppet
         }
 
         file = nil
-        checks = Puppet::FileServer::CHECKPARAMS
+        checks = Puppet::Server::FileServer::CHECKPARAMS
 
         assert_nothing_raised {
-            server = Puppet::FileServer.new(
+            server = Puppet::Server::FileServer.new(
                 :Local => true
             )
         }
@@ -200,7 +198,7 @@ class TestFileServer < TestPuppet
     def test_mountroot
         server = nil
         assert_nothing_raised {
-            server = Puppet::FileServer.new(
+            server = Puppet::Server::FileServer.new(
                 :Local => true
             )
         }
@@ -230,7 +228,7 @@ class TestFileServer < TestPuppet
     def test_recursionlevels
         server = nil
         assert_nothing_raised {
-            server = Puppet::FileServer.new(
+            server = Puppet::Server::FileServer.new(
                 :Local => true
             )
         }
@@ -275,7 +273,7 @@ class TestFileServer < TestPuppet
     def test_listedpath
         server = nil
         assert_nothing_raised {
-            server = Puppet::FileServer.new(
+            server = Puppet::Server::FileServer.new(
                 :Local => true
             )
         }
@@ -312,7 +310,7 @@ class TestFileServer < TestPuppet
     def test_widelists
         server = nil
         assert_nothing_raised {
-            server = Puppet::FileServer.new(
+            server = Puppet::Server::FileServer.new(
                 :Local => true
             )
         }
@@ -354,10 +352,10 @@ class TestFileServer < TestPuppet
         }
 
         file = nil
-        checks = Puppet::FileServer::CHECKPARAMS
+        checks = Puppet::Server::FileServer::CHECKPARAMS
 
         assert_nothing_raised {
-            server = Puppet::FileServer.new(
+            server = Puppet::Server::FileServer.new(
                 :Local => true
             )
         }

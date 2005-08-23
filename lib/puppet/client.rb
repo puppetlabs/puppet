@@ -5,13 +5,13 @@
 require 'puppet'
 require 'puppet/sslcertificates'
 require 'puppet/type'
-require 'puppet/server'
 require 'facter'
 require 'openssl'
 require 'puppet/transaction'
 require 'puppet/transportable'
 require 'puppet/metric'
 require 'puppet/daemon'
+require 'puppet/server'
 
 $noclientnetworking = false
 begin
@@ -33,9 +33,9 @@ module Puppet
         class NetworkClient < XMLRPC::Client
             #include Puppet::Daemon
 
-            @@handlers = [Puppet::FileServer, Puppet::CA, Puppet::Master]
+            #@@handlers = [Puppet::FileServer, Puppet::CA, Puppet::Server::Master]
 
-            @@handlers.each { |handler|
+            Puppet::Server.eachhandler { |name, handler|
                 interface = handler.interface
                 namespace = interface.prefix
 
@@ -169,12 +169,12 @@ module Puppet
 
                     @driver = Puppet::NetworkClient.new(args)
                     @local = false
-                when Puppet::Master:
+                when Puppet::Server::Master:
                     @driver = hash[:Server]
                     @local = true
                 else
                     raise ClientError.new("Server must be a hostname or a " +
-                        "Puppet::Master object")
+                        "Puppet::Server::Master object")
                 end
             else
                 raise ClientError.new("Must pass :Server to client")

@@ -1,12 +1,11 @@
 if __FILE__ == $0
     $:.unshift '../../lib'
-    $:.unshift '../../../../library/trunk/lib/'
-    $:.unshift '../../../../library/trunk/test/'
+    $:.unshift '..'
     $puppetbase = "../.."
 end
 
 require 'puppet'
-require 'puppet/ca'
+require 'puppet/server/ca'
 require 'puppet/sslcertificates'
 require 'openssl'
 require 'test/unit'
@@ -54,7 +53,7 @@ class TestCA < Test::Unit::TestCase
         ca = nil
 
         assert_nothing_raised {
-            ca = Puppet::CA.new()
+            ca = Puppet::Server::CA.new()
         }
 
         key = nil
@@ -106,7 +105,7 @@ class TestCA < Test::Unit::TestCase
         ca = nil
         caserv = nil
         assert_nothing_raised {
-            caserv = Puppet::CA.new()
+            caserv = Puppet::Server::CA.new()
         }
         assert_nothing_raised {
             ca = caserv.ca
@@ -163,7 +162,7 @@ class TestCA < Test::Unit::TestCase
         caserv = nil
 
         assert_nothing_raised {
-            caserv = Puppet::CA.new()
+            caserv = Puppet::Server::CA.new()
         }
 
         key = nil
@@ -212,7 +211,7 @@ class TestCA < Test::Unit::TestCase
         caserv = nil
         file = File.join($puppetbase, "examples", "code", "head")
         assert_nothing_raised {
-            caserv = Puppet::CA.new()
+            caserv = Puppet::Server::CA.new()
         }
 
         assert(caserv.autosign?("hostmatch.domain.com"))

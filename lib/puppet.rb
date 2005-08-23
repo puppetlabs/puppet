@@ -206,5 +206,6 @@ module Puppet
     end
 end
 
+require 'puppet/server'
 require 'puppet/type'
 require 'puppet/storage'

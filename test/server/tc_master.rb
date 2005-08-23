@@ -1,27 +1,15 @@
 if __FILE__ == $0
     if Dir.getwd =~ /test\/server$/
         Dir.chdir("..")
-        #puts "Unfortunately, you must be in the test dir to run this test."
-        #puts "Yes, I know it's different than all of the others."
-        #exit
     end
 
     $:.unshift '../lib'
-    $:.unshift '../../../library/trunk/lib/'
-    $:.unshift '../../../library/trunk/test/'
     $puppetbase = ".."
 
 end
 
-#if __FILE__ == $0
-#    $:.unshift '../../lib'
-#    $:.unshift '../../../../library/trunk/lib/'
-#    $:.unshift '../../../../library/trunk/test/'
-#    $puppetbase = "../.."
-#end
-
 require 'puppet'
-require 'puppet/master'
+require 'puppet/server'
 require 'puppet/client'
 require 'test/unit'
 require 'puppettest.rb'
@@ -68,7 +56,7 @@ class TestMaster < Test::Unit::TestCase
             master = nil
             assert_nothing_raised() {
                 # this is the default server setup
-                master = Puppet::Master.new(
+                master = Puppet::Server::Master.new(
                     :File => file,
                     :Local => true
                 )
@@ -108,7 +96,7 @@ class TestMaster < Test::Unit::TestCase
             master = nil
             assert_nothing_raised() {
                 # this is the default server setup
-                master = Puppet::Master.new(
+                master = Puppet::Server::Master.new(
                     :File => file,
                     :Local => true
                 )

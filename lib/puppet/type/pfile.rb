@@ -7,7 +7,7 @@ require 'etc'
 require 'uri'
 require 'fileutils'
 require 'puppet/type/state'
-require 'puppet/fileserver'
+require 'puppet/server/fileserver'
 
 module Puppet
     # we first define all of the state that our file will use
@@ -1577,7 +1577,7 @@ module Puppet
 
                 case uri.scheme
                 when "file":
-                    sourceobj.server = Puppet::FileServer.new(
+                    sourceobj.server = Puppet::Server::FileServer.new(
                         :Local => true
                     )
                     sourceobj.server.mount("/", "localhost")

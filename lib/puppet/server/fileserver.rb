@@ -2,6 +2,7 @@ require 'puppet'
 require 'cgi'
 
 module Puppet
+class Server
     class FileServerError < Puppet::Error; end
     class FileServer
         attr_accessor :local
@@ -16,6 +17,8 @@ module Puppet
                 iface.add_method("string retrieve(string)")
             }
         end
+
+        Puppet::Server.addhandler(:FileServer, self)
 
         def check(dir)
             unless FileTest.exists?(dir)
@@ -255,6 +258,7 @@ module Puppet
             return dirname
         end
     end
+end
 end
 
 # $Id$

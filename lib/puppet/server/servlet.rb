@@ -1,6 +1,7 @@
 require 'xmlrpc/server'
 
 module Puppet
+class Server
     class ServletError < RuntimeError; end
     class Servlet < XMLRPC::WEBrickServlet
         attr_accessor :request
@@ -107,4 +108,5 @@ module Puppet
             end
         end
     end
+end
 end

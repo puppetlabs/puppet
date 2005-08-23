@@ -8,9 +8,6 @@
 
 require 'puppet'
 require 'puppet/daemon'
-require 'puppet/servlet'
-require 'puppet/master'
-require 'puppet/ca'
 
 $noservernetworking = false
 
@@ -51,13 +48,25 @@ module Puppet
         class Server < WEBrick::HTTPServer
             include Puppet::Daemon
 
-            # a bit of a hack for now, but eh, wadda ya gonna do?
-            @@handlers = {
-                :Master => Puppet::Master,
-                :CA => Puppet::CA,
-                :Status => Puppet::ServerStatus
-            }
+            @@handlers = {}
+#            # a bit of a hack for now, but eh, wadda ya gonna do?
+#            @@handlers = {
+#                :Master => Puppet::Server::Master,
+#                :CA => Puppet::Server::CA,
+#                :Status => Puppet::ServerStatus
+#            }
 
+            def self.addhandler(name, handler)
+                @@handlers[name] = handler
+            end
+
+            Puppet::Server.addhandler(:Status, Puppet::ServerStatus)
+
+            def self.eachhandler
+                @@handlers.each { |name, klass|
+                    yield(name, klass)
+                }
+            end
             def self.inithandler(handler,args)
                 unless @@handlers.include?(handler)
                     raise ServerError, "Invalid handler %s" % handler
@@ -91,7 +100,7 @@ module Puppet
 
                 # okay, i need to retrieve my cert and set it up, somehow
                 # the default case will be that i'm also the ca
-                if ca = @handlers.find { |handler| handler.is_a?(Puppet::CA) }
+                if ca = @handlers.find { |handler| handler.is_a?(Puppet::Server::CA) }
                     @driver = ca
                     @secureinit = true
                     self.fqdn
@@ -120,10 +129,16 @@ module Puppet
                 # have a global state
 
                 # mount has to be called after the server is initialized
-                self.mount("/RPC2", Puppet::Servlet, @handlers)
+                self.mount("/RPC2", Puppet::Server::Servlet, @handlers)
             end
         end
     end
 
     #---------------------------------------------------------------
 end
+
+require 'puppet/server/servlet'
+require 'puppet/server/master'
+require 'puppet/server/ca'
+require 'puppet/server/fileserver'
+require 'puppet/server/filebucket'

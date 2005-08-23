@@ -5,6 +5,7 @@ require 'puppet/sslcertificates'
 require 'xmlrpc/server'
 
 module Puppet
+class Server
     class MasterError < Puppet::Error; end
     class Master
         attr_accessor :ast, :local
@@ -15,6 +16,8 @@ module Puppet
                 iface.add_method("string getconfig(string)")
             }
         end
+
+        Puppet::Server.addhandler(:Master, self)
 
         def initialize(hash = {})
 
@@ -85,4 +88,5 @@ module Puppet
             end
         end
     end
+end
 end

@@ -1,26 +1,12 @@
 if __FILE__ == $0
     $:.unshift '../../lib'
-    $:.unshift '../../../../library/trunk/lib/'
-    $:.unshift '../../../../library/trunk/test/'
+    $:.unshift '..'
     $puppetbase = "../.."
 end
-#if __FILE__ == $0
-#    $:.unshift '../lib'
-#    $:.unshift '../../../library/trunk/lib/'
-#    $:.unshift '../../../library/trunk/test/'
-#    $puppetbase = ".."
-#
-#
-#    if Dir.getwd !~ /test$/
-#        puts "Unfortunately, you must be in the test dir to run this test."
-#        puts "Yes, I know it's different than all of the others."
-#        exit
-#    end
-#end
 
 require 'puppet'
 require 'cgi'
-require 'puppet/server'
+#require 'puppet/server'
 require 'facter'
 require 'puppet/client'
 require 'xmlrpc/client'
