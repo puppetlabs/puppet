@@ -7,17 +7,13 @@ require 'xmlrpc/server'
 module Puppet
 class Server
     class MasterError < Puppet::Error; end
-    class Master
+    class Master < Handler
         attr_accessor :ast, :local
         attr_reader :ca
 
-        def self.interface
-            XMLRPC::Service::Interface.new("puppetmaster") { |iface|
+        @interface = XMLRPC::Service::Interface.new("puppetmaster") { |iface|
                 iface.add_method("string getconfig(string)")
-            }
-        end
-
-        Puppet::Server.addhandler(:Master, self)
+        }
 
         def initialize(hash = {})
 

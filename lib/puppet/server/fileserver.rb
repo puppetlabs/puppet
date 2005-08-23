@@ -4,21 +4,17 @@ require 'cgi'
 module Puppet
 class Server
     class FileServerError < Puppet::Error; end
-    class FileServer
+    class FileServer < Handler
         attr_accessor :local
 
         #CHECKPARAMS = %w{checksum type mode owner group}
         CHECKPARAMS = [:mode, :type, :owner, :group, :checksum]
 
-        def self.interface
-            XMLRPC::Service::Interface.new("fileserver") { |iface|
-                iface.add_method("string describe(string)")
-                iface.add_method("string list(string, boolean)")
-                iface.add_method("string retrieve(string)")
-            }
-        end
-
-        Puppet::Server.addhandler(:FileServer, self)
+        @interface = XMLRPC::Service::Interface.new("fileserver") { |iface|
+            iface.add_method("string describe(string)")
+            iface.add_method("string list(string, boolean)")
+            iface.add_method("string retrieve(string)")
+        }
 
         def check(dir)
             unless FileTest.exists?(dir)

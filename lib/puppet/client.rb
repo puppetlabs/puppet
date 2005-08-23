@@ -33,9 +33,8 @@ module Puppet
         class NetworkClient < XMLRPC::Client
             #include Puppet::Daemon
 
-            #@@handlers = [Puppet::FileServer, Puppet::CA, Puppet::Server::Master]
-
-            Puppet::Server.eachhandler { |name, handler|
+            # add the methods associated with each namespace
+            Puppet::Server::Handler.each { |handler|
                 interface = handler.interface
                 namespace = interface.prefix
 

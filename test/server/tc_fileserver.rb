@@ -19,7 +19,15 @@ class TestFileServer < TestPuppet
             Puppet[:loglevel] = :debug
         end
 
+        @@tmppids = []
         super
+    end
+
+    def teardown
+        super
+        @@tmppids.each { |pid|
+            system("kill -INT %s" % pid)
+        }
     end
 
     def mkrandomdirs(dir, depth, width)
@@ -377,6 +385,48 @@ class TestFileServer < TestPuppet
                 desc = server.describe(sfile + file)
             }
         }
+    end
+
+    def test_networksources
+        server = nil
+        Puppet[:ssldir] = "/tmp/serverconnecttesting"
+        Puppet[:autosign] = true
+        @@tmpfiles << "/tmp/serverconnecttesting"
+        serverpid = nil
+        port = 8080
+        assert_nothing_raised() {
+            server = Puppet::Server.new(
+                :Port => port,
+                :Handlers => {
+                    :CA => {}, # so that certs autogenerate
+                    :Status => nil
+                }
+            )
+
+        }
+        serverpid = fork {
+            assert_nothing_raised() {
+                #trap(:INT) { server.shutdown; Kernel.exit! }
+                trap(:INT) { server.shutdown }
+                server.start
+            }
+        }
+        @@tmppids << serverpid
+
+        sleep(3)
+        client = nil
+        assert_nothing_raised() {
+            client = XMLRPC::Client.new("localhost", "/RPC2", port, nil, nil,
+                nil, nil, true, 3)
+        }
+        retval = nil
+
+        assert_nothing_raised() {
+            Puppet.notice "calling status"
+            retval = client.call("status.status")
+        }
+
+        assert_equal(1, retval)
     end
 end
 

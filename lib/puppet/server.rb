@@ -27,56 +27,8 @@ module Puppet
     if $noservernetworking
         Puppet.err "Could not create server: %s" % $noservernetworking
     else
-        class ServerStatus
-            attr_reader :ca
-
-            def self.interface
-                XMLRPC::Service::Interface.new("status") { |iface|
-                    iface.add_method("int status()")
-                }
-            end
-
-            def initialize(hash = {})
-            end
-
-            def status(status = nil, request = nil)
-                Puppet.warning "Returning status"
-                return 1
-            end
-        end
-
         class Server < WEBrick::HTTPServer
             include Puppet::Daemon
-
-            @@handlers = {}
-#            # a bit of a hack for now, but eh, wadda ya gonna do?
-#            @@handlers = {
-#                :Master => Puppet::Server::Master,
-#                :CA => Puppet::Server::CA,
-#                :Status => Puppet::ServerStatus
-#            }
-
-            def self.addhandler(name, handler)
-                @@handlers[name] = handler
-            end
-
-            Puppet::Server.addhandler(:Status, Puppet::ServerStatus)
-
-            def self.eachhandler
-                @@handlers.each { |name, klass|
-                    yield(name, klass)
-                }
-            end
-            def self.inithandler(handler,args)
-                unless @@handlers.include?(handler)
-                    raise ServerError, "Invalid handler %s" % handler
-                end
-
-                hclass = @@handlers[handler]
-
-                obj = hclass.new(args)
-                return obj
-            end
 
             def initialize(hash = {})
                 hash[:Port] ||= Puppet[:masterport]
@@ -92,7 +44,11 @@ module Puppet
                     end
 
                     @handlers = hash[:Handlers].collect { |handler, args|
-                        self.class.inithandler(handler, args)
+                        hclass = nil
+                        unless hclass = Handler.handler(handler)
+                            raise ServerError, "Invalid handler %s" % handler
+                        end
+                        hclass.new(args)
                     }
                 else
                     raise ServerError, "A server must have handlers"
@@ -132,6 +88,62 @@ module Puppet
                 self.mount("/RPC2", Puppet::Server::Servlet, @handlers)
             end
         end
+    end
+
+    class Server
+        # the base class for the different handlers
+        class Handler
+            @subclasses = []
+
+            def self.each
+                @subclasses.each { |c| yield c }
+            end
+
+            def self.handler(name)
+                @subclasses.find { |h|
+                    h.name == name
+                }
+            end
+
+            def self.inherited(sub)
+                @subclasses << sub
+            end
+
+            def self.interface
+                if defined? @interface
+                    return @interface
+                else
+                    raise Puppet::DevError, "Handler %s has no defined interface" %
+                        self
+                end
+            end
+
+            def self.name
+                unless defined? @name
+                    @name = self.to_s.sub(/.+::/, '').intern
+                end
+
+                return @name
+            end
+
+            def initialize(hash = {})
+            end
+        end
+
+        class ServerStatus < Handler
+
+            @interface = XMLRPC::Service::Interface.new("status") { |iface|
+                iface.add_method("int status()")
+            }
+
+            @name = :Status
+
+            def status(status = nil, request = nil)
+                Puppet.warning "Returning status"
+                return 1
+            end
+        end
+
     end
 
     #---------------------------------------------------------------

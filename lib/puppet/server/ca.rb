@@ -9,16 +9,12 @@ require 'xmlrpc/server'
 module Puppet
 class Server
     class CAError < Puppet::Error; end
-    class CA
+    class CA < Handler
         attr_reader :ca
 
-        def self.interface
-            XMLRPC::Service::Interface.new("puppetca") { |iface|
-                iface.add_method("array getcert(csr)")
-            }
-        end
-
-        Puppet::Server.addhandler(:CA, self)
+        @interface = XMLRPC::Service::Interface.new("puppetca") { |iface|
+            iface.add_method("array getcert(csr)")
+        }
 
         def autosign?(hostname)
             # simple values are easy
