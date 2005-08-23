@@ -7,14 +7,13 @@
 
 $:.unshift '.'
 $:.unshift '../lib'
-$:.unshift '../../../language/trunk/lib/'
 
 # if we're not in the library trunk, then add that to the lib search path
-if Dir.getwd !~ %r{puppet/library}
-    $:.unshift '../../../library/trunk/lib/'
-    $:.unshift '../../../language/trunk/lib/'
-    $:.unshift '../../../library/trunk/test/'
-end
+#if Dir.getwd !~ %r{puppet/library}
+#    $:.unshift '../../../library/trunk/lib/'
+#    $:.unshift '../../../language/trunk/lib/'
+#    $:.unshift '../../../library/trunk/test/'
+#end
 
 require 'puppettest.rb'
 
@@ -37,7 +36,7 @@ result.each { |opt,arg|
 	end
 }
 
-$puppetbase = "../../../language/trunk"
+$puppetbase = ".."
 
 suites = nil
 

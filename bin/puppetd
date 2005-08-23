@@ -1,0 +1,102 @@
+#!/usr/bin/ruby
+
+#--------------------
+# the puppet client
+#
+# $Id$
+
+
+$:.unshift '../lib'
+
+require 'puppet'
+require 'puppet/server'
+require 'puppet/client'
+require 'getoptlong'
+
+result = GetoptLong.new(
+	[ "--logfile",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--ssldir",   				GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--fqdn",     "-f",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--server",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--secure",       			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--noinit",	"-n",			GetoptLong::NO_ARGUMENT ],
+	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+)
+
+noinit = false
+server = "localhost"
+proto = "http"
+fqdn = nil
+
+result.each { |opt,arg|
+	case opt
+		when "--help"
+			puts "There is no help yet"
+			exit
+		when "--verbose"
+            Puppet[:loglevel] = :info
+		when "--debug"
+            Puppet[:loglevel] = :debug
+		when "--ssldir"
+            Puppet[:ssldir] = arg
+		when "--secure"
+            proto = "https"
+		when "--noinit"
+            noinit = true
+		when "--fqdn"
+            fqdn = arg
+		when "--server"
+            server = arg
+		when "--port"
+            Puppet[:masterport] = arg
+		when "--logfile"
+            Puppet[:logfile] = arg
+		else
+			puts "Invalid option '#{opt}'"
+            exit(10)
+	end
+}
+
+bg = false
+
+unless Puppet[:loglevel] == :debug or Puppet[:loglevel] == :info
+    bg = true
+end
+
+args = {:Server => server}
+if fqdn
+    args[:FQDN] = fqdn
+end
+client = Puppet::Client.new(args)
+
+unless client.readcert
+    begin
+        while ! client.requestcert do
+            Puppet.notice "Could not request certificate"
+            sleep 5
+        end
+    rescue => detail
+        Puppet.err "Could not request certificate: %s" % detail.to_s
+        exit(23)
+    end
+end
+
+if bg
+    Puppet[:logdest] = Puppet[:logfile]
+    client.daemonize
+end
+#client.start
+client.getconfig
+
+#threads = []
+#threads << Thread.new {
+#    trap(:INT) {
+#        client.shutdown
+#    }
+#    client.start
+#}
+#
+#client.getconfig

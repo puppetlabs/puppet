@@ -1,0 +1,19 @@
+# $Id$
+
+file {
+    "/tmp/dirchmodtesta": create => directory;
+    "/tmp/dirchmodtesta/testing": create => true
+}
+
+file { "/tmp/dirchmodtesta":
+    mode => 644, recurse => true
+}
+
+file {
+    "/tmp/dirchmodtestb": create => directory;
+    "/tmp/dirchmodtestb/testing": create => true
+}
+
+file { "/tmp/dirchmodtestb":
+    mode => 600, recurse => true
+}

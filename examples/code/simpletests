@@ -1,0 +1,11 @@
+# $Id$
+
+file {
+    "/tmp/atest": create => true;
+    "/tmp/btest": create => true
+}
+
+file {
+    "/tmp/ctest": create => true;
+    "/tmp/dtest": create => true;
+}

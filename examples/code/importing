@@ -1,0 +1,8 @@
+# $Id$
+
+#import "groups"
+# testing import loops
+import "importing"
+
+$name = "value"
+$system = $operatingsystem

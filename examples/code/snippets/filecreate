@@ -1,0 +1,11 @@
+# $Id$
+
+file {
+    "/tmp/createatest": create => true, mode => 755;
+    "/tmp/createbtest": create => true, mode => 755
+}
+
+file {
+    "/tmp/createctest": create => true;
+    "/tmp/createdtest": create => true;
+}

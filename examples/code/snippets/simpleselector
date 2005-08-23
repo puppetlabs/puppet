@@ -1,0 +1,38 @@
+# $Id$
+
+$var = "value"
+
+file { "/tmp/snippetselectatest":
+    create => true,
+    mode => $var ? {
+        nottrue => 641,
+        value => 755
+    }
+}
+
+file { "/tmp/snippetselectbtest":
+    create => true,
+    mode => $var ? {
+        nottrue => 644,
+        default => 755
+    }
+}
+
+$othervar = "complex value"
+
+file { "/tmp/snippetselectctest":
+    create => true,
+    mode => $othervar ? {
+        "complex value" => 755,
+        default => 644
+    }
+}
+$anothervar = Yayness
+
+file { "/tmp/snippetselectdtest":
+    create => true,
+    mode => $anothervar ? {
+        Yayness => 755,
+        default => 644
+    }
+}

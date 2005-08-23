@@ -1,0 +1,20 @@
+# $Id$
+
+# define nodes
+
+#service.setpath("../examples/root/etc/init.d")
+
+Service {
+    path => "../examples/root/etc/init.d"
+}
+
+import "classing"
+
+sleepserver {
+    path => $operatingsystem ? {
+        sunos => "../examples/root/etc/configfile",
+        hpux => "../examples/other/etc/configfile",
+        default => "../examples/root/etc/configfile"
+    },
+    schedule => true
+}

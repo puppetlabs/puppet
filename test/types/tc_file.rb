@@ -1,6 +1,7 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
+    $:.unshift "../../../../language/trunk/lib"
     $puppetbase = "../../../../language/trunk"
 end
 
@@ -67,7 +68,7 @@ class TestFile < Test::Unit::TestCase
         Puppet::Storage.clear
     end
 
-    def test_zzowner
+    def test_owner
         file = mktestfile()
 
         users = {}
@@ -138,6 +139,9 @@ class TestFile < Test::Unit::TestCase
             users.each { |uid, name|
                 # just make sure we don't try to manage users
                 assert_nothing_raised() {
+                    file.sync
+                }
+                assert_nothing_raised() {
                     file[:owner] = name
                 }
                 assert_nothing_raised() {
@@ -151,7 +155,7 @@ class TestFile < Test::Unit::TestCase
         end
     end
 
-    def test_zzgroup
+    def test_group
         file = mktestfile()
         [%x{groups}.chomp.split(/ /), Process.groups].flatten.each { |group|
             assert_nothing_raised() {
@@ -493,6 +497,8 @@ class TestFile < Test::Unit::TestCase
             trans.evaluate
         }
 
+        assert(FileTest.exists?(todir))
+
         clearstorage
         Puppet::Type.allclear
     end
@@ -518,7 +524,7 @@ class TestFile < Test::Unit::TestCase
         return [fromdir,todir]
     end
 
-    def test_complex_sources_twice
+    def test_zzzcomplex_sources_twice
         fromdir, todir = run_complex_sources
         assert_trees_equal(fromdir,todir)
         recursive_source_test(fromdir, todir)
@@ -528,6 +534,7 @@ class TestFile < Test::Unit::TestCase
     def test_sources_with_deleted_destfiles
         fromdir, todir = run_complex_sources
         # then delete some files
+        assert(FileTest.exists?(todir))
         delete_random_files(todir)
 
         # and run
@@ -539,6 +546,7 @@ class TestFile < Test::Unit::TestCase
 
     def test_sources_with_readonly_destfiles
         fromdir, todir = run_complex_sources
+        assert(FileTest.exists?(todir))
         readonly_random_files(todir)
         recursive_source_test(fromdir, todir)
 
@@ -549,6 +557,7 @@ class TestFile < Test::Unit::TestCase
     def test_sources_with_modified_dest_files
         fromdir, todir = run_complex_sources
 
+        assert(FileTest.exists?(todir))
         # then modify some files
         modify_random_files(todir)
 
@@ -560,6 +569,7 @@ class TestFile < Test::Unit::TestCase
 
     def test_sources_with_added_destfiles
         fromdir, todir = run_complex_sources
+        assert(FileTest.exists?(todir))
         # and finally, add some new files
         add_random_files(todir)
 
@@ -581,5 +591,85 @@ class TestFile < Test::Unit::TestCase
 
         # and make sure they're still equal
         assert_trees_equal(fromdir,todir)
+    end
+
+    def test_filetype_retrieval
+        file = nil
+        assert_nothing_raised {
+            file = Puppet::Type::PFile.new(
+                :name => "/tmp",
+                :check => :type
+            )
+        }
+
+        assert_nothing_raised {
+            file.evaluate
+        }
+
+        assert_equal("directory", file.state(:type).is)
+
+        assert_nothing_raised {
+            file = Puppet::Type::PFile.new(
+                :name => "/etc/passwd",
+                :check => :type
+            )
+        }
+
+        assert_nothing_raised {
+            file.evaluate
+        }
+
+        assert_equal("file", file.state(:type).is)
+
+        assert_raise(Puppet::Error) {
+            file[:type] = "directory"
+        }
+
+        assert(file.insync?)
+
+        assert_raise(Puppet::Error) {
+            file.sync
+        }
+    end
+
+    def test_RecursionWithAddedFiles
+        basedir = "/tmp/recursionplussaddedfiles"
+        Dir.mkdir(basedir)
+        @@tmpfiles << basedir
+        file1 = File.join(basedir, "file1")
+        file2 = File.join(basedir, "file2")
+        subdir1 = File.join(basedir, "subdir1")
+        file3 = File.join(subdir1, "file")
+        File.open(file1, "w") { |f| 3.times { f.print rand(100) } }
+        rootobj = nil
+        assert_nothing_raised {
+            rootobj = Puppet::Type::PFile.new(
+                :name => basedir,
+                :recurse => true,
+                :check => %w{type owner}
+            )
+
+            rootobj.evaluate
+        }
+
+        klass = Puppet::Type::PFile
+        assert(klass[basedir])
+        assert(klass[file1])
+        assert_nil(klass[file2])
+
+        File.open(file2, "w") { |f| 3.times { f.print rand(100) } }
+
+        assert_nothing_raised {
+            rootobj.evaluate
+        }
+        assert(klass[file2])
+
+        Dir.mkdir(subdir1)
+        File.open(file3, "w") { |f| 3.times { f.print rand(100) } }
+
+        assert_nothing_raised {
+            rootobj.evaluate
+        }
+        assert(klass[file3])
     end
 end

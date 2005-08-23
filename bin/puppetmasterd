@@ -1,0 +1,89 @@
+#!/usr/bin/ruby -w
+
+#--------------------
+# the central puppet server
+#
+# $Id$
+
+require 'getoptlong'
+require 'puppet'
+require 'puppet/server'
+
+result = GetoptLong.new(
+	[ "--logfile",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--manifest",	"-m",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--ssldir",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--noinit",   "-n",			GetoptLong::NO_ARGUMENT ],
+	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
+	[ "--noca",         			GetoptLong::NO_ARGUMENT ],
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+)
+
+noinit = false
+ca = true
+
+result.each { |opt,arg|
+	case opt
+		when "--help"
+			puts "There is no help yet"
+			exit
+		when "--verbose"
+            Puppet[:loglevel] = :info
+		when "--debug"
+            Puppet[:debug] = true
+		when "--noca"
+            ca = false
+		when "--ssldir"
+            Puppet[:ssldir] = arg
+		when "--manifest"
+            Puppet[:manifest] = arg
+		when "--noinit"
+            noinit = true
+		when "--logfile"
+            Puppet[:masterlog] = arg
+		else
+			raise "Invalid option '#{opt}'"
+	end
+}
+
+bg = false
+
+Puppet[:autosign] = true
+
+unless Puppet[:loglevel] == :debug or Puppet[:loglevel] == :info
+    bg = true
+end
+
+if bg
+    Puppet[:logdest] = Puppet[:masterlog]
+end
+
+begin
+    # use the default, um, everything
+    #server = Puppet::Server.new(:CA => ca)
+    server = Puppet::Server.new(
+        :Handlers => {
+            :CA => {}, # so that certs autogenerate
+            :Master => {},
+            :Status => {}
+        }
+    )
+rescue => detail
+    $stderr.puts detail
+    exit(1)
+end
+
+if bg
+    server.daemonize
+end
+
+trap(:INT) {
+    server.shutdown
+}
+begin
+    server.start
+rescue => detail
+    Puppet.err "Could not start puppetmaster: %s" % detail
+    exit(1)
+end

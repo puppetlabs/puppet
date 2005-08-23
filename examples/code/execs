@@ -1,0 +1,16 @@
+$path = "/usr/bin:/bin"
+
+exec { "mkdir -p /tmp/fakedir":
+    path => $path
+}
+
+exec { "rm -rf /tmp/fakedir":
+    path => $path
+}
+
+exec { "touch /this/directory/does/not/exist":
+    path => $path,
+    returns => 1
+}
+
+

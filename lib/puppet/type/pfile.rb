@@ -4,14 +4,42 @@
 
 require 'digest/md5'
 require 'etc'
+require 'uri'
 require 'fileutils'
 require 'puppet/type/state'
+require 'puppet/fileserver'
 
 module Puppet
     # we first define all of the state that our file will use
     # because the objects must be defined for us to use them in our
     # definition of the file object
     class State
+        class PFileType < Puppet::State
+            require 'etc'
+            @doc = "A read-only state to check the file type."
+            @name = :type
+
+            def should=(value)
+                raise Puppet::Error, ":type is read-only"
+            end
+
+            def retrieve
+                if stat = @parent.stat(true)
+                    @is = stat.ftype
+                else
+                    @is = -1
+                end
+
+                # so this state is never marked out of sync
+                @should = @is
+            end
+
+
+            def sync
+                raise Puppet::Error, ":type is read-only"
+            end
+        end
+
         class PFileCreate < Puppet::State
             require 'etc'
             @doc = "Whether to create files that don't currently exist.
@@ -209,7 +237,7 @@ module Puppet
                     if @is == -1
                         # if they're copying, then we won't worry about the file
                         # not existing yet
-                        unless @parent.state(:copy) or @parent.state(:create)
+                        unless @parent.state(:source) or @parent.state(:create)
                             Puppet.warning "File %s does not exist -- cannot checksum" %
                                 @parent.name
                         end
@@ -280,16 +308,16 @@ module Puppet
 
             def retrieve
                 # if we're not root, then we can't chown anyway
-                unless Process.uid == 0
-                    @parent.delete(self.name)
-                    @should = nil
-                    @is = nil
-                    unless defined? @@notified
-                        Puppet.notice "Cannot manage ownership unless running as root"
-                        @@notified = true
-                        return
-                    end
-                end
+#                unless Process.uid == 0
+#                    @parent.delete(self.name)
+#                    @should = nil
+#                    @is = nil
+#                    unless defined? @@notified
+#                        Puppet.notice "Cannot manage ownership unless running as root"
+#                        @@notified = true
+#                        return
+#                    end
+#                end
 
                 unless stat = @parent.stat(true)
                     @is = -1
@@ -307,7 +335,9 @@ module Puppet
                         Puppet.notice "Cannot manage ownership unless running as root"
                         #@parent.delete(self.name)
                         @@notified = true
-                        return
+                    end
+                    if @parent.state(:owner)
+                        @parent.delete(:owner)
                     end
                     raise Puppet::Error.new(
                         "Cannot manage ownership unless running as root"
@@ -588,54 +618,172 @@ module Puppet
             end
         end
 
-        class PFileCopy < Puppet::State
+        class PFileSource < Puppet::State
             attr_accessor :source, :local
             @doc = "Copy a file over the current file.  Uses `checksum` to
                 determine when a file should be copied.  This is largely a support
                 state for the `source` parameter, which is what should generally
                 be used instead of `copy`."
-            @name = :copy
+            @name = :source
+
+            def desc2hash(line, params)
+                args = {}
+                
+                values = line.split("\t").collect { |value|
+                    if value =~ /^[0-9]+$/
+                        value.to_i
+                    else
+                        value
+                    end
+                }
+
+                params.zip(values).each { |param, value|
+                    args[param] = value
+                }
+
+                if args[:type] == "directory"
+                    args.delete(:checksum)
+                end
+                args
+            end
+
+            def hash2child(hash, source, recurse)
+                # "/" == self
+                if hash[:name] == "/"
+                    if hash[:type] == "directory"
+                    else
+                        self[:source] = source
+                    end
+                    hash.each { |param, value|
+                        next if param == :name
+                        next if param == :type
+
+                        unless self.state(param)
+                            self[param] = value
+                        end
+                    }
+                    if source =~ /Filesourcetest/
+                        p self
+                    end
+                    # we can now skip this object, and the rest is
+                    # pretty much related to children
+                    return
+                end
+
+                name = File.join(self.name, hash[:name])
+                if child = @children.find { |child|
+                    child.name == name }
+                else # the child does not yet exist
+                    #hash.delete(:name)
+                    sum = nil
+                    if hash[:type] == "directory"
+                        hash[:create] = "directory"
+                        hash[:source] = @parameters[:source] +  hash[:name]
+                        hash[:recurse] = recurse
+                    else
+                        hash[:source] = source + hash[:name]
+                        #sum = hash[:checksum]
+                        #hash.delete(:checksum)
+                    end
+                    hash.delete(:type)
+
+                    name = hash[:name].sub(/^\//, '') # rm leading /
+                    hash.delete(:name)
+
+                    Puppet.warning "Found new file %s under %s" %
+                        [name.inspect, self.name]
+                    self.newchild(name, hash)
+                end
+            end
+
+            def describe
+                source = @source
+                
+                sourceobj, path = @parent.uri2obj(source)
+
+                server = sourceobj.server
+
+                desc = server.describe(path)
+
+                args = {}
+                Puppet::Type::PFile::PINPARAMS.zip(desc.split("\t")).each { |param, value|
+                    if value =~ /^[0-9]+$/
+                        value = value.to_i
+                    end
+                    args[param] = value
+                }
+
+                return args
+            end
 
             def retrieve
                 sum = nil
-                if sum = @parent.state(:checksum)
-                    if sum.is
-                        if sum.is == -1
-                            sum.retrieve
+                
+                @stats = self.describe
+
+                @stats.each { |stat, value|
+                    next if stat == :checksum
+                    next if stat == :type
+
+                    unless @parent.argument?(stat)
+                        if state = @parent.state(stat)
+                            state.should = value
+                        else
+                            @parent[stat] = value
                         end
-                        @is = sum.is
+                    end
+                }
+                case @stats[:type]
+                when "file":
+                    if sum = @parent.state(:checksum)
+                        if sum.is
+                            if sum.is == -1
+                                sum.retrieve
+                            end
+                            @is = sum.is
+                        else
+                            @is = -1
+                        end
                     else
                         @is = -1
                     end
+
+                    @should = @stats[:checksum]
+
+                    if state = @parent.state(:create)
+                        unless state.should == "file"
+                            Puppet.notice(
+                                "File %s had both create and source enabled" %
+                                    @parent.name
+                            )
+                            @parent.delete(:create)
+                        end
+                    end
+                when "directory":
+                    if state = @parent.state(:create)
+                        unless state.should == "directory"
+                            state.should = "directory"
+                        end
+                    else
+                        @parent[:create] = "directory"
+                        @parent.state(:create).retrieve
+                    end
+                    # we'll let the :create state do our work
+                    @should = true
+                    @is = true
                 else
-                    @is = -1
+                    Puppet.err "Cannot use files of type %s as sources" %
+                        @stats[:type]
+                    @should = true
+                    @is = true
                 end
             end
 
             def should=(source)
-                @local = true # redundant for now
                 @source = source
-                type = Puppet::Type.type(:file)
 
-                sourcesum = nil
-                stat = File.stat(@source)
-                case stat.ftype
-                when "file":
-                    unless sourcesum = type[@source].state(:checksum).is
-                        raise Puppet::Error.new(
-                            "Could not retrieve checksum of source %s" %
-                            @source
-                        )
-                    end
-                when "directory":
-                    raise Puppet::Error.new(
-                        "Somehow got told to copy dir %s" % @parent.name)
-                else
-                    raise Puppet::Error.new(
-                        "Cannot use files of type %s as source" % stat.ftype)
-                end
-
-                @should = sourcesum
+                # stupid hack for now; it'll get overriden
+                @should = source
             end
 
             def sync
@@ -673,64 +821,140 @@ module Puppet
                     @backed = true
                 end
 
+                unless @stats[:type] == "file"
+                    raise Puppet::DevError, "Got told to copy non-file %s" %
+                        @parent.name
+                end
+
+                sourceobj, path = @parent.uri2obj(@source)
+
+                contents = sourceobj.server.retrieve(path)
+
+                unless sourceobj.server.local
+                    contents = CGI.unescape(contents)
+                end
+
+                if contents == ""
+                    Puppet.notice "Could not retrieve contents for %s" %
+                        @source
+                end
+
+                begin
+                    if FileTest.exists?(@parent.name)
+                        if FileTest.exists?(@parent.name + bak)
+                            Puppet.warning "Deleting backup of %s" %
+                                @parent.name
+                            File.unlink(@parent.name + bak)
+                        end
+
+                        # rename the existing one
+                        File.rename(
+                            @parent.name,
+                            @parent.name + ".puppet-bak"
+                        )
+                        # move the new file into place
+                        args = [@parent.name, 
+                            File::CREAT | File::WRONLY | File::TRUNC]
+
+                        # try to create it with the correct modes to start
+                        # we should also be changing our effective uid/gid, but...
+                        if @parent[:mode]
+                            args.push @parent[:mode]
+                        end
+                        File.open(*args) { |f|
+                            f.print contents
+                        }
+                        # if we've made a backup, then delete the old file
+                        if @backed
+                            #Puppet.err "Unlinking backup"
+                            File.unlink(@parent.name + bak)
+                        #else
+                            #Puppet.err "Not unlinking backup"
+                        end
+                    else
+                        # the easy case
+                        args = [@parent.name, 
+                            File::CREAT | File::WRONLY | File::TRUNC]
+
+                        # try to create it with the correct modes to start
+                        # we should also be changing our effective uid/gid, but...
+                        if @parent[:mode]
+                            args.push @parent[:mode]
+                        end
+                        File.open(*args) { |f|
+                            f.print contents
+                        }
+                    end
+                rescue => detail
+                    # since they said they want a backup, let's error out
+                    # if we couldn't make one
+                    error = Puppet::Error.new("Could not copy %s to %s: %s" %
+                        [@source, @parent.name, detail.message])
+                    raise error
+                end
+
                 #Puppet.notice "@is: %s; @should: %s" % [@is,@should]
                 #Puppet.err "@is: %s; @should: %s" % [@is,@should]
                 # okay, we've now got whatever backing up done we might need
                 # so just copy the files over
-                if @local
-                    stat = File.stat(@source)
-                    case stat.ftype
-                    when "file":
-                        begin
-                            if FileTest.exists?(@parent.name)
-                                # get the file here
-                                FileUtils.cp(@source, @parent.name + ".tmp")
-                                if FileTest.exists?(@parent.name + bak)
-                                    Puppet.warning "Deleting backup of %s" %
+
+                f = false
+                if f
+                    if @local
+                        stat = File.stat(@source)
+                        case stat.ftype
+                        when "file":
+                            begin
+                                if FileTest.exists?(@parent.name)
+                                    # get the file here
+                                    FileUtils.cp(@source, @parent.name + ".tmp")
+                                    if FileTest.exists?(@parent.name + bak)
+                                        Puppet.warning "Deleting backup of %s" %
+                                            @parent.name
+                                        File.unlink(@parent.name + bak)
+                                    end
+                                    # rename the existing one
+                                    File.rename(
+                                        @parent.name,
+                                        @parent.name + ".puppet-bak"
+                                    )
+                                    # move the new file into place
+                                    File.rename(
+                                        @parent.name + ".tmp",
                                         @parent.name
-                                    File.unlink(@parent.name + bak)
+                                    )
+                                    # if we've made a backup, then delete the old file
+                                    if @backed
+                                        #Puppet.err "Unlinking backup"
+                                        File.unlink(@parent.name + bak)
+                                    #else
+                                        #Puppet.err "Not unlinking backup"
+                                    end
+                                else
+                                    # the easy case
+                                    FileUtils.cp(@source, @parent.name)
                                 end
-                                # rename the existing one
-                                File.rename(
-                                    @parent.name,
-                                    @parent.name + ".puppet-bak"
-                                )
-                                # move the new file into place
-                                File.rename(
-                                    @parent.name + ".tmp",
-                                    @parent.name
-                                )
-                                # if we've made a backup, then delete the old file
-                                if @backed
-                                    #Puppet.err "Unlinking backup"
-                                    File.unlink(@parent.name + bak)
-                                #else
-                                    #Puppet.err "Not unlinking backup"
-                                end
-                            else
-                                # the easy case
-                                FileUtils.cp(@source, @parent.name)
+                            rescue => detail
+                                # since they said they want a backup, let's error out
+                                # if we couldn't make one
+                                error = Puppet::Error.new("Could not copy %s to %s: %s" %
+                                    [@source, @parent.name, detail.message])
+                                raise error
                             end
-                        rescue => detail
-                            # since they said they want a backup, let's error out
-                            # if we couldn't make one
-                            error = Puppet::Error.new("Could not copy %s to %s: %s" %
-                                [@source, @parent.name, detail.message])
-                            raise error
+                        when "directory":
+                            raise Puppet::Error.new(
+                                "Somehow got told to copy directory %s" %
+                                    @parent.name)
+                        when "link":
+                            dest = File.readlink(@source)
+                            Puppet::State::PFileLink.create(@dest,@parent.path)
+                        else
+                            raise Puppet::Error.new(
+                                "Cannot use files of type %s as source" % stat.ftype)
                         end
-                    when "directory":
-                        raise Puppet::Error.new(
-                            "Somehow got told to copy directory %s" %
-                                @parent.name)
-                    when "link":
-                        dest = File.readlink(@source)
-                        Puppet::State::PFileLink.create(@dest,@parent.path)
                     else
-                        raise Puppet::Error.new(
-                            "Cannot use files of type %s as source" % stat.ftype)
+                        raise Puppet::Error.new("Somehow got a non-local source")
                     end
-                else
-                    raise Puppet::Error.new("Somehow got a non-local source")
                 end
                 return :file_changed
             end
@@ -746,18 +970,19 @@ module Puppet
             @states = [
                 Puppet::State::PFileCreate,
                 Puppet::State::PFileChecksum,
-                Puppet::State::PFileCopy,
+                Puppet::State::PFileSource,
                 Puppet::State::PFileUID,
                 Puppet::State::PFileGroup,
-                Puppet::State::PFileMode
+                Puppet::State::PFileMode,
+                Puppet::State::PFileType
             ]
 
             @parameters = [
                 :path,
                 :backup,
                 :linkmaker,
-                :recurse,
                 :source,
+                :recurse,
                 :filebucket
             ]
 
@@ -782,7 +1007,7 @@ module Puppet
                 *file* is supported as a protocol)."
 
             @paramdoc[:filebucket] = "A repository for backing up files, including
-                over the network.  Argument must the name of an existing
+                over the network.  Argument must be the name of an existing
                 filebucket."
 
             @name = :file
@@ -790,11 +1015,12 @@ module Puppet
 
             @depthfirst = false
 
-            if Process.uid == 0
-                @@pinparams = [:mode, :owner, :group, :checksum]
-            else
-                @@pinparams = [:mode, :group, :checksum]
-            end
+            #if Process.uid == 0
+                @@pinparams = [:mode, :type, :owner, :group, :checksum]
+                PINPARAMS = [:mode, :type, :owner, :group, :checksum]
+            #else
+            #    @@pinparams = [:mode, :type, :group, :checksum]
+            #end
 
 
             def self.recursecompare(source,dest)
@@ -823,6 +1049,10 @@ module Puppet
                         child.parent = self
                     }
                 end
+            end
+
+            def argument?(arg)
+                @arghash.include?(arg)
             end
 
             def initialize(hash)
@@ -882,13 +1112,13 @@ module Puppet
                 end
 
                 args = @arghash.dup
+                #args = {}
 
                 args[:path] = path
 
                 unless hash.include?(:source) # it's being manually overridden
-
                     if args.include?(:source)
-                        #Puppet.notice "Rewriting source for %s" % path
+                        Puppet.err "Rewriting source for %s" % path
                         name = File.basename(path)
                         dirname = args[:source]
                         #Puppet.notice "Old: %s" % args[:source]
@@ -937,16 +1167,26 @@ module Puppet
                     klass = Puppet::Type::PFile
                 end
                 if child = klass[path]
-                    #raise "Ruh-roh"
+                    unless @children.include?(child)
+                        raise Puppet::Error,
+                            "Planned child file %s already exists with parent %s" %
+                            [path, child.parent]
+                    end
                     args.each { |var,value|
                         next if var == :path
                         next if var == :name
-                        child[var] = value
+                        # behave idempotently
+                        unless child[var] == value
+                            #Puppet.warning "%s is %s, not %s" % [var, child[var], value]
+                            child[var] = value
+                        end
                     }
                 else # create it anew
                     #notice "Creating new file with args %s" % args.inspect
                     begin
                         child = klass.new(args)
+                        child.parent = self
+                        @children << child
                     rescue Puppet::Error => detail
                         Puppet.notice(
                             "Cannot manage %s: %s" %
@@ -962,9 +1202,6 @@ module Puppet
                         Puppet.debug args.inspect
                         child = nil
                     end
-                end
-                if child
-                    child.parent = self
                 end
                 return child
             end
@@ -984,8 +1221,8 @@ module Puppet
                     #Puppet.info "%s is already in memory" % @source
                     if obj.managed?
                         raise Puppet::Error.new(
-                            "You cannot currently use managed files as sources;" +
-                            "%s is managed" % path
+                            "You cannot currently use managed file %s as a source" %
+                                path.inspect
                         )
                     else
                         # verify they're looking up the correct info
@@ -1031,18 +1268,29 @@ module Puppet
                 return obj
             end
 
-            # pinning is like recursion, except that it's recursion across
-            # the pinned file's tree, instead of our own
-            # if recursion is turned off, then this whole thing is pretty easy
-            def paramsource=(source)
+            def disabledparamsource=(source)
                 @parameters[:source] = source
                 @arghash.delete(:source)
                 @source = source
 
                 # verify we support the proto
-                if @source =~ /^file:\/\/(\/.+)/
-                    @source = $1
-                elsif @source =~ /(\w+):\/\/(\/.+)/
+                if @source =~ /^\/(\/.+)/
+                    @sourcetype = "file"
+                elsif @source =~ /^(\w):\/\/(\/.+)/
+                    @sourcetype = $1
+                    @source = $2
+                else
+                    raise Puppet::Error, "Invalid source %s" % @source
+                end
+
+
+                case @sourcetype
+                when "file":
+                when "http", "https":
+                    if @parameters[:recurse]
+                        raise Puppet::Error.new("HTTP is not supported recursively")
+                    end
+                else
                     raise Puppet::Error.new("Protocol %s not supported" % $1)
                 end
 
@@ -1158,9 +1406,7 @@ module Puppet
                             else # they have it but we don't
                                 fullname = File.join(self.name, name)
                                 if kid = self.newchild(name,:source => child.name)
-                                    if @children.include?(kid)
-                                        Puppet.notice "Child already included"
-                                    else
+                                    unless @children.include?(kid)
                                         self.push kid
                                     end
                                 end
@@ -1169,19 +1415,12 @@ module Puppet
                     }
 
                 else
-                    self[:copy] = @sourceobj.name
+                    self[:source] = @sourceobj.name
                 end
             end
 
-            def paramrecurse=(value)
-                @parameters[:recurse] = value
-                unless FileTest.exist?(self.name) and self.stat.directory?
-                    #Puppet.info "%s is not a directory; not recursing" %
-                    #    self.name
-                    return
-                end
-
-                recurse = value
+            def recurse
+                recurse = @parameters[:recurse]
                 # we might have a string, rather than a number
                 if recurse.is_a?(String)
                     if recurse =~ /^[0-9]+$/
@@ -1194,6 +1433,24 @@ module Puppet
 
                 # are we at the end of the recursion?
                 if recurse == 0
+                    Puppet.info "finished recursing"
+                    return
+                end
+
+                if recurse.is_a?(Integer)
+                    recurse -= 1
+                end
+
+                self.localrecurse(recurse)
+                if @states.include?(:source)
+                    self.sourcerecurse(recurse)
+                end
+            end
+
+            def localrecurse(recurse)
+                unless FileTest.exist?(self.name) and self.stat.directory?
+                    #Puppet.info "%s is not a directory; not recursing" %
+                    #    self.name
                     return
                 end
 
@@ -1211,51 +1468,79 @@ module Puppet
                 Dir.foreach(self.name) { |file|
                     next if file =~ /^\.\.?/ # skip . and ..
                     if child = self.newchild(file, :recurse => recurse)
-                        if @children.include?(child)
-                            Puppet.notice "Child already included"
-                        else
+                        unless @children.include?(child)
                             self.push child
                             added.push file
                         end
                     end
                 }
+            end
 
-                # here's where we handle sources; it's special, because it can
-                # require us to build a structure of files that don't yet exist
-                if @parameters.include?(:source)
-                    unless FileTest.directory?(@parameters[:source])
-                        raise Puppet::Error("Cannot use file %s as a source for a dir" %
-                            @parameters[:source])
-                    end
-                    Dir.foreach(@parameters[:source]) { |file|
-                        next if file =~ /^\.\.?$/ # skip . and ..
-                        unless added.include?(file)
-                            Puppet.notice "Adding absent source-file %s" % file
-                            if child = self.newchild(file,
-                                :recurse => recurse,
-                                :source => File.join(self.name, file)
-                            )
-                                if @children.include?(child)
-                                    Puppet.notice "Child already included"
-                                else
-                                    self.push child
-                                    added.push file
-                                end
-                            end
-                        end
-                    }
+            def sourcerecurse(recurse)
+                source = @states[:source].source
+                
+                sourceobj, path = uri2obj(source)
+
+                # we'll set this manually as necessary
+                if @arghash.include?(:create)
+                    @arghash.delete(:create)
                 end
+
+                # okay, we've got our source object; now we need to
+                # build up a local file structure to match the remote
+                # one
+
+                server = sourceobj.server
+                sum = "md5"
+                if state = self.state(:checksum)
+                    sum = state.checktype
+                end
+                r = false
+                if recurse
+                    unless recurse == 0
+                        r = 1
+                    end
+                end
+
+                #Puppet.warning "Listing path %s" % path.inspect
+                desc = server.list(path, r)
+
+                #params = @@pinparams.dup
+                #params.unshift(:name)
+                desc.split("\n").each { |line|
+                    file, type = line.split("\t")
+                    next if file == "/"
+                    name = file.sub(/^\//, '')
+                    #Puppet.warning "child name is %s" % name
+                    args = {:source => source + file}
+                    if type == file
+                        args[:recurse] = nil
+                    end
+                    self.newchild(name, args)
+                    #self.newchild(hash, source, recurse)
+                    #hash2child(hash, source, recurse)
+                }
             end
 
             # a wrapper method to make sure the file exists before doing anything
             def retrieve
+                if @states.include?(:source)
+                    @states[:source].retrieve
+                end
+
+                if @parameters.include?(:recurse)
+                    #self[:recurse] = @parameters[:recurse]
+                    self.recurse
+                end
+
                 unless stat = self.stat(true)
-                    Puppet.debug "File %s does not exist" % self.name
+                    Puppet.debug "rFile %s does not exist" % self.name
                     @states.each { |name,state|
                         state.is = -1
                     }
                     return
                 end
+
                 super
             end
 
@@ -1264,8 +1549,6 @@ module Puppet
                     begin
                         @stat = File.stat(self.name)
                     rescue Errno::ENOENT => error
-                        #Puppet.debug "Failed to stat %s: No such file or directory" %
-                        #    [self.name]
                         @stat = nil
                     rescue => error
                         Puppet.debug "Failed to stat %s: %s" %
@@ -1276,30 +1559,57 @@ module Puppet
 
                 return @stat
             end
+
+            def uri2obj(source)
+                sourceobj = FileSource.new
+                path = nil
+                if source =~ /^\//
+                    source = "file://localhost/%s" % source
+                    sourceobj.mount = "localhost"
+                    sourceobj.local = true
+                end
+                begin
+                    uri = URI.parse(source)
+                rescue => detail
+                    raise Puppet::Error, "Could not understand source %s: %s" %
+                        [source, detail.to_s]
+                end
+
+                case uri.scheme
+                when "file":
+                    sourceobj.server = Puppet::FileServer.new(
+                        :Local => true
+                    )
+                    sourceobj.server.mount("/", "localhost")
+                    path = "/localhost" + uri.path
+                when "puppet":
+                    args = { :Server => uri.host }
+                    if uri.port
+                        args[:Port] = uri.port
+                    end
+                    sourceobj.server = Puppet::NetworkClient.new(args)
+
+                    tmp = uri.path
+                    if tmp =~ %r{^/(\w+)}
+                        sourceobj.mount = $1
+                        path = tmp.sub(%r{^/\w+},'') || "/"
+                    else
+                        raise Puppet::Error, "Invalid source path %s" % tmp
+                    end
+                else
+                    raise Puppet::Error,
+                        "Got other recursive file proto %s" % uri.scheme
+                    return
+                end
+
+                return [sourceobj, path.sub(/\/\//, '/')]
+            end
         end # Puppet::Type::PFile
     end # Puppet::Type
 
-    class PFileSource
-        attr_accessor :name
-
-        @sources = Hash.new(nil)
-
-        def PFileSource.[]=(name,sub)
-            @sources[name] = sub
-        end
-
-        def PFileSource.[](name)
-            return @sources[name]
-        end
-
-        def initialize(name)
-            @name = name
-
-            if block_given?
-                yield self
-            end
-
-            PFileSource[name] = self
-        end
+    # the filesource class can't include the path, because the path
+    # changes for every file instance
+    class FileSource
+        attr_accessor :mount, :root, :server, :local
     end
 end

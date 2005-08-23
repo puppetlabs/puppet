@@ -1,0 +1,22 @@
+$Id$
+
+This is what you need to get puppet running:
+
+-- Check you have Ruby version 1.8.2 or later
+    You can download it from 
+    ftp://ftp.ruby-lang.org/pub/ruby/ruby-1.8.2.tar.gz
+    Un tar it, then: ./configure; make; make install
+
+-- http://reductivelabs.com/downloads/facter/facter-1.0.tgz
+    A library that puppet needs to run.  Un tar it, and calling
+    'ruby install.rb' file should successfully install it; let 
+    me know if it doesn't.  Otherwise, you can just set RUBYLIB
+    to contain its lib directory.
+
+-- Install puppet
+    Run 'ruby install.rb' or add the 'lib/' directory to your RUBYLIB path.
+    Documentation can be found online at 
+    http://reductivelabs.com/projects/puppet/documentation/
+
+-- After that, you should be able to go into test/ and run ./test, 
+   or run 'bin/puppet' on whichever puppet config files you want.

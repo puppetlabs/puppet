@@ -1,0 +1,22 @@
+# $Id$
+
+# DISABLED
+
+# facts are now added to the top scope (e.g., operatingsystem and macaddress)
+
+# these facts have to get defined by the server onto the client before
+# we can retrieve their values
+#fact { "videocard":
+#    interpreter => "/bin/sh",
+#    code => "lspci  | grep VGA",
+#    os => "Linux"
+#}
+$testing = "value"
+$operatingsystem = fact("operatingsystem")
+$fact = addfact(
+    name => "videocard",
+    interpreter => "/bin/sh",
+    code => "lspci  | grep VGA",
+    os => "Linux"
+)
+$card = fact("videocard")

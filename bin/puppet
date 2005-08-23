@@ -1,0 +1,129 @@
+#!/usr/bin/ruby -w
+
+#
+# = Synopsis
+#
+# Run a stand-alone +puppet+ script.
+#
+# = Usage
+#
+#   puppet [-V|--version] [-d|--debug] [-v|--verbose] [-l|--logfile <file>] [-h|--help] <file>
+#
+# = Description
+#
+# This is the standalone +puppet+ execution script; use it to execute
+# individual scripts that you write.  If you need to execute site-wide
+# scripts, use +puppetd+ and +puppetmasterd+.
+#
+# = Options
+#
+# debug::
+#   Enable full debugging.
+#
+# help::
+#   Print this help message
+#
+# logfile::
+#   Where to send messages.  Defaults to sending messages to the console.
+#
+# = Example
+#
+#   puppet -l /tmp/script.log script.pp
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005 Reductive Labs, LLC
+# Licensed under the Gnu Public License
+
+require 'puppet'
+require 'puppet/server'
+require 'puppet/client'
+require 'getoptlong'
+
+$haveusage = true
+
+begin
+    require 'rdoc/usage'
+rescue
+    $haveusage = false
+end
+
+    result = GetoptLong.new(
+        [ "--version",  "-V",                   GetoptLong::NO_ARGUMENT ],
+        [ "--logfile",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
+        [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+        [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
+        [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+    )
+
+debug = false
+verbose = false
+logfile = false
+
+begin
+    result.each { |opt,arg|
+        case opt
+            when "--version"
+                puts "%s" % Puppet.version
+                exit
+            when "--help"
+                if $haveusage
+                    RDoc::usage && exit
+                else
+                    puts "No help available unless you have RDoc::usage installed"
+                    exit
+                end
+            when "--verbose"
+                verbose = true
+            when "--debug"
+                debug = true
+            when "--logfile"
+                logfile = arg
+            else
+                $stderr.puts "Invalid option '#{opt}'"
+                Rdoc::usage(1,'usage')
+        end
+    }
+rescue GetoptLong::InvalidOption => detail
+    RDoc::usage(1,'usage')
+end
+
+if debug
+    Puppet[:loglevel] = :debug
+elsif verbose
+    Puppet[:loglevel] = :info
+end
+
+if logfile
+    Puppet[:logdest] = logfile
+end
+
+begin
+    server = Puppet::Master.new(
+        :File => ARGV.shift,
+        :Local => true
+    )
+rescue => detail
+    $stderr.puts detail
+    exit(1)
+end
+
+begin
+    client = Puppet::Client.new(
+        :Server => server
+    )
+rescue => detail
+    $stderr.puts detail
+    exit(1)
+end
+
+begin
+    client.getconfig
+rescue => detail
+    $stderr.puts detail
+    exit(1)
+end

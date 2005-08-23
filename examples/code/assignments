@@ -1,0 +1,11 @@
+# $Id$
+
+$goodness = sunos
+
+$subvariable = $goodness
+
+$yayness = "this is a string of text"
+
+#$sleeper = service { sleeper:
+#    running => "1"
+#}

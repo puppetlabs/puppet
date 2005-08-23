@@ -1,0 +1,127 @@
+#!/usr/bin/ruby -w
+
+#--------------------
+# the puppet client
+#
+# $Id$
+
+
+require 'puppet'
+require 'puppet/sslcertificates'
+require 'getoptlong'
+
+result = GetoptLong.new(
+	[ "--ssldir",	    			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--list",	    "-l",			GetoptLong::NO_ARGUMENT ],
+	[ "--sign",	    "-s",			GetoptLong::NO_ARGUMENT ],
+	[ "--debug",    "-d",			GetoptLong::NO_ARGUMENT ],
+	[ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
+	[ "--all",	    "-a",			GetoptLong::NO_ARGUMENT ],
+	[ "--cadir",	    			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--generate", "-g",  			GetoptLong::NO_ARGUMENT ],
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+)
+
+mode = nil
+all = false
+generate = nil
+
+result.each { |opt,arg|
+	case opt
+		when "--help"
+			puts "There is no help yet"
+			exit
+		when "--list"
+            mode = :list
+		when "--sign"
+            mode = :sign
+		when "--all"
+            all = true
+		when "--verbose"
+            Puppet[:loglevel] = :info
+		when "--debug"
+            Puppet[:loglevel] = :debug
+		when "--generate"
+            generate = arg
+            mode = :generate
+		when "--cadir"
+            Puppet[:cadir] = arg
+		when "--ssldir"
+            Puppet[:ssldir] = arg
+		else
+			puts "Invalid option '#{opt}'"
+            exit(10)
+	end
+}
+
+ca = Puppet::SSLCertificates::CA.new()
+
+unless mode
+    $stderr.puts "You must specify --list or --sign"
+    exit(12)
+end
+
+hosts = ca.list
+unless hosts.length > 0 or mode == :generate
+    Puppet.info "No waiting requests"
+    exit(0)
+end
+
+case mode
+when :list
+    puts hosts.join("\n")
+when :sign
+    unless ARGV.length > 0 or all
+        $stderr.puts(
+            "You must specify to sign all certificates or you must specify hostnames"
+        )
+        exit(24)
+    end
+
+    unless all
+        hosts = hosts.find_all { |host|
+            ARGV.include?(host)
+        }
+    end
+
+    hosts.each { |host|
+        begin
+            csr = ca.getclientcsr(host)
+        rescue => detail
+            $stderr.puts "Could not retrieve request for %s: %s" % [host, detail]
+        end
+
+        begin
+            ca.sign(csr)
+        rescue => detail
+            $stderr.puts "Could not sign request for %s: %s" % [host, detail]
+        end
+
+        begin
+            ca.removeclientcsr(host)
+        rescue => detail
+            $stderr.puts "Could not remove request for %s: %s" % [host, detail]
+        end
+    }
+when :generate
+    # we need to generate a certificate for a host
+    unless ARGV.length > 0
+        $stderr.puts "You must specify hosts to generate certs for"
+        exit(84)
+    end
+    ARGV.each { |host|
+        puts "Generating certificate for %s" % host
+        cert = Puppet::SSLCertificates::Certificate.new(
+            :name => host
+        )
+        cert.mkcsr
+        signedcert, cacert = ca.sign(cert.csr)
+
+        cert.cert = signedcert
+        cert.cacert = cacert
+        cert.write
+    }
+else
+    $stderr.puts "Invalid mode %s" % mode
+    exit(42)
+end

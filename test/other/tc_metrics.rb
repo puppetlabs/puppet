@@ -1,7 +1,7 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk/"
+    $puppetbase = "../.."
 end
 
 require 'puppet/metric'

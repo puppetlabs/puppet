@@ -1,0 +1,10 @@
+class comp(arg1) {
+    file { "/etc/passwd":
+        mode => 644
+    }
+}
+
+# i've specified an arg but it's an invalid one
+comp {
+    fakearg => "yay"
+}

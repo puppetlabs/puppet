@@ -1,0 +1,13 @@
+$path = "/usr/bin:/bin"
+
+file { "/tmp/svntests":
+    recurse => true,
+    checksum => md5
+}
+
+exec { "echo 'files have been updated'":
+    cwd => "/tmp/svntests",
+    refreshonly => true,
+    require => file["/tmp/svntests"],
+    path => $path
+}

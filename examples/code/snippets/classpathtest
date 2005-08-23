@@ -1,0 +1,13 @@
+# $Id$
+
+define component {
+    file { "/tmp/classtest": create => true, mode => 755 }
+    #testing {}
+}
+
+class testing {
+    component { "componentname": }
+}
+
+#component {}
+testing { "testingname": }

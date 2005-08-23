@@ -409,9 +409,13 @@ class Type < Puppet::Element
     # does the name reflect a valid parameter?
     def self.validparameter?(name)
         unless defined? @parameters
-            raise "Class %s has not defined parameters" % self
+            raise Puppet::DevError, "Class %s has not defined parameters" % self
         end
-        return @parameters.include?(name)
+        if @parameters.include?(name) or @@metaparams.include?(name)
+            return true
+        else
+            return false
+        end
     end
     #---------------------------------------------------------------
 
@@ -474,6 +478,7 @@ class Type < Puppet::Element
             raise Puppet::Error.new("Got nil value for %s" % name)
         end
         if Puppet::Type.metaparam?(name)
+            @parameters[name] = value
             # call the metaparam method 
             self.send(("meta" + name.id2name + "="),value)
         elsif stateklass = self.class.validstate?(name) 

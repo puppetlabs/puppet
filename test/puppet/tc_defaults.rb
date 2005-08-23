@@ -1,7 +1,7 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk/"
+    $puppetbase = ".."
 end
 
 require 'puppet'
@@ -11,8 +11,7 @@ require 'test/unit'
 
 class TestPuppetDefaults < Test::Unit::TestCase
     @@dirs = %w{rrddir puppetconf puppetvar logdir statedir}
-    @@files = %w{logfile checksumfile 
-        manifest masterlog}
+    @@files = %w{logfile checksumfile manifest masterlog}
     @@normals = %w{puppetport masterport server}
     @@booleans = %w{rrdgraph noop}
 
@@ -40,17 +39,19 @@ class TestPuppetDefaults < Test::Unit::TestCase
         }
     end
 
-    def testContained
-        confdir = Regexp.new(Puppet[:puppetconf])
-        vardir = Regexp.new(Puppet[:puppetvar])
-        [@@dirs,@@files].flatten.each { |param|
-            value = Puppet[param]
+    if __FILE__ == $0
+        def disabled_testContained
+            confdir = Regexp.new(Puppet[:puppetconf])
+            vardir = Regexp.new(Puppet[:puppetvar])
+            [@@dirs,@@files].flatten.each { |param|
+                value = Puppet[param]
 
-            unless value =~ confdir or value =~ vardir
-                assert_nothing_raised { raise "%s is in wrong dir: %s" %
-                    [param,value] }
-            end
-        }
+                unless value =~ confdir or value =~ vardir
+                    assert_nothing_raised { raise "%s is in wrong dir: %s" %
+                        [param,value] }
+                end
+            }
+        end
     end
 
     def testArgumentTypes

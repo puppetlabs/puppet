@@ -5,6 +5,7 @@
 require 'puppet'
 require 'puppet/sslcertificates'
 require 'puppet/type'
+require 'puppet/server'
 require 'facter'
 require 'openssl'
 require 'puppet/transaction'
@@ -32,22 +33,23 @@ module Puppet
         class NetworkClient < XMLRPC::Client
             #include Puppet::Daemon
 
-            @@methods = {
-                "puppetmaster" => [ :getconfig ],
-                "puppetca" => [ :getcert ]
-            }
+            @@handlers = [Puppet::FileServer, Puppet::CA, Puppet::Master]
 
-            @@methods.each { |namespace, methods|
-                methods.each { |method|
+            @@handlers.each { |handler|
+                interface = handler.interface
+                namespace = interface.prefix
+
+                interface.methods.each { |ary|
+                    method = ary[0]
                     self.send(:define_method,method) { |*args|
-                        Puppet.info "peer cert is %s" % @http.peer_cert
+                        #Puppet.info "peer cert is %s" % @http.peer_cert
                         #Puppet.info "cert is %s" % @http.cert
                         begin
                             call("%s.%s" % [namespace, method.to_s],*args)
                         rescue XMLRPC::FaultException => detail
                             Puppet.err "XML Could not call %s.%s: %s" %
                                 [namespace, method, detail.faultString]
-                            raise NetworkClientError.new,
+                            raise NetworkClientError,
                                 "XMLRPC Error: %s" % detail.faultString
                         rescue => detail
                             Puppet.err "Could not call %s.%s: %s" %
