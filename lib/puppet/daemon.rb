@@ -41,14 +41,21 @@ module Puppet
         def httplog
             args = []
             # yuck; separate http logs
+            file = nil
             if self.is_a?(Puppet::Server)
-                args << Puppet[:masterhttplog]
+                file = Puppet[:masterhttplog]
             else
-                args << Puppet[:httplog]
+                file = Puppet[:httplog]
             end
+
+            unless FileTest.exists?(File.dirname(file))
+                Puppet.recmkdir(File.dirname(file))
+            end
+            args << file
             if Puppet[:debug]
                 args << WEBrick::Log::DEBUG
             end
+
             log = WEBrick::Log.new(*args)
 
             return log

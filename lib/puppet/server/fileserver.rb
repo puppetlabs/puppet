@@ -38,7 +38,7 @@ class Server
             return obj
         end
 
-        def describe(file)
+        def describe(file, request = nil)
             mount, path = splitpath(file)
 
             subdir = nil
@@ -82,9 +82,22 @@ class Server
             else
                 @local = false
             end
+
+            if hash.include?(:Mount)
+                unless hash[:Mount].is_a?(Hash)
+                    raise Puppet::DevError, "Invalid mount hash %s" %
+                        hash[:Mount].inspect
+                end
+
+                hash[:Mount].each { |dir, name|
+                    if FileTest.exists?(dir)
+                        self.mount(dir, name)
+                    end
+                }
+            end
         end
 
-        def list(dir, recurse = false, sum = "md5")
+        def list(dir, recurse = false, sum = "md5", request = nil)
             mount, path = splitpath(dir)
 
             subdir = nil
@@ -101,7 +114,7 @@ class Server
 
             #rmdir = File.dirname(File.join(@mounts[mount], path))
             rmdir = nameswap(dir, mount)
-            desc = self.reclist(rmdir, subdir, recurse)
+            desc = reclist(rmdir, subdir, recurse)
 
             if desc.length == 0
                 Puppet.notice "Got no information on //%s/%s" %
@@ -145,43 +158,7 @@ class Server
             end
         end
 
-        # recursive listing function
-        def reclist(root, path, recurse)
-            #desc = [obj.name.sub(%r{#{root}/?}, '')]
-            name = path.sub(root, '')
-            if name == ""
-                name = "/"
-            end
-
-            if name == path
-                raise Puppet::FileServerError, "Could not match %s in %s" %
-                    [root, path]
-            end
-
-            desc = [name]
-            ftype = File.stat(path).ftype
-
-            desc << ftype
-            if recurse.is_a?(Integer)
-                recurse -= 1
-            end
-
-            ary = [desc]
-            if recurse == true or (recurse.is_a?(Integer) and recurse > -1)
-                if ftype == "directory"
-                    Dir.entries(path).each { |child|
-                        next if child =~ /^\.\.?$/
-                        self.reclist(root, File.join(path, child), recurse).each { |cobj|
-                            ary << cobj
-                        }
-                    }
-                end
-            end
-
-            return ary.reject { |c| c.nil? }
-        end
-
-        def retrieve(file)
+        def retrieve(file, request = nil)
             mount, path = splitpath(file)
 
             unless (@mounts.include?(mount))
@@ -217,6 +194,42 @@ class Server
             )
             #Puppet.info "Swapped %s to %s" % [name, newname]
             #newname
+        end
+
+        # recursive listing function
+        def reclist(root, path, recurse)
+            #desc = [obj.name.sub(%r{#{root}/?}, '')]
+            name = path.sub(root, '')
+            if name == ""
+                name = "/"
+            end
+
+            if name == path
+                raise Puppet::FileServerError, "Could not match %s in %s" %
+                    [root, path]
+            end
+
+            desc = [name]
+            ftype = File.stat(path).ftype
+
+            desc << ftype
+            if recurse.is_a?(Integer)
+                recurse -= 1
+            end
+
+            ary = [desc]
+            if recurse == true or (recurse.is_a?(Integer) and recurse > -1)
+                if ftype == "directory"
+                    Dir.entries(path).each { |child|
+                        next if child =~ /^\.\.?$/
+                        reclist(root, File.join(path, child), recurse).each { |cobj|
+                            ary << cobj
+                        }
+                    }
+                end
+            end
+
+            return ary.reject { |c| c.nil? }
         end
 
         def splitpath(dir)

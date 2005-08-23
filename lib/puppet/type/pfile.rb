@@ -642,9 +642,8 @@ module Puppet
 
             def describe
                 source = @source
-                
-                sourceobj, path = @parent.uri2obj(source)
 
+                sourceobj, path = @parent.uri2obj(source)
                 server = sourceobj.server
 
                 desc = server.describe(path)
@@ -1300,7 +1299,8 @@ module Puppet
                     tmp = uri.path
                     if tmp =~ %r{^/(\w+)}
                         sourceobj.mount = $1
-                        path = tmp.sub(%r{^/\w+},'') || "/"
+                        path = tmp
+                        #path = tmp.sub(%r{^/\w+},'') || "/"
                     else
                         raise Puppet::Error, "Invalid source path %s" % tmp
                     end

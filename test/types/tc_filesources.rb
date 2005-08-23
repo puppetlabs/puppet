@@ -6,6 +6,7 @@ if __FILE__ == $0
 end
 
 require 'puppet'
+require 'cgi'
 require 'test/unit'
 require 'fileutils'
 require 'puppettest'
@@ -36,6 +37,7 @@ class TestFileSources < Test::Unit::TestCase
 
     def setup
         @@tmpfiles = []
+        @@tmppids = []
         Puppet[:loglevel] = :debug if __FILE__ == $0
         Puppet[:checksumfile] = File.join(Puppet[:statedir], "checksumtestfile")
         begin
@@ -48,6 +50,9 @@ class TestFileSources < Test::Unit::TestCase
     def teardown
         clearstorage
         Puppet::Type.allclear
+        @@tmppids.each { |pid|
+            system("kill -INT %s" % pid)
+        }
         @@tmpfiles.each { |file|
             if FileTest.exists?(file)
                 system("chmod -R 755 %s" % file)
@@ -169,7 +174,7 @@ class TestFileSources < Test::Unit::TestCase
         Puppet::Type.allclear
     end
 
-    def run_complex_sources
+    def run_complex_sources(networked = false)
         path = "/tmp/ComplexSourcesTest"
         @@tmpfiles.push path
 
@@ -185,7 +190,12 @@ class TestFileSources < Test::Unit::TestCase
         }
 
         todir = File.join(path, "todir")
-        recursive_source_test(fromdir, todir)
+        source = fromdir
+        if networked
+            source = "puppet://localhost/%s%s" % [networked, fromdir]
+        end
+        Puppet.warning "Source is %s" % source
+        recursive_source_test(source, todir)
 
         return [fromdir,todir]
     end
@@ -233,7 +243,7 @@ class TestFileSources < Test::Unit::TestCase
         assert_trees_equal(fromdir,todir)
     end
 
-    def test_zzzsources_with_added_destfiles
+    def test_sources_with_added_destfiles
         fromdir, todir = run_complex_sources
         assert(FileTest.exists?(todir))
         # and finally, add some new files
@@ -298,5 +308,126 @@ class TestFileSources < Test::Unit::TestCase
             rootobj.evaluate
         }
         assert(klass[file3])
+    end
+
+    def test_zzSimpleNetworkSources
+        server = nil
+        basedir = "/tmp/networksourcetesting"
+        Dir.mkdir(basedir)
+
+        Puppet[:puppetconf] = basedir
+        Puppet[:puppetvar] = basedir
+        Puppet[:autosign] = true
+        @@tmpfiles << basedir
+
+        tmpname = "yaytesting"
+        tmpfile = File.join(basedir, tmpname)
+        File.open(tmpfile, "w") { |f| f.print rand(100) }
+
+        port = 8765
+        serverpid = nil
+        assert_nothing_raised() {
+            server = Puppet::Server.new(
+                :Port => port,
+                :Handlers => {
+                    :CA => {}, # so that certs autogenerate
+                    :FileServer => {
+                        :Mount => {
+                            "/" => "root"
+                        }
+                    }
+                }
+            )
+
+        }
+        serverpid = fork {
+            assert_nothing_raised() {
+                #trap(:INT) { server.shutdown; Kernel.exit! }
+                trap(:INT) { server.shutdown }
+                server.start
+            }
+        }
+        @@tmppids << serverpid
+
+        client = nil
+        assert_nothing_raised() {
+            client = XMLRPC::Client.new("localhost", "/RPC2", port, nil, nil,
+                nil, nil, true, 3)
+        }
+        retval = nil
+
+        sleep(1)
+
+        list = nil
+        rpath = "/root%s" % tmpfile
+        assert_nothing_raised {
+            list = client.call("fileserver.list", rpath)
+        }
+
+        assert_equal("/\tfile", list)
+
+        assert_nothing_raised {
+            list = client.call("fileserver.describe", rpath)
+        }
+
+        assert_match(/^\d+\tfile\t\d+\t\d+\t.+$/, list)
+
+        assert_nothing_raised {
+            list = client.call("fileserver.retrieve", rpath)
+        }
+
+        contents = File.read(tmpfile)
+        assert_equal(contents, CGI.unescape(list))
+
+        assert_nothing_raised {
+            system("kill -INT %s" % serverpid)
+        }
+    end
+
+    def test_zzNetworkSources
+        server = nil
+        basedir = "/tmp/networksourcetesting"
+        Dir.mkdir(basedir)
+
+        Puppet[:puppetconf] = basedir
+        Puppet[:puppetvar] = basedir
+        Puppet[:autosign] = true
+        @@tmpfiles << basedir
+
+        Puppet[:masterport] = 8762
+
+        serverpid = nil
+        assert_nothing_raised() {
+            server = Puppet::Server.new(
+                :Handlers => {
+                    :CA => {}, # so that certs autogenerate
+                    :FileServer => {
+                        :Mount => {
+                            "/" => "root"
+                        }
+                    }
+                }
+            )
+
+        }
+        serverpid = fork {
+            assert_nothing_raised() {
+                #trap(:INT) { server.shutdown; Kernel.exit! }
+                trap(:INT) { server.shutdown }
+                server.start
+            }
+        }
+        @@tmppids << serverpid
+
+        sleep(1)
+
+        fromdir, todir = run_complex_sources("root")
+        assert_trees_equal(fromdir,todir)
+        recursive_source_test(fromdir, todir)
+        assert_trees_equal(fromdir,todir)
+
+        assert_nothing_raised {
+            system("kill -INT %s" % serverpid)
+        }
     end
 end

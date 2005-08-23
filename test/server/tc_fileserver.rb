@@ -386,44 +386,6 @@ class TestFileServer < TestPuppet
             }
         }
     end
-
-    def test_networksources
-        server = nil
-        Puppet[:ssldir] = "/tmp/serverconnecttesting"
-        Puppet[:autosign] = true
-        @@tmpfiles << "/tmp/serverconnecttesting"
-        serverpid = nil
-        port = 8080
-        assert_nothing_raised() {
-            server = Puppet::Server.new(
-                :Port => port,
-                :Handlers => {
-                    :CA => {}, # so that certs autogenerate
-                    :FileServer => {
-                        :Mount => {
-                            
-                        }
-                    }
-                }
-            )
-
-        }
-        serverpid = fork {
-            assert_nothing_raised() {
-                #trap(:INT) { server.shutdown; Kernel.exit! }
-                trap(:INT) { server.shutdown }
-                server.start
-            }
-        }
-        @@tmppids << serverpid
-
-        sleep(3)
-        client = nil
-        assert_nothing_raised() {
-            client = XMLRPC::Client.new("localhost", "/RPC2", port, nil, nil,
-                nil, nil, true, 3)
-        }
-    end
 end
 
 # $Id$

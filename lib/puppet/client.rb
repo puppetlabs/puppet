@@ -111,6 +111,10 @@ module Puppet
                 # from here, i need to add the key, cert, and ca cert
                 # and reorgize how i start the client
             end
+
+            def local
+                false
+            end
         end
     end
 

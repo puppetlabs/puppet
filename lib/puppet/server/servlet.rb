@@ -72,17 +72,17 @@ class Server
             for name, obj in @handler
                 if obj.kind_of? Proc
                     unless methodname == name
-                        Puppet.debug "obj is proc but %s != %s" %
-                            [methodname, name]
+                        #Puppet.debug "obj is proc but %s != %s" %
+                        #    [methodname, name]
                         next
                     end
                 else
                     unless methodname =~ /^#{name}(.+)$/
-                        Puppet.debug "methodname did not match"
+                        #Puppet.debug "methodname did not match"
                         next
                     end
                     unless obj.respond_to? $1
-                        Puppet.debug "methodname does not respond to %s" % $1
+                        #Puppet.debug "methodname does not respond to %s" % $1
                         next
                     end
                     obj = obj.method($1)
