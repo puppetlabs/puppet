@@ -37,7 +37,8 @@ class TestFile < Test::Unit::TestCase
     def setup
         @@tmpfiles = []
         Puppet[:loglevel] = :debug if __FILE__ == $0
-        Puppet[:checksumfile] = File.join(Puppet[:statedir], "checksumtestfile")
+        Puppet[:checksumfile] = "/tmp/checksumtestfile"
+        @@tmpfiles << Puppet[:checksumfile]
         begin
             initstorage
         rescue
@@ -55,7 +56,9 @@ class TestFile < Test::Unit::TestCase
             end
         }
         @@tmpfiles.clear
-        system("rm -f %s" % Puppet[:checksumfile])
+
+        # clean up so i don't screw up other tests
+        Puppet::Storage.clear
     end
 
     def initstorage
@@ -249,10 +252,13 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    def test_checksums
-        types = %w{md5 md5lite timestamp ctime}
+    def test_zzchecksums
+        types = %w{md5 md5lite timestamp time}
         exists = "/tmp/sumtest-exists"
         nonexists = "/tmp/sumtest-nonexists"
+
+        @@tmpfiles << exists
+        @@tmpfiles << nonexists
 
         # try it both with files that exist and ones that don't
         files = [exists, nonexists]
@@ -277,11 +283,23 @@ class TestFile < Test::Unit::TestCase
                         :checksum => type
                     )
                 }
+                comp = Puppet::Type::Component.new(
+                    :name => "componentfile"
+                )
+                comp.push file
+                trans = nil
                 assert_nothing_raised() {
-                    file.evaluate
+                    trans = comp.evaluate
                 }
+
+                if file.name !~ /nonexists/
+                    sum = file.state(:checksum)
+                    assert_equal(sum.is, sum.should)
+                    assert(sum.insync?)
+                end
+
                 assert_nothing_raised() {
-                    events = file.sync
+                    events = trans.evaluate.collect { |e| e.event }
                 }
                 # we don't want to kick off an event the first time we
                 # come across a file
@@ -290,13 +308,13 @@ class TestFile < Test::Unit::TestCase
                 )
                 assert_nothing_raised() {
                     File.open(path,"w") { |of|
-                        10.times { 
-                            of.puts rand(100)
-                        }
+                        of.puts rand(100)
                     }
-                    #system("cat %s" % path)
                 }
                 Puppet::Type::PFile.clear
+                Puppet::Type::Component.clear
+                sleep 1
+
                 # now recreate the file
                 assert_nothing_raised() {
                     file = Puppet::Type::PFile.new(
@@ -304,24 +322,30 @@ class TestFile < Test::Unit::TestCase
                         :checksum => type
                     )
                 }
+                comp = Puppet::Type::Component.new(
+                    :name => "componentfile"
+                )
+                comp.push file
+                trans = nil
                 assert_nothing_raised() {
-                    file.evaluate
+                    trans = comp.evaluate
                 }
                 assert_nothing_raised() {
-                    events = file.sync
+                    events = trans.evaluate.collect { |e| e.event }
                 }
+
+                sum = file.state(:checksum)
+
                 # verify that we're actually getting notified when a file changes
                 assert(
                     events.include?(:file_modified)
                 )
                 assert_nothing_raised() {
                     Puppet::Type::PFile.clear
+                    Puppet::Type::Component.clear
                 }
-                @@tmpfiles.push path
             }
         }
-        # clean up so i don't screw up other tests
-        Puppet::Storage.clear
     end
 
     def cyclefile(path)
