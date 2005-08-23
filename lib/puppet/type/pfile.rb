@@ -626,76 +626,6 @@ module Puppet
                 be used instead of `copy`."
             @name = :source
 
-            def desc2hash(line, params)
-                args = {}
-                
-                values = line.split("\t").collect { |value|
-                    if value =~ /^[0-9]+$/
-                        value.to_i
-                    else
-                        value
-                    end
-                }
-
-                params.zip(values).each { |param, value|
-                    args[param] = value
-                }
-
-                if args[:type] == "directory"
-                    args.delete(:checksum)
-                end
-                args
-            end
-
-            def hash2child(hash, source, recurse)
-                # "/" == self
-                if hash[:name] == "/"
-                    if hash[:type] == "directory"
-                    else
-                        self[:source] = source
-                    end
-                    hash.each { |param, value|
-                        next if param == :name
-                        next if param == :type
-
-                        unless self.state(param)
-                            self[param] = value
-                        end
-                    }
-                    if source =~ /Filesourcetest/
-                        p self
-                    end
-                    # we can now skip this object, and the rest is
-                    # pretty much related to children
-                    return
-                end
-
-                name = File.join(self.name, hash[:name])
-                if child = @children.find { |child|
-                    child.name == name }
-                else # the child does not yet exist
-                    #hash.delete(:name)
-                    sum = nil
-                    if hash[:type] == "directory"
-                        hash[:create] = "directory"
-                        hash[:source] = @parameters[:source] +  hash[:name]
-                        hash[:recurse] = recurse
-                    else
-                        hash[:source] = source + hash[:name]
-                        #sum = hash[:checksum]
-                        #hash.delete(:checksum)
-                    end
-                    hash.delete(:type)
-
-                    name = hash[:name].sub(/^\//, '') # rm leading /
-                    hash.delete(:name)
-
-                    Puppet.warning "Found new file %s under %s" %
-                        [name.inspect, self.name]
-                    self.newchild(name, hash)
-                end
-            end
-
             def describe
                 source = @source
                 
@@ -706,12 +636,19 @@ module Puppet
                 desc = server.describe(path)
 
                 args = {}
-                Puppet::Type::PFile::PINPARAMS.zip(desc.split("\t")).each { |param, value|
+                Puppet::Type::PFile::PINPARAMS.zip(
+                    desc.split("\t")
+                ).each { |param, value|
                     if value =~ /^[0-9]+$/
                         value = value.to_i
                     end
                     args[param] = value
                 }
+
+                # we can't manage ownership as root, so don't even try
+                unless Process.uid == 0
+                    args.delete(:owner)
+                end
 
                 return args
             end
@@ -1577,10 +1514,13 @@ module Puppet
 
                 case uri.scheme
                 when "file":
-                    sourceobj.server = Puppet::Server::FileServer.new(
-                        :Local => true
-                    )
-                    sourceobj.server.mount("/", "localhost")
+                    unless defined? @@localfileserver
+                        @@localfileserver = Puppet::Server::FileServer.new(
+                            :Local => true
+                        )
+                        @@localfileserver.mount("/", "localhost")
+                    end
+                    sourceobj.server = @@localfileserver
                     path = "/localhost" + uri.path
                 when "puppet":
                     args = { :Server => uri.host }
