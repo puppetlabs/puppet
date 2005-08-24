@@ -49,6 +49,7 @@ module SSLCertificates
                 raise ArgumentError, "mkcert called without %s" % param
             end
         }
+
         cert = OpenSSL::X509::Certificate.new
         from = Time.now
 
@@ -57,7 +58,7 @@ module SSLCertificates
             cert.issuer = hash[:issuer].subject
         else
             # we're a self-signed cert
-            cert.issuer = cert.subject
+            cert.issuer = hash[:name]
         end
         cert.not_before = from
         cert.not_after = from + (hash[:days] * 24 * 60 * 60)
@@ -67,36 +68,12 @@ module SSLCertificates
         cert.serial = hash[:serial]
 
         basic_constraint = nil
-        key_usage = []
-        ext_key_usage = []
-
-        case hash[:type]
-        when :ca:
-            basic_constraint = "CA:TRUE"
-            key_usage.push %w{cRLSign keyCertSign}
-        when :terminalsubca:
-            basic_constraint = "CA:TRUE,pathlen:0"
-            key_usage %w{cRLSign keyCertSign}
-        when :server:
-            basic_constraint = "CA:FALSE"
-            key_usage << %w{digitalSignature keyEncipherment}
-        ext_key_usage << "serverAuth"
-        when :ocsp:
-            basic_constraint = "CA:FALSE"
-            key_usage << %w{nonRepudiation digitalSignature}
-        ext_key_usage << %w{serverAuth OCSPSigning}
-        when :client:
-            basic_constraint = "CA:FALSE"
-            key_usage << %w{nonRepudiation digitalSignature keyEncipherment}
-        ext_key_usage << %w{clientAuth emailProtection}
-        else
-            raise Puppet::Error, "unknown cert type '%s'" % hash[:type]
-        end
-
-        key_usage.flatten!
-        ext_key_usage.flatten!
+        key_usage = nil
+        ext_key_usage = nil
 
         ef = OpenSSL::X509::ExtensionFactory.new
+
+        ef.subject_certificate = cert
 
         if hash[:issuer]
             ef.issuer_certificate = hash[:issuer]
@@ -104,24 +81,45 @@ module SSLCertificates
             ef.issuer_certificate = cert
         end
 
-        ef.subject_certificate = cert
-
         ex = []
-        ex << ef.create_extension("basicConstraints", basic_constraint, true)
+        case hash[:type]
+        when :ca:
+            basic_constraint = "CA:TRUE"
+            key_usage = %w{cRLSign keyCertSign}
+        when :terminalsubca:
+            basic_constraint = "CA:TRUE,pathlen:0"
+            key_usage = %w{cRLSign keyCertSign}
+        when :server:
+            basic_constraint = "CA:FALSE"
+            key_usage = %w{digitalSignature keyEncipherment}
+        ext_key_usage = %w{serverAuth}
+        when :ocsp:
+            basic_constraint = "CA:FALSE"
+            key_usage = %w{nonRepudiation digitalSignature}
+        ext_key_usage = %w{serverAuth OCSPSigning}
+        when :client:
+            basic_constraint = "CA:FALSE"
+            key_usage = %w{nonRepudiation digitalSignature keyEncipherment}
+        ext_key_usage = %w{clientAuth emailProtection}
+            ex << ef.create_extension("nsCertType", "client,email")
+        else
+            raise Puppet::Error, "unknown cert type '%s'" % hash[:type]
+        end
+
+        Puppet.debug "Key usage is %s" % key_usage.inspect
+        Puppet.debug "ExtKey usage is %s" % ext_key_usage.inspect
+
         ex << ef.create_extension("nsComment",
                                   "Puppet Ruby/OpenSSL Generated Certificate")
+        ex << ef.create_extension("basicConstraints", basic_constraint, true)
         ex << ef.create_extension("subjectKeyIdentifier", "hash")
-        #ex << ef.create_extension("nsCertType", "client,email")
-        unless key_usage.empty? then
+
+        if key_usage
           ex << ef.create_extension("keyUsage", key_usage.join(","))
         end
-        #ex << ef.create_extension("authorityKeyIdentifier",
-        #                          "keyid:always,issuer:always")
-        #ex << ef.create_extension("authorityKeyIdentifier", "keyid:always")
-        unless ext_key_usage.empty? then
+        if ext_key_usage
           ex << ef.create_extension("extendedKeyUsage", ext_key_usage.join(","))
         end
-
 
         #if @ca_config[:cdp_location] then
         #  ex << ef.create_extension("crlDistributionPoints",
@@ -134,8 +132,11 @@ module SSLCertificates
         #end
         cert.extensions = ex
 
-        # write the cert out
-        #File.open(certfile, "w") {  |f| f << cert.to_pem }
+        # for some reason this _must_ be the last extension added
+        if hash[:type] == :ca
+            ex << ef.create_extension("authorityKeyIdentifier",
+                                      "keyid:always,issuer:always")
+        end
 
         return cert
     end
@@ -311,7 +312,8 @@ module SSLCertificates
                 :encrypt => @config[:passfile],
                 :key => @config[:cakey],
                 :selfsign => true,
-                :length => 1825
+                :length => 1825,
+                :type => :ca
             )
             @cert = cert.mkselfsigned
             File.open(@config[:cacert], "w", 0660) { |f|
@@ -658,14 +660,19 @@ module SSLCertificates
                 raise Puppet::Error, "Cannot replace existing certificate"
             end
 
-            @cert = SSLCertificates.mkcert(
-                :type => :server,
+            args = {
                 :name => self.certname,
                 :days => @days,
                 :issuer => nil,
                 :serial => 0x0,
                 :publickey => @key.public_key
-            )
+            }
+            if @type
+                args[:type] = @type
+            else
+                args[:type] = :server
+            end
+            @cert = SSLCertificates.mkcert(args)
 
             @cert.sign(@key, OpenSSL::Digest::SHA1.new) if @selfsign
 

@@ -2,8 +2,7 @@
 
 if __FILE__ == $0
     $:.unshift '../../lib'
-    $:.unshift '../../../../library/trunk/lib/'
-    $:.unshift '../../../../library/trunk/test/'
+    $:.unshift '..'
     $puppetbase = "../.."
 end
 
@@ -196,14 +195,16 @@ class TestCertMgr < Test::Unit::TestCase
             cert.write
         }
         #system("find %s" % Puppet[:ssldir])
+        #system("cp -R %s /tmp/ssltesting" % Puppet[:ssldir])
 
         output = nil
         assert_nothing_raised {
-            output = %x{openssl verify -CApath #{Puppet[:certdir]} -purpose sslserver #{cert.certfile}}
+            output = %x{openssl verify -CAfile #{Puppet[:cacert]} -purpose sslserver #{cert.certfile}}
+            #output = %x{openssl verify -CApath #{Puppet[:certdir]} -purpose sslserver #{cert.certfile}}
         }
 
         assert_equal($?,0)
-        assert_equal("\n", output)
+        assert_equal("/tmp/puppetcertestingdir/certs/signedcertest.pem: OK\n", output)
     end
 
     def mkcert(hostname)
