@@ -336,6 +336,10 @@ module Puppet
             #---------------------------------------------------------------
 
             #---------------------------------------------------------------
+            class Default < AST::Leaf; end
+            #---------------------------------------------------------------
+
+            #---------------------------------------------------------------
             class Type < AST::Leaf; end
             #---------------------------------------------------------------
 
@@ -466,8 +470,6 @@ module Puppet
 
                 def initialize(hash)
                     super
-
-                    Puppet.debug "%s id is %s" % [@name, object_id]
 
                     # we don't have to evaluate because we require bare words
                     # for types
@@ -759,6 +761,141 @@ module Puppet
                     end
 
                     list.each { |child| yield child }
+                end
+            end
+            #---------------------------------------------------------------
+
+            #---------------------------------------------------------------
+            class CaseStatement < AST::Branch
+                attr_accessor :test, :options, :default
+
+                # 'if' is a bit special, since we don't want to continue
+                # evaluating if a test turns up true
+                def evaluate(scope)
+                    value = @test.evaluate(scope)
+
+                    retvalue = nil
+                    found = false
+                    default = nil
+                    @options.each { |option|
+                        if option.eachvalue { |opval|
+                            if opval == value
+                                break true
+                            end
+                        }
+                            # we found a matching option
+                            retvalue = option.evaluate(scope)
+                            break
+                        end
+                    }
+
+                    unless found
+                        if defined? @default
+                            retvalue = @default.evaluate(scope)
+                        else
+                            Puppet.debug "No true answers and no default"
+                        end
+                    end
+                    return retvalue
+                end
+
+                def initialize(hash)
+                    values = {}
+
+                    super
+                    # this won't work if we move away from only allowing constants
+                    # here
+                    # but for now, it's fine and useful
+                    @options.each { |option|
+                        if option.default?
+                            @default = option
+                        end
+                        option.eachvalue { |val|
+                            if values.include?(val)
+                                raise Puppet::ParseError,
+                                    "Value %s appears twice in case statement" %
+                                        val
+                            else
+                                values[val] = true
+                            end
+                        }
+                    }
+                end
+
+                def tree(indent = 0)
+                    rettree = [
+                        @test.tree(indent + 1),
+                        ((@@indline * indent) + self.typewrap(self.pin)),
+                        @options.tree(indent + 1)
+                    ]
+
+                    return rettree.flatten.join("\n")
+                end
+
+                def each
+                    [@test,@options].each { |child| yield child }
+                end
+            end
+            #---------------------------------------------------------------
+
+            #---------------------------------------------------------------
+            class CaseOpt < AST::Branch
+                attr_accessor :value, :statements
+
+                # CaseOpt is a bit special -- we just want the value first,
+                # so that CaseStatement can compare, and then it will selectively
+                # decide whether to fully evaluate this option
+
+                def default?
+                    if defined? @default
+                        return @default
+                    end
+
+                    if @value.is_a?(AST::ASTArray)
+                        @value.each { |subval|
+                            if subval.is_a?(AST::Default)
+                                @default = true
+                                break
+                            end
+                        }
+                    else
+                        if @value.is_a?(AST::Default)
+                            @default = true
+                        end
+                    end
+
+                    unless defined? @default
+                        @default = false
+                    end
+
+                    return @default
+                end
+
+                def eachvalue
+                    if @value.is_a?(AST::ASTArray)
+                        @value.each { |subval|
+                            yield subval.value
+                        }
+                    else
+                        yield @value.value
+                    end
+                end
+
+                def evaluate(scope)
+                    return @statements.evaluate(scope.newscope)
+                end
+
+                def tree(indent = 0)
+                    rettree = [
+                        @value.tree(indent + 1),
+                        ((@@indline * indent) + self.typewrap(self.pin)),
+                        @statements.tree(indent + 1)
+                    ]
+                    return rettree.flatten.join("\n")
+                end
+
+                def each
+                    [@value,@statements].each { |child| yield child }
                 end
             end
             #---------------------------------------------------------------

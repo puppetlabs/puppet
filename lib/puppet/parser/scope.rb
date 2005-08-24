@@ -322,7 +322,7 @@ module Puppet
 
             #------------------------------------------------------------
             def setvar(name,value)
-                Puppet.debug "Setting '%s' to '%s' at level %s" %
+                Puppet.debug "Setting %s to '%s' at level %s" %
                     [name.inspect,value,self.level]
                 if @@declarative and @symtable.include?(name)
                     error = Puppet::ParseError.new(

@@ -6,7 +6,7 @@
 import "simpletests"
 import "assignments"
 import "selectors"
-import "iftest"
+#import "iftest"
 import "importing"
 import "execs"
 import "filedefaults"

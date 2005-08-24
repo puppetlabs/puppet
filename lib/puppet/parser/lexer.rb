@@ -55,7 +55,9 @@ module Puppet
                 "class" => :CLASS,
                 "node" => :NODE,
                 "host" => :NODE,
+                "case" => :CASE,
                 "true" => :BOOLEAN,
+                "default" => :DEFAULT,
                 "false" => :BOOLEAN,
                 "inherits" => :INHERITS,
                 "define" => :DEFINE

@@ -45,7 +45,7 @@ class TestPuppetDExe < Test::Unit::TestCase
         file = File.join($puppetbase, "examples", "code", "head")
         output = nil
         assert_nothing_raised {
-            output = %x{puppetmasterd --manifest #{file}}.chomp
+            output = %x{puppetmasterd --port #{Puppet[:masterport]} --manifest #{file}}.chomp
         }
         assert($? == 0)
         @@tmppids << $?.pid

@@ -23,6 +23,6 @@ $sleeper = file { $filename:
 
 # i guess it has to be solved this way...
 
-$platform ? sunos => file { $filename:
-    mode => 644
-}
+#$platform ? sunos => file { $filename:
+#    mode => 644
+#}

@@ -13,6 +13,7 @@ result = GetoptLong.new(
 	[ "--logfile",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--manifest",	"-m",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--ssldir",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--noinit",   "-n",			GetoptLong::NO_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
@@ -34,6 +35,8 @@ result.each { |opt,arg|
             Puppet[:debug] = true
 		when "--noca"
             ca = false
+		when "--port"
+            Puppet[:masterport] = arg
 		when "--ssldir"
             Puppet[:ssldir] = arg
 		when "--manifest"

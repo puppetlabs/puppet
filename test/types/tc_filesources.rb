@@ -310,9 +310,12 @@ class TestFileSources < Test::Unit::TestCase
         assert(klass[file3])
     end
 
-    def test_zzSimpleNetworkSources
+    def test_SimpleNetworkSources
         server = nil
-        basedir = "/tmp/networksourcetesting"
+        basedir = "/tmp/simplnetworksourcetesting"
+        if File.exists?(basedir)
+            system("rm -rf %s" % basedir)
+        end
         Dir.mkdir(basedir)
 
         Puppet[:puppetconf] = basedir
@@ -384,9 +387,12 @@ class TestFileSources < Test::Unit::TestCase
         }
     end
 
-    def test_zzNetworkSources
+    def test_NetworkSources
         server = nil
         basedir = "/tmp/networksourcetesting"
+        if File.exists?(basedir)
+            system("rm -rf %s" % basedir)
+        end
         Dir.mkdir(basedir)
 
         Puppet[:puppetconf] = basedir

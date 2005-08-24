@@ -267,6 +267,23 @@ class TestSnippets < Test::Unit::TestCase
         assert(File.stat(file2).mode & 007777 == 0644)
     end
 
+    def snippet_casestatement(trans)
+        files = %w{
+            /tmp/existsfile
+            /tmp/existsfile2
+            /tmp/existsfile3
+        }
+
+        files.each { |file|
+            assert(FileTest.exists?(file), "File %s is missing" % file)
+            assert(File.stat(file).mode & 007777 == 0755, "File %s is not 755" % file)
+        }
+
+        assert_nothing_raised {
+            trans.rollback
+        }
+    end
+
     def disabled_snippet_dirchmod(trans)
         dirs = %w{a b}.collect { |letter|
             "/tmp/dirchmodtest%s" % letter
@@ -306,9 +323,16 @@ class TestSnippets < Test::Unit::TestCase
                 )
 
                 assert(client.local)
-                client.getconfig()
-                trans = client.config()
-                self.send(mname, trans)
+                assert_nothing_raised {
+                    client.getconfig()
+                }
+                trans = nil
+                assert_nothing_raised {
+                    trans = client.config()
+                }
+                assert_nothing_raised {
+                    self.send(mname, trans)
+                }
             }
             mname = mname.intern
             #eval("alias %s %s" % [testname, mname])

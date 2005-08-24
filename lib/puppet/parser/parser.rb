@@ -31,7 +31,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..ida89b5273aa', 'grammar.ra', 573
+module_eval <<'..end grammar.ra modeval..id21701493a9', 'grammar.ra', 648
 attr_writer :stack
 attr_reader :file
 
@@ -132,279 +132,212 @@ end
 def string=(string)
     @lexer.string = string
 end
-..end grammar.ra modeval..ida89b5273aa
+..end grammar.ra modeval..id21701493a9
 
 ##### racc 1.4.4 generates ###
 
 racc_reduce_table = [
  0, 0, :racc_error,
- 1, 38, :_reduce_1,
- 1, 39, :_reduce_none,
- 2, 39, :_reduce_3,
- 1, 40, :_reduce_none,
- 1, 40, :_reduce_none,
- 1, 40, :_reduce_none,
- 1, 40, :_reduce_none,
- 1, 40, :_reduce_none,
- 1, 40, :_reduce_none,
- 1, 40, :_reduce_none,
- 5, 41, :_reduce_11,
- 5, 41, :_reduce_12,
- 5, 41, :_reduce_13,
- 3, 54, :_reduce_14,
- 1, 49, :_reduce_none,
- 3, 49, :_reduce_16,
- 0, 50, :_reduce_none,
+ 1, 40, :_reduce_1,
+ 1, 41, :_reduce_none,
+ 2, 41, :_reduce_3,
+ 1, 42, :_reduce_none,
+ 1, 42, :_reduce_none,
+ 1, 42, :_reduce_none,
+ 1, 42, :_reduce_none,
+ 1, 42, :_reduce_none,
+ 1, 42, :_reduce_none,
+ 5, 43, :_reduce_10,
+ 5, 43, :_reduce_11,
+ 5, 43, :_reduce_12,
+ 3, 55, :_reduce_13,
  1, 50, :_reduce_none,
- 1, 48, :_reduce_19,
- 1, 53, :_reduce_20,
- 1, 55, :_reduce_none,
- 1, 55, :_reduce_none,
- 1, 55, :_reduce_none,
- 1, 55, :_reduce_none,
- 1, 55, :_reduce_none,
- 3, 42, :_reduce_26,
- 0, 51, :_reduce_27,
- 1, 51, :_reduce_28,
- 3, 51, :_reduce_29,
- 3, 60, :_reduce_30,
+ 3, 50, :_reduce_15,
+ 0, 51, :_reduce_none,
+ 1, 51, :_reduce_none,
+ 1, 49, :_reduce_18,
+ 1, 54, :_reduce_19,
+ 1, 56, :_reduce_none,
+ 1, 56, :_reduce_none,
+ 1, 56, :_reduce_none,
+ 1, 56, :_reduce_none,
+ 1, 56, :_reduce_none,
+ 3, 44, :_reduce_25,
+ 0, 52, :_reduce_26,
+ 1, 52, :_reduce_27,
+ 3, 52, :_reduce_28,
+ 3, 62, :_reduce_29,
+ 1, 63, :_reduce_none,
+ 3, 63, :_reduce_31,
  1, 61, :_reduce_none,
- 3, 61, :_reduce_32,
- 1, 59, :_reduce_none,
- 1, 59, :_reduce_none,
- 1, 59, :_reduce_none,
- 1, 59, :_reduce_none,
- 1, 59, :_reduce_none,
- 1, 59, :_reduce_none,
- 1, 59, :_reduce_none,
- 1, 59, :_reduce_none,
- 1, 59, :_reduce_none,
- 1, 56, :_reduce_42,
- 1, 63, :_reduce_43,
- 4, 64, :_reduce_44,
- 5, 44, :_reduce_45,
- 10, 44, :_reduce_46,
- 9, 44, :_reduce_47,
- 5, 66, :_reduce_48,
- 6, 66, :_reduce_49,
- 1, 65, :_reduce_none,
- 3, 65, :_reduce_51,
+ 1, 61, :_reduce_none,
+ 1, 61, :_reduce_none,
+ 1, 61, :_reduce_none,
+ 1, 61, :_reduce_none,
+ 1, 61, :_reduce_none,
+ 1, 61, :_reduce_none,
+ 1, 61, :_reduce_none,
+ 1, 61, :_reduce_none,
+ 1, 57, :_reduce_41,
+ 1, 65, :_reduce_42,
+ 4, 66, :_reduce_43,
+ 5, 45, :_reduce_44,
  1, 67, :_reduce_none,
- 1, 67, :_reduce_none,
- 1, 67, :_reduce_none,
- 1, 67, :_reduce_none,
- 1, 67, :_reduce_none,
- 1, 67, :_reduce_none,
- 3, 43, :_reduce_58,
- 1, 68, :_reduce_none,
- 3, 68, :_reduce_60,
- 1, 70, :_reduce_none,
- 3, 70, :_reduce_62,
- 3, 69, :_reduce_63,
+ 2, 67, :_reduce_46,
+ 5, 68, :_reduce_47,
+ 1, 69, :_reduce_none,
+ 3, 69, :_reduce_49,
+ 3, 58, :_reduce_50,
  1, 71, :_reduce_none,
- 1, 71, :_reduce_none,
- 1, 71, :_reduce_none,
- 2, 45, :_reduce_67,
- 6, 46, :_reduce_68,
- 7, 47, :_reduce_69,
- 0, 74, :_reduce_70,
- 1, 72, :_reduce_none,
- 3, 72, :_reduce_72,
- 3, 72, :_reduce_73,
- 1, 75, :_reduce_none,
- 3, 75, :_reduce_75,
- 3, 76, :_reduce_76,
- 1, 76, :_reduce_77,
+ 3, 71, :_reduce_52,
  1, 73, :_reduce_none,
- 2, 73, :_reduce_79,
- 1, 57, :_reduce_80,
- 3, 58, :_reduce_81,
- 1, 62, :_reduce_none,
- 1, 62, :_reduce_none,
- 0, 52, :_reduce_none,
- 1, 52, :_reduce_85 ]
+ 3, 73, :_reduce_54,
+ 3, 72, :_reduce_55,
+ 1, 70, :_reduce_56,
+ 1, 70, :_reduce_57,
+ 1, 70, :_reduce_58,
+ 1, 70, :_reduce_59,
+ 2, 46, :_reduce_60,
+ 6, 47, :_reduce_61,
+ 7, 48, :_reduce_62,
+ 0, 76, :_reduce_63,
+ 1, 74, :_reduce_none,
+ 3, 74, :_reduce_65,
+ 3, 74, :_reduce_66,
+ 1, 77, :_reduce_none,
+ 3, 77, :_reduce_68,
+ 3, 78, :_reduce_69,
+ 1, 78, :_reduce_70,
+ 1, 75, :_reduce_none,
+ 2, 75, :_reduce_72,
+ 1, 59, :_reduce_73,
+ 3, 60, :_reduce_74,
+ 1, 64, :_reduce_none,
+ 1, 64, :_reduce_none,
+ 0, 53, :_reduce_none,
+ 1, 53, :_reduce_78 ]
 
-racc_reduce_n = 86
+racc_reduce_n = 79
 
-racc_shift_n = 153
+racc_shift_n = 134
 
 racc_action_table = [
-    22,    24,    22,    24,     1,    54,     5,     9,    39,    12,
-    14,    22,    24,    22,    24,    82,     3,     7,   116,    84,
-    85,    59,    22,    24,   115,    28,   126,    28,    96,    31,
-   108,    31,     3,     7,     3,     7,    28,    59,    28,    62,
-    31,     7,    31,     3,     7,     3,     7,    28,    22,    24,
-    89,    31,    56,    57,     3,     7,    97,    22,    24,    22,
-    24,    22,    24,   128,    22,    24,   129,   113,    56,    57,
-    22,    24,   114,    28,    98,    22,    24,    31,    59,   103,
-     3,     7,    28,    80,    28,    80,    28,    63,    31,    28,
-     7,     3,     7,    31,    69,    28,     3,     7,   133,    31,
-    28,   121,     3,     7,    31,    22,    24,     3,     7,    56,
-    57,   122,   136,    80,     1,   137,     5,     9,   124,    12,
-    14,   125,   111,   109,    84,    85,     3,     7,   102,   102,
-    28,    78,    63,    55,    31,    44,   134,     3,     7,     1,
-   140,     5,     9,    99,    12,    14,    98,   138,    37,    80,
-    37,     3,     7,   141,   152,    44,     1,    42,     5,     9,
-   144,    12,    14,    41,   146,    40,    39,    38,     3,     7,
-     1,   151,     5,     9,    37,    12,    14,    36,     7,   nil,
-   nil,   nil,     3,     7,   nil,   149,   nil,     1,   nil,     5,
-     9,   nil,    12,    14,   nil,   nil,   nil,   nil,   nil,     3,
-     7,     1,   147,     5,     9,   nil,    12,    14,   nil,   nil,
-   nil,   nil,   nil,     3,     7,   nil,   nil,   nil,     1,   nil,
-     5,     9,   nil,    12,    14,   nil,   nil,   nil,   nil,   nil,
-     3,     7,     1,   nil,     5,     9,   nil,    12,    14,   nil,
-   nil,   nil,   nil,   nil,     3,     7,     1,   nil,     5,     9,
-   nil,    12,    14,   nil,   nil,   nil,   nil,   nil,     3,     7,
-     1,   nil,     5,     9,   nil,    12,    14,   nil,   nil,   nil,
-   nil,   nil,     3,     7,     1,   nil,     5,     9,   nil,    12,
-    14,   nil,   nil,   nil,   nil,   nil,     3,     7,     1,   nil,
-     5,     9,   nil,    12,    14,   nil,   nil,   nil,   nil,   nil,
-     3,     7,     1,   nil,     5,     9,   nil,    12,    14,   nil,
-   nil,   nil,   nil,   nil,     3,     7,     1,   nil,     5,     9,
-   nil,    12,    14,   nil,   nil,   nil,   nil,   nil,     3,     7,
-     1,   nil,     5,     9,   nil,    12,    14,   nil,   nil,   nil,
-   nil,   nil,     3,     7,    48,    49,    50,    51,    52,    53 ]
+    76,   110,    79,    98,    48,    76,    89,    76,    91,    97,
+   108,    70,    76,    93,    76,    71,    72,    88,   124,    76,
+    71,    72,    91,    22,    24,   109,    88,    47,    22,    24,
+    36,    74,    75,    22,    24,    78,    74,    75,    74,    75,
+    78,    99,    78,    74,    75,    74,    75,    78,    27,    78,
+    74,    75,    31,    27,    78,     2,     5,    31,    27,   100,
+     2,     5,    31,    22,    24,     2,     5,     5,    22,    24,
+    22,    24,    63,    22,    24,   103,    62,   106,    41,    22,
+    24,    40,    63,    46,    22,    24,    87,   114,    27,    22,
+    24,    63,   116,    27,    46,    27,    53,    31,    27,    31,
+     2,     5,     2,     5,    27,   133,     5,   118,    31,    27,
+   122,     2,     5,    31,    27,   119,     2,     5,    31,     5,
+    41,     2,     5,     4,     7,   132,    11,    13,     4,     7,
+    40,    11,    13,     2,     5,    38,     9,    69,     2,     5,
+   126,     9,    37,     4,     7,   128,    11,    13,     4,     7,
+    36,    11,    13,     2,     5,    35,     9,    20,     2,     5,
+    63,     9,     4,     7,    19,    11,    13,     4,     7,   117,
+    11,    13,     2,     5,   nil,     9,   nil,     2,     5,   nil,
+     9,     4,     7,   nil,    11,    13,     4,     7,   nil,    11,
+    13,     2,     5,   nil,     9,   nil,     2,     5,   nil,     9 ]
 
 racc_action_check = [
-     1,     1,    83,    83,    96,    27,    96,    96,    27,    96,
-    96,    89,    89,    54,    54,    46,    96,    96,    94,    46,
-    46,   112,    47,    47,    94,     1,   106,    83,    64,     1,
-    87,    83,     1,     1,    83,    83,    89,    37,    54,    37,
-    89,    63,    54,    89,    89,    54,    54,    47,    98,    98,
-    61,    47,   112,   112,    47,    47,    66,    99,    99,   129,
-   129,    39,    39,   109,   113,   113,   109,    92,    37,    37,
-   137,   137,    93,    98,    80,    22,    22,    98,    62,    79,
-    98,    98,    99,    97,   129,    44,    39,    42,   129,   113,
-    99,   129,   129,   113,    39,   137,   113,   113,   117,   137,
-    22,   100,   137,   137,    22,    40,    40,    22,    22,    62,
-    62,   101,   127,   102,   117,   127,   117,   117,   103,   117,
-   117,   104,    91,    88,    91,    91,   117,   117,    81,    74,
-    40,    41,    38,    34,    40,    33,   118,    40,    40,    88,
-   135,    88,    88,    73,    88,    88,    69,   128,    68,   134,
-    23,    88,    88,   136,   150,    18,   135,    14,   135,   135,
-   139,   135,   135,    13,   142,    12,    11,     9,   135,   135,
-   150,   148,   150,   150,     6,   150,   150,     5,   116,   nil,
-   nil,   nil,   150,   150,   nil,   145,   nil,   148,   nil,   148,
-   148,   nil,   148,   148,   nil,   nil,   nil,   nil,   nil,   148,
-   148,   145,   143,   145,   145,   nil,   145,   145,   nil,   nil,
-   nil,   nil,   nil,   145,   145,   nil,   nil,   nil,   143,   nil,
-   143,   143,   nil,   143,   143,   nil,   nil,   nil,   nil,   nil,
-   143,   143,   144,   nil,   144,   144,   nil,   144,   144,   nil,
-   nil,   nil,   nil,   nil,   144,   144,   141,   nil,   141,   141,
-   nil,   141,   141,   nil,   nil,   nil,   nil,   nil,   141,   141,
-   146,   nil,   146,   146,   nil,   146,   146,   nil,   nil,   nil,
-   nil,   nil,   146,   146,    55,   nil,    55,    55,   nil,    55,
-    55,   nil,   nil,   nil,   nil,   nil,    55,    55,   138,   nil,
-   138,   138,   nil,   138,   138,   nil,   nil,   nil,   nil,   nil,
-   138,   138,    15,   nil,    15,    15,   nil,    15,    15,   nil,
-   nil,   nil,   nil,   nil,    15,    15,   125,   nil,   125,   125,
-   nil,   125,   125,   nil,   nil,   nil,   nil,   nil,   125,   125,
-     0,   nil,     0,     0,   nil,     0,     0,   nil,   nil,   nil,
-   nil,   nil,     0,     0,    26,    26,    26,    26,    26,    26 ]
+    46,    85,    46,    65,    30,    48,    58,    83,    60,    65,
+    83,    45,   110,    61,   125,    45,    45,    63,   105,    79,
+   105,   105,    64,   103,   103,    85,    53,    29,     9,     9,
+    29,    46,    46,    73,    73,    46,    48,    48,    83,    83,
+    48,    67,    83,   110,   110,   125,   125,   110,   103,   125,
+    79,    79,   103,     9,    79,   103,   103,     9,    73,    68,
+     9,     9,    73,    36,    36,    73,    73,    41,    99,    99,
+    22,    22,    40,    89,    89,    77,    38,    82,    37,    35,
+    35,    34,    87,    55,    88,    88,    51,    90,    36,    47,
+    47,    91,    92,    99,    26,    22,    36,    99,    89,    22,
+    99,    99,    22,    22,    35,   131,    89,    94,    35,    88,
+   101,    35,    35,    88,    47,    96,    88,    88,    47,    98,
+    20,    47,    47,   131,   131,   129,   131,   131,   101,   101,
+    17,   101,   101,   131,   131,    14,   131,    42,   101,   101,
+   109,   101,    13,   129,   129,   111,   129,   129,   118,   118,
+    12,   118,   118,   129,   129,    11,   129,     7,   118,   118,
+   128,   118,    69,    69,     4,    69,    69,    15,    15,    93,
+    15,    15,    69,    69,   nil,    69,   nil,    15,    15,   nil,
+    15,   126,   126,   nil,   126,   126,     0,     0,   nil,     0,
+     0,   126,   126,   nil,   126,   nil,     0,     0,   nil,     0 ]
 
 racc_action_pointer = [
-   308,    -2,   nil,   nil,   nil,   174,   161,   nil,   nil,   132,
-   nil,   161,   153,   163,   122,   280,   nil,   nil,   150,   nil,
-   nil,   nil,    73,   137,   nil,   nil,   328,     3,   nil,   nil,
-   nil,   nil,   nil,   130,   128,   nil,   nil,    34,   118,    59,
-   103,   131,    73,   nil,    50,   nil,    11,    20,   nil,   nil,
-   nil,   nil,   nil,   nil,    11,   252,   nil,   nil,   nil,   nil,
-   nil,    42,    75,     6,    23,   nil,    23,   nil,   135,   138,
-   nil,   nil,   nil,   107,   120,   nil,   nil,   nil,   nil,    50,
-    66,   119,   nil,     0,   nil,   nil,   nil,    26,   117,     9,
-   nil,   116,    55,    57,     9,   nil,   -18,    48,    46,    55,
-    95,   105,    78,    83,   116,   nil,    20,   nil,   nil,    40,
-   nil,   nil,    18,    62,   nil,   nil,   143,    92,   127,   nil,
-   nil,   nil,   nil,   nil,   nil,   294,   nil,    89,   142,    57,
-   nil,   nil,   nil,   nil,   114,   134,   148,    68,   266,   155,
-   nil,   224,   159,   196,   210,   179,   238,   nil,   165,   nil,
-   148,   nil,   nil ]
+   162,   nil,   nil,   nil,   161,   nil,   nil,   122,   nil,    26,
+   nil,   143,   145,   107,   135,   143,   nil,   125,   nil,   nil,
+   106,   nil,    68,   nil,   nil,   nil,    81,   nil,   nil,    25,
+    -1,   nil,   nil,   nil,    76,    77,    61,    64,    76,   nil,
+    37,    32,   132,   nil,   nil,     7,    -3,    87,     2,   nil,
+   nil,    53,   nil,    18,   nil,    70,   nil,   nil,   -30,   nil,
+    -1,   -16,   nil,     9,    13,    -6,   nil,    29,    44,   138,
+   nil,   nil,   nil,    31,   nil,   nil,   nil,    67,   nil,    16,
+   nil,   nil,    73,     4,   nil,    -8,   nil,    47,    82,    71,
+    81,    56,    86,   134,   102,   nil,   109,   nil,    84,    66,
+   nil,   104,   nil,    21,   nil,    12,   nil,   nil,   nil,   135,
+     9,   136,   nil,   nil,   nil,   nil,   nil,   nil,   124,   nil,
+   nil,   nil,   nil,   nil,   nil,    11,   157,   nil,   125,   119,
+   nil,    99,   nil,   nil ]
 
 racc_action_default = [
-   -86,   -86,    -7,   -20,    -8,   -86,   -86,   -19,    -9,   -86,
-   -10,   -86,   -80,   -86,   -86,    -1,    -2,    -4,   -86,    -5,
-    -6,   -33,   -86,   -39,   -42,   -40,   -50,   -34,   -80,   -38,
-   -36,   -43,   -41,   -35,   -86,   -37,   -67,   -86,   -70,   -27,
-   -86,   -86,   -70,    -3,   -27,   -31,   -86,   -86,   -52,   -53,
-   -54,   -55,   -56,   -57,   -86,   -86,   -65,   -64,   -58,   -66,
-   -59,   -86,   -86,   -70,   -86,   -71,   -86,   -21,   -24,   -19,
-   -25,   -22,   -28,   -17,   -84,   -23,   -15,   -26,   153,   -70,
-   -86,   -84,   -81,   -86,   -82,   -83,   -51,   -86,   -86,   -86,
-   -61,   -86,   -77,   -86,   -86,   -74,   -86,   -27,   -86,   -18,
-   -86,   -86,   -85,   -86,   -86,   -78,   -86,   -32,   -44,   -45,
-   -63,   -60,   -86,   -86,   -72,   -73,   -86,   -86,   -14,   -30,
-   -16,   -11,   -12,   -29,   -79,   -86,   -13,   -86,   -86,   -86,
-   -62,   -76,   -75,   -68,   -86,   -86,   -86,   -86,   -86,   -86,
-   -69,   -86,   -86,   -86,   -86,   -86,   -86,   -47,   -86,   -46,
-   -86,   -48,   -49 ]
+   -79,    -5,   -19,    -6,   -79,   -18,    -7,   -79,    -8,   -79,
+    -9,   -79,   -79,   -79,   -79,    -1,    -2,   -79,    -4,   -60,
+   -63,   -40,   -79,   -32,   -41,   -36,   -38,   -73,   -39,   -33,
+   -79,   -42,   -37,   -35,   -34,   -79,   -26,   -63,   -79,    -3,
+   -26,   -63,   -79,   -64,   -30,   -79,   -79,   -79,   -79,   -25,
+   -14,   -79,   -20,   -18,   -22,   -23,   -24,   -21,   -16,   -27,
+   -77,   -63,   134,   -79,   -77,   -79,   -67,   -70,   -79,   -79,
+   -74,   -75,   -76,   -79,   -57,   -56,   -58,   -79,   -59,   -79,
+   -50,   -51,   -79,   -79,   -45,   -79,   -48,   -26,   -79,   -17,
+   -79,   -78,   -79,   -79,   -79,   -71,   -79,   -66,   -79,   -79,
+   -65,   -79,   -31,   -79,   -53,   -79,   -43,   -46,   -44,   -79,
+   -79,   -13,   -29,   -15,   -10,   -28,   -11,   -72,   -79,   -12,
+   -68,   -69,   -61,   -55,   -52,   -79,   -79,   -49,   -79,   -79,
+   -54,   -79,   -62,   -47 ]
 
 racc_goto_table = [
-    15,    29,    76,    33,    60,    70,    23,    34,    67,   123,
-    93,    74,    83,    95,    45,    64,    81,    58,   101,    79,
-    47,   127,    29,    73,    33,   106,   105,    23,    91,    90,
-   100,   104,    77,    46,    43,    94,    13,   nil,   nil,    86,
-    29,   123,    33,   nil,    68,    23,    87,    29,   nil,    33,
-   nil,   nil,    23,   nil,    29,    88,    33,   112,   nil,    23,
-   nil,   nil,   120,    35,   nil,    70,   132,   nil,    67,   118,
-   nil,   nil,   nil,   nil,   nil,   107,   nil,   nil,   nil,   130,
-   nil,   110,   nil,    29,    35,    33,   nil,   nil,    23,    29,
-   119,    33,   nil,   nil,    23,   nil,   117,   nil,    29,   nil,
-    33,    75,    35,    23,    68,   131,   nil,    43,   nil,    35,
-   nil,   nil,   nil,    29,   nil,    33,    35,   nil,    23,    27,
-   nil,   nil,   nil,   nil,   nil,   135,   nil,   nil,   nil,    29,
-   nil,    33,   nil,   nil,    23,   139,    43,    29,   143,    33,
-    27,   145,    23,   142,   148,    35,   150,   nil,   nil,   nil,
-   nil,    35,   nil,   nil,    43,   nil,   nil,    71,    27,   nil,
-    35,    75,    43,   nil,    43,    27,   nil,    43,   nil,    43,
-   nil,   nil,    27,   nil,   nil,    35,   nil,   nil,   nil,   nil,
-   nil,    92,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,
-   nil,    35,   nil,   nil,   nil,   nil,   nil,   nil,   nil,    35,
-   nil,    27,   nil,   nil,   nil,   nil,   nil,    27,   nil,   nil,
-   nil,   nil,   nil,   nil,   nil,   nil,    27,    71,   nil,   nil,
-   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,
-   nil,    27,   nil,   nil,    92,   nil,   nil,   nil,   nil,   nil,
-   nil,   nil,   nil,   nil,   nil,   nil,   nil,    27,   nil,   nil,
-   nil,   nil,   nil,   nil,   nil,    27 ]
+    15,    39,    29,    73,    32,    81,    50,    30,    86,    34,
+    66,    52,    54,   115,    84,    29,    68,    32,   105,    56,
+    44,    55,    34,    80,    42,    58,    90,    60,    29,    57,
+    32,    64,    45,    49,    67,    34,    95,    94,   104,    83,
+    29,    61,    32,    86,    92,    82,    65,    34,    96,   107,
+   115,    14,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   113,
+   nil,   nil,   nil,   125,    52,    54,    29,   120,    32,   101,
+   127,   102,    56,    34,    55,   nil,   nil,   nil,   111,   nil,
+   nil,    29,    57,    32,   130,   nil,   112,    39,    34,   nil,
+   nil,    67,    29,   nil,    32,   nil,    29,   121,    32,    34,
+   nil,   123,   nil,    34,   nil,   nil,   nil,   nil,   nil,   nil,
+   nil,   nil,   nil,   nil,   nil,    39,   nil,    39,   129,   nil,
+   nil,   nil,   nil,   nil,   nil,   nil,   131 ]
 
 racc_goto_check = [
-     2,     4,    17,    16,    32,    21,    20,    28,    19,    23,
-    37,    14,    25,    39,    22,    35,    14,    31,    15,    35,
-    30,    29,     4,    12,    16,    15,    37,    20,    33,    32,
-    13,    36,    22,    24,     3,    38,     1,   nil,   nil,    22,
-     4,    23,    16,   nil,    20,    20,    22,     4,   nil,    16,
-   nil,   nil,    20,   nil,     4,     2,    16,    25,   nil,    20,
-   nil,   nil,    17,     6,   nil,    21,    39,   nil,    19,    14,
-   nil,   nil,   nil,   nil,   nil,    22,   nil,   nil,   nil,    32,
-   nil,    22,   nil,     4,     6,    16,   nil,   nil,    20,     4,
-    22,    16,   nil,   nil,    20,   nil,     2,   nil,     4,   nil,
-    16,     6,     6,    20,    20,    22,   nil,     3,   nil,     6,
-   nil,   nil,   nil,     4,   nil,    16,     6,   nil,    20,    11,
-   nil,   nil,   nil,   nil,   nil,     2,   nil,   nil,   nil,     4,
-   nil,    16,   nil,   nil,    20,    28,     3,     4,     2,    16,
-    11,     2,    20,    28,     2,     6,     2,   nil,   nil,   nil,
-   nil,     6,   nil,   nil,     3,   nil,   nil,    11,    11,   nil,
-     6,     6,     3,   nil,     3,    11,   nil,     3,   nil,     3,
-   nil,   nil,    11,   nil,   nil,     6,   nil,   nil,   nil,   nil,
-   nil,    11,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,
-   nil,     6,   nil,   nil,   nil,   nil,   nil,   nil,   nil,     6,
-   nil,    11,   nil,   nil,   nil,   nil,   nil,    11,   nil,   nil,
-   nil,   nil,   nil,   nil,   nil,   nil,    11,    11,   nil,   nil,
-   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,
-   nil,    11,   nil,   nil,    11,   nil,   nil,   nil,   nil,   nil,
-   nil,   nil,   nil,   nil,   nil,   nil,   nil,    11,   nil,   nil,
-   nil,   nil,   nil,   nil,   nil,    11 ]
+     2,     3,    10,    25,     4,    33,    16,    22,    31,    15,
+    39,    18,    19,    23,    29,    10,    37,     4,    34,    21,
+    22,    20,    15,    32,    35,    11,    12,    13,    10,    10,
+     4,    13,    24,    22,    10,    15,    37,    36,    33,    28,
+    10,    35,     4,    31,    14,    22,    38,    15,    14,    29,
+    23,     1,   nil,   nil,   nil,   nil,   nil,   nil,   nil,    16,
+   nil,   nil,   nil,    25,    18,    19,    10,    39,     4,     2,
+    31,    22,    21,    15,    20,   nil,   nil,   nil,    13,   nil,
+   nil,    10,    10,     4,    33,   nil,    22,     3,    15,   nil,
+   nil,    10,    10,   nil,     4,   nil,    10,    22,     4,    15,
+   nil,    22,   nil,    15,   nil,   nil,   nil,   nil,   nil,   nil,
+   nil,   nil,   nil,   nil,   nil,     3,   nil,     3,     2,   nil,
+   nil,   nil,   nil,   nil,   nil,   nil,     2 ]
 
 racc_goto_pointer = [
-   nil,    36,     0,    19,     0,   nil,    62,   nil,   nil,   nil,
-   nil,   118,   -16,   -43,   -28,   -56,     2,   -37,   nil,   -31,
-     5,   -34,    -8,   -93,    11,   -34,   nil,   nil,     6,   -88,
-    -6,   -20,   -33,   -34,   nil,   -23,   -48,   -53,   -28,   -50 ]
+   nil,    51,     0,   -14,    -5,   nil,   nil,   nil,   nil,   nil,
+    -7,   -11,   -32,    -9,   -16,     0,   -30,   nil,   -25,   -24,
+   -15,   -17,    -2,   -78,    10,   -42,   nil,   nil,    -9,   -34,
+   nil,   -40,   -23,   -41,   -61,     4,   -24,   -25,     5,   -31 ]
 
 racc_goto_default = [
-   nil,   nil,   nil,    16,    17,    19,    20,     2,     4,     8,
-    10,    11,   nil,   nil,   nil,   nil,    18,   nil,    66,    21,
-     6,    25,    26,    72,   nil,   nil,    30,    32,   nil,   nil,
-   nil,   nil,   nil,   nil,    61,   nil,   nil,    65,   nil,   nil ]
+   nil,   nil,   nil,    16,    18,     1,     3,     6,     8,    10,
+    12,   nil,   nil,   nil,   nil,    17,   nil,    51,    23,    25,
+    26,    28,   nil,    59,   nil,   nil,    33,    21,   nil,   nil,
+    85,    77,   nil,   nil,   nil,   nil,   nil,    43,   nil,   nil ]
 
 racc_token_table = {
  false => 0,
@@ -443,11 +376,13 @@ racc_token_table = {
  :COLON => 33,
  :TYPE => 34,
  :NAME => 35,
- :SEMIC => 36 }
+ :SEMIC => 36,
+ :CASE => 37,
+ :DEFAULT => 38 }
 
 racc_use_result_var = true
 
-racc_nt_base = 37
+racc_nt_base = 39
 
 Racc_arg = [
  racc_action_table,
@@ -503,14 +438,15 @@ Racc_token_to_s_table = [
 'TYPE',
 'NAME',
 'SEMIC',
+'CASE',
+'DEFAULT',
 '$start',
 'program',
 'statements',
 'statement',
 'object',
 'assignment',
-'selector',
-'iftest',
+'casestatement',
 'import',
 'definition',
 'hostclass',
@@ -523,6 +459,7 @@ Racc_token_to_s_table = [
 'objectinst',
 'objectname',
 'quotedtext',
+'selector',
 'variable',
 'array',
 'rvalue',
@@ -531,13 +468,13 @@ Racc_token_to_s_table = [
 'comma',
 'boolean',
 'objectref',
-'test',
-'elsifs',
-'testop',
+'caseopts',
+'caseopt',
+'casevalues',
+'selectlhand',
 'svalues',
 'selectval',
 'sintvalues',
-'selectlhand',
 'argumentlist',
 'parent',
 'nothing',
@@ -609,10 +546,8 @@ module_eval <<'.,.,', 'grammar.ra', 54
 
  # reduce 9 omitted
 
- # reduce 10 omitted
-
 module_eval <<'.,.,', 'grammar.ra', 89
-  def _reduce_11( val, _values, result )
+  def _reduce_10( val, _values, result )
     ary = val[2]
     if val[0].is_a?(AST::ASTArray)
         Puppet.notice "invalid name"
@@ -641,7 +576,7 @@ module_eval <<'.,.,', 'grammar.ra', 89
 .,.,
 
 module_eval <<'.,.,', 'grammar.ra', 113
-  def _reduce_12( val, _values, result )
+  def _reduce_11( val, _values, result )
     if val[0].is_a?(AST::ASTArray)
         Puppet.notice "invalid name"
         raise Puppet::ParseError, "Invalid name"
@@ -670,7 +605,7 @@ module_eval <<'.,.,', 'grammar.ra', 113
 .,.,
 
 module_eval <<'.,.,', 'grammar.ra', 126
-  def _reduce_13( val, _values, result )
+  def _reduce_12( val, _values, result )
     # a template setting for a type
     if val[0].is_a?(AST::ASTArray)
         Puppet.notice "invalid type"
@@ -688,7 +623,7 @@ module_eval <<'.,.,', 'grammar.ra', 126
 .,.,
 
 module_eval <<'.,.,', 'grammar.ra', 134
-  def _reduce_14( val, _values, result )
+  def _reduce_13( val, _values, result )
     result = AST::ASTArray.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -698,10 +633,10 @@ module_eval <<'.,.,', 'grammar.ra', 134
   end
 .,.,
 
- # reduce 15 omitted
+ # reduce 14 omitted
 
 module_eval <<'.,.,', 'grammar.ra', 148
-  def _reduce_16( val, _values, result )
+  def _reduce_15( val, _values, result )
     if val[0][0].is_a?(AST::ASTArray)
         val[0].push val[2]
         result = val[0]
@@ -716,12 +651,12 @@ module_eval <<'.,.,', 'grammar.ra', 148
   end
 .,.,
 
+ # reduce 16 omitted
+
  # reduce 17 omitted
 
- # reduce 18 omitted
-
 module_eval <<'.,.,', 'grammar.ra', 159
-  def _reduce_19( val, _values, result )
+  def _reduce_18( val, _values, result )
     result = AST::Name.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -732,7 +667,7 @@ module_eval <<'.,.,', 'grammar.ra', 159
 .,.,
 
 module_eval <<'.,.,', 'grammar.ra', 167
-  def _reduce_20( val, _values, result )
+  def _reduce_19( val, _values, result )
     result = AST::Type.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -742,6 +677,8 @@ module_eval <<'.,.,', 'grammar.ra', 167
   end
 .,.,
 
+ # reduce 20 omitted
+
  # reduce 21 omitted
 
  # reduce 22 omitted
@@ -750,10 +687,8 @@ module_eval <<'.,.,', 'grammar.ra', 167
 
  # reduce 24 omitted
 
- # reduce 25 omitted
-
 module_eval <<'.,.,', 'grammar.ra', 189
-  def _reduce_26( val, _values, result )
+  def _reduce_25( val, _values, result )
     # this is distinct from referencing a variable
     variable = AST::Name.new(
         :line => @lexer.line,
@@ -772,7 +707,7 @@ module_eval <<'.,.,', 'grammar.ra', 189
 .,.,
 
 module_eval <<'.,.,', 'grammar.ra', 198
-  def _reduce_27( val, _values, result )
+  def _reduce_26( val, _values, result )
     result = AST::ASTArray.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -783,14 +718,14 @@ module_eval <<'.,.,', 'grammar.ra', 198
 .,.,
 
 module_eval <<'.,.,', 'grammar.ra', 198
-  def _reduce_28( val, _values, result )
+  def _reduce_27( val, _values, result )
  result = val[0]
    result
   end
 .,.,
 
 module_eval <<'.,.,', 'grammar.ra', 211
-  def _reduce_29( val, _values, result )
+  def _reduce_28( val, _values, result )
     if val[0].is_a?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
@@ -806,7 +741,7 @@ module_eval <<'.,.,', 'grammar.ra', 211
 .,.,
 
 module_eval <<'.,.,', 'grammar.ra', 226
-  def _reduce_30( val, _values, result )
+  def _reduce_29( val, _values, result )
     leaf = AST::String.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -823,10 +758,10 @@ module_eval <<'.,.,', 'grammar.ra', 226
   end
 .,.,
 
- # reduce 31 omitted
+ # reduce 30 omitted
 
 module_eval <<'.,.,', 'grammar.ra', 239
-  def _reduce_32( val, _values, result )
+  def _reduce_31( val, _values, result )
     if val[0].is_a?(AST::ASTArray)
         result = val[0].push(val[2])
     else
@@ -839,6 +774,8 @@ module_eval <<'.,.,', 'grammar.ra', 239
    result
   end
 .,.,
+
+ # reduce 32 omitted
 
  # reduce 33 omitted
 
@@ -856,10 +793,8 @@ module_eval <<'.,.,', 'grammar.ra', 239
 
  # reduce 40 omitted
 
- # reduce 41 omitted
-
 module_eval <<'.,.,', 'grammar.ra', 257
-  def _reduce_42( val, _values, result )
+  def _reduce_41( val, _values, result )
     result = AST::String.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -870,7 +805,7 @@ module_eval <<'.,.,', 'grammar.ra', 257
 .,.,
 
 module_eval <<'.,.,', 'grammar.ra', 265
-  def _reduce_43( val, _values, result )
+  def _reduce_42( val, _values, result )
     result = AST::Boolean.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -881,7 +816,7 @@ module_eval <<'.,.,', 'grammar.ra', 265
 .,.,
 
 module_eval <<'.,.,', 'grammar.ra', 275
-  def _reduce_44( val, _values, result )
+  def _reduce_43( val, _values, result )
     result = AST::ObjectRef.new(
         :pin => '[]',
         :line => @lexer.line,
@@ -893,11 +828,49 @@ module_eval <<'.,.,', 'grammar.ra', 275
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 285
-  def _reduce_45( val, _values, result )
-    result = AST::If.new(
-        :pin => "if",
+module_eval <<'.,.,', 'grammar.ra', 292
+  def _reduce_44( val, _values, result )
+    options = val[3]
+    unless options.is_a?(AST::ASTArray)
+        options = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[3]]
+        )
+    end
+    result = AST::CaseStatement.new(
         :test => val[1],
+        :options => val[3],
+        :file => @lexer.file,
+        :line => @lexer.line
+    )
+   result
+  end
+.,.,
+
+ # reduce 45 omitted
+
+module_eval <<'.,.,', 'grammar.ra', 306
+  def _reduce_46( val, _values, result )
+    if val[0].is_a?(AST::ASTArray)
+        val[0].push val[1]
+        result = val[0]
+    else
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[0], val[1]]
+        )
+    end
+   result
+  end
+.,.,
+
+module_eval <<'.,.,', 'grammar.ra', 316
+  def _reduce_47( val, _values, result )
+    result = AST::CaseOpt.new(
+        :pin => ":",
+        :value => val[0],
         :file => @lexer.file,
         :line => @lexer.line,
         :statements => val[3]
@@ -906,135 +879,10 @@ module_eval <<'.,.,', 'grammar.ra', 285
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 307
-  def _reduce_46( val, _values, result )
-    # make sure our elsifs are an array, as it will save lots of
-    # effort later
-    unless val[5].is_a?(AST::ASTArray)
-        val[5] = AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => [val[5]]
-        )
-    end
+ # reduce 48 omitted
 
-    result = AST::If.new(
-        :pin => "if",
-        :test => val[1],
-        :statements => val[3],
-        :file => @lexer.file,
-        :line => @lexer.line,
-        :else => val[8],
-        :elsif => val[5]
-    )
-   result
-  end
-.,.,
-
-module_eval <<'.,.,', 'grammar.ra', 318
-  def _reduce_47( val, _values, result )
-    result = AST::If.new(
-        :pin => "if",
-        :test => val[1],
-        :statements => val[3],
-        :file => @lexer.file,
-        :line => @lexer.line,
-        :else => val[7]
-    )
-   result
-  end
-.,.,
-
-module_eval <<'.,.,', 'grammar.ra', 328
-  def _reduce_48( val, _values, result )
-    result = AST::If.new(
-        :pin => "elseif",
-        :test => val[1],
-        :file => @lexer.file,
-        :statements => val[3],
-        :line => @lexer.line
-    )
-   result
-  end
-.,.,
-
-module_eval <<'.,.,', 'grammar.ra', 348
+module_eval <<'.,.,', 'grammar.ra', 330
   def _reduce_49( val, _values, result )
-    second = AST::If.new(
-        :pin => "elsif",
-        :test => val[2],
-        :statements => val[4],
-        :file => @lexer.file,
-        :line => @lexer.line
-    )
-
-    if val[0].is_a?(AST::ASTArray)
-        val[0].push(second)
-        result = val[0]
-    else
-        result = AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => [val[0],second]
-        )
-    end
-   result
-  end
-.,.,
-
- # reduce 50 omitted
-
-module_eval <<'.,.,', 'grammar.ra', 359
-  def _reduce_51( val, _values, result )
-    result = AST::Test.new(
-        :pin => val[1],
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :lhs => val[0],
-        :rhs => val[2]
-    )
-   result
-  end
-.,.,
-
- # reduce 52 omitted
-
- # reduce 53 omitted
-
- # reduce 54 omitted
-
- # reduce 55 omitted
-
- # reduce 56 omitted
-
- # reduce 57 omitted
-
-module_eval <<'.,.,', 'grammar.ra', 376
-  def _reduce_58( val, _values, result )
-    result = AST::Selector.new(
-        :pin => "?",
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :param => val[0],
-        :value => val[2]
-    )
-   result
-  end
-.,.,
-
- # reduce 59 omitted
-
-module_eval <<'.,.,', 'grammar.ra', 378
-  def _reduce_60( val, _values, result )
- result = val[1]
-   result
-  end
-.,.,
-
- # reduce 61 omitted
-
-module_eval <<'.,.,', 'grammar.ra', 393
-  def _reduce_62( val, _values, result )
     if val[0].is_a?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
@@ -1049,32 +897,105 @@ module_eval <<'.,.,', 'grammar.ra', 393
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 408
-  def _reduce_63( val, _values, result )
-    leaf = AST::String.new(
+module_eval <<'.,.,', 'grammar.ra', 431
+  def _reduce_50( val, _values, result )
+    result = AST::Selector.new(
+        :pin => "?",
         :line => @lexer.line,
         :file => @lexer.file,
-        :value => val[0]
-    )
-    result = AST::ObjectParam.new(
-        :pin => "=>",
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :param => leaf,
+        :param => val[0],
         :value => val[2]
     )
    result
   end
 .,.,
 
- # reduce 64 omitted
+ # reduce 51 omitted
 
- # reduce 65 omitted
+module_eval <<'.,.,', 'grammar.ra', 433
+  def _reduce_52( val, _values, result )
+ result = val[1]
+   result
+  end
+.,.,
 
- # reduce 66 omitted
+ # reduce 53 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 437
-  def _reduce_67( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 448
+  def _reduce_54( val, _values, result )
+    if val[0].is_a?(AST::ASTArray)
+        val[0].push(val[2])
+        result = val[0]
+    else
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[0],val[2]]
+        )
+    end
+   result
+  end
+.,.,
+
+module_eval <<'.,.,', 'grammar.ra', 458
+  def _reduce_55( val, _values, result )
+    result = AST::ObjectParam.new(
+        :pin => "=>",
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :param => val[0],
+        :value => val[2]
+    )
+   result
+  end
+.,.,
+
+module_eval <<'.,.,', 'grammar.ra', 466
+  def _reduce_56( val, _values, result )
+    result = AST::String.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+   result
+  end
+.,.,
+
+module_eval <<'.,.,', 'grammar.ra', 473
+  def _reduce_57( val, _values, result )
+    result = AST::String.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+   result
+  end
+.,.,
+
+module_eval <<'.,.,', 'grammar.ra', 480
+  def _reduce_58( val, _values, result )
+    result = AST::String.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+   result
+  end
+.,.,
+
+module_eval <<'.,.,', 'grammar.ra', 487
+  def _reduce_59( val, _values, result )
+    result = AST::Default.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+   result
+  end
+.,.,
+
+module_eval <<'.,.,', 'grammar.ra', 512
+  def _reduce_60( val, _values, result )
     # importing files
     # yuk, i hate keywords
     # we'll probably have to have some kind of search path eventually
@@ -1101,8 +1022,8 @@ module_eval <<'.,.,', 'grammar.ra', 437
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 447
-  def _reduce_68( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 522
+  def _reduce_61( val, _values, result )
     result = AST::CompDef.new(
         :name => AST::Name.new(:value => val[1], :line => @lexer.line),
         :args => val[2],
@@ -1114,8 +1035,8 @@ module_eval <<'.,.,', 'grammar.ra', 447
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 458
-  def _reduce_69( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 533
+  def _reduce_62( val, _values, result )
     result = AST::ClassDef.new(
         :name => AST::Name.new(:value => val[1], :line => @lexer.line),
         :args => val[2],
@@ -1128,8 +1049,8 @@ module_eval <<'.,.,', 'grammar.ra', 458
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 473
-  def _reduce_70( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 548
+  def _reduce_63( val, _values, result )
     result = AST::ASTArray.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -1139,17 +1060,17 @@ module_eval <<'.,.,', 'grammar.ra', 473
   end
 .,.,
 
- # reduce 71 omitted
+ # reduce 64 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 478
-  def _reduce_72( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 553
+  def _reduce_65( val, _values, result )
     result = val[1]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 489
-  def _reduce_73( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 564
+  def _reduce_66( val, _values, result )
     if val[1].is_a?(AST::ASTArray)
         result = val[1]
     else
@@ -1163,10 +1084,10 @@ module_eval <<'.,.,', 'grammar.ra', 489
   end
 .,.,
 
- # reduce 74 omitted
+ # reduce 67 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 503
-  def _reduce_75( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 578
+  def _reduce_68( val, _values, result )
     if val[0].is_a?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
@@ -1181,8 +1102,8 @@ module_eval <<'.,.,', 'grammar.ra', 503
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 511
-  def _reduce_76( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 586
+  def _reduce_69( val, _values, result )
     result = AST::ASTArray.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -1192,8 +1113,8 @@ module_eval <<'.,.,', 'grammar.ra', 511
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 518
-  def _reduce_77( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 593
+  def _reduce_70( val, _values, result )
     result = AST::ASTArray.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -1203,10 +1124,10 @@ module_eval <<'.,.,', 'grammar.ra', 518
   end
 .,.,
 
- # reduce 78 omitted
+ # reduce 71 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 527
-  def _reduce_79( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 602
+  def _reduce_72( val, _values, result )
     result = AST::Name.new(
         :value => val[1],
         :file => @lexer.file,
@@ -1216,8 +1137,8 @@ module_eval <<'.,.,', 'grammar.ra', 527
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 536
-  def _reduce_80( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 611
+  def _reduce_73( val, _values, result )
     name = val[0].sub(/^\$/,'')
     result = AST::Variable.new(
         :line => @lexer.line,
@@ -1228,8 +1149,8 @@ module_eval <<'.,.,', 'grammar.ra', 536
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 545
-  def _reduce_81( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 620
+  def _reduce_74( val, _values, result )
     if val[1].is_a?(AST::ASTArray)
         result = val[1]
     else
@@ -1240,14 +1161,14 @@ module_eval <<'.,.,', 'grammar.ra', 545
   end
 .,.,
 
- # reduce 82 omitted
+ # reduce 75 omitted
 
- # reduce 83 omitted
+ # reduce 76 omitted
 
- # reduce 84 omitted
+ # reduce 77 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 550
-  def _reduce_85( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 625
+  def _reduce_78( val, _values, result )
  result = nil
    result
   end
