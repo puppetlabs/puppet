@@ -183,7 +183,7 @@ class TestSnippets < Test::Unit::TestCase
         %w{a b c d}.each { |letter|
             file = "/tmp/create%stest" % letter
             Puppet.info "testing %s" % file
-            assert(Puppet::Type::PFile[file])
+            assert(Puppet::Type::PFile[file], "File %s does not exist" % file)
             assert(FileTest.exists?(file))
             @@tmpfiles << file
         }
@@ -197,14 +197,14 @@ class TestSnippets < Test::Unit::TestCase
         }
         %w{a b c d}.each { |letter|
             file = "/tmp/create%stest" % letter
-            assert(! FileTest.exists?(file))
+            assert(! FileTest.exists?(file), "File %s still exists" % file)
         }
     end
 
     def snippet_simpledefaults(trans)
         file = "/tmp/defaulttest"
         @@tmpfiles << file
-        assert(FileTest.exists?(file))
+        assert(FileTest.exists?(file), "File %s does not exist" % file)
         assert(File.stat(file).mode & 007777 == 0755)
 
         assert_nothing_raised {
@@ -281,6 +281,46 @@ class TestSnippets < Test::Unit::TestCase
 
         assert_nothing_raised {
             trans.rollback
+        }
+    end
+
+    def snippet_implicititeration(trans)
+        files = %w{a b c d e f g h}.collect { |l| "/tmp/iteration%stest" % l }
+
+        files.each { |file|
+            @@tmpfiles << file
+            assert(FileTest.exists?(file), "File %s does not exist" % file)
+            assert(File.stat(file).mode & 007777 == 0755,
+                "File %s is not 755" % file)
+
+        }
+
+        assert_nothing_raised {
+            trans.rollback
+        }
+
+        files.each { |file|
+            assert(! FileTest.exists?(file), "file %s still exists" % file)
+        }
+    end
+
+    def snippet_multipleinstances(trans)
+        files = %w{a b c}.collect { |l| "/tmp/multipleinstances%s" % l }
+
+        files.each { |file|
+            @@tmpfiles << file
+            assert(FileTest.exists?(file), "File %s does not exist" % file)
+            assert(File.stat(file).mode & 007777 == 0755,
+                "File %s is not 755" % file)
+
+        }
+
+        assert_nothing_raised {
+            trans.rollback
+        }
+
+        files.each { |file|
+            assert(! FileTest.exists?(file), "file %s still exists" % file)
         }
     end
 

@@ -20,6 +20,15 @@ class TestParser < Test::Unit::TestCase
         Puppet[:parseonly] = true
         #@lexer = Puppet::Parser::Lexer.new()
         @parser = Puppet::Parser::Parser.new()
+        @@tmpfiles = []
+    end
+
+    def teardown
+        @@tmpfiles.each { |file|
+            if FileTest.exist?(file)
+                system("rm -rf %s" % file)
+            end
+        }
     end
 
     def test_each_file
@@ -50,5 +59,19 @@ class TestParser < Test::Unit::TestCase
             }
             Puppet::Type.allclear
         }
+    end
+
+    def test_zzarrayrvalues
+        parser = Puppet::Parser::Parser.new()
+        ret = nil
+        assert_nothing_raised {
+            parser.string = 'file { "/tmp/testing": mode => [755, 640] }'
+        }
+
+        assert_nothing_raised {
+            ret = parser.parse
+        }
+        puts ret.class
+        p ret
     end
 end

@@ -63,20 +63,24 @@ statement:    object
             
 #object:       name LBRACE objectname COLON params endcomma RBRACE {
 object:       name LBRACE objectinstances endsemi RBRACE {
-    ary = val[2]
     if val[0].is_a?(AST::ASTArray)
-        Puppet.notice "invalid name"
         raise Puppet::ParseError, "Invalid name"
     end
-    if ary[0].is_a?(AST::Leaf)
-        ary = [ary]
+    array = val[2]
+    if array.is_a?(AST::ObjectInst)
+        array = [array]
     end
     result = AST::ASTArray.new(
         :line => @lexer.line,
         :file => @lexer.file
     )
-    ary.each { |instance|
-        Puppet.debug "Adding %s with name %s" % [val[0].value, instance[0].value]
+    # this iterates across each specified objectinstance
+    array.each { |instance|
+        unless instance.is_a?(AST::ObjectInst)
+            raise Puppet::Dev, "Got something that isn't an instance"
+        end
+        # now, i need to somehow differentiate between those things with
+        # arrays in their names, and normal things
         result.push AST::ObjectDef.new(
             :pin => "{}",
             :line => @lexer.line,
@@ -126,7 +130,7 @@ object:       name LBRACE objectinstances endsemi RBRACE {
 }
 
 objectinst:   objectname COLON params {
-    result = AST::ASTArray.new(
+    result = AST::ObjectInst.new(
         :line => @lexer.line,
         :file => @lexer.file,
         :children => [val[0],val[2]]
@@ -135,15 +139,15 @@ objectinst:   objectname COLON params {
 
 objectinstances:   objectinst
                  | objectinstances SEMIC objectinst {
-    if val[0][0].is_a?(AST::ASTArray)
-        val[0].push val[2]
-        result = val[0]
-    else
+    if val[0].is_a?(AST::ObjectInst)
         result = AST::ASTArray.new(
             :line => @lexer.line,
             :file => @lexer.file,
             :children => [val[0],val[2]]
         )
+    else
+        val[0].push val[2]
+        result = val[0]
     end
 }
 
@@ -705,6 +709,9 @@ def parse
         except.line ||= @lexer.line
         except.file ||= @lexer.file
         except.stack ||= except.stack
+        if Puppet[:debug]
+            puts except.stack
+        end
         raise except
     rescue Puppet::DevError => except
         except.line ||= @lexer.line

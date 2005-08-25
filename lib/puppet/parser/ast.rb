@@ -274,6 +274,10 @@ module Puppet
             #---------------------------------------------------------------
 
             #---------------------------------------------------------------
+            class ObjectInst < ASTArray; end
+            #---------------------------------------------------------------
+
+            #---------------------------------------------------------------
             # and these ones don't
             class Leaf < AST
                 attr_accessor :value, :type
@@ -487,7 +491,17 @@ module Puppet
                             #Puppet.debug "%s is a builtin type" % objtype
                             if Puppet[:paramcheck]
                                 @params.each { |param|
-                                    pname = param.param.value
+                                    #p self.name
+                                    #p @params
+                                    unless param.is_a?(AST::ObjectParam)
+                                        raise Puppet::DevError,
+                                            "Got something other than param"
+                                    end
+                                    begin
+                                        pname = param.param.value
+                                    rescue => detail
+                                        raise Puppet::DevError, detail.to_s
+                                    end
                                     next if pname == "name" # always allow these
                                     unless builtin.validarg?(pname)
                                         error = Puppet::ParseError.new(
@@ -513,7 +527,11 @@ module Puppet
                                     next
                                 end
 
-                                pname = param.param.value
+                                begin
+                                    pname = param.param.value
+                                rescue => detail
+                                    raise Puppet::DevError, detail.to_s
+                                end
                                 unless hash.include?(pname)
                                     error = Puppet::ParseError.new(
                                         "Invalid parameter '%s' for type '%s'" %
@@ -543,6 +561,8 @@ module Puppet
                         @params = params
                     else
                         @params = AST::ASTArray.new(
+                            :line => params.line,
+                            :file => params.file,
                             :children => [params]
                         )
                     end

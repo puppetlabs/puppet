@@ -1,0 +1,15 @@
+# $Id$
+
+$files = ["/tmp/iterationatest", "/tmp/iterationbtest"]
+
+file { $files: create => true, mode => 755 }
+
+file { ["/tmp/iterationctest", "/tmp/iterationdtest"]:
+    create => true,
+    mode => 755
+}
+
+file {
+    ["/tmp/iterationetest", "/tmp/iterationftest"]: create => true, mode => 755;
+    ["/tmp/iterationgtest", "/tmp/iterationhtest"]: create => true, mode => 755;
+}
