@@ -1,7 +1,9 @@
 $Id$
 
-This is what you need to get puppet running:
+Documentation (and detailed install instructions) can be found 
+online: http://reductivelabs.com/projects/puppet/documentation/
 
+This is what you need to get puppet running:
 -- Check you have Ruby version 1.8.2 or later
     You can download it from 
     ftp://ftp.ruby-lang.org/pub/ruby/ruby-1.8.2.tar.gz
@@ -14,9 +16,7 @@ This is what you need to get puppet running:
     to contain its lib directory.
 
 -- Install puppet
-    Run 'ruby install.rb' or add the 'lib/' directory to your RUBYLIB path.
-    Documentation can be found online at 
-    http://reductivelabs.com/projects/puppet/documentation/
+   Run 'ruby install.rb' or add the 'lib/' directory to your RUBYLIB path.
 
 -- After that, you should be able to go into test/ and run ./test, 
    or run 'bin/puppet' on whichever puppet config files you want.
