@@ -98,7 +98,6 @@ object:       name LBRACE objectinstances endsemi RBRACE {
     # an object but without a name
     # this cannot be an instance of a library type
 
-    Puppet.debug "Adding %s" % val[0].value
     # make a unique name for bookkeeping purposes
     name = AST::Name.new(
         :line => @lexer.line,
