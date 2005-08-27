@@ -30,18 +30,30 @@ class TestFileServer < TestPuppet
         }
     end
 
-    def mkrandomdirs(dir, depth, width)
+    def mktestfiles(testdir)
+        @@tmpfiles << testdir
         assert_nothing_raised {
-            Dir.mkdir(dir)
-        }
+            Dir.mkdir(testdir)
+            @@tmpfiles << testdir
+            files = %w{a b c d e}.collect { |l|
+                name = File.join(testdir, "file%s" % l)
+                File.open(name, "w") { |f|
+                    f.puts rand(100)
+                }
+                
+                name
+            }
 
+            return files
+        }
     end
 
     def test_namefailures
         server = nil
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
-                :Local => true
+                :Local => true,
+                :Config => false
             )
         }
 
@@ -79,7 +91,8 @@ class TestFileServer < TestPuppet
 
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
-                :Local => true
+                :Local => true,
+                :Config => false
             )
         }
 
@@ -121,7 +134,8 @@ class TestFileServer < TestPuppet
 
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
-                :Local => true
+                :Local => true,
+                :Config => false
             )
         }
 
@@ -175,7 +189,8 @@ class TestFileServer < TestPuppet
 
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
-                :Local => true
+                :Local => true,
+                :Config => false
             )
         }
 
@@ -207,7 +222,8 @@ class TestFileServer < TestPuppet
         server = nil
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
-                :Local => true
+                :Local => true,
+                :Config => false
             )
         }
 
@@ -237,7 +253,8 @@ class TestFileServer < TestPuppet
         server = nil
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
-                :Local => true
+                :Local => true,
+                :Config => false
             )
         }
 
@@ -282,7 +299,8 @@ class TestFileServer < TestPuppet
         server = nil
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
-                :Local => true
+                :Local => true,
+                :Config => false
             )
         }
 
@@ -319,7 +337,8 @@ class TestFileServer < TestPuppet
         server = nil
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
-                :Local => true
+                :Local => true,
+                :Config => false
             )
         }
 
@@ -348,23 +367,15 @@ class TestFileServer < TestPuppet
     def test_describe
         server = nil
         testdir = "/tmp/remotefilecopying"
-        assert_nothing_raised {
-            Dir.mkdir(testdir)
-            @@tmpfiles << testdir
-            %w{a b c d e}.each { |l|
-                name = File.join(testdir, "file%s" % name)
-                File.open(name, "w") { |f|
-                    f.puts rand(100)
-                }
-            }
-        }
+        files = mktestfiles(testdir)
 
         file = nil
         checks = Puppet::Server::FileServer::CHECKPARAMS
 
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
-                :Local => true
+                :Local => true,
+                :Config => false
             )
         }
 
@@ -383,6 +394,75 @@ class TestFileServer < TestPuppet
                 file, type = line.split("\t")
 
                 desc = server.describe(sfile + file)
+            }
+        }
+
+        files.each { |file|
+            file = File.basename(file)
+            assert_nothing_raised {
+                desc = server.describe(sfile + file)
+                assert(desc, "Got no description for %s" % file)
+                assert(desc != "", "Got no description for %s" % file)
+                assert_match(/^\d+/, desc, "Got invalid description %s" % desc)
+            }
+        }
+    end
+
+    def test_configfile
+        server = nil
+        basedir = "/tmp/configfiletesting"
+
+        conftext = "# a test config file\n \n"
+
+        @@tmpfiles << basedir
+
+        Dir.mkdir(basedir)
+        mounts = {}
+        %w{thing thus ahna the}.each { |dir|
+            path = File.join(basedir, dir)
+            conftext << "[#{dir}]
+    path #{path}
+"
+            mounts[dir] = mktestfiles(path)
+
+        }
+
+        conffile = "/tmp/fileservertestingfile"
+        @@tmpfiles << conffile
+
+        File.open(conffile, "w") { |f|
+            f.print conftext
+        }
+        
+
+        assert_nothing_raised {
+            server = Puppet::Server::FileServer.new(
+                :Local => true,
+                :Config => conffile
+            )
+        }
+
+        list = nil
+        mounts.each { |mount, files|
+            mount = "/#{mount}/"
+            assert_nothing_raised {
+                list = server.list(mount, true)
+            }
+
+            assert_nothing_raised {
+                list.split("\n").each { |line|
+                    file, type = line.split("\t")
+
+                    desc = server.describe(mount + file)
+                }
+            }
+
+            files.each { |f|
+                file = File.basename(f)
+                desc = server.describe(mount + file)
+                assert(desc, "Got no description for %s" % f)
+                assert(desc != "", "Got no description for %s" % f)
+                assert_match(/^\d+/, desc, "Got invalid description %s" % f)
             }
         }
     end

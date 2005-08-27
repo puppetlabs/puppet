@@ -7,6 +7,8 @@ class Server
     class FileServer < Handler
         attr_accessor :local
 
+        Puppet.setdefault(:fileserverconfig, [:puppetconf, "fileserver.conf"])
+
         #CHECKPARAMS = %w{checksum type mode owner group}
         CHECKPARAMS = [:mode, :type, :owner, :group, :checksum]
 
@@ -83,7 +85,17 @@ class Server
                 @local = false
             end
 
+            if hash[:Config] == false
+                @noreadconfig = true
+            else
+                @config = hash[:Config] || Puppet[:fileserverconfig]
+                @noreadconfig = false
+            end
+
+            @configstamp = nil
+
             if hash.include?(:Mount)
+                @passedconfig = true
                 unless hash[:Mount].is_a?(Hash)
                     raise Puppet::DevError, "Invalid mount hash %s" %
                         hash[:Mount].inspect
@@ -94,6 +106,9 @@ class Server
                         self.mount(dir, name)
                     end
                 }
+            else
+                @passedconfig = false
+                readconfig
             end
         end
 
@@ -127,34 +142,79 @@ class Server
             }.join("\n")
         end
 
-        def mount(dir, name)
+        def mount(path, name)
             if @mounts.include?(name)
-                if @mounts[name] != dir
+                if @mounts[name] != path
                     raise FileServerError, "%s is already mounted at %s" %
-                        [@mounts[name], name]
+                        [@mounts[name].path, name]
                 else
                     # it's already mounted; no problem
                     return
                 end
             end
 
-            unless name =~ %r{^\w+$}
-                raise FileServerError, "Invalid name format '%s'" % name
-            end
-
-            unless FileTest.exists?(dir)
-                raise FileServerError, "%s does not exist" % dir
-            end
-
-            if FileTest.directory?(dir)
-                if FileTest.readable?(dir)
-                    Puppet.info "Mounting %s at %s" % [dir, name]
-                    @mounts[name] = dir
+            if FileTest.directory?(path)
+                if FileTest.readable?(path)
+                    @mounts[name] = Mount.new(name, path)
+                    Puppet.info "Mounted %s at %s" % [path, name]
                 else
-                    raise FileServerError, "%s is not readable" % dir
+                    raise FileServerError, "%s is not readable" % path
                 end
             else
-                raise FileServerError, "%s is not a directory" % dir
+                raise FileServerError, "%s is not a directory" % path
+            end
+        end
+
+        def readconfig
+            return if @noreadconfig
+
+            @mounts.clear
+
+            begin
+                File.open(@config) { |f|
+                    mount = nil
+                    count = 1
+                    f.each { |line|
+                        case line
+                        when /^\s*#/: next # skip comments
+                        when /^\s*$/: next # skip blank lines
+                        when /\[(\w+)\]/:
+                            name = $1
+                            if @mounts.include?(name)
+                                raise FileServerError, "%s is already mounted at %s" %
+                                    [@mounts[name], name]
+                            end
+                            mount = Mount.new(name)
+                            @mounts[name] = mount
+                        when /\s*(\w+)\s+(.+)$/:
+                            var = $1
+                            value = $2
+                            case var
+                            when "path":
+                                mount.path = value
+                            when "allow":
+                                value.split(/\s*,\s*/).each { |val|
+                                    mount.allow(val)
+                                }
+                            when "deny":
+                                value.split(/\s*,\s*/).each { |val|
+                                    mount.deny(val)
+                                }
+                            else
+                                raise Puppet::Error,
+                                    "Invalid argument %s at line %s" % [var, count]
+                            end
+                        else
+                            raise Puppet::Error,
+                                "Invalid line %s: %s" % [count, line]
+                        end
+                        count += 1
+                    }
+                }
+            rescue Errno::EACCES => detail
+                raise Puppet::Error, "Cannot read %s" % @config
+            rescue Errno::ENOENT => detail
+                raise Puppet::Error, "%s does not exit" % @config
             end
         end
 
@@ -168,9 +228,9 @@ class Server
 
             fpath = nil
             if path
-                fpath = File.join(@mounts[mount], path)
+                fpath = File.join(@mounts[mount].path, path)
             else
-                fpath = @mounts[mount]
+                fpath = @mounts[mount].path
             end
 
             unless FileTest.exists?(fpath)
@@ -189,7 +249,7 @@ class Server
         private
 
         def nameswap(name, mount)
-            name.sub(/\/#{mount}/, @mounts[mount]).gsub(%r{//}, '/').sub(
+            name.sub(/\/#{mount}/, @mounts[mount].path).gsub(%r{//}, '/').sub(
                 %r{/$}, ''
             )
             #Puppet.info "Swapped %s to %s" % [name, newname]
@@ -255,7 +315,7 @@ class Server
         end
 
         def subdir(mount, dir)
-            basedir = @mounts[mount]
+            basedir = @mounts[mount].path
 
             dirname = nil
             if dir
@@ -265,6 +325,44 @@ class Server
             end
 
             return dirname
+        end
+
+        class Mount
+            attr_reader :path, :name
+
+            def allow(pattern)
+            end
+
+            def allowed?(host)
+            end
+
+            def deny(pattern)
+            end
+
+            def initialize(name, path = nil)
+                unless name =~ %r{^\w+$}
+                    raise FileServerError, "Invalid name format '%s'" % name
+                end
+                @name = name
+
+                @allow = []
+                @deny = []
+
+                if path
+                    self.path = path
+                end
+            end
+
+            def path=(path)
+                unless FileTest.exists?(path)
+                    raise FileServerError, "%s does not exist" % path
+                end
+                @path = path
+            end
+
+            def to_s
+                @path
+            end
         end
     end
 end
