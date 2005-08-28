@@ -38,6 +38,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
             Puppet[:loglevel] = :debug
         end
         @@tmpfiles = []
+        @port = 8320
     end
 
     def startmasterd(args)
@@ -48,10 +49,10 @@ class TestPuppetMasterD < Test::Unit::TestCase
         #    cmd += " --debug"
         #end
         assert_nothing_raised {
-            output = %x{puppetmasterd #{args}}.chomp
+            output = %x{puppetmasterd --port #{@port} #{args}}.chomp
         }
-        assert($? == 0)
-        assert_equal("", output)
+        assert($? == 0, "Puppetmasterd exit status was %s" % $?)
+        assert_equal("", output, "Puppetmasterd produced output %s" % output)
     end
 
     def stopmasterd(running = true)
@@ -91,13 +92,13 @@ class TestPuppetMasterD < Test::Unit::TestCase
         startmasterd("--manifest #{file}")
 
         assert_nothing_raised {
-            socket = TCPSocket.new("127.0.0.1", Puppet[:masterport])
+            socket = TCPSocket.new("127.0.0.1", @port)
             socket.close
         }
 
         client = nil
         assert_nothing_raised() {
-            client = XMLRPC::Client.new("localhost", "/RPC2", Puppet[:masterport],
+            client = XMLRPC::Client.new("localhost", "/RPC2", @port,
                 nil, nil, nil, nil, true, 5)
         }
         retval = nil
@@ -105,7 +106,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
         assert_nothing_raised() {
             retval = client.call("status.status", "")
         }
-        assert_equal(1, retval)
+        assert_equal(1, retval, "Status.status return value was %s" % retval)
         facts = {}
         Facter.each { |p,v|
             facts[p] = v
@@ -149,7 +150,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
         assert_nothing_raised() {
             retval = client.nothing
         }
-        assert_equal(1, retval)
+        assert_equal(1, retval, "return value was %s" % retval)
         facts = {}
         Facter.each { |p,v|
             facts[p] = v

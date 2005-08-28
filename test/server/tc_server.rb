@@ -132,7 +132,6 @@ class TestServer < Test::Unit::TestCase
 
         clthread = Thread.new {
             assert_nothing_raised() {
-                Puppet.notice "calling status"
                 retval = client.call("status.status", "")
             }
         }
@@ -186,7 +185,6 @@ class TestServer < Test::Unit::TestCase
         retval = nil
 
         assert_nothing_raised() {
-            Puppet.notice "calling status"
             retval = client.call("status.status")
         }
 
@@ -244,7 +242,6 @@ class TestServer < Test::Unit::TestCase
         retval = nil
 
         assert_nothing_raised() {
-            Puppet.notice "calling status"
             retval = client.getconfig
         }
 
@@ -257,7 +254,6 @@ class TestServer < Test::Unit::TestCase
 
         facts = CGI.escape(Marshal.dump(Puppet::Client::MasterClient.facts))
         assert_nothing_raised() {
-            Puppet.notice "calling status"
             retval = client.call("puppetmaster.getconfig", facts)
         }
 

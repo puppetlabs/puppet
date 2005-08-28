@@ -17,6 +17,7 @@ class Server
 
         def initialize(hash = {})
 
+            # FIXME this should all be s/:File/:Manifest/g or something
             # build our AST
             @file = hash[:File] || Puppet[:manifest]
             @parser = Puppet::Parser::Parser.new()
@@ -37,8 +38,8 @@ class Server
             end
         end
 
-        def getconfig(facts, request = nil)
-            if request
+        def getconfig(facts, client = nil, clientip = nil)
+            if client
                 #Puppet.warning request.inspect
             end
             if @local

@@ -6,8 +6,10 @@ module Puppet
     module Daemon
         def daemonize
             unless Puppet[:logdest] == :file
-                Puppet.err "You must reset log destination before daemonizing"
+                raise Puppet::DevError,
+                    "You must reset log destination before daemonizing"
             end
+
             if pid = fork()
                 Process.detach(pid)
                 exit(0)

@@ -67,7 +67,7 @@ class Server
 
         # our client sends us a csr, and we either store it for later signing,
         # or we sign it right away
-        def getcert(csrtext, request = nil)
+        def getcert(csrtext, client = nil, clientip = nil)
             # okay, i need to retrieve the hostname from the csr, and then
             # verify that i get the same hostname through reverse lookup or
             # something

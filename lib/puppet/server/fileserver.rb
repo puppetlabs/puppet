@@ -1,4 +1,5 @@
 require 'puppet'
+require 'webrick/httpstatus'
 require 'cgi'
 
 module Puppet
@@ -40,18 +41,22 @@ class Server
             return obj
         end
 
-        def describe(file, request = nil)
+        def describe(file, client = nil, clientip = nil)
             mount, path = splitpath(file)
 
-            subdir = nil
-            unless subdir = subdir(mount, path)
+            unless @mounts[mount].allowed?(client, clientip)
+                raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
+            end
+
+            sdir = nil
+            unless sdir = subdir(mount, path)
                 Puppet.notice "Could not find subdirectory %s" %
                     "//%s/%s" % [mount, path]
                 return ""
             end
 
             obj = nil
-            unless obj = self.check(subdir)
+            unless obj = self.check(sdir)
                 return ""
             end
 
@@ -112,8 +117,12 @@ class Server
             end
         end
 
-        def list(dir, recurse = false, sum = "md5", request = nil)
+        def list(dir, recurse = false, client = nil, clientip = nil)
             mount, path = splitpath(dir)
+
+            unless @mounts[mount].allowed?(client, clientip)
+                raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
+            end
 
             subdir = nil
             unless subdir = subdir(mount, path)
@@ -194,11 +203,25 @@ class Server
                                 mount.path = value
                             when "allow":
                                 value.split(/\s*,\s*/).each { |val|
-                                    mount.allow(val)
+                                    begin
+                                        Puppet.info "Allowing %s access to %s" %
+                                            [val, mount.name]
+                                        mount.allow(val)
+                                    rescue AuthStoreError => detail
+                                        raise Puppet::Error, "%s at line %s of %s" %
+                                            [detail.to_s, count, @config]
+                                    end
                                 }
                             when "deny":
                                 value.split(/\s*,\s*/).each { |val|
-                                    mount.deny(val)
+                                    begin
+                                        Puppet.info "Denying %s access to %s" %
+                                            [val, mount.name]
+                                        mount.deny(val)
+                                    rescue AuthStoreError => detail
+                                        raise Puppet::Error, "%s at line %s of %s" %
+                                            [detail.to_s, count, @config]
+                                    end
                                 }
                             else
                                 raise Puppet::Error,
@@ -218,12 +241,15 @@ class Server
             end
         end
 
-        def retrieve(file, request = nil)
+        def retrieve(file, client = nil, clientip = nil)
             mount, path = splitpath(file)
 
             unless (@mounts.include?(mount))
-                # FIXME I really need some better way to pass and handle xmlrpc errors
-                raise FileServerError, "%s not mounted" % mount
+                raise Puppet::Server::FileServerError, "%s not mounted" % mount
+            end
+
+            unless @mounts[mount].allowed?(client, clientip)
+                raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
             end
 
             fpath = nil
@@ -327,17 +353,8 @@ class Server
             return dirname
         end
 
-        class Mount
+        class Mount < AuthStore
             attr_reader :path, :name
-
-            def allow(pattern)
-            end
-
-            def allowed?(host)
-            end
-
-            def deny(pattern)
-            end
 
             def initialize(name, path = nil)
                 unless name =~ %r{^\w+$}
@@ -345,12 +362,11 @@ class Server
                 end
                 @name = name
 
-                @allow = []
-                @deny = []
-
                 if path
                     self.path = path
                 end
+
+                super()
             end
 
             def path=(path)

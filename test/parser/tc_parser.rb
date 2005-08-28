@@ -71,7 +71,5 @@ class TestParser < Test::Unit::TestCase
         assert_nothing_raised {
             ret = parser.parse
         }
-        puts ret.class
-        p ret
     end
 end

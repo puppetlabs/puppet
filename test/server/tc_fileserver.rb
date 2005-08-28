@@ -418,7 +418,7 @@ class TestFileServer < TestPuppet
 
         Dir.mkdir(basedir)
         mounts = {}
-        %w{thing thus ahna the}.each { |dir|
+        %w{thing thus these those}.each { |dir|
             path = File.join(basedir, dir)
             conftext << "[#{dir}]
     path #{path}
@@ -431,7 +431,24 @@ class TestFileServer < TestPuppet
         @@tmpfiles << conffile
 
         File.open(conffile, "w") { |f|
-            f.print conftext
+            f.print "# a test config file
+ 
+[thing]
+    path #{basedir}/thing
+    allow 192.168.0.*
+
+[thus]
+    path #{basedir}/thus
+    allow *.madstop.com, *.kanies.com
+    deny *.sub.madstop.com
+
+[these]
+    path #{basedir}/these
+
+[those]
+    path #{basedir}/those
+
+"
         }
         
 
@@ -443,6 +460,7 @@ class TestFileServer < TestPuppet
         }
 
         list = nil
+        # run through once with no host/ip info, to verify everything is working
         mounts.each { |mount, files|
             mount = "/#{mount}/"
             assert_nothing_raised {
@@ -465,6 +483,53 @@ class TestFileServer < TestPuppet
                 assert_match(/^\d+/, desc, "Got invalid description %s" % f)
             }
         }
+
+        # now let's check that things are being correctly forbidden
+        {
+            "thing" => {
+                :deny => [
+                    ["hostname.com", "192.168.1.0"],
+                    ["hostname.com", "192.158.0.0"]
+                ],
+                :allow => [
+                    ["hostname.com", "192.168.0.0"],
+                    ["hostname.com", "192.168.0.245"],
+                ]
+            },
+            "thus" => {
+                :deny => [
+                    ["hostname.com", "192.168.1.0"],
+                    ["name.sub.madstop.com", "192.158.0.0"]
+                ],
+                :allow => [
+                    ["luke.kanies.com", "192.168.0.0"],
+                    ["luke.madstop.com", "192.168.0.245"],
+                ]
+            }
+        }.each { |mount, hash|
+            mount = "/#{mount}/"
+
+            hash.each { |type, ary|
+                ary.each { |sub|
+                    host, ip = sub
+
+                    case type
+                    when :deny:
+                        assert_raise(Puppet::Server::AuthorizationError,
+                            "Host %s, ip %s, allowed %s" %
+                            [host, ip, mount]) {
+                                list = server.list(mount, true, host, ip)
+                        }
+                    when :allow:
+                        assert_nothing_raised("Host %s, ip %s, denied %s" %
+                            [host, ip, mount]) {
+                                list = server.list(mount, true, host, ip)
+                        }
+                    end
+                }
+            }
+        }
+
     end
 end
 

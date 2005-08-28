@@ -4,12 +4,18 @@ module Puppet
 class Server
     class ServletError < RuntimeError; end
     class Servlet < XMLRPC::WEBrickServlet
+        ERR_UNAUTHORIZED = 30
+
         attr_accessor :request
 
         # this is just a duplicate of the normal method; it's here for
         # debugging when i need it
         def self.get_instance(server, *options)
             self.new(server, *options)
+        end
+
+        def authorize(request, method)
+            true
         end
 
         def initialize(server, handlers)
@@ -28,28 +34,55 @@ class Server
             }
 
             @request = nil
+            @client = nil
+            @clientip = nil
             self.set_service_hook { |obj, *args|
                 #raise "crap!"
-                if @request
-                    args.push @request
+                if @client and @clientip
+                    args.push(@client, @clientip)
                     #obj.call(args, @request)
                 end
                 begin
                     obj.call(*args)
+                rescue Puppet::Server::AuthorizationError => detail
+                    Puppet.warning obj.inspect
+                    Puppet.warning args.inspect
+                    Puppet.err "Permission denied: %s" % detail.to_s
+                    raise XMLRPC::FaultException.new(
+                        1, detail.to_s
+                    )
+                rescue Puppet::Error => detail
+                    Puppet.warning obj.inspect
+                    Puppet.warning args.inspect
+                    Puppet.err "Puppet error: %s" % detail.to_s
+                    raise XMLRPC::FaultException.new(
+                        1, detail.to_s
+                    )
                 rescue => detail
                     Puppet.warning obj.inspect
                     Puppet.warning args.inspect
                     Puppet.err "Could not call: %s" % detail.to_s
+                    raise error
                 end
             }
         end
 
         def service(request, response)
             @request = request
-            if @request.client_cert
-                Puppet.info "client cert is %s" % @request.client_cert
+            if peer = request.peeraddr
+                @client = peer[2]
+                @clientip = peer[3]
+            else
+                raise XMLRPC::FaultException.new(
+                    ERR_UNCAUGHT_EXCEPTION,
+                    "Could not retrieve client information"
+                )
             end
-            if @request.server_cert
+
+            if request.client_cert
+                Puppet.info "client cert is %s" % request.client_cert
+            end
+            if request.server_cert
                 #Puppet.info "server cert is %s" % @request.server_cert
             end
             #p @request
@@ -59,6 +92,8 @@ class Server
                 Puppet.err "Could not service request: %s: %s" %
                     [detail.class, detail]
             end
+            @client = nil
+            @clientip = nil
             @request = nil
         end
 
@@ -66,7 +101,21 @@ class Server
 
         # this is pretty much just a copy of the original method but with more
         # feedback
+        # here's where we have our authorization hooks
         def dispatch(methodname, *args)
+
+            if defined? @request and @request
+                unless self.authorize(@request, methodname)
+                    raise XMLRPC::FaultException.new(
+                        ERR_UNAUTHORIZED,
+                        "Host %s not authorized to call %s" %
+                            [@request.host, methodname]
+                    )
+                end
+            else
+                raise Puppet::DevError, "Did not get request in dispatch"
+            end
+
             #Puppet.warning "dispatch on %s called with %s" %
             #    [methodname, args.inspect]
             for name, obj in @handler

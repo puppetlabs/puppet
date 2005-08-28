@@ -1,7 +1,6 @@
 if __FILE__ == $0
     $:.unshift '../../lib'
-    $:.unshift '../../../../library/trunk/lib/'
-    $:.unshift '../../../../library/trunk/test/'
+    $:.unshift '..'
     $puppetbase = "../.."
 end
 

@@ -60,7 +60,7 @@ class Server
         end
 
         # accept a file from a client
-        def addfile(string,path, request = nil)
+        def addfile(string,path, client = nil, clientip = nil)
             #puts "entering addfile"
             contents = Base64.decode64(string)
             #puts "string is decoded"
@@ -129,7 +129,7 @@ class Server
             return md5
         end
 
-        def getfile(md5, request = nil)
+        def getfile(md5, client = nil, clientip = nil)
             bpath, bfile, bpaths = FileBucket.paths(@bucket,md5)
 
             unless FileTest.exists?(bfile)

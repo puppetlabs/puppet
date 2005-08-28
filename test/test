@@ -49,3 +49,6 @@ end
 suites.each { |suite|
     PuppetTestSuite.new(suite)
 }
+
+# This damn problem just doesn't seem to want to go away
+system("%s/etc/init.d/sleeper stop 2>/dev/null 1>/dev/null" % $puppetbase)

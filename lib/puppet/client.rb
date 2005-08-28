@@ -47,14 +47,14 @@ module Puppet
                         begin
                             call("%s.%s" % [namespace, method.to_s],*args)
                         rescue XMLRPC::FaultException => detail
-                            Puppet.err "XML Could not call %s.%s: %s" %
+                            Puppet.err "Could not call %s.%s: %s" %
                                 [namespace, method, detail.faultString]
                             raise NetworkClientError,
                                 "XMLRPC Error: %s" % detail.faultString
-                        rescue => detail
-                            Puppet.err "Could not call %s.%s: %s" %
-                                [namespace, method, detail.inspect]
-                            raise NetworkClientError.new(detail.to_s)
+                        #rescue => detail
+                        #    Puppet.err "Could not call %s.%s: %s" %
+                        #        [namespace, method, detail.inspect]
+                        #    raise NetworkClientError.new(detail.to_s)
                         end
                     }
                 }

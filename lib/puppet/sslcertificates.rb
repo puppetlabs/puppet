@@ -92,7 +92,7 @@ module SSLCertificates
         when :server:
             basic_constraint = "CA:FALSE"
             key_usage = %w{digitalSignature keyEncipherment}
-        ext_key_usage = %w{serverAuth}
+        ext_key_usage = %w{serverAuth clientAuth}
         when :ocsp:
             basic_constraint = "CA:FALSE"
             key_usage = %w{nonRepudiation digitalSignature}
@@ -105,9 +105,6 @@ module SSLCertificates
         else
             raise Puppet::Error, "unknown cert type '%s'" % hash[:type]
         end
-
-        Puppet.debug "Key usage is %s" % key_usage.inspect
-        Puppet.debug "ExtKey usage is %s" % ext_key_usage.inspect
 
         ex << ef.create_extension("nsComment",
                                   "Puppet Ruby/OpenSSL Generated Certificate")

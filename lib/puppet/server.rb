@@ -32,6 +32,8 @@ module Puppet
             include Puppet::Daemon
 
             def initialize(hash = {})
+                # FIXME we should have some kind of access control here, using
+                # :RequestHandler
                 hash[:Port] ||= Puppet[:masterport]
                 hash[:Logger] ||= self.httplog
                 hash[:AccessLog] ||= [
@@ -139,7 +141,7 @@ module Puppet
 
             @name = :Status
 
-            def status(status = nil, request = nil)
+            def status(status = nil, client = nil, clientip = nil)
                 Puppet.warning "Returning status"
                 return 1
             end
@@ -150,6 +152,7 @@ module Puppet
     #---------------------------------------------------------------
 end
 
+require 'puppet/server/authstore'
 require 'puppet/server/servlet'
 require 'puppet/server/master'
 require 'puppet/server/ca'

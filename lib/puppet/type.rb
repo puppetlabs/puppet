@@ -498,10 +498,18 @@ class Type < Puppet::Element
                             :should => value
                         )
                         @states[name] = newstate
-                    rescue => detail
+                    rescue Puppet::Error => detail
                         # the state failed, so just ignore it
                         Puppet.debug "State %s failed: %s" %
                             [name, detail]
+                    rescue Puppet::DevError => detail
+                        # the state failed, so just ignore it
+                        Puppet.notice "State %s failed: %s" %
+                            [name, detail]
+                    rescue => detail
+                        # the state failed, so just ignore it
+                        Puppet.err "State %s failed: %s (%s)" %
+                            [name, detail, detail.class]
                     end
                 end
             end

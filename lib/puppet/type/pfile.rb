@@ -1283,9 +1283,11 @@ module Puppet
                 when "file":
                     unless defined? @@localfileserver
                         @@localfileserver = Puppet::Server::FileServer.new(
-                            :Local => true
+                            :Local => true,
+                            :Mount => { "/" => "localhost" },
+                            :Config => false
                         )
-                        @@localfileserver.mount("/", "localhost")
+                        #@@localfileserver.mount("/", "localhost")
                     end
                     sourceobj.server = @@localfileserver
                     path = "/localhost" + uri.path

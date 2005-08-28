@@ -154,7 +154,7 @@ class TestAuthStore < TestPuppet
         }
     end
 
-    def test_ziprangedenials
+    def test_iprangedenials
         store = mkstore
 
         assert_nothing_raised("Failed to store overlapping IP ranges") {
@@ -166,7 +166,7 @@ class TestAuthStore < TestPuppet
         assert(! store.allowed?("fake.name", "192.168.0.50"), "/24 ip allowed")
     end
 
-    def test_zsubdomaindenails
+    def test_subdomaindenails
         store = mkstore
 
         assert_nothing_raised("Failed to store overlapping IP ranges") {
@@ -178,6 +178,37 @@ class TestAuthStore < TestPuppet
             "hostname not allowed")
         assert(! store.allowed?("name.sub.madstop.com", "192.168.0.50"),
             "subname name allowed")
+    end
+
+    def test_orderingstuff
+        store = mkstore
+
+        assert_nothing_raised("Failed to store overlapping IP ranges") {
+            store.allow("*.madstop.com")
+            store.deny("192.168.0.0/24")
+        }
+
+        assert(store.allowed?("hostname.madstop.com", "192.168.1.50"),
+            "hostname not allowed")
+        assert(! store.allowed?("hostname.madstop.com", "192.168.0.50"),
+            "Host allowed over IP")
+    end
+
+    def test_globalallow
+        store = mkstore
+
+        assert_nothing_raised("Failed to add global allow") {
+            store.allow("*")
+        }
+
+        [
+            %w{hostname.com 192.168.0.4},
+            %w{localhost 192.168.0.1},
+            %w{localhost 127.0.0.1}
+            
+        ].each { |ary|
+            assert(store.allowed?(*ary), "Failed to allow %s" % [ary.join(",")])
+        }
     end
 end
 

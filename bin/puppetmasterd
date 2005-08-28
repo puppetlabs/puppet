@@ -15,6 +15,7 @@ result = GetoptLong.new(
 	[ "--ssldir",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--noinit",   "-n",			GetoptLong::NO_ARGUMENT ],
+	[ "--autosign", "-a",			GetoptLong::NO_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
 	[ "--noca",         			GetoptLong::NO_ARGUMENT ],
@@ -22,7 +23,11 @@ result = GetoptLong.new(
 )
 
 noinit = false
-ca = true
+
+haveca = true
+master = {}
+ca = {}
+args = {}
 
 result.each { |opt,arg|
 	case opt
@@ -33,20 +38,23 @@ result.each { |opt,arg|
             Puppet[:loglevel] = :info
 		when "--debug"
             Puppet[:debug] = true
+		when "--autosign"
+            ca[:autosign] = true
 		when "--noca"
-            ca = false
+            haveca = false
 		when "--port"
-            Puppet[:masterport] = arg
+            args[:Port] = arg
 		when "--ssldir"
             Puppet[:ssldir] = arg
 		when "--manifest"
-            Puppet[:manifest] = arg
+            master[:File] = arg
 		when "--noinit"
             noinit = true
 		when "--logfile"
-            Puppet[:masterlog] = arg
+            args[:AccessLog] = arg
 		else
-			raise "Invalid option '#{opt}'"
+			$stderr.puts "Invalid option '#{opt}'"
+            exit(1)
 	end
 }
 
@@ -62,16 +70,28 @@ if bg
     Puppet[:logdest] = Puppet[:masterlog]
 end
 
+handlers = {
+    :Master => master,
+    :Status => {}
+}
+
+
+if haveca
+    handlers[:CA] = ca
+end
+
+if File.exists?(Puppet[:fileserverconfig])
+    handlers[:FileServer] = {
+        :Config => Puppet[:fileserverconfig]
+    }
+end
+
+args[:Handlers] = handlers
+
 begin
     # use the default, um, everything
     #server = Puppet::Server.new(:CA => ca)
-    server = Puppet::Server.new(
-        :Handlers => {
-            :CA => {}, # so that certs autogenerate
-            :Master => {},
-            :Status => {}
-        }
-    )
+    server = Puppet::Server.new(args)
 rescue => detail
     $stderr.puts detail
     exit(1)

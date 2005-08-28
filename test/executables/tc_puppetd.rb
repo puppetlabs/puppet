@@ -47,7 +47,7 @@ class TestPuppetDExe < Test::Unit::TestCase
         assert_nothing_raised {
             output = %x{puppetmasterd --port #{Puppet[:masterport]} --manifest #{file}}.chomp
         }
-        assert($? == 0)
+        assert($? == 0, "Puppetmasterd return status was %s" % $?)
         @@tmppids << $?.pid
         assert_equal("", output)
     end
@@ -62,7 +62,7 @@ class TestPuppetDExe < Test::Unit::TestCase
                 pid = ary[1].to_i
             end
         }
-        assert(pid)
+        assert(pid, "No puppetmasterd pid")
         
         assert_nothing_raised {
             Process.kill("-INT", pid)
@@ -75,8 +75,8 @@ class TestPuppetDExe < Test::Unit::TestCase
         assert_nothing_raised {
             output = %x{puppetd --server localhost}.chomp
         }
-        assert($? == 0)
-        assert_equal("", output)
+        assert($? == 0, "Puppetd exited with code %s" % $?)
+        assert_equal("", output, "Puppetd produced output %s" % output)
 
         assert_nothing_raised {
             socket = TCPSocket.new("127.0.0.1", Puppet[:masterport])

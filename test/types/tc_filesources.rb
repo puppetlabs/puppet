@@ -194,7 +194,6 @@ class TestFileSources < Test::Unit::TestCase
         if networked
             source = "puppet://localhost/%s%s" % [networked, fromdir]
         end
-        Puppet.warning "Source is %s" % source
         recursive_source_test(source, todir)
 
         return [fromdir,todir]
@@ -310,9 +309,28 @@ class TestFileSources < Test::Unit::TestCase
         assert(klass[file3])
     end
 
-    def test_SimpleNetworkSources
+    def mkfileserverconf(mounts)
+        file = "/tmp/fileserverconftestingfile%s" % rand(100)
+        File.open(file, "w") { |f|
+            mounts.each { |path, name|
+                f.puts "[#{name}]\n\tpath #{path}\n\tallow *\n"
+            }
+        }
+
+        @@tmpfiles << file
+        return file
+    end
+
+    def test_zSimpleNetworkSources
         server = nil
         basedir = "/tmp/simplnetworksourcetesting"
+
+        mounts = {
+            "/" => "root"
+        }
+
+        fileserverconf = mkfileserverconf(mounts)
+
         if File.exists?(basedir)
             system("rm -rf %s" % basedir)
         end
@@ -335,9 +353,7 @@ class TestFileSources < Test::Unit::TestCase
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
                     :FileServer => {
-                        :Mount => {
-                            "/" => "root"
-                        }
+                        :Config => fileserverconf
                     }
                 }
             )
@@ -364,7 +380,7 @@ class TestFileSources < Test::Unit::TestCase
         list = nil
         rpath = "/root%s" % tmpfile
         assert_nothing_raised {
-            list = client.call("fileserver.list", rpath)
+            list = client.call("fileserver.list", rpath, false)
         }
 
         assert_equal("/\tfile", list)
@@ -387,13 +403,19 @@ class TestFileSources < Test::Unit::TestCase
         }
     end
 
-    def test_NetworkSources
+    def test_zNetworkSources
         server = nil
         basedir = "/tmp/networksourcetesting"
         if File.exists?(basedir)
             system("rm -rf %s" % basedir)
         end
         Dir.mkdir(basedir)
+
+        mounts = {
+            "/" => "root"
+        }
+
+        fileserverconf = mkfileserverconf(mounts)
 
         Puppet[:puppetconf] = basedir
         Puppet[:puppetvar] = basedir
@@ -408,9 +430,7 @@ class TestFileSources < Test::Unit::TestCase
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
                     :FileServer => {
-                        :Mount => {
-                            "/" => "root"
-                        }
+                        :Config => fileserverconf
                     }
                 }
             )
