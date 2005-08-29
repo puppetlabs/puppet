@@ -121,7 +121,7 @@ else
 
     s.bindir = "bin"                               # Use these for applications.
     s.executables = ["puppet", "puppetd", "puppetmasterd", "puppetdoc",
-                     "filebucketd", "certmgr.rb"]
+                     "puppetca"]
     s.default_executable = "puppet"
     s.autorequire = 'puppet'
 
