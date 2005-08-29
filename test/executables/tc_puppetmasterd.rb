@@ -60,7 +60,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
 
         pid = nil
         %x{#{ps}}.chomp.split(/\n/).each { |line|
-            if line =~ /puppetmasterd --manifest/
+            if line =~ /ruby.+puppetmasterd/
                 ary = line.split(" ")
                 pid = ary[1].to_i
             end
@@ -122,7 +122,25 @@ class TestPuppetMasterD < Test::Unit::TestCase
         assert_nothing_raised {
             Marshal::load(CGI.unescape(retval))
         }
-        #stopmasterd
+        stopmasterd
+    end
+
+    def test_parseonly
+        file = File.join($puppetbase, "examples", "code", "head")
+        startmasterd("--parseonly --manifest #{file}")
+
+        pid = nil
+        ps = Facter["ps"].value || "ps -ef"
+        %x{#{ps}}.chomp.split(/\n/).each { |line|
+            if line =~ /puppetmasterd --manifest/
+                ary = line.split(" ")
+                pid = ary[1].to_i
+            end
+        }
+
+        assert($? == 0, "Puppetmasterd ended with non-zero exit status")
+
+        assert_nil(pid, "Puppetmasterd is still running after parseonly")
     end
 
     def disabled_test_sslconnection
