@@ -42,7 +42,7 @@
 #
 # manifest::
 #   The central site manifest to use for providing clients with their individual
-#   configurations.  Defaults to /etc/puppet/manifest.pp.
+#   configurations.  Defaults to /etc/puppet/manifests/site.pp.
 #
 # noca::
 #   Do not function as a certificate authority.

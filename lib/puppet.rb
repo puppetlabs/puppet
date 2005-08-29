@@ -73,7 +73,8 @@ module Puppet
         :statedir       => [:puppetvar,      "state"],
 
         # then the files},
-        :manifest       => [:puppetconf,     "manifest.pp"],
+        :manifestdir    => [:puppetconf,     "manifests"],
+        :manifest       => [:manifestdir,    "site.pp"],
         :localconfig    => [:puppetconf,     "localconfig.ma"],
         :logfile        => [:logdir,         "puppet.log"],
         :httplogfile    => [:logdir,         "http.log"],
