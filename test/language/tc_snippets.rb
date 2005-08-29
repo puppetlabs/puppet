@@ -368,7 +368,7 @@ class TestSnippets < Test::Unit::TestCase
                 }
                 trans = nil
                 assert_nothing_raised {
-                    trans = client.config()
+                    trans = client.apply()
                 }
                 assert_nothing_raised {
                     self.send(mname, trans)

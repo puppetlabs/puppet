@@ -1,11 +1,11 @@
 # $Id$
 #
 
-$platform = sunos
+$platform = SunOS
 
 $funtest = $platform ? {
-    sunos => yayness,
-    aix => goodness,
+    SunOS => yayness,
+    AIX => goodness,
     default => badness
 }
 
@@ -15,10 +15,10 @@ $filename = "/tmp/yayness"
 
 $sleeper = file { $filename:
     mode => $platform ? {
-        sunos => 644,
+        SunOS => 644,
         default => 755
     },
-    create => $platform ? sunos => true
+    create => $platform ? "SunOS" => true
 }
 
 # i guess it has to be solved this way...

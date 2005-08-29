@@ -205,7 +205,7 @@ module Puppet
             def self.facts
                 facts = {}
                 Facter.each { |name,fact|
-                    facts[name] = fact.downcase
+                    facts[name] = fact
                 }
 
                 facts
