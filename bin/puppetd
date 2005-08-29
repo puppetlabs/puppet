@@ -1,64 +1,150 @@
 #!/usr/bin/ruby
-
-#--------------------
-# the puppet client
+# == Synopsis 
 #
-# $Id$
+# Retrieve the client configuration from the central puppet server and apply
+# it to the local host.
+#
+# Currently must be run out periodically, using cron or something similar.
+#
+# = Usage
+#
+#   puppetd  [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
+#               [--ssldir <cert directory>] [-l|--logdest <syslog|<file>|console>]
+#               [--fqdn <host name>] [-p|--port <port>] [-s|--server <server>]
+#
+# = Description
+#
+# This is the main puppet client.  Its job is to retrieve the local machine's
+# configuration from a remote server and apply it.  In order to successfully
+# communicate with the remote server, the client must have a certificate signed
+# by a certificate authority that the server trusts; the recommended method
+# for this, at the moment, is to run a certificate authority as part of the
+# puppet server (which is the default).  The client will connect and request
+# a signed certificate, and will continue connecting until it receives one.
+#
+# Once the client has a signed certificate, it will retrieve its configuration
+# and apply it.
+#
+# = Options
+#
+# debug::
+#   Enable full debugging.
+#
+# fqdn::
+#   Set the fully-qualified domain name of the client.  This is only used for
+#   certificate purposes, but can be used to override the discovered hostname.
+#   If you need to use this flag, it is generally an indication of a setup problem.
+#
+# help::
+#   Print this help message
+#
+# logdest::
+#   Where to send messages.  Choose between syslog, the console, and a log file.
+#   Defaults to sending messages to /var/puppet/log/puppet.log, or the console
+#   if debugging or verbosity is enabled.
+#
+# port::
+#   The port to which to connect on the remote server.  Currently defaults to 8139.
+#
+# server::
+#   The remote server from whom to receive the local configuration.  Currently
+#   must also be the certificate authority.  Currently defaults to 'localhost'.
+#
+# ssldir::
+#   Where to store and find certificates.  Defaults to /etc/puppet/ssl.
+#
+# verbose::
+#   Turn on verbose reporting.
+#
+# version::
+#   Print the puppet version number and exit.
+#
+# = Example
+#
+#   puppet -s puppet.domain.com
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005 Reductive Labs, LLC
+# Licensed under the GNU Public License
 
-
-$:.unshift '../lib'
 
 require 'puppet'
 require 'puppet/server'
 require 'puppet/client'
 require 'getoptlong'
 
+$haveusage = true
+begin
+    require 'rdoc/usage'
+rescue
+    $haveusage = false
+end
+
 result = GetoptLong.new(
-	[ "--logfile",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--ssldir",   				GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--fqdn",     "-f",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--server",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--secure",       			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--noinit",	"-n",			GetoptLong::NO_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+	[ "--fqdn",     "-f",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
+	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--server",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--ssldir",   				GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
-	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+	[ "--version",	"-V",			GetoptLong::NO_ARGUMENT ]
 )
 
-noinit = false
 server = "localhost"
-proto = "http"
 fqdn = nil
+args = {}
 
-result.each { |opt,arg|
-	case opt
-		when "--help"
-			puts "There is no help yet"
-			exit
-		when "--verbose"
-            Puppet[:loglevel] = :info
-		when "--debug"
-            Puppet[:loglevel] = :debug
-		when "--ssldir"
-            Puppet[:ssldir] = arg
-		when "--secure"
-            proto = "https"
-		when "--noinit"
-            noinit = true
-		when "--fqdn"
-            fqdn = arg
-		when "--server"
-            server = arg
-		when "--port"
-            Puppet[:masterport] = arg
-		when "--logfile"
-            Puppet[:logfile] = arg
-		else
-			puts "Invalid option '#{opt}'"
-            exit(10)
-	end
-}
+begin
+    result.each { |opt,arg|
+        case opt
+            when "--help"
+                if $haveusage
+                    RDoc::usage && exit
+                else
+                    puts "No help available unless you have RDoc::usage installed"
+                    exit
+                end
+            when "--version"
+                puts "%s" % Puppet.version
+                exit
+            when "--verbose"
+                Puppet[:loglevel] = :info
+            when "--debug"
+                Puppet[:loglevel] = :debug
+            when "--ssldir"
+                Puppet[:ssldir] = arg
+            when "--fqdn"
+                fqdn = arg
+            when "--server"
+                server = arg
+            when "--port"
+                args[:Port] = arg
+            when "--logdest"
+                # FIXME we should be able to have log.rb check the validity of the dst
+                case arg
+                when "syslog", "console", /^\//:
+                    Puppet[:logdest] = arg
+                else
+                    $stderr.puts "Invalid log destination %s" % arg
+                end
+        end
+    }
+rescue GetoptLong::InvalidOption => detail
+    $stderr.puts "Try '#{$0} --help'"
+    #$stderr.puts detail
+    # FIXME RDoc::usage doesn't seem to work
+    #if $haveusage
+    #    RDoc::usage(1,'usage')
+    #end
+    exit(1)
+end
 
 bg = false
 
@@ -66,7 +152,7 @@ unless Puppet[:loglevel] == :debug or Puppet[:loglevel] == :info
     bg = true
 end
 
-args = {:Server => server}
+args[:Server] = server
 if fqdn
     args[:FQDN] = fqdn
 end
@@ -75,8 +161,8 @@ client = Puppet::Client.new(args)
 unless client.readcert
     begin
         while ! client.requestcert do
-            Puppet.notice "Could not request certificate"
-            sleep 5
+            Puppet.notice "Did not receive certificate"
+            sleep 60
         end
     rescue => detail
         Puppet.err "Could not request certificate: %s" % detail.to_s
@@ -90,13 +176,6 @@ if bg
 end
 #client.start
 client.getconfig
+client.config
 
-#threads = []
-#threads << Thread.new {
-#    trap(:INT) {
-#        client.shutdown
-#    }
-#    client.start
-#}
-#
-#client.getconfig
+# $Id$

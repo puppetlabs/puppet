@@ -1,62 +1,154 @@
-#!/usr/bin/ruby -w
+#!/usr/bin/ruby
 
-#--------------------
-# the central puppet server
 #
-# $Id$
+# = Synopsis
+#
+# The central puppet server.  Can also function as a certificate authority.
+#
+# = Usage
+#
+#   puppetmasterd [-h|--help] [-d|--debug] [-v|--verbose] [-V|--version]
+#               [-l|--logdest <syslog|console|<file>>] [--httplog <file>]
+#               [-m|--manifest <site manifest>] [--noca] [-p|--port <port>]
+#               [-s|--ssldir <cert directory>]
+#
+# = Description
+#
+# This is the standalone puppet execution script; use it to execute
+# individual scripts that you write.  If you need to execute site-wide
+# scripts, use +puppetd+ and +puppetmasterd+.
+#
+# = Options
+#
+# debug::
+#   Enable full debugging.  Causes the daemon not to go into the background.
+#
+# help::
+#   Print this help message.
+#
+# httplog::
+#   Where to send http logs (which are currently separate from Puppet logs).
+#   Defaults to /var/puppet/log/http.log.
+#
+# logdest::
+#   Where to send messages.  Choose between syslog, the console, and a log file.
+#   Defaults to sending messages to /var/puppet/log/puppet.log, or the console
+#   if debugging or verbosity is enabled.
+#
+# manifest::
+#   The central site manifest to use for providing clients with their individual
+#   configurations.  Defaults to /etc/puppet/manifest.pp.
+#
+# noca::
+#   Do not function as a certificate authority.
+#
+# port::
+#   The port on which to listen.  Defaults to 8139.
+#
+# ssldir::
+#   The directory in which to store certificates.  Defaults to /etc/puppet/ssl.
+#
+# verbose::
+#   Enable verbosity.  Causes the daemon not to go into the background.
+#
+# version::
+#   Print the puppet version number and exit.
+#
+# = Example
+#
+#   puppetmasterd
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005 Reductive Labs, LLC
+# Licensed under the GNU Public License
 
 require 'getoptlong'
 require 'puppet'
 require 'puppet/server'
 
 result = GetoptLong.new(
-	[ "--logfile",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--manifest",	"-m",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--ssldir",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--noinit",   "-n",			GetoptLong::NO_ARGUMENT ],
 	[ "--autosign", "-a",			GetoptLong::NO_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
-	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
+	[ "--httplog",					GetoptLong::NO_ARGUMENT ],
+	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--manifest",	"-m",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--noca",         			GetoptLong::NO_ARGUMENT ],
-	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--ssldir",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
+    [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
 )
 
-noinit = false
+$haveusage = true
+
+begin
+    require 'rdoc/usage'
+rescue
+    $haveusage = false
+end
 
 haveca = true
 master = {}
 ca = {}
 args = {}
 
-result.each { |opt,arg|
-	case opt
-		when "--help"
-			puts "There is no help yet"
-			exit
-		when "--verbose"
-            Puppet[:loglevel] = :info
-		when "--debug"
-            Puppet[:debug] = true
-		when "--autosign"
-            ca[:autosign] = true
-		when "--noca"
-            haveca = false
-		when "--port"
-            args[:Port] = arg
-		when "--ssldir"
-            Puppet[:ssldir] = arg
-		when "--manifest"
-            master[:File] = arg
-		when "--noinit"
-            noinit = true
-		when "--logfile"
-            args[:AccessLog] = arg
-		else
-			$stderr.puts "Invalid option '#{opt}'"
-            exit(1)
-	end
-}
+begin
+    result.each { |opt,arg|
+        case opt
+            when "--autosign"
+                ca[:autosign] = true
+            when "--debug"
+                Puppet[:debug] = true
+            when "--help"
+                if $haveusage
+                    RDoc::usage && exit
+                else
+                    puts "No help available unless you have RDoc::usage installed"
+                    exit
+                end
+            when "--httplog"
+                args[:AccessLog] = arg
+            when "--manifest"
+                master[:File] = arg
+            when "--noca"
+                haveca = false
+            when "--port"
+                args[:Port] = arg
+            when "--ssldir"
+                Puppet[:ssldir] = arg
+            when "--logdest"
+                # FIXME we should be able to have log.rb check the validity of the dst
+                case arg
+                when "syslog", "console", /^\//:
+                    Puppet[:logdest] = arg
+                else
+                    $stderr.puts "Invalid log destination %s" % arg
+                end
+            when "--version"
+                puts "%s" % Puppet.version
+                exit
+            when "--verbose"
+                Puppet[:loglevel] = :info
+            else
+                $stderr.puts "Invalid option '#{opt}'"
+                exit(1)
+        end
+    }
+rescue GetoptLong::InvalidOption => detail
+    $stderr.puts "Try '#{$0} --help'"
+    #$stderr.puts detail
+    # FIXME RDoc::usage doesn't seem to work
+    #if $haveusage
+    #    RDoc::usage(1,'usage')
+    #end
+    exit(1)
+end
 
 bg = false
 
@@ -110,3 +202,5 @@ rescue => detail
     Puppet.err "Could not start puppetmaster: %s" % detail
     exit(1)
 end
+
+# $Id$

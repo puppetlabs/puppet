@@ -1,58 +1,134 @@
-#!/usr/bin/ruby -w
+#!/usr/bin/ruby
 
-#--------------------
-# the puppet client
 #
-# $Id$
-
+# = Synopsis
+#
+# Stand-alone certificate authority.  Capable of generating certificates
+# but mostly meant for signing certificate requests from puppet clients.
+#
+# = Usage
+#
+#   puppetca [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
+#               [--cadir <ca directory>] [-g|--generate] [-l|--list]
+#               [-s|--sign] [--ssldir <cert directory>]
+#
+# = Description
+#
+# Because the puppetmasterd daemon defaults to not signing client certificate
+# requests, this script is available for signing outstanding requests.  It
+# can be used to list outstanding requests and then either sign them individually
+# or sign all of them.
+#
+# = Options
+#
+# all::
+#   Operate on all outstanding requests.  Only makes sense with '--sign'.
+#
+# cadir::
+#   Where to look for the ca directory.  Defaults to /etc/puppet/ssl/ca.
+#
+# debug::
+#   Enable full debugging.
+#
+# generate::
+#   Generate a certificate for a named client.  A certificate/keypair will be
+#   generated for each client named on the command line.
+#
+# help::
+#   Print this help message
+#
+# list::
+#   List outstanding certificate requests.
+#
+# sign::
+#   Sign an outstanding certificate request.  Unless '--all' is specified,
+#   hosts must be listed after all flags.
+#
+# ssldir::
+#   The directory in which to store certificates.  Defaults to /etc/puppet/ssl.
+#
+# verbose::
+#   Enable verbosity.
+#
+# = Example
+#
+#   $ puppetca -l
+#   culain.madstop.com
+#   $ puppetca -s culain.madstop.com
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005 Reductive Labs, LLC
+# Licensed under the GNU Public License
 
 require 'puppet'
 require 'puppet/sslcertificates'
 require 'getoptlong'
 
+$haveusage = true
+
+begin
+    require 'rdoc/usage'
+rescue
+    $haveusage = false
+end
+
 result = GetoptLong.new(
-	[ "--ssldir",	    			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--list",	    "-l",			GetoptLong::NO_ARGUMENT ],
-	[ "--sign",	    "-s",			GetoptLong::NO_ARGUMENT ],
-	[ "--debug",    "-d",			GetoptLong::NO_ARGUMENT ],
-	[ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
 	[ "--all",	    "-a",			GetoptLong::NO_ARGUMENT ],
 	[ "--cadir",	    			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--debug",    "-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--generate", "-g",  			GetoptLong::NO_ARGUMENT ],
-	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
+	[ "--list",	    "-l",			GetoptLong::NO_ARGUMENT ],
+	[ "--sign",	    "-s",			GetoptLong::NO_ARGUMENT ],
+	[ "--ssldir",	    			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ]
 )
 
 mode = nil
 all = false
 generate = nil
 
-result.each { |opt,arg|
-	case opt
-		when "--help"
-			puts "There is no help yet"
-			exit
-		when "--list"
-            mode = :list
-		when "--sign"
-            mode = :sign
-		when "--all"
-            all = true
-		when "--verbose"
-            Puppet[:loglevel] = :info
-		when "--debug"
-            Puppet[:loglevel] = :debug
-		when "--generate"
-            generate = arg
-            mode = :generate
-		when "--cadir"
-            Puppet[:cadir] = arg
-		when "--ssldir"
-            Puppet[:ssldir] = arg
-		else
-			puts "Invalid option '#{opt}'"
-            exit(10)
-	end
-}
+begin
+    result.each { |opt,arg|
+        case opt
+            when "--all"
+                all = true
+            when "--cadir"
+                Puppet[:cadir] = arg
+            when "--debug"
+                Puppet[:loglevel] = :debug
+            when "--generate"
+                generate = arg
+                mode = :generate
+            when "--help"
+                if $haveusage
+                    RDoc::usage && exit
+                else
+                    puts "No help available unless you have RDoc::usage installed"
+                    exit
+                end
+            when "--list"
+                mode = :list
+            when "--sign"
+                mode = :sign
+            when "--ssldir"
+                Puppet[:ssldir] = arg
+            when "--verbose"
+                Puppet[:loglevel] = :info
+        end
+    }
+rescue GetoptLong::InvalidOption => detail
+    $stderr.puts "Try '#{$0} --help'"
+    #if $haveusage
+    #    RDoc::usage_no_exit('usage')
+    #end
+    exit(1)
+end
 
 ca = Puppet::SSLCertificates::CA.new()
 
@@ -125,3 +201,5 @@ else
     $stderr.puts "Invalid mode %s" % mode
     exit(42)
 end
+
+# $Id$

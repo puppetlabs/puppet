@@ -1,4 +1,4 @@
-#!/usr/bin/ruby -w
+#!/usr/bin/ruby
 
 #
 # = Synopsis
@@ -7,11 +7,12 @@
 #
 # = Usage
 #
-#   puppet [-V|--version] [-d|--debug] [-v|--verbose] [-l|--logfile <file>] [-h|--help] <file>
+#   puppet [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
+#               [-l|--logfile <file>] <file>
 #
 # = Description
 #
-# This is the standalone +puppet+ execution script; use it to execute
+# This is the standalone puppet execution script; use it to execute
 # individual scripts that you write.  If you need to execute site-wide
 # scripts, use +puppetd+ and +puppetmasterd+.
 #
@@ -37,7 +38,7 @@
 # = Copyright
 #
 # Copyright (c) 2005 Reductive Labs, LLC
-# Licensed under the Gnu Public License
+# Licensed under the GNU Public License
 
 require 'puppet'
 require 'puppet/server'
@@ -52,13 +53,13 @@ rescue
     $haveusage = false
 end
 
-    result = GetoptLong.new(
-        [ "--version",  "-V",                   GetoptLong::NO_ARGUMENT ],
-        [ "--logfile",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
-        [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
-        [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
-        [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
-    )
+result = GetoptLong.new(
+    [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+    [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
+    [ "--logfile",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
+    [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
+)
 
 debug = false
 verbose = false
@@ -82,24 +83,27 @@ begin
             when "--debug"
                 debug = true
             when "--logfile"
-                logfile = arg
-            else
-                $stderr.puts "Invalid option '#{opt}'"
-                Rdoc::usage(1,'usage')
+                # FIXME we should be able to have log.rb check the validity of the dst
+                case arg
+                when "syslog", "console", /^\//:
+                    Puppet[:logdest] = arg
+                else
+                    $stderr.puts "Invalid log destination %s" % arg
+                end
         end
     }
 rescue GetoptLong::InvalidOption => detail
-    RDoc::usage(1,'usage')
+    $stderr.puts "Try '#{$0} --help'"
+    #if $haveusage
+    #    RDoc::usage(1,'usage')
+    #end
+    exit(1)
 end
 
 if debug
     Puppet[:loglevel] = :debug
 elsif verbose
     Puppet[:loglevel] = :info
-end
-
-if logfile
-    Puppet[:logdest] = logfile
 end
 
 begin
@@ -125,6 +129,6 @@ begin
     client.getconfig
     client.config
 rescue => detail
-    $stderr.puts detail
+    Puppet.err detail
     exit(1)
 end
