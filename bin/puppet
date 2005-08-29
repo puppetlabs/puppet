@@ -25,7 +25,8 @@
 #   Print this help message
 #
 # logfile::
-#   Where to send messages.  Defaults to sending messages to the console.
+#   Where to send messages.  Choose between syslog, the console, and a log file.
+#   Defaults to sending messages to the console.
 #
 # = Example
 #
@@ -56,7 +57,7 @@ end
 result = GetoptLong.new(
     [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
     [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
-    [ "--logfile",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
     [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
 )
@@ -82,7 +83,7 @@ begin
                 verbose = true
             when "--debug"
                 debug = true
-            when "--logfile"
+            when "--logdest"
                 # FIXME we should be able to have log.rb check the validity of the dst
                 case arg
                 when "syslog", "console", /^\//:
@@ -127,7 +128,7 @@ end
 
 begin
     client.getconfig
-    client.config
+    client.apply
 rescue => detail
     Puppet.err detail
     exit(1)
