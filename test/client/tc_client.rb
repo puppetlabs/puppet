@@ -36,9 +36,16 @@ class TestClient < Test::Unit::TestCase
         Puppet[:autosign] = true
         Puppet[:ssldir] = "/tmp/puppetclientcertests"
         @@tmpfiles.push Puppet[:ssldir]
-        port = 8085
+        @@tmpfiles.push "/tmp/puppetclienttesting"
+        file = "/tmp/testingmanifest.pp"
+        File.open(file, "w") { |f|
+            f.puts '
+file { "/tmp/puppetclienttesting": create => true, mode => 755 }
+'
+        }
 
-        file = File.join($puppetbase, "examples", "code", "head")
+        @@tmpfiles << file
+        port = 8085
 
         server = nil
         assert_nothing_raised {
@@ -77,6 +84,17 @@ class TestClient < Test::Unit::TestCase
         assert(File.exists?(keyfile))
         assert(File.exists?(certfile))
         assert(File.exists?(publickeyfile))
+
+        assert_nothing_raised("Client could not retrieve configuration") {
+            client.getconfig
+        }
+
+        assert_nothing_raised("Client could not apply configuration") {
+            client.apply
+        }
+
+        assert(FileTest.exists?("/tmp/puppetclienttesting"),
+            "Applied file does not exist")
     end
 
     # disabled because the server needs to have its certs in place

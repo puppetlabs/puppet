@@ -156,7 +156,7 @@ args[:Server] = server
 if fqdn
     args[:FQDN] = fqdn
 end
-client = Puppet::Client.new(args)
+client = Puppet::Client::MasterClient.new(args)
 
 unless client.readcert
     begin
@@ -171,11 +171,13 @@ unless client.readcert
 end
 
 if bg
-    Puppet[:logdest] = Puppet[:logfile]
+    unless Puppet[:logdest] == :file
+        Puppet[:logdest] = Puppet[:logfile]
+    end
     client.daemonize
 end
 #client.start
 client.getconfig
-client.config
+client.apply
 
 # $Id$

@@ -37,15 +37,17 @@ class TestPuppetDExe < Test::Unit::TestCase
         }
 
         @@tmppids.each { |pid|
-            %x{kill -INT #{pid} 2>/dev/null}
+            %x{kill #{pid} 2>/dev/null}
         }
+        stopmaster
     end
 
-    def startmaster
-        file = File.join($puppetbase, "examples", "code", "head")
+    def startmaster(file, port)
         output = nil
+        ssldir = "/tmp/puppetmasterdpuppetdssldirtesting"
+        @@tmpfiles << ssldir
         assert_nothing_raised {
-            output = %x{puppetmasterd --port #{Puppet[:masterport]} --manifest #{file}}.chomp
+            output = %x{puppetmasterd --port #{port} -a --ssldir #{ssldir} --manifest #{file}}.chomp
         }
         assert($? == 0, "Puppetmasterd return status was %s" % $?)
         @@tmppids << $?.pid
@@ -62,26 +64,40 @@ class TestPuppetDExe < Test::Unit::TestCase
                 pid = ary[1].to_i
             end
         }
-        assert(pid, "No puppetmasterd pid")
-        
-        assert_nothing_raised {
-            Process.kill("-INT", pid)
-        }
+        if pid
+            assert_nothing_raised {
+                Process.kill("-TERM", pid)
+            }
+        end
     end
 
     def test_normalstart
-        startmaster
-        output = nil
-        assert_nothing_raised {
-            output = %x{puppetd --server localhost}.chomp
+        file = "/tmp/testingmanifest.pp"
+        File.open(file, "w") { |f|
+            f.puts '
+file { "/tmp/puppetdtesting": create => true, mode => 755 }
+'
         }
+
+        @@tmpfiles << file
+        @@tmpfiles << "/tmp/puppetdtesting"
+        port = 8235
+        startmaster(file, port)
+        output = nil
+        ssldir = "/tmp/puppetdssldirtesting"
+        @@tmpfiles << ssldir
+        client = Puppet::Client.new(:Server => "localhost")
+        fqdn = client.fqdn.sub(/^\w+\./, "testing.")
+        assert_nothing_raised {
+            output = %x{puppetd --fqdn #{fqdn} --port #{port} --ssldir #{ssldir} --server localhost}.chomp
+        }
+        sleep 1
         assert($? == 0, "Puppetd exited with code %s" % $?)
+        #puts output
         assert_equal("", output, "Puppetd produced output %s" % output)
 
-        assert_nothing_raised {
-            socket = TCPSocket.new("127.0.0.1", Puppet[:masterport])
-            socket.close
-        }
+        assert(FileTest.exists?("/tmp/puppetdtesting"),
+            "Failed to create config'ed file")
         stopmaster
     end
 end

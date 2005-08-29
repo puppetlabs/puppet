@@ -88,7 +88,6 @@ module Puppet
                 )
 
                 if hash[:Certificate]
-                    Puppet.info "adding cert to @http"
                     @http.cert = hash[:Certificate]
                 end
 
@@ -126,11 +125,29 @@ module Puppet
 
         # FIXME the cert stuff should only come up with networking, so it
         # should be in the network client, not the normal client
+        # but if i do that, it's hard to tell whether the certs have been initialized
         include Puppet::Daemon
         attr_reader :local, :secureinit
 
         class << self
             attr_reader :drivername
+        end
+
+        def initcerts
+            unless self.readcert
+                unless self.requestcert
+                    return nil
+                end
+            end
+
+            unless @driver
+                return true
+            end
+
+            Puppet.info "setting cert and key and such"
+            @driver.cert = @cert
+            @driver.key = @key
+            @driver.ca_file = @cacertfile
         end
 
         def initialize(hash)
@@ -192,6 +209,60 @@ module Puppet
                 }
 
                 facts
+            end
+
+            # this method is how the client receives the tree of Transportable
+            # objects
+            # for now, just descend into the tree and perform and necessary
+            # manipulations
+            def apply
+                unless defined? @objects
+                    raise Puppet::Error, "Cannot apply; objects not defined"
+                end
+
+                # XXX this is kind of a problem; if the user changes the state file
+                # after this, then we have to reload the file and everything...
+                begin
+                    Puppet::Storage.init
+                    Puppet::Storage.load
+                rescue => detail
+                    Puppet.err "Corrupt state file %s" % Puppet[:checksumfile]
+                    begin
+                        File.unlink(Puppet[:checksumfile])
+                        retry
+                    rescue => detail
+                        raise Puppet::Error.new("Cannot remove %s: %s" %
+                            [Puppet[statefile], detail])
+                    end
+                end
+
+                container = @objects.to_type
+                #if @local
+                #    container = @objects.to_type
+                #else
+                #    container = Marshal::load(@objects).to_type
+                #end
+
+                # this is a gross hack... but i don't see a good way around it
+                # set all of the variables to empty
+                Puppet::Transaction.init
+
+                # for now we just evaluate the top-level container, but eventually
+                # there will be schedules and such associated with each object,
+                # and probably with the container itself
+                transaction = container.evaluate
+                #transaction = Puppet::Transaction.new(objects)
+                transaction.toplevel = true
+                transaction.evaluate
+                Puppet::Metric.gather
+                Puppet::Metric.tally
+                if Puppet[:rrdgraph] == true
+                    Metric.store
+                    Metric.graph
+                end
+                Puppet::Storage.store
+
+                return transaction
             end
 
             def getconfig
@@ -263,78 +334,6 @@ module Puppet
                     Puppet.warning objects.inspect
                     raise NetworkClientError.new(objects.class)
                 end
-            end
-
-            # this method is how the client receives the tree of Transportable
-            # objects
-            # for now, just descend into the tree and perform and necessary
-            # manipulations
-            def config
-                unless defined? @objects
-                    raise Puppet::Error, "Cannot config; objects not defined"
-                end
-                Puppet.debug("Calling config")
-
-                # XXX this is kind of a problem; if the user changes the state file
-                # after this, then we have to reload the file and everything...
-                begin
-                    Puppet::Storage.init
-                    Puppet::Storage.load
-                rescue => detail
-                    Puppet.err "Corrupt state file %s" % Puppet[:checksumfile]
-                    begin
-                        File.unlink(Puppet[:checksumfile])
-                        retry
-                    rescue => detail
-                        raise Puppet::Error.new("Cannot remove %s: %s" %
-                            [Puppet[statefile], detail])
-                    end
-                end
-
-                container = @objects.to_type
-                #if @local
-                #    container = @objects.to_type
-                #else
-                #    container = Marshal::load(@objects).to_type
-                #end
-
-                # this is a gross hack... but i don't see a good way around it
-                # set all of the variables to empty
-                Puppet::Transaction.init
-
-                # for now we just evaluate the top-level container, but eventually
-                # there will be schedules and such associated with each object,
-                # and probably with the container itself
-                transaction = container.evaluate
-                #transaction = Puppet::Transaction.new(objects)
-                transaction.toplevel = true
-                transaction.evaluate
-                Puppet::Metric.gather
-                Puppet::Metric.tally
-                if Puppet[:rrdgraph] == true
-                    Metric.store
-                    Metric.graph
-                end
-                Puppet::Storage.store
-
-                return transaction
-            end
-
-            def initcerts
-                unless self.readcert
-                    unless self.requestcert
-                        return nil
-                    end
-                end
-
-                unless @driver
-                    return true
-                end
-
-                Puppet.info "setting cert and key and such"
-                @driver.cert = @cert
-                @driver.key = @key
-                @driver.ca_file = @cacertfile
             end
         end
 
