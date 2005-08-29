@@ -189,6 +189,12 @@ class Server
                         when /^\s*$/: next # skip blank lines
                         when /\[(\w+)\]/:
                             name = $1
+                            if mount
+                                unless mount.path
+                                    raise Puppet::Error, "Mount %s has no path specified" %
+                                        mount.name
+                                end
+                            end
                             if @mounts.include?(name)
                                 raise FileServerError, "%s is already mounted at %s" %
                                     [@mounts[name], name]
@@ -329,6 +335,10 @@ class Server
 
                 unless @mounts.include?(mount)
                     raise FileServerError, "%s not mounted" % mount
+                end
+
+                unless @mounts[mount].path
+                    raise FileServerError, "Mount %s does not have a path set" % mount
                 end
             else
                 raise FileServerError, "Invalid path '%s'" % dir
