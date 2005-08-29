@@ -2,8 +2,6 @@
 
 # $Id$
 
-$VERBOSE = true
-
 require 'singleton'
 require 'puppet/log'
 
