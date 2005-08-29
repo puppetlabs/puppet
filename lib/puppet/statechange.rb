@@ -60,7 +60,7 @@ module Puppet
                 # should basically point to that, right?
                     #:state => @state,
                     #:object => @state.parent,
-                Puppet.info self.to_s
+                Puppet.notice self.to_s
                 return Puppet::Event.new(
                     :event => event,
                     :change => self,
@@ -78,7 +78,7 @@ module Puppet
                 #    pname = pname.id2name
                 #end
                     #:state => @state,
-                Puppet.info "Failed: " + self.to_s
+                Puppet.notice "Failed: " + self.to_s
                 return Puppet::Event.new(
                     :event => pname + "_failed",
                     :change => self,
