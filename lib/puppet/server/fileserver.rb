@@ -184,6 +184,7 @@ class Server
             if @configstamp and FileTest.exists?(@config)
                 if @configtimeout and @configstatted and
                     (Time.now - @configstatted > @configtimeout)
+                        @configstatted = Time.now
                         tmp = File.stat(@config).ctime
 
                         if tmp == @configstamp
