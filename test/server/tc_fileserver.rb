@@ -531,6 +531,70 @@ class TestFileServer < TestPuppet
         }
 
     end
+
+    def test_filereread
+        server = nil
+        testdir = "/tmp/filerereadtesting"
+
+        @@tmpfiles << testdir
+
+        #Dir.mkdir(testdir)
+        files = mktestfiles(testdir)
+
+        conffile = "/tmp/fileservertestingfile"
+        @@tmpfiles << conffile
+
+        File.open(conffile, "w") { |f|
+            f.print "# a test config file
+ 
+[thing]
+    path #{testdir}
+    allow test1.domain.com
+"
+        }
+        
+
+        assert_nothing_raised {
+            server = Puppet::Server::FileServer.new(
+                :Local => true,
+                :ConfigTimeout => 0.5,
+                :Config => conffile
+            )
+        }
+
+        list = nil
+        assert_nothing_raised {
+            list = server.list("/thing/", false, "test1.domain.com", "127.0.0.1")
+        }
+        assert(list != "", "List returned nothing in rereard test")
+
+        assert_raise(Puppet::Server::AuthorizationError, "List allowed invalid host") {
+            list = server.list("/thing/", false, "test2.domain.com", "127.0.0.1")
+        }
+
+        sleep 1
+        File.open(conffile, "w") { |f|
+            f.print "# a test config file
+ 
+[thing]
+    path #{testdir}
+    allow test2.domain.com
+"
+        }
+        
+        assert_raise(Puppet::Server::AuthorizationError, "List allowed invalid host") {
+            list = server.list("/thing/", false, "test1.domain.com", "127.0.0.1")
+        }
+
+        assert_nothing_raised {
+            list = server.list("/thing/", false, "test2.domain.com", "127.0.0.1")
+        }
+
+        assert(list != "", "List returned nothing in rereard test")
+
+        list = nil
+    end
+
 end
 
 # $Id$

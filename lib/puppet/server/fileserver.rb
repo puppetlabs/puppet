@@ -42,6 +42,7 @@ class Server
         end
 
         def describe(file, client = nil, clientip = nil)
+            readconfig
             mount, path = splitpath(file)
 
             unless @mounts[mount].allowed?(client, clientip)
@@ -97,7 +98,9 @@ class Server
                 @noreadconfig = false
             end
 
+            @configtimeout = hash[:ConfigTimeout] || 60
             @configstamp = nil
+            @congigstatted = nil
 
             if hash.include?(:Mount)
                 @passedconfig = true
@@ -118,6 +121,7 @@ class Server
         end
 
         def list(dir, recurse = false, client = nil, clientip = nil)
+            readconfig
             mount, path = splitpath(dir)
 
             unless @mounts[mount].allowed?(client, clientip)
@@ -176,6 +180,17 @@ class Server
 
         def readconfig
             return if @noreadconfig
+
+            if @configstamp and FileTest.exists?(@config)
+                if @configtimeout and @configstatted and
+                    (Time.now - @configstatted > @configtimeout)
+                        tmp = File.stat(@config).ctime
+
+                        if tmp == @configstamp
+                            return
+                        end
+                end
+            end
 
             @mounts.clear
 
@@ -245,9 +260,13 @@ class Server
             rescue Errno::ENOENT => detail
                 raise Puppet::Error, "%s does not exit" % @config
             end
+
+            @configstamp = File.stat(@config).ctime
+            @configstatted = Time.now
         end
 
         def retrieve(file, client = nil, clientip = nil)
+            readconfig
             mount, path = splitpath(file)
 
             unless (@mounts.include?(mount))
