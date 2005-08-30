@@ -91,8 +91,8 @@ class Server
 
         def parsefile
             if @filestamp and FileTest.exists?(@file)
-                if @filetimeout and @filestatted and
-                    (Time.now - @filestatted > @filetimeout)
+                if @filetimeout and @filestatted
+                    if Time.now - @filestatted > @filetimeout
                         tmp = File.stat(@file).ctime
 
                         @filestatted = Time.now
@@ -101,6 +101,9 @@ class Server
                         else
                             Puppet.notice "Reloading file"
                         end
+                    else
+                        return
+                    end
                 end
             end
 

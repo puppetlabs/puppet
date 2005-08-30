@@ -182,14 +182,17 @@ class Server
             return if @noreadconfig
 
             if @configstamp and FileTest.exists?(@config)
-                if @configtimeout and @configstatted and
-                    (Time.now - @configstatted > @configtimeout)
+                if @configtimeout and @configstatted
+                    if Time.now - @configstatted > @configtimeout
                         @configstatted = Time.now
                         tmp = File.stat(@config).ctime
 
                         if tmp == @configstamp
                             return
                         end
+                    else
+                        return
+                    end
                 end
             end
 
