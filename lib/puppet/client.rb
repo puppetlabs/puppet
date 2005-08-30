@@ -175,12 +175,8 @@ module Puppet
                         $nonetworking)
                 end
 
-                args = {}
-                [:Port, :Server].each { |arg|
-                    if hash.include?(:Port)
-                        args[arg] = hash[arg]
-                    end
-                }
+                args = {:Server => hash[:Server]}
+                args[:Port] == hash[:Port] || Puppet[:masterport]
 
                 if self.readcert
                     args[:Certificate] = @cert
