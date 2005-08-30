@@ -11,6 +11,7 @@
 #   puppetd  [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
 #               [--ssldir <cert directory>] [-l|--logdest <syslog|<file>|console>]
 #               [--fqdn <host name>] [-p|--port <port>] [-s|--server <server>]
+#               [-w|--waitforcert <seconds>]
 #
 # = Description
 #
@@ -48,7 +49,7 @@
 #
 # server::
 #   The remote server from whom to receive the local configuration.  Currently
-#   must also be the certificate authority.  Currently defaults to 'localhost'.
+#   must also be the certificate authority.  Currently defaults to 'puppet'.
 #
 # ssldir::
 #   Where to store and find certificates.  Defaults to /etc/puppet/ssl.
@@ -58,6 +59,10 @@
 #
 # version::
 #   Print the puppet version number and exit.
+#
+# waitforcert::
+#   Have the process wait around, continuously retrying for the certificate
+#   each <argument> seconds.
 #
 # = Example
 #
@@ -90,16 +95,20 @@ result = GetoptLong.new(
 	[ "--fqdn",     "-f",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--noop",	    "-n",			GetoptLong::NO_ARGUMENT ],
 	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--server",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--ssldir",   				GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
-	[ "--version",	"-V",			GetoptLong::NO_ARGUMENT ]
+	[ "--version",	"-V",			GetoptLong::NO_ARGUMENT ],
+	[ "--waitforcert",	"-w",		GetoptLong::REQUIRED_ARGUMENT ]
 )
 
-server = "localhost"
+server = "puppet"
 fqdn = nil
 args = {}
+
+waitforcert = false
 
 begin
     result.each { |opt,arg|
@@ -118,6 +127,8 @@ begin
                 Puppet[:loglevel] = :info
             when "--debug"
                 Puppet[:loglevel] = :debug
+            when "--noop"
+                Puppet[:noop] = true
             when "--ssldir"
                 Puppet[:ssldir] = arg
             when "--fqdn"
@@ -134,6 +145,8 @@ begin
                 else
                     $stderr.puts "Invalid log destination %s" % arg
                 end
+            when "--waitforcert"
+                waitforcert = arg
         end
     }
 rescue GetoptLong::InvalidOption => detail
@@ -159,14 +172,21 @@ end
 client = Puppet::Client::MasterClient.new(args)
 
 unless client.readcert
-    begin
-        while ! client.requestcert do
-            Puppet.notice "Did not receive certificate"
-            sleep 60
+    if waitforcert
+        begin
+            while ! client.requestcert do
+                Puppet.notice "Did not receive certificate"
+                sleep waitforcert
+            end
+        rescue => detail
+            Puppet.err "Could not request certificate: %s" % detail.to_s
+            exit(23)
         end
-    rescue => detail
-        Puppet.err "Could not request certificate: %s" % detail.to_s
-        exit(23)
+    else
+        unless client.requestcert
+            Puppet.notice "No certificates; exiting"
+            exit(1)
+        end
     end
 end
 

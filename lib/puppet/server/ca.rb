@@ -16,6 +16,7 @@ class Server
             iface.add_method("array getcert(csr)")
         }
 
+        # FIXME autosign? should probably accept both hostnames and IP addresses
         def autosign?(hostname)
             # simple values are easy
             asign = Puppet[:autosign]
@@ -33,32 +34,34 @@ class Server
                 Puppet.warning "Autosign is enabled but %s is missing" % asign
                 return false
             end
+            auth = Puppet::Server::AuthStore.new
             File.open(asign) { |f|
                 f.each { |line|
-                    line.chomp!
-                    if line =~ /^[.\w-]+$/ and line == hostname
-                        Puppet.info "%s exactly matched %s" % [hostname, line]
-                        return true
-                    else
-                        begin
-                            rx = Regexp.new(line)
-                        rescue => detail
-                            Puppet.err(
-                                "Could not create regexp out of autosign line %s: %s" %
-                                [line, detail]
-                            )
-                            next
-                        end
-
-                        if hostname =~ rx
-                            Puppet.info "%s matched %s" % [hostname, line]
-                            return true
-                        end
-                    end
+                    auth.allow(line.chomp)
+#                    if line =~ /^[.\w-]+$/ and line == hostname
+#                        Puppet.info "%s exactly matched %s" % [hostname, line]
+#                        return true
+#                    else
+#                        begin
+#                            rx = Regexp.new(line)
+#                        rescue => detail
+#                            Puppet.err(
+#                                "Could not create regexp out of autosign line %s: %s" %
+#                                [line, detail]
+#                            )
+#                            next
+#                        end
+#
+#                        if hostname =~ rx
+#                            Puppet.info "%s matched %s" % [hostname, line]
+#                            return true
+#                        end
+#                    end
                 }
             }
 
-            return false
+            # for now, just cheat and pass a fake IP address to allowed?
+            return auth.allowed?(hostname, "127.0.0.1")
         end
 
         def initialize(hash = {})

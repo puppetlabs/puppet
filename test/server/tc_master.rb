@@ -117,6 +117,58 @@ class TestMaster < Test::Unit::TestCase
             break
         }
     end
+
+    def test_zfilereread
+        Puppet[:debug] = true if __FILE__ == $0
+        Puppet[:puppetconf] = "/tmp/masterfilereread"
+        Puppet[:puppetvar] = "/tmp/masterfilereread"
+        @@tmpfiles << Puppet[:puppetconf]
+
+        manifest = "/tmp/masterfilerereadmanifest.pp"
+        @@tmpfiles << manifest = "/tmp/masterfilerereadmanifest.pp"
+        file1 = "/tmp/masterfilecreationrearead"
+        file2 = "/tmp/masterfilecreationrearead2"
+        @@tmpfiles << file1
+        @@tmpfiles << file2
+
+        File.open(manifest, "w") { |f|
+            f.puts %{file { "/tmp/masterfilecreationrearead": create => true } }
+        }
+        client = master = nil
+        assert_nothing_raised() {
+            # this is the default server setup
+            master = Puppet::Server::Master.new(
+                :File => manifest,
+                :Local => true,
+                :FileTimeout => 0.5
+            )
+        }
+        assert_nothing_raised() {
+            client = Puppet::Client::MasterClient.new(
+                :Master => master
+            )
+        }
+
+        assert_nothing_raised {
+            client.getconfig
+            client.apply
+        }
+
+        assert(FileTest.exists?(file1), "First file %s does not exist" % file1)
+        sleep 1
+        Puppet::Type.allclear
+
+        File.open(manifest, "w") { |f|
+            f.puts %{file { "/tmp/masterfilecreationrearead2": create => true } }
+        }
+        assert_nothing_raised {
+            client.getconfig
+            client.apply
+        }
+
+        assert(FileTest.exists?(file2), "Second file %s does not exist" % file2)
+    end
+
 end
 
 # $Id$

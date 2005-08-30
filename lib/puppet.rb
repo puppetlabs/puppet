@@ -15,7 +15,7 @@ require 'puppet/log'
 #
 # it's also a place to find top-level commands like 'debug'
 module Puppet
-    PUPPETVERSION="0.0.1"
+    PUPPETVERSION="0.9.0"
 
     def Puppet.version
         return PUPPETVERSION
@@ -73,7 +73,8 @@ module Puppet
         :statedir       => [:puppetvar,      "state"],
 
         # then the files},
-        :manifest       => [:puppetconf,     "manifest.pp"],
+        :manifestdir    => [:puppetconf,     "manifests"],
+        :manifest       => [:manifestdir,    "site.pp"],
         :localconfig    => [:puppetconf,     "localconfig.ma"],
         :logfile        => [:logdir,         "puppet.log"],
         :httplogfile    => [:logdir,         "http.log"],

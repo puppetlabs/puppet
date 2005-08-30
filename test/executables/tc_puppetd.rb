@@ -73,14 +73,15 @@ class TestPuppetDExe < Test::Unit::TestCase
 
     def test_normalstart
         file = "/tmp/testingmanifest.pp"
+        mkfile = "/tmp/puppetdtesting"
         File.open(file, "w") { |f|
-            f.puts '
-file { "/tmp/puppetdtesting": create => true, mode => 755 }
-'
+            f.puts %{
+file { "#{mkfile}": create => true, mode => 755 }
+}
         }
 
         @@tmpfiles << file
-        @@tmpfiles << "/tmp/puppetdtesting"
+        @@tmpfiles << mkfile
         port = 8235
         startmaster(file, port)
         output = nil
@@ -89,15 +90,28 @@ file { "/tmp/puppetdtesting": create => true, mode => 755 }
         client = Puppet::Client.new(:Server => "localhost")
         fqdn = client.fqdn.sub(/^\w+\./, "testing.")
         assert_nothing_raised {
-            output = %x{puppetd --fqdn #{fqdn} --port #{port} --ssldir #{ssldir} --server localhost}.chomp
+            output = %x{puppetd --verbose --fqdn #{fqdn} --port #{port} --ssldir #{ssldir} --server localhost}.chomp
         }
         sleep 1
         assert($? == 0, "Puppetd exited with code %s" % $?)
         #puts output
-        assert_equal("", output, "Puppetd produced output %s" % output)
+        #assert_equal("", output, "Puppetd produced output %s" % output)
 
-        assert(FileTest.exists?("/tmp/puppetdtesting"),
+        assert(FileTest.exists?(mkfile),
             "Failed to create config'ed file")
+
+        # now verify that --noop works
+        File.unlink(mkfile)
+
+        assert_nothing_raised {
+            output = %x{puppetd --noop --fqdn #{fqdn} --port #{port} --ssldir #{ssldir} --server localhost}.chomp
+        }
+        sleep 1
+        assert($? == 0, "Puppetd exited with code %s" % $?)
+
+        assert(! FileTest.exists?(mkfile),
+            "Noop created config'ed file")
+
         stopmaster
     end
 end

@@ -10,7 +10,7 @@
 #   puppetmasterd [-h|--help] [-d|--debug] [-v|--verbose] [-V|--version]
 #               [-l|--logdest <syslog|console|<file>>] [--httplog <file>]
 #               [-m|--manifest <site manifest>] [--noca] [-p|--port <port>]
-#               [-s|--ssldir <cert directory>]
+#               [--parseonly] [-s|--ssldir <cert directory>]
 #
 # = Description
 #
@@ -19,6 +19,11 @@
 # scripts, use +puppetd+ and +puppetmasterd+.
 #
 # = Options
+#
+# autosign::
+#   Enable autosign (which presents a potential security problem).  If enabled,
+#   refers to the autosign configuration file at /etc/puppet/autosign.conf to
+#   determine which hosts should have their certificates signed.
 #
 # debug::
 #   Enable full debugging.  Causes the daemon not to go into the background.
@@ -42,10 +47,13 @@
 #
 # manifest::
 #   The central site manifest to use for providing clients with their individual
-#   configurations.  Defaults to /etc/puppet/manifest.pp.
+#   configurations.  Defaults to /etc/puppet/manifests/site.pp.
 #
 # noca::
 #   Do not function as a certificate authority.
+#
+# parseonly::
+#   Just parse the central manifest to verify it is syntactically correct.
 #
 # port::
 #   The port on which to listen.  Defaults to 8139.
@@ -85,6 +93,7 @@ result = GetoptLong.new(
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--manifest",	"-m",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--noca",         			GetoptLong::NO_ARGUMENT ],
+	[ "--parseonly",   			    GetoptLong::NO_ARGUMENT ],
 	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--ssldir",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
@@ -105,11 +114,13 @@ ca = {}
 fs = {}
 args = {}
 
+parseonly = false
+
 begin
     result.each { |opt,arg|
         case opt
             when "--autosign"
-                ca[:autosign] = true
+                ca[:autosign] = Puppet[:autosign]
             when "--debug"
                 Puppet[:debug] = true
             when "--fsconfig"
@@ -132,6 +143,8 @@ begin
                 master[:File] = arg
             when "--noca"
                 haveca = false
+            when "--parseonly"
+                parseonly = true
             when "--port"
                 args[:Port] = arg
             when "--ssldir"
@@ -205,6 +218,11 @@ begin
 rescue => detail
     $stderr.puts detail
     exit(1)
+end
+
+if parseonly
+    # we would have already exited if the file weren't syntactically correct
+    exit(0)
 end
 
 if bg

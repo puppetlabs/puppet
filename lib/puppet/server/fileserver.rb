@@ -42,6 +42,7 @@ class Server
         end
 
         def describe(file, client = nil, clientip = nil)
+            readconfig
             mount, path = splitpath(file)
 
             unless @mounts[mount].allowed?(client, clientip)
@@ -97,7 +98,9 @@ class Server
                 @noreadconfig = false
             end
 
+            @configtimeout = hash[:ConfigTimeout] || 60
             @configstamp = nil
+            @congigstatted = nil
 
             if hash.include?(:Mount)
                 @passedconfig = true
@@ -118,6 +121,7 @@ class Server
         end
 
         def list(dir, recurse = false, client = nil, clientip = nil)
+            readconfig
             mount, path = splitpath(dir)
 
             unless @mounts[mount].allowed?(client, clientip)
@@ -177,6 +181,18 @@ class Server
         def readconfig
             return if @noreadconfig
 
+            if @configstamp and FileTest.exists?(@config)
+                if @configtimeout and @configstatted and
+                    (Time.now - @configstatted > @configtimeout)
+                        @configstatted = Time.now
+                        tmp = File.stat(@config).ctime
+
+                        if tmp == @configstamp
+                            return
+                        end
+                end
+            end
+
             @mounts.clear
 
             begin
@@ -189,6 +205,12 @@ class Server
                         when /^\s*$/: next # skip blank lines
                         when /\[(\w+)\]/:
                             name = $1
+                            if mount
+                                unless mount.path
+                                    raise Puppet::Error, "Mount %s has no path specified" %
+                                        mount.name
+                                end
+                            end
                             if @mounts.include?(name)
                                 raise FileServerError, "%s is already mounted at %s" %
                                     [@mounts[name], name]
@@ -239,9 +261,13 @@ class Server
             rescue Errno::ENOENT => detail
                 raise Puppet::Error, "%s does not exit" % @config
             end
+
+            @configstamp = File.stat(@config).ctime
+            @configstatted = Time.now
         end
 
         def retrieve(file, client = nil, clientip = nil)
+            readconfig
             mount, path = splitpath(file)
 
             unless (@mounts.include?(mount))
@@ -329,6 +355,10 @@ class Server
 
                 unless @mounts.include?(mount)
                     raise FileServerError, "%s not mounted" % mount
+                end
+
+                unless @mounts[mount].path
+                    raise FileServerError, "Mount %s does not have a path set" % mount
                 end
             else
                 raise FileServerError, "Invalid path '%s'" % dir
