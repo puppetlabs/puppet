@@ -635,9 +635,7 @@ module Puppet
         class PFileSource < Puppet::State
             attr_accessor :source, :local
             @doc = "Copy a file over the current file.  Uses `checksum` to
-                determine when a file should be copied.  This is largely a support
-                state for the `source` parameter, which is what should generally
-                be used instead of `copy`."
+                determine when a file should be copied."
             @name = :source
 
             def describe
