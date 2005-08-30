@@ -20,6 +20,11 @@
 #
 # = Options
 #
+# autosign::
+#   Enable autosign (which presents a potential security problem).  If enabled,
+#   refers to the autosign configuration file at /etc/puppet/autosign.conf to
+#   determine which hosts should have their certificates signed.
+#
 # debug::
 #   Enable full debugging.  Causes the daemon not to go into the background.
 #
@@ -115,7 +120,7 @@ begin
     result.each { |opt,arg|
         case opt
             when "--autosign"
-                ca[:autosign] = true
+                ca[:autosign] = Puppet[:autosign]
             when "--debug"
                 Puppet[:debug] = true
             when "--fsconfig"

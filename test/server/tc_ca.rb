@@ -204,8 +204,7 @@ class TestCA < Test::Unit::TestCase
         @@tmpfiles << autosign
         File.open(autosign, "w") { |f|
             f.puts "hostmatch.domain.com"
-            f.puts ".+.other.com"
-            f.puts "hostname.+"
+            f.puts "*.other.com"
         }
 
         caserv = nil
@@ -216,8 +215,6 @@ class TestCA < Test::Unit::TestCase
 
         assert(caserv.autosign?("hostmatch.domain.com"))
         assert(caserv.autosign?("fakehost.other.com"))
-        assert(caserv.autosign?("hostname.rahtest.boo"))
-        assert(caserv.autosign?("hostname.com")) # a tricky one
         assert(!caserv.autosign?("kirby.reductivelabs.com"))
         assert(!caserv.autosign?("culain.domain.com"))
     end

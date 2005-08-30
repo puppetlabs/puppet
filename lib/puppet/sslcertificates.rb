@@ -207,7 +207,7 @@ module SSLCertificates
             :serial         => [:cadir,          "serial"],
             :privatedir     => [:ssldir,         "private"],
             :passfile       => [:privatedir,     "password"],
-            :autosign       => [:ssldir,         "autosign"],
+            :autosign       => [:ssldir,         "autosign.conf"],
             :ca_crl_days    => 365,
             :ca_days        => 1825,
             :ca_md          => "md5",
