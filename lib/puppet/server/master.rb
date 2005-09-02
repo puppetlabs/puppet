@@ -23,6 +23,7 @@ class Server
             hash.delete(:File)
 
             @filestamp = nil
+            @filestatted = nil
             @filetimeout = hash[:FileTimeout] || 60
             parsefile
 
