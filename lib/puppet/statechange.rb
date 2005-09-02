@@ -17,7 +17,7 @@ module Puppet
             @is = state.is
 
             if state.is == state.should
-                raise Puppet::Error(
+                raise Puppet::Error.new(
                     "Tried to create a change for in-sync state %s" % state.name
                 )
             end

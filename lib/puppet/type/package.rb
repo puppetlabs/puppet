@@ -422,7 +422,7 @@ module Puppet
 
             def self.init
                 unless @@platform = Facter["operatingsystem"].value.downcase
-                    raise Puppet::DevError(
+                    raise Puppet::DevError.new(
                         "Must know platform for package management"
                     )
                 end
