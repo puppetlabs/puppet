@@ -169,7 +169,7 @@ class TestSnippets < Test::Unit::TestCase
     def teardown
         @@tmpfiles.flatten.each { |file|
             if FileTest.exists?(file)
-                File.unlink(file)
+                system("rm -rf %s" % file)
             end
         }
         Puppet::Type.allclear
@@ -322,6 +322,15 @@ class TestSnippets < Test::Unit::TestCase
         files.each { |file|
             assert(! FileTest.exists?(file), "file %s still exists" % file)
         }
+    end
+
+    def snippet_namevartest(trans)
+        file = "/tmp/testfiletest"
+        dir = "/tmp/testdirtest"
+        @@tmpfiles << file
+        @@tmpfiles << dir
+        assert(FileTest.file?(file), "File %s does not exist" % file)
+        assert(FileTest.directory?(dir), "Directory %s does not exist" % dir)
     end
 
     def disabled_snippet_dirchmod(trans)

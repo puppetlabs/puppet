@@ -1280,27 +1280,29 @@ module Puppet
                                 end
                             end
                         }
-
-                        hash.each { |arg,value|
-                            begin
-                                scope.setvar(arg,hash[arg])
-                            rescue Puppet::ParseError => except
-                                except.line = self.line
-                                except.file = self.file
-                                raise except
-                            rescue Puppet::ParseError => except
-                                except.line = self.line
-                                except.file = self.file
-                                raise except
-                            rescue => except
-                                error = Puppet::ParseError.new(except.message)
-                                error.line = self.line
-                                error.file = self.file
-                                error.stack = caller
-                                raise error
-                            end
-                        }
                     end
+
+                    #Puppet.warning objname
+                    hash["name"] = objname
+                    hash.each { |arg,value|
+                        begin
+                            scope.setvar(arg,hash[arg])
+                        rescue Puppet::ParseError => except
+                            except.line = self.line
+                            except.file = self.file
+                            raise except
+                        rescue Puppet::ParseError => except
+                            except.line = self.line
+                            except.file = self.file
+                            raise except
+                        rescue => except
+                            error = Puppet::ParseError.new(except.message)
+                            error.line = self.line
+                            error.file = self.file
+                            error.stack = caller
+                            raise error
+                        end
+                    }
 
                     # now just evaluate the code with our new bindings
                     self.code.evaluate(scope)
