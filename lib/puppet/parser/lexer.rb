@@ -48,9 +48,6 @@ module Puppet
             }
 
             @@keywords = {
-                "if" => :IF,
-                "elsif" => :ELSIF,
-                "else" => :ELSE,
                 "import" => :IMPORT,
                 "class" => :CLASS,
                 "node" => :NODE,
