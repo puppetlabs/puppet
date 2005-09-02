@@ -133,25 +133,35 @@ types.sort { |a,b|
     puts type.doc.gsub(/\n\s*/, ' ') + "\n\n"
     type.buildstatehash
     #puts tab(1) + "* namevar: %s" % type.namevar
-    puts "%s States\n'''''''''''''''''''''''''''''''" % name.to_s.capitalize
+    docs = {}
+    #puts "%s States\n'''''''''''''''''''''''''''''''" % name.to_s.capitalize
     type.validstates.sort { |a,b|
         a.to_s <=> b.to_s
+    }.reject { |sname,state|
+        state.nodoc
     }.each { |sname,state|
-        puts "- **%s**" % sname
-        puts tab(1) + state.doc.gsub(/\n\s*/,' ')
+        docs[sname] = state.doc.gsub(/\n\s*/,' ')
+        #puts "- **%s**" % sname
+        #puts tab(1) + state.doc.gsub(/\n\s*/,' ')
     }
 
     puts "\n%s Parameters\n''''''''''''''''''''''''''''''" % name.to_s.capitalize
     type.parameters.sort { |a,b|
         a.to_s <=> b.to_s
     }.each { |name,param|
+        docs[name] = type.paramdoc(name).gsub(/\n\s*/,' ')
+    }
+
+    docs.sort { |a, b|
+        a[0].to_s <=> b[0].to_s
+    }.each { |name, doc|
         print "- **%s**" % name
         if type.namevar == name and name != :name
             puts " (*namevar*)"
         else
             puts ""
         end
-        puts tab(1) + type.paramdoc(name).gsub(/\n\s*/,' ')
+        puts tab(1) + doc
     }
     puts "\n"
 }
