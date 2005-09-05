@@ -14,6 +14,10 @@ class Puppet::Element
     include Puppet
     attr_writer :noop
 
+    class << self
+        attr_accessor :doc, :nodoc
+    end
+
     #---------------------------------------------------------------
     # all of our subclasses must respond to each of these methods...
     @@interface_methods = [
