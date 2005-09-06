@@ -172,7 +172,7 @@ class TestBucket < Test::Unit::TestCase
 
         server = nil
         client = nil
-        port = Puppet::Server::FileBucket::DEFAULTPORT
+        port = Puppet[:masterport]
         serverthread = nil
         pid = fork {
             server = Puppet::Server.new(

@@ -743,33 +743,7 @@ module Puppet
                         return nil
                     end
                 end
-                @backed = false
-                bak = @parent[:backup] || ".puppet-bak"
-
-                # try backing ourself up before we overwrite
-                if FileTest.file?(@parent.name)
-                    if bucket = @parent[:filebucket]
-                        bucket.backup(@parent.name)
-                        @backed = true
-                    elsif @parent[:backup]
-                        # back the file up
-                        begin
-                            FileUtils.cp(@parent.name,
-                                @parent.name + bak)
-                            @backed = true
-                        rescue => detail
-                            # since they said they want a backup, let's error out
-                            # if we couldn't make one
-                            error = Puppet::Error.new("Could not back %s up: %s" %
-                                [@parent.name, detail.message])
-                            raise error
-                        end
-                    end
-                end
-
-                unless @parent[:backup]
-                    @backed = true
-                end
+                @backed = @parent.handlebackup
 
                 unless @stats[:type] == "file"
                     raise Puppet::DevError, "Got told to copy non-file %s" %
@@ -789,123 +763,48 @@ module Puppet
                         @source
                 end
 
+                if FileTest.exists?(@parent.name)
+                    # this makes sure we have a copy for posterity
+                    @backed = @parent.handlebackup
+                end
+
+                # create the file in a tmp location
+                args = [@parent.name + ".puppettmp", 
+                    File::CREAT | File::WRONLY | File::TRUNC]
+
+                # try to create it with the correct modes to start
+                # we should also be changing our effective uid/gid, but...
+                if @parent[:mode]
+                    args.push @parent[:mode]
+                end
+
                 begin
-                    if FileTest.exists?(@parent.name)
-                        if FileTest.exists?(@parent.name + bak)
-                            Puppet.warning "Deleting backup of %s" %
-                                @parent.name
-                            File.unlink(@parent.name + bak)
-                        end
-
-                        # rename the existing one
-                        File.rename(
-                            @parent.name,
-                            @parent.name + ".puppet-bak"
-                        )
-                        # move the new file into place
-                        args = [@parent.name, 
-                            File::CREAT | File::WRONLY | File::TRUNC]
-
-                        # try to create it with the correct modes to start
-                        # we should also be changing our effective uid/gid, but...
-                        if @parent[:mode]
-                            args.push @parent[:mode]
-                        end
-                        File.open(*args) { |f|
-                            f.print contents
-                        }
-                        # if we've made a backup, then delete the old file
-                        if @backed
-                            #Puppet.err "Unlinking backup"
-                            File.unlink(@parent.name + bak)
-                        #else
-                            #Puppet.err "Not unlinking backup"
-                        end
-                    else
-                        # the easy case
-                        args = [@parent.name, 
-                            File::CREAT | File::WRONLY | File::TRUNC]
-
-                        # try to create it with the correct modes to start
-                        # we should also be changing our effective uid/gid, but...
-                        if @parent[:mode]
-                            args.push @parent[:mode]
-                        end
-                        File.open(*args) { |f|
-                            f.print contents
-                        }
-                    end
+                    File.open(*args) { |f|
+                        f.print contents
+                    }
                 rescue => detail
                     # since they said they want a backup, let's error out
                     # if we couldn't make one
-                    error = Puppet::Error.new("Could not copy %s to %s: %s" %
-                        [@source, @parent.name, detail.message])
-                    raise error
+                    raise Puppet::Error, "Could not create %s to %s: %s" %
+                        [@source, @parent.name, detail.message]
                 end
 
-                #Puppet.notice "@is: %s; @should: %s" % [@is,@should]
-                #Puppet.err "@is: %s; @should: %s" % [@is,@should]
-                # okay, we've now got whatever backing up done we might need
-                # so just copy the files over
-
-                f = false
-                if f
-                    if @local
-                        stat = File.stat(@source)
-                        case stat.ftype
-                        when "file":
-                            begin
-                                if FileTest.exists?(@parent.name)
-                                    # get the file here
-                                    FileUtils.cp(@source, @parent.name + ".tmp")
-                                    if FileTest.exists?(@parent.name + bak)
-                                        Puppet.warning "Deleting backup of %s" %
-                                            @parent.name
-                                        File.unlink(@parent.name + bak)
-                                    end
-                                    # rename the existing one
-                                    File.rename(
-                                        @parent.name,
-                                        @parent.name + ".puppet-bak"
-                                    )
-                                    # move the new file into place
-                                    File.rename(
-                                        @parent.name + ".tmp",
-                                        @parent.name
-                                    )
-                                    # if we've made a backup, then delete the old file
-                                    if @backed
-                                        #Puppet.err "Unlinking backup"
-                                        File.unlink(@parent.name + bak)
-                                    #else
-                                        #Puppet.err "Not unlinking backup"
-                                    end
-                                else
-                                    # the easy case
-                                    FileUtils.cp(@source, @parent.name)
-                                end
-                            rescue => detail
-                                # since they said they want a backup, let's error out
-                                # if we couldn't make one
-                                error = Puppet::Error.new("Could not copy %s to %s: %s" %
-                                    [@source, @parent.name, detail.message])
-                                raise error
-                            end
-                        when "directory":
-                            raise Puppet::Error.new(
-                                "Somehow got told to copy directory %s" %
-                                    @parent.name)
-                        when "link":
-                            dest = File.readlink(@source)
-                            Puppet::State::PFileLink.create(@dest,@parent.path)
-                        else
-                            raise Puppet::Error.new(
-                                "Cannot use files of type %s as source" % stat.ftype)
-                        end
-                    else
-                        raise Puppet::Error.new("Somehow got a non-local source")
+                if FileTest.exists?(@parent.name)
+                    begin
+                        File.unlink(@parent.name)
+                    rescue => detail
+                        Puppet.err "Could not remove %s for replacing: %s" %
+                            [@parent.name, detail]
                     end
                 end
+
+                begin
+                    File.rename(@parent.name + ".puppettmp", @parent.name)
+                rescue => detail
+                    Puppet.err "Could not rename tmp %s for replacing: %s" %
+                        [@parent.name, detail]
+                end
+
                 return :file_changed
             end
         end
@@ -972,6 +871,63 @@ module Puppet
                 @arghash.include?(arg)
             end
 
+            def handlebackup(file = nil)
+                # let the path be specified
+                file ||= self[:path]
+                # if they specifically don't want a backup, then just say
+                # we're good
+                unless FileTest.exists?(file)
+                    return true
+                end
+
+                unless self[:backup]
+                    return true
+                end
+
+                case File.stat(file).ftype
+                when "directory":
+                    # we don't need to backup directories
+                    return true
+                when "file":
+                    backup = self[:backup]
+                    case backup
+                    when Puppet::Client::Dipper:
+                        sum = backup.backup(file)
+                        Puppet.info "Filebucketed %s with sum %s" %
+                            [file, sum]
+                        return true
+                    when String:
+                        newfile = file + backup
+                        if FileTest.exists?(newfile)
+                            begin
+                                File.unlink(newfile)
+                            rescue => detail
+                                Puppet.err "Could not remove old backup: %s" %
+                                    detail
+                                return false
+                            end
+                        end
+                        begin
+                            FileUtils.cp(file,
+                                file + backup)
+                            return true
+                        rescue => detail
+                            # since they said they want a backup, let's error out
+                            # if we couldn't make one
+                            raise Puppet::Error.new("Could not back %s up: %s" %
+                                [file, detail.message])
+                        end
+                    else
+                        Puppet.err "Invalid backup type %s" % backup
+                        return false
+                    end
+                else
+                    Puppet.notice "Cannot backup files of type %s" %
+                        File.stat(file).ftype
+                    return false
+                end
+            end
+
             def initialize(hash)
                 @arghash = self.argclean(hash)
                 @arghash.delete(self.class.namevar)
@@ -1002,20 +958,29 @@ module Puppet
             end
 
             def parambackup=(value)
-                if value == false or value == "false"
+                case value
+                when false, "false":
                     @parameters[:backup] = false
-                elsif value == true or value == "true"
+                when true, "true":
                     @parameters[:backup] = ".puppet-bak"
+                when Array:
+                    case value[0]
+                    when "filebucket":
+                        if bucket = Puppet::Type::PFileBucket.bucket(value[1])
+                            @parameters[:backup] = bucket
+                        else
+                            @parameters[:backup] = ".puppet-bak"
+                            raise Puppet::Error,
+                                "Could not retrieve filebucket %s" %
+                                value[1]
+                        end
+                    else
+                        raise Puppet::Error, "Invalid backup object type %s" %
+                            value[0].inspect
+                    end
                 else
-                    @parameters[:backup] = value
-                end
-            end
-
-            def paramfilebucket=(name)
-                if bucket = Puppet::Type::PFileBucket.bucket(name)
-                    @parameters[:filebucket]  = bucket
-                else
-                    raise Puppet::Error.new("Could not find filebucket %s" % name)
+                    raise Puppet::Error, "Invalid backup type %s" %
+                        value.inspect
                 end
             end
 
@@ -1081,7 +1046,7 @@ module Puppet
                         :path => path
                     }
                 else
-                    klass = Puppet::Type::PFile
+                    klass = self.class
                 end
                 if child = klass[path]
                     unless @children.include?(child)

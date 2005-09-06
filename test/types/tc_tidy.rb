@@ -45,12 +45,66 @@ class TestTidy < TestPuppet
             f.puts rand(100)
         }
 
-        Puppet::Type::Tidy.new(
-            :name => file
+        tidy = Puppet::Type::Tidy.new(
+            :name => dir,
+            :size => "1b",
+            :recurse => true
         )
+
+        comp = newcomp("tidytesting", tidy)
+
+        trans = nil
+        assert_nothing_raised {
+            trans = comp.evaluate
+        }
+        event = nil
+        assert_nothing_raised {
+            event = trans.evaluate.collect { |e| e.event }
+        }
+
+        assert_equal(1, event.length, "Got no events on tidy")
+        assert_equal([:file_tidied], event, "Got incorrect event on tidy")
+
+        assert(!FileTest.exists?(file), "Tidied file still exists")
     end
 
-    def test_recursion
+    def test_tidydirs
+        dir = mktmpdir
+        file = File.join(dir, "tidytesting")
+        File.open(file, "w") { |f|
+            f.puts rand(100)
+        }
+
+        tidy = Puppet::Type::Tidy.new(
+            :name => dir,
+            :size => "1b",
+            :age => "1s",
+            :rmdirs => true,
+            :recurse => true
+        )
+
+        comp = newcomp("tidytesting", tidy)
+
+        sleep(2)
+        trans = nil
+        assert_nothing_raised {
+            trans = comp.evaluate
+        }
+        event = nil
+        assert_nothing_raised {
+            event = trans.evaluate.collect { |e| e.event }
+        }
+
+        assert(!FileTest.exists?(file), "Tidied %s still exists" % file)
+        assert(!FileTest.exists?(dir), "Tidied %s still exists" % dir)
+
+        assert_equal(2, event.length, "Got %s events instead of %s on tidy" %
+            [event.length, 2])
+        assert_equal([:file_tidied, :file_tidied], event,
+            "Got incorrect events on tidy")
+    end
+
+    def disabled_test_recursion
         source = mktmpdir()
         FileUtils.cd(source) {
             mkranddirsandfiles()

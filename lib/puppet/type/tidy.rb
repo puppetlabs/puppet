@@ -12,80 +12,68 @@ module Puppet
     class State
         class TidyUp < Puppet::State
             require 'etc'
-            attr_accessor :file
 
-            @doc = "Create a link to another file.  Currently only symlinks
-                are supported, and attempts to replace normal files with
-                links will currently fail, while existing but incorrect symlinks
-                will be removed."
-            @name = :target
+            @nodoc = true
+            @name = :tidyup
 
-            def create
-                begin
-                    debug("Creating symlink '%s' to '%s'" %
-                        [self.parent[:path],self.should])
-                    unless File.symlink(self.should,self.parent[:path])
-                        raise TypeError.new("Could not create symlink '%s'" %
-                            self.parent[:path])
-                    end
-                rescue => detail
-                    raise TypeError.new("Cannot create symlink '%s': %s" %
-                        [self.parent[:path],detail])
-                end
-            end
-
-            def remove
-                if FileTest.symlink?(self.parent[:path])
-                    debug("Removing symlink '%s'" % self.parent[:path])
-                    begin
-                        File.unlink(self.parent[:path])
-                    rescue
-                        raise TypeError.new("Failed to remove symlink '%s'" %
-                            self.parent[:path])
-                    end
-                elsif FileTest.exists?(self.parent[:path])
-                    raise TypeError.new("Cannot remove normal file '%s'" %
-                        self.parent[:path])
+            def age(stat)
+                type = nil
+                if stat.ftype == "directory"
+                    type = :mtime
                 else
-                    debug("Symlink '%s' does not exist" %
-                        self.parent[:path])
+                    type = @parent[:type] || :atime
                 end
+                
+                return Integer(Time.now - stat.send(type))
             end
 
             def retrieve
                 stat = nil
-
-                if FileTest.symlink?(self.parent[:path])
-                    self.is = File.readlink(self.parent[:path])
-                    debug("link value is '%s'" % self.is)
-                    return
-                else
-                    self.is = nil
+                unless stat = @parent.stat
+                    @is = :unknown
                     return
                 end
+
+                @is = [:age, :size].collect { |param|
+                    if @parent[param]
+                        self.send(param, stat)
+                    end
+                }.reject { |p| p == false or p.nil? }
             end
 
-            # this is somewhat complicated, because it could exist and be
-            # a file
+            def size(stat)
+                return stat.size
+            end
+
             def sync
-                if self.should.nil?
-                    self.remove()
-                else # it should exist and be a symlink
-                    if FileTest.symlink?(self.parent[:path])
-                        path = File.readlink(self.parent[:path])
-                        if path != self.should
-                            self.remove()
-                            self.create()
+                file = @parent[:path]
+                case File.lstat(file).ftype
+                when "directory":
+                    if @parent[:rmdirs]
+                        subs = Dir.entries(@parent[:path]).reject { |d|
+                            d == "." or d == ".."
+                        }.length
+                        if subs > 0
+                            Puppet.info "%s has %s children; not tidying" %
+                                [@parent[:path], subs]
+                            Puppet.info Dir.entries(@parent[:path]).inspect
+                        else
+                            Dir.rmdir(@parent[:path])
                         end
-                    elsif FileTest.exists?(self.parent[:path])
-                        raise TypeError.new("Cannot replace normal file '%s'" %
-                            self.parent[:path])
                     else
-                        self.create()
+                        Puppet.debug "Not tidying directories"
+                        return nil
                     end
+                when "file":
+                    @parent.handlebackup(file)
+                    File.unlink(file)
+                when "symlink":     File.unlink(file)
+                else
+                    raise Puppet::Error, "Cannot tidy files of type %s" %
+                        File.lstat(file).ftype
                 end
 
-                #self.parent.newevent(:event => :inode_changed)
+                return :file_tidied
             end
         end
     end
@@ -99,10 +87,12 @@ module Puppet
             ]
 
             @parameters = [
+                :path,
                 :age,
                 :size,
                 :type,
                 :backup,
+                :rmdirs,
                 :recurse
             ]
 
@@ -117,16 +107,75 @@ module Puppet
                 time is the default mechanism, but modification."
             @paramdoc[:recurse] = "If target is a directory, recursively descend
                 into the directory looking for files to tidy."
+            @paramdoc[:rmdirs] = "Tidy directories in addition to files."
             @doc = "Remove unwanted files based on specific criteria."
             @name = :tidy
             @namevar = :path
 
+            @depthfirst = true
+
             def initialize(hash)
                 super
+
+                unless  @parameters.include?(:age) or
+                        @parameters.include?(:size)
+                    unless FileTest.directory?(self[:path])
+                        # don't do size comparisons for directories
+                        raise Puppet::Error, "Tidy must specify size, age, or both"
+                    end
+                end
+
+                # only allow backing up into filebuckets
+                unless self[:backup].is_a? Puppet::Client::Dipper
+                    self[:backup] = false
+                end
+                self[:tidyup] = [:age, :size].collect { |param|
+                    @parameters[param]
+                }.reject { |p| p == false }
             end
 
             def paramage=(age)
                 @parameters[:age] = age
+                case age
+                when /^[0-9]+$/, /^[0-9]+[dD]/:
+                    @parameters[:age] = Integer(age.gsub(/[^0-9]+/,'')) *
+                        60 * 60 * 24
+                when /^[0-9]+$/, /^[0-9]+[hH]/:
+                    @parameters[:age] = Integer(age.gsub(/[^0-9]+/,'')) * 60 * 60
+                when /^[0-9]+[mM]/:
+                    @parameters[:age] = Integer(age.gsub(/[^0-9]+/,'')) * 60
+                when /^[0-9]+[sS]/:
+                    @parameters[:age] = Integer(age.gsub(/[^0-9]+/,''))
+                else
+                    raise Puppet::Error.new("Invalid tidy age %s" % age)
+                end
+            end
+
+            def paramsize=(size)
+                if FileTest.directory?(self[:path])
+                    # don't do size comparisons for directories
+                    return
+                end
+                case size
+                when /^[0-9]+$/, /^[0-9]+[kK]/:
+                    @parameters[:size] = Integer(size.gsub(/[^0-9]+/,'')) * 1024
+                when /^[0-9]+[bB]/:
+                    @parameters[:size] = Integer(size.gsub(/[^0-9]+/,''))
+                when /^[0-9]+[mM]/:
+                    @parameters[:size] = Integer(size.gsub(/[^0-9]+/,'')) *
+                        1024 * 1024
+                else
+                    raise Puppet::Error.new("Invalid tidy size %s" % size)
+                end
+            end
+
+            def paramtype=(type)
+                case type
+                when "atime", "mtime", "ctime":
+                    @parameters[:type] = type.intern
+                else
+                    raise Puppet::Error.new("Invalid tidy type %s" % type)
+                end
             end
 
         end # Puppet::Type::Symlink
