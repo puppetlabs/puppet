@@ -131,7 +131,7 @@ class TestFileBucket < Test::Unit::TestCase
 
         file = mktestfile()
         assert_nothing_raised {
-            file[:filebucket] = name
+            file[:backup] = ["filebucket", name]
         }
 
         opath = "/tmp/anotherbuckettest"
@@ -140,9 +140,9 @@ class TestFileBucket < Test::Unit::TestCase
         origmd5 = File.open(file.name) { |f| newmd5 = Digest::MD5.hexdigest(f.read) }
 
         file[:source] = opath
-        assert_nothing_raised {
-            file[:backup] = true
-        }
+        #assert_nothing_raised {
+        #    file[:backup] = true
+        #}
 
         comp = newcomp("yaytest", file)
 

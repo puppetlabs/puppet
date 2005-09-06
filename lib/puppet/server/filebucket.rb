@@ -19,8 +19,6 @@ module Puppet
 class Server
     class BucketError < RuntimeError; end
     class FileBucket < Handler
-        DEFAULTPORT = 8139
-
         @interface = XMLRPC::Service::Interface.new("puppetbucket") { |iface|
             iface.add_method("string addfile(string, string)")
             iface.add_method("string getfile(string)")
