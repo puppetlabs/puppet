@@ -176,7 +176,7 @@ module Puppet
                 end
 
                 args = {:Server => hash[:Server]}
-                args[:Port] == hash[:Port] || Puppet[:masterport]
+                args[:Port] = hash[:Port] || Puppet[:masterport]
 
                 if self.readcert
                     args[:Certificate] = @cert
@@ -378,11 +378,16 @@ module Puppet
 
                 if restore
                     #puts "Restoring %s" % file
-                    newcontents = Base64.decode64(@driver.getfile(sum))
-                    newsum = Digest::MD5.hexdigest(newcontents)
-                    File.open(file,File::WRONLY|File::TRUNC) { |of|
-                        of.print(newcontents)
-                    }
+                    if tmp = @driver.getfile(sum)
+                        newcontents = Base64.decode64(tmp)
+                        newsum = Digest::MD5.hexdigest(newcontents)
+                        File.open(file,File::WRONLY|File::TRUNC) { |of|
+                            of.print(newcontents)
+                        }
+                    else
+                        Puppet.err "Could not find file with checksum %s" % sum
+                        return nil
+                    end
                     #puts "Done"
                     return newsum
                 else
