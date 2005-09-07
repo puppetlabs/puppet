@@ -576,6 +576,28 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # retrieve the 'is' value for a specified state
+    def is(state)
+        if @states.include?(state)
+            return @states[state].is
+        else
+            return nil
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # retrieve the 'should' value for a specified state
+    def should(state)
+        if @states.include?(state)
+            return @states[state].should
+        else
+            return nil
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # is the instance a managed instance?  A 'yes' here means that
     # the instance was created from the language, vs. being created
     # in order resolve other questions, such as finding a package
@@ -1219,11 +1241,13 @@ end
 require 'puppet/statechange'
 require 'puppet/type/component'
 require 'puppet/type/exec'
+require 'puppet/type/group'
 require 'puppet/type/package'
 require 'puppet/type/pfile'
 require 'puppet/type/pfilebucket'
 require 'puppet/type/service'
 require 'puppet/type/symlink'
+require 'puppet/type/user'
 require 'puppet/type/tidy'
 #require 'puppet/type/typegen'
 #require 'puppet/type/typegen/filetype'
