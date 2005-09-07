@@ -100,7 +100,12 @@ module Puppet
                 :name
             ]
 
-            @doc = " "
+            @doc = "Manage groups.  This type can only create groups.  Group
+                membership must be managed on individual users."
+
+            @paramdoc[:name] = "The group name.  While naming limitations vary by
+                system, it is advisable to keep the name to the degenerate limitations,
+                which is a maximum of 8 characters beginning with a letter."
             @name = :group
             @namevar = :name
 
@@ -109,7 +114,7 @@ module Puppet
                     begin
                         @groupinfo = Etc.getgrnam(self[:name])
                     rescue ArgumentError => detail
-                        # leave groupinfo as nil
+                        @groupinfo = nil
                     end
                 end
 

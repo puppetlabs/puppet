@@ -14,6 +14,19 @@ require 'test/unit'
 class TestGroup < TestPuppet
     def setup
         Puppet[:loglevel] = :debug if __FILE__ == $0
+        @@tmpgroups = []
+        super
+    end
+
+    def teardown
+        @@tmpgroups.each { |group|
+            begin
+                obj = Etc.getgrnam(group)
+                system("groupdel %s" % group)
+            rescue ArgumentError => detail
+                # no such group, so we're fine
+            end
+        }
         super
     end
 
@@ -67,6 +80,10 @@ class TestGroup < TestPuppet
             gobj = nil
             comp = nil
             name = "pptestgr"
+
+            assert_raise(ArgumentError) {
+                obj = Etc.getgrnam(name)
+            }
             assert_nothing_raised {
                 gobj = Puppet::Type::Group.new(
                     :name => name
@@ -75,23 +92,19 @@ class TestGroup < TestPuppet
                 comp = newcomp("groupmaker %s" % name, gobj)
             }
 
-            trans = nil
+            trans = assert_events(comp, [:group_created], "group")
+            @@tmpgroups << name
+
+            obj = nil
             assert_nothing_raised {
-                trans = comp.evaluate
+                obj = Etc.getgrnam(name)
             }
 
-            events = nil
-            assert_nothing_raised {
-                events = trans.evaluate.reject { |e| e.nil? }.collect { |e| e.event }
+            assert_rollback_events(trans, [:group_deleted], "group")
+
+            assert_raise(ArgumentError) {
+                obj = Etc.getgrnam(name)
             }
-
-            assert_equal([:group_created], events, "Incorrect group events")
-
-            assert_nothing_raised {
-                events = trans.rollback.reject { |e| e.nil? }.collect { |e| e.event }
-            }
-
-            assert_equal([:group_deleted], events, "Incorrect deletion group events")
         end
     else
         $stderr.puts "Not running as root; skipping group creation tests."

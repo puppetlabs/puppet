@@ -27,6 +27,40 @@ class TestPuppet < Test::Unit::TestCase
         Puppet::Type.allclear
     end
 
+    def assert_rollback_events(trans, events, msg)
+        run_events(:rollback, trans, events, msg)
+    end
+
+    def assert_events(comp, events, msg)
+        trans = nil
+        assert_nothing_raised("Component %s failed" % [msg]) {
+            trans = comp.evaluate
+        }
+
+        run_events(:evaluate, trans, events, msg)
+    end
+
+    def run_events(type, trans, events, msg)
+        case type
+        when :evaluate, :rollback: # things are hunky-dory
+        else
+            raise Puppet::DevError, "Incorrect run_events type"
+        end
+
+        method = type
+
+        newevents = nil
+        assert_nothing_raised("Transaction %s %s failed" % [type, msg]) {
+            newevents = trans.send(method).reject { |e| e.nil? }.collect { |e|
+                e.event
+            }
+        }
+
+        assert_equal(events, newevents, "Incorrect %s %s events" % [type, msg])
+
+        return trans
+    end
+
     def test_nothing
     end
 end

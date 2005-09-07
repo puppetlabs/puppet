@@ -48,7 +48,7 @@ module Puppet
                 if event.nil?
                     #event = @state.parent.class.name.id2name + "_changed"
                     # they didn't actually change anything
-                    return
+                    return nil
                 elsif ! event.is_a?(Symbol)
                     Puppet.warning "State '%s' returned invalid event '%s'; resetting to default" %
                         [@state.class,event]
@@ -111,6 +111,10 @@ module Puppet
             unless @state.insync?
                 Puppet.notice "Rolling %s backward" % self
                 return self.go
+            else
+                Puppet.debug "rollback is already in sync: %s vs. %s" %
+                    [@state.is.inspect, @state.should.inspect]
+                return nil
             end
 
             #raise "Moving statechanges backward is currently unsupported"
