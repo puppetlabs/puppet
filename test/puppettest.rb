@@ -2,6 +2,15 @@
 require 'test/unit'
 
 class TestPuppet < Test::Unit::TestCase
+    def newcomp(name,*ary)
+        comp = Puppet::Type::Component.new(
+            :name => name
+        )
+        ary.each { |item| comp.push item }
+
+        return comp
+    end
+
     def setup
         @@tmpfiles = []
         Puppet[:loglevel] = :debug if __FILE__ == $0
