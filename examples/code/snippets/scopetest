@@ -1,0 +1,13 @@
+
+$mode = 640
+
+define thing {
+    file { "/tmp/scopetest": create => true, mode => $mode }
+}
+
+class testing {
+    $mode = 755
+    thing {}
+}
+
+testing {}

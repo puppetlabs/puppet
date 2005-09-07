@@ -333,6 +333,14 @@ class TestSnippets < Test::Unit::TestCase
         assert(FileTest.directory?(dir), "Directory %s does not exist" % dir)
     end
 
+    def snippet_scopetest(trans)
+        file = "/tmp/scopetest"
+        @@tmpfiles << file
+        assert(FileTest.file?(file), "File %s does not exist" % file)
+        assert(File.stat(file).mode & 007777 == 0755,
+            "File %s is not 755" % file)
+    end
+
     def disabled_snippet_dirchmod(trans)
         dirs = %w{a b}.collect { |letter|
             "/tmp/dirchmodtest%s" % letter
