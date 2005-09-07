@@ -25,7 +25,13 @@ class TestComponent < TestPuppet
 
     def randnum(limit)
         num = nil
+        looped = 0
         loop do
+            looped += 1
+            if looped > 1000
+                $stderr.print "Reached limit of looping"
+                break
+            end
             num = rand(limit)
             unless @@used.include?(num)
                 @@used[num] = true
