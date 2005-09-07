@@ -113,7 +113,7 @@ class Transaction
 
     #---------------------------------------------------------------
     def rollback
-        @changes.each { |change|
+        events = @changes.collect { |change|
             if change.is_a?(Puppet::StateChange)
                 next unless change.run
                 #change.transaction = self
@@ -135,6 +135,11 @@ class Transaction
             else
                 raise "Transactions cannot handle objects of type %s" % child.class
             end
+        }.flatten.reject { |e| e.nil? }
+
+        events.each { |event|
+            object = event.source
+            object.propagate(event)
         }
     end
     #---------------------------------------------------------------
