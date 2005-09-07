@@ -831,8 +831,7 @@ module Puppet
                 :backup,
                 :linkmaker,
                 :source,
-                :recurse,
-                :filebucket
+                :recurse
             ]
 
             @paramdoc[:path] = "The path to the file to manage.  Must be fully
@@ -854,10 +853,6 @@ module Puppet
                 support multiple protocols for copying.  Arguments are specified
                 using either a full local path or using a URI (currently only
                 *file* is supported as a protocol)."
-
-            @paramdoc[:filebucket] = "A repository for backing up files, including
-                over the network.  Argument must be the name of an existing
-                filebucket."
 
             @name = :file
             @namevar = :path

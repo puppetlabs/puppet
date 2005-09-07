@@ -18,6 +18,23 @@ module Puppet
                 :port
             ]
 
+            @doc = "A repository for backing up files.  If no filebucket is
+                defined, then files will be backed up in their current directory,
+                but the filebucket can be either a host- or site-global repository
+                for backing up.  It stores files and returns the MD5 sum, which
+                can later be used to retrieve the file if restoration becomes
+                necessary.  A filebucket does not do any work itself; instead,
+                it can be specified as the value of *backup* in a **file** object."
+
+            @paramdoc[:name] = "The name of the filebucket."
+            @paramdoc[:server] = "The server providing the filebucket.  If this is
+                not specified, then the bucket is local and *path* must be specified."
+            @paramdoc[:port] = "The port on which the remote server is listening.
+                Defaults to the normal Puppet port, %s." % Puppet[:masterport]
+            @paramdoc[:path] = "The path to the local filebucket.  If this is
+                not specified, then the bucket is remote and *server* must be
+                specified."
+
             @name = :filebucket
 			@namevar = :name
 

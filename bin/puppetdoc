@@ -94,7 +94,14 @@ Meta-Parameters
 ---------------
 
 }
+params = []
 Puppet::Type.eachmetaparam { |param|
+    params << param
+}
+
+params.sort { |a,b|
+    a.to_s <=> b.to_s
+}.each { |param|
     puts "- **" + param.to_s + "**"
     puts tab(1) + Puppet::Type.metaparamdoc(param).gsub(/\n\s*/,' ')
 }
@@ -107,8 +114,7 @@ Types
 - *namevar* is the parameter used to uniquely identify a type instance.
   This is the parameter that gets assigned when a string is provided before
   the colon in a type declaration.
-- *states* are the aspects of a type that can be changed.
-- *params* control how a type implements the state changes.
+- *parameters* determine the specific configuration of the instance.
 
 
 }
