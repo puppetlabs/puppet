@@ -7,9 +7,10 @@ end
 # $Id$
 
 require 'puppet/type'
+require 'puppettest'
 require 'test/unit'
 
-class TestType < Test::Unit::TestCase
+class TestType < TestPuppet
     def test_typemethods
         assert_nothing_raised() {
             Puppet::Type.buildstatehash
@@ -17,33 +18,32 @@ class TestType < Test::Unit::TestCase
 
         Puppet::Type.eachtype { |type|
             name = nil
-            assert_nothing_raised() {
-                name = type.name
+            assert_nothing_raised("Searching for name for %s caused failure" %
+                type.to_s) {
+                    name = type.name
             }
 
-            assert(
-                name
-            )
+            assert(name, "Could not find name for %s" % type.to_s)
 
             assert_equal(
                 type,
-                Puppet::Type.type(name)
+                Puppet::Type.type(name),
+                "Failed to retrieve %s by name" % name
             )
 
             assert(
-                type.namevar
+                type.namevar,
+                "Failed to retrieve namevar for %s" % name
             )
 
             assert_not_nil(
-                type.states
+                type.states,
+                "States for %s are nil" % name
             )
 
             assert_not_nil(
-                type.validstates
-            )
-
-            assert(
-                type.validparameter?(type.namevar)
+                type.validstates,
+                "Valid states for %s are nil" % name
             )
         }
     end
@@ -94,5 +94,17 @@ class TestType < Test::Unit::TestCase
         assert_nothing_raised() {
             file.sync
         }
+    end
+
+    def test_nameasstate
+        # currently groups are the only objects with the namevar as a state
+        group = nil
+        assert_nothing_raised {
+            group = Puppet::Type::Group.new(
+                :name => "testing"
+            )
+        }
+
+        assert_equal("testing", group.name, "Could not retrieve name")
     end
 end

@@ -774,7 +774,24 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     # derive the instance name based on class.namevar
     def name
-        return self[self.class.namevar]
+        unless defined? @name and @name
+            namevar = self.class.namevar
+            if self.class.validparameter?(namevar)
+                @name = @parameters[namevar]
+            elsif self.class.validstate?(namevar)
+                @name = self.should(namevar)
+            else
+                raise Puppet::DevError, "Could not find namevar %s for %s" %
+                    [namevar, self.class.name]
+            end
+        end
+
+        unless @name
+            raise Puppet::DevError, "Could not find name %s for %s" %
+                [namevar, self.class.name]
+        end
+
+        return @name
     end
     #---------------------------------------------------------------
 
