@@ -61,6 +61,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
         pid = nil
         %x{#{ps}}.chomp.split(/\n/).each { |line|
             if line =~ /ruby.+puppetmasterd/
+                next if line =~ /tc_/ # skip the test script itself
                 ary = line.split(" ")
                 pid = ary[1].to_i
             end

@@ -73,7 +73,7 @@ $haveusage = true
 
 begin
     require 'rdoc/usage'
-rescue
+rescue LoadError
     $haveusage = false
 end
 

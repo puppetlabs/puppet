@@ -12,8 +12,15 @@ class TestPuppet < Test::Unit::TestCase
     end
 
     def setup
-        @@tmpfiles = []
-        Puppet[:loglevel] = :debug if __FILE__ == $0
+        Puppet[:loglevel] = :debug if __FILE__ =~ /tc_.+\.rb/
+
+        @configpath = File.join(tmpdir, self.class.to_s + "configdir")
+        @oldconf = Puppet[:puppetconf]
+        Puppet[:puppetconf] = @configpath
+        @oldvar = Puppet[:puppetvar]
+        Puppet[:puppetvar] = @configpath
+
+        @@tmpfiles = [@configpath]
     end
 
     def teardown
@@ -25,6 +32,10 @@ class TestPuppet < Test::Unit::TestCase
         }
         @@tmpfiles.clear
         Puppet::Type.allclear
+    end
+
+    def tmpdir
+        "/tmp"
     end
 
     def assert_rollback_events(trans, events, msg)

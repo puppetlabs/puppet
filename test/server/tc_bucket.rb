@@ -50,6 +50,13 @@ class TestBucket < Test::Unit::TestCase
 
         @@tmppids = []
         @@tmpfiles = [@bucket]
+
+        @oldconf = Puppet[:puppetconf]
+        Puppet[:puppetconf] = "/tmp/buckettesting"
+        @oldvar = Puppet[:puppetvar]
+        Puppet[:puppetvar] = "/tmp/buckettesting"
+
+        @@tmpfiles << "/tmp/buckettesting"
     end
 
     def teardown
@@ -61,6 +68,9 @@ class TestBucket < Test::Unit::TestCase
         @@tmppids.each { |pid|
             system("kill -INT %s" % pid)
         }
+
+        Puppet[:puppetconf] = @oldconf
+        Puppet[:puppetvar] = @oldvar
     end
 
     def test_localserver
@@ -170,6 +180,8 @@ class TestBucket < Test::Unit::TestCase
         tmpdir = File.join(@bucket,"tmpfiledir")
         Puppet.recmkdir(tmpdir)
 
+        asign = Puppet[:autosign]
+        Puppet[:autosign] = true
         server = nil
         client = nil
         port = Puppet[:masterport]
@@ -254,5 +266,7 @@ class TestBucket < Test::Unit::TestCase
             raise "Uh, we don't have a child pid"
         end
         system("kill %s" % pid)
+
+        Puppet[:autosign] = asign
     end
 end

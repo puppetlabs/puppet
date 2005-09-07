@@ -13,7 +13,7 @@ require 'xmlrpc/client'
 #require 'webrick/httpstatus'
 require 'facter'
 require 'digest/md5'
-require 'base64'
+require 'puppet/base64'
 
 module Puppet
 class Server

@@ -5,6 +5,7 @@ if __FILE__ == $0
 end
 
 require 'puppet'
+require 'puppettest'
 require 'puppet/storage'
 require 'test/unit'
 
@@ -13,15 +14,26 @@ require 'test/unit'
 class StorageTestingClass
 end
 
-class TestStorage < Test::Unit::TestCase
-    def setup
+class TestStorage < TestPuppet
+    def disabled_setup
         Puppet[:loglevel] = :debug if __FILE__ == $0
         Puppet[:checksumfile] = "/var/tmp/puppetteststate"
+
+        @oldconf = Puppet[:puppetconf]
+        Puppet[:puppetconf] = "/tmp/storagetesting"
+        @oldvar = Puppet[:puppetvar]
+        Puppet[:puppetvar] = "/tmp/storagetesting"
+
+        @@tmpfiles << "/tmp/storagetesting"
     end
 
     def teardown
-        system("rm -f %s" % Puppet[:checksumfile])
+        #system("rm -f %s" % Puppet[:checksumfile])
         Puppet::Storage.clear
+
+        #Puppet[:puppetconf] = @oldconf
+        #Puppet[:puppetvar] = @oldvar
+        super
     end
 
     def test_simple

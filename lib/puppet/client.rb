@@ -12,6 +12,7 @@ require 'puppet/transportable'
 require 'puppet/metric'
 require 'puppet/daemon'
 require 'puppet/server'
+require 'puppet/base64'
 
 $noclientnetworking = false
 begin

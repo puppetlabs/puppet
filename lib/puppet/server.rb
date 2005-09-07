@@ -142,7 +142,6 @@ module Puppet
             @name = :Status
 
             def status(status = nil, client = nil, clientip = nil)
-                Puppet.warning "Returning status"
                 return 1
             end
         end

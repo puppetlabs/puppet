@@ -30,7 +30,12 @@ class TestServer < Test::Unit::TestCase
             #Puppet::Type.type(:service).setpath(paths)
         end
 
-        @@tmpfiles = []
+        @oldconf = Puppet[:puppetconf]
+        Puppet[:puppetconf] = "/tmp/servertesting"
+        @oldvar = Puppet[:puppetvar]
+        Puppet[:puppetvar] = "/tmp/servertesting"
+
+        @@tmpfiles = ["/tmp/servertesting"]
         @@tmppids = []
     end
 
@@ -55,6 +60,9 @@ class TestServer < Test::Unit::TestCase
         @@tmppids.each { |pid|
             system("kill -INT %s" % pid)
         }
+
+        Puppet[:puppetconf] = @oldconf
+        Puppet[:puppetvar] = @oldvar
     end
 
     def test_start
