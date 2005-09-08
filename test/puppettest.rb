@@ -12,7 +12,12 @@ class TestPuppet < Test::Unit::TestCase
     end
 
     def setup
-        Puppet[:loglevel] = :debug if __FILE__ =~ /tc_.+\.rb/
+        if $0 =~ /tc_.+\.rb/
+            Puppet[:loglevel] = :debug
+        else
+            Puppet[:logdest] = "/dev/null"
+            Puppet[:httplog] = "/dev/null"
+        end
 
         @configpath = File.join(tmpdir, self.class.to_s + "configdir")
         @oldconf = Puppet[:puppetconf]
