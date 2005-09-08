@@ -65,8 +65,8 @@ module Puppet
                 args[:type] = "component"
             end
             super(args)
-            Puppet.debug "Made component with name %s and type %s" %
-                [self.name, self[:type]]
+            #Puppet.debug "Made component with name %s and type %s" %
+            #    [self.name, self[:type]]
         end
 
         # the "old" way of doing things
