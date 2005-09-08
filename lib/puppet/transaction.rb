@@ -113,7 +113,7 @@ class Transaction
 
     #---------------------------------------------------------------
     def rollback
-        events = @changes.collect { |change|
+        events = @changes.reverse.collect { |change|
             if change.is_a?(Puppet::StateChange)
                 # skip changes that were never actually run
                 next unless change.run
