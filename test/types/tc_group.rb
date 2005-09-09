@@ -61,18 +61,18 @@ class TestGroup < TestPuppet
             return nil
         end
     else
-        def assert_missing(group)
+        def missing?(group)
             begin
                 obj = Etc.getgrnam(group)
-                raise false
+                return false
             rescue ArgumentError
-                raise true
+                return true
             end
         end
 
         def gid(name)
             assert_nothing_raised {
-                obj = Etc.getgrnam(group[:name])
+                obj = Etc.getgrnam(name)
                 return obj.gid
             }
 
@@ -225,7 +225,7 @@ class TestGroup < TestPuppet
             }
             assert(!missing?(name), "Group %s is missing" % name)
 
-            tests = Puppet::Type::Group.validstates.collect { |name, state|
+            tests = Puppet::Type::Group.validstates.collect { |sname, state|
                 state.name
             }
 
@@ -237,8 +237,14 @@ class TestGroup < TestPuppet
                     #$stderr.puts "Not testing attr %s of group" % test
                 end
             }
-            assert_rollback_events(trans, [:group_modified, :group_deleted],
-                "group")
+
+            es = nil
+            if os == "Darwin"
+                es = [:group_modified, :group_deleted]
+            else
+                es = [:group_deleted]
+            end
+            assert_rollback_events(trans, es, "group")
 
             assert(missing?(name), "Group %s is still present" % name)
         end

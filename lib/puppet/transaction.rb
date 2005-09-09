@@ -123,6 +123,7 @@ class Transaction
                     #@@changed.push change.state.parent
                 rescue => detail
                     Puppet.err("%s rollback failed: %s" % [change,detail])
+                    next
                     # at this point, we would normally do error handling
                     # but i haven't decided what to do for that yet
                     # so just record that a sync failed for a given object

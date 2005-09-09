@@ -25,11 +25,14 @@ module Puppet
             # so we don't have to worry about abstracting that across
             # the system
             def retrieve
-                obj = @parent.getinfo(true)
+                if obj = @parent.getinfo(true)
 
-                method = self.class.infomethod
+                    method = self.class.infomethod
+                    @is = obj.send(method)
+                else
+                    @is = :notfound
+                end
 
-                @is = obj.send(method)
             end
         end
 
@@ -68,16 +71,10 @@ module Puppet
                 a letter."
             @name = :name
 
-            def should=(gid)
-                if gid.is_a?(String)
-                    if gid =~ /^[0-9]+$/
-                        gid = Integer(gid)
-                    end
-                end
+            def should=(name)
+                Puppet.info "Setting group name to %s" % name
 
-                Puppet.info "Setting gid to %s" % gid
-
-                @should = gid
+                @should = name
             end
         end
 
@@ -96,20 +93,23 @@ module Puppet
             def sync
                 obj = @parent.getinfo
 
-                # if the user either does not or should not exist...
-                # yes, it's a badly named method
-                if obj.nil? or @should == :notfound
-                    return create()
+                if self.name == :name
+                    return syncname()
                 end
 
-                # there's a possibility that we created the user in this session
-                # so verify that we're actually out of sync
-                if self.insync?
+                obj = @parent.getinfo
+
+                if obj.nil?
+                    raise Puppet::DevError,
+                        "Group does not exist; cannot set gid"
+                end
+
+                if @should == :notfound
+                    # we have to depend on the 'name' state doing the deletion
                     return nil
                 end
-
                 cmd = [
-                    "groupmod", self.class.flag, "'%s'" % @should, @parent.name
+                    "groupmod", self.class.xaddflag, "'%s'" % @should, @parent.name
                 ].join(" ")
 
                 output = %x{#{cmd} 2>&1}
@@ -119,11 +119,11 @@ module Puppet
                         [self.class.name, @parent.name, output]
                 end
 
-                return :user_modified
+                return :group_modified
             end
 
             private
-            def create
+            def syncname
                 obj = @parent.getinfo
                 
                 cmd = nil
@@ -216,11 +216,11 @@ module Puppet
 
             def sync
                 events = []
-                obj = @parent.getinfo
 
                 if self.name == :name
                     return syncname()
                 end
+                obj = @parent.getinfo
 
                 if obj.nil?
                     raise Puppet::DevError,
