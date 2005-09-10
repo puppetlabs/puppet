@@ -1,0 +1,160 @@
+#!/usr/bin/ruby
+
+#
+# = Synopsis
+#
+# Convert cfengine code to puppet code.
+#
+# = Usage
+#
+#   cf2puppet [-h|--help] -o|--out <dir> <cfengine file>
+#
+# = Description
+#
+# This script reads in an entire cfengine configuration set, including
+# importing necessary files, and converts it to a puppet configuration.
+#
+# = Options
+#
+# help::
+#   Print this help message
+#
+# out::
+#   Print this help message
+#
+# = Example
+#
+#   $ puppetdoc > /tmp/reference.rst
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005 Reductive Labs, LLC
+# Licensed under the GNU Public License
+
+require 'puppet'
+require 'getoptlong'
+
+
+module Cf2Puppet
+    class CfClass < Array
+        attr_accessor :name
+    end
+
+    class CfAction
+        attr_accessor :name, :type
+
+        def []=(param, value)
+            @params[param] = value
+        end
+
+        def initialize
+            @params = {}
+        end
+    end
+end
+
+def handle(file)
+end
+
+def parse(file)
+    begin
+        File.open(file) { |f|
+            f.foreach { |line|
+                case line.chomp
+                when /(\w+):\s*\n/:
+                    $action = $1
+                when /(\w+):\s*\n/:
+                    $action = $1
+                end
+            }
+        }
+    rescue Errno::ENOENT => detail
+        $stderr.puts "File %s not found" % file
+        return
+    rescue Errno::EACCES => detail
+        $stderr.puts "Could not open file %s" % file
+        return
+    end
+end
+
+$haveusage = true
+
+begin
+    require 'rdoc/usage'
+rescue LoadError
+    $haveusage = false
+end
+
+result = GetoptLong.new(
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+)
+
+out = nil
+
+begin
+    result.each { |opt,arg|
+        case opt
+        when "--out"
+            out = arg
+        when "--help"
+            if $haveusage
+                RDoc::usage && exit
+            else
+                puts "No help available unless you have RDoc::usage installed"
+                exit
+            end
+        end
+    }
+rescue GetoptLong::InvalidOption => detail
+    $stderr.puts "Try '#{$0} --help'"
+    #if $haveusage
+    #    RDoc::usage_no_exit('usage')
+    #end
+    exit(1)
+end
+
+unless out
+    puts "You must specify an output directory using '-o'."
+    exit(12)
+end
+
+if FileTest.exists?(out)
+    unless FileTest.directory?(out)
+        puts "%s is not a directory" % out
+        exit(14)
+    end
+else
+    basedir = File.dirname(out)
+
+    unless FileTest.directory?(basedir)
+        puts "Parent directory %s does not exist" % basedir
+        exit(16)
+    end
+
+    Dir.mkdir(out)
+end
+
+files = []
+if ARGV.length > 0
+    files += ARGV
+else
+    $stderr.puts "Defaulting to cfagent.conf"
+    files << "/var/cfengine/inputs/cfagent.conf"
+end
+
+$stderr.puts "****WARNING****
+I can absolutely guarantee you that this script will not yet produce
+an exact copy of your cfengine configuration.  You _must_not_ just run
+the generated configuration; check the entire configuration before
+executing.  This is meant as a tool for simplifying migration, not
+entirely performing it.
+****WARNING****"
+
+files.each { |file|
+    handle(file)
+}
+# $Id$
