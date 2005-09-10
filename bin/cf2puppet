@@ -55,29 +55,55 @@ module Cf2Puppet
             @params = {}
         end
     end
-end
 
-def handle(file)
-end
+    class Parser
+        def initialize(file)
+            @file = file
+            @dir = File.dirname(file)
 
-def parse(file)
-    begin
-        File.open(file) { |f|
-            f.foreach { |line|
-                case line.chomp
-                when /(\w+):\s*\n/:
-                    $action = $1
-                when /(\w+):\s*\n/:
-                    $action = $1
-                end
-            }
-        }
-    rescue Errno::ENOENT => detail
-        $stderr.puts "File %s not found" % file
-        return
-    rescue Errno::EACCES => detail
-        $stderr.puts "Could not open file %s" % file
-        return
+            unless FileTest.exists?(file)
+                $stderr.puts "%s does not exist" % file
+                exit(18)
+            end
+        end
+
+        def parse
+            begin
+                File.open(@file) { |f|
+                    str = f.read
+
+                    # get rid of comments
+                    str.gsub(/#.+\n/)
+                    str.gsub(/^\s*$/, '') # and blank lines
+
+                    while str do
+                        case str
+                        when /\A(\w+):[^:]/n:
+                            action = $1
+                        end
+                    end
+                    f.foreach { |line|
+                        case line.chomp
+                        when /(\w+):\s*\n/:
+                            $action = $1
+                        when /(\w+):\s*\n/:
+                            $action = $1
+                        end
+                    }
+                }
+            rescue Errno::ENOENT => detail
+                $stderr.puts "File %s not found" % file
+                return
+            rescue Errno::EACCES => detail
+                $stderr.puts "Could not open file %s" % file
+                return
+            end
+        end
+
+        module Actions
+            def import
+            end
+        end
     end
 end
 
