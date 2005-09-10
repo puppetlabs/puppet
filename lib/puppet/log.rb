@@ -79,7 +79,7 @@ module Puppet
                 end
                 @@logdest = :syslog
             elsif dest =~ /^\//
-                if defined? @@logfile
+                if defined? @@logfile and @@logfile
                     @@logfile.close
                 end
 

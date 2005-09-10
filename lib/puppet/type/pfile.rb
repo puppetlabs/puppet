@@ -830,7 +830,6 @@ module Puppet
                 :path,
                 :backup,
                 :linkmaker,
-                :source,
                 :recurse
             ]
 
