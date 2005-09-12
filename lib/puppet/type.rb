@@ -1213,6 +1213,7 @@ end
 
 require 'puppet/statechange'
 require 'puppet/type/component'
+require 'puppet/type/cron'
 require 'puppet/type/exec'
 require 'puppet/type/group'
 require 'puppet/type/package'

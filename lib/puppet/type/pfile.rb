@@ -3,6 +3,7 @@
 # $Id$
 
 require 'digest/md5'
+require 'cgi'
 require 'etc'
 require 'uri'
 require 'fileutils'
@@ -219,6 +220,7 @@ module Puppet
                 # if we don't have a 'should' value, then go ahead and mark it
                 if ! defined? @should or @should == -2
                     @should = sum
+                    # FIXME we should support an updatechecksums-like mechanism
                     self.updatesum
                 end
 
@@ -418,6 +420,7 @@ module Puppet
                 unless @parent.stat
                     Puppet.err "File '%s' does not exist; cannot chown" %
                         @parent[:path]
+                    return nil
                 end
 
                 begin
@@ -675,6 +678,8 @@ module Puppet
                     next if stat == :checksum
                     next if stat == :type
 
+                    # was the stat already specified, or should the value
+                    # be inherited from the source?
                     unless @parent.argument?(stat)
                         if state = @parent.state(stat)
                             state.should = value
@@ -743,7 +748,6 @@ module Puppet
                         return nil
                     end
                 end
-                @backed = @parent.handlebackup
 
                 unless @stats[:type] == "file"
                     raise Puppet::DevError, "Got told to copy non-file %s" %
@@ -778,6 +782,8 @@ module Puppet
                     args.push @parent[:mode]
                 end
 
+                # FIXME we should also change our effective user and group id
+
                 begin
                     File.open(*args) { |f|
                         f.print contents
@@ -811,11 +817,11 @@ module Puppet
     end
     class Type
         class PFile < Type
+            # FIXME i don't think these are used
             attr_reader :params, :source, :srcbase
             @doc = "Manages local files, including setting ownership and
                 permissions, and allowing creation of both files and directories."
-            # class instance variable
-                #Puppet::State::PFileSource,
+
             @states = [
                 Puppet::State::PFileCreate,
                 Puppet::State::PFileChecksum,
@@ -923,6 +929,8 @@ module Puppet
             end
 
             def initialize(hash)
+                # clean out as many references to any file paths as possible
+                # this was the source of many, many bugs
                 @arghash = self.argclean(hash)
                 @arghash.delete(self.class.namevar)
 
@@ -933,8 +941,9 @@ module Puppet
                 @stat = nil
                 @parameters = Hash.new(false)
 
-                # default to a string, which is true
-                @parameters[:backup] = ".puppet-bak"
+                # default to true
+                self[:backup] = true
+
                 @srcbase = nil
                 super
             end
@@ -992,6 +1001,7 @@ module Puppet
 
                 args[:path] = path
 
+                # FIXME I think this is obviated now
                 unless hash.include?(:source) # it's being manually overridden
                     if args.include?(:source)
                         Puppet.err "Rewriting source for %s" % path
@@ -1052,7 +1062,7 @@ module Puppet
                         next if var == :path
                         next if var == :name
                         # behave idempotently
-                        unless child[var] == value
+                        unless child.should(var) == value
                             #Puppet.warning "%s is %s, not %s" % [var, child[var], value]
                             child[var] = value
                         end
@@ -1140,6 +1150,7 @@ module Puppet
             end
 
             def sourcerecurse(recurse)
+                # FIXME sourcerecurse should support purging non-remote files
                 source = @states[:source].source
                 
                 sourceobj, path = uri2obj(source)
@@ -1207,7 +1218,7 @@ module Puppet
             def stat(refresh = false)
                 if @stat.nil? or refresh == true
                     begin
-                        @stat = File.stat(self.name)
+                        @stat = File.lstat(self.name)
                     rescue Errno::ENOENT => error
                         @stat = nil
                     rescue => error
