@@ -152,7 +152,7 @@ module Puppet
                         hash["returns"] = hash["returns"].to_s
                     end
                 elsif hash.include?(:returns) 
-                    if hash["returns"].is_a?(Fixnum)
+                    if hash[:returns].is_a?(Fixnum)
                         hash[:returns] = hash[:returns].to_s
                     end
                 else
@@ -169,11 +169,10 @@ module Puppet
                 # if we're not fully qualified, require a path
                 if self[:command] !~ /^\//
                     if self[:path].nil?
-                        error = TypeError.new(
+                        puts caller
+                        raise TypeError,
                             "'%s' is both unqualifed and specified no search path" %
                                 self[:command]
-                        )
-                        raise error
                     end
                 end
             end

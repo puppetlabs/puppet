@@ -251,6 +251,9 @@ class Type < Puppet::Element
             #    [object.name,object.class])
             @objects[newobj.name] = newobj
         end
+
+        # and then add it to the master list
+        Puppet::Type.push(object)
     end
     #---------------------------------------------------------------
 
@@ -269,6 +272,19 @@ class Type < Puppet::Element
     def self.clear
         if defined? @objects
             @objects.clear
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # remove a specified object
+    def self.delete(object)
+        if @@allobjects.include?(object)
+            @@allobjects.delete(object)
+        end
+        return unless defined? @objects
+        if @objects.include?(object.name)
+            @objects.delete(object.name)
         end
     end
     #---------------------------------------------------------------
@@ -496,6 +512,18 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    # remove a state from the object; useful in testing or in cleanup
+    # when an error has been encountered
+    def destroy
+        self.class.delete(self)
+
+        @dependencies.each { |dep|
+            dep.unsubscribe(self)
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # iterate across all children, and then iterate across states
     # we do children first so we're sure that all dependent objects
     # are checked first
@@ -719,9 +747,6 @@ class Type < Puppet::Element
         # add this object to the specific class's list of objects
         #puts caller
         self.class[self.name] = self
-
-        # and then add it to the master list
-        Puppet::Type.push(self)
     end
     #---------------------------------------------------------------
 
@@ -1155,6 +1180,20 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
+    def unsubscribe(object, event = nil)
+        @subscriptions.find_all { |sub|
+            if event
+                sub.target == object and sub.event = event
+            else
+                sub.target == object
+            end
+        }.each { |sub|
+            @subscriptions.delete(sub)
+        }
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
     # return all of the subscriptions to a given event
     def subscribers?(event)
         @subscriptions.find_all { |sub|
@@ -1213,7 +1252,7 @@ end
 
 require 'puppet/statechange'
 require 'puppet/type/component'
-require 'puppet/type/cron'
+#require 'puppet/type/cron'
 require 'puppet/type/exec'
 require 'puppet/type/group'
 require 'puppet/type/package'

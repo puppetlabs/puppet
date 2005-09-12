@@ -52,7 +52,27 @@ module Puppet
         def to_type
             retobj = nil
             if type = Puppet::Type.type(self.type)
-                retobj = type.new(self)
+                begin
+                    retobj = type.new(self)
+                rescue => detail
+                    # FIXME TransObject should be handling what happens when there's an error
+                    if Puppet[:debug]
+                        puts self.inspect
+                        if detail.respond_to?(:stack)
+                            puts detail.stack
+                        end
+                    end
+                    if retobj
+                        Puppet.err "Destroying %s" % self[:name]
+                        retobj.destroy()
+                    else
+                        if obj = type[self[:name]]
+                            Puppet.err "Destroying retrieved %s" % self[:name]
+                            obj.destroy()
+                        end
+                    end
+                    return nil
+                end
                 retobj.file = @file
                 retobj.line = @line
             else
@@ -72,7 +92,7 @@ module Puppet
         def push(*args)
             args.each { |arg|
                 case arg
-                when Puppet::TransBucket, Puppet::TransObject, Puppet::TransSetting
+                when Puppet::TransBucket, Puppet::TransObject
                     # nada
                 else
                     raise "TransBuckets cannot handle objects of type %s" %
@@ -121,7 +141,7 @@ module Puppet
                     # this assumes that type/name combinations are globally
                     # unique
 
-                    # XXX this still might be wrong, because it doesn't search
+                    # FIXME this still might be wrong, because it doesn't search
                     # up scopes
                     # either that, or it's redundant
                     name = [child[:name],child.type].join("--")
@@ -139,29 +159,13 @@ module Puppet
                         object.parent = self
                     else # the object does not exist yet in our scope
                         # now we have the object instantiated, in our scope
-                        begin
-                            object = child.to_type
-                        rescue Puppet::Error => except
-                            Puppet.err "Failed to create %s %s: %s" %
-                                [child.type,child.name,except.message]
-                            if Puppet[:debug]
-                                puts child.inspect
-                                puts except.stack
-                            end
-                            next
-                        rescue => except
-                            Puppet.err "Failed to create %s %s: %s" %
-                                [child.type,child.name,except.message]
-                            if Puppet[:debug]
-                                puts child.inspect
-                                puts caller
-                            end
-                            next
-                        end
-                        nametable[name] = object
+                        if object = child.to_type
+                            # the object will be nil if it failed
+                            nametable[name] = object
 
-                        # this sets the order of the object
-                        container.push object
+                            # this sets the order of the object
+                            container.push object
+                        end
                     end
                 else
                     raise "TransBucket#to_type cannot handle objects of type %s" %
