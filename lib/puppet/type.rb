@@ -38,12 +38,16 @@ class Type < Puppet::Element
     attr_accessor :file, :line
     include Enumerable
 
+    # this is currently unused, but I expect to use it for metrics eventually
     @@retrieved = Hash.new(0)
 
     # an array to contain all instances of Type
+    # also currently unused
     @@allobjects = Array.new
 
     # a little fakery, since Puppet itself isn't a type
+    # I don't think this is used any more, now that the language can't
+    # call methods
     @name = :puppet
 
     # set it to something to silence the tests, but otherwise not used
@@ -55,9 +59,6 @@ class Type < Puppet::Element
     @parameters = [:notused]
 
     #@paramdoc = Hash.new
-
-    # the methods that can be called from within the language
-    @allowedmethods = [:noop,:debug,:checksumfile]
 
     # the parameters that all instances will accept
     @@metaparams = [
@@ -155,6 +156,7 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     # The work that gets done for every subclass of Type
+    # this is an implicit method called by Ruby for us
     def self.inherited(sub)
         sub.initvars
 
@@ -170,10 +172,10 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     # all of the variables that must be initialized for each subclass
     def self.initvars
+        # all of the instances of this class
         @objects = Hash.new
-        @actions = Hash.new
+
         @validstates = {}
-        @validparameters = {}
 
         @paramdoc = Hash.new { |hash,key|
           if key.is_a?(String)
@@ -191,7 +193,7 @@ class Type < Puppet::Element
         end
 
         unless defined? @states
-            @states = {}
+            @states = []
         end
     end
     #---------------------------------------------------------------
@@ -200,59 +202,11 @@ class Type < Puppet::Element
     # return a Type instance by name
     def self.type(type)
         unless @@typeary.length == @@typehash.length
+            # call bulidtypehash if types have been added since it
+            # was last called
             Type.buildtypehash
         end
         @@typehash[type]
-    end
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
-    # class methods dealing with allowedmethods
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
-
-    public
-
-    #---------------------------------------------------------------
-    # Test whether a given method can be called from within the puppet
-    # language
-    def self.allowedmethod(method)
-        if defined? @allowedmethods and @allowedmethods.include?(method)
-            return true
-        else
-            return false
-        end
-    end
-    #---------------------------------------------------------------
-
-    def Type.debug(value)
-        if value == "false" or value == false or value == 0 or value == "0"
-            Puppet[:debug] = false
-        else
-            #Puppet[:debug] = true
-            puts "Got %s for debug value" % value
-            if value == true
-                raise "Crap! got a true!"
-            end
-        end
-    end
-
-    def Type.noop(value)
-        if value == "false" or value == false
-            Puppet[:noop] = false
-        else
-            Puppet[:noop] = true
-        end
-    end
-
-    def Type.statefile(value)
-        if value =~ /^\//
-            Puppet[:checksumfile] = value
-        else
-            raise "Statefile %s must be fully qualified" % value
-        end
     end
     #---------------------------------------------------------------
     #---------------------------------------------------------------
@@ -303,6 +257,7 @@ class Type < Puppet::Element
     #---------------------------------------------------------------
     # remove all type instances; this is mostly only useful for testing
     def self.allclear
+        @@allobjects.clear
         @@typeary.each { |subtype|
             subtype.clear
         }
@@ -337,6 +292,7 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     # add an object to the master list of Type instances
+    # I'm pretty sure this is currently basically unused
     def self.push(object)
         @@allobjects.push object
         #debug("adding %s of type %s to master list" %
@@ -499,11 +455,11 @@ class Type < Puppet::Element
                         @states[name] = newstate
                     rescue Puppet::Error => detail
                         # the state failed, so just ignore it
-                        Puppet.debug "State %s failed: %s" %
+                        Puppet.warning "State %s failed: %s" %
                             [name, detail]
                     rescue Puppet::DevError => detail
                         # the state failed, so just ignore it
-                        Puppet.notice "State %s failed: %s" %
+                        Puppet.err "State %s failed: %s" %
                             [name, detail]
                     rescue => detail
                         # the state failed, so just ignore it
@@ -641,6 +597,7 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     # return an actual type by name; to return the value, use 'inst[name]'
+    # FIXME this method should go away
     def state(name)
         unless name.is_a? Symbol
             name = name.intern
@@ -718,9 +675,6 @@ class Type < Puppet::Element
         #end
 
         @noop = false
-
-        # which objects to notify when we change
-        @notify = []
 
         # keeping stats for the total number of changes, and how many were
         # completely sync'ed
@@ -846,7 +800,7 @@ class Type < Puppet::Element
     def retrieve
         # it's important to use the method here, as it follows the order
         # in which they're defined in the object
-        states.collect { |state|
+        states.each { |state|
             state.retrieve
         }
     end
@@ -990,6 +944,7 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     # if all contained objects are in sync, then we're in sync
+    # FIXME I don't think this is used on the type instances any more
     def insync?
         insync = true
 
@@ -1135,6 +1090,7 @@ class Type < Puppet::Element
 
     #---------------------------------------------------------------
     def handledepends(requires, event, method)
+        # FIXME this should probably test whether requires[0] is an array
         unless requires.is_a?(Array)
             requires = [requires]
         end
