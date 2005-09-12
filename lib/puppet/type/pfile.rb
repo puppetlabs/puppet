@@ -1190,7 +1190,6 @@ module Puppet
                 end
 
                 if @parameters.include?(:recurse)
-                    #self[:recurse] = @parameters[:recurse]
                     self.recurse
                 end
 
@@ -1203,8 +1202,6 @@ module Puppet
                 end
 
                 super
-
-                #p @states[:checksum].is
             end
 
             def stat(refresh = false)
