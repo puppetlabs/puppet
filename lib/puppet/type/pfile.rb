@@ -836,7 +836,8 @@ module Puppet
                 :path,
                 :backup,
                 :linkmaker,
-                :recurse
+                :recurse,
+                :ignore
             ]
 
             @paramdoc[:path] = "The path to the file to manage.  Must be fully
@@ -853,11 +854,16 @@ module Puppet
             @paramdoc[:recurse] = "Whether and how deeply to do recursive
                 management.  **false**/*true*/*inf*/*number*"
 
+            @paramdoc[:ignore] = "A parameter which omits action on files matching specified
+                patterns during recursion  i.e. .svn, *.ini"
+
             @paramdoc[:source] = "Where to retrieve the contents of the files.
                 Currently only supports local copying, but will eventually
                 support multiple protocols for copying.  Arguments are specified
                 using either a full local path or using a URI (currently only
                 *file* is supported as a protocol)."
+
+            
 
             @name = :file
             @namevar = :path
@@ -988,6 +994,49 @@ module Puppet
             end
 
             def newchild(path, hash = {})
+
+                #make local copy of arguments
+                args = @arghash.dup
+
+                #check if ignored
+                match_ignore = false;
+                if args.include?(:ignore)
+                   ignore = args[:ignore]
+                   
+                   #Make sure the value of ignore is in correct type    
+                   unless ignore.is_a?(Array) | ignore.is_a?(String)
+                      raise Puppet::DevError.new("Ignore must be a string or an Array")
+                   end
+
+                   if ignore.is_a?(String)
+                      ignore = Array.new(1,ignore) 
+                   end                 
+                   
+                   ignore.each{|pattern|
+                     
+                      #make sure we got strings
+                      unless pattern.is_a?(String)
+                          raise Puppet::DevError.new(
+                               "If Ignore is an Array it must contain strings of patterns")
+                      end
+
+                      #try to match the pattern
+                      match = Regexp.new(pattern.split("*").join("\/*"))
+ 
+                      if match =~ path
+                         match_ignore = true 
+                         break
+                      end
+
+                   }
+
+                  #if the patten is matched return no child
+                   if match_ignore
+                     return nil
+                   end
+
+                end
+
                 if path =~ %r{^#{File::SEPARATOR}}
                     raise Puppet::DevError.new(
                         "Must pass relative paths to PFile#newchild()"
@@ -995,9 +1044,6 @@ module Puppet
                 else
                     path = File.join(self.name, path)
                 end
-
-                args = @arghash.dup
-                #args = {}
 
                 args[:path] = path
 
