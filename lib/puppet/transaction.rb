@@ -75,13 +75,13 @@ class Transaction
             event.nil?
         }
 
-        @triggerevents = []
+        #@triggerevents = []
         events.each { |event|
             object = event.source
             object.propagate(event)
         }
 
-        events += @triggerevents
+        #events += @triggerevents
     end
     #---------------------------------------------------------------
 
@@ -142,20 +142,20 @@ class Transaction
             end
         }.flatten.reject { |e| e.nil? }
 
-        @triggerevents = []
+        #@triggerevents = []
         events.each { |event|
             object = event.source
             object.propagate(event)
         }
 
-        events += @triggerevents
+        #events += @triggerevents
     end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
     def triggered(object, method)
         @triggered[object][method] += 1
-        @triggerevents << ("%s_%sed" % [object.class.name.to_s, method.to_s]).intern
+        #@triggerevents << ("%s_%sed" % [object.class.name.to_s, method.to_s]).intern
     end
     #---------------------------------------------------------------
 

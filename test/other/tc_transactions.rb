@@ -1,7 +1,7 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk"
+    $puppetbase = "../.."
 end
 
 require 'puppet'
@@ -10,27 +10,15 @@ require 'test/unit'
 
 # $Id$
 
-class TestTransactions < Test::Unit::TestCase
+class TestTransactions < TestPuppet
     include FileTesting
-    def cycle(comp)
-        assert_nothing_raised {
-            trans = comp.evaluate
-        }
-        events = nil
-        assert_nothing_raised {
-            events = trans.evaluate.collect { |e|
-                e.event
-            }
-        }
-        return events
-    end
-
     def ingroup(gid)
         require 'etc'
         begin
             group = Etc.getgrgid(gid)
         rescue => detail
             puts "Could not retrieve info for group %s: %s" % [gid, detail]
+            return nil
         end
 
         return @groups.include?(group.name)
@@ -38,27 +26,22 @@ class TestTransactions < Test::Unit::TestCase
 
     def setup
         Puppet::Type.allclear
-        @@tmpfiles = []
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-        Puppet[:checksumfile] = File.join(Puppet[:statedir], "checksumtestfile")
         @groups = %x{groups}.chomp.split(/ /)
         unless @groups.length > 1
             p @groups
             raise "You must be a member of more than one group to test this"
         end
+        super
     end
 
     def teardown
-        Puppet::Type.allclear
-        @@tmpfiles.each { |file|
-            if FileTest.exists?(file)
-                system("chmod -R 755 %s" % file)
-                system("rm -rf %s" % file)
-            end
+        Puppet::Type::Service.each { |serv|
+            serv[:running] = false
+            serv.sync
         }
-        @@tmpfiles.clear
-        system("rm -f %s" % Puppet[:checksumfile])
+        Puppet::Type.allclear
         print "\n\n" if Puppet[:debug]
+        super
     end
 
     def newfile(hash = {})
@@ -99,21 +82,17 @@ class TestTransactions < Test::Unit::TestCase
         }
     end
 
-    def newcomp(name,*args)
-        comp = nil
+    def newexec(file)
         assert_nothing_raised() {
-            comp = Puppet::Type::Component.new(:name => name)
+            return Puppet::Type::Exec.new(
+                :name => "touch %s" % file,
+                :path => "/bin:/usr/bin:/sbin:/usr/sbin",
+                :returns => 0
+            )
         }
-
-        args.each { |arg|
-            assert_nothing_raised() {
-                comp.push arg
-            }
-        }
-
-        return comp
     end
 
+    # modify a file and then roll the modifications back
     def test_filerollback
         transaction = nil
         file = newfile()
@@ -139,193 +118,110 @@ class TestTransactions < Test::Unit::TestCase
             file[:group] = @groups[1]
             file[:mode] = "755"
         }
-        assert_nothing_raised() {
-            transaction = component.evaluate
-        }
-        assert_nothing_raised() {
-            transaction.evaluate
-        }
-        assert_nothing_raised() {
-            transaction.rollback
-        }
+        trans = assert_events(component, [:inode_changed, :inode_changed], "file")
+
+        assert_rollback_events(trans, [:inode_changed, :inode_changed], "file")
+
         assert_nothing_raised() {
             file.retrieve
         }
         states.each { |state,value|
             assert_equal(
-                value,file[state]
+                value,file.is(state), "File %s remained %s" % [state, file.is(state)]
             )
         }
     end
 
+    # start a service, and then roll the modification back
     def test_servicetrans
         transaction = nil
         service = newservice()
-        service[:check] = [:running]
 
         component = newcomp("service",service)
 
         assert_nothing_raised() {
-            service.retrieve
-        }
-        state = service[:running]
-        assert_nothing_raised() {
             service[:running] = 1
         }
-        assert_nothing_raised() {
-            transaction = component.evaluate
-        }
-        assert_nothing_raised() {
-            transaction.evaluate
-        }
-        assert_nothing_raised() {
-            service[:running] = 0
-        }
-        assert_nothing_raised() {
-            transaction = component.evaluate
-        }
-        assert_nothing_raised() {
-            transaction.evaluate
-        }
+        trans = assert_events(component, [:service_started], "file")
+
+        assert_rollback_events(trans, [:service_stopped], "file")
     end
 
-    def test_both
+    # test that services are correctly restarted and that work is done
+    # in the right order
+    def test_refreshing
         transaction = nil
         file = newfile()
-        service = newservice()
+        execfile = File.join(tmpdir(), "exectestingness")
+        exec = newexec(execfile)
         states = {}
         check = [:group,:mode]
         file[:check] = check
 
-        service[:running] = 1
-        service.sync
+        @@tmpfiles << execfile
 
-        component = newcomp("both",file,service)
+        component = newcomp("both",file,exec)
 
-        # 'requires' expects an array of arrays
-        service[:require] = [[file.class.name,file.name]]
+        # 'subscribe' expects an array of arrays
+        exec[:subscribe] = [[file.class.name,file.name]]
+        exec[:refreshonly] = true
 
         assert_nothing_raised() {
             file.retrieve
-            service.retrieve
+            exec.retrieve
         }
 
         check.each { |state|
             states[state] = file[state]
         }
         assert_nothing_raised() {
-            file[:group] = @groups[1]
             file[:mode] = "755"
         }
+
+        trans = assert_events(component,
+            [:inode_changed], "testboth")
+
+        assert(FileTest.exists?(execfile), "Execfile does not exist")
+        File.unlink(execfile)
         assert_nothing_raised() {
-            transaction = component.evaluate
-            transaction.toplevel = true
+            file[:group] = @groups[1]
         }
 
-        # this should cause a restart of the service
-        events = nil
-        assert_nothing_raised() {
-            events = transaction.evaluate
-        }
-
-        event = events.pop
-
-        assert(event)
-
-        #fakevent = nil
-        #assert_nothing_raised {
-        #    fakevent = Puppet::Event.new(
-        #        :event => :ALL_EVENTS,
-        #        :object => file,
-        #        :state => file.state(:mode),
-        #        :transaction => transaction,
-        #        :message => "yay"
-        #    )
-        #}
-
-        sub = nil
-        assert_nothing_raised() {
-            sub = file.subscribers?(event)
-        }
-
-        assert(sub)
-
-        # assert we got exactly one trigger on this subscription
-        # in other words, we don't want a single event to cause many
-        # restarts
-        # XXX i don't have a good way to retrieve this information...
-        #assert_equal(1,transaction.triggercount(sub))
+        trans = assert_events(component,
+            [:inode_changed], "testboth")
+        assert(FileTest.exists?(execfile), "Execfile does not exist")
     end
 
-    def test_twocomps
+    def test_zrefreshAcrossTwoComponents
         transaction = nil
         file = newfile()
-        service = newservice()
+        execfile = File.join(tmpdir(), "exectestingness2")
+        @@tmpfiles << execfile
+        exec = newexec(execfile)
         states = {}
         check = [:group,:mode]
         file[:check] = check
-
-        service[:running] = 1
-        service.sync
 
         fcomp = newcomp("file",file)
-        scomp = newcomp("service",service)
+        ecomp = newcomp("exec",exec)
 
-        component = newcomp("both",fcomp,scomp)
+        component = newcomp("both",fcomp,ecomp)
 
-        # 'requires' expects an array of arrays
+        # 'subscribe' expects an array of arrays
         #component[:require] = [[file.class.name,file.name]]
-        service[:require] = [[fcomp.class.name,fcomp.name]]
+        ecomp[:subscribe] = [[fcomp.class.name,fcomp.name]]
+        exec[:refreshonly] = true
 
-        assert_nothing_raised() {
-            file.retrieve
-            service.retrieve
-        }
+        trans = assert_events(component, [], "subscribe1")
 
-        check.each { |state|
-            states[state] = file[state]
-        }
         assert_nothing_raised() {
             file[:group] = @groups[1]
             file[:mode] = "755"
         }
-        assert_nothing_raised() {
-            transaction = component.evaluate
-            transaction.toplevel = true
-        }
 
-        # this should cause a restart of the service
-        events = nil
-        assert_nothing_raised() {
-            events = transaction.evaluate
-        }
+        trans = assert_events(component, [:inode_changed, :inode_changed],
+            "subscribe2")
 
-        event = events.pop
-
-        assert(event)
-
-        #fakevent = nil
-        #assert_nothing_raised {
-        #    fakevent = Puppet::Event.new(
-        #        :event => :ALL_EVENTS,
-        #        :object => file,
-        #        :state => file.state(:mode),
-        #        :transaction => transaction,
-        #        :message => "yay"
-        #    )
-        #}
-
-        sub = nil
-        assert_nothing_raised() {
-            sub = file.subscribers?(event)
-        }
-
-        assert(sub)
-
-        # assert we got exactly one trigger on this subscription
-        # XXX this doesn't work, because the sub is being triggered in
-        # a contained transaction, not this one
-        #assert_equal(1,transaction.triggercount(sub))
     end
 
 end

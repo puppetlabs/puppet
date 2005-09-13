@@ -39,6 +39,10 @@ class TestPuppet < Test::Unit::TestCase
         Puppet::Type.allclear
     end
 
+    def tempfile
+        File.join(self.tmpdir(), "puppetestfile%s" % rand(100))
+    end
+
     def tmpdir
         "/tmp"
     end
@@ -364,7 +368,7 @@ unless defined? PuppetTestSuite
         end
 
         def tempfile
-            File.join(self.tmpdir(), "puppetestfile")
+            File.join(self.tmpdir(), "puppetestfile%s" % rand(100))
         end
 
         def tmpdir

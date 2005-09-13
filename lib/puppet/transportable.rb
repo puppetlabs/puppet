@@ -57,17 +57,15 @@ module Puppet
                 rescue => detail
                     # FIXME TransObject should be handling what happens when there's an error
                     if Puppet[:debug]
-                        puts self.inspect
                         if detail.respond_to?(:stack)
                             puts detail.stack
                         end
                     end
+                    Puppet.err "Could not create %s: %s" % [self[:name], detail.to_s]
                     if retobj
-                        Puppet.err "Destroying %s" % self[:name]
                         retobj.destroy()
                     else
                         if obj = type[self[:name]]
-                            Puppet.err "Destroying retrieved %s" % self[:name]
                             obj.destroy()
                         end
                     end

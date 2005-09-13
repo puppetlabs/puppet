@@ -843,7 +843,7 @@ class Type < Puppet::Element
             ! (event.is_a?(Symbol) or event.is_a?(String))
         }.flatten
 
-        Puppet.notice "got events %s" % events.inspect
+        #Puppet.notice "got events %s" % events.inspect
 
         Puppet::Metric.addevents(self.class,self,events)
         return events
