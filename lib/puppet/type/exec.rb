@@ -20,6 +20,14 @@ module Puppet
             # we're just using retrieve to verify that the command
             # exists and such
             def retrieve
+                if file = @parent[:creates]
+                    if FileTest.exists?(file)
+                        @is = true
+                        @should = true
+                        return
+                    end
+                end
+
                 cmd = self.parent[:command]
                 if cmd =~ /^\//
                     exe = cmd.split(/ /)[0]
@@ -124,6 +132,7 @@ module Puppet
             @parameters = [
                 :path,
                 :user,
+                :creates,
                 :cwd,
                 :refreshonly,
                 :command
@@ -138,10 +147,14 @@ module Puppet
             @paramdoc[:refreshonly] = "The command should only be run as a
                 refresh mechanism for when a dependent object is changed."
             @paramdoc[:command] = "The actual command to execute."
+            @paramdoc[:creates] = "A file that this command creates.  If this
+                parameter is provided, then the command will only be run
+                if the specified file does not exist."
 
             @doc = "Executes external commands.  It is critical that all commands
                 executed using this mechanism can be run multiple times without
-                harm, i.e., they are *idempotent*."
+                harm, i.e., they are *idempotent*.  One useful way to create idempotent
+                commands is to use the *creates* parameter."
             @name = :exec
             @namevar = :command
 
@@ -169,7 +182,6 @@ module Puppet
                 # if we're not fully qualified, require a path
                 if self[:command] !~ /^\//
                     if self[:path].nil?
-                        puts caller
                         raise TypeError,
                             "'%s' is both unqualifed and specified no search path" %
                                 self[:command]
@@ -183,6 +195,15 @@ module Puppet
                 else
                     return self.state(:returns).output
                 end
+            end
+
+            # FIXME if they try to set this and fail, then we should probably 
+            # fail the entire exec, right?
+            def paramcreates=(file)
+                unless file =~ %r{^#{File::SEPARATOR}}
+                    raise Puppet::Error, "'creates' files must be fully qualified."
+                end
+                @parameters[:creates] = file
             end
 
             # this might be a very, very bad idea...

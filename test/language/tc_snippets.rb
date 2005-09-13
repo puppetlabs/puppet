@@ -341,6 +341,14 @@ class TestSnippets < Test::Unit::TestCase
             "File %s is not 755" % file)
     end
 
+    def snippet_missingexecpath(trans)
+        file = "/tmp/exectesting1"
+        execfile = "/tmp/execdisttesting"
+        @@tmpfiles << file
+        @@tmpfiles << execfile
+        assert(!FileTest.exists?(execfile), "File %s exists" % execfile)
+    end
+
     def disabled_snippet_dirchmod(trans)
         dirs = %w{a b}.collect { |letter|
             "/tmp/dirchmodtest%s" % letter
@@ -364,7 +372,8 @@ class TestSnippets < Test::Unit::TestCase
     Dir.entries($snippetbase).sort.each { |file|
         next if file =~ /^\./
 
-        mname = "snippet_" + file
+
+        mname = "snippet_" + file.sub(/\.pp$/, '')
         if self.method_defined?(mname)
             #eval("alias %s %s" % [testname, mname])
             testname = ("test_" + mname).intern

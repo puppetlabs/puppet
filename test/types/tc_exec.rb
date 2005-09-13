@@ -1,30 +1,17 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk"
+    $puppetbase = "../.."
 end
 
 require 'puppet'
+require 'puppettest'
 require 'test/unit'
 require 'facter'
 
 # $Id$
 
-class TestExec < Test::Unit::TestCase
-    def setup
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-        @@tmpfiles = []
-    end
-
-    def teardown
-        Puppet::Type.allclear
-        @@tmpfiles.each { |f|
-            if FileTest.exists?(f)
-                system("rm -rf %s" % f)
-            end
-        }
-    end
-
+class TestExec < TestPuppet
     def test_execution
         command = nil
         output = nil
@@ -204,5 +191,21 @@ class TestExec < Test::Unit::TestCase
             [:file_modified],
             events
         )
+    end
+
+    def test_creates
+        file = tempfile()
+        exec = nil
+        assert_nothing_raised {
+            exec = Puppet::Type::Exec.new(
+                :command => "touch %s" % file,
+                :path => "/usr/bin:/bin:/usr/sbin:/sbin",
+                :creates => file
+            )
+        }
+
+        comp = newcomp("createstest", exec)
+        assert_events(comp, [:executed_command], "creates")
+        assert_events(comp, [], "creates")
     end
 end
