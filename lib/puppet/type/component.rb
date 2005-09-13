@@ -23,23 +23,33 @@ module Puppet
         # topo sort functions
         def self.sort(objects)
             list = []
-            inlist = {}
+            tmplist = {}
 
             objects.each { |obj|
-                self.recurse(obj, inlist, list)
+                self.recurse(obj, tmplist, list)
             }
 
-            return list
+            return list.flatten
         end
 
+        # FIXME this method assumes that dependencies themselves
+        # are never components
         def self.recurse(obj, inlist, list)
-            return if inlist.include?(obj.object_id)
+            if inlist.include?(obj.object_id)
+                return
+            end
+            inlist[obj.object_id] = true
             obj.eachdependency { |req|
                 self.recurse(req, inlist, list)
             }
-            
-            list << obj
-            inlist[obj.object_id] = true
+
+            if obj.is_a?(Puppet::Type::Component)
+                obj.each { |child|
+                    self.recurse(child, inlist, list)
+                }
+            else
+                list << obj
+            end
         end
 
         def each
@@ -48,13 +58,7 @@ module Puppet
         
         # this returns a sorted array, not a new component, but that suits me just fine
         def flatten
-            self.class.sort(@children.collect { |child|
-                if child.is_a?(self.class)
-                    child.flatten
-                else
-                    child
-                end
-            }.flatten)
+            self.class.sort(@children).flatten
         end
 
         def initialize(args)
@@ -67,14 +71,6 @@ module Puppet
             super(args)
             #Puppet.debug "Made component with name %s and type %s" %
             #    [self.name, self[:type]]
-        end
-
-        # the "old" way of doing things
-        # just turn the container into a transaction
-        def oldevaluate
-            transaction = Puppet::Transaction.new(@children)
-            transaction.component = self
-            return transaction
         end
 
         # flatten all children, sort them, and evaluate them in order

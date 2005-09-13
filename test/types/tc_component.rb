@@ -29,7 +29,7 @@ class TestComponent < TestPuppet
         loop do
             looped += 1
             if looped > 1000
-                $stderr.print "Reached limit of looping"
+                raise "Reached limit of looping"
                 break
             end
             num = rand(limit)
@@ -57,7 +57,7 @@ class TestComponent < TestPuppet
     end
 
     def mkcomp
-        comp = Puppet::Type::Component.new(:name => "component_" + randnum(1000).to_s)
+        Puppet::Type::Component.new(:name => "component_" + randnum(1000).to_s)
     end
 
     def mkrandcomp(numfiles, numdivs)
@@ -66,6 +66,7 @@ class TestComponent < TestPuppet
         found = 0
 
         divs = {}
+
         numdivs.times { |i|
             num = i + 2
             divs[num] = nil
@@ -164,7 +165,7 @@ class TestComponent < TestPuppet
         }
 
         comp = Puppet::Type::Component.new(:name => "RefreshTest")
-        [file,cmd].each { |obj|
+        [cmd, file].each { |obj|
             comp.push obj
         }
         objects = nil
@@ -175,5 +176,103 @@ class TestComponent < TestPuppet
         [cmd, file].each { |obj|
             assert_equal(1, objects.find_all { |o| o.name == obj.name }.length)
         }
+
+        assert(objects[0] == file, "File was not first object")
+        assert(objects[1] == cmd, "Exec was not second object")
+    end
+
+    def test_deepflatten
+        tmpfile = tempfile()
+        @@tmpfiles.push tmpfile
+        trans = nil
+        cmd = nil
+        File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
+            of.puts rand(100)
+        }
+        file = Puppet::Type::PFile.new(
+            :path => tmpfile,
+            :checksum => "md5"
+        )
+        assert_nothing_raised {
+            cmd = Puppet::Type::Exec.new(
+                :command => "pwd",
+                :path => "/usr/bin:/bin:/usr/sbin:/sbin",
+                :refreshonly => true
+            )
+        }
+
+        fcomp = newcomp("fflatten", file)
+        ecomp = newcomp("eflatten", cmd)
+
+        # this subscription can screw up the sorting
+        ecomp[:subscribe] = [[fcomp.class.name,fcomp.name]]
+
+        comp = newcomp("bflatten", ecomp, fcomp)
+        objects = nil
+        assert_nothing_raised {
+            objects = comp.flatten
+        }
+
+        assert_equal(objects.length, 2, "Did not get two sorted objects")
+        objects.each { |o|
+            assert(o.is_a?(Puppet::Type), "Object %s is not a Type" % o.class)
+        }
+
+        assert(objects[0] == file, "File was not first object")
+        assert(objects[1] == cmd, "Exec was not second object")
+    end
+
+    def test_deepflatten2
+        tmpfile = tempfile()
+        @@tmpfiles.push tmpfile
+        trans = nil
+        cmd = nil
+        File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
+            of.puts rand(100)
+        }
+        file = Puppet::Type::PFile.new(
+            :path => tmpfile,
+            :checksum => "md5"
+        )
+        assert_nothing_raised {
+            cmd = Puppet::Type::Exec.new(
+                :command => "pwd",
+                :path => "/usr/bin:/bin:/usr/sbin:/sbin",
+                :refreshonly => true
+            )
+        }
+
+        ocmd = nil
+        assert_nothing_raised {
+            ocmd = Puppet::Type::Exec.new(
+                :command => "echo true",
+                :path => "/usr/bin:/bin:/usr/sbin:/sbin",
+                :refreshonly => true
+            )
+        }
+
+        fcomp = newcomp("fflatten", file)
+        ecomp = newcomp("eflatten", cmd)
+        ocomp = newcomp("oflatten", ocmd)
+
+        # this subscription can screw up the sorting
+        cmd[:subscribe] = [[fcomp.class.name,fcomp.name]]
+        ocmd[:subscribe] = [[cmd.class.name,cmd.name]]
+
+        comp = newcomp("bflatten", ocomp, ecomp, fcomp)
+        objects = nil
+        assert_nothing_raised {
+            objects = comp.flatten
+        }
+
+        assert_equal(objects.length, 3, "Did not get three sorted objects")
+
+        objects.each { |o|
+            assert(o.is_a?(Puppet::Type), "Object %s is not a Type" % o.class)
+        }
+
+        assert(objects[0] == file, "File was not first object")
+        assert(objects[1] == cmd, "Exec was not second object")
+        assert(objects[2] == ocmd, "Other exec was not second object")
     end
 end
