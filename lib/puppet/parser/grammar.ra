@@ -332,97 +332,6 @@ casevalues:       selectlhand
     end
 }
 
-#iftest:       IF test LBRACE statements RBRACE {
-#    result = AST::If.new(
-#        :pin => "if",
-#        :test => val[1],
-#        :file => @lexer.file,
-#        :line => @lexer.line,
-#        :statements => val[3]
-#    )
-#}
-#            | IF test LBRACE statements RBRACE elsifs ELSE LBRACE statements RBRACE {
-#    # make sure our elsifs are an array, as it will save lots of
-#    # effort later
-#    unless val[5].is_a?(AST::ASTArray)
-#        val[5] = AST::ASTArray.new(
-#            :line => @lexer.line,
-#            :file => @lexer.file,
-#            :children => [val[5]]
-#        )
-#    end
-#
-#    result = AST::If.new(
-#        :pin => "if",
-#        :test => val[1],
-#        :statements => val[3],
-#        :file => @lexer.file,
-#        :line => @lexer.line,
-#        :else => val[8],
-#        :elsif => val[5]
-#    )
-#    
-#}
-#            | IF test LBRACE statements RBRACE ELSE LBRACE statements RBRACE {
-#    result = AST::If.new(
-#        :pin => "if",
-#        :test => val[1],
-#        :statements => val[3],
-#        :file => @lexer.file,
-#        :line => @lexer.line,
-#        :else => val[7]
-#    )
-#    
-#}
-#
-#elsifs:       ELSIF test LBRACE statements RBRACE {
-#    result = AST::If.new(
-#        :pin => "elseif",
-#        :test => val[1],
-#        :file => @lexer.file,
-#        :statements => val[3],
-#        :line => @lexer.line
-#    )
-#} 
-#            | elsifs ELSIF test LBRACE statements RBRACE {
-#    second = AST::If.new(
-#        :pin => "elsif",
-#        :test => val[2],
-#        :statements => val[4],
-#        :file => @lexer.file,
-#        :line => @lexer.line
-#    )
-#
-#    if val[0].is_a?(AST::ASTArray)
-#        val[0].push(second)
-#        result = val[0]
-#    else
-#        result = AST::ASTArray.new(
-#            :line => @lexer.line,
-#            :file => @lexer.file,
-#            :children => [val[0],second]
-#        )
-#    end
-#} 
-#
-#test:         rvalue
-#            | rvalue testop rvalue {
-#    result = AST::Test.new(
-#        :pin => val[1],
-#        :line => @lexer.line,
-#        :file => @lexer.file,
-#        :lhs => val[0],
-#        :rhs => val[2]
-#    )
-#}
-#
-#testop:       ISEQUAL
-#            | GREATEREQUAL
-#            | GREATERTHAN
-#            | LESSTHAN
-#            | LESSEQUAL
-#            | NOTEQUAL
-
 selector:     variable QMARK svalues {
     result = AST::Selector.new(
         :pin => "?",
@@ -488,6 +397,7 @@ selectlhand:  NAME {
         :value => val[0]
     )
 }
+            | boolean
 
 import: IMPORT QTEXT {
     # importing files

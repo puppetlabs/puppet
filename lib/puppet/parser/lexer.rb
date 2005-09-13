@@ -201,9 +201,9 @@ module Puppet
             # we've encountered an opening quote...
             # slurp in the rest of the string and return it
             def slurpstring(quote)
-                #Puppet.debug("searching '%s'" % self.rest)
-                str = @scanner.scan_until(/[^\\]#{quote}/)
-                #str = @scanner.scan_until(/"/)
+                # we search for the next quote that isn't preceded by a
+                # backslash; the caret is there to match empty strings
+                str = @scanner.scan_until(/([^\\]|^)#{quote}/)
                 if str.nil?
                     raise Puppet::LexError.new("Unclosed quote after '%s' in '%s'" %
                         [self.last,self.rest])
@@ -215,6 +215,7 @@ module Puppet
                 return str
             end
 
+            # just parse a string, not a whole file
             def string=(string)
                 @scanner = StringScanner.new(string)
             end

@@ -280,11 +280,12 @@ module Puppet
                 #Puppet.debug("interpreting '%s'" % string)
                 while match = regex.match(newstring) do
                     if match[1]
-                        newstring.sub!(regex,self.lookupvar(match[1]))
+                        newstring.sub!(regex,self.lookupvar(match[1]).to_s)
                     elsif match[2]
-                        newstring.sub!(regex,self.lookupvar(match[2]))
+                        newstring.sub!(regex,self.lookupvar(match[2]).to_s)
                     else
-                        raise 'fuh?'
+                        raise Puppet::DevError, "Could not match variable in %s" %
+                            newstring
                     end
                 end
                 #Puppet.debug("result is '%s'" % newstring)

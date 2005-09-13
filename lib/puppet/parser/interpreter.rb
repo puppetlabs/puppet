@@ -81,6 +81,9 @@ module Puppet
                     if Puppet[:debug]
                         puts except.stack
                     end
+                    if Puppet[:debug]
+                        puts caller
+                    end
                     #exit(1)
                     raise
                 rescue => except
@@ -88,7 +91,7 @@ module Puppet
                         [except.class, except.message])
                     error.stack = caller
                     if Puppet[:debug]
-                        puts error.stack
+                        puts caller
                     end
                     raise error
                 end

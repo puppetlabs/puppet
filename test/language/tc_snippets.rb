@@ -349,6 +349,26 @@ class TestSnippets < Test::Unit::TestCase
         assert(!FileTest.exists?(execfile), "File %s exists" % execfile)
     end
 
+    def snippet_selectorvalues(trans)
+        nums = %w{1 2 3}
+        files = nums.collect { |n|
+            "/tmp/selectorvalues%s" % n
+        }
+
+        files.each { |f|
+            @@tmpfiles << f
+            assert(FileTest.exists?(f), "File %s does not exist" % f)
+            assert(File.stat(f).mode & 007777 == 0755,
+                "File %s is not 755" % f)
+        }
+    end
+
+    def snippet_falsevalues(trans)
+        file = "/tmp/falsevaluesfalse"
+        @@tmpfiles << file
+        assert(FileTest.exists?(file), "File %s does not exist" % file)
+    end
+
     def disabled_snippet_dirchmod(trans)
         dirs = %w{a b}.collect { |letter|
             "/tmp/dirchmodtest%s" % letter

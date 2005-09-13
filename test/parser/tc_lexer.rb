@@ -108,4 +108,13 @@ class TestLexer < Test::Unit::TestCase
             )
         }
     end
+
+    def test_emptystring
+        bit = '$var = ""'
+
+        assert_nothing_raised {
+            @lexer.string = bit
+            p @lexer.fullscan
+        }
+    end
 end

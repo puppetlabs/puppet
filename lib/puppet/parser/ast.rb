@@ -38,10 +38,28 @@ module Puppet
             def evaluate(scope)
                 #Puppet.debug("Evaluating ast %s" % @name)
                 value = self.collect { |obj|
-                    obj.evaluate(scope)
+                    obj.safeevaluate(scope)
                 }.reject { |obj|
                     obj.nil?
                 }
+            end
+
+            def safeevaluate(*args)
+                begin
+                    self.evaluate(*args)
+                rescue Puppet::DevError
+                    raise
+                rescue => detail
+                    if Puppet[:debug]
+                        puts caller
+                    end
+                    error = Puppet::DevError.new(
+                        "Child of type %s failed: %s" %
+                            [self.class, detail.to_s]
+                    )
+                    error.stack = caller
+                    raise error
+                end
             end
 
             def typewrap(string)
@@ -101,30 +119,8 @@ module Puppet
                 end
 
                 def evaluate(scope)
-                    #Puppet.debug("Evaluating branch")
-#                    rets = nil
-#                    if scope.declarative
-#                        # if we're operating declaratively, then we want to get
-#                        # all of our 'setting' operations done first
-#                        rets = @children.sort { |a,b|
-#                            [a,b].each { |i|
-#                                unless  @@klassorder.include?(i.class)
-#                                    raise "Order not defined for %s" % i.class
-#                                end
-#                            }
-#                            @@klassorder.index(a.class) <=> @@klassorder.index(b.class)
-#                        }.collect { |item|
-#                            Puppet.debug "Decl evaluating %s" % item.class
-#                            item.evaluate(scope)
-#                        }
-#                    else
-#                        rets = @children.collect { |item|
-#                            item.evaluate(scope)
-#                        }
-#                    end
                     self.collect { |item|
-                        #Puppet.debug "Evaluating %s" % item.class
-                        item.evaluate(scope)
+                        item.safeevaluate(scope)
                     }.reject { |obj|
                         obj.nil
                     }
@@ -189,11 +185,11 @@ module Puppet
                             end
                         }
                         rets = [settors,others].flatten.collect { |child|
-                            child.evaluate(scope)
+                            child.safeevaluate(scope)
                         }
                     else
                         rets = @children.collect { |item|
-                            item.evaluate(scope)
+                            item.safeevaluate(scope)
                         }
                     end
                     rets = rets.reject { |obj| obj.nil? }
@@ -260,11 +256,11 @@ module Puppet
                             @@klassorder.index(a.class) <=> @@klassorder.index(b.class)
                         }.collect { |item|
                             Puppet.debug "Decl evaluating %s" % item.class
-                            item.evaluate(scope)
+                            item.safeevaluate(scope)
                         }.reject { |obj| obj.nil? }
                     else
                         rets = @children.collect { |item|
-                            item.evaluate(scope)
+                            item.safeevaluate(scope)
                         }.reject { |obj| obj.nil? }
                     end
 
@@ -396,11 +392,18 @@ module Puppet
                 def evaluate(scope)
                     hash = {}
 
-                    objtype = @type.evaluate(scope)
-                    objnames = @name.evaluate(scope)
+                    objtype = @type.safeevaluate(scope)
+                    objnames = @name.safeevaluate(scope)
 
                     # first, retrieve the defaults
-                    defaults = scope.lookupdefaults(objtype)
+                    begin
+                        defaults = scope.lookupdefaults(objtype)
+                    rescue => detail
+                        error = Puppet::DevError.new(
+                            "Could not lookup defaults for %s: %s" %
+                                [objtype, detail.to_s]
+                        )
+                    end
                     defaults.each { |var,value|
                         Puppet.debug "Found default %s for %s" %
                             [var,objtype]
@@ -410,7 +413,7 @@ module Puppet
 
                     # then set all of the specified params
                     @params.each { |param|
-                        ary = param.evaluate(scope)
+                        ary = param.safeevaluate(scope)
                         hash[ary[0]] = ary[1]
                     }
 
@@ -467,7 +470,7 @@ module Puppet
                             # one of those, evaluate that with our arguments
                             Puppet.debug("Calling object '%s' with arguments %s" %
                                 [object.name, hash.inspect])
-                            object.evaluate(scope,hash,objtype,objname)
+                            object.safeevaluate(scope,hash,objtype,objname)
                         end
                     }.reject { |obj| obj.nil? }
                 end
@@ -611,8 +614,8 @@ module Puppet
                 end
 
                 def evaluate(scope)
-                    objtype = @type.evaluate(scope)
-                    objnames = @name.evaluate(scope)
+                    objtype = @type.safeevaluate(scope)
+                    objnames = @name.safeevaluate(scope)
 
                     # it's easier to always use an array, even for only one name
                     unless objnames.is_a?(Array)
@@ -668,7 +671,9 @@ module Puppet
                 end
 
                 def evaluate(scope)
-                    return [@param.evaluate(scope),@value.evaluate(scope)]
+                    param = @param.safeevaluate(scope)
+                    value = @value.safeevaluate(scope)
+                    return [param, value]
                 end
 
                 def tree(indent = 0)
@@ -686,113 +691,13 @@ module Puppet
             #---------------------------------------------------------------
 
             #---------------------------------------------------------------
-            class Test < AST::Branch
-                attr_accessor :lhs, :rhs
-
-                # is our test true or false?
-                def evaluate(scope)
-                    # retrieve our values and make them a touch easier to manage
-                    lvalue = @lhs.evaluate(scope)
-                    rvalue = @rhs.evaluate(scope)
-
-                    # FIXME this probably won't work except on strings right now...
-                    retvalue = lvalue.send(@pin, rvalue)
-
-                    #Puppet.debug "test '%s' returned %s" % [self.to_s,retvalue]
-                    return retvalue
-                end
-
-                def tree(indent = 0)
-                    return [
-                        @lhs.tree(indent + 1),
-                        ((@@indline * indent) + self.typewrap(self.pin)),
-                        @rhs.tree(indent + 1)
-                    ].join("\n")
-                end
-
-                def each
-                    [@lhs,@rhs].each { |child| yield child }
-                end
-
-                def to_s
-                    return "%s %s %s" % [@lhs,@pin,@rhs]
-                end
-            end
-            #---------------------------------------------------------------
-
-            #---------------------------------------------------------------
-            class If < AST::Branch
-                attr_accessor :test, :statements, :else, :elsif
-
-                # 'if' is a bit special, since we don't want to continue
-                # evaluating if a test turns up true
-                def evaluate(scope)
-                    scope = scope.newscope
-                    retvalue = nil
-                    if @test.evaluate(scope)
-                        Puppet.debug "%s is true" % @test
-                        retvalue = @statements.evaluate(scope)
-                    elsif defined? @elsif
-                        Puppet.debug "%s is false" % @test
-                        elsereturn = nil
-                        @elsif.each { |elsetest|
-                            if elsereturn = @elsif.evaluate(scope)
-                                retvalue = elsereturn
-                            end
-                        }
-                    elsif defined? @else
-                        retvalue = @else.evaluate(scope)
-                    else
-                        Puppet.debug "None of the ifs are true"
-                    end
-                    return retvalue
-                end
-
-                def tree(indent = 0)
-                    rettree = [
-                        @test.tree(indent + 1),
-                        ((@@indline * indent) + self.typewrap(self.pin)),
-                        @statements.tree(indent + 1)
-                    ]
-                    if defined? @elsif
-                        @elsif.each { |elsetest|
-                            rettree.push(elsetest.tree(indent + 1))
-                        }
-                    end
-
-                    if defined? @else
-                        rettree.push(@else.tree(indent+1))
-                    end
-
-                    return rettree.flatten.join("\n")
-                end
-
-                def each
-                    list = [@test,@statements]
-
-                    if defined? @elsif
-                        @elsif.each { |tmp|
-                            list.push(tmp)
-                        }
-                    end
-
-                    if defined? @else
-                        list.push(@else)
-                    end
-
-                    list.each { |child| yield child }
-                end
-            end
-            #---------------------------------------------------------------
-
-            #---------------------------------------------------------------
             class CaseStatement < AST::Branch
                 attr_accessor :test, :options, :default
 
                 # 'if' is a bit special, since we don't want to continue
                 # evaluating if a test turns up true
                 def evaluate(scope)
-                    value = @test.evaluate(scope)
+                    value = @test.safeevaluate(scope)
 
                     retvalue = nil
                     found = false
@@ -804,14 +709,14 @@ module Puppet
                             end
                         }
                             # we found a matching option
-                            retvalue = option.evaluate(scope)
+                            retvalue = option.safeevaluate(scope)
                             break
                         end
                     }
 
                     unless found
                         if defined? @default
-                            retvalue = @default.evaluate(scope)
+                            retvalue = @default.safeevaluate(scope)
                         else
                             Puppet.debug "No true answers and no default"
                         end
@@ -902,7 +807,7 @@ module Puppet
                 end
 
                 def evaluate(scope)
-                    return @statements.evaluate(scope.newscope)
+                    return @statements.safeevaluate(scope.newscope)
                 end
 
                 def tree(indent = 0)
@@ -927,11 +832,11 @@ module Puppet
                 # okay, here's a decision point...
                 def evaluate(scope)
                     # retrieve our values and make them a touch easier to manage
-                    hash = Hash[*(@value.evaluate(scope).flatten)]
+                    hash = Hash[*(@value.safeevaluate(scope).flatten)]
 
                     retvalue = nil
 
-                    paramvalue = @param.evaluate(scope)
+                    paramvalue = @param.safeevaluate(scope)
 
                     retvalue = hash.detect { |test,value|
                         # FIXME this will return variables named 'default'...
@@ -975,8 +880,8 @@ module Puppet
                 attr_accessor :name, :value
 
                 def evaluate(scope)
-                    name = @name.evaluate(scope)
-                    value = @value.evaluate(scope)
+                    name = @name.safeevaluate(scope)
+                    value = @value.safeevaluate(scope)
 
                     Puppet.debug "setting %s to %s" % [name,value]
                     begin
@@ -1021,8 +926,8 @@ module Puppet
                 end
 
                 def evaluate(scope)
-                    type = @type.evaluate(scope)
-                    params = @params.evaluate(scope)
+                    type = @type.safeevaluate(scope)
+                    params = @params.safeevaluate(scope)
 
                     #Puppet.info "Params are %s" % params.inspect
                     #Puppet.debug("evaluating '%s.%s' with values [%s]" %
@@ -1067,9 +972,8 @@ module Puppet
                 end
 
                 def evaluate(scope)
-                    name = @name.evaluate(scope)
-
-                    args = @args.evaluate(scope)
+                    name = @name.safeevaluate(scope)
+                    args = @args.safeevaluate(scope)
 
                     #Puppet.debug("defining '%s' with arguments [%s]" %
                     #    [name,args])
@@ -1117,7 +1021,7 @@ module Puppet
                             end
                         }
                     else
-                        Puppet.warning "got arg %s" % @args.inspect
+                        #Puppet.warning "got arg %s" % @args.inspect
                         hash[@args.value] += 1
                     end
                 end
@@ -1147,12 +1051,12 @@ module Puppet
                 end
 
                 def evaluate(scope)
-                    name = @name.evaluate(scope)
-                    args = @args.evaluate(scope)
+                    name = @name.safeevaluate(scope)
+                    args = @args.safeevaluate(scope)
 
                     #Puppet.debug "evaluating parent %s of type %s" %
                     #    [@parent.name, @parent.class]
-                    parent = @parentclass.evaluate(scope)
+                    parent = @parentclass.safeevaluate(scope)
 
                     Puppet.debug("defining hostclass '%s' with arguments [%s]" %
                         [name,args])
@@ -1207,7 +1111,7 @@ module Puppet
                 end
 
                 def evaluate(scope)
-                    names = @names.evaluate(scope)
+                    names = @names.safeevaluate(scope)
 
                     unless names.is_a?(Array)
                         names = [names]
@@ -1266,10 +1170,11 @@ module Puppet
                         Puppet.debug "args are %s" % self.args.inspect
                         self.args.each { |arg, default|
                             unless hash.include?(arg)
-                                if default
+                                # FIXME this needs to test for 'defined?'
+                                if defined? default
                                     hash[arg] = default
                                 else
-                                    error = Puppet.ParseError.new(
+                                    error = Puppet::ParseError.new(
                                         "Must pass %s to %s of type %s" %
                                             [arg.inspect,name,objtype]
                                     )
@@ -1282,7 +1187,6 @@ module Puppet
                         }
                     end
 
-                    #Puppet.warning objname
                     hash["name"] = objname
                     hash.each { |arg,value|
                         begin
@@ -1305,7 +1209,7 @@ module Puppet
                     }
 
                     # now just evaluate the code with our new bindings
-                    self.code.evaluate(scope)
+                    self.code.safeevaluate(scope)
                 end
             end
             #---------------------------------------------------------------
@@ -1337,7 +1241,7 @@ module Puppet
                             error.file = self.file
                             raise error
                         end
-                        parentobj.evaluate(scope,hash,objtype,objname)
+                        parentobj.safeevaluate(scope,hash,objtype,objname)
                     end
 
                     # just use the Component evaluate method, but change the type
@@ -1383,7 +1287,7 @@ module Puppet
                             error.file = self.file
                             raise error
                         end
-                        parentobj.evaluate(scope,hash,objtype,objname)
+                        parentobj.safeevaluate(scope,hash,objtype,objname)
                     end
 
                     # just use the Component evaluate method, but change the type
