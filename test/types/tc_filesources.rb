@@ -18,6 +18,8 @@ class TestFileSources < Test::Unit::TestCase
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store
+
+=begin
     def mkfile(hash)
         file = nil
         assert_nothing_raised {
@@ -34,7 +36,7 @@ class TestFileSources < Test::Unit::TestCase
         @@tmpfiles.push tmpfile
         mkfile(:name => tmpfile)
     end
-
+=end
     def setup
         @@tmpfiles = []
         @@tmppids = []
@@ -77,7 +79,7 @@ class TestFileSources < Test::Unit::TestCase
         path = "/tmp/newchilddir"
         @@tmpfiles.push path
 
-        system("mkdir -p #{path}")
+        FileUtils.mkdir_p path
         File.open(File.join(path,"childtest"), "w") { |of|
             of.puts "yayness"
         }
@@ -106,7 +108,7 @@ class TestFileSources < Test::Unit::TestCase
     def test_simplelocalsource
         path = "/tmp/Filesourcetest"
         @@tmpfiles.push path
-        system("mkdir -p #{path}")
+        FileUtils.mkdir_p path
         frompath = File.join(path,"source")
         topath = File.join(path,"dest")
         fromfile = nil
@@ -132,9 +134,10 @@ class TestFileSources < Test::Unit::TestCase
         assert_nothing_raised {
             trans.evaluate
         }
-        assert_nothing_raised {
-            comp.sync
-        }
+   #     assert_nothing_raised {
+   #         comp.sync
+   #     }
+
         assert(FileTest.exists?(topath))
         from = File.open(frompath) { |o| o.read }
         to = File.open(topath) { |o| o.read }
@@ -179,7 +182,7 @@ class TestFileSources < Test::Unit::TestCase
         @@tmpfiles.push path
 
         # first create the source directory
-        system("mkdir -p #{path}")
+        FileUtils.mkdir_p path
 
 
         # okay, let's create a directory structure
