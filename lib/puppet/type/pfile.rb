@@ -1017,36 +1017,6 @@ module Puppet
               #make local copy of arguments
                 args = @arghash.dup
 
-                #check if ignored
-                match_ignore = false;
-                if args.include?(:ignore)
-                   ignore = args[:ignore]
-                   
-                   ignore.each { |pattern|
-                     
-                      #make sure we got strings
-                      unless pattern.is_a?(String)
-                          raise Puppet::DevError.new(
-                               "If Ignore is an Array it must contain strings of patterns")
-                      end
-
-                      #try to match the pattern
-                      match = Regexp.new(pattern.split("*").join("\/*"))
- 
-                      if match =~ path
-                         match_ignore = true 
-                         break
-                      end
-
-                   }
-
-                  #if the patten is matched return no child
-                   if match_ignore
-                     return nil
-                   end
-
-                end
-
                 if path =~ %r{^#{File::SEPARATOR}}
                     raise Puppet::DevError.new(
                         "Must pass relative paths to PFile#newchild()"
@@ -1247,6 +1217,7 @@ module Puppet
                 #Puppet.warning "Listing path %s" % path.inspect
                 desc = server.list(path, r, ignore)
 
+                puts desc
                 desc.split("\n").each { |line|
                     file, type = line.split("\t")
                     next if file == "/"
