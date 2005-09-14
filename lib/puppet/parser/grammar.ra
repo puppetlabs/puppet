@@ -404,24 +404,35 @@ import: IMPORT QTEXT {
     # yuk, i hate keywords
     # we'll probably have to have some kind of search path eventually
     # but for now, just use a path relative to the file doing the importing
-    path = @lexer.file.sub(%r{[^/]+$},val[1])
-    parser = Puppet::Parser::Parser.new()
-    parser.stack = self.stack
-    Puppet.debug("importing %s" % path)
-    noimport = false
-    begin
-        parser.file = path
-    rescue Puppet::ImportError
-        Puppet.warning("Importing %s would result in an import loop" % path)
-        result = AST::ASTArray.new(
-            :file => @lexer.file,
-            :line => @lexer.line
-        )
-        noimport = true
+    dir = @lexer.file.sub(%r{[^/]+$},'').sub(/\/$/, '')
+    if dir == ""
+        dir = "."
     end
-    unless noimport
-        result = parser.parse
-    end
+    Puppet.notice "Orig: %s" % @lexer.file.inspect
+    Puppet.notice "Dir: %s" % dir.inspect
+    Dir.chdir(dir) {
+        Puppet.notice "Globbing %s" % val[1]
+        Dir.glob(val[1]).each { |file|
+            Puppet.notice "File: %s" % file.inspect
+            parser = Puppet::Parser::Parser.new()
+            parser.stack = self.stack
+            Puppet.debug("importing '%s'" % file)
+            begin
+                parser.file = file
+            rescue Puppet::ImportError
+                Puppet.warning(
+                    "Importing %s would result in an import loop" %
+                        File.join(dir, file)
+                )
+                result = AST::ASTArray.new(
+                    :file => @lexer.file,
+                    :line => @lexer.line
+                )
+                next
+            end
+            result = parser.parse
+        }
+    }
 }
 
 definition: DEFINE NAME argumentlist LBRACE statements RBRACE {

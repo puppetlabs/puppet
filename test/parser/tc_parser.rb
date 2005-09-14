@@ -61,7 +61,7 @@ class TestParser < Test::Unit::TestCase
         }
     end
 
-    def test_zzarrayrvalues
+    def test_arrayrvalues
         parser = Puppet::Parser::Parser.new()
         ret = nil
         assert_nothing_raised {
