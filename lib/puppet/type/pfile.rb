@@ -23,7 +23,7 @@ module Puppet
             def should=(value)
                 raise Puppet::Error, ":type is read-only"
             end
-
+            
             def retrieve
                 if stat = @parent.stat(true)
                     @is = stat.ftype
@@ -815,6 +815,7 @@ module Puppet
             end
         end
     end
+
     class Type
         class PFile < Type
             # FIXME i don't think these are used
@@ -857,11 +858,12 @@ module Puppet
             @paramdoc[:ignore] = "A parameter which omits action on files matching specified
                 patterns during recursion  i.e. .svn, *.ini"
 
-            @paramdoc[:source] = "Where to retrieve the contents of the files.
-                Currently only supports local copying, but will eventually
-                support multiple protocols for copying.  Arguments are specified
-                using either a full local path or using a URI (currently only
-                *file* is supported as a protocol)."
+          #no longer a parameter
+           # @paramdoc[:source] = "Where to retrieve the contents of the files.
+           #     Currently only supports local copying, but will eventually
+           #     support multiple protocols for copying.  Arguments are specified
+           #     using either a full local path or using a URI (currently only
+           #     *file* is supported as a protocol)."
 
             
 
@@ -933,7 +935,15 @@ module Puppet
                     return false
                 end
             end
-
+            
+            def handleignore(children)
+                @parameters[:ignore].each { |ignore|
+                ignored = Dir.glob(File.join(self.name,ignore), File::FNM_DOTMATCH) 
+                children = children - ignored
+                }
+                return children
+            end  
+              
             def initialize(hash)
                 # clean out as many references to any file paths as possible
                 # this was the source of many, many bugs
@@ -953,7 +963,7 @@ module Puppet
                 @srcbase = nil
                 super
             end
-
+            
             def path
                 if defined? @parent
                     if @parent.is_a?(self.class)
@@ -992,10 +1002,19 @@ module Puppet
                         value.inspect
                 end
             end
+            
+            def paramignore=(value)
+
+                #Make sure the value of ignore is in correct type    
+                unless value.is_a?(Array) or value.is_a?(String)
+                    raise Puppet::DevError.new("Ignore must be a string or an Array")
+                end
+            
+            end
 
             def newchild(path, hash = {})
-
-                #make local copy of arguments
+        
+              #make local copy of arguments
                 args = @arghash.dup
 
                 #check if ignored
@@ -1003,16 +1022,7 @@ module Puppet
                 if args.include?(:ignore)
                    ignore = args[:ignore]
                    
-                   #Make sure the value of ignore is in correct type    
-                   unless ignore.is_a?(Array) | ignore.is_a?(String)
-                      raise Puppet::DevError.new("Ignore must be a string or an Array")
-                   end
-
-                   if ignore.is_a?(String)
-                      ignore = Array.new(1,ignore) 
-                   end                 
-                   
-                   ignore.each{|pattern|
+                   ignore.each { |pattern|
                      
                       #make sure we got strings
                       unless pattern.is_a?(String)
@@ -1047,6 +1057,7 @@ module Puppet
 
                 args[:path] = path
 
+=begin
                 # FIXME I think this is obviated now
                 unless hash.include?(:source) # it's being manually overridden
                     if args.include?(:source)
@@ -1063,6 +1074,7 @@ module Puppet
                     end
 
                 end
+=end
 
                 unless hash.include?(:recurse)
                     if args.include?(:recurse)
@@ -1183,9 +1195,17 @@ module Puppet
                     return
                 end
 
+                children = Dir.entries(self.name)
+
+                #Get rid of ignored children
+                if @parameters.include?(:ignore)
+                    children = handleignore(children)
+                end  
+
                 added = []
-                Dir.foreach(self.name) { |file|
-                    next if file =~ /^\.\.?/ # skip . and ..
+                children.each { |file|
+                    file = File.basename(file)
+                    next if file =~ /^\.\.?/ # skip . and .. 
                     if child = self.newchild(file, :recurse => recurse)
                         unless @children.include?(child)
                             self.push child
@@ -1222,8 +1242,10 @@ module Puppet
                     end
                 end
 
+                ignore = @parameters[:ignore]
+
                 #Puppet.warning "Listing path %s" % path.inspect
-                desc = server.list(path, r)
+                desc = server.list(path, r, ignore)
 
                 desc.split("\n").each { |line|
                     file, type = line.split("\t")

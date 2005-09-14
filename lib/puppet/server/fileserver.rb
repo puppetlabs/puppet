@@ -15,7 +15,7 @@ class Server
 
         @interface = XMLRPC::Service::Interface.new("fileserver") { |iface|
             iface.add_method("string describe(string)")
-            iface.add_method("string list(string, boolean)")
+            iface.add_method("string list(string, boolean, array)")
             iface.add_method("string retrieve(string)")
         }
 
@@ -81,6 +81,14 @@ class Server
             return desc.join("\t")
         end
 
+        def handleignore(children, path, ignore)
+            ignore.each { |ignore|
+            ignored = Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) 
+            children = children - ignored
+            }
+            return children
+        end  
+
         def initialize(hash = {})
             @mounts = {}
             @files = {}
@@ -120,7 +128,7 @@ class Server
             end
         end
 
-        def list(dir, recurse = false, client = nil, clientip = nil)
+        def list(dir, recurse = false, ignore = false, client = nil, clientip = nil)
             readconfig
             mount, path = splitpath(dir)
 
@@ -142,7 +150,7 @@ class Server
 
             #rmdir = File.dirname(File.join(@mounts[mount], path))
             rmdir = nameswap(dir, mount)
-            desc = reclist(rmdir, subdir, recurse)
+            desc = reclist(rmdir, subdir, recurse, ignore)
 
             if desc.length == 0
                 Puppet.notice "Got no information on //%s/%s" %
@@ -312,7 +320,7 @@ class Server
         end
 
         # recursive listing function
-        def reclist(root, path, recurse)
+        def reclist(root, path, recurse, ignore)
             #desc = [obj.name.sub(%r{#{root}/?}, '')]
             name = path.sub(root, '')
             if name == ""
@@ -335,9 +343,13 @@ class Server
             ary = [desc]
             if recurse == true or (recurse.is_a?(Integer) and recurse > -1)
                 if ftype == "directory"
-                    Dir.entries(path).each { |child|
+                    children = Dir.entries(path)
+                    if ignore
+                        children = handleignore(children, path, ignore)
+                    end  
+                    children.each { |child|
                         next if child =~ /^\.\.?$/
-                        reclist(root, File.join(path, child), recurse).each { |cobj|
+                        reclist(root, File.join(path, child), recurse, ignore).each { |cobj|
                             ary << cobj
                         }
                     }
