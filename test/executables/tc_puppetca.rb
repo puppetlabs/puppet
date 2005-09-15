@@ -21,20 +21,7 @@ libdirs = $:.find_all { |dir|
 }
 ENV["RUBYLIB"] = libdirs.join(":")
 
-class TestPuppetCA < Test::Unit::TestCase
-    def setup
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-        @@tmpfiles = []
-    end
-
-    def teardown
-        @@tmpfiles.flatten.each { |file|
-            if File.exists? file
-                system("rm -rf %s" % file)
-            end
-        }
-    end
-
+class TestPuppetCA < ServerTest
     def mkcert(hostname)
         cert = nil
         assert_nothing_raised {

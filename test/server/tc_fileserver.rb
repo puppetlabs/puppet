@@ -14,22 +14,25 @@ require 'test/unit'
 require 'puppettest.rb'
 
 class TestFileServer < TestPuppet
-    def setup
-        if __FILE__ == $0
-            Puppet[:loglevel] = :debug
-        end
+    # make a simple file source
+    def mktestdir
+        testdir = File.join(tmpdir(), "remotefilecopytesting")
+        @@tmpfiles << testdir
 
-        @@tmppids = []
-        super
-    end
-
-    def teardown
-        super
-        @@tmppids.each { |pid|
-            system("kill -INT %s" % pid)
+        # create a tmpfile
+        pattern = "tmpfile"
+        tmpfile = File.join(testdir, pattern)
+        assert_nothing_raised {
+            Dir.mkdir(testdir)
+            File.open(tmpfile, "w") { |f|
+                3.times { f.puts rand(100) }
+            }
         }
+
+        return [testdir, %r{#{pattern}}, tmpfile]
     end
 
+    # make a bunch of random test files
     def mktestfiles(testdir)
         @@tmpfiles << testdir
         assert_nothing_raised {
@@ -48,6 +51,17 @@ class TestFileServer < TestPuppet
         }
     end
 
+    def assert_describe(base, file, server)
+        file = File.basename(file)
+        assert_nothing_raised {
+            desc = server.describe(base + file)
+            assert(desc, "Got no description for %s" % file)
+            assert(desc != "", "Got no description for %s" % file)
+            assert_match(/^\d+/, desc, "Got invalid description %s" % desc)
+        }
+    end
+
+    # test for invalid names
     def test_namefailures
         server = nil
         assert_nothing_raised {
@@ -74,21 +88,15 @@ class TestFileServer < TestPuppet
         }
     end
 
+    # verify that listing the root behaves as expected
     def test_listroot
         server = nil
-        testdir = "/tmp/remotefilecopying"
-        tmpfile = File.join(testdir, "tmpfile")
-        assert_nothing_raised {
-            Dir.mkdir(testdir)
-            File.open(tmpfile, "w") { |f|
-                3.times { f.puts rand(100) }
-            }
-            @@tmpfiles << testdir
-        }
+        testdir, pattern, tmpfile = mktestdir()
 
         file = nil
         checks = Puppet::Server::FileServer::CHECKPARAMS
 
+        # and make our fileserver
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
                 :Local => true,
@@ -96,39 +104,30 @@ class TestFileServer < TestPuppet
             )
         }
 
+        # mount the testdir
         assert_nothing_raised {
             server.mount(testdir, "test")
         }
 
+        # and verify different iterations of 'root' return the same value
         list = nil
         assert_nothing_raised {
             list = server.list("/test/", true, false)
         }
 
-        assert(list =~ /tmpfile/)
+        assert(list =~ pattern)
 
         assert_nothing_raised {
             list = server.list("/test", true, false)
         }
-        assert(list =~ /tmpfile/)
+        assert(list =~ pattern)
 
     end
 
+    # test listing individual files
     def test_getfilelist
         server = nil
-        testdir = "/tmp/remotefilecopying"
-        #subdir = "testingyo"
-        #subpath = File.join(testdir, "testingyo")
-        #dir = File.join(testdir, subdir)
-        tmpfile = File.join(testdir, "tmpfile")
-        assert_nothing_raised {
-            Dir.mkdir(testdir)
-            #Dir.mkdir(subpath)
-            File.open(tmpfile, "w") { |f|
-                3.times { f.puts rand(100) }
-            }
-            @@tmpfiles << testdir
-        }
+        testdir, pattern, tmpfile = mktestdir()
 
         file = nil
 
@@ -143,6 +142,7 @@ class TestFileServer < TestPuppet
             server.mount(testdir, "test")
         }
 
+        # get our listing
         list = nil
         sfile = "/test/tmpfile"
         assert_nothing_raised {
@@ -155,12 +155,18 @@ class TestFileServer < TestPuppet
 
         output = "/\tfile"
 
+        # verify it got listed as a file
         assert_equal(output, list)
+
+        # verify we got all fields
         assert(list !~ /\t\t/)
 
+        # verify that we didn't get the directory itself
         list.split("\n").each { |line|
             assert(line !~ %r{remotefile})
         }
+
+        # and then verify that the contents match
         contents = File.read(tmpfile)
 
         ret = nil
@@ -171,19 +177,15 @@ class TestFileServer < TestPuppet
         assert_equal(contents, ret)
     end
 
+    # check that the fileserver is seeing newly created files
     def test_seenewfiles
         server = nil
-        testdir = "/tmp/remotefilecopying"
-        oldfile = File.join(testdir, "oldfile")
-        newfile = File.join(testdir, "newfile")
-        assert_nothing_raised {
-            Dir.mkdir(testdir)
-            File.open(oldfile, "w") { |f|
-                3.times { f.puts rand(100) }
-            }
-            @@tmpfiles << testdir
-        }
+        testdir, pattern, tmpfile = mktestdir()
 
+
+        newfile = File.join(testdir, "newfile")
+
+        # go through the whole schtick again...
         file = nil
         checks = Puppet::Server::FileServer::CHECKPARAMS
 
@@ -204,6 +206,7 @@ class TestFileServer < TestPuppet
             list = server.list(sfile, true, false)
         }
 
+        # create the new file
         File.open(newfile, "w") { |f|
             3.times { f.puts rand(100) }
         }
@@ -213,11 +216,15 @@ class TestFileServer < TestPuppet
             newlist = server.list(sfile, true, false)
         }
 
+        # verify the list has changed
         assert(list != newlist)
 
+        # and verify that we are specifically seeing the new file
         assert(newlist =~ /newfile/)
     end
 
+    # verify we can mount /, which is what local file servers will
+    # normally do
     def test_mountroot
         server = nil
         assert_nothing_raised {
@@ -231,24 +238,17 @@ class TestFileServer < TestPuppet
             server.mount("/", "root")
         }
 
-        testdir = "/tmp/remotefilecopying"
-        oldfile = File.join(testdir, "oldfile")
-        assert_nothing_raised {
-            Dir.mkdir(testdir)
-            File.open(oldfile, "w") { |f|
-                3.times { f.puts rand(100) }
-            }
-            @@tmpfiles << testdir
-        }
+        testdir, pattern, tmpfile = mktestdir()
 
         list = nil
         assert_nothing_raised {
             list = server.list("/root/" + testdir, true, false)
         }
 
-        assert(list =~ /oldfile/)
+        assert(list =~ pattern)
     end
 
+    # verify that we're correctly recursing the right number of levels
     def test_recursionlevels
         server = nil
         assert_nothing_raised {
@@ -258,7 +258,8 @@ class TestFileServer < TestPuppet
             )
         }
 
-        basedir = "/tmp/remotefilecopying"
+        # make our deep recursion
+        basedir = File.join(tmpdir(), "recurseremotetesting")
         testdir = "%s/with/some/sub/directories/for/the/purposes/of/testing" % basedir
         oldfile = File.join(testdir, "oldfile")
         assert_nothing_raised {
@@ -273,20 +274,22 @@ class TestFileServer < TestPuppet
             server.mount(basedir, "test")
         }
 
+        # get our list
         list = nil
         assert_nothing_raised {
             list = server.list("/test/with", false, false)
         }
 
+        # make sure we only got one line, since we're not recursing
         assert(list !~ /\n/)
 
+        # for each level of recursion, make sure we get the right list
         [0, 1, 2].each { |num|
             assert_nothing_raised {
                 list = server.list("/test/with", num, false)
             }
 
             count = 0
-            #p list
             while list =~ /\n/
                 list.sub!(/\n/, '')
                 count += 1
@@ -295,6 +298,8 @@ class TestFileServer < TestPuppet
         }
     end
 
+    # verify that we're not seeing the dir we ask for; i.e., that our
+    # list is relative to that dir, not it's parent dir
     def test_listedpath
         server = nil
         assert_nothing_raised {
@@ -304,6 +309,8 @@ class TestFileServer < TestPuppet
             )
         }
 
+
+        # create a deep dir
         basedir = "/tmp/remotefilecopying"
         testdir = "%s/with/some/sub/directories/for/testing" % basedir
         oldfile = File.join(testdir, "oldfile")
@@ -315,11 +322,13 @@ class TestFileServer < TestPuppet
             @@tmpfiles << basedir
         }
 
+        # mounty mounty
         assert_nothing_raised {
             server.mount(basedir, "localhost")
         }
 
         list = nil
+        # and then check a few dirs
         assert_nothing_raised {
             list = server.list("/localhost/with", false, false)
         }
@@ -333,6 +342,7 @@ class TestFileServer < TestPuppet
         assert(list !~ /sub/)
     end
 
+    # test many dirs, not necessarily very deep
     def test_widelists
         server = nil
         assert_nothing_raised {
@@ -366,6 +376,7 @@ class TestFileServer < TestPuppet
         assert_equal(dirs.length + 1, list.length)
     end
 
+    # verify that 'describe' works as advertised
     def test_describe
         server = nil
         testdir = "/tmp/remotefilecopying"
@@ -385,12 +396,14 @@ class TestFileServer < TestPuppet
             server.mount(testdir, "test")
         }
 
+        # get our list
         list = nil
         sfile = "/test/"
         assert_nothing_raised {
             list = server.list(sfile, true, false)
         }
 
+        # and describe each file in the list
         assert_nothing_raised {
             list.split("\n").each { |line|
                 file, type = line.split("\t")
@@ -399,37 +412,32 @@ class TestFileServer < TestPuppet
             }
         }
 
+        # and then make sure we can describe everything that we know is there
         files.each { |file|
-            file = File.basename(file)
-            assert_nothing_raised {
-                desc = server.describe(sfile + file)
-                assert(desc, "Got no description for %s" % file)
-                assert(desc != "", "Got no description for %s" % file)
-                assert_match(/^\d+/, desc, "Got invalid description %s" % desc)
-            }
+            assert_describe(sfile, file, server)
         }
     end
 
+    # test that our config file is parsing and working as planned
     def test_configfile
         server = nil
-        basedir = "/tmp/configfiletesting"
+        basedir = File.join(tmpdir, "fileserverconfigfiletesting")
+        @@tmpfiles << basedir
 
         conftext = "# a test config file\n \n"
 
-        @@tmpfiles << basedir
 
+        # make some dirs for mounting
         Dir.mkdir(basedir)
         mounts = {}
         %w{thing thus these those}.each { |dir|
             path = File.join(basedir, dir)
-            conftext << "[#{dir}]
-    path #{path}
-"
             mounts[dir] = mktestfiles(path)
 
         }
 
-        conffile = "/tmp/fileservertestingfile"
+        # create an example file with each of them
+        conffile = tempfile
         @@tmpfiles << conffile
 
         File.open(conffile, "w") { |f|
@@ -454,6 +462,7 @@ class TestFileServer < TestPuppet
         }
         
 
+        # create a server with the file
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
                 :Local => true,
@@ -478,15 +487,12 @@ class TestFileServer < TestPuppet
             }
 
             files.each { |f|
-                file = File.basename(f)
-                desc = server.describe(mount + file)
-                assert(desc, "Got no description for %s" % f)
-                assert(desc != "", "Got no description for %s" % f)
-                assert_match(/^\d+/, desc, "Got invalid description %s" % f)
+                assert_describe(mount, f, server)
             }
         }
 
         # now let's check that things are being correctly forbidden
+        # this is just a map of names and expected results
         {
             "thing" => {
                 :deny => [
@@ -511,6 +517,7 @@ class TestFileServer < TestPuppet
         }.each { |mount, hash|
             mount = "/#{mount}/"
 
+            # run through the map
             hash.each { |type, ary|
                 ary.each { |sub|
                     host, ip = sub
@@ -534,28 +541,27 @@ class TestFileServer < TestPuppet
 
     end
 
+    # verify we reread the config file when it changes
     def test_filereread
         server = nil
-        testdir = "/tmp/filerereadtesting"
 
-        @@tmpfiles << testdir
+        dir = testdir()
 
-        #Dir.mkdir(testdir)
-        files = mktestfiles(testdir)
+        files = mktestfiles(dir)
 
-        conffile = "/tmp/fileservertestingfile"
-        @@tmpfiles << conffile
+        conffile = tempfile()
 
         File.open(conffile, "w") { |f|
             f.print "# a test config file
  
 [thing]
-    path #{testdir}
+    path #{dir}
     allow test1.domain.com
 "
         }
         
 
+        # start our server with a fast timeout
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
                 :Local => true,
@@ -579,7 +585,7 @@ class TestFileServer < TestPuppet
             f.print "# a test config file
  
 [thing]
-    path #{testdir}
+    path #{dir}
     allow test2.domain.com
 "
         }

@@ -1305,7 +1305,8 @@ module Puppet
                     if uri.port
                         args[:Port] = uri.port
                     end
-                    sourceobj.server = Puppet::NetworkClient.new(args)
+                    #sourceobj.server = Puppet::NetworkClient.new(args)
+                    sourceobj.server = Puppet::Client::FileClient.new(args)
 
                     tmp = uri.path
                     if tmp =~ %r{^/(\w+)}

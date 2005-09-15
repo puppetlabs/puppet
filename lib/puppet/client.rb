@@ -47,6 +47,11 @@ module Puppet
                         #Puppet.info "cert is %s" % @http.cert
                         begin
                             call("%s.%s" % [namespace, method.to_s],*args)
+                        rescue OpenSSL::SSL::SSLError => detail
+                            Puppet.err "Could not call %s.%s: Untrusted certificates" %
+                                [namespace, method]
+                            raise NetworkClientError,
+                                "Certificates were not trusted"
                         rescue XMLRPC::FaultException => detail
                             Puppet.err "Could not call %s.%s: %s" %
                                 [namespace, method, detail.faultString]
@@ -61,16 +66,26 @@ module Puppet
                 }
             }
 
-            [:key, :cert, :ca_file].each { |method|
-                setmethod = method.to_s + "="
-                #self.send(:define_method, method) {
-                #    @http.send(method)
-                #}
-                self.send(:define_method, setmethod) { |*args|
-                    Puppet.debug "Setting %s" % method 
-                    @http.send(setmethod, *args)
-                }
-            }
+            def ca_file=(cafile)
+                @http.ca_file = cafile
+                store = OpenSSL::X509::Store.new
+                cacert = OpenSSL::X509::Certificate.new(
+                    File.read(cafile)
+                )
+                store.add_cert(cacert) 
+                store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
+                @http.cert_store = store
+            end
+
+            def cert=(cert)
+                Puppet.info "Adding certificate"
+                @http.cert = cert
+                @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+            end
+
+            def key=(key)
+                @http.key = key
+            end
 
             def initialize(hash)
                 hash[:Path] ||= "/RPC2"
@@ -89,23 +104,17 @@ module Puppet
                 )
 
                 if hash[:Certificate]
-                    @http.cert = hash[:Certificate]
+                    self.cert = hash[:Certificate]
+                else
+                    Puppet.err "No certificate; running with reduced functionality."
                 end
 
                 if hash[:Key]
-                    @http.key = hash[:Key]
+                    self.key = hash[:Key]
                 end
 
                 if hash[:CAFile]
-                    @http.ca_file = hash[:CAFile]
-                    store = OpenSSL::X509::Store.new
-                    cacert = OpenSSL::X509::Certificate.new(
-                        File.read(hash[:CAFile])
-                    )
-                    store.add_cert(cacert) 
-                    store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
-                    @http.cert_store = store
-                    @http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+                    self.ca_file = hash[:CAFile]
                 end
 
                 # from here, i need to add the key, cert, and ca cert
@@ -141,14 +150,13 @@ module Puppet
                 end
             end
 
+            # unless we have a driver, we're a local client and we can't add
+            # certs anyway, so it doesn't matter
             unless @driver
                 return true
             end
 
-            Puppet.info "setting cert and key and such"
-            @driver.cert = @cert
-            @driver.key = @key
-            @driver.ca_file = @cacertfile
+            self.setcerts
         end
 
         def initialize(hash)
@@ -196,6 +204,12 @@ module Puppet
             end
         end
 
+        def setcerts
+            @driver.cert = @cert
+            @driver.key = @key
+            @driver.ca_file = @cacertfile
+        end
+
         class MasterClient < Puppet::Client
             @drivername = :Master
 
@@ -217,8 +231,6 @@ module Puppet
                     raise Puppet::Error, "Cannot apply; objects not defined"
                 end
 
-                # XXX this is kind of a problem; if the user changes the state file
-                # after this, then we have to reload the file and everything...
                 begin
                     Puppet::Storage.init
                     Puppet::Storage.load
@@ -396,6 +408,72 @@ module Puppet
                 end
 
             end
+        end
+
+        # unlike the other client classes (again, this design sucks) this class
+        # is basically just a proxy class -- it calls its methods on the driver
+        # and that's about it
+        class ProxyClient < Puppet::Client
+            def self.mkmethods
+                interface = @handler.interface
+                namespace = interface.prefix
+
+                interface.methods.each { |ary|
+                    method = ary[0]
+                    Puppet.debug "%s: defining %s.%s" % [self, namespace, method]
+                    self.send(:define_method,method) { |*args|
+                        begin
+                            @driver.send(method, *args)
+                        rescue XMLRPC::FaultException => detail
+                            Puppet.err "Could not call %s.%s: %s" %
+                                [namespace, method, detail.faultString]
+                            raise NetworkClientError,
+                                "XMLRPC Error: %s" % detail.faultString
+                        end
+                    }
+                }
+            end
+        end
+
+        class FileClient < Puppet::Client::ProxyClient
+            @drivername = :FileServer
+
+            # set up the appropriate interface methods
+            @handler = Puppet::Server::FileServer
+
+            self.mkmethods
+
+            def initialize(hash = {})
+                if hash.include?(:FileServer)
+                    unless hash[:FileServer].is_a?(Puppet::Server::FileServer)
+                        raise Puppet::DevError, "Must pass an actual FS object"
+                    end
+                end
+
+                super(hash)
+            end
+        end
+
+        class CAClient < Puppet::Client::ProxyClient
+            @drivername = :CA
+
+            # set up the appropriate interface methods
+            @handler = Puppet::Server::CA
+            self.mkmethods
+
+            def initialize(hash = {})
+                if hash.include?(:CA)
+                    hash[:CA] = Puppet::Server::CA.new()
+                end
+
+                super(hash)
+            end
+        end
+
+        class StatusClient < Puppet::Client::ProxyClient
+            # set up the appropriate interface methods
+            @handler = Puppet::Server::ServerStatus
+            self.mkmethods
         end
 
     end

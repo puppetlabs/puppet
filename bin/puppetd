@@ -196,7 +196,11 @@ if bg
     end
     client.daemonize
 end
-#client.start
+
+# now set up the network client with the certs, now that we have them
+client.setcerts
+
+# and then retrieve and apply our configuration
 client.getconfig
 client.apply
 

@@ -327,7 +327,7 @@ class TestSnippets < TestPuppet
             "File %s is not 755" % file)
     end
 
-    def snippet_missingexecpath(trans)
+    def snippet_failmissingexecpath(trans)
         file = "/tmp/exectesting1"
         execfile = "/tmp/execdisttesting"
         @@tmpfiles << file

@@ -22,96 +22,49 @@ libdirs = $:.find_all { |dir|
 }
 ENV["RUBYLIB"] = libdirs.join(":")
 
-class TestPuppetDExe < Test::Unit::TestCase
-    def setup
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-        @@tmpfiles = []
-        @@tmppids = []
-    end
-
-    def teardown
-        @@tmpfiles.flatten.each { |file|
-            if File.exists? file
-                system("rm -rf %s" % file)
-            end
-        }
-
-        @@tmppids.each { |pid|
-            %x{kill #{pid} 2>/dev/null}
-        }
-        stopmaster
-    end
-
-    def startmaster(file, port)
-        output = nil
-        ssldir = "/tmp/puppetmasterdpuppetdssldirtesting"
-        @@tmpfiles << ssldir
-        assert_nothing_raised {
-            output = %x{puppetmasterd --port #{port} -a --ssldir #{ssldir} --manifest #{file}}.chomp
-        }
-        assert($? == 0, "Puppetmasterd return status was %s" % $?)
-        @@tmppids << $?.pid
-        assert_equal("", output)
-    end
-
-    def stopmaster
-        ps = Facter["ps"].value || "ps -ef"
-
-        pid = nil
-        %x{#{ps}}.chomp.split(/\n/).each { |line|
-            if line =~ /puppetmasterd/
-                ary = line.split(" ")
-                pid = ary[1].to_i
-            end
-        }
-        if pid
-            assert_nothing_raised {
-                Process.kill("-TERM", pid)
-            }
-        end
-    end
-
+class TestPuppetDExe < ExeTest
     def test_normalstart
-        file = "/tmp/testingmanifest.pp"
-        mkfile = "/tmp/puppetdtesting"
-        File.open(file, "w") { |f|
-            f.puts %{
-file { "#{mkfile}": create => true, mode => 755 }
-}
-        }
+        # start the master
+        file = startmasterd
 
-        @@tmpfiles << file
-        @@tmpfiles << mkfile
-        port = 8235
-        startmaster(file, port)
-        output = nil
-        ssldir = "/tmp/puppetdssldirtesting"
-        @@tmpfiles << ssldir
-        client = Puppet::Client.new(:Server => "localhost")
+        # create the client
+        client = Puppet::Client.new(:Server => "localhost", :Port => @@port)
+
+        # make a new fqdn
         fqdn = client.fqdn.sub(/^\w+\./, "testing.")
+
+        cmd = "puppetd"
+        cmd += " --verbose"
+        cmd += " --fqdn %s" % fqdn
+        cmd += " --port %s" % @@port
+        cmd += " --ssldir %s" % Puppet[:ssldir]
+        cmd += " --server localhost"
+
+        # and verify our daemon runs
         assert_nothing_raised {
-            output = %x{puppetd --verbose --fqdn #{fqdn} --port #{port} --ssldir #{ssldir} --server localhost}.chomp
+            output = %x{#{cmd}}.chomp
         }
         sleep 1
         assert($? == 0, "Puppetd exited with code %s" % $?)
         #puts output
         #assert_equal("", output, "Puppetd produced output %s" % output)
 
-        assert(FileTest.exists?(mkfile),
+        assert(FileTest.exists?(@createdfile),
             "Failed to create config'ed file")
 
         # now verify that --noop works
-        File.unlink(mkfile)
+        File.unlink(@createdfile)
 
+        cmd += " --noop"
         assert_nothing_raised {
-            output = %x{puppetd --noop --fqdn #{fqdn} --port #{port} --ssldir #{ssldir} --server localhost}.chomp
+            output = %x{#{cmd}}.chomp
         }
         sleep 1
         assert($? == 0, "Puppetd exited with code %s" % $?)
 
-        assert(! FileTest.exists?(mkfile),
+        assert(! FileTest.exists?(@createdfile),
             "Noop created config'ed file")
 
-        stopmaster
+        stopmasterd
     end
 end

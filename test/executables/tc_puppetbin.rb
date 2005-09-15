@@ -21,19 +21,7 @@ libdirs = $:.find_all { |dir|
 }
 ENV["RUBYLIB"] = libdirs.join(":")
 
-class TestPuppetBin < Test::Unit::TestCase
-    def setup
-        @@tmpfiles = []
-    end
-
-    def teardown
-        @@tmpfiles.each { |f|
-            if FileTest.exists?(f)
-                system("rm -rf %s" % f)
-            end
-        }
-    end
-
+class TestPuppetBin < ServerTest
     def test_version
         output = nil
         assert_nothing_raised {
@@ -43,14 +31,7 @@ class TestPuppetBin < Test::Unit::TestCase
     end
 
     def test_execution
-        file = "/tmp/puppetbintestingmanifest.pp"
-        File.open(file, "w") { |f|
-            f.puts '
-file { "/tmp/puppetbintesting": create => true, mode => 755 }
-'
-        }
-
-        @@tmpfiles << file
+        file = mktestmanifest()
         @@tmpfiles << "/tmp/puppetbintesting"
 
         output = nil
@@ -59,7 +40,6 @@ file { "/tmp/puppetbintesting": create => true, mode => 755 }
         }
         assert($? == 0, "Puppet exited with code %s" % $?.to_i)
 
-        assert(FileTest.exists?("/tmp/puppetbintesting"),
-            "Failed to create config'ed file")
+        assert(FileTest.exists?(@createdfile), "Failed to create config'ed file")
     end
 end

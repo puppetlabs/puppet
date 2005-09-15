@@ -11,6 +11,8 @@ module Puppet
         class ASTError < RuntimeError; end
         #---------------------------------------------------------------
         class AST
+            Puppet.setdefault(:typecheck, true)
+            Puppet.setdefault(:paramcheck, true)
             attr_accessor :line, :file, :parent
 
             @@pink = "[0;31m"
@@ -482,6 +484,8 @@ module Puppet
                     # for types
                     objtype = @type.value
 
+                    # This will basically always be on, but I wanted to make it at
+                    # least simple to turn off if it came to that
                     if Puppet[:typecheck]
                         builtin = false
                         begin
@@ -492,6 +496,8 @@ module Puppet
                         if builtin
                             # we're a builtin type
                             #Puppet.debug "%s is a builtin type" % objtype
+                            # like :typecheck, this always defaults to on, but
+                            # at least it's easy to turn off if necessary
                             if Puppet[:paramcheck]
                                 @params.each { |param|
                                     #p self.name

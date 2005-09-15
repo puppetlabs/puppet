@@ -1,8 +1,6 @@
 # $Id$
 require 'test/unit'
 
-$VERBOSE = 1
-
 class TestPuppet < Test::Unit::TestCase
     def newcomp(name,*ary)
         comp = Puppet::Type::Component.new(
@@ -16,42 +14,88 @@ class TestPuppet < Test::Unit::TestCase
     def setup
         if $0 =~ /tc_.+\.rb/
             Puppet[:loglevel] = :debug
+            $VERBOSE = 1
         else
             Puppet[:logdest] = "/dev/null"
             Puppet[:httplog] = "/dev/null"
         end
 
         @configpath = File.join(tmpdir, self.class.to_s + "configdir")
-        @oldconf = Puppet[:puppetconf]
         Puppet[:puppetconf] = @configpath
-        @oldvar = Puppet[:puppetvar]
         Puppet[:puppetvar] = @configpath
 
+        unless File.exists?(@configpath)
+            Dir.mkdir(@configpath)
+        end
+
         @@tmpfiles = [@configpath]
+        @@tmppids = []
+    end
+
+
+    def spin
+        if Puppet[:debug]
+            return
+        end
+        @modes = %w{| / - \\}
+        unless defined? @mode
+            @mode = 0
+        end
+
+        $stderr.print "%s" % @modes[@mode]
+        if @mode == @modes.length - 1
+            @mode = 0
+        else
+            @mode += 1
+        end
+        $stderr.flush
+    end
+
+    # stop any services that might be hanging around
+    def stopservices
+        if stype = Puppet::Type.type(:service)
+            stype.each { |service|
+                service[:running] = false
+                service.sync
+            }
+        end
     end
 
     def teardown
+        stopservices
         @@tmpfiles.each { |file|
             if FileTest.exists?(file)
                 system("chmod -R 755 %s" % file)
                 system("rm -rf %s" % file)
-                Puppet.err "Removing %s" % file
-            else
-                Puppet.err "%s does not exist" % file
             end
         }
         @@tmpfiles.clear
+
+        @@tmppids.each { |pid|
+            %x{kill -INT #{pid} 2>/dev/null}
+        }
+        @@tmppids.clear
         Puppet::Type.allclear
+        Puppet.clear
     end
 
     def tempfile
-        File.join(self.tmpdir(), "puppetestfile%s" % rand(100))
+        f = File.join(self.tmpdir(), self.class.to_s + "testfile" + rand(1000).to_s)
+        @@tmpfiles << f
+        return f
+    end
+
+    def testdir
+        d = File.join(self.tmpdir(), self.class.to_s + "testdir" + rand(1000).to_s)
+        @@tmpfiles << d
+        return d
     end
 
     def tmpdir
         unless defined? @tmpdir and @tmpdir
             @tmpdir = case Facter["operatingsystem"].value
             when "Darwin": "/private/tmp"
+            when "SunOS": "/var/tmp"
             else
                 "/tmp"
             end
@@ -97,6 +141,132 @@ class TestPuppet < Test::Unit::TestCase
     end
 end
 
+
+class ServerTest < TestPuppet
+    def setup
+        if defined? @@port
+            @@port += 1
+        else
+            @@port = 8085
+        end
+
+        super
+    end
+
+    # create a simple manifest that just creates a file
+    def mktestmanifest
+        file = File.join(Puppet[:puppetconf], "%ssite.pp" % (self.class.to_s + "test"))
+        @createdfile = File.join(tmpdir(), self.class.to_s + "servermanifesttesting")
+
+        File.open(file, "w") { |f|
+            f.puts "file { \"%s\": create => true, mode => 755 }\n" % @createdfile
+        }
+
+        @@tmpfiles << @createdfile
+        @@tmpfiles << file
+
+        return file
+    end
+
+    # create a server, forked into the background
+    def mkserver(handlers = nil)
+        # our default handlers
+        unless handlers
+            handlers = {
+                :CA => {}, # so that certs autogenerate
+                :Master => {
+                    :File => mktestmanifest(),
+                },
+            }
+        end
+
+        # then create the actual server
+        server = nil
+        assert_nothing_raised {
+            server = Puppet::Server.new(
+                :Port => @@port,
+                :Handlers => handlers
+            )
+        }
+
+        # fork it
+        spid = fork {
+            trap(:INT) { server.shutdown }
+            server.start
+        }
+
+        # and store its pid for killing
+        @@tmppids << spid
+
+        # give the server a chance to do its thing
+        sleep 1 
+        return spid
+    end
+
+end
+
+class ExeTest < ServerTest
+    unless ENV["PATH"] =~ /puppet/
+        # ok, we have to add the bin directory to our search path
+        ENV["PATH"] += ":" + File.join($puppetbase, "bin")
+
+        # and then the library directories
+        libdirs = $:.find_all { |dir|
+            dir =~ /puppet/ or dir =~ /\.\./
+        }
+        ENV["RUBYLIB"] = libdirs.join(":")
+    end
+
+    def startmasterd(args = "")
+        output = nil
+
+        manifest = mktestmanifest()
+        args += " --manifest %s" % manifest
+        args += " --ssldir %s" % Puppet[:ssldir]
+        args += " --port %s" % @@port
+        args += " --autosign"
+
+        cmd = "puppetmasterd %s" % args
+
+
+        assert_nothing_raised {
+            output = %x{#{cmd}}.chomp
+        }
+        assert($? == 0, "Puppetmasterd exit status was %s" % $?)
+        assert_equal("", output, "Puppetmasterd produced output %s" % output)
+
+        return manifest
+    end
+
+    def stopmasterd(running = true)
+        ps = Facter["ps"].value || "ps -ef"
+
+        pid = nil
+        %x{#{ps}}.chomp.split(/\n/).each { |line|
+            if line =~ /ruby.+puppetmasterd/
+                next if line =~ /tc_/ # skip the test script itself
+                ary = line.split(" ")
+                pid = ary[1].to_i
+            end
+        }
+
+        # we default to mandating that it's running, but teardown
+        # doesn't require that
+        if running or pid
+            assert(pid)
+
+            assert_nothing_raised {
+                Process.kill("-INT", pid)
+            }
+        end
+    end
+
+    def teardown
+        stopmasterd(false)
+        super
+    end
+end
+
 unless defined? PuppetTestSuite
     $:.unshift File.join(Dir.getwd, '../lib')
 
@@ -131,10 +301,14 @@ unless defined? PuppetTestSuite
         end
     end
 
+    # a list of files that we can parse for testing
     def textfiles
-        textdir = File.join($puppetbase,"examples","code")
-        # only parse this one file now
-        yield File.join(textdir,"head")
+        textdir = File.join($puppetbase,"examples","code", "snippets")
+        Dir.entries(textdir).reject { |f|
+            f =~ /^\./ or f =~ /fail/
+        }.each { |f|
+            yield File.join(textdir, f)
+        }
     end
 
     def failers
@@ -384,5 +558,4 @@ unless defined? PuppetTestSuite
         end
 
     end
-
 end

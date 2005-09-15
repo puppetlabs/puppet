@@ -14,46 +14,22 @@ require 'puppet/client'
 require 'test/unit'
 require 'puppettest.rb'
 
-class TestMaster < Test::Unit::TestCase
-    def setup
-        if __FILE__ == $0
-            Puppet[:loglevel] = :debug
-        end
-
-        @@tmpfiles = []
-    end
-
-    def stopservices
-        if stype = Puppet::Type.type(:service)
-            stype.each { |service|
-                service[:running] = false
-                service.sync
-            }
-        end
-    end
-
+class TestMaster < ServerTest
     def teardown
-        Puppet::Type.allclear
+        super
         print "\n\n\n\n" if Puppet[:debug]
-
-        @@tmpfiles.each { |file|
-            if FileTest.exists?(file)
-                system("rm -rf %s" % file)
-            end
-        }
     end
 
+    # run through all of the existing test files and make sure everything
+    # works
     def test_files
-        Puppet[:debug] = true if __FILE__ == $0
-        Puppet[:puppetconf] = "/tmp/servertestingdir"
-        @@tmpfiles << Puppet[:puppetconf]
+        count = 0
         textfiles { |file|
             Puppet.debug("parsing %s" % file)
-            server = nil
             client = nil
-            threads = []
-            port = 8080
             master = nil
+
+            # create our master
             assert_nothing_raised() {
                 # this is the default server setup
                 master = Puppet::Server::Master.new(
@@ -61,13 +37,15 @@ class TestMaster < Test::Unit::TestCase
                     :Local => true
                 )
             }
+
+            # and our client
             assert_nothing_raised() {
                 client = Puppet::Client::MasterClient.new(
                     :Master => master
                 )
             }
 
-            # pull our configuration
+            # pull our configuration a few times
             assert_nothing_raised() {
                 client.getconfig
                 stopservices
@@ -83,13 +61,15 @@ class TestMaster < Test::Unit::TestCase
                 stopservices
                 Puppet::Type.allclear
             }
+            # only test three files; that's plenty
+            if count > 3
+                break
+            end
+            count += 1
         }
     end
 
     def test_defaultmanifest
-        Puppet[:debug] = true if __FILE__ == $0
-        Puppet[:puppetconf] = "/tmp/servertestingdir"
-        @@tmpfiles << Puppet[:puppetconf]
         textfiles { |file|
             Puppet[:manifest] = file
             client = nil
@@ -118,22 +98,11 @@ class TestMaster < Test::Unit::TestCase
         }
     end
 
-    def test_zfilereread
-        Puppet[:debug] = true if __FILE__ == $0
-        Puppet[:puppetconf] = "/tmp/masterfilereread"
-        Puppet[:puppetvar] = "/tmp/masterfilereread"
-        @@tmpfiles << Puppet[:puppetconf]
+    def test_filereread
+        manifest = mktestmanifest()
 
-        manifest = "/tmp/masterfilerereadmanifest.pp"
-        @@tmpfiles << manifest = "/tmp/masterfilerereadmanifest.pp"
-        file1 = "/tmp/masterfilecreationrearead"
-        file2 = "/tmp/masterfilecreationrearead2"
-        @@tmpfiles << file1
-        @@tmpfiles << file2
+        file2 = @createdfile + "2"
 
-        File.open(manifest, "w") { |f|
-            f.puts %{file { "/tmp/masterfilecreationrearead": create => true } }
-        }
         client = master = nil
         assert_nothing_raised() {
             # this is the default server setup
@@ -154,12 +123,13 @@ class TestMaster < Test::Unit::TestCase
             client.apply
         }
 
-        assert(FileTest.exists?(file1), "First file %s does not exist" % file1)
+        assert(FileTest.exists?(@createdfile),
+            "Created file %s does not exist" % @createdfile)
         sleep 1
         Puppet::Type.allclear
 
         File.open(manifest, "w") { |f|
-            f.puts %{file { "/tmp/masterfilecreationrearead2": create => true } }
+            f.puts "file { \"%s\": create => true }\n" % file2
         }
         assert_nothing_raised {
             client.getconfig

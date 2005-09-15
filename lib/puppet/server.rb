@@ -76,7 +76,7 @@ module Puppet
                 hash[:SSLStartImmediately] = true
                 hash[:SSLEnable] = true
                 hash[:SSLCACertificateFile] = @cacertfile
-                hash[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_NONE
+                hash[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_PEER
                 hash[:SSLCertName] = nil
 
                 super(hash)

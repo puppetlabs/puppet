@@ -15,7 +15,20 @@ class Server
         end
 
         def authorize(request, method)
-            true
+            if request.client_cert
+                Puppet.info "Allowing %s(%s) trusted access to %s" %
+                    [request.peeraddr[2], request.peeraddr[3], method]
+                return true
+            else
+                if method =~ /^puppetca\./
+                    Puppet.notice "Allowing %s(%s) untrusted access to CA methods" %
+                        [request.peeraddr[2], request.peeraddr[3]]
+                else
+                    Puppet.err "Unauthenticated client %s(%s) cannot call %s" %
+                        [request.peeraddr[2], request.peeraddr[3], method]
+                    return false
+                end
+            end
         end
 
         def initialize(server, handlers)
@@ -79,12 +92,12 @@ class Server
                 )
             end
 
-            if request.client_cert
-                Puppet.info "client cert is %s" % request.client_cert
-            end
-            if request.server_cert
-                #Puppet.info "server cert is %s" % @request.server_cert
-            end
+            #if request.client_cert
+            #    Puppet.info "client cert is %s" % request.client_cert
+            #end
+            #if request.server_cert
+            #    Puppet.info "server cert is %s" % @request.server_cert
+            #end
             #p @request
             begin
                 super

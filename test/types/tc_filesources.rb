@@ -40,16 +40,12 @@ class TestFileSources < TestPuppet
         rescue
             system("rm -rf %s" % Puppet[:checksumfile])
         end
-        @@tmppids = []
         super
     end
 
     def teardown
         clearstorage
         super
-        @@tmppids.each { |pid|
-            system("kill -INT %s" % pid)
-        }
     end
 
     def initstorage
@@ -129,8 +125,6 @@ class TestFileSources < TestPuppet
         from = File.open(frompath) { |o| o.read }
         to = File.open(topath) { |o| o.read }
         assert_equal(from,to)
-        clearstorage
-        Puppet::Type.allclear
         @@tmpfiles.push path
     end
 
@@ -159,8 +153,6 @@ class TestFileSources < TestPuppet
         }
 
         assert(FileTest.exists?(todir))
-
-        clearstorage
         Puppet::Type.allclear
     end
 
@@ -311,7 +303,10 @@ class TestFileSources < TestPuppet
         return file
     end
 
-    def test_zSimpleNetworkSources
+    # test raw xmlrpc calls
+    # this test is disabled because it requires way too much setup to get
+    # the certificates correct
+    def disabled_test_SimpleNetworkSources
         server = nil
         basedir = "/tmp/simplenetworksourcetesting"
         @@tmpfiles << basedir
@@ -393,7 +388,7 @@ class TestFileSources < TestPuppet
         }
     end
 
-    def test_zNetworkSources
+    def test_NetworkSources
         server = nil
         basedir = "/tmp/networksourcetesting"
         @@tmpfiles << basedir

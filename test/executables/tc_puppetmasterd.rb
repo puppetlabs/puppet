@@ -14,16 +14,7 @@ require 'facter'
 
 # $Id$
 
-# ok, we have to add the bin directory to our search path
-ENV["PATH"] += ":" + File.join($puppetbase, "bin")
-
-# and then the library directories
-libdirs = $:.find_all { |dir|
-    dir =~ /puppet/ or dir =~ /\.\./
-}
-ENV["RUBYLIB"] = libdirs.join(":")
-
-class TestPuppetMasterD < Test::Unit::TestCase
+class TestPuppetMasterD < ExeTest
     def getcerts
         include Puppet::Daemon
         if self.readcerts
@@ -33,102 +24,68 @@ class TestPuppetMasterD < Test::Unit::TestCase
         end
     end
 
-    def setup
-        if __FILE__ == $0
-            Puppet[:loglevel] = :debug
-        end
-        @@tmpfiles = []
-        @port = 8320
-    end
-
-    def startmasterd(args)
-        output = nil
-        cmd = "puppetmasterd %s" % args
-        #if Puppet[:debug]
-        #    Puppet.debug "turning daemon debugging on"
-        #    cmd += " --debug"
-        #end
-        assert_nothing_raised {
-            output = %x{puppetmasterd --port #{@port} #{args}}.chomp
-        }
-        assert($? == 0, "Puppetmasterd exit status was %s" % $?)
-        assert_equal("", output, "Puppetmasterd produced output %s" % output)
-    end
-
-    def stopmasterd(running = true)
-        ps = Facter["ps"].value || "ps -ef"
-
-        pid = nil
-        %x{#{ps}}.chomp.split(/\n/).each { |line|
-            if line =~ /ruby.+puppetmasterd/
-                next if line =~ /tc_/ # skip the test script itself
-                ary = line.split(" ")
-                pid = ary[1].to_i
-            end
-        }
-
-        # we default to mandating that it's running, but teardown
-        # doesn't require that
-        if running or pid
-            assert(pid)
-
-            assert_nothing_raised {
-                Process.kill("-INT", pid)
-            }
-        end
-    end
-
-    def teardown
-        @@tmpfiles.flatten.each { |file|
-            if File.exists?(file)
-                system("rm -rf %s" % file)
-            end
-        }
-
-        stopmasterd(false)
-    end
-
+    # start the daemon and verify it responds and such
     def test_normalstart
-        file = File.join($puppetbase, "examples", "code", "head")
-        startmasterd("--manifest #{file}")
+        startmasterd
 
         assert_nothing_raised {
-            socket = TCPSocket.new("127.0.0.1", @port)
+            socket = TCPSocket.new("127.0.0.1", @@port)
             socket.close
         }
 
         client = nil
         assert_nothing_raised() {
-            client = XMLRPC::Client.new("localhost", "/RPC2", @port,
-                nil, nil, nil, nil, true, 5)
+            client = Puppet::Client::StatusClient.new(
+                :Server => "localhost",
+                :Port => @@port
+            )
         }
+
+        # set our client up to auto-sign
+        assert(Puppet[:autosign] =~ /^#{File::SEPARATOR}/,
+            "Autosign is set to %s, not a file" % Puppet[:autosign])
+
+        FileUtils.mkdir_p(File.dirname(Puppet[:autosign]))
+        File.open(Puppet[:autosign], "w") { |f|
+            f.puts client.fqdn
+        }
+
         retval = nil
 
+        # init the client certs
         assert_nothing_raised() {
-            retval = client.call("status.status", "")
+            client.initcerts
+        }
+
+        # call status
+        assert_nothing_raised() {
+            retval = client.status
         }
         assert_equal(1, retval, "Status.status return value was %s" % retval)
-        facts = {}
-        Facter.each { |p,v|
-            facts[p] = v
+
+        # this client shoulduse the same certs
+        assert_nothing_raised() {
+            client = Puppet::Client::MasterClient.new(
+                :Server => "localhost",
+                :Port => @@port
+            )
         }
-        textfacts = CGI.escape(Marshal::dump(facts))
         assert_nothing_raised() {
             #Puppet.notice "calling status"
             #retval = client.call("status.status", "")
-            retval = client.call("puppetmaster.getconfig", textfacts)
+            retval = client.getconfig
         }
 
         objects = nil
-        assert_nothing_raised {
-            Marshal::load(CGI.unescape(retval))
-        }
+        assert_instance_of(Puppet::TransBucket, retval,
+            "Retrieved non-transportable object")
         stopmasterd
     end
 
+    # verify that we can run puppetmasterd in parse-only mode
     def test_parseonly
-        file = File.join($puppetbase, "examples", "code", "head")
-        startmasterd("--parseonly --manifest #{file}")
+        startmasterd("--parseonly")
+        sleep(1)
 
         pid = nil
         ps = Facter["ps"].value || "ps -ef"

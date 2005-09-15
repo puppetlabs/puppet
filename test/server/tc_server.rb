@@ -21,60 +21,25 @@ else
     $short = false
 end
 
-class TestServer < Test::Unit::TestCase
-    def setup
-        if __FILE__ == $0
-            Puppet[:loglevel] = :debug
-            #paths = Puppet::Type.type(:service).searchpath
-            #paths.push "%s/examples/root/etc/init.d" % $puppetbase
-            #Puppet::Type.type(:service).setpath(paths)
-        end
-
-        @oldconf = Puppet[:puppetconf]
-        Puppet[:puppetconf] = "/tmp/servertesting"
-        @oldvar = Puppet[:puppetvar]
-        Puppet[:puppetvar] = "/tmp/servertesting"
-
-        @@tmpfiles = ["/tmp/servertesting"]
-        @@tmppids = []
-    end
-
-    def stopservices
-        if stype = Puppet::Type.type(:service)
-            stype.each { |service|
-                service[:running] = false
-                service.sync
-            }
-        end
-    end
-
+class TestServer < ServerTest
     def teardown
-        Puppet::Type.allclear
+        super
         print "\n\n\n\n" if Puppet[:debug]
-
-        @@tmpfiles.each { |file|
-            if FileTest.exists?(file)
-                system("rm -rf %s" % file)
-            end
-        }
-        @@tmppids.each { |pid|
-            system("kill -INT %s" % pid)
-        }
-
-        Puppet[:puppetconf] = @oldconf
-        Puppet[:puppetvar] = @oldvar
     end
 
+    # just do a simple start test
     def test_start
-        server = nil
-        Puppet[:ssldir] = "/tmp/serverstarttesting"
         Puppet[:autosign] = true
-        @@tmpfiles << "/tmp/serverstarttesting"
-        port = 8081
-        file = File.join($puppetbase, "examples", "code", "head")
+        server = nil
+        # make a test manifest
+        file = mktestmanifest()
+
+        # create a simple server
+        # we can use threading here because we're not talking to the server,
+        # just starting and stopping it
         assert_nothing_raised() {
             server = Puppet::Server.new(
-                :Port => port,
+                :Port => @@port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
                     :Master => {
@@ -85,6 +50,8 @@ class TestServer < Test::Unit::TestCase
             )
 
         }
+
+        # start it
         sthread = nil
         assert_nothing_raised() {
             trap(:INT) { server.shutdown }
@@ -92,82 +59,29 @@ class TestServer < Test::Unit::TestCase
                 server.start
             }
         }
-        sleep 1
+
+        # and stop it
         assert_nothing_raised {
             server.shutdown
         }
+
+        # and then wait
         assert_nothing_raised {
             sthread.join
         }
     end
 
-    # disabled because i can't find a good way to test client connecting
-    # i'll have to test the external executables
-    def disabled_test_connect_with_threading
-        server = nil
-        Puppet[:ssldir] = "/tmp/serverconnecttesting"
-        Puppet[:autosign] = true
-        @@tmpfiles << "/tmp/serverconnecttesting"
-        threads = []
-        port = 8080
-        server = nil
-        Thread.abort_on_exception = true
-        assert_nothing_raised() {
-            server = Puppet::Server.new(
-                :Port => port,
-                :Handlers => {
-                    :CA => {}, # so that certs autogenerate
-                    :Status => nil
-                }
-            )
-
-        }
-        sthread = Thread.new {
-            assert_nothing_raised() {
-                #trap(:INT) { server.shutdown; Kernel.exit! }
-                trap(:INT) { server.shutdown }
-                server.start
-            }
-        }
-
-        sleep(3)
-        client = nil
-        assert_nothing_raised() {
-            client = XMLRPC::Client.new("localhost", "/RPC2", port, nil, nil,
-                nil, nil, true, 3)
-        }
-        retval = nil
-
-        clthread = Thread.new {
-            assert_nothing_raised() {
-                retval = client.call("status.status", "")
-            }
-        }
-        assert_not_nil(clthread.join(5))
-
-        assert_equal(1, retval)
-        assert_nothing_raised {
-            #system("kill -INT %s" % serverpid)
-            server.shutdown
-        }
-
-        assert_not_nil(sthread.join(5))
-
-        #Process.wait
-    end
-
-    # disabled because i can't find a good way to test client connecting
-    # i'll have to test the external executables
+    # test that we can connect to the server
+    # we have to use fork here, because we apparently can't use threads
+    # to talk to other threads
     def test_connect_with_fork
         server = nil
-        Puppet[:ssldir] = "/tmp/serverconnecttesting"
         Puppet[:autosign] = true
-        @@tmpfiles << "/tmp/serverconnecttesting"
-        serverpid = nil
-        port = 8080
+
+        # create a server just serving status
         assert_nothing_raised() {
             server = Puppet::Server.new(
-                :Port => port,
+                :Port => @@port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
                     :Status => nil
@@ -175,49 +89,45 @@ class TestServer < Test::Unit::TestCase
             )
 
         }
+
+        # and fork
         serverpid = fork {
             assert_nothing_raised() {
-                #trap(:INT) { server.shutdown; Kernel.exit! }
                 trap(:INT) { server.shutdown }
                 server.start
             }
         }
         @@tmppids << serverpid
 
-        sleep(3)
+        # create a status client, and verify it can talk
         client = nil
         assert_nothing_raised() {
-            client = XMLRPC::Client.new("localhost", "/RPC2", port, nil, nil,
-                nil, nil, true, 3)
+            client = Puppet::Client::StatusClient.new(
+                :Server => "localhost",
+                :Port => @@port
+            )
         }
         retval = nil
 
         assert_nothing_raised() {
-            retval = client.call("status.status")
+            retval = client.status
         }
 
         assert_equal(1, retval)
-        #assert_nothing_raised {
-        #    system("kill -INT %s" % serverpid)
-        #    #server.shutdown
-        #}
-
-        #Process.wait
     end
 
-    # disabled because i can't find a good way to test client connecting
-    # i'll have to test the external executables
-    def test_zzgetconfig_with_fork
-        server = nil
-        Puppet[:ssldir] = "/tmp/serverconfigtesting"
+    # similar to the last test, but this time actually run getconfig
+    def test_getconfig_with_fork
         Puppet[:autosign] = true
-        @@tmpfiles << "/tmp/serverconfigtesting"
         serverpid = nil
-        port = 8082
-        file = File.join($puppetbase, "examples", "code", "head")
+
+        file = mktestmanifest()
+
+        server = nil
+        # make our server again
         assert_nothing_raised() {
             server = Puppet::Server.new(
-                :Port => port,
+                :Port => @@port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
                     :Master => {
@@ -237,118 +147,26 @@ class TestServer < Test::Unit::TestCase
         }
         @@tmppids << serverpid
 
-        sleep(3)
         client = nil
 
-        # first use a puppet client object
+        # and then start a masterclient
         assert_nothing_raised() {
             client = Puppet::Client::MasterClient.new(
                 :Server => "localhost",
-                :Port => port
+                :Port => @@port
             )
         }
         retval = nil
 
+        # and run getconfig a couple of times
         assert_nothing_raised() {
             retval = client.getconfig
         }
+        assert_instance_of(Puppet::TransBucket, retval,
+            "Server returned something other than a TransBucket")
 
-        # then use a raw rpc client
         assert_nothing_raised() {
-            client = XMLRPC::Client.new("localhost", "/RPC2", port, nil, nil,
-                nil, nil, true, 3)
-        }
-        retval = nil
-
-        facts = CGI.escape(Marshal.dump(Puppet::Client::MasterClient.facts))
-        assert_nothing_raised() {
-            retval = client.call("puppetmaster.getconfig", facts)
-        }
-
-        #assert_equal(1, retval)
-    end
-
-    # disabled because clients can't seem to connect from in the same process
-    def disabled_test_files
-        Puppet[:debug] = true if __FILE__ == $0
-        Puppet[:puppetconf] = "/tmp/servertestingdir"
-        Puppet[:autosign] = true
-        @@tmpfiles << Puppet[:puppetconf]
-        textfiles { |file|
-            Puppet.debug("parsing %s" % file)
-            server = nil
-            client = nil
-            threads = []
-            port = 8080
-            assert_nothing_raised() {
-                # this is the default server setup
-                server = Puppet::Server.new(
-                    :Port => port,
-                    :Handlers => {
-                        :CA => {}, # so that certs autogenerate
-                        :Master => {
-                            :File => file,
-                        },
-                    }
-                )
-            }
-            assert_nothing_raised() {
-                client = Puppet::Client.new(
-                    :Server => "localhost",
-                    :Port => port
-                )
-            }
-
-            # start the server
-            assert_nothing_raised() {
-                trap(:INT) { server.shutdown }
-                threads << Thread.new {
-                    server.start
-                }
-            }
-
-            # start the client
-            #assert_nothing_raised() {
-            #    threads << Thread.new {
-            #        client.start
-            #    }
-            #}
-
-            sleep(1)
-            # pull our configuration
-            assert_nothing_raised() {
-                client.getconfig
-                stopservices
-                Puppet::Type.allclear
-            }
-            assert_nothing_raised() {
-                client.getconfig
-                stopservices
-                Puppet::Type.allclear
-            }
-            assert_nothing_raised() {
-                client.getconfig
-                stopservices
-                Puppet::Type.allclear
-            }
-
-            # and shut them both down
-            assert_nothing_raised() {
-                [server].each { |thing|
-                    thing.shutdown
-                }
-            }
-
-            # make sure everything's complete before we stop
-            assert_nothing_raised() {
-                threads.each { |thr|
-                    thr.join
-                }
-            }
-            assert_nothing_raised() {
-                stopservices
-            }
-            Puppet::Type.allclear
+            retval = client.getconfig
         }
     end
 end

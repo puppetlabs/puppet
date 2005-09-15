@@ -101,6 +101,10 @@ module Puppet
         @defaults[:puppetvar] = File.expand_path("~/.puppet/var")
     end
 
+    def self.clear
+        @@config = Hash.new(false)
+    end
+
 	# configuration parameter access and stuff
 	def self.[](param)
         if param.is_a?(String)
