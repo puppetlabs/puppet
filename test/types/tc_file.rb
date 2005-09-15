@@ -12,7 +12,7 @@ require 'puppettest'
 
 # $Id$
 
-class TestFile < Test::Unit::TestCase
+class TestFile < TestPuppet
     include FileTesting
     # hmmm
     # this is complicated, because we store references to the created
@@ -35,30 +35,18 @@ class TestFile < Test::Unit::TestCase
     end
 
     def setup
-        @@tmpfiles = []
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-        Puppet[:checksumfile] = "/tmp/checksumtestfile"
-        @@tmpfiles << Puppet[:checksumfile]
         begin
             initstorage
         rescue
             system("rm -rf %s" % Puppet[:checksumfile])
         end
+        super
     end
 
     def teardown
         clearstorage
-        Puppet::Type.allclear
-        @@tmpfiles.each { |file|
-            if FileTest.exists?(file)
-                system("chmod -R 755 %s" % file)
-                system("rm -rf %s" % file)
-            end
-        }
-        @@tmpfiles.clear
-
-        # clean up so i don't screw up other tests
         Puppet::Storage.clear
+        super
     end
 
     def initstorage
@@ -252,7 +240,7 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    def test_zzchecksums
+    def test_checksums
         types = %w{md5 md5lite timestamp time}
         exists = "/tmp/sumtest-exists"
         nonexists = "/tmp/sumtest-nonexists"
@@ -428,9 +416,11 @@ class TestFile < Test::Unit::TestCase
 
     def test_filetype_retrieval
         file = nil
+
+        Puppet.err tmpdir()
         assert_nothing_raised {
             file = Puppet::Type::PFile.new(
-                :name => "/tmp",
+                :name => tmpdir(),
                 :check => :type
             )
         }

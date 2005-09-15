@@ -2,13 +2,44 @@
 
 # $Id$
 
+require 'facter'
 require 'puppet/type/state'
 
 module Puppet
-    # okay, how do we deal with parameters that don't have operations
-    # associated with them?
+    module CronType
+        module Default
+            def self.fields
+                return [:minute, :hour, :weekday, :monthday, :command]
+            end
+
+            def self.retrieve(user)
+                %x{crontab -u #{user} -l 2>/dev/null}.split("\n").each { |line|
+                    hash = {}
+                    ary = line.split(" ")
+                    fields().each { |param|
+                        hash[param] = ary.shift
+                    }
+
+                    if ary.length > 0
+                        hash[:command] += " " + ary.join(" ")
+                    end
+                    cron = nil
+                    unless cron = Puppet::Type::Cron[hash[:command]]
+                        cron = Puppet::Type::Cron.new
+                    end
+
+                    hash.each { |param, value|
+                        cron.is = [param, value]
+                    }
+                }
+            end
+
+            def self.sync(user)
+            end
+        end
+    end
+
     class State
-        # this always runs
         class CronCommand < Puppet::State
             @doc = "The command to execute in the cron job.  The environment
                 provided to the command varies by local system rules, and it is
@@ -17,109 +48,19 @@ module Puppet
                 user's environment is desired it should be sourced manually."
             @name = :command
 
-            # because this command always runs,
-            # we're just using retrieve to verify that the command
-            # exists and such
             def retrieve
-                cmd = self.parent[:command]
-                if cmd =~ /^\//
-                    exe = cmd.split(/ /)[0]
-                    unless FileTest.exists?(exe)
-                        raise TypeError.new(
-                            "Could not find executable %s" % exe
-                        )
-                    end
-                    unless FileTest.executable?(exe)
-                        raise TypeError.new(
-                            "%s is not executable" % exe
-                        )
-                    end
-                elsif path = self.parent[:path]
-                    exe = cmd.split(/ /)[0]
-                    tmppath = ENV["PATH"]
-                    ENV["PATH"] = self.parent[:path]
-
-                    path = %{which #{exe}}.chomp
-                    if path == ""
-                        raise TypeError.new(
-                            "Could not find command '%s'" % exe
-                        )
-                    end
-                    ENV["PATH"] = tmppath
-                else
-                    raise TypeError.new(
-                        "%s is somehow not qualified with no search path" %
-                            self.parent[:command]
-                    )
-                end
-
-                if self.parent[:refreshonly]
-                    # if refreshonly is enabled, then set things so we
-                    # won't sync
-                    self.is = self.should
-                else
-                    # else, just set it to something we know it won't be
-                    self.is = nil
-                end
+                # nothing...
             end
 
             def sync
-                olddir = nil
-                unless self.parent[:cwd].nil?
-                    debug "Resetting cwd to %s" % self.parent[:cwd]
-                    olddir = Dir.getwd
-                    begin
-                        Dir.chdir(self.parent[:cwd])
-                    rescue => detail
-                        raise "Failed to set cwd: %s" % detail
-                    end
-                end
-
-                tmppath = ENV["PATH"]
-                ENV["PATH"] = self.parent[:path]
-
-                # capture both stdout and stderr
-                @output = %x{#{self.parent[:command]} 2>&1}
-                status = $?
-
-                loglevel = :info
-                if status.exitstatus.to_s != self.should.to_s
-                    err("%s returned %s" %
-                        [self.parent[:command],status.exitstatus])
-
-                    # if we've had a failure, up the log level
-                    loglevel = :err
-                end
-
-                # and log
-                @output.split(/\n/).each { |line|
-                    Puppet.send(loglevel, "%s: %s" % [self.parent[:command],line])
-                }
-
-                # reset things to how we found them
-                ENV["PATH"] = tmppath
-
-                unless olddir.nil?
-                    begin
-                        Dir.chdir(olddir)
-                    rescue => detail
-                        err("Could not reset cwd to %s: %s" %
-                            [olddir,detail])
-                    end
-                end
-
-                return :executed_command
             end
         end
     end
 
     class Type
         class Cron < Type
-            # this is kind of hackish, using the return value as the
-            # state, but apparently namevars can't also be states
-            # who knew?
             @states = [
-                Puppet::State::Returns
+                Puppet::State::CronCommand
             ]
 
             @parameters = [
@@ -154,24 +95,51 @@ module Puppet
             @name = :cron
             @namevar = :name
 
-            def initialize(hash)
+            @loaded = {}
+
+            @synced = {}
+
+            case Facter["operatingsystem"].value
+            when "Stub":
+                # nothing
+            else
+                Puppet.err "including default"
+                include Puppet::CronType::Default
             end
 
-            def output
-                if self.state(:returns).nil?
-                    return nil
+            def self.loaded?(user)
+                if @loaded.include?(user)
+                    return @loaded[user]
                 else
-                    return self.state(:returns).output
+                    return nil
                 end
             end
 
-            # this might be a very, very bad idea...
-            def refresh
-                self.state(:returns).sync
+            def self.sync(user)
             end
 
-            def to_s
-                "exec(%s)" % self.name
+            def initialize(hash)
+            end
+
+            def is=(ary)
+                param, value = ary
+                if param.is_a?(String)
+                    param = param.intern
+                end
+                unless @states.include?(param)
+                    if stateklass = self.class.validstate?(name) 
+                        begin
+                        @states[param] = stateklass.new(
+                            :parent => self
+                        )
+                        rescue => detail
+                        end
+                    else
+                        raise Puppet::Error, "Invalid parameter %s" % [name]
+                    end
+
+                end
+                @states[param].is = value
             end
         end
     end

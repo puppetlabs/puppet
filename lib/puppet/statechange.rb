@@ -41,33 +41,39 @@ module Puppet
             end
 
             begin
-                event = @state.sync
-                @run = true
-                
-                # default to a simple event type
-                if event.nil?
-                    #event = @state.parent.class.name.id2name + "_changed"
-                    # they didn't actually change anything
+                events = @state.sync
+                if events.nil?
                     return nil
-                elsif ! event.is_a?(Symbol)
-                    Puppet.warning "State '%s' returned invalid event '%s'; resetting to default" %
-                        [@state.class,event]
-
-                    event = @state.parent.class.name.id2name + "_changed"
                 end
 
-                # i should maybe include object type, but the event type
-                # should basically point to that, right?
-                    #:state => @state,
-                    #:object => @state.parent,
-                Puppet.notice self.to_s
-                return Puppet::Event.new(
-                    :event => event,
-                    :change => self,
-                    :transaction => @transaction,
-                    :source => @state.parent,
-                    :message => self.to_s
-                )
+                unless events.is_a?(Array)
+                    events = [events]
+                end
+                @run = true
+                
+                return events.collect { |event|
+                    # default to a simple event type
+                    if ! event.is_a?(Symbol)
+                        Puppet.warning("State '%s' returned invalid event '%s'; resetting to default" %
+                            [@state.class,event])
+
+                        event = @state.parent.class.name.id2name + "_changed"
+                    end
+
+                    # i should maybe include object type, but the event type
+                    # should basically point to that, right?
+                        #:state => @state,
+                        #:object => @state.parent,
+                    # FIXME this is where loglevel stuff should go
+                    Puppet.notice self.to_s
+                    Puppet::Event.new(
+                        :event => event,
+                        :change => self,
+                        :transaction => @transaction,
+                        :source => @state.parent,
+                        :message => self.to_s
+                    )
+                }
             rescue => detail
                 #Puppet.err "%s failed: %s" % [self.to_s,detail]
                 raise

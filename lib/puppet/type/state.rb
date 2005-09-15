@@ -69,8 +69,10 @@ class State < Puppet::Element
 
         if hash.include?(:should)
             self.should = hash[:should]
-        else # we got passed no argument
-            # leave @should undefined
+        end
+
+        if hash.include?(:is)
+            self.is = hash[:is]
         end
     end
     #---------------------------------------------------------------

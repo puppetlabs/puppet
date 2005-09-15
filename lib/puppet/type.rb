@@ -460,28 +460,7 @@ class Type < Puppet::Element
                 if @states.include?(name)
                     @states[name].should = value
                 else
-                    #Puppet.warning "Creating state %s for %s" %
-                    #    [stateklass.name,self.name]
-                    begin
-                        # make sure the state doesn't have any errors
-                        newstate = stateklass.new(
-                            :parent => self,
-                            :should => value
-                        )
-                        @states[name] = newstate
-                    rescue Puppet::Error => detail
-                        # the state failed, so just ignore it
-                        Puppet.warning "State %s failed: %s" %
-                            [name, detail]
-                    rescue Puppet::DevError => detail
-                        # the state failed, so just ignore it
-                        Puppet.err "State %s failed: %s" %
-                            [name, detail]
-                    rescue => detail
-                        # the state failed, so just ignore it
-                        Puppet.err "State %s failed: %s (%s)" %
-                            [name, detail, detail.class]
-                    end
+                    newstate(name, :should => value)
                 end
             end
         elsif self.class.validparameter?(name)
@@ -494,7 +473,7 @@ class Type < Puppet::Element
                 @parameters[name] = value
             end
         else
-            raise "Invalid parameter %s" % [name]
+            raise Puppet::Error, "Invalid parameter %s" % [name]
         end
     end
     #---------------------------------------------------------------
@@ -597,6 +576,45 @@ class Type < Puppet::Element
                 end
             }
             return @managed
+        end
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # create a new state
+    def newstate(name, hash = {})
+        if stateklass = self.class.validstate?(name) 
+            if @states.include?(name)
+                hash.each { |var,value|
+                    if value.is_a?(Puppet::State)
+                        raise "huh?"
+                    end
+                    @states[name].send(var.to_s + "=", value)
+                }
+            else
+                #Puppet.warning "Creating state %s for %s" %
+                #    [stateklass.name,self.name]
+                hash[:parent] = self
+                begin
+                    # make sure the state doesn't have any errors
+                    newstate = stateklass.new(hash)
+                    @states[name] = newstate
+                rescue Puppet::Error => detail
+                    # the state failed, so just ignore it
+                    Puppet.warning "State %s failed: %s" %
+                        [name, detail]
+                rescue Puppet::DevError => detail
+                    # the state failed, so just ignore it
+                    Puppet.err "State %s failed: %s" %
+                        [name, detail]
+                rescue => detail
+                    # the state failed, so just ignore it
+                    Puppet.err "State %s failed: %s (%s)" %
+                        [name, detail, detail.class]
+                end
+            end
+        else
+            raise Puppet::Error, "Invalid parameter %s" % name
         end
     end
     #---------------------------------------------------------------
@@ -1017,17 +1035,7 @@ class Type < Puppet::Element
             next if @states.include?(state)
 
             stateklass = nil
-            unless stateklass = self.class.validstate?(state)
-                raise "%s is not a valid state for %s" % [state,self.class]
-            end
-
-            # XXX it's probably a bad idea to have code this important in
-            # two places
-            @states[state] = stateklass.new(
-                :parent => self
-            )
-            #@states[state] = stateklass.new()
-            #@states[state].parent = self
+            self.newstate(state)
         }
     end
     #---------------------------------------------------------------

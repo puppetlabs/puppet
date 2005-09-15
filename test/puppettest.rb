@@ -44,7 +44,14 @@ class TestPuppet < Test::Unit::TestCase
     end
 
     def tmpdir
-        "/tmp"
+        unless defined? @tmpdir and @tmpdir
+            @tmpdir = case Facter["operatingsystem"].value
+            when "Darwin": "/private/tmp"
+            else
+                "/tmp"
+            end
+        end
+        @tmpdir
     end
 
     def assert_rollback_events(trans, events, msg)
@@ -369,10 +376,6 @@ unless defined? PuppetTestSuite
 
         def tempfile
             File.join(self.tmpdir(), "puppetestfile%s" % rand(100))
-        end
-
-        def tmpdir
-            "/tmp"
         end
 
     end
