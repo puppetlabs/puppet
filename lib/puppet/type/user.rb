@@ -212,18 +212,18 @@ module Puppet
             # all of the states are very similar, but syncing is different
             # for each _type_ of state
             @states.each { |state|
-                begin
-                    klass = eval("Puppet::State::UserState" + @@extender)
-                    if klass.test
-                        state.send(:include, klass)
-                    else
-                        Puppet.err "Cannot sync %s on %s" %
-                            [state.name, @name]
-                    end
-                rescue NameError
-                    Puppet.notice "No %s extender for %s" %
-                        [@@extender, state.name]
-                end
+#                begin
+#                    klass = eval("Puppet::State::UserState" + @@extender)
+#                    if klass.test
+#                        state.send(:include, klass)
+#                    else
+#                        Puppet.err "Cannot sync %s on %s" %
+#                            [state.name, @name]
+#                    end
+#                rescue NameError
+#                    Puppet.notice "No %s extender for %s" %
+#                        [@@extender, state.name]
+#                end
             }
 
             @paramdoc[:name] = "User name.  While limitations are determined for

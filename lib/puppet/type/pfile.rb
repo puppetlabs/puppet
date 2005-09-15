@@ -120,9 +120,9 @@ module Puppet
                         raise error
                     end
                 rescue => detail
-                    error = Puppet::Error.new "Could not create %s: %s" %
+                    raise Puppet::Error.new("Could not create %s: %s" %
                         [@should, detail]
-                    raise error
+                    )
                 end
                 return event
             end

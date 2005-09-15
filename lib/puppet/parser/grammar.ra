@@ -408,12 +408,8 @@ import: IMPORT QTEXT {
     if dir == ""
         dir = "."
     end
-    Puppet.notice "Orig: %s" % @lexer.file.inspect
-    Puppet.notice "Dir: %s" % dir.inspect
     Dir.chdir(dir) {
-        Puppet.notice "Globbing %s" % val[1]
         Dir.glob(val[1]).each { |file|
-            Puppet.notice "File: %s" % file.inspect
             parser = Puppet::Parser::Parser.new()
             parser.stack = self.stack
             Puppet.debug("importing '%s'" % file)

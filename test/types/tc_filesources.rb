@@ -13,11 +13,8 @@ require 'puppettest'
 
 # $Id$
 
-class TestFileSources < Test::Unit::TestCase
+class TestFileSources < TestPuppet
     include FileTesting
-    # hmmm
-    # this is complicated, because we store references to the created
-    # objects in a central store
 
 =begin
     def mkfile(hash)
@@ -38,31 +35,20 @@ class TestFileSources < Test::Unit::TestCase
     end
 =end
     def setup
-        @@tmpfiles = []
-        @@tmppids = []
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-        Puppet[:checksumfile] = File.join(Puppet[:statedir], "checksumtestfile")
         begin
             initstorage
         rescue
             system("rm -rf %s" % Puppet[:checksumfile])
         end
+        super
     end
 
     def teardown
         clearstorage
-        Puppet::Type.allclear
         @@tmppids.each { |pid|
             system("kill -INT %s" % pid)
         }
-        @@tmpfiles.each { |file|
-            if FileTest.exists?(file)
-                system("chmod -R 755 %s" % file)
-                system("rm -rf %s" % file)
-            end
-        }
-        @@tmpfiles.clear
-        system("rm -f %s" % Puppet[:checksumfile])
+        super
     end
 
     def initstorage

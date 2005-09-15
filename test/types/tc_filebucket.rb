@@ -11,7 +11,7 @@ require 'puppettest'
 
 # $Id$
 
-class TestFileBucket < Test::Unit::TestCase
+class TestFileBucket < TestPuppet
     include FileTesting
     # hmmm
     # this is complicated, because we store references to the created

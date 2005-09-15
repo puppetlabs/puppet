@@ -23,7 +23,7 @@ require 'puppettest'
 # so really, we want to do things like test that our ast is correct
 # and test whether we've got things in the right scopes
 
-class TestSnippets < Test::Unit::TestCase
+class TestSnippets < TestPuppet
     $snippetbase = File.join($puppetbase, "examples", "code", "snippets")
     
     def file2ast(file)
@@ -161,20 +161,6 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
-    def setup
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-        @@tmpfiles = []
-    end
-
-    def teardown
-        @@tmpfiles.flatten.each { |file|
-            if FileTest.exists?(file)
-                system("rm -rf %s" % file)
-            end
-        }
-        Puppet::Type.allclear
-    end
-
     # this is here in case no tests get defined; otherwise we get a warning
     def test_nothing
     end
@@ -217,7 +203,7 @@ class TestSnippets < Test::Unit::TestCase
         files = %w{a b c d}.collect { |letter|
             "/tmp/snippetselect%stest" % letter
         }
-        @@tmpfiles << files
+        @@tmpfiles += files
 
         files.each { |file|
             assert(FileTest.exists?(file))
