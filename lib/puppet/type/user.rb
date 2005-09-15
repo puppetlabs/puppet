@@ -199,6 +199,33 @@ module Puppet
                 :name
             ]
 
+            case Facter["operatingsystem"].value
+            when "Darwin":
+                @@extender = "NInfo"
+            else
+                @@extender = "XAdd"
+            end
+
+            @name = :group
+            @namevar = :name
+
+            # all of the states are very similar, but syncing is different
+            # for each _type_ of state
+            @states.each { |state|
+                begin
+                    klass = eval("Puppet::State::UserState" + @@extender)
+                    if klass.test
+                        state.send(:include, klass)
+                    else
+                        Puppet.err "Cannot sync %s on %s" %
+                            [state.name, @name]
+                    end
+                rescue NameError
+                    Puppet.notice "No %s extender for %s" %
+                        [@@extender, state.name]
+                end
+            }
+
             @paramdoc[:name] = "User name.  While limitations are determined for
                 each operating system, it is generally a good idea to keep to the
                 degenerate 8 characters, beginning with a letter."
