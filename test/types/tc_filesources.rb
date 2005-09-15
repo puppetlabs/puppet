@@ -369,7 +369,7 @@ class TestFileSources < TestPuppet
         list = nil
         rpath = "/root%s" % tmpfile
         assert_nothing_raised {
-            list = client.call("fileserver.list", rpath, false)
+            list = client.call("fileserver.list", rpath, false, false)
         }
 
         assert_equal("/\tfile", list)

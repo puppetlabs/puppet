@@ -938,11 +938,14 @@ module Puppet
             
             def handleignore(children)
                 @parameters[:ignore].each { |ignore|
-                ignored = Dir.glob(File.join(self.name,ignore), File::FNM_DOTMATCH) 
+                ignored = []
+                    Dir.glob(File.join(self.name,ignore), File::FNM_DOTMATCH) { |match|
+                    ignored.push(File.basename(match))
+                    }
                 children = children - ignored
                 }
                 return children
-            end  
+            end
               
             def initialize(hash)
                 # clean out as many references to any file paths as possible
@@ -1004,12 +1007,13 @@ module Puppet
             end
             
             def paramignore=(value)
-
+           
                 #Make sure the value of ignore is in correct type    
                 unless value.is_a?(Array) or value.is_a?(String)
                     raise Puppet::DevError.new("Ignore must be a string or an Array")
                 end
             
+                @parameters[:ignore] = value
             end
 
             def newchild(path, hash = {})
@@ -1166,12 +1170,12 @@ module Puppet
                 end
 
                 children = Dir.entries(self.name)
-
+             
                 #Get rid of ignored children
                 if @parameters.include?(:ignore)
                     children = handleignore(children)
                 end  
-
+            
                 added = []
                 children.each { |file|
                     file = File.basename(file)
@@ -1213,10 +1217,10 @@ module Puppet
                 end
 
                 ignore = @parameters[:ignore]
-
+               
                 #Puppet.warning "Listing path %s" % path.inspect
                 desc = server.list(path, r, ignore)
-
+               
                 desc.split("\n").each { |line|
                     file, type = line.split("\t")
                     next if file == "/"

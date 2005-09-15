@@ -386,6 +386,12 @@ class TestFile < TestPuppet
         @@tmpfiles.push path
     end
 
+=begin
+    def test_ignore
+
+    end
+=end
+
     # XXX disabled until i change how dependencies work
     def disabled_test_recursionwithcreation
         path = "/tmp/this/directory/structure/does/not/exist"

@@ -102,13 +102,13 @@ class TestFileServer < TestPuppet
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/test/", true)
+            list = server.list("/test/", true, false)
         }
 
         assert(list =~ /tmpfile/)
 
         assert_nothing_raised {
-            list = server.list("/test", true)
+            list = server.list("/test", true, false)
         }
         assert(list =~ /tmpfile/)
 
@@ -146,7 +146,7 @@ class TestFileServer < TestPuppet
         list = nil
         sfile = "/test/tmpfile"
         assert_nothing_raised {
-            list = server.list(sfile, true)
+            list = server.list(sfile, true, false)
         }
 
         assert_nothing_raised {
@@ -201,7 +201,7 @@ class TestFileServer < TestPuppet
         list = nil
         sfile = "/test/"
         assert_nothing_raised {
-            list = server.list(sfile, true)
+            list = server.list(sfile, true, false)
         }
 
         File.open(newfile, "w") { |f|
@@ -210,7 +210,7 @@ class TestFileServer < TestPuppet
 
         newlist = nil
         assert_nothing_raised {
-            newlist = server.list(sfile, true)
+            newlist = server.list(sfile, true, false)
         }
 
         assert(list != newlist)
@@ -243,7 +243,7 @@ class TestFileServer < TestPuppet
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/root/" + testdir, true)
+            list = server.list("/root/" + testdir, true, false)
         }
 
         assert(list =~ /oldfile/)
@@ -275,14 +275,14 @@ class TestFileServer < TestPuppet
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/test/with", false)
+            list = server.list("/test/with", false, false)
         }
 
         assert(list !~ /\n/)
 
         [0, 1, 2].each { |num|
             assert_nothing_raised {
-                list = server.list("/test/with", num)
+                list = server.list("/test/with", num, false)
             }
 
             count = 0
@@ -321,13 +321,13 @@ class TestFileServer < TestPuppet
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/localhost/with", false)
+            list = server.list("/localhost/with", false, false)
         }
 
         assert(list !~ /with/)
 
         assert_nothing_raised {
-            list = server.list("/localhost/with/some/sub", true)
+            list = server.list("/localhost/with/some/sub", true, false)
         }
 
         assert(list !~ /sub/)
@@ -358,7 +358,7 @@ class TestFileServer < TestPuppet
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/localhost/", 1).split("\n")
+            list = server.list("/localhost/", 1).split("\n", false)
         }
 
         assert_equal(dirs.length + 1, list.length)
@@ -386,7 +386,7 @@ class TestFileServer < TestPuppet
         list = nil
         sfile = "/test/"
         assert_nothing_raised {
-            list = server.list(sfile, true)
+            list = server.list(sfile, true, false)
         }
 
         assert_nothing_raised {
@@ -464,7 +464,7 @@ class TestFileServer < TestPuppet
         mounts.each { |mount, files|
             mount = "/#{mount}/"
             assert_nothing_raised {
-                list = server.list(mount, true)
+                list = server.list(mount, true, false)
             }
 
             assert_nothing_raised {
@@ -518,12 +518,12 @@ class TestFileServer < TestPuppet
                         assert_raise(Puppet::Server::AuthorizationError,
                             "Host %s, ip %s, allowed %s" %
                             [host, ip, mount]) {
-                                list = server.list(mount, true, host, ip)
+                                list = server.list(mount, true, false, host, ip)
                         }
                     when :allow:
                         assert_nothing_raised("Host %s, ip %s, denied %s" %
                             [host, ip, mount]) {
-                                list = server.list(mount, true, host, ip)
+                                list = server.list(mount, true, false, host, ip)
                         }
                     end
                 }
@@ -564,12 +564,12 @@ class TestFileServer < TestPuppet
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/thing/", false, "test1.domain.com", "127.0.0.1")
+            list = server.list("/thing/", false, false, "test1.domain.com", "127.0.0.1")
         }
         assert(list != "", "List returned nothing in rereard test")
 
         assert_raise(Puppet::Server::AuthorizationError, "List allowed invalid host") {
-            list = server.list("/thing/", false, "test2.domain.com", "127.0.0.1")
+            list = server.list("/thing/", false, false, "test2.domain.com", "127.0.0.1")
         }
 
         sleep 1
@@ -583,11 +583,11 @@ class TestFileServer < TestPuppet
         }
         
         assert_raise(Puppet::Server::AuthorizationError, "List allowed invalid host") {
-            list = server.list("/thing/", false, "test1.domain.com", "127.0.0.1")
+            list = server.list("/thing/", false, false, "test1.domain.com", "127.0.0.1")
         }
 
         assert_nothing_raised {
-            list = server.list("/thing/", false, "test2.domain.com", "127.0.0.1")
+            list = server.list("/thing/", false, false, "test2.domain.com", "127.0.0.1")
         }
 
         assert(list != "", "List returned nothing in rereard test")

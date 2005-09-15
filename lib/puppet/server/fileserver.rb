@@ -82,10 +82,13 @@ class Server
         end
 
         def handleignore(children, path, ignore)
-            ignore.each { |ignore|
-            ignored = Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) 
-            children = children - ignored
-            }
+            ignore.each { |ignorepat|
+                ignored = [] 
+                Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) { |match|
+                    ignored.push(File.basename(match))
+                }
+                children = children - ignored
+            } 
             return children
         end  
 
