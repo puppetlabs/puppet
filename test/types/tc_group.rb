@@ -24,13 +24,7 @@ class TestGroup < TestPuppet
         end
         @@tmpgroups.each { |group|
             unless missing?(group)
-                # if we've gotten this far, the group exists, so remove it
-                Puppet.info "Cleaning %s" % group
-                group = Puppet::Type::Group.new(
-                    :name => group
-                )
-                group[:name] = :notfound
-                group.state(:name).sync
+                remove(group)
             end
         }
         super
@@ -60,6 +54,10 @@ class TestGroup < TestPuppet
 
             return nil
         end
+
+        def remove(group)
+            system("niutil -destroy / /groups/%s" % group)
+        end
     else
         def missing?(group)
             begin
@@ -77,6 +75,10 @@ class TestGroup < TestPuppet
             }
 
             return nil
+        end
+
+        def remove(group)
+            system("groupdel %s" % group)
         end
     end
 
@@ -238,13 +240,7 @@ class TestGroup < TestPuppet
                 end
             }
 
-            es = nil
-            if os == "Darwin"
-                es = [:group_modified, :group_deleted]
-            else
-                es = [:group_deleted]
-            end
-            assert_rollback_events(trans, es, "group")
+            assert_rollback_events(trans, [:group_deleted], "group")
 
             assert(missing?(name), "Group %s is still present" % name)
         end

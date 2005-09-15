@@ -217,7 +217,11 @@ module Puppet
             def sync
                 events = []
 
-                if self.name == :name
+                unless @parent.exists?
+                    events << syncname()
+                end
+
+                if @should == :notfound
                     return syncname()
                 end
                 obj = @parent.getinfo
@@ -248,7 +252,8 @@ module Puppet
 
                 GroupNInfo.flush()
 
-                return :group_modified
+                events << :group_modified
+                return events
             end
 
             private
@@ -298,7 +303,6 @@ module Puppet
     class Type
         class Group < Type
             @states = [
-                    Puppet::State::GroupName,
                     Puppet::State::GroupGID
             ]
 
@@ -330,7 +334,12 @@ module Puppet
                 end
             }
 
-            @parameters = []
+            @parameters = [:name]
+
+            @paramdoc[:name] = "The group name.  While naming limitations vary by
+                system, it is advisable to keep the name to the degenerate
+                limitations, which is a maximum of 8 characters beginning with
+                a letter."
 
             @doc = "Manage groups.  This type can only create groups.  Group
                 membership must be managed on individual users."
