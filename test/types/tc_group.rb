@@ -218,8 +218,14 @@ class TestGroup < TestPuppet
             }
 
             @@tmpgroups << name
-            trans = assert_events(comp, [:group_created, :group_modified],
-                "group")
+            case Facter["operatingsystem"].value
+            when "Darwin":
+                trans = assert_events(comp, [:group_created, :group_modified],
+                    "group")
+            else
+                trans = assert_events(comp, [:group_created],
+                    "group")
+            end
 
             obj = nil
             assert_nothing_raised {
