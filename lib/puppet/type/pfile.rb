@@ -1217,7 +1217,6 @@ module Puppet
                 #Puppet.warning "Listing path %s" % path.inspect
                 desc = server.list(path, r, ignore)
 
-                puts desc
                 desc.split("\n").each { |line|
                     file, type = line.split("\t")
                     next if file == "/"

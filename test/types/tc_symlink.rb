@@ -10,29 +10,8 @@ require 'test/unit'
 
 # $Id$
 
-class TestSymlink < Test::Unit::TestCase
+class TestSymlink < TestPuppet
     include FileTesting
-    # hmmm
-    # this is complicated, because we store references to the created
-    # objects in a central store
-    def setup
-        @symlink = nil
-        @@tmpfiles = []
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-    end
-
-    def teardown
-        @@tmpfiles.each { |file|
-            if FileTest.exists?(file)
-                Kernel.system("rm -rf %s" % file)
-            end
-            if FileTest.symlink?(file)
-                Kernel.system("rm -rf %s" % file)
-            end
-        }
-        Puppet::Type.allclear
-    end
-
     def mktmpfile
         # because luke's home directory is on nfs, it can't be used for testing
         # as root
