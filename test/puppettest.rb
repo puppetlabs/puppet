@@ -1,6 +1,8 @@
 # $Id$
 require 'test/unit'
 
+$VERBOSE = 1
+
 class TestPuppet < Test::Unit::TestCase
     def newcomp(name,*ary)
         comp = Puppet::Type::Component.new(
@@ -33,6 +35,9 @@ class TestPuppet < Test::Unit::TestCase
             if FileTest.exists?(file)
                 system("chmod -R 755 %s" % file)
                 system("rm -rf %s" % file)
+                Puppet.err "Removing %s" % file
+            else
+                Puppet.err "%s does not exist" % file
             end
         }
         @@tmpfiles.clear

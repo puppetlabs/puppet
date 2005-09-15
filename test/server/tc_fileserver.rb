@@ -358,8 +358,10 @@ class TestFileServer < TestPuppet
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/localhost/", 1).split("\n", false)
+            list = server.list("/localhost/", 1, false)
         }
+        assert_instance_of(String, list, "Server returned %s instead of string")
+        list = list.split("\n")
 
         assert_equal(dirs.length + 1, list.length)
     end

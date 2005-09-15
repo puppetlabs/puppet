@@ -40,15 +40,16 @@ class TestFileSources < TestPuppet
         rescue
             system("rm -rf %s" % Puppet[:checksumfile])
         end
+        @@tmppids = []
         super
     end
 
     def teardown
         clearstorage
+        super
         @@tmppids.each { |pid|
             system("kill -INT %s" % pid)
         }
-        super
     end
 
     def initstorage
@@ -312,7 +313,8 @@ class TestFileSources < TestPuppet
 
     def test_zSimpleNetworkSources
         server = nil
-        basedir = "/tmp/simplnetworksourcetesting"
+        basedir = "/tmp/simplenetworksourcetesting"
+        @@tmpfiles << basedir
 
         mounts = {
             "/" => "root"
@@ -328,7 +330,6 @@ class TestFileSources < TestPuppet
         Puppet[:puppetconf] = basedir
         Puppet[:puppetvar] = basedir
         Puppet[:autosign] = true
-        @@tmpfiles << basedir
 
         tmpname = "yaytesting"
         tmpfile = File.join(basedir, tmpname)
@@ -395,6 +396,7 @@ class TestFileSources < TestPuppet
     def test_zNetworkSources
         server = nil
         basedir = "/tmp/networksourcetesting"
+        @@tmpfiles << basedir
         if File.exists?(basedir)
             system("rm -rf %s" % basedir)
         end
@@ -409,7 +411,6 @@ class TestFileSources < TestPuppet
         Puppet[:puppetconf] = basedir
         Puppet[:puppetvar] = basedir
         Puppet[:autosign] = true
-        @@tmpfiles << basedir
 
         Puppet[:masterport] = 8762
 

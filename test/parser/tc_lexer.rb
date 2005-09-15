@@ -114,7 +114,6 @@ class TestLexer < Test::Unit::TestCase
 
         assert_nothing_raised {
             @lexer.string = bit
-            p @lexer.fullscan
         }
     end
 end

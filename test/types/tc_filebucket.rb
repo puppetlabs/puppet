@@ -48,9 +48,7 @@ class TestFileBucket < TestPuppet
     end
 
     def setup
-        @@tmpfiles = []
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-        Puppet[:checksumfile] = File.join(Puppet[:statedir], "checksumtestfile")
+        super
         begin
             initstorage
         rescue
@@ -59,16 +57,8 @@ class TestFileBucket < TestPuppet
     end
 
     def teardown
+        super
         clearstorage
-        Puppet::Type.allclear
-        @@tmpfiles.each { |file|
-            if FileTest.exists?(file)
-                system("chmod -R 755 %s" % file)
-                system("rm -rf %s" % file)
-            end
-        }
-        @@tmpfiles.clear
-        system("rm -f %s" % Puppet[:checksumfile])
     end
 
     def initstorage
@@ -94,6 +84,7 @@ class TestFileBucket < TestPuppet
 
         md5 = nil
         newpath = "/tmp/passwd"
+        @@tmpfiles << newpath
         system("cp /etc/passwd %s" % newpath)
         assert_nothing_raised {
             md5 = bucket.backup(newpath)
