@@ -93,7 +93,7 @@ module Puppet
             def sync
                 obj = @parent.getinfo
 
-                if self.name == :name
+                if @is == :notfound or @should == :notfound
                     return syncname()
                 end
 
