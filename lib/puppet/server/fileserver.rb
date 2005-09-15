@@ -89,7 +89,6 @@ class Server
          
                 Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) { |match|
                     ignored.push(File.basename(match))
-                    Puppet.info(match)
                 }
 
                 children = children - ignored
