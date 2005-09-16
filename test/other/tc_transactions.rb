@@ -10,8 +10,7 @@ require 'test/unit'
 
 # $Id$
 
-class TestTransactions < TestPuppet
-    include FileTesting
+class TestTransactions < FileTesting
     def ingroup(gid)
         require 'etc'
         begin
@@ -25,7 +24,6 @@ class TestTransactions < TestPuppet
     end
 
     def setup
-        Puppet::Type.allclear
         @groups = %x{groups}.chomp.split(/ /)
         unless @groups.length > 1
             p @groups
@@ -39,7 +37,6 @@ class TestTransactions < TestPuppet
             serv[:running] = false
             serv.sync
         }
-        Puppet::Type.allclear
         print "\n\n" if Puppet[:debug]
         super
     end

@@ -10,16 +10,7 @@ require 'test/unit'
 
 # $Id$
 
-class TestTidy < TestPuppet
-    include FileTesting
-    # hmmm
-    # this is complicated, because we store references to the created
-    # objects in a central store
-    def setup
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-        super
-    end
-
+class TestTidy < FileTesting
     def mktmpfile
         # because luke's home directory is on nfs, it can't be used for testing
         # as root

@@ -10,8 +10,7 @@ require 'test/unit'
 
 # $Id$
 
-class TestSymlink < TestPuppet
-    include FileTesting
+class TestSymlink < FileTesting
     def mktmpfile
         # because luke's home directory is on nfs, it can't be used for testing
         # as root

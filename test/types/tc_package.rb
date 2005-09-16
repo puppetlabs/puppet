@@ -18,11 +18,7 @@ $platform = Facter["operatingsystem"].value
 unless Puppet::Type::Package.defaulttype
     puts "No default package type for %s; skipping package tests" % $platform
 else
-class TestPackagingType < Test::Unit::TestCase
-    def teardown
-        Puppet::Type::Package.clear
-    end
-
+class TestPackagingType < TestPuppet
     def test_listing
         type = Puppet::Type::Package.defaulttype
         assert(type)
@@ -33,11 +29,7 @@ class TestPackagingType < Test::Unit::TestCase
     end
 end
 
-class TestPackageSource < Test::Unit::TestCase
-    def teardown
-        Puppet::Type::Package.clear
-    end
-
+class TestPackageSource < TestPuppet
     def test_filesource
         system("touch /tmp/fakepackage")
         assert_equal(
@@ -48,15 +40,11 @@ class TestPackageSource < Test::Unit::TestCase
     end
 end
 
-class TestPackages < Test::Unit::TestCase
-    include FileTesting
+class TestPackages < FileTesting
     def setup
         #@list = Puppet::Type::Package.getpkglist
         Puppet::Type::Package.clear
-    end
-
-    def teardown
-        Puppet::Type::Package.clear
+        super
     end
 
     def mkpkgcomp(pkg)

@@ -13,8 +13,7 @@ require 'puppettest'
 
 # $Id$
 
-class TestFileSources < TestPuppet
-    include FileTesting
+class TestFileSources < FileTesting
 
 =begin
     def mkfile(hash)

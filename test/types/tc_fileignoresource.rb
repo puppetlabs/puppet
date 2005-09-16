@@ -13,35 +13,20 @@ require 'puppettest'
 
 # $Id: $
 
-class TestFileIgnoreSources < Test::Unit::TestCase
-    include FileTesting
+class TestFileIgnoreSources < FileTesting
    
     def setup
-        @@tmpfiles = []
-        @@tmppids = []
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-        Puppet[:checksumfile] = File.join(Puppet[:statedir], "checksumtestfile")
         begin
             initstorage
         rescue
             system("rm -rf %s" % Puppet[:checksumfile])
         end
+        super
     end
 
     def teardown
         clearstorage
-        Puppet::Type.allclear
-        @@tmppids.each { |pid|
-            system("kill -INT %s" % pid)
-        }
-        @@tmpfiles.each { |file|
-            if FileTest.exists?(file)
-                system("chmod -R 755 %s" % file)
-                system("rm -rf %s" % file)
-            end
-        }
-        @@tmpfiles.clear
-        system("rm -f %s" % Puppet[:checksumfile])
+        super
     end
 
 #This is not needed unless using md5 (correct me if I'm wrong)

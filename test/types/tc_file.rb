@@ -12,8 +12,7 @@ require 'puppettest'
 
 # $Id$
 
-class TestFile < TestPuppet
-    include FileTesting
+class TestFile < FileTesting
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store
