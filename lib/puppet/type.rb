@@ -684,7 +684,8 @@ class Type < Puppet::Element
     # force users to call this, so that we can merge objects if
     # necessary
     def self.create(hash)
-        if name = self["name"] || self[:name]
+        if name =   hash["name"] || hash[:name] ||
+                    hash[self.namevar] || hash[self.namevar.to_s]
             # if the object already exists
             if retobj = self[name]
                 retobj.merge(self)
@@ -694,9 +695,8 @@ class Type < Puppet::Element
                 return new(hash)
             end
         else
-            return new(hash)
-            #raise Puppet::Error, "You must specify a name for objects of type %s" %
-            #    self.to_s
+            raise Puppet::Error, "You must specify a name for objects of type %s" %
+                self.to_s
         end
     end
     #---------------------------------------------------------------
@@ -800,20 +800,17 @@ class Type < Puppet::Element
     def merge(hash)
         hash.each { |param, value|
             if param.is_a?(String)
-                hash[param.intern] = value
-                hash.delete(param)
+                param = param.intern
             end
-        }
+            next if param == :name or param == self.class.namevar
 
-        hash.each { |param, value|
             # FIXME we should really allow equal values, but for now, don't allow
             # any values
-
-            if oldval = self[param]
-                if self.parent.class == self.class # they're a result of recursion
-                end
-                unless oldval == value
-                end
+            if oldval = self.should(param)
+                raise Puppet::Error, "Cannot override %s on %s(%s)" %
+                    [param, self.class.name, self.name]
+            else
+                self[param] = value
             end
         }
     end
