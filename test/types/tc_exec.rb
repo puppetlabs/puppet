@@ -62,10 +62,11 @@ class TestExec < TestPuppet
     def test_path_or_qualified
         command = nil
         output = nil
-        assert_raise(TypeError) {
+        assert_nothing_raised {
             command = Puppet::Type::Exec.create(
                 :command => "echo"
             )
+            assert_nil(command)
         }
         Puppet::Type::Exec.clear
         assert_nothing_raised {

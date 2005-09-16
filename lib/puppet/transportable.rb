@@ -52,23 +52,7 @@ module Puppet
         def to_type
             retobj = nil
             if type = Puppet::Type.type(self.type)
-                begin
-                    retobj = type.create(self)
-                rescue => detail
-                    # FIXME TransObject should be handling what happens when there's an error
-                    if Puppet[:debug]
-                        if detail.respond_to?(:stack)
-                            puts detail.stack
-                        end
-                    end
-                    Puppet.err "Could not create %s: %s" % [self[:name], detail.to_s]
-                    if retobj
-                        retobj.destroy()
-                    else
-                        if obj = type[self[:name]]
-                            obj.destroy()
-                        end
-                    end
+                unless retobj = type.create(self)
                     return nil
                 end
                 retobj.file = @file

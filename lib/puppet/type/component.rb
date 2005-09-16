@@ -52,6 +52,15 @@ module Puppet
             end
         end
 
+        def delete(child)
+            if @children.include?(child)
+                @children.delete(child)
+                return true
+            else
+                return false
+            end
+        end
+
         def each
             @children.each { |child| yield child }
         end

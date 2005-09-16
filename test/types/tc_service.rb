@@ -1,87 +1,94 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk"
+    $puppetbase = "../.."
 end
 
 require 'puppet'
+require 'puppettest'
 require 'test/unit'
 
 # $Id$
 
-class TestService < Test::Unit::TestCase
+class TestService < TestPuppet
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store
     def setup
-        @sleeper = nil
+        sleeper = nil
         script = File.join($puppetbase,"examples/root/etc/init.d/sleeper")
         @status = script + " status"
 
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-        assert_nothing_raised() {
-            unless Puppet::Type::Service.has_key?("sleeper")
-                Puppet::Type::Service.create(
-                    :name => "sleeper",
-                    :path => File.join($puppetbase,"examples/root/etc/init.d"),
-                    :running => 1
-                )
-            end
-            @sleeper = Puppet::Type::Service["sleeper"]
-        }
+
+        super
     end
 
     def teardown
-        Puppet::Type.allclear
-        Kernel.system("pkill sleeper")
+        stopservices
+        super
+    end
+
+    def mksleeper
+        assert_nothing_raised() {
+            return Puppet::Type::Service.create(
+                :name => "sleeper",
+                :path => File.join($puppetbase,"examples/root/etc/init.d"),
+                :running => 1
+            )
+        }
     end
 
     def test_process_start
+        sleeper = mksleeper
         # start it
         assert_nothing_raised() {
-            @sleeper[:running] = 1
+            sleeper[:running] = 1
         }
         assert_nothing_raised() {
-            @sleeper.retrieve
+            sleeper.retrieve
         }
-        assert(!@sleeper.insync?())
+        assert(!sleeper.insync?())
         assert_nothing_raised() {
-            @sleeper.sync
+            sleeper.sync
         }
         assert_nothing_raised() {
-            @sleeper.retrieve
+            sleeper.retrieve
         }
-        assert(@sleeper.insync?)
+        assert(sleeper.insync?)
 
         # test refreshing it
         assert_nothing_raised() {
-            @sleeper.refresh
+            sleeper.refresh
         }
 
-        assert(@sleeper.respond_to?(:refresh))
+        assert(sleeper.respond_to?(:refresh))
 
         # now stop it
         assert_nothing_raised() {
-            @sleeper[:running] = 0
+            sleeper[:running] = 0
         }
         assert_nothing_raised() {
-            @sleeper.retrieve
+            sleeper.retrieve
         }
-        assert(!@sleeper.insync?())
+        assert(!sleeper.insync?())
         assert_nothing_raised() {
-            @sleeper.sync
+            sleeper.sync
         }
         assert_nothing_raised() {
-            @sleeper.retrieve
+            sleeper.retrieve
         }
-        assert(@sleeper.insync?)
+        assert(sleeper.insync?)
     end
 
-    def testFailOnNoPath
-        assert_raise(Puppet::Error) {
-            Puppet::Type::Service.create(
+    def test_FailOnNoPath
+        serv = nil
+        assert_nothing_raised {
+            serv = Puppet::Type::Service.create(
                 :name => "sleeper"
             )
         }
+
+        assert_nil(serv)
+        assert_nil(Puppet::Type::Service["sleeper"])
     end
 end

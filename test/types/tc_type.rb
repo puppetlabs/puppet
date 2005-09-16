@@ -96,7 +96,10 @@ class TestType < TestPuppet
         }
     end
 
-    def test_nameasstate
+    # This was supposed to test objects whose name was a state, but that
+    # fundamentally doesn't make much sense, and we now don't have any such
+    # types.
+    def disabled_test_nameasstate
         # currently groups are the only objects with the namevar as a state
         group = nil
         assert_nothing_raised {

@@ -128,9 +128,10 @@ module Puppet
             @allowedmethods = [:setpath]
 
             def initialize(hash)
+                @searchpaths = []
                 super
 
-                unless defined? @searchpaths and @searchpaths.length >= 0
+                unless defined? @searchpaths and @searchpaths.length > 0
                     raise Puppet::Error.new(
                         "You must specify a valid search path for service %s" %
                         self.name
@@ -152,10 +153,11 @@ module Puppet
                     # if we've gotten this far, we found a valid script
                     return fqname
                 }
-                raise "Could not find init script for '%s'" % name
+                raise Puppet::Error, "Could not find init script for '%s'" % name
             end
 
             def parampath=(ary)
+                @parameters[:path] = ary
                 # verify each of the paths exists
                 @searchpaths = ary.find_all { |dir|
                     FileTest.directory?(dir)

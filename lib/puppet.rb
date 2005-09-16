@@ -160,6 +160,35 @@ module Puppet
         end
 	end
 
+    def self.asuser(user)
+        # FIXME this should use our user object, since it already knows how
+        # to find users and such
+        require 'etc'
+
+        begin
+            obj = Etc.getpwnam(user)
+        rescue ArgumentError
+            raise Puppet::Error, "User %s not found"
+        end
+
+        uid = obj.uid
+
+        olduid = nil
+        if Process.uid == uid
+            olduid = Process.uid
+            Process.euid = uid
+        end
+
+        retval = yield
+
+
+        if olduid
+            Process.euid = olduid
+        end
+
+        return retval
+    end
+
     def self.setdefault(param,value)
         if value.is_a?(Array) 
             if value[0].is_a?(Symbol) 

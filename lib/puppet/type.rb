@@ -499,6 +499,10 @@ class Type < Puppet::Element
         @dependencies.each { |dep|
             dep.unsubscribe(self)
         }
+
+        if defined? @parent and @parent
+            @parent.delete(self)
+        end
     end
     #---------------------------------------------------------------
 
@@ -681,18 +685,38 @@ class Type < Puppet::Element
     public
 
     #---------------------------------------------------------------
-    # force users to call this, so that we can merge objects if
-    # necessary
+    # Force users to call this, so that we can merge objects if
+    # necessary.  FIXME This method should be responsible for most of the
+    # error handling.
     def self.create(hash)
         if name =   hash["name"] || hash[:name] ||
                     hash[self.namevar] || hash[self.namevar.to_s]
             # if the object already exists
             if retobj = self[name]
+                # merge the new data
                 retobj.merge(hash)
 
                 return retobj
             else
-                return new(hash)
+                # create it anew
+                # if there's a failure, destroy the object if it got that far
+                begin
+                    obj = new(hash)
+                rescue => detail
+                    if Puppet[:debug]
+                        if detail.respond_to?(:stack)
+                            puts detail.stack
+                        end
+                    end
+                    Puppet.err "Could not create %s: %s" % [name, detail.to_s]
+                    if obj
+                        Puppet.err obj
+                        obj.destroy
+                    elsif obj = self[name]
+                        obj.destroy
+                    end
+                    return nil
+                end
             end
         else
             raise Puppet::Error, "You must specify a name for objects of type %s" %
@@ -1308,7 +1332,7 @@ end
 
 require 'puppet/statechange'
 require 'puppet/type/component'
-#require 'puppet/type/cron'
+require 'puppet/type/cron'
 require 'puppet/type/exec'
 require 'puppet/type/group'
 require 'puppet/type/package'
