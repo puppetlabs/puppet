@@ -16,7 +16,7 @@ class TestExec < TestPuppet
         command = nil
         output = nil
         assert_nothing_raised {
-            command = Puppet::Type::Exec.new(
+            command = Puppet::Type::Exec.create(
                 :command => "/bin/echo"
             )
         }
@@ -33,7 +33,7 @@ class TestExec < TestPuppet
         command = nil
         output = nil
         assert_nothing_raised {
-            command = Puppet::Type::Exec.new(
+            command = Puppet::Type::Exec.create(
                 :command => "/bin/echo",
                 :returns => 0
             )
@@ -46,7 +46,7 @@ class TestExec < TestPuppet
         }
         Puppet::Type::Exec.clear
         assert_nothing_raised {
-            command = Puppet::Type::Exec.new(
+            command = Puppet::Type::Exec.create(
                 :command => "/bin/echo",
                 :returns => "0"
             )
@@ -63,26 +63,26 @@ class TestExec < TestPuppet
         command = nil
         output = nil
         assert_raise(TypeError) {
-            command = Puppet::Type::Exec.new(
+            command = Puppet::Type::Exec.create(
                 :command => "echo"
             )
         }
         Puppet::Type::Exec.clear
         assert_nothing_raised {
-            command = Puppet::Type::Exec.new(
+            command = Puppet::Type::Exec.create(
                 :command => "echo",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin"
             )
         }
         Puppet::Type::Exec.clear
         assert_nothing_raised {
-            command = Puppet::Type::Exec.new(
+            command = Puppet::Type::Exec.create(
                 :command => "/bin/echo"
             )
         }
         Puppet::Type::Exec.clear
         assert_nothing_raised {
-            command = Puppet::Type::Exec.new(
+            command = Puppet::Type::Exec.create(
                 :command => "/bin/echo",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin"
             )
@@ -91,21 +91,21 @@ class TestExec < TestPuppet
 
     def test_nonzero_returns
         assert_nothing_raised {
-            command = Puppet::Type::Exec.new(
+            command = Puppet::Type::Exec.create(
                 :command => "mkdir /this/directory/does/not/exist",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :returns => 1
             )
         }
         assert_nothing_raised {
-            command = Puppet::Type::Exec.new(
+            command = Puppet::Type::Exec.create(
                 :command => "touch /etc",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :returns => 1
             )
         }
         assert_nothing_raised {
-            command = Puppet::Type::Exec.new(
+            command = Puppet::Type::Exec.create(
                 :command => "thiscommanddoesnotexist",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :returns => 127
@@ -120,7 +120,7 @@ class TestExec < TestPuppet
             Dir.getwd
         }
         assert_nothing_raised {
-            command = Puppet::Type::Exec.new(
+            command = Puppet::Type::Exec.create(
                 :command => "pwd",
                 :cwd => dir,
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
@@ -145,12 +145,12 @@ class TestExec < TestPuppet
         File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
             of.puts rand(100)
         }
-        file = Puppet::Type::PFile.new(
+        file = Puppet::Type::PFile.create(
             :path => tmpfile,
             :checksum => "md5"
         )
         assert_nothing_raised {
-            cmd = Puppet::Type::Exec.new(
+            cmd = Puppet::Type::Exec.create(
                 :command => "pwd",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :subscribe => [[file.class.name,file.name]],
@@ -158,7 +158,7 @@ class TestExec < TestPuppet
             )
         }
 
-        comp = Puppet::Type::Component.new(:name => "RefreshTest")
+        comp = Puppet::Type::Component.create(:name => "RefreshTest")
         [file,cmd].each { |obj|
             comp.push obj
         }
@@ -197,7 +197,7 @@ class TestExec < TestPuppet
         file = tempfile()
         exec = nil
         assert_nothing_raised {
-            exec = Puppet::Type::Exec.new(
+            exec = Puppet::Type::Exec.create(
                 :command => "touch %s" % file,
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :creates => file

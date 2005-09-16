@@ -18,7 +18,7 @@ class TestFileBucket < FileTesting
     def mkfile(hash)
         file = nil
         assert_nothing_raised {
-            file = Puppet::Type::PFile.new(hash)
+            file = Puppet::Type::PFile.create(hash)
         }
         return file
     end
@@ -26,7 +26,7 @@ class TestFileBucket < FileTesting
     def mkbucket(name,path)
         bucket = nil
         assert_nothing_raised {
-            bucket = Puppet::Type::PFileBucket.new(
+            bucket = Puppet::Type::PFileBucket.create(
                 :name => name,
                 :path => path
             )

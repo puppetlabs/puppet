@@ -681,6 +681,32 @@ class Type < Puppet::Element
     public
 
     #---------------------------------------------------------------
+    # force users to call this, so that we can merge objects if
+    # necessary
+    def self.create(hash)
+        if name = self["name"] || self[:name]
+            # if the object already exists
+            if retobj = self[name]
+                retobj.merge(self)
+
+                return retobj
+            else
+                return new(hash)
+            end
+        else
+            return new(hash)
+            #raise Puppet::Error, "You must specify a name for objects of type %s" %
+            #    self.to_s
+        end
+    end
+    #---------------------------------------------------------------
+
+    # and then make 'new' private
+    class << self
+        private :new
+    end
+
+    #---------------------------------------------------------------
     # initialize the type instance
     def initialize(hash)
         @children = []
@@ -765,6 +791,31 @@ class Type < Puppet::Element
         # add this object to the specific class's list of objects
         #puts caller
         self.class[self.name] = self
+    end
+    #---------------------------------------------------------------
+
+    #---------------------------------------------------------------
+    # merge new information with an existing object, checking for conflicts
+    # and such
+    def merge(hash)
+        hash.each { |param, value|
+            if param.is_a?(String)
+                hash[param.intern] = value
+                hash.delete(param)
+            end
+        }
+
+        hash.each { |param, value|
+            # FIXME we should really allow equal values, but for now, don't allow
+            # any values
+
+            if oldval = self[param]
+                if self.parent.class == self.class # they're a result of recursion
+                end
+                unless oldval == value
+                end
+            end
+        }
     end
     #---------------------------------------------------------------
 

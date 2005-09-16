@@ -21,7 +21,7 @@ class TestService < Test::Unit::TestCase
         Puppet[:loglevel] = :debug if __FILE__ == $0
         assert_nothing_raised() {
             unless Puppet::Type::Service.has_key?("sleeper")
-                Puppet::Type::Service.new(
+                Puppet::Type::Service.create(
                     :name => "sleeper",
                     :path => File.join($puppetbase,"examples/root/etc/init.d"),
                     :running => 1
@@ -79,7 +79,7 @@ class TestService < Test::Unit::TestCase
 
     def testFailOnNoPath
         assert_raise(Puppet::Error) {
-            Puppet::Type::Service.new(
+            Puppet::Type::Service.create(
                 :name => "sleeper"
             )
         }

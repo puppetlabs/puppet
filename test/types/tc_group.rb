@@ -171,7 +171,7 @@ class TestGroup < TestPuppet
             gobj = nil
             comp = nil
             assert_nothing_raised {
-                gobj = Puppet::Type::Group.new(
+                gobj = Puppet::Type::Group.create(
                     :name => group,
                     :check => [:gid]
                 )
@@ -210,7 +210,7 @@ class TestGroup < TestPuppet
             assert(missing?(name), "Group %s is still present" % name)
 
             assert_nothing_raised {
-                gobj = Puppet::Type::Group.new(
+                gobj = Puppet::Type::Group.create(
                     :name => name
                 )
 

@@ -261,7 +261,7 @@ class TestUser < TestPuppet
             }
 
             assert_nothing_raised {
-                user = Puppet::Type::User.new(
+                user = Puppet::Type::User.create(
                     :name => name,
                     :comment => "Puppet Testing User"
                 )

@@ -14,8 +14,15 @@ require 'facter'
 
 class TestExec < TestPuppet
     def setup
-        @me = %x{whoami}.chomp
-        assert(@me != "", "Could not retrieve user name")
+        id = %x{id}.chomp
+        if id =~ /uid=\d+\(([^\)]+)\)/
+            @me = $1
+        else
+            puts id
+        end
+        unless defined? @me
+            raise "Could not retrieve user name; 'id' did not work"
+        end
         super
     end
 
@@ -23,5 +30,20 @@ class TestExec < TestPuppet
         assert_nothing_raised {
             Puppet::Type::Cron.retrieve(@me)
         }
+    end
+
+    def test_mkcron
+        cron = nil
+        assert_nothing_raised {
+            cron = Puppet::Type::Cron.create(
+                :command => "date > %s/crontest" % tmpdir(),
+                :name => "testcron",
+                :user => @me
+            )
+        }
+
+        comp = newcomp("crontest", cron)
+
+        trans = assert_events(comp, [:cron_created], "crontest")
     end
 end

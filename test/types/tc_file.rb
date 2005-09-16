@@ -19,7 +19,7 @@ class TestFile < FileTesting
     def mkfile(hash)
         file = nil
         assert_nothing_raised {
-            file = Puppet::Type::PFile.new(hash)
+            file = Puppet::Type::PFile.create(hash)
         }
         return file
     end
@@ -173,7 +173,7 @@ class TestFile < FileTesting
         %w{a b c d}.collect { |name| "/tmp/createst%s" % name }.each { |path|
             file =nil
             assert_nothing_raised() {
-                file = Puppet::Type::PFile.new(
+                file = Puppet::Type::PFile.create(
                     :name => path,
                     :create => true
                 )
@@ -197,7 +197,7 @@ class TestFile < FileTesting
         %w{a b c d}.collect { |name| "/tmp/createst%s" % name }.each { |path|
             file = nil
             assert_nothing_raised() {
-                file = Puppet::Type::PFile.new(
+                file = Puppet::Type::PFile.create(
                     :name => path,
                     :create => "directory"
                 )
@@ -264,13 +264,13 @@ class TestFile < FileTesting
                 events = nil
                 # okay, we now know that we have a file...
                 assert_nothing_raised() {
-                    file = Puppet::Type::PFile.new(
+                    file = Puppet::Type::PFile.create(
                         :name => path,
                         :create => true,
                         :checksum => type
                     )
                 }
-                comp = Puppet::Type::Component.new(
+                comp = Puppet::Type::Component.create(
                     :name => "componentfile"
                 )
                 comp.push file
@@ -304,12 +304,12 @@ class TestFile < FileTesting
 
                 # now recreate the file
                 assert_nothing_raised() {
-                    file = Puppet::Type::PFile.new(
+                    file = Puppet::Type::PFile.create(
                         :name => path,
                         :checksum => type
                     )
                 }
-                comp = Puppet::Type::Component.new(
+                comp = Puppet::Type::Component.create(
                     :name => "componentfile"
                 )
                 comp.push file
@@ -345,13 +345,13 @@ class TestFile < FileTesting
 
             initstorage
             assert_nothing_raised {
-                file = Puppet::Type::PFile.new(
+                file = Puppet::Type::PFile.create(
                     param => path,
                     :recurse => true,
                     :checksum => "md5"
                 )
             }
-            comp = Puppet::Type::Component.new(
+            comp = Puppet::Type::Component.create(
                 :name => "component"
             )
             comp.push file
@@ -424,7 +424,7 @@ class TestFile < FileTesting
 
         Puppet.err tmpdir()
         assert_nothing_raised {
-            file = Puppet::Type::PFile.new(
+            file = Puppet::Type::PFile.create(
                 :name => tmpdir(),
                 :check => :type
             )
@@ -437,7 +437,7 @@ class TestFile < FileTesting
         assert_equal("directory", file.state(:type).is)
 
         assert_nothing_raised {
-            file = Puppet::Type::PFile.new(
+            file = Puppet::Type::PFile.create(
                 :name => "/etc/passwd",
                 :check => :type
             )

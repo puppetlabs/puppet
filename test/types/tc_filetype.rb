@@ -19,7 +19,7 @@ class TestFileType
         @passwdtype = Puppet::Type::FileType["passwd"]
         if @passwdtype.nil?
             assert_nothing_raised() {
-                @passwdtype = Puppet::Type::FileType.newtype(
+                @passwdtype = Puppet::Type::FileType.createtype(
                     :name => "passwd"
                 )
                 @passwdtype.addrecord(
@@ -33,7 +33,7 @@ class TestFileType
         @syslogtype = Puppet::Type::FileType["syslog"]
         if @syslogtype.nil?
             assert_nothing_raised() {
-                @syslogtype = Puppet::Type::FileType.newtype(
+                @syslogtype = Puppet::Type::FileType.createtype(
                     :escapednewlines => true,
                     :name => "syslog"
                 )

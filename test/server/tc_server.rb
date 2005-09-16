@@ -27,50 +27,6 @@ class TestServer < ServerTest
         print "\n\n\n\n" if Puppet[:debug]
     end
 
-    # just do a simple start test
-    def test_start
-        Puppet[:autosign] = true
-        server = nil
-        # make a test manifest
-        file = mktestmanifest()
-
-        # create a simple server
-        # we can use threading here because we're not talking to the server,
-        # just starting and stopping it
-        assert_nothing_raised() {
-            server = Puppet::Server.new(
-                :Port => @@port,
-                :Handlers => {
-                    :CA => {}, # so that certs autogenerate
-                    :Master => {
-                        :File => file,
-                    },
-                    :Status => nil
-                }
-            )
-
-        }
-
-        # start it
-        sthread = nil
-        assert_nothing_raised() {
-            trap(:INT) { server.shutdown }
-            sthread = Thread.new {
-                server.start
-            }
-        }
-
-        # and stop it
-        assert_nothing_raised {
-            server.shutdown
-        }
-
-        # and then wait
-        assert_nothing_raised {
-            sthread.join
-        }
-    end
-
     # test that we can connect to the server
     # we have to use fork here, because we apparently can't use threads
     # to talk to other threads

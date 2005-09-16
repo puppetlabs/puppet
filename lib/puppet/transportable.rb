@@ -53,7 +53,7 @@ module Puppet
             retobj = nil
             if type = Puppet::Type.type(self.type)
                 begin
-                    retobj = type.new(self)
+                    retobj = type.create(self)
                 rescue => detail
                     # FIXME TransObject should be handling what happens when there's an error
                     if Puppet[:debug]
@@ -123,7 +123,7 @@ module Puppet
             else
                 Puppet.debug "%s has no parameters" % @name
             end
-            container = Puppet::Type::Component.new(hash)
+            container = Puppet::Type::Component.create(hash)
             nametable = {}
 
             self.each { |child|

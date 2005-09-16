@@ -49,7 +49,7 @@ class TestPackages < FileTesting
 
     def mkpkgcomp(pkg)
         assert_nothing_raised {
-            pkg = Puppet::Type::Package.new(:name => pkg, :install => true)
+            pkg = Puppet::Type::Package.create(:name => pkg, :install => true)
         }
         assert_nothing_raised {
             pkg.retrieve
@@ -104,7 +104,7 @@ class TestPackages < FileTesting
 
         obj = nil
         assert_nothing_raised {
-            obj = Puppet::Type::Package.new(
+            obj = Puppet::Type::Package.create(
                 :name => pkg
             )
         }
@@ -139,7 +139,7 @@ class TestPackages < FileTesting
 
         pkgs.each { |pkg|
             assert_nothing_raised {
-                pkg = Puppet::Type::Package.new(:name => pkg, :install => true)
+                pkg = Puppet::Type::Package.create(:name => pkg, :install => true)
             }
             assert_nothing_raised {
                 pkg.retrieve

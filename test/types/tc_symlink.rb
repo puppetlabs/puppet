@@ -40,7 +40,7 @@ class TestSymlink < FileTesting
         unless hash.include?(:target)
             hash[:target] = mktmpfile()
         end
-        link = Puppet::Type::Symlink.new(hash)
+        link = Puppet::Type::Symlink.create(hash)
         return link
     end
 

@@ -65,13 +65,13 @@ class TestTransactions < FileTesting
         @@tmpfiles.push tmpfile
         hash[:name] = tmpfile
         assert_nothing_raised() {
-            return Puppet::Type::PFile.new(hash)
+            return Puppet::Type::PFile.create(hash)
         }
     end
 
     def newservice
         assert_nothing_raised() {
-            return Puppet::Type::Service.new(
+            return Puppet::Type::Service.create(
                 :name => "sleeper",
                 :path => File.join($puppetbase,"examples/root/etc/init.d"),
                 :check => [:running]
@@ -81,7 +81,7 @@ class TestTransactions < FileTesting
 
     def newexec(file)
         assert_nothing_raised() {
-            return Puppet::Type::Exec.new(
+            return Puppet::Type::Exec.create(
                 :name => "touch %s" % file,
                 :path => "/bin:/usr/bin:/sbin:/usr/sbin",
                 :returns => 0

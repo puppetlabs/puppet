@@ -515,7 +515,7 @@ module Puppet
                     }
                     return object
                 else # just create it
-                    obj = self.new(:name => name)
+                    obj = self.create(:name => name)
                     hash.each { |var,value|
                         obj.addis(var,value)
                     }

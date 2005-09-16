@@ -245,6 +245,7 @@ module Puppet
                     end
                 end
 
+                # FIXME this should be in getconfig, not apply
                 container = @objects.to_type
                 #if @local
                 #    container = @objects.to_type

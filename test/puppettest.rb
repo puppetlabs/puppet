@@ -8,7 +8,7 @@ end
 
 class TestPuppet < Test::Unit::TestCase
     def newcomp(name,*ary)
-        comp = Puppet::Type::Component.new(
+        comp = Puppet::Type::Component.create(
             :name => name
         )
         ary.each { |item| comp.push item }

@@ -53,7 +53,7 @@ class TestType < TestPuppet
         path = "/tmp/testfile"
         assert_nothing_raised() {
             system("rm -f %s" % path)
-            file = Puppet::Type::PFile.new(
+            file = Puppet::Type::PFile.create(
                 :path => path,
                 :create => true,
                 :recurse => true,
@@ -69,7 +69,7 @@ class TestType < TestPuppet
         Puppet::Type::PFile.clear
         assert_nothing_raised() {
             system("rm -f %s" % path)
-            file = Puppet::Type::PFile.new(
+            file = Puppet::Type::PFile.create(
                 "path" => path,
                 "create" => true,
                 "recurse" => true,
@@ -100,7 +100,7 @@ class TestType < TestPuppet
         # currently groups are the only objects with the namevar as a state
         group = nil
         assert_nothing_raised {
-            group = Puppet::Type::Group.new(
+            group = Puppet::Type::Group.create(
                 :name => "testing"
             )
         }

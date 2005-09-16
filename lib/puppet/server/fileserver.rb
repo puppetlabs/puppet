@@ -27,7 +27,7 @@ class Server
 
             obj = nil
             unless obj = Puppet::Type::PFile[dir]
-                obj = Puppet::Type::PFile.new(
+                obj = Puppet::Type::PFile.create(
                     :name => dir,
                     :check => CHECKPARAMS
                 )

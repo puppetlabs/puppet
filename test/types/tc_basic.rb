@@ -21,7 +21,7 @@ class TestBasic < Test::Unit::TestCase
         Puppet[:loglevel] = :debug if __FILE__ == $0
 
         assert_nothing_raised() {
-            @component = Puppet::Type::Component.new(
+            @component = Puppet::Type::Component.create(
                 :name => "yaytest",
                 :type => "testing"
             )
@@ -30,14 +30,14 @@ class TestBasic < Test::Unit::TestCase
         assert_nothing_raised() {
             @filepath = "/tmp/testfile"
             system("rm -f %s" % @filepath)
-            @configfile = Puppet::Type::PFile.new(
+            @configfile = Puppet::Type::PFile.create(
                 :path => @filepath,
                 :create => true,
                 :checksum => "md5"
             )
         }
         assert_nothing_raised() {
-            @sleeper = Puppet::Type::Service.new(
+            @sleeper = Puppet::Type::Service.create(
                 :name => "sleeper",
                 :path => File.join($puppetbase,"examples/root/etc/init.d"),
                 :running => 1

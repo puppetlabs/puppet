@@ -36,7 +36,7 @@ class TestTidy < FileTesting
             f.puts rand(100)
         }
 
-        tidy = Puppet::Type::Tidy.new(
+        tidy = Puppet::Type::Tidy.create(
             :name => dir,
             :size => "1b",
             :recurse => true
@@ -66,7 +66,7 @@ class TestTidy < FileTesting
             f.puts rand(100)
         }
 
-        tidy = Puppet::Type::Tidy.new(
+        tidy = Puppet::Type::Tidy.create(
             :name => dir,
             :size => "1b",
             :age => "1s",

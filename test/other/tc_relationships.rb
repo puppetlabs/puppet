@@ -32,7 +32,7 @@ class TestRelationships < Test::Unit::TestCase
         assert_nothing_raised() {
             cfile = File.join($puppetbase,"examples/root/etc/configfile")
             unless Puppet::Type::PFile.has_key?(cfile)
-                Puppet::Type::PFile.new(
+                Puppet::Type::PFile.create(
                     :path => cfile,
                     :check => [:mode, :owner, :group]
                 )
@@ -44,7 +44,7 @@ class TestRelationships < Test::Unit::TestCase
     def newservice
         assert_nothing_raised() {
             unless Puppet::Type::Service.has_key?("sleeper")
-                Puppet::Type::Service.new(
+                Puppet::Type::Service.create(
                     :name => "sleeper",
                     :path => File.join($puppetbase,"examples/root/etc/init.d"),
                     :check => [:running]

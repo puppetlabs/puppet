@@ -19,7 +19,7 @@ class TestFileSources < FileTesting
     def mkfile(hash)
         file = nil
         assert_nothing_raised {
-            file = Puppet::Type::PFile.new(hash)
+            file = Puppet::Type::PFile.create(hash)
         }
         return file
     end
@@ -69,7 +69,7 @@ class TestFileSources < FileTesting
         comp = nil
         trans = nil
         assert_nothing_raised {
-            file = Puppet::Type::PFile.new(
+            file = Puppet::Type::PFile.create(
                 :name => path
             )
         }
@@ -101,12 +101,12 @@ class TestFileSources < FileTesting
             of.puts "yayness"
         }
         assert_nothing_raised {
-            tofile = Puppet::Type::PFile.new(
+            tofile = Puppet::Type::PFile.create(
                 :name => topath,
                 :source => frompath
             )
         }
-        comp = Puppet::Type::Component.new(
+        comp = Puppet::Type::Component.create(
             :name => "component"
         )
         comp.push tofile
@@ -133,14 +133,14 @@ class TestFileSources < FileTesting
         trans = nil
 
         assert_nothing_raised {
-            tofile = Puppet::Type::PFile.new(
+            tofile = Puppet::Type::PFile.create(
                 :name => todir,
                 "recurse" => true,
                 "backup" => false,
                 "source" => fromdir
             )
         }
-        comp = Puppet::Type::Component.new(
+        comp = Puppet::Type::Component.create(
             :name => "component"
         )
         comp.push tofile
@@ -260,7 +260,7 @@ class TestFileSources < FileTesting
         File.open(file1, "w") { |f| 3.times { f.print rand(100) } }
         rootobj = nil
         assert_nothing_raised {
-            rootobj = Puppet::Type::PFile.new(
+            rootobj = Puppet::Type::PFile.create(
                 :name => basedir,
                 :recurse => true,
                 :check => %w{type owner}

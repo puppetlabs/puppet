@@ -14,7 +14,7 @@ module SSLCertificates
     def self.mkdir(dir)
         # this is all a bunch of stupid hackery
         unless FileTest.exists?(dir)
-            comp = Puppet::Type::Component.new(
+            comp = Puppet::Type::Component.create(
                 :name => "certdir creation"
             )
             path = ['']
@@ -26,7 +26,7 @@ module SSLCertificates
                         raise "%s exists but is not a directory" % File.join(path)
                     end
                 else
-                    obj = Puppet::Type.type(:file).new(
+                    obj = Puppet::Type.type(:file).create(
                         :name => File.join(path),
                         :mode => "750",
                         :create => "directory"

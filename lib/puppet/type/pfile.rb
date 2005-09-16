@@ -1102,7 +1102,7 @@ module Puppet
                 else # create it anew
                     #notice "Creating new file with args %s" % args.inspect
                     begin
-                        child = klass.new(args)
+                        child = klass.create(args)
                         child.parent = self
                         @children << child
                     rescue Puppet::Error => detail

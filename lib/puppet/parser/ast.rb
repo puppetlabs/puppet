@@ -646,7 +646,7 @@ module Puppet
                     # should we implicitly iterate here?
                     # yes, i believe that we essentially have to...
                     objnames.collect { |objname|
-                        if object.is_a?(Component)
+                        if object.is_a?(AST::Component)
                             objname = "%s[%s]" % [objtype,objname]
                             objtype = "component"
                         end
@@ -990,7 +990,7 @@ module Puppet
 
                     begin
                         scope.settype(name,
-                            Component.new(
+                            AST::Component.new(
                                 :name => name,
                                 :args => args,
                                 :code => @code
