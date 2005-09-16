@@ -688,7 +688,7 @@ class Type < Puppet::Element
                     hash[self.namevar] || hash[self.namevar.to_s]
             # if the object already exists
             if retobj = self[name]
-                retobj.merge(self)
+                retobj.merge(hash)
 
                 return retobj
             else

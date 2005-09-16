@@ -136,8 +136,16 @@ module Puppet
 
 		#---------------------------------------------------------------
         def to_s
-            return "%s: %s changed %s to %s" %
-                [@state.parent, @state.name, @state.is_to_s, @state.should_to_s]
+            if @state.is == :notfound
+                return "%s: defined '%s' as '%s'" %
+                    [@state.parent, @state.name, @state.should_to_s]
+            elsif @state.should == :notfound
+                return "%s: undefined %s from '%s'" %
+                    [@state.parent, @state.name, @state.is_to_s]
+            else
+                return "%s: %s changed '%s' to '%s'" %
+                    [@state.parent, @state.name, @state.is_to_s, @state.should_to_s]
+            end
         end
 		#---------------------------------------------------------------
 	end
