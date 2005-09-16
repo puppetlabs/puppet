@@ -120,6 +120,21 @@ class State < Puppet::Element
     end
     #---------------------------------------------------------------
 
+
+    #---------------------------------------------------------------
+    def change_to_s
+        if @is == :notfound
+            return "%s: defined '%s' as '%s'" %
+                [@parent, self.name, self.should_to_s]
+        elsif self.should == :notfound
+            return "%s: undefined %s from '%s'" %
+                [self.parent, self.name, self.is_to_s]
+        else
+            return "%s: %s changed '%s' to '%s'" %
+                [self.parent, self.name, self.is_to_s, self.should_to_s]
+        end
+    end
+    #---------------------------------------------------------------
     #---------------------------------------------------------------
     # because the @should and @is vars might be in weird formats,
     # we need to set up a mechanism for pretty printing of the values

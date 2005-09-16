@@ -65,7 +65,7 @@ module Puppet
                         #:state => @state,
                         #:object => @state.parent,
                     # FIXME this is where loglevel stuff should go
-                    Puppet.notice self.to_s
+                    Puppet.notice @state.change_to_s
                     Puppet::Event.new(
                         :event => event,
                         :change => self,
@@ -84,7 +84,7 @@ module Puppet
                 #    pname = pname.id2name
                 #end
                     #:state => @state,
-                Puppet.notice "Failed: " + self.to_s
+                Puppet.notice "Failed: " + @state.change_to_s
                 return Puppet::Event.new(
                     :event => pname + "_failed",
                     :change => self,
@@ -101,7 +101,8 @@ module Puppet
             #Puppet.debug "moving change forward"
 
             unless defined? @transaction
-                raise "StateChange '%s' tried to be executed outside of transaction" %
+                raise Puppet::Error,
+                    "StateChange '%s' tried to be executed outside of transaction" %
                     self
             end
 
@@ -114,8 +115,13 @@ module Puppet
             @state.should = @is
             @state.retrieve
 
+            unless defined? @transaction
+                raise Puppet::Error,
+                    "StateChange '%s' tried to be executed outside of transaction" %
+                    self
+            end
             unless @state.insync?
-                Puppet.notice "Rolling %s backward" % self
+                Puppet.info "Rolling %s backward" % self
                 return self.go
             else
                 Puppet.debug "rollback is already in sync: %s vs. %s" %
@@ -134,19 +140,8 @@ module Puppet
         end
 		#---------------------------------------------------------------
 
-		#---------------------------------------------------------------
         def to_s
-            if @state.is == :notfound
-                return "%s: defined '%s' as '%s'" %
-                    [@state.parent, @state.name, @state.should_to_s]
-            elsif @state.should == :notfound
-                return "%s: undefined %s from '%s'" %
-                    [@state.parent, @state.name, @state.is_to_s]
-            else
-                return "%s: %s changed '%s' to '%s'" %
-                    [@state.parent, @state.name, @state.is_to_s, @state.should_to_s]
-            end
+            return "change %s.%s" % [@transaction.object_id, self.object_id]
         end
-		#---------------------------------------------------------------
 	end
 end
