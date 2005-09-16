@@ -9,22 +9,22 @@ module Puppet
     module CronType
         module Default
             def self.read(user)
-                %x{crontab -u #{user} -l}
+                tab = %x{crontab -u #{user} -l 2>/dev/null}
+            end
+
+            def self.remove(user)
+                %x{crontab -u #{user} -r 2>/dev/null}
             end
 
             def self.write(user, text)
-                IO.popen("crontab -u #{user} -") { |p|
+                IO.popen("crontab -u #{user} -", "w") { |p|
                     p.print text
                 }
             end
         end
 
         module SunOS
-            def self.read(user)
-                %x{crontab -l #{user}}
-            end
-
-            def self.write(user, text)
+            def self.asuser(user)
                 # FIXME this should use our user object, since it already does
                 # this for us
                 require 'etc'
@@ -43,13 +43,34 @@ module Puppet
                     Process.euid = uid
                 end
 
-                IO.popen("crontab -") { |p|
-                    p.print text
-                }
+                retval = yield
+
 
                 if olduid
                     Process.euid = olduid
                 end
+
+                return retval
+            end
+
+            def self.read(user)
+                self.asuser(user) {
+                    %x{crontab -l 2>/dev/null}
+                }
+            end
+
+            def self.remove(user)
+                self.asuser(user) {
+                    %x{crontab -r 2>/dev/null}
+                }
+            end
+
+            def self.write(user, text)
+                self.asuser(user) {
+                    IO.popen("crontab", "w") { |p|
+                        p.print text
+                    }
+                }
             end
         end
     end
@@ -64,17 +85,33 @@ module Puppet
                 user's environment is desired it should be sourced manually."
 
             def retrieve
-                # nothing...
+                unless defined? @is and ! @is.nil?
+                    @is = :notfound
+                end
             end
 
             def sync
                 @parent.store
 
+                event = nil
                 if @is == :notfound
-                    return :cron_created
+                    #@is = @should
+                    event = :cron_created
+                elsif @should == :notfound
+                    # FIXME I need to actually delete the cronjob...
+                    event = :cron_deleted
+                elsif @should == @is
+                    Puppet.err "Uh, they're both %s" % @should
+                    return nil
                 else
-                    return :cron_changed
+                    #@is = @should
+                    Puppet.err "@is is %s" % @is
+                    event = :cron_changed
                 end
+
+                @parent.store
+                
+                return event
             end
         end
     end
@@ -125,6 +162,11 @@ module Puppet
 
             @instances = {}
 
+            @@weekdays = %w{sunday monday tuesday wednesday thursday friday saturday}
+
+            @@months = %w{january february march april may june july
+                august september october november december}
+
             case Facter["operatingsystem"].value
             when "SunOS":
                 @crontype = Puppet::CronType::SunOS
@@ -135,59 +177,98 @@ module Puppet
             # FIXME so the fundamental problem is, what if the object
             # already exists?
 
+            def self.clear
+                @instances = {}
+                @loaded = {}
+                @synced = {}
+                super
+            end
+
+            def self.crontype
+                return @crontype
+            end
+
             def self.fields
                 return [:minute, :hour, :monthday, :month, :weekday, :command]
             end
 
             def self.instance(obj)
-                @instances << obj
+                user = obj[:user]
+                if @instances.include?(user)
+                    unless @instances[obj[:user]].include?(obj)
+                        @instances[obj[:user]] << obj
+                    end
+                else
+                    @instances[obj[:user]] = [obj]
+                end
             end
 
             def self.retrieve(user)
-                Puppet.err "Retrieving"
-                crons = []
                 hash = {}
+                name = nil
+                unless @instances.include?(user)
+                    @instances[user] = []
+                end
                 #%x{crontab -u #{user} -l 2>/dev/null}.split("\n").each { |line|
                 @crontype.read(user).split("\n").each { |line|
                     case line
-                    when /^# Puppet Name: (\w+)$/: hash[:name] = $1
-                    when /^#/: # add other comments to the list as they are
-                        crons << line 
+                    when /^# Puppet Name: (\w+)$/: name = $1
+                    when /^#/:
+                        # add other comments to the list as they are
+                        @instances[user] << line 
                     else
                         ary = line.split(" ")
                         fields().each { |param|
-                            hash[param] = ary.shift
+                            value = ary.shift
+                            unless value == "*"
+                                hash[param] = value
+                            end
                         }
 
                         if ary.length > 0
                             hash[:command] += " " + ary.join(" ")
                         end
                         cron = nil
-                        unless hash.include?(:name)
+                        unless name
                             Puppet.info "Autogenerating name for %s" % hash[:command]
-                            hash[:name] = "cron-%s" % hash.object_id
+                            name = "cron-%s" % hash.object_id
                         end
 
+                        unless hash.include?(:command)
+                            raise Puppet::DevError, "No command for %s" % name
+                        end
                         unless cron = Puppet::Type::Cron[hash[:command]]
-                            cron = Puppet::Type::Cron.create
+                            cron = Puppet::Type::Cron.create(
+                                :name => name
+                            )
                         end
 
                         hash.each { |param, value|
                             cron.is = [param, value]
                         }
-                        crons << cron
                         hash.clear
+                        name = nil
                     end
                 }
+                if $? == 0
+                    #return tab
+                else
+                    #return nil
+                end
 
-                @instances[user] = crons
                 @loaded[user] = Time.now
             end
 
             def self.store(user)
                 if @instances.include?(user)
                     @crontype.write(user,
-                        @instances[user].join("\n")
+                        @instances[user].collect { |obj|
+                            if obj.is_a?(Cron)
+                                obj.to_cron
+                            else
+                                obj.to_s
+                            end
+                        }.join("\n")
                     )
                     @synced[user] = Time.now
                 else
@@ -203,30 +284,9 @@ module Puppet
                 end
             end
 
-            def self.sync(user)
-                Puppet.err ary.length
-                str = ary.collect { |obj|
-                    Puppet.err obj.name
-                    self.to_cron(obj)
-                }.join("\n")
-
-                puts str
-            end
-
-            def self.to_cron(obj)
-                hash = {:command => obj.should(:command)}
-                self.fields().reject { |f| f == :command }.each { |param|
-                    hash[param] = obj[param] || "*"
-                }
-
-                self.fields.collect { |f|
-                    hash[f]
-                }.join(" ")
-            end
-
             def initialize(hash)
-                self.class.instance(self)
                 super
+                self.class.instance(self)
             end
 
             def is=(ary)
@@ -234,13 +294,93 @@ module Puppet
                 if param.is_a?(String)
                     param = param.intern
                 end
-                unless @states.include?(param)
+                if self.class.validstate?(param)
                     self.newstate(param)
+                    @states[param].is = value
+                else
+                    self[param] = value
                 end
-                @states[param].is = value
+            end
+
+            def numfix(num)
+                if num =~ /^\d+$/
+                    return num.to_i
+                elsif num.is_a?(Integer)
+                    return num
+                else
+                    return false
+                end
+            end
+
+            def limitcheck(num, lower, upper, type)
+                if num >= lower and num <= upper
+                    return num
+                else
+                    return false
+                end
+            end
+
+            def alphacheck(value, type, ary)
+                tmp = value.downcase
+                if tmp.length == 3
+                    ary.each_with_index { |name, index|
+                        if name =~ /#{tmp}/i
+                            return index
+                        end
+                    }
+                else
+                    if ary.include?(tmp)
+                        return ary.index(tmp)
+                    end
+                end
+
+                return false
+            end
+
+            def parameter(value, type, lower, upper, alpha = nil, ary = nil)
+                retval = nil
+                if num = numfix(value)
+                    retval = limitcheck(num, lower, upper, type)
+                elsif alpha
+                    retval = alphacheck(value, type, ary)
+                end
+
+                if retval
+                    @parameters[type] = retval
+                else
+                    raise Puppet::Error, "%s is not a valid %s" %
+                        [value, type]
+                end
+            end
+
+            def paramminute=(value)
+                parameter(value, :minute, 0, 59)
+            end
+
+            def paramhour=(value)
+                parameter(value, :hour, 0, 23)
+            end
+
+            def paramweekday=(value)
+                parameter(value, :weekday, 0, 6, true, @@weekdays)
+            end
+
+            def parammonth=(value)
+                parameter(value, :month, 1, 12, true, @@months)
+            end
+
+            def parammonthday=(value)
+                parameter(value, :monthday, 1, 31)
             end
 
             def paramuser=(user)
+                require 'etc'
+
+                begin
+                    obj = Etc.getpwnam(user)
+                rescue ArgumentError
+                    raise Puppet::Error, "User %s not found"
+                end
                 @parameters[:user] = user
             end
 
@@ -249,12 +389,24 @@ module Puppet
                     raise Puppet::Error, "You must specify the cron user"
                 end
 
-                # look for the existing instance...
-                # and then set @is = :notfound
+                self.class.retrieve(@parameters[:user])
+                @states[:command].retrieve
             end
 
             def store
                 self.class.store(@parameters[:user])
+            end
+
+            def to_cron
+                hash = {:command => @states[:command].should || @states[:command].is }
+                self.class.fields().reject { |f| f == :command }.each { |param|
+                    hash[param] = @parameters[param] || "*"
+                }
+
+                return "# Puppet Name: %s\n" % self.name +
+                    self.class.fields.collect { |f|
+                        hash[f]
+                    }.join(" ")
             end
         end
     end
