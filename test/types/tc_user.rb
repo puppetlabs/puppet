@@ -146,6 +146,7 @@ class TestUser < TestPuppet
                     group = Etc.getgrnam(gid)
                 rescue ArgumentError => detail
                     false
+                    next
                 end
                 old != group.gid
         }

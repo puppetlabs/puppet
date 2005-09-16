@@ -9,6 +9,7 @@
 require 'etc'
 require 'facter'
 require 'puppet/type/state'
+require 'puppet/type/nameservice'
 
 module Puppet
     class State
@@ -25,16 +26,21 @@ module Puppet
             end
 
             def should=(gid)
-                if gid.is_a?(String)
+                case gid
+                when String
                     if gid =~ /^[0-9]+$/
                         gid = Integer(gid)
                     else
                         raise Puppet::Error, "Invalid GID %s" % gid
                     end
-                end
-
-                if gid.is_a?(Integer) and gid < 0
-                    raise Puppet::Error, "GIDs must be positive"
+                when Integer
+                    unless gid >= 0
+                        raise Puppet::Error, "GIDs must be positive"
+                    end
+                when Symbol
+                    unless gid == :auto or gid == :notfound
+                        raise Puppet::DevError, "Invalid GID %s" % gid
+                    end
                 end
 
                 Puppet.info "Setting gid to %s" % gid
@@ -46,20 +52,37 @@ module Puppet
 
     class Type
         class Group < Type
-            statemodule = nil
+            statenames = [
+                "GroupGID"
+            ]
             case Facter["operatingsystem"].value
             when "Darwin":
-                statemodule = Puppet::NameService::NetInfo::NetInfoGroup
+                @statemodule = Puppet::NameService::NetInfo
             else
-                statemodule = Puppet::NameService::ObjectAdd::ObjectAddGroup
+                @statemodule = Puppet::NameService::ObjectAdd
             end
 
-            @states = statemodule.substates
+            @states = statenames.collect { |name|
+                fullname = @statemodule.to_s + "::" + name
+                begin
+                    eval(fullname)
+                rescue NameError
+                    raise Puppet::DevError, "Could not retrieve state class %s" %
+                        fullname
+                end
+            }.each { |klass|
+                klass.complete
+            }
 
             @name = :group
             @namevar = :name
 
             @parameters = [:name]
+
+            class << self
+                attr_accessor :netinfodir
+                attr_accessor :statemodule
+            end
 
             @netinfodir = "groups"
 
@@ -72,22 +95,7 @@ module Puppet
                 membership must be managed on individual users."
 
             def exists?
-                case @@extender
-                when "NInfo":
-                    cmd = "nidump -r /groups/%s /" % self.name
-                    output = %x{#{cmd} 2>/dev/null}
-                    if output == ""
-                        return false
-                    else
-                        return true
-                    end
-                else
-                    if self.getinfo
-                        return true
-                    else
-                        return false
-                    end
-                end
+                self.class.statemodule.exists?(self)
             end
 
             def getinfo(refresh = false)
@@ -112,20 +120,8 @@ module Puppet
                     super
                 else
                     # the group does not exist
-
-                    # unless we're in noop mode, we need to auto-pick a gid if
-                    # there hasn't been one specified
-                    unless @states.include?(:gid) or self.noop
-                        highest = 0
-                        Etc.group { |group|
-                            if group.gid > highest
-                                unless group.gid > 65000
-                                    highest = group.gid
-                                end
-                            end
-                        }
-
-                        self[:gid] = highest + 1
+                    unless @states.include?(:gid)
+                        self[:gid] = :auto
                     end
 
                     @states.each { |name, state|

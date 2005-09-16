@@ -1,5 +1,7 @@
+require 'puppet'
+
 module Puppet
-    class Type
+    class State
         def self.objectaddflag
             if defined? @objectaddflag and @objectaddflag
                 return @objectaddflag
@@ -23,12 +25,23 @@ module Puppet
                 end
             end
 
+            def self.exists?(obj)
+                if obj.getinfo
+                    return true
+                else
+                    return false
+                end
+            end
+
             class ObjectAddGroup < POSIX::POSIXState
                 def addcmd
                     cmd = ["groupadd"]
                     if gid = @parent.should(:gid)
-                        cmd << "-g" << gid 
+                        unless gid == :auto
+                            cmd << "-g" << gid 
+                        end
                     end
+                    cmd << @parent.name
 
                     return cmd.join(" ")
                 end
@@ -40,7 +53,7 @@ module Puppet
                 def modifycmd
                     [
                         "groupmod",
-                        self.class.xaddflag,
+                        self.class.objectaddflag,
                         "'%s'" % @should,
                         @parent.name
                     ].join(" ")
@@ -52,30 +65,6 @@ module Puppet
             end
 
             class ObjectAddUser < POSIX::POSIXState
-                class << self
-                    attr_accessor :extender
-                end
-
-                @subs = []
-                def self.inherited(sub)
-                    @subs << sub
-                    mod = "Puppet::State::%s" %
-                        sub.to_s.sub(/.+::/,'')
-                    begin
-                    modklass = eval(mod)
-                    rescue NameError
-                        raise Puppet::Error,
-                            "Could not find extender module for %s" % sub.to_s
-                    end
-                    sub.include(modklass)
-
-                    sub.extender = modklass
-                end
-
-                def self.substates
-                    @subs
-                end
-
                 def addcmd
                     cmd = ["useradd"]
                     @parent.eachstate { |state|
@@ -83,6 +72,13 @@ module Puppet
                         # have spaces in it
                         cmd << state.class.objectaddflag << "'%s'" % state.should
                     }
+                    # stupid fedora
+                    case Facter["distro"].value
+                    when "Fedora", "RedHat":
+                        cmd << "-M"
+                    else
+                    end
+                    cmd << @parent.name
 
                     cmd.join(" ")
                 end
@@ -109,7 +105,7 @@ module Puppet
             end
 
             class UserComment   < ObjectAddUser
-                @objectaddflag = "-d"
+                @objectaddflag = "-c"
             end
 
             class UserHome      < ObjectAddUser

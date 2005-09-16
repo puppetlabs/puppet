@@ -1,3 +1,5 @@
+require 'puppet'
+
 module Puppet
     class Type
         def self.posixmethod
@@ -16,6 +18,10 @@ module Puppet
         # a subclass of these classes to actually modify the system.
         module POSIX
             class POSIXState < Puppet::State
+                class << self
+                    attr_accessor :extender
+                end
+
                 def self.doc
                     if defined? @extender
                         @extender.doc
@@ -24,33 +30,55 @@ module Puppet
                     end
                 end
 
+                def self.complete
+                    mod = "Puppet::State::%s" %
+                        self.to_s.sub(/.+::/,'')
+                    begin
+                        modklass = eval(mod)
+                    rescue NameError
+                        raise Puppet::Error,
+                            "Could not find extender module %s for %s" %
+                                [mod, self.to_s]
+                    end
+                    include modklass
+
+                    self.extender = modklass
+                end
+
                 def self.posixmethod
                     if defined? @extender
                         if @extender.respond_to?(:posixmethod)
+                            return @extender.posixmethod
                         else
-                            return @name
+                            return @extender.name
                         end
                     else
-                        return @name
+                        raise Puppet::DevError,
+                            "%s could not retrieve posixmethod" % self
                     end
                 end
 
                 def self.name
                     @extender.name
                 end
+
                 # we use the POSIX interfaces to retrieve all information,
                 # so we don't have to worry about abstracting that across
                 # the system
                 def retrieve
                     if obj = @parent.getinfo(true)
 
-                        method = self.class.posixmethod
-                        @is = obj.send(method)
+                        if method = self.class.posixmethod || self.class.name
+                            @is = obj.send(method)
+                        else
+                            raise Puppet::DevError,
+                                "%s has no posixmethod" % self.class
+                        end
                     else
                         @is = :notfound
                     end
-
                 end
+
                 def sync
                     obj = @parent.getinfo
 
@@ -69,6 +97,8 @@ module Puppet
                     # this needs to be set either by the individual state
                     # or its parent class
                     cmd = self.modifycmd
+
+                    Puppet.debug "Executing %s" % cmd.inspect
 
                     output = %x{#{cmd} 2>&1}
 
@@ -109,6 +139,7 @@ module Puppet
                         cmd = self.addcmd
                         type = "create"
                     end
+                    Puppet.debug "Executing %s" % cmd.inspect
 
                     output = %x{#{cmd} 2>&1}
 
@@ -118,9 +149,6 @@ module Puppet
                     end
 
                     return "#{@parent.class.name}_#{type}d".intern
-                end
-
-                class POSIXGID
                 end
             end
         end

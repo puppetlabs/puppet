@@ -1,6 +1,9 @@
 # Manage NetInfo POSIX objects.  Probably only used on OS X, but I suppose
 # it could be used elsewhere.
 
+require 'puppet'
+require 'puppet/type/nameservice/posix'
+
 module Puppet
     class Type
         # Return the NetInfo directory in which a given object type is stored.
@@ -33,6 +36,18 @@ module Puppet
                 else
                     Puppet.err "Could not find nireport"
                     return false
+                end
+            end
+
+            def self.exists?(obj)
+                cmd = "nidump -r /%s/%s /" %
+                    [obj.class.netinfodir, obj.name]
+
+                output = %x{#{cmd} 2>/dev/null}
+                if output == ""
+                    return false
+                else
+                    return true
                 end
             end
 
@@ -113,26 +128,11 @@ module Puppet
                             "Could not find netinfokey for state %s" %
                             self.class.name
                     end
-                    cmd.join(" "
+                    cmd.join(" ")
                 end
             end
 
-            class NetInfoGroup < NetInfoState
-                @subs = []
-                def self.inherited(sub)
-                    @subs << sub
-                    mod = "Puppet::State::%s" %
-                        sub.to_s.sub(/.+::/,'')
-                    sub.include(eval(mod))
-                end
-
-                def self.substates
-                    @subs
-                end
-
-            end
-
-            class NetInfoGID < NetInfoState; end
+            class GroupGID < NetInfoState; end
         end
     end
 end

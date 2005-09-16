@@ -3,6 +3,7 @@
 require 'etc'
 require 'facter'
 require 'puppet/type/state'
+require 'puppet/type/nameservice'
 
 module Puppet
     class State
@@ -87,6 +88,8 @@ module Puppet
             def self.doc
                 "The user's login shell.  The shell must exist and be
                 executable."
+            end
+
             def self.name
                 :shell
             end
@@ -131,15 +134,39 @@ module Puppet
 
     class Type
         class User < Type
-            statemodule = nil
+            statenames = [
+                "UserUID",
+                "UserGID",
+                "UserComment",
+                "UserHome",
+                "UserShell"
+            ]
+            @statemodule = nil
             case Facter["operatingsystem"].value
             when "Darwin":
-                statemodule = Puppet::NameService::NetInfo::NetInfoUser
+                @statemodule = Puppet::NameService::NetInfo
             else
-                statemodule = Puppet::NameService::ObjectAdd::ObjectAddUser
+                @statemodule = Puppet::NameService::ObjectAdd
             end
 
-            @states = statemodule.substates
+            class << self
+                attr_accessor :netinfodir
+                attr_accessor :statemodule
+            end
+
+            @states = []
+
+            @states = statenames.collect { |name|
+                fullname = @statemodule.to_s + "::" + name
+                begin
+                    eval(fullname)
+                rescue NameError
+                    raise Puppet::DevError, "Could not retrieve state class %s" %
+                        fullname
+                end
+            }.each { |klass|
+                klass.complete
+            }
 
             @parameters = [
                 :name
