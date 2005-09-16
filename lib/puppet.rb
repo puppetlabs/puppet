@@ -1,7 +1,5 @@
 #!/usr/local/bin/ruby -w
 
-# $Id$
-
 require 'singleton'
 require 'puppet/log'
 
@@ -217,3 +215,6 @@ end
 require 'puppet/server'
 require 'puppet/type'
 require 'puppet/storage'
+
+# $Id$
+
