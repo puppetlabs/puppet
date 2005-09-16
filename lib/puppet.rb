@@ -217,4 +217,3 @@ require 'puppet/type'
 require 'puppet/storage'
 
 # $Id$
-
