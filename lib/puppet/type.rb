@@ -1065,7 +1065,7 @@ class Type < Puppet::Element
 
         states.each { |state|
             unless state.insync?
-                #Puppet.debug("%s is not in sync" % state)
+                Puppet.debug("%s is not in sync" % state)
                 insync = false
             end
         }

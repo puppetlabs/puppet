@@ -20,6 +20,22 @@ module Puppet
             class POSIXState < Puppet::State
                 class << self
                     attr_accessor :extender
+
+                    def autogen?
+                        if defined? @autogen
+                            return @autogen
+                        else
+                            return false
+                        end
+                    end
+
+                    def optional?
+                        if defined? @optional
+                            return @optional
+                        else
+                            return false
+                        end
+                    end
                 end
 
                 def self.doc
@@ -80,15 +96,26 @@ module Puppet
                 end
 
                 def sync
-                    obj = @parent.getinfo
-
+                    event = nil
+                    if @is == :notfound
+                        self.retrieve
+                        if @is == @should
+                            return nil
+                        end
+                    end
                     # if the object needs to be created or deleted,
                     # depend on another method to do it all at once
                     if @is == :notfound or @should == :notfound
-                        return syncname()
+                        event = syncname()
+
+                        # if the whole object is created at once, just return
+                        # an event saying so
+                        if self.class.allatonce?
+                            return event
+                        end
                     end
 
-                    if obj.nil?
+                    unless @parent.exists?
                         raise Puppet::DevError,
                             "%s %s does not exist; cannot set %s" %
                             [@parent.class.name, @parent.name, self.class.name]
@@ -102,24 +129,27 @@ module Puppet
 
                     output = %x{#{cmd} 2>&1}
 
+
                     unless $? == 0
                         raise Puppet::Error, "Could not modify %s on %s %s: %s" %
                             [self.class.name, @parent.class.name,
                                 @parent.name, output]
                     end
 
-                    return "#{@parent.class.name}_modified".intern
+                    if event
+                        return event
+                    else
+                        return "#{@parent.class.name}_modified".intern
+                    end
                 end
 
                 private
                 def syncname
-                    obj = @parent.getinfo
-                    
                     cmd = nil
                     event = nil
                     if @should == :notfound
                         # we need to remove the object...
-                        if obj.nil?
+                        unless @parent.exists?
                             # the group already doesn't exist
                             return nil
                         end
@@ -129,10 +159,8 @@ module Puppet
                         cmd = self.deletecmd
                         type = "delete"
                     else
-                        unless obj.nil?
-                            raise Puppet::DevError,
-                                "Got told to create a %s that already exists" %
-                                @parent.class.name
+                        if @parent.exists?
+                            return nil
                         end
 
                         # blah blah, define elsewhere, blah blah
@@ -146,6 +174,18 @@ module Puppet
                     unless $? == 0
                         raise Puppet::Error, "Could not %s %s %s: %s" %
                             [type, @parent.class.name, @parent.name, output]
+                    end
+
+                    # we want object creation to show up as one event, 
+                    # not many
+                    unless self.class.allatonce?
+                        if type == "create"
+                            Puppet.info "syncing everyone"
+                            @parent.eachstate { |state|
+                                Puppet.info "syncing %s" % state.name
+                                state.sync
+                            }
+                        end
                     end
 
                     return "#{@parent.class.name}_#{type}d".intern

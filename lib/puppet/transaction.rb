@@ -58,8 +58,13 @@ class Transaction
                     #@@changed.push change.state.parent
                 rescue => detail
                     Puppet.err("%s failed: %s" % [change,detail])
+                    if Puppet[:debug] and detail.respond_to?(:stack)
+                        puts detail.stack
+                    end
                     next
-                    # FIXME this should support using onerror to determine behaviour
+                    # FIXME this should support using onerror to determine
+                    # behaviour; or more likely, the client calling us
+                    # should do so
                 end
 
                 if events.nil?

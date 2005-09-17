@@ -34,6 +34,10 @@ module Puppet
             end
 
             class ObjectAddGroup < POSIX::POSIXState
+                def self.allatonce?
+                    true
+                end
+
                 def addcmd
                     cmd = ["groupadd"]
                     if gid = @parent.should(:gid)
@@ -62,9 +66,14 @@ module Puppet
 
             class GroupGID       < ObjectAddGroup
                 @objectaddflag = "-g"
+                @autogen = true
             end
 
             class ObjectAddUser < POSIX::POSIXState
+                def self.allatonce?
+                    true
+                end
+
                 def addcmd
                     cmd = ["useradd"]
                     @parent.eachstate { |state|
@@ -98,10 +107,12 @@ module Puppet
             end
             class UserUID       < ObjectAddUser
                 @objectaddflag = "-u"
+                @autogen = true
             end
 
             class UserGID       < ObjectAddUser
                 @objectaddflag = "-g"
+                @autogen = true
             end
 
             class UserComment   < ObjectAddUser
@@ -110,10 +121,12 @@ module Puppet
 
             class UserHome      < ObjectAddUser
                 @objectaddflag = "-d"
+                @autogen = true
             end
 
             class UserShell     < ObjectAddUser
                 @objectaddflag = "-s"
+                @autogen = true
             end
 
             class UserLocked    < ObjectAddUser
@@ -121,10 +134,12 @@ module Puppet
 
             class UserExpire    < ObjectAddUser
                 @objectaddflag = "-e"
+                @autogen = true
             end
 
             class UserInactive  < ObjectAddUser
                 @objectaddflag = "-f"
+                @autogen = true
             end
         end
     end

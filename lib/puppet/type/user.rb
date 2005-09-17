@@ -19,6 +19,38 @@ module Puppet
             def self.name
                 :uid
             end
+
+            def autogen
+                highest = 0
+                Etc.passwd { |user|
+                    if user.uid > highest
+                        unless user.uid > 65000
+                            highest = user.uid
+                        end
+                    end
+                }
+
+                return highest + 1
+            end
+
+            def should=(value)
+                case value
+                when String
+                    if value =~ /^[-0-9]+$/
+                        value = Integer(value)
+                    end
+                when Symbol
+                    unless value == :notfound or value == :auto
+                        raise Puppet::DevError, "Invalid UID %s" % value
+                    end
+
+                    if value == :auto
+                        value = autogen()
+                    end
+                end
+
+                @should = value
+            end
         end
 
         module UserGID
@@ -34,7 +66,7 @@ module Puppet
             def should=(gid)
                 method = :getgrgid
                 if gid.is_a?(String)
-                    if gid =~ /^[0-9]+$/
+                    if gid =~ /^[-0-9]+$/
                         gid = Integer(gid)
                     else
                         method = :getgrnam
@@ -51,6 +83,7 @@ module Puppet
                         [gid, detail]
                 end
 
+                Puppet.notice "setting gid to %s" % ginfo.gid.inspect
                 @should = ginfo.gid
             end
         end
@@ -62,6 +95,10 @@ module Puppet
 
             def self.name
                 :comment
+            end
+
+            def self.optional?
+                true
             end
 
             def self.posixmethod
@@ -186,6 +223,10 @@ module Puppet
 
             @netinfodir = "users"
 
+            def exists?
+                self.class.statemodule.exists?(self)
+            end
+
             def getinfo(refresh = false)
                 if @userinfo.nil? or refresh == true
                     begin
@@ -201,6 +242,19 @@ module Puppet
             def initialize(hash)
                 @userinfo = nil
                 super
+
+                self.class.states.each { |state|
+                    next if @states.include?(state.name)
+
+                    unless state.autogen? or state.optional?
+                        if state.method_defined?(:autogen)
+                            self[state.name] = :auto
+                        else
+                            raise Puppet::Error,
+                                "Users require a value for %s" % state.name
+                        end
+                    end
+                }
 
                 if @states.empty?
                     self[:comment] = self[:name]

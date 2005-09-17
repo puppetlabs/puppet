@@ -20,14 +20,93 @@ class TestUser < TestPuppet
 
     def teardown
         @@tmpusers.each { |user|
-            begin
-                obj = Etc.getpwnam(user)
-                system("userdel %s" % user)
-            rescue ArgumentError => detail
-                # no such user, so we're fine
+            unless missing?(user)
+                remove(user)
             end
         }
         super
+    end
+
+    case Facter["operatingsystem"].value
+    when "Darwin":
+        def missing?(user)
+            output = %x{nidump -r /users/#{user} / 2>/dev/null}.chomp
+
+            if output == ""
+                return true
+            else
+                return false
+            end
+
+            assert_equal("", output, "User %s is present:\n%s" % [user, output])
+        end
+
+        def current?(param, name)
+            state = Puppet::Type::User.states.find { |st|
+                st.name == param
+            }
+
+            output = %x{nireport / /users name #{state.netinfokey}}
+            output.split("\n").each { |line|
+                if line =~ /^(\w+)\s+(.+)$/
+                    user = $1
+                    id = $2.sub(/\s+$/, '')
+                    if user == name
+                        if id =~ /^[-0-9]+$/
+                            return Integer(id)
+                        else
+                            return id
+                        end
+                    end
+                else
+                    raise "Could not match %s" % line
+                end
+            }
+
+            return nil
+        end
+
+        def remove(user)
+            system("niutil -destroy / /users/%s" % user)
+        end
+    else
+        def missing?(user)
+            begin
+                obj = Etc.getgrnam(user)
+                return false
+            rescue ArgumentError
+                return true
+            end
+        end
+
+        def current?(param, name)
+            state = Puppet::Type::User.states.find { |st|
+                state.name == param
+            }
+
+            assert_nothing_raised {
+                obj = Etc.getgrnam(name)
+                return obj.send(state.posixmethod)
+            }
+
+            return nil
+        end
+
+        def remove(user)
+            system("userdel %s" % user)
+        end
+    end
+
+    def findshell(old = nil)
+        %w{/bin/sh /bin/bash /sbin/sh /bin/ksh /bin/zsh /bin/csh /bin/tcsh
+            /usr/bin/sh /usr/bin/bash /usr/bin/ksh /usr/bin/zsh /usr/bin/csh
+            /usr/bin/tcsh}.find { |shell|
+                if old
+                    FileTest.exists?(shell) and shell != old
+                else
+                    FileTest.exists?(shell)
+                end
+        }
     end
 
     def attrtest_comment(user)
@@ -38,30 +117,20 @@ class TestUser < TestPuppet
 
         trans = assert_events(comp, [:user_modified], "user")
 
-        obj = nil
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-
-        assert_equal("A different comment", obj.gecos, "Comment was not changed")
+        assert_equal("A different comment", current?(:comment, user[:name]),
+            "Comment was not changed")
 
         assert_rollback_events(trans, [:user_modified], "user")
 
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-
-        assert_equal(old, obj.gecos, "Comment was not reverted")
+        assert_equal(old, current?(:comment, user[:name]),
+            "Comment was not reverted")
     end
 
     def attrtest_home(user)
         obj = nil
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-        old = obj.dir
         comp = newcomp("hometest", user)
 
+        old = current?(:home, user[:name])
         user[:home] = old
 
         trans = assert_events(comp, [], "user")
@@ -70,39 +139,22 @@ class TestUser < TestPuppet
 
         trans = assert_events(comp, [:user_modified], "user")
 
-        obj = nil
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-
-        assert_equal("/tmp", obj.dir, "Home was not changed")
+        assert_equal("/tmp", current?(:home, user[:name]), "Home was not changed")
 
         assert_rollback_events(trans, [:user_modified], "user")
 
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-
-        assert_equal(old, obj.dir, "Home was not reverted")
+        assert_equal(old, current?(:home, user[:name]), "Home was not reverted")
     end
 
     def attrtest_shell(user)
-        obj = nil
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-        old = obj.shell
+        old = current?(:shell, user[:name])
         comp = newcomp("shelltest", user)
 
         user[:shell] = old
 
         trans = assert_events(comp, [], "user")
 
-        newshell = %w{/bin/sh /bin/bash /sbin/sh /bin/ksh /bin/zsh /bin/csh /bin/tcsh
-            /usr/bin/sh /usr/bin/bash /usr/bin/ksh /usr/bin/zsh /usr/bin/csh
-            /usr/bin/tcsh}.find { |shell|
-                FileTest.exists?(shell) and shell != old
-        }
+        newshell = findshell(old)
 
         unless newshell
             $stderr.puts "Cannot find alternate shell; skipping shell test"
@@ -113,29 +165,22 @@ class TestUser < TestPuppet
 
         trans = assert_events(comp, [:user_modified], "user")
 
-        obj = nil
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-
-        assert_equal(newshell, obj.shell, "Shell was not changed")
+        assert_equal(newshell, current?(:shell, user[:name]),
+            "Shell was not changed")
 
         assert_rollback_events(trans, [:user_modified], "user")
 
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-
-        assert_equal(old, obj.shell, "Shell was not reverted")
+        assert_equal(old, current?(:shell, user[:name]), "Shell was not reverted")
     end
 
     def attrtest_gid(user)
         obj = nil
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-        old = obj.gid
+        old = current?(:gid,user.name)
         comp = newcomp("gidtest", user)
+
+        user.retrieve
+        Puppet.notice "%s vs %s vs %s" %
+            [user.is(:gid), user.should(:gid), old.inspect]
 
         user[:gid] = old
 
@@ -145,7 +190,6 @@ class TestUser < TestPuppet
                 begin
                     group = Etc.getgrnam(gid)
                 rescue ArgumentError => detail
-                    false
                     next
                 end
                 old != group.gid
@@ -170,32 +214,22 @@ class TestUser < TestPuppet
             user[:gid] = newgid
         }
 
+        user.retrieve
+
         assert_events(comp, [], "user")
 
-        obj = nil
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-
-        assert_equal(newgid, obj.gid, "GID was not changed")
+        assert_equal(newgid, current?(:gid,user[:name]), "GID was not changed")
 
         assert_rollback_events(trans, [:user_modified], "user")
 
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-
-        assert_equal(old, obj.gid, "GID was not reverted")
+        assert_equal(old, current?(:gid,user[:name]), "GID was not reverted")
     end
 
     def attrtest_uid(user)
         obj = nil
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-        old = obj.uid
         comp = newcomp("uidtest", user)
 
+        old = current?(:uid, user[:name])
         user[:uid] = old
 
         trans = assert_events(comp, [], "user")
@@ -221,20 +255,11 @@ class TestUser < TestPuppet
 
         trans = assert_events(comp, [:user_modified], "user")
 
-        obj = nil
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-
-        assert_equal(newuid, obj.uid, "UID was not changed")
+        assert_equal(newuid, current?(:uid, user[:name]), "UID was not changed")
 
         assert_rollback_events(trans, [:user_modified], "user")
 
-        assert_nothing_raised {
-            obj = Etc.getpwnam(user[:name])
-        }
-
-        assert_equal(old, obj.uid, "UID was not reverted")
+        assert_equal(old, current?(:uid, user[:name]), "UID was not reverted")
     end
 
     def test_eachmethod
@@ -257,29 +282,26 @@ class TestUser < TestPuppet
             user = nil
             name = "pptest"
 
-            assert_raise(ArgumentError) {
-                Etc.getpwnam(name)
-            }
+            assert(missing?(name), "User %s is present" % name)
 
             assert_nothing_raised {
                 user = Puppet::Type::User.create(
                     :name => name,
-                    :comment => "Puppet Testing User"
+                    :comment => "Puppet Testing User",
+                    :gid => Process.gid,
+                    :shell => findshell(),
+                    :home => "/home/%s" % name
                 )
             }
+
+            @@tmpusers << name
 
             comp = newcomp("usercomp", user)
 
             trans = assert_events(comp, [:user_created], "user")
 
-            @@tmpusers << name
-
-            obj = nil
-            assert_nothing_raised {
-                obj = Etc.getpwnam(name)
-            }
-
-            assert_equal("Puppet Testing User", obj.gecos, "Comment was not set")
+            assert_equal("Puppet Testing User", current?(:comment, user[:name]),
+                "Comment was not set")
 
             tests = Puppet::Type::User.validstates.collect { |name, state|
                 state.name
@@ -296,9 +318,7 @@ class TestUser < TestPuppet
 
             assert_rollback_events(trans, [:user_deleted], "user")
 
-            assert_raise(ArgumentError) {
-                Etc.getpwnam(user[:name])
-            }
+            assert(missing?(user[:name]))
         end
     else
         $stderr.puts "Not root; skipping user creation/modification tests"

@@ -8,13 +8,6 @@ module Puppet
     class Type
         # Return the NetInfo directory in which a given object type is stored.
         # Defaults to the type's name if @netinfodir is unset.
-        def self.netinfodir
-            if defined? @netinfodir and @netinfodir
-                return @netinfodir
-            else
-                return @name
-            end
-        end
     end
 
     module NameService
@@ -47,6 +40,7 @@ module Puppet
                 if output == ""
                     return false
                 else
+                    #Puppet.debug "%s exists: %s" % [obj.name, output]
                     return true
                 end
             end
@@ -60,17 +54,21 @@ module Puppet
             end
 
             class NetInfoState < POSIX::POSIXState
+                def self.allatonce?
+                    false
+                end
+
                 def self.netinfokey
                     if defined? @netinfokey and @netinfokey
                         return @netinfokey
                     else
-                        return @name
+                        return self.name
                     end
                 end
 
                 def retrieve
                     dir = @parent.class.netinfodir
-                    cmd = ["nireport", "/" "/%s" % dir, "name"]
+                    cmd = ["nireport", "/", "/%s" % dir, "name"]
 
                     if key = self.class.netinfokey
                         cmd << key.to_s
@@ -79,16 +77,22 @@ module Puppet
                             "Could not find netinfokey for state %s" %
                             self.class.name
                     end
+                    Puppet.debug "Executing %s" % cmd.join(" ").inspect
 
                     output = %x{#{cmd.join(" ")} 2>&1}.split("\n").each { |line|
-                        name, value = line.chomp.split(/\s+/)
+                        if line =~ /^(\w+)\s+(.+)$/
+                            name = $1
+                            value = $2.sub(/\s+$/, '')
 
-                        if name == @parent.name
-                            if value =~ /^\d+$/
-                                @is = Integer(value)
-                            else
-                                @is = value
+                            if name == @parent.name
+                                if value =~ /^[-0-9]+$/
+                                    @is = Integer(value)
+                                else
+                                    @is = value
+                                end
                             end
+                        else
+                            raise Puppet::DevError, "Could not match %s" % line
                         end
                     }
 
@@ -108,7 +112,11 @@ module Puppet
                     cmd << "/" << "/%s/%s" %
                         [@parent.class.netinfodir, @parent.name]
 
-                    cmd.join(" ")
+                    #if arg == "-create"
+                    #    return [cmd.join(" "), self.modifycmd].join(";")
+                    #else
+                        return cmd.join(" ")
+                    #end
                 end
 
                 def deletecmd
@@ -132,7 +140,33 @@ module Puppet
                 end
             end
 
-            class GroupGID < NetInfoState; end
+            class GroupGID < NetInfoState
+            end
+
+            class UserUID       < NetInfoState
+            end
+
+            class UserGID       < NetInfoState
+            end
+
+            class UserComment   < NetInfoState
+                @netinfokey = "realname"
+            end
+
+            class UserHome      < NetInfoState
+            end
+
+            class UserShell     < NetInfoState
+            end
+
+            class UserLocked    < NetInfoState
+            end
+
+            class UserExpire    < NetInfoState
+            end
+
+            class UserInactive  < NetInfoState
+            end
         end
     end
 end

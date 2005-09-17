@@ -19,9 +19,6 @@ class TestGroup < TestPuppet
 
     def teardown
         Puppet::Type::Group.clear
-        if Facter["operatingsystem"].value == "Darwin"
-            Puppet::State::GroupNInfo.flush()
-        end
         @@tmpgroups.each { |group|
             unless missing?(group)
                 remove(group)
@@ -218,14 +215,7 @@ class TestGroup < TestPuppet
             }
 
             @@tmpgroups << name
-            case Facter["operatingsystem"].value
-            when "Darwin":
-                trans = assert_events(comp, [:group_created, :group_modified],
-                    "group")
-            else
-                trans = assert_events(comp, [:group_created],
-                    "group")
-            end
+            trans = assert_events(comp, [:group_created], "group")
 
             obj = nil
             assert_nothing_raised {

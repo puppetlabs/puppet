@@ -25,10 +25,23 @@ module Puppet
                 :gid
             end
 
+            def autogen
+                highest = 0
+                Etc.group { |group|
+                    if group.gid > highest
+                        unless group.gid > 65000
+                            highest = group.gid
+                        end
+                    end
+                }
+
+                return highest + 1
+            end
+
             def should=(gid)
                 case gid
                 when String
-                    if gid =~ /^[0-9]+$/
+                    if gid =~ /^[-0-9]+$/
                         gid = Integer(gid)
                     else
                         raise Puppet::Error, "Invalid GID %s" % gid
@@ -40,6 +53,11 @@ module Puppet
                 when Symbol
                     unless gid == :auto or gid == :notfound
                         raise Puppet::DevError, "Invalid GID %s" % gid
+                    end
+                    if gid == :auto
+                        unless self.class.autogen?
+                            gid = autogen
+                        end
                     end
                 end
 

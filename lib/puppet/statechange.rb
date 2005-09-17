@@ -121,7 +121,7 @@ module Puppet
                     self
             end
             unless @state.insync?
-                Puppet.info "Rolling %s backward" % self
+                Puppet.info "Backing %s" % self
                 return self.go
             else
                 Puppet.debug "rollback is already in sync: %s vs. %s" %
@@ -141,7 +141,9 @@ module Puppet
 		#---------------------------------------------------------------
 
         def to_s
-            return "change %s.%s" % [@transaction.object_id, self.object_id]
+            return "change %s.%s(%s)" %
+                [@transaction.object_id, self.object_id, @state.change_to_s]
+            #return "change %s.%s" % [@transaction.object_id, self.object_id]
         end
 	end
 end
