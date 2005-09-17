@@ -65,12 +65,14 @@ result = GetoptLong.new(
     [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
     [ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
     [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
+    [ "--noop",     "-n",			GetoptLong::NO_ARGUMENT ],
     [ "--parse-only",  "-p",		GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
 )
 
 debug = false
 verbose = false
+noop = false
 logfile = false
 parseonly = false
 
@@ -87,6 +89,8 @@ begin
                     puts "No help available unless you have RDoc::usage installed"
                     exit
                 end
+            when "--noop"
+                noop = true
             when "--verbose"
                 verbose = true
             when "--parse-only"

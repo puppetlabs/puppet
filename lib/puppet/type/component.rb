@@ -82,7 +82,6 @@ module Puppet
                 args[:type] = "component"
             end
             super(args)
-            Puppet.warning "Name is %s" % self.name
             #Puppet.debug "Made component with name %s and type %s" %
             #    [self.name, self[:type]]
         end
