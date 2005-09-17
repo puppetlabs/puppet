@@ -41,8 +41,8 @@ module Puppet
                 %r{\?} => :QMARK,
                 %r{\\} => :BACKSLASH,
                 %r{=>} => :FARROW,
-                %r{[a-z]\w*} => :NAME,
-                %r{[A-Z]\w*} => :TYPE,
+                %r{[a-z][-\w]*} => :NAME,
+                %r{[A-Z][-\w]*} => :TYPE,
                 %r{[0-9]+} => :NUMBER,
                 %r{\$\w+} => :VARIABLE
             }

@@ -89,7 +89,7 @@ module Puppet
             # this level
             #container = Puppet::Component.new(:name => @name, :type => @type)
             unless defined? @name
-                raise "TransBuckets must have names"
+                raise Puppet::DevError, "TransBuckets must have names"
             end
             unless defined? @type
                 Puppet.debug "TransBucket '%s' has no type" % @name
@@ -108,6 +108,11 @@ module Puppet
                 Puppet.debug "%s has no parameters" % @name
             end
             container = Puppet::Type::Component.create(hash)
+
+            # unless we successfully created the container, return an error
+            unless container
+                return nil
+            end
             nametable = {}
 
             self.each { |child|
@@ -116,7 +121,13 @@ module Puppet
                 # which is _probably_ a good thing, but one never knows...
                 if child.is_a?(Puppet::TransBucket)
                     # just perform the same operation on any children
-                    container.push(child.to_type)
+                    obj = child.to_type
+                    if obj
+                        container.push(obj)
+                    else
+                        # FIXME we need to figure out error handling.
+                        # really
+                    end
                 elsif child.is_a?(Puppet::TransObject)
                     # do a simple little naming hack to see if the object already
                     # exists in our scope

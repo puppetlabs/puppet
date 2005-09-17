@@ -41,7 +41,7 @@ class Server
         end
 
         def getconfig(facts, client = nil, clientip = nil)
-            parsefile
+            parsefile()
             if client
                 #Puppet.warning request.inspect
             end

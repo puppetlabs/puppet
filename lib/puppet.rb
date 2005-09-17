@@ -30,7 +30,7 @@ module Puppet
         def to_s
             str = nil
             if defined? @file and defined? @line
-                str = "%s at file %s, line %s" %
+                str = "%s in file %s at line %s" %
                     [@message, @file, @line]
             elsif defined? @line
                 str = "%s at line %s" %

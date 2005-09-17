@@ -171,6 +171,7 @@ type:         TYPE {
 
 objectname:   quotedtext
             | name
+            | type
             | selector
             | variable
             | array
@@ -587,15 +588,15 @@ def on_error(token,value,stack)
     #on '%s' at '%s' in\n'%s'" % [token,value,stack]
     #error = "line %s: parse error after '%s'" %
     #    [@lexer.line,@lexer.last]
-    error = "an error was found"
+    error = "Syntax error at '%s'" % [value]
 
-    if Puppet[:debug]
-        puts stack.inspect
-        puts stack
-    end
-    if @lexer.file
-        error += (" in '%s'" % @lexer.file)
-    end
+    #if Puppet[:debug]
+        #puts stack.inspect
+        #puts stack.class
+    #end
+    #if @lexer.file
+    #    error += (" in '%s'" % @lexer.file)
+    #end
 
     except = Puppet::ParseError.new(error)
     except.line = @lexer.line
@@ -625,26 +626,26 @@ def parse
         except.line ||= @lexer.line
         except.file ||= @lexer.file
         except.stack ||= except.stack
-        if Puppet[:debug]
-            puts except.stack
-        end
+        #if Puppet[:debug]
+        #    puts except.stack
+        #end
         raise except
     rescue Puppet::DevError => except
         except.line ||= @lexer.line
         except.file ||= @lexer.file
         except.stack ||= caller
-        if Puppet[:debug]
-            puts except.stack
-        end
+        #if Puppet[:debug]
+        #    puts except.stack
+        #end
         raise except
     rescue => except
         error = Puppet::DevError.new(except.message)
         error.line = @lexer.line
         error.file = @lexer.file
         error.stack = caller
-        if Puppet[:debug]
-            puts caller
-        end
+        #if Puppet[:debug]
+        #    puts caller
+        #end
         raise error
     end
 end

@@ -8,7 +8,7 @@
 # = Usage
 #
 #   puppet [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
-#               [-l|--logfile <file>] <file>
+#               [-l|--logfile <file>] [-p|--parse-only] <file>
 #
 # = Description
 #
@@ -27,6 +27,12 @@
 # logfile::
 #   Where to send messages.  Choose between syslog, the console, and a log file.
 #   Defaults to sending messages to the console.
+#
+# parse-only::
+#   Just verify syntax, do not apply anything.
+#
+# verbose::
+#   Print extra information.
 #
 # = Example
 #
@@ -59,12 +65,14 @@ result = GetoptLong.new(
     [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
     [ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
     [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
+    [ "--parse-only",  "-p",		GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
 )
 
 debug = false
 verbose = false
 logfile = false
+parseonly = false
 
 begin
     result.each { |opt,arg|
@@ -81,6 +89,8 @@ begin
                 end
             when "--verbose"
                 verbose = true
+            when "--parse-only"
+                parseonly = true
             when "--debug"
                 debug = true
             when "--logdest"
@@ -119,11 +129,17 @@ end
 
 begin
     client = Puppet::Client::MasterClient.new(
-        :Master => server
+        :Master => server,
+        :Cache => false
     )
 rescue => detail
     $stderr.puts detail
     exit(1)
+end
+
+
+if parseonly
+    exit(0)
 end
 
 begin

@@ -25,9 +25,7 @@ module Puppet
             @@indline = @@pink + ("-" * 4) + @@reset
             @@midline = @@slate + ("-" * 4) + @@reset
 
-            @@settypes = Hash.new { |hash,key|
-                hash[key] = Hash.new(0)
-            }
+            @@settypes = {}
 
             def AST.indention
                 return @@indent * @@indention
@@ -529,7 +527,7 @@ module Puppet
                         elsif @@settypes.include?(objtype) 
                             # we've defined it locally
                             Puppet.debug "%s is a defined type" % objtype
-                            hash = @@settypes[objtype]
+                            type = @@settypes[objtype]
                             @params.each { |param|
                                 # FIXME we might need to do more here eventually...
                                 if Puppet::Type.metaparam?(param.param.value.intern)
@@ -541,7 +539,7 @@ module Puppet
                                 rescue => detail
                                     raise Puppet::DevError, detail.to_s
                                 end
-                                unless hash.include?(pname)
+                                unless type.validarg?(pname)
                                     error = Puppet::ParseError.new(
                                         "Invalid parameter '%s' for type '%s'" %
                                             [pname,objtype]
@@ -1016,19 +1014,13 @@ module Puppet
 
                     # we need to both mark that a given argument is valid,
                     # and we need to also store any provided default arguments
-                    hash = @@settypes[@name.value]
-                    if @args.is_a?(AST::ASTArray)
-                        @args.each { |ary|
-                            if ary.is_a?(AST::ASTArray)
-                                arg = ary[0]
-                                hash[arg.value] += 1
-                            else
-                                hash[ary.value] += 1
-                            end
-                        }
-                    else
-                        #Puppet.warning "got arg %s" % @args.inspect
-                        hash[@args.value] += 1
+                    # FIXME This creates a global list of types and their
+                    # acceptable arguments.  This should really be scoped
+                    # instead.
+                    begin
+                    @@settypes[@name.value] = self
+                    rescue
+                        raise "wtf?"
                     end
                 end
 
@@ -1043,6 +1035,40 @@ module Puppet
 
                 def to_s
                     return "define %s(%s) {\n%s }" % [@name, @args, @code]
+                end
+
+                def validarg?(param)
+                    found = false
+                    if @args.is_a?(AST::ASTArray)
+                        found = @args.detect { |arg|
+                            if arg.is_a?(AST::ASTArray)
+                                arg[0].value == param
+                            else
+                                arg.value == param
+                            end
+                        }
+                    else
+                        found = @args.value == param
+                        #Puppet.warning "got arg %s" % @args.inspect
+                        #hash[@args.value] += 1
+                    end
+
+                    if found
+                        return true
+                    # a nil parentclass is an empty astarray
+                    # stupid but true
+                    elsif defined? @parentclass and ! @parentclass.is_a?(AST::ASTArray)
+                        parent = @@settypes[@parentclass.value]
+                        if parent and parent != []
+                            return parent.validarg?(param)
+                        else
+                            raise Puppet::Error, "Could not find parent class %s" %
+                                @parentclass.value
+                        end
+                    else
+                        return false
+                    end
+
                 end
             end
             #---------------------------------------------------------------
@@ -1060,22 +1086,43 @@ module Puppet
                     name = @name.safeevaluate(scope)
                     args = @args.safeevaluate(scope)
 
-                    #Puppet.debug "evaluating parent %s of type %s" %
-                    #    [@parent.name, @parent.class]
+                    arghash = {
+                        :name => name,
+                        :args => args,
+                        :code => @code
+                    }
+
                     parent = @parentclass.safeevaluate(scope)
 
-                    Puppet.debug("defining hostclass '%s' with arguments [%s]" %
-                        [name,args])
+                    if parent == []
+                        parent = nil
+                    end
+
+                    #Puppet.debug("defining hostclass '%s' with arguments [%s]" %
+                    #    [name,args])
 
                     begin
-                        scope.settype(name,
-                            HostClass.new(
-                                :name => name,
-                                :args => args,
-                                :parent => parent,
-                                :code => @code
+                        if parent
+                            scope.settype(name,
+                                HostClass.new(
+                                    :name => name,
+                                    :args => args,
+                                    :parentclass => parent,
+                                    :code => @code
+                                )
                             )
-                        )
+                        else
+                            scope.settype(name,
+                                HostClass.new(
+                                    :name => name,
+                                    :args => args,
+                                    :code => @code
+                                )
+                            )
+                        end
+                        #scope.settype(name,
+                        #    HostClass.new(arghash)
+                        #)
                     rescue Puppet::ParseError => except
                         except.line = self.line
                         except.file = self.file
@@ -1173,10 +1220,9 @@ module Puppet
 
                     # define all of the arguments in our local scope
                     if self.args
-                        Puppet.debug "args are %s" % self.args.inspect
+                        #Puppet.debug "args are %s" % self.args.inspect
                         self.args.each { |arg, default|
                             unless hash.include?(arg)
-                                # FIXME this needs to test for 'defined?'
                                 if defined? default
                                     hash[arg] = default
                                 else
@@ -1247,7 +1293,7 @@ module Puppet
                             error.file = self.file
                             raise error
                         end
-                        parentobj.safeevaluate(scope,hash,objtype,objname)
+                        parentobj.safeevaluate(scope,hash,@parentclass,objname)
                     end
 
                     # just use the Component evaluate method, but change the type

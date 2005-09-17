@@ -52,6 +52,7 @@ module Puppet
             end
         end
 
+        # Remove a child from the component.
         def delete(child)
             if @children.include?(child)
                 @children.delete(child)
@@ -61,15 +62,18 @@ module Puppet
             end
         end
 
+        # Return each child in turn.
         def each
             @children.each { |child| yield child }
         end
         
-        # this returns a sorted array, not a new component, but that suits me just fine
+        # Return a flattened array containing all of the children
+        # and all child components' children, sorted in order of dependencies.
         def flatten
             self.class.sort(@children).flatten
         end
 
+        # Initialize a new component
         def initialize(args)
             @children = []
 
@@ -78,6 +82,7 @@ module Puppet
                 args[:type] = "component"
             end
             super(args)
+            Puppet.warning "Name is %s" % self.name
             #Puppet.debug "Made component with name %s and type %s" %
             #    [self.name, self[:type]]
         end
