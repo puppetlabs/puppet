@@ -67,6 +67,7 @@ module Puppet
                 end
 
                 def retrieve
+                    NetInfo.flush
                     dir = @parent.class.netinfodir
                     cmd = ["nireport", "/", "/%s" % dir, "name"]
 

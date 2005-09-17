@@ -109,6 +109,21 @@ class TestUser < TestPuppet
         }
     end
 
+    def mkuser(name)
+        user = nil
+        assert_nothing_raised {
+            user = Puppet::Type::User.create(
+                :name => name,
+                :comment => "Puppet Testing User",
+                :gid => Process.gid,
+                :shell => findshell(),
+                :home => "/home/%s" % name
+            )
+        }
+
+        return user
+    end
+
     def attrtest_comment(user)
         old = user.is(:comment)
         user[:comment] = "A different comment"
@@ -179,8 +194,6 @@ class TestUser < TestPuppet
         comp = newcomp("gidtest", user)
 
         user.retrieve
-        Puppet.notice "%s vs %s vs %s" %
-            [user.is(:gid), user.should(:gid), old.inspect]
 
         user[:gid] = old
 
@@ -269,9 +282,10 @@ class TestUser < TestPuppet
 
         Puppet::Type::User.validstates.each { |name, state|
             assert_nothing_raised {
-                method = state.infomethod
+                method = state.posixmethod
                 assert(method, "State %s has no infomethod" % name)
-                assert(obj.respond_to?(method), "State %s has an invalid method %s" %
+                assert(obj.respond_to?(method),
+                    "State %s has an invalid method %s" %
                     [name, method])
             }
         }
@@ -279,20 +293,33 @@ class TestUser < TestPuppet
 
     if Process.uid == 0
         def test_simpleuser
+            name = "pptest"
+
+            assert(missing?(name), "User %s is present" % name)
+
+            user = mkuser(name)
+
+            @@tmpusers << name
+
+            comp = newcomp("usercomp", user)
+
+            trans = assert_events(comp, [:user_created], "user")
+
+            assert_equal("Puppet Testing User", current?(:comment, user[:name]),
+                "Comment was not set")
+
+            assert_rollback_events(trans, [:user_deleted], "user")
+
+            assert(missing?(user[:name]))
+        end
+
+        def test_allstates
             user = nil
             name = "pptest"
 
             assert(missing?(name), "User %s is present" % name)
 
-            assert_nothing_raised {
-                user = Puppet::Type::User.create(
-                    :name => name,
-                    :comment => "Puppet Testing User",
-                    :gid => Process.gid,
-                    :shell => findshell(),
-                    :home => "/home/%s" % name
-                )
-            }
+            user = mkuser(name)
 
             @@tmpusers << name
 
@@ -315,10 +342,6 @@ class TestUser < TestPuppet
                     $stderr.puts "Not testing attr %s of user" % test
                 end
             }
-
-            assert_rollback_events(trans, [:user_deleted], "user")
-
-            assert(missing?(user[:name]))
         end
     else
         $stderr.puts "Not root; skipping user creation/modification tests"

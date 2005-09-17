@@ -8,7 +8,7 @@
 
 module Puppet
 	class StateChange
-        attr_accessor :is, :should, :type, :path, :state, :transaction, :run
+        attr_accessor :is, :should, :type, :path, :state, :transaction, :changed
 
 		#---------------------------------------------------------------
         def initialize(state)
@@ -23,7 +23,7 @@ module Puppet
             end
             @should = state.should
 
-            @run = false
+            @changed = false
         end
 		#---------------------------------------------------------------
 
@@ -35,9 +35,9 @@ module Puppet
             end
 
             if @state.is == @state.should
-                raise Puppet::Error.new(
-                    "Tried to change in-sync state %s" % state.name
-                )
+                Puppet.info "%s.%s is already in sync" %
+                    [@state.parent.name, @state.name]
+                return nil
             end
 
             begin
@@ -46,10 +46,13 @@ module Puppet
                     return nil
                 end
 
-                unless events.is_a?(Array)
+                if events.is_a?(Array)
+                    if events.empty?
+                        return nil
+                    end
+                else
                     events = [events]
                 end
-                @run = true
                 
                 return events.collect { |event|
                     # default to a simple event type

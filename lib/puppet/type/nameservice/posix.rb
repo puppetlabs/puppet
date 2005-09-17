@@ -97,6 +97,10 @@ module Puppet
 
                 def sync
                     event = nil
+                    # they're in sync some other way
+                    if @is == @should
+                        return nil
+                    end
                     if @is == :notfound
                         self.retrieve
                         if @is == @should
@@ -108,11 +112,12 @@ module Puppet
                     if @is == :notfound or @should == :notfound
                         event = syncname()
 
+                        return event
                         # if the whole object is created at once, just return
                         # an event saying so
-                        if self.class.allatonce?
-                            return event
-                        end
+                        #if self.class.allatonce?
+                        #    return event
+                        #end
                     end
 
                     unless @parent.exists?
@@ -180,10 +185,9 @@ module Puppet
                     # not many
                     unless self.class.allatonce?
                         if type == "create"
-                            Puppet.info "syncing everyone"
                             @parent.eachstate { |state|
-                                Puppet.info "syncing %s" % state.name
                                 state.sync
+                                state.retrieve
                             }
                         end
                     end

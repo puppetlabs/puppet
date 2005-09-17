@@ -72,10 +72,6 @@ module Puppet
                     else
                         method = :getgrnam
                     end
-                when Integer
-                    unless gid >= 0
-                        raise Puppet::Error, "GIDs must be positive"
-                    end
                 when Symbol
                     unless gid == :auto or gid == :notfound
                         raise Puppet::DevError, "Invalid GID %s" % gid

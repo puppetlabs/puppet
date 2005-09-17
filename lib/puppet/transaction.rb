@@ -67,14 +67,16 @@ class Transaction
                     # should do so
                 end
 
-                if events.nil?
-                    Puppet.debug "No events returned?"
+                unless events.nil? or (events.is_a?(Array) and events.empty?)
+                    change.changed = true
                 end
                 events
             elsif change.is_a?(Puppet::Transaction)
+                raise Puppet::DevError, "Got a sub-transaction"
                 change.evaluate
             else
-                raise "Transactions cannot handle objects of type %s" % child.class
+                raise Puppet::DevError,
+                    "Transactions cannot handle objects of type %s" % child.class
             end
         }.flatten.reject { |event|
             event.nil?
@@ -124,7 +126,10 @@ class Transaction
         events = @changes.reverse.collect { |change|
             if change.is_a?(Puppet::StateChange)
                 # skip changes that were never actually run
-                next unless change.run
+                unless change.changed
+                    Puppet.debug "%s was not changed" % change.to_s
+                    next
+                end
                 #change.transaction = self
                 begin
                     change.backward
@@ -140,10 +145,12 @@ class Transaction
                     # but a chmod failed?  how would i handle that error? dern
                 end
             elsif change.is_a?(Puppet::Transaction)
+                raise Puppet::DevError, "Got a sub-transaction"
                 # yay, recursion
                 change.rollback
             else
-                raise "Transactions cannot handle objects of type %s" % child.class
+                raise Puppe::DevError,
+                    "Transactions cannot handle objects of type %s" % child.class
             end
         }.flatten.reject { |e| e.nil? }
 
