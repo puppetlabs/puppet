@@ -72,7 +72,7 @@ class TestUser < TestPuppet
     else
         def missing?(user)
             begin
-                obj = Etc.getgrnam(user)
+                obj = Etc.getpwnam(user)
                 return false
             rescue ArgumentError
                 return true
@@ -81,11 +81,11 @@ class TestUser < TestPuppet
 
         def current?(param, name)
             state = Puppet::Type::User.states.find { |st|
-                state.name == param
+                st.name == param
             }
 
             assert_nothing_raised {
-                obj = Etc.getgrnam(name)
+                obj = Etc.getpwnam(name)
                 return obj.send(state.posixmethod)
             }
 

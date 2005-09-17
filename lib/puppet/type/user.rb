@@ -65,12 +65,24 @@ module Puppet
 
             def should=(gid)
                 method = :getgrgid
-                if gid.is_a?(String)
+                case gid
+                when String
                     if gid =~ /^[-0-9]+$/
                         gid = Integer(gid)
                     else
                         method = :getgrnam
                     end
+                when Integer
+                    unless gid >= 0
+                        raise Puppet::Error, "GIDs must be positive"
+                    end
+                when Symbol
+                    unless gid == :auto or gid == :notfound
+                        raise Puppet::DevError, "Invalid GID %s" % gid
+                    end
+                    # these are treated specially by sync()
+                    @should = gid
+                    return
                 end
 
                 # FIXME this should really check to see if we already have a
