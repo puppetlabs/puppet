@@ -409,6 +409,10 @@ import: IMPORT QTEXT {
     if dir == ""
         dir = "."
     end
+    result = AST::ASTArray.new(
+        :file => @lexer.file,
+        :line => @lexer.line
+    )
     Dir.chdir(dir) {
         Dir.glob(val[1]).each { |file|
             parser = Puppet::Parser::Parser.new()
@@ -427,7 +431,8 @@ import: IMPORT QTEXT {
                 )
                 next
             end
-            result = parser.parse
+            # push the results into the main result array
+            result.push parser.parse
         }
     }
 }
@@ -443,14 +448,19 @@ definition: DEFINE NAME argumentlist LBRACE statements RBRACE {
 }
 
 hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
-    result = AST::ClassDef.new(
+    args = {
         :name => AST::Name.new(:value => val[1], :line => @lexer.line),
         :args => val[2],
-        :parentclass => val[3],
         :file => @lexer.file,
         :line => @lexer.line,
         :code => val[5]
-    )
+    }
+    # It'll be an ASTArray if we didn't get a parent
+    if val[3].is_a?(AST::Name)
+        Puppet.notice "Assigning parent of %s as %s" % [val[1], val[3].value]
+        args[:parentclass] = val[3]
+    end
+    result = AST::ClassDef.new(args)
 }
 
 #nodedef: NODE words LBRACE statements RBRACE {

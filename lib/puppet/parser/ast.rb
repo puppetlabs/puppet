@@ -49,6 +49,8 @@ module Puppet
                     self.evaluate(*args)
                 rescue Puppet::DevError
                     raise
+                rescue Puppet::ParseError
+                    raise
                 rescue => detail
                     if Puppet[:debug]
                         puts caller
@@ -200,8 +202,8 @@ module Puppet
 
                     @children.each { |child|
                         unless child.is_a?(AST)
-                            Puppet.err("child %s is not an ast" % child)
-                            exit
+                            raise Puppet::DevError,
+                                "child %s is not an ast" % child
                         end
                     }
                     return self
@@ -434,6 +436,19 @@ module Puppet
                         error.file = self.file
                         error.stack = caller
                         raise error
+                    end
+
+                    unless object
+                        begin
+                            Puppet::Type.type(objtype)
+                        rescue TypeError
+                            error = Puppet::ParseError.new(
+                                "Invalid type %s" % objtype
+                            )
+                            error.line = @line
+                            error.file = @file
+                            raise error
+                        end
                     end
 
                     # this is where our implicit iteration takes place;
@@ -1017,11 +1032,7 @@ module Puppet
                     # FIXME This creates a global list of types and their
                     # acceptable arguments.  This should really be scoped
                     # instead.
-                    begin
                     @@settypes[@name.value] = self
-                    rescue
-                        raise "wtf?"
-                    end
                 end
 
                 def tree(indent = 0)
@@ -1057,7 +1068,7 @@ module Puppet
                         return true
                     # a nil parentclass is an empty astarray
                     # stupid but true
-                    elsif defined? @parentclass and ! @parentclass.is_a?(AST::ASTArray)
+                    elsif @parentclass
                         parent = @@settypes[@parentclass.value]
                         if parent and parent != []
                             return parent.validarg?(param)
@@ -1079,7 +1090,11 @@ module Puppet
                 attr_accessor :parentclass
 
                 def each
-                    [@name,@args,@parentclass,@code].each { |child| yield child }
+                    if @parentclass
+                        [@name,@args,@parentclass,@code].each { |child| yield child }
+                    else
+                        [@name,@args,@code].each { |child| yield child }
+                    end
                 end
 
                 def evaluate(scope)
@@ -1092,9 +1107,9 @@ module Puppet
                         :code => @code
                     }
 
-                    parent = @parentclass.safeevaluate(scope)
-
-                    if parent == []
+                    if @parentclass
+                        parent = @parentclass.safeevaluate(scope)
+                    else
                         parent = nil
                     end
 
@@ -1134,6 +1149,10 @@ module Puppet
                         error.stack = caller
                         raise error
                     end
+                end
+
+                def initialize(hash)
+                    super
                 end
 
                 def tree(indent = 0)
@@ -1304,9 +1323,6 @@ module Puppet
                 def initialize(hash)
                     @parentclass = nil
                     super
-                    if self.parent.is_a?(Array)
-                        self.parent = nil
-                    end
                 end
 
             end
@@ -1334,7 +1350,8 @@ module Puppet
                         end
                         unless parentobj
                             error = Puppet::ParseError.new( 
-                                "Could not find parent '%s' of '%s'" % [@parentclass,@name])
+                                "Could not find parent '%s' of '%s'" %
+                                    [@parentclass,@name])
                             error.line = self.line
                             error.file = self.file
                             raise error

@@ -105,8 +105,11 @@ class Server
                     else
                         return
                     end
+                else
+                    @filestatted = Time.now
                 end
             end
+            @filestatted = Time.now
 
             unless FileTest.exists?(@file)
                 if @ast

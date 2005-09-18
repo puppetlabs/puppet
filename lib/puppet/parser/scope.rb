@@ -113,7 +113,8 @@ module Puppet
                 table = @map[type]
                 if table.nil?
                     error = Puppet::ParseError.new(
-                        "Could not retrieve %s table at level %s" % [type,self.level]
+                        "Could not retrieve %s table at level %s" %
+                            [type,self.level]
                     )
                     error.stack = caller
                     raise error
@@ -175,6 +176,7 @@ module Puppet
                 if value == :undefined
                     return nil
                 else
+                    Puppet.debug "Found type %s" % name
                     return value
                 end
             end
@@ -350,6 +352,7 @@ module Puppet
                 results = []
                 
                 @children.each { |child|
+                    Puppet.notice "Transing child of type %s" % child.class
                     if child.is_a?(Scope)
                         cresult = child.to_trans
                         Puppet.debug "Got %s from scope %s" %
