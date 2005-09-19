@@ -128,7 +128,7 @@ module Puppet
             end
 
             unless @@levels.include?(level)
-                raise "Invalid loglevel %s" % level
+                raise Puppet::DevError, "Invalid loglevel %s" % level
             end
 
             @@loglevel = @@levels.index(level)
@@ -144,7 +144,8 @@ module Puppet
                 end
             when :file:
                 unless defined? @@logfile
-                    raise "Log file must be defined before we can log to it"
+                    raise Puppet::DevError,
+                        "Log file must be defined before we can log to it"
                 end
                 @@logfile.puts("%s %s (%s): %s" %
                     [msg.time,msg.source,msg.level,msg.to_s])
@@ -172,7 +173,7 @@ module Puppet
 		def initialize(args)
 			unless args.include?(:level) && args.include?(:message) &&
 						args.include?(:source) 
-				raise "Puppet::Log called incorrectly"
+				raise Puppet::DevError, "Puppet::Log called incorrectly"
 			end
 
 			if args[:level].class == String
@@ -180,7 +181,8 @@ module Puppet
 			elsif args[:level].class == Symbol
 				@level = args[:level]
 			else
-				raise "Level is not a string or symbol: #{args[:level].class}"
+				raise Puppet::DevError,
+                    "Level is not a string or symbol: #{args[:level].class}"
 			end
 			@message = args[:message]
 			@source = args[:source] || "Puppet"
@@ -188,7 +190,7 @@ module Puppet
 			# this should include the host name, and probly lots of other
 			# stuff, at some point
 			unless @@levels.include?(level)
-				raise "Invalid message level #{level}"
+				raise Puppet::DevError, "Invalid message level #{level}"
 			end
 
             Log.newmessage(self)

@@ -1152,6 +1152,7 @@ module Puppet
                 end
 
                 def initialize(hash)
+                    @parentclass = nil
                     super
                 end
 
@@ -1312,6 +1313,8 @@ module Puppet
                             error.file = self.file
                             raise error
                         end
+                        # FIXME I should only have _one_ instance of a given
+                        # parent class
                         parentobj.safeevaluate(scope,hash,@parentclass,objname)
                     end
 
