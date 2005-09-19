@@ -4,6 +4,7 @@
 
 # included so we can test object types
 require 'puppet'
+require 'puppet/log'
 require 'puppet/element'
 require 'puppet/event'
 require 'puppet/metric'
@@ -57,8 +58,8 @@ class Type < Puppet::Element
     # the namevar
     @states = []
     @parameters = [:notused]
-
-    #@paramdoc = Hash.new
+    
+    # @paramdoc = Hash.new
 
     # the parameters that all instances will accept
     @@metaparams = [
@@ -67,9 +68,10 @@ class Type < Puppet::Element
         :schedule,
         :check,
         :subscribe,
-        :require
+        :require,
+        :loglevel
     ]
-
+    
     @@metaparamdoc = Hash.new { |hash,key|
         if key.is_a?(String)
             key = key.intern
@@ -97,7 +99,10 @@ class Type < Puppet::Element
     @@metaparamdoc[:subscribe] = "One or more objects that this object depends on.
         Changes in the subscribed to objects result in the dependent objects being
         refreshed (e.g., a service will get restarted)."
-   
+    @@metaparamdoc[:loglevel] = "Sets the level that information will be logged:
+         debug, info, verbose, notice, warning, err, alert, emerg or crit"
+
+    @metaparams = []
     #---------------------------------------------------------------
     #---------------------------------------------------------------
     # class methods dealing with Type management
@@ -126,7 +131,7 @@ class Type < Puppet::Element
 
     # the Type class attribute accessors
     class << self
-        attr_reader :name, :namevar, :states, :validstates, :parameters
+        attr_reader :name, :namevar, :states, :validstates, :parameters, :metaparams
     end
 
     #---------------------------------------------------------------
@@ -195,6 +200,7 @@ class Type < Puppet::Element
         unless defined? @states
             @states = []
         end
+
     end
     #---------------------------------------------------------------
 
@@ -563,6 +569,13 @@ class Type < Puppet::Element
         end
     end
     #---------------------------------------------------------------
+    
+    #---------------------------------------------------------------
+    # create a log at specified level
+    def log(msg)
+        Puppet::Log.create(@metaparams[:loglevel],msg)
+    end
+    #---------------------------------------------------------------
 
     #---------------------------------------------------------------
     # is the instance a managed instance?  A 'yes' here means that
@@ -756,7 +769,10 @@ class Type < Puppet::Element
         unless defined? @parameters
             @parameters = Hash.new(false)
         end
-
+        unless defined? @metaparams
+            @metaparams = Hash.new(false)
+        end
+           
         #unless defined? @paramdoc
         #   @paramdoc = Hash.new { |hash,key|
         #      if key.is_a?(String)
@@ -770,8 +786,9 @@ class Type < Puppet::Element
         #   }
         #end
 
+        # set defalts
         @noop = false
-
+        @metaparams[:loglevel] = :info
         # keeping stats for the total number of changes, and how many were
         # completely sync'ed
         # this isn't really sufficient either, because it adds lots of special cases
@@ -792,7 +809,7 @@ class Type < Puppet::Element
                 # we don't want our namevar in there multiple times
                 param == self.class.namevar
         }
-
+  
         order.flatten.each { |name|
             if hash.include?(name)
                 begin
@@ -1161,6 +1178,20 @@ class Type < Puppet::Element
         @schedule = schedule
     end
     #---------------------------------------------------------------
+    def metaloglevel=(loglevel)
+        if loglevel.is_a?(String)
+            loglevel.intern
+        end
+        if loglevel == :verbose
+            loglevel = :info 
+        end        
+
+        if Puppet::Log.levels.include?(loglevel)
+            @metaparams[:loglevel] = loglevel
+        else
+            raise Puppet::Error.new("Invalid loglevel '%s%'" % loglevel)       
+        end
+    end
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
