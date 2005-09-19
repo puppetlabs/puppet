@@ -1,6 +1,6 @@
 # $Id$
 
-define base(mode) {
+class base(mode) {
     file { "/tmp/classargtest1": create => true, mode => $mode }
 }
 

@@ -365,6 +365,16 @@ class TestSnippets < TestPuppet
         }
     end
 
+    def snippet_classheirarchy(trans)
+        [1,2,3].each { |num|
+            file = "/tmp/classheir%s" % num
+            @@tmpfiles << file
+            assert(FileTest.file?(file), "File %s does not exist" % file)
+            assert(File.stat(file).mode & 007777 == 0755,
+                "File %s is not 755" % file)
+        }
+    end
+
     def disabled_snippet_dirchmod(trans)
         dirs = %w{a b}.collect { |letter|
             "/tmp/dirchmodtest%s" % letter
