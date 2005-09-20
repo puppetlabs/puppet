@@ -60,6 +60,7 @@ statement:    object
             | import
             | definition
             | hostclass
+            | nodedef
             
 #object:       name LBRACE objectname COLON params endcomma RBRACE {
 object:       name LBRACE objectinstances endsemi RBRACE {
@@ -339,7 +340,7 @@ selector:     variable QMARK svalues {
         :line => @lexer.line,
         :file => @lexer.file,
         :param => val[0],
-        :value => val[2]
+        :values => val[2]
     )
 }
 
@@ -457,18 +458,44 @@ hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
     }
     # It'll be an ASTArray if we didn't get a parent
     if val[3].is_a?(AST::Name)
-        Puppet.notice "Assigning parent of %s as %s" % [val[1], val[3].value]
         args[:parentclass] = val[3]
     end
     result = AST::ClassDef.new(args)
 }
 
-#nodedef: NODE words LBRACE statements RBRACE {
-#    result = AST::NodeDef.new(
-#        :names => val[1],
-#        :code => val[3]
-#    )
-#}
+nodedef: NODE names parent LBRACE statements RBRACE {
+    unless val[1].is_a?(AST::ASTArray)
+        val[1] = AST::ASTArray.new(
+            :line => val[1].line,
+            :file => val[1].file,
+            :children => [val[1]]
+        )
+    end
+    args = {
+        :file => @lexer.file,
+        :line => @lexer.line,
+        :names => val[1],
+        :code => val[4]
+    }
+    if val[3].is_a?(AST::Name)
+        args[:parentclass] = val[2]
+    end
+    result = AST::NodeDef.new(args)
+}
+
+names:    name
+        | names name {
+    if val[0].is_a?(AST::ASTArray)
+        result = val[0]
+        result.push val[1]
+    else
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[0], val[1]]
+        )
+    end
+}
 
 nothing:    {
     result = AST::ASTArray.new(

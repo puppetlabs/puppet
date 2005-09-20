@@ -9,32 +9,42 @@
 module Puppet
     module Parser
         class ASTError < RuntimeError; end
-        #---------------------------------------------------------------
+
+        # The base class for all of the objects that make up the parse trees.
+        # Handles things like file name, line #, and also does the initialization
+        # for all of the parameters of all of the child objects.
         class AST
             Puppet.setdefault(:typecheck, true)
             Puppet.setdefault(:paramcheck, true)
             attr_accessor :line, :file, :parent
 
+            # Just used for 'tree', which is only used in debugging.
             @@pink = "[0;31m"
             @@green = "[0;32m"
             @@yellow = "[0;33m"
             @@slate = "[0;34m"
             @@reset = "[0m"
 
+            # Just used for 'tree', which is only used in debugging.
             @@indent = " " * 4
             @@indline = @@pink + ("-" * 4) + @@reset
             @@midline = @@slate + ("-" * 4) + @@reset
 
             @@settypes = {}
 
+            # Just used for 'tree', which is only used in debugging.
             def AST.indention
                 return @@indent * @@indention
             end
 
+            # Just used for 'tree', which is only used in debugging.
             def AST.midline
                 return @@midline
             end
 
+            # Evaluate the current object.  Basically just iterates across all
+            # of the contained children and evaluates them in turn, returning a
+            # list of all of the collected values, rejecting nil values
             def evaluate(scope)
                 #Puppet.debug("Evaluating ast %s" % @name)
                 value = self.collect { |obj|
@@ -44,6 +54,10 @@ module Puppet
                 }
             end
 
+            # The version of the evaluate method that should be called, because it
+            # correctly handles errors.  It is critical to use this method because
+            # it can enable you to catch the error where it happens, rather than
+            # much higher up the stack.
             def safeevaluate(*args)
                 begin
                     self.evaluate(*args)
@@ -64,6 +78,7 @@ module Puppet
                 end
             end
 
+            # Again, just used for printing out the parse tree.
             def typewrap(string)
                 #return self.class.to_s.sub(/.+::/,'') +
                     #"(" + @@green + string.to_s + @@reset + ")"
@@ -71,19 +86,15 @@ module Puppet
                     "(" + self.class.to_s.sub(/.+::/,'') + ")"
             end
 
+            # Initialize the object.  Requires a hash as the argument, and takes
+            # each of the parameters of the hash and calls the settor method for
+            # them.  This is probably pretty inefficient and should likely be changed
+            # at some point.
             def initialize(args)
-                # this has to wait until all of the objects are defined
-                unless defined? @@klassorder
-                    @@klassorder = [
-                        AST::VarDef, AST::TypeDefaults,
-                        AST::ObjectDef, AST::StatementArray
-                    ]
-                end
-
                 args.each { |param,value|
                     method = param.to_s + "="
                     unless self.respond_to?(method)
-                        error = Puppet::ParseError.new(
+                        error = Puppet::DevError.new(
                             "Invalid parameter %s to object class %s" %
                                 [method,self.class.to_s]
                         )
@@ -107,50 +118,44 @@ module Puppet
                 }
             end
 
-            #---------------------------------------------------------------
-            # this differentiation is used by the interpreter
-            # these objects have children
+            # The parent class of all AST objects that contain other AST objects.
+            # Everything but the really simple objects descend from this.  It is
+            # important to note that Branch objects contain other AST objects only --
+            # if you want to contain values, use a descendent of the AST::Leaf class.
             class Branch < AST
                 include Enumerable
                 attr_accessor :pin, :children
 
+                # Yield each contained AST node in turn.  Used mostly by 'evaluate'.
+                # This definition means that I don't have to override 'evaluate'
+                # every time, but each child of Branch will likely need to override
+                # this method.
                 def each
                     @children.each { |child|
                         yield child
                     }
                 end
 
-                def evaluate(scope)
-                    self.collect { |item|
-                        item.safeevaluate(scope)
-                    }.reject { |obj|
-                        obj.nil
-                    }
-                end
-
+                # Initialize our object.  Largely relies on the method from the base
+                # class, but also does some verification.
                 def initialize(arghash)
                     super(arghash)
 
+                    # Create the hash, if it was not set at initialization time.
                     unless defined? @children
                         @children = []
                     end
 
-                    #puts "children is '%s'" % [@children]
-
-                    self.each { |child|
-                        if child.class == Array
-                            error = Puppet::DevError.new(
-                                "child for %s(%s) is array" % [self.class,self.parent]
-                            )
-                            error.stack = caller
-                            raise error
-                        end
-                        unless child.nil?
-                            child.parent = self
+                    # Verify that we only got valid AST nodes.
+                    @children.each { |child|
+                        unless child.is_a?(AST)
+                            raise Puppet::DevError,
+                                "child %s is not an ast" % child
                         end
                     }
                 end
 
+                # Pretty-print the parse tree.
                 def tree(indent = 0)
                     return ((@@indline * indent) +
                         self.typewrap(self.pin)) + "\n" + self.collect { |child|
@@ -158,25 +163,31 @@ module Puppet
                     }.join("\n")
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
+            # The basic container class.  This object behaves almost identically
+            # to a normal array except at initialization time.  Note that its name
+            # is 'AST::ASTArray', rather than plain 'AST::Array'; I had too many
+            # bugs when it was just 'AST::Array', because things like
+            # 'object.is_a?(Array)' never behaved as I expected.
             class ASTArray < AST::Branch
                 include Enumerable
 
+                # Return a child by index.  Probably never used.
                 def [](index)
                     @children[index]
                 end
 
+                # Evaluate our children.
                 def evaluate(scope)
                     rets = nil
+                    # We basically always operate declaratively, and when we
+                    # do we need to evaluate the settor-like statements first.  This
+                    # is basically variable and type-default declarations.
                     if scope.declarative
                         test = [
                             AST::VarDef, AST::TypeDefaults
                         ]
 
-                        # if we're operating declaratively, then we want to get
-                        # all of our 'setting' operations done first
                         settors = []
                         others = []
                         @children.each { |child|
@@ -190,23 +201,12 @@ module Puppet
                             child.safeevaluate(scope)
                         }
                     else
+                        # If we're not declarative, just do everything in order.
                         rets = @children.collect { |item|
                             item.safeevaluate(scope)
                         }
                     end
                     rets = rets.reject { |obj| obj.nil? }
-                end
-
-                def initialize(hash)
-                    super(hash)
-
-                    @children.each { |child|
-                        unless child.is_a?(AST)
-                            raise Puppet::DevError,
-                                "child %s is not an ast" % child
-                        end
-                    }
-                    return self
                 end
 
                 def push(*ary)
@@ -220,72 +220,40 @@ module Puppet
                     return self
                 end
 
+                # Convert to a string.  Only used for printing the parse tree.
                 def to_s
                     return "[" + @children.collect { |child|
                         child.to_s
                     }.join(", ") + "]"
                 end
 
+                # Print the parse tree.
                 def tree(indent = 0)
                     #puts((AST.indent * indent) + self.pin)
                     self.collect { |child|
-                        if child.class == Array
-                            Puppet.debug "child is array for %s" % self.class
-                        end
                         child.tree(indent)
                     }.join("\n" + (AST.midline * (indent+1)) + "\n")
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
-            class StatementArray < ASTArray
-                def evaluate(scope)
-                    rets = nil
-                    if scope.declarative
-                        # if we're operating declaratively, then we want to get
-                        # all of our 'setting' operations done first
-                        rets = @children.sort { |a,b|
-                            [a,b].each { |i|
-                                unless  @@klassorder.include?(i.class)
-                                    error = Puppet::DevError.new(
-                                        "Order not defined for %s" % i.class
-                                    )
-                                    error.stack = caller
-                                    raise error
-                                end
-                            }
-                            @@klassorder.index(a.class) <=> @@klassorder.index(b.class)
-                        }.collect { |item|
-                            Puppet.debug "Decl evaluating %s" % item.class
-                            item.safeevaluate(scope)
-                        }.reject { |obj| obj.nil? }
-                    else
-                        rets = @children.collect { |item|
-                            item.safeevaluate(scope)
-                        }.reject { |obj| obj.nil? }
-                    end
-
-                    return rets
-                end
-            end
-            #---------------------------------------------------------------
-
-            #---------------------------------------------------------------
+            # A simple container class, containing the parameters for an object.
+            # Used for abstracting the grammar declarations.  Basically unnecessary
+            # except that I kept finding bugs because I had too many arrays that
+            # meant completely different things.
             class ObjectInst < ASTArray; end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
-            # and these ones don't
+            # The base class for all of the leaves of the parse trees.  These
+            # basically just have types and values.  Both of these parameters
+            # are simple values, not AST objects.
             class Leaf < AST
                 attr_accessor :value, :type
 
-                # this only works if @value has already been evaluated
-                # otherwise you get AST objects, which you don't likely want...
+                # Return our value.
                 def evaluate(scope)
                     return @value
                 end
 
+                # Print the value in parse tree context.
                 def tree(indent = 0)
                     return ((@@indent * indent) + self.typewrap(self.value))
                 end
@@ -294,10 +262,12 @@ module Puppet
                     return @value
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
+            # The boolean class.  True or false.  Converts the string it receives
+            # to a Ruby boolean.
             class Boolean < AST::Leaf
+
+                # Use the parent method, but then convert to a real boolean.
                 def initialize(hash)
                     super
 
@@ -314,45 +284,35 @@ module Puppet
                         @value = false
                     end
                 end
-
-                def evaluate(scope)
-                    return @value
-                end
-
-                def to_s
-                    return @value
-                end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
+            # The base string class.
             class String < AST::Leaf
+                # Interpolate the string looking for variables, and then return
+                # the result.
                 def evaluate(scope)
                     return scope.strinterp(@value)
                 end
             end
             #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
-            class Word < AST::Leaf; end
-            #---------------------------------------------------------------
-
-            #---------------------------------------------------------------
+            # The 'default' option on case statements and selectors.
             class Default < AST::Leaf; end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
+            # Capitalized words; used mostly for type-defaults, but also
+            # get returned by the lexer any other time an unquoted capitalized
+            # word is found.
             class Type < AST::Leaf; end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
+            # Lower-case words.
             class Name < AST::Leaf; end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
-            class Variable < Word
+            # A simple variable.  This object is only used during interpolation;
+            # the VarDef class is used for assignment.
+            class Variable < Name
+                # Looks up the value of the object in the scope tree (does
+                # not include syntactical constructs, like '$' and '{}').
                 def evaluate(scope)
-                    # look up the variable value in the symbol table
                     begin
                         return scope.lookupvar(@value)
                     rescue Puppet::ParseError => except
@@ -368,32 +328,37 @@ module Puppet
                     end
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
+            # Any normal puppet object declaration.  Can result in a class or a 
+            # component, in addition to builtin types.
             class ObjectDef < AST::Branch
                 attr_accessor :name, :type
                 attr_reader :params
 
+                # probably not used at all
                 def []=(index,obj)
                     @params[index] = obj
                 end
 
+                # probably not used at all
                 def [](index)
                     return @params[index]
                 end
 
+                # Iterate across all of our children.
                 def each
-                    #Puppet.debug("each called on %s" % self)
                     [@type,@name,@params].flatten.each { |param|
                         #Puppet.debug("yielding param %s" % param)
                         yield param
                     }
                 end
 
+                # Does not actually return an object; instead sets an object
+                # in the current scope.
                 def evaluate(scope)
                     hash = {}
 
+                    # Get our type and name.
                     objtype = @type.safeevaluate(scope)
                     objnames = @name.safeevaluate(scope)
 
@@ -401,11 +366,12 @@ module Puppet
                     begin
                         defaults = scope.lookupdefaults(objtype)
                     rescue => detail
-                        error = Puppet::DevError.new(
+                        raise Puppet::DevError, 
                             "Could not lookup defaults for %s: %s" %
                                 [objtype, detail.to_s]
-                        )
                     end
+
+                    # Add any found defaults to our argument list
                     defaults.each { |var,value|
                         Puppet.debug "Found default %s for %s" %
                             [var,objtype]
@@ -424,6 +390,7 @@ module Puppet
                         objnames = [objnames]
                     end
 
+                    # See if our object was defined
                     begin
                         object = scope.lookuptype(objtype)
                     rescue Puppet::ParseError => except
@@ -438,10 +405,12 @@ module Puppet
                         raise error
                     end
 
+                    # If not, verify that it's a builtin type
                     unless object
                         begin
                             Puppet::Type.type(objtype)
                         rescue TypeError
+                            # otherwise, the user specified an invalid type
                             error = Puppet::ParseError.new(
                                 "Invalid type %s" % objtype
                             )
@@ -490,6 +459,7 @@ module Puppet
                     }.reject { |obj| obj.nil? }
                 end
 
+                # Create our ObjectDef.  Handles type checking for us.
                 def initialize(hash)
                     super
 
@@ -508,13 +478,11 @@ module Puppet
                         end
                         if builtin
                             # we're a builtin type
-                            #Puppet.debug "%s is a builtin type" % objtype
                             # like :typecheck, this always defaults to on, but
                             # at least it's easy to turn off if necessary
                             if Puppet[:paramcheck]
+                                # Verify that each param is valid
                                 @params.each { |param|
-                                    #p self.name
-                                    #p @params
                                     unless param.is_a?(AST::ObjectParam)
                                         raise Puppet::DevError,
                                             "Got something other than param"
@@ -537,11 +505,14 @@ module Puppet
                                     end
                                 }
                             end
+                        # Find the defined type and verify arguments are valid.
                         # FIXME this should use scoping rules to find the set type,
                         # not a global list
                         elsif @@settypes.include?(objtype) 
                             # we've defined it locally
                             Puppet.debug "%s is a defined type" % objtype
+
+                            # this is somewhat hackish, using a global type list...
                             type = @@settypes[objtype]
                             @params.each { |param|
                                 # FIXME we might need to do more here eventually...
@@ -578,6 +549,7 @@ module Puppet
                     end
                 end
 
+                # Set the parameters for our object.
                 def params=(params)
                     if params.is_a?(AST::ASTArray)
                         @params = params
@@ -590,6 +562,7 @@ module Puppet
                     end
                 end
 
+                # Print this object out.
                 def tree(indent = 0)
                     return [
                         @type.tree(indent + 1),
@@ -618,20 +591,20 @@ module Puppet
                     ]
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
+            # A reference to an object.  Only valid as an rvalue.
             class ObjectRef < AST::Branch
                 attr_accessor :name, :type
 
                 def each
-                    #Puppet.debug("each called on %s" % self)
                     [@type,@name].flatten.each { |param|
                         #Puppet.debug("yielding param %s" % param)
                         yield param
                     }
                 end
 
+                # Evaluate our object, but just return a simple array of the type
+                # and name.
                 def evaluate(scope)
                     objtype = @type.safeevaluate(scope)
                     objnames = @name.safeevaluate(scope)
@@ -641,6 +614,7 @@ module Puppet
                         objnames = [objnames]
                     end
 
+                    # Verify we can find the object.
                     begin
                         object = scope.lookuptype(objtype)
                     rescue Puppet::ParseError => except
@@ -679,9 +653,8 @@ module Puppet
                     return "%s[%s]" % [@name,@type]
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
+            # The AST object for the parameters inside ObjectDefs and Selectors.
             class ObjectParam < AST::Branch
                 attr_accessor :value, :param
 
@@ -689,6 +662,7 @@ module Puppet
                     [@param,@value].each { |child| yield child }
                 end
 
+                # Return the parameter and the value.
                 def evaluate(scope)
                     param = @param.safeevaluate(scope)
                     value = @value.safeevaluate(scope)
@@ -707,32 +681,31 @@ module Puppet
                     return "%s => %s" % [@param,@value]
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
+            # The basic logical structure in Puppet.  Supports a list of
+            # tests and statement arrays.
             class CaseStatement < AST::Branch
                 attr_accessor :test, :options, :default
 
-                # 'if' is a bit special, since we don't want to continue
-                # evaluating if a test turns up true
+                # Short-curcuit evaluation.  Return the value of the statements for
+                # the first option that matches.
                 def evaluate(scope)
                     value = @test.safeevaluate(scope)
 
                     retvalue = nil
                     found = false
-                    default = nil
+                    
+                    # Iterate across the options looking for a match.
                     @options.each { |option|
-                        if option.eachvalue { |opval|
-                            if opval == value
-                                break true
-                            end
-                        }
+                        if option.eachvalue { |opval| break true if opval == value }
                             # we found a matching option
                             retvalue = option.safeevaluate(scope)
+                            found = true
                             break
                         end
                     }
 
+                    # Unless we found something, look for the default.
                     unless found
                         if defined? @default
                             retvalue = @default.safeevaluate(scope)
@@ -743,6 +716,7 @@ module Puppet
                     return retvalue
                 end
 
+                # Do some input validation on our options.
                 def initialize(hash)
                     values = {}
 
@@ -780,9 +754,8 @@ module Puppet
                     [@test,@options].each { |child| yield child }
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
+            # Each individual option in a case statement.
             class CaseOpt < AST::Branch
                 attr_accessor :value, :statements
 
@@ -790,6 +763,11 @@ module Puppet
                 # so that CaseStatement can compare, and then it will selectively
                 # decide whether to fully evaluate this option
 
+                def each
+                    [@value,@statements].each { |child| yield child }
+                end
+
+                # Are we the default option?
                 def default?
                     if defined? @default
                         return @default
@@ -815,6 +793,7 @@ module Puppet
                     return @default
                 end
 
+                # You can specify a list of values; return each in turn.
                 def eachvalue
                     if @value.is_a?(AST::ASTArray)
                         @value.each { |subval|
@@ -825,6 +804,8 @@ module Puppet
                     end
                 end
 
+                # Evaluate the actual statements; this only gets called if
+                # our option matched.
                 def evaluate(scope)
                     return @statements.safeevaluate(scope.newscope)
                 end
@@ -837,42 +818,50 @@ module Puppet
                     ]
                     return rettree.flatten.join("\n")
                 end
+            end
+
+            # The inline conditional operator.  Unlike CaseStatement, which executes
+            # code, we just return a value.
+            class Selector < AST::Branch
+                attr_accessor :param, :values
 
                 def each
-                    [@value,@statements].each { |child| yield child }
+                    [@param,@values].each { |child| yield child }
                 end
-            end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
-            class Selector < AST::Branch
-                attr_accessor :param, :value
-
-                # okay, here's a decision point...
+                # Find the value that corresponds with the test.
                 def evaluate(scope)
-                    # retrieve our values and make them a touch easier to manage
-                    hash = Hash[*(@value.safeevaluate(scope).flatten)]
-
                     retvalue = nil
+                    found = nil
 
+                    # Get our parameter.
                     paramvalue = @param.safeevaluate(scope)
 
-                    retvalue = hash.detect { |test,value|
-                        # FIXME this will return variables named 'default'...
-                        if paramvalue == test
-                            break value
+                    default = nil
+
+                    # Then look for a match in the options.
+                    @values.each { |obj|
+                        param = obj.param.safeevaluate(scope)
+                        if param == paramvalue
+                            # we found a matching option
+                            retvalue = obj.value.safeevaluate(scope)
+                            found = true
+                            break
+                        elsif obj.param.is_a?(Default)
+                            default = obj
                         end
                     }
-                    if retvalue.nil?
-                        if hash.include?("default")
-                            return hash["default"]
+
+                    # Unless we found something, look for the default.
+                    unless found
+                        if default
+                            retvalue = default.value.safeevaluate(scope)
                         else
                             error = Puppet::ParseError.new(
                                 "No value for selector param '%s'" % paramvalue
                             )
                             error.line = self.line
                             error.file = self.file
-                            error.stack = self.stack
                             raise error
                         end
                     end
@@ -884,20 +873,17 @@ module Puppet
                     return [
                         @param.tree(indent + 1),
                         ((@@indline * indent) + self.typewrap(self.pin)),
-                        @value.tree(indent + 1)
+                        @values.tree(indent + 1)
                     ].join("\n")
                 end
-
-                def each
-                    [@param,@value].each { |child| yield child }
-                end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
+            # Define a variable.  Stores the value in the current scope.
             class VarDef < AST::Branch
                 attr_accessor :name, :value
 
+                # Look up our name and value, and store them appropriately.  The
+                # lexer strips off the syntax stuff like '$'.
                 def evaluate(scope)
                     name = @name.safeevaluate(scope)
                     value = @value.safeevaluate(scope)
@@ -934,9 +920,9 @@ module Puppet
                     return "%s => %s" % [@name,@value]
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
+            # A statement syntactically similar to an ObjectDef, but uses a
+            # capitalized object type and cannot have a name.  
             class TypeDefaults < AST::Branch
                 attr_accessor :type, :params
 
@@ -944,14 +930,12 @@ module Puppet
                     [@type,@params].each { |child| yield child }
                 end
 
+                # As opposed to ObjectDef, this stores each default for the given
+                # object type.
                 def evaluate(scope)
                     type = @type.safeevaluate(scope)
                     params = @params.safeevaluate(scope)
 
-                    #Puppet.info "Params are %s" % params.inspect
-                    #Puppet.debug("evaluating '%s.%s' with values [%s]" %
-                    #    [type,name,values])
-                    # okay, now i need the interpreter's client object thing...
                     begin
                         scope.setdefaults(type.downcase,params)
                     rescue Puppet::ParseError => except
@@ -979,10 +963,15 @@ module Puppet
                     return "%s { %s }" % [@type,@params]
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
-            # these are analogous to defining new object types
+            # Define a new component.  This basically just stores the associated parse
+            # tree by name in our current scope.  Note that there is currently
+            # a mismatch in how we look up components -- it usually uses scopes, but
+            # sometimes uses '@@settypes'.
+            # FIXME This class should verify that each of its direct children
+            # has an abstractable name -- i.e., if a file does not include a variable
+            # in its name, then the user is essentially guaranteed to encounter
+            # an error if the component is instantiated more than once.
             class CompDef < AST::Branch
                 attr_accessor :name, :args, :code
 
@@ -990,16 +979,10 @@ module Puppet
                     [@name,@args,@code].each { |child| yield child }
                 end
 
+                # Store the parse tree.
                 def evaluate(scope)
                     name = @name.safeevaluate(scope)
                     args = @args.safeevaluate(scope)
-
-                    #Puppet.debug("defining '%s' with arguments [%s]" %
-                    #    [name,args])
-                    #p @args
-                    #p args
-                    # okay, now i need to evaluate all of the statements
-                    # within a component and a new lexical scope...
 
                     begin
                         scope.settype(name,
@@ -1023,6 +1006,7 @@ module Puppet
                 end
 
                 def initialize(hash)
+                    @parentclass = nil
                     super
 
                     Puppet.debug "Defining type %s" % @name.value
@@ -1048,6 +1032,8 @@ module Puppet
                     return "define %s(%s) {\n%s }" % [@name, @args, @code]
                 end
 
+                # Check whether a given argument is valid.  Searches up through
+                # any parent classes that might exist.
                 def validarg?(param)
                     found = false
                     if @args.is_a?(AST::ASTArray)
@@ -1082,10 +1068,10 @@ module Puppet
 
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
-            # these are analogous to defining new object types
+            # Define a new class.  Syntactically similar to component definitions,
+            # but classes are always singletons -- only one can exist on a given
+            # host.
             class ClassDef < AST::CompDef
                 attr_accessor :parentclass
 
@@ -1097,6 +1083,7 @@ module Puppet
                     end
                 end
 
+                # Store our parse tree according to name.
                 def evaluate(scope)
                     name = @name.safeevaluate(scope)
                     args = @args.safeevaluate(scope)
@@ -1117,27 +1104,17 @@ module Puppet
                     #    [name,args])
 
                     begin
+                        arghash = {
+                            :name => name,
+                            :args => args,
+                            :code => @code
+                        }
                         if parent
-                            scope.settype(name,
-                                HostClass.new(
-                                    :name => name,
-                                    :args => args,
-                                    :parentclass => parent,
-                                    :code => @code
-                                )
-                            )
-                        else
-                            scope.settype(name,
-                                HostClass.new(
-                                    :name => name,
-                                    :args => args,
-                                    :code => @code
-                                )
-                            )
+                            arghash[:parentclass] = parent
                         end
-                        #scope.settype(name,
-                        #    HostClass.new(arghash)
-                        #)
+                        scope.settype(name,
+                            HostClass.new(arghash)
+                        )
                     rescue Puppet::ParseError => except
                         except.line = self.line
                         except.file = self.file
@@ -1161,7 +1138,7 @@ module Puppet
                         @name.tree(indent + 1),
                         ((@@indline * 4 * indent) + self.typewrap("class")),
                         @args.tree(indent + 1),
-                        @parentclass.tree(indent + 1),
+                        @parentclass ? @parentclass.tree(indent + 1) : "",
                         @code.tree(indent + 1),
                     ].join("\n")
                 end
@@ -1171,11 +1148,10 @@ module Puppet
                         [@name, @args, @parentclass, @code]
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
-            # host definitions are special, because they get called when a host
-            # whose name matches connects
+            # Define a node.  The node definition stores a parse tree for each
+            # specified node, and this parse tree is only ever looked up when
+            # a client connects.
             class NodeDef < AST::Branch
                 attr_accessor :names, :code
 
@@ -1183,6 +1159,7 @@ module Puppet
                     [@names,@code].each { |child| yield child }
                 end
 
+                # Do implicit iteration over each of the names passed.
                 def evaluate(scope)
                     names = @names.safeevaluate(scope)
 
@@ -1194,7 +1171,7 @@ module Puppet
                     names.each { |name|
                         begin
                             scope.sethost(name,
-                                Host.new(
+                                Node.new(
                                     :name => name,
                                     :code => @code
                                 )
@@ -1225,11 +1202,10 @@ module Puppet
                     return "host %s {\n%s }" % [@name, @code]
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
-            # this is not really an AST node; it's just a placeholder
-            # for a bunch of AST code to evaluate later
+            # Evaluate the stored parse tree for a given component.  This will
+            # receive the arguments passed to the component and also the type and
+            # name of the component.
             class Component < AST::Branch
                 attr_accessor :name, :args, :code
 
@@ -1240,7 +1216,11 @@ module Puppet
 
                     # define all of the arguments in our local scope
                     if self.args
-                        #Puppet.debug "args are %s" % self.args.inspect
+
+                        # Verify that all required arguments are either present or
+                        # have been provided with defaults.
+                        # FIXME This should probably also require each parent class's
+                        # arguments...
                         self.args.each { |arg, default|
                             unless hash.include?(arg)
                                 if defined? default
@@ -1259,6 +1239,8 @@ module Puppet
                         }
                     end
 
+                    # Set each of the provided arguments as variables in the
+                    # component's scope.
                     hash["name"] = objname
                     hash.each { |arg,value|
                         begin
@@ -1280,15 +1262,14 @@ module Puppet
                         end
                     }
 
-                    # now just evaluate the code with our new bindings
+                    # Now just evaluate the code with our new bindings.
                     self.code.safeevaluate(scope)
                 end
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
-            # this is not really an AST node; it's just a placeholder
-            # for a bunch of AST code to evaluate later
+            # The code associated with a class.  This is different from components
+            # in that each class is a singleton -- only one will exist for a given
+            # node.
             class HostClass < AST::Component
                 attr_accessor :parentclass
 
@@ -1308,7 +1289,8 @@ module Puppet
                         end
                         unless parentobj
                             error = Puppet::ParseError.new( 
-                                "Could not find parent '%s' of '%s'" % [@parentclass,@name])
+                                "Could not find parent '%s' of '%s'" %
+                                    [@parentclass,@name])
                             error.line = self.line
                             error.file = self.file
                             raise error
@@ -1329,12 +1311,9 @@ module Puppet
                 end
 
             end
-            #---------------------------------------------------------------
 
-            #---------------------------------------------------------------
-            # this is not really an AST node; it's just a placeholder
-            # for a bunch of AST code to evaluate later
-            class Host < AST::Component
+            # The specific code associated with a host.  
+            class Node < AST::Component
                 attr_accessor :name, :args, :code, :parentclass
 
                 def evaluate(scope,hash,objtype,objname)
