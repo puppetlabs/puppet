@@ -1,11 +1,6 @@
-#!/usr/local/bin/ruby -w
-
-# $Id$
-
-# the interpreter
-#
-# this builds our virtual pinball machine, into which we'll place our host-specific
-# information and out of which we'll receive our host-specific configuration
+# The interepreter's job is to convert from a parsed file to the configuration
+# for a given client.  It really doesn't do any work on its own, it just collects
+# and calls out to other objects.
 
 require 'puppet'
 require 'puppet/parser/parser'
@@ -14,66 +9,49 @@ require 'puppet/parser/scope'
 
 module Puppet
     module Parser
-        #---------------------------------------------------------------
         class Interpreter
             attr_accessor :ast, :topscope
             # just shorten the constant path a bit, using what amounts to an alias
             AST = Puppet::Parser::AST
 
-            #------------------------------------------------------------
-            def clear
-                TransObject.clear
-            end
-            #------------------------------------------------------------
-
-            #------------------------------------------------------------
-            #def callfunc(function,*args)
-            #    #Puppet.debug("Calling %s on %s" % [function,@client])
-            #    @client.callfunc(function,*args)
-            #    #Puppet.debug("Finished %s" % function)
-            #end
-            #------------------------------------------------------------
-
-            #------------------------------------------------------------
             # create our interpreter
             def initialize(hash)
-                unless hash.include?(:ast)
-                    raise ArgumentError.new("Must pass tree and client to Interpreter")
+                unless hash.include?(:Manifest)
+                    raise Puppet::DevError, "Interpreter was not passed a file"
                 end
-                @ast = hash[:ast]
-                #@client = hash[:client]
 
-                @scope = Puppet::Parser::Scope.new() # no parent scope
-                @topscope = @scope
-                @scope.interp = self
+                @file = hash[:Manifest]
 
-                if hash.include?(:facts)
-                    facts = hash[:facts]
-                    unless facts.is_a?(Hash)
-                        raise ArgumentError.new("Facts must be a hash")
-                    end
-
-                    facts.each { |fact,value|
-                        @scope.setvar(fact,value)
-                    }
+                if hash.include?(:UseNodes)
+                    @usenodes = hash[:UseNodes]
+                else
+                    @usenodes = true
                 end
+
+                # Create our parser object
+                parsefiles
+
+                evaluate
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
             # evaluate our whole tree
-            def run
-                # evaluate returns a value, but at the top level we only
-                # care about its side effects
-                # i think
-                unless @ast.is_a?(AST) or @ast.is_a?(AST::ASTArray)
-                    Puppet.err "Received top-level non-ast '%s' of type %s" %
-                        [@ast,@ast.class]
-                    raise TypeError.new("Received non-ast '%s' of type %s" %
-                        [@ast,@ast.class])
-                end
+            def run(client, facts)
+                parsefiles()
 
                 begin
+                    if @usenodes
+                        unless client
+                            raise Puppet::Error,
+                                "Cannot evaluate no nodes with a nil client"
+                        end
+
+                        # We've already evaluated the AST, in this case
+                        @scope.evalnode(client, facts)
+                    else
+                        scope = Puppet::Parser::Scope.new() # no parent scope
+                        scope.interp = self
+                        scope.evaluate(@ast, facts)
+                    end
                     @ast.evaluate(@scope)
                 rescue Puppet::DevError, Puppet::Error, Puppet::ParseError => except
                     #Puppet.err "File %s, line %s: %s" %
@@ -125,14 +103,55 @@ module Puppet
                 #TransObject.clear
                 return topbucket
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
             def scope
                 return @scope
             end
-            #------------------------------------------------------------
+
+            private
+
+            # Evaluate the configuration.  If there aren't any nodes defined, then
+            # this doesn't actually do anything, because we have to evaluate the
+            # entire configuration each time we get a connect.
+            def evaluate
+                @scope = Puppet::Parser::Scope.new() # no parent scope
+                @topscope = @scope
+                @scope.interp = self
+
+                if @usenodes
+                    Puppet.debug "Nodes defined"
+                    @ast.safeevaluate(@scope)
+                else
+                    Puppet.debug "No nodes defined"
+                    return
+                end
+            end
+
+            def parsefiles
+                if defined? @parser
+                    unless @parser.reparse?
+                        return false
+                    end
+                end
+
+                unless FileTest.exists?(@file)
+                    if @ast
+                        Puppet.warning "Manifest %s has disappeared" % @file
+                        return
+                    else
+                        raise Puppet::Error, "Manifest %s must exist" % @file
+                    end
+                end
+
+                # should i be creating a new parser each time...?
+                @parser = Puppet::Parser::Parser.new()
+                @parser.file = @file
+                @ast = @parser.parse
+
+                evaluate
+            end
         end
-        #---------------------------------------------------------------
     end
 end
+
+# $Id$

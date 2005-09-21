@@ -9,41 +9,16 @@ module Puppet
     class TransObject < Hash
         attr_accessor :type, :name, :file, :line
 
-        @@ohash = {}
-        @@oarray = []
-
-        def TransObject.add(object)
-            @@oarray.push object
-
-            # this is just so we can check, at parse time, whether a required
-            # object has already been mentioned when it is listed as required
-            # because we're ordered, as long as an object gets made before its
-            # dependent objects will get synced later
-            @@ohash[object.longname] = object
-        end
-
-        def TransObject.clear
-            @@oarray.clear
-        end
-
-        def TransObject.list
-            return @@oarray
-        end
-
         def initialize(name,type)
             self[:name] = name
             @type = type
             @name = name
-            self.class.add(self)
+            #self.class.add(self)
         end
 
         def longname
             return [self.type,self[:name]].join('--')
         end
-
-        #def name
-        #    return self[:name]
-        #end
 
         def to_s
             return "%s(%s) => %s" % [@type,self[:name],super]

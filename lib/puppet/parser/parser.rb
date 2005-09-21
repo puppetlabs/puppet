@@ -8,6 +8,7 @@ require 'racc/parser'
 
 
 require 'puppet'
+require 'puppet/parsedfile'
 require 'puppet/parser/lexer'
 require 'puppet/parser/ast'
 #require 'puppet/parser/interpreter'
@@ -31,23 +32,27 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..idea8fcb8472', 'grammar.ra', 606
-attr_writer :stack
-attr_reader :file
+module_eval <<'..end grammar.ra modeval..id859845cfb5', 'grammar.ra', 607
+attr_reader :file, :files
 
 def file=(file)
-    if self.stack.include?(file)
+    unless FileTest.exists?(file)
+        raise Puppet::Error, "Could not find file %s" % file
+    end
+    if @files.detect { |f| f.file == file }
         raise Puppet::ImportError.new("Import loop detected")
     else
+        @files << Puppet::ParsedFile.new(file)
         @lexer.file = file
     end
 end
 
 def initialize
     @lexer = Puppet::Parser::Lexer.new()
-    if Puppet[:debug]
-        @yydebut = true
-    end
+    @files = []
+    #if Puppet[:debug]
+    #    @yydebug = true
+    #end
 end
 
 def on_error(token,value,stack)
@@ -116,26 +121,14 @@ def parse
     end
 end
 
-def stack
-    if defined? @stack and ! @stack.nil?
-        if @lexer.file
-            return [@stack,@lexer.file].flatten
-        else
-            return @stack
-        end
-    else
-        if @lexer.file
-            return [@lexer.file]
-        else
-            return []
-        end
-    end
+def reparse?
+    return @files.detect { |file| file.changed? }
 end
 
 def string=(string)
     @lexer.string = string
 end
-..end grammar.ra modeval..idea8fcb8472
+..end grammar.ra modeval..id859845cfb5
 
 ##### racc 1.4.4 generates ###
 

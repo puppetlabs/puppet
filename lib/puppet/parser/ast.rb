@@ -1167,7 +1167,7 @@ module Puppet
 
                     names.each { |name|
                         begin
-                            scope.sethost(name,
+                            scope.setnode(name,
                                 Node.new(
                                     :name => name,
                                     :code => @code
@@ -1331,13 +1331,24 @@ module Puppet
             class Node < AST::Component
                 attr_accessor :name, :args, :code, :parentclass
 
-                def evaluate(scope,hash,objtype,objname)
+                def evaluate(scope, facts = {})
                     scope = scope.newscope
-                    scope.type = objtype
-                    scope.name = objname
+                    scope.type = "node"
+                    scope.name = @name
+
+                    # Mark this scope as a nodescope, so that classes will be
+                    # singletons within it
                     scope.nodescope = true
 
-                    self.code.safeevaluate(scope)
+                    # Now set all of the facts inside this scope
+                    facts.each { |var, value|
+                        scope.setvar(var, value)
+                    }
+
+                    # And then evaluate our code.
+                    @code.safeevaluate(scope)
+
+                    return scope
                 end
             end
             #---------------------------------------------------------------

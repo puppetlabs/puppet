@@ -5,6 +5,8 @@ require 'puppet'
 
 module Puppet
     class ParsedFile
+        attr_reader :file
+
         # Determine whether the file has changed and thus whether it should
         # be reparsed
         def changed?

@@ -38,6 +38,30 @@ module Puppet
                 @@declarative
             end
 
+            # Remove a specific child.
+            def delete(child)
+                @children.delete(child)
+            end
+
+            # Verify that no nodescopes are hanging around.
+            def nodeclean
+                @children.find_all { |child|
+                    if child.is_a?(Scope)
+                        child.nodescope?
+                    else
+                        false
+                    end
+                }.each { |child|
+                    @children.delete(child)
+                }
+
+                @children.each { |child|
+                    if child.is_a?(Scope)
+                        child.nodeclean
+                    end
+                }
+            end
+
             # Is this scope associated with being a node?  The answer determines
             # whether we store class instances here
             def nodescope?
@@ -58,6 +82,65 @@ module Puppet
                 @children.each { |child|
                     yield child
                 }
+            end
+
+            # Evaluate a specific node's code.  This method will normally be called
+            # on the top-level scope, but it actually evaluates the node at the
+            # appropriate scope.
+            def evalnode(names, facts)
+                scope = code = nil
+                names.each { |node|
+                    scope, code = self.findnode(node)
+                    if scope and code
+                        break
+                    end
+                }
+
+                unless scope and code
+                    raise Puppet::Error, "Could not find configuration for %s" %
+                        names.join(" or ")
+                end
+
+                # First make sure there aren't any other node scopes lying around
+                self.nodeclean
+
+                # We need to do a little skullduggery here.  We want a
+                # temporary scope, because we don't want this scope to
+                # show up permanently in the scope tree -- otherwise we could
+                # not evaluate the node multiple times.  We could conceivably
+                # cache the results, but it's not worth it at this stage.
+
+                # Note that we evaluate the node code with its containing
+                # scope, not with the top scope.
+                code.safeevaluate(scope, facts)
+
+                # We don't need to worry about removing the Node code because
+                # it will be removed during translation.
+
+                # And now return the whole thing
+                return self.to_trans
+            end
+
+            # Find a given node's definition; searches downward recursively.
+            def findnode(node)
+                if @nodetable.include?(node)
+                    return [self, @nodetable[node]]
+                else
+                    self.find { |child|
+                        child.findnode(node)
+                    }
+                end
+            end
+
+            # Evaluate normally, with no node definitions
+            def evaluate(objects, facts = {})
+                facts.each { |var, value|
+                    self.setvar(var, value)
+                }
+
+                objects.safeevaluate(self)
+
+                return self.to_trans
             end
 
             # Initialize our new scope.  Defaults to having no parent and to
@@ -88,6 +171,9 @@ module Puppet
                 # be used by top scopes and node scopes.
                 @classtable = Hash.new(nil)
 
+                # A table for storing nodes.
+                @nodetable = Hash.new(nil)
+
                 # All of the defaults set for types.  It's a hash of hashes,
                 # with the first key being the type, then the second key being
                 # the parameter.
@@ -115,6 +201,7 @@ module Puppet
                 @map = {
                     "variable" => @symtable,
                     "type" => @typetable,
+                    "node" => @nodetable,
                     "object" => @objectable,
                     "defaults" => @defaultstable
                 }
@@ -193,6 +280,18 @@ module Puppet
                 return values
             end
 
+            # Look up a node by name
+            def lookupnode(name)
+                Puppet.debug "Looking up type %s" % name
+                value = self.lookup("type",name)
+                if value == :undefined
+                    return nil
+                else
+                    Puppet.debug "Found type %s" % name
+                    return value
+                end
+            end
+
             # Look up a defined type.
             def lookuptype(name)
                 Puppet.debug "Looking up type %s" % name
@@ -209,18 +308,16 @@ module Puppet
             def lookupobject(name,type)
                 Puppet.debug "Looking up object %s of type %s in level %s" %
                     [name, type, @level]
-                unless defined? @@objectsearch
-                    @@objectsearch = proc { |table|
-                        if table.include?(type)
-                            if table[type].include?(name)
-                                table[type][name]
-                            end
-                        else
-                            nil
+                sub = proc { |table|
+                    if table.include?(type)
+                        if table[type].include?(name)
+                            table[type][name]
                         end
-                    }
-                end
-                value = self.lookup("object",@@objectsearch)
+                    else
+                        nil
+                    end
+                }
+                value = self.lookup("object",sub)
                 if value == :undefined
                     return nil
                 else
@@ -294,20 +391,14 @@ module Puppet
             end
 
             # Store a host in the global table.
-            def sethost(name,host)
-                if @@hosttable.include?(name)
-                    str = "Host %s is already defined" % name
-                    if @@hosttable[name].file
-                        str += " in file %s" % @@hosttable[name].file
-                    end
-                    if @@hosttable[name].line
-                        str += " on line %s" % @@hosttable[name].line
-                    end
-                    raise Puppet::ParseError,
-                        "Host %s is already defined" % name
+            def setnode(name,code)
+                if @nodetable.include?(name)
+                    raise Puppet::Error, "Host %s is already defined" % name
                 else
-                    @@hosttable[name] = host
+                    @nodetable[name] = code
                 end
+
+                #self.nodescope = true
             end
 
             # Define our type.
@@ -405,6 +496,13 @@ module Puppet
                         else
                             # Otherwise, just add it to our list of results.
                             results.push(cresult)
+                        end
+
+                        # Nodescopes are one-time; once they've been evaluated
+                        # I need to destroy them.  Nodeclean makes sure this is
+                        # done correctly, but this should catch most of them.
+                        if child.nodescope?
+                            @children.delete(child)
                         end
                     elsif child.is_a?(TransObject)
                         results.push(child)
