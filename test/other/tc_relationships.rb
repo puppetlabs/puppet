@@ -1,31 +1,21 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk"
+    $puppetbase = "../.."
 end
 
 require 'puppet'
+require 'puppettest'
 require 'test/unit'
 
-# $Id$
-
-class TestRelationships < Test::Unit::TestCase
+class TestRelationships < TestPuppet
     def setup
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-
+        super
         @groups = %x{groups}.chomp.split(/ /)
         unless @groups.length > 1
             p @groups
             raise "You must be a member of more than one group to test this"
         end
-    end
-
-    def teardown
-        assert_nothing_raised() {
-            Puppet::Type.allclear
-        }
-
-        print "\n\n" if Puppet[:debug]
     end
 
     def newfile
@@ -72,3 +62,5 @@ class TestRelationships < Test::Unit::TestCase
     def test_simplerel
     end
 end
+
+# $Id$
