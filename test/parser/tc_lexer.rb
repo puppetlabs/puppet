@@ -9,8 +9,6 @@ require 'puppet/parser/lexer'
 require 'test/unit'
 require 'puppettest.rb'
 
-# $Id$
-
 #%q{service("telnet") = \{
 #    port => "23",
 #    protocol => "tcp",
@@ -18,9 +16,9 @@ require 'puppettest.rb'
 #\}
 #} => [[:NAME, "service"], [:LPAREN, "("], [:DQUOTE, "\""], [:NAME, "telnet"], [:DQUOTE, "\""], [:RPAREN, ")"], [:EQUALS, "="], [:lbrace, "{"], [:NAME, "port"], [:FARROW, "=>"], [:DQUOTE, "\""], [:NAME, "23"], [:DQUOTE, "\""], [:COMMA, ","], [:NAME, "protocol"], [:FARROW, "=>"], [:DQUOTE, "\""], [:NAME, "tcp"], [:DQUOTE, "\""], [:COMMA, ","], [:NAME, "name"], [:FARROW, "=>"], [:DQUOTE, "\""], [:NAME, "telnet"], [:DQUOTE, "\""], [:COMMA, ","], [:RBRACE, "}"]]
 
-class TestLexer < Test::Unit::TestCase
+class TestLexer < TestPuppet
     def setup
-        Puppet[:loglevel] = :debug if __FILE__ == $0
+        super
         @lexer = Puppet::Parser::Lexer.new()
     end
 
@@ -117,3 +115,5 @@ class TestLexer < Test::Unit::TestCase
         }
     end
 end
+
+# $Id$

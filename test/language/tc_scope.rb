@@ -2,8 +2,7 @@
 
 if __FILE__ == $0
     $:.unshift '../../lib'
-    $:.unshift '../../../../library/trunk/lib/'
-    $:.unshift '../../../../library/trunk/test/'
+    $:.unshift '..'
     $puppetbase = "../.."
 end
 
@@ -23,11 +22,8 @@ require 'puppettest'
 # so really, we want to do things like test that our ast is correct
 # and test whether we've got things in the right scopes
 
-class TestScope < Test::Unit::TestCase
-    def setup
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-    end
-
+class TestScope < TestPuppet
+    AST = Puppet::Parser::AST
     def to_ary(hash)
         hash.collect { |key,value|
             [key,value]
@@ -260,5 +256,41 @@ class TestScope < Test::Unit::TestCase
             val = scope.strinterp("string $test ${test} $test")
         }
         assert_equal("string value value value", val)
+    end
+
+    # Test some of the host manipulations
+    def test_zhostlookup
+        top = Puppet::Parser::Scope.new(nil)
+
+        child1 = Puppet::Parser::Scope.new(top)
+        child2 = Puppet::Parser::Scope.new(top)
+        sub1 = Puppet::Parser::Scope.new(child1)
+
+        # verify we can set a host
+        assert_nothing_raised("Could not create host") {
+            child1.sethost("testing", AST::Node.new(
+                :name => "testing",
+                :code => :notused
+                )
+            )
+        }
+
+        # Verify we cannot redefine it
+        assert_raise(Puppet::ParseError, "Duplicate host creation succeeded") {
+            child2.sethost("testing", AST::Node.new(
+                :name => "testing",
+                :code => :notused
+                )
+            )
+        }
+
+        # Now verify we can find the host again
+        host = nil
+        assert_nothing_raised("Host lookup failed") {
+            host = top.lookuphost("testing")
+        }
+
+        assert(host, "Could not find host")
+        assert(host.code == :notused, "Host is not what we stored")
     end
 end

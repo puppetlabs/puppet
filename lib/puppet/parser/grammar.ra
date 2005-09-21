@@ -117,7 +117,6 @@ object:       name LBRACE objectinstances endsemi RBRACE {
 }           | type LBRACE params endcomma RBRACE {
     # a template setting for a type
     if val[0].is_a?(AST::ASTArray)
-        Puppet.notice "invalid type"
         raise Puppet::ParseError, "Invalid type"
     end
     result = AST::TypeDefaults.new(
@@ -448,22 +447,23 @@ definition: DEFINE NAME argumentlist LBRACE statements RBRACE {
     )
 }
 
-hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
+#hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
+hostclass: CLASS NAME parent LBRACE statements RBRACE {
+        #:args => val[2],
     args = {
         :name => AST::Name.new(:value => val[1], :line => @lexer.line),
-        :args => val[2],
         :file => @lexer.file,
         :line => @lexer.line,
-        :code => val[5]
+        :code => val[4]
     }
     # It'll be an ASTArray if we didn't get a parent
-    if val[3].is_a?(AST::Name)
-        args[:parentclass] = val[3]
+    if val[2].is_a?(AST::Name)
+        args[:parentclass] = val[2]
     end
     result = AST::ClassDef.new(args)
 }
 
-nodedef: NODE names parent LBRACE statements RBRACE {
+nodedef: NODE names LBRACE statements RBRACE {
     unless val[1].is_a?(AST::ASTArray)
         val[1] = AST::ASTArray.new(
             :line => val[1].line,
@@ -477,9 +477,9 @@ nodedef: NODE names parent LBRACE statements RBRACE {
         :names => val[1],
         :code => val[4]
     }
-    if val[3].is_a?(AST::Name)
-        args[:parentclass] = val[2]
-    end
+    #if val[3].is_a?(AST::Name)
+    #    args[:parentclass] = val[2]
+    #end
     result = AST::NodeDef.new(args)
 }
 

@@ -9,26 +9,12 @@ require 'puppet/parser/parser'
 require 'test/unit'
 require 'puppettest'
 
-# $Id$
-
-class TestParser < Test::Unit::TestCase
-    # hmmm
-    # this is complicated, because we store references to the created
-    # objects in a central store
+class TestParser < TestPuppet
     def setup
-        Puppet[:loglevel] = :debug if __FILE__ == $0
+        super
         Puppet[:parseonly] = true
         #@lexer = Puppet::Parser::Lexer.new()
         @parser = Puppet::Parser::Parser.new()
-        @@tmpfiles = []
-    end
-
-    def teardown
-        @@tmpfiles.each { |file|
-            if FileTest.exist?(file)
-                system("rm -rf %s" % file)
-            end
-        }
     end
 
     def test_each_file
@@ -73,3 +59,5 @@ class TestParser < Test::Unit::TestCase
         }
     end
 end
+
+# $Id$

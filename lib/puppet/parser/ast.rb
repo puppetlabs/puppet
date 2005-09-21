@@ -1,14 +1,9 @@
-#/usr/bin/ruby
-
-# $Id$
-# vim: syntax=ruby
-
-# the AST tree
-
 # the parent class for all of our syntactical objects
+
+require 'puppet'
+
 module Puppet
     module Parser
-        class ASTError < RuntimeError; end
 
         # The base class for all of the objects that make up the parse trees.
         # Handles things like file name, line #, and also does the initialization
@@ -70,8 +65,8 @@ module Puppet
                         puts caller
                     end
                     error = Puppet::DevError.new(
-                        "Child of type %s failed: %s" %
-                            [self.class, detail.to_s]
+                        "Child of type %s failed with error %s: %s" %
+                            [self.class, detail.class, detail.to_s]
                     )
                     error.stack = caller
                     raise error
@@ -91,12 +86,14 @@ module Puppet
             # them.  This is probably pretty inefficient and should likely be changed
             # at some point.
             def initialize(args)
+                @file = nil
+                @line = nil
                 args.each { |param,value|
                     method = param.to_s + "="
                     unless self.respond_to?(method)
                         error = Puppet::DevError.new(
                             "Invalid parameter %s to object class %s" %
-                                [method,self.class.to_s]
+                                [param,self.class.to_s]
                         )
                         error.line = self.line
                         error.file = self.file
@@ -183,7 +180,7 @@ module Puppet
                     # We basically always operate declaratively, and when we
                     # do we need to evaluate the settor-like statements first.  This
                     # is basically variable and type-default declarations.
-                    if scope.declarative
+                    if scope.declarative?
                         test = [
                             AST::VarDef, AST::TypeDefaults
                         ]
@@ -365,6 +362,10 @@ module Puppet
                     # first, retrieve the defaults
                     begin
                         defaults = scope.lookupdefaults(objtype)
+                        if defaults.length > 0
+                            Puppet.debug "Got defaults for %s: %s" %
+                                [objtype,defaults.inspect]
+                        end
                     rescue => detail
                         raise Puppet::DevError, 
                             "Could not lookup defaults for %s: %s" %
@@ -429,8 +430,12 @@ module Puppet
                         # just store it in our objectable
                         if object.nil?
                             begin
-                                Puppet.debug("Setting object '%s' with arguments %s" %
-                                    [objname, hash.inspect])
+                                Puppet.debug(
+                                    ("Setting object '%s' " +
+                                    "in scope %s " +
+                                    "with arguments %s") %
+                                    [objname, scope.object_id, hash.inspect]
+                                )
                                 obj = scope.setobject(
                                     objtype,
                                     objname,
@@ -888,7 +893,6 @@ module Puppet
                     name = @name.safeevaluate(scope)
                     value = @value.safeevaluate(scope)
 
-                    Puppet.debug "setting %s to %s" % [name,value]
                     begin
                         scope.setvar(name,value)
                     rescue Puppet::ParseError => except
@@ -1077,41 +1081,33 @@ module Puppet
 
                 def each
                     if @parentclass
-                        [@name,@args,@parentclass,@code].each { |child| yield child }
+                        #[@name,@args,@parentclass,@code].each { |child| yield child }
+                        [@name,@parentclass,@code].each { |child| yield child }
                     else
-                        [@name,@args,@code].each { |child| yield child }
+                        #[@name,@args,@code].each { |child| yield child }
+                        [@name,@code].each { |child| yield child }
                     end
                 end
 
                 # Store our parse tree according to name.
                 def evaluate(scope)
                     name = @name.safeevaluate(scope)
-                    args = @args.safeevaluate(scope)
+                    #args = @args.safeevaluate(scope)
 
+                        #:args => args,
                     arghash = {
                         :name => name,
-                        :args => args,
                         :code => @code
                     }
 
                     if @parentclass
-                        parent = @parentclass.safeevaluate(scope)
-                    else
-                        parent = nil
+                        arghash[:parentclass] = @parentclass.safeevaluate(scope)
                     end
 
                     #Puppet.debug("defining hostclass '%s' with arguments [%s]" %
                     #    [name,args])
 
                     begin
-                        arghash = {
-                            :name => name,
-                            :args => args,
-                            :code => @code
-                        }
-                        if parent
-                            arghash[:parentclass] = parent
-                        end
                         scope.settype(name,
                             HostClass.new(arghash)
                         )
@@ -1134,10 +1130,10 @@ module Puppet
                 end
 
                 def tree(indent = 0)
+                        #@args.tree(indent + 1),
                     return [
                         @name.tree(indent + 1),
                         ((@@indline * 4 * indent) + self.typewrap("class")),
-                        @args.tree(indent + 1),
                         @parentclass ? @parentclass.tree(indent + 1) : "",
                         @code.tree(indent + 1),
                     ].join("\n")
@@ -1145,7 +1141,8 @@ module Puppet
 
                 def to_s
                     return "class %s(%s) inherits %s {\n%s }" %
-                        [@name, @args, @parentclass, @code]
+                        [@name, @parentclass, @code]
+                        #[@name, @args, @parentclass, @code]
                 end
             end
 
@@ -1274,6 +1271,10 @@ module Puppet
                 attr_accessor :parentclass
 
                 def evaluate(scope,hash,objtype,objname)
+                    if scope.lookupclass(@name)
+                        Puppet.debug "%s class already evaluated" % @name
+                        return nil
+                    end
                     if @parentclass
                         begin
                             parentobj = scope.lookuptype(@parentclass)
@@ -1295,14 +1296,28 @@ module Puppet
                             error.file = self.file
                             raise error
                         end
-                        # FIXME I should only have _one_ instance of a given
-                        # parent class
+
+                        # Verify that the parent and child are of the same type
+                        unless parentobj.class == self.class
+                            error = Puppet::ParseError.new(
+                                "Class %s has incompatible parent type" %
+                                [@name]
+                            )
+                            error.file = self.file
+                            error.line = self.line
+                            raise error
+                        end
                         parentobj.safeevaluate(scope,hash,@parentclass,objname)
                     end
 
                     # just use the Component evaluate method, but change the type
                     # to our own type
-                    super(scope,hash,@name,objname)
+                    retval = super(scope,hash,@name,objname)
+
+                    # Set the mark after we evaluate, so we don't record it but
+                    # then encounter an error
+                    scope.setclass(@name)
+                    return retval
                 end
 
                 def initialize(hash)
@@ -1317,36 +1332,17 @@ module Puppet
                 attr_accessor :name, :args, :code, :parentclass
 
                 def evaluate(scope,hash,objtype,objname)
-                    if @parentclass
-                        begin
-                            parentobj = scope.lookuptype(@parentclass)
-                        rescue Puppet::ParseError => except
-                            except.line = self.line
-                            except.file = self.file
-                            raise except
-                        rescue => detail
-                            error = Puppet::ParseError.new(detail)
-                            error.line = self.line
-                            error.file = self.file
-                            raise error
-                        end
-                        unless parentobj
-                            error = Puppet::ParseError.new( 
-                                "Could not find parent '%s' of '%s'" %
-                                    [@parentclass,@name])
-                            error.line = self.line
-                            error.file = self.file
-                            raise error
-                        end
-                        parentobj.safeevaluate(scope,hash,objtype,objname)
-                    end
+                    scope = scope.newscope
+                    scope.type = objtype
+                    scope.name = objname
+                    scope.nodescope = true
 
-                    # just use the Component evaluate method, but change the type
-                    # to our own type
-                    super(scope,hash,@name,objname)
+                    self.code.safeevaluate(scope)
                 end
             end
             #---------------------------------------------------------------
         end
     end
 end
+
+# $Id$

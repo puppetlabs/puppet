@@ -355,7 +355,7 @@ class TestSnippets < TestPuppet
         assert(FileTest.exists?(file), "File %s does not exist" % file)
     end
 
-    def snippet_classargtest(trans)
+    def disabled_snippet_classargtest(trans)
         [1,2].each { |num|
             file = "/tmp/classargtest%s" % num
             @@tmpfiles << file

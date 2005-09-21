@@ -1,66 +1,71 @@
-#!/usr/local/bin/ruby -w
-
-# $Id$
-
-# the interpreter
-#
-# this builds our virtual pinball machine, into which we'll place our host-specific
-# information and out of which we'll receive our host-specific configuration
+# The scope class, which handles storing and retrieving variables and types and
+# such.
 
 require 'puppet/transportable'
 
 module Puppet
     module Parser
-        class ScopeError < RuntimeError
-            attr_accessor :line, :file
-        end
-        #---------------------------------------------------------------
         class Scope
-
-            attr_accessor :symtable, :objectable, :parent, :level, :interp
+            include Enumerable
+            attr_accessor :parent, :level, :interp
             attr_accessor :name, :type
 
-            # i don't really know how to deal with a global scope yet, so
-            # i'm leaving it disabled
-            @@global = nil
-
+            # The global host table.  This will likely be changed to be scoped,
+            # eventually, but for now it's not.
             @@hosttable = {}
-            @@settingtable = []
+
+            # Whether we behave declaratively.  Note that it's a class variable,
+            # so all scopes behave the same.
             @@declarative = true
 
-            #------------------------------------------------------------
+            # Retrieve and set the declarative setting.
             def Scope.declarative
                 return @@declarative
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
             def Scope.declarative=(val)
                 @@declarative = val
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
-            def Scope.global
-                return @@global
-            end
-            #------------------------------------------------------------
-
-            #------------------------------------------------------------
+            # Create a new child scope.
             def child=(scope)
                 @children.push(scope)
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
-            def declarative
-                return @@declarative
+            # Test whether a given scope is declarative.  Even though it's
+            # a global value, the calling objects don't need to know that.
+            def declarative?
+                @@declarative
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
+            # Is this scope associated with being a node?  The answer determines
+            # whether we store class instances here
+            def nodescope?
+                @nodescope
+            end
+
+            def nodescope=(bool)
+                @nodescope = bool
+            end
+
+            # Are we the top scope?
+            def topscope?
+                @level == 1
+            end
+
+            # Yield each child scope in turn
+            def each
+                @children.each { |child|
+                    yield child
+                }
+            end
+
+            # Initialize our new scope.  Defaults to having no parent and to
+            # being declarative.
             def initialize(parent = nil, declarative = true)
                 @parent = parent
+                @nodescope = false
+
                 if @parent.nil?
                     @level = 1
                     @@declarative = declarative
@@ -70,16 +75,28 @@ module Puppet
                     @interp = @parent.interp
                 end
 
+                # Our child scopes
                 @children = []
 
+                # The symbol table for this scope
                 @symtable = Hash.new(nil)
+
+                # The type table for this scope
                 @typetable = Hash.new(nil)
 
-                # the defaultstable is a hash of hashes
+                # The table for storing class singletons.  This will only actually
+                # be used by top scopes and node scopes.
+                @classtable = Hash.new(nil)
+
+                # All of the defaults set for types.  It's a hash of hashes,
+                # with the first key being the type, then the second key being
+                # the parameter.
                 @defaultstable = Hash.new { |dhash,type|
                     dhash[type] = Hash.new(nil)
                 }
 
+                # The object table is similar, but it is actually a hash of hashes
+                # where the innermost objects are TransObject instances.
                 @objectable = Hash.new { |typehash,typekey|
                     #hash[key] = TransObject.new(key)
                     typehash[typekey] = Hash.new { |namehash, namekey|
@@ -93,6 +110,8 @@ module Puppet
                         namehash[namekey]
                     }
                 }
+
+                # Map the names to the tables.
                 @map = {
                     "variable" => @symtable,
                     "type" => @typetable,
@@ -100,15 +119,10 @@ module Puppet
                     "defaults" => @defaultstable
                 }
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
-            # this method just abstracts the upwards-recursive nature of
-            # name resolution
-            # because different tables are different depths (e.g., flat, or
-            # hash of hashes), we pass in a code snippet that gets passed
-            # the table.  It is assumed that the code snippet already has
-            # the name in it
+            # This method abstracts recursive searching.  It accepts the type
+            # of search being done and then either a literal key to search for or
+            # a Proc instance to do the searching.
             def lookup(type,sub)
                 table = @map[type]
                 if table.nil?
@@ -130,9 +144,21 @@ module Puppet
                     return :undefined
                 end
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
+            # Look up a given class.  This enables us to make sure classes are
+            # singletons
+            def lookupclass(klass)
+                if self.nodescope? or self.topscope?
+                    return @classtable[klass]
+                else
+                    unless @parent
+                        raise Puppet::DevError, "Not top scope but not parent defined"
+                    end
+                    return @parent.lookupclass(klass)
+                end
+            end
+
+            # Look up hosts from the global table.
             def lookuphost(name)
                 if @@hosttable.include?(name)
                     return @@hosttable[name]
@@ -140,15 +166,14 @@ module Puppet
                     return nil
                 end
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
-            # collect all of the defaults set at any higher scopes
-            # this is a different type of lookup because it's additive --
+            # Collect all of the defaults set at any higher scopes.
+            # This is a different type of lookup because it's additive --
             # it collects all of the defaults, with defaults in closer scopes
-            # overriding those in later scopes
+            # overriding those in later scopes.
             def lookupdefaults(type)
                 values = {}
+
                 # first collect the values from the parents
                 unless @parent.nil?
                     @parent.lookupdefaults(type).each { |var,value|
@@ -163,13 +188,12 @@ module Puppet
                         values[var] = value
                     }
                 end
-                Puppet.debug "Got defaults for %s: %s" %
-                    [type,values.inspect]
+                #Puppet.debug "Got defaults for %s: %s" %
+                #    [type,values.inspect]
                 return values
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
+            # Look up a defined type.
             def lookuptype(name)
                 Puppet.debug "Looking up type %s" % name
                 value = self.lookup("type",name)
@@ -180,31 +204,31 @@ module Puppet
                     return value
                 end
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
-            # slightly different, because we're looking through a hash of hashes
+            # Look up an object by name and type.
             def lookupobject(name,type)
-                Puppet.debug "Looking up object %s of type %s" % [name, type]
-                sub = proc { |table|
-                    if table.include?(type)
-                        if type[type].include?(name)
-                            type[type][name]
+                Puppet.debug "Looking up object %s of type %s in level %s" %
+                    [name, type, @level]
+                unless defined? @@objectsearch
+                    @@objectsearch = proc { |table|
+                        if table.include?(type)
+                            if table[type].include?(name)
+                                table[type][name]
+                            end
+                        else
+                            nil
                         end
-                    else
-                        nil
-                    end
-                }
-                value = self.lookup("object",sub)
+                    }
+                end
+                value = self.lookup("object",@@objectsearch)
                 if value == :undefined
                     return nil
                 else
                     return value
                 end
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
+            # Look up a variable.  The simplest value search we do.
             def lookupvar(name)
                 Puppet.debug "Looking up variable %s" % name
                 value = self.lookup("variable", name)
@@ -219,16 +243,25 @@ module Puppet
                     return value
                 end
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
+            # Create a new scope.
             def newscope
                 Puppet.debug "Creating new scope, level %s" % [self.level + 1]
                 return Puppet::Parser::Scope.new(self)
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
+            # Store the fact that we've evaluated a given class.
+            # FIXME Shouldn't setclass actually store the code, not just a boolean?
+            def setclass(klass)
+                if self.nodescope? or self.topscope?
+                    @classtable[klass] = true
+                else
+                    @parent.setclass(klass)
+                end
+            end
+
+            # Set defaults for a type.  The typename should already be downcased,
+            # so that the syntax is isolated.
             def setdefaults(type,params)
                 table = @defaultstable[type]
 
@@ -259,23 +292,31 @@ module Puppet
                     table[ary[0]] = ary[1]
                 }
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
+            # Store a host in the global table.
             def sethost(name,host)
-                @@hosttable[name] = host
+                if @@hosttable.include?(name)
+                    str = "Host %s is already defined" % name
+                    if @@hosttable[name].file
+                        str += " in file %s" % @@hosttable[name].file
+                    end
+                    if @@hosttable[name].line
+                        str += " on line %s" % @@hosttable[name].line
+                    end
+                    raise Puppet::ParseError,
+                        "Host %s is already defined" % name
+                else
+                    @@hosttable[name] = host
+                end
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
+            # Define our type.
             def settype(name,ltype)
                 @typetable[name] = ltype
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
-            # when we have an 'eval' function, we should do that instead
-            # for now, we only support variables in strings
+            # Return an interpolated string.
+            # FIXME We do not yet support a non-interpolated string.
             def strinterp(string)
                 newstring = string.dup
                 regex = Regexp.new('\$\{(\w+)\}|\$(\w+)')
@@ -293,14 +334,12 @@ module Puppet
                 #Puppet.debug("result is '%s'" % newstring)
                 return newstring
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
-            # this is kind of quirky, because it doesn't differentiate between
-            # creating a new object and adding params to an existing object
-            # it doesn't solve the real problem, though: cases like file recursion,
+            # This is kind of quirky, because it doesn't differentiate between
+            # creating a new object and adding params to an existing object.
+            # It doesn't solve the real problem, though: cases like file recursion,
             # where one statement explicitly modifies an object, and another
-            # statement modifies it because of recursion
+            # statement modifies it because of recursion.
             def setobject(type, name, params, file, line)
                 obj = self.lookupobject(name,type)
                 if obj == :undefined or obj.nil?
@@ -321,9 +360,10 @@ module Puppet
                 }
                 return obj
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
+            # Set a variable in the current scope.  This will override settings
+            # in scopes above, but will not allow variables in the current scope
+            # to be reassigned if we're declarative (which is the default).
             def setvar(name,value)
                 Puppet.debug "Setting %s to '%s' at level %s" %
                     [name.inspect,value,self.level]
@@ -340,30 +380,30 @@ module Puppet
                     @symtable[name] = value
                 end
             end
-            #------------------------------------------------------------
 
-            #------------------------------------------------------------
-            # I'm pretty sure this method could be obviated, but it doesn't
-            # really seem worth it
+            # Convert our scope to a list of Transportable objects.
             def to_trans
                 Puppet.debug "Translating scope %s at level %s" %
                     [self.object_id,self.level]
 
                 results = []
                 
+                # Iterate across our child scopes and call to_trans on them
                 @children.each { |child|
-                    Puppet.notice "Transing child of type %s" % child.class
                     if child.is_a?(Scope)
                         cresult = child.to_trans
                         Puppet.debug "Got %s from scope %s" %
                             [cresult.class,child.object_id]
 
-                        # get rid of the arrayness
+                        # Scopes normally result in a TransBucket, but they could
+                        # also result in a normal array; if that happens, get rid
+                        # of the array.
                         unless cresult.is_a?(TransBucket)
                             cresult.each { |result|
                                 results.push(result)
                             }
                         else
+                            # Otherwise, just add it to our list of results.
                             results.push(cresult)
                         end
                     elsif child.is_a?(TransObject)
@@ -377,15 +417,15 @@ module Puppet
                         raise error
                     end
                 }
+
+                # Get rid of any nil objects.
                 results = results.reject { |child|
-                    # if a scope didn't result in any objects, we get some nils
-                    # just get rid of them
                     child.nil?
                 }
 
-                # if we have a name and type, then make a TransBucket, which
-                # becomes a component
-                # else, just stack all of the objects into the current bucket
+                # If we have a name and type, then make a TransBucket, which
+                # becomes a component.
+                # Else, just stack all of the objects into the current bucket.
                 if defined? @name
                     bucket = TransBucket.new
                     bucket.name = @name
@@ -424,8 +464,8 @@ module Puppet
                     return results
                 end
             end
-            #------------------------------------------------------------
         end
-        #---------------------------------------------------------------
     end
 end
+
+# $Id$
