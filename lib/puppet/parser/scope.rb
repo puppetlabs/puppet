@@ -79,7 +79,7 @@ module Puppet
 
             # Yield each child scope in turn
             def each
-                @children.each { |child|
+                @children.reject { |child|
                     yield child
                 }
             end
@@ -90,7 +90,8 @@ module Puppet
             def evalnode(names, facts)
                 scope = code = nil
                 names.each { |node|
-                    scope, code = self.findnode(node)
+                    scope = self.findnode(node)
+                    code = scope.node(node)
                     if scope and code
                         break
                     end
@@ -124,12 +125,25 @@ module Puppet
             # Find a given node's definition; searches downward recursively.
             def findnode(node)
                 if @nodetable.include?(node)
-                    return [self, @nodetable[node]]
+                    return self
                 else
-                    self.find { |child|
-                        child.findnode(node)
+                    scope = nil
+                    self.reject { |child|
+                        ! child.is_a?(Scope)
+                    }.each { |child|
+                        if scope = child.findnode(node)
+                            break
+                        end
                     }
+
+                    return scope
                 end
+            end
+
+            # Retrieve a specific node.  This is basically only used from within
+            # 'findnode'.
+            def node(name)
+                @nodetable[name]
             end
 
             # Evaluate normally, with no node definitions
@@ -242,15 +256,6 @@ module Puppet
                         raise Puppet::DevError, "Not top scope but not parent defined"
                     end
                     return @parent.lookupclass(klass)
-                end
-            end
-
-            # Look up hosts from the global table.
-            def lookuphost(name)
-                if @@hosttable.include?(name)
-                    return @@hosttable[name]
-                else
-                    return nil
                 end
             end
 
@@ -390,12 +395,41 @@ module Puppet
                 }
             end
 
+            # Check whether a node is already defined.
+            # FIXME Should this system replace the 'UseNodes' flags and such?
+            def nodedefined?(name)
+                if defined? @nodemarkers
+                    return @nodemarkers[name]
+                else
+                    if @parent
+                        return @parent.nodedefined?(name)
+                    else
+                        return false
+                    end
+                end
+            end
+
+            # Mark that a node is defined.  We don't want to allow more than one
+            # node definition per name, because, well, that would make things not
+            # work any more.
+            def marknode(name)
+                if @parent
+                    @parent.marknode(name)
+                else
+                    unless defined? @nodemarkers
+                        @nodemarkers = {}
+                    end
+                    @nodemarkers[name] = true
+                end
+            end
+
             # Store a host in the global table.
             def setnode(name,code)
-                if @nodetable.include?(name)
-                    raise Puppet::Error, "Host %s is already defined" % name
+                if self.nodedefined?(name)
+                    raise Puppet::ParseError, "Host %s is already defined" % name
                 else
                     @nodetable[name] = code
+                    self.marknode(name)
                 end
 
                 #self.nodescope = true

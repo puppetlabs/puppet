@@ -10,21 +10,23 @@ require 'puppet/parser/scope'
 module Puppet
     module Parser
         class Interpreter
-            attr_accessor :ast, :topscope
+            attr_accessor :ast
             # just shorten the constant path a bit, using what amounts to an alias
             AST = Puppet::Parser::AST
 
             # create our interpreter
             def initialize(hash)
                 unless hash.include?(:Manifest)
-                    raise Puppet::DevError, "Interpreter was not passed a file"
+                    raise Puppet::DevError, "Interpreter was not passed a manifest"
                 end
 
                 @file = hash[:Manifest]
 
                 if hash.include?(:UseNodes)
+                    Puppet.warning "Usenodes is %s" % hash[:UseNodes]
                     @usenodes = hash[:UseNodes]
                 else
+                    Puppet.warning "Usenodes is missing"
                     @usenodes = true
                 end
 
@@ -38,6 +40,9 @@ module Puppet
             def run(client, facts)
                 parsefiles()
 
+                # Really, we should stick multiple names in here
+                # but for now just make a simple array
+                names = [client]
                 begin
                     if @usenodes
                         unless client
@@ -46,13 +51,13 @@ module Puppet
                         end
 
                         # We've already evaluated the AST, in this case
-                        @scope.evalnode(client, facts)
+                        @scope.evalnode(names, facts)
                     else
-                        scope = Puppet::Parser::Scope.new() # no parent scope
-                        scope.interp = self
-                        scope.evaluate(@ast, facts)
+                        @scope = Puppet::Parser::Scope.new() # no parent scope
+                        @scope.interp = self
+                        @scope.evaluate(@ast, facts)
                     end
-                    @ast.evaluate(@scope)
+                    #@ast.evaluate(@scope)
                 rescue Puppet::DevError, Puppet::Error, Puppet::ParseError => except
                     #Puppet.err "File %s, line %s: %s" %
                     #    [except.file, except.line, except.message]
@@ -79,10 +84,10 @@ module Puppet
                 # to pass to the client
                 # this will be heirarchical, and will (at this point) contain
                 # only TransObjects and TransSettings
-                @topscope.name = "top"
-                @topscope.type = "puppet"
+                @scope.name = "top"
+                @scope.type = "puppet"
                 begin
-                    topbucket = @topscope.to_trans
+                    topbucket = @scope.to_trans
                 rescue => detail
                     Puppet.warning detail
                     raise
@@ -114,11 +119,10 @@ module Puppet
             # this doesn't actually do anything, because we have to evaluate the
             # entire configuration each time we get a connect.
             def evaluate
-                @scope = Puppet::Parser::Scope.new() # no parent scope
-                @topscope = @scope
-                @scope.interp = self
 
                 if @usenodes
+                    @scope = Puppet::Parser::Scope.new() # no parent scope
+                    @scope.interp = self
                     Puppet.debug "Nodes defined"
                     @ast.safeevaluate(@scope)
                 else

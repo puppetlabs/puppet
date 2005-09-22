@@ -22,7 +22,7 @@ class TestInterpreter < TestPuppet
             f.puts "file { \"/etc\": owner => root }"
         }
         assert_nothing_raised {
-            Puppet::Parser::Interpreter.new(:file => file)
+            Puppet::Parser::Interpreter.new(:Manifest => file)
         }
     end
 end

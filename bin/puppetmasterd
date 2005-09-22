@@ -52,6 +52,10 @@
 # noca::
 #   Do not function as a certificate authority.
 #
+# nonodes::
+#   Do not use individual node designations; each node will receive the result
+#   of evaluating the entire configuration.
+#
 # parseonly::
 #   Just parse the central manifest to verify it is syntactically correct.
 #
@@ -93,6 +97,7 @@ result = GetoptLong.new(
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--manifest",	"-m",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--noca",         			GetoptLong::NO_ARGUMENT ],
+	[ "--nonodes",         			GetoptLong::NO_ARGUMENT ],
 	[ "--parseonly",   			    GetoptLong::NO_ARGUMENT ],
 	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--ssldir",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
@@ -143,6 +148,8 @@ begin
                 master[:File] = arg
             when "--noca"
                 haveca = false
+            when "--nonodes"
+                master[:UseNodes] = false
             when "--parseonly"
                 parseonly = true
             when "--port"

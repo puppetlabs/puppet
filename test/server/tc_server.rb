@@ -87,6 +87,7 @@ class TestServer < ServerTest
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
                     :Master => {
+                        :UseNodes => false,
                         :File => file
                     },
                     :Status => nil

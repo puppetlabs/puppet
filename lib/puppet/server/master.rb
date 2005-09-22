@@ -38,7 +38,9 @@ class Server
 
             args = {:Manifest => @file}
 
-            if @local
+            if hash.include?(:UseNodes)
+                args[:UseNodes] = hash[:UseNodes]
+            elsif @local
                 args[:UseNodes] = false
             end
 

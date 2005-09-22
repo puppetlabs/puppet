@@ -25,6 +25,7 @@ class TestMaster < ServerTest
     def test_files
         count = 0
         textfiles { |file|
+            Puppet.err :mark
             Puppet.debug("parsing %s" % file)
             client = nil
             master = nil
@@ -34,6 +35,7 @@ class TestMaster < ServerTest
                 # this is the default server setup
                 master = Puppet::Server::Master.new(
                     :File => file,
+                    :UseNodes => false,
                     :Local => true
                 )
             }
@@ -78,6 +80,7 @@ class TestMaster < ServerTest
                 # this is the default server setup
                 master = Puppet::Server::Master.new(
                     :File => file,
+                    :UseNodes => false,
                     :Local => true
                 )
             }
@@ -108,6 +111,7 @@ class TestMaster < ServerTest
             # this is the default server setup
             master = Puppet::Server::Master.new(
                 :File => manifest,
+                :UseNodes => false,
                 :Local => true,
                 :FileTimeout => 0.5
             )

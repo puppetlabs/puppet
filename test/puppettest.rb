@@ -181,6 +181,7 @@ class ServerTest < TestPuppet
                 :CA => {}, # so that certs autogenerate
                 :Master => {
                     :File => mktestmanifest(),
+                    :UseNodes => false
                 },
             }
         end
@@ -229,6 +230,7 @@ class ExeTest < ServerTest
         args += " --manifest %s" % manifest
         args += " --ssldir %s" % Puppet[:ssldir]
         args += " --port %s" % @@port
+        args += " --nonodes"
         args += " --autosign"
 
         cmd = "puppetmasterd %s" % args

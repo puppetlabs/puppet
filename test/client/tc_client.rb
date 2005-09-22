@@ -61,7 +61,7 @@ class TestClient < ServerTest
 
 
     # here we create two servers; we 
-    def test_zzfailureWithUntrustedCerts
+    def test_failureWithUntrustedCerts
         Puppet[:autosign] = true
 
         # create a pair of clients with no certs

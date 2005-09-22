@@ -262,13 +262,20 @@ class TestScope < TestPuppet
     def test_zhostlookup
         top = Puppet::Parser::Scope.new(nil)
 
-        child1 = Puppet::Parser::Scope.new(top)
-        child2 = Puppet::Parser::Scope.new(top)
-        sub1 = Puppet::Parser::Scope.new(child1)
+        # Create a deep scope tree, so that we know we're doing a deeply recursive
+        # search.
+        mid1 = Puppet::Parser::Scope.new(top)
+        mid2 = Puppet::Parser::Scope.new(mid1)
+        mid3 = Puppet::Parser::Scope.new(mid2)
+        child1 = Puppet::Parser::Scope.new(mid3)
+        mida = Puppet::Parser::Scope.new(top)
+        midb = Puppet::Parser::Scope.new(mida)
+        midc = Puppet::Parser::Scope.new(midb)
+        child2 = Puppet::Parser::Scope.new(midc)
 
         # verify we can set a host
         assert_nothing_raised("Could not create host") {
-            child1.sethost("testing", AST::Node.new(
+            child1.setnode("testing", AST::Node.new(
                 :name => "testing",
                 :code => :notused
                 )
@@ -277,7 +284,7 @@ class TestScope < TestPuppet
 
         # Verify we cannot redefine it
         assert_raise(Puppet::ParseError, "Duplicate host creation succeeded") {
-            child2.sethost("testing", AST::Node.new(
+            child2.setnode("testing", AST::Node.new(
                 :name => "testing",
                 :code => :notused
                 )
@@ -287,7 +294,8 @@ class TestScope < TestPuppet
         # Now verify we can find the host again
         host = nil
         assert_nothing_raised("Host lookup failed") {
-            host = top.lookuphost("testing")
+            scope = top.findnode("testing")
+            host = scope.node("testing")
         }
 
         assert(host, "Could not find host")
