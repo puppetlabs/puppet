@@ -23,13 +23,17 @@ class TestAST < TestPuppet
     end
 
     def classobj(name, args = {})
-        args[:name] = nameobj(name)
-        args[:code] = AST::ASTArray.new(
-            :children => [
-                varobj("%svar" % name, "%svalue" % name),
-                fileobj("/%s" % name)
-            ]
-        )
+        unless args.include?(:name)
+            args[:name] = nameobj(name)
+        end
+        unless args.include?(:code)
+            args[:code] = AST::ASTArray.new(
+                :children => [
+                    varobj("%svar" % name, "%svalue" % name),
+                    fileobj("/%s" % name)
+                ]
+            )
+        end
         assert_nothing_raised("Could not create class %s" % name) {
             return AST::ClassDef.new(args)
         }
@@ -119,19 +123,13 @@ class TestAST < TestPuppet
         children = []
 
         # create the parent class
-        assert_nothing_raised("Could not create parent object") {
-            children << classobj("parent")
-        }
+        children << classobj("parent")
 
         # Create child class one
-        assert_nothing_raised("Could not create child1 object") {
-            children << classobj("child1", :parentclass => nameobj("parent"))
-        }
+        children << classobj("child1", :parentclass => nameobj("parent"))
 
         # Create child class two
-        assert_nothing_raised("Could not create child2 object") {
-            children << classobj("child2", :parentclass => nameobj("parent"))
-        }
+        children << classobj("child2", :parentclass => nameobj("parent"))
 
         # Now call the two classes
         assert_nothing_raised("Could not add AST nodes for calling") {
@@ -397,6 +395,47 @@ class TestAST < TestPuppet
 
         assert_nothing_raised("Could not find node-declared object") {
             assert_equal("/%s" % name, objects[1][0][:name])
+        }
+    end
+
+    # Test that we can 'include' variables, not just normal strings.
+    def test_zincludevars
+        children = []
+
+        # Create our class for testin
+        klassname = "include"
+        children << classobj(klassname)
+
+        # Then add our variable assignment
+        children << varobj("klassvar", klassname)
+
+        # And finally add our calling of the variable
+        children << AST::ObjectDef.new(
+            :type => AST::Variable.new(:value => "klassvar"),
+            :params => astarray
+        )
+
+        # And then create our top object
+        top = AST::ASTArray.new(
+            :children => children
+        )
+
+        # Evaluate the parse tree
+        scope = nil
+        assert_nothing_raised("Could not evaluate node") {
+            scope = Puppet::Parser::Scope.new()
+            top.evaluate(scope)
+        }
+
+        # Verify we can find the node via a search list
+        objects = nil
+        assert_nothing_raised("Could not retrieve objects") {
+            objects = scope.to_trans
+        }
+        assert(objects, "Could not retrieve objects")
+
+        assert_nothing_raised("Could not find top-declared object") {
+            assert_equal("/%s" % klassname, objects[0][0][:name])
         }
     end
 end

@@ -10,4 +10,4 @@ class testing {
     thing {}
 }
 
-testing {}
+include testing

@@ -12,5 +12,4 @@ class sub2 inherits base {
     file { "/tmp/classheir3": create => true, mode => 755 }
 }
 
-sub1 {}
-sub2 {}
+include sub1, sub2

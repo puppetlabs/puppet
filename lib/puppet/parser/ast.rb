@@ -342,6 +342,21 @@ module Puppet
                     return @params[index]
                 end
 
+                # Auto-generate a name
+                def autoname(type, object)
+                    case object
+                    when Puppet::Type:
+                        raise Puppet::Error,
+                            "Built-in types must be provided with a name"
+                    when HostClass:
+                        return type
+                    else
+                        Puppet.info "Autogenerating name for object of type %s" %
+                            type
+                        return [type, "-", self.object_id].join("")
+                    end
+                end
+
                 # Iterate across all of our children.
                 def each
                     [@type,@name,@params].flatten.each { |param|
@@ -357,38 +372,11 @@ module Puppet
 
                     # Get our type and name.
                     objtype = @type.safeevaluate(scope)
-                    objnames = @name.safeevaluate(scope)
 
-                    # first, retrieve the defaults
-                    begin
-                        defaults = scope.lookupdefaults(objtype)
-                        if defaults.length > 0
-                            Puppet.debug "Got defaults for %s: %s" %
-                                [objtype,defaults.inspect]
-                        end
-                    rescue => detail
-                        raise Puppet::DevError, 
-                            "Could not lookup defaults for %s: %s" %
-                                [objtype, detail.to_s]
-                    end
-
-                    # Add any found defaults to our argument list
-                    defaults.each { |var,value|
-                        Puppet.debug "Found default %s for %s" %
-                            [var,objtype]
-
-                        hash[var] = value
-                    }
-
-                    # then set all of the specified params
-                    @params.each { |param|
-                        ary = param.safeevaluate(scope)
-                        hash[ary[0]] = ary[1]
-                    }
-
-                    # it's easier to always use an array, even for only one name
-                    unless objnames.is_a?(Array)
-                        objnames = [objnames]
+                    # If the type was a variable, we wouldn't have typechecked yet.
+                    # Do it now, if so.
+                    unless @checked
+                        self.typecheck(objtype)
                     end
 
                     # See if our object was defined
@@ -406,10 +394,10 @@ module Puppet
                         raise error
                     end
 
-                    # If not, verify that it's a builtin type
                     unless object
+                        # If not, verify that it's a builtin type
                         begin
-                            Puppet::Type.type(objtype)
+                            object = Puppet::Type.type(objtype)
                         rescue TypeError
                             # otherwise, the user specified an invalid type
                             error = Puppet::ParseError.new(
@@ -421,14 +409,33 @@ module Puppet
                         end
                     end
 
+                    # Autogenerate the name if one was not passed.
+                    if defined? @name
+                        objnames = @name.safeevaluate(scope)
+                    else
+                        objnames = self.autoname(objtype, object)
+                    end
+
+                    # it's easier to always use an array, even for only one name
+                    unless objnames.is_a?(Array)
+                        objnames = [objnames]
+                    end
+
+                    # Retrieve the defaults for our type
+                    hash = getdefaults(objtype, scope)
+
+                    # then set all of the specified params
+                    @params.each { |param|
+                        ary = param.safeevaluate(scope)
+                        hash[ary[0]] = ary[1]
+                    }
+
                     # this is where our implicit iteration takes place;
                     # if someone passed an array as the name, then we act
                     # just like the called us many times
                     objnames.collect { |objname|
-                        # if the type is not defined in our scope, we assume
-                        # that it's a type that the client will understand, so we
-                        # just store it in our objectable
-                        if object.nil?
+                        # If the object is a class, that means it's a builtin type
+                        if object.is_a?(Class)
                             begin
                                 Puppet.debug(
                                     ("Setting object '%s' " +
@@ -464,93 +471,109 @@ module Puppet
                     }.reject { |obj| obj.nil? }
                 end
 
+                # Retrieve the defaults for our type
+                def getdefaults(objtype, scope)
+                    # first, retrieve the defaults
+                    begin
+                        defaults = scope.lookupdefaults(objtype)
+                        if defaults.length > 0
+                            Puppet.debug "Got defaults for %s: %s" %
+                                [objtype,defaults.inspect]
+                        end
+                    rescue => detail
+                        raise Puppet::DevError, 
+                            "Could not lookup defaults for %s: %s" %
+                                [objtype, detail.to_s]
+                    end
+
+                    hash = {}
+                    # Add any found defaults to our argument list
+                    defaults.each { |var,value|
+                        Puppet.debug "Found default %s for %s" %
+                            [var,objtype]
+
+                        hash[var] = value
+                    }
+
+                    return hash
+                end
+
                 # Create our ObjectDef.  Handles type checking for us.
                 def initialize(hash)
+                    @checked = false
                     super
 
-                    # we don't have to evaluate because we require bare words
-                    # for types
-                    objtype = @type.value
+                    if @type.is_a?(Variable)
+                        Puppet.debug "Delaying typecheck"
+                        return
+                    else
+                        self.typecheck(@type.value)
 
-                    # This will basically always be on, but I wanted to make it at
-                    # least simple to turn off if it came to that
-                    if Puppet[:typecheck]
-                        builtin = false
-                        begin
-                            builtin = Puppet::Type.type(objtype)
-                        rescue TypeError
-                            # nothing; we've already set builtin to false
-                        end
+                        objtype = @type.value
+                    end
+
+                end
+
+                # Verify that all passed parameters are valid
+                def paramcheck(builtin, objtype)
+                    # This defaults to true
+                    unless Puppet[:paramcheck]
+                        return
+                    end
+
+                    @params.each { |param|
                         if builtin
-                            # we're a builtin type
-                            # like :typecheck, this always defaults to on, but
-                            # at least it's easy to turn off if necessary
-                            if Puppet[:paramcheck]
-                                # Verify that each param is valid
-                                @params.each { |param|
-                                    unless param.is_a?(AST::ObjectParam)
-                                        raise Puppet::DevError,
-                                            "Got something other than param"
-                                    end
-                                    begin
-                                        pname = param.param.value
-                                    rescue => detail
-                                        raise Puppet::DevError, detail.to_s
-                                    end
-                                    next if pname == "name" # always allow these
-                                    unless builtin.validarg?(pname)
-                                        error = Puppet::ParseError.new(
-                                            "Invalid parameter '%s' for type '%s'" %
-                                                [pname,objtype]
-                                        )
-                                        error.stack = caller
-                                        error.line = self.line
-                                        error.file = self.file
-                                        raise error
-                                    end
-                                }
-                            end
-                        # Find the defined type and verify arguments are valid.
-                        # FIXME this should use scoping rules to find the set type,
-                        # not a global list
-                        elsif @@settypes.include?(objtype) 
-                            # we've defined it locally
-                            Puppet.debug "%s is a defined type" % objtype
-
-                            # this is somewhat hackish, using a global type list...
-                            type = @@settypes[objtype]
-                            @params.each { |param|
-                                # FIXME we might need to do more here eventually...
-                                if Puppet::Type.metaparam?(param.param.value.intern)
-                                    next
-                                end
-
-                                begin
-                                    pname = param.param.value
-                                rescue => detail
-                                    raise Puppet::DevError, detail.to_s
-                                end
-                                unless type.validarg?(pname)
-                                    error = Puppet::ParseError.new(
-                                        "Invalid parameter '%s' for type '%s'" %
-                                            [pname,objtype]
-                                    )
-                                    error.stack = caller
-                                    error.line = self.line
-                                    error.file = self.file
-                                    raise error
-                                end
-                            }
+                            self.parambuiltincheck(builtin, param)
                         else
-                            # we don't know anything about it
-                            error = Puppet::ParseError.new(
-                                "Unknown type '%s'" % objtype
-                            )
-                            error.line = self.line
-                            error.file = self.file
-                            error.stack = caller
-                            raise error
+                            self.paramdefinedcheck(objtype, param)
                         end
+                    }
+                end
+
+                def parambuiltincheck(type, param)
+                    unless param.is_a?(AST::ObjectParam)
+                        raise Puppet::DevError,
+                            "Got something other than param"
+                    end
+                    begin
+                        pname = param.param.value
+                    rescue => detail
+                        raise Puppet::DevError, detail.to_s
+                    end
+                    next if pname == "name" # always allow these
+                    unless type.validarg?(pname)
+                        error = Puppet::ParseError.new(
+                            "Invalid parameter '%s' for type '%s'" %
+                                [pname,type.name]
+                        )
+                        error.stack = caller
+                        error.line = self.line
+                        error.file = self.file
+                        raise error
+                    end
+                end
+
+                def paramdefinedcheck(objtype, param)
+                    # FIXME we might need to do more here eventually...
+                    if Puppet::Type.metaparam?(param.param.value.intern)
+                        next
+                    end
+
+                    begin
+                        pname = param.param.value
+                    rescue => detail
+                        raise Puppet::DevError, detail.to_s
+                    end
+
+                    unless @@settypes[objtype].validarg?(pname)
+                        error = Puppet::ParseError.new(
+                            "Invalid parameter '%s' for type '%s'" %
+                                [pname,objtype]
+                        )
+                        error.stack = caller
+                        error.line = self.line
+                        error.file = self.file
+                        raise error
                     end
                 end
 
@@ -586,6 +609,41 @@ module Puppet
                             end
                         }.join("\n")
                     ].join("\n")
+                end
+
+                # Verify that the type is valid.  This throws an error if there's
+                # a problem, so the return value doesn't matter
+                def typecheck(objtype)
+                    # This will basically always be on, but I wanted to make it at
+                    # least simple to turn off if it came to that
+                    unless Puppet[:typecheck]
+                        return
+                    end
+
+                    builtin = false
+                    begin
+                        builtin = Puppet::Type.type(objtype)
+                    rescue TypeError
+                        # nothing; we've already set builtin to false
+                    end
+
+                    unless builtin or @@settypes.include?(objtype) 
+                        error = Puppet::ParseError.new(
+                            "Unknown type '%s'" % objtype
+                        )
+                        error.line = self.line
+                        error.file = self.file
+                        error.stack = caller
+                        raise error
+                    end
+
+                    unless builtin
+                        Puppet.debug "%s is a defined type" % objtype
+                    end
+
+                    self.paramcheck(builtin, objtype)
+
+                    @checked = true
                 end
 
                 def to_s

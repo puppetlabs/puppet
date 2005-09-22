@@ -48,16 +48,17 @@ module Puppet
             }
 
             @@keywords = {
-                "import" => :IMPORT,
-                "class" => :CLASS,
-                "node" => :NODE,
-                "host" => :NODE,
                 "case" => :CASE,
-                "true" => :BOOLEAN,
+                "class" => :CLASS,
                 "default" => :DEFAULT,
+                "define" => :DEFINE,
                 "false" => :BOOLEAN,
+                "host" => :NODE,
+                "import" => :IMPORT,
+                "include" => :INCLUDE,
                 "inherits" => :INHERITS,
-                "define" => :DEFINE
+                "node" => :NODE,
+                "true" => :BOOLEAN
             }
 
             # scan the whole file

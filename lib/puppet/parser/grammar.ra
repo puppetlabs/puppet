@@ -10,7 +10,7 @@ class Puppet::Parser::Parser
 token LBRACK QTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE FALSE EQUALS
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL NOTEQUAL
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN DOT COLON TYPE
-token NAME SEMIC CASE DEFAULT
+token NAME SEMIC CASE DEFAULT INCLUDE
 
 rule
 program:    statements {
@@ -58,10 +58,48 @@ statement:    object
             | assignment
             | casestatement
             | import
+            | include
             | definition
             | hostclass
             | nodedef
-            
+
+# Includes are just syntactic sugar for classes with no names and
+# no 
+include:    INCLUDE classnames {
+    classnames = aryfy(val[1])
+
+    klasses = []
+    
+    # Now just iterate over each of the class names and create a new
+    # object instance.  FIXME This should probably eventually include
+    # some kind of checking that the asked-for class is a defined class.
+    classnames.each { |classname|
+        emptyary = AST::ASTArray.new(:children => [])
+        klasses << AST::ObjectDef.new(
+            :pin => "{}",
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :type => classname,
+            :params => emptyary
+        )
+    }
+    result = AST::ASTArray.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :children => klasses
+    )
+}
+
+classnames:       classname
+                | classnames COMMA classname {
+    result = aryfy(val[0], val[2])
+    result.line = @lexer.line
+    result.file = @lexer.file
+}
+
+classname:        name
+                | variable
+
 #object:       name LBRACE objectname COLON params endcomma RBRACE {
 object:       name LBRACE objectinstances endsemi RBRACE {
     if val[0].is_a?(AST::ASTArray)
@@ -99,19 +137,12 @@ object:       name LBRACE objectinstances endsemi RBRACE {
     # an object but without a name
     # this cannot be an instance of a library type
 
-    # make a unique name for bookkeeping purposes
-    name = AST::Name.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => [val[0].value, "-", val[0].object_id].join('')
-    )
-
+    # the objects will autogenerate a name if we don't provide one
     result = AST::ObjectDef.new(
         :pin => "{}",
         :line => @lexer.line,
         :file => @lexer.file,
         :type => val[0],
-        :name => name,
         :params => val[2]
     )
 }           | type LBRACE params endcomma RBRACE {
@@ -605,6 +636,22 @@ Puppet[:paramcheck] = true
 
 ---- inner ----
 attr_reader :file, :files
+
+# Create an AST array out of all of the args
+def aryfy(*args)
+    if args[0].is_a?(AST::ASTArray)
+        result = args.shift
+        args.each { |arg|
+            args.push arg
+        }
+    else
+        result = AST::ASTArray.new(
+            :children => args
+        )
+    end
+
+    return result
+end
 
 def file=(file)
     unless FileTest.exists?(file)

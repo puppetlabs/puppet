@@ -23,10 +23,8 @@ module Puppet
                 @file = hash[:Manifest]
 
                 if hash.include?(:UseNodes)
-                    Puppet.warning "Usenodes is %s" % hash[:UseNodes]
                     @usenodes = hash[:UseNodes]
                 else
-                    Puppet.warning "Usenodes is missing"
                     @usenodes = true
                 end
 

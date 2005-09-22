@@ -231,7 +231,7 @@ class TestSnippets < TestPuppet
         }
 
         assert_nothing_raised {
-            assert_equal(%w{puppet[top] testing[testingname] component[componentname] /tmp/classtest}, obj.path)
+            assert_equal(%w{puppet[top] testing[testing] component[componentname] /tmp/classtest}, obj.path)
             #Puppet.err obj.path
         }
 
@@ -368,6 +368,16 @@ class TestSnippets < TestPuppet
     def snippet_classheirarchy(trans)
         [1,2,3].each { |num|
             file = "/tmp/classheir%s" % num
+            @@tmpfiles << file
+            assert(FileTest.file?(file), "File %s does not exist" % file)
+            assert(File.stat(file).mode & 007777 == 0755,
+                "File %s is not 755" % file)
+        }
+    end
+
+    def snippet_classincludes(trans)
+        [1,2,3].each { |num|
+            file = "/tmp/classincludes%s" % num
             @@tmpfiles << file
             assert(FileTest.file?(file), "File %s does not exist" % file)
             assert(File.stat(file).mode & 007777 == 0755,

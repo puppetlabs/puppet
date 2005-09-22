@@ -91,7 +91,9 @@ module Puppet
                 scope = code = nil
                 names.each { |node|
                     scope = self.findnode(node)
-                    code = scope.node(node)
+                    if scope
+                        code = scope.node(node)
+                    end
                     if scope and code
                         break
                     end
