@@ -855,8 +855,11 @@ module Puppet
             @paramdoc[:recurse] = "Whether and how deeply to do recursive
                 management.  **false**/*true*/*inf*/*number*"
 
-            @paramdoc[:ignore] = "A parameter which omits action on files matching specified
-                patterns during recursion  i.e. .svn, *.ini"
+            @paramdoc[:ignore] = "A parameter which omits action on files matching
+                specified patterns during recursion.  Uses Ruby's builtin globbing
+                engine, so shell metacharacters are fully supported, e.g. ``[a-z]*``.
+                Matches that would descend into the directory structure are ignored,
+                e.g., ``*/*``."
 
           #no longer a parameter
            # @paramdoc[:source] = "Where to retrieve the contents of the files.
