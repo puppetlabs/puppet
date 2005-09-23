@@ -10,9 +10,9 @@ module Puppet
             attr_accessor :parent, :level, :interp
             attr_accessor :name, :type
 
-            # The global host table.  This will likely be changed to be scoped,
-            # eventually, but for now it's not.
-            @@hosttable = {}
+            # This is probably not all that good of an idea, but...
+            # This way a parent can share its node table with all of its children.
+            attr_writer :nodetable 
 
             # Whether we behave declaratively.  Note that it's a class variable,
             # so all scopes behave the same.
@@ -30,6 +30,12 @@ module Puppet
             # Create a new child scope.
             def child=(scope)
                 @children.push(scope)
+
+                if defined? @nodetable
+                    scope.nodetable = @nodetable
+                else
+                    raise Puppet::DevError, "No nodetable has been defined"
+                end
             end
 
             # Test whether a given scope is declarative.  Even though it's
@@ -89,16 +95,17 @@ module Puppet
             # appropriate scope.
             def evalnode(names, facts)
                 scope = code = nil
+
+                # Find a node that matches one of our names
                 names.each { |node|
-                    scope = self.findnode(node)
-                    if scope
-                        code = scope.node(node)
-                    end
-                    if scope and code
+                    if hash = @nodetable[node]
+                        code = hash[:node]
+                        scope = hash[:scope]
                         break
                     end
                 }
 
+                # And fail if we don't find one.
                 unless scope and code
                     raise Puppet::Error, "Could not find configuration for %s" %
                         names.join(" or ")
@@ -124,28 +131,30 @@ module Puppet
                 return self.to_trans
             end
 
-            # Find a given node's definition; searches downward recursively.
-            def findnode(node)
-                if @nodetable.include?(node)
-                    return self
-                else
-                    scope = nil
-                    self.reject { |child|
-                        ! child.is_a?(Scope)
-                    }.each { |child|
-                        if scope = child.findnode(node)
-                            break
-                        end
-                    }
-
-                    return scope
-                end
-            end
-
             # Retrieve a specific node.  This is basically only used from within
             # 'findnode'.
             def node(name)
                 @nodetable[name]
+            end
+
+            # Store a host in the site node table.
+            def setnode(name,code)
+                unless defined? @nodetable
+                    raise Puppet::DevError, "No node table defined"
+                end
+                if @nodetable.include?(name)
+                    raise Puppet::ParseError, "Host %s is already defined" % name
+                else
+                    #Puppet.warning "Setting node %s at level %s" % [name, @level]
+
+                    # We have to store both the scope that's setting the node and
+                    # the node itself, so that the node gets evaluated in the correct
+                    # scope.
+                    @nodetable[name] = {
+                        :scope => self,
+                        :node => code
+                    }
+                end
             end
 
             # Evaluate normally, with no node definitions
@@ -167,7 +176,16 @@ module Puppet
 
                 if @parent.nil?
                     @level = 1
+
                     @@declarative = declarative
+
+                    # A table for storing nodes.
+                    @nodetable = Hash.new(nil)
+
+                    # Eventually, if we support sites, this will allow definitions
+                    # of nodes with the same name in different sites.  For now
+                    # the top-level scope is always the only site scope.
+                    @sitescope = true
                 else
                     @parent.child = self
                     @level = @parent.level + 1
@@ -186,9 +204,6 @@ module Puppet
                 # The table for storing class singletons.  This will only actually
                 # be used by top scopes and node scopes.
                 @classtable = Hash.new(nil)
-
-                # A table for storing nodes.
-                @nodetable = Hash.new(nil)
 
                 # All of the defaults set for types.  It's a hash of hashes,
                 # with the first key being the type, then the second key being
@@ -395,46 +410,6 @@ module Puppet
                     end
                     table[ary[0]] = ary[1]
                 }
-            end
-
-            # Check whether a node is already defined.
-            # FIXME Should this system replace the 'UseNodes' flags and such?
-            def nodedefined?(name)
-                if defined? @nodemarkers
-                    return @nodemarkers[name]
-                else
-                    if @parent
-                        return @parent.nodedefined?(name)
-                    else
-                        return false
-                    end
-                end
-            end
-
-            # Mark that a node is defined.  We don't want to allow more than one
-            # node definition per name, because, well, that would make things not
-            # work any more.
-            def marknode(name)
-                if @parent
-                    @parent.marknode(name)
-                else
-                    unless defined? @nodemarkers
-                        @nodemarkers = {}
-                    end
-                    @nodemarkers[name] = true
-                end
-            end
-
-            # Store a host in the global table.
-            def setnode(name,code)
-                if self.nodedefined?(name)
-                    raise Puppet::ParseError, "Host %s is already defined" % name
-                else
-                    @nodetable[name] = code
-                    self.marknode(name)
-                end
-
-                #self.nodescope = true
             end
 
             # Define our type.

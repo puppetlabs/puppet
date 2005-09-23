@@ -494,7 +494,7 @@ hostclass: CLASS NAME parent LBRACE statements RBRACE {
     result = AST::ClassDef.new(args)
 }
 
-nodedef: NODE names LBRACE statements RBRACE {
+nodedef: NODE names parent LBRACE statements RBRACE {
     unless val[1].is_a?(AST::ASTArray)
         val[1] = AST::ASTArray.new(
             :line => val[1].line,
@@ -508,9 +508,9 @@ nodedef: NODE names LBRACE statements RBRACE {
         :names => val[1],
         :code => val[4]
     }
-    #if val[3].is_a?(AST::Name)
-    #    args[:parentclass] = val[2]
-    #end
+    if val[2].is_a?(AST::Name)
+        args[:parentclass] = val[2]
+    end
     result = AST::NodeDef.new(args)
 }
 

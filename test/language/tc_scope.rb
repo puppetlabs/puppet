@@ -294,8 +294,8 @@ class TestScope < TestPuppet
         # Now verify we can find the host again
         host = nil
         assert_nothing_raised("Host lookup failed") {
-            scope = top.findnode("testing")
-            host = scope.node("testing")
+            hash = top.node("testing")
+            host = hash[:node]
         }
 
         assert(host, "Could not find host")

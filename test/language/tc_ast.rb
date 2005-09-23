@@ -283,7 +283,7 @@ class TestAST < TestPuppet
         assert(! scope.lookupclass("parent"), "Found parent class in top scope")
 
         # verify we can find our node
-        assert(scope.findnode(nodename), "Could not find node")
+        assert(scope.node(nodename), "Could not find node")
 
         # And verify that we can evaluate it okay
         objects = nil
@@ -399,7 +399,7 @@ class TestAST < TestPuppet
     end
 
     # Test that we can 'include' variables, not just normal strings.
-    def test_zincludevars
+    def test_includevars
         children = []
 
         # Create our class for testin
@@ -436,6 +436,64 @@ class TestAST < TestPuppet
 
         assert_nothing_raised("Could not find top-declared object") {
             assert_equal("/%s" % klassname, objects[0][0][:name])
+        }
+    end
+
+    # Test that node inheritance works correctly
+    def test_nodeinheritance
+        children = []
+
+        # create the base node
+        name = "basenode"
+        children << nodeobj(name)
+
+        # and the sub node
+        name = "subnode"
+        children << AST::NodeDef.new(
+            :names => nameobj(name),
+            :parentclass => nameobj("basenode"),
+            :code => AST::ASTArray.new(
+                :children => [
+                    varobj("%svar" % name, "%svalue" % name),
+                    fileobj("/%s" % name)
+                ]
+            )
+        )
+        #subnode = nodeobj(name)
+        #subnode.parentclass = "basenode"
+
+        #children << subnode
+
+        # and the top object
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        # Evaluate the parse tree
+        scope = nil
+        assert_nothing_raised("Could not evaluate node") {
+            scope = Puppet::Parser::Scope.new()
+            top.evaluate(scope)
+        }
+
+        # Verify we can find the node via a search list
+        objects = nil
+        assert_nothing_raised("Could not retrieve node definition") {
+            objects = scope.evalnode([name], {})
+        }
+        assert(objects, "Could not retrieve node definition")
+
+        # And now verify that we got the subnode file
+        assert_nothing_raised("Could not find basenode file") {
+            assert_equal("/basenode", objects[0][0][:name])
+        }
+
+        # and the parent node file
+        assert_nothing_raised("Could not find subnode file") {
+            assert_equal("/subnode", objects[0][1][:name])
         }
     end
 end

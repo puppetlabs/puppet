@@ -1208,7 +1208,7 @@ module Puppet
             # specified node, and this parse tree is only ever looked up when
             # a client connects.
             class NodeDef < AST::Branch
-                attr_accessor :names, :code
+                attr_accessor :names, :code, :parentclass
 
                 def each
                     [@names,@code].each { |child| yield child }
@@ -1221,15 +1221,21 @@ module Puppet
                     unless names.is_a?(Array)
                         names = [names]
                     end
-                    Puppet.debug("defining hosts '%s'" % [names.join(", ")])
-
+                    
                     names.each { |name|
+                        Puppet.debug("defining host '%s'" % name)
+                        arghash = {
+                            :name => name,
+                            :code => @code
+                        }
+
+                        if @parentclass
+                            arghash[:parentclass] = @parentclass.safeevaluate(scope)
+                        end
+
                         begin
                             scope.setnode(name,
-                                Node.new(
-                                    :name => name,
-                                    :code => @code
-                                )
+                                Node.new(arghash)
                             )
                         rescue Puppet::ParseError => except
                             except.line = self.line
@@ -1245,16 +1251,21 @@ module Puppet
                     }
                 end
 
+                def initialize(hash)
+                    @parentclass = nil
+                    super
+                end
+
                 def tree(indent = 0)
                     return [
                         @names.tree(indent + 1),
-                        ((@@indline * 4 * indent) + self.typewrap("host")),
+                        ((@@indline * 4 * indent) + self.typewrap("node")),
                         @code.tree(indent + 1),
                     ].join("\n")
                 end
 
                 def to_s
-                    return "host %s {\n%s }" % [@name, @code]
+                    return "node %s {\n%s }" % [@name, @code]
                 end
             end
 
@@ -1333,7 +1344,24 @@ module Puppet
                         Puppet.debug "%s class already evaluated" % @name
                         return nil
                     end
+
+                    self.evalparent(scope, hash, objname)
+
+                    # just use the Component evaluate method, but change the type
+                    # to our own type
+                    retval = super(scope,hash,@name,objname)
+
+                    # Set the mark after we evaluate, so we don't record it but
+                    # then encounter an error
+                    scope.setclass(@name)
+                    return retval
+                end
+
+                # Evaluate our parent class.  
+                def evalparent(scope, args, name)
                     if @parentclass
+                        parentobj = nil
+
                         begin
                             parentobj = scope.lookuptype(@parentclass)
                         rescue Puppet::ParseError => except
@@ -1365,17 +1393,8 @@ module Puppet
                             error.line = self.line
                             raise error
                         end
-                        parentobj.safeevaluate(scope,hash,@parentclass,objname)
+                        parentobj.safeevaluate(scope,args,@parentclass,name)
                     end
-
-                    # just use the Component evaluate method, but change the type
-                    # to our own type
-                    retval = super(scope,hash,@name,objname)
-
-                    # Set the mark after we evaluate, so we don't record it but
-                    # then encounter an error
-                    scope.setclass(@name)
-                    return retval
                 end
 
                 def initialize(hash)
@@ -1403,10 +1422,54 @@ module Puppet
                         scope.setvar(var, value)
                     }
 
+                    self.evalparent(scope)
+
                     # And then evaluate our code.
                     @code.safeevaluate(scope)
 
                     return scope
+                end
+
+                # Evaluate our parent class.
+                def evalparent(scope)
+                    if @parentclass
+                        # This is pretty messed up.  I don't know if this will
+                        # work in the long term, but we need to evaluate the node
+                        # in our own scope, even though our parent node has
+                        # a scope associated with it, because otherwise we 1) won't
+                        # get our facts defined, and 2) we won't actually get the
+                        # objects returned, based on how nodes work.
+
+                        # We also can't just evaluate the node itself, because
+                        # it would create a node scope within this scope,
+                        # and that would cause mass havoc.
+                        hash = nil
+                        unless hash = scope.node(@parentclass)
+                            raise Puppet::ParseError,
+                                "Could not find parent node %s" %
+                                @parentclass
+                        end
+
+                        begin
+                            code = hash[:node].code
+                            code.safeevaluate(scope)
+                        rescue Puppet::ParseError => except
+                            except.line = self.line
+                            except.file = self.file
+                            raise except
+                        rescue => detail
+                            error = Puppet::ParseError.new(detail)
+                            error.line = self.line
+                            error.file = self.file
+                            raise error
+                        end
+                    end
+                end
+
+                def initialize(hash)
+                    @parentclass = nil
+                    super
+
                 end
             end
             #---------------------------------------------------------------
