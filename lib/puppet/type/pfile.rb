@@ -163,7 +163,7 @@ module Puppet
                 end
 
                 unless FileTest.exists?(@parent.name)
-                    Puppet.info "File %s does not exist" % @parent.name
+                    Puppet.err "File %s does not exist" % @parent.name
                     self.is = -1
                     return
                 end
@@ -941,11 +941,11 @@ module Puppet
             
             def handleignore(children)
                 @parameters[:ignore].each { |ignore|
-                ignored = []
+                    ignored = []
                     Dir.glob(File.join(self.name,ignore), File::FNM_DOTMATCH) { |match|
-                    ignored.push(File.basename(match))
+                        ignored.push(File.basename(match))
                     }
-                children = children - ignored
+                    children = children - ignored
                 }
                 return children
             end
@@ -953,6 +953,7 @@ module Puppet
             def initialize(hash)
                 # clean out as many references to any file paths as possible
                 # this was the source of many, many bugs
+                
                 @arghash = self.argclean(hash)
                 @arghash.delete(self.class.namevar)
 

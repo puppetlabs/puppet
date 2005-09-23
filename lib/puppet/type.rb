@@ -102,7 +102,6 @@ class Type < Puppet::Element
     @@metaparamdoc[:loglevel] = "Sets the level that information will be logged:
          debug, info, verbose, notice, warning, err, alert, emerg or crit"
 
-    @metaparams = []
     #---------------------------------------------------------------
     #---------------------------------------------------------------
     # class methods dealing with Type management
@@ -131,7 +130,7 @@ class Type < Puppet::Element
 
     # the Type class attribute accessors
     class << self
-        attr_reader :name, :namevar, :states, :validstates, :parameters, :metaparams
+        attr_reader :name, :namevar, :states, :validstates, :parameters
     end
 
     #---------------------------------------------------------------
