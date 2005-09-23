@@ -205,8 +205,7 @@ class Server
                 end
             end
 
-            @mounts.clear
-
+            newmounts = {}
             begin
                 File.open(@config) { |f|
                     mount = nil
@@ -217,24 +216,24 @@ class Server
                         when /^\s*$/: next # skip blank lines
                         when /\[(\w+)\]/:
                             name = $1
-                            if mount
-                                unless mount.path
-                                    raise Puppet::Error, "Mount %s has no path specified" %
-                                        mount.name
-                                end
-                            end
-                            if @mounts.include?(name)
+                            if newmounts.include?(name)
                                 raise FileServerError, "%s is already mounted at %s" %
-                                    [@mounts[name], name]
+                                    [newmounts[name], name]
                             end
                             mount = Mount.new(name)
-                            @mounts[name] = mount
-                        when /\s*(\w+)\s+(.+)$/:
+                            newmounts[name] = mount
+                        when /^\s*(\w+)\s+(.+)$/:
                             var = $1
                             value = $2
                             case var
                             when "path":
-                                mount.path = value
+                                begin
+                                    mount.path = value
+                                rescue FileServerError => detail
+                                    Puppet.err "Removing mount %s: %s" %
+                                        [mount.name, detail]
+                                    newmounts.delete(mount.name)
+                                end
                             when "allow":
                                 value.split(/\s*,\s*/).each { |val|
                                     begin
@@ -242,7 +241,7 @@ class Server
                                             [val, mount.name]
                                         mount.allow(val)
                                     rescue AuthStoreError => detail
-                                        raise Puppet::Error, "%s at line %s of %s" %
+                                        raise FileServerError, "%s at line %s of %s" %
                                             [detail.to_s, count, @config]
                                     end
                                 }
@@ -253,26 +252,38 @@ class Server
                                             [val, mount.name]
                                         mount.deny(val)
                                     rescue AuthStoreError => detail
-                                        raise Puppet::Error, "%s at line %s of %s" %
+                                        raise FileServerError, "%s at line %s of %s" %
                                             [detail.to_s, count, @config]
                                     end
                                 }
                             else
-                                raise Puppet::Error,
-                                    "Invalid argument %s at line %s" % [var, count]
+                                raise FileServerError,
+                                    "Invalid argument '%s' at line %s" % [var, count]
                             end
                         else
-                            raise Puppet::Error,
-                                "Invalid line %s: %s" % [count, line]
+                            raise FileServerError, "Invalid line %s: %s" % [count, line]
                         end
                         count += 1
                     }
                 }
             rescue Errno::EACCES => detail
-                raise Puppet::Error, "Cannot read %s" % @config
+                Puppet.err "FileServer error: Cannot read %s; cannot serve" % @config
+                #raise Puppet::Error, "Cannot read %s" % @config
             rescue Errno::ENOENT => detail
-                raise Puppet::Error, "%s does not exit" % @config
+                Puppet.err "FileServer error: '%s' does not exit; cannot serve" %
+                    @config
+                #raise Puppet::Error, "%s does not exit" % @config
+            #rescue FileServerError => detail
+            #    Puppet.err "FileServer error: %s" % detail
             end
+
+            # Verify each of the mounts are valid.
+            # We let the check raise an error, so that it can raise an error
+            # pointing to the specific problem.
+            newmounts.each { |name, mount|
+                mount.valid?
+            }
+            @mounts = newmounts
 
             @configstamp = File.stat(@config).ctime
             @configstatted = Time.now
@@ -283,7 +294,8 @@ class Server
             mount, path = splitpath(file)
 
             unless (@mounts.include?(mount))
-                raise Puppet::Server::FileServerError, "%s not mounted" % mount
+                raise Puppet::Server::FileServerError,
+                    "FileServer module '%s' not mounted" % mount
             end
 
             unless @mounts[mount].allowed?(client, clientip)
@@ -370,14 +382,15 @@ class Server
                 path = dir.sub(%r{/#{mount}/?}, '')
 
                 unless @mounts.include?(mount)
-                    raise FileServerError, "%s not mounted" % mount
+                    raise FileServerError, "Fileserver module '%s' not mounted" % mount
                 end
 
                 unless @mounts[mount].path
-                    raise FileServerError, "Mount %s does not have a path set" % mount
+                    raise FileServerError,
+                        "Fileserver error: Mount '%s' does not have a path set" % mount
                 end
             else
-                raise FileServerError, "Invalid path '%s'" % dir
+                raise FileServerError, "Fileserver error: Invalid path '%s'" % dir
             end
 
             if path == ""
@@ -410,6 +423,8 @@ class Server
 
                 if path
                     self.path = path
+                else
+                    @path = nil
                 end
 
                 super()
@@ -424,6 +439,14 @@ class Server
 
             def to_s
                 @path
+            end
+
+            # Verify our configuration is valid.  This should really check to
+            # make sure at least someone will be allowed, but, eh.
+            def valid?
+                unless @path
+                    raise FileServerError, "No path specified"
+                end
             end
         end
     end

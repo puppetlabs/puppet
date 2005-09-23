@@ -14,20 +14,43 @@ class Server
             self.new(server, *options)
         end
 
+        def add_handler(interface, handler)
+            @loadedhandlers << interface.prefix
+            super
+        end
+
+        # Verify that our client has access.  We allow untrusted access to
+        # puppetca methods but none others.
         def authorize(request, method)
+            namespace = method.sub(/\..+/, '')
+            client = request.peeraddr[2]
+            ip = request.peeraddr[3]
             if request.client_cert
                 Puppet.info "Allowing %s(%s) trusted access to %s" %
-                    [request.peeraddr[2], request.peeraddr[3], method]
+                    [client, ip, method]
                 return true
             else
                 if method =~ /^puppetca\./
                     Puppet.notice "Allowing %s(%s) untrusted access to CA methods" %
-                        [request.peeraddr[2], request.peeraddr[3]]
+                        [client, ip]
                 else
                     Puppet.err "Unauthenticated client %s(%s) cannot call %s" %
-                        [request.peeraddr[2], request.peeraddr[3], method]
+                        [client, ip, method]
                     return false
                 end
+            end
+        end
+
+        def available?(method)
+            namespace = method.sub(/\..+/, '')
+            client = request.peeraddr[2]
+            ip = request.peeraddr[3]
+            if @loadedhandlers.include?(namespace)
+                return true
+            else
+                Puppet.warning "Client %s(%s) requested unavailable functionality %s" %
+                    [client, ip, namespace]
+                return false
             end
         end
 
@@ -41,6 +64,7 @@ class Server
             # and we can consume them all ourselves
             super()
 
+            @loadedhandlers = []
             handlers.each { |handler|
                 Puppet.debug "adding handler for %s" % handler.class
                 self.add_handler(handler.class.interface, handler)
@@ -58,22 +82,22 @@ class Server
                 begin
                     obj.call(*args)
                 rescue Puppet::Server::AuthorizationError => detail
-                    Puppet.warning obj.inspect
-                    Puppet.warning args.inspect
+                    #Puppet.warning obj.inspect
+                    #Puppet.warning args.inspect
                     Puppet.err "Permission denied: %s" % detail.to_s
                     raise XMLRPC::FaultException.new(
                         1, detail.to_s
                     )
                 rescue Puppet::Error => detail
-                    Puppet.warning obj.inspect
-                    Puppet.warning args.inspect
-                    Puppet.err "Puppet error: %s" % detail.to_s
+                    #Puppet.warning obj.inspect
+                    #Puppet.warning args.inspect
+                    Puppet.err detail.to_s
                     raise XMLRPC::FaultException.new(
                         1, detail.to_s
                     )
                 rescue => detail
-                    Puppet.warning obj.inspect
-                    Puppet.warning args.inspect
+                    #Puppet.warning obj.inspect
+                    #Puppet.warning args.inspect
                     Puppet.err "Could not call: %s" % detail.to_s
                     raise error
                 end
@@ -118,6 +142,13 @@ class Server
         def dispatch(methodname, *args)
 
             if defined? @request and @request
+                unless self.available?(methodname)
+                    raise XMLRPC::FaultException.new(
+                        ERR_UNAUTHORIZED,
+                        "Functionality %s not available" %
+                            methodname.sub(/\..+/, '')
+                    )
+                end
                 unless self.authorize(@request, methodname)
                     raise XMLRPC::FaultException.new(
                         ERR_UNAUTHORIZED,

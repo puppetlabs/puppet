@@ -787,7 +787,7 @@ class Type < Puppet::Element
 
         # set defalts
         @noop = false
-        @metaparams[:loglevel] = :info
+        @metaparams[:loglevel] = :notice
         # keeping stats for the total number of changes, and how many were
         # completely sync'ed
         # this isn't really sufficient either, because it adds lots of special cases
@@ -812,6 +812,11 @@ class Type < Puppet::Element
         order.flatten.each { |name|
             if hash.include?(name)
                 begin
+                    if name == "owner" or name == :owner
+                        if hash[name].nil?
+                            puts caller
+                        end
+                    end
                     self[name] = hash[name]
                 rescue => detail
                     raise Puppet::DevError.new( 

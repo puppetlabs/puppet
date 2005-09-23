@@ -70,6 +70,10 @@ class Server
                 end
             end
 
+            unless client
+                client = facts["hostname"]
+                clientip = facts["ipaddress"]
+            end
             Puppet.debug("Running interpreter")
             begin
                 retobjects = @interpreter.run(client, facts)

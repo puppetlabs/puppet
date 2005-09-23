@@ -45,15 +45,19 @@ module Puppet
                     if @usenodes
                         unless client
                             raise Puppet::Error,
-                                "Cannot evaluate no nodes with a nil client"
+                                "Cannot evaluate nodes with a nil client"
                         end
 
                         # We've already evaluated the AST, in this case
-                        @scope.evalnode(names, facts)
+                        retval = @scope.evalnode(names, facts)
+                        return retval
                     else
+                        # We've already evaluated the AST, in this case
                         @scope = Puppet::Parser::Scope.new() # no parent scope
                         @scope.interp = self
-                        @scope.evaluate(@ast, facts)
+                        @scope.type = "puppet"
+                        @scope.name = "top"
+                        return @scope.evaluate(@ast, facts)
                     end
                     #@ast.evaluate(@scope)
                 rescue Puppet::DevError, Puppet::Error, Puppet::ParseError => except
@@ -82,14 +86,14 @@ module Puppet
                 # to pass to the client
                 # this will be heirarchical, and will (at this point) contain
                 # only TransObjects and TransSettings
-                @scope.name = "top"
-                @scope.type = "puppet"
-                begin
-                    topbucket = @scope.to_trans
-                rescue => detail
-                    Puppet.warning detail
-                    raise
-                end
+                #@scope.name = "top"
+                #@scope.type = "puppet"
+                #begin
+                #    topbucket = @scope.to_trans
+                #rescue => detail
+                #    Puppet.warning detail
+                #    raise
+                #end
 
                 # add our settings to the front of the array
                 # at least, for now
@@ -104,7 +108,7 @@ module Puppet
                 #retlist = TransObject.list
                 #Puppet.debug "retobject length is %s" % retlist.length
                 #TransObject.clear
-                return topbucket
+                #return topbucket
             end
 
             def scope
@@ -120,6 +124,8 @@ module Puppet
 
                 if @usenodes
                     @scope = Puppet::Parser::Scope.new() # no parent scope
+                    @scope.name = "top"
+                    @scope.type = "puppet"
                     @scope.interp = self
                     Puppet.debug "Nodes defined"
                     @ast.safeevaluate(@scope)

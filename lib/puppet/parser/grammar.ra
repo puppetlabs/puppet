@@ -25,18 +25,18 @@ program:    statements {
 
     # this is mainly so we can test the parser separately from the
     # interpreter
-    if Puppet[:parseonly]
-        begin
-            if Puppet[:debug]
-                puts result.tree(0)
-            end
-        rescue NoMethodError => detail
-            Puppet.err detail
-            #exit(78)
-        end
-        #require 'puppet/parser/interpreter'
-        #result = Puppet::Server.new(result)
-    end
+#    if Puppet[:parseonly]
+#        begin
+#            if Puppet[:debug]
+#                puts result.tree(0)
+#            end
+#        rescue NoMethodError => detail
+#            Puppet.err detail
+#            #exit(78)
+#        end
+#        #require 'puppet/parser/interpreter'
+#        #result = Puppet::Server.new(result)
+#    end
 }
 
 statements:   statement
@@ -447,7 +447,7 @@ import: IMPORT QTEXT {
     Dir.chdir(dir) {
         Dir.glob(val[1]).each { |file|
             parser = Puppet::Parser::Parser.new()
-            parser.stack = self.stack
+            parser.files = self.files
             Puppet.debug("importing '%s'" % file)
             begin
                 parser.file = file
@@ -554,7 +554,7 @@ argumentlist: nothing
 
 arguments:    argument
             | arguments COMMA argument {
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
     else
@@ -567,14 +567,14 @@ arguments:    argument
 }
 
 argument:     name EQUALS rvalue {
-    result = AST::ASTArray.new(
+    result = AST::CompArgument.new(
         :line => @lexer.line,
         :file => @lexer.file,
         :children => [val[0],val[2]]
     )
 }
             | name {
-    result = AST::ASTArray.new(
+    result = AST::CompArgument.new(
         :line => @lexer.line,
         :file => @lexer.file,
         :children => [val[0]]
@@ -635,14 +635,15 @@ Puppet[:typecheck] = true
 Puppet[:paramcheck] = true
 
 ---- inner ----
-attr_reader :file, :files
+attr_reader :file
+attr_accessor :files
 
 # Create an AST array out of all of the args
 def aryfy(*args)
     if args[0].is_a?(AST::ASTArray)
         result = args.shift
         args.each { |arg|
-            args.push arg
+            result.push arg
         }
     else
         result = AST::ASTArray.new(

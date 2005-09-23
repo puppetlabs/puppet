@@ -534,6 +534,7 @@ module Puppet
             def addis(state,value)
                 if stateklass = self.class.validstate?(state)
                     @states[state] = stateklass.new(:parent => self)
+                    Puppet.debug "Adding is for %s as %s" % [state, value]
                     @states[state].is = value
                 elsif self.class.validparameter?(state)
                     self[state] = value
@@ -577,15 +578,23 @@ module Puppet
                         [self.name, error.to_s]
 
                     @states.delete(:install)
+                    return
                 end
 
-                if hash.nil?
+                if hash.nil? and @states.include?(:install)
+                    Puppet.info "Removing install"
                     @states[:install].is = nil
+                    #return
                 end
 
                 hash.each { |name,value|
                     if self.class.validstate?(name)
                         if @states.include?(name)
+                            unless @states[name]
+                                raise Puppet::DevError,
+                                    "State %s on package %s is %s" %
+                                    [name, @name, @states[name]]
+                            end
                             @states[name].is = value
                         else
                             # silently ignore any returned states
@@ -622,6 +631,7 @@ module Puppet
             end
         end # Puppet::Type::Package
     end
+
     # this is how we retrieve packages
     class PackageSource
         attr_accessor :uri

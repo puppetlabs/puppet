@@ -239,6 +239,10 @@ module Puppet
             # meant completely different things.
             class ObjectInst < ASTArray; end
 
+            # Another simple container class to make sure we can correctly arrayfy
+            # things.
+            class CompArgument < ASTArray; end
+
             # The base class for all of the leaves of the parse trees.  These
             # basically just have types and values.  Both of these parameters
             # are simple values, not AST objects.
@@ -1289,8 +1293,10 @@ module Puppet
                         # arguments...
                         self.args.each { |arg, default|
                             unless hash.include?(arg)
-                                if defined? default
+                                if defined? default and ! default.nil?
                                     hash[arg] = default
+                                    Puppet.debug "Got default %s for %s in %s" %
+                                        [default.inspect, arg.inspect, objname.inspect]
                                 else
                                     error = Puppet::ParseError.new(
                                         "Must pass %s to %s of type %s" %

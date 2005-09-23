@@ -81,6 +81,8 @@ module Puppet
 
                 super(hash)
 
+                Puppet.info "Listening on port %s" % hash[:Port]
+
                 # this creates a new servlet for every connection,
                 # but all servlets have the same list of handlers
                 # thus, the servlets can have their own state -- passing

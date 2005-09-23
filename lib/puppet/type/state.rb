@@ -77,13 +77,14 @@ class State < Puppet::Element
     end
     #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    # we aren't actually comparing the states themselves, we're only
-    # comparing the "should" value with the "is" value
+    # Determine whether the state is in-sync or not.  If @should is
+    # not defined or is set to a non-true value, then we do not have
+    # a valid value for it and thus consider the state to be in-sync
+    # since we cannot fix it.
     def insync?
         #debug "%s value is '%s', should be '%s'" %
         #    [self,self.is.inspect,self.should.inspect]
-        unless defined? @should
+        unless defined? @should and @should
             return true
         end
         self.is == self.should

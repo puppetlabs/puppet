@@ -28,6 +28,10 @@
 #
 # = Options
 #
+# confdir::
+#   The configuration root directory, where +puppetmasterd+ defaults to looking
+#   for all of its configuration files.  Defaults to +/etc/puppet+.
+#
 # debug::
 #   Enable full debugging.
 #
@@ -91,6 +95,7 @@ rescue LoadError
 end
 
 result = GetoptLong.new(
+	[ "--confdir",	"-c",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--fqdn",     "-f",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
@@ -113,6 +118,8 @@ waitforcert = false
 begin
     result.each { |opt,arg|
         case opt
+            when "--confdir"
+                Puppet[:puppetconf] = arg
             when "--help"
                 if $haveusage
                     RDoc::usage && exit

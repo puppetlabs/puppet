@@ -416,6 +416,23 @@ class TestFileServer < TestPuppet
         files.each { |file|
             assert_describe(sfile, file, server)
         }
+
+        # And then describe some files that we know aren't there
+        retval = nil
+        assert_nothing_raised("Describing non-existent files raised an error") {
+            retval = server.describe(sfile + "noexisties")
+        }
+
+        assert_equal("", retval, "Description of non-existent files returned a value")
+
+        # Now try to describe some sources that don't even exist
+        retval = nil
+        assert_raise(Puppet::Server::FileServerError,
+            "Describing non-existent mount did not raise an error") {
+            retval = server.describe("/notmounted/" + "noexisties")
+        }
+
+        assert_nil(retval, "Description of non-existent mounts returned a value")
     end
 
     # test that our config file is parsing and working as planned
@@ -423,9 +440,6 @@ class TestFileServer < TestPuppet
         server = nil
         basedir = File.join(tmpdir, "fileserverconfigfiletesting")
         @@tmpfiles << basedir
-
-        conftext = "# a test config file\n \n"
-
 
         # make some dirs for mounting
         Dir.mkdir(basedir)
@@ -541,6 +555,72 @@ class TestFileServer < TestPuppet
 
     end
 
+    # Test that we smoothly handle invalid config files
+    def test_configfailures
+        # create an example file with each of them
+        conffile = tempfile()
+
+        invalidmounts = {
+            "noexist" => "[noexist]
+    path /this/path/does/not/exist
+    allow 192.168.0.*
+"
+}
+
+        invalidconfigs = [
+"[not valid]
+    path /this/path/does/not/exist
+    allow 192.168.0.*
+",
+"[valid]
+    invalidstatement
+    path /etc
+    allow 192.168.0.*
+",
+"[valid]
+    allow 192.168.0.*
+"
+]
+
+        invalidmounts.each { |mount, text|
+            File.open(conffile, "w") { |f|
+                f.print text
+            }
+            
+
+            # create a server with the file
+            server = nil
+            assert_nothing_raised {
+                server = Puppet::Server::FileServer.new(
+                    :Local => true,
+                    :Config => conffile
+                )
+            }
+
+            assert_raise(Puppet::Server::FileServerError,
+                "Invalid mount was mounted") {
+                    server.list(mount)
+            }
+        }
+
+        invalidconfigs.each_with_index { |text, i|
+            File.open(conffile, "w") { |f|
+                f.print text
+            }
+            
+
+            # create a server with the file
+            server = nil
+            assert_raise(Puppet::Server::FileServerError,
+                "Invalid config %s did not raise error" % i) {
+                server = Puppet::Server::FileServer.new(
+                    :Local => true,
+                    :Config => conffile
+                )
+            }
+        }
+    end
+
     # verify we reread the config file when it changes
     def test_filereread
         server = nil
@@ -572,12 +652,14 @@ class TestFileServer < TestPuppet
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/thing/", false, false, "test1.domain.com", "127.0.0.1")
+            list = server.list("/thing/", false, false,
+                "test1.domain.com", "127.0.0.1")
         }
         assert(list != "", "List returned nothing in rereard test")
 
         assert_raise(Puppet::Server::AuthorizationError, "List allowed invalid host") {
-            list = server.list("/thing/", false, false, "test2.domain.com", "127.0.0.1")
+            list = server.list("/thing/", false, false,
+                "test2.domain.com", "127.0.0.1")
         }
 
         sleep 1
@@ -591,11 +673,13 @@ class TestFileServer < TestPuppet
         }
         
         assert_raise(Puppet::Server::AuthorizationError, "List allowed invalid host") {
-            list = server.list("/thing/", false, false, "test1.domain.com", "127.0.0.1")
+            list = server.list("/thing/", false, false,
+                "test1.domain.com", "127.0.0.1")
         }
 
         assert_nothing_raised {
-            list = server.list("/thing/", false, false, "test2.domain.com", "127.0.0.1")
+            list = server.list("/thing/", false, false,
+                "test2.domain.com", "127.0.0.1")
         }
 
         assert(list != "", "List returned nothing in rereard test")

@@ -1,5 +1,3 @@
-#!/usr/local/bin/ruby -w
-
 # the available clients
 
 require 'puppet'
@@ -43,20 +41,26 @@ module Puppet
                     method = ary[0]
                     Puppet.info "Defining %s.%s" % [namespace, method]
                     self.send(:define_method,method) { |*args|
+                        Puppet.info "Calling %s" % method
                         #Puppet.info "peer cert is %s" % @http.peer_cert
                         #Puppet.info "cert is %s" % @http.cert
                         begin
                             call("%s.%s" % [namespace, method.to_s],*args)
                         rescue OpenSSL::SSL::SSLError => detail
-                            Puppet.err "Could not call %s.%s: Untrusted certificates" %
-                                [namespace, method]
+                            #Puppet.err "Could not call %s.%s: Untrusted certificates" %
+                            #    [namespace, method]
                             raise NetworkClientError,
                                 "Certificates were not trusted"
                         rescue XMLRPC::FaultException => detail
-                            Puppet.err "Could not call %s.%s: %s" %
-                                [namespace, method, detail.faultString]
-                            raise NetworkClientError,
-                                "XMLRPC Error: %s" % detail.faultString
+                            #Puppet.err "Could not call %s.%s: %s" %
+                            #    [namespace, method, detail.faultString]
+                            #raise NetworkClientError,
+                            #    "XMLRPC Error: %s" % detail.faultString
+                            raise NetworkClientError, detail.faultString
+                        rescue Errno::ECONNREFUSED => detail
+                            msg = "Could not connect to %s on port %s" % [@host, @port]
+                            #Puppet.err msg
+                            raise NetworkClientError, msg
                         #rescue => detail
                         #    Puppet.err "Could not call %s.%s: %s" %
                         #        [namespace, method, detail.inspect]
@@ -78,7 +82,7 @@ module Puppet
             end
 
             def cert=(cert)
-                Puppet.info "Adding certificate"
+                Puppet.debug "Adding certificate"
                 @http.cert = cert
                 @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
             end
@@ -216,7 +220,7 @@ module Puppet
             def self.facts
                 facts = {}
                 Facter.each { |name,fact|
-                    facts[name] = fact
+                    facts[name] = fact.downcase
                 }
 
                 facts
@@ -341,8 +345,8 @@ module Puppet
                 if objects.is_a?(Puppet::TransBucket)
                     @objects = objects
                 else
-                    Puppet.warning objects.inspect
-                    raise NetworkClientError.new(objects.class)
+                    raise NetworkClientError,
+                        "Invalid returned objects of type %s" % objects.class
                 end
             end
         end
@@ -426,10 +430,11 @@ module Puppet
                         begin
                             @driver.send(method, *args)
                         rescue XMLRPC::FaultException => detail
-                            Puppet.err "Could not call %s.%s: %s" %
-                                [namespace, method, detail.faultString]
-                            raise NetworkClientError,
-                                "XMLRPC Error: %s" % detail.faultString
+                            #Puppet.err "Could not call %s.%s: %s" %
+                            #    [namespace, method, detail.faultString]
+                            #raise NetworkClientError,
+                            #    "XMLRPC Error: %s" % detail.faultString
+                            raise NetworkClientError, detail.faultString
                         end
                     }
                 }

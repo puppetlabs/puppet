@@ -244,7 +244,8 @@ class TestSnippets < TestPuppet
     def snippet_argumentdefaults(trans)
         file1 = "/tmp/argumenttest1"
         file2 = "/tmp/argumenttest2"
-        #@@tmpfiles << file
+        @@tmpfiles << file1
+        @@tmpfiles << file2
 
         assert(FileTest.exists?(file1))
         assert(File.stat(file1).mode & 007777 == 0755)

@@ -39,6 +39,11 @@ class TestFileSources < FileTesting
         rescue
             system("rm -rf %s" % Puppet[:checksumfile])
         end
+        if defined? @port
+            @port += 1
+        else
+            @port = 8800
+        end
         super
     end
 
@@ -439,5 +444,106 @@ class TestFileSources < FileTesting
         assert_nothing_raised {
             system("kill -INT %s" % serverpid)
         }
+    end
+
+    def test_networkSourcesWithoutService
+        server = nil
+
+        Puppet[:autosign] = true
+        Puppet[:masterport] = 8765
+
+        serverpid = nil
+        assert_nothing_raised() {
+            server = Puppet::Server.new(
+                :Handlers => {
+                    :CA => {}, # so that certs autogenerate
+                }
+            )
+
+        }
+        serverpid = fork {
+            assert_nothing_raised() {
+                #trap(:INT) { server.shutdown; Kernel.exit! }
+                trap(:INT) { server.shutdown }
+                server.start
+            }
+        }
+        @@tmppids << serverpid
+
+        sleep(1)
+
+        name = File.join(tmpdir(), "nosourcefile")
+        file = Puppet::Type::PFile.create(
+            :source => "puppet://localhost/dist/file",
+            :name => name
+        )
+
+        assert_nothing_raised {
+            file.retrieve
+        }
+
+        comp = newcomp("nosource", file)
+
+        assert_nothing_raised {
+            comp.evaluate
+        }
+
+        assert(!FileTest.exists?(name), "File with no source exists anyway")
+    end
+
+    def test_unmountedNetworkSources
+        server = nil
+        mounts = {
+            "/" => "root",
+            "/noexistokay" => "noexist"
+        }
+
+        fileserverconf = mkfileserverconf(mounts)
+
+        Puppet[:autosign] = true
+        Puppet[:masterport] = @port
+
+        serverpid = nil
+        assert_nothing_raised() {
+            server = Puppet::Server.new(
+                :Port => @port,
+                :Handlers => {
+                    :CA => {}, # so that certs autogenerate
+                    :FileServer => {
+                        :Config => fileserverconf
+                    }
+                }
+            )
+
+        }
+
+        serverpid = fork {
+            assert_nothing_raised() {
+                #trap(:INT) { server.shutdown; Kernel.exit! }
+                trap(:INT) { server.shutdown }
+                server.start
+            }
+        }
+        @@tmppids << serverpid
+
+        sleep(1)
+
+        name = File.join(tmpdir(), "nosourcefile")
+        file = Puppet::Type::PFile.create(
+            :source => "puppet://localhost/noexist/file",
+            :name => name
+        )
+
+        assert_nothing_raised {
+            file.retrieve
+        }
+
+        comp = newcomp("nosource", file)
+
+        assert_nothing_raised {
+            comp.evaluate
+        }
+
+        assert(!FileTest.exists?(name), "File with no source exists anyway")
     end
 end

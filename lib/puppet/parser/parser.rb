@@ -32,15 +32,16 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id4705e629f1', 'grammar.ra', 638
-attr_reader :file, :files
+module_eval <<'..end grammar.ra modeval..idb211ea7fd3', 'grammar.ra', 638
+attr_reader :file
+attr_accessor :files
 
 # Create an AST array out of all of the args
 def aryfy(*args)
     if args[0].is_a?(AST::ASTArray)
         result = args.shift
         args.each { |arg|
-            args.push arg
+            result.push arg
         }
     else
         result = AST::ASTArray.new(
@@ -144,7 +145,7 @@ end
 def string=(string)
     @lexer.string = string
 end
-..end grammar.ra modeval..id4705e629f1
+..end grammar.ra modeval..idb211ea7fd3
 
 ##### racc 1.4.4 generates ###
 
@@ -561,18 +562,18 @@ module_eval <<'.,.,', 'grammar.ra', 40
 
     # this is mainly so we can test the parser separately from the
     # interpreter
-    if Puppet[:parseonly]
-        begin
-            if Puppet[:debug]
-                puts result.tree(0)
-            end
-        rescue NoMethodError => detail
-            Puppet.err detail
-            #exit(78)
-        end
-        #require 'puppet/parser/interpreter'
-        #result = Puppet::Server.new(result)
-    end
+#    if Puppet[:parseonly]
+#        begin
+#            if Puppet[:debug]
+#                puts result.tree(0)
+#            end
+#        rescue NoMethodError => detail
+#            Puppet.err detail
+#            #exit(78)
+#        end
+#        #require 'puppet/parser/interpreter'
+#        #result = Puppet::Server.new(result)
+#    end
    result
   end
 .,.,
@@ -1118,7 +1119,7 @@ module_eval <<'.,.,', 'grammar.ra', 469
     Dir.chdir(dir) {
         Dir.glob(val[1]).each { |file|
             parser = Puppet::Parser::Parser.new()
-            parser.stack = self.stack
+            parser.files = self.files
             Puppet.debug("importing '%s'" % file)
             begin
                 parser.file = file
@@ -1252,7 +1253,7 @@ module_eval <<'.,.,', 'grammar.ra', 553
 
 module_eval <<'.,.,', 'grammar.ra', 567
   def _reduce_80( val, _values, result )
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
     else
@@ -1268,7 +1269,7 @@ module_eval <<'.,.,', 'grammar.ra', 567
 
 module_eval <<'.,.,', 'grammar.ra', 575
   def _reduce_81( val, _values, result )
-    result = AST::ASTArray.new(
+    result = AST::CompArgument.new(
         :line => @lexer.line,
         :file => @lexer.file,
         :children => [val[0],val[2]]
@@ -1279,7 +1280,7 @@ module_eval <<'.,.,', 'grammar.ra', 575
 
 module_eval <<'.,.,', 'grammar.ra', 582
   def _reduce_82( val, _values, result )
-    result = AST::ASTArray.new(
+    result = AST::CompArgument.new(
         :line => @lexer.line,
         :file => @lexer.file,
         :children => [val[0]]

@@ -128,6 +128,7 @@ module Puppet
                 # it will be removed during translation.
 
                 # And now return the whole thing
+                #return self.to_trans
                 return self.to_trans
             end
 
@@ -485,8 +486,8 @@ module Puppet
 
             # Convert our scope to a list of Transportable objects.
             def to_trans
-                Puppet.debug "Translating scope %s at level %s" %
-                    [self.object_id,self.level]
+                #Puppet.debug "Translating scope %s at level %s" %
+                #    [self.object_id,self.level]
 
                 results = []
                 
@@ -494,8 +495,8 @@ module Puppet
                 @children.each { |child|
                     if child.is_a?(Scope)
                         cresult = child.to_trans
-                        Puppet.debug "Got %s from scope %s" %
-                            [cresult.class,child.object_id]
+                        #Puppet.debug "Got %s from scope %s" %
+                        #    [cresult.class,child.object_id]
 
                         # Scopes normally result in a TransBucket, but they could
                         # also result in a normal array; if that happens, get rid
@@ -553,8 +554,10 @@ module Puppet
                         error.stack = caller
                         raise error
                     end
-                    Puppet.debug "TransBucket with name %s and type %s in scope %s" %
-                        [@name,@type,self.object_id]
+                    #Puppet.debug(
+                    #    "TransBucket with name %s and type %s in scope %s" %
+                    #    [@name,@type,self.object_id]
+                    #)
 
                     # now find metaparams
                     @symtable.each { |var,value|
@@ -569,7 +572,7 @@ module Puppet
                     #    [bucket.name,self.object_id]
                     return bucket
                 else
-                    #Puppet.debug "nameless scope; just returning a list"
+                    Puppet.debug "nameless scope; just returning a list"
                     return results
                 end
             end

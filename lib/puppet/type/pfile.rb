@@ -28,7 +28,7 @@ module Puppet
                 if stat = @parent.stat(true)
                     @is = stat.ftype
                 else
-                    @is = -1
+                    @is = :notfound
                 end
 
                 # so this state is never marked out of sync
@@ -57,9 +57,9 @@ module Puppet
                     @should = "file"
                 when "directory", /^d/:
                     @should = "directory"
-                when "-1", -1:
+                when :notfound:
                     # this is where a creation is being rolled back
-                    @should = -1
+                    @should = :notfound
                 else
                     error = Puppet::Error.new "Cannot create files of type %s" %
                         value
@@ -71,7 +71,7 @@ module Puppet
                 if stat = @parent.stat(true)
                     @is = stat.ftype
                 else
-                    @is = -1
+                    @is = :notfound
                 end
 
                 #Puppet.debug "'exists' state is %s" % self.is
@@ -105,7 +105,7 @@ module Puppet
                             Dir.mkdir(@parent.name)
                         end
                         event = :directory_created
-                    when -1:
+                    when :notfound:
                         # this is where the file should be deleted...
                         unless FileTest.size(@parent.name) == 0
                             raise Puppet::Error.new(
@@ -151,8 +151,8 @@ module Puppet
                         @should = -2
                     end
                 else
-                    # We can't use -1 here, because then it'll match on non-existent
-                    # files
+                    # We can't use :notfound here, because then it'll match on
+                    # non-existent files
                     @should = -2
                 end
             end
@@ -164,7 +164,7 @@ module Puppet
 
                 unless FileTest.exists?(@parent.name)
                     Puppet.err "File %s does not exist" % @parent.name
-                    self.is = -1
+                    self.is = :notfound
                     return
                 end
 
@@ -238,7 +238,7 @@ module Puppet
                     raise error
                 end
 
-                if @is == -1
+                if @is == :notfound
                     self.retrieve
 
                     if @is == @should
@@ -250,7 +250,7 @@ module Puppet
 
                     # if we still can't retrieve a checksum, it means that
                     # the file still doesn't exist
-                    if @is == -1
+                    if @is == :notfound
                         # if they're copying, then we won't worry about the file
                         # not existing yet
                         unless @parent.state(:source)
@@ -283,11 +283,11 @@ module Puppet
                     state[@parent.name] = Hash.new
                 end
 
-                if @is == -1
+                if @is == :notfound
                     error = Puppet::Error.new("%s has invalid checksum" %
                         @parent.name)
                     raise error
-                #elsif @should == -1
+                #elsif @should == :notfound
                 #    error = Puppet::Error.new("%s has invalid 'should' checksum" %
                 #        @parent.name)
                 #    raise error
@@ -328,36 +328,38 @@ module Puppet
 #                    @parent.delete(self.name)
 #                    @should = nil
 #                    @is = nil
-#                    unless defined? @@notified
+#                    unless defined? @@notifieduid
 #                        Puppet.notice "Cannot manage ownership unless running as root"
-#                        @@notified = true
+#                        @@notifieduid = true
 #                        return
 #                    end
 #                end
 
                 unless stat = @parent.stat(true)
-                    @is = -1
+                    @is = :notfound
                     return
                 end
 
                 self.is = stat.uid
             end
 
+            # If we're not root, we can check the values but we cannot change them
             def should=(value)
                 unless Process.uid == 0
                     @should = nil
                     @is = nil
-                    unless defined? @@notified
+                    unless defined? @@notifieduid
                         Puppet.notice "Cannot manage ownership unless running as root"
                         #@parent.delete(self.name)
-                        @@notified = true
+                        @@notifieduid = true
                     end
-                    if @parent.state(:owner)
-                        @parent.delete(:owner)
-                    end
-                    raise Puppet::Error.new(
-                        "Cannot manage ownership unless running as root"
-                    )
+                    return
+                    #if @parent.state(:owner)
+                    #    @parent.delete(:owner)
+                    #end
+                    #raise Puppet::Error.new(
+                    #    "Cannot manage ownership unless running as root"
+                    #)
                 end
                 if value.is_a?(Integer)
                     # verify the user is a valid user
@@ -404,14 +406,19 @@ module Puppet
 
             def sync
                 unless Process.uid == 0
+                    unless defined? @@notifieduid
+                        Puppet.notice "Cannot manage ownership unless running as root"
+                        #@parent.delete(self.name)
+                        @@notifieduid = true
+                    end
                     # there's a possibility that we never got retrieve() called
                     # e.g., if the file didn't exist
                     # thus, just delete ourselves now and don't do any work
-                    @parent.delete(self.name)
+                    #@parent.delete(self.name)
                     return nil
                 end
 
-                if @is == -1
+                if @is == :notfound
                     @parent.stat(true)
                     self.retrieve
                     #Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
@@ -424,11 +431,10 @@ module Puppet
                 end
 
                 begin
-                    File.chown(self.should,-1,@parent[:path])
+                    File.chown(self.should,nil,@parent[:path])
                 rescue => detail
-                    error = Puppet::Error.new("failed to chown '%s' to '%s': %s" %
-                        [@parent[:path],self.should,detail])
-                    raise error
+                    raise Puppet::Error, "Failed to set owner of '%s' to '%s': %s" %
+                        [@parent[:path],self.should,detail]
                 end
 
                 return :inode_changed
@@ -496,23 +502,22 @@ module Puppet
                         end
                     end
                 else
-                    self.is = -1
+                    self.is = :notfound
                 end
 
                 #Puppet.debug "chmod state is %o" % self.is
             end
 
             def sync
-                if @is == -1
+                if @is == :notfound
                     @parent.stat(true)
                     self.retrieve
                     #Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
-                end
-
-                unless @parent.stat
-                    Puppet.err "File '%s' does not exist; cannot chmod" %
-                        @parent[:path]
-                    return nil
+                    if @is == :notfound
+                        @parent.log "%s does not exist; cannot set mode" %
+                            @parent.name
+                        return nil
+                    end
                 end
 
                 unless defined? @fixed
@@ -555,6 +560,16 @@ module Puppet
                 method = nil
                 gid = nil
                 gname = nil
+
+                unless Process.uid == 0
+                    unless defined? @@notifiedgroup
+                        Puppet.notice(  
+                            "Cannot manage group unless running as root"
+                        )
+                        @@notifiedgroup = true
+                    end
+                    return
+                end
 
                 if value.is_a?(Integer)
                     method = :getgrgid
@@ -610,8 +625,18 @@ module Puppet
             end
 
             def sync
+                unless Process.uid == 0
+                    unless defined? @@notifiedgroup
+                        Puppet.notice(  
+                            "Cannot manage group ownership unless running as root"
+                        )
+                        @@notifiedgroup = true
+                    end
+                    return nil
+                end
+
                 Puppet.debug "setting chgrp state to %s" % self.should
-                if @is == -1
+                if @is == :notfound
                     @parent.stat(true)
                     self.retrieve
                     #Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
@@ -649,7 +674,13 @@ module Puppet
                 sourceobj, path = @parent.uri2obj(source)
                 server = sourceobj.server
 
-                desc = server.describe(path)
+                begin
+                    desc = server.describe(path)
+                rescue NetworkClientError => detail
+                    Puppet.err "Could not describe %s: %s" %
+                        [path, detail]
+                    return nil
+                end
 
                 args = {}
                 Puppet::Type::PFile::PINPARAMS.zip(
@@ -666,13 +697,17 @@ module Puppet
                     args.delete(:owner)
                 end
 
+                Puppet.notice "returning describe args %s" % args.inspect
                 return args
             end
 
             def retrieve
                 sum = nil
                 
-                @stats = self.describe
+                unless @stats = self.describe
+                    @is = :notdescribed
+                    return nil
+                end
 
                 @stats.each { |stat, value|
                     next if stat == :checksum
@@ -692,15 +727,15 @@ module Puppet
                 when "file":
                     if sum = @parent.state(:checksum)
                         if sum.is
-                            if sum.is == -1
+                            if sum.is == :notfound
                                 sum.retrieve
                             end
                             @is = sum.is
                         else
-                            @is = -1
+                            @is = :notfound
                         end
                     else
-                        @is = -1
+                        @is = :notfound
                     end
 
                     @should = @stats[:checksum]
@@ -742,8 +777,13 @@ module Puppet
             end
 
             def sync
-                if @is == -1
+                Puppet.notice "syncing %s" % @parent.name
+                if @is == :notdescribed
                     self.retrieve # try again
+                    if @is == :notdescribed
+                        @parent.log "Could not retreive information on %s" % @parent.name
+                        return nil
+                    end
                     if @is == @should
                         return nil
                     end
@@ -756,7 +796,15 @@ module Puppet
 
                 sourceobj, path = @parent.uri2obj(@source)
 
-                contents = sourceobj.server.retrieve(path)
+                begin
+                    contents = sourceobj.server.retrieve(path)
+                rescue NetworkClientError => detail
+                    Puppet.err "Could not retrieve %s: %s" %
+                        [path, detail]
+                    return nil
+                end
+
+                Puppet.notice "retrieved %s" % path
 
                 unless sourceobj.server.local
                     contents = CGI.unescape(contents)
@@ -778,8 +826,8 @@ module Puppet
 
                 # try to create it with the correct modes to start
                 # we should also be changing our effective uid/gid, but...
-                if @parent[:mode]
-                    args.push @parent[:mode]
+                if @parent.should(:mode) and @parent.should(:mode) != :notfound
+                    args.push @parent.should(:mode)
                 end
 
                 # FIXME we should also change our effective user and group id
@@ -1091,8 +1139,8 @@ module Puppet
                 if child = klass[path]
                     unless @children.include?(child)
                         raise Puppet::Error,
-                            "Planned child file %s already exists with parent %s" %
-                            [path, child.parent]
+                            "Planned child file %s of %s already exists with parent %s" %
+                            [path, self.name, child.parent]
                     end
                     args.each { |var,value|
                         next if var == :path
@@ -1253,7 +1301,7 @@ module Puppet
                 unless stat = self.stat(true)
                     Puppet.debug "File %s does not exist" % self.name
                     @states.each { |name,state|
-                        state.is = -1
+                        state.is = :notfound
                     }
                     return
                 end
@@ -1309,6 +1357,7 @@ module Puppet
                     if uri.port
                         args[:Port] = uri.port
                     end
+                    # FIXME We should cache a copy of this server
                     #sourceobj.server = Puppet::NetworkClient.new(args)
                     sourceobj.server = Puppet::Client::FileClient.new(args)
 

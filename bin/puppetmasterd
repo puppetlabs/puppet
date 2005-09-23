@@ -25,6 +25,10 @@
 #   refers to the autosign configuration file at /etc/puppet/autosign.conf to
 #   determine which hosts should have their certificates signed.
 #
+# confdir::
+#   The configuration root directory, where +puppetmasterd+ defaults to looking
+#   for all of its configuration files.  Defaults to +/etc/puppet+.
+#
 # debug::
 #   Enable full debugging.  Causes the daemon not to go into the background.
 #
@@ -90,6 +94,7 @@ require 'puppet/server'
 
 result = GetoptLong.new(
 	[ "--autosign", "-a",			GetoptLong::NO_ARGUMENT ],
+	[ "--confdir",	"-c",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--fsconfig",	"-f",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
@@ -126,6 +131,8 @@ begin
         case opt
             when "--autosign"
                 ca[:autosign] = Puppet[:autosign]
+            when "--confdir"
+                Puppet[:puppetconf] = arg
             when "--debug"
                 Puppet[:debug] = true
             when "--fsconfig"
@@ -209,6 +216,9 @@ end
 unless fs.include?(:Config)
     if File.exists?(Puppet[:fileserverconfig])
         fs[:Config] = Puppet[:fileserverconfig]
+    else
+        Puppet.notice "File server config %s does not exist; skipping file serving" %
+            Puppet[:fileserverconfig]
     end
 end
 

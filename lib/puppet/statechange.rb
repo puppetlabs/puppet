@@ -29,15 +29,19 @@ module Puppet
 
 		#---------------------------------------------------------------
         def go
-            if @state.noop
-                #Puppet.debug "%s is noop" % @state
-                return nil
-            end
-
             if @state.is == @state.should
                 Puppet.info "%s.%s is already in sync" %
                     [@state.parent.name, @state.name]
                 return nil
+            end
+
+            if @state.noop
+                @state.parent.log "%s should be %s" %
+                    [@state, @should]
+                #Puppet.debug "%s is noop" % @state
+                return nil
+            else
+                Puppet.notice "Noop is %s" % @state.noop
             end
 
             begin
@@ -68,7 +72,7 @@ module Puppet
                         #:state => @state,
                         #:object => @state.parent,
                     # FIXME this is where loglevel stuff should go
-                    Puppet.notice @state.change_to_s
+                    @state.parent.log @state.change_to_s
                     Puppet::Event.new(
                         :event => event,
                         :change => self,
@@ -87,7 +91,7 @@ module Puppet
                 #    pname = pname.id2name
                 #end
                     #:state => @state,
-                Puppet.notice "Failed: " + @state.change_to_s
+                @state.parent.log "Failed: " + @state.change_to_s
                 return Puppet::Event.new(
                     :event => pname + "_failed",
                     :change => self,
