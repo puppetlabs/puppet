@@ -1,299 +1,329 @@
-#!/usr/local/bin/ruby -w
-
-# $Id$
+# Define the different packaging systems.  Each package system is implemented
+# in a module, which then gets used to individually extend each package object.
+# This allows packages to exist on the same machine using different packaging
+# systems.
 
 require 'puppet/type/state'
 
 module Puppet
     class PackageError < Puppet::Error; end
 
-    # packaging types are defined first so that we can retrieve the entire
-    # list for documentation extraction
-    class PackagingType
-        @params = [:list, :query, :remove, :install]
-        attr_writer(*@params)
+    module PackagingType
+        # The packaging system for Debian systems.
+        module DPKG
+            def query
+                packages = []
 
-        class << self
-            attr_reader :params
-        end
+                # dpkg only prints as many columns as you have available
+                # which means we don't get all of the info
+                # stupid stupid
+                oldcol = ENV["COLUMNS"]
+                ENV["COLUMNS"] = "500"
+                fields = [:desired, :status, :error, :name, :version, :description]
 
-        @@types = Hash.new(false)
+                hash = {}
+                # list out our specific package
+                open("| dpkg -l %s 2>/dev/null" % self.name) { |process|
+                    # our regex for matching dpkg output
+                    regex = %r{^(.)(.)(.)\s(\S+)\s+(\S+)\s+(.+)$}
 
-        def PackagingType.types
-            @@types.keys
-        end
+                    # we only want the last line
+                    lines = process.readlines
+                    # we've got four header lines, so we should expect all of those
+                    # plus our output
+                    if lines.length < 5
+                        return nil
+                    end
 
-        def PackagingType.[](name)
-            if @@types.include?(name)
-                return @@types[name]
-            else
-                Puppet.warning name.inspect
-                Puppet.warning @@types.keys.collect { |key|
-                    key.inspect
-                }.join(" ")
-                return nil
-            end
-        end
+                    line = lines[-1]
 
-        # whether a package is installed or not
-        def [](name)
-            return @packages[name]
-        end
+                    if match = regex.match(line)
+                        fields.zip(match.captures) { |field,value|
+                            hash[field] = value
+                        }
+                        #packages.push Puppet::Type::Package.installedpkg(hash)
+                    else
+                        raise Puppet::DevError,
+                            "failed to match dpkg line %s" % line
+                    end
+                }
+                ENV["COLUMNS"] = oldcol
 
-        @params.each { |method|
-            self.send(:define_method, method) { |pkg|
-                # retrieve the variable
-                var = eval("@" + method.id2name)
-                if var.is_a?(Proc)
-                    var.call(pkg)
-                else
-                    raise "only blocks are supported right now"
+                if hash[:error] != " "
+                    raise Puppet::PackageError.new(
+                        "Package %s, version %s is in error state: %s" %
+                            [hash[:name], hash[:install], hash[:error]]
+                    )
                 end
-            }
-        }
-        
-        def initialize(name)
-            if block_given?
-                yield self
+
+                if hash[:status] == "i"
+                    hash[:install] = hash[:version]
+                else
+                    hash[:install] = :notinstalled
+                end
+
+                return hash
             end
 
-            @packages = Hash.new(false)
-            @@types[name] = self
+            def list
+                packages = []
+
+                # dpkg only prints as many columns as you have available
+                # which means we don't get all of the info
+                # stupid stupid
+                oldcol = ENV["COLUMNS"]
+                ENV["COLUMNS"] = "500"
+
+                # list out all of the packages
+                open("| dpkg -l") { |process|
+                    # our regex for matching dpkg output
+                    regex = %r{^(\S+)\s+(\S+)\s+(\S+)\s+(.+)$}
+                    fields = [:status, :name, :install, :description]
+                    hash = {}
+
+                    5.times { process.gets } # throw away the header
+
+                    # now turn each returned line into a package object
+                    process.each { |line|
+                        if match = regex.match(line)
+                            hash.clear
+
+                            fields.zip(match.captures) { |field,value|
+                                hash[field] = value
+                            }
+                            packages.push Puppet::Type::Package.installedpkg(hash)
+                        else
+                            raise Puppet::DevError,
+                                "Failed to match dpkg line %s" % line
+                        end
+                    }
+                }
+                ENV["COLUMNS"] = oldcol
+
+                return packages
+            end
+
+            def remove
+                cmd = "dpkg -r %s" % self.name
+                output = %x{#{cmd} 2>&1}
+                if $? != 0
+                    raise Puppet::PackageError.new(output)
+                end
+            end
         end
+        
+        # A derivative of DPKG; this is how most people actually manage
+        # Debian boxes, and the only thing that differs is that it can
+        # install packages from remote sites.
+        module APT
+            include DPKG
 
-        def retrieve
-            @packages.clear()
+            # Install a package using 'apt-get'.
+            def install
+                cmd = "apt-get install %s" % self.name
 
-            @packages = self.list()
+                Puppet.info "Executing %s" % cmd.inspect
+                output = %x{#{cmd} 2>&1}
+
+                unless $? == 0
+                    raise Puppet::PackageError.new(output)
+                end
+            end
         end
-    end
+        
+        module RPM
+            def query
+                fields = {
+                    :name => "NAME",
+                    :install => "VERSION",
+                    :description => "DESCRIPTION"
+                }
 
-    PackagingType.new(:apt) { |type|
-        type.query = proc { |pkg|
-            packages = []
+                cmd = "rpm -q --qf '%s\n'" %
+                    %w{NAME VERSION DESCRIPTION}.collect { |str|
+                        "%{#{str}}"
+                    }.join(" ")
 
-            # dpkg only prints as many columns as you have available
-            # which means we don't get all of the info
-            # stupid stupid
-            oldcol = ENV["COLUMNS"]
-            ENV["COLUMNS"] = "500"
-            fields = [:desired, :status, :error, :name, :version, :description]
+                # list out all of the packages
+                str = %x{#{cmd} 2>/dev/null}.chomp
 
-            hash = {}
-            # list out all of the packages
-            open("| dpkg -l %s 2>/dev/null" % pkg) { |process|
-                # our regex for matching dpkg output
-                regex = %r{^(.)(.)(.)\s(\S+)\s+(\S+)\s+(.+)$}
-
-                # we only want the last line
-                lines = process.readlines
-                # we've got four header lines, so we should expect all of those
-                # plus our output
-                if lines.length < 5
+                if $? != 0
                     return nil
                 end
 
-                line = lines[-1]
-
-                if match = regex.match(line)
+                regex = %r{^(\S+)\s+(\S+)\s+(.+)}
+                fields = [:name, :install, :description]
+                hash = {}
+                if match = regex.match(str)
                     fields.zip(match.captures) { |field,value|
                         hash[field] = value
                     }
-                    #packages.push Puppet::Type::Package.installedpkg(hash)
                 else
-                    raise "failed to match dpkg line %s" % line
+                    raise Puppet::DevError,
+                        "Failed to match rpm output '%s'" %
+                        str
                 end
-            }
-            ENV["COLUMNS"] = oldcol
 
-            if hash[:error] != " "
-                raise Puppet::PackageError.new(
-                    "Package %s, version %s is in error state: %s" %
-                        [hash[:name], hash[:install], hash[:error]]
-                )
+                return hash
             end
 
-            if hash[:status] == "i"
-                hash[:install] = hash[:version]
-            else
-                # this isn't really correct, but we'll settle for it for now
-                hash[:install] = nil
-            end
+            def list
+                packages = []
 
-            return hash
-        }
-        type.list = proc {
-            packages = []
+                # list out all of the packages
+                open("| rpm -q -a --qf '%{NAME} %{VERSION}\n'") { |process|
+                    # our regex for matching dpkg output
+                    regex = %r{^(\S+)\s+(\S+)}
+                    fields = [:name, :install]
+                    hash = {}
 
-            # dpkg only prints as many columns as you have available
-            # which means we don't get all of the info
-            # stupid stupid
-            oldcol = ENV["COLUMNS"]
-            ENV["COLUMNS"] = "500"
+                    # now turn each returned line into a package object
+                    process.each { |line|
+                        if match = regex.match(line)
+                            hash.clear
 
-            # list out all of the packages
-            open("| dpkg -l") { |process|
-                # our regex for matching dpkg output
-                regex = %r{^(\S+)\s+(\S+)\s+(\S+)\s+(.+)$}
-                fields = [:status, :name, :install, :description]
-                hash = {}
-
-                5.times { process.gets } # throw away the header
-
-                # now turn each returned line into a package object
-                process.each { |line|
-                    if match = regex.match(line)
-                        hash.clear
-
-                        fields.zip(match.captures) { |field,value|
-                            hash[field] = value
-                        }
-                        packages.push Puppet::Type::Package.installedpkg(hash)
-                    else
-                        raise "failed to match dpkg line %s" % line
-                    end
-                }
-            }
-            ENV["COLUMNS"] = oldcol
-
-            return packages
-        }
-
-        # we need package retrieval mechanisms before we can have package
-        # installation mechanisms...
-        type.install = proc { |pkg|
-            cmd = "apt-get install %s" % pkg
-
-            Puppet.info "Executing %s" % cmd.inspect
-            output = %x{#{cmd} 2>&1}
-
-            unless $? == 0
-                raise Puppet::PackageError.new(output)
-            end
-        }
-
-        type.remove = proc { |pkg|
-            cmd = "dpkg -r %s" % pkg.name
-            output = %x{#{cmd}}
-            if $? != 0
-                raise Puppet::PackageError.new(output)
-            end
-        }
-    }
-
-    PackagingType.new(:rpm) { |type|
-        type.list = proc {
-            packages = []
-
-            # dpkg only prints as many columns as you have available
-            # which means we don't get all of the info
-            # stupid stupid
-            oldcol = ENV["COLUMNS"]
-            ENV["COLUMNS"] = "500"
-
-            # list out all of the packages
-            open("| rpm -q -a --qf '%{NAME} %{VERSION}\n'") { |process|
-                # our regex for matching dpkg output
-                regex = %r{^(\S+)\s+(\S+)}
-                fields = [:name, :install]
-                hash = {}
-
-                # now turn each returned line into a package object
-                process.each { |line|
-                    if match = regex.match(line)
-                        hash.clear
-
-                        fields.zip(match.captures) { |field,value|
-                            hash[field] = value
-                        }
-                        packages.push Puppet::Type::Package.installedpkg(hash)
-                    else
-                        raise "failed to match rpm line %s" % line
-                    end
-                }
-            }
-            ENV["COLUMNS"] = oldcol
-
-            return packages
-        }
-
-        # we need package retrieval mechanisms before we can have package
-        # installation mechanisms...
-        #type.install = proc { |pkg|
-        #    raise "installation not implemented yet"
-        #}
-
-        type.remove = proc { |pkg|
-            cmd = "rpm -e %s" % pkg.name
-            output = %x{#{cmd}}
-            if $? != 0
-                raise output
-            end
-        }
-    }
-
-    PackagingType.new(:sunpkg) { |type|
-        type.list = proc {
-            packages = []
-            hash = {}
-            names = {
-                "PKGINST" => :name,
-                "NAME" => nil,
-                "CATEGORY" => :category,
-                "ARCH" => :platform,
-                "VERSION" => :install,
-                "BASEDIR" => :root,
-                "HOTLINE" => nil,
-                "EMAIL" => nil,
-                "VENDOR" => :vendor,
-                "DESC" => :description,
-                "PSTAMP" => nil,
-                "INSTDATE" => nil,
-                "STATUS" => nil,
-                "FILES" => nil
-            }
-
-            # list out all of the packages
-            open("| pkginfo -l") { |process|
-                # we're using the long listing, so each line is a separate piece
-                # of information
-                process.each { |line|
-                    case line
-                    when /^$/:
-                        packages.push Puppet::Type::Package.installedpkg(hash)
-                        hash.clear
-                    when /\s*(\w+):\s+(.+)/:
-                        name = $1
-                        value = $2
-                        if names.include?(name)
-                            unless names[name].nil?
-                                hash[names[name]] = value
-                            end
+                            fields.zip(match.captures) { |field,value|
+                                hash[field] = value
+                            }
+                            packages.push Puppet::Type::Package.installedpkg(hash)
                         else
-                            raise "Could not find %s" % name
+                            raise "failed to match rpm line %s" % line
                         end
-                    when /\s+\d+.+/:
-                        # nothing; we're ignoring the FILES info
-                    end
+                    }
                 }
-            }
-            return packages
-        }
 
-        # we need package retrieval mechanisms before we can have package
-        # installation mechanisms...
-        #type.install = proc { |pkg|
-        #    raise "installation not implemented yet"
-        #}
-
-        type.remove = proc { |pkg|
-            cmd = "pkgrm -n %s" % pkg.name
-            output = %x{#{cmd}}
-            if $? != 0
-                raise output
+                return packages
             end
-        }
-    }
+
+            # we need package retrieval mechanisms before we can have package
+            # installation mechanisms...
+            #type.install = proc { |pkg|
+            #    raise "installation not implemented yet"
+            #}
+
+            def remove
+                cmd = "rpm -e %s" % self.name
+                output = %x{#{cmd}}
+                if $? != 0
+                    raise output
+                end
+            end
+        end
+        
+        module Sun
+            def query
+                names = {
+                    "PKGINST" => :name,
+                    "NAME" => nil,
+                    "CATEGORY" => :category,
+                    "ARCH" => :platform,
+                    "VERSION" => :install,
+                    "BASEDIR" => :root,
+                    "HOTLINE" => nil,
+                    "EMAIL" => nil,
+                    "VENDOR" => :vendor,
+                    "DESC" => :description,
+                    "PSTAMP" => nil,
+                    "INSTDATE" => nil,
+                    "STATUS" => nil,
+                    "FILES" => nil
+                }
+
+                hash = {}
+
+                # list out all of the packages
+                open("| pkginfo -l %s 2>/dev/null" % self.name) { |process|
+                    # we're using the long listing, so each line is a separate
+                    # piece of information
+                    process.each { |line|
+                        case line
+                        when /^$/:  # ignore
+                        when /\s*([A-Z]+):\s+(.+)/:
+                            name = $1
+                            value = $2
+                            if names.include?(name)
+                                unless names[name].nil?
+                                    hash[names[name]] = value
+                                end
+                            else
+                                Puppet.err "'pkginfo' returned invalid name %s" %
+                                    name
+                            end
+                        when /\s+\d+.+/:
+                            # nothing; we're ignoring the FILES info
+                        end
+                    }
+                }
+
+                if hash.empty?
+                    return nil
+                else
+                    return hash
+                end
+            end
+
+            def list
+                packages = []
+                hash = {}
+                names = {
+                    "PKGINST" => :name,
+                    "NAME" => nil,
+                    "CATEGORY" => :category,
+                    "ARCH" => :platform,
+                    "VERSION" => :install,
+                    "BASEDIR" => :root,
+                    "HOTLINE" => nil,
+                    "EMAIL" => nil,
+                    "VENDOR" => :vendor,
+                    "DESC" => :description,
+                    "PSTAMP" => nil,
+                    "INSTDATE" => nil,
+                    "STATUS" => nil,
+                    "FILES" => nil
+                }
+
+                # list out all of the packages
+                open("| pkginfo -l") { |process|
+                    # we're using the long listing, so each line is a separate
+                    # piece of information
+                    process.each { |line|
+                        case line
+                        when /^$/:
+                            packages.push Puppet::Type::Package.installedpkg(hash)
+                            hash.clear
+                        when /\s*(\w+):\s+(.+)/:
+                            name = $1
+                            value = $2
+                            if names.include?(name)
+                                unless names[name].nil?
+                                    hash[names[name]] = value
+                                end
+                            else
+                                raise "Could not find %s" % name
+                            end
+                        when /\s+\d+.+/:
+                            # nothing; we're ignoring the FILES info
+                        end
+                    }
+                }
+                return packages
+            end
+
+            # we need package retrieval mechanisms before we can have package
+            # installation mechanisms...
+            #type.install = proc { |pkg|
+            #    raise "installation not implemented yet"
+            #}
+
+            def remove
+                cmd = "pkgrm -n %s" % self.name
+                output = %x{#{cmd}}
+                if $? != 0
+                    raise output
+                end
+            end
+        end
+    end
 
     class State
         class PackageInstalled < Puppet::State
@@ -306,20 +336,16 @@ module Puppet
                 unless defined? @is
                     @parent.retrieve
                 end
-
-                # if the only requirement is that it's installed, then settle
-                # for that
-                if @should == true
-                    if @is
-                        @is = true
-                    end
-                end
             end
 
             def should=(value)
                 # possible values are: true, false, and a version number
-                if value == true or value == false or value =~ /^[0-9]/
+                case value
+                #when true, /^[0-9]/:
+                when true:
                     @should = value
+                when false:
+                    @should = :notinstalled
                 else
                     raise Puppet::Error.new(
                         "Invalid install value %s" % value
@@ -328,24 +354,27 @@ module Puppet
             end
 
             def sync
-                type = @parent.pkgtype
-                begin
-                    if @should == false
-                        type.remove(@parent)
-                    else
-                        type.install(@parent)
-                    end
-                rescue => detail
-                    raise Puppet::Error.new(
-                        "Could not install package %s: %s" % [@parent.name, detail]
-                    )
+                method = nil
+                event = nil
+                case @should
+                when true:
+                    method = :install
+                    event = :package_installed
+                when :notinstalled:
+                    method = :remove
+                    event = :package_removed
+                else
+                    raise Puppet::Error, "Invalid should value %s" % @should
                 end
 
-                if @should == false
-                    return :package_removed
+                if @parent.respond_to?(method)
+                    @parent.send(method)
                 else
-                    return :package_installed
+                    raise Puppet::Error, "Packages of type %s do not support %s" %
+                        [@parent[:type], method]
                 end
+
+                return event
             end
         end
     end
@@ -357,15 +386,34 @@ module Puppet
         class Package < Type
             attr_reader :version, :pkgtype
 
+            @pkgtypes = [
+                Puppet::PackagingType::APT,
+                Puppet::PackagingType::DPKG,
+                Puppet::PackagingType::RPM,
+                Puppet::PackagingType::Sun
+            ]
+
+            @pkgtypehash = {}
+
+            # Now collect the name of each type and store it thusly
+            @pkgtypes.each { |type|
+                if type.respond_to?(:typename)
+                    @pkgtypehash[type.typename] = type
+                else
+                    name = type.to_s.sub(/.+::/, '').downcase.intern
+                    @pkgtypehash[name] = type
+                end
+            }
+
             @states = [
                 Puppet::State::PackageInstalled
             ]
+                #:version,
             @parameters = [
                 :name,
                 :type,
                 :instance,
                 :status,
-                :version,
                 :category,
                 :platform,
                 :root,
@@ -375,11 +423,12 @@ module Puppet
 
             @paramdoc[:name] = "The package name."
             @paramdoc[:type] = "The package format.  Currently supports " +
-                PackagingType.types.collect{|p| "``" + p.to_s + "``"}.join(", ") +
-                "."
+                @pkgtypes.collect {|t|
+                    "``" + t.name.to_s + "``"
+                }.join(", ") + "."
             @paramdoc[:instance] = "A read-only parameter set by the package."
             @paramdoc[:status] = "A read-only parameter set by the package."
-            @paramdoc[:version] = "A read-only parameter set by the package."
+            #@paramdoc[:version] = "A read-only parameter set by the package."
             @paramdoc[:category] = "A read-only parameter set by the package."
             @paramdoc[:platform] = "A read-only parameter set by the package."
             @paramdoc[:root] = "A read-only parameter set by the package."
@@ -394,10 +443,9 @@ module Puppet
             @listed = false
 
             @allowedmethods = [:types]
-            @@types = nil
 
-            @@default = nil
-            @@platform = nil
+            @default = nil
+            @platform = nil
 
             class << self
                 attr_reader :listed
@@ -408,62 +456,52 @@ module Puppet
                 super
             end
 
+            # Cache and return the default package type for our current
+            # platform.
             def self.default
-                if @@default.nil?
+                if @default.nil?
                     self.init
                 end
 
-                return @@default
+                return @default
             end
 
-            def self.defaulttype
-                return Puppet::PackagingType[self.default]
-            end
-
+            # Figure out what the default package type is for the platform
+            # on which we're running.
             def self.init
-                unless @@platform = Facter["operatingsystem"].value.downcase
+                unless @platform = Facter["operatingsystem"].value.downcase
                     raise Puppet::DevError.new(
                         "Must know platform for package management"
                     )
                 end
-                case @@platform
-                when "sunos": @@default = :sunpkg
+                case @platform
+                when "sunos": @default = :sun
                 when "linux":
                     case Facter["distro"].value.downcase
-                    when "gentoo": raise "No support for gentoo yet"
-                    when "debian": @@default = :apt
-                    when "redhat", "fedora": @@default = :rpm
+                    when "gentoo":
+                        Puppet.notice "No support for gentoo yet"
+                        @default = nil
+                    when "debian": @default = :apt
+                    when "redhat", "fedora": @default = :rpm
                     else
-                        #raise "No default type for " + Puppet::Fact["distro"]
                         Puppet.warning "Using rpm as default type for %s" %
                             Facter["distro"].value
-                        @@default = :rpm
+                        @default = :rpm
                     end
                 else
-                    @@default = nil
-                    #raise Puppet::Error.new(
-                    #    "No default type for " + Puppet::Fact["operatingsystem"]
-                    #)
+                    @default = nil
                 end
-            end
-
-            def self.types(array)
-                unless array.is_a?(Array)
-                    array = [array]
-                end
-                @@types = array
-                Puppet.debug "Types are %s" % array.join(" ")
             end
 
             def self.getpkglist
-                if @@types.nil?
-                    if @@default.nil?
+                if @types.nil?
+                    if @default.nil?
                         self.init
                     end
-                    @@types = [@@default]
+                    @types = [@default]
                 end
 
-                list = @@types.collect { |type|
+                list = @types.collect { |type|
                     if typeobj = Puppet::PackagingType[type]
                         # pull all of the objects
                         typeobj.list
@@ -523,25 +561,12 @@ module Puppet
                 end
             end
 
+            # Retrieve a package type by name; names are symbols.
             def self.pkgtype(pkgtype)
-                if @typeary.length != @typehash.length
-                    self.buildpkgtypehash
+                if pkgtype.is_a?(String)
+                    pkgtype = pkgtype.intern
                 end
-                
-                return @typehash[pkgtype]
-            end
-
-            def addis(state,value)
-                if stateklass = self.class.validstate?(state)
-                    @states[state] = stateklass.new(:parent => self)
-                    Puppet.debug "Adding is for %s as %s" % [state, value]
-                    @states[state].is = value
-                elsif self.class.validparameter?(state)
-                    self[state] = value
-                else
-                    raise Puppet::DevError.new("Invalid package state %s" % state)
-                end
-
+                return @pkgtypehash[pkgtype]
             end
 
             # okay, there are two ways that a package could be created...
@@ -549,85 +574,46 @@ module Puppet
             # be set in 'should', or through comparing against the system, in which
             # case the hash's values should be set in 'is'
             def initialize(hash)
-                unless hash.include?(:install) or hash.include?("install")
-                    Puppet.debug "Defaulting to installing a package"
-                    hash[:install] = true
-                end
-
                 super
 
+                unless @states.include?(:install)
+                    Puppet.debug "Defaulting to installing a package"
+                    self[:install] = true
+                end
+
                 unless @parameters.include?(:type)
-                    if @@default.nil?
-                        self.class.init
-                    end
-                    self[:type] = @@default
+                    self[:type] = self.class.default
+                end
+            end
+
+            # Set the package type parameter.  Looks up the corresponding
+            # module and then extends the 'install' state.
+            def paramtype=(typename)
+                if type = self.class.pkgtype(typename)
+                    Puppet.debug "Extending %s with %s" % [self.name, type]
+                    self.extend(type)
+                    @parameters[:type] = type
+                else
+                    raise Puppet::Error, "Invalid package type %s" % typename
                 end
             end
 
             def retrieve
-                unless pkgtype = Puppet::PackagingType[@parameters[:type]]
-                    raise Puppet::DevError.new(
-                        "No support for type %s" % @parameters[:type]
-                    )
-                end
-
-                begin
-                    hash = pkgtype.query(self)
-                rescue => error
-                    Puppet.err "Cannot install %s: %s" %
-                        [self.name, error.to_s]
-
-                    @states.delete(:install)
-                    return
-                end
-
-                if hash.nil? and @states.include?(:install)
-                    Puppet.info "Removing install"
-                    @states[:install].is = nil
-                    #return
-                end
-
-                hash.each { |name,value|
-                    if self.class.validstate?(name)
-                        if @states.include?(name)
-                            unless @states[name]
-                                raise Puppet::DevError,
-                                    "State %s on package %s is %s" %
-                                    [name, @name, @states[name]]
-                            end
-                            @states[name].is = value
-                        else
-                            # silently ignore any returned states
-                            # that we're not managing
-                            # this is highly unlikely to happen
-                            Puppet.info "%s missing state %s" %
-                                [self.name, name]
+                if hash = self.query
+                    hash.each { |param, value|
+                        unless self.class.validarg?(param)
+                            hash.delete(param)
                         end
-                    elsif self.class.validparameter?(name)
-                        self[name] = value
-                    else
-                        # silently ignore anything that's not a valid state
-                        # or param
-                    end
-                }
+                    }
 
-                # now let them all handle things as necessary
-                @states.each { |name, state|
-                    state.retrieve
-                }
-            end
-
-            def paramtype=(typename)
-                @parameters[:type] = typename
-                pkgtype = nil
-
-                unless pkgtype = Puppet::PackagingType[typename]
-                    raise Puppet::Error.new(
-                        "Could not find package type %s" % typename
-                    )
+                    hash.each { |param, value|
+                        self.is = [param, value]
+                    }
+                else
+                    self.class.validstates.each { |name, state|
+                        self.is = [name, :notinstalled]
+                    }
                 end
-
-                @pkgtype = pkgtype
             end
         end # Puppet::Type::Package
     end
@@ -676,3 +662,5 @@ module Puppet
         }
     }
 end
+
+# $Id$

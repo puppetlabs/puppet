@@ -40,8 +40,6 @@ module Puppet
                     [@state, @should]
                 #Puppet.debug "%s is noop" % @state
                 return nil
-            else
-                Puppet.notice "Noop is %s" % @state.noop
             end
 
             begin

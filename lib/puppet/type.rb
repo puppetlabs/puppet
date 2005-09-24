@@ -311,6 +311,24 @@ class Type < Puppet::Element
     end
     #---------------------------------------------------------------
 
+    # Allow an outside party to specify the 'is' value for a state.  The
+    # arguments are an array because you can't use parens with 'is=' calls.
+    # Most classes won't use this.
+    def is=(ary)
+        param, value = ary
+        if param.is_a?(String)
+            param = param.intern
+        end
+        if self.class.validstate?(param)
+            unless @states.include?(param)
+                self.newstate(param)
+            end
+            @states[param].is = value
+        else
+            self[param] = value
+        end
+    end
+
     #---------------------------------------------------------------
     # add an object to the master list of Type instances
     # I'm pretty sure this is currently basically unused

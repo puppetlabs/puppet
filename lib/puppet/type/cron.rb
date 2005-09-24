@@ -399,26 +399,9 @@ module Puppet
                 end
             end
 
-            # Because the current value is retrieved by the +@crontype+ module,
-            # the +is+ value on the state is set by an outside party.  Cron is
-            # currently the only class that needs this, so this method is provided
-            # specifically for it.
-            def is=(ary)
-                param, value = ary
-                if param.is_a?(String)
-                    param = param.intern
-                end
-                if self.class.validstate?(param)
-                    self.newstate(param)
-                    @states[param].is = value
-                else
-                    self[param] = value
-                end
-            end
-
-            # A method used to do parameter input handling.  Converts integers in
-            # string form to actual integers, and returns the value if it's an integer
-            # or false if it's just a normal string.
+            # A method used to do parameter input handling.  Converts integers
+            # in string form to actual integers, and returns the value if it's
+            # an integer or false if it's just a normal string.
             def numfix(num)
                 if num =~ /^\d+$/
                     return num.to_i

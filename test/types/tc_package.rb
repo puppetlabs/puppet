@@ -1,7 +1,7 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk"
+    $puppetbase = "../.."
 end
 
 require 'puppettest'
@@ -9,25 +9,11 @@ require 'puppet'
 require 'test/unit'
 require 'facter'
 
-Puppet[:loglevel] = :debug if __FILE__ == $0
-
-# $Id$
-
 $platform = Facter["operatingsystem"].value
 
-unless Puppet::Type::Package.defaulttype
+unless Puppet::Type::Package.default
     puts "No default package type for %s; skipping package tests" % $platform
 else
-class TestPackagingType < TestPuppet
-    def test_listing
-        type = Puppet::Type::Package.defaulttype
-        assert(type)
-
-        #assert_nothing_raised() {
-        #    type.list(nil)
-        #}
-    end
-end
 
 class TestPackageSource < TestPuppet
     def test_filesource
@@ -60,35 +46,12 @@ class TestPackages < FileTesting
         return comp
     end
 
-    def test_checking
-#        pkg = nil
-#        assert_nothing_raised() {
-#            pkg = @list[rand(@list.length)]
-#        }
-#        assert(pkg[:install])
-#        assert(! pkg.state(:install).should)
-#        assert_nothing_raised() {
-#            pkg.evaluate
-#        }
-#        assert_nothing_raised() {
-#            pkg[:install] = pkg[:install]
-#        }
-#        assert_nothing_raised() {
-#            pkg.evaluate
-#        }
-#        assert(pkg.insync?)
-#        assert_nothing_raised() {
-#            pkg[:install] = "1.2.3.4"
-#        }
-#        assert(!pkg.insync?)
-    end
-
     def test_retrievepkg
         pkg = nil
 
         case $platform
-        #when "SunOS"
-        #    type = "SMCossh"
+        when "SunOS"
+            pkg = "SMCossh"
         when "Linux"
             case Facter["distro"].value
             when "Debian": pkg = "ssh"
@@ -109,23 +72,42 @@ class TestPackages < FileTesting
             )
         }
 
+        assert(obj, "could not create package")
+
         assert_nothing_raised {
             obj.retrieve
         }
+
+        assert(obj.is(:install), "Could not retrieve package version")
     end
 
-    def test_zinstallpkg
-        unless Process.uid == 0
-            Puppet.notice "Test as root for installation tests"
-            return
-        end
+    def test_nosuchpkg
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet::Type::Package.create(
+                :name => "thispackagedoesnotexist"
+            )
+        }
+
+        assert_nothing_raised {
+            obj.retrieve
+        }
+
+        assert_equal(:notinstalled, obj.is(:install),
+            "Somehow retrieved unknown pkg's version")
+    end
+
+    unless Process.uid == 0
+        $stderr.puts "Run as root to perform package installation tests"
+    else
+    def test_installpkg
         pkgs = nil
         case $platform
         #when "SunOS"
         #    type = "sunpkg"
         when "Linux"
             case Facter["distro"].value
-            when "Debian": type = :apt
+            when "Debian":
                 pkgs = %w{zec}
             #when "RedHat": type = :rpm
             else
@@ -151,31 +133,22 @@ class TestPackages < FileTesting
             end
 
             comp = newcomp("package", pkg)
-            trans = nil
-            assert_nothing_raised {
-                trans = comp.evaluate
-            }
-            events = nil
-            assert_nothing_raised {
-                events = trans.evaluate.collect { |event| event.event }
-            }
-            assert_equal([:package_installed],events)
+
+            assert_events(comp, [:package_installed], "package")
 
             assert_nothing_raised {
                 pkg[:install] = false
             }
 
-            assert_nothing_raised {
-                comp.retrieve
-            }
-            assert_nothing_raised {
-               trans = comp.evaluate
-            }
-            assert_nothing_raised {
-                events = trans.evaluate.collect { |event| event.event }
-            }
-            assert_equal([:package_removed],events)
+            pkg.retrieve
+
+            assert(! pkg.insync?, "Package is insync")
+
+            assert_events(comp, [:package_removed], "package")
         }
+    end
     end
 end
 end
+
+# $Id$

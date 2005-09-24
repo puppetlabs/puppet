@@ -110,8 +110,4 @@ class TestType < TestPuppet
 
         assert_equal("testing", group.name, "Could not retrieve name")
     end
-
-    # Test that global noop works
-    def test_zglobalnoop
-    end
 end

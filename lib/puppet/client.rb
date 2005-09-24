@@ -41,7 +41,7 @@ module Puppet
                     method = ary[0]
                     Puppet.info "Defining %s.%s" % [namespace, method]
                     self.send(:define_method,method) { |*args|
-                        Puppet.info "Calling %s" % method
+                        #Puppet.info "Calling %s" % method
                         #Puppet.info "peer cert is %s" % @http.peer_cert
                         #Puppet.info "cert is %s" % @http.cert
                         begin
