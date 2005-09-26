@@ -37,7 +37,7 @@ module Puppet
 
             if @state.noop
                 @state.parent.log "%s should be %s" %
-                    [@state, @should]
+                    [@state, state.should_to_s]
                 #Puppet.debug "%s is noop" % @state
                 return nil
             end
