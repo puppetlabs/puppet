@@ -697,14 +697,14 @@ module Puppet
                     args.delete(:owner)
                 end
 
-                Puppet.notice "returning describe args %s" % args.inspect
                 return args
             end
 
             def retrieve
                 sum = nil
                 
-                unless @stats = self.describe
+                @stats = self.describe
+                if @stats.nil? or @stats[:type].nil?
                     @is = :notdescribed
                     return nil
                 end
