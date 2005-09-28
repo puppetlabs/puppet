@@ -28,22 +28,16 @@ class TestService < TestPuppet
         super
     end
 
-    def mksleeper
+    def mksleeper(hash = {})
+        hash[:name] = "sleeper"
+        hash[:path] = File.join($puppetbase,"examples/root/etc/init.d")
+        hash[:running] = true
         assert_nothing_raised() {
-            return Puppet::Type::Service.create(
-                :name => "sleeper",
-                :path => File.join($puppetbase,"examples/root/etc/init.d"),
-                :running => 1
-            )
+            return Puppet::Type::Service.create(hash)
         }
     end
 
-    def test_process_start
-        sleeper = mksleeper
-        # start it
-        assert_nothing_raised() {
-            sleeper[:running] = 1
-        }
+    def cyclesleeper(sleeper)
         assert_nothing_raised() {
             sleeper.retrieve
         }
@@ -80,15 +74,14 @@ class TestService < TestPuppet
         assert(sleeper.insync?)
     end
 
-    def test_FailOnNoPath
-        serv = nil
-        assert_nothing_raised {
-            serv = Puppet::Type::Service.create(
-                :name => "sleeper"
-            )
-        }
+    def test_processStartWithPattern
+        sleeper = mksleeper(:pattern => "bin/sleeper")
 
-        assert_nil(serv)
-        assert_nil(Puppet::Type::Service["sleeper"])
+        cyclesleeper(sleeper)
+    end
+
+    def test_processStartWithStatus
+        sleeper = mksleeper(:hasstatus => true)
+        cyclesleeper(sleeper)
     end
 end
