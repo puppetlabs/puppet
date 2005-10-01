@@ -9,57 +9,103 @@ require 'puppettest'
 require 'test/unit'
 
 class TestRelationships < TestPuppet
-    def setup
-        super
-        @groups = %x{groups}.chomp.split(/ /)
-        unless @groups.length > 1
-            p @groups
-            raise "You must be a member of more than one group to test this"
-        end
-    end
-
     def newfile
         assert_nothing_raised() {
-            cfile = File.join($puppetbase,"examples/root/etc/configfile")
-            unless Puppet::Type::PFile.has_key?(cfile)
-                Puppet::Type::PFile.create(
-                    :path => cfile,
-                    :check => [:mode, :owner, :group]
-                )
-            end
-            return Puppet::Type::PFile[cfile]
+            return Puppet::Type::PFile.create(
+                :path => tempfile,
+                :check => [:mode, :owner, :group]
+            )
         }
-    end
-
-    def newservice
-        assert_nothing_raised() {
-            unless Puppet::Type::Service.has_key?("sleeper")
-                Puppet::Type::Service.create(
-                    :name => "sleeper",
-                    :path => File.join($puppetbase,"examples/root/etc/init.d"),
-                    :check => [:running]
-                )
-            end
-            return Puppet::Type::Service["sleeper"]
-        }
-    end
-
-    def newcomp(name,*args)
-        comp = nil
-        assert_nothing_raised() {
-            comp = Puppet::Component.new(:name => name)
-        }
-
-        args.each { |arg|
-            assert_nothing_raised() {
-                comp.push arg
-            }
-        }
-
-        return comp
     end
 
     def test_simplerel
+        file1 = newfile()
+        file2 = newfile()
+        assert_nothing_raised {
+            file1[:require] = [file2.class.name, file2.name]
+        }
+
+        deps = []
+        assert_nothing_raised {
+            file1.eachdependency { |obj|
+                deps << obj
+            }
+        }
+
+        assert_equal(1, deps.length, "Did not get dependency")
+
+        assert_nothing_raised {
+            file1.unsubscribe(file2)
+        }
+
+        deps = []
+        assert_nothing_raised {
+            file1.eachdependency { |obj|
+                deps << obj
+            }
+        }
+
+        assert_equal(0, deps.length, "Still have dependency")
+    end
+
+    def test_newsub
+        file1 = newfile()
+        file2 = newfile()
+
+        sub = nil
+        assert_nothing_raised("Could not create subscription") {
+            sub = Puppet::Event::Subscription.new(
+                :source => file1,
+                :target => file2,
+                :event => :ALL_EVENTS,
+                :callback => :refresh
+            )
+        }
+
+        subs = nil
+
+        assert_nothing_raised {
+            subs = Puppet::Event::Subscription.subscribers(file1)
+        }
+        assert_equal(1, subs.length, "Got incorrect number of subs")
+        assert_equal(sub.target, subs[0], "Got incorrect sub")
+
+        deps = nil
+        assert_nothing_raised {
+            deps = Puppet::Event::Subscription.dependencies(file2)
+        }
+        assert_equal(1, deps.length, "Got incorrect number of deps")
+        assert_equal(sub, deps[0], "Got incorrect dep")
+    end
+
+    def test_eventmatch
+        file1 = newfile()
+        file2 = newfile()
+
+        sub = nil
+        assert_nothing_raised("Could not create subscription") {
+            sub = Puppet::Event::Subscription.new(
+                :source => file1,
+                :target => file2,
+                :event => :ALL_EVENTS,
+                :callback => :refresh
+            )
+        }
+
+        assert(sub.match?(:anything), "ALL_EVENTS did not match")
+        assert(! sub.match?(:NONE), "ALL_EVENTS matched :NONE")
+
+        sub.event = :file_created
+
+        assert(sub.match?(:file_created), "event did not match")
+        assert(sub.match?(:ALL_EVENTS), "ALL_EVENTS did not match")
+        assert(! sub.match?(:NONE), "ALL_EVENTS matched :NONE")
+
+        sub.event = :NONE
+
+        assert(! sub.match?(:file_created), "Invalid match")
+        assert(! sub.match?(:ALL_EVENTS), "ALL_EVENTS matched")
+        assert(! sub.match?(:NONE), "matched :NONE")
     end
 end
 

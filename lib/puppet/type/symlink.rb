@@ -167,7 +167,7 @@ module Puppet
                     :source => @target
                 }
 
-                dir = Puppet::Type::PFile.create(args)
+                dir = Puppet::Type::PFile.implicitcreate(args)
                 dir.parent = self
                 Puppet.debug "Got dir %s" % dir.name
                 self.push dir

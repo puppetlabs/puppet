@@ -74,6 +74,7 @@ class TestTransactions < FileTesting
             return Puppet::Type::Service.create(
                 :name => "sleeper",
                 :path => File.join($puppetbase,"examples/root/etc/init.d"),
+                :hasstatus => true,
                 :check => [:running]
             )
         }

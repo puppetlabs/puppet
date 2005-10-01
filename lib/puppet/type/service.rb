@@ -4,10 +4,45 @@
 # can only be managed through the interface of an init script
 # which is why they have a search path for initscripts and such
 
-require 'puppet/type/service/init'
-
 module Puppet
     class State
+        class ServiceEnabled < State
+            @doc = "Whether a service should be enabled to start at boot.
+                **true**/*false*/*runlevel*"
+            @name = :enabled
+
+            def retrieve
+                @is = @parent.enabled?
+            end
+
+            def should=(should)
+                case should
+                when true: @should = :enabled
+                when false: @should = :disabled
+                else
+                    raise Puppet::Error, "Invalid 'enabled' value %s" % should
+                end
+            end
+
+            def sync
+                case @should
+                when :enabled
+                    unless @parent.respond_to?(:enable)
+                        raise Puppet::Error, "Service %s does not support enabling"
+                    end
+                    @parent.enable
+                    return :service_enabled
+                when :disabled
+                    unless @parent.respond_to?(:disable)
+                        raise Puppet::Error,
+                            "Service %s does not support disabling"
+                    end
+                    @parent.disable
+                    return :service_disabled
+                end
+            end
+        end
+
         class ServiceRunning < State
             @doc = "Whether a service should be running.  **true**/*false*"
             @name = :running
@@ -16,9 +51,9 @@ module Puppet
             # i should probably just be using booleans, but for now, i'm not...
             def should=(should)
                 case should
-                when false,0,"0":
+                when false,0,"0", "stopped", :stopped:
                     should = :stopped
-                when true,1,"1":
+                when true,1,"1", :running, "running":
                     should = :running
                 else
                     Puppet.warning "%s: interpreting '%s' as false" %
@@ -106,12 +141,8 @@ module Puppet
 
             # Return the service type we're using.  Default to the Service
             # class itself, but could be set to a module.
-            def self.svctype
-                if defined? @svctype
-                    return @svctype
-                else
-                    return self
-                end
+            class << self
+                attr_accessor :svctype
             end
 
             # Execute a command.  Basically just makes sure it exits with a 0
@@ -176,7 +207,9 @@ module Puppet
             # happen if, for instance, it has an init script (and thus responds to
             # 'statuscmd') but does not have 'hasstatus' enabled.
             def status
-                if self[:status] or (self.respond_to?(:statuscmd) and self.statuscmd)
+                if self[:status] or (
+                    self.respond_to?(:statuscmd) and self.statuscmd
+                )
                     cmd = self[:status] || self.statuscmd
                     output = %x(#{cmd} 2>&1)
                     Puppet.debug "%s status returned %s" %
@@ -226,15 +259,20 @@ module Puppet
             end
 
             # Now load any overlay modules to provide additional functionality
-            case Facter["operatingsystem"].value
+            os = Facter["operatingsystem"].value
+            case os
             when "Linux":
                 case Facter["distro"].value
                 when "Debian":
                     require 'puppet/type/service/init'
                     @svctype = Puppet::ServiceTypes::InitSvc
+
+                    # and then require stupid debian-specific stuff
+                    require 'puppet/type/service/debian'
+                    include Puppet::ServiceTypes::DebianSvc
                 end
             when "SunOS":
-                release = Integer(Facter["operatingsystemrelease"].value)
+                release = Float(Facter["operatingsystemrelease"].value)
                 if release < 5.10
                     require 'puppet/type/service/init'
                     @svctype = Puppet::ServiceTypes::InitSvc

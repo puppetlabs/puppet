@@ -345,22 +345,22 @@ module Puppet
 
             # If we're not root, we can check the values but we cannot change them
             def should=(value)
-                unless Process.uid == 0
-                    @should = nil
-                    @is = nil
-                    unless defined? @@notifieduid
-                        Puppet.notice "Cannot manage ownership unless running as root"
-                        #@parent.delete(self.name)
-                        @@notifieduid = true
-                    end
-                    return
+                #unless Process.uid == 0
+                #    @should = nil
+                #    @is = nil
+                #    unless defined? @@notifieduid
+                #        Puppet.notice "Cannot manage ownership unless running as root"
+                #        #@parent.delete(self.name)
+                #        @@notifieduid = true
+                #    end
+                #    return
                     #if @parent.state(:owner)
                     #    @parent.delete(:owner)
                     #end
                     #raise Puppet::Error.new(
                     #    "Cannot manage ownership unless running as root"
                     #)
-                end
+                #end
                 if value.is_a?(Integer)
                     # verify the user is a valid user
                     begin
@@ -561,16 +561,16 @@ module Puppet
                 gid = nil
                 gname = nil
 
-                unless Process.uid == 0
-                    unless defined? @@notifiedgroup
-                        Puppet.notice(  
-                            "Cannot manage group unless running as root"
-                        )
-                        @@notifiedgroup = true
-                    end
-                    return
-                end
-
+                #unless Process.uid == 0
+                #    unless defined? @@notifiedgroup
+                #        Puppet.notice(  
+                #            "Cannot manage group unless running as root"
+                #        )
+                #        @@notifiedgroup = true
+                #    end
+                #    return
+                #end
+#
                 if value.is_a?(Integer)
                     method = :getgrgid
                 else
@@ -624,16 +624,19 @@ module Puppet
                 end
             end
 
+            # Normal users will only be able to manage certain groups.  Right now,
+            # we'll just let it fail, but we should probably set things up so
+            # that users get warned if they try to change to an unacceptable group.
             def sync
-                unless Process.uid == 0
-                    unless defined? @@notifiedgroup
-                        Puppet.notice(  
-                            "Cannot manage group ownership unless running as root"
-                        )
-                        @@notifiedgroup = true
-                    end
-                    return nil
-                end
+                #unless Process.uid == 0
+                #    unless defined? @@notifiedgroup
+                #        Puppet.notice(  
+                #            "Cannot manage group ownership unless running as root"
+                #        )
+                #        @@notifiedgroup = true
+                #    end
+                #    return nil
+                #end
 
                 Puppet.debug "setting chgrp state to %s" % self.should
                 if @is == :notfound
@@ -660,6 +663,7 @@ module Puppet
             end
         end
 
+        # Copy files from a local or remote source.
         class PFileSource < Puppet::State
             attr_accessor :source, :local
             @doc = "Copy a file over the current file.  Uses `checksum` to
@@ -668,6 +672,7 @@ module Puppet
                 types are *puppet* and *file*."
             @name = :source
 
+            # Ask the file server to describe our file.
             def describe
                 source = @source
 
@@ -700,15 +705,22 @@ module Puppet
                 return args
             end
 
+            # This basically calls describe() on our file, and then sets all
+            # of the local states appropriately.  If the remote file is a normal
+            # file then we set it to copy; if it's a directory, then we just mark
+            # that the local directory should be created.
             def retrieve
                 sum = nil
                 
+                # Describe the remote file.
                 @stats = self.describe
                 if @stats.nil? or @stats[:type].nil?
                     @is = :notdescribed
                     return nil
                 end
 
+                # Take each of the stats and set them as states on the local file
+                # if a value has not already been provided.
                 @stats.each { |stat, value|
                     next if stat == :checksum
                     next if stat == :type
@@ -723,6 +735,8 @@ module Puppet
                         end
                     end
                 }
+
+                # If we're a normal file, then set things up to copy the file down.
                 case @stats[:type]
                 when "file":
                     if sum = @parent.state(:checksum)
@@ -749,6 +763,8 @@ module Puppet
                             @parent.delete(:create)
                         end
                     end
+                # If we're a directory, then do not copy anything, and instead just
+                # create the directory using the 'create' state.
                 when "directory":
                     if state = @parent.state(:create)
                         unless state.should == "directory"
@@ -761,6 +777,7 @@ module Puppet
                     # we'll let the :create state do our work
                     @should = true
                     @is = true
+                # FIXME We should at least support symlinks, I would think...
                 else
                     Puppet.err "Cannot use files of type %s as sources" %
                         @stats[:type]
@@ -769,15 +786,26 @@ module Puppet
                 end
             end
 
+            # The special thing here is that we need to make sure that 'should'
+            # is only set for files, not directories.
             def should=(source)
-                @source = source
+                if ! defined? @stats or @stats.nil?
+                    @source = source
 
-                # stupid hack for now; it'll get overriden
-                @should = source
+                    # stupid hack for now; it'll get overriden
+                    @should = source
+                else
+                    if @stats[:type] == "directory"
+                        @should = true
+                        @is = true
+                    else
+                        @source = source
+                        @should = source
+                    end
+                end
             end
 
             def sync
-                Puppet.notice "syncing %s" % @parent.name
                 if @is == :notdescribed
                     self.retrieve # try again
                     if @is == :notdescribed
@@ -790,6 +818,9 @@ module Puppet
                 end
 
                 unless @stats[:type] == "file"
+                    if @stats[:type] == "directory"
+                            [@parent.name, @is.inspect, @should.inspect]
+                    end
                     raise Puppet::DevError, "Got told to copy non-file %s" %
                         @parent.name
                 end
@@ -803,8 +834,6 @@ module Puppet
                         [path, detail]
                     return nil
                 end
-
-                Puppet.notice "retrieved %s" % path
 
                 unless sourceobj.server.local
                     contents = CGI.unescape(contents)
@@ -1147,14 +1176,13 @@ module Puppet
                         next if var == :name
                         # behave idempotently
                         unless child.should(var) == value
-                            #Puppet.warning "%s is %s, not %s" % [var, child[var], value]
                             child[var] = value
                         end
                     }
                 else # create it anew
                     #notice "Creating new file with args %s" % args.inspect
                     begin
-                        child = klass.create(args)
+                        child = klass.implicitcreate(args)
                         child.parent = self
                         @children << child
                     rescue Puppet::Error => detail
@@ -1301,6 +1329,10 @@ module Puppet
                 unless stat = self.stat(true)
                     Puppet.debug "File %s does not exist" % self.name
                     @states.each { |name,state|
+                        # We've already retreived the source, and we don't
+                        # want to overwrite whatever it did.  This is a bit
+                        # of a hack, but oh well, source is definitely special.
+                        next if name == :source
                         state.is = :notfound
                     }
                     return

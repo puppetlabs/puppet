@@ -22,6 +22,7 @@ class TestBucket < ServerTest
             spin
             name = File.basename(file)
             tmppath = File.join(tmpdir,name)
+            @@tmpfiles << tmppath
 
             # copy the files to our tmp directory so we can modify them...
             File.open(tmppath,File::WRONLY|File::TRUNC|File::CREAT) { |wf|
@@ -167,6 +168,7 @@ class TestBucket < ServerTest
         files = filelist()
 
         tmpdir = File.join(tmpdir(),"tmpfiledir")
+        @@tmpfiles << tmpdir
         FileUtils.mkdir_p(tmpdir)
 
         bucket = nil

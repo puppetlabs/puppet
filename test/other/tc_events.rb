@@ -11,9 +11,9 @@ require 'test/unit'
 # $Id$
 
 class TestEvents < TestPuppet
-    def setup
-        Puppet[:loglevel] = :debug if __FILE__ == $0
+    def teardown
         super
+        Puppet::Event::Subscription.clear
     end
 
     def test_simplesubscribe
@@ -30,17 +30,9 @@ class TestEvents < TestPuppet
 
         @@tmpfiles << "/tmp/eventtestingA"
 
-        comp = Puppet::Type::Component.create(
-            :name => "eventtesting"
-        )
-        comp.push exec
-        trans = comp.evaluate
-        events = nil
-        assert_nothing_raised {
-            events = trans.evaluate
-        }
+        comp = newcomp("eventtesting", file, exec)
 
-        assert_equal(1, events.length)
+        trans = assert_events(comp, [:file_created], "events")
 
         assert_equal(1, trans.triggered?(exec, :refresh))
     end
@@ -74,7 +66,7 @@ class TestEvents < TestPuppet
         assert_equal(0, trans.triggered?(exec, :refresh))
     end
 
-    def test_ladderrequire
+    def test_zladderrequire
         comps = {}
         objects = {}
         fname = "/tmp/eventtestfuntest"

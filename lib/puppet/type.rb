@@ -1,41 +1,19 @@
-#!/usr/local/bin/ruby -w
+# This class is the abstract base class for the mechanism for organizing
+# work.  No work is actually done by this class or its subclasses; rather,
+# the subclasses include states which do the actual work.
+#   See state.rb for how work is actually done.
 
-# $Id$
-
-# included so we can test object types
 require 'puppet'
 require 'puppet/log'
 require 'puppet/element'
 require 'puppet/event'
 require 'puppet/metric'
 require 'puppet/type/state'
-
-
 # see the bottom of the file for the rest of the inclusions
-
-#---------------------------------------------------------------
-# This class is the abstract base class for the mechanism for organizing
-# work.  No work is actually done by this class or its subclasses; rather,
-# the subclasses include states which do the actual work.
-#   See state.rb for how work is actually done.
-
-# our duck type interface -- if your object doesn't match this interface,
-# it won't work
-
-# all of our first-class objects (objects, states, and components) will
-# respond to these methods
-# although states don't inherit from Puppet::Type
-#   although maybe Puppet::State should...
-
-# the default behaviour that this class provides is to just call a given
-# method on each contained object, e.g., in calling 'sync', we just run:
-# object.each { |subobj| subobj.sync() }
-
-# to use this interface, just define an 'each' method and 'include Puppet::Type'
 
 module Puppet
 class Type < Puppet::Element
-    attr_accessor :children, :parameters, :parent
+    attr_accessor :children, :parameters, :parent, :implicit
     attr_accessor :file, :line
     include Enumerable
 
@@ -102,15 +80,10 @@ class Type < Puppet::Element
     @@metaparamdoc[:loglevel] = "Sets the level that information will be logged:
          debug, info, verbose, notice, warning, err, alert, emerg or crit"
 
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
     # class methods dealing with Type management
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
 
     public
 
-    #---------------------------------------------------------------
     # these objects are used for mapping type names (e.g., 'file')
     # to actual object classes; because Type.inherited is
     # called before the <subclass>.name method is defined, we need
@@ -133,7 +106,6 @@ class Type < Puppet::Element
         attr_reader :name, :namevar, :states, :validstates, :parameters
     end
 
-    #---------------------------------------------------------------
     # Create @@typehash from @@typeary.  This is meant to be run
     # multiple times -- whenever it is discovered that the two
     # objects have differents lengths.
@@ -149,16 +121,12 @@ class Type < Puppet::Element
             end
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # iterate across all of the subclasses of Type
     def self.eachtype
         @@typeary.each { |type| yield type }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # The work that gets done for every subclass of Type
     # this is an implicit method called by Ruby for us
     def self.inherited(sub)
@@ -171,9 +139,7 @@ class Type < Puppet::Element
         # get executed, which, um, sucks
         @@typeary.push(sub)
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # all of the variables that must be initialized for each subclass
     def self.initvars
         # all of the instances of this class
@@ -201,9 +167,7 @@ class Type < Puppet::Element
         end
 
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # return a Type instance by name
     def self.type(type)
         unless @@typeary.length == @@typehash.length
@@ -213,18 +177,11 @@ class Type < Puppet::Element
         end
         @@typehash[type]
     end
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
     # class methods dealing with type instance management
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
 
     public
 
-    #---------------------------------------------------------------
     # retrieve a named instance of the current type
     def self.[](name)
         if @objects.has_key?(name)
@@ -233,9 +190,7 @@ class Type < Puppet::Element
             return nil
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # add an instance by name to the class list of instances
     def self.[]=(name,object)
         newobj = nil
@@ -260,28 +215,23 @@ class Type < Puppet::Element
         # and then add it to the master list
         Puppet::Type.push(object)
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # remove all type instances; this is mostly only useful for testing
     def self.allclear
         @@allobjects.clear
+        Puppet::Event::Subscription.clear
         @@typeary.each { |subtype|
             subtype.clear
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # remove all of the instances of a single type
     def self.clear
         if defined? @objects
             @objects.clear
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # remove a specified object
     def self.delete(object)
         if @@allobjects.include?(object)
@@ -292,9 +242,7 @@ class Type < Puppet::Element
             @objects.delete(object.name)
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # iterate across each of the type's instances
     def self.each
         return unless defined? @objects
@@ -302,14 +250,11 @@ class Type < Puppet::Element
             yield instance
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # does the type have an object with the given name?
     def self.has_key?(name)
         return @objects.has_key?(name)
     end
-    #---------------------------------------------------------------
 
     # Allow an outside party to specify the 'is' value for a state.  The
     # arguments are an array because you can't use parens with 'is=' calls.
@@ -329,7 +274,6 @@ class Type < Puppet::Element
         end
     end
 
-    #---------------------------------------------------------------
     # add an object to the master list of Type instances
     # I'm pretty sure this is currently basically unused
     def self.push(object)
@@ -337,18 +281,11 @@ class Type < Puppet::Element
         #debug("adding %s of type %s to master list" %
         #    [object.name,object.class])
     end
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
     # class and instance methods dealing with parameters and states
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
 
     public
 
-    #---------------------------------------------------------------
     # build a per-Type hash, mapping the states to their names
     def self.buildstatehash
         unless defined? @validstates
@@ -368,9 +305,7 @@ class Type < Puppet::Element
             end
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # set the parameters for a type; probably only used by FileRecord
     # objects
     def self.parameters=(params)
@@ -383,9 +318,7 @@ class Type < Puppet::Element
             end
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # does the name reflect a valid state?
     def self.validstate?(name)
         unless @validstates.length == @states.length
@@ -397,9 +330,7 @@ class Type < Puppet::Element
             return false
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # does the name reflect a valid parameter?
     def self.validparameter?(name)
         unless defined? @parameters
@@ -411,9 +342,7 @@ class Type < Puppet::Element
             return false
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def self.validarg?(name)
         if name.is_a?(String)
             name = name.intern
@@ -424,9 +353,7 @@ class Type < Puppet::Element
             return false
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # abstract accessing parameters and states, and normalize
     # access to always be symbols, not strings
     # XXX this returns a _value_, not an object
@@ -455,9 +382,7 @@ class Type < Puppet::Element
             raise TypeError.new("Invalid parameter %s" % [name])
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # abstract setting parameters and states, and normalize
     # access to always be symbols, not strings
     def []=(name,value)
@@ -499,9 +424,7 @@ class Type < Puppet::Element
             raise Puppet::Error, "Invalid parameter %s" % [name]
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # remove a state from the object; useful in testing or in cleanup
     # when an error has been encountered
     def delete(attr)
@@ -511,25 +434,21 @@ class Type < Puppet::Element
             raise Puppet::DevError.new("Undefined state '#{attr}' in #{self}")
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # remove a state from the object; useful in testing or in cleanup
     # when an error has been encountered
     def destroy
         self.class.delete(self)
 
-        @dependencies.each { |dep|
-            dep.unsubscribe(self)
+        Puppet::Event::Subscription.dependencies(self).each { |dep|
+            self.unsubscribe(dep)
         }
 
         if defined? @parent and @parent
             @parent.delete(self)
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # iterate across all children, and then iterate across states
     # we do children first so we're sure that all dependent objects
     # are checked first
@@ -553,9 +472,7 @@ class Type < Puppet::Element
             }
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # iterate across the existing states
     def eachstate
         # states() is a private method
@@ -563,9 +480,7 @@ class Type < Puppet::Element
             yield state
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # retrieve the 'is' value for a specified state
     def is(state)
         if @states.include?(state)
@@ -574,9 +489,7 @@ class Type < Puppet::Element
             return nil
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # retrieve the 'should' value for a specified state
     def should(state)
         if @states.include?(state)
@@ -585,16 +498,12 @@ class Type < Puppet::Element
             return nil
         end
     end
-    #---------------------------------------------------------------
     
-    #---------------------------------------------------------------
     # create a log at specified level
     def log(msg)
         Puppet::Log.create(@metaparams[:loglevel],msg)
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # is the instance a managed instance?  A 'yes' here means that
     # the instance was created from the language, vs. being created
     # in order resolve other questions, such as finding a package
@@ -612,9 +521,7 @@ class Type < Puppet::Element
             return @managed
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # create a new state
     def newstate(name, hash = {})
         if stateklass = self.class.validstate?(name) 
@@ -651,9 +558,7 @@ class Type < Puppet::Element
             raise Puppet::Error, "Invalid parameter %s" % name
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # return the value of a parameter
     def parameter(name)
         unless name.is_a? Symbol
@@ -661,9 +566,7 @@ class Type < Puppet::Element
         end
         return @parameters[name]
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def push(*childs)
         unless defined? @children
             @children = []
@@ -673,9 +576,7 @@ class Type < Puppet::Element
             child.parent = self
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # return an actual type by name; to return the value, use 'inst[name]'
     # FIXME this method should go away
     def state(name)
@@ -684,11 +585,9 @@ class Type < Puppet::Element
         end
         return @states[name]
     end
-    #---------------------------------------------------------------
 
     private
 
-    #---------------------------------------------------------------
     def states
         #debug "%s has %s states" % [self,@states.length]
         tmpstates = []
@@ -702,27 +601,29 @@ class Type < Puppet::Element
         end
         return tmpstates
     end
-    #---------------------------------------------------------------
 
 
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
     # instance methods related to instance intrinsics
     # e.g., initialize() and name()
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
 
     public
 
-    #---------------------------------------------------------------
     # Force users to call this, so that we can merge objects if
     # necessary.  FIXME This method should be responsible for most of the
     # error handling.
     def self.create(hash)
+        # Handle this new object being implicit
+        implicit = hash[:implicit] || false
+        if hash.include?(:implicit)
+            hash.delete(:implicit)
+        end
+
         if name =   hash["name"] || hash[:name] ||
                     hash[self.namevar] || hash[self.namevar.to_s]
             # if the object already exists
             if retobj = self[name]
+                # if only one of our objects is implicit, then it's easy to see
+                # who wins -- the non-implicit one.
                 # merge the new data
                 retobj.merge(hash)
 
@@ -753,21 +654,26 @@ class Type < Puppet::Element
                 self.to_s
         end
     end
-    #---------------------------------------------------------------
+
+    def self.implicitcreate(hash)
+        unless hash.include?(:implicit)
+            hash[:implicit] = true
+        end
+        obj = self.create(hash)
+        obj.implicit = true
+
+        return obj
+    end
 
     # and then make 'new' private
     class << self
         private :new
     end
 
-    #---------------------------------------------------------------
     # initialize the type instance
     def initialize(hash)
         @children = []
         @evalcount = 0
-
-        @subscriptions = []
-        @dependencies = []
 
         # callbacks are per object and event
         @callbacks = Hash.new { |chash, key|
@@ -855,9 +761,7 @@ class Type < Puppet::Element
         #puts caller
         self.class[self.name] = self
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # merge new information with an existing object, checking for conflicts
     # and such
     def merge(hash)
@@ -877,9 +781,7 @@ class Type < Puppet::Element
             end
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # derive the instance name based on class.namevar
     def name
         unless defined? @name and @name
@@ -901,9 +803,7 @@ class Type < Puppet::Element
 
         return @name
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # fix any namevar => param translations
     def argclean(hash)
         # we have to set the name of our object before anything else,
@@ -935,9 +835,7 @@ class Type < Puppet::Element
 
         return hash
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # return the full path to us, for logging and rollback
     # some classes (e.g., FileTypeRecords) will have to override this
     def path
@@ -947,9 +845,7 @@ class Type < Puppet::Element
             return [self.name]
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # retrieve the current value of all contained states
     def retrieve
         # it's important to use the method here, as it follows the order
@@ -958,9 +854,7 @@ class Type < Puppet::Element
             state.retrieve
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # sync the changes to disk, and return the events generated by the changes
     # FIXME this method is essentially obviated, but it's still used by tests
     # and i don't feel like fixing it yet
@@ -977,24 +871,16 @@ class Type < Puppet::Element
         Puppet::Metric.addevents(self.class,self,events)
         return events
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # convert to a string
     def to_s
         self.name
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
     # instance methods dealing with actually doing work
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
 
     public
 
-    #---------------------------------------------------------------
     # this is a retarded hack method to get around the difference between
     # component children and file children
     def self.depthfirst?
@@ -1004,9 +890,7 @@ class Type < Puppet::Element
             return false
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # this method is responsible for collecting state changes
     # we always descend into the children before we evaluate our current
     # states
@@ -1094,9 +978,7 @@ class Type < Puppet::Element
         end
         return changes.flatten
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # if all contained objects are in sync, then we're in sync
     # FIXME I don't think this is used on the type instances any more
     def insync?
@@ -1112,24 +994,16 @@ class Type < Puppet::Element
         #Puppet.debug("%s sync status is %s" % [self,insync])
         return insync
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
     # Meta-parameter methods:  These methods deal with the results
     # of specifying metaparameters
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def self.eachmetaparam
         @@metaparams.each { |param|
             yield param
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # This just marks states that we definitely want to retrieve values
     # on.  There is currently no way to uncheck a parameter.
     def metacheck=(args)
@@ -1149,34 +1023,26 @@ class Type < Puppet::Element
             self.newstate(state)
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # Is the parameter in question a meta-parameter?
     def self.metaparam?(param)
         @@metaparams.include?(param)
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # for each object we require, subscribe to all events that it
     # generates
     # we might reduce the level of subscription eventually, but for now...
     def metarequire=(requires)
         self.handledepends(requires, :NONE, nil)
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # for each object we require, subscribe to all events that it
     # generates
     # we might reduce the level of subscription eventually, but for now...
     def metasubscribe=(requires)
         self.handledepends(requires, :ALL_EVENTS, :refresh)
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def metanoop=(noop)
         if noop == "true" or noop == true
             @noop = true
@@ -1186,20 +1052,15 @@ class Type < Puppet::Element
             raise Puppet::Error.new("Invalid noop value '%s'" % noop)
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def metaonerror=(response)
         Puppet.debug("Would have called metaonerror")
         @onerror = response
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def metaschedule=(schedule)
         @schedule = schedule
     end
-    #---------------------------------------------------------------
     def metaloglevel=(loglevel)
         if loglevel.is_a?(String)
             loglevel.intern
@@ -1214,42 +1075,31 @@ class Type < Puppet::Element
             raise Puppet::Error.new("Invalid loglevel '%s%'" % loglevel)       
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
     # Subscription and relationship methods
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    def addcallback(object, event, method)
-        @callbacks[object][event] = method
-    end
-    #---------------------------------------------------------------
+    #def addcallback(object, event, method)
+    #    @callbacks[object][event] = method
+    #end
 
-    #---------------------------------------------------------------
     # return all objects subscribed to the current object
     def eachdependency
-        @dependencies.each { |dep|
-            yield dep
+        Puppet::Event::Subscription.dependencies(self).each { |dep|
+            yield dep.source
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # return all objects subscribed to the current object
-    def eachsubscriber
-        @subscriptions.each { |sub|
-            yield sub.target
-        }
-    end
-    #---------------------------------------------------------------
+    #def eachsubscriber
+    #    Puppet::Event::Subscriptions.subscribers?(self).each { |sub|
+    #        yield sub.targetobject
+    #    }
+    #end
 
-    #---------------------------------------------------------------
     def handledepends(requires, event, method)
-        # FIXME this should probably test whether requires[0] is an array
-        unless requires.is_a?(Array)
+        # Requires are specified in the form of [type, name], so they're always
+        # an array.  But we want them to be an array of arrays.
+        unless requires[0].is_a?(Array)
             requires = [requires]
         end
         requires.each { |rname|
@@ -1268,77 +1118,72 @@ class Type < Puppet::Element
             end
             Puppet.debug("%s subscribes to %s" % [self.name,object])
 
-            unless @dependencies.include?(object)
-                @dependencies << object
-            end
+            #unless @dependencies.include?(object)
+            #    @dependencies << object
+            #end
 
             # pure requires don't call methods
-            next if method.nil?
+            #next if method.nil?
 
             # ok, both sides of the connection store some information
             # we store the method to call when a given subscription is 
             # triggered, but the source object decides whether 
-            sub = object.subscribe(
+            subargs = {
                 :event => event,
+                :source => object,
                 :target => self
-            )
-            if self.respond_to?(method)
-                self.addcallback(object, event, method)
+            }
+            if method and self.respond_to?(method)
+                subargs[:callback] = method
             end
+            Puppet::Event::Subscription.new(subargs)
+            #if self.respond_to?(method)
+            #    self.addcallback(object, event, method)
+            #end
             #object.addnotify(self)
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    def propagate(event)
-        self.subscribers?(event).each { |object|
-            object.trigger(event, self)
-        }
+    # Trigger any associated subscriptions, and then pass the event up to our
+    # parent.
+    def propagate(event, transaction)
+        Puppet::Event::Subscription.trigger(self, event, transaction)
 
         if defined? @parent
-            @parent.propagate(event)
+            @parent.propagate(event, transaction)
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def subscribe(hash)
         hash[:source] = self
-        sub = Puppet::Event::Subscription.new(hash)
+        Puppet::Event::Subscription.new(hash)
 
         # add to the correct area
-        @subscriptions.push sub
+        #@subscriptions.push sub
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
+    # Unsubscribe from a given object, possibly with a specific event.
     def unsubscribe(object, event = nil)
-        @subscriptions.find_all { |sub|
+        Puppet::Event::Subscription.dependencies(self).find_all { |sub|
             if event
-                sub.target == object and sub.event = event
+                sub.match?(event)
             else
-                sub.target == object
+                sub.source == object
             end
         }.each { |sub|
-            @subscriptions.delete(sub)
+            Puppet::Event::Subscription.delete(sub)
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # return all of the subscriptions to a given event
-    def subscribers?(event)
-        @subscriptions.find_all { |sub|
-            sub.event == event.event or
-                sub.event == :ALL_EVENTS
-        }.collect { |sub|
-            sub.target
-        }
-    end
-    #---------------------------------------------------------------
+    #def subscribers?(event)
+    #    Puppet::Event::Subscription.subscriptions(self).find_all { |sub|
+    #        sub.match?(event)
+    #    }.collect { |sub|
+    #        sub.target
+    #    }
+    #end
 
-    #---------------------------------------------------------------
     # we've received an event
     # we only support local events right now, so we can pass actual
     # objects around, including the transaction object
@@ -1363,23 +1208,14 @@ class Type < Puppet::Element
             }
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
     # Documentation methods
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
     def self.paramdoc(param)
         @paramdoc[param]
     end
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
     def self.metaparamdoc(metaparam)
         @@metaparamdoc[metaparam]
     end
-    #---------------------------------------------------------------
-    #---------------------------------------------------------------
 end # Puppet::Type
 end
 
@@ -1398,3 +1234,5 @@ require 'puppet/type/tidy'
 #require 'puppet/type/typegen'
 #require 'puppet/type/typegen/filetype'
 #require 'puppet/type/typegen/filerecord'
+
+# $Id$

@@ -1,7 +1,7 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk"
+    $puppetbase = "../.."
 end
 
 require 'puppet'
@@ -43,6 +43,7 @@ class TestQuery < Test::Unit::TestCase
                 Puppet::Type::Service.create(
                     :name => "sleeper",
                     :path => File.join($puppetbase,"examples/root/etc/init.d"),
+                    :hasstatus => true,
                     :check => [:running]
                 )
             end

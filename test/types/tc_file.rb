@@ -86,8 +86,66 @@ class TestFile < FileTesting
             end
         end
 
-        # we can really only test changing ownership if we're root
-        if Process.uid == 0
+        uid, name = users.shift
+        us = {}
+        us[uid] = name
+        users.each { |uid, name|
+            # just make sure we don't try to manage users
+            assert_nothing_raised() {
+                file.sync
+            }
+            assert_nothing_raised() {
+                file[:owner] = name
+            }
+            assert_nothing_raised() {
+                file.retrieve
+            }
+            assert_nothing_raised() {
+                file.sync
+            }
+        }
+    end
+
+    def test_zgroup
+        file = mktestfile()
+        [%x{groups}.chomp.split(/ /), Process.groups].flatten.each { |group|
+            assert_nothing_raised() {
+                file[:group] = group
+            }
+            assert(file.state(:group))
+            assert(file.state(:group).should)
+        }
+    end
+
+    if Process.uid == 0
+        def test_ownerasroot
+            file = mktestfile()
+
+            users = {}
+            count = 0
+
+            # collect five users
+            Etc.passwd { |passwd|
+                if count > 5
+                    break
+                else
+                    count += 1
+                end
+                users[passwd.uid] = passwd.name
+            }
+
+            fake = {}
+            # find a fake user
+            while true
+                a = rand(1000)
+                begin
+                    Etc.getpwuid(a)
+                rescue
+                    fake[a] = "fakeuser"
+                    break
+                end
+            end
+
             users.each { |uid, name|
                 assert_nothing_raised() {
                     file[:owner] = name
@@ -122,51 +180,33 @@ class TestFile < FileTesting
                     file[:owner] = uid
                 }
             }
-        else
-            uid, name = users.shift
-            us = {}
-            us[uid] = name
-            users.each { |uid, name|
-                # just make sure we don't try to manage users
+        end
+
+        def test_groupasroot
+            file = mktestfile()
+            [%x{groups}.chomp.split(/ /), Process.groups].flatten.each { |group|
+                assert_nothing_raised() {
+                    file[:group] = group
+                }
+                assert(file.state(:group))
+                assert(file.state(:group).should)
+                assert_nothing_raised() {
+                    file.evaluate
+                }
                 assert_nothing_raised() {
                     file.sync
                 }
                 assert_nothing_raised() {
-                    file[:owner] = name
-                }
-                assert_nothing_raised() {
-                    file.retrieve
+                    file.evaluate
                 }
                 assert(file.insync?())
                 assert_nothing_raised() {
-                    file.sync
+                    file.delete(:group)
                 }
             }
         end
-    end
-
-    def test_group
-        file = mktestfile()
-        [%x{groups}.chomp.split(/ /), Process.groups].flatten.each { |group|
-            assert_nothing_raised() {
-                file[:group] = group
-            }
-            assert(file.state(:group))
-            assert(file.state(:group).should)
-            assert_nothing_raised() {
-                file.evaluate
-            }
-            assert_nothing_raised() {
-                file.sync
-            }
-            assert_nothing_raised() {
-                file.evaluate
-            }
-            assert(file.insync?())
-            assert_nothing_raised() {
-                file.delete(:group)
-            }
-        }
+    else
+        $stderr.puts "Run as root for complete owner and group testing"
     end
 
     def test_create
@@ -371,6 +411,7 @@ class TestFile < FileTesting
 
     def test_recursion
         path = "/tmp/filerecursetest"
+        @@tmpfiles.push path
         tmpfile = File.join(path,"testing")
         system("mkdir -p #{path}")
         cyclefile(path)
@@ -382,7 +423,6 @@ class TestFile < FileTesting
             of.puts "goodness"
         }
         cyclefile(path)
-        @@tmpfiles.push path
     end
 
 =begin
