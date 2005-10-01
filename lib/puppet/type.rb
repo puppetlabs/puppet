@@ -435,20 +435,6 @@ class Type < Puppet::Element
         end
     end
 
-    # remove a state from the object; useful in testing or in cleanup
-    # when an error has been encountered
-    def destroy
-        self.class.delete(self)
-
-        Puppet::Event::Subscription.dependencies(self).each { |dep|
-            self.unsubscribe(dep)
-        }
-
-        if defined? @parent and @parent
-            @parent.delete(self)
-        end
-    end
-
     # iterate across all children, and then iterate across states
     # we do children first so we're sure that all dependent objects
     # are checked first
@@ -577,6 +563,25 @@ class Type < Puppet::Element
         }
     end
 
+    # Remove an object.  The argument determines whether the object's
+    # subscriptions get eliminated, too.
+    def remove(rmdeps)
+        @children.each { |child|
+            child.remove
+        }
+        self.class.delete(self)
+
+        if rmdeps
+            Puppet::Event::Subscription.dependencies(self).each { |dep|
+                self.unsubscribe(dep)
+            }
+        end
+
+        if defined? @parent and @parent
+            @parent.delete(self)
+        end
+    end
+
     # return an actual type by name; to return the value, use 'inst[name]'
     # FIXME this method should go away
     def state(name)
@@ -618,40 +623,51 @@ class Type < Puppet::Element
             hash.delete(:implicit)
         end
 
-        if name =   hash["name"] || hash[:name] ||
+        name = nil
+        unless name =   hash["name"] || hash[:name] ||
                     hash[self.namevar] || hash[self.namevar.to_s]
-            # if the object already exists
-            if retobj = self[name]
-                # if only one of our objects is implicit, then it's easy to see
-                # who wins -- the non-implicit one.
+            raise Puppet::Error, "You must specify a name for objects of type %s" %
+                self.to_s
+        end
+        # if the object already exists
+        if retobj = self[name]
+            # if only one of our objects is implicit, then it's easy to see
+            # who wins -- the non-implicit one.
+            if retobj.implicit? and ! implicit
+                Puppet.warning "Removing implicit %s" % retobj.name
+                # Remove all of the objects, but do not remove their subscriptions.
+                retobj.remove(false)
+
+                # now pass through and create the new object
+            elsif implicit
+                Puppet.warning "Ignoring implicit %s" % name
+
+                return retobj
+            else
                 # merge the new data
                 retobj.merge(hash)
 
                 return retobj
-            else
-                # create it anew
-                # if there's a failure, destroy the object if it got that far
-                begin
-                    obj = new(hash)
-                rescue => detail
-                    if Puppet[:debug]
-                        if detail.respond_to?(:stack)
-                            puts detail.stack
-                        end
-                    end
-                    Puppet.err "Could not create %s: %s" % [name, detail.to_s]
-                    if obj
-                        Puppet.err obj
-                        obj.destroy
-                    elsif obj = self[name]
-                        obj.destroy
-                    end
-                    return nil
+            end
+        end
+
+        # create it anew
+        # if there's a failure, destroy the object if it got that far
+        begin
+            obj = new(hash)
+        rescue => detail
+            if Puppet[:debug]
+                if detail.respond_to?(:stack)
+                    puts detail.stack
                 end
             end
-        else
-            raise Puppet::Error, "You must specify a name for objects of type %s" %
-                self.to_s
+            Puppet.err "Could not create %s: %s" % [name, detail.to_s]
+            if obj
+                obj.remove(true)
+            elsif obj = self[name]
+                obj.remove(true)
+            end
+            return nil
         end
     end
 

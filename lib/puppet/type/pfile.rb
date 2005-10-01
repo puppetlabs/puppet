@@ -1165,24 +1165,38 @@ module Puppet
                 else
                     klass = self.class
                 end
+
+                # We know we're creating an implicit child.  If the child we're
+                # trying to create already exists, then we know it should still
+                # be there, since if it shouldn't be, it would have already been
+                # removed.  Either it's entirely explicit, in which case it
+                # should win, or it's implicit but resulting from a more explicit
+                # child.
                 if child = klass[path]
-                    unless @children.include?(child)
-                        raise Puppet::Error,
-                            "Planned child file %s of %s already exists with parent %s" %
-                            [path, self.name, child.parent]
-                    end
-                    args.each { |var,value|
-                        next if var == :path
-                        next if var == :name
-                        # behave idempotently
-                        unless child.should(var) == value
-                            child[var] = value
-                        end
-                    }
+                    Puppet.warning "Not managing more explicit %s" % child
+                    return nil
+                    #unless @children.include?(child)
+                    #    raise Puppet::Error,
+                    #        "Planned child file %s of %s already exists with parent %s" %
+                    #        [path, self.name, child.parent]
+                    #end
+                    #args.each { |var,value|
+                    #    next if var == :path
+                    #    next if var == :name
+                    #    # behave idempotently
+                    #    unless child.should(var) == value
+                    #        child[var] = value
+                    #    end
+                    #}
                 else # create it anew
                     #notice "Creating new file with args %s" % args.inspect
                     begin
                         child = klass.implicitcreate(args)
+                        
+                        # implicit creation can return nil
+                        if child.nil?
+                            return nil
+                        end
                         child.parent = self
                         @children << child
                     rescue Puppet::Error => detail
