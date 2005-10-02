@@ -131,7 +131,7 @@ module Puppet
                         [@parent.class.netinfodir, @parent.name]
 
                     if key = self.class.netinfokey
-                        cmd << key << "'%s'" % @should
+                        cmd << key << "'%s'" % self.should
                     else
                         raise Puppet::DevError,
                             "Could not find netinfokey for state %s" %

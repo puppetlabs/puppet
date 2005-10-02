@@ -125,6 +125,7 @@ class TestFileBucket < FileTesting
         }
 
         opath = "/tmp/anotherbuckettest"
+        @@tmpfiles << opath
         system("cp /etc/passwd %s" % opath)
 
         origmd5 = File.open(file.name) { |f| newmd5 = Digest::MD5.hexdigest(f.read) }

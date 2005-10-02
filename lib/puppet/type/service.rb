@@ -6,6 +6,7 @@
 
 module Puppet
     class State
+        # Handle whether the service is started at boot time.
         class ServiceEnabled < State
             @doc = "Whether a service should be enabled to start at boot.
                 **true**/*false*/*runlevel*"
@@ -15,17 +16,17 @@ module Puppet
                 @is = @parent.enabled?
             end
 
-            def should=(should)
+            def shouldprocess(should)
                 case should
-                when true: @should = :enabled
-                when false: @should = :disabled
+                when true: return :enabled
+                when false: return :disabled
                 else
                     raise Puppet::Error, "Invalid 'enabled' value %s" % should
                 end
             end
 
             def sync
-                case @should
+                case self.should
                 when :enabled
                     unless @parent.respond_to?(:enable)
                         raise Puppet::Error, "Service %s does not support enabling"
@@ -43,13 +44,12 @@ module Puppet
             end
         end
 
+        # Handle whether the service should actually be running right now.
         class ServiceRunning < State
             @doc = "Whether a service should be running.  **true**/*false*"
             @name = :running
 
-            # this whole thing is annoying
-            # i should probably just be using booleans, but for now, i'm not...
-            def should=(should)
+            def shouldprocess(should)
                 case should
                 when false,0,"0", "stopped", :stopped:
                     should = :stopped
@@ -61,7 +61,7 @@ module Puppet
                     should = 0
                 end
                 Puppet.debug "Service should is %s" % should
-                @should = should
+                return should
             end
 
             def retrieve
@@ -72,21 +72,21 @@ module Puppet
 
             def sync
                 event = nil
-                if @should == :running
+                case self.should
+                when :running
                     @parent.start
                     event = :service_started
-                elsif @should == :stopped
+                when :stopped
                     @parent.stop
                     event = :service_stopped
                 else
                     Puppet.debug "Not running '%s' and shouldn't be running" %
                         self
                 end
-
-                return event
             end
         end
     end
+
 	class Type
 		class Service < Type
 			attr_reader :stat

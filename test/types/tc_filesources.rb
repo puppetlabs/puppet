@@ -11,28 +11,7 @@ require 'test/unit'
 require 'fileutils'
 require 'puppettest'
 
-# $Id$
-
 class TestFileSources < FileTesting
-
-=begin
-    def mkfile(hash)
-        file = nil
-        assert_nothing_raised {
-            file = Puppet::Type::PFile.create(hash)
-        }
-        return file
-    end
-
-    def mktestfile
-        # because luke's home directory is on nfs, it can't be used for testing
-        # as root
-        tmpfile = tempfile()
-        File.open(tmpfile, "w") { |f| f.puts rand(100) }
-        @@tmpfiles.push tmpfile
-        mkfile(:name => tmpfile)
-    end
-=end
     def setup
         begin
             initstorage
@@ -83,10 +62,6 @@ class TestFileSources < FileTesting
             child = file.newchild("childtest")
         }
         assert(child)
-        assert_nothing_raised {
-            child = file.newchild("childtest")
-        }
-        assert(child)
         assert_raise(Puppet::DevError) {
             file.newchild(File.join(path,"childtest"))
         }
@@ -133,6 +108,7 @@ class TestFileSources < FileTesting
     end
 
     def recursive_source_test(fromdir, todir)
+        Puppet::Type.allclear
         initstorage
         tofile = nil
         trans = nil
@@ -196,10 +172,14 @@ class TestFileSources < FileTesting
         fromdir, todir = run_complex_sources
         # then delete some files
         assert(FileTest.exists?(todir))
-        delete_random_files(todir)
+        missing_files = delete_random_files(todir)
 
         # and run
         recursive_source_test(fromdir, todir)
+
+        missing_files.each { |file|
+            assert(FileTest.exists?(file), "Deleted file %s is still missing" % file)
+        }
 
         # and make sure they're still equal
         assert_trees_equal(fromdir,todir)
@@ -547,3 +527,5 @@ class TestFileSources < FileTesting
         assert(!FileTest.exists?(name), "File with no source exists anyway")
     end
 end
+
+# $Id$

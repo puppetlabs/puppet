@@ -13,8 +13,18 @@ require 'puppet/type/state'
 
 module Puppet
 class Type < Puppet::Element
-    attr_accessor :children, :parameters, :parent, :implicit
+    attr_accessor :children, :parameters, :parent
     attr_accessor :file, :line
+
+    attr_writer :implicit
+    def implicit?
+        if defined? @implicit and @implicit
+            return true
+        else
+            return false
+        end
+    end
+
     include Enumerable
 
     # this is currently unused, but I expect to use it for metrics eventually
@@ -513,9 +523,6 @@ class Type < Puppet::Element
         if stateklass = self.class.validstate?(name) 
             if @states.include?(name)
                 hash.each { |var,value|
-                    if value.is_a?(Puppet::State)
-                        raise "huh?"
-                    end
                     @states[name].send(var.to_s + "=", value)
                 }
             else
@@ -669,6 +676,12 @@ class Type < Puppet::Element
             end
             return nil
         end
+
+        if implicit
+            obj.implicit = true
+        end
+
+        return obj
     end
 
     def self.implicitcreate(hash)
@@ -787,11 +800,28 @@ class Type < Puppet::Element
             end
             next if param == :name or param == self.class.namevar
 
-            # FIXME we should really allow equal values, but for now, don't allow
-            # any values
-            if oldval = self.should(param)
-                raise Puppet::Error, "Cannot override %s on %s(%s)" %
-                    [param, self.class.name, self.name]
+            unless value.is_a?(Array)
+                value = [value]
+            end
+
+            # This needs some way to retrieve the original values specified to
+            # 'should'.
+            if oldvals = self.should(param)
+                if oldvals.is_a?(Array)
+                    # take the intersection
+                    newvals = oldvals & value
+                    if newvals.empty?
+                        raise Puppet::Error, "No common values for %s on %s(%s)" %
+                            [param, self.class.name, self.name]
+                    else
+                        Puppet.debug "Reduced old values %s and new values %s to %s" %
+                            [oldvals.inspect, value.inspect, newvals.inspect]
+                        self.should = newvals
+                    end
+                else
+                    raise Puppet::Error, "Cannot override %s on %s(%s)" %
+                        [param, self.class.name, self.name]
+                end
             else
                 self[param] = value
             end

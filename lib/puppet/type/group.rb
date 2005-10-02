@@ -38,7 +38,7 @@ module Puppet
                 return highest + 1
             end
 
-            def should=(gid)
+            def shouldprocess(gid)
                 case gid
                 when String
                     if gid =~ /^[-0-9]+$/
@@ -59,7 +59,7 @@ module Puppet
 
                 Puppet.info "Setting gid to %s" % gid
 
-                @should = gid
+                return gid
             end
         end
     end

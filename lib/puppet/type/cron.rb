@@ -122,12 +122,11 @@ module Puppet
                 if @is == :notfound
                     #@is = @should
                     event = :cron_created
-                elsif @should == :notfound
-                    # FIXME I need to actually delete the cronjob...
-                    @parent.destroy
+                elsif self.should == :notfound
+                    @parent.remove(true)
                     event = :cron_deleted
-                elsif @should == @is
-                    Puppet.err "Uh, they're both %s" % @should
+                elsif self.should == @is
+                    Puppet.err "Uh, they're both %s" % self.should
                     return nil
                 else
                     #@is = @should

@@ -196,6 +196,7 @@ class TestBucket < ServerTest
         files = filelist()
 
         tmpdir = File.join(tmpdir(),"tmpfiledir")
+        @@tmpfiles << tmpdir
         FileUtils.mkdir_p(tmpdir)
 
         Puppet[:autosign] = true

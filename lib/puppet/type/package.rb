@@ -24,14 +24,14 @@ module Puppet
                 end
             end
 
-            def should=(value)
+            def shouldprocess(value)
                 # possible values are: true, false, and a version number
                 case value
                 #when true, /^[0-9]/:
                 when true:
-                    @should = value
+                    return value
                 when false:
-                    @should = :notinstalled
+                    return :notinstalled
                 else
                     raise Puppet::Error.new(
                         "Invalid install value %s" % value
@@ -42,7 +42,7 @@ module Puppet
             def sync
                 method = nil
                 event = nil
-                case @should
+                case @should[0]
                 when true:
                     method = :install
                     event = :package_installed
@@ -50,7 +50,7 @@ module Puppet
                     method = :remove
                     event = :package_removed
                 else
-                    raise Puppet::Error, "Invalid should value %s" % @should
+                    raise Puppet::Error, "Invalid should value %s" % @should[0]
                 end
 
                 if @parent.respond_to?(method)

@@ -1,4 +1,3 @@
-# $Id$
 require 'test/unit'
 
 libdir = File.join(File.dirname(__FILE__), '../lib')
@@ -360,7 +359,12 @@ class FileTesting < TestPuppet
         }
         tolist = file_list(todir).sort
 
-        assert_equal(fromlist,tolist)
+        fromlist.sort.zip(tolist.sort).each { |a,b|
+            assert_equal(a, b,
+            "Fromfile %s with length %s does not match tofile %s with length %s" %
+                    [a, fromlist.length, b, tolist.length])
+        }
+        #assert_equal(fromlist,tolist)
 
         # and then do some verification that the files are actually set up
         # the same
@@ -404,12 +408,14 @@ class FileTesting < TestPuppet
     end
 
     def delete_random_files(dir)
+        deleted = []
         random_files(dir) { |file|
             stat = File.stat(file)
             begin
                 if stat.ftype == "directory"
                     false
                 else
+                    deleted << file
                     File.unlink(file)
                     true
                 end
@@ -419,6 +425,8 @@ class FileTesting < TestPuppet
                 false
             end
         }
+
+        return deleted
     end
 
     def add_random_files(dir)
@@ -549,3 +557,5 @@ def failers
         yield file
     }
 end
+
+# $Id$

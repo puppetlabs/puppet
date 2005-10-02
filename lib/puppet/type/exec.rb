@@ -23,7 +23,7 @@ module Puppet
                 if file = @parent[:creates]
                     if FileTest.exists?(file)
                         @is = true
-                        @should = true
+                        @should = nil
                         return
                     end
                 end

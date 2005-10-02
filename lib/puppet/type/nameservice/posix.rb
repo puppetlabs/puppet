@@ -98,18 +98,18 @@ module Puppet
                 def sync
                     event = nil
                     # they're in sync some other way
-                    if @is == @should
+                    if self.insync?
                         return nil
                     end
                     if @is == :notfound
                         self.retrieve
-                        if @is == @should
+                        if self.insync?
                             return nil
                         end
                     end
                     # if the object needs to be created or deleted,
                     # depend on another method to do it all at once
-                    if @is == :notfound or @should == :notfound
+                    if @is == :notfound or self.should == :notfound
                         event = syncname()
 
                         return event
@@ -152,7 +152,7 @@ module Puppet
                 def syncname
                     cmd = nil
                     event = nil
-                    if @should == :notfound
+                    if self.should == :notfound
                         # we need to remove the object...
                         unless @parent.exists?
                             # the group already doesn't exist

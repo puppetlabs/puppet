@@ -58,7 +58,7 @@ module Puppet
                     [
                         "groupmod",
                         self.class.objectaddflag,
-                        "'%s'" % @should,
+                        "'%s'" % self.should,
                         @parent.name
                     ].join(" ")
                 end
@@ -100,7 +100,7 @@ module Puppet
                 cmd = [
                     "usermod",
                     self.class.objectaddflag,
-                    "'%s'" % @should,
+                    "'%s'" % self.should,
                     @parent.name
                 ].join(" ")
                 end

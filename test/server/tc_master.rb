@@ -105,6 +105,7 @@ class TestMaster < ServerTest
         manifest = mktestmanifest()
 
         file2 = @createdfile + "2"
+        @@tmpfiles << file2
 
         client = master = nil
         assert_nothing_raised() {

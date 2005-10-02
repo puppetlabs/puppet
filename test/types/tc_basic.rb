@@ -5,15 +5,15 @@ if __FILE__ == $0
 end
 
 require 'puppet'
+require 'puppettest'
 require 'test/unit'
 
-# $Id$
-
-class TestBasic < Test::Unit::TestCase
+class TestBasic < TestPuppet
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store
     def setup
+        super
         @component = nil
         @configfile = nil
         @sleeper = nil
@@ -29,7 +29,7 @@ class TestBasic < Test::Unit::TestCase
 
         assert_nothing_raised() {
             @filepath = "/tmp/testfile"
-            system("rm -f %s" % @filepath)
+            @@tmpfiles << @filepath
             @configfile = Puppet::Type::PFile.create(
                 :path => @filepath,
                 :create => true,
@@ -53,11 +53,6 @@ class TestBasic < Test::Unit::TestCase
         
         #puts "Component is %s, id %s" % [@component, @component.object_id]
         #puts "ConfigFile is %s, id %s" % [@configfile, @configfile.object_id]
-    end
-
-    def teardown
-        Puppet::Type.allclear
-        system("rm -f %s" % @filepath)
     end
 
     def test_name_calls
@@ -118,3 +113,5 @@ class TestBasic < Test::Unit::TestCase
         }
     end
 end
+
+# $Id$

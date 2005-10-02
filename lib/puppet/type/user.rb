@@ -33,7 +33,7 @@ module Puppet
                 return highest + 1
             end
 
-            def should=(value)
+            def shouldprocess(value)
                 case value
                 when String
                     if value =~ /^[-0-9]+$/
@@ -49,7 +49,7 @@ module Puppet
                     end
                 end
 
-                @should = value
+                return value
             end
         end
 
@@ -63,7 +63,7 @@ module Puppet
                 :gid
             end
 
-            def should=(gid)
+            def shouldprocess(gid)
                 method = :getgrgid
                 case gid
                 when String
@@ -77,8 +77,7 @@ module Puppet
                         raise Puppet::DevError, "Invalid GID %s" % gid
                     end
                     # these are treated specially by sync()
-                    @should = gid
-                    return
+                    return gid
                 end
 
                 # FIXME this should really check to see if we already have a
@@ -92,7 +91,7 @@ module Puppet
                 end
 
                 Puppet.notice "setting gid to %s" % ginfo.gid.inspect
-                @should = ginfo.gid
+                return ginfo.gid
             end
         end
 

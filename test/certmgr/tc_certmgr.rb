@@ -221,7 +221,7 @@ class TestCertMgr < Test::Unit::TestCase
     def test_interactiveca
         ca = nil
         Puppet[:ssldir] = "/tmp/puppetinteractivecatest"
-        @@tmpfiles.push Puppet[:ssldir]
+        @@tmpfiles << Puppet[:ssldir]
 
         assert_nothing_raised {
             ca = Puppet::SSLCertificates::CA.new

@@ -1,16 +1,13 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $:.unshift "../../../../language/trunk/lib"
-    $puppetbase = "../../../../language/trunk"
+    $puppetbase = "../.."
 end
 
 require 'puppet'
 require 'test/unit'
 require 'fileutils'
 require 'puppettest'
-
-# $Id$
 
 class TestFile < FileTesting
     # hmmm
@@ -500,3 +497,5 @@ class TestFile < FileTesting
         }
     end
 end
+
+# $Id$
