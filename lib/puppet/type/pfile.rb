@@ -8,13 +8,13 @@ require 'puppet/server/fileserver'
 
 # We put all of the states in separate files, because there are so many
 # of them.
-require 'puppet/type/pfile/pfiletype'
-require 'puppet/type/pfile/pfilecreate'
-require 'puppet/type/pfile/pfilechecksum'
-require 'puppet/type/pfile/pfileuid'
-require 'puppet/type/pfile/pfilemode'
-require 'puppet/type/pfile/pfilegroup'
-require 'puppet/type/pfile/pfilesource'
+require 'puppet/type/pfile/type'
+require 'puppet/type/pfile/create'
+require 'puppet/type/pfile/checksum'
+require 'puppet/type/pfile/uid'
+require 'puppet/type/pfile/mode'
+require 'puppet/type/pfile/group'
+require 'puppet/type/pfile/source'
 
 module Puppet
     class Type
