@@ -13,7 +13,8 @@ require 'puppet/server/fileserver'
 require 'test/unit'
 require 'puppettest.rb'
 
-class TestFileServer < TestPuppet
+class TestFileServer < Test::Unit::TestCase
+	include TestPuppet
     # make a simple file source
     def mktestdir
         testdir = File.join(tmpdir(), "remotefilecopytesting")

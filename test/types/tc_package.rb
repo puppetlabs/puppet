@@ -15,7 +15,8 @@ unless Puppet::Type::Package.default
     puts "No default package type for %s; skipping package tests" % $platform
 else
 
-class TestPackageSource < TestPuppet
+class TestPackageSource < Test::Unit::TestCase
+	include TestPuppet
     def test_filesource
         system("touch /tmp/fakepackage")
         assert_equal(
@@ -26,7 +27,8 @@ class TestPackageSource < TestPuppet
     end
 end
 
-class TestPackages < FileTesting
+class TestPackages < Test::Unit::TestCase
+	include FileTesting
     def setup
         #@list = Puppet::Type::Package.getpkglist
         Puppet::Type::Package.clear

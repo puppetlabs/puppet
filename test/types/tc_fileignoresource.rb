@@ -13,7 +13,8 @@ require 'puppettest'
 
 # $Id: $
 
-class TestFileIgnoreSources < FileTesting
+class TestFileIgnoreSources < Test::Unit::TestCase
+	include FileTesting
    
     def setup
         begin

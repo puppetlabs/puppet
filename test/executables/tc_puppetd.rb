@@ -22,7 +22,8 @@ libdirs = $:.find_all { |dir|
 }
 ENV["RUBYLIB"] = libdirs.join(":")
 
-class TestPuppetDExe < ExeTest
+class TestPuppetDExe < Test::Unit::TestCase
+	include ExeTest
     def test_normalstart
         # start the master
         file = startmasterd

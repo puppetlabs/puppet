@@ -10,7 +10,8 @@ require 'test/unit'
 
 # $Id$
 
-class TestComponent < TestPuppet
+class TestComponent < Test::Unit::TestCase
+	include TestPuppet
     def setup
         @@used = {}
         super

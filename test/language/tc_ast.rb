@@ -13,7 +13,8 @@ require 'puppet/client'
 require 'test/unit'
 require 'puppettest'
 
-class TestAST < TestPuppet
+class TestAST < Test::Unit::TestCase
+	include TestPuppet
     AST = Puppet::Parser::AST
 
     def astarray

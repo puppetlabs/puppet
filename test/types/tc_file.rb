@@ -9,7 +9,8 @@ require 'test/unit'
 require 'fileutils'
 require 'puppettest'
 
-class TestFile < FileTesting
+class TestFile < Test::Unit::TestCase
+	include FileTesting
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store

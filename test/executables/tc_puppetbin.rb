@@ -21,7 +21,8 @@ libdirs = $:.find_all { |dir|
 }
 ENV["RUBYLIB"] = libdirs.join(":")
 
-class TestPuppetBin < ServerTest
+class TestPuppetBin < Test::Unit::TestCase
+	include ServerTest
     def test_version
         output = nil
         assert_nothing_raised {

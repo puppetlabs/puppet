@@ -13,7 +13,8 @@ require 'puppet/client'
 require 'test/unit'
 require 'puppettest'
 
-class TestInterpreter < TestPuppet
+class TestInterpreter < Test::Unit::TestCase
+	include TestPuppet
     AST = Puppet::Parser::AST
 
     def test_simple

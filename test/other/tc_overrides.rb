@@ -8,7 +8,8 @@ require 'puppet'
 require 'puppettest'
 require 'test/unit'
 
-class TestOverrides < TestPuppet
+class TestOverrides < Test::Unit::TestCase
+	include TestPuppet
     def mksubdirs(basedir, level)
         @@tmpfiles << basedir
         dir = basedir.dup

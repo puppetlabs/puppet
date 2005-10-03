@@ -9,7 +9,8 @@ require 'puppet/parsedfile'
 require 'puppettest'
 require 'test/unit'
 
-class TestParsedFile < TestPuppet
+class TestParsedFile < Test::Unit::TestCase
+	include TestPuppet
     def test_file
         file = nil
         path = tempfile()

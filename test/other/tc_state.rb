@@ -14,7 +14,8 @@ require 'test/unit'
 class StorageTestingClass
 end
 
-class TestStorage < TestPuppet
+class TestStorage < Test::Unit::TestCase
+	include TestPuppet
     def disabled_setup
         Puppet[:loglevel] = :debug if __FILE__ == $0
         Puppet[:checksumfile] = "/var/tmp/puppetteststate"

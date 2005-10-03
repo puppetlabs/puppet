@@ -11,7 +11,8 @@ require 'puppet/type'
 require 'puppettest'
 require 'test/unit'
 
-class TestGroup < TestPuppet
+class TestGroup < Test::Unit::TestCase
+	include TestPuppet
     def setup
         @@tmpgroups = []
         super

@@ -8,7 +8,8 @@ require 'puppet'
 require 'puppettest'
 require 'test/unit'
 
-class TestRelationships < TestPuppet
+class TestRelationships < Test::Unit::TestCase
+	include TestPuppet
     def newfile
         assert_nothing_raised() {
             return Puppet::Type::PFile.create(

@@ -10,7 +10,8 @@ require 'puppet/type'
 require 'puppettest'
 require 'test/unit'
 
-class TestType < TestPuppet
+class TestType < Test::Unit::TestCase
+	include TestPuppet
     def test_typemethods
         assert_nothing_raised() {
             Puppet::Type.buildstatehash

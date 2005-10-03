@@ -10,7 +10,8 @@ require 'test/unit'
 
 # $Id$
 
-class TestService < TestPuppet
+class TestService < Test::Unit::TestCase
+	include TestPuppet
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store

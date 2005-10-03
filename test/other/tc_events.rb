@@ -10,7 +10,8 @@ require 'test/unit'
 
 # $Id$
 
-class TestEvents < TestPuppet
+class TestEvents < Test::Unit::TestCase
+	include TestPuppet
     def teardown
         super
         Puppet::Event::Subscription.clear

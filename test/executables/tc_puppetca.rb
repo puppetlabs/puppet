@@ -21,7 +21,8 @@ libdirs = $:.find_all { |dir|
 }
 ENV["RUBYLIB"] = libdirs.join(":")
 
-class TestPuppetCA < ServerTest
+class TestPuppetCA < Test::Unit::TestCase
+	include ServerTest
     def mkcert(hostname)
         cert = nil
         assert_nothing_raised {

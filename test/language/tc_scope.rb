@@ -22,7 +22,8 @@ require 'puppettest'
 # so really, we want to do things like test that our ast is correct
 # and test whether we've got things in the right scopes
 
-class TestScope < TestPuppet
+class TestScope < Test::Unit::TestCase
+	include TestPuppet
     AST = Puppet::Parser::AST
     def to_ary(hash)
         hash.collect { |key,value|

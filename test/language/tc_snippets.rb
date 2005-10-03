@@ -23,7 +23,8 @@ require 'puppettest'
 # so really, we want to do things like test that our ast is correct
 # and test whether we've got things in the right scopes
 
-class TestSnippets < TestPuppet
+class TestSnippets < Test::Unit::TestCase
+	include TestPuppet
     $snippetbase = File.join($puppetbase, "examples", "code", "snippets")
     
     def file2ast(file)

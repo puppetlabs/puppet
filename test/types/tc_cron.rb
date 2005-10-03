@@ -12,7 +12,8 @@ require 'puppet/type/cron'
 require 'test/unit'
 require 'facter'
 
-class TestExec < TestPuppet
+class TestExec < Test::Unit::TestCase
+	include TestPuppet
     def setup
         # retrieve the user name
         id = %x{id}.chomp

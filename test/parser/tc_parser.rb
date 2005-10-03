@@ -9,7 +9,8 @@ require 'puppet/parser/parser'
 require 'test/unit'
 require 'puppettest'
 
-class TestParser < TestPuppet
+class TestParser < Test::Unit::TestCase
+	include TestPuppet
     def setup
         super
         Puppet[:parseonly] = true

@@ -10,7 +10,8 @@ require 'test/unit'
 
 # $Id$
 
-class TestTidy < FileTesting
+class TestTidy < Test::Unit::TestCase
+	include FileTesting
     def mktmpfile
         # because luke's home directory is on nfs, it can't be used for testing
         # as root

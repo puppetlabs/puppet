@@ -21,7 +21,8 @@ else
     $short = false
 end
 
-class TestServer < ServerTest
+class TestServer < Test::Unit::TestCase
+	include ServerTest
     def teardown
         super
         print "\n\n\n\n" if Puppet[:debug]

@@ -16,7 +16,8 @@ require 'puppettest.rb'
 #\}
 #} => [[:NAME, "service"], [:LPAREN, "("], [:DQUOTE, "\""], [:NAME, "telnet"], [:DQUOTE, "\""], [:RPAREN, ")"], [:EQUALS, "="], [:lbrace, "{"], [:NAME, "port"], [:FARROW, "=>"], [:DQUOTE, "\""], [:NAME, "23"], [:DQUOTE, "\""], [:COMMA, ","], [:NAME, "protocol"], [:FARROW, "=>"], [:DQUOTE, "\""], [:NAME, "tcp"], [:DQUOTE, "\""], [:COMMA, ","], [:NAME, "name"], [:FARROW, "=>"], [:DQUOTE, "\""], [:NAME, "telnet"], [:DQUOTE, "\""], [:COMMA, ","], [:RBRACE, "}"]]
 
-class TestLexer < TestPuppet
+class TestLexer < Test::Unit::TestCase
+	include TestPuppet
     def setup
         super
         @lexer = Puppet::Parser::Lexer.new()

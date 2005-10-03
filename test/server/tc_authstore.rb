@@ -13,7 +13,8 @@ require 'puppet/server/authstore'
 require 'test/unit'
 require 'puppettest.rb'
 
-class TestAuthStore < TestPuppet
+class TestAuthStore < Test::Unit::TestCase
+	include TestPuppet
     def setup
         if __FILE__ == $0
             Puppet[:loglevel] = :debug

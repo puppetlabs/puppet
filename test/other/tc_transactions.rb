@@ -10,7 +10,8 @@ require 'test/unit'
 
 # $Id$
 
-class TestTransactions < FileTesting
+class TestTransactions < Test::Unit::TestCase
+	include FileTesting
     def ingroup(gid)
         require 'etc'
         begin

@@ -11,7 +11,8 @@ require 'facter'
 
 # $Id$
 
-class TestExec < TestPuppet
+class TestExec < Test::Unit::TestCase
+	include TestPuppet
     def test_execution
         command = nil
         output = nil

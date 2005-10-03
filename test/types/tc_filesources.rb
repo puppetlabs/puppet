@@ -11,7 +11,8 @@ require 'test/unit'
 require 'fileutils'
 require 'puppettest'
 
-class TestFileSources < FileTesting
+class TestFileSources < Test::Unit::TestCase
+	include FileTesting
     def setup
         begin
             initstorage

@@ -8,7 +8,8 @@ require 'puppet'
 require 'puppettest'
 require 'test/unit'
 
-class TestBasic < TestPuppet
+class TestBasic < Test::Unit::TestCase
+	include TestPuppet
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store

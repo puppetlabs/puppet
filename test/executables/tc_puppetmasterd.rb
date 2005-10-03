@@ -14,7 +14,8 @@ require 'facter'
 
 # $Id$
 
-class TestPuppetMasterD < ExeTest
+class TestPuppetMasterD < Test::Unit::TestCase
+	include ExeTest
     def getcerts
         include Puppet::Daemon
         if self.readcerts

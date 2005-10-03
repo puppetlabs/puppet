@@ -5,7 +5,7 @@ unless $:.include?(libdir)
     $:.unshift libdir
 end
 
-class TestPuppet < Test::Unit::TestCase
+module TestPuppet
     def newcomp(name,*ary)
         comp = Puppet::Type::Component.create(
             :name => name
@@ -146,7 +146,8 @@ class TestPuppet < Test::Unit::TestCase
 end
 
 
-class ServerTest < TestPuppet
+module ServerTest
+    include TestPuppet
     def setup
         if defined? @@port
             @@port += 1
@@ -210,7 +211,8 @@ class ServerTest < TestPuppet
 
 end
 
-class ExeTest < ServerTest
+module ExeTest
+    include ServerTest
     unless ENV["PATH"] =~ /puppet/
         # ok, we have to add the bin directory to our search path
         ENV["PATH"] += ":" + File.join($puppetbase, "bin")
@@ -273,7 +275,8 @@ class ExeTest < ServerTest
     end
 end
 
-class FileTesting < TestPuppet
+module FileTesting
+    include TestPuppet
     def cycle(comp)
         trans = nil
         assert_nothing_raised {
@@ -500,7 +503,7 @@ class FileTesting < TestPuppet
     end
 end
 
-class PuppetTestSuite
+module PuppetTestSuite
     attr_accessor :subdir
 
     def self.list

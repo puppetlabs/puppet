@@ -12,7 +12,8 @@ require 'test/unit'
 require 'puppettest.rb'
 require 'base64'
 
-class TestBucket < ServerTest
+class TestBucket < Test::Unit::TestCase
+	include ServerTest
     # run through all of the files and exercise the filebucket methods
     def checkfiles(client)
         files = filelist()

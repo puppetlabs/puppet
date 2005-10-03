@@ -11,7 +11,8 @@ require 'puppet/type'
 require 'puppettest'
 require 'test/unit'
 
-class TestUser < TestPuppet
+class TestUser < Test::Unit::TestCase
+	include TestPuppet
     def setup
         @@tmpusers = []
         Puppet[:loglevel] = :debug if __FILE__ == $0

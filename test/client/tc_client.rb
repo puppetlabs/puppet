@@ -12,7 +12,8 @@ require 'puppettest.rb'
 
 # $Id$
 
-class TestClient < ServerTest
+class TestClient < Test::Unit::TestCase
+	include ServerTest
     # a single run through of connect, auth, etc.
     def test_sslInitWithAutosigningLocalServer
         # autosign everything, for simplicity

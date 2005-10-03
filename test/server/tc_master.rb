@@ -14,7 +14,8 @@ require 'puppet/client'
 require 'test/unit'
 require 'puppettest.rb'
 
-class TestMaster < ServerTest
+class TestMaster < Test::Unit::TestCase
+	include ServerTest
     def teardown
         super
         print "\n\n\n\n" if Puppet[:debug]
