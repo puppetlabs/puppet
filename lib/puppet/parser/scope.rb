@@ -8,7 +8,7 @@ module Puppet
         class Scope
             include Enumerable
             attr_accessor :parent, :level, :interp
-            attr_accessor :name, :type
+            attr_accessor :name, :type, :topscope, :base
 
             # This is probably not all that good of an idea, but...
             # This way a parent can share its node table with all of its children.
@@ -176,6 +176,7 @@ module Puppet
                 @nodescope = false
 
                 if @parent.nil?
+                    # the level is mostly used for debugging
                     @level = 1
 
                     @@declarative = declarative
@@ -187,10 +188,14 @@ module Puppet
                     # of nodes with the same name in different sites.  For now
                     # the top-level scope is always the only site scope.
                     @sitescope = true
+
+                    # We're the top scope, so record that fact for our children
+                    @topscope = self
                 else
                     @parent.child = self
                     @level = @parent.level + 1
                     @interp = @parent.interp
+                    @topscope = @parent.topscope
                 end
 
                 # Our child scopes
@@ -484,6 +489,29 @@ module Puppet
                 end
             end
 
+            # Return the tags associated with this scope.  It's basically
+            # just our parents' tags, plus our type.
+            def tags
+                unless defined? @tags
+                    @tags = []
+                    if @parent
+                        @tags += @parent.tags
+                    end
+
+                    # Add our type to the tag list
+                    @tags << @type
+
+                    # We could add the base (e.g., node or class) to the
+                    # tags, but for now, we're not going to
+
+                    # We also don't add the name
+                end
+
+                return @tags.collect { |tag|
+                    tag.to_s
+                }
+            end
+
             # Convert our scope to a list of Transportable objects.
             def to_trans
                 #Puppet.debug "Translating scope %s at level %s" %
@@ -517,6 +545,9 @@ module Puppet
                             @children.delete(child)
                         end
                     elsif child.is_a?(TransObject)
+                        # Wait until the last minute to set tags, although this
+                        # probably should not matter
+                        child.tags = self.tags
                         results.push(child)
                     else
                         error = Puppet::DevError.new(

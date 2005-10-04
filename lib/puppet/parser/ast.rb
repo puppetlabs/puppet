@@ -1030,14 +1030,15 @@ module Puppet
                 end
             end
 
-            # Define a new component.  This basically just stores the associated parse
-            # tree by name in our current scope.  Note that there is currently
-            # a mismatch in how we look up components -- it usually uses scopes, but
-            # sometimes uses '@@settypes'.
+            # Define a new component.  This basically just stores the
+            # associated parse tree by name in our current scope.  Note that
+            # there is currently a mismatch in how we look up components -- it
+            # usually uses scopes, but sometimes uses '@@settypes'.
             # FIXME This class should verify that each of its direct children
-            # has an abstractable name -- i.e., if a file does not include a variable
-            # in its name, then the user is essentially guaranteed to encounter
-            # an error if the component is instantiated more than once.
+            # has an abstractable name -- i.e., if a file does not include a
+            # variable in its name, then the user is essentially guaranteed to
+            # encounter an error if the component is instantiated more than
+            # once.
             class CompDef < AST::Branch
                 attr_accessor :name, :args, :code
 
@@ -1277,20 +1278,37 @@ module Puppet
             # receive the arguments passed to the component and also the type and
             # name of the component.
             class Component < AST::Branch
+                class << self
+                    attr_accessor :name
+                end
+
+                # The class name
+                @name = :component
+
                 attr_accessor :name, :args, :code
 
                 def evaluate(scope,hash,objtype,objname)
                     scope = scope.newscope
+
+                    # The type is the component or class name
                     scope.type = objtype
+
+                    # The name is the name the user has chosen or that has
+                    # been dynamically generated.  This is almost never used
                     scope.name = objname
+
+                    # Additionally, add a tag for whatever kind of class
+                    # we are
+                    scope.base = self.class.name
+
 
                     # define all of the arguments in our local scope
                     if self.args
 
                         # Verify that all required arguments are either present or
                         # have been provided with defaults.
-                        # FIXME This should probably also require each parent class's
-                        # arguments...
+                        # FIXME This should probably also require each parent
+                        # class's arguments...
                         self.args.each { |arg, default|
                             unless hash.include?(arg)
                                 if defined? default and ! default.nil?
@@ -1343,6 +1361,7 @@ module Puppet
             # in that each class is a singleton -- only one will exist for a given
             # node.
             class HostClass < AST::Component
+                @name = :class
                 attr_accessor :parentclass
 
                 def evaluate(scope,hash,objtype,objname)
@@ -1412,6 +1431,7 @@ module Puppet
 
             # The specific code associated with a host.  
             class Node < AST::Component
+                @name = :node
                 attr_accessor :name, :args, :code, :parentclass
 
                 def evaluate(scope, facts = {})

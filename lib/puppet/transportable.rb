@@ -9,6 +9,8 @@ module Puppet
     class TransObject < Hash
         attr_accessor :type, :name, :file, :line
 
+        attr_writer :tags
+
         def initialize(name,type)
             self[:name] = name
             @type = type
@@ -18,6 +20,10 @@ module Puppet
 
         def longname
             return [self.type,self[:name]].join('--')
+        end
+
+        def tags
+            return @tags + [self.type, self.name]
         end
 
         def to_s

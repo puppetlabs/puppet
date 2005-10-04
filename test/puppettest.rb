@@ -503,7 +503,7 @@ module FileTesting
     end
 end
 
-module PuppetTestSuite
+class PuppetTestSuite
     attr_accessor :subdir
 
     def self.list

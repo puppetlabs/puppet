@@ -75,18 +75,18 @@ class TestService < Test::Unit::TestCase
         assert(sleeper.insync?)
     end
 
-    case Puppet::Type::Service.svctype
-    when Puppet::ServiceTypes::InitSvc
-        def test_processStartWithPattern
-            sleeper = mksleeper(:pattern => "bin/sleeper")
-
-            cyclesleeper(sleeper)
-        end
-
-        def test_processStartWithStatus
-            sleeper = mksleeper(:hasstatus => true)
-            cyclesleeper(sleeper)
-        end
-    #when Puppet::ServiceTypes::SMFSvc
-    end
+    #case Puppet::Type::Service.svctype
+    #when Puppet::ServiceTypes::InitSvc
+    #    def test_processStartWithPattern
+    #        sleeper = mksleeper(:pattern => "bin/sleeper")
+#
+#            cyclesleeper(sleeper)
+#        end
+#
+#        def test_processStartWithStatus
+#            sleeper = mksleeper(:hasstatus => true)
+#            cyclesleeper(sleeper)
+#        end
+#    #when Puppet::ServiceTypes::SMFSvc
+#    end
 end
