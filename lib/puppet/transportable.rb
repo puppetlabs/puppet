@@ -23,7 +23,7 @@ module Puppet
         end
 
         def tags
-            return @tags + [self.type, self.name]
+            return @tags + [@type, @name]
         end
 
         def to_s
@@ -40,6 +40,10 @@ module Puppet
                 retobj.line = @line
             else
                 raise Puppet::Error.new("Could not find object type %s" % self.type)
+            end
+
+            if defined? @tags and @tags
+                Puppet.warning "%s(%s) tags: %s" % [@type, @name, @tags.join(" ")]
             end
 
             return retobj

@@ -77,6 +77,11 @@ class Server
             Puppet.debug("Running interpreter")
             begin
                 retobjects = @interpreter.run(client, facts)
+            rescue Puppet::Error => detail
+                Puppet.err detail
+                raise XMLRPC::FaultException.new(
+                    1, detail.to_s
+                )
             rescue => detail
                 Puppet.err detail.to_s
                 return ""

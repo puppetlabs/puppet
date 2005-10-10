@@ -32,7 +32,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..idb211ea7fd3', 'grammar.ra', 638
+module_eval <<'..end grammar.ra modeval..id0af758a138', 'grammar.ra', 638
 attr_reader :file
 attr_accessor :files
 
@@ -145,7 +145,7 @@ end
 def string=(string)
     @lexer.string = string
 end
-..end grammar.ra modeval..idb211ea7fd3
+..end grammar.ra modeval..id0af758a138
 
 ##### racc 1.4.4 generates ###
 
@@ -1122,7 +1122,7 @@ module_eval <<'.,.,', 'grammar.ra', 469
             parser.files = self.files
             Puppet.debug("importing '%s'" % file)
             begin
-                parser.file = file
+                parser.file = File.join(dir, file)
             rescue Puppet::ImportError
                 Puppet.warning(
                     "Importing %s would result in an import loop" %

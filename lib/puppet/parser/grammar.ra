@@ -450,7 +450,7 @@ import: IMPORT QTEXT {
             parser.files = self.files
             Puppet.debug("importing '%s'" % file)
             begin
-                parser.file = file
+                parser.file = File.join(dir, file)
             rescue Puppet::ImportError
                 Puppet.warning(
                     "Importing %s would result in an import loop" %

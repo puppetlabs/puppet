@@ -1436,7 +1436,14 @@ module Puppet
 
                 def evaluate(scope, facts = {})
                     scope = scope.newscope
-                    scope.type = "node"
+
+                    # nodes are never instantiated like a normal object,
+                    # but we need the type to be the name users would use for
+                    # instantiation, otherwise tags don't work out
+
+                    # The name has already been evaluated, so it's a normal
+                    # string.
+                    scope.type = @name
                     scope.name = @name
 
                     # Mark this scope as a nodescope, so that classes will be
@@ -1469,15 +1476,24 @@ module Puppet
                         # We also can't just evaluate the node itself, because
                         # it would create a node scope within this scope,
                         # and that would cause mass havoc.
-                        hash = nil
+                        node = nil
+
+                        # The 'node' method just returns a hash of the node
+                        # code and name.  It's used here, and in 'evalnode'.
                         unless hash = scope.node(@parentclass)
                             raise Puppet::ParseError,
                                 "Could not find parent node %s" %
                                 @parentclass
                         end
 
+                        node = hash[:node]
+                        # Tag the scope with the parent's name/type.
+                        name = node.name
+                        Puppet.info "Tagging with parent node %s" % name
+                        scope.tag(name)
+
                         begin
-                            code = hash[:node].code
+                            code = node.code
                             code.safeevaluate(scope)
                         rescue Puppet::ParseError => except
                             except.line = self.line
@@ -1488,6 +1504,10 @@ module Puppet
                             error.line = self.line
                             error.file = self.file
                             raise error
+                        end
+
+                        if node.parentclass
+                            node.evalparent(scope)
                         end
                     end
                 end

@@ -116,9 +116,22 @@ class Server
                 )
             end
 
-            #if request.client_cert
-            #    Puppet.info "client cert is %s" % request.client_cert
-            #end
+            # If they have a certificate (which will almost always be true)
+            # then we get the hostname from the cert, instead of via IP
+            # info
+            if cert = request.client_cert
+                name = cert.subject
+                #Puppet.info name.inspect
+                if name.to_s =~ /CN=(\w+)/
+                    Puppet.info "Overriding %s with cert name %s" %
+                        [@client, $1]
+                    @client = $1
+                else
+                    Puppet.warning "Could not match against %s(%s)" %
+                        [name, name.class]
+                end
+                #Puppet.info "client cert is %s" % request.client_cert
+            end
             #if request.server_cert
             #    Puppet.info "server cert is %s" % @request.server_cert
             #end

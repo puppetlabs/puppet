@@ -208,7 +208,12 @@ end
 client.setcerts
 
 # and then retrieve and apply our configuration
-client.getconfig
-client.apply
+begin
+    client.getconfig
+    client.apply
+rescue => detail
+    Puppet.err detail.to_s
+    exit(13)
+end
 
 # $Id$

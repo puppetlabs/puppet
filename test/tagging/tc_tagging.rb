@@ -25,7 +25,7 @@ class TestTagging < Test::Unit::TestCase
         }
     end
 
-    # Test deeper tags
+    # Test deeper tags, where a scope gets all of its parent scopes' tags
     def test_deepscopetags
         scope = nil
         assert_nothing_raised {

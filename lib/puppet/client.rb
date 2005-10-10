@@ -61,10 +61,14 @@ module Puppet
                             msg = "Could not connect to %s on port %s" % [@host, @port]
                             #Puppet.err msg
                             raise NetworkClientError, msg
-                        #rescue => detail
-                        #    Puppet.err "Could not call %s.%s: %s" %
-                        #        [namespace, method, detail.inspect]
-                        #    raise NetworkClientError.new(detail.to_s)
+                        rescue SocketError => detail
+                            Puppet.err "Could not find server %s" % @puppetserver
+                            exit(12)
+                        rescue => detail
+                            Puppet.err "Could not call %s.%s: %s" %
+                                [namespace, method, detail.inspect]
+                            #raise NetworkClientError.new(detail.to_s)
+                            raise
                         end
                     }
                 }
@@ -95,6 +99,8 @@ module Puppet
                 hash[:Path] ||= "/RPC2"
                 hash[:Server] ||= "localhost"
                 hash[:Port] ||= Puppet[:masterport]
+
+                @puppetserver = hash[:Server]
 
                 super(
                     hash[:Server],

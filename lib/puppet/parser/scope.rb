@@ -27,6 +27,40 @@ module Puppet
                 @@declarative = val
             end
 
+            # Add a single object's tags to the global list of tags for
+            # that object.
+            def addtags(obj)
+                unless defined? @tagtable
+                    raise Puppet::DevError, "Told to add tags, but no tag table"
+                end
+                list = @tagtable[obj.type][obj.name]
+
+                obj.tags.each { |tag|
+                    unless list.include?(tag)
+                        if tag.nil? or tag == ""
+                            Puppet.warning "Got tag %s from %s(%s)" %
+                                [tag.inspect, obj.type, obj.name]
+                        else
+                            list << tag
+                        end
+                    end
+                }
+            end
+
+            # Log the existing tags.  At some point this should be in a better
+            # place, but eh.
+            def logtags
+                @tagtable.sort { |a, b|
+                    a[0] <=> b[0]
+                }.each { |type, names|
+                    names.sort { |a, b|
+                        a[0] <=> b[0]
+                    }.each { |name, tags|
+                        Puppet.info "%s(%s): '%s'" % [type, name, tags.join("' '")]
+                    }
+                }
+            end
+
             # Create a new child scope.
             def child=(scope)
                 @children.push(scope)
@@ -129,11 +163,16 @@ module Puppet
 
                 # And now return the whole thing
                 #return self.to_trans
-                return self.to_trans
+                objects = self.to_trans
+
+                # I should do something to add the node as an object with tags
+                # but that will possibly end up with far too many tags.
+                self.logtags
+                return objects
             end
 
-            # Retrieve a specific node.  This is basically only used from within
-            # 'findnode'.
+            # Retrieve a specific node.  This is used in ast.rb to find a
+            # parent node and in findnode to retrieve and evaluate a node.
             def node(name)
                 @nodetable[name]
             end
@@ -175,6 +214,8 @@ module Puppet
                 @parent = parent
                 @nodescope = false
 
+                @tags = []
+
                 if @parent.nil?
                     # the level is mostly used for debugging
                     @level = 1
@@ -191,6 +232,14 @@ module Puppet
 
                     # We're the top scope, so record that fact for our children
                     @topscope = self
+
+                    # And create a tag table, so we can collect all of the tags
+                    # associated with any objects created in this scope tree
+                    @tagtable = Hash.new { |types, type|
+                        types[type] = Hash.new { |names, name|
+                            names[name] = []
+                        }
+                    }
                 else
                     @parent.child = self
                     @level = @parent.level + 1
@@ -489,27 +538,37 @@ module Puppet
                 end
             end
 
+            # Add a tag to our current list.  This is only currently used
+            # when nodes evaluate their parents.
+            def tag(*ary)
+                ary.each { |tag|
+                    if tag.nil? or tag == ""
+                        Puppet.warning "got told to tag with %s" % tag.inspect
+                    end
+                    unless @tags.include?(tag)
+                        @tags << tag.to_s
+                    end
+                }
+            end
+
             # Return the tags associated with this scope.  It's basically
             # just our parents' tags, plus our type.
             def tags
-                unless defined? @tags
-                    @tags = []
-                    if @parent
-                        @tags += @parent.tags
-                    end
-
-                    # Add our type to the tag list
-                    @tags << @type
-
-                    # We could add the base (e.g., node or class) to the
-                    # tags, but for now, we're not going to
-
-                    # We also don't add the name
+                tmp = [] + @tags
+                unless @type.nil? or @type == ""
+                    tmp << @type.to_s
                 end
-
-                return @tags.collect { |tag|
-                    tag.to_s
-                }
+                if @parent
+                    @parent.tags.each { |tag|
+                        if tag.nil? or tag == ""
+                            Puppet.warning "parent returned tag %s" % tag.inspect
+                        end
+                        unless tmp.include?(tag)
+                            tmp << tag
+                        end
+                    }
+                end
+                return tmp
             end
 
             # Convert our scope to a list of Transportable objects.
@@ -548,6 +607,11 @@ module Puppet
                         # Wait until the last minute to set tags, although this
                         # probably should not matter
                         child.tags = self.tags
+
+                        # Then make sure this child's tags are stored in the
+                        # central table.  This should maybe be in the evaluate
+                        # methods, but, eh.
+                        @topscope.addtags(child)
                         results.push(child)
                     else
                         error = Puppet::DevError.new(
