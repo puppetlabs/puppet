@@ -1,5 +1,3 @@
-# $Id$
-
 require 'etc'
 require 'facter'
 require 'puppet/type/state'
@@ -284,3 +282,5 @@ module Puppet
         end
     end
 end
+
+# $Id$

@@ -42,6 +42,7 @@ class TestQuery < Test::Unit::TestCase
             unless Puppet::Type::Service.has_key?("sleeper")
                 Puppet::Type::Service.create(
                     :name => "sleeper",
+                    :type => "init",
                     :path => File.join($puppetbase,"examples/root/etc/init.d"),
                     :hasstatus => true,
                     :check => [:running]

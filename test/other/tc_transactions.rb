@@ -74,6 +74,7 @@ class TestTransactions < Test::Unit::TestCase
         assert_nothing_raised() {
             return Puppet::Type::Service.create(
                 :name => "sleeper",
+                :type => "init",
                 :path => File.join($puppetbase,"examples/root/etc/init.d"),
                 :hasstatus => true,
                 :check => [:running]

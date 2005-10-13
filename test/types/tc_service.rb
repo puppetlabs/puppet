@@ -8,8 +8,6 @@ require 'puppet'
 require 'puppettest'
 require 'test/unit'
 
-# $Id$
-
 class TestService < Test::Unit::TestCase
 	include TestPuppet
     # hmmm
@@ -19,7 +17,6 @@ class TestService < Test::Unit::TestCase
         sleeper = nil
         script = File.join($puppetbase,"examples/root/etc/init.d/sleeper")
         @status = script + " status"
-
 
         super
     end
@@ -33,6 +30,7 @@ class TestService < Test::Unit::TestCase
         hash[:name] = "sleeper"
         hash[:path] = File.join($puppetbase,"examples/root/etc/init.d")
         hash[:running] = true
+        hash[:type] = "init"
         assert_nothing_raised() {
             return Puppet::Type::Service.create(hash)
         }
@@ -75,18 +73,29 @@ class TestService < Test::Unit::TestCase
         assert(sleeper.insync?)
     end
 
-    #case Puppet::Type::Service.svctype
-    #when Puppet::ServiceTypes::InitSvc
-    #    def test_processStartWithPattern
-    #        sleeper = mksleeper(:pattern => "bin/sleeper")
-#
-#            cyclesleeper(sleeper)
-#        end
-#
-#        def test_processStartWithStatus
-#            sleeper = mksleeper(:hasstatus => true)
-#            cyclesleeper(sleeper)
-#        end
-#    #when Puppet::ServiceTypes::SMFSvc
-#    end
+    def test_processStartWithPattern
+        sleeper = mksleeper(:pattern => "bin/sleeper")
+
+        cyclesleeper(sleeper)
+    end
+
+    def test_processStartWithStatus
+        sleeper = mksleeper(:hasstatus => true)
+        cyclesleeper(sleeper)
+    end
+
+    unless Process.uid == 0
+        puts "run as root to test service enable/disable"
+    else
+        case Puppet::Type::Service.defaulttype
+        when Puppet::ServiceTypes::InitSvc
+        when Puppet::ServiceTypes::SMFSvc
+            # yay
+        else
+            Puppet.notice "Not testing service type %s" %
+                Puppet::Type::Service.defaulttype
+        end
+    end
 end
+
+# $Id$

@@ -9,6 +9,7 @@ module Puppet
                 end
                 unless @searchpaths.length > 0
                     if init = self.defaultinit
+                        Puppet.notice "Adding default init"
                         @searchpaths << init
                     else
                         Puppet.notice "No default init for %s" %
@@ -88,11 +89,14 @@ module Puppet
                 }
             end
 
-            # Enable a service, to it's started at boot time.  This basically
+            # Enable a service, so it's started at boot time.  This basically
             # just creates links in the RC directories, which means that, well,
             # we need to know where the rc directories are.
             # FIXME This should probably be a state or something, and
             # it should actually create use Symlink objects...
+            # At this point, people should just link objects for enabling,
+            # if they're running on a system that doesn't have a tool to
+            # manage init script links.
             #def enable
             #end
 

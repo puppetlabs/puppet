@@ -1,4 +1,4 @@
-# this is our main way of managing processes right now
+# This is our main way of managing processes right now.
 #
 # a service is distinct from a process in that services
 # can only be managed through the interface of an init script
@@ -13,13 +13,20 @@ module Puppet
             @name = :enabled
 
             def retrieve
+                unless @parent.respond_to?(:enabled?)
+                    raise Puppet::Error, "Service %s does not support enabling"
+                end
                 @is = @parent.enabled?
             end
 
             def shouldprocess(should)
+                @runlevel = nil
                 case should
                 when true: return :enabled
                 when false: return :disabled
+                when /^\d+$/:
+                    @runlevel = should
+                    return :enabled
                 else
                     raise Puppet::Error, "Invalid 'enabled' value %s" % should
                 end
@@ -31,7 +38,7 @@ module Puppet
                     unless @parent.respond_to?(:enable)
                         raise Puppet::Error, "Service %s does not support enabling"
                     end
-                    @parent.enable
+                    @parent.enable(@runlevel)
                     return :service_enabled
                 when :disabled
                     unless @parent.respond_to?(:disable)
@@ -102,7 +109,8 @@ module Puppet
                 :restart,
                 :start,
                 :status,
-                :stop
+                :stop,
+                :type
             ]
 
             @paramdoc[:binary] = "The path to the daemon.  This is only used for
@@ -145,6 +153,37 @@ module Puppet
                 attr_accessor :svctype
             end
 
+            # Retrieve the default type for the current platform.
+            def self.defaulttype
+                unless defined? @defsvctype
+                    @defsvctype = nil
+                    os = Facter["operatingsystem"].value
+                    case os
+                    when "Linux":
+                        case Facter["distro"].value
+                        when "Debian":
+                            @defsvctype = Puppet::ServiceTypes::DebianSvc
+                        end
+                    when "SunOS":
+                        release = Float(Facter["operatingsystemrelease"].value)
+                        if release < 5.10
+                            @defsvctype = Puppet::ServiceTypes::InitSvc
+                        else
+                            @defsvctype = Puppet::ServiceTypes::SMFSvc
+                        end
+                    end
+
+                    unless @defsvctype
+                        Puppet.notice "Defaulting to base service type"
+                        @defsvctype = Puppet::ServiceTypes::BaseSvc
+                    end
+                end
+
+                Puppet.err @defsvctype
+
+                return @defsvctype
+            end
+
             # Execute a command.  Basically just makes sure it exits with a 0
             # code.
             def execute(type, cmd)
@@ -163,6 +202,9 @@ module Puppet
                         "Either a stop command or a pattern must be specified"
                 end
                 ps = Facter["ps"].value
+                unless ps and ps != ""
+                    raise Puppet::Error, "You must upgrade Facter"
+                end
                 regex = Regexp.new(self[:pattern])
                 IO.popen(ps) { |table|
                     table.each { |line|
@@ -176,11 +218,41 @@ module Puppet
                 return nil
             end
 
+            # Initialize the service.  This is basically responsible for merging
+            # in the right module.
             def initialize(hash)
+                # We have to extend the object before we call 'super', so that
+                # the parameter methods are called correctly.
+                type =  hash[:type] ||
+                        hash["type"] ||
+                        self.class.defaulttype
+
+                if type.is_a?(String)
+                    type = type2module(type)
+                end
+
+                # Extend the object with the service type
+                self.extend(type)
+
                 super
 
+                # and then see if it needs to be checked
                 if self.respond_to?(:configchk)
                     self.configchk
+                end
+            end
+
+            # Retrieve the service type.
+            def type2module(type)
+                case type
+                when "smf":
+                    return Puppet::ServiceTypes::SMFSvc
+                when "init":
+                    return Puppet::ServiceTypes::InitSvc
+                when "launchd":
+                    #return Puppet::ServiceTypes::LaunchDSvc
+                else
+                    raise Puppet::Error, "Invalid service type %s" % type
                 end
             end
 
@@ -257,37 +329,15 @@ module Puppet
                     return true
                 end
             end
-
-            # Now load any overlay modules to provide additional functionality
-            os = Facter["operatingsystem"].value
-            case os
-            when "Linux":
-                case Facter["distro"].value
-                when "Debian":
-                    require 'puppet/type/service/init'
-                    @svctype = Puppet::ServiceTypes::InitSvc
-
-                    # and then require stupid debian-specific stuff
-                    require 'puppet/type/service/debian'
-                    include Puppet::ServiceTypes::DebianSvc
-                end
-            when "SunOS":
-                release = Float(Facter["operatingsystemrelease"].value)
-                if release < 5.10
-                    require 'puppet/type/service/init'
-                    @svctype = Puppet::ServiceTypes::InitSvc
-                else
-                    require 'puppet/type/service/smf'
-                    @svctype = Puppet::ServiceTypes::SMFSvc
-                end
-            end
-            unless defined? @svctype
-                require 'puppet/type/service/base'
-                @svctype = Puppet::ServiceTypes::BaseSvc
-            end
-            include @svctype
 		end
 	end
 end
+
+# Load all of the different service types.  We could probably get away with
+# loading less here, but it's not a big deal to do so.
+require 'puppet/type/service/base'
+require 'puppet/type/service/init'
+require 'puppet/type/service/debian'
+require 'puppet/type/service/smf'
 
 # $Id$

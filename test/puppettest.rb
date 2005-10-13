@@ -140,9 +140,6 @@ module TestPuppet
 
         return trans
     end
-
-    def test_nothing
-    end
 end
 
 
