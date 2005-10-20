@@ -16,7 +16,11 @@ module Puppet
         class PackageInstalled < Puppet::State
             @name = :install
 
-            @doc = "What state the package should be in.  *true*/*false*/*latest*"
+            @doc = "What state the package should be in.  Specifying *true* will
+                only result in a change if the package is not installed at all; use
+                *latest* to keep the package (and, depending on the package system, its
+                prerequisites) up to date.  Specifying *false* will uninstall the
+                package if it is installed.  *true*/*false*/*latest*/``version``"
 
             # Override the parent method, because we've got all kinds of
             # funky definitions of 'in sync'.
