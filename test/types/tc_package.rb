@@ -35,6 +35,27 @@ class TestPackages < Test::Unit::TestCase
         super
     end
 
+    def tstpkg
+        case $platform
+        #when "SunOS"
+        #    type = "sunpkg"
+        when "Linux"
+            case Facter["distro"].value
+            when "Debian":
+                return %w{zec}
+            #when "RedHat": type = :rpm
+            when "Fedora":
+                return %w{wv}
+            else
+                Puppet.notice "No test packags for %s" % $platform
+                return nil
+            end
+        else
+            Puppet.notice "No test packags for %s" % $platform
+            return nil
+        end
+    end
+
     def mkpkgcomp(pkg)
         assert_nothing_raised {
             pkg = Puppet::Type::Package.create(:name => pkg, :install => true)
@@ -57,6 +78,7 @@ class TestPackages < Test::Unit::TestCase
         when "Linux"
             case Facter["distro"].value
             when "Debian": pkg = "ssh"
+            when "Fedora": pkg = "openssh"
             #when "RedHat": type = :rpm
             else
                 Puppet.notice "No test package for %s" % $platform 
@@ -99,29 +121,25 @@ class TestPackages < Test::Unit::TestCase
             "Somehow retrieved unknown pkg's version")
     end
 
+    def test_latestpkg
+        pkgs = tstpkg || return
+
+        pkgs.each { |name|
+            pkg = Puppet::Type::Package.create(:name => name)
+            assert_nothing_raised {
+                assert(pkg.latest, "Package did not return value for 'latest'")
+            }
+        }
+    end
+
     unless Process.uid == 0
         $stderr.puts "Run as root to perform package installation tests"
     else
     def test_installpkg
-        pkgs = nil
-        case $platform
-        #when "SunOS"
-        #    type = "sunpkg"
-        when "Linux"
-            case Facter["distro"].value
-            when "Debian":
-                pkgs = %w{zec}
-            #when "RedHat": type = :rpm
-            else
-                Puppet.notice "No test packags for %s" % $platform
-                return
-            end
-        else
-            Puppet.notice "No test packags for %s" % $platform
-            return
-        end
-
+        pkgs = tstpkg || return
         pkgs.each { |pkg|
+            # we first set install to 'true', and make sure something gets
+            # installed
             assert_nothing_raised {
                 pkg = Puppet::Type::Package.create(:name => pkg, :install => true)
             }
@@ -138,9 +156,34 @@ class TestPackages < Test::Unit::TestCase
 
             assert_events(comp, [:package_installed], "package")
 
+            # then uninstall it
             assert_nothing_raised {
                 pkg[:install] = false
             }
+
+
+            pkg.retrieve
+
+            assert(! pkg.insync?, "Package is insync")
+
+            assert_events(comp, [:package_removed], "package")
+
+            # and now set install to 'latest' and verify it installs
+            # FIXME this isn't really a very good test -- we should install
+            # a low version, and then upgrade using this.  But, eh.
+            assert_nothing_raised {
+                pkg[:install] = "latest"
+            }
+
+            assert_events(comp, [:package_installed], "package")
+
+            pkg.retrieve
+            assert(pkg.insync?, "After install, package is not insync")
+
+            assert_nothing_raised {
+                pkg[:install] = false
+            }
+
 
             pkg.retrieve
 

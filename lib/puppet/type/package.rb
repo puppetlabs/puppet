@@ -7,6 +7,7 @@ require 'puppet/type/state'
 require 'puppet/type/package/dpkg.rb'
 require 'puppet/type/package/apt.rb'
 require 'puppet/type/package/rpm.rb'
+require 'puppet/type/package/yum.rb'
 require 'puppet/type/package/sun.rb'
 
 module Puppet
@@ -15,9 +16,40 @@ module Puppet
         class PackageInstalled < Puppet::State
             @name = :install
 
-            @doc = "What state the package should be in.
-                *true*/*false*/``version``"
+            @doc = "What state the package should be in.  *true*/*false*/*latest*"
 
+            # Override the parent method, because we've got all kinds of
+            # funky definitions of 'in sync'.
+            def insync?
+                Puppet.debug "is: %s" % @is
+                # Iterate across all of the should values, and see how they turn out.
+                @should.each { |should|
+                    Puppet.debug "should: %s" % should
+                    case should
+                    when :installed
+                        unless @is == :notinstalled
+                            return true
+                        end
+                    when :latest
+                        latest = @parent.latest
+                        if @is == latest
+                            return true
+                        else
+                            Puppet.warning "latest is %s" % latest
+                        end
+                    when :notinstalled
+                        if @is == :notinstalled
+                            return true
+                        end
+                    when @is
+                        return true
+                    end
+                }
+
+                return false
+            end
+
+            # This retrieves the current state
             def retrieve
                 unless defined? @is
                     @parent.retrieve
@@ -27,15 +59,22 @@ module Puppet
             def shouldprocess(value)
                 # possible values are: true, false, and a version number
                 case value
-                #when true, /^[0-9]/:
-                when true:
-                    return value
-                when false:
+                when "latest":
+                    unless @parent.respond_to?(:latest)
+                        raise Puppet::Error,
+                            "Package type %s does not support querying versions" %
+                            @parent[:type]
+                    end
+                    return :latest
+                when true, :installed:
+                    return :installed
+                when false, :notinstalled:
                     return :notinstalled
                 else
-                    raise Puppet::Error.new(
-                        "Invalid install value %s" % value
-                    )
+                    # We allow them to set a should value however they want,
+                    # but only specific package types will be able to use this
+                    # value
+                    return value
                 end
             end
 
@@ -43,18 +82,39 @@ module Puppet
                 method = nil
                 event = nil
                 case @should[0]
-                when true:
+                when :installed:
                     method = :install
                     event = :package_installed
                 when :notinstalled:
                     method = :remove
                     event = :package_removed
+                when :latest
+                    if @is == :notinstalled
+                        method = :install
+                        event = :package_installed
+                    else
+                        method = :update
+                        event = :package_updated
+                    end
                 else
-                    raise Puppet::Error, "Invalid should value %s" % @should[0]
+                    unless ! @parent.respond_to?(:versionable?) or @parent.versionable?
+                        Puppet.warning value
+                        raise Puppet::Error,
+                            "Package type %s does not support specifying versions" %
+                            @parent[:type]
+                    else
+                        method = :install
+                        event = :package_installed
+                    end
                 end
 
                 if @parent.respond_to?(method)
+                    begin
                     @parent.send(method)
+                    rescue => detail
+                        Puppet.err "Could not run %s: %s" % [method, detail.to_s]
+                        raise
+                    end
                 else
                     raise Puppet::Error, "Packages of type %s do not support %s" %
                         [@parent[:type], method]
@@ -76,6 +136,7 @@ module Puppet
                 Puppet::PackagingType::APT,
                 Puppet::PackagingType::DPKG,
                 Puppet::PackagingType::RPM,
+                Puppet::PackagingType::Yum,
                 Puppet::PackagingType::Sun
             ]
 
@@ -168,7 +229,8 @@ module Puppet
                         Puppet.notice "No support for gentoo yet"
                         @default = nil
                     when "debian": @default = :apt
-                    when "redhat", "fedora": @default = :rpm
+                    when "fedora": @default = :yum
+                    when "redhat": @default = :rpm
                     else
                         Puppet.warning "Using rpm as default type for %s" %
                             Facter["distro"].value

@@ -1,7 +1,3 @@
-#!/usr/local/bin/ruby -w
-
-# $Id$
-
 # the class that actually walks our object/state tree, collects the changes,
 # and performs them
 
@@ -182,3 +178,5 @@ class Transaction
 end
 end
 #---------------------------------------------------------------
+
+# $Id$

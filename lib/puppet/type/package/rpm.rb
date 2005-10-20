@@ -8,29 +8,28 @@ module Puppet
                     :description => "DESCRIPTION"
                 }
 
-                cmd = "rpm -q --qf '%s\n'" %
-                    %w{NAME VERSION DESCRIPTION}.collect { |str|
-                        "%{#{str}}"
-                    }.join(" ")
+                cmd = "rpm -q #{self.name} --qf '%s\n'" %
+                    "%{NAME} %{VERSION}-%{RELEASE}"
 
                 # list out all of the packages
-                str = %x{#{cmd} 2>/dev/null}.chomp
+                output = %x{#{cmd} 2>/dev/null}.chomp
 
                 if $? != 0
                     return nil
                 end
 
-                regex = %r{^(\S+)\s+(\S+)\s+(.+)}
-                fields = [:name, :install, :description]
+                regex = %r{^(\S+)\s+(\S+)}
+                #fields = [:name, :install, :description]
+                fields = [:name, :install]
                 hash = {}
-                if match = regex.match(str)
+                if match = regex.match(output)
                     fields.zip(match.captures) { |field,value|
                         hash[field] = value
                     }
                 else
                     raise Puppet::DevError,
                         "Failed to match rpm output '%s'" %
-                        str
+                        output
                 end
 
                 return hash

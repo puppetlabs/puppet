@@ -1026,13 +1026,15 @@ class Type < Puppet::Element
     end
 
     # if all contained objects are in sync, then we're in sync
-    # FIXME I don't think this is used on the type instances any more
+    # FIXME I don't think this is used on the type instances any more,
+    # it's really only used for testing
     def insync?
         insync = true
 
         states.each { |state|
             unless state.insync?
-                Puppet.debug("%s is not in sync" % state)
+                Puppet.debug("%s is not in sync: %s vs %s" %
+                    [state, state.is, state.should])
                 insync = false
             end
         }
