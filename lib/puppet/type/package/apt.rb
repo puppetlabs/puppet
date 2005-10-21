@@ -31,22 +31,34 @@ module Puppet
 
             # What's the latest package version available?
             def latest
-                cmd = "apt-cache show %s" % self.name 
+                cmd = "apt-cache showpkg %s" % self.name 
                 output = %x{#{cmd} 2>&1}
 
                 unless $? == 0
                     raise Puppet::PackageError.new(output)
                 end
 
-                if output =~ /Version: (.+)\n/
-                    return $1
-                else
-                    Puppet.debug "No version"
-                    if Puppet[:debug]
-                        print output
+                if output =~ /Versions:\s*\n((\n|.)+)^$/
+                    versions = $1
+                    version = versions.split(/\n/).collect { |version|
+                        if version =~ /(.+)\(/
+                            $1
+                        else
+                            Puppet.warning "Could not match version '%s'" % version
+                            nil
+                        end
+                    }.reject { |vers| vers.nil? }.sort[-1]
+
+                    unless version
+                        Puppet.debug "No latest version"
+                        if Puppet[:debug]
+                            print output
+                        end
                     end
 
-                    return nil
+                    return version
+                else
+                    Puppet.err "Could not match string"
                 end
             end
 

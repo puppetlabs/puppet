@@ -37,7 +37,7 @@ module Puppet
                         if @is == latest
                             return true
                         else
-                            Puppet.debug "latest is %s" % latest
+                            Puppet.debug "latest %s is %s" % [@parent.name, latest]
                         end
                     when :notinstalled
                         if @is == :notinstalled

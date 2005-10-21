@@ -35,6 +35,29 @@ class TestPackages < Test::Unit::TestCase
         super
     end
 
+    # These are packages that we're sure will be installed
+    def installedpkgs
+        pkgs = nil
+        case $platform
+        when "SunOS"
+            pkgs = %w{SMCossh}
+        when "Linux"
+            case Facter["distro"].value
+            when "Debian": pkgs = %w{ssh openssl}
+            when "Fedora": pkgs = %w{openssh}
+            #when "RedHat": type = :rpm
+            else
+                Puppet.notice "No test package for %s" % $platform 
+                return []
+            end
+        else
+            Puppet.notice "No test package for %s" % $platform
+            return []
+        end
+
+        return pkgs
+    end
+
     def tstpkg
         case $platform
         #when "SunOS"
@@ -70,39 +93,22 @@ class TestPackages < Test::Unit::TestCase
     end
 
     def test_retrievepkg
-        pkg = nil
+        installedpkgs().each { |pkg|
+            obj = nil
+            assert_nothing_raised {
+                obj = Puppet::Type::Package.create(
+                    :name => pkg
+                )
+            }
 
-        case $platform
-        when "SunOS"
-            pkg = "SMCossh"
-        when "Linux"
-            case Facter["distro"].value
-            when "Debian": pkg = "ssh"
-            when "Fedora": pkg = "openssh"
-            #when "RedHat": type = :rpm
-            else
-                Puppet.notice "No test package for %s" % $platform 
-                return
-            end
-        else
-            Puppet.notice "No test package for %s" % $platform
-            return
-        end
+            assert(obj, "could not create package")
 
-        obj = nil
-        assert_nothing_raised {
-            obj = Puppet::Type::Package.create(
-                :name => pkg
-            )
+            assert_nothing_raised {
+                obj.retrieve
+            }
+
+            assert(obj.is(:install), "Could not retrieve package version")
         }
-
-        assert(obj, "could not create package")
-
-        assert_nothing_raised {
-            obj.retrieve
-        }
-
-        assert(obj.is(:install), "Could not retrieve package version")
     end
 
     def test_nosuchpkg
