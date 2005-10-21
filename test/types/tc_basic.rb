@@ -29,7 +29,7 @@ class TestBasic < Test::Unit::TestCase
         }
 
         assert_nothing_raised() {
-            @filepath = "/tmp/testfile"
+            @filepath = tempfile()
             @@tmpfiles << @filepath
             @configfile = Puppet::Type::PFile.create(
                 :path => @filepath,
