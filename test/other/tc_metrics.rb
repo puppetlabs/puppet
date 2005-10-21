@@ -9,8 +9,6 @@ require 'puppet'
 require 'puppet/type'
 require 'test/unit'
 
-# $Id$
-
 $haverrd = true
 begin
     require 'RRD'
@@ -90,3 +88,5 @@ if $haverrd
 else
     $stderr.puts "Missing RRD library -- skipping metric tests"
 end
+
+# $Id$

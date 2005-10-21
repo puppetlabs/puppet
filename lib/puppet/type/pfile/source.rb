@@ -125,7 +125,7 @@ module Puppet
                         @parent.state(:create).retrieve
                     end
                     # we'll let the :create state do our work
-                    @should = nil
+                    @should.clear
                     @is = true
                 # FIXME We should at least support symlinks, I would think...
                 else

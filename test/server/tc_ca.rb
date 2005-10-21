@@ -26,14 +26,14 @@ class TestCA < Test::Unit::TestCase
         print "\n\n" if Puppet[:debug]
     end
 
-    # verify that we're autosigning
-    def test_zautocertgeneration
-        Puppet[:autosign] = true
+    # Verify that we're autosigning.  We have to autosign a "different" machine,
+    # since we always autosign the CA server's certificate.
+    def test_autocertgeneration
         ca = nil
 
         # create our ca
         assert_nothing_raised {
-            ca = Puppet::Server::CA.new()
+            ca = Puppet::Server::CA.new(:autosign => true)
         }
 
         # create a cert with a fake name
@@ -74,7 +74,9 @@ class TestCA < Test::Unit::TestCase
         # and pull it again, just to make sure we're getting the same thing
         newtext = nil
         assert_nothing_raised {
-            newtext, cacerttext = ca.getcert(cert.csr.to_s)
+            newtext, cacerttext = ca.getcert(
+                cert.csr.to_s, "test.reductivelabs.com", "127.0.0.1"
+            )
         }
 
         assert_equal(certtext,newtext)
@@ -82,15 +84,12 @@ class TestCA < Test::Unit::TestCase
 
     # this time don't use autosign
     def test_storeAndSign
-        assert_nothing_raised {
-            Puppet[:autosign] = false
-        }
         ca = nil
         caserv = nil
 
         # make our CA server
         assert_nothing_raised {
-            caserv = Puppet::Server::CA.new()
+            caserv = Puppet::Server::CA.new(:autosign => false)
         }
 
         # retrieve the actual ca object
@@ -116,7 +115,9 @@ class TestCA < Test::Unit::TestCase
         # retrieve them
         certtext = nil
         assert_nothing_raised {
-            certtext, cacerttext = caserv.getcert(cert.csr.to_s)
+            certtext, cacerttext = caserv.getcert(
+                cert.csr.to_s, "test.reductivelabs.com", "127.0.0.1"
+            )
         }
 
         # verify we got nothing back, since autosign is off
@@ -151,7 +152,6 @@ class TestCA < Test::Unit::TestCase
     # and now test the autosign file
     def test_autosign
         autosign = File.join(tmpdir, "autosigntesting")
-        Puppet[:autosign] = autosign
         @@tmpfiles << autosign
         File.open(autosign, "w") { |f|
             f.puts "hostmatch.domain.com"
@@ -160,7 +160,7 @@ class TestCA < Test::Unit::TestCase
 
         caserv = nil
         assert_nothing_raised {
-            caserv = Puppet::Server::CA.new()
+            caserv = Puppet::Server::CA.new(:autosign => autosign)
         }
 
         # make sure we know what's going on
@@ -168,5 +168,34 @@ class TestCA < Test::Unit::TestCase
         assert(caserv.autosign?("fakehost.other.com"))
         assert(!caserv.autosign?("kirby.reductivelabs.com"))
         assert(!caserv.autosign?("culain.domain.com"))
+    end
+
+    # verify that things aren't autosigned by default
+    def test_nodefaultautosign
+        caserv = nil
+        assert_nothing_raised {
+            caserv = Puppet::Server::CA.new()
+        }
+
+        # make sure we know what's going on
+        assert(!caserv.autosign?("hostmatch.domain.com"))
+        assert(!caserv.autosign?("fakehost.other.com"))
+        assert(!caserv.autosign?("kirby.reductivelabs.com"))
+        assert(!caserv.autosign?("culain.domain.com"))
+    end
+
+    # We want the CA to autosign its own certificate, because otherwise
+    # the puppetmasterd CA does not autostart.
+    def test_caautosign
+        server = nil
+        assert_nothing_raised {
+            server = Puppet::Server.new(
+                :Port => @@port,
+                :Handlers => {
+                    :CA => {}, # so that certs autogenerate
+                    :Status => nil
+                }
+            )
+        }
     end
 end

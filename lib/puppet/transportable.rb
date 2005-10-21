@@ -43,7 +43,7 @@ module Puppet
             end
 
             if defined? @tags and @tags
-                Puppet.warning "%s(%s) tags: %s" % [@type, @name, @tags.join(" ")]
+                Puppet.debug "%s(%s) tags: %s" % [@type, @name, @tags.join(" ")]
             end
 
             return retobj

@@ -66,13 +66,18 @@ class Server
 
             @loadedhandlers = []
             handlers.each { |handler|
-                Puppet.debug "adding handler for %s" % handler.class
+                #Puppet.debug "adding handler for %s" % handler.class
                 self.add_handler(handler.class.interface, handler)
             }
 
+            # Initialize these to nil, but they will get set to values
+            # by the 'service' method.  These have to instance variables
+            # because I don't have a clear line from the service method to
+            # the service hook.
             @request = nil
             @client = nil
             @clientip = nil
+
             self.set_service_hook { |obj, *args|
                 #raise "crap!"
                 if @client and @clientip
@@ -81,6 +86,8 @@ class Server
                 end
                 begin
                     obj.call(*args)
+                rescue XMLRPC::FaultException
+                    raise
                 rescue Puppet::Server::AuthorizationError => detail
                     #Puppet.warning obj.inspect
                     #Puppet.warning args.inspect
@@ -99,13 +106,17 @@ class Server
                     #Puppet.warning obj.inspect
                     #Puppet.warning args.inspect
                     Puppet.err "Could not call: %s" % detail.to_s
-                    raise error
+                    raise XMLRPC::FaultException.new(1, detail.to_s)
                 end
             }
         end
 
+        # Handle the actual request.  This does some basic collection of
+        # data, and then just calls the parent method.
         def service(request, response)
             @request = request
+
+            # The only way that @client can be nil is if the request is local.
             if peer = request.peeraddr
                 @client = peer[2]
                 @clientip = peer[3]
@@ -120,17 +131,17 @@ class Server
             # then we get the hostname from the cert, instead of via IP
             # info
             if cert = request.client_cert
-                name = cert.subject
-                #Puppet.info name.inspect
-                if name.to_s =~ /CN=(\w+)/
-                    Puppet.info "Overriding %s with cert name %s" %
-                        [@client, $1]
-                    @client = $1
+                nameary = cert.subject.to_a.find { |ary|
+                    ary[0] == "CN"
+                }   
+
+                if nameary.nil?
+                    Puppet.warning "Could not retrieve server name from cert"
                 else
-                    Puppet.warning "Could not match against %s(%s)" %
-                        [name, name.class]
+                    Puppet.debug "Overriding %s with cert name %s" %
+                        [@client, nameary[1]]
+                    @client = nameary[1]
                 end
-                #Puppet.info "client cert is %s" % request.client_cert
             end
             #if request.server_cert
             #    Puppet.info "server cert is %s" % @request.server_cert

@@ -207,7 +207,7 @@ module SSLCertificates
             :serial         => [:cadir,          "serial"],
             :privatedir     => [:ssldir,         "private"],
             :passfile       => [:privatedir,     "password"],
-            :autosign       => [:ssldir,         "autosign.conf"],
+            :autosign       => [:puppetconf,     "autosign.conf"],
             :ca_crl_days    => 365,
             :ca_days        => 1825,
             :ca_md          => "md5",
@@ -443,7 +443,8 @@ module SSLCertificates
 
             certfile = host2certfile(host)
             if File.exists?(certfile)
-                Puppet.notice "Overwriting signed certificate for %s" % host
+                Puppet.notice "Overwriting signed certificate %s for %s" %
+                    [certfile, host]
             end
 
             File.open(certfile, "w", 0660) { |f|

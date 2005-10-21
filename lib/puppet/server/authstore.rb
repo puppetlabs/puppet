@@ -66,6 +66,7 @@ class Server
                 }
             }
 
+            Puppet.info "Defaulting to false for %s" % name
             # default to false
             return false
         end

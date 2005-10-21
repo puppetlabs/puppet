@@ -36,7 +36,7 @@ class TestPuppetDExe < Test::Unit::TestCase
 
         cmd = "puppetd"
         cmd += " --verbose"
-        cmd += " --fqdn %s" % fqdn
+        #cmd += " --fqdn %s" % fqdn
         cmd += " --port %s" % @@port
         cmd += " --ssldir %s" % Puppet[:ssldir]
         cmd += " --server localhost"
@@ -44,11 +44,10 @@ class TestPuppetDExe < Test::Unit::TestCase
         # and verify our daemon runs
         assert_nothing_raised {
             output = %x{#{cmd}}.chomp
+            puts output
         }
         sleep 1
         assert($? == 0, "Puppetd exited with code %s" % $?)
-        #puts output
-        #assert_equal("", output, "Puppetd produced output %s" % output)
 
         assert(FileTest.exists?(@createdfile),
             "Failed to create config'ed file")

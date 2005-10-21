@@ -56,6 +56,11 @@ class State < Puppet::Element
             raise Puppet::DevError, "%s's should is not array" % self.class.name
         end
 
+        # an empty array is analogous to no should values
+        if @should.empty?
+            return true
+        end
+
         # Look for a matching value
         @should.each { |val|
             if @is == val
@@ -93,7 +98,16 @@ class State < Puppet::Element
 
     # Only return the first value
     def should
-        return @should[0]
+        if defined? @should
+            unless @should.is_a?(Array)
+                Puppet.warning @should.inspect
+                raise Puppet::DevError, "should for %s on %s is not an array" %
+                    [self.class.name, @parent.name]
+            end
+            return @should[0]
+        else
+            return nil
+        end
     end
 
     # Set the should value.

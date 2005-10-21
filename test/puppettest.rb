@@ -16,6 +16,11 @@ module TestPuppet
     end
 
     def setup
+        if defined? @@testcount
+            @@testcount += 1
+        else
+            @@testcount = 0
+        end
         if $0 =~ /tc_.+\.rb/
             Puppet[:loglevel] = :debug
             $VERBOSE = 1
@@ -24,7 +29,10 @@ module TestPuppet
             Puppet[:httplog] = "/dev/null"
         end
 
-        @configpath = File.join(tmpdir, self.class.to_s + "configdir")
+        @configpath = File.join(tmpdir,
+            self.class.to_s + "configdir" + @@testcount.to_s
+        )
+
         Puppet[:puppetconf] = @configpath
         Puppet[:puppetvar] = @configpath
 

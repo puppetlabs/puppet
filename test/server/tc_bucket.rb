@@ -204,7 +204,7 @@ class TestBucket < Test::Unit::TestCase
         client = nil
         port = Puppet[:masterport]
 
-        pid = mkserver(:CA => nil, :FileBucket => { :Bucket => @bucket})
+        pid = mkserver(:CA => {}, :FileBucket => { :Bucket => @bucket})
 
         assert_nothing_raised {
             client = Puppet::Client::Dipper.new(

@@ -1,15 +1,12 @@
-#!/usr/local/bin/ruby -w
-
-# $Id$
-
 # included so we can test object types
 require 'puppet'
 
-module Puppet
+module Puppet # :nodoc:
+    # A class for handling metrics.  This is currently ridiculously hackish.
 	class Metric
         def Metric.init
-            @@typemetrics = Hash.new { |typehash,type|
-                typehash[type] = Hash.new(0)
+            @@typemetrics = Hash.new { |typehash,typename|
+                typehash[typename] = Hash.new(0)
             }
 
             @@eventmetrics = Hash.new(0)
@@ -27,9 +24,10 @@ module Puppet
             # first gather stats about all of the types
             Puppet::Type.eachtype { |type|
                 type.each { |instance|
-                    @@typemetrics[type][:total] += 1
+                    hash = @@typemetrics[type]
+                    hash[:total] += 1
                     if instance.managed?
-                        @@typemetrics[type][:managed] += 1
+                        hash[:managed] += 1
                     end
                 }
             }
@@ -46,7 +44,7 @@ module Puppet
                 @@typemetrics[type][:changed] += 1
                 @@typemetrics[type][:totalchanges] += count
             else
-                raise "Unknown metric %s" % metric
+                raise Puppet::DevError, "Unknown metric %s" % metric
             end
         end
 
@@ -58,12 +56,14 @@ module Puppet
             }
         end
 
+        # Iterate across all of the metrics
         def Metric.each
             @@metrics.each { |name,metric|
                 yield metric
             }
         end
 
+        # I'm nearly positive this method is used only for testing
         def Metric.load(ary)
             @@typemetrics = ary[0]
             @@eventmetrics = ary[1]
@@ -246,3 +246,5 @@ module Puppet
         end
     end
 end
+
+# $Id$

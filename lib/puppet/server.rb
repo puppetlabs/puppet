@@ -98,6 +98,7 @@ module Puppet
     class Server
         # the base class for the different handlers
         class Handler
+            attr_accessor :server
             @subclasses = []
 
             def self.each

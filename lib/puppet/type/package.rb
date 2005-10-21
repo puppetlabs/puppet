@@ -25,10 +25,8 @@ module Puppet
             # Override the parent method, because we've got all kinds of
             # funky definitions of 'in sync'.
             def insync?
-                Puppet.debug "is: %s" % @is
                 # Iterate across all of the should values, and see how they turn out.
                 @should.each { |should|
-                    Puppet.debug "should: %s" % should
                     case should
                     when :installed
                         unless @is == :notinstalled
@@ -39,7 +37,7 @@ module Puppet
                         if @is == latest
                             return true
                         else
-                            Puppet.warning "latest is %s" % latest
+                            Puppet.debug "latest is %s" % latest
                         end
                     when :notinstalled
                         if @is == :notinstalled
@@ -65,6 +63,7 @@ module Puppet
                 case value
                 when "latest":
                     unless @parent.respond_to?(:latest)
+                        Puppet.err @parent.inspect
                         raise Puppet::Error,
                             "Package type %s does not support querying versions" %
                             @parent[:type]
@@ -326,6 +325,9 @@ module Puppet
             # be set in 'should', or through comparing against the system, in which
             # case the hash's values should be set in 'is'
             def initialize(hash)
+                type = hash["type"] || hash[:type] || self.class.default
+                self.type2module(type)
+
                 super
 
                 unless @states.include?(:install)
@@ -335,18 +337,6 @@ module Puppet
 
                 unless @parameters.include?(:type)
                     self[:type] = self.class.default
-                end
-            end
-
-            # Set the package type parameter.  Looks up the corresponding
-            # module and then extends the 'install' state.
-            def paramtype=(typename)
-                if type = self.class.pkgtype(typename)
-                    Puppet.debug "Extending %s with %s" % [self.name, type]
-                    self.extend(type)
-                    @parameters[:type] = type
-                else
-                    raise Puppet::Error, "Invalid package type %s" % typename
                 end
             end
 
@@ -365,6 +355,16 @@ module Puppet
                     self.class.validstates.each { |name, state|
                         self.is = [name, :notinstalled]
                     }
+                end
+            end
+
+            # Extend the package with the appropriate package type.
+            def type2module(typename)
+                if type = self.class.pkgtype(typename)
+                    Puppet.debug "Extending to package type %s" % [type]
+                    self.extend(type)
+                else
+                    raise Puppet::Error, "Invalid package type %s" % typename
                 end
             end
         end # Puppet::Type::Package

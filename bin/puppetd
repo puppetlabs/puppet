@@ -11,7 +11,7 @@
 #   puppetd  [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
 #               [--ssldir <cert directory>] [-l|--logdest <syslog|<file>|console>]
 #               [--fqdn <host name>] [-p|--port <port>] [-s|--server <server>]
-#               [-w|--waitforcert <seconds>]
+#               [-w|--waitforcert <seconds>] [-c|--confdir <configuration directory>]
 #
 # = Description
 #

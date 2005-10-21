@@ -179,8 +179,6 @@ module Puppet
                     end
                 end
 
-                Puppet.err @defsvctype
-
                 return @defsvctype
             end
 
@@ -235,6 +233,11 @@ module Puppet
                 self.extend(type)
 
                 super
+
+                unless @parameters.include?(:pattern)
+                    # default to using the service name as the pattern
+                    self[:pattern] = self.name
+                end
 
                 # and then see if it needs to be checked
                 if self.respond_to?(:configchk)

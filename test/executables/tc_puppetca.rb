@@ -49,7 +49,9 @@ class TestPuppetCA < Test::Unit::TestCase
         cert = mkcert("host.test.com")
         resp = nil
         assert_nothing_raised {
-            resp = ca.getcert(cert.csr.to_pem)
+            # We need to use a fake name so it doesn't think the cert is from
+            # itself.
+            resp = ca.getcert(cert.csr.to_pem, "fakename", "127.0.0.1")
         }
         assert_equal(["",""], resp)
         #Puppet.warning "SSLDir is %s" % Puppet[:ssldir]

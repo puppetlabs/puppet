@@ -38,7 +38,8 @@ class TestTagging < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            assert_equal(%w{solaris apache}, scope.tags, "Incorrect scope tags")
+            # Scopes put their own tags first
+            assert_equal(%w{apache solaris}, scope.tags, "Incorrect scope tags")
         }
     end
 

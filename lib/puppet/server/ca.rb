@@ -19,65 +19,42 @@ class Server
         # FIXME autosign? should probably accept both hostnames and IP addresses
         def autosign?(hostname)
             # simple values are easy
-            asign = Puppet[:autosign]
-            if asign == true or asign == false
-                return asign
+            if @autosign == true or @autosign == false
+                return @autosign
             end
 
             # we only otherwise know how to handle files
-            unless asign =~ /^\//
+            unless @autosign =~ /^\//
                 raise Puppet::Error, "Invalid autosign value %s" %
-                    asign
+                    @autosign
             end
 
-            unless FileTest.exists?(asign)
-                Puppet.warning "Autosign is enabled but %s is missing" % asign
+            unless FileTest.exists?(@autosign)
+                Puppet.info "Autosign is enabled but %s is missing" % @autosign
                 return false
             end
             auth = Puppet::Server::AuthStore.new
-            File.open(asign) { |f|
+            File.open(@autosign) { |f|
                 f.each { |line|
                     auth.allow(line.chomp)
-#                    if line =~ /^[.\w-]+$/ and line == hostname
-#                        Puppet.info "%s exactly matched %s" % [hostname, line]
-#                        return true
-#                    else
-#                        begin
-#                            rx = Regexp.new(line)
-#                        rescue => detail
-#                            Puppet.err(
-#                                "Could not create regexp out of autosign line %s: %s" %
-#                                [line, detail]
-#                            )
-#                            next
-#                        end
-#
-#                        if hostname =~ rx
-#                            Puppet.info "%s matched %s" % [hostname, line]
-#                            return true
-#                        end
-#                    end
                 }
             }
 
             # for now, just cheat and pass a fake IP address to allowed?
-            return auth.allowed?(hostname, "127.0.0.1")
+            return auth.allowed?(hostname, "127.1.1.1")
         end
 
         def initialize(hash = {})
+            @autosign = hash[:autosign] || Puppet[:autosign]
             @ca = Puppet::SSLCertificates::CA.new()
         end
 
         # our client sends us a csr, and we either store it for later signing,
         # or we sign it right away
         def getcert(csrtext, client = nil, clientip = nil)
-            # okay, i need to retrieve the hostname from the csr, and then
-            # verify that i get the same hostname through reverse lookup or
-            # something
-
-            Puppet.info "Someone's trying for a cert"
             csr = OpenSSL::X509::Request.new(csrtext)
 
+            # Use the hostname from the CSR, not from the network.
             subject = csr.subject
 
             nameary = subject.to_a.find { |ary|
@@ -85,7 +62,9 @@ class Server
             }
 
             if nameary.nil?
-                Puppet.err "Invalid certificate request"
+                Puppet.err(
+                    "Invalid certificate request: could not retrieve server name"
+                )
                 return "invalid"
             end
 
@@ -129,10 +108,13 @@ class Server
             cert, cacert = ca.getclientcert(hostname)
             if cert and cacert
                 Puppet.info "Retrieving existing certificate for %s" % hostname
-                Puppet.info "Cert: %s; Cacert: %s" % [cert.class, cacert.class]
+                #Puppet.info "Cert: %s; Cacert: %s" % [cert.class, cacert.class]
                 return [cert.to_pem, cacert.to_pem]
             elsif @ca
-                if self.autosign?(hostname)
+                if self.autosign?(hostname) or client.nil?
+                    if client.nil?
+                        Puppet.info "Signing certificate for CA server"
+                    end
                     # okay, we don't have a signed cert
                     # if we're a CA and autosign is turned on, then go ahead and sign
                     # the csr and return the results

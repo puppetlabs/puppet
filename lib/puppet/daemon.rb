@@ -127,6 +127,7 @@ module Puppet
                 Puppet.err "Cannot request a certificate without a defined target"
                 return false
             end
+
             Puppet.info "Creating a new certificate request for %s" % @fqdn
             name = OpenSSL::X509::Name.new([["CN", @fqdn]])
 

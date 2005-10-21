@@ -41,6 +41,13 @@ module Puppet
                 # Really, we should stick multiple names in here
                 # but for now just make a simple array
                 names = [client]
+
+                # if the client name is fully qualied (which is normally will be)
+                # add the short name
+                if client =~ /\./
+                    names << client.sub(/\..+/,'')
+                end
+
                 begin
                     if @usenodes
                         unless client

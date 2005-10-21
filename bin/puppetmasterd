@@ -193,8 +193,6 @@ end
 
 bg = false
 
-Puppet[:autosign] = true
-
 unless Puppet[:loglevel] == :debug or Puppet[:loglevel] == :info
     bg = true
 end

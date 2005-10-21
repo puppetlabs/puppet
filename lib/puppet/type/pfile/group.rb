@@ -54,15 +54,14 @@ module Puppet
                         "Could not retrieve gid for %s" % @parent.name)
                 end
 
-                # now make sure the user is allowed to change to that group
-                unless Process.uid == 0
-                    groups = %x{groups}.chomp.split(/\s/)
-                    unless groups.include?(gname)
-                        Puppet.notice "Cannot chgrp: not in group %s" % gname
-                        raise Puppet::Error.new(
-                            "Cannot chgrp: not in group %s" % gname)
-                    end
-                end
+                #unless Process.uid == 0
+                #    groups = %x{groups}.chomp.split(/\s/)
+                #    unless groups.include?(gname)
+                #        Puppet.notice "Cannot chgrp: not in group %s" % gname
+                #        raise Puppet::Error.new(
+                #            "Cannot chgrp: not in group %s" % gname)
+                #    end
+                #end
 
                 if gid.nil?
                     raise Puppet::Error.new(
@@ -76,15 +75,18 @@ module Puppet
             # we'll just let it fail, but we should probably set things up so
             # that users get warned if they try to change to an unacceptable group.
             def sync
-                #unless Process.uid == 0
-                #    unless defined? @@notifiedgroup
-                #        Puppet.notice(  
-                #            "Cannot manage group ownership unless running as root"
-                #        )
-                #        @@notifiedgroup = true
-                #    end
-                #    return nil
-                #end
+                # now make sure the user is allowed to change to that group
+                # We don't do this in the should section, so it can still be used
+                # for noop.
+                unless Process.uid == 0
+                    unless defined? @@notifiedgroup
+                        Puppet.notice(  
+                            "Cannot manage group ownership unless running as root"
+                        )
+                        @@notifiedgroup = true
+                    end
+                    return nil
+                end
 
                 if @is == :notfound
                     @parent.stat(true)
