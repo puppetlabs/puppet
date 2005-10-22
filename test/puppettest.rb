@@ -528,7 +528,7 @@ class PuppetTestSuite
         Dir.entries(name).collect { |file|
             File.join(name,file)
         }.find_all { |file|
-            FileTest.file?(file) and file =~ /tc_.+\.rb$/
+            FileTest.file?(file) and file =~ /\.rb$/
         }.sort { |a,b|
             # in the order they were modified, so the last modified files
             # are loaded and thus displayed last

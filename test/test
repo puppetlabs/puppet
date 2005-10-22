@@ -1,22 +1,12 @@
 #!/usr/bin/env ruby
 
 #------------------------------------------------------------
-# $Id$
-#
 # run any or all test suites
 
 $:.unshift '.'
 $:.unshift '../lib'
 
-# if we're not in the library trunk, then add that to the lib search path
-#if Dir.getwd !~ %r{puppet/library}
-#    $:.unshift '../../../library/trunk/lib/'
-#    $:.unshift '../../../language/trunk/lib/'
-#    $:.unshift '../../../library/trunk/test/'
-#end
-
 require 'puppettest.rb'
-
 require 'getoptlong'
 
 	#[ "--size",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
@@ -52,3 +42,5 @@ suites.each { |suite|
 
 # This damn problem just doesn't seem to want to go away
 system("%s/etc/init.d/sleeper stop 2>/dev/null 1>/dev/null" % $puppetbase)
+
+# $Id$
