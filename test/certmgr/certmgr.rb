@@ -23,10 +23,11 @@ require 'puppettest'
 class TestCertMgr < Test::Unit::TestCase
     include TestPuppet
     def setup
-        Puppet[:loglevel] = :debug if __FILE__ == $0
+        super
         #@dir = File.join(Puppet[:certdir], "testing")
+        @dir = File.join(@configpath, "certest")
+        Puppet.notice @dir
         system("mkdir -p %s" % @dir)
-        @@tmpfiles = [@dir]
     end
 
     def mkPassFile()
@@ -44,20 +45,11 @@ class TestCertMgr < Test::Unit::TestCase
 
     def mkCA
         ca = nil
-        Puppet[:ssldir] = @dir
         assert_nothing_raised {
             ca = Puppet::SSLCertificates::CA.new()
         }
 
         return ca
-    end
-
-    def teardown
-        @@tmpfiles.each { |f|
-            if FileTest.exists?(f)
-                system("rm -rf %s" % f)
-            end
-        }
     end
 
     def testCreateSelfSignedCertificate
@@ -203,7 +195,7 @@ class TestCertMgr < Test::Unit::TestCase
         }
 
         assert_equal($?,0)
-        assert_equal("/tmp/puppetcertestingdir/certs/signedcertest.pem: OK\n", output)
+        assert_equal(File.join(Puppet[:certdir], "signedcertest.pem: OK\n"), output)
     end
 
     def mkcert(hostname)
