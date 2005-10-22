@@ -8,6 +8,28 @@ module Puppet
             @name = :group
             @event = :inode_changed
 
+            def id2name(id)
+                begin
+                    group = Etc.getgrgid(id)
+                rescue ArgumentError
+                    return nil
+                end
+                if group.gid == ""
+                    return nil
+                else
+                    return group.name
+                end
+            end
+
+            # We want to print names, not numbers
+            def is_to_s
+                id2name(@is) || @is
+            end
+
+            def should_to_s
+                id2name(self.should) || self.should
+            end
+
             def retrieve
                 stat = @parent.stat(true)
 

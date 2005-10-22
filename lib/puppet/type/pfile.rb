@@ -166,6 +166,9 @@ module Puppet
                 # default to true
                 self[:backup] = true
 
+                # Used for caching clients
+                @clients = {}
+
                 super
             end
             
@@ -500,7 +503,10 @@ module Puppet
                     end
                     # FIXME We should cache a copy of this server
                     #sourceobj.server = Puppet::NetworkClient.new(args)
-                    sourceobj.server = Puppet::Client::FileClient.new(args)
+                    unless @clients.include?(source)
+                        @clients[source] = Puppet::Client::FileClient.new(args)
+                    end
+                    sourceobj.server = @clients[source]
 
                     tmp = uri.path
                     if tmp =~ %r{^/(\w+)}

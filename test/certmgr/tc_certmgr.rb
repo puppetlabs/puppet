@@ -21,11 +21,10 @@ require 'puppettest'
 # and test whether we've got things in the right scopes
 
 class TestCertMgr < Test::Unit::TestCase
+    include TestPuppet
     def setup
         Puppet[:loglevel] = :debug if __FILE__ == $0
         #@dir = File.join(Puppet[:certdir], "testing")
-        @dir = "/tmp/puppetcertestingdir"
-        Puppet[:ssldir] = @dir
         system("mkdir -p %s" % @dir)
         @@tmpfiles = [@dir]
     end
@@ -220,8 +219,6 @@ class TestCertMgr < Test::Unit::TestCase
 
     def test_interactiveca
         ca = nil
-        Puppet[:ssldir] = "/tmp/puppetinteractivecatest"
-        @@tmpfiles << Puppet[:ssldir]
 
         assert_nothing_raised {
             ca = Puppet::SSLCertificates::CA.new

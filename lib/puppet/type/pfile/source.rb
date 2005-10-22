@@ -99,6 +99,7 @@ module Puppet
                             @is = :notfound
                         end
                     else
+                        Puppet.info "File does not have checksum"
                         @is = :notfound
                     end
 

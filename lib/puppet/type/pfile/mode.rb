@@ -12,11 +12,19 @@ module Puppet
 
             # Our modes are octal, so make sure they print correctly.
             def is_to_s
-                "%o" % @is
+                if @is.is_a?(Integer)
+                    return "%o" % @is
+                else
+                    return @is
+                end
             end
 
             def should_to_s
-                "%o" % self.should
+                if @should.is_a?(Integer)
+                    return "%o" % @should
+                else
+                    return @should
+                end
             end
 
             def shouldprocess(should)

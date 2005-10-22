@@ -86,7 +86,7 @@ module Puppet
             end
 
             def cert=(cert)
-                Puppet.debug "Adding certificate"
+                #Puppet.debug "Adding certificate"
                 @http.cert = cert
                 @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
             end
@@ -99,6 +99,7 @@ module Puppet
                 hash[:Path] ||= "/RPC2"
                 hash[:Server] ||= "localhost"
                 hash[:Port] ||= Puppet[:masterport]
+                Puppet.debug "Creating client for %s" % hash[:Server]
 
                 @puppetserver = hash[:Server]
 

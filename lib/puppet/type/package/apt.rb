@@ -19,7 +19,7 @@ module Puppet
                     # Add the package version
                     str += "=%s" % should
                 end
-                cmd = "apt-get install %s" % str
+                cmd = "apt-get -q -y install %s" % str
 
                 Puppet.info "Executing %s" % cmd.inspect
                 output = %x{#{cmd} 2>&1}
@@ -41,7 +41,7 @@ module Puppet
                 if output =~ /Versions:\s*\n((\n|.)+)^$/
                     versions = $1
                     version = versions.split(/\n/).collect { |version|
-                        if version =~ /(.+)\(/
+                        if version =~ /^([^\(]+)\(/
                             $1
                         else
                             Puppet.warning "Could not match version '%s'" % version

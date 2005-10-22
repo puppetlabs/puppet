@@ -7,6 +7,28 @@ module Puppet
             @name = :owner
             @event = :inode_changed
 
+            def id2name(id)
+                begin
+                    user = Etc.getpwuid(id)
+                rescue ArgumentError
+                    return nil
+                end
+                if user.uid == ""
+                    return nil
+                else
+                    return user.name
+                end
+            end
+
+            # We want to print names, not numbers
+            def is_to_s
+                id2name(@is) || @is
+            end
+
+            def should_to_s
+                id2name(self.should) || self.should
+            end
+
             def retrieve
                 unless stat = @parent.stat(true)
                     @is = :notfound
