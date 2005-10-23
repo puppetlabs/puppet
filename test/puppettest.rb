@@ -119,8 +119,9 @@ module TestPuppet
         run_events(:rollback, trans, events, msg)
     end
 
-    def assert_events(comp, events, msg)
+    def assert_events(comp, events, msg = nil)
         trans = nil
+        msg ||= comp.name
         assert_nothing_raised("Component %s failed" % [msg]) {
             trans = comp.evaluate
         }

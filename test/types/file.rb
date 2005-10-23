@@ -104,7 +104,7 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    def test_zgroup
+    def test_group
         file = mktestfile()
         [%x{groups}.chomp.split(/ /), Process.groups].flatten.each { |group|
             assert_nothing_raised() {
@@ -116,6 +116,28 @@ class TestFile < Test::Unit::TestCase
     end
 
     if Process.uid == 0
+        def test_zcreateasuser
+            dir = tmpdir()
+
+            user = nonrootuser()
+            path = File.join(tmpdir, "createusertesting")
+            @@tmpfiles << path
+
+            file = nil
+            assert_nothing_raised {
+                file = Puppet::Type::PFile.create(
+                    :path => path,
+                    :owner => user.name,
+                    :create => true,
+                    :mode => "755"
+                )
+            }
+
+            comp = newcomp("createusertest", file)
+
+            assert_events(comp, [:file_created])
+        end
+
         def test_ownerasroot
             file = mktestfile()
 
@@ -460,7 +482,6 @@ class TestFile < Test::Unit::TestCase
     def test_filetype_retrieval
         file = nil
 
-        Puppet.err tmpdir()
         assert_nothing_raised {
             file = Puppet::Type::PFile.create(
                 :name => tmpdir(),

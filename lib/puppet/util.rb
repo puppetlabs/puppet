@@ -2,9 +2,8 @@
 
 module Puppet
 module Util
-    # Execute a block as a given user, and optionally as a group
-    def self.asuser(user, group = nil)
-        # FIXME This needs to allow user, group, or both to be optional.
+    # Execute a block as a given user or group
+    def self.asuser(user = nil, group = nil)
         require 'etc'
 
         uid = nil

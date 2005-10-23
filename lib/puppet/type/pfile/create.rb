@@ -38,29 +38,50 @@ module Puppet
             def sync
                 event = nil
                 mode = @parent.should(:mode)
+
+                # First, determine if a user has been specified and if so if
+                # that user has write access to the parent dir
+                asuser = nil
+                if @parent.should(:owner) and ! @parent.should(:owner).is_a?(Symbol)
+                    writeable = Puppet::Util.asuser(@parent.should(:owner)) {
+                        FileTest.writable?(File.dirname(@parent[:path]))
+                    }
+
+                    # If the parent directory is writeable, then we execute
+                    # as the user in question.  Otherwise we'll rely on
+                    # the 'owner' state to do things.
+                    if writeable
+                        asuser = @parent.should(:owner)
+                    end
+                end
                 begin
                     case self.should
                     when "file":
                         # just create an empty file
-                        if mode
-                            File.open(@parent[:path],"w", mode) {
-                            }
-                            @parent.delete(:mode)
-                        else
-                            File.open(@parent[:path],"w") {
-                            }
-                        end
+                        Puppet::Util.asuser(asuser, @parent.should(:group)) {
+                            if mode
+                                File.open(@parent[:path],"w", mode) {
+                                }
+                            else
+                                File.open(@parent[:path],"w") {
+                                }
+                            end
+                        }
                         event = :file_created
                     when "directory":
-                        if mode
-                            Dir.mkdir(@parent.name,mode)
-                            @parent.delete(:mode)
-                        else
-                            Dir.mkdir(@parent.name)
-                        end
+                        Puppet::Util.asuser(asuser) {
+                            if mode
+                                Dir.mkdir(@parent.name,mode)
+                            else
+                                Dir.mkdir(@parent.name)
+                            end
+                        }
                         event = :directory_created
                     when :notfound:
                         # this is where the file should be deleted...
+
+                        # This value is only valid when we're rolling back a creation,
+                        # so we verify that the file has not been modified since then.
                         unless FileTest.size(@parent.name) == 0
                             raise Puppet::Error.new(
                                 "Created file %s has since been modified; cannot roll back."

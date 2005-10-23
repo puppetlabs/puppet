@@ -100,13 +100,15 @@ module Puppet
                 if @is == :notfound
                     @parent.stat(true)
                     self.retrieve
+                    if @is == :notfound
+                        Puppet.err "File '%s' does not exist; cannot chown" %
+                            @parent[:path]
+                        return nil
+                    end
+                    if self.insync?
+                        return nil
+                    end
                     #Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
-                end
-
-                unless @parent.stat
-                    Puppet.err "File '%s' does not exist; cannot chown" %
-                        @parent[:path]
-                    return nil
                 end
 
                 begin

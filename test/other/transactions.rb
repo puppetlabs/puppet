@@ -114,8 +114,16 @@ class TestTransactions < Test::Unit::TestCase
 
 
         component = newcomp("file",file)
+        require 'etc'
+        groupname = Etc.getgrgid(File.stat(file.name).gid).name
         assert_nothing_raised() {
-            file[:group] = @groups[1]
+            # Find a group that it's not set to
+            group = @groups.find { |group| group != groupname }
+            unless group
+                raise "Could not find suitable group"
+            end
+            file[:group] = group
+
             file[:mode] = "755"
         }
         trans = assert_events(component, [:inode_changed, :inode_changed], "file")

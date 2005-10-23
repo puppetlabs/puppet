@@ -97,29 +97,19 @@ module Puppet
             # we'll just let it fail, but we should probably set things up so
             # that users get warned if they try to change to an unacceptable group.
             def sync
-                # now make sure the user is allowed to change to that group
-                # We don't do this in the should section, so it can still be used
-                # for noop.
-                unless Process.uid == 0
-                    unless defined? @@notifiedgroup
-                        Puppet.notice(  
-                            "Cannot manage group ownership unless running as root"
-                        )
-                        @@notifiedgroup = true
-                    end
-                    return nil
-                end
-
                 if @is == :notfound
                     @parent.stat(true)
                     self.retrieve
-                    #Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
-                end
 
-                unless @parent.stat
-                    Puppet.err "File '%s' does not exist; cannot chgrp" %
-                        @parent[:path]
-                    return nil
+                    if @is == :notfound
+                        Puppet.err "File '%s' does not exist; cannot chgrp" %
+                            @parent[:path]
+                        return nil
+                    end
+
+                    if self.insync?
+                        return nil
+                    end
                 end
 
                 begin
