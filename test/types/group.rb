@@ -138,7 +138,8 @@ class TestGroup < Test::Unit::TestCase
         assert_equal(old, curgid, "UID was not reverted")
     end
 
-    def test_eachmethod
+    # Disabled, because it was testing implementation, not function
+    def disabled_test_eachmethod
         obj = Etc.getgrnam(groupnames()[0])
 
         assert(obj, "Could not retrieve test group object")
@@ -186,6 +187,31 @@ class TestGroup < Test::Unit::TestCase
         }
     end
 
+    # Test that we can query things
+    # It'd be nice if we could automate this...
+    def test_checking
+        require 'etc'
+
+        name = nil
+        assert_nothing_raised {
+            name = Etc.getgrgid(Process.gid).name
+        }
+        user = nil
+        assert_nothing_raised {
+            checks = Puppet::Type::Group.validstates
+            user = Puppet::Type::Group.create(
+                :name => name,
+                :check => checks
+            )
+        }
+
+        assert_nothing_raised {
+            user.retrieve
+        }
+
+        assert_equal(Process.gid, user.is(:gid), "Retrieved UID does not match")
+    end
+
     if Process.uid == 0
         def test_mkgroup
             gobj = nil
@@ -224,9 +250,7 @@ class TestGroup < Test::Unit::TestCase
             }
             assert(!missing?(name), "Group %s is missing" % name)
 
-            tests = Puppet::Type::Group.validstates.collect { |sname, state|
-                state.name
-            }
+            tests = Puppet::Type::Group.validstates
 
             gobj.retrieve
             tests.each { |test|

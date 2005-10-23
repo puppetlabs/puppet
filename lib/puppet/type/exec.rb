@@ -70,49 +70,48 @@ module Puppet
                 end
             end
 
+            # Actually execute the command.
             def sync
                 olddir = nil
-                unless self.parent[:cwd].nil?
-                    debug "Resetting cwd to %s" % self.parent[:cwd]
-                    olddir = Dir.getwd
-                    begin
-                        Dir.chdir(self.parent[:cwd])
-                    rescue => detail
-                        raise "Failed to set cwd: %s" % detail
-                    end
-                end
 
+                # We need a dir to change to, even if it's just the cwd
+                dir = self.parent[:cwd] || Dir.pwd
                 tmppath = ENV["PATH"]
-                ENV["PATH"] = self.parent[:path]
 
-                # capture both stdout and stderr
-                @output = %x{#{self.parent[:command]} 2>&1}
-                status = $?
+                begin
+                    # Do our chdir
+                    Dir.chdir(dir) {
+                        ENV["PATH"] = self.parent[:path]
 
-                loglevel = :info
-                if status.exitstatus.to_s != self.should.to_s
-                    err("%s returned %s" %
-                        [self.parent[:command],status.exitstatus])
+                        # The user and group default to nil, which 'asuser'
+                        # handlers correctly
+                        Puppet::Util.asuser(@parent[:user], @parent[:group]) {
+                            # capture both stdout and stderr
+                            @output = %x{#{self.parent[:command]} 2>&1}
+                        }
+                        status = $?
 
-                    # if we've had a failure, up the log level
-                    loglevel = :err
-                end
+                        loglevel = :info
+                        if status.exitstatus.to_s != self.should.to_s
+                            err("%s returned %s" %
+                                [self.parent[:command],status.exitstatus])
 
-                # and log
-                @output.split(/\n/).each { |line|
-                    Puppet.send(loglevel, "%s: %s" % [self.parent[:command],line])
-                }
+                            # if we've had a failure, up the log level
+                            loglevel = :err
+                        end
 
-                # reset things to how we found them
-                ENV["PATH"] = tmppath
-
-                unless olddir.nil?
-                    begin
-                        Dir.chdir(olddir)
-                    rescue => detail
-                        err("Could not reset cwd to %s: %s" %
-                            [olddir,detail])
-                    end
+                        # and log
+                        @output.split(/\n/).each { |line|
+                            Puppet.send(loglevel,
+                                "%s: %s" % [self.parent[:command],line]
+                            )
+                        }
+                    }
+                rescue Errno::ENOENT => detail
+                    raise Puppet::Error, detail.to_s
+                ensure
+                    # reset things to how we found them
+                    ENV["PATH"] = tmppath
                 end
 
                 return :executed_command
@@ -132,6 +131,7 @@ module Puppet
             @parameters = [
                 :path,
                 :user,
+                :group,
                 :creates,
                 :cwd,
                 :refreshonly,
@@ -140,8 +140,8 @@ module Puppet
 
             @paramdoc[:path] = "The search path used for command execution.
                 Commands must be fully qualified if no path is specified."
-            @paramdoc[:user] = "The user to run the command as.  Currently
-                non-functional."
+            @paramdoc[:user] = "The user to run the command as."
+            @paramdoc[:group] = "The group to run the command as."
             @paramdoc[:cwd] = "The directory from which to run the command.  If
                 this directory does not exist, the command will fail."
             @paramdoc[:refreshonly] = "The command should only be run as a
@@ -204,6 +204,51 @@ module Puppet
                     raise Puppet::Error, "'creates' files must be fully qualified."
                 end
                 @parameters[:creates] = file
+            end
+
+            # Execute the command as the specified group
+            def paramgroup=(group)
+                require 'etc'
+                method = :getgrnam
+                case group
+                when Integer: method = :getgrgid
+                when /^\d+$/
+                    group = group.to_i
+                    method = :getgrgid
+                end
+
+                begin
+                    Etc.send(method, group)
+                rescue ArgumentError
+                    raise Puppet::Error, "No such group %s" % group
+                end
+
+                @parameters[:group] = group
+            end
+
+            # Execute the command as the specified user
+            def paramuser=(user)
+                unless Process.uid == 0
+                    raise Puppet::Error,
+                        "Only root can execute commands as other users"
+                end
+                require 'etc'
+
+                method = :getpwnam
+                case user
+                when Integer
+                    method = :getpwuid
+                when /^\d+$/
+                    user = user.to_i
+                    method = :getpwuid
+                end
+                begin
+                    Etc.send(method, user)
+                rescue ArgumentError
+                    raise Puppet::Error, "No such user %s" % user
+                end
+
+                @parameters[:user] = user
             end
 
             # this might be a very, very bad idea...

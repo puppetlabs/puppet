@@ -21,7 +21,7 @@ module TestPuppet
         else
             @@testcount = 0
         end
-        if $0 =~ /tc_.+\.rb/
+        if $0 =~ /.+\.rb/
             Puppet[:loglevel] = :debug
             $VERBOSE = 1
         else
@@ -147,6 +147,22 @@ module TestPuppet
         assert_equal(events, newevents, "Incorrect %s %s events" % [type, msg])
 
         return trans
+    end
+
+    def nonrootuser
+        Etc.passwd { |user|
+            if user.uid != Process.uid
+                return user
+            end
+        }
+    end
+
+    def nonrootgroup
+        Etc.group { |group|
+            if group.gid != Process.gid
+                return group
+            end
+        }
     end
 end
 

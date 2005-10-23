@@ -555,7 +555,7 @@ module Puppet
             # just our parents' tags, plus our type.
             def tags
                 tmp = [] + @tags
-                unless @type.nil? or @type == ""
+                unless ! defined? @type or @type.nil? or @type == ""
                     tmp << @type.to_s
                 end
                 if @parent

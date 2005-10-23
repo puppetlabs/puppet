@@ -276,12 +276,13 @@ class TestUser < Test::Unit::TestCase
         assert_equal(old, current?(:uid, user[:name]), "UID was not reverted")
     end
 
-    def test_eachmethod
+    # Disabled, because this is testing too much internal implementation
+    def disabled_test_eachmethod
         obj = Etc.getpwuid(Process.uid)
 
         assert(obj, "Could not retrieve test group object")
 
-        Puppet::Type::User.validstates.each { |name, state|
+        Puppet::Type::User.validstates.each { |name|
             assert_nothing_raised {
                 method = state.posixmethod
                 assert(method, "State %s has no infomethod" % name)
@@ -290,6 +291,29 @@ class TestUser < Test::Unit::TestCase
                     [name, method])
             }
         }
+    end
+
+    def test_checking
+        require 'etc'
+
+        name = nil
+        assert_nothing_raised {
+            name = Etc.getpwuid(Process.uid).name
+        }
+        user = nil
+        assert_nothing_raised {
+            checks = Puppet::Type::User.validstates
+            user = Puppet::Type::User.create(
+                :name => name,
+                :check => checks
+            )
+        }
+
+        assert_nothing_raised {
+            user.retrieve
+        }
+
+        assert_equal(Process.uid, user.is(:uid), "Retrieved UID does not match")
     end
 
     if Process.uid == 0

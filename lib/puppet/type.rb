@@ -113,7 +113,7 @@ class Type < Puppet::Element
 
     # the Type class attribute accessors
     class << self
-        attr_reader :name, :namevar, :states, :validstates, :parameters
+        attr_reader :name, :namevar, :states, :parameters
     end
 
     # Create @@typehash from @@typeary.  This is meant to be run
@@ -339,6 +339,15 @@ class Type < Puppet::Element
         else
             return false
         end
+    end
+
+    # Return the list of validstates
+    def self.validstates
+        unless @validstates.length == @states.length
+            self.buildstatehash
+        end
+
+        return @validstates.keys
     end
 
     # does the name reflect a valid parameter?

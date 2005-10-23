@@ -12,7 +12,7 @@ class State < Puppet::Element
     # Because 'should' uses an array, we have a special method for handling
     # it.  We also want to keep copies of the original values, so that
     # they can be retrieved and compared later when merging.
-    attr_reader :should, :shouldorig
+    attr_reader :shouldorig
 
     @virtual = true
 

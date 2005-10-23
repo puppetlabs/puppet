@@ -63,7 +63,7 @@ module Puppet
         module SunOS
             # Read a specific user's cron tab.
             def self.read(user)
-                Puppet.asuser(user) {
+                Puppet::Util.asuser(user) {
                     %x{crontab -l 2>/dev/null}
                 }
             end

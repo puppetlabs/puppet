@@ -248,21 +248,25 @@ module Puppet
                 @userinfo = nil
                 super
 
-                self.class.states.each { |state|
-                    next if @states.include?(state.name)
+                # Verify that they have provided everything necessary, if we
+                # are trying to manage the user
+                if self.managed?
+                    self.class.states.each { |state|
+                        next if @states.include?(state.name)
 
-                    unless state.autogen? or state.optional?
-                        if state.method_defined?(:autogen)
-                            self[state.name] = :auto
-                        else
-                            raise Puppet::Error,
-                                "Users require a value for %s" % state.name
+                        unless state.autogen? or state.optional?
+                            if state.method_defined?(:autogen)
+                                self[state.name] = :auto
+                            else
+                                raise Puppet::Error,
+                                    "Users require a value for %s" % state.name
+                            end
                         end
-                    end
-                }
+                    }
 
-                if @states.empty?
-                    self[:comment] = self[:name]
+                    if @states.empty?
+                        self[:comment] = self[:name]
+                    end
                 end
             end
 

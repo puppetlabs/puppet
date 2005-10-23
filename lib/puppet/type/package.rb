@@ -352,7 +352,7 @@ module Puppet
                         self.is = [param, value]
                     }
                 else
-                    self.class.validstates.each { |name, state|
+                    self.class.validstates.each { |name|
                         self.is = [name, :notinstalled]
                     }
                 end

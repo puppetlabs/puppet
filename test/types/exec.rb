@@ -210,4 +210,62 @@ class TestExec < Test::Unit::TestCase
         assert_events(comp, [:executed_command], "creates")
         assert_events(comp, [], "creates")
     end
+
+    if Process.uid == 0
+        # Verify that we can execute commands as a special user
+        def mknverify(file, user, group = nil, id = true)
+            args = {
+                :command => "touch %s" % file,
+                :path => "/usr/bin:/bin:/usr/sbin:/sbin",
+            }
+
+            if user
+                if id
+                    # convert to a string, because that's what the object expects
+                    args[:user] = user.uid.to_s
+                else
+                    args[:user] = user.name
+                end
+            end
+
+            if group
+                if id
+                    args[:group] = group.gid.to_s
+                else
+                    args[:group] = group.name
+                end
+            end
+            exec = nil
+            assert_nothing_raised {
+                exec = Puppet::Type::Exec.create(args)
+            }
+
+            comp = newcomp("usertest", exec)
+            assert_events(comp, [:executed_command], "usertest")
+
+            assert(FileTest.exists?(file), "File does not exist")
+            if user
+                assert_equal(user.uid, File.stat(file).uid, "File UIDs do not match")
+            end
+
+            # We can't actually test group ownership, unfortunately, because
+            # behaviour changes wildlly based on platform.
+            Puppet::Type.allclear
+        end
+
+        def test_userngroup
+            file = tempfile()
+            [
+                [nonrootuser()], # just user, by name
+                [nonrootuser(), nil, true], # user, by uid
+                [nil, nonrootgroup()], # just group
+                [nil, nonrootgroup(), true], # just group, by id
+                [nonrootuser(), nonrootgroup()], # user and group, by name
+                [nonrootuser(), nonrootgroup(), true], # user and group, by id
+            ].each { |ary|
+                mknverify(file, *ary) {
+                }
+            }
+        end
+    end
 end

@@ -77,18 +77,7 @@ class TestSnippets < Test::Unit::TestCase
     end
 
     def states(type)
-        states = []
-        
-        type.buildstatehash
-        type.validstates.each { |name,state|
-            states.push name
-        }
-
-        #if states.length == 0
-        #    raise "%s has no states" % type
-        #end
-
-        states
+        states = type.validstates
     end
 
     def metaparams(type)

@@ -174,7 +174,7 @@ module Puppet
         uid = obj.uid
 
         olduid = nil
-        if Process.uid == uid
+        if Process.uid != uid
             olduid = Process.uid
             Process.euid = uid
         end
@@ -241,6 +241,7 @@ module Puppet
     end
 end
 
+require 'puppet/util'
 require 'puppet/server'
 require 'puppet/type'
 require 'puppet/storage'
