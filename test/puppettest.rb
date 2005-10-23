@@ -92,13 +92,23 @@ module TestPuppet
     end
 
     def tempfile
-        f = File.join(self.tmpdir(), self.class.to_s + "testfile" + rand(1000).to_s)
+        if defined? @tmpfilenum
+            @tmpfilenum += 1
+        else
+            @tmpfilenum = 1
+        end
+        f = File.join(self.tmpdir(), self.class.to_s + "testfile" + @tmpfilenum.to_s)
         @@tmpfiles << f
         return f
     end
 
     def testdir
-        d = File.join(self.tmpdir(), self.class.to_s + "testdir" + rand(1000).to_s)
+        if defined? @testdirnum
+            @testdirnum += 1
+        else
+            @testdirnum = 1
+        end
+        d = File.join(self.tmpdir(), self.class.to_s + "testdir" + @testdirnum.to_s)
         @@tmpfiles << d
         return d
     end

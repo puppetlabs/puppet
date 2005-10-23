@@ -381,6 +381,8 @@ module Puppet
                 }
             end
 
+            # This recurses against the remote source and makes sure the local
+            # and remote structures match.  It's run after 'localrecurse'.
             def sourcerecurse(recurse)
                 # FIXME sourcerecurse should support purging non-remote files
                 source = @states[:source].source
@@ -431,6 +433,11 @@ module Puppet
             # a wrapper method to make sure the file exists before doing anything
             def retrieve
                 if @states.include?(:source)
+                    # This probably isn't the best place for it, but we need
+                    # to make sure that we have a corresponding checksum state.
+                    unless @states.include?(:checksum)
+                        self[:checksum] = "md5"
+                    end
                     @states[:source].retrieve
                 end
 

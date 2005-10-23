@@ -18,6 +18,10 @@ module Puppet
                 @validtypes.include?(type)
             end
 
+            def checktype
+                @checktypes[0]
+            end
+
             def getsum(checktype)
                 sum = ""
                 case checktype
@@ -70,9 +74,14 @@ module Puppet
 
             # Convert from the sum type to the stored checksum.
             def shouldprocess(value)
+                unless defined? @checktypes
+                    @checktypes = []
+                end
                 unless self.class.validtype?(value)
                     raise Puppet::Error, "Invalid checksum type '%s'" % value
                 end
+
+                @checktypes << value
                 state = Puppet::Storage.state(self)
                 if hash = state[@parent[:path]]
                     if hash.include?(value)
@@ -95,23 +104,17 @@ module Puppet
             # mechanism can really only test against one, so we'll just retrieve
             # the first specified sum type.
             def retrieve
-                checktypes = nil
-                if defined? @shouldorig
-                    checktypes = @shouldorig
-                else
-                    checktypes = ["md5"]
+                unless defined? @checktypes
+                    @checktypes = ["md5"]
                 end
 
                 unless FileTest.exists?(@parent.name)
-                    Puppet.err "File %s does not exist" % @parent.name
                     self.is = :notfound
                     return
                 end
 
                 # Just use the first allowed check type
-                @checktype = checktypes[0]
-
-                @is = getsum(@checktype)
+                @is = getsum(@checktypes[0])
 
                 # If there is no should defined, then store the current value
                 # into the 'should' value, so that we're not marked as being
@@ -191,7 +194,7 @@ module Puppet
                 end
 
                 # if we're replacing, vs. updating
-                if state[@parent.name].include?(@checktype)
+                if state[@parent.name].include?(@checktypes[0])
                     unless defined? @should
                         raise Puppet::Error.new(
                             ("@should is not initialized for %s, even though we " +
@@ -199,15 +202,15 @@ module Puppet
                         )
                     end
                     Puppet.debug "Replacing %s checksum %s with %s" %
-                        [@parent.name, state[@parent.name][@checktype],@is]
+                        [@parent.name, state[@parent.name][@checktypes[0]],@is]
                     #Puppet.debug "@is: %s; @should: %s" % [@is,@should]
                     result = true
                 else
                     Puppet.debug "Creating checksum %s for %s of type %s" %
-                        [self.is,@parent.name,@checktype]
+                        [self.is,@parent.name,@checktypes[0]]
                     result = false
                 end
-                state[@parent.name][@checktype] = @is
+                state[@parent.name][@checktypes[0]] = @is
                 return result
             end
         end

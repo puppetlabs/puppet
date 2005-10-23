@@ -527,6 +527,32 @@ class TestFileSources < Test::Unit::TestCase
 
         assert(!FileTest.exists?(name), "File with no source exists anyway")
     end
+
+    def test_zalwayschecksum
+        from = tempfile()
+        to = tempfile()
+
+        File.open(from, "w") { |f| f.puts "yayness" }
+        File.open(to, "w") { |f| f.puts "yayness" }
+
+        file = nil
+
+        # Now the files should be exactly the same, so we should not see attempts
+        # at copying
+        assert_nothing_raised {
+            file = Puppet::Type::PFile.create(
+                :path => to,
+                :source => from
+            )
+        }
+
+        file.retrieve
+
+        assert(file.is(:checksum), "File does not have a checksum state")
+
+        assert_equal(0, file.evaluate.length, "File produced changes")
+
+    end
 end
 
 # $Id$
