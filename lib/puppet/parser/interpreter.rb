@@ -87,35 +87,6 @@ module Puppet
                     end
                     raise error
                 end
-
-                # okay, at this point we have a tree of scopes, and we want to
-                # unzip along that tree, building our structure of objects
-                # to pass to the client
-                # this will be heirarchical, and will (at this point) contain
-                # only TransObjects and TransSettings
-                #@scope.name = "top"
-                #@scope.type = "puppet"
-                #begin
-                #    topbucket = @scope.to_trans
-                #rescue => detail
-                #    Puppet.warning detail
-                #    raise
-                #end
-
-                # add our settings to the front of the array
-                # at least, for now
-                #@topscope.typesets.each { |setting|
-                #    topbucket.unshift setting
-                #}
-
-                # guarantee that settings are at the very top
-                #topbucket.push settingbucket
-                #topbucket.push @scope.to_trans
-
-                #retlist = TransObject.list
-                #Puppet.debug "retobject length is %s" % retlist.length
-                #TransObject.clear
-                #return topbucket
             end
 
             def scope
@@ -158,11 +129,14 @@ module Puppet
                     end
                 end
 
+                Puppet.info "Reloading files"
                 # should i be creating a new parser each time...?
                 @parser = Puppet::Parser::Parser.new()
                 @parser.file = @file
                 @ast = @parser.parse
 
+                # Reevaluate the config.  This is what actually replaces the
+                # existing scope.
                 evaluate
             end
         end

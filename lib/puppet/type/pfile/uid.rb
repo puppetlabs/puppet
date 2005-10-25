@@ -101,7 +101,7 @@ module Puppet
                     @parent.stat(true)
                     self.retrieve
                     if @is == :notfound
-                        Puppet.err "File '%s' does not exist; cannot chown" %
+                        Puppet.info "File '%s' does not exist; cannot chown" %
                             @parent[:path]
                         return nil
                     end

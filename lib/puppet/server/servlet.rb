@@ -14,6 +14,20 @@ class Server
             self.new(server, *options)
         end
 
+        # This is a hackish way to avoid an auth message every time we have a
+        # normal operation
+        def self.log(msg)
+            unless defined? @logs
+                @logs = {}
+            end
+            if @logs.include?(msg)
+                @logs[msg] += 1
+            else
+                Puppet.info msg
+                @logs[msg] = 1
+            end
+        end
+
         def add_handler(interface, handler)
             @loadedhandlers << interface.prefix
             super
@@ -26,7 +40,7 @@ class Server
             client = request.peeraddr[2]
             ip = request.peeraddr[3]
             if request.client_cert
-                Puppet.info "Allowing %s(%s) trusted access to %s" %
+                Servlet.log "Allowing %s(%s) trusted access to %s" %
                     [client, ip, method]
                 return true
             else

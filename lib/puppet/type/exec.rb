@@ -23,7 +23,7 @@ module Puppet
                 if file = @parent[:creates]
                     if FileTest.exists?(file)
                         @is = true
-                        @should = nil
+                        @should = [true]
                         return
                     end
                 end
@@ -204,6 +204,18 @@ module Puppet
                     raise Puppet::Error, "'creates' files must be fully qualified."
                 end
                 @parameters[:creates] = file
+            end
+
+            def paramcwd=(dir)
+                if dir.is_a?(Array)
+                    dir = dir[0]
+                end
+
+                unless File.directory?(dir)
+                    raise Puppet::Error, "Directory '%s' does not exist" % dir
+                end
+
+                @parameters[:cwd] = dir
             end
 
             # Execute the command as the specified group

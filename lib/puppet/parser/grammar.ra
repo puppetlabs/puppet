@@ -1,6 +1,3 @@
-#/usr/bin/ruby
-
-# $Id$
 # vim: syntax=ruby
 
 # the parser
@@ -741,9 +738,13 @@ def parse
 end
 
 def reparse?
-    return @files.detect { |file| file.changed? }
+    @files.detect { |file|
+        file.changed?
+    }
 end
 
 def string=(string)
     @lexer.string = string
 end
+
+# $Id$

@@ -82,7 +82,7 @@ module Puppet
                     self.retrieve
                     #Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
                     if @is == :notfound
-                        @parent.log "%s does not exist; cannot set mode" %
+                        Puppet.info "%s does not exist; cannot set mode" %
                             @parent.name
                         return nil
                     end
