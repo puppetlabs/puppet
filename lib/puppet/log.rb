@@ -168,7 +168,7 @@ module Puppet
             end
         end
 
-		attr_accessor :level, :message, :source, :time
+		attr_accessor :level, :message, :source, :time, :tags, :path
 
 		def initialize(args)
 			unless args.include?(:level) && args.include?(:message) &&
@@ -193,8 +193,15 @@ module Puppet
 				raise Puppet::DevError, "Invalid message level #{level}"
 			end
 
+            if args.include?(:tags)
+                @tags = args[:tags]
+            end
+
+            if args.include?(:path)
+                @path = args[:path]
+            end
+
             Log.newmessage(self)
-			@@messages.push(self)
 		end
 
 		def to_s

@@ -1,16 +1,18 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk/"
+    $puppetbase = "../.."
 end
 
 require 'puppet/log'
 require 'puppet'
+require 'puppettest'
 require 'test/unit'
 
 # $Id$
 
 class TestLog < Test::Unit::TestCase
+    include TestPuppet
     @@logfile = File.join(Puppet[:logdir], "puppettest.log")
 
     def teardown
@@ -119,5 +121,22 @@ class TestLog < Test::Unit::TestCase
 
         system("rm -rf /tmp/logtesting")
         Puppet[:logdest] = curdest
+    end
+
+    def test_logtags
+        log = nil
+        assert_nothing_raised {
+            log = Puppet::Log.new(
+                :level => :info,
+                :source => "Puppet",
+                :message => "A test message",
+                :tags => %w{this is a set of tags},
+                :path => "a path"
+            )
+        }
+
+        # This is really stupid
+        assert(log.tags)
+        assert(log.path)
     end
 end
