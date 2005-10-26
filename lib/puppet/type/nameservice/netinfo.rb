@@ -78,7 +78,7 @@ module Puppet
                             "Could not find netinfokey for state %s" %
                             self.class.name
                     end
-                    Puppet.debug "Executing %s" % cmd.join(" ").inspect
+                    self.debug "Executing %s" % cmd.join(" ").inspect
 
                     output = %x{#{cmd.join(" ")} 2>&1}.split("\n").each { |line|
                         if line =~ /^(\w+)\s+(.+)$/

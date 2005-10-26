@@ -38,7 +38,7 @@ module Puppet
                     value = Integer(value)
                 end
 
-                #Puppet.warning "Should is %o from %s" % [value, should]
+                #self.warning "Should is %o from %s" % [value, should]
 
                 return value
             end
@@ -73,16 +73,16 @@ module Puppet
                     self.is = :notfound
                 end
 
-                #Puppet.debug "chmod state is %o" % self.is
+                #self.debug "chmod state is %o" % self.is
             end
 
             def sync
                 if @is == :notfound
                     @parent.stat(true)
                     self.retrieve
-                    #Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    #self.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
                     if @is == :notfound
-                        Puppet.info "%s does not exist; cannot set mode" %
+                        self.info "File does not exist; cannot set mode" %
                             @parent.name
                         return nil
                     end

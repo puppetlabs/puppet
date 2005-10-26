@@ -1,5 +1,3 @@
-# $Id$
-
 module Puppet
     # a class for storing state
 	class Storage
@@ -26,7 +24,7 @@ module Puppet
 
 		def self.load
             if Puppet[:checksumfile].nil?
-                raise "Somehow the statefile is nil"
+                raise Puppet::DevError, "Somehow the statefile is nil"
             end
 
 			unless File.exists?(Puppet[:checksumfile])
@@ -89,3 +87,5 @@ module Puppet
 		end
 	end
 end
+
+# $Id$

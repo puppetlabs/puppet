@@ -100,7 +100,7 @@ class State < Puppet::Element
     def should
         if defined? @should
             unless @should.is_a?(Array)
-                Puppet.warning @should.inspect
+                self.warning @should.inspect
                 raise Puppet::DevError, "should for %s on %s is not an array" %
                     [self.class.name, @parent.name]
             end
@@ -137,8 +137,8 @@ class State < Puppet::Element
             return "%s: undefined %s from '%s'" %
                 [self.parent, self.name, self.is_to_s]
         else
-            return "%s: %s changed '%s' to '%s'" %
-                [self.parent, self.name, self.is_to_s, self.should_to_s]
+            return "%s changed '%s' to '%s'" %
+                [self.name, self.is_to_s, self.should_to_s]
         end
     end
 

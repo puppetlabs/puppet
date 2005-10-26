@@ -36,8 +36,15 @@ class TestPuppetBin < Test::Unit::TestCase
         @@tmpfiles << "/tmp/puppetbintesting"
 
         output = nil
+        cmd = "puppet"
+        cmd += " --verbose"
+        #cmd += " --fqdn %s" % fqdn
+        cmd += " --confdir %s" % Puppet[:puppetconf]
+        cmd += " --vardir %s" % Puppet[:puppetvar]
+        cmd += " --logdest %s" % "/dev/null"
+
         assert_nothing_raised {
-            system("puppet --logdest /dev/null %s" % file)
+            system(cmd + " " + file)
         }
         assert($? == 0, "Puppet exited with code %s" % $?.to_i)
 

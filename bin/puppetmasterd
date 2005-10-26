@@ -11,6 +11,7 @@
 #               [-l|--logdest <syslog|console|<file>>] [--httplog <file>]
 #               [-m|--manifest <site manifest>] [--noca] [-p|--port <port>]
 #               [--parseonly] [-s|--ssldir <cert directory>]
+#               [-c|--confdir <configuration directory>] [--vardir <var dir>]
 #
 # = Description
 #
@@ -69,6 +70,10 @@
 # ssldir::
 #   The directory in which to store certificates.  Defaults to /etc/puppet/ssl.
 #
+# vardir::
+#   The variable-size directory, used for storing state.  Defaults to
+#   /var/puppet.
+#
 # verbose::
 #   Enable verbosity.  Causes the daemon not to go into the background.
 #
@@ -106,6 +111,7 @@ result = GetoptLong.new(
 	[ "--parseonly",   			    GetoptLong::NO_ARGUMENT ],
 	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--ssldir",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--vardir",	    			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
 )
@@ -171,6 +177,8 @@ begin
                 else
                     $stderr.puts "Invalid log destination %s" % arg
                 end
+            when "--vardir"
+                Puppet[:puppetvar] = arg
             when "--version"
                 puts "%s" % Puppet.version
                 exit

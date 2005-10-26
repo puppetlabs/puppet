@@ -102,9 +102,7 @@ module Puppet
 
                         # and log
                         @output.split(/\n/).each { |line|
-                            Puppet.send(loglevel,
-                                "%s: %s" % [self.parent[:command],line]
-                            )
+                            Puppet.send(loglevel, line)
                         }
                     }
                 rescue Errno::ENOENT => detail
@@ -169,7 +167,6 @@ module Puppet
                         hash[:returns] = hash[:returns].to_s
                     end
                 else
-                    debug("setting return to 0")
                     hash[:returns] = "0"
                 end
 

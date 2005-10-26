@@ -37,7 +37,7 @@ module Puppet
                         if @is == latest
                             return true
                         else
-                            Puppet.debug "latest %s is %s" % [@parent.name, latest]
+                            self.debug "latest %s is %s" % [@parent.name, latest]
                         end
                     when :notinstalled
                         if @is == :notinstalled
@@ -63,7 +63,7 @@ module Puppet
                 case value
                 when "latest":
                     unless @parent.respond_to?(:latest)
-                        Puppet.err @parent.inspect
+                        self.err @parent.inspect
                         raise Puppet::Error,
                             "Package type %s does not support querying versions" %
                             @parent[:type]
@@ -101,7 +101,7 @@ module Puppet
                     end
                 else
                     unless ! @parent.respond_to?(:versionable?) or @parent.versionable?
-                        Puppet.warning value
+                        self.warning value
                         raise Puppet::Error,
                             "Package type %s does not support specifying versions" %
                             @parent[:type]
@@ -113,9 +113,9 @@ module Puppet
 
                 if @parent.respond_to?(method)
                     begin
-                    @parent.send(method)
+                        @parent.send(method)
                     rescue => detail
-                        Puppet.err "Could not run %s: %s" % [method, detail.to_s]
+                        self.err "Could not run %s: %s" % [method, detail.to_s]
                         raise
                     end
                 else
@@ -330,8 +330,10 @@ module Puppet
 
                 super
 
+                self.debug "Extending to package type %s" % [@type]
+
                 unless @states.include?(:install)
-                    Puppet.debug "Defaulting to installing a package"
+                    self.debug "Defaulting to installing a package"
                     self[:install] = true
                 end
 
@@ -361,7 +363,7 @@ module Puppet
             # Extend the package with the appropriate package type.
             def type2module(typename)
                 if type = self.class.pkgtype(typename)
-                    Puppet.debug "Extending to package type %s" % [type]
+                    @type = type
                     self.extend(type)
                 else
                     raise Puppet::Error, "Invalid package type %s" % typename

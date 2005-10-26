@@ -44,6 +44,7 @@ module Puppet
 
             if defined? @tags and @tags
                 Puppet.debug "%s(%s) tags: %s" % [@type, @name, @tags.join(" ")]
+                retobj.tags = @tags
             end
 
             return retobj

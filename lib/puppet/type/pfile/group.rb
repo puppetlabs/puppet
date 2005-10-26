@@ -79,7 +79,7 @@ module Puppet
                 #unless Process.uid == 0
                 #    groups = %x{groups}.chomp.split(/\s/)
                 #    unless groups.include?(gname)
-                #        Puppet.notice "Cannot chgrp: not in group %s" % gname
+                #        self.notice "Cannot chgrp: not in group %s" % gname
                 #        raise Puppet::Error.new(
                 #            "Cannot chgrp: not in group %s" % gname)
                 #    end
@@ -102,7 +102,7 @@ module Puppet
                     self.retrieve
 
                     if @is == :notfound
-                        Puppet.err "File '%s' does not exist; cannot chgrp" %
+                        self.err "File '%s' does not exist; cannot chgrp" %
                             @parent[:path]
                         return nil
                     end

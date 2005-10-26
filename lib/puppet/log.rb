@@ -50,15 +50,9 @@ module Puppet
             end
         end
 
-        def Log.create(level,*ary)
-            msg = ary.join(" ")
-
-            if @@levels.index(level) >= @@loglevel 
-                return Puppet::Log.new(
-                    :level => level,
-                    :source => "Puppet",
-                    :message => msg
-                )
+        def Log.create(hash)
+            if @@levels.index(hash[:level]) >= @@loglevel 
+                return Puppet::Log.new(hash)
             else
                 return nil
             end
@@ -185,7 +179,6 @@ module Puppet
                     "Level is not a string or symbol: #{args[:level].class}"
 			end
 			@message = args[:message]
-			@source = args[:source] || "Puppet"
 			@time = Time.now
 			# this should include the host name, and probly lots of other
 			# stuff, at some point
@@ -199,6 +192,23 @@ module Puppet
 
             if args.include?(:path)
                 @path = args[:path]
+            end
+
+            if args.include?(:source)
+                @source = args[:source]
+                unless defined? @tags and @tags
+                    if @source.respond_to?(:tags)
+                        @tags = @source.tags
+                    end
+                end
+
+                unless defined? @path and @path
+                    if @source.respond_to?(:path)
+                        @path = @source.path
+                    end
+                end
+            else
+                @source = "Puppet"
             end
 
             Log.newmessage(self)

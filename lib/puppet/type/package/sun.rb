@@ -36,7 +36,7 @@ module Puppet
                                     hash[names[name]] = value
                                 end
                             else
-                                Puppet.err "'pkginfo' returned invalid name %s" %
+                                self.err "'pkginfo' returned invalid name %s" %
                                     name
                             end
                         when /\s+\d+.+/:

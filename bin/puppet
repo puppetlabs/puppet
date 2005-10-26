@@ -9,6 +9,7 @@
 #
 #   puppet [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
 #               [-l|--logfile <file>] [-p|--parse-only] <file>
+#               [-c|--confdir <configuration directory>] [--vardir <var directory>]
 #
 # = Description
 #
@@ -34,6 +35,10 @@
 #
 # parse-only::
 #   Just verify syntax, do not apply anything.
+#
+# vardir::
+#   The variable-size directory, used for storing state.  Defaults to
+#   /var/puppet.
 #
 # verbose::
 #   Print extra information.
@@ -73,6 +78,7 @@ result = GetoptLong.new(
     [ "--noop",     "-n",			GetoptLong::NO_ARGUMENT ],
     [ "--use-nodes",    			GetoptLong::NO_ARGUMENT ],
     [ "--parse-only",  "-p",		GetoptLong::NO_ARGUMENT ],
+	[ "--vardir",	    			GetoptLong::REQUIRED_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
 )
 
@@ -119,6 +125,8 @@ begin
                 else
                     $stderr.puts "Invalid log destination %s" % arg
                 end
+            when "--vardir"
+                Puppet[:puppetvar] = arg
         end
     }
 rescue GetoptLong::InvalidOption => detail

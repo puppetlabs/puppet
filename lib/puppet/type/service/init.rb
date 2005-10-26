@@ -9,10 +9,10 @@ module Puppet
                 end
                 unless @searchpaths.length > 0
                     if init = self.defaultinit
-                        Puppet.notice "Adding default init"
+                        self.notice "Adding default init"
                         @searchpaths << init
                     else
-                        Puppet.notice "No default init for %s" %
+                        self.notice "No default init for %s" %
                             Facter["operatingsystem"].value
 
                         raise Puppet::Error.new(
@@ -55,13 +55,13 @@ module Puppet
             def initcmd(cmd)
                 script = self.initscript
 
-                Puppet.debug "Executing '%s %s' as initcmd for '%s'" %
+                self.debug "Executing '%s %s' as initcmd for '%s'" %
                     [script,cmd,self]
 
                 rvalue = Kernel.system("%s %s" %
                         [script,cmd])
 
-                Puppet.debug "'%s' ran with exit status '%s'" %
+                self.debug "'%s' ran with exit status '%s'" %
                     [cmd,rvalue]
 
 
@@ -110,7 +110,7 @@ module Puppet
                         stat = File.stat(fqname)
                     rescue
                         # should probably rescue specific errors...
-                        Puppet.debug("Could not find %s in %s" % [name,path])
+                        self.debug("Could not find %s in %s" % [name,path])
                         next
                     end
 

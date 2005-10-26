@@ -21,7 +21,7 @@ module Puppet
                 end
                 cmd = "apt-get -q -y install %s" % str
 
-                Puppet.info "Executing %s" % cmd.inspect
+                self.info "Executing %s" % cmd.inspect
                 output = %x{#{cmd} 2>&1}
 
                 unless $? == 0
@@ -44,13 +44,13 @@ module Puppet
                         if version =~ /^([^\(]+)\(/
                             $1
                         else
-                            Puppet.warning "Could not match version '%s'" % version
+                            self.warning "Could not match version '%s'" % version
                             nil
                         end
                     }.reject { |vers| vers.nil? }.sort[-1]
 
                     unless version
-                        Puppet.debug "No latest version"
+                        self.debug "No latest version"
                         if Puppet[:debug]
                             print output
                         end
@@ -58,7 +58,7 @@ module Puppet
 
                     return version
                 else
-                    Puppet.err "Could not match string"
+                    self.err "Could not match string"
                 end
             end
 

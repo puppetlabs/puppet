@@ -31,7 +31,7 @@ module Puppet
                     @is = :notfound
                 end
 
-                #Puppet.debug "'exists' state is %s" % self.is
+                #self.debug "'exists' state is %s" % self.is
             end
 
 

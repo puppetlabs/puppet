@@ -86,7 +86,7 @@ module Puppet
             def sync
                 unless Process.uid == 0
                     unless defined? @@notifieduid
-                        Puppet.notice "Cannot manage ownership unless running as root"
+                        self.notice "Cannot manage ownership unless running as root"
                         #@parent.delete(self.name)
                         @@notifieduid = true
                     end
@@ -101,14 +101,14 @@ module Puppet
                     @parent.stat(true)
                     self.retrieve
                     if @is == :notfound
-                        Puppet.info "File '%s' does not exist; cannot chown" %
+                        self.info "File does not exist; cannot set owner" %
                             @parent[:path]
                         return nil
                     end
                     if self.insync?
                         return nil
                     end
-                    #Puppet.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
+                    #self.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
                 end
 
                 begin

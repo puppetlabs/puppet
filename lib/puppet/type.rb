@@ -14,7 +14,7 @@ require 'puppet/type/state'
 module Puppet
 class Type < Puppet::Element
     attr_accessor :children, :parameters, :parent
-    attr_accessor :file, :line
+    attr_accessor :file, :line, :tags
 
     attr_writer :implicit
     def implicit?
@@ -421,7 +421,7 @@ class Type < Puppet::Element
             self.send(("meta" + name.id2name + "="),value)
         elsif stateklass = self.class.validstate?(name) 
             if value.is_a?(Puppet::State)
-                Puppet.debug "'%s' got handed a state for '%s'" % [self,name]
+                self.debug "'%s' got handed a state for '%s'" % [self,name]
                 @states[name] = value
             else
                 if @states.include?(name)
@@ -506,7 +506,11 @@ class Type < Puppet::Element
     
     # create a log at specified level
     def log(msg)
-        Puppet::Log.create(@metaparams[:loglevel],msg)
+        Puppet::Log.create(
+            :level => @metaparams[:loglevel],
+            :message => msg,
+            :source => self
+        )
     end
 
     # is the instance a managed instance?  A 'yes' here means that
@@ -544,15 +548,15 @@ class Type < Puppet::Element
                     @states[name] = newstate
                 rescue Puppet::Error => detail
                     # the state failed, so just ignore it
-                    Puppet.warning "State %s failed: %s" %
+                    self.warning "State %s failed: %s" %
                         [name, detail]
                 rescue Puppet::DevError => detail
                     # the state failed, so just ignore it
-                    Puppet.err "State %s failed: %s" %
+                    self.err "State %s failed: %s" %
                         [name, detail]
                 rescue => detail
                     # the state failed, so just ignore it
-                    Puppet.err "State %s failed: %s (%s)" %
+                    self.err "State %s failed: %s (%s)" %
                         [name, detail, detail.class]
                 end
             end
@@ -790,7 +794,7 @@ class Type < Puppet::Element
         }
 
         if hash.length > 0
-            Puppet.debug hash.inspect
+            self.debug hash.inspect
             raise Puppet::Error.new("Class %s does not accept argument(s) %s" %
                 [self.class.name, hash.keys.join(" ")])
         end
@@ -823,7 +827,7 @@ class Type < Puppet::Element
                         raise Puppet::Error, "No common values for %s on %s(%s)" %
                             [param, self.class.name, self.name]
                     else
-                        Puppet.debug "Reduced old values %s and new values %s to %s" %
+                        self.debug "Reduced old values %s and new values %s to %s" %
                             [oldvals.inspect, value.inspect, newvals.inspect]
                         self.should = newvals
                     end
@@ -954,7 +958,7 @@ class Type < Puppet::Element
     def evaluate
         #Puppet.err "Evaluating %s" % self.path.join(":")
         unless defined? @evalcount
-            Puppet.err "No evalcount defined on '%s' of type '%s'" %
+            self.err "No evalcount defined on '%s' of type '%s'" %
                 [self.name,self.class]
             @evalcount = 0
         end
@@ -1025,10 +1029,10 @@ class Type < Puppet::Element
         # now record how many changes we've resulted in
         Puppet::Metric.add(self.class,self,:changes,changes.length)
         if changes.length > 0
-            Puppet.info "%s: %s change(s)" %
-                [self.name, changes.length]
+            self.info "%s change(s)" %
+                [changes.length]
             #changes.each { |change|
-            #    Puppet.debug "change: %s" % change.state.name
+            #    self.debug "change: %s" % change.state.name
             #}
         end
         return changes.flatten
@@ -1042,13 +1046,13 @@ class Type < Puppet::Element
 
         states.each { |state|
             unless state.insync?
-                Puppet.debug("%s is not in sync: %s vs %s" %
+                self.debug("%s is not in sync: %s vs %s" %
                     [state, state.is, state.should])
                 insync = false
             end
         }
 
-        #Puppet.debug("%s sync status is %s" % [self,insync])
+        #self.debug("%s sync status is %s" % [self,insync])
         return insync
     end
 
@@ -1111,7 +1115,7 @@ class Type < Puppet::Element
     end
 
     def metaonerror=(response)
-        Puppet.debug("Would have called metaonerror")
+        self.debug("Would have called metaonerror")
         @onerror = response
     end
 
@@ -1173,7 +1177,7 @@ class Type < Puppet::Element
                 raise Puppet::Error, "Could not retrieve object '%s' of type '%s'" %
                     [name,type]
             end
-            Puppet.debug("%s subscribes to %s" % [self.name,object])
+            self.debug("%s subscribes to %s" % [self.name,object])
 
             #unless @dependencies.include?(object)
             #    @dependencies << object

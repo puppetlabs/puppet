@@ -54,14 +54,14 @@ module Puppet
                             d == "." or d == ".."
                         }.length
                         if subs > 0
-                            Puppet.info "%s has %s children; not tidying" %
+                            self.info "%s has %s children; not tidying" %
                                 [@parent[:path], subs]
-                            Puppet.info Dir.entries(@parent[:path]).inspect
+                            self.info Dir.entries(@parent[:path]).inspect
                         else
                             Dir.rmdir(@parent[:path])
                         end
                     else
-                        Puppet.debug "Not tidying directories"
+                        self.debug "Not tidying directories"
                         return nil
                     end
                 when "file":

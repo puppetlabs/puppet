@@ -81,6 +81,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
         assert_instance_of(Puppet::TransBucket, retval,
             "Retrieved non-transportable object")
         stopmasterd
+        sleep(1)
     end
 
     # verify that we can run puppetmasterd in parse-only mode

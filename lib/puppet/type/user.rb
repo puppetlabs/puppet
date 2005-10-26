@@ -88,7 +88,7 @@ module Puppet
                         [gid, detail]
                 end
 
-                Puppet.notice "setting gid to %s" % ginfo.gid.inspect
+                self.notice "setting gid to %s" % ginfo.gid.inspect
                 return ginfo.gid
             end
         end

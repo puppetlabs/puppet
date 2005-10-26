@@ -1,7 +1,3 @@
-#!/usr/local/bin/ruby -w
-
-# $Id$
-
 # the class responsible for actually doing any work
 
 # enables no-op and logging/rollback
@@ -30,7 +26,7 @@ module Puppet
 		#---------------------------------------------------------------
         def go
             if @state.is == @state.should
-                Puppet.info "%s.%s is already in sync" %
+                @state.info "%s.%s is already in sync" %
                     [@state.parent.name, @state.name]
                 return nil
             end
@@ -38,7 +34,7 @@ module Puppet
             if @state.noop
                 @state.parent.log "%s is %s, should be %s" %
                     [@state, state.is_to_s, state.should_to_s]
-                #Puppet.debug "%s is noop" % @state
+                #@state.debug "%s is noop" % @state
                 return nil
             end
 
@@ -59,7 +55,7 @@ module Puppet
                 return events.collect { |event|
                     # default to a simple event type
                     if ! event.is_a?(Symbol)
-                        Puppet.warning("State '%s' returned invalid event '%s'; resetting to default" %
+                        @state.warning("State '%s' returned invalid event '%s'; resetting to default" %
                             [@state.class,event])
 
                         event = @state.parent.class.name.id2name + "_changed"
@@ -80,7 +76,7 @@ module Puppet
                     )
                 }
             rescue => detail
-                #Puppet.err "%s failed: %s" % [self.to_s,detail]
+                #@state.err "%s failed: %s" % [self.to_s,detail]
                 raise
                 # there should be a way to ask the state what type of event
                 # it would have generated, but...
@@ -103,7 +99,7 @@ module Puppet
 
 		#---------------------------------------------------------------
         def forward
-            #Puppet.debug "moving change forward"
+            #@state.debug "moving change forward"
 
             unless defined? @transaction
                 raise Puppet::Error,
@@ -126,10 +122,10 @@ module Puppet
                     self
             end
             unless @state.insync?
-                Puppet.info "Backing %s" % self
+                @state.info "Backing %s" % self
                 return self.go
             else
-                Puppet.debug "rollback is already in sync: %s vs. %s" %
+                @state.debug "rollback is already in sync: %s vs. %s" %
                     [@state.is.inspect, @state.should.inspect]
                 return nil
             end
@@ -152,3 +148,5 @@ module Puppet
         end
 	end
 end
+
+# $Id$

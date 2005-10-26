@@ -130,7 +130,7 @@ module Puppet
                     # or its parent class
                     cmd = self.modifycmd
 
-                    Puppet.debug "Executing %s" % cmd.inspect
+                    self.debug "Executing %s" % cmd.inspect
 
                     output = %x{#{cmd} 2>&1}
 
@@ -172,7 +172,7 @@ module Puppet
                         cmd = self.addcmd
                         type = "create"
                     end
-                    Puppet.debug "Executing %s" % cmd.inspect
+                    self.debug "Executing %s" % cmd.inspect
 
                     output = %x{#{cmd} 2>&1}
 

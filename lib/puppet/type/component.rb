@@ -82,7 +82,7 @@ module Puppet
                 args[:type] = "component"
             end
             super(args)
-            #Puppet.debug "Made component with name %s and type %s" %
+            #self.debug "Made component with name %s and type %s" %
             #    [self.name, self[:type]]
         end
 
@@ -105,7 +105,7 @@ module Puppet
         def push(*ary)
             ary.each { |child|
                 unless child.is_a?(Puppet::Element)
-                    Puppet.debug "Got object of type %s" % child.class
+                    self.debug "Got object of type %s" % child.class
                     raise Puppet::DevError.new(
                         "Containers can only contain Puppet::Elements, not %s" %
                         child.class

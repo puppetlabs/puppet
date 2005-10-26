@@ -55,7 +55,14 @@ module Puppet
     # define helper messages for each of the message levels
     Puppet::Log.levels.each { |level|
         define_method(level,proc { |args|
-            Puppet::Log.create(level,args)
+            if args.is_a?(Array)
+                args = args.join(" ")
+            end
+            Puppet::Log.create(
+                :level => level,
+                :source => "Puppet",
+                :message => args
+            )
         })
         module_function level
     }

@@ -21,13 +21,6 @@ module TestPuppet
         else
             @@testcount = 0
         end
-        if $0 =~ /.+\.rb/
-            Puppet[:loglevel] = :debug
-            $VERBOSE = 1
-        else
-            Puppet[:logdest] = "/dev/null"
-            Puppet[:httplog] = "/dev/null"
-        end
 
         @configpath = File.join(tmpdir,
             self.class.to_s + "configdir" + @@testcount.to_s
@@ -42,6 +35,14 @@ module TestPuppet
 
         @@tmpfiles = [@configpath]
         @@tmppids = []
+
+        if $0 =~ /.+\.rb/
+            Puppet[:loglevel] = :debug
+            $VERBOSE = 1
+        else
+            Puppet[:logdest] = "/dev/null"
+            Puppet[:httplog] = "/dev/null"
+        end
     end
 
 
@@ -181,13 +182,13 @@ end
 module ServerTest
     include TestPuppet
     def setup
+        super
+
         if defined? @@port
             @@port += 1
         else
             @@port = 8085
         end
-
-        super
     end
 
     # create a simple manifest that just creates a file
@@ -261,7 +262,8 @@ module ExeTest
 
         manifest = mktestmanifest()
         args += " --manifest %s" % manifest
-        args += " --ssldir %s" % Puppet[:ssldir]
+        args += " --confdir %s" % Puppet[:puppetconf]
+        args += " --vardir %s" % Puppet[:puppetvar]
         args += " --port %s" % @@port
         args += " --nonodes"
         args += " --autosign"
@@ -284,7 +286,7 @@ module ExeTest
         pid = nil
         %x{#{ps}}.chomp.split(/\n/).each { |line|
             if line =~ /ruby.+puppetmasterd/
-                next if line =~ /tc_/ # skip the test script itself
+                next if line =~ /\.rb/ # skip the test script itself
                 ary = line.split(" ")
                 pid = ary[1].to_i
             end

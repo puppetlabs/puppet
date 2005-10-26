@@ -17,7 +17,7 @@ module Puppet
                 begin
                     desc = server.describe(path)
                 rescue NetworkClientError => detail
-                    Puppet.err "Could not describe %s: %s" %
+                    self.err "Could not describe %s: %s" %
                         [path, detail]
                     return nil
                 end
@@ -99,7 +99,7 @@ module Puppet
                             @is = :notfound
                         end
                     else
-                        Puppet.info "File does not have checksum"
+                        self.info "File does not have checksum"
                         @is = :notfound
                     end
 
@@ -107,7 +107,7 @@ module Puppet
 
                     if state = @parent.state(:create)
                         unless state.should == "file"
-                            Puppet.notice(
+                            self.notice(
                                 "File %s had both create and source enabled" %
                                     @parent.name
                             )
@@ -130,7 +130,7 @@ module Puppet
                     @is = true
                 # FIXME We should at least support symlinks, I would think...
                 else
-                    Puppet.err "Cannot use files of type %s as sources" %
+                    self.err "Cannot use files of type %s as sources" %
                         @stats[:type]
                     @should = nil
                     @is = true
@@ -189,7 +189,7 @@ module Puppet
                 begin
                     contents = sourceobj.server.retrieve(path)
                 rescue NetworkClientError => detail
-                    Puppet.err "Could not retrieve %s: %s" %
+                    self.err "Could not retrieve %s: %s" %
                         [path, detail]
                     return nil
                 end
@@ -201,7 +201,7 @@ module Puppet
                 end
 
                 if contents == ""
-                    Puppet.notice "Could not retrieve contents for %s" %
+                    self.notice "Could not retrieve contents for %s" %
                         @source
                 end
 
@@ -237,7 +237,7 @@ module Puppet
                     begin
                         File.unlink(@parent.name)
                     rescue => detail
-                        Puppet.err "Could not remove %s for replacing: %s" %
+                        self.err "Could not remove %s for replacing: %s" %
                             [@parent.name, detail]
                     end
                 end
@@ -245,7 +245,7 @@ module Puppet
                 begin
                     File.rename(@parent.name + ".puppettmp", @parent.name)
                 rescue => detail
-                    Puppet.err "Could not rename tmp %s for replacing: %s" %
+                    self.err "Could not rename tmp %s for replacing: %s" %
                         [@parent.name, detail]
                 end
 

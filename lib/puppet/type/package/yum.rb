@@ -10,7 +10,7 @@ module Puppet
             def install
                 cmd = "yum -y install %s" % self.name
 
-                Puppet.info "Executing %s" % cmd.inspect
+                self.info "Executing %s" % cmd.inspect
                 output = %x{#{cmd} 2>&1}
 
                 unless $? == 0
@@ -30,7 +30,7 @@ module Puppet
                 if output =~ /#{self.name}\S+\s+(\S+)\s/
                     return $1
                 else
-                    Puppet.debug "No version"
+                    self.debug "No version"
                     if Puppet[:debug]
                         print output
                     end
@@ -42,7 +42,7 @@ module Puppet
             def update
                 cmd = "yum -y update %s" % self.name
 
-                Puppet.info "Executing %s" % cmd.inspect
+                self.info "Executing %s" % cmd.inspect
                 output = %x{#{cmd} 2>&1}
 
                 unless $? == 0

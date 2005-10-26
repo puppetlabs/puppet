@@ -355,9 +355,7 @@ class TestUser < Test::Unit::TestCase
             assert_equal("Puppet Testing User", current?(:comment, user[:name]),
                 "Comment was not set")
 
-            tests = Puppet::Type::User.validstates.collect { |name, state|
-                state.name
-            }
+            tests = Puppet::Type::User.validstates
 
             user.retrieve
             tests.each { |test|

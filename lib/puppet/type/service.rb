@@ -63,17 +63,17 @@ module Puppet
                 when true,1,"1", :running, "running":
                     should = :running
                 else
-                    Puppet.warning "%s: interpreting '%s' as false" %
+                    self.warning "%s: interpreting '%s' as false" %
                         [self.class,should]
                     should = 0
                 end
-                Puppet.debug "Service should is %s" % should
+                self.debug "Service should is %s" % should
                 return should
             end
 
             def retrieve
                 self.is = @parent.status
-                Puppet.debug "Running value for '%s' is '%s'" %
+                self.debug "Running value is '%s'" %
                     [self.parent.name,self.is]
             end
 
@@ -87,7 +87,7 @@ module Puppet
                     @parent.stop
                     event = :service_stopped
                 else
-                    Puppet.debug "Not running '%s' and shouldn't be running" %
+                    self.debug "Not running '%s' and shouldn't be running" %
                         self
                 end
             end
@@ -174,7 +174,7 @@ module Puppet
                     end
 
                     unless @defsvctype
-                        Puppet.notice "Defaulting to base service type"
+                        self.notice "Defaulting to base service type"
                         @defsvctype = Puppet::ServiceTypes::BaseSvc
                     end
                 end
@@ -287,7 +287,7 @@ module Puppet
                 )
                     cmd = self[:status] || self.statuscmd
                     output = %x(#{cmd} 2>&1)
-                    Puppet.debug "%s status returned %s" %
+                    self.debug "%s status returned %s" %
                         [self.name, output]
                     if $? == 0
                         return :running
@@ -320,7 +320,7 @@ module Puppet
                 else
                     pid = getpid
                     unless pid
-                        Puppet.info "%s is not running" % self.name
+                        self.info "%s is not running" % self.name
                         return false
                     end
                     output = %x("kill #{pid} 2>&1")

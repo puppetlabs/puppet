@@ -27,7 +27,7 @@ module Puppet
                 case checktype
                 when "md5", "md5lite":
                     unless FileTest.file?(@parent[:path])
-                        #Puppet.info "Cannot MD5 sum directory %s" %
+                        #@parent.info "Cannot MD5 sum directory %s" %
                         #    @parent[:path]
 
                         # because we cannot sum directories, just delete ourselves
@@ -44,7 +44,7 @@ module Puppet
                                     text = file.read(512)
                                 end
                                 if text.nil?
-                                    Puppet.info "Not checksumming empty file %s" %
+                                    self.info "Not checksumming empty file %s" %
                                         @parent.name
                                     sum = 0
                                 else
@@ -52,11 +52,11 @@ module Puppet
                                 end
                             }
                         rescue Errno::EACCES => detail
-                            Puppet.notice "Cannot checksum %s: permission denied" %
+                            self.notice "Cannot checksum %s: permission denied" %
                                 @parent.name
                             @parent.delete(self.class.name)
                         rescue => detail
-                            Puppet.notice "Cannot checksum %s: %s" %
+                            self.notice "Cannot checksum %s: %s" %
                                 detail
                             @parent.delete(self.class.name)
                         end
@@ -86,10 +86,10 @@ module Puppet
                 if hash = state[@parent[:path]]
                     if hash.include?(value)
                         return hash[value]
-                        #Puppet.debug "Found checksum %s for %s" %
+                        #@parent.debug "Found checksum %s for %s" %
                         #    [self.should,@parent[:path]]
                     else
-                        #Puppet.debug "Found checksum for %s but not of type %s" %
+                        #@parent.debug "Found checksum for %s but not of type %s" %
                         #    [@parent[:path],@checktype]
                         return :nosum
                     end
@@ -126,7 +126,7 @@ module Puppet
                     self.updatesum
                 end
 
-                #Puppet.debug "checksum state is %s" % self.is
+                #@parent.debug "checksum state is %s" % self.is
             end
 
 
@@ -143,10 +143,10 @@ module Puppet
                     self.retrieve
 
                     if self.insync?
-                        Puppet.debug "Checksum is already in sync"
+                        self.debug "Checksum is already in sync"
                         return nil
                     end
-                    #Puppet.debug "%s(%s): after refresh, is '%s'" %
+                    #@parent.debug "%s(%s): after refresh, is '%s'" %
                     #    [self.class.name,@parent.name,@is]
 
                     # If we still can't retrieve a checksum, it means that
@@ -155,7 +155,7 @@ module Puppet
                         # if they're copying, then we won't worry about the file
                         # not existing yet
                         unless @parent.state(:source)
-                            Puppet.warning(
+                            self.warning(
                                 "File %s does not exist -- cannot checksum" %
                                 @parent.name
                             )
@@ -177,8 +177,7 @@ module Puppet
                 result = false
                 state = Puppet::Storage.state(self)
                 unless state.include?(@parent.name)
-                    Puppet.debug "Initializing state hash for %s" %
-                        @parent.name
+                    self.debug "Initializing state hash"
 
                     state[@parent.name] = Hash.new
                 end
@@ -201,13 +200,13 @@ module Puppet
                             "found a checksum") % @parent[:path]
                         )
                     end
-                    Puppet.debug "Replacing %s checksum %s with %s" %
+                    self.debug "Replacing %s checksum %s with %s" %
                         [@parent.name, state[@parent.name][@checktypes[0]],@is]
-                    #Puppet.debug "@is: %s; @should: %s" % [@is,@should]
+                    #@parent.debug "@is: %s; @should: %s" % [@is,@should]
                     result = true
                 else
-                    Puppet.debug "Creating checksum %s for %s of type %s" %
-                        [self.is,@parent.name,@checktypes[0]]
+                    @parent.debug "Creating checksum %s of type %s" %
+                        [@is,@checktypes[0]]
                     result = false
                 end
                 state[@parent.name][@checktypes[0]] = @is

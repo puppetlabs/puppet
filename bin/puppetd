@@ -12,6 +12,7 @@
 #               [--ssldir <cert directory>] [-l|--logdest <syslog|<file>|console>]
 #               [--fqdn <host name>] [-p|--port <port>] [-s|--server <server>]
 #               [-w|--waitforcert <seconds>] [-c|--confdir <configuration directory>]
+#               [--vardir <var directory>]
 #
 # = Description
 #
@@ -57,6 +58,10 @@
 #
 # ssldir::
 #   Where to store and find certificates.  Defaults to /etc/puppet/ssl.
+#
+# vardir::
+#   The variable-size directory, used for storing state.  Defaults to
+#   /var/puppet.
 #
 # verbose::
 #   Turn on verbose reporting.
@@ -106,6 +111,7 @@ result = GetoptLong.new(
 	[ "--ssldir",   				GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
 	[ "--version",	"-V",			GetoptLong::NO_ARGUMENT ],
+	[ "--vardir",	    			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--waitforcert",	"-w",		GetoptLong::REQUIRED_ARGUMENT ]
 )
 
@@ -152,6 +158,8 @@ begin
                 else
                     $stderr.puts "Invalid log destination %s" % arg
                 end
+            when "--vardir"
+                Puppet[:puppetvar] = arg
             when "--waitforcert"
                 waitforcert = arg
         end

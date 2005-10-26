@@ -14,6 +14,7 @@ require 'puppettest'
 class TestFileSources < Test::Unit::TestCase
 	include FileTesting
     def setup
+        super
         begin
             initstorage
         rescue
@@ -24,12 +25,11 @@ class TestFileSources < Test::Unit::TestCase
         else
             @port = 8800
         end
-        super
     end
 
     def teardown
-        clearstorage
         super
+        clearstorage
     end
 
     def initstorage

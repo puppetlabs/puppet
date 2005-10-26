@@ -103,7 +103,7 @@ module Puppet
                     case backup
                     when Puppet::Client::Dipper:
                         sum = backup.backup(file)
-                        Puppet.info "Filebucketed %s with sum %s" %
+                        self.info "Filebucketed %s with sum %s" %
                             [file, sum]
                         return true
                     when String:
@@ -112,7 +112,7 @@ module Puppet
                             begin
                                 File.unlink(newfile)
                             rescue => detail
-                                Puppet.err "Could not remove old backup: %s" %
+                                self.err "Could not remove old backup: %s" %
                                     detail
                                 return false
                             end
@@ -128,11 +128,11 @@ module Puppet
                                 [file, detail.message])
                         end
                     else
-                        Puppet.err "Invalid backup type %s" % backup
+                        self.err "Invalid backup type %s" % backup
                         return false
                     end
                 else
-                    Puppet.notice "Cannot backup files of type %s" %
+                    self.notice "Cannot backup files of type %s" %
                         File.stat(file).ftype
                     return false
                 end
@@ -238,7 +238,7 @@ module Puppet
                 unless hash.include?(:recurse)
                     if args.include?(:recurse)
                         if args[:recurse].is_a?(Integer)
-                            Puppet.notice "Decrementing recurse on %s" % path
+                            self.notice "Decrementing recurse on %s" % path
                             args[:recurse] -= 1 # reduce the level of recursion
                         end
                     end
@@ -255,7 +255,7 @@ module Puppet
                     ! FileTest.directory?(args[:source])
                     klass = Puppet::Type::Symlink
 
-                    Puppet.debug "%s is a link" % path
+                    self.debug "%s is a link" % path
                     # clean up the args a lot for links
                     old = args.dup
                     args = {
@@ -272,7 +272,7 @@ module Puppet
                 # than this last bit, so it doesn't really make sense.
                 if child = klass[path]
                     unless @children.include?(child)
-                        Puppet.notice "Not managing more explicit file %s" %
+                        self.notice "Not managing more explicit file %s" %
                             path
                         return nil
                     end
@@ -296,18 +296,18 @@ module Puppet
                         child.parent = self
                         @children << child
                     rescue Puppet::Error => detail
-                        Puppet.notice(
+                        self.notice(
                             "Cannot manage %s: %s" %
                                 [path,detail.message]
                         )
-                        Puppet.debug args.inspect
+                        self.debug args.inspect
                         child = nil
                     rescue => detail
-                        Puppet.notice(
+                        self.notice(
                             "Cannot manage %s: %s" %
                                 [path,detail]
                         )
-                        Puppet.debug args.inspect
+                        self.debug args.inspect
                         child = nil
                     end
                 end
@@ -330,7 +330,7 @@ module Puppet
 
                 # are we at the end of the recursion?
                 if recurse == 0
-                    Puppet.info "finished recursing"
+                    self.info "finished recursing"
                     return
                 end
 
@@ -346,7 +346,7 @@ module Puppet
 
             def localrecurse(recurse)
                 unless FileTest.exist?(self.name) and self.stat.directory?
-                    #Puppet.info "%s is not a directory; not recursing" %
+                    #self.info "%s is not a directory; not recursing" %
                     #    self.name
                     return
                 end
@@ -357,7 +357,7 @@ module Puppet
                     )
                 end
                 unless FileTest.readable? self.name
-                    Puppet.notice "Cannot manage %s: permission denied" % self.name
+                    self.notice "Cannot manage %s: permission denied" % self.name
                     return
                 end
 
@@ -412,14 +412,14 @@ module Puppet
 
                 ignore = @parameters[:ignore]
                
-                #Puppet.warning "Listing path %s" % path.inspect
+                #self.warning "Listing path %s" % path.inspect
                 desc = server.list(path, r, ignore)
                
                 desc.split("\n").each { |line|
                     file, type = line.split("\t")
                     next if file == "/"
                     name = file.sub(/^\//, '')
-                    #Puppet.warning "child name is %s" % name
+                    #self.warning "child name is %s" % name
                     args = {:source => source + file}
                     if type == file
                         args[:recurse] = nil
@@ -446,7 +446,7 @@ module Puppet
                 end
 
                 unless stat = self.stat(true)
-                    Puppet.debug "File %s does not exist" % self.name
+                    self.debug "File does not exist" % self.name
                     @states.each { |name,state|
                         # We've already retreived the source, and we don't
                         # want to overwrite whatever it did.  This is a bit
@@ -467,7 +467,7 @@ module Puppet
                     rescue Errno::ENOENT => error
                         @stat = nil
                     rescue => error
-                        Puppet.debug "Failed to stat %s: %s" %
+                        self.debug "Failed to stat %s: %s" %
                             [self.name,error]
                         @stat = nil
                     end

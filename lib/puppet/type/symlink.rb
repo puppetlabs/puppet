@@ -127,7 +127,7 @@ module Puppet
                 if FileTest.exist?(@target)
                     @stat = File.stat(@target)
                 else
-                    Puppet.info "Target %s must exist for recursive links" %
+                    self.info "Target %s must exist for recursive links" %
                         @target
                     return
                 end
@@ -169,7 +169,7 @@ module Puppet
 
                 dir = Puppet::Type::PFile.implicitcreate(args)
                 dir.parent = self
-                Puppet.debug "Got dir %s" % dir.name
+                self.debug "Got dir %s" % dir.name
                 self.push dir
                 #Dir.foreach(@target) { |file|
                 #    next if file =~ /^\.\.?$/ # skip . and ..

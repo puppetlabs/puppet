@@ -57,7 +57,7 @@ module Puppet
                     end
                 end
 
-                Puppet.info "Setting gid to %s" % gid
+                self.info "Setting gid to %s" % gid
 
                 return gid
             end

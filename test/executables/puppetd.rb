@@ -38,7 +38,8 @@ class TestPuppetDExe < Test::Unit::TestCase
         cmd += " --verbose"
         #cmd += " --fqdn %s" % fqdn
         cmd += " --port %s" % @@port
-        cmd += " --ssldir %s" % Puppet[:ssldir]
+        cmd += " --confdir %s" % Puppet[:puppetconf]
+        cmd += " --vardir %s" % Puppet[:puppetvar]
         cmd += " --server localhost"
 
         # and verify our daemon runs

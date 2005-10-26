@@ -124,19 +124,29 @@ class TestLog < Test::Unit::TestCase
     end
 
     def test_logtags
+        path = tempfile
+        File.open(path, "w") { |f| f.puts "yayness" }
+
+        file = Puppet::Type::PFile.create(
+            :path => path,
+            :check => [:owner, :group, :mode, :checksum]
+        )
+        file.tags = %w{this is a test}
+
         log = nil
         assert_nothing_raised {
             log = Puppet::Log.new(
                 :level => :info,
-                :source => "Puppet",
-                :message => "A test message",
-                :tags => %w{this is a set of tags},
-                :path => "a path"
+                :source => file,
+                :message => "A test message"
             )
         }
 
         # This is really stupid
-        assert(log.tags)
-        assert(log.path)
+        assert(log.tags, "Got no tags")
+        assert(log.path, "Got no path")
+
+        assert_equal(log.tags, file.tags, "Tags were not equal")
+        assert_equal(log.path, file.path, "Paths were not equal")
     end
 end

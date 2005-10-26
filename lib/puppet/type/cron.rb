@@ -126,11 +126,11 @@ module Puppet
                     @parent.remove(true)
                     event = :cron_deleted
                 elsif self.should == @is
-                    Puppet.err "Uh, they're both %s" % self.should
+                    self.err "Uh, they're both %s" % self.should
                     return nil
                 else
                     #@is = @should
-                    Puppet.err "@is is %s" % @is
+                    self.err "@is is %s" % @is
                     event = :cron_changed
                 end
 
