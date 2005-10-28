@@ -167,7 +167,7 @@ module Puppet
 
                 # I should do something to add the node as an object with tags
                 # but that will possibly end up with far too many tags.
-                self.logtags
+                #self.logtags
                 return objects
             end
 

@@ -182,13 +182,18 @@ module Puppet # :nodoc:
                         ] + RESET
                     end
                 when Puppet::Client::LogClient
-                    # For now, to avoid a loop, don't send remote messages
                     unless msg.is_a?(String) or msg.remote
                         begin
                             #puts "would have sent %s" % msg
                             #puts "would have sent %s" %
                             #    CGI.escape(Marshal::dump(msg))
-                            dest.addlog(CGI.escape(Marshal::dump(msg)))
+                            begin
+                                tmp = CGI.escape(Marshal::dump(msg))
+                            rescue => detail
+                                puts "Could not dump: %s" % detail.to_s
+                                return
+                            end
+                            dest.addlog(tmp)
                             #dest.addlog(msg.to_s)
                             sleep(0.5)
                         rescue => detail
@@ -230,7 +235,7 @@ module Puppet # :nodoc:
             @levels.include?(level)
         end
 
-		attr_accessor :level, :message, :source, :time, :tags, :path, :remote
+		attr_accessor :level, :message, :source, :time, :tags, :remote
 
 		def initialize(args)
 			unless args.include?(:level) && args.include?(:message)
@@ -257,21 +262,16 @@ module Puppet # :nodoc:
                 @tags = args[:tags]
             end
 
-            if args.include?(:path)
-                @path = args[:path]
-            end
-
             if args.include?(:source)
-                @source = args[:source]
+                # We can't store the actual source, we just store the path
+                if args[:source].respond_to?(:path)
+                    @source = args[:source].path
+                else
+                    @source = args[:source].to_s
+                end
                 unless defined? @tags and @tags
                     if @source.respond_to?(:tags)
                         @tags = @source.tags
-                    end
-                end
-
-                unless defined? @path and @path
-                    if @source.respond_to?(:path)
-                        @path = @source.path
                     end
                 end
             else

@@ -12,7 +12,7 @@
 #               [--ssldir <cert directory>] [-l|--logdest <syslog|<file>|console>]
 #               [--fqdn <host name>] [-p|--port <port>] [-s|--server <server>]
 #               [-w|--waitforcert <seconds>] [-c|--confdir <configuration directory>]
-#               [--vardir <var directory>]
+#               [--vardir <var directory>] [--centrallogging]
 #
 # = Description
 #
@@ -28,6 +28,10 @@
 # and apply it.
 #
 # = Options
+#
+# centrallogging::
+#   Send all produced logs to the central puppetmasterd system.  This currently
+#   results in a significant slowdown, so it is not recommended.
 #
 # confdir::
 #   The configuration root directory, where +puppetmasterd+ defaults to looking
@@ -100,6 +104,7 @@ rescue LoadError
 end
 
 result = GetoptLong.new(
+	[ "--centrallogging",			GetoptLong::NO_ARGUMENT ],
 	[ "--confdir",	"-c",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--fqdn",     "-f",			GetoptLong::REQUIRED_ARGUMENT ],
@@ -121,9 +126,12 @@ args = {}
 
 waitforcert = false
 
+centrallogs = false
 begin
     result.each { |opt,arg|
         case opt
+            when "--centrallogging"
+                centrallogs = true
             when "--confdir"
                 Puppet[:puppetconf] = arg
             when "--help"
@@ -187,13 +195,15 @@ if fqdn
     args[:FQDN] = fqdn
 end
 
-logdest = args[:Server]
+if centrallogs
+    logdest = args[:Server]
 
-if args.include?(:Port)
-    logdest += ":" + args[:Port]
+    if args.include?(:Port)
+        logdest += ":" + args[:Port]
+    end
+    Puppet[:logdest] = logdest
 end
 
-Puppet[:logdest] = logdest
 
 client = Puppet::Client::MasterClient.new(args)
 

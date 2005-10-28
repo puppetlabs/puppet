@@ -27,13 +27,8 @@ class Server # :nodoc:
 
             if client
                 if ! message.source or message.source == "Puppet"
-                #unless message.source or message.source != "Puppet"
                     message.source = client
-                else
-                    puts message.source.inspect
                 end
-            else
-                puts "No client"
             end
 
             Puppet::Log.newmessage(message)

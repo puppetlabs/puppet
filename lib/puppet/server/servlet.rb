@@ -153,9 +153,11 @@ class Server
                 if nameary.nil?
                     Puppet.warning "Could not retrieve server name from cert"
                 else
-                    Puppet.debug "Overriding %s with cert name %s" %
-                        [@client, nameary[1]]
-                    @client = nameary[1]
+                    unless @client == nameary[1]
+                        Puppet.debug "Overriding %s with cert name %s" %
+                            [@client, nameary[1]]
+                        @client = nameary[1]
+                    end
                 end
             end
             #if request.server_cert
