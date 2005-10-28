@@ -1,12 +1,9 @@
-# $Id$
-
 require 'syslog'
 
-module Puppet
-    #------------------------------------------------------------
-    # provide feedback of various types to the user
-    # modeled after syslog messages
-    # each level of message prints in a different color
+module Puppet # :nodoc:
+    # Pass feedback to the user.  Log levels are modeled after syslog's, and it is
+    # expected that that will be the most common log destination.  Supports
+    # multiple destinations, one of which is a remote server.
 	class Log
         PINK="[0;31m"
         GREEN="[0;32m"
@@ -16,13 +13,10 @@ module Puppet
         BLUE="[0;36m"
         RESET="[0m"
 
-		@@messages = Array.new
+        @levels = [:debug,:info,:notice,:warning,:err,:alert,:emerg,:crit]
+        @loglevel = 2
 
-        @@levels = [:debug,:info,:notice,:warning,:err,:alert,:emerg,:crit]
-        @@loglevel = 2
-        @@logdest = :console
-
-		@@colors = {
+		@colors = {
 			:debug => SLATE,
 			:info => GREEN,
 			:notice => PINK,
@@ -33,52 +27,91 @@ module Puppet
             :crit => RESET
 		}
 
-        def Log.close
-            if defined? @@logfile
-                @@logfile.close
-                @@logfile = nil
+        @destinations = {:syslog => Syslog.open("puppet")}
+
+        # Reset all logs to basics.  Basically just closes all files and undefs
+        # all of the other objects.
+        def Log.close(dest = nil)
+            if dest
+                if @destinations.include?(dest)
+                    Puppet.warning "Closing %s" % dest
+                    if @destinations.respond_to?(:close)
+                        @destinations[dest].close
+                    end
+                    @destinations.delete(dest)
+                end
+            else
+                @destinations.each { |type, dest|
+                    if dest.respond_to?(:flush)
+                        dest.flush
+                    end
+                    if dest.respond_to?(:close)
+                        dest.close
+                    end
+                }
+                @destinations = {}
             end
 
-            if defined? @@syslog
-                @@syslog = nil
-            end
+            Puppet.info "closed"
         end
 
+        # Flush any log destinations that support such operations.
         def Log.flush
-            if defined? @@logfile
-                @@logfile.flush
-            end
+            @destinations.each { |type, dest|
+                if dest.respond_to?(:flush)
+                    dest.flush
+                end
+            }
         end
 
+        # Create a new log message.  The primary role of this method is to
+        # avoid creating log messages below the loglevel.
         def Log.create(hash)
-            if @@levels.index(hash[:level]) >= @@loglevel 
+            if @levels.index(hash[:level]) >= @loglevel 
                 return Puppet::Log.new(hash)
             else
                 return nil
             end
         end
 
-        def Log.levels
-            return @@levels.dup
+        # Yield each valid level in turn
+        def Log.eachlevel
+            @levels.each { |level| yield level }
         end
 
-        def Log.destination
-            return @@logdest
+        # Return the current log level.
+        def Log.level
+            return @levels[@loglevel]
         end
 
-        def Log.destination=(dest)
-            if dest == "syslog" or dest == :syslog
-                unless defined? @@syslog
-                    @@syslog = Syslog.open("puppet")
-                end
-                @@logdest = :syslog
-            elsif dest =~ /^\//
-                if defined? @@logfile and @@logfile
-                    @@logfile.close
-                end
+        # Set the current log level.
+        def Log.level=(level)
+            unless level.is_a?(Symbol)
+                level = level.intern
+            end
 
-                @@logpath = dest
+            unless @levels.include?(level)
+                raise Puppet::DevError, "Invalid loglevel %s" % level
+            end
 
+            @loglevel = @levels.index(level)
+        end
+
+        # Create a new log destination.
+        def Log.newdestination(dest)
+            # Each destination can only occur once.
+            if @destinations.include?(dest)
+                return
+            end
+
+            case dest
+            when "syslog", :syslog
+                if Syslog.opened?
+                    Syslog.close
+                end
+                @destinations[:syslog] = Syslog.open("puppet")
+            when /^\// # files
+                Puppet.info "opening %s as a log" % dest
                 # first make sure the directory exists
                 unless FileTest.exist?(File.dirname(dest))
                     begin
@@ -93,80 +126,114 @@ module Puppet
                     end
                 end
 
-                Puppet[:logfile] = dest
                 begin
                     # create the log file, if it doesn't already exist
-                    @@logfile = File.open(dest,File::WRONLY|File::CREAT|File::APPEND)
+                    file = File.open(dest,File::WRONLY|File::CREAT|File::APPEND)
                 rescue => detail
                     Log.destination = :console
                     Puppet.err "Could not create log file: %s" %
                         detail
                     return
                 end
-                @@logdest = :file
+                @destinations[dest] = file
+            when "console", :console
+                @destinations[:console] = :console
+            when Puppet::Server::Logger
+                @destinations[dest] = dest
             else
-                unless @@logdest == :console or @@logdest == "console"
-                    Puppet.notice "Invalid log setting %s; setting log destination to 'console'" % @@logdest
+                Puppet.info "Treating %s as a hostname" % dest
+                args = {}
+                if dest =~ /:(\d+)/
+                    args[:Port] = $1
+                    args[:Server] = dest.sub(/:\d+/, '')
+                else
+                    args[:Server] = dest
                 end
-                @@logdest = :console
+                @destinations[dest] = Puppet::Client::LogClient.new(args)
             end
         end
 
-        def Log.level
-            return @@levels[@@loglevel]
-        end
-
-        def Log.level=(level)
-            unless level.is_a?(Symbol)
-                level = level.intern
-            end
-
-            unless @@levels.include?(level)
-                raise Puppet::DevError, "Invalid loglevel %s" % level
-            end
-
-            @@loglevel = @@levels.index(level)
-        end
-
+        # Route the actual message. FIXME There are lots of things this method should
+        # do, like caching, storing messages when there are not yet destinations,
+        # a bit more.
+        # It's worth noting that there's a potential for a loop here, if
+        # the machine somehow gets the destination set as itself.
         def Log.newmessage(msg)
-            case @@logdest
-            when :syslog:
-                if msg.source == "Puppet"
-                    @@syslog.send(msg.level,msg.to_s)
+            @destinations.each { |type, dest|
+                case dest
+                when Module # This is the Syslog module
+                    next if msg.remote
+                    if msg.source == "Puppet"
+                        dest.send(msg.level,msg.to_s)
+                    else
+                        dest.send(msg.level,"(%s) %s" % [msg.source,msg.to_s])
+                    end
+                when File:
+                    dest.puts("%s %s (%s): %s" %
+                        [msg.time,msg.source,msg.level,msg.to_s])
+                when :console
+                    if msg.source == "Puppet"
+                        puts @colors[msg.level] + "%s: %s" % [
+                            msg.level, msg.to_s
+                        ] + RESET
+                    else
+                        puts @colors[msg.level] + "%s (%s): %s" % [
+                            msg.source, msg.level, msg.to_s
+                        ] + RESET
+                    end
+                when Puppet::Client::LogClient
+                    # For now, to avoid a loop, don't send remote messages
+                    unless msg.is_a?(String) or msg.remote
+                        begin
+                            #puts "would have sent %s" % msg
+                            #puts "would have sent %s" %
+                            #    CGI.escape(Marshal::dump(msg))
+                            dest.addlog(CGI.escape(Marshal::dump(msg)))
+                            #dest.addlog(msg.to_s)
+                            sleep(0.5)
+                        rescue => detail
+                            Puppet.err detail
+                            @destinations.delete(type)
+                        end
+                    end
                 else
-                    @@syslog.send(msg.level,"(%s) %s" % [msg.source,msg.to_s])
+                    #raise Puppet::Error, "Invalid log destination %s" % dest
+                    puts "Invalid log destination %s" % dest.inspect
                 end
-            when :file:
-                unless defined? @@logfile
-                    raise Puppet::DevError,
-                        "Log file must be defined before we can log to it"
-                end
-                @@logfile.puts("%s %s (%s): %s" %
-                    [msg.time,msg.source,msg.level,msg.to_s])
-            else
-                if msg.source == "Puppet"
-                    puts @@colors[msg.level] + "%s: %s" % [
-                        msg.level, msg.to_s
-                    ] + RESET
-                else
-                    puts @@colors[msg.level] + "%s (%s): %s" % [
-                        msg.source, msg.level, msg.to_s
-                    ] + RESET
-                end
-            end
+            }
         end
 
+        # Reopen all of our logs.
         def Log.reopen
-            if @@logfile
-                Log.destination = @@logpath
+            types = @destinations.keys
+            @destinations.each { |type, dest|
+                if dest.respond_to?(:close)
+                    dest.close
+                end
+            }
+            @destinations.clear
+            # We need to make sure we always end up with some kind of destination
+            begin
+                types.each { |type|
+                    Log.newdestination(type)
+                }
+            rescue => detail
+                if @destinations.empty?
+                    Log.newdestination(:syslog)
+                    Puppet.err detail.to_s
+                end
             end
         end
 
-		attr_accessor :level, :message, :source, :time, :tags, :path
+        # Is the passed level a valid log level?
+        def self.validlevel?(level)
+            @levels.include?(level)
+        end
+
+		attr_accessor :level, :message, :source, :time, :tags, :path, :remote
 
 		def initialize(args)
-			unless args.include?(:level) && args.include?(:message) &&
-						args.include?(:source) 
+			unless args.include?(:level) && args.include?(:message)
 				raise Puppet::DevError, "Puppet::Log called incorrectly"
 			end
 
@@ -182,7 +249,7 @@ module Puppet
 			@time = Time.now
 			# this should include the host name, and probly lots of other
 			# stuff, at some point
-			unless @@levels.include?(level)
+			unless self.class.validlevel?(level)
 				raise Puppet::DevError, "Invalid message level #{level}"
 			end
 
@@ -215,17 +282,9 @@ module Puppet
 		end
 
 		def to_s
-			# this probably won't stay, but until this leaves the console,
-			# i'm going to use coloring...
-			#return "#{@time} #{@source} (#{@level}): #{@message}"
-			#return @@colors[@level] + "%s %s (%s): %s" % [
-			#	@time, @source, @level, @message
-			#] + RESET
             return @message
-			#return @@colors[@level] + "%s (%s): %s" % [
-			#	@source, @level, @message
-			#] + RESET
 		end
 	end
-    #------------------------------------------------------------
 end
+
+# $Id$

@@ -138,8 +138,10 @@ begin
                 exit
             when "--verbose"
                 Puppet[:loglevel] = :info
+                Puppet[:logdest] = :console
             when "--debug"
                 Puppet[:loglevel] = :debug
+                Puppet[:logdest] = :console
             when "--noop"
                 Puppet[:noop] = true
             when "--ssldir"
@@ -151,12 +153,10 @@ begin
             when "--port"
                 args[:Port] = arg
             when "--logdest"
-                # FIXME we should be able to have log.rb check the validity of the dst
-                case arg
-                when "syslog", "console", /^\//:
+                begin
                     Puppet[:logdest] = arg
-                else
-                    $stderr.puts "Invalid log destination %s" % arg
+                rescue => detail
+                    $stderr.puts detail.to_s
                 end
             when "--vardir"
                 Puppet[:puppetvar] = arg
@@ -176,15 +176,27 @@ end
 
 bg = false
 
-unless Puppet[:loglevel] == :debug or Puppet[:loglevel] == :info
-    bg = true
+if Puppet[:loglevel] == :debug or Puppet[:loglevel] == :info
+    args[:Daemonize] = false
+else
+    args[:Daemonize] = true
 end
 
 args[:Server] = server
 if fqdn
     args[:FQDN] = fqdn
 end
+
+logdest = args[:Server]
+
+if args.include?(:Port)
+    logdest += ":" + args[:Port]
+end
+
+Puppet[:logdest] = logdest
+
 client = Puppet::Client::MasterClient.new(args)
+
 
 unless client.readcert
     if waitforcert
@@ -206,9 +218,6 @@ unless client.readcert
 end
 
 if bg
-    unless Puppet[:logdest] == :file
-        Puppet[:logdest] = Puppet[:logfile]
-    end
     client.daemonize
 end
 

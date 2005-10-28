@@ -37,9 +37,11 @@ module TestPuppet
         @@tmppids = []
 
         if $0 =~ /.+\.rb/
+            Puppet[:logdest] = :console
             Puppet[:loglevel] = :debug
             $VERBOSE = 1
         else
+            Puppet::Log.close
             Puppet[:logdest] = "/dev/null"
             Puppet[:httplog] = "/dev/null"
         end
@@ -90,6 +92,9 @@ module TestPuppet
         @@tmppids.clear
         Puppet::Type.allclear
         Puppet.clear
+
+        # reset all of the logs
+        Puppet::Log.close
     end
 
     def tempfile
@@ -276,6 +281,7 @@ module ExeTest
         }
         assert($? == 0, "Puppetmasterd exit status was %s" % $?)
         assert_equal("", output, "Puppetmasterd produced output %s" % output)
+        sleep(1)
 
         return manifest
     end
@@ -283,20 +289,38 @@ module ExeTest
     def stopmasterd(running = true)
         ps = Facter["ps"].value || "ps -ef"
 
+        pidfile = File.join(Puppet[:puppetvar], "puppetmasterd.pid")
+
         pid = nil
-        %x{#{ps}}.chomp.split(/\n/).each { |line|
-            if line =~ /ruby.+puppetmasterd/
-                next if line =~ /\.rb/ # skip the test script itself
-                ary = line.split(" ")
-                pid = ary[1].to_i
+        if FileTest.exists?(pidfile)
+            pid = File.read(pidfile).chomp.to_i
+            File.unlink(pidfile)
+        end
+
+        if running or pid
+            runningpid = nil
+            %x{#{ps}}.chomp.split(/\n/).each { |line|
+                if line =~ /ruby.+puppetmasterd/
+                    next if line =~ /\.rb/ # skip the test script itself
+                    ary = line.split(/\s+/)
+                    runningpid = ary[1].to_i
+                end
+            }
+
+            if running
+                assert(runningpid, "Process is not running")
+                assert_equal(pid, runningpid, "PIDs are not equal")
+            else
+                return
             end
-        }
+        end
 
         # we default to mandating that it's running, but teardown
         # doesn't require that
-        if running or pid
-            assert(pid)
-
+        if pid
+            if pid == $$
+                raise Puppet::Error, "Tried to kill own pid"
+            end
             assert_nothing_raised {
                 Process.kill("-INT", pid)
             }

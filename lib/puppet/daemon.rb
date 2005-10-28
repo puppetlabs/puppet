@@ -2,18 +2,18 @@
 
 require 'puppet'
 
-module Puppet
+module Puppet # :nodoc:
+    # A module that handles operations common to all daemons.
     module Daemon
+        # Put the daemon into the background.
         def daemonize
-            unless Puppet[:logdest] == :file
-                raise Puppet::DevError,
-                    "You must reset log destination before daemonizing"
-            end
-
             if pid = fork()
                 Process.detach(pid)
                 exit(0)
             end
+
+            # Get rid of console logging
+            Puppet::Log.close(:console)
 
             Process.setsid
             Dir.chdir("/")
@@ -21,7 +21,7 @@ module Puppet
                 $stdin.reopen "/dev/null"
                 $stdout.reopen "/dev/null", "a"
                 $stderr.reopen $stdout
-                Log.reopen
+                Puppet::Log.reopen
             rescue => detail
                 File.open("/tmp/daemonout", "w") { |f|
                     f.puts "Could not start %s: %s" % [$0, detail]
@@ -29,6 +29,25 @@ module Puppet
                 Puppet.err "Could not start %s: %s" % [$0, detail]
                 exit(12)
             end
+
+            name = $0.gsub(/.+#{File::SEPARATOR}/,'')
+            @pidfile = File.join(Puppet[:puppetvar], name + ".pid")
+            if FileTest.exists?(@pidfile)
+                Puppet.info "Deleting old pid file"
+                begin
+                    File.unlink(@pidfile)
+                rescue Errno::EACCES
+                    Puppet.err "Could not delete old PID file; cannot create new one"
+                    return
+                end
+            end
+
+            begin
+                File.open(@pidfile, "w") { |f| f.puts $$ }
+            rescue => detail
+                Puppet.err "Could not create PID file: %s" % detail
+            end
+            Puppet.info "pid file is %s" % @pidfile
         end
 
         def fqdn
@@ -165,6 +184,23 @@ module Puppet
                 raise Puppet::DevError, "Received invalid certificate"
             end
             return retrieved
+        end
+
+        # Shut down our server
+        def shutdown
+            # Remove our pid file
+            if defined? @pidfile and @pidfile and FileTest.exists?(@pidfile)
+                begin
+                    File.unlink(@pidfile)
+                rescue => detail
+                    Puppet.err "Could not remove PID file %s: %s" % [@pidfile, detail]
+                end
+            end
+
+            # And close all logs
+            Puppet::Log.close
+
+            super
         end
     end
 end

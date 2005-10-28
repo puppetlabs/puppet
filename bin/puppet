@@ -118,12 +118,10 @@ begin
             when "--debug"
                 debug = true
             when "--logdest"
-                # FIXME we should be able to have log.rb check the validity of the dst
-                case arg
-                when "syslog", "console", /^\//:
+                begin
                     Puppet[:logdest] = arg
-                else
-                    $stderr.puts "Invalid log destination %s" % arg
+                rescue => detail
+                    $stderr.puts detail.to_s
                 end
             when "--vardir"
                 Puppet[:puppetvar] = arg

@@ -119,6 +119,7 @@ class Server
                 rescue => detail
                     #Puppet.warning obj.inspect
                     #Puppet.warning args.inspect
+                    puts detail.inspect
                     Puppet.err "Could not call: %s" % detail.to_s
                     raise XMLRPC::FaultException.new(1, detail.to_s)
                 end

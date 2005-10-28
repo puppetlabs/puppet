@@ -1,7 +1,3 @@
-#!/usr/local/bin/ruby -w
-
-# $Id$
-
 # the server
 #
 # allow things to connect to us and communicate, and stuff
@@ -32,6 +28,14 @@ module Puppet
             include Puppet::Daemon
 
             def initialize(hash = {})
+                daemonize = nil
+                if hash.include?(:Daemonize)
+                    daemonize = hash[:Daemonize]
+                end
+
+                if daemonize
+                    self.daemonize
+                end
                 # FIXME we should have some kind of access control here, using
                 # :RequestHandler
                 hash[:Port] ||= Puppet[:masterport]
@@ -160,4 +164,7 @@ require 'puppet/server/master'
 require 'puppet/server/ca'
 require 'puppet/server/fileserver'
 require 'puppet/server/filebucket'
+require 'puppet/server/logger'
 require 'puppet/client'
+
+# $Id$

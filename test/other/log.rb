@@ -13,20 +13,20 @@ require 'test/unit'
 
 class TestLog < Test::Unit::TestCase
     include TestPuppet
-    @@logfile = File.join(Puppet[:logdir], "puppettest.log")
 
     def teardown
-        system("rm -f %s" % @@logfile)
-        Puppet::Log.destination=(:console)
-        Puppet[:loglevel] = :notice
+        super
+        Puppet::Log.close
     end
 
     def getlevels
         levels = nil
         assert_nothing_raised() {
-            levels = Puppet::Log.levels
+            levels = []
+            Puppet::Log.eachlevel { |level| levels << level }
         }
-        return levels 
+        # Don't test the top levels; too annoying
+        return levels.reject { |level| level == :emerg or level == :crit }
     end
 
     def mkmsgs(levels)
@@ -42,19 +42,19 @@ class TestLog < Test::Unit::TestCase
     end
 
     def test_logfile
-        Puppet[:debug] = true if __FILE__ == $0
         fact = nil
         levels = nil
         levels = getlevels
+        logfile = tempfile()
         assert_nothing_raised() {
-            Puppet::Log.destination=(@@logfile)
+            Puppet::Log.newdestination(logfile)
         }
         msgs = mkmsgs(levels)
         assert(msgs.length == levels.length)
-        Puppet::Log.flush
+        Puppet::Log.close
         count = 0
         assert_nothing_raised() {
-            File.open(@@logfile) { |of|
+            File.open(logfile) { |of|
                 count = of.readlines.length
             }
         }
@@ -69,7 +69,7 @@ class TestLog < Test::Unit::TestCase
             }
         }
         assert_nothing_raised() {
-            Puppet::Log.destination=("syslog")
+            Puppet::Log.newdestination("syslog")
         }
         # there's really no way to verify that we got syslog messages...
         msgs = mkmsgs(levels)
@@ -79,12 +79,9 @@ class TestLog < Test::Unit::TestCase
     def test_consolelog
         Puppet[:debug] = true if __FILE__ == $0
         fact = nil
-        levels = nil
+        levels = getlevels
         assert_nothing_raised() {
-            levels = Puppet::Log.levels
-        }
-        assert_nothing_raised() {
-            Puppet::Log.destination=(:console)
+            Puppet::Log.newdestination(:console)
         }
         msgs = mkmsgs(levels)
         assert(msgs.length == levels.length)
@@ -93,7 +90,7 @@ class TestLog < Test::Unit::TestCase
 
     def test_levelmethods
         assert_nothing_raised() {
-            Puppet::Log.destination=("/dev/null")
+            Puppet::Log.newdestination("/dev/null")
         }
         getlevels.each { |level|
             assert_nothing_raised() {
@@ -112,15 +109,12 @@ class TestLog < Test::Unit::TestCase
     end
 
     def test_creatingdirs
-        curdest = Puppet[:logdest]
-
         Puppet[:logdest] = "/tmp/logtesting/logfile"
         Puppet.info "testing logs"
         assert(FileTest.directory?("/tmp/logtesting"))
         assert(FileTest.file?("/tmp/logtesting/logfile"))
 
         system("rm -rf /tmp/logtesting")
-        Puppet[:logdest] = curdest
     end
 
     def test_logtags

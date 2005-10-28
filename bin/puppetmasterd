@@ -141,6 +141,7 @@ begin
                 Puppet[:puppetconf] = arg
             when "--debug"
                 Puppet[:debug] = true
+                Puppet[:logdest] = :console
             when "--fsconfig"
                 unless FileTest.exists?(arg)
                     $stderr.puts "File server configuration file %s does not exist" %
@@ -170,12 +171,10 @@ begin
             when "--ssldir"
                 Puppet[:ssldir] = arg
             when "--logdest"
-                # FIXME we should be able to have log.rb check the validity of the dst
-                case arg
-                when "syslog", "console", /^\//:
+                begin
                     Puppet[:logdest] = arg
-                else
-                    $stderr.puts "Invalid log destination %s" % arg
+                rescue => detail
+                    $stderr.puts detail.to_s
                 end
             when "--vardir"
                 Puppet[:puppetvar] = arg
@@ -184,6 +183,7 @@ begin
                 exit
             when "--verbose"
                 Puppet[:loglevel] = :info
+                Puppet[:logdest] = :console
             else
                 $stderr.puts "Invalid option '#{opt}'"
                 exit(1)
@@ -199,19 +199,16 @@ rescue GetoptLong::InvalidOption => detail
     exit(1)
 end
 
-bg = false
-
-unless Puppet[:loglevel] == :debug or Puppet[:loglevel] == :info
-    bg = true
-end
-
-if bg
-    Puppet[:logdest] = Puppet[:masterlog]
+if Puppet[:loglevel] == :debug or Puppet[:loglevel] == :info or parseonly
+    args[:Daemonize] = false
+else
+    args[:Daemonize] = true
 end
 
 handlers = {
     :Master => master,
-    :Status => {}
+    :Status => {},
+    :Logger => {}
 }
 
 
@@ -222,9 +219,9 @@ end
 unless fs.include?(:Config)
     if File.exists?(Puppet[:fileserverconfig])
         fs[:Config] = Puppet[:fileserverconfig]
-    else
-        Puppet.notice "File server config %s does not exist; skipping file serving" %
-            Puppet[:fileserverconfig]
+    #else
+    #    Puppet.notice "File server config %s does not exist; skipping file serving" %
+    #        Puppet[:fileserverconfig]
     end
 end
 
@@ -246,10 +243,6 @@ end
 if parseonly
     # we would have already exited if the file weren't syntactically correct
     exit(0)
-end
-
-if bg
-    server.daemonize
 end
 
 trap(:INT) {

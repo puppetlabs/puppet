@@ -53,14 +53,13 @@ module Puppet
     @@config = Hash.new(false)
 
     # define helper messages for each of the message levels
-    Puppet::Log.levels.each { |level|
+    Puppet::Log.eachlevel { |level|
         define_method(level,proc { |args|
             if args.is_a?(Array)
                 args = args.join(" ")
             end
             Puppet::Log.create(
                 :level => level,
-                :source => "Puppet",
                 :message => args
             )
         })
@@ -95,8 +94,6 @@ module Puppet
         :parseonly      => false,
         :puppetport     => 8139,
         :masterport     => 8140,
-        :loglevel       => :notice,
-        :logdest        => :file,
     }
     if Process.uid == 0
         @defaults[:puppetconf] = "/etc/puppet"
@@ -126,8 +123,6 @@ module Puppet
             end
         when :loglevel:
             return Puppet::Log.level
-        when :logdest:
-            return Puppet::Log.destination
         else
             # allow manual override
             if @@config.include?(param)
@@ -161,7 +156,7 @@ module Puppet
         when :loglevel:
             Puppet::Log.level=(value)
         when :logdest:
-            Puppet::Log.destination=(value)
+            Puppet::Log.newdestination(value)
         else
             @@config[param] = value
         end

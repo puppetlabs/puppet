@@ -1177,7 +1177,7 @@ class Type < Puppet::Element
                 raise Puppet::Error, "Could not retrieve object '%s' of type '%s'" %
                     [name,type]
             end
-            self.debug("%s subscribes to %s" % [self.name,object])
+            self.debug("subscribes to %s" % [object])
 
             #unless @dependencies.include?(object)
             #    @dependencies << object

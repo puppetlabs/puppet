@@ -29,6 +29,10 @@ class TestPuppetMasterD < Test::Unit::TestCase
     def test_normalstart
         startmasterd
 
+        pidfile = File.join(Puppet[:puppetvar], "puppetmasterd.pid")
+        assert(FileTest.exists?(pidfile), "PID file does not exist")
+
+        sleep(1)
         assert_nothing_raised {
             socket = TCPSocket.new("127.0.0.1", @@port)
             socket.close
@@ -86,7 +90,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
 
     # verify that we can run puppetmasterd in parse-only mode
     def test_parseonly
-        startmasterd("--parseonly")
+        startmasterd("--parseonly > /dev/null")
         sleep(1)
 
         pid = nil

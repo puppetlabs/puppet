@@ -16,6 +16,11 @@ module Puppet
                 executed command returns something else."
             @name = :returns
 
+            # Make output a bit prettier
+            def change_to_s
+                return "executed successfully"
+            end
+
             # because this command always runs,
             # we're just using retrieve to verify that the command
             # exists and such
@@ -102,7 +107,7 @@ module Puppet
 
                         # and log
                         @output.split(/\n/).each { |line|
-                            Puppet.send(loglevel, line)
+                            self.send(loglevel, line)
                         }
                     }
                 rescue Errno::ENOENT => detail

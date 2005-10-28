@@ -51,7 +51,7 @@ class TestType < Test::Unit::TestCase
 
     def test_stringvssymbols
         file = nil
-        path = "/tmp/testfile"
+        path = tempfile()
         assert_nothing_raised() {
             system("rm -f %s" % path)
             file = Puppet::Type::PFile.create(

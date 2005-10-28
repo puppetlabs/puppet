@@ -33,7 +33,7 @@ class Puppet::Element
     #---------------------------------------------------------------
 
     # create instance methods for each of the log levels, too
-    Puppet::Log.levels.each { |level|
+    Puppet::Log.eachlevel { |level|
         define_method(level,proc { |args|
             if args.is_a?(Array)
                 args = args.join(" ")

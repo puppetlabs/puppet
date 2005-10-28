@@ -241,7 +241,7 @@ module Puppet # :nodoc:
             begin
                 RRD.update(self.path,args.join(":"))
             rescue => detail
-                Puppet.err "Failed to update %s: %s" % [self.name,detail]
+                raise Puppet::Error, "Failed to update %s: %s" % [self.name,detail]
             end
         end
     end
