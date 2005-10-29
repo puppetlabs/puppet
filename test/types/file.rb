@@ -518,6 +518,30 @@ class TestFile < Test::Unit::TestCase
             file.sync
         }
     end
+
+    if Process.uid == 0
+    def test_zfilewithpercentsign
+        file = nil
+        dir = tmpdir()
+        path = File.join(dir, "file%sname")
+        assert_nothing_raised {
+            file = Puppet::Type::PFile.create(
+                :path => path,
+                :create => true,
+                :owner => "nosuchuser",
+                :group => "root",
+                :mode => "755"
+            )
+        }
+
+        comp = newcomp("percent", file)
+        events = nil
+        assert_nothing_raised {
+            trans = comp.evaluate
+            events = trans.evaluate
+        }
+    end
+    end
 end
 
 # $Id$

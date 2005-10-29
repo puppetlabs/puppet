@@ -26,7 +26,7 @@ class State < Puppet::Element
         @is = nil
 
         unless hash.include?(:parent)
-            raise "State %s was not passed a parent" % self
+            raise Puppet::DevError, "State %s was not passed a parent" % self
         end
         @parent = hash[:parent]
 

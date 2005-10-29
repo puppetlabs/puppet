@@ -136,11 +136,9 @@ class TestLog < Test::Unit::TestCase
             )
         }
 
-        # This is really stupid
         assert(log.tags, "Got no tags")
-        assert(log.path, "Got no path")
 
         assert_equal(log.tags, file.tags, "Tags were not equal")
-        assert_equal(log.path, file.path, "Paths were not equal")
+        assert_equal(log.source, file.path, "Source was not set correctly")
     end
 end

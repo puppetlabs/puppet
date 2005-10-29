@@ -297,15 +297,15 @@ module Puppet
                         @children << child
                     rescue Puppet::Error => detail
                         self.notice(
-                            "Cannot manage %s: %s" %
-                                [path,detail.message]
+                            "Cannot manage: %s" %
+                                [detail.message]
                         )
                         self.debug args.inspect
                         child = nil
                     rescue => detail
                         self.notice(
-                            "Cannot manage %s: %s" %
-                                [path,detail]
+                            "Cannot manage: %s" %
+                                [detail]
                         )
                         self.debug args.inspect
                         child = nil

@@ -39,7 +39,7 @@ module Puppet
                     begin
                         @@state[eval(myclass)][key] = Marshal::load(value)
                     rescue => detail
-                        raise RuntimeError,
+                        raise Puppet::Error,
                             "Failed to load value for %s::%s => %s" % [
                                 myclass,key,detail
                             ], caller

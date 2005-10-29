@@ -27,7 +27,8 @@ class Puppet::Element
     # so raise an error if a method that isn't overridden gets called
     @@interface_methods.each { |method|
         self.send(:define_method,method) {
-            raise "%s has not overridden %s" % [self.class,method]
+            raise Puppet::DevError, "%s has not overridden %s" %
+                [self.class,method]
         }
     }
     #---------------------------------------------------------------

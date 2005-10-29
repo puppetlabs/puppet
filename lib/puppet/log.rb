@@ -163,14 +163,19 @@ module Puppet # :nodoc:
                 case dest
                 when Module # This is the Syslog module
                     next if msg.remote
+                    # XXX Syslog currently has a bug that makes it so you
+                    # cannot log a message with a '%' in it.  So, we get rid
+                    # of them.
                     if msg.source == "Puppet"
-                        dest.send(msg.level,msg.to_s)
+                        dest.send(msg.level, msg.to_s.gsub("%", ''))
                     else
-                        dest.send(msg.level,"(%s) %s" % [msg.source,msg.to_s])
+                        dest.send(msg.level, "(%s) %s" %
+                            [msg.source.to_s.gsub("%", ""), msg.to_s.gsub("%", '')]
+                        )
                     end
                 when File:
                     dest.puts("%s %s (%s): %s" %
-                        [msg.time,msg.source,msg.level,msg.to_s])
+                        [msg.time, msg.source, msg.level, msg.to_s])
                 when :console
                     if msg.source == "Puppet"
                         puts @colors[msg.level] + "%s: %s" % [
@@ -202,8 +207,8 @@ module Puppet # :nodoc:
                         end
                     end
                 else
-                    #raise Puppet::Error, "Invalid log destination %s" % dest
-                    puts "Invalid log destination %s" % dest.inspect
+                    raise Puppet::Error, "Invalid log destination %s" % dest
+                    #puts "Invalid log destination %s" % dest.inspect
                 end
             }
         end
@@ -270,8 +275,8 @@ module Puppet # :nodoc:
                     @source = args[:source].to_s
                 end
                 unless defined? @tags and @tags
-                    if @source.respond_to?(:tags)
-                        @tags = @source.tags
+                    if args[:source].respond_to?(:tags)
+                        @tags = args[:source].tags
                     end
                 end
             else

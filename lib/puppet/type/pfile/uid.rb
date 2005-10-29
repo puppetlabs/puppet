@@ -101,8 +101,7 @@ module Puppet
                     @parent.stat(true)
                     self.retrieve
                     if @is == :notfound
-                        self.info "File does not exist; cannot set owner" %
-                            @parent[:path]
+                        self.info "File does not exist; cannot set owner"
                         return nil
                     end
                     if self.insync?
@@ -114,8 +113,8 @@ module Puppet
                 begin
                     File.chown(self.should,nil,@parent[:path])
                 rescue => detail
-                    raise Puppet::Error, "Failed to set owner of '%s' to '%s': %s" %
-                        [@parent[:path],self.should,detail]
+                    raise Puppet::Error, "Failed to set owner to '%s': %s" %
+                        [self.should,detail]
                 end
 
                 return :inode_changed

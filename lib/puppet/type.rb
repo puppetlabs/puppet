@@ -1,8 +1,3 @@
-# This class is the abstract base class for the mechanism for organizing
-# work.  No work is actually done by this class or its subclasses; rather,
-# the subclasses include states which do the actual work.
-#   See state.rb for how work is actually done.
-
 require 'puppet'
 require 'puppet/log'
 require 'puppet/element'
@@ -11,7 +6,11 @@ require 'puppet/metric'
 require 'puppet/type/state'
 # see the bottom of the file for the rest of the inclusions
 
-module Puppet
+module Puppet # :nodoc:
+# This class is the abstract base class for the mechanism for organizing
+# work.  No work is actually done by this class or its subclasses; rather,
+# the subclasses include states which do the actual work.
+#   See state.rb for how work is actually done.
 class Type < Puppet::Element
     attr_accessor :children, :parameters, :parent
     attr_accessor :file, :line, :tags
@@ -375,8 +374,9 @@ class Type < Puppet::Element
 
     # abstract accessing parameters and states, and normalize
     # access to always be symbols, not strings
-    # XXX this returns a _value_, not an object
-    # if you want a state object, use <type>.state(<state>)
+    # This returns a value, not an object.  It returns the 'is'
+    # value, but you can also specifically return 'is' and 'should'
+    # values using 'object.is(:state)' or 'object.should(:state)'.
     def [](name)
         if name.is_a?(String)
             name = name.intern
@@ -402,8 +402,9 @@ class Type < Puppet::Element
         end
     end
 
-    # abstract setting parameters and states, and normalize
-    # access to always be symbols, not strings
+    # Abstract setting parameters and states, and normalize
+    # access to always be symbols, not strings.  This sets the 'should'
+    # value on states, and otherwise just sets the appropriate parameter.
     def []=(name,value)
         if name.is_a?(String)
             name = name.intern
@@ -427,7 +428,12 @@ class Type < Puppet::Element
                 if @states.include?(name)
                     @states[name].should = value
                 else
-                    newstate(name, :should => value)
+                    # newstate returns true if it successfully created the state,
+                    # false otherwise; I just don't know what to do with that
+                    # fact.
+                    unless newstate(name, :should => value)
+                        #self.info "%s failed" % name
+                    end
                 end
             end
         elsif self.class.validparameter?(name)
@@ -533,35 +539,38 @@ class Type < Puppet::Element
 
     # create a new state
     def newstate(name, hash = {})
-        if stateklass = self.class.validstate?(name) 
-            if @states.include?(name)
-                hash.each { |var,value|
-                    @states[name].send(var.to_s + "=", value)
-                }
-            else
-                #Puppet.warning "Creating state %s for %s" %
-                #    [stateklass.name,self.name]
-                hash[:parent] = self
-                begin
-                    # make sure the state doesn't have any errors
-                    newstate = stateklass.new(hash)
-                    @states[name] = newstate
-                rescue Puppet::Error => detail
-                    # the state failed, so just ignore it
-                    self.warning "State %s failed: %s" %
-                        [name, detail]
-                rescue Puppet::DevError => detail
-                    # the state failed, so just ignore it
-                    self.err "State %s failed: %s" %
-                        [name, detail]
-                rescue => detail
-                    # the state failed, so just ignore it
-                    self.err "State %s failed: %s (%s)" %
-                        [name, detail, detail.class]
-                end
-            end
-        else
+        unless stateklass = self.class.validstate?(name) 
             raise Puppet::Error, "Invalid parameter %s" % name
+        end
+        if @states.include?(name)
+            hash.each { |var,value|
+                @states[name].send(var.to_s + "=", value)
+            }
+        else
+            #Puppet.warning "Creating state %s for %s" %
+            #    [stateklass.name,self.name]
+            begin
+                hash[:parent] = self
+                # make sure the state doesn't have any errors
+                newstate = stateklass.new(hash)
+                @states[name] = newstate
+                return true
+            rescue Puppet::Error => detail
+                # the state failed, so just ignore it
+                self.warning "State %s failed: %s" %
+                    [name, detail]
+                return false
+            rescue Puppet::DevError => detail
+                # the state failed, so just ignore it
+                self.err "State %s failed: %s" %
+                    [name, detail]
+                return false
+            rescue => detail
+                # the state failed, so just ignore it
+                self.err "State %s failed: %s (%s)" %
+                    [name, detail, detail.class]
+                return false
+            end
         end
     end
 
@@ -778,15 +787,10 @@ class Type < Puppet::Element
         order.flatten.each { |name|
             if hash.include?(name)
                 begin
-                    if name == "owner" or name == :owner
-                        if hash[name].nil?
-                            puts caller
-                        end
-                    end
                     self[name] = hash[name]
                 rescue => detail
                     raise Puppet::DevError.new( 
-                        "Could not set %s on %s: %s" % [name, self.class, detail]
+                        "Could not set %s on %s: %s" % [name, self.class.name, detail]
                     )
                 end
                 hash.delete name
@@ -898,11 +902,15 @@ class Type < Puppet::Element
     # return the full path to us, for logging and rollback
     # some classes (e.g., FileTypeRecords) will have to override this
     def path
-        if defined? @parent
-            return [@parent.path, self.name].flatten
-        else
-            return [self.name]
+        unless defined? @path
+            if defined? @parent
+                @path = [@parent.path, self.name].flatten.to_s
+            else
+                @path = self.name
+            end
         end
+
+        return @path
     end
 
     # retrieve the current value of all contained states
