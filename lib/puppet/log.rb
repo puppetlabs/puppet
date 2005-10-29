@@ -167,10 +167,10 @@ module Puppet # :nodoc:
                     # cannot log a message with a '%' in it.  So, we get rid
                     # of them.
                     if msg.source == "Puppet"
-                        dest.send(msg.level, msg.to_s.gsub("%", ''))
+                        dest.send(msg.level, msg.to_s.gsub("%", '%%'))
                     else
                         dest.send(msg.level, "(%s) %s" %
-                            [msg.source.to_s.gsub("%", ""), msg.to_s.gsub("%", '')]
+                            [msg.source.to_s.gsub("%", ""), msg.to_s.gsub("%", '%%')]
                         )
                     end
                 when File:

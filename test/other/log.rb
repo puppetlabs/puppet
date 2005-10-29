@@ -141,4 +141,16 @@ class TestLog < Test::Unit::TestCase
         assert_equal(log.tags, file.tags, "Tags were not equal")
         assert_equal(log.source, file.path, "Source was not set correctly")
     end
+
+    # Verify that we can pass strings that match printf args
+    def test_percentlogs
+        Puppet[:logdest] = :syslog
+
+        assert_nothing_raised {
+            Puppet::Log.new(
+                :level => :info,
+                :message => "A message with %s in it"
+            )
+        }
+    end
 end

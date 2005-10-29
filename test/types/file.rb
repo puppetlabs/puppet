@@ -32,12 +32,12 @@ class TestFile < Test::Unit::TestCase
     end
 
     def setup
+        super
         begin
             initstorage
         rescue
             system("rm -rf %s" % Puppet[:checksumfile])
         end
-        super
     end
 
     def teardown
@@ -192,14 +192,15 @@ class TestFile < Test::Unit::TestCase
                 assert(file.insync?())
             }
 
-            fake.each { |uid, name|
-                assert_raise(Puppet::Error) {
-                    file[:owner] = name
-                }
-                assert_raise(Puppet::Error) {
-                    file[:owner] = uid
-                }
-            }
+            # We no longer raise an error here, because we check at run time
+            #fake.each { |uid, name|
+            #    assert_raise(Puppet::Error) {
+            #        file[:owner] = name
+            #    }
+            #    assert_raise(Puppet::Error) {
+            #        file[:owner] = uid
+            #    }
+            #}
         end
 
         def test_groupasroot
@@ -517,30 +518,6 @@ class TestFile < Test::Unit::TestCase
         assert_raise(Puppet::Error) {
             file.sync
         }
-    end
-
-    if Process.uid == 0
-    def test_zfilewithpercentsign
-        file = nil
-        dir = tmpdir()
-        path = File.join(dir, "file%sname")
-        assert_nothing_raised {
-            file = Puppet::Type::PFile.create(
-                :path => path,
-                :create => true,
-                :owner => "nosuchuser",
-                :group => "root",
-                :mode => "755"
-            )
-        }
-
-        comp = newcomp("percent", file)
-        events = nil
-        assert_nothing_raised {
-            trans = comp.evaluate
-            events = trans.evaluate
-        }
-    end
     end
 end
 

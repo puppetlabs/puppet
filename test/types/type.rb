@@ -1,10 +1,8 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk"
+    $puppetbase = "../.."
 end
-
-# $Id$
 
 require 'puppet/type'
 require 'puppettest'
@@ -111,4 +109,43 @@ class TestType < Test::Unit::TestCase
 
         assert_equal("testing", group.name, "Could not retrieve name")
     end
+
+    # Verify that values get merged correctly
+    def test_mergestatevalues
+        file = tempfile()
+
+        # Create the first version
+        assert_nothing_raised {
+            Puppet::Type::PFile.create(
+                :path => file,
+                :owner => ["root", "bin"]
+            )
+        }
+
+        # Make an identical statement
+        assert_nothing_raised {
+            Puppet::Type::PFile.create(
+                :path => file,
+                :owner => ["root", "bin"]
+            )
+        }
+
+        # Create a conflicting statement
+        assert_raise(Puppet::Error) {
+            Puppet::Type::PFile.create(
+                :path => file,
+                :owner => ["root", "bin", "adm"]
+            )
+        }
+
+        # And then make an intersection with one valid value
+        assert_nothing_raised {
+            Puppet::Type::PFile.create(
+                :path => file,
+                :owner => "root"
+            )
+        }
+    end
 end
+
+# $Id$

@@ -20,6 +20,40 @@ module Puppet
                 end
             end
 
+            def name2id(value)
+                begin
+                    user = Etc.getpwnam(value)
+                    if user.uid == ""
+                        return nil
+                    end
+                    return user.uid
+                rescue ArgumentError => detail
+                    return nil
+                end
+            end
+
+            # Determine if the user is valid, and if so, return the UID
+            def validuser?(value)
+                if value =~ /^\d+$/
+                    value = value.to_i
+                end
+
+                if value.is_a?(Integer)
+                    # verify the user is a valid user
+                    if tmp = id2name(value)
+                        return value
+                    else
+                        return false
+                    end
+                else
+                    if tmp = name2id(value)
+                        return tmp
+                    else
+                        return false
+                    end
+                end
+            end
+
             # We want to print names, not numbers
             def is_to_s
                 id2name(@is) || @is
@@ -38,49 +72,17 @@ module Puppet
                 self.is = stat.uid
             end
 
-            # If we're not root, we can check the values but we cannot change them
+            # If we're not root, we can check the values but we cannot change them.
+            # We can't really do any processing here, because users might
+            # not exist yet.  FIXME There's still a bit of a problem here if
+            # the user's UID changes at run time, but we're just going to have
+            # to be okay with that for now, unfortunately.
             def shouldprocess(value)
-                if value.is_a?(Integer)
-                    # verify the user is a valid user
-                    begin
-                        user = Etc.getpwuid(value)
-                        if user.uid == ""
-                            error = Puppet::Error.new(
-                                "Could not retrieve uid for '%s'" %
-                                    @parent.name)
-                            raise error
-                        end
-                    rescue ArgumentError => detail
-                        raise Puppet::Error.new("User ID %s does not exist" %
-                            value
-                        )
-                    rescue => detail
-                        raise Puppet::Error.new(
-                            "Could not find user '%s': %s" % [value, detail])
-                        raise error
-                    end
+                if tmp = self.validuser?(value)
+                    return tmp
                 else
-                    begin
-                        user = Etc.getpwnam(value)
-                        if user.uid == ""
-                            error = Puppet::Error.new(
-                                "Could not retrieve uid for '%s'" %
-                                    @parent.name)
-                            raise error
-                        end
-                        value = user.uid
-                    rescue ArgumentError => detail
-                        raise Puppet::Error.new("User %s does not exist" %
-                            value
-                        )
-                    rescue => detail
-                        error = Puppet::Error.new(
-                            "Could not find user '%s': %s" % [value, detail])
-                        raise error
-                    end
+                    return value
                 end
-
-                return value
             end
 
             def sync
@@ -90,11 +92,23 @@ module Puppet
                         #@parent.delete(self.name)
                         @@notifieduid = true
                     end
-                    # there's a possibility that we never got retrieve() called
-                    # e.g., if the file didn't exist
-                    # thus, just delete ourselves now and don't do any work
-                    #@parent.delete(self.name)
                     return nil
+                end
+
+                user = nil
+                unless user = self.validuser?(self.should)
+                    tmp = self.should
+                    unless defined? @@usermissing
+                        @@usermissing = {}
+                    end
+
+                    if @@usermissing.include?(tmp)
+                        @@usermissing[tmp] += 1
+                    else
+                        self.notice "user %s does not exist" % tmp
+                        @@usermissing[tmp] = 1
+                        return nil
+                    end
                 end
 
                 if @is == :notfound
@@ -111,10 +125,10 @@ module Puppet
                 end
 
                 begin
-                    File.chown(self.should,nil,@parent[:path])
+                    File.chown(user, nil, @parent[:path])
                 rescue => detail
                     raise Puppet::Error, "Failed to set owner to '%s': %s" %
-                        [self.should,detail]
+                        [user, detail]
                 end
 
                 return :inode_changed

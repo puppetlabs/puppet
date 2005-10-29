@@ -808,36 +808,46 @@ class Type < Puppet::Element
         self.class[self.name] = self
     end
 
-    # merge new information with an existing object, checking for conflicts
-    # and such
+    # Merge new information with an existing object, checking for conflicts
+    # and such.  This allows for two specifications of the same object and
+    # the same values, but it's pretty limited right now.  The result of merging
+    # states is very different from the result of merging parameters or metaparams.
     def merge(hash)
         hash.each { |param, value|
             if param.is_a?(String)
                 param = param.intern
             end
+            
+            # Of course names are the same, duh.
             next if param == :name or param == self.class.namevar
 
             unless value.is_a?(Array)
                 value = [value]
             end
 
-            # This needs some way to retrieve the original values specified to
-            # 'should'.
-            if oldvals = self.should(param)
-                if oldvals.is_a?(Array)
-                    # take the intersection
-                    newvals = oldvals & value
-                    if newvals.empty?
-                        raise Puppet::Error, "No common values for %s on %s(%s)" %
-                            [param, self.class.name, self.name]
-                    else
-                        self.debug "Reduced old values %s and new values %s to %s" %
-                            [oldvals.inspect, value.inspect, newvals.inspect]
-                        self.should = newvals
-                    end
-                else
-                    raise Puppet::Error, "Cannot override %s on %s(%s)" %
+            if oldvals = @states[param].shouldorig
+                unless oldvals.is_a?(Array)
+                    oldvals = [oldvals]
+                end
+                # If the values are exactly the same, order and everything,
+                # then it's okay.
+                if oldvals == value
+                    return true
+                end
+                # take the intersection
+                newvals = oldvals & value
+                if newvals.empty?
+                    raise Puppet::Error, "No common values for %s on %s(%s)" %
                         [param, self.class.name, self.name]
+                elsif newvals.length > 1
+                    raise Puppet::Error, "Too many values for %s on %s(%s)" %
+                        [param, self.class.name, self.name]
+                else
+                    self.debug "Reduced old values %s and new values %s to %s" %
+                        [oldvals.inspect, value.inspect, newvals.inspect]
+                    @states[param].should = newvals
+                    #self.should = newvals
+                    return true
                 end
             else
                 self[param] = value
