@@ -23,8 +23,8 @@ require 'puppettest'
 # and test whether we've got things in the right scopes
 
 class TestScope < Test::Unit::TestCase
-	include TestPuppet
-    AST = Puppet::Parser::AST
+	include ParserTesting
+
     def to_ary(hash)
         hash.collect { |key,value|
             [key,value]
@@ -260,7 +260,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     # Test some of the host manipulations
-    def test_zhostlookup
+    def test_hostlookup
         top = Puppet::Parser::Scope.new(nil)
 
         # Create a deep scope tree, so that we know we're doing a deeply recursive
@@ -301,5 +301,112 @@ class TestScope < Test::Unit::TestCase
 
         assert(host, "Could not find host")
         assert(host.code == :notused, "Host is not what we stored")
+    end
+
+    # Verify that two statements about a file within the same scope tree
+    # will cause a conflict.
+    def test_noconflicts
+        filename = tempfile()
+        children = []
+
+        # create the parent class
+        children << classobj("one", :code => AST::ASTArray.new(
+            :children => [
+                fileobj(filename, "owner" => "root")
+            ]
+        ))
+
+        # now create a child class with differ values
+        children << classobj("two",
+            :code => AST::ASTArray.new(
+                :children => [
+                    fileobj(filename, "owner" => "bin")
+                ]
+        ))
+
+        # Now call the child class
+        assert_nothing_raised("Could not add AST nodes for calling") {
+            children << AST::ObjectDef.new(
+                :type => nameobj("two"),
+                :name => nameobj("yayness"),
+                :params => astarray()
+            ) << AST::ObjectDef.new(
+                :type => nameobj("one"),
+                :name => nameobj("yayness"),
+                :params => astarray()
+            )
+        }
+
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        objects = nil
+        scope = nil
+
+        # Here's where we should encounter the failure.  It should find that
+        # it has already created an object with that name, and this should result
+        # in some pukey-pukeyness.
+        assert_raise(Puppet::ParseError) {
+            scope = Puppet::Parser::Scope.new()
+            objects = scope.evaluate(top)
+        }
+    end
+
+    # Verify that we override statements that we find within our scope
+    def test_zsuboverrides
+        filename = tempfile()
+        children = []
+
+        # create the parent class
+        children << classobj("parent", :code => AST::ASTArray.new(
+            :children => [
+                fileobj(filename, "owner" => "root")
+            ]
+        ))
+
+        # now create a child class with differ values
+        children << classobj("child", :parentclass => nameobj("parent"),
+            :code => AST::ASTArray.new(
+                :children => [
+                    fileobj(filename, "owner" => "bin")
+                ]
+        ))
+
+        # Now call the child class
+        assert_nothing_raised("Could not add AST nodes for calling") {
+            children << AST::ObjectDef.new(
+                :type => nameobj("child"),
+                :name => nameobj("yayness"),
+                :params => astarray()
+            )
+        }
+
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        objects = nil
+        scope = nil
+        assert_nothing_raised("Could not evaluate") {
+            scope = Puppet::Parser::Scope.new()
+            objects = scope.evaluate(top)
+        }
+
+        assert_equal(1, objects.length, "Returned too many objects: %s" %
+            objects.inspect)
+        assert_equal(1, objects[0].length, "Returned too many objects: %s" %
+            objects[0].inspect)
+        assert_nothing_raised {
+            file = objects[0][0]
+
+            assert_equal("bin", file["owner"], "Value did not override correctly")
+        }
     end
 end

@@ -1228,7 +1228,8 @@ module Puppet
                     end
                     
                     names.each { |name|
-                        Puppet.debug("defining host '%s'" % name)
+                        Puppet.debug("defining host '%s' in scope %s" %
+                            [name, scope.object_id])
                         arghash = {
                             :name => name,
                             :code => @code
@@ -1285,9 +1286,10 @@ module Puppet
                 # The class name
                 @name = :component
 
-                attr_accessor :name, :args, :code
+                attr_accessor :name, :args, :code, :scope
 
                 def evaluate(scope,hash,objtype,objname)
+
                     scope = scope.newscope
 
                     # The type is the component or class name
@@ -1297,9 +1299,18 @@ module Puppet
                     # been dynamically generated.  This is almost never used
                     scope.name = objname
 
+                    #if self.is_a?(Node)
+                    #    scope.isnodescope
+                    #end
+
                     # Additionally, add a tag for whatever kind of class
                     # we are
-                    scope.base = self.class.name
+                    scope.tag(objtype)
+
+                    unless objname =~ /-\d+/ # it was generated
+                        scope.tag(objname)
+                    end
+                    #scope.base = self.class.name
 
 
                     # define all of the arguments in our local scope
@@ -1354,6 +1365,10 @@ module Puppet
 
                     # Now just evaluate the code with our new bindings.
                     self.code.safeevaluate(scope)
+
+                    # We return the scope, so that our children can make their scopes
+                    # under ours.  This allows them to find our definitions.
+                    return scope
                 end
             end
 
@@ -1370,7 +1385,13 @@ module Puppet
                         return nil
                     end
 
-                    self.evalparent(scope, hash, objname)
+                    if tmp = self.evalparent(scope, hash, objname)
+                        # Override our scope binding with the parent scope
+                        # binding. This is quite hackish, but I can't think
+                        # of another way to make sure our scopes end up under
+                        # our parent scopes.
+                        scope = tmp
+                    end
 
                     # just use the Component evaluate method, but change the type
                     # to our own type
@@ -1382,7 +1403,9 @@ module Puppet
                     return retval
                 end
 
-                # Evaluate our parent class.  
+                # Evaluate our parent class.  Parent classes are evaluated in the
+                # exact same scope as the children.  This is maybe not a good idea
+                # but, eh.
                 def evalparent(scope, args, name)
                     if @parentclass
                         parentobj = nil
@@ -1411,14 +1434,14 @@ module Puppet
                         # Verify that the parent and child are of the same type
                         unless parentobj.class == self.class
                             error = Puppet::ParseError.new(
-                                "Class %s has incompatible parent type" %
-                                [@name]
+                                "Class %s has incompatible parent type, %s vs %s" %
+                                [@name, parentobj.class, self.class]
                             )
                             error.file = self.file
                             error.line = self.line
                             raise error
                         end
-                        parentobj.safeevaluate(scope,args,@parentclass,name)
+                        return parentobj.safeevaluate(scope,args,@parentclass,name)
                     end
                 end
 
@@ -1429,8 +1452,9 @@ module Puppet
 
             end
 
-            # The specific code associated with a host.  
-            class Node < AST::Component
+            # The specific code associated with a host.  Nodes are annoyingly unlike
+            # other objects.  That's just the way it is, at least for now.
+            class Node < AST::HostClass
                 @name = :node
                 attr_accessor :name, :args, :code, :parentclass
 
@@ -1448,14 +1472,24 @@ module Puppet
 
                     # Mark this scope as a nodescope, so that classes will be
                     # singletons within it
-                    scope.nodescope = true
+                    scope.isnodescope
 
                     # Now set all of the facts inside this scope
                     facts.each { |var, value|
                         scope.setvar(var, value)
                     }
 
-                    self.evalparent(scope)
+                    if tmp = self.evalparent(scope)
+                        # Again, override our scope with the parent scope, if
+                        # there is one.
+                        scope = tmp
+                    end
+
+                    #scope.tag(@name)
+
+                    # We never pass the facts to the parent class, because they've
+                    # already been defined at this top-level scope.
+                    #super(scope, facts, @name, @name)
 
                     # And then evaluate our code.
                     @code.safeevaluate(scope)
@@ -1489,7 +1523,7 @@ module Puppet
                         node = hash[:node]
                         # Tag the scope with the parent's name/type.
                         name = node.name
-                        Puppet.info "Tagging with parent node %s" % name
+                        #Puppet.info "Tagging with parent node %s" % name
                         scope.tag(name)
 
                         begin

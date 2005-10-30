@@ -14,109 +14,7 @@ require 'test/unit'
 require 'puppettest'
 
 class TestAST < Test::Unit::TestCase
-	include TestPuppet
-    AST = Puppet::Parser::AST
-
-    def astarray
-        AST::ASTArray.new(
-            :children => []
-        )
-    end
-
-    def classobj(name, args = {})
-        unless args.include?(:name)
-            args[:name] = nameobj(name)
-        end
-        unless args.include?(:code)
-            args[:code] = AST::ASTArray.new(
-                :children => [
-                    varobj("%svar" % name, "%svalue" % name),
-                    fileobj("/%s" % name)
-                ]
-            )
-        end
-        assert_nothing_raised("Could not create class %s" % name) {
-            return AST::ClassDef.new(args)
-        }
-    end
-
-    def compobj(name, args = {})
-        args[:name] = nameobj(name)
-        args[:code] = AST::ASTArray.new(
-            :children => [
-                varobj("%svar" % name, "%svalue" % name),
-                fileobj("/%s" % name)
-            ]
-        )
-        assert_nothing_raised("Could not create compdef %s" % name) {
-            return AST::CompDef.new(args)
-        }
-    end
-
-    def fileobj(path, hash = {"owner" => "root"})
-        assert_nothing_raised("Could not create file %s" % path) {
-            return AST::ObjectDef.new(
-                :name => stringobj(path),
-                :type => nameobj("file"),
-                :params => objectinst(hash)
-            )
-        }
-    end
-
-    def nameobj(name)
-        assert_nothing_raised("Could not create name %s" % name) {
-            return AST::Name.new(
-                :value => name
-            )
-        }
-    end
-
-    def nodeobj(name)
-        assert_nothing_raised("Could not create node %s" % name) {
-            return AST::NodeDef.new(
-                :names => nameobj(name),
-                :code => AST::ASTArray.new(
-                    :children => [
-                        varobj("%svar" % name, "%svalue" % name),
-                        fileobj("/%s" % name)
-                    ]
-                )
-            )
-        }
-    end
-
-    def objectinst(hash)
-        assert_nothing_raised("Could not create object instance") {
-            params = hash.collect { |param, value|
-                objectparam(param, value)
-            }
-            return AST::ObjectInst.new(
-                :children => params
-            )
-        }
-    end
-
-    def objectparam(param, value)
-        assert_nothing_raised("Could not create param %s" % param) {
-            return AST::ObjectParam.new(
-                :param => nameobj(param),
-                :value => stringobj(value)
-            )
-        }
-    end
-
-    def stringobj(value)
-        AST::String.new(:value => value)
-    end
-
-    def varobj(name, value)
-        assert_nothing_raised("Could not create %s code" % name) {
-            return AST::VarDef.new(
-                :name => nameobj(name),
-                :value => stringobj(value)
-            )
-        }
-    end
+	include ParserTesting
 
     # Test that classes behave like singletons
     def test_classsingleton
@@ -441,7 +339,7 @@ class TestAST < Test::Unit::TestCase
     end
 
     # Test that node inheritance works correctly
-    def test_nodeinheritance
+    def test_znodeinheritance
         children = []
 
         # create the base node
@@ -487,14 +385,28 @@ class TestAST < Test::Unit::TestCase
         }
         assert(objects, "Could not retrieve node definition")
 
-        # And now verify that we got the subnode file
-        assert_nothing_raised("Could not find basenode file") {
-            assert_equal("/basenode", objects[0][0][:name])
-        }
+        assert_nothing_raised {
+            inner = objects[0]
 
-        # and the parent node file
-        assert_nothing_raised("Could not find subnode file") {
-            assert_equal("/subnode", objects[0][1][:name])
+            # And now verify that we got the subnode file
+            assert_nothing_raised("Could not find basenode file") {
+                base = inner[0]
+                assert_equal("/basenode", base[:name])
+            }
+
+            # and the parent node file
+            assert_nothing_raised("Could not find subnode file") {
+                sub = inner[1]
+                assert_equal("/subnode", sub[:name])
+            }
+
+            inner.each { |obj|
+                %w{basenode subnode}.each { |tag|
+                    assert(obj.tags.include?(tag),
+                        "%s did not include %s tag" % [obj[:name], tag]
+                    )
+                }
+            }
         }
     end
 end

@@ -11,8 +11,8 @@ module Puppet
             attr_accessor :name, :type, :topscope, :base
 
             # This is probably not all that good of an idea, but...
-            # This way a parent can share its node table with all of its children.
-            attr_writer :nodetable 
+            # This way a parent can share its tables with all of its children.
+            attr_writer :nodetable, :classtable, :definedtable
 
             # Whether we behave declaratively.  Note that it's a class variable,
             # so all scopes behave the same.
@@ -70,6 +70,18 @@ module Puppet
                 else
                     raise Puppet::DevError, "No nodetable has been defined"
                 end
+
+                if defined? @classtable
+                    scope.classtable = @classtable
+                else
+                    raise Puppet::DevError, "No classtable has been defined"
+                end
+
+                if defined? @definedtable
+                    scope.definedtable = @definedtable
+                else
+                    raise Puppet::DevError, "No definedtable has been defined"
+                end
             end
 
             # Test whether a given scope is declarative.  Even though it's
@@ -108,8 +120,28 @@ module Puppet
                 @nodescope
             end
 
-            def nodescope=(bool)
-                @nodescope = bool
+            # Mark that we are a nodescope.
+            def isnodescope
+                @nodescope = true
+
+                # Also, create the extra tables associated with being a node
+                # scope.
+                # The table for storing class singletons.
+                @classtable = Hash.new(nil)
+
+                # Also, create the object checking map
+                @definedtable = Hash.new { |types, type|
+                    types[type] = {}
+                }
+            end
+
+            # Has a given object been defined anywhere in the scope tree?
+            def objectdefined?(name, type)
+                unless defined? @definedtable
+                    raise Puppet::DevError, "Scope did not receive definedtable"
+                end
+
+                return @definedtable[type][name]
             end
 
             # Are we the top scope?
@@ -197,7 +229,10 @@ module Puppet
                 end
             end
 
-            # Evaluate normally, with no node definitions
+            # Evaluate normally, with no node definitions.  This is a bit of a
+            # silly method, in that it just calls evaluate on the passed-in
+            # objects, and then calls to_trans on itself.  It just conceals
+            # a paltry amount of info from whomever's using the scope object.
             def evaluate(objects, facts = {})
                 facts.each { |var, value|
                     self.setvar(var, value)
@@ -221,6 +256,16 @@ module Puppet
                     @level = 1
 
                     @@declarative = declarative
+
+                    # The table for storing class singletons.  This will only actually
+                    # be used by top scopes and node scopes.
+                    @classtable = Hash.new(nil)
+
+                    # The table for all defined objects.  This will only be
+                    # used in the top scope if we don't have any nodescopes.
+                    @definedtable = Hash.new { |types, type|
+                        types[type] = {}
+                    }
 
                     # A table for storing nodes.
                     @nodetable = Hash.new(nil)
@@ -255,10 +300,6 @@ module Puppet
 
                 # The type table for this scope
                 @typetable = Hash.new(nil)
-
-                # The table for storing class singletons.  This will only actually
-                # be used by top scopes and node scopes.
-                @classtable = Hash.new(nil)
 
                 # All of the defaults set for types.  It's a hash of hashes,
                 # with the first key being the type, then the second key being
@@ -321,14 +362,10 @@ module Puppet
             # Look up a given class.  This enables us to make sure classes are
             # singletons
             def lookupclass(klass)
-                if self.nodescope? or self.topscope?
-                    return @classtable[klass]
-                else
-                    unless @parent
-                        raise Puppet::DevError, "Not top scope but not parent defined"
-                    end
-                    return @parent.lookupclass(klass)
+                unless defined? @classtable
+                    raise Puppet::DevError, "Scope did not receive class table"
                 end
+                return @classtable[klass]
             end
 
             # Collect all of the defaults set at any higher scopes.
@@ -492,14 +529,34 @@ module Puppet
                 return newstring
             end
 
-            # This is kind of quirky, because it doesn't differentiate between
-            # creating a new object and adding params to an existing object.
-            # It doesn't solve the real problem, though: cases like file recursion,
-            # where one statement explicitly modifies an object, and another
-            # statement modifies it because of recursion.
+            # This method will fail if the named object is already defined anywhere
+            # in the scope tree, which is what provides some minimal closure-like
+            # behaviour.
             def setobject(type, name, params, file, line)
+                # First see if we can look the object up using normal scope
+                # rules, i.e., one of our parent classes has defined the
+                # object or something
                 obj = self.lookupobject(name,type)
+
+                # If we can't find it...
                 if obj == :undefined or obj.nil?
+                    # Make sure it's not defined elsewhere in the configuration
+                    if tmp = self.objectdefined?(name, type)
+                        msg = "Duplicate definition: %s[%s] is already defined" %
+                            [type, name]
+                        if tmp.line
+                            msg += " at line %s" % tmp.line
+                        end
+                        if tmp.file
+                            msg += " in file %s" % tmp.file
+                        end
+                        error = Puppet::ParseError.new(msg)
+                        error.file = file
+                        error.line = line
+                        raise error
+                    end
+
+                    # And if it's not, then create it anew
                     obj = @objectable[type][name]
 
                     # only set these if we've created the object, which is the
@@ -508,13 +565,16 @@ module Puppet
                     obj.line = line
                 end
 
-                # now add the params to whatever object we've found, whether
-                # it was in a higher scope or we just created it
-                # it will not be obvious where these parameters are from, that is,
-                # which file they're in or whatever
+                # Now add our parameters.  This has the function of overriding
+                # existing values, which might have been defined in a higher
+                # scope.
                 params.each { |var,value|
                     obj[var] = value
                 }
+
+                # And finally store the fact that we've defined this object.
+                @definedtable[type][name] = obj
+
                 return obj
             end
 
@@ -538,14 +598,15 @@ module Puppet
                 end
             end
 
-            # Add a tag to our current list.  This is only currently used
-            # when nodes evaluate their parents.
+            # Add a tag to our current list.  These tags will be added to all
+            # of the objects contained in this scope.
             def tag(*ary)
                 ary.each { |tag|
                     if tag.nil? or tag == ""
                         Puppet.warning "got told to tag with %s" % tag.inspect
                     end
                     unless @tags.include?(tag)
+                        #Puppet.info "Tagging scope %s with %s" % [self.object_id, tag]
                         @tags << tag.to_s
                     end
                 }
@@ -593,8 +654,10 @@ module Puppet
                                 results.push(result)
                             }
                         else
-                            # Otherwise, just add it to our list of results.
-                            results.push(cresult)
+                            unless cresult.empty?
+                                # Otherwise, just add it to our list of results.
+                                results.push(cresult)
+                            end
                         end
 
                         # Nodescopes are one-time; once they've been evaluated
@@ -604,6 +667,9 @@ module Puppet
                             @children.delete(child)
                         end
                     elsif child.is_a?(TransObject)
+                        if child.empty?
+                            next
+                        end
                         # Wait until the last minute to set tags, although this
                         # probably should not matter
                         child.tags = self.tags

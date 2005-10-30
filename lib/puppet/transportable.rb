@@ -1,11 +1,8 @@
-#!/usr/local/bin/ruby -w
-
-# $Id$
-
 require 'puppet'
 
 module Puppet
-    #------------------------------------------------------------
+    # The transportable objects themselves.  Basically just a hash with some
+    # metadata and a few extra methods.
     class TransObject < Hash
         attr_accessor :type, :name, :file, :line
 
@@ -23,7 +20,7 @@ module Puppet
         end
 
         def tags
-            return @tags + [@type, @name]
+            return @tags
         end
 
         def to_s
@@ -167,3 +164,5 @@ module Puppet
     end
     #------------------------------------------------------------
 end
+
+# $Id$
