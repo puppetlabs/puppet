@@ -166,7 +166,7 @@ class TestExec < Test::Unit::TestCase
         cronback
         Puppet::Type::Cron.crontype.remove(@me)
 
-        cron = mkcron("crontest")
+        cron = mkcron("testwithnotab")
         cyclecron(cron)
         cronrestore
     end
@@ -178,7 +178,7 @@ class TestExec < Test::Unit::TestCase
 "1 1 1 1 * date > %s/crontesting\n" % testdir()
         )
 
-        cron = mkcron("crontest")
+        cron = mkcron("testwithtab")
         cyclecron(cron)
         cronrestore
     end

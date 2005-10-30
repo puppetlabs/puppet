@@ -175,12 +175,12 @@ module Puppet
             def path
                 if defined? @parent
                     if @parent.is_a?(self.class)
-                        return [@parent.path, File.basename(self.name)].flatten
+                        return [@parent.path, File.basename(self.name)].flatten.to_s
                     else
-                        return [@parent.path, self.name].flatten
+                        return [@parent.path, self.name].flatten.to_s
                     end
                 else
-                    return [self.name]
+                    return [self.name].to_s
                 end
             end
 

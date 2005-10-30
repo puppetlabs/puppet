@@ -1,9 +1,10 @@
-require 'test/unit'
-
 libdir = File.join(File.dirname(__FILE__), '../lib')
 unless $:.include?(libdir)
     $:.unshift libdir
 end
+
+require 'puppet'
+require 'test/unit'
 
 module TestPuppet
     def newcomp(name,*ary)

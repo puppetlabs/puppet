@@ -122,27 +122,11 @@ class TestType < Test::Unit::TestCase
             )
         }
 
-        # Make an identical statement
-        assert_nothing_raised {
-            Puppet::Type::PFile.create(
-                :path => file,
-                :owner => ["root", "bin"]
-            )
-        }
-
-        # Create a conflicting statement
+        # Make sure no other statements are allowed
         assert_raise(Puppet::Error) {
             Puppet::Type::PFile.create(
                 :path => file,
-                :owner => ["root", "bin", "adm"]
-            )
-        }
-
-        # And then make an intersection with one valid value
-        assert_nothing_raised {
-            Puppet::Type::PFile.create(
-                :path => file,
-                :owner => "root"
+                :group => "root"
             )
         }
     end

@@ -669,14 +669,17 @@ class Type < Puppet::Element
 
                 # now pass through and create the new object
             elsif implicit
-                Puppet.warning "Ignoring implicit %s" % name
+                Puppet.notice "Ignoring implicit %s" % name
 
                 return retobj
             else
-                # merge the new data
-                retobj.merge(hash)
+                # We will probably want to support merging of some kind in
+                # the future, but for now, just throw an error.
+                raise Puppet::Error, "%s %s is already being managed" %
+                    [self.name, name]
+                #retobj.merge(hash)
 
-                return retobj
+                #return retobj
             end
         end
 
@@ -916,7 +919,7 @@ class Type < Puppet::Element
             if defined? @parent
                 @path = [@parent.path, self.name].flatten.to_s
             else
-                @path = self.name
+                @path = self.name.to_s
             end
         end
 

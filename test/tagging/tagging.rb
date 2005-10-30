@@ -71,7 +71,7 @@ class TestTagging < Test::Unit::TestCase
         object = objects.shift
 
         assert_nothing_raised {
-            assert_equal(%w{solaris file /etc/passwd}, object.tags,
+            assert_equal(%w{solaris}, object.tags,
                 "Incorrect tags")
         }
     end

@@ -110,7 +110,7 @@ class TestBasic < Test::Unit::TestCase
     def test_paths
         [@configfile,@sleeper,@component].each { |obj|
             assert_nothing_raised {
-                assert(obj.path.is_a?(Array))
+                assert_instance_of(String, obj.path)
             }
         }
     end

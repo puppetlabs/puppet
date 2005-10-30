@@ -310,7 +310,7 @@ module Puppet
                             raise Puppet::DevError, "No command for %s" % name
                         end
                         # if the cron already exists with that name...
-                        if cron = Puppet::Type::Cron[hash[:command]]
+                        if cron = Puppet::Type::Cron[name]
                             # do nothing...
                         elsif tmp = @instances[user].reject { |obj|
                                     ! obj.is_a?(Cron)
