@@ -815,6 +815,7 @@ class Type < Puppet::Element
     # and such.  This allows for two specifications of the same object and
     # the same values, but it's pretty limited right now.  The result of merging
     # states is very different from the result of merging parameters or metaparams.
+    # This is currently unused.
     def merge(hash)
         hash.each { |param, value|
             if param.is_a?(String)
