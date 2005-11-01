@@ -1,10 +1,10 @@
 # Rakefile for Puppet
 
 begin
-  require 'rubygems'
-  require 'rake/gempackagetask'
+    require 'rubygems'
+    require 'rake/gempackagetask'
 rescue Exception
-  nil
+    nil
 end
 
 require 'rake/clean'
@@ -15,16 +15,16 @@ require 'rake/testtask'
 #CLOBBER.include('doc/*')
 
 def announce(msg='')
-  STDERR.puts msg
+    STDERR.puts msg
 end
 
 
 # Determine the current version
 
 if `ruby -Ilib ./bin/puppet --version` =~ /\S+$/
-  CURRENT_VERSION = $&
+    CURRENT_VERSION = $&
 else
-  CURRENT_VERSION = "0.0.0"
+    CURRENT_VERSION = "0.0.0"
 end
 
 if ENV['REL']
@@ -45,15 +45,15 @@ task :u => :unittests
 task :a => :alltests
 
 Rake::TestTask.new(:alltests) do |t|
-  t.test_files = FileList['test/tc*.rb']
-  t.warning = true
-  t.verbose = false
+    t.test_files = FileList['test/tc*.rb']
+    t.warning = true
+    t.verbose = false
 end
 
 Rake::TestTask.new(:unittests) do |t|
-  t.test_files = FileList['test/test']
-  t.warning = true
-  t.verbose = false
+    t.test_files = FileList['test/test']
+    t.warning = true
+    t.verbose = false
 end
 
 # SVN Tasks ----------------------------------------------------------
@@ -63,7 +63,7 @@ end
 
 desc "Install the application"
 task :install do
-  ruby "install.rb"
+    ruby "install.rb"
 end
 
 # Create a task to build the RDOC documentation tree.
@@ -82,75 +82,75 @@ end
 # tar, zip and gem files.
 
 PKG_FILES = FileList[
-  'install.rb',
-  '[A-Z]*',
-  'lib/**/*.rb',
-  'test/**/*.rb',
-  'bin/**/*',
-  'examples/**/*'
+    'install.rb',
+    '[A-Z]*',
+    'lib/**/*.rb',
+    'test/**/*.rb',
+    'bin/**/*',
+    'examples/**/*'
 ]
 PKG_FILES.delete_if {|item| item.include?(".svn")}
 
 if ! defined?(Gem)
-  puts "Package Target requires RubyGEMs"
+    puts "Package Target requires RubyGEMs"
 else
-  spec = Gem::Specification.new do |s|
-    
-    #### Basic information.
+    spec = Gem::Specification.new { |s|
 
-    s.name = 'puppet'
-    s.version = PKG_VERSION
-    s.summary = "Puppet is a server configuration management tool."
-    s.description = <<-EOF
-      Puppet is a declarative language for expressing system configuration,
-      a client and server for distributing it, and a library for realizing 
-      the configuration.
-    EOF
-    s.platform = Gem::Platform::RUBY
+        #### Basic information.
 
-    #### Dependencies and requirements.
+        s.name = 'puppet'
+        s.version = PKG_VERSION
+        s.summary = "Puppet is a server configuration management tool."
+        s.description = <<-EOF
+Puppet is a declarative language for expressing system configuration,
+a client and server for distributing it, and a library for realizing 
+the configuration.
+        EOF
+        s.platform = Gem::Platform::RUBY
 
-    s.add_dependency('facter', '>= 1.0.0')
-    #s.requirements << ""
+        #### Dependencies and requirements.
 
-    s.files = PKG_FILES.to_a
+        s.add_dependency('facter', '>= 1.0.0')
+        #s.requirements << ""
 
-    #### Load-time details: library and application (you will need one or both).
+        s.files = PKG_FILES.to_a
 
-    s.require_path = 'lib'                         # Use these for libraries.
+        #### Load-time details: library and application (you will need one or both).
 
-    s.bindir = "bin"                               # Use these for applications.
-    s.executables = ["puppet", "puppetd", "puppetmasterd", "puppetdoc",
-                     "puppetca"]
-    s.default_executable = "puppet"
-    s.autorequire = 'puppet'
+        s.require_path = 'lib'                         # Use these for libraries.
 
-    #### Documentation and testing.
+        s.bindir = "bin"                               # Use these for applications.
+        s.executables = ["puppet", "puppetd", "puppetmasterd", "puppetdoc",
+                         "puppetca"]
+        s.default_executable = "puppet"
+        s.autorequire = 'puppet'
 
-    s.has_rdoc = false
-    #s.extra_rdoc_files = rd.rdoc_files.reject { |fn| fn =~ /\.rb$/ }.to_a
-    #s.rdoc_options <<
-    #  '--title' <<  'Puppet - Configuration Management' <<
-    #  '--main' << 'README' <<
-    #  '--line-numbers'
-    s.test_file = "test/test"
- 
-    #### Signing key and cert chain
-    #s.signing_key = '/..../gem-private_key.pem'
-    #s.cert_chain = ['gem-public_cert.pem']
+        #### Documentation and testing.
 
-    #### Author and project details.
+        s.has_rdoc = false
+        #s.extra_rdoc_files = rd.rdoc_files.reject { |fn| fn =~ /\.rb$/ }.to_a
+        #s.rdoc_options <<
+        #  '--title' <<  'Puppet - Configuration Management' <<
+        #  '--main' << 'README' <<
+        #  '--line-numbers'
+        s.test_file = "test/test"
 
-    s.author = "Luke Kanies"
-    s.email = "dev@reductivelabs.com"
-    s.homepage = "http://reductivelabs.com/projects/puppet"
-    #s.rubyforge_project = "puppet"
-  end
+        #### Signing key and cert chain
+        #s.signing_key = '/..../gem-private_key.pem'
+        #s.cert_chain = ['gem-public_cert.pem']
 
-  Rake::GemPackageTask.new(spec) do |pkg|
-    #pkg.need_zip = true
-    pkg.need_tar = true
-  end
+        #### Author and project details.
+
+        s.author = "Luke Kanies"
+        s.email = "dev@reductivelabs.com"
+        s.homepage = "http://reductivelabs.com/projects/puppet"
+        #s.rubyforge_project = "puppet"
+    }
+
+    Rake::GemPackageTask.new(spec) { |pkg|
+        #pkg.need_zip = true
+        pkg.need_tar = true
+    }
 end
 
 # Misc tasks =========================================================
@@ -169,22 +169,22 @@ end
 # Support Tasks ------------------------------------------------------
 
 def egrep(pattern)
-  Dir['**/*.rb'].each do |fn|
-    count = 0
-    open(fn) do |f|
-      while line = f.gets
-	count += 1
-	if line =~ pattern
-	  puts "#{fn}:#{count}:#{line}"
-	end
-      end
+    Dir['**/*.rb'].each do |fn|
+        count = 0
+        open(fn) do |f|
+            while line = f.gets
+        count += 1
+        if line =~ pattern
+            puts "#{fn}:#{count}:#{line}"
+        end
+            end
+        end
     end
-  end
 end
 
 desc "Look for TODO and FIXME tags in the code"
 task :todo do
-  egrep "/#.*(FIXME|TODO|TBD)/"
+    egrep "/#.*(FIXME|TODO|TBD)/"
 end
 
 #desc "Look for Debugging print lines"
@@ -203,88 +203,90 @@ end
 
 desc "Make a new release"
 task :release => [
-  :prerelease,
-  :clobber,
-  :alltests,
-  :update_version,
-  :package,
-  :tag] do
+        :prerelease,
+        :clobber,
+        :alltests,
+        :update_version,
+        :package,
+        :tag
+      ] do
   
-  announce 
-  announce "**************************************************************"
-  announce "* Release #{PKG_VERSION} Complete."
-  announce "* Packages ready to upload."
-  announce "**************************************************************"
-  announce 
+    announce 
+    announce "**************************************************************"
+    announce "* Release #{PKG_VERSION} Complete."
+    announce "* Packages ready to upload."
+    announce "**************************************************************"
+    announce 
 end
 
 # Validate that everything is ready to go for a release.
 task :prerelease do
-  announce 
-  announce "**************************************************************"
-  announce "* Making RubyGem Release #{PKG_VERSION}"
-  announce "* (current version #{CURRENT_VERSION})"
-  announce "**************************************************************"
-  announce  
+    announce 
+    announce "**************************************************************"
+    announce "* Making RubyGem Release #{PKG_VERSION}"
+    announce "* (current version #{CURRENT_VERSION})"
+    announce "**************************************************************"
+    announce  
 
-  # Is a release number supplied?
-  unless ENV['REL']
-    fail "Usage: rake release REL=x.y.z [REUSE=tag_suffix]"
-  end
-
-  # Is the release different than the current release.
-  # (or is REUSE set?)
-  if PKG_VERSION == CURRENT_VERSION && ! ENV['REUSE']
-    fail "Current version is #{PKG_VERSION}, must specify REUSE=tag_suffix to reuse version"
-  end
-
-  # Are all source files checked in?
-  if ENV['RELTEST']
-    announce "Release Task Testing, skipping checked-in file test"
-  else
-    announce "Checking for unchecked-in files..."
-    data = `svn -q update`
-    unless data =~ /^$/
-      fail "SVN update is not clean ... do you have unchecked-in files?"
+    # Is a release number supplied?
+    unless ENV['REL']
+        fail "Usage: rake release REL=x.y.z [REUSE=tag_suffix]"
     end
-    announce "No outstanding checkins found ... OK"
-  end
+
+    # Is the release different than the current release.
+    # (or is REUSE set?)
+    if PKG_VERSION == CURRENT_VERSION && ! ENV['REUSE']
+        fail "Current version is #{PKG_VERSION}, must specify REUSE=tag_suffix to reuse version"
+    end
+
+    # Are all source files checked in?
+    if ENV['RELTEST']
+        announce "Release Task Testing, skipping checked-in file test"
+    else
+        announce "Checking for unchecked-in files..."
+        data = `svn -q update`
+        unless data =~ /^$/
+            fail "SVN update is not clean ... do you have unchecked-in files?"
+        end
+        announce "No outstanding checkins found ... OK"
+    end
 end
 
 task :update_version => [:prerelease] do
-  if PKG_VERSION == CURRENT_VERSION
-    announce "No version change ... skipping version update"
-  else
-    announce "Updating Puppet version to #{PKG_VERSION}"
-    open("lib/puppet.rb") do |rakein|
-      open("lib/puppet.rb.new", "w") do |rakeout|
-	rakein.each do |line|
-	  if line =~ /^PUPPETVERSION\s*=\s*/
-	    rakeout.puts "PUPPETVERSION = '#{PKG_VERSION}'"
-	  else
-	    rakeout.puts line
-	  end
-	end
-      end
-    end
-    mv "lib/puppet.rb.new", "lib/puppet.rb"
-    if ENV['RELTEST']
-      announce "Release Task Testing, skipping commiting of new version"
+    if PKG_VERSION == CURRENT_VERSION
+        announce "No version change ... skipping version update"
     else
-      sh %{svn commit -m "Updated to version #{PKG_VERSION}" lib/puppet.rb}
+        announce "Updating Puppet version to #{PKG_VERSION}"
+        open("lib/puppet.rb") do |rakein|
+            open("lib/puppet.rb.new", "w") do |rakeout|
+                rakein.each do |line|
+                    if line =~ /^PUPPETVERSION\s*=\s*/
+                        rakeout.puts "PUPPETVERSION = '#{PKG_VERSION}'"
+                    else
+                        rakeout.puts line
+                    end
+                end
+            end
+        end
+
+        mv "lib/puppet.rb.new", "lib/puppet.rb"
+        if ENV['RELTEST']
+            announce "Release Task Testing, skipping commiting of new version"
+        else
+            sh %{svn commit -m "Updated to version #{PKG_VERSION}" lib/puppet.rb}
+        end
     end
-  end
 end
 
 desc "Tag all the SVN files with the latest release number (REL=x.y.z)"
 task :tag => [:prerelease] do
-  reltag = "REL_#{PKG_VERSION.gsub(/\./, '_')}"
-  reltag << ENV['REUSE'].gsub(/\./, '_') if ENV['REUSE']
-  announce "Tagging SVN copy with [#{reltag}]"
-  if ENV['RELTEST']
-    announce "Release Task Testing, skipping SVN tagging"
-  else
-    #sh %{svn copy ../trunk/ ../tags/#{reltag}}
-  end
+    reltag = "REL_#{PKG_VERSION.gsub(/\./, '_')}"
+    reltag << ENV['REUSE'].gsub(/\./, '_') if ENV['REUSE']
+    announce "Tagging SVN copy with [#{reltag}]"
+    if ENV['RELTEST']
+        announce "Release Task Testing, skipping SVN tagging"
+    else
+        #sh %{svn copy ../trunk/ ../tags/#{reltag}}
+    end
 end
 

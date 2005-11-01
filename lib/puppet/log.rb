@@ -188,6 +188,22 @@ module Puppet # :nodoc:
                     end
                 when Puppet::Client::LogClient
                     unless msg.is_a?(String) or msg.remote
+                        unless defined? @hostname
+                            @hostname = Facter["hostname"].value
+                        end
+                        unless defined? @domain
+                            @domain = Facter["domain"].value
+                            if @domain
+                                @hostname += "." + @domain
+                            end
+                        end
+                        if msg.source =~ /^\//
+                            msg.source = @hostname + ":" + msg.source
+                        elsif msg.source == "Puppet"
+                            msg.source = @hostname + " " + msg.source
+                        else
+                            msg.source = @hostname + " " + msg.source
+                        end
                         begin
                             #puts "would have sent %s" % msg
                             #puts "would have sent %s" %
@@ -198,6 +214,7 @@ module Puppet # :nodoc:
                                 puts "Could not dump: %s" % detail.to_s
                                 return
                             end
+                            # Add the hostname to the source
                             dest.addlog(tmp)
                             #dest.addlog(msg.to_s)
                             sleep(0.5)

@@ -221,7 +221,9 @@ class TestSnippets < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            assert_equal(%w{puppet[top] testing[testing] component[componentname] /tmp/classtest}.to_s, obj.path)
+            assert_equal(
+                "//testing/component[componentname]/file=/tmp/classtest",
+                obj.path)
             #Puppet.err obj.path
         }
 

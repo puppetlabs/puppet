@@ -1,5 +1,3 @@
-#!/usr/local/bin/ruby -w
-
 require 'singleton'
 require 'puppet/log'
 
@@ -13,7 +11,7 @@ require 'puppet/log'
 #
 # it's also a place to find top-level commands like 'debug'
 module Puppet
-    PUPPETVERSION="0.9.0"
+    PUPPETVERSION="1.0.0"
 
     def Puppet.version
         return PUPPETVERSION

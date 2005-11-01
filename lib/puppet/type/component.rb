@@ -90,8 +90,6 @@ module Puppet
         # this is only called on one component over the whole system
         # this also won't work with scheduling, but eh
         def evaluate
-            # but what about dependencies?
-
             transaction = Puppet::Transaction.new(self.flatten)
             transaction.component = self
             return transaction
@@ -99,7 +97,14 @@ module Puppet
 
         def name
             #return self[:name]
-            return "%s[%s]" % [self[:type],self[:name]]
+            unless defined? @name
+                if self[:type] == self[:name]
+                    @name = self[:type]
+                else
+                    @name = "%s[%s]" % [self[:type],self[:name]]
+                end
+            end
+            return @name
         end
 
         def push(*ary)

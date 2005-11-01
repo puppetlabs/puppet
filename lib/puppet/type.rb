@@ -918,9 +918,16 @@ class Type < Puppet::Element
     def path
         unless defined? @path
             if defined? @parent
-                @path = [@parent.path, self.name].flatten.to_s
+                if self.is_a?(Puppet::Type::Component)
+                    @path = @parent.path + "/" + self.name
+                else
+                    @path = @parent.path + "/" + self.class.name.to_s + "=" + self.name
+                end
             else
-                @path = self.name.to_s
+                # The top-level name is always puppet[top], so we don't bother with
+                # that.  And we don't add the hostname here, it gets added
+                # in the log server thingy.
+                @path = "/"
             end
         end
 
