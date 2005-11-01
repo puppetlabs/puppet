@@ -82,8 +82,6 @@ module Puppet
                 args[:type] = "component"
             end
             super(args)
-            #self.debug "Made component with name %s and type %s" %
-            #    [self.name, self[:type]]
         end
 
         # flatten all children, sort them, and evaluate them in order

@@ -274,7 +274,14 @@ module Puppet
                 transaction = container.evaluate
                 #transaction = Puppet::Transaction.new(objects)
                 transaction.toplevel = true
-                transaction.evaluate
+                begin
+                    transaction.evaluate
+                rescue Puppet::Error => detail
+                    Puppet.err "Could not apply complete configuration: %s" %
+                        detail
+                rescue => detail
+                    Puppet.err "Found a bug: %s" % detail
+                end
                 Puppet::Metric.gather
                 Puppet::Metric.tally
                 if Puppet[:rrdgraph] == true

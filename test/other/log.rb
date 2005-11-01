@@ -153,4 +153,43 @@ class TestLog < Test::Unit::TestCase
             )
         }
     end
+
+    # Verify that the error and source are always strings
+    def test_argsAreStrings
+        msg = nil
+        file = Puppet::Type::PFile.create(
+            :path => tempfile(),
+            :check => %w{owner group}
+        )
+        assert_nothing_raised {
+            msg = Puppet::Log.new(:level => :info, :message => "This is a message")
+        }
+        assert_nothing_raised {
+            msg.source = file
+        }
+
+        assert_instance_of(String, msg.to_s)
+        assert_instance_of(String, msg.source)
+    end
+
+    # Verify that loglevel behaves as one expects
+    def test_loglevel
+        path = tempfile()
+        file = Puppet::Type::PFile.create(
+            :path => path,
+            :create => true
+        )
+
+        assert_nothing_raised {
+            assert_equal(:notice, file[:loglevel])
+        }
+
+        assert_nothing_raised {
+            file[:loglevel] = "warning"
+        }
+
+        assert_nothing_raised {
+            assert_equal(:warning, file[:loglevel])
+        }
+    end
 end

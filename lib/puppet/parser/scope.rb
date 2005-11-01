@@ -544,15 +544,13 @@ module Puppet
                     if tmp = self.objectdefined?(name, type)
                         msg = "Duplicate definition: %s[%s] is already defined" %
                             [type, name]
+                        error = Puppet::ParseError.new(msg)
                         if tmp.line
-                            msg += " at line %s" % tmp.line
+                            error.line = tmp.line
                         end
                         if tmp.file
-                            msg += " in file %s" % tmp.file
+                            error.file = tmp.file
                         end
-                        error = Puppet::ParseError.new(msg)
-                        error.file = file
-                        error.line = line
                         raise error
                     end
 

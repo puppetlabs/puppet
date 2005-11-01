@@ -206,7 +206,7 @@ class Type < Puppet::Element
         if object.is_a?(Puppet::Type)
             newobj = object
         else
-            raise "must pass a Puppet::Type object"
+            raise Puppet::DevError, "must pass a Puppet::Type object"
         end
 
         if @objects.has_key?(newobj.name)
@@ -391,6 +391,12 @@ class Type < Puppet::Element
             else
                 return nil
             end
+        elsif Puppet::Type.metaparam?(name)
+            if @metaparams.include?(name)
+                return @metaparams[name]
+            else
+                return nil
+            end
         elsif self.class.validparameter?(name)
             if @parameters.include?(name)
                 return @parameters[name]
@@ -453,10 +459,17 @@ class Type < Puppet::Element
     # remove a state from the object; useful in testing or in cleanup
     # when an error has been encountered
     def delete(attr)
-        if @states.has_key?(attr)
-            @states.delete(attr)
+        case attr
+        when Puppet::Type
+            if @children.include?(attr)
+                @children.delete(attr)
+            end
         else
-            raise Puppet::DevError.new("Undefined state '#{attr}' in #{self}")
+            if @states.has_key?(attr)
+                @states.delete(attr)
+            else
+                raise Puppet::DevError.new("Undefined state '#{attr}' in #{self}")
+            end
         end
     end
 
@@ -776,6 +789,12 @@ class Type < Puppet::Element
         @syncedchanges = 0
         @failedchanges = 0
 
+        # Before anything else, set our parent if it was included
+        if hash.include?(:parent)
+            @parent = hash[:parent]
+            hash.delete(:parent)
+        end
+
         hash = self.argclean(hash)
 
         # now get all of the arguments, in a specific order
@@ -886,6 +905,10 @@ class Type < Puppet::Element
         # we have to set the name of our object before anything else,
         # because it might be used in creating the other states
         hash = hash.dup
+
+        if hash.include?(:parent)
+            hash.delete(:parent)
+        end
         namevar = self.class.namevar
 
         hash.each { |var,value|
@@ -911,27 +934,6 @@ class Type < Puppet::Element
         end
 
         return hash
-    end
-
-    # return the full path to us, for logging and rollback
-    # some classes (e.g., FileTypeRecords) will have to override this
-    def path
-        unless defined? @path
-            if defined? @parent
-                if self.is_a?(Puppet::Type::Component)
-                    @path = @parent.path + "/" + self.name
-                else
-                    @path = @parent.path + "/" + self.class.name.to_s + "=" + self.name
-                end
-            else
-                # The top-level name is always puppet[top], so we don't bother with
-                # that.  And we don't add the hostname here, it gets added
-                # in the log server thingy.
-                @path = "/"
-            end
-        end
-
-        return @path
     end
 
     # retrieve the current value of all contained states
@@ -1143,26 +1145,30 @@ class Type < Puppet::Element
         end
     end
 
+    # Currently nonfunctional
     def metaonerror=(response)
         self.debug("Would have called metaonerror")
         @onerror = response
     end
 
+    # Currently nonfunctional
     def metaschedule=(schedule)
         @schedule = schedule
     end
+
+    # Determines what our objects log at.  Defaults to :notice.
     def metaloglevel=(loglevel)
         if loglevel.is_a?(String)
-            loglevel.intern
+            loglevel = loglevel.intern
         end
         if loglevel == :verbose
             loglevel = :info 
         end        
 
-        if Puppet::Log.levels.include?(loglevel)
+        if Puppet::Log.validlevel?(loglevel)
             @metaparams[:loglevel] = loglevel
         else
-            raise Puppet::Error.new("Invalid loglevel '%s%'" % loglevel)       
+            raise Puppet::Error.new("Invalid loglevel '%s'" % loglevel)       
         end
     end
 

@@ -182,7 +182,7 @@ module Puppet # :nodoc:
                             msg.level, msg.to_s
                         ] + RESET
                     else
-                        puts @colors[msg.level] + "%s (%s): %s" % [
+                        puts @colors[msg.level] + "%s: %s: %s" % [
                             msg.source, msg.level, msg.to_s
                         ] + RESET
                     end
@@ -257,7 +257,8 @@ module Puppet # :nodoc:
             @levels.include?(level)
         end
 
-		attr_accessor :level, :message, :source, :time, :tags, :remote
+		attr_accessor :level, :message, :time, :tags, :remote
+        attr_reader :source
 
 		def initialize(args)
 			unless args.include?(:level) && args.include?(:message)
@@ -272,7 +273,7 @@ module Puppet # :nodoc:
 				raise Puppet::DevError,
                     "Level is not a string or symbol: #{args[:level].class}"
 			end
-			@message = args[:message]
+			@message = args[:message].to_s
 			@time = Time.now
 			# this should include the host name, and probly lots of other
 			# stuff, at some point
@@ -285,23 +286,27 @@ module Puppet # :nodoc:
             end
 
             if args.include?(:source)
-                # We can't store the actual source, we just store the path
-                if args[:source].respond_to?(:path)
-                    @source = args[:source].path
-                else
-                    @source = args[:source].to_s
-                end
-                unless defined? @tags and @tags
-                    if args[:source].respond_to?(:tags)
-                        @tags = args[:source].tags
-                    end
-                end
+                self.source = args[:source]
             else
                 @source = "Puppet"
             end
 
             Log.newmessage(self)
 		end
+
+        def source=(source)
+            # We can't store the actual source, we just store the path
+            if source.respond_to?(:path)
+                @source = source.path
+            else
+                @source = source.to_s
+            end
+            unless defined? @tags and @tags
+                if source.respond_to?(:tags)
+                    @tags = source.tags
+                end
+            end
+        end
 
 		def to_s
             return @message

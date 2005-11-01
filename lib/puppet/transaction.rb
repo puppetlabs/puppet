@@ -53,7 +53,7 @@ class Transaction
                     events = [change.forward].flatten.reject { |e| e.nil? }
                     #@@changed.push change.state.parent
                 rescue => detail
-                    Puppet.err("%s failed: %s" % [change,detail])
+                    Puppet.err("%s failed: %s" % [change.to_s,detail])
                     if Puppet[:debug] and detail.respond_to?(:stack)
                         puts detail.stack
                     end
@@ -67,9 +67,6 @@ class Transaction
                     change.changed = true
                 end
                 events
-            elsif change.is_a?(Puppet::Transaction)
-                raise Puppet::DevError, "Got a sub-transaction"
-                change.evaluate
             else
                 raise Puppet::DevError,
                     "Transactions cannot handle objects of type %s" % child.class

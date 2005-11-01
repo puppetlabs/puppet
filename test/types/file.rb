@@ -116,7 +116,7 @@ class TestFile < Test::Unit::TestCase
     end
 
     if Process.uid == 0
-        def test_zcreateasuser
+        def test_createasuser
             dir = tmpdir()
 
             user = nonrootuser()
@@ -431,19 +431,42 @@ class TestFile < Test::Unit::TestCase
     end
 
     def test_recursion
-        path = "/tmp/filerecursetest"
-        @@tmpfiles.push path
-        tmpfile = File.join(path,"testing")
-        system("mkdir -p #{path}")
-        cyclefile(path)
-        File.open(tmpfile, File::WRONLY|File::CREAT|File::APPEND) { |of|
-            of.puts "yayness"
+        basedir = tempfile()
+        subdir = File.join(basedir, "this", "is", "sub", "dir")
+        tmpfile = File.join(subdir,"testing")
+        FileUtils.mkdir_p(subdir)
+
+        dir = nil
+        assert_nothing_raised {
+            dir = Puppet::Type::PFile.create(
+                :path => basedir,
+                :recurse => true,
+                :check => %w{owner mode group}
+            )
         }
-        cyclefile(path)
-        File.open(tmpfile, File::WRONLY|File::APPEND) { |of|
-            of.puts "goodness"
+
+        assert_nothing_raised {
+            dir.retrieve
         }
-        cyclefile(path)
+
+        subobj = nil
+        assert_nothing_raised {
+            subobj = Puppet::Type::PFile[subdir]
+        }
+
+        assert(subobj, "Could not retrieve subdir object")
+
+        File.open(tmpfile, "w") { |f| f.puts "yayness" }
+
+        dir.retrieve
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet::Type::PFile[tmpfile]
+        }
+
+        assert(file, "Could not retrieve file object")
+
     end
 
 =begin
@@ -518,6 +541,75 @@ class TestFile < Test::Unit::TestCase
         assert_raise(Puppet::Error) {
             file.sync
         }
+    end
+
+    def test_remove
+        basedir = tempfile()
+        subdir = File.join(basedir, "this")
+        FileUtils.mkdir_p(subdir)
+
+        dir = nil
+        assert_nothing_raised {
+            dir = Puppet::Type::PFile.create(
+                :path => basedir,
+                :recurse => true,
+                :check => %w{owner mode group}
+            )
+        }
+
+        assert_nothing_raised {
+            dir.retrieve
+        }
+
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet::Type::PFile[subdir]
+        }
+
+        assert(obj, "Could not retrieve subdir object")
+
+        assert_nothing_raised {
+            obj.remove(true)
+        }
+
+        assert_nothing_raised {
+            obj = Puppet::Type::PFile[subdir]
+        }
+
+        assert_nil(obj, "Retrieved removed object")
+    end
+
+    def test_zpath
+        dir = tempfile()
+
+        path = File.join(dir, "and", "a", "sub", "dir")
+
+        assert_nothing_raised("Could not make file") {
+            FileUtils.mkdir_p(File.dirname(path))
+            File.open(path, "w") { |f| f.puts "yayness" }
+        }
+
+        file = nil
+        dirobj = nil
+        assert_nothing_raised("Could not make file object") {
+            dirobj = Puppet::Type::PFile.create(
+                :path => dir,
+                :recurse => true,
+                :check => %w{mode owner group}
+            )
+        }
+
+        assert_nothing_raised {
+            dirobj.retrieve
+        }
+
+        assert_nothing_raised {
+            file = dirobj.class[path]
+        }
+
+        assert(file, "Could not retrieve file object")
+
+        assert_equal("file=%s" % file.name, file.path)
     end
 end
 

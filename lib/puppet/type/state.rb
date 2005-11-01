@@ -72,6 +72,18 @@ class State < Puppet::Element
         return false
     end
 
+    def log(msg)
+        unless @parent[:loglevel]
+            raise Puppet::DevError, "Parent %s has no loglevel" %
+                @parent.to_s
+        end
+        Puppet::Log.create(
+            :level => @parent[:loglevel],
+            :message => msg,
+            :source => self
+        )
+    end
+
     # each state class must define the name() method, and state instances
     # do not change that name
     # this implicitly means that a given object can only have one state
@@ -93,7 +105,7 @@ class State < Puppet::Element
     # return the full path to us, for logging and rollback; not currently
     # used
     def path
-        return [@parent.path, self.name].flatten
+        return [@parent.path, self.name].join("/")
     end
 
     # Only return the first value
@@ -130,15 +142,23 @@ class State < Puppet::Element
 
     # How should a state change be printed as a string?
     def change_to_s
+        begin
         if @is == :notfound
-            return "%s: defined '%s' as '%s'" %
-                [@parent, self.name, self.should_to_s]
+            return "defined '%s' as '%s'" %
+                [self.name, self.should_to_s]
         elsif self.should == :notfound
-            return "%s: undefined %s from '%s'" %
-                [self.parent, self.name, self.is_to_s]
+            return "undefined %s from '%s'" %
+                [self.name, self.is_to_s]
         else
+            self.should_to_s
             return "%s changed '%s' to '%s'" %
                 [self.name, self.is_to_s, self.should_to_s]
+        end
+        rescue Puppet::Error, Puppet::DevError
+            raise
+        rescue => detail
+            raise Puppet::DevError, "Could not convert change to string: %s" %
+                change_to_s
         end
     end
 

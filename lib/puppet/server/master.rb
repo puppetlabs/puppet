@@ -64,9 +64,9 @@ class Server
                 begin
                     facts = Marshal::load(CGI.unescape(facts))
                 rescue => detail
-                    puts "AAAAA"
-                    puts detail
-                    exit
+                    raise XMLRPC::FaultException.new(
+                        1, "Could not rebuild facts"
+                    )
                 end
             end
 

@@ -305,7 +305,7 @@ class TestScope < Test::Unit::TestCase
 
     # Verify that two statements about a file within the same scope tree
     # will cause a conflict.
-    def test_noconflicts
+    def test_znoconflicts
         filename = tempfile()
         children = []
 
@@ -357,7 +357,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     # Verify that we override statements that we find within our scope
-    def test_zsuboverrides
+    def test_suboverrides
         filename = tempfile()
         children = []
 

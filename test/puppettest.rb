@@ -578,6 +578,8 @@ module ParserTesting
         end
         unless args.include?(:code)
             args[:code] = AST::ASTArray.new(
+                :file => tempfile(),
+                :line => rand(100),
                 :children => [
                     varobj("%svar" % name, "%svalue" % name),
                     fileobj("/%s" % name)
@@ -590,8 +592,12 @@ module ParserTesting
     end
 
     def compobj(name, args = {})
+        args[:file] = tempfile()
+        args[:line] = rand(100)
         args[:name] = nameobj(name)
         args[:code] = AST::ASTArray.new(
+            :file => tempfile(),
+            :line => rand(100),
             :children => [
                 varobj("%svar" % name, "%svalue" % name),
                 fileobj("/%s" % name)
@@ -605,6 +611,8 @@ module ParserTesting
     def fileobj(path, hash = {"owner" => "root"})
         assert_nothing_raised("Could not create file %s" % path) {
             return AST::ObjectDef.new(
+                :file => tempfile(),
+                :line => rand(100),
                 :name => stringobj(path),
                 :type => nameobj("file"),
                 :params => objectinst(hash)
@@ -615,6 +623,8 @@ module ParserTesting
     def nameobj(name)
         assert_nothing_raised("Could not create name %s" % name) {
             return AST::Name.new(
+                :file => tempfile(),
+                :line => rand(100),
                 :value => name
             )
         }
@@ -623,6 +633,8 @@ module ParserTesting
     def nodeobj(name)
         assert_nothing_raised("Could not create node %s" % name) {
             return AST::NodeDef.new(
+                :file => tempfile(),
+                :line => rand(100),
                 :names => nameobj(name),
                 :code => AST::ASTArray.new(
                     :children => [
@@ -640,6 +652,8 @@ module ParserTesting
                 objectparam(param, value)
             }
             return AST::ObjectInst.new(
+                :file => tempfile(),
+                :line => rand(100),
                 :children => params
             )
         }
@@ -648,6 +662,8 @@ module ParserTesting
     def objectparam(param, value)
         assert_nothing_raised("Could not create param %s" % param) {
             return AST::ObjectParam.new(
+                :file => tempfile(),
+                :line => rand(100),
                 :param => nameobj(param),
                 :value => stringobj(value)
             )
@@ -655,12 +671,18 @@ module ParserTesting
     end
 
     def stringobj(value)
-        AST::String.new(:value => value)
+        AST::String.new(
+            :file => tempfile(),
+            :line => rand(100),
+            :value => value
+        )
     end
 
     def varobj(name, value)
         assert_nothing_raised("Could not create %s code" % name) {
             return AST::VarDef.new(
+                :file => tempfile(),
+                :line => rand(100),
                 :name => nameobj(name),
                 :value => stringobj(value)
             )

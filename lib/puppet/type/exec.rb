@@ -185,8 +185,7 @@ module Puppet
                 if self[:command] !~ /^\//
                     if self[:path].nil?
                         raise TypeError,
-                            "'%s' is both unqualifed and specified no search path" %
-                                self[:command]
+                            "both unqualifed and specified no search path"
                     end
                 end
             end

@@ -1,12 +1,6 @@
-#!/usr/local/bin/ruby -w
-
-# $Id$
-
 # included so we can test object types
 require 'puppet'
 
-
-#---------------------------------------------------------------
 # the base class for both types and states
 # very little functionality; basically just defines the interface
 # and provides a few simple across-the-board functions like 'noop'
@@ -18,10 +12,9 @@ class Puppet::Element
         attr_accessor :doc, :nodoc
     end
 
-    #---------------------------------------------------------------
     # all of our subclasses must respond to each of these methods...
     @@interface_methods = [
-        :retrieve, :insync?, :sync, :path, :evaluate
+        :retrieve, :insync?, :sync, :evaluate
     ]
 
     # so raise an error if a method that isn't overridden gets called
@@ -31,7 +24,6 @@ class Puppet::Element
                 [self.class,method]
         }
     }
-    #---------------------------------------------------------------
 
     # create instance methods for each of the log levels, too
     Puppet::Log.eachlevel { |level|
@@ -47,7 +39,6 @@ class Puppet::Element
         })
     }
 
-    #---------------------------------------------------------------
     # for testing whether we should actually do anything
     def noop
         unless defined? @noop
@@ -55,7 +46,35 @@ class Puppet::Element
         end
         return @noop || Puppet[:noop] || false
     end
-    #---------------------------------------------------------------
+
+    # return the full path to us, for logging and rollback
+    # some classes (e.g., FileTypeRecords) will have to override this
+    def path
+        unless defined? @path
+            if defined? @parent and @parent
+                if self.is_a?(Puppet::Type::Component)
+                    @path = [@parent.path, self.name]
+                else
+                    @path = [@parent.path, self.class.name.to_s + "=" + self.name]
+                end
+            else
+                # The top-level name is always puppet[top], so we don't bother with
+                # that.  And we don't add the hostname here, it gets added
+                # in the log server thingy.
+                if self.name == "puppet[top]"
+                    @path = ["/"]
+                else
+                    # We assume that if we don't have a parent that we should not
+                    # cache the path
+                    Puppet.warning "%s has no parent" % self.name
+                    @path = [self.class.name.to_s + "=" + self.name]
+                end
+            end
+        end
+
+        return @path.join("/")
+    end
 
 end
-#---------------------------------------------------------------
+
+# $Id$

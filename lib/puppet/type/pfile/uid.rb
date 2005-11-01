@@ -10,6 +10,8 @@ module Puppet
             def id2name(id)
                 begin
                     user = Etc.getpwuid(id)
+                rescue TypeError
+                    return nil
                 rescue ArgumentError
                     return nil
                 end
@@ -60,7 +62,15 @@ module Puppet
             end
 
             def should_to_s
-                id2name(self.should) || self.should
+                case self.should
+                when Integer
+                    id2name(self.should) || self.should
+                when String
+                    self.should
+                else
+                    raise Puppet::DevError, "Invalid uid type %s(%s)" %
+                        [self.should.class, self.should]
+                end
             end
 
             def retrieve

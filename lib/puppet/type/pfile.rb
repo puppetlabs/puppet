@@ -274,6 +274,7 @@ module Puppet
                     }
                 else # create it anew
                     #notice "Creating new file with args %s" % args.inspect
+                    args[:parent] = self
                     begin
                         child = klass.implicitcreate(args)
                         
@@ -281,7 +282,6 @@ module Puppet
                         if child.nil?
                             return nil
                         end
-                        child.parent = self
                         @children << child
                     rescue Puppet::Error => detail
                         self.notice(
@@ -300,6 +300,41 @@ module Puppet
                     end
                 end
                 return child
+            end
+
+            # Paths are special for files, because we don't actually want to show
+            # the parent's full path.
+            def path
+                unless defined? @path
+                    if defined? @parent
+                        # We only need to behave specially when our parent is also
+                        # a file
+                        if @parent.is_a?(self.class)
+                            # Remove the parent file name
+                            ppath = @parent.path.sub(/\/?file=.+/, '')
+                            @path = []
+                            if ppath != "/" and ppath != ""
+                                @path << ppath
+                            end
+                            @path << self.class.name.to_s + "=" + self.name
+                        else
+                            super
+                        end
+                    else
+                        # The top-level name is always puppet[top], so we don't
+                        # bother with that.  And we don't add the hostname
+                        # here, it gets added in the log server thingy.
+                        if self.name == "puppet[top]"
+                            @path = ["/"]
+                        else
+                            # We assume that if we don't have a parent that we
+                            # should not cache the path
+                            @path = [self.class.name.to_s + "=" + self.name]
+                        end
+                    end
+                end
+
+                return @path.join("/")
             end
 
             # Recurse into the directory.  This basically just calls 'localrecurse'
@@ -355,16 +390,18 @@ module Puppet
                 if @parameters.include?(:ignore)
                     children = handleignore(children)
                 end  
-            
+
                 added = []
                 children.each { |file|
                     file = File.basename(file)
-                    next if file =~ /^\.\.?/ # skip . and .. 
+                    next if file =~ /^\.\.?$/ # skip . and .. 
                     if child = self.newchild(file, :recurse => recurse)
                         unless @children.include?(child)
                             self.push child
                             added.push file
+
                         end
+                        child.retrieve
                     end
                 }
             end

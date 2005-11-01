@@ -29,12 +29,12 @@ module Puppet
             str = nil
             if defined? @file and defined? @line and @file and @line
                 str = "%s in file %s at line %s" %
-                    [@message, @file, @line]
+                    [@message.to_s, @file, @line]
             elsif defined? @line and @line
                 str = "%s at line %s" %
-                    [@message, @line]
+                    [@message.to_s, @line]
             else
-                str = @message
+                str = @message.to_s
             end
 
             #if Puppet[:debug] and @stack

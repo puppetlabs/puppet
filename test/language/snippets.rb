@@ -425,6 +425,15 @@ class TestSnippets < Test::Unit::TestCase
                 assert_nothing_raised {
                     trans = client.apply()
                 }
+
+                Puppet::Type.eachtype { |type|
+                    type.each { |obj|
+                        unless obj.name == "puppet[top]"
+                            assert(obj.parent, "%s has no parent" % obj.name)
+                        end
+                        assert(obj.name)
+                    }
+                }
                 assert_nothing_raised {
                     self.send(mname, trans)
                 }

@@ -10,20 +10,29 @@ module Puppet
             @name = :mode
             @event = :inode_changed
 
-            # Our modes are octal, so make sure they print correctly.
+            # Our modes are octal, so make sure they print correctly.  Other
+            # valid values are symbols, basically
             def is_to_s
-                if @is.is_a?(Integer)
+                case @is
+                when Integer
                     return "%o" % @is
-                else
+                when Symbol
                     return @is
+                else
+                    raise Puppet::DevError, "Invalid 'is' value for mode: %s" %
+                        @is.inspect
                 end
             end
 
             def should_to_s
-                if @should.is_a?(Integer)
-                    return "%o" % @should
+                case self.should
+                when Integer
+                    return "%o" % self.should
+                when Symbol
+                    return self.should
                 else
-                    return @should
+                    raise Puppet::DevError, "Invalid 'should' value for mode: %s" %
+                        self.should.inspect
                 end
             end
 
@@ -32,13 +41,19 @@ module Puppet
                 # octal, yet the number can only be specified as a string right now
                 value = should
                 if value.is_a?(String)
+                    unless value =~ /^[0-9]+$/
+                        raise Puppet::Error, "File modes can only be numbers"
+                    end
                     unless value =~ /^0/
                         value = "0" + value
                     end
-                    value = Integer(value)
+                    begin
+                        value = Integer(value)
+                    rescue ArgumentError => detail
+                        raise Puppet::DevError, "Could not convert %s to integer" %
+                            value.inspect
+                    end
                 end
-
-                #self.warning "Should is %o from %s" % [value, should]
 
                 return value
             end
