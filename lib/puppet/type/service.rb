@@ -174,7 +174,7 @@ module Puppet
                     end
 
                     unless @defsvctype
-                        self.notice "Defaulting to base service type"
+                        Puppet.notice "Defaulting to base service type"
                         @defsvctype = Puppet::ServiceTypes::BaseSvc
                     end
                 end

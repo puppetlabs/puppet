@@ -19,10 +19,12 @@ module Util
                 if group.is_a?(Integer)
                     gid = group
                 else
-                    obj = Puppet::Type::Group.create(
-                        :name => user,
-                        :check => [:gid]
-                    )
+                    unless obj = Puppet::Type::Group[user]
+                        obj = Puppet::Type::Group.create(
+                            :name => user,
+                            :check => [:gid]
+                        )
+                    end
                     obj.retrieve
                     gid = obj.is(:gid)
                     unless gid.is_a?(Integer)
@@ -45,10 +47,12 @@ module Util
                 if user.is_a?(Integer)
                     uid = user
                 else
-                    obj = Puppet::Type::User.create(
-                        :name => user,
-                        :check => [:uid, :gid]
-                    )
+                    unless obj = Puppet::Type::User[user]
+                        obj = Puppet::Type::User.create(
+                            :name => user,
+                            :check => [:uid, :gid]
+                        )
+                    end
                     obj.retrieve
                     uid = obj.is(:uid)
                     unless uid.is_a?(Integer)

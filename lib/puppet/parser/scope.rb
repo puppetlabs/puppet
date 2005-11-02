@@ -542,16 +542,21 @@ module Puppet
                 if obj == :undefined or obj.nil?
                     # Make sure it's not defined elsewhere in the configuration
                     if tmp = self.objectdefined?(name, type)
-                        msg = "Duplicate definition: %s[%s] is already defined" %
-                            [type, name]
-                        error = Puppet::ParseError.new(msg)
-                        if tmp.line
-                            error.line = tmp.line
+                        typeklass = Puppet::Type.type(type)
+                        if typeklass and ! typeklass.isomorphic?
+                            Puppet.info "Allowing duplicate %s" % type
+                        else
+                            msg = "Duplicate definition: %s[%s] is already defined" %
+                                [type, name]
+                            error = Puppet::ParseError.new(msg)
+                            if tmp.line
+                                error.line = tmp.line
+                            end
+                            if tmp.file
+                                error.file = tmp.file
+                            end
+                            raise error
                         end
-                        if tmp.file
-                            error.file = tmp.file
-                        end
-                        raise error
                     end
 
                     # And if it's not, then create it anew

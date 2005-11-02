@@ -209,7 +209,7 @@ class Type < Puppet::Element
             raise Puppet::DevError, "must pass a Puppet::Type object"
         end
 
-        if @objects.has_key?(newobj.name)
+        if @objects.has_key?(newobj.name) and self.isomorphic?
             raise Puppet::Error.new(
                 "Object '%s' of type '%s' already exists with id '%s' vs. '%s'" %
                 [newobj.name,newobj.class.name,
@@ -644,7 +644,8 @@ class Type < Puppet::Element
             end
         }
         unless tmpstates.length == @states.length
-            raise "Something went very wrong with tmpstates creation"
+            raise Puppet::DevError,
+                "Something went very wrong with tmpstates creation"
         end
         return tmpstates
     end
@@ -672,11 +673,11 @@ class Type < Puppet::Element
                 self.to_s
         end
         # if the object already exists
-        if retobj = self[name]
+        if self.isomorphic? and retobj = self[name]
             # if only one of our objects is implicit, then it's easy to see
             # who wins -- the non-implicit one.
             if retobj.implicit? and ! implicit
-                Puppet.warning "Removing implicit %s" % retobj.name
+                Puppet.notice "Removing implicit %s" % retobj.name
                 # Remove all of the objects, but do not remove their subscriptions.
                 retobj.remove(false)
 
@@ -730,6 +731,17 @@ class Type < Puppet::Element
         obj.implicit = true
 
         return obj
+    end
+
+    # Is this type's name isomorphic with the object?  That is, if the
+    # name conflicts, does it necessarily mean that the objects conflict?
+    # Defaults to true.
+    def self.isomorphic?
+        if defined? @isomorphic
+            return @isomorphic
+        else
+            return true
+        end
     end
 
     # and then make 'new' private

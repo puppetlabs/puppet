@@ -161,6 +161,9 @@ module Puppet
             @name = :exec
             @namevar = :command
 
+            # Exec names are not isomorphic with the objects.
+            @isomorphic = false
+
             def initialize(hash)
                 # default to erroring on a non-zero return
                 if hash.include?("returns") 
