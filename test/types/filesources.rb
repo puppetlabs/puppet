@@ -528,7 +528,7 @@ class TestFileSources < Test::Unit::TestCase
         assert(!FileTest.exists?(name), "File with no source exists anyway")
     end
 
-    def test_zalwayschecksum
+    def test_alwayschecksum
         from = tempfile()
         to = tempfile()
 
@@ -552,6 +552,35 @@ class TestFileSources < Test::Unit::TestCase
 
         assert_equal(0, file.evaluate.length, "File produced changes")
 
+    end
+
+    def test_sourcepaths
+        files = []
+        3.times { 
+            files << tempfile()
+        }
+
+        to = tempfile()
+
+        File.open(files[-1], "w") { |f| f.puts "yee-haw" }
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet::Type::PFile.create(
+                :name => to,
+                :source => files
+            )
+        }
+
+        comp = newcomp(file)
+        assert_events(comp, [:file_changed])
+
+        assert(File.exists?(to), "File does not exist")
+
+        txt = nil
+        File.open(to) { |f| txt = f.read.chomp }
+
+        assert_equal("yee-haw", txt, "Contents do not match")
     end
 end
 

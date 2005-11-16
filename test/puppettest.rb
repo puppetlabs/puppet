@@ -8,6 +8,10 @@ require 'test/unit'
 
 module TestPuppet
     def newcomp(name,*ary)
+        if name.is_a?(Puppet::Type)
+            ary.unshift name
+            name = name.name
+        end
         comp = Puppet::Type::Component.create(
             :name => name
         )

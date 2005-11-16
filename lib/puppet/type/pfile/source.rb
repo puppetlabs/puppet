@@ -29,7 +29,9 @@ module Puppet
                     if value =~ /^[0-9]+$/
                         value = value.to_i
                     end
-                    args[param] = value
+                    unless value.nil?
+                        args[param] = value
+                    end
                 }
 
                 # we can't manage ownership as root, so don't even try
@@ -37,7 +39,11 @@ module Puppet
                     args.delete(:owner)
                 end
 
-                return args
+                if args.empty?
+                    return nil
+                else
+                    return args
+                end
             end
 
             # This basically calls describe() on our file, and then sets all
