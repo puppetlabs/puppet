@@ -92,6 +92,8 @@ master = {
     :Local => true
 }
 
+Puppet[:logdest] = :console
+
 begin
     result.each { |opt,arg|
         case opt
