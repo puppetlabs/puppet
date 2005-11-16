@@ -1,7 +1,5 @@
-#!/usr/local/bin/ruby -w
 
-# $Id$
-
+require 'open3'
 require 'puppet/type/state'
 
 module Puppet
@@ -93,15 +91,30 @@ module Puppet
                         Puppet::Util.asuser(@parent[:user], @parent[:group]) {
                             # capture both stdout and stderr
 
-                            stderr = Puppet::Util.capture_stderr {
-                                @output = %x{#{self.parent[:command]}}
-                            }
+                            #stdin, stdout, stderr = Open3.popen3(self.parent[:command])
+                            #@output = stdout.read
+                            #err = stderr.read
 
-                            if stderr != ""
-                                stderr.split(/\n/).each { |line|
-                                    self.send(:err, line)
-                                }
+                            #stderr = Puppet::Util.capture_stderr {
+                            #    @output = %x{#{self.parent[:command]}}
+                            #}
+                            if @parent[:user]
+                                unless defined? @@alreadywarned
+                                    Puppet.warning(
+                            "Cannot capture STDERR when running as another user"
+                                    )
+                                    @@alreadywarned = true
+                                end
+                                @output = %x{#{self.parent[:command]}}
+                            else
+                                @output = %x{#{self.parent[:command]} 2>&1}
                             end
+
+                            #if err != ""
+                            #    stderr.split(/\n/).each { |line|
+                            #        self.send(:err, line)
+                            #    }
+                            #end
                         }
                         status = $?
 
@@ -152,7 +165,9 @@ module Puppet
 
             @paramdoc[:path] = "The search path used for command execution.
                 Commands must be fully qualified if no path is specified."
-            @paramdoc[:user] = "The user to run the command as."
+            @paramdoc[:user] = "The user to run the command as.  Note that if you use
+                this then any error output is not currently captured.  This is mostly
+                because of a bug within Ruby."
             @paramdoc[:group] = "The group to run the command as."
             @paramdoc[:cwd] = "The directory from which to run the command.  If
                 this directory does not exist, the command will fail."
@@ -297,3 +312,5 @@ module Puppet
         end
     end
 end
+
+# $Id$

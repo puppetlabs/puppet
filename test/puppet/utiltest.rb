@@ -13,6 +13,7 @@ class TestPuppetUtil < Test::Unit::TestCase
     unless Process.uid == 0
         $stderr.puts "Run as root to perform Utility tests"
     else
+
     def mknverify(file, user, group = nil, id = false)
         if File.exists?(file)
             File.unlink(file)
@@ -113,11 +114,6 @@ class TestPuppetUtil < Test::Unit::TestCase
 
         assert(Process.euid == 0, "UID did not get reset")
     end
-    end
-
-    def test_capturestderr
-        str = Puppet::Util.capture_stderr { $stderr.puts("hello world") }
-        assert_equal("hello world\n", str)
     end
 end
 

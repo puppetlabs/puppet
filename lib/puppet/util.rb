@@ -19,9 +19,9 @@ module Util
                 if group.is_a?(Integer)
                     gid = group
                 else
-                    unless obj = Puppet::Type::Group[user]
+                    unless obj = Puppet::Type::Group[group]
                         obj = Puppet::Type::Group.create(
-                            :name => user,
+                            :name => group,
                             :check => [:gid]
                         )
                     end
@@ -83,18 +83,6 @@ module Util
         end
 
         return retval
-    end
-
-    # Capture stderr of a block
-    def self.capture_stderr
-        require 'stringio'
-        begin
-            $stderr = StringIO.new
-            yield
-            $stderr.rewind && $stderr.read
-        ensure
-            $stderr = STDERR
-        end
     end
 
     # Create instance methods for each of the log levels.  This allows
