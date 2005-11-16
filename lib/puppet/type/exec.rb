@@ -92,11 +92,20 @@ module Puppet
                         # handlers correctly
                         Puppet::Util.asuser(@parent[:user], @parent[:group]) {
                             # capture both stdout and stderr
-                            @output = %x{#{self.parent[:command]} 2>&1}
+
+                            stderr = Puppet::Util.capture_stderr {
+                                @output = %x{#{self.parent[:command]}}
+                            }
+
+                            if stderr != ""
+                                stderr.split(/\n/).each { |line|
+                                    self.send(:err, line)
+                                }
+                            end
                         }
                         status = $?
 
-                        loglevel = :info
+                        loglevel = @parent[:loglevel]
                         if status.exitstatus.to_s != self.should.to_s
                             err("%s returned %s" %
                                 [self.parent[:command],status.exitstatus])
@@ -157,7 +166,17 @@ module Puppet
             @doc = "Executes external commands.  It is critical that all commands
                 executed using this mechanism can be run multiple times without
                 harm, i.e., they are *idempotent*.  One useful way to create idempotent
-                commands is to use the *creates* parameter."
+                commands is to use the *creates* parameter.
+
+                It is worth nothing that ``exec`` is special, in that it is not
+                currently considered an error to have multiple ``exec`` instances
+                with the same name.  This was done purely because it had to be this
+                way in order to get certain functionality, but it complicates things.
+                In particular, you will not be able to use ``exec`` instances that
+                share their commands with other instances as a dependency, since
+                Puppet has no way of knowing which instance you mean.
+
+                It is recommended to avoid duplicate names whenever possible."
             @name = :exec
             @namevar = :command
 

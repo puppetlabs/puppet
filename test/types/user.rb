@@ -14,9 +14,8 @@ require 'test/unit'
 class TestUser < Test::Unit::TestCase
 	include TestPuppet
     def setup
-        @@tmpusers = []
-        Puppet[:loglevel] = :debug if __FILE__ == $0
         super
+        @@tmpusers = []
     end
 
     def teardown

@@ -183,7 +183,7 @@ module Puppet # :nodoc:
                         ] + RESET
                     else
                         puts @colors[msg.level] + "%s: %s: %s" % [
-                            msg.source, msg.level, msg.to_s
+                            msg.level, msg.source, msg.to_s
                         ] + RESET
                     end
                 when Puppet::Client::LogClient
@@ -294,9 +294,13 @@ module Puppet # :nodoc:
             Log.newmessage(self)
 		end
 
+        # If they pass a source in to us, we make sure it is a string, and
+        # we retrieve any tags we can.
         def source=(source)
-            # We can't store the actual source, we just store the path
-            if source.respond_to?(:path)
+            # We can't store the actual source, we just store the path.  This
+            # is a bit of a stupid hack, specifically testing for elements, but
+            # eh.
+            if source.is_a?(Puppet::Element) and source.respond_to?(:path)
                 @source = source.path
             else
                 @source = source.to_s

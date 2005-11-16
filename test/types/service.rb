@@ -14,16 +14,15 @@ class TestService < Test::Unit::TestCase
     # this is complicated, because we store references to the created
     # objects in a central store
     def setup
+        super
         sleeper = nil
         script = File.join($puppetbase,"examples/root/etc/init.d/sleeper")
         @status = script + " status"
-
-        super
     end
 
     def teardown
-        stopservices
         super
+        stopservices
     end
 
     def mksleeper(hash = {})

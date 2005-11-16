@@ -349,6 +349,14 @@ class Type < Puppet::Element
         return @validstates.keys
     end
 
+    # Return the state class associated with a name
+    def self.statebyname(name)
+        unless @validstates.length == @states.length
+            self.buildstatehash
+        end
+        @validstates[name]
+    end
+
     # does the name reflect a valid parameter?
     def self.validparameter?(name)
         unless defined? @parameters

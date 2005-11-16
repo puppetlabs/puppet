@@ -85,6 +85,43 @@ module Util
         return retval
     end
 
+    # Capture stderr of a block
+    def self.capture_stderr
+        require 'stringio'
+        begin
+            $stderr = StringIO.new
+            yield
+            $stderr.rewind && $stderr.read
+        ensure
+            $stderr = STDERR
+        end
+    end
+
+    # Create instance methods for each of the log levels.  This allows
+    # the messages to be a little richer.  Most classes will be calling this
+    # method.
+    def self.logmethods(klass, useself = true)
+        Puppet::Log.eachlevel { |level|
+            klass.send(:define_method, level, proc { |args|
+                if args.is_a?(Array)
+                    args = args.join(" ")
+                end
+                if useself
+                    Puppet::Log.create(
+                        :level => level,
+                        :message => args
+                    )
+                else
+                    Puppet::Log.create(
+                        :level => level,
+                        :source => self,
+                        :message => args
+                    )
+                end
+            })
+        }
+    end
+
     # XXX this should all be done using puppet objects, not using
     # normal mkdir
     def self.recmkdir(dir,mode = 0755)

@@ -471,7 +471,7 @@ module Puppet
                 end
 
                 unless stat = self.stat(true)
-                    self.debug "File does not exist" % self.name
+                    self.debug "File does not exist"
                     @states.each { |name,state|
                         # We've already retreived the source, and we don't
                         # want to overwrite whatever it did.  This is a bit

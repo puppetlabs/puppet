@@ -73,8 +73,7 @@ module Puppet
 
             def retrieve
                 self.is = @parent.status
-                self.debug "Running value is '%s'" %
-                    [self.parent.name,self.is]
+                self.debug "Running value is '%s'" % self.is
             end
 
             def sync
@@ -201,13 +200,14 @@ module Puppet
                 end
                 ps = Facter["ps"].value
                 unless ps and ps != ""
-                    raise Puppet::Error, "You must upgrade Facter"
+                    raise Puppet::Error,
+                        "You must upgrade Facter to a version that includes 'ps'"
                 end
                 regex = Regexp.new(self[:pattern])
                 IO.popen(ps) { |table|
                     table.each { |line|
                         if regex.match(line)
-                            ary = line.split(/\s+/)
+                            ary = line.sub(/^\s+/, '').split(/\s+/)
                             return ary[1]
                         end
                     }
@@ -230,6 +230,7 @@ module Puppet
                 end
 
                 # Extend the object with the service type
+                #self.info "extending with %s" % type
                 self.extend(type)
 
                 super

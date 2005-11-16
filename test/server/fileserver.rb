@@ -226,7 +226,7 @@ class TestFileServer < Test::Unit::TestCase
 
     # verify we can mount /, which is what local file servers will
     # normally do
-    def test_mountroot
+    def test_zmountroot
         server = nil
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
@@ -244,6 +244,11 @@ class TestFileServer < Test::Unit::TestCase
         list = nil
         assert_nothing_raised {
             list = server.list("/root/" + testdir, true, false)
+        }
+
+        assert(list =~ pattern)
+        assert_nothing_raised {
+            list = server.list("/root" + testdir, true, false)
         }
 
         assert(list =~ pattern)
@@ -688,6 +693,17 @@ class TestFileServer < Test::Unit::TestCase
         list = nil
     end
 
+    # Verify that we get converted to the right kind of string
+    def test_mountstring
+        mount = nil
+        name = "yaytest"
+        path = tmpdir()
+        assert_nothing_raised {
+            mount = Puppet::Server::FileServer::Mount.new(name, path)
+        }
+
+        assert_equal(name + ":" + path, mount.to_s)
+    end
 end
 
 # $Id$

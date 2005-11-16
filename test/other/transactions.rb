@@ -25,12 +25,12 @@ class TestTransactions < Test::Unit::TestCase
     end
 
     def setup
+        super
         @groups = %x{groups}.chomp.split(/ /)
         unless @groups.length > 1
             p @groups
             raise "You must be a member of more than one group to test this"
         end
-        super
     end
 
     def teardown

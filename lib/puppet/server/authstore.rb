@@ -19,6 +19,8 @@ class Server
             :name => [:hostname, :domain]
         }
 
+        Puppet::Util.logmethods(self, false)
+
         def allow(pattern)
             # a simple way to allow anyone at all to connect
             if pattern == "*"
@@ -66,7 +68,7 @@ class Server
                 }
             }
 
-            Puppet.info "Defaulting to false for %s" % name
+            self.info "Defaulting to false for %s" % name
             # default to false
             return false
         end

@@ -15,6 +15,7 @@ require 'facter'
 class TestExec < Test::Unit::TestCase
 	include TestPuppet
     def setup
+        super
         # retrieve the user name
         id = %x{id}.chomp
         if id =~ /uid=\d+\(([^\)]+)\)/
@@ -27,8 +28,6 @@ class TestExec < Test::Unit::TestCase
         end
         # god i'm lazy
         @crontype = Puppet::Type::Cron
-
-        super
     end
 
     # Back up the user's existing cron tab if they have one.

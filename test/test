@@ -6,6 +6,8 @@
 $:.unshift '.'
 $:.unshift '../lib'
 
+$puppetbase = ".."
+
 require 'puppettest.rb'
 require 'getoptlong'
 
@@ -25,8 +27,6 @@ result.each { |opt,arg|
 			raise "Invalid option '#{opt}'"
 	end
 }
-
-$puppetbase = ".."
 
 suites = nil
 

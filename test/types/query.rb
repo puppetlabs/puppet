@@ -5,21 +5,13 @@ if __FILE__ == $0
 end
 
 require 'puppet'
+require 'puppettest'
 require 'test/unit'
 
 # $Id$
 
 class TestQuery < Test::Unit::TestCase
-    def setup
-        Puppet[:loglevel] = :debug if __FILE__ == $0
-    end
-
-    def teardown
-        assert_nothing_raised() {
-            Puppet::Type.allclear
-        }
-    end
-
+    include TestPuppet
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store

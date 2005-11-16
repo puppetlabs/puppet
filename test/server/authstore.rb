@@ -15,14 +15,6 @@ require 'puppettest.rb'
 
 class TestAuthStore < Test::Unit::TestCase
 	include TestPuppet
-    def setup
-        if __FILE__ == $0
-            Puppet[:loglevel] = :debug
-        end
-
-        super
-    end
-
     def mkstore
         store = nil
         assert_nothing_raised {

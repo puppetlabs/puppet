@@ -25,19 +25,7 @@ class Puppet::Element
         }
     }
 
-    # create instance methods for each of the log levels, too
-    Puppet::Log.eachlevel { |level|
-        define_method(level,proc { |args|
-            if args.is_a?(Array)
-                args = args.join(" ")
-            end
-            Puppet::Log.create(
-                :level => level,
-                :source => self,
-                :message => args
-            )
-        })
-    }
+    Puppet::Util.logmethods(self, true)
 
     # for testing whether we should actually do anything
     def noop
@@ -66,8 +54,11 @@ class Puppet::Element
                 else
                     # We assume that if we don't have a parent that we should not
                     # cache the path
-                    Puppet.warning "%s has no parent" % self.name
-                    @path = [self.class.name.to_s + "=" + self.name]
+                    if self.is_a?(Puppet::Type::Component)
+                        @path = [self.name]
+                    else
+                        @path = [self.class.name.to_s + "=" + self.name]
+                    end
                 end
             end
         end

@@ -14,8 +14,8 @@ require 'test/unit'
 class TestGroup < Test::Unit::TestCase
 	include TestPuppet
     def setup
-        @@tmpgroups = []
         super
+        @@tmpgroups = []
     end
 
     def teardown

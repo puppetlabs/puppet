@@ -13,15 +13,8 @@ require 'test/unit'
 class TestComponent < Test::Unit::TestCase
 	include TestPuppet
     def setup
+        super
         @@used = {}
-        super
-    end
-
-    def teardown
-        assert_nothing_raised() {
-            Puppet::Type.allclear
-        }
-        super
     end
 
     def randnum(limit)

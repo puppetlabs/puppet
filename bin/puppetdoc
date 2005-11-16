@@ -143,9 +143,11 @@ types.sort { |a,b|
     #puts "%s States\n'''''''''''''''''''''''''''''''" % name.to_s.capitalize
     type.validstates.sort { |a,b|
         a.to_s <=> b.to_s
-    }.reject { |sname,state|
+    }.reject { |sname|
+        state = type.statebyname(sname)
         state.nodoc
-    }.each { |sname,state|
+    }.each { |sname|
+        state = type.statebyname(sname)
         docs[sname] = state.doc.gsub(/\n\s*/,' ')
         #puts "- **%s**" % sname
         #puts tab(1) + state.doc.gsub(/\n\s*/,' ')

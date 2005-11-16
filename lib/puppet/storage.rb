@@ -31,6 +31,7 @@ module Puppet
                 Puppet.info "Statefile %s does not exist" % Puppet[:checksumfile]
                 return
             end
+            begin
             #Puppet.debug "Loading statefile %s" % Puppet[:checksumfile]
 			File.open(Puppet[:checksumfile]) { |file|
 				file.each { |line|
@@ -46,6 +47,9 @@ module Puppet
                     end
 				}
 			}
+            rescue => detail
+                Puppet.err "Could not read %s" % Puppet[:checksumfile]
+            end
 
             #Puppet.debug "Loaded state is %s" % @@state.inspect
 		end

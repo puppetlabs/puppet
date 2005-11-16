@@ -34,7 +34,7 @@ module TestPuppet
             Dir.mkdir(@configpath)
         end
 
-        @@tmpfiles = [@configpath]
+        @@tmpfiles = [@configpath, tmpdir()]
         @@tmppids = []
 
         if $0 =~ /.+\.rb/
@@ -127,6 +127,13 @@ module TestPuppet
             when "SunOS": "/var/tmp"
             else
                 "/tmp"
+            end
+
+            @tmpdir = File.join(@tmpdir, "puppettesting")
+
+            unless File.exists?(@tmpdir)
+                FileUtils.mkdir_p(@tmpdir)
+                File.chmod(01777, @tmpdir)
             end
         end
         @tmpdir
@@ -303,7 +310,7 @@ module ExeTest
             %x{#{ps}}.chomp.split(/\n/).each { |line|
                 if line =~ /ruby.+puppetmasterd/
                     next if line =~ /\.rb/ # skip the test script itself
-                    ary = line.split(/\s+/)
+                    ary = line.sub(/^\s+/, '').split(/\s+/)
                     runningpid = ary[1].to_i
                 end
             }

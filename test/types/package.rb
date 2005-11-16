@@ -30,9 +30,9 @@ end
 class TestPackages < Test::Unit::TestCase
 	include FileTesting
     def setup
+        super
         #@list = Puppet::Type::Package.getpkglist
         Puppet::Type::Package.clear
-        super
     end
 
     # These are packages that we're sure will be installed

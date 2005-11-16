@@ -17,17 +17,17 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 	include FileTesting
    
     def setup
+        super
         begin
             initstorage
         rescue
             system("rm -rf %s" % Puppet[:checksumfile])
         end
-        super
     end
 
     def teardown
-        clearstorage
         super
+        clearstorage
     end
 
 #This is not needed unless using md5 (correct me if I'm wrong)

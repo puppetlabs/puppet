@@ -220,6 +220,7 @@ class TestExec < Test::Unit::TestCase
             }
 
             if user
+                #Puppet.warning "Using user %s" % user.name
                 if id
                     # convert to a string, because that's what the object expects
                     args[:user] = user.uid.to_s
@@ -229,6 +230,7 @@ class TestExec < Test::Unit::TestCase
             end
 
             if group
+                #Puppet.warning "Using group %s" % group.name
                 if id
                     args[:group] = group.gid.to_s
                 else

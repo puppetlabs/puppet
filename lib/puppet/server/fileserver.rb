@@ -19,6 +19,8 @@ class Server
             iface.add_method("string retrieve(string)")
         }
 
+        # Run 'retrieve' on a file.  This gets the actual parameters, so
+        # we can pass them to the client.
         def check(dir)
             unless FileTest.exists?(dir)
                 Puppet.notice "File source %s does not exist" % dir
@@ -41,17 +43,19 @@ class Server
             return obj
         end
 
+        # Describe a given file.  This returns all of the manageable aspects
+        # of that file.
         def describe(file, client = nil, clientip = nil)
             readconfig
             mount, path = splitpath(file)
 
-            unless @mounts[mount].allowed?(client, clientip)
+            unless mount.allowed?(client, clientip)
                 raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
             end
 
             sdir = nil
             unless sdir = subdir(mount, path)
-                Puppet.notice "Could not find subdirectory %s" %
+                mount.notice "Could not find subdirectory %s" %
                     "//%s/%s" % [mount, path]
                 return ""
             end
@@ -65,13 +69,13 @@ class Server
             CHECKPARAMS.each { |check|
                 if state = obj.state(check)
                     unless state.is
-                        Puppet.notice "Manually retrieving info for %s" % check
+                        mount.notice "Manually retrieving info for %s" % check
                         state.retrieve
                     end
                     desc << state.is
                 else
                     if check == "checksum" and obj.state(:type).is == "file"
-                        Puppet.notice "File %s does not have data for %s" %
+                        mount.notice "File %s does not have data for %s" %
                             [obj.name, check]
                     end
                     desc << nil
@@ -81,6 +85,7 @@ class Server
             return desc.join("\t")
         end
 
+        # Deal with ignore parameters.
         def handleignore(children, path, ignore)            
             ignore.each { |ignore|                
                 Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) { |match|
@@ -90,6 +95,7 @@ class Server
             return children
         end  
 
+        # Create a new fileserving module.
         def initialize(hash = {})
             @mounts = {}
             @files = {}
@@ -129,18 +135,19 @@ class Server
             end
         end
 
+        # List a specific directory's contents.
         def list(dir, recurse = false, ignore = false, client = nil, clientip = nil)
             readconfig
             mount, path = splitpath(dir)
 
-            unless @mounts[mount].allowed?(client, clientip)
+            unless mount.allowed?(client, clientip)
                 raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
             end
 
             subdir = nil
             unless subdir = subdir(mount, path)
-                Puppet.notice "Could not find subdirectory %s" %
-                    "//%s/%s" % [mount, path]
+                mount.notice "Could not find subdirectory %s" %
+                    "%s:%s" % [mount, path]
                 return ""
             end
 
@@ -149,12 +156,11 @@ class Server
                 return ""
             end
 
-            #rmdir = File.dirname(File.join(@mounts[mount], path))
-            rmdir = nameswap(dir, mount)
-            desc = reclist(rmdir, subdir, recurse, ignore)
+            rmdir = expand_mount(dir, mount)
+            desc = reclist(mount, rmdir, subdir, recurse, ignore)
 
             if desc.length == 0
-                Puppet.notice "Got no information on //%s/%s" %
+                mount.notice "Got no information on //%s/%s" %
                     [mount, path]
                 return ""
             end
@@ -164,6 +170,7 @@ class Server
             }.join("\n")
         end
 
+        # Mount a new directory with a name.
         def mount(path, name)
             if @mounts.include?(name)
                 if @mounts[name] != path
@@ -178,7 +185,7 @@ class Server
             if FileTest.directory?(path)
                 if FileTest.readable?(path)
                     @mounts[name] = Mount.new(name, path)
-                    Puppet.info "Mounted %s at %s" % [path, name]
+                    @mounts[name].info "Mounted"
                 else
                     raise FileServerError, "%s is not readable" % path
                 end
@@ -187,6 +194,7 @@ class Server
             end
         end
 
+        # Read the configuration file.
         def readconfig
             return if @noreadconfig
 
@@ -237,8 +245,7 @@ class Server
                             when "allow":
                                 value.split(/\s*,\s*/).each { |val|
                                     begin
-                                        Puppet.info "Allowing %s access to %s" %
-                                            [val, mount.name]
+                                        mount.info "Allowing %s access" % val
                                         mount.allow(val)
                                     rescue AuthStoreError => detail
                                         raise FileServerError, "%s at line %s of %s" %
@@ -248,8 +255,7 @@ class Server
                             when "deny":
                                 value.split(/\s*,\s*/).each { |val|
                                     begin
-                                        Puppet.info "Denying %s access to %s" %
-                                            [val, mount.name]
+                                        mount.info "Denying %s access" % val
                                         mount.deny(val)
                                     rescue AuthStoreError => detail
                                         raise FileServerError, "%s at line %s of %s" %
@@ -289,24 +295,21 @@ class Server
             @configstatted = Time.now
         end
 
+        # Retrieve a file from the local disk and pass it to the remote
+        # client.
         def retrieve(file, client = nil, clientip = nil)
             readconfig
             mount, path = splitpath(file)
 
-            unless (@mounts.include?(mount))
-                raise Puppet::Server::FileServerError,
-                    "FileServer module '%s' not mounted" % mount
-            end
-
-            unless @mounts[mount].allowed?(client, clientip)
+            unless mount.allowed?(client, clientip)
                 raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
             end
 
             fpath = nil
             if path
-                fpath = File.join(@mounts[mount].path, path)
+                fpath = File.join(mount.path, path)
             else
-                fpath = @mounts[mount].path
+                fpath = mount.path
             end
 
             unless FileTest.exists?(fpath)
@@ -324,24 +327,26 @@ class Server
 
         private
 
-        def nameswap(name, mount)
-            name.sub(/\/#{mount}/, @mounts[mount].path).gsub(%r{//}, '/').sub(
+        # Convert from the '/mount/path' form to the real path on disk.
+        def expand_mount(name, mount)
+            # Note that the user could have passed a path with multiple /'s
+            # in it, and we are likely to result in multiples, so we have to
+            # get rid of all of them.
+            name.sub(/\/#{mount.name}/, mount.path).gsub(%r{/+}, '/').sub(
                 %r{/$}, ''
             )
-            #Puppet.info "Swapped %s to %s" % [name, newname]
-            #newname
         end
 
-        # recursive listing function
-        def reclist(root, path, recurse, ignore)
-            #desc = [obj.name.sub(%r{#{root}/?}, '')]
+        # Recursively list the directory.
+        def reclist(mount, root, path, recurse, ignore)
+            # Take out the root of the path.
             name = path.sub(root, '')
             if name == ""
                 name = "/"
             end
 
             if name == path
-                raise Puppet::FileServerError, "Could not match %s in %s" %
+                raise FileServerError, "Could not match %s in %s" %
                     [root, path]
             end
 
@@ -362,7 +367,7 @@ class Server
                     end  
                     children.each { |child|
                         next if child =~ /^\.\.?$/
-                        reclist(root, File.join(path, child), recurse, ignore).each { |cobj|
+                        reclist(mount, root, File.join(path, child), recurse, ignore).each { |cobj|
                             ary << cobj
                         }
                     }
@@ -372,6 +377,7 @@ class Server
             return ary.reject { |c| c.nil? }
         end
 
+        # Split the path into the separate mount point and path.
         def splitpath(dir)
             # the dir is based on one of the mounts
             # so first retrieve the mount path
@@ -389,6 +395,9 @@ class Server
                     raise FileServerError,
                         "Fileserver error: Mount '%s' does not have a path set" % mount
                 end
+
+                # And now replace the name with the actual object.
+                mount = @mounts[mount]
             else
                 raise FileServerError, "Fileserver error: Invalid path '%s'" % dir
             end
@@ -399,8 +408,9 @@ class Server
             return mount, path
         end
 
+        # Retrieve a specific directory relative to a mount point.
         def subdir(mount, dir)
-            basedir = @mounts[mount].path
+            basedir = mount.path
 
             dirname = nil
             if dir
@@ -409,12 +419,18 @@ class Server
                 dirname = basedir
             end
 
-            return dirname
+            dirname
         end
 
+        # A simple class for wrapping mount points.  Instances of this class
+        # don't know about the enclosing object; they're mainly just used for
+        # authorization.
         class Mount < AuthStore
             attr_reader :path, :name
 
+            Puppet::Util.logmethods(self, true)
+
+            # Create out orbject.  It must have a name.
             def initialize(name, path = nil)
                 unless name =~ %r{^\w+$}
                     raise FileServerError, "Invalid name format '%s'" % name
@@ -430,6 +446,7 @@ class Server
                 super()
             end
 
+            # Set the path.
             def path=(path)
                 unless FileTest.exists?(path)
                     raise FileServerError, "%s does not exist" % path
@@ -438,7 +455,11 @@ class Server
             end
 
             def to_s
-                @path
+                if @path
+                    @name + ":" + @path
+                else
+                    @name
+                end
             end
 
             # Verify our configuration is valid.  This should really check to

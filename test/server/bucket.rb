@@ -21,8 +21,10 @@ class TestBucket < Test::Unit::TestCase
         # iterate across all of the files
         files.each { |file|
             spin
+            tempdir = tempfile()
+            Dir.mkdir(tempdir)
             name = File.basename(file)
-            tmppath = File.join(tmpdir,name)
+            tmppath = File.join(tempdir,name)
             @@tmpfiles << tmppath
 
             # copy the files to our tmp directory so we can modify them...
