@@ -28,6 +28,10 @@ module Puppet
                     @usenodes = true
                 end
 
+                # Set it to either the value or nil.  This is currently only used
+                # by the cfengine module.
+                @classes = hash[:Classes] || []
+
                 # Create our parser object
                 parsefiles
 
@@ -64,7 +68,7 @@ module Puppet
                         @scope.interp = self
                         @scope.type = "puppet"
                         @scope.name = "top"
-                        return @scope.evaluate(@ast, facts)
+                        return @scope.evaluate(@ast, facts, @classes)
                     end
                     #@ast.evaluate(@scope)
                 rescue Puppet::DevError, Puppet::Error, Puppet::ParseError => except

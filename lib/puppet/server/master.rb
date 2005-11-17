@@ -44,6 +44,11 @@ class Server
                 args[:UseNodes] = false
             end
 
+            # This is only used by the cfengine module
+            if hash.include?(:Classes)
+                args[:Classes] = hash[:Classes]
+            end
+
             begin
                 @interpreter = Puppet::Parser::Interpreter.new(args)
             rescue => detail

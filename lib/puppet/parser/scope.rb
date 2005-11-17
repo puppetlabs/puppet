@@ -233,12 +233,20 @@ module Puppet
             # silly method, in that it just calls evaluate on the passed-in
             # objects, and then calls to_trans on itself.  It just conceals
             # a paltry amount of info from whomever's using the scope object.
-            def evaluate(objects, facts = {})
+            def evaluate(objects, facts = {}, classes = [])
                 facts.each { |var, value|
                     self.setvar(var, value)
                 }
 
                 objects.safeevaluate(self)
+
+                # These classes would be passed in manually, via something like
+                # a cfengine module
+                classes.each { |klass|
+                    if code = self.lookuptype(klass)
+                        code.safeevaluate(self, {}, klass, klass)
+                    end
+                }
 
                 return self.to_trans
             end

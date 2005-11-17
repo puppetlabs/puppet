@@ -19,35 +19,42 @@ libdirs = $:.find_all { |dir|
 }
 ENV["RUBYLIB"] = libdirs.join(":")
 
-class TestPuppetBin < Test::Unit::TestCase
+$module = File.join($puppetbase, "ext", "module:puppet")
+
+class TestPuppetModule < Test::Unit::TestCase
 	include ServerTest
-    def test_version
-        output = nil
-        assert_nothing_raised {
-          output = %x{puppet --version}.chomp
-        }
-        assert(output == Puppet.version)
-    end
 
     def test_execution
-        file = mktestmanifest()
-        @@tmpfiles << "/tmp/puppetbintesting"
+        file = tempfile()
+
+        createdfile = tempfile()
+
+        File.open(file, "w") { |f|
+            f.puts "class yaytest { file { \"#{createdfile}\": create => true } }"
+        }
 
         output = nil
-        cmd = "puppet"
+        cmd = $module
         cmd += " --verbose"
         #cmd += " --fqdn %s" % fqdn
         cmd += " --confdir %s" % Puppet[:puppetconf]
         cmd += " --vardir %s" % Puppet[:puppetvar]
-        cmd += " --logdest %s" % "/dev/null"
+        if Puppet[:debug]
+            cmd += " --logdest %s" % "console"
+        else
+            cmd += " --logdest %s" % "/dev/null"
+        end
 
+        ENV["CFALLCLASSES"] = "yaytest:all"
+
+        Puppet.err :mark
         assert_nothing_raised {
             system(cmd + " " + file)
         }
-        assert($? == 0, "Puppet exited with code %s" % $?.to_i)
+        assert($? == 0, "Puppet module exited with code %s" % $?.to_i)
 
-        assert(FileTest.exists?(@createdfile), "Failed to create config'ed file")
+        assert(FileTest.exists?(createdfile), "Failed to create config'ed file")
     end
 end
 
-# $Id: $
+# $Id$

@@ -1,0 +1,195 @@
+#!/usr/bin/ruby
+
+#
+# = Synopsis
+#
+# Run a +puppet+ script as a cfengine module.
+#
+# = Usage
+#
+#   puppet [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
+#               [-l|--logfile <file>] [-p|--parse-only] <file>
+#               [-c|--confdir <configuration directory>] [--vardir <var directory>]
+#
+# = Description
+#
+# This is the standalone puppet execution script; use it to execute
+# individual scripts that you write.  If you need to execute site-wide
+# scripts, use +puppetd+ and +puppetmasterd+.
+#
+# = Options
+#
+# confdir::
+#   The configuration root directory, where +puppetmasterd+ defaults to looking
+#   for all of its configuration files.  Defaults to +/etc/puppet+.
+#
+# debug::
+#   Enable full debugging.
+#
+# help::
+#   Print this help message
+#
+# logfile::
+#   Where to send messages.  Choose between syslog, the console, and a log file.
+#   Defaults to sending messages to the console.
+#
+# parse-only::
+#   Just verify syntax, do not apply anything.
+#
+# vardir::
+#   The variable-size directory, used for storing state.  Defaults to
+#   /var/puppet.
+#
+# verbose::
+#   Print extra information.
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005 Reductive Labs, LLC
+# Licensed under the GNU Public License
+
+require 'puppet'
+require 'puppet/server'
+require 'puppet/client'
+require 'getoptlong'
+
+$haveusage = true
+
+begin
+    require 'rdoc/usage'
+rescue LoadError
+    $haveusage = false
+end
+
+result = GetoptLong.new(
+	[ "--confdir",	"-c",			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+    [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
+    [ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
+    [ "--noop",     "-n",			GetoptLong::NO_ARGUMENT ],
+    [ "--use-nodes",    			GetoptLong::NO_ARGUMENT ],
+    [ "--parse-only",  "-p",		GetoptLong::NO_ARGUMENT ],
+	[ "--vardir",	    			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
+)
+
+debug = false
+verbose = false
+noop = false
+logfile = false
+parseonly = false
+
+master = {
+    :Local => true
+}
+
+# We default to a non-console log destination, because we assume this is being
+# run non-interactively.
+#Puppet[:logdest] = :console
+
+begin
+    result.each { |opt,arg|
+        case opt
+            when "--confdir"
+                Puppet[:puppetconf] = arg
+            when "--version"
+                puts "%s" % Puppet.version
+                exit
+            when "--help"
+                if $haveusage
+                    RDoc::usage && exit
+                else
+                    puts "No help available unless you have RDoc::usage installed"
+                    exit
+                end
+            when "--noop"
+                Puppet[:noop] = true
+            when "--use-nodes"
+                master[:UseNodes] = true
+            when "--verbose"
+                verbose = true
+            when "--parse-only"
+                parseonly = true
+            when "--debug"
+                debug = true
+            when "--logdest"
+                begin
+                    Puppet[:logdest] = arg
+                rescue => detail
+                    $stderr.puts detail.to_s
+                end
+            when "--vardir"
+                Puppet[:puppetvar] = arg
+        end
+    }
+rescue GetoptLong::InvalidOption => detail
+    $stderr.puts "Try '#{$0} --help'"
+    #if $haveusage
+    #    RDoc::usage(1,'usage')
+    #end
+    exit(1)
+end
+
+if debug
+    Puppet[:loglevel] = :debug
+elsif verbose
+    Puppet[:loglevel] = :info
+end
+
+unless ARGV.length > 0
+    $stderr.puts "You must pass a script to parse"
+    exit(14)
+end
+
+master[:File] = ARGV.shift
+
+unless ENV.include?("CFALLCLASSES")
+    $stderr.puts "Cfengine classes must be passed to the module"
+    exit(15)
+end
+
+master[:UseNodes] = false
+
+classes = ENV["CFALLCLASSES"].split(":")
+
+if classes.empty?
+    $stderr.puts "Could not find any cfengine classes"
+    exit(16)
+end
+
+master[:Classes] = classes
+
+begin
+    server = Puppet::Server::Master.new(master)
+rescue => detail
+    $stderr.puts detail
+    exit(1)
+end
+
+begin
+    client = Puppet::Client::MasterClient.new(
+        :Master => server,
+        :Cache => false
+    )
+rescue => detail
+    $stderr.puts detail
+    exit(1)
+end
+
+
+if parseonly
+    exit(0)
+end
+
+begin
+    client.getconfig
+    client.apply
+rescue => detail
+    Puppet.err detail
+    exit(1)
+end
