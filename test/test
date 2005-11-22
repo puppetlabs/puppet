@@ -4,11 +4,11 @@
 # run any or all test suites
 
 basedir = File.dirname(__FILE__)
+$puppetbase = File.expand_path(File.join(basedir, ".."))
 
 $:.unshift basedir
-$:.unshift '#{basedir}/lib'
+$:.unshift "#{$puppetbase}/lib"
 
-$puppetbase = ".."
 
 require 'puppettest.rb'
 require 'getoptlong'

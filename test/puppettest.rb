@@ -706,22 +706,32 @@ end
 class PuppetTestSuite
     attr_accessor :subdir
 
+    def self.basedir
+        unless defined? @basedir
+            @basedir = File.join($puppetbase, "test")
+        end
+        @basedir
+    end
+
     def self.list
-        Dir.entries(".").find_all { |file|
-            FileTest.directory?(file) and file !~ /^\./
+        puts "testdir is %s" % self.basedir
+        Dir.entries(self.basedir).find_all { |file|
+            path = File.join(@basedir, file)
+            FileTest.directory?(path) and file !~ /^\./
         }
     end
 
     def initialize(name)
-        unless FileTest.directory?(name)
+        path = File.join(self.class.basedir, name)
+        unless FileTest.directory?(path)
             puts "TestSuites are directories containing test cases"
-            puts "no such directory: %s" % name
+            puts "no such directory: %s" % path
             exit(65)
         end
 
         # load each of the files
-        Dir.entries(name).collect { |file|
-            File.join(name,file)
+        Dir.entries(path).collect { |file|
+            File.join(path,file)
         }.find_all { |file|
             FileTest.file?(file) and file =~ /\.rb$/
         }.sort { |a,b|
