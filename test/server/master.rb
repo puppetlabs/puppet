@@ -18,7 +18,7 @@ class TestMaster < Test::Unit::TestCase
 	include ServerTest
     def teardown
         super
-        print "\n\n\n\n" if Puppet[:debug]
+        #print "\n\n\n\n" if Puppet[:debug]
     end
 
     # run through all of the existing test files and make sure everything

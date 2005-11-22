@@ -3,8 +3,10 @@
 #------------------------------------------------------------
 # run any or all test suites
 
-$:.unshift '.'
-$:.unshift '../lib'
+basedir = File.dirname(__FILE__)
+
+$:.unshift basedir
+$:.unshift '#{basedir}/lib'
 
 $puppetbase = ".."
 

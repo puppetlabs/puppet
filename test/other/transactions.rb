@@ -38,7 +38,7 @@ class TestTransactions < Test::Unit::TestCase
             serv[:running] = false
             serv.sync
         }
-        print "\n\n" if Puppet[:debug]
+        #print "\n\n" if Puppet[:debug]
         super
     end
 

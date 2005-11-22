@@ -23,7 +23,7 @@ class TestCA < Test::Unit::TestCase
 	include ServerTest
     def teardown
         super
-        print "\n\n" if Puppet[:debug]
+        #print "\n\n" if Puppet[:debug]
     end
 
     # Verify that we're autosigning.  We have to autosign a "different" machine,

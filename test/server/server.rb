@@ -25,7 +25,7 @@ class TestServer < Test::Unit::TestCase
 	include ServerTest
     def teardown
         super
-        print "\n\n\n\n" if Puppet[:debug]
+        #print "\n\n\n\n" if Puppet[:debug]
     end
 
     # test that we can connect to the server

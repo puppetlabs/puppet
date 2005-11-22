@@ -54,6 +54,8 @@ module TestPuppet
 
 
     def spin
+        # Just disable spin, unless we really need it
+        return
         if Puppet[:debug]
             return
         end
