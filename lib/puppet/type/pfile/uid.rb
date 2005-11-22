@@ -8,6 +8,9 @@ module Puppet
             @event = :inode_changed
 
             def id2name(id)
+                if id.is_a?(Symbol)
+                    return id.to_s
+                end
                 begin
                     user = Etc.getpwuid(id)
                 rescue TypeError
@@ -23,6 +26,9 @@ module Puppet
             end
 
             def name2id(value)
+                if value.is_a?(Symbol)
+                    return value.to_s
+                end
                 begin
                     user = Etc.getpwnam(value)
                     if user.uid == ""
@@ -63,6 +69,8 @@ module Puppet
 
             def should_to_s
                 case self.should
+                when Symbol
+                    self.should.to_s
                 when Integer
                     id2name(self.should) || self.should
                 when String
@@ -80,13 +88,21 @@ module Puppet
                 end
 
                 self.is = stat.uid
+
+                # On OS X, files that are owned by -2 get returned as really
+                # large UIDs instead of negative ones.  This isn't a Ruby bug,
+                # it's an OS X bug, since it shows up in perl, too.
+                if @is > 120000
+                    self.warning "current state is silly: %s" % @is
+                    @is = :notfound
+                end
             end
 
-            # If we're not root, we can check the values but we cannot change them.
-            # We can't really do any processing here, because users might
-            # not exist yet.  FIXME There's still a bit of a problem here if
-            # the user's UID changes at run time, but we're just going to have
-            # to be okay with that for now, unfortunately.
+            # If we're not root, we can check the values but we cannot change
+            # them.  We can't really do any processing here, because users
+            # might not exist yet.  FIXME There's still a bit of a problem here
+            # if the user's UID changes at run time, but we're just going to
+            # have to be okay with that for now, unfortunately.
             def shouldprocess(value)
                 if tmp = self.validuser?(value)
                     return tmp

@@ -182,7 +182,7 @@ module TestPuppet
 
     def nonrootuser
         Etc.passwd { |user|
-            if user.uid != Process.uid
+            if user.uid != Process.uid and user.uid > 0
                 return user
             end
         }
@@ -190,7 +190,7 @@ module TestPuppet
 
     def nonrootgroup
         Etc.group { |group|
-            if group.gid != Process.gid
+            if group.gid != Process.gid and group.gid > 0
                 return group
             end
         }

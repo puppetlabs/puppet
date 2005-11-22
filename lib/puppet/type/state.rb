@@ -143,22 +143,21 @@ class State < Puppet::Element
     # How should a state change be printed as a string?
     def change_to_s
         begin
-        if @is == :notfound
-            return "defined '%s' as '%s'" %
-                [self.name, self.should_to_s]
-        elsif self.should == :notfound
-            return "undefined %s from '%s'" %
-                [self.name, self.is_to_s]
-        else
-            self.should_to_s
-            return "%s changed '%s' to '%s'" %
-                [self.name, self.is_to_s, self.should_to_s]
-        end
+            if @is == :notfound
+                return "defined '%s' as '%s'" %
+                    [self.name, self.should_to_s]
+            elsif self.should == :notfound
+                return "undefined %s from '%s'" %
+                    [self.name, self.is_to_s]
+            else
+                return "%s changed '%s' to '%s'" %
+                    [self.name, self.is_to_s, self.should_to_s]
+            end
         rescue Puppet::Error, Puppet::DevError
             raise
         rescue => detail
-            raise Puppet::DevError, "Could not convert change to string: %s" %
-                change_to_s
+            raise Puppet::DevError, "Could not convert change %s to string: %s" %
+                [self.name, detail]
         end
     end
 
