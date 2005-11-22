@@ -87,6 +87,7 @@ PKG_FILES = FileList[
     'lib/**/*.rb',
     'test/**/*.rb',
     'bin/**/*',
+    'ext/**/*',
     'examples/**/*'
 ]
 PKG_FILES.delete_if {|item| item.include?(".svn")}

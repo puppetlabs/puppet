@@ -11,7 +11,7 @@ require 'puppet/log'
 #
 # it's also a place to find top-level commands like 'debug'
 module Puppet
-    PUPPETVERSION="1.0.0"
+    PUPPETVERSION="0.9.1"
 
     def Puppet.version
         return PUPPETVERSION
