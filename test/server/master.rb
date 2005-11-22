@@ -26,7 +26,6 @@ class TestMaster < Test::Unit::TestCase
     def test_files
         count = 0
         textfiles { |file|
-            Puppet.err :mark
             Puppet.debug("parsing %s" % file)
             client = nil
             master = nil

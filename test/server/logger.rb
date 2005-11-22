@@ -80,7 +80,6 @@ class TestLogger < Test::Unit::TestCase
 
     # And now test over the network
     def test_logclient
-        Puppet.err :mark
         pid = nil
         clientlog = tempfile()
         serverlog = tempfile()
