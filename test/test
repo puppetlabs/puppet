@@ -15,6 +15,7 @@ require 'getoptlong'
 
 	#[ "--size",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
 result = GetoptLong.new(
+	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
 )
 
@@ -22,6 +23,8 @@ usage = "USAGE: %s [--help] <testsuite> <testsuite> .." % $0
 
 result.each { |opt,arg|
 	case opt
+		when "--debug"
+            Puppet[:debug] = true
 		when "--help"
 			puts usage
 			exit

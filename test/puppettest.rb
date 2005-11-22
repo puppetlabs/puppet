@@ -41,7 +41,7 @@ module TestPuppet
         @@tmpfiles = [@configpath, tmpdir()]
         @@tmppids = []
 
-        if $0 =~ /.+\.rb/
+        if $0 =~ /.+\.rb/ or Puppet[:debug]
             Puppet[:logdest] = :console
             Puppet[:loglevel] = :debug
             $VERBOSE = 1
