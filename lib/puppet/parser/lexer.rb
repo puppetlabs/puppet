@@ -1,6 +1,3 @@
-#!/usr/local/bin/ruby -w
-
-# $Id$
 
 # the scanner/lexer
 
@@ -224,3 +221,5 @@ module Puppet
         #---------------------------------------------------------------
     end
 end
+
+# $Id$

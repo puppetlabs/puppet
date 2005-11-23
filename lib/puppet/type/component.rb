@@ -1,6 +1,3 @@
-#!/usr/local/bin/ruby -w
-
-# $Id$
 
 # the object allowing us to build complex structures
 # this thing contains everything else, including itself
@@ -139,3 +136,5 @@ module Puppet
 	end
     end
 end
+
+# $Id$

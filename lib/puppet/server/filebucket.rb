@@ -1,9 +1,5 @@
-#!/usr/bin/ruby -w
-
 #--------------------
 # accept and serve files
-#
-# $Id$
 
 
 require 'webrick'
@@ -145,3 +141,5 @@ class Server
     end
 end
 end
+#
+# $Id$

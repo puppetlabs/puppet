@@ -1,6 +1,3 @@
-#!/usr/local/bin/ruby -w
-
-# $Id$
 
 # parse and write configuration files using objects with minimal parsing abilities
 
@@ -147,3 +144,5 @@ end
 #---------------------------------------------------------------
 end
 end
+
+# $Id$

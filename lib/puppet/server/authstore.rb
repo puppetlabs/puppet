@@ -1,10 +1,5 @@
-#!/usr/bin/ruby -w
-
-#--------------------
 # standard module for determining whether a given hostname or IP has access to
 # the requested resource
-#
-# $Id$
 
 require 'ipaddr'
 
@@ -225,3 +220,5 @@ class Server
     end
 end
 end
+#
+# $Id$

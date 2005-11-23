@@ -1,10 +1,4 @@
-#!/usr/bin/ruby -w
-
-#--------------------
-# the puppet client
-#
-# $Id$
-
+# The library for manipulating SSL certs.
 
 require 'puppet'
 require 'openssl'
@@ -735,3 +729,6 @@ module SSLCertificates
     end
 end
 end
+
+#
+# $Id$

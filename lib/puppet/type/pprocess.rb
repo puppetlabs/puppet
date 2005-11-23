@@ -1,5 +1,3 @@
-#!/usr/local/bin/ruby -w
-
 # DISABLED
 # I'm only working on services, not processes, right now
 

@@ -1,6 +1,3 @@
-#!/usr/local/bin/ruby -w
-
-# $Id$
 
 require 'etc'
 require 'puppet/type/state'
@@ -181,3 +178,5 @@ module Puppet
         end # Puppet::Type::Symlink
     end # Puppet::Type
 end
+
+# $Id$
