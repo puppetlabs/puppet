@@ -73,7 +73,7 @@ class TestFileBucket < Test::Unit::TestCase
 
     def test_simplebucket
         name = "yayness"
-        mkbucket("yayness", "/tmp/filebucket")
+        mkbucket(name, tempfile())
 
         bucket = nil
         assert_nothing_raised {
@@ -83,7 +83,7 @@ class TestFileBucket < Test::Unit::TestCase
         assert_instance_of(Puppet::Client::Dipper, bucket)
 
         md5 = nil
-        newpath = "/tmp/passwd"
+        newpath = tempfile()
         @@tmpfiles << newpath
         system("cp /etc/passwd %s" % newpath)
         assert_nothing_raised {
@@ -113,7 +113,7 @@ class TestFileBucket < Test::Unit::TestCase
 
     def test_fileswithbuckets
         name = "yayness"
-        mkbucket("yayness", "/tmp/filebucket")
+        mkbucket(name, tempfile())
 
         bucket = nil
         assert_nothing_raised {
@@ -125,7 +125,7 @@ class TestFileBucket < Test::Unit::TestCase
             file[:backup] = ["filebucket", name]
         }
 
-        opath = "/tmp/anotherbuckettest"
+        opath = tempfile()
         @@tmpfiles << opath
         system("cp /etc/passwd %s" % opath)
 
