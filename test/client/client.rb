@@ -138,7 +138,7 @@ class TestClient < Test::Unit::TestCase
     # i don't think this test makes much sense anyway
     def disabled_test_sslInitWithNonsigningLocalServer
         Puppet[:autosign] = false
-        Puppet[:ssldir] = "/tmp/puppetclientcertests"
+        Puppet[:ssldir] = tempfile()
         @@tmpfiles.push Puppet[:ssldir]
 
         file = File.join($puppetbase, "examples", "code", "head")

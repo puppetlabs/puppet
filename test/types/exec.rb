@@ -141,7 +141,7 @@ class TestExec < Test::Unit::TestCase
     def test_refreshonly
         file = nil
         cmd = nil
-        tmpfile = "/tmp/exectesting"
+        tmpfile = tempfile()
         @@tmpfiles.push tmpfile
         trans = nil
         File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|

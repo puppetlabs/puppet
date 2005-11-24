@@ -109,12 +109,12 @@ class TestLog < Test::Unit::TestCase
     end
 
     def test_creatingdirs
-        Puppet[:logdest] = "/tmp/logtesting/logfile"
+        dir = tempfile()
+        file = File.join(dir, "logfile")
+        Puppet[:logdest] = file
         Puppet.info "testing logs"
-        assert(FileTest.directory?("/tmp/logtesting"))
-        assert(FileTest.file?("/tmp/logtesting/logfile"))
-
-        system("rm -rf /tmp/logtesting")
+        assert(FileTest.directory?(dir))
+        assert(FileTest.file?(file))
     end
 
     def test_logtags

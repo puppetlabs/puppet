@@ -37,7 +37,7 @@ class TestPuppetCA < Test::Unit::TestCase
 
     def test_signing
         ca = nil
-        Puppet[:ssldir] = "/tmp/puppetcatest"
+        Puppet[:ssldir] = tempfile()
         @@tmpfiles << Puppet[:ssldir]
         Puppet[:autosign] = false
         assert_nothing_raised {

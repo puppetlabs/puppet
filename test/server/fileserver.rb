@@ -317,7 +317,7 @@ class TestFileServer < Test::Unit::TestCase
 
 
         # create a deep dir
-        basedir = "/tmp/remotefilecopying"
+        basedir = tempfile()
         testdir = "%s/with/some/sub/directories/for/testing" % basedir
         oldfile = File.join(testdir, "oldfile")
         assert_nothing_raised {
@@ -358,7 +358,7 @@ class TestFileServer < Test::Unit::TestCase
             )
         }
 
-        basedir = "/tmp/remotefilecopying"
+        basedir = tempfile()
         dirs = %w{a set of directories}
         assert_nothing_raised {
             Dir.mkdir(basedir)
@@ -385,7 +385,7 @@ class TestFileServer < Test::Unit::TestCase
     # verify that 'describe' works as advertised
     def test_describe
         server = nil
-        testdir = "/tmp/remotefilecopying"
+        testdir = tempfile()
         files = mktestfiles(testdir)
 
         file = nil

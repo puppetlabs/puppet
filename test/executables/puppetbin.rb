@@ -31,7 +31,7 @@ class TestPuppetBin < Test::Unit::TestCase
 
     def test_execution
         file = mktestmanifest()
-        @@tmpfiles << "/tmp/puppetbintesting"
+        @@tmpfiles << tempfile()
 
         output = nil
         cmd = "puppet"

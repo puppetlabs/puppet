@@ -18,12 +18,12 @@ else
 class TestPackageSource < Test::Unit::TestCase
 	include TestPuppet
     def test_filesource
-        system("touch /tmp/fakepackage")
+        path = tempfile()
+        system("touch %s" % path)
         assert_equal(
-            "/tmp/fakepackage",
-            Puppet::PackageSource.get("file:///tmp/fakepackage")
+            path,
+            Puppet::PackageSource.get("file://#{path}")
         )
-        system("rm -f /tmp/fakepackage")
     end
 end
 

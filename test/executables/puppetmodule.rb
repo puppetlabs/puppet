@@ -47,7 +47,6 @@ class TestPuppetModule < Test::Unit::TestCase
 
         ENV["CFALLCLASSES"] = "yaytest:all"
 
-        Puppet.err :mark
         assert_nothing_raised {
             system(cmd + " " + file)
         }

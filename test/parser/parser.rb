@@ -51,8 +51,9 @@ class TestParser < Test::Unit::TestCase
     def test_arrayrvalues
         parser = Puppet::Parser::Parser.new()
         ret = nil
+        file = tempfile()
         assert_nothing_raised {
-            parser.string = 'file { "/tmp/testing": mode => [755, 640] }'
+            parser.string = "file { \"#{file}\": mode => [755, 640] }"
         }
 
         assert_nothing_raised {

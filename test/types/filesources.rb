@@ -43,7 +43,7 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def test_newchild
-        path = "/tmp/newchilddir"
+        path = tempfile()
         @@tmpfiles.push path
 
         FileUtils.mkdir_p path
@@ -69,7 +69,7 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def test_simplelocalsource
-        path = "/tmp/Filesourcetest"
+        path = tempfile()
         @@tmpfiles.push path
         FileUtils.mkdir_p path
         frompath = File.join(path,"source")
@@ -138,7 +138,7 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def run_complex_sources(networked = false)
-        path = "/tmp/ComplexSourcesTest"
+        path = tempfile()
         @@tmpfiles.push path
 
         # first create the source directory
@@ -236,7 +236,7 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def test_RecursionWithAddedFiles
-        basedir = "/tmp/recursionplussaddedfiles"
+        basedir = tempfile()
         Dir.mkdir(basedir)
         @@tmpfiles << basedir
         file1 = File.join(basedir, "file1")
@@ -277,7 +277,7 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def mkfileserverconf(mounts)
-        file = "/tmp/fileserverconftestingfile%s" % rand(100)
+        file = tempfile()
         File.open(file, "w") { |f|
             mounts.each { |path, name|
                 f.puts "[#{name}]\n\tpath #{path}\n\tallow *\n"
@@ -293,7 +293,7 @@ class TestFileSources < Test::Unit::TestCase
     # the certificates correct
     def disabled_test_SimpleNetworkSources
         server = nil
-        basedir = "/tmp/simplenetworksourcetesting"
+        basedir = tempfile()
         @@tmpfiles << basedir
 
         mounts = {
@@ -375,7 +375,7 @@ class TestFileSources < Test::Unit::TestCase
 
     def test_NetworkSources
         server = nil
-        basedir = "/tmp/networksourcetesting"
+        basedir = tempfile()
         @@tmpfiles << basedir
         if File.exists?(basedir)
             system("rm -rf %s" % basedir)

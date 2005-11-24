@@ -9,8 +9,6 @@ require 'puppet/type/typegen/filetype'
 require 'puppet/type/typegen/filerecord'
 require 'test/unit'
 
-# $Id$
-
 #class TestFileType < Test::Unit::TestCase
 class TestFileType
     def disabled_setup
@@ -89,9 +87,10 @@ class TestFileType
     def disabled_test_passwd2_change
         file = nil
         type = nil
-        Kernel.system("cp /etc/passwd /tmp/oparsepasswd")
+        newfile = tempfile()
+        Kernel.system("cp /etc/passwd #{newfile}")
         assert_nothing_raised() {
-            file = @passwdtype.new("/tmp/oparsepasswd")
+            file = @passwdtype.new(newfile)
         }
         assert_nothing_raised() {
             file.retrieve
@@ -130,8 +129,6 @@ class TestFileType
         }
 
         assert(file.insync?)
-
-        Kernel.system("rm /tmp/oparsepasswd")
     end
 
     def disabled_test_syslog_nochange
@@ -160,3 +157,5 @@ class TestFileType
 
     end
 end
+
+# $Id$

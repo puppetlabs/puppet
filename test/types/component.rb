@@ -40,7 +40,7 @@ class TestComponent < Test::Unit::TestCase
         unless num
             num = randnum(1000)
         end
-        name = "/tmp/componentrandfile" + num.to_s
+        name = tempfile() + num.to_s
 
         file = Puppet::Type::PFile.create(
             :path => name,
@@ -107,7 +107,7 @@ class TestComponent < Test::Unit::TestCase
     end
 
     def test_correctsorting
-        tmpfile = "/tmp/comptesting"
+        tmpfile = tempfile()
         @@tmpfiles.push tmpfile
         trans = nil
         cmd = nil
@@ -138,7 +138,7 @@ class TestComponent < Test::Unit::TestCase
     end
 
     def test_correctflattening
-        tmpfile = "/tmp/comptesting"
+        tmpfile = tempfile()
         @@tmpfiles.push tmpfile
         trans = nil
         cmd = nil

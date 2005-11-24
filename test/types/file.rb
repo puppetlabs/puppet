@@ -231,7 +231,7 @@ class TestFile < Test::Unit::TestCase
     end
 
     def test_create
-        %w{a b c d}.collect { |name| "/tmp/createst%s" % name }.each { |path|
+        %w{a b c d}.collect { |name| tempfile() + name.to_s }.each { |path|
             file =nil
             assert_nothing_raised() {
                 file = Puppet::Type::PFile.create(

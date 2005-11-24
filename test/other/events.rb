@@ -18,8 +18,9 @@ class TestEvents < Test::Unit::TestCase
     end
 
     def test_simplesubscribe
+        name = tempfile()
         file = Puppet::Type::PFile.create(
-            :name => "/tmp/eventtestingA",
+            :name => name,
             :create => true
         )
         exec = Puppet::Type::Exec.create(
@@ -29,8 +30,6 @@ class TestEvents < Test::Unit::TestCase
             :subscribe => [[file.class.name, file.name]] 
         )
 
-        @@tmpfiles << "/tmp/eventtestingA"
-
         comp = newcomp("eventtesting", file, exec)
 
         trans = assert_events(comp, [:file_created], "events")
@@ -39,8 +38,9 @@ class TestEvents < Test::Unit::TestCase
     end
 
     def test_simplerequire
+        name = tempfile()
         file = Puppet::Type::PFile.create(
-            :name => "/tmp/eventtestingA",
+            :name => name,
             :create => true
         )
         exec = Puppet::Type::Exec.create(
@@ -50,7 +50,6 @@ class TestEvents < Test::Unit::TestCase
             :require => [[file.class.name, file.name]] 
         )
 
-        @@tmpfiles << "/tmp/eventtestingA"
 
         comp = Puppet::Type::Component.create(
             :name => "eventtesting"
@@ -67,14 +66,14 @@ class TestEvents < Test::Unit::TestCase
         assert_equal(0, trans.triggered?(exec, :refresh))
     end
 
-    def test_zladderrequire
+    def test_ladderrequire
         comps = {}
         objects = {}
-        fname = "/tmp/eventtestfuntest"
+        fname = tempfile()
         [:a, :b].each { |l|
             case l
             when :a
-                name = "/tmp/eventtesting%s" % l
+                name = tempfile() + l.to_s
                 objects[l] = Puppet::Type::PFile.create(
                     :name => name,
                     :create => true
