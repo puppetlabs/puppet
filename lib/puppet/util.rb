@@ -85,6 +85,16 @@ module Util
         return retval
     end
 
+    # Create a lock file while something is happening
+    def self.lock(file)
+        lock = file + ".lock"
+        while File.exists?(lock)
+            Puppet.debug "%s is locked" % file
+            sleep 0.1
+        end
+        yield
+    end
+
     # Create instance methods for each of the log levels.  This allows
     # the messages to be a little richer.  Most classes will be calling this
     # method.

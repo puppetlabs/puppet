@@ -33,22 +33,25 @@ module Puppet
             end
             begin
             #Puppet.debug "Loading statefile %s" % Puppet[:checksumfile]
-			File.open(Puppet[:checksumfile]) { |file|
-				file.each { |line|
-					myclass, key, value = line.split(@@splitchar)
+            Puppet::Util.lock(Puppet[:checksumfile]) {
+                File.open(Puppet[:checksumfile]) { |file|
+                    file.each { |line|
+                        myclass, key, value = line.split(@@splitchar)
 
-                    begin
-                        @@state[eval(myclass)][key] = Marshal::load(value)
-                    rescue => detail
-                        raise Puppet::Error,
-                            "Failed to load value for %s::%s => %s" % [
-                                myclass,key,detail
-                            ], caller
-                    end
-				}
-			}
+                        begin
+                            @@state[eval(myclass)][key] = Marshal::load(value)
+                        rescue => detail
+                            raise Puppet::Error,
+                                "Failed to load value for %s::%s => %s" % [
+                                    myclass,key,detail
+                                ], caller
+                        end
+                    }
+                }
+            }
             rescue => detail
                 Puppet.err "Could not read %s" % Puppet[:checksumfile]
+                raise
             end
 
             #Puppet.debug "Loaded state is %s" % @@state.inspect
@@ -78,14 +81,16 @@ module Puppet
                 Puppet.info "Creating state file %s" % Puppet[:checksumfile]
             end
 
-			File.open(Puppet[:checksumfile], File::CREAT|File::WRONLY, 0600) { |file|
-				@@state.each { |klass, thash|
-                    thash.each { |key,value|
-                        mvalue = Marshal::dump(value)
-                        file.puts([klass,key,mvalue].join(@@splitchar))
+            Puppet::Util.lock(Puppet[:checksumfile]) {
+                File.open(Puppet[:checksumfile], File::CREAT|File::WRONLY, 0600) { |file|
+                    @@state.each { |klass, thash|
+                        thash.each { |key,value|
+                            mvalue = Marshal::dump(value)
+                            file.puts([klass,key,mvalue].join(@@splitchar))
+                        }
                     }
-				}
-			}
+                }
+            }
 
             #Puppet.debug "Stored state is %s" % @@state.inspect
 		end
