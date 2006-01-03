@@ -5,78 +5,67 @@ require 'etc'
 require 'puppet/type'
 require 'puppet/type/typegen'
 
-#---------------------------------------------------------------
 class Puppet::Type::FileRecord < Puppet::Type::TypeGenerator
-    attr_accessor :fields, :namevar, :splitchar, :object
+    class << self
+        # The name of the record type.  Probably superfluous.
+        attr_accessor :name
 
-    @parameters = [:name, :splitchar, :fields, :namevar, :filetype, :regex, :joinchar]
-    @abstract = true
-    @metaclass = true
+        # What character we split on to convert from a line into a set of fields.
+        # This can be either a string or a regex and defaults to /\s+/
+        attr_accessor :fieldsep
 
-    @namevar = :name
-    @name = :filerecord
+        # The fields in this record type.
+        attr_accessor :fields
 
-    #---------------------------------------------------------------
+        # Which of the fields counts as the name of the record.  Defaults to the
+        # first field.
+        attr_accessor :namevar
+
+        # Which filetype this record type is associated with.  Essentially useless.
+        attr_accessor :filetype
+
+        # An optional regex to use to match fields.  This can be used instead
+        # of splitting based on a character and must use match sets to return
+        # the fields.  If this is not set, then a regex is created from the
+        # fieldsep.  If your regex is complicated enough that you have nested
+        # parentheses, then just set your fields up so that the non-field matches
+        # are nil.
+        attr_writer :regex
+
+        # The character(s) to use to join the records back together.  If this is
+        # not set, then 'fieldsep' will be used instead, which means that this
+        # *must* be set if 'fieldsep' is a regex or if the record regex is set.
+        attr_accessor :fieldjoin
+
+        # Some records (like cron jobs) don't have a name field, so we have to
+        # store the name in the previous comment.  Dern.  If we are doing this,
+        # it is assumed that some objects won't yet have names, so we'll generate
+        # names for those cases.
+        attr_accessor :extname
+    end
+
     def FileRecord.newtype(hash)
-        #shortname = hash[:name]
-        #hash[:name] = hash[:filetype].name.capitalize + hash[:name].capitalize
-        klass = super(hash)
-        #klass.name = shortname
-        klass.parameters = hash[:fields]
-        #klass.namevar = hash[:namevar]
-        klass.filetype = hash[:filetype]
-        hash.delete(:fields)
-        hash.delete(:namevar)
-        return klass
-    end
-    #---------------------------------------------------------------
+        # Provide some defaults.
+        newklass = Class.new(self)
 
-    #---------------------------------------------------------------
-    def FileRecord.fields=(ary)
-        @fields = ary
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def FileRecord.fields
-        return @fields
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def FileRecord.filetype
-        @filetype
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def FileRecord.filetype=(filetype)
-        if filetype.is_a?(String)
-            @filetype = Puppet::Type::FileType[filetype]
-        elsif filetype.is_a?(Puppet::Type::FileType)
-            @filetype = filetype
-        else
-            raise "Cannot use objects of type %s as filetypes" % filetype 
+        # If they've passed in values, then set them appropriately.
+        unless hash.empty?
+            hash.each { |param, val|
+                meth = param.to_s + "="
+                if self.respond_to? meth
+                    self.send(meth, val)
+                end
+            }
         end
-    end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    def FileRecord.joinchar=(char)
-        @joinchar = char
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def FileRecord.joinchar
-        unless defined? @joinchar
-            @joinchar = nil
+        # If they've provided a block, then yield to it
+        if block_given?
+            yield newklass
         end
-        @joinchar
-    end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
+        return newklass
+    end
+
     def FileRecord.match(object,line)
         matchobj = nil
         begin
@@ -93,30 +82,24 @@ class Puppet::Type::FileRecord < Puppet::Type::TypeGenerator
             return child
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    def FileRecord.regex=(regex)
-        @regex = regex
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
     def FileRecord.regex
-        # the only time @regex is allowed to be nil is if @splitchar is defined
+        # the only time @regex is allowed to be nil is if @fieldsep is defined
         if @regex.nil?
-            if @splitchar.nil?
-                raise "%s defined incorrectly -- splitchar or regex must be specified" %
+            if @fieldsep.nil?
+                raise Puppet::DevError,
+                    "%s defined incorrectly -- fieldsep or regex must be specified" %
                     self
             else
                 ary = []
                 text = @fields.collect { |field|
-                    "([^%s]*)" % @splitchar
-                }.join(@splitchar)
+                    "([^%s]*)" % @fieldsep
+                }.join(@fieldsep)
                 begin
                     @regex = Regexp.new(text)
                 rescue RegexpError => detail
-                    raise "Could not create splitregex from %s" % @splitchar
+                    raise Puppet::DevError,
+                        "Could not create splitregex from %s" % @fieldsep
                 end
                 debug("Created regexp %s" % @regex)
             end
@@ -124,39 +107,12 @@ class Puppet::Type::FileRecord < Puppet::Type::TypeGenerator
             begin
                 @regex = Regexp.new(@regex)
             rescue RegexpError => detail
-                raise "Could not create splitregex from %s" % @regex
+                raise Puppet::DevError, "Could not create splitregex from %s" % @regex
             end
         end
         return @regex
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    def FileRecord.splitchar=(char)
-        @splitchar = char
-        #@regex = %r{#{char}}
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def FileRecord.splitchar
-        return @splitchar
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    #def [](field)
-    #    @parameters[field]
-    #end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    #def []=(field,value)
-    #    @parameters[field] = value
-    #end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
     def ==(other)
         unless self.class == other.class
             return false
@@ -173,9 +129,7 @@ class Puppet::Type::FileRecord < Puppet::Type::TypeGenerator
         }
         return true
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def initialize(hash)
         if self.class == Puppet::Type::FileRecord
             self.class.newtype(hash)
@@ -187,9 +141,7 @@ class Puppet::Type::FileRecord < Puppet::Type::TypeGenerator
         #end
         super(hash)
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def match=(matchobj)
         @match = matchobj
         #puts "captures are [%s]" % [matchobj.captures]
@@ -198,13 +150,11 @@ class Puppet::Type::FileRecord < Puppet::Type::TypeGenerator
             #puts "%s => %s" % [field,@parameters[field]]
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def record=(record)
         begin
             ary = record.split(self.class.regex)
-        rescue RegexpError=> detail
+        rescue RegexpError => detail
             raise RegexpError.new(detail)
         end
         self.class.fields.each { |field|
@@ -212,9 +162,7 @@ class Puppet::Type::FileRecord < Puppet::Type::TypeGenerator
             #puts "%s => %s" % [field,@parameters[field]]
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def name
         if @parameters.include?(self.class.namevar)
             return @parameters[self.class.namevar]
@@ -223,9 +171,7 @@ class Puppet::Type::FileRecord < Puppet::Type::TypeGenerator
                 [self.class.namevar,self.class.to_s]
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def to_s
         ary = self.class.fields.collect { |field|
             if ! @parameters.include?(field)
@@ -233,10 +179,8 @@ class Puppet::Type::FileRecord < Puppet::Type::TypeGenerator
             else
                 @parameters[field]
             end
-        }.join(self.class.joinchar || self.class.splitchar)
+        }.join(self.class.fieldjoin || self.class.fieldsep)
     end
-    #---------------------------------------------------------------
 end
-#---------------------------------------------------------------
 
 # $Id$

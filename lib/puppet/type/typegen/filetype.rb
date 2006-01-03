@@ -1,150 +1,145 @@
-
 # parse and write configuration files using objects with minimal parsing abilities
 
 require 'puppet/type'
 require 'puppet/type/typegen'
 
 class Puppet::Type::FileType < Puppet::Type::TypeGenerator
-    attr_accessor :childtype
-
-    @parameters = [:name, :linesplit, :escapednewlines]
-    #@abstract = true
-    @metaclass = true
+    @parameters = [:name, :recordsep, :escapednewlines]
 
     @namevar = :name
     @name = :filetype
 
     @modsystem = true
 
-    #---------------------------------------------------------------
-    def FileType.newtype(hash)
-        unless hash.include?(:linesplit)
-            hash[:linesplit] = "\n"
+    class << self
+        # Which field in the record functions as the name of the record.
+        attr_accessor :namevar
+
+        # Does this filetype support escaped newlines?  Defaults to false.
+        attr_accessor :escapednewlines
+
+        # What do comments in this filetype look like? Defaults to /^#|^\s/
+        attr_accessor :comment
+
+        # What is the record separator?  Defaults to "\n".
+        attr_accessor :recordsep
+
+        # How do we separate records?  Normally we just turn the recordsep
+        # into a regex, but you can override that, or just not use the recordsep.
+        attr_writer :regex
+    end
+
+    # Add a new record to our filetype.  This should never be called on the FileType
+    # class itself, only on its subclasses.
+    def FileType.addrecord(hash = {})
+        if self == Puppet::Type::FileRecord
+            raise Puppet::DevError, "Cannot add records to the FileType base class"
         end
 
-        # i don't think there's any reason to 'super' this
-        #klass = Puppet::Type::TypeGenerator.newtype(hash)
-        klass = super(hash)
+        newrecord = Puppet::Type::FileRecord.newtype(hash)
+        newrecord.filetype = self
 
-        klass.escapednewlines = true
-        klass.namevar = :name
-        klass.parameters = [:name, :path, :complete]
+        if block_given?
+            yield newrecord
+        end
 
-        #klass.childtype = Puppet::Type::FileRecord.newtype(
-        #    :name => hash[:name] + "_record",
-        #    :splitchar => hash[:recordsplit],
-        #    :fields => hash[:fields],
-        #    :namevar => hash[:namevar]
-        #)
-        #klass.addrecord(
-        #    :name => hash[:name] + "_record",
-        #    :splitchar => hash[:recordsplit],
-        #    :fields => hash[:fields],
-        #    :namevar => hash[:namevar]
-        #)
-
-        return klass
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # currently not used
-    def FileType.addrecord(hash)
         unless defined? @records
-            @records = {}
-        end
-        hash[:filetype] = self
-        
-        # default to the naming field being the first field provided
-        unless hash.include?(:namevar)
-            hash[:namevar] = hash[:fields][0]
+            @records = []
         end
 
-        recordtype = Puppet::Type::FileRecord.newtype(hash)
-        @records[recordtype.name] = recordtype
+        @records << newrecord
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    def FileType.records
-        return @records
-    end
-    #---------------------------------------------------------------
+    # Remove all defined filetypes.  Mostly used for testing.
+    def self.clear
+        if defined? @subclasses
+            @subclasses.each { |sub|
+                sub.clear
+            }
+            @subclasses.clear
+        end
 
-    #---------------------------------------------------------------
-    def FileType.escapednewlines=(value)
-        @escnlines = value
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def FileType.escapednewlines
-        if ! defined? @escnlines or @escnlines.nil?
-            return false
-        else
-            return @escnlines
+        if defined? @records
+            @records.clear
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    def FileType.childtype
-        unless defined? @childtype
-            @childtype = nil
+    # Yield each record in turn, so we can iterate over each of them.
+    def self.eachrecord
+        @records.each { |record|
+            yield record
+        }
+    end
+
+    # Create a new file type.  You would generally provide an initialization block
+    # for this method:
+    #
+    #   FileType.newtype do |type|
+    #       @name = "cron"
+    #       type.addrecord do |record|
+    #           @name = "cronjob"
+    #           @splitchar = "\t"
+    #           @fields = [:minute, :hour, :monthday, :month, :weekday, :command]
+    #       end
+    #   end
+    #
+    # You don't actually have to provide anything at initialization time, but your
+    # filetype won't be much use if you don't at least provide it with some record
+    # types.  You will generally only have one record type, since comments are
+    # handled transparently, although you might have to define what looks like a
+    # comment (the default is anything starting with a '#' or any whitespace).
+    def FileType.newtype(hash = {})
+        unless defined? @subclasses
+            @subclasses = Hash.new
         end
-        return @childtype
-    end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    def FileType.childtype=(childtype)
-        @childtype = childtype
-    end
-    #---------------------------------------------------------------
+        # Provide some defaults.
+        newklass = Class.new(self) do
+            @escapednewlines = true
+            @namevar = :name
+            @comment = /^#|^\s/
+            @recordsep = "\n"
+        end
 
-    #---------------------------------------------------------------
+        # If they've passed in values, then set them appropriately.
+        unless hash.empty?
+            hash.each { |param, val|
+                meth = param.to_s + "="
+                if self.respond_to? meth
+                    self.send(meth, val)
+                end
+            }
+        end
+
+        # If they've provided a block, then yield to it
+        if block_given?
+            yield newklass
+        end
+
+        @subclasses << newklass
+        return newklass
+    end
+
+    # Return the defined regex or the recordsep converted to one.
     def FileType.regex
+        unless defined? @regex
+            @regex = %r{#{recordsep}}
+        end
         return @regex
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    def FileType.linesplit=(linesplit)
-        @regex = %r{#{linesplit}}
-        @linesplit = linesplit
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def FileType.linesplit
-        return @linesplit
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    #def [](name)
-    #    return @childhash[name]
-    #end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    #def []=(name,value)
-    #end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
     # we don't really have a 'less-than/greater-than' sense here
     # so i'm sticking with 'equals' until those make sense
     def ==(other)
         unless self.children.length == other.children.length
-            debug("file has %s records instead of %s" %
+            Puppet.debug("file has %s records instead of %s" %
                 [self.children.length, other.children.length])
             return self.children.length == other.children.length
         end
         equal = true
         self.zip(other.children) { |schild,ochild|
             unless schild == ochild
-                debug("%s has changed in %s" %
+                Puppet.debug("%s has changed in %s" %
                     [schild.name,self.name])
                 equal = false
                 break
@@ -153,9 +148,7 @@ class Puppet::Type::FileType < Puppet::Type::TypeGenerator
 
         return equal
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # create a new record with a block
     def add(type,&block)
         obj = self.class.records[type].new(self,&block)
@@ -165,15 +158,11 @@ class Puppet::Type::FileType < Puppet::Type::TypeGenerator
 
         return obj
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def children
         return @childary
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # remove a record
     def delete(name)
         if @childhash.has_key?(name)
@@ -185,17 +174,13 @@ class Puppet::Type::FileType < Puppet::Type::TypeGenerator
             raise "No such entry %s" % name
         end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def each
         @childary.each { |child|
             yield child
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # create a new file
     def initialize(hash)
         # if we are the FileType object itself, we create a new type
@@ -214,9 +199,7 @@ class Puppet::Type::FileType < Puppet::Type::TypeGenerator
         @childhash = {}
         super
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # this is where we're pretty different from other objects
     # we can choose to either reparse the existing file and compare
     # the objects, or we can write our file out and do an
@@ -227,15 +210,11 @@ class Puppet::Type::FileType < Puppet::Type::TypeGenerator
 
         return self == tmp
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     #def name
     #    return @file
     #end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     # read the whole file in and turn it into each of the appropriate
     # objects
     def retrieve
@@ -284,32 +263,24 @@ class Puppet::Type::FileType < Puppet::Type::TypeGenerator
             end
         }
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def sync
         #unless self.insync?
             self.write
         #end
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def to_s
         return @childary.collect { |child|
             child.to_s
-        }.join(self.class.linesplit) + self.class.linesplit
+        }.join(self.class.recordsep) + self.class.recordsep
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def write
         ::File.open(@file, "w") { |file|
             file.write(self.to_s)
         }
     end
-    #---------------------------------------------------------------
 end
-#---------------------------------------------------------------
 
 # $Id$

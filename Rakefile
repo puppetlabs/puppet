@@ -209,6 +209,7 @@ task :release => [
         :alltests,
         :update_version,
         :package,
+        :copy,
         :tag
       ] do
   

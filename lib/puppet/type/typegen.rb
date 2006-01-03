@@ -1,11 +1,8 @@
-
-# parse and write configuration files using objects with minimal parsing abilities
-
 require 'etc'
 require 'puppet/type'
 
 module Puppet
-    class Type
+class Type
 class TypeGenerator < Puppet::Type
     include Enumerable
 
@@ -19,57 +16,31 @@ class TypeGenerator < Puppet::Type
 
     @paramdoc[:name] = "..."
 
-    #---------------------------------------------------------------
+    class << self
+        attr_accessor :name
+    end
+
     def TypeGenerator.[](name)
         return @subclasses[name]
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    def TypeGenerator.inherited(subclass)
-        #subclass.initvars
-        super(subclass)
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # we don't need to 'super' here because type.rb already runs initvars
-    # in Type#inherited
     def TypeGenerator.initvars
         @subclasses = Hash.new(nil)
         super
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
-    def TypeGenerator.name
-        return @name
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    def TypeGenerator.name=(name)
-        @name = name
-    end
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
     def TypeGenerator.namevar
         return @namevar || :name
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def TypeGenerator.namevar=(namevar)
-        debug "Setting namevar for %s to %s" % [self,namevar]
+        Puppet.debug "Setting namevar for %s to %s" % [self,namevar]
         unless namevar.is_a? Symbol
             namevar = namevar.intern
         end
         @namevar = namevar
     end
-    #---------------------------------------------------------------
 
-    #---------------------------------------------------------------
     def TypeGenerator.newtype(arghash)
         unless defined? @parameters
             raise "Type %s is set up incorrectly" % self
@@ -139,9 +110,7 @@ class TypeGenerator < Puppet::Type
         Puppet::Type.buildtypehash
         return klass
     end
-    #---------------------------------------------------------------
 end
-#---------------------------------------------------------------
 end
 end
 
