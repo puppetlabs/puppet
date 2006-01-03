@@ -50,7 +50,6 @@ module Puppet
                 "default" => :DEFAULT,
                 "define" => :DEFINE,
                 "false" => :BOOLEAN,
-                "host" => :NODE,
                 "import" => :IMPORT,
                 "include" => :INCLUDE,
                 "inherits" => :INHERITS,
