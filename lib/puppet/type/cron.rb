@@ -116,21 +116,25 @@ module Puppet
             # out which event to return.  Finally, call @parent.sync to write the
             # cron tab.
             def sync
-                @parent.store
-
                 event = nil
                 if @is == :notfound
                     #@is = @should
                     event = :cron_created
+                    # We're the first state, so if we're creating the job
+                    # then sync all of the other states
+                    @parent.eachstate { |state|
+                        next if state == self
+                        state.sync(true)
+                    }
+
+                    @is = self.should
                 elsif self.should == :notfound
                     @parent.remove(true)
                     event = :cron_deleted
-                elsif self.should == @is
-                    self.err "Uh, they're both %s" % self.should
+                elsif self.insync?
                     return nil
                 else
-                    #@is = @should
-                    self.err "@is is %s" % @is
+                    @is = self.should
                     event = :cron_changed
                 end
 
@@ -138,6 +142,170 @@ module Puppet
                 
                 return event
             end
+        end
+
+        # A base class for all of the Cron parameters, since they all have
+        # similar argument checking going on.
+        class CronParam < Puppet::State
+            class << self
+                attr_reader :checking
+            end
+
+            def weekdays
+                %w{sunday monday tuesday wednesday thursday friday saturday}
+            end
+
+            def months
+                %w{january february march april may june july
+                    august september october november december}
+            end
+
+            # Normally this would retrieve the current value, but our state is not
+            # actually capable of doing so.  The Cron class does the actual tab
+            # retrieval, so all this method does is default to :notfound for @is.
+            def retrieve
+                unless defined? @is and ! @is.nil?
+                    @is = :notfound
+                end
+            end
+
+            # Determine whether the cron job should be destroyed, and figure
+            # out which event to return.  Finally, call @parent.sync to write the
+            # cron tab.
+            def sync(nostore = false)
+                event = nil
+                if @is == :notfound
+                    @is = self.should
+                    event = :cron_created
+                elsif self.should == :notfound
+                    @parent.remove(true)
+                    event = :cron_deleted
+                elsif self.insync?
+                    return nil
+                else
+                    @is = self.should
+                    event = :cron_changed
+                end
+
+                unless nostore
+                    @parent.store
+                end
+                
+                return event
+            end
+
+            # A method used to do parameter input handling.  Converts integers
+            # in string form to actual integers, and returns the value if it's
+            # an integer or false if it's just a normal string.
+            def numfix(num)
+                if num =~ /^\d+$/
+                    return num.to_i
+                elsif num.is_a?(Integer)
+                    return num
+                else
+                    return false
+                end
+            end
+
+            # Verify that a number is within the specified limits.  Return the
+            # number if it is, or false if it is not.
+            def limitcheck(num, lower, upper)
+                if num >= lower and num <= upper
+                    return num
+                else
+                    return false
+                end
+            end
+
+            # Verify that a value falls within the specified array.  Does case
+            # insensitive matching, and supports matching either the entire word
+            # or the first three letters of the word.
+            def alphacheck(value, ary)
+                tmp = value.downcase
+                if tmp.length == 3
+                    ary.each_with_index { |name, index|
+                        if name =~ /#{tmp}/i
+                            return index
+                        end
+                    }
+                else
+                    if ary.include?(tmp)
+                        return ary.index(tmp)
+                    end
+                end
+
+                return false
+            end
+
+            def should_to_s
+                if @should.empty?
+                    return "*"
+                else
+                    return @should.join(",")
+                end
+            end
+
+            # The method that does all of the actual parameter value
+            # checking; called by all of the +param<name>=+ methods.
+            # Requires the value, type, and bounds, and optionally supports
+            # a boolean of whether to do alpha checking, and if so requires
+            # the ary against which to do the checking.
+            def validate(value, lower, upper, arymethod = nil)
+                retval = nil
+                if num = numfix(value)
+                    retval = limitcheck(num, lower, upper)
+                elsif arymethod
+                    retval = alphacheck(value, send(arymethod))
+                end
+
+                if retval
+                    return retval
+                else
+                    raise Puppet::Error, "%s is not a valid %s" %
+                        [value, self.class.name]
+                end
+            end
+
+            def shouldprocess(value)
+                val = validate(value, *self.class.checking)
+                return val.to_s
+            end
+        end
+
+        class CronMinute < CronParam
+            @name = :minute
+            @checking = [0, 59]
+            @doc = "The minute at which to run the cron job.
+                Optional; if specified, must be between 0 and 59, inclusive."
+        end
+
+        class CronHour < CronParam
+            @name = :hour
+            @checking = [0, 23]
+            @doc = "The hour at which to run the cron job. Optional;
+                if specified, must be between 0 and 23, inclusive."
+        end
+
+        class CronWeekday < CronParam
+            @name = :weekday
+            @checking = [0, 6, :weekdays]
+            @doc = "The weekday on which to run the command.
+                Optional; if specified, must be between 0 and 6, inclusive, with
+                0 being Sunday, or must be the name of the day (e.g., Tuesday)."
+        end
+
+        class CronMonth < CronParam
+            @name = :month
+            @checking = [1, 12, :months]
+            @doc = "The month of the year.  Optional; if specified
+                must be between 1 and 12 or the month name (e.g., December)."
+        end
+
+        class CronMonthDay < CronParam
+            @name = :monthday
+            @checking = [1, 31]
+            @doc = "The day of the month on which to run the
+                command.  Optional; if specified, must be between 1 and 31."
         end
     end
 
@@ -148,17 +316,16 @@ module Puppet
         # and is used to manage the job.
         class Cron < Type
             @states = [
-                Puppet::State::CronCommand
+                Puppet::State::CronCommand,
+                Puppet::State::CronMinute,
+                Puppet::State::CronHour,
+                Puppet::State::CronWeekday,
+                Puppet::State::CronMonth,
+                Puppet::State::CronMonthDay
             ]
-
             @parameters = [
-                :name,
                 :user,
-                :minute,
-                :hour,
-                :weekday,
-                :month,
-                :monthday
+                :name
             ]
 
             @paramdoc[:name] = "The symbolic name of the cron job.  This name
@@ -166,17 +333,6 @@ module Puppet
             @paramdoc[:user] = "The user to run the command as.  This user must
                 be allowed to run cron jobs, which is not currently checked by
                 Puppet."
-            @paramdoc[:minute] = "The minute at which to run the cron job.
-                Optional; if specified, must be between 0 and 59, inclusive."
-            @paramdoc[:hour] = "The hour at which to run the cron job. Optional;
-                if specified, must be between 0 and 23, inclusive."
-            @paramdoc[:weekday] = "The weekday on which to run the command.
-                Optional; if specified, must be between 0 and 6, inclusive, with
-                0 being Sunday, or must be the name of the day (e.g., Tuesday)."
-            @paramdoc[:month] = "The month of the year.  Optional; if specified
-                must be between 1 and 12 or the month name (e.g., December)."
-            @paramdoc[:monthday] = "The day of the month on which to run the
-                command.  Optional; if specified, must be between 1 and 31."
 
             @doc = "Installs and manages cron jobs.  All fields except the command 
                 and the user are optional, although specifying no periodic
@@ -195,11 +351,6 @@ module Puppet
             @synced = {}
 
             @instances = {}
-
-            @@weekdays = %w{sunday monday tuesday wednesday thursday friday saturday}
-
-            @@months = %w{january february march april may june july
-                august september october november december}
 
             case Facter["operatingsystem"].value
             when "SunOS":
@@ -289,17 +440,21 @@ module Puppet
                         # add other comments to the list as they are
                         @instances[user] << line 
                     else
-                        ary = line.split(" ")
-                        fields().each { |param|
-                            value = ary.shift
-                            unless value == "*"
-                                hash[param] = value
-                            end
-                        }
-
-                        if ary.length > 0
-                            hash[:command] += " " + ary.join(" ")
+                        if match = /^(\S+) (\S+) (\S+) (\S+) (\S+) (.+)$/.match(line)
+                            fields().zip(match.captures).each { |param, value|
+                                unless value == "*"
+                                    unless param == :command
+                                        if value =~ /,/
+                                            value = value.split(",")
+                                        end
+                                    end
+                                    hash[param] = value
+                                end
+                            }
+                        else
+                            raise Puppet::Error, "Could not match '%s'" % line
                         end
+
                         cron = nil
                         unless name
                             Puppet.info "Autogenerating name for %s" % hash[:command]
@@ -348,7 +503,6 @@ module Puppet
             # method.  Returns nil if there was no cron job; else, returns the
             # number of cron instances found.
             def self.retrieve(user)
-                #%x{crontab -u #{user} -l 2>/dev/null}.split("\n").each { |line|
                 text = @crontype.read(user)
                 if $? != 0
                     # there is no cron file
@@ -398,99 +552,6 @@ module Puppet
                 end
             end
 
-            # A method used to do parameter input handling.  Converts integers
-            # in string form to actual integers, and returns the value if it's
-            # an integer or false if it's just a normal string.
-            def numfix(num)
-                if num =~ /^\d+$/
-                    return num.to_i
-                elsif num.is_a?(Integer)
-                    return num
-                else
-                    return false
-                end
-            end
-
-            # Verify that a number is within the specified limits.  Return the
-            # number if it is, or false if it is not.
-            def limitcheck(num, lower, upper)
-                if num >= lower and num <= upper
-                    return num
-                else
-                    return false
-                end
-            end
-
-            # Verify that a value falls within the specified array.  Does case
-            # insensitive matching, and supports matching either the entire word
-            # or the first three letters of the word.
-            def alphacheck(value, ary)
-                tmp = value.downcase
-                if tmp.length == 3
-                    ary.each_with_index { |name, index|
-                        if name =~ /#{tmp}/i
-                            return index
-                        end
-                    }
-                else
-                    if ary.include?(tmp)
-                        return ary.index(tmp)
-                    end
-                end
-
-                return false
-            end
-
-            # The method that does all of the actual parameter value checking; called
-            # by all of the +param<name>=+ methods.  Requires the value, type, and
-            # bounds, and optionally supports a boolean of whether to do alpha
-            # checking, and if so requires the ary against which to do the checking.
-            def parameter(values, type, lower, upper, alpha = nil, ary = nil)
-                unless values.is_a?(Array)
-                    if values =~ /,/
-                        values = values.split(/,/)
-                    else
-                        values = [values]
-                    end
-                end
-
-                @parameters[type] = values.collect { |value|
-                    retval = nil
-                    if num = numfix(value)
-                        retval = limitcheck(num, lower, upper)
-                    elsif alpha
-                        retval = alphacheck(value, ary)
-                    end
-
-                    if retval
-                        @parameters[type] = retval
-                    else
-                        raise Puppet::Error, "%s is not a valid %s" %
-                            [value, type]
-                    end
-                }
-            end
-
-            def paramminute=(value)
-                parameter(value, :minute, 0, 59)
-            end
-
-            def paramhour=(value)
-                parameter(value, :hour, 0, 23)
-            end
-
-            def paramweekday=(value)
-                parameter(value, :weekday, 0, 6, true, @@weekdays)
-            end
-
-            def parammonth=(value)
-                parameter(value, :month, 1, 12, true, @@months)
-            end
-
-            def parammonthday=(value)
-                parameter(value, :monthday, 1, 31)
-            end
-
             def paramuser=(user)
                 require 'etc'
 
@@ -511,7 +572,7 @@ module Puppet
                 end
 
                 self.class.retrieve(@parameters[:user])
-                @states[:command].retrieve
+                self.eachstate { |st| st.retrieve }
             end
 
             # Write the entire user's cron tab out.
@@ -523,17 +584,17 @@ module Puppet
             # as a comment above the cron job, in the form '# Puppet Name: <name>'.
             def to_cron
                 hash = {:command => @states[:command].should || @states[:command].is }
+
+                # Collect all of the values that we have
                 self.class.fields().reject { |f| f == :command }.each { |param|
-                    hash[param] = @parameters[param] || "*"
+                    if @states.include?(param)
+                        hash[param] = @states[param].should_to_s
+                    end
                 }
 
                 return "# Puppet Name: %s\n" % self.name +
                     self.class.fields.collect { |f|
-                        if hash[f].is_a?(Array)
-                            hash[f].join(",")
-                        else
-                            hash[f]
-                        end
+                        hash[f] || "*"
                     }.join(" ")
             end
         end

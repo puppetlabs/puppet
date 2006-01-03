@@ -12,7 +12,15 @@ require 'puppet/type/cron'
 require 'test/unit'
 require 'facter'
 
-class TestExec < Test::Unit::TestCase
+
+# Here we just want to unit-test our cron type, to verify that 
+class TestCronType < Test::Unit::TestCase
+	include TestPuppet
+
+
+end
+
+class TestCron < Test::Unit::TestCase
 	include TestPuppet
     def setup
         super
@@ -28,6 +36,38 @@ class TestExec < Test::Unit::TestCase
         end
         # god i'm lazy
         @crontype = Puppet::Type::Cron
+
+        # Here we just create a fake cron type that answers to all of the methods
+        # but does not modify our actual system.
+        unless defined? @fakecrontype
+            @fakecrontype = Class.new {
+                @tabs = Hash.new("")
+                def self.clear
+                    @tabs = Hash.new("")
+                end
+
+                def self.read(user)
+                    @tabs[user]
+                end
+
+                def self.write(user, text)
+                    @tabs[user] = text
+                end
+
+                def self.remove(user)
+                    @tabs.delete(user)
+                end
+            }
+
+            @oldcrontype = @crontype.crontype
+            @crontype.crontype = @fakecrontype
+        end
+    end
+
+    def teardown
+        @crontype.crontype = @oldcrontype
+        @fakecrontype.clear
+        super
     end
 
     # Back up the user's existing cron tab if they have one.
@@ -107,7 +147,7 @@ class TestExec < Test::Unit::TestCase
         assert_nothing_raised {
             cron = @crontype.create(
                 :name => name,
-                :command => "date",
+                :command => "date > /dev/null",
                 :user => @me
             )
         }
@@ -116,8 +156,53 @@ class TestExec < Test::Unit::TestCase
         assert_nothing_raised {
             str = cron.to_cron
         }
-        assert_equal(str, "# Puppet Name: #{name}\n* * * * * date",
+
+        assert_equal(str, "# Puppet Name: #{name}\n* * * * * date > /dev/null",
             "Cron did not generate correctly")
+    end
+
+    # Test that changing any field results in the cron tab being rewritten.
+    # it directly
+    def test_any_field_changes
+        cron = nil
+        # make the cron
+        name = "yaytest"
+        assert_nothing_raised {
+            cron = @crontype.create(
+                :name => name,
+                :command => "date > /dev/null",
+                :month => "May",
+                :user => @me
+            )
+        }
+        assert_nothing_raised {
+            cron.sync
+        }
+        assert_nothing_raised {
+            cron[:month] = "June"
+        }
+        comp = newcomp(cron)
+
+        assert_events(comp, [:cron_changed], "did not change cron job")
+    end
+
+    # Test that a cron job with spaces at the end doesn't get rewritten
+    def test_trailingspaces
+        cron = nil
+        # make the cron
+        name = "yaytest"
+        assert_nothing_raised {
+            cron = @crontype.create(
+                :name => name,
+                :command => "date > /dev/null ",
+                :month => "May",
+                :user => @me
+            )
+        }
+        comp = newcomp(cron)
+
+        assert_events(comp, [:cron_created], "did not create cron job")
+        assert_events(comp, [], "cron job got rewritten")
     end
     
     # Test that comments are correctly retained
@@ -162,16 +247,13 @@ class TestExec < Test::Unit::TestCase
 
     # Test adding a cron when there is currently no file.
     def test_mkcronwithnotab
-        cronback
         Puppet::Type::Cron.crontype.remove(@me)
 
         cron = mkcron("testwithnotab")
         cyclecron(cron)
-        cronrestore
     end
 
     def test_mkcronwithtab
-        cronback
         Puppet::Type::Cron.crontype.remove(@me)
         Puppet::Type::Cron.crontype.write(@me,
 "1 1 1 1 * date > %s/crontesting\n" % testdir()
@@ -179,11 +261,9 @@ class TestExec < Test::Unit::TestCase
 
         cron = mkcron("testwithtab")
         cyclecron(cron)
-        cronrestore
     end
 
     def test_makeandretrievecron
-        cronback
         Puppet::Type::Cron.crontype.remove(@me)
 
         name = "storeandretrieve"
@@ -198,20 +278,19 @@ class TestExec < Test::Unit::TestCase
 
         assert(cron = Puppet::Type::Cron[name], "Could not retrieve named cron")
         assert_instance_of(Puppet::Type::Cron, cron)
-        cronrestore
     end
 
     # Do input validation testing on all of the parameters.
     def test_arguments
         values = {
             :monthday => {
-                :valid => [ 1, 13, "1,30" ],
+                :valid => [ 1, 13, "1" ],
                 :invalid => [ -1, 0, 32 ]
             },
             :weekday => {
-                :valid => [ 0, 3, 6, "1,2", "tue", "wed",
+                :valid => [ 0, 3, 6, "1", "tue", "wed",
                     "Wed", "MOnday", "SaTurday" ],
-                :invalid => [ -1, 7, "1, 3", "tues", "teusday", "thurs" ]
+                :invalid => [ -1, 7, "13", "tues", "teusday", "thurs" ]
             },
             :hour => {
                 :valid => [ 0, 21, 23 ],
@@ -238,7 +317,7 @@ class TestExec < Test::Unit::TestCase
                         }
 
                         if value.is_a?(Integer)
-                            assert_equal([value], cron[param],
+                            assert_equal(value.to_s, cron.should(param),
                                 "Cron value was not set correctly")
                         end
                     when :invalid:
