@@ -12,6 +12,7 @@ module Puppet
 
     module NameService
         module NetInfo
+            # Verify that we've got all of the commands we need.
             def self.test
                 system("which niutil > /dev/null 2>&1")
 
@@ -32,6 +33,7 @@ module Puppet
                 end
             end
 
+            # Does the object already exist?
             def self.exists?(obj)
                 cmd = "nidump -r /%s/%s /" %
                     [obj.class.netinfodir, obj.name]
@@ -45,6 +47,7 @@ module Puppet
                 end
             end
 
+            # Attempt to flush the database, but this doesn't seem to work at all.
             def self.flush
                 output = %x{lookupd -flushcache 2>&1}
 
@@ -54,10 +57,12 @@ module Puppet
             end
 
             class NetInfoState < POSIX::POSIXState
+                # Should we do all of the changes at once?
                 def self.allatonce?
                     false
                 end
 
+                # Similar to posixmethod, what key do we use to get data?
                 def self.netinfokey
                     if defined? @netinfokey and @netinfokey
                         return @netinfokey
@@ -66,6 +71,7 @@ module Puppet
                     end
                 end
 
+                # Retrieve the data, yo.
                 def retrieve
                     NetInfo.flush
                     dir = @parent.class.netinfodir
@@ -102,6 +108,7 @@ module Puppet
                     end
                 end
 
+                # How to add an object.
                 def addcmd
                     creatorcmd("-create")
                 end

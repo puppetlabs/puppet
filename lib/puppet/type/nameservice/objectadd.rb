@@ -2,6 +2,7 @@ require 'puppet'
 
 module Puppet
     class State
+        # The flag to use to add an object
         def self.objectaddflag
             if defined? @objectaddflag and @objectaddflag
                 return @objectaddflag
@@ -25,6 +26,7 @@ module Puppet
                 end
             end
 
+            # Does the object already exist?
             def self.exists?(obj)
                 if obj.getinfo
                     return true
