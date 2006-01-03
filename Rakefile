@@ -33,6 +33,8 @@ else
   PKG_VERSION = CURRENT_VERSION
 end
 
+GEMDIR = "/export/docroots/reductivelabs.com/htdocs/downloads/gems"
+TARDIR = "/export/docroots/reductivelabs.com/htdocs/downloads/puppet"
 
 # The default task is run if rake is given no explicit arguments.
 
@@ -280,6 +282,14 @@ task :update_version => [:prerelease] do
     end
 end
 
+desc "Copy the newly created package into the downloads directory"
+task :copy => [:prerelease] do
+    sh %{cp pkg/puppet-#{PKG_VERSION}.gem #{GEMDIR}}
+    sh %{generate_yaml_index.rb -d #{GEMDIR}}
+    sh %{cp pkg/puppet-#{PKG_VERSION}.tgz #{TARDIR}}
+    sh %{ln -sf puppet-#{PKG_VERSION}.tgz #{TARDIR}/puppet-latest.tgz}
+end
+
 desc "Tag all the SVN files with the latest release number (REL=x.y.z)"
 task :tag => [:prerelease] do
     reltag = "REL_#{PKG_VERSION.gsub(/\./, '_')}"
@@ -288,7 +298,7 @@ task :tag => [:prerelease] do
     if ENV['RELTEST']
         announce "Release Task Testing, skipping SVN tagging"
     else
-        #sh %{svn copy ../trunk/ ../tags/#{reltag}}
+        sh %{svn copy ../trunk/ ../tags/#{reltag}}
     end
 end
 
