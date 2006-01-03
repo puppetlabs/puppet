@@ -86,13 +86,20 @@ module Util
     end
 
     # Create a lock file while something is happening
-    def self.lock(file)
-        lock = file + ".lock"
+    def self.lock(*opts)
+        lock = opts[0] + ".lock"
         while File.exists?(lock)
-            Puppet.debug "%s is locked" % file
+            #Puppet.debug "%s is locked" % opts[0]
             sleep 0.1
         end
-        yield
+        File.open(lock, "w") { |f| f.print " "; f.flush }
+        begin
+            File.open(*opts) { |file| yield file }
+        rescue
+            raise
+        ensure
+            File.delete(lock)
+        end
     end
 
     # Create instance methods for each of the log levels.  This allows

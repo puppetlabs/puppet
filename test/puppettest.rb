@@ -98,6 +98,7 @@ module TestPuppet
         }
         @@tmppids.clear
         Puppet::Type.allclear
+        Puppet::Storage.clear
         Puppet.clear
 
         # reset all of the logs

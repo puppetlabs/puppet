@@ -29,6 +29,12 @@ class TestParsedFile < Test::Unit::TestCase
             Puppet::Storage.store
         }
         assert_nothing_raised {
+            Puppet::Storage.clear
+        }
+        assert_nothing_raised {
+            Puppet::Storage.load
+        }
+        assert_nothing_raised {
             state = Puppet::Storage.state(hash)
         }
 
@@ -39,7 +45,7 @@ class TestParsedFile < Test::Unit::TestCase
     # are reading or writing the file at once
     # so we need to test that
     def test_multiwrite
-        value = {:a => :b, :c => :d}
+        value = {:a => :b}
         threads = []
         9.times { |a|
             threads << Thread.new {
@@ -47,6 +53,7 @@ class TestParsedFile < Test::Unit::TestCase
                     assert_nothing_raised {
                         Puppet::Storage.load
                         state = Puppet::Storage.state(value)
+                        value.each { |k,v| state[k] = v }
                         state[:e] = rand(100)
                         Puppet::Storage.store
                     }

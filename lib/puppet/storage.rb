@@ -1,3 +1,5 @@
+require 'yaml'
+
 module Puppet
     # a class for storing state
 	class Storage
@@ -31,28 +33,26 @@ module Puppet
                 Puppet.info "Statefile %s does not exist" % Puppet[:checksumfile]
                 return
             end
-            begin
             #Puppet.debug "Loading statefile %s" % Puppet[:checksumfile]
-            Puppet::Util.lock(Puppet[:checksumfile]) {
-                File.open(Puppet[:checksumfile]) { |file|
-                    file.each { |line|
-                        myclass, key, value = line.split(@@splitchar)
-
-                        begin
-                            @@state[eval(myclass)][key] = Marshal::load(value)
-                        rescue => detail
-                            raise Puppet::Error,
-                                "Failed to load value for %s::%s => %s" % [
-                                    myclass,key,detail
-                                ], caller
-                        end
-                    }
-                }
+            Puppet::Util.lock(Puppet[:checksumfile]) { |file|
+                #@@state = Marshal.load(file)
+                @@state = YAML.load(file)
+                #File.open(Puppet[:checksumfile]) { |file|
+                #    file.each { |line|
+                #        line.chomp!
+                #        myclass, key, value = line.split(@@splitchar)
+#
+#                        begin
+#                            @@state[eval(myclass)][key] = Marshal::load(value)
+#                        rescue => detail
+#                            raise Puppet::Error,
+#                                "Failed to load value for %s::%s => %s" % [
+#                                    myclass,key,detail
+#                                ], caller
+#                        end
+#                    }
+                #}
             }
-            rescue => detail
-                Puppet.err "Could not read %s" % Puppet[:checksumfile]
-                raise
-            end
 
             #Puppet.debug "Loaded state is %s" % @@state.inspect
 		end
@@ -61,8 +61,7 @@ module Puppet
             unless myclass.is_a? Class
                 myclass = myclass.class
             end
-            result = @@state[myclass]
-            return result
+            return @@state[myclass.to_s]
 		end
 
 		def self.store
@@ -81,18 +80,20 @@ module Puppet
                 Puppet.info "Creating state file %s" % Puppet[:checksumfile]
             end
 
-            Puppet::Util.lock(Puppet[:checksumfile]) {
-                File.open(Puppet[:checksumfile], File::CREAT|File::WRONLY, 0600) { |file|
-                    @@state.each { |klass, thash|
-                        thash.each { |key,value|
-                            mvalue = Marshal::dump(value)
-                            file.puts([klass,key,mvalue].join(@@splitchar))
-                        }
-                    }
-                }
+            Puppet::Util.lock(Puppet[:checksumfile], File::CREAT|File::WRONLY, 0600) { |file|
+                file.print YAML.dump(@@state)
+                #file.puts(Marshal::dump(@@state))
+                #File.open(Puppet[:checksumfile], File::CREAT|File::WRONLY, 0600) { |file|
+                #    @@state.each { |klass, thash|
+                #        thash.each { |key,value|
+                #            Puppet.warning "Storing: %s %s %s" %
+                #                [klass, key.inspect, value.inspect]
+                #            mvalue = Marshal::dump(value)
+                #            file.puts([klass,key,mvalue].join(@@splitchar))
+                #        }
+                #    }
+                #}
             }
-
-            #Puppet.debug "Stored state is %s" % @@state.inspect
 		end
 	end
 end
