@@ -292,7 +292,7 @@ task :update_version => [:prerelease] do
         open("lib/puppet.rb") do |rakein|
             open("lib/puppet.rb.new", "w") do |rakeout|
                 rakein.each do |line|
-                    if line =~ /^\s+PUPPETVERSION\s*=\s*/
+                    if line =~ /^\s*PUPPETVERSION\s*=\s*/
                         rakeout.puts "PUPPETVERSION = '#{PKG_VERSION}'"
                     else
                         rakeout.puts line
@@ -328,7 +328,7 @@ task :tag => [:prerelease] do
         announce "Release Task Testing, skipping SVN tagging"
     else
         sh %{svn copy ../trunk/ ../tags/#{reltag}}
-        sh %{cd ../tags; svn ci -m "Adding release tag #{reltag}}
+        sh %{cd ../tags; svn ci -m "Adding release tag #{reltag}"}
     end
 end
 
