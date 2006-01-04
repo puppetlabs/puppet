@@ -97,62 +97,63 @@ module Puppet
                 self.mount("/RPC2", Puppet::Server::Servlet, @handlers)
             end
         end
-    end
 
-    class Server
-        # the base class for the different handlers
-        class Handler
-            attr_accessor :server
-            @subclasses = []
+        class Server
+            # the base class for the different handlers
+            class Handler
+                attr_accessor :server
+                @subclasses = []
 
-            def self.each
-                @subclasses.each { |c| yield c }
+                def self.each
+                    @subclasses.each { |c| yield c }
+                end
+
+                def self.handler(name)
+                    @subclasses.find { |h|
+                        h.name == name
+                    }
+                end
+
+                def self.inherited(sub)
+                    @subclasses << sub
+                end
+
+                def self.interface
+                    if defined? @interface
+                        return @interface
+                    else
+                        raise Puppet::DevError, "Handler %s has no defined interface" %
+                            self
+                    end
+                end
+
+                def self.name
+                    unless defined? @name
+                        @name = self.to_s.sub(/.+::/, '').intern
+                    end
+
+                    return @name
+                end
+
+                def initialize(hash = {})
+                end
             end
 
-            def self.handler(name)
-                @subclasses.find { |h|
-                    h.name == name
+            
+            class ServerStatus < Handler
+
+                @interface = XMLRPC::Service::Interface.new("status") { |iface|
+                    iface.add_method("int status()")
                 }
-            end
 
-            def self.inherited(sub)
-                @subclasses << sub
-            end
+                @name = :Status
 
-            def self.interface
-                if defined? @interface
-                    return @interface
-                else
-                    raise Puppet::DevError, "Handler %s has no defined interface" %
-                        self
+                def status(status = nil, client = nil, clientip = nil)
+                    return 1
                 end
             end
 
-            def self.name
-                unless defined? @name
-                    @name = self.to_s.sub(/.+::/, '').intern
-                end
-
-                return @name
-            end
-
-            def initialize(hash = {})
-            end
         end
-
-        class ServerStatus < Handler
-
-            @interface = XMLRPC::Service::Interface.new("status") { |iface|
-                iface.add_method("int status()")
-            }
-
-            @name = :Status
-
-            def status(status = nil, client = nil, clientip = nil)
-                return 1
-            end
-        end
-
     end
 
     #---------------------------------------------------------------

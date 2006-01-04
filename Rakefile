@@ -7,17 +7,17 @@ rescue Exception
     nil
 end
 
+require 'rdoc/rdoc'
 require 'rake/clean'
 require 'rake/testtask'
 
-#require 'rake/rdoctask'
-#CLEAN.include('**/*.o')
-#CLOBBER.include('doc/*')
+require 'rake/rdoctask'
+CLEAN.include('**/*.o')
+CLOBBER.include('doc/*')
 
 def announce(msg='')
     STDERR.puts msg
 end
-
 
 # Determine the current version
 
@@ -33,6 +33,7 @@ else
   PKG_VERSION = CURRENT_VERSION
 end
 
+DOWNDIR = "/export/docroots/reductivelabs.com/htdocs/downloads"
 
 # The default task is run if rake is given no explicit arguments.
 
@@ -45,16 +46,16 @@ task :u => :unittests
 task :a => :alltests
 
 Rake::TestTask.new(:alltests) do |t|
-    t.test_files = FileList['test/tc*.rb']
+    t.test_files = FileList['test/*/*.rb']
     t.warning = true
     t.verbose = false
 end
 
-Rake::TestTask.new(:unittests) do |t|
-    t.test_files = FileList['test/test']
-    t.warning = true
-    t.verbose = false
-end
+#Rake::TestTask.new(:unittests) do |t|
+#    t.test_files = FileList['test/test']
+#    t.warning = true
+#    t.verbose = false
+#end
 
 # SVN Tasks ----------------------------------------------------------
 # ... none.
@@ -68,14 +69,39 @@ end
 
 # Create a task to build the RDOC documentation tree.
 
-#rd = Rake::RDocTask.new("rdoc") { |rdoc|
-#  rdoc.rdoc_dir = 'html'
-#  rdoc.template = 'css2'
-#  rdoc.title    = "Puppet"
-#  rdoc.options << '--line-numbers' << '--inline-source' << '--main' << 'README'
-#  rdoc.rdoc_files.include('README', 'LICENSE', 'TODO', 'CHANGELOG')
-#  rdoc.rdoc_files.include('lib/**/*.rb', 'doc/**/*.rdoc')
+#Rake::RDocTask.new("ri") { |rdoc|
+#    #rdoc.rdoc_dir = 'html'
+#    #rdoc.template = 'html'
+#    rdoc.title    = "Puppet"
+#    rdoc.options << '--ri' << '--line-numbers' << '--inline-source' << '--main' << 'README'
+#    rdoc.rdoc_files.include('README', 'LICENSE', 'TODO', 'CHANGELOG')
+#    rdoc.rdoc_files.include('lib/**/*.rb', 'doc/**/*.rdoc')
 #}
+
+Rake::RDocTask.new(:html) { |rdoc|
+    rdoc.rdoc_dir = 'html'
+    rdoc.template = 'html'
+    rdoc.title    = "Puppet"
+    rdoc.options << '--line-numbers' << '--inline-source' << '--main' << 'README'
+    rdoc.rdoc_files.include('README', 'LICENSE', 'TODO', 'CHANGELOG')
+    rdoc.rdoc_files.include('lib/**/*.rb')
+    CLEAN.include("html")
+}
+
+task :ri do |ri|
+    files = ['README', 'LICENSE', 'TODO', 'CHANGELOG'] + Dir.glob('lib/**/*.rb')
+    puts "files are \n%s" % files.join("\n")
+    begin
+        ri = RDoc::RDoc.new
+        ri.document(["--ri-site"] + files)
+    rescue RDoc::RDocError => detail
+        puts "Failed to build docs: %s" % detail
+        return nil
+    rescue LoadError
+        puts "Missing rdoc; cannot build documentation"
+        return nil
+    end
+end
 
 # ====================================================================
 # Create a task that will package the Rake software into distributable
@@ -111,7 +137,10 @@ the configuration.
 
         #### Dependencies and requirements.
 
-        s.add_dependency('facter', '>= 1.0.0')
+        # I'd love to explicitly list all of the libraries that I need,
+        # but gems seem to only be able to handle dependencies on other
+        # gems, which is, um, stupid.
+        s.add_dependency('facter', '>= 1.0.1')
         #s.requirements << ""
 
         s.files = PKG_FILES.to_a
@@ -128,12 +157,12 @@ the configuration.
 
         #### Documentation and testing.
 
-        s.has_rdoc = false
+        s.has_rdoc = true
         #s.extra_rdoc_files = rd.rdoc_files.reject { |fn| fn =~ /\.rb$/ }.to_a
-        #s.rdoc_options <<
-        #  '--title' <<  'Puppet - Configuration Management' <<
-        #  '--main' << 'README' <<
-        #  '--line-numbers'
+        s.rdoc_options <<
+            '--title' <<  'Puppet - Configuration Management' <<
+            '--main' << 'README' <<
+            '--line-numbers'
         s.test_file = "test/test"
 
         #### Signing key and cert chain
@@ -145,13 +174,14 @@ the configuration.
         s.author = "Luke Kanies"
         s.email = "dev@reductivelabs.com"
         s.homepage = "http://reductivelabs.com/projects/puppet"
-        #s.rubyforge_project = "puppet"
+        s.rubyforge_project = "puppet"
     }
 
     Rake::GemPackageTask.new(spec) { |pkg|
         #pkg.need_zip = true
         pkg.need_tar = true
     }
+    CLEAN.include("pkg")
 end
 
 # Misc tasks =========================================================
@@ -207,6 +237,7 @@ task :release => [
         :prerelease,
         :clobber,
         :alltests,
+        :rdoc,
         :update_version,
         :package,
         :copy,
@@ -262,7 +293,7 @@ task :update_version => [:prerelease] do
         open("lib/puppet.rb") do |rakein|
             open("lib/puppet.rb.new", "w") do |rakeout|
                 rakein.each do |line|
-                    if line =~ /^PUPPETVERSION\s*=\s*/
+                    if line =~ /^\s+PUPPETVERSION\s*=\s*/
                         rakeout.puts "PUPPETVERSION = '#{PKG_VERSION}'"
                     else
                         rakeout.puts line
@@ -280,6 +311,15 @@ task :update_version => [:prerelease] do
     end
 end
 
+desc "Copy the newly created package into the downloads directory"
+task :copy => [:package, :html] do
+    sh %{cp pkg/puppet-#{PKG_VERSION}.gem #{DOWNDIR}/gems}
+    sh %{generate_yaml_index.rb -d #{DOWNDIR}}
+    sh %{cp pkg/puppet-#{PKG_VERSION}.tgz #{DOWNDIR}/puppet}
+    sh %{ln -sf puppet-#{PKG_VERSION}.tgz #{DOWNDIR}/puppet/puppet-latest.tgz}
+    sh %{cp -r html #{DOWNDIR}/puppet/apidocs}
+end
+
 desc "Tag all the SVN files with the latest release number (REL=x.y.z)"
 task :tag => [:prerelease] do
     reltag = "REL_#{PKG_VERSION.gsub(/\./, '_')}"
@@ -288,7 +328,9 @@ task :tag => [:prerelease] do
     if ENV['RELTEST']
         announce "Release Task Testing, skipping SVN tagging"
     else
-        #sh %{svn copy ../trunk/ ../tags/#{reltag}}
+        sh %{svn copy ../trunk/ ../tags/#{reltag}}
+        sh %{cd ../tags; svn ci -m "Adding release tag #{reltag}}
     end
 end
 
+# $Id$
