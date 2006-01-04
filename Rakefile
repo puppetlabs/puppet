@@ -237,11 +237,11 @@ task :release => [
         :prerelease,
         :clobber,
         :alltests,
-        :rdoc,
         :update_version,
+        :tag, # tag everything before we make a bunch of extra dirs
+        :html,
         :package,
-        :copy,
-        :tag
+        :copy
       ] do
   
     announce 
