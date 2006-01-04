@@ -35,6 +35,9 @@ end
 
 DOWNDIR = "/export/docroots/reductivelabs.com/htdocs/downloads"
 
+#TESTHOSTS = %w{sol10b fedora1 rh3a}
+TESTHOSTS = %w{sol10b}
+
 # The default task is run if rake is given no explicit arguments.
 
 desc "Default Task"
@@ -330,6 +333,20 @@ task :tag => [:prerelease] do
         sh %{svn copy ../trunk/ ../tags/#{reltag}}
         sh %{cd ../tags; svn ci -m "Adding release tag #{reltag}"}
     end
+end
+
+desc "Test Puppet on each test host"
+task :hosttest do
+    out = ""
+    TESTHOSTS.each { |host|
+        puts "testing %s" % host
+        #out += %x{ssh #{host} 'cd puppet/test; sudo ./test' 2>&1} 
+        sh %{ssh #{host} 'cd puppet/test; sudo ./test' 2>&1} 
+    }
+
+    #IO.popen("mail -s 'Puppet Test Results' luke@madstop.com") do |m|
+    #    m.puts out
+    #end
 end
 
 # $Id$
