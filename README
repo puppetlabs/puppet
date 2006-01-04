@@ -1,24 +1,21 @@
-$Id$
-
 Documentation (and detailed install instructions) can be found 
-online: http://reductivelabs.com/projects/puppet/documentation/
+online at http://reductivelabs.com/projects/puppet/documentation.
 
-This is what you need to get puppet running:
--- Check you have Ruby version 1.8.2 or later
-    You can download it from 
-    ftp://ftp.ruby-lang.org/pub/ruby/ruby-1.8.2.tar.gz
-    Un tar it, then: ./configure; make; make install
+Generally, you need the following things installed:
 
--- http://reductivelabs.com/downloads/facter/facter-latest.tgz
-    A library that puppet needs to run.  Un tar it, and calling
-    'ruby install.rb' file should successfully install it; let 
-    me know if it doesn't.  Otherwise, you can just set RUBYLIB
-    to contain its lib directory.
+* Ruby >= 1.8.1 (earlier releases might work but probably not)
 
-    There should also be a recent snapshot there.
+* The Ruby OpenSSL library.  For some reason, this often isn't included
+  in the main ruby distributions.  You can test for it by running
+  'ruby -ropenssl -e "puts :yep"'.  If that errors out, you're missing the
+  library.
 
--- Install puppet
-   Run 'ruby install.rb' or add the 'lib/' directory to your RUBYLIB path.
+* The Ruby XMLRPC client and server libraries.  For some reason, this often
+  isn't included in the main ruby distributions.  You can test for it by
+  running 'ruby -rxmlrpc/client -e "puts :yep"'.  If that errors out, you're missing
+  the library.
 
--- After that, you should be able to go into test/ and run ./test, 
-   or run 'bin/puppet' on whichever puppet config files you want.
+* Facter => 1.0.1
+  You can get this from http://reductivelabs.com/projects/facter
+
+$Id$
