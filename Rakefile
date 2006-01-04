@@ -236,7 +236,6 @@ desc "Make a new release"
 task :release => [
         :prerelease,
         :clobber,
-        :alltests,
         :update_version,
         :tag, # tag everything before we make a bunch of extra dirs
         :html,
