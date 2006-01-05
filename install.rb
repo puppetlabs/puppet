@@ -36,6 +36,7 @@
 require 'rbconfig'
 require 'find'
 require 'fileutils'
+require 'ftools' # apparently on some system ftools doesn't get loaded
 require 'optparse'
 require 'ostruct'
 
