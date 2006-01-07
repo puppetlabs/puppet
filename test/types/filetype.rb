@@ -14,10 +14,10 @@ class TestFileType
     def disabled_setup
         Puppet[:loglevel] = :debug if __FILE__ == $0
 
-        @passwdtype = Puppet.type(:filetype)["passwd"]
+        @passwdtype = Puppet::Type::FileType["passwd"]
         if @passwdtype.nil?
             assert_nothing_raised() {
-                @passwdtype = Puppet.type(:filetype).createtype(
+                @passwdtype = Puppet::Type::FileType.createtype(
                     :name => "passwd"
                 )
                 @passwdtype.addrecord(
@@ -28,10 +28,10 @@ class TestFileType
             }
         end
 
-        @syslogtype = Puppet.type(:filetype)["syslog"]
+        @syslogtype = Puppet::Type::FileType["syslog"]
         if @syslogtype.nil?
             assert_nothing_raised() {
-                @syslogtype = Puppet.type(:filetype).createtype(
+                @syslogtype = Puppet::Type::FileType.createtype(
                     :escapednewlines => true,
                     :name => "syslog"
                 )
@@ -113,7 +113,7 @@ class TestFileType
         assert(!file.insync?)
 
         assert_nothing_raised() {
-            file.evaluate
+            file.sync
         }
 
         assert(file.insync?)
@@ -125,7 +125,7 @@ class TestFileType
         assert(!file.insync?)
 
         assert_nothing_raised() {
-            file.evaluate
+            file.sync
         }
 
         assert(file.insync?)

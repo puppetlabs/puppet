@@ -48,7 +48,7 @@ class TestStorage < Test::Unit::TestCase
         file = nil
         state = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type::PFile.create(
                 :path => "/etc/passwd"
             )
         }

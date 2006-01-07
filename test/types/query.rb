@@ -18,21 +18,21 @@ class TestQuery < Test::Unit::TestCase
     def file
         assert_nothing_raised() {
             cfile = File.join($puppetbase,"examples/root/etc/configfile")
-            unless Puppet.type(:file).has_key?(cfile)
-                Puppet.type(:file).create(
+            unless Puppet::Type::PFile.has_key?(cfile)
+                Puppet::Type::PFile.create(
                     :path => cfile,
                     :check => [:mode, :owner, :checksum]
                 )
             end
-            @configfile = Puppet.type(:file)[cfile]
+            @configfile = Puppet::Type::PFile[cfile]
         }
         return @configfile
     end
 
     def service
         assert_nothing_raised() {
-            unless Puppet.type(:service).has_key?("sleeper")
-                Puppet.type(:service).create(
+            unless Puppet::Type::Service.has_key?("sleeper")
+                Puppet::Type::Service.create(
                     :name => "sleeper",
                     :type => "init",
                     :path => File.join($puppetbase,"examples/root/etc/init.d"),
@@ -40,7 +40,7 @@ class TestQuery < Test::Unit::TestCase
                     :check => [:running]
                 )
             end
-            @sleeper = Puppet.type(:service)["sleeper"]
+            @sleeper = Puppet::Type::Service["sleeper"]
         }
 
         return @sleeper
@@ -48,7 +48,7 @@ class TestQuery < Test::Unit::TestCase
 
     def component(name,*args)
         assert_nothing_raised() {
-            @component = Puppet.type(:component).create(:name => name)
+            @component = Puppet::Type::Component.create(:name => name)
         }
 
         args.each { |arg|

@@ -25,7 +25,7 @@ if $haverrd
             eventmax = 10
             maxdiff = 10
 
-            types = [Puppet.type(:file), Puppet.type(:package), Puppet.type(:package)]
+            types = [Puppet::Type::PFile, Puppet::Type::Package, Puppet::Type::Service]
             data = [:total, :managed, :outofsync, :changed, :totalchanges]
             events = [:file_changed, :package_installed, :service_started]
 

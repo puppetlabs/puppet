@@ -79,7 +79,7 @@ module Puppet
                     process.each { |line|
                         case line
                         when /^$/:
-                            packages.push Puppet.type(:package).installedpkg(hash)
+                            packages.push Puppet::Type::Package.installedpkg(hash)
                             hash.clear
                         when /\s*(\w+):\s+(.+)/:
                             name = $1

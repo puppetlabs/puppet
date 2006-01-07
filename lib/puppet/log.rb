@@ -67,12 +67,6 @@ module Puppet # :nodoc:
         # Create a new log message.  The primary role of this method is to
         # avoid creating log messages below the loglevel.
         def Log.create(hash)
-            unless hash.include?(:level)
-                raise Puppet::DevError, "Logs require a level"
-            end
-            unless @levels.index(hash[:level])
-                raise Puppet::DevError, "Invalid log level %s" % hash[:level]
-            end
             if @levels.index(hash[:level]) >= @loglevel 
                 return Puppet::Log.new(hash)
             else
@@ -165,9 +159,6 @@ module Puppet # :nodoc:
         # It's worth noting that there's a potential for a loop here, if
         # the machine somehow gets the destination set as itself.
         def Log.newmessage(msg)
-            if @levels.index(msg.level) < @loglevel 
-                return
-            end
             @destinations.each { |type, dest|
                 case dest
                 when Module # This is the Syslog module
@@ -239,10 +230,6 @@ module Puppet # :nodoc:
             }
         end
 
-        def Log.sendlevel?(level)
-            @levels.index(level) >= @loglevel 
-        end
-
         # Reopen all of our logs.
         def Log.reopen
             types = @destinations.keys
@@ -286,10 +273,6 @@ module Puppet # :nodoc:
 				raise Puppet::DevError,
                     "Level is not a string or symbol: #{args[:level].class}"
 			end
-
-            # Just return unless we're actually at a level we should send
-            #return unless self.class.sendlevel?(@level)
-
 			@message = args[:message].to_s
 			@time = Time.now
 			# this should include the host name, and probly lots of other

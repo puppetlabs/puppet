@@ -4,24 +4,19 @@ require 'puppet/type/state'
 require 'puppet/type/nameservice'
 
 module Puppet
-    newtype(:user, Puppet::Type::NSSType) do
-        case Facter["operatingsystem"].value
-        when "Darwin":
-            @parentstate = Puppet::NameService::NetInfo::NetInfoState
-            @parentmodule = Puppet::NameService::NetInfo
-        else
-            @parentstate = Puppet::NameService::ObjectAdd::ObjectAddUser
-            @parentmodule = Puppet::NameService::ObjectAdd
-        end
-
-        newstate(:uid, @parentstate) do
-            desc "The user ID.  Must be specified numerically.  For new users
+    class State
+        module UserUID
+            def self.doc
+                "The user ID.  Must be specified numerically.  For new users
                 being created, if no user ID is specified then one will be
                 chosen automatically, which will likely result in the same user
                 having different IDs on different systems, which is not
                 recommended."
+            end
 
-            isautogen
+            def self.name
+                :uid
+            end
 
             def autogen
                 highest = 0
@@ -36,7 +31,7 @@ module Puppet
                 return highest + 1
             end
 
-            munge do |value|
+            def shouldprocess(value)
                 case value
                 when String
                     if value =~ /^[-0-9]+$/
@@ -56,13 +51,17 @@ module Puppet
             end
         end
 
-        newstate(:gid, @parentstate) do
-            desc "The user's primary group.  Can be specified numerically or
+        module UserGID
+            def self.doc
+                "The user's primary group.  Can be specified numerically or
                 by name."
+            end
 
-            isautogen
+            def self.name
+                :gid
+            end
 
-            munge do |gid|
+            def shouldprocess(gid)
                 method = :getgrgid
                 case gid
                 when String
@@ -94,121 +93,195 @@ module Puppet
             end
         end
 
-        newstate(:comment, @parentstate) do
-            desc "A description of the user.  Generally is a user's full name."
+        module UserComment
+            def self.doc
+                "A description of the user.  Generally is a user's full name."
+            end
 
-            isoptional
+            def self.name
+                :comment
+            end
 
-            @posixmethod = :gecos
+            def self.optional?
+                true
+            end
+
+            def self.posixmethod
+                :gecos
+            end
         end
 
-        newstate(:home, @parentstate) do
-            desc "The home directory of the user.  The directory must be created
+        module UserHome
+            def self.doc
+                "The home directory of the user.  The directory must be created
                 separately and is not currently checked for existence."
+            end
 
-            isautogen
-            @posixmethod = :dir
+            def self.name
+                :home
+            end
+
+            def self.posixmethod
+                :dir
+            end
         end
 
-        newstate(:shell, @parentstate) do
-            desc "The user's login shell.  The shell must exist and be
+        module UserShell
+            def self.doc
+                "The user's login shell.  The shell must exist and be
                 executable."
-            isautogen
+            end
+
+            def self.name
+                :shell
+            end
         end
 
         # these three states are all implemented differently on each platform,
         # so i'm disabling them for now
 
         # FIXME Puppet::State::UserLocked is currently non-functional
-        #newstate(:locked, @parentstate) do
-        #    desc "The expected return code.  An error will be returned if the
-        #        executed command returns something else."
-        #end
+        module UserLocked 
+            def self.doc
+                "The expected return code.  An error will be returned if the
+                executed command returns something else."
+            end
+
+            def self.name
+                :locked
+            end
+        end
 
         # FIXME Puppet::State::UserExpire is currently non-functional
-        #newstate(:expire, @parentstate) do
-        #    desc "The expected return code.  An error will be returned if the
-        #        executed command returns something else."
-        #    @objectaddflag = "-e"
-        #    isautogen
-        #end
+        module UserExpire 
+            def self.doc
+                "The expected return code.  An error will be returned if the
+                executed command returns something else."
+            end
+
+            def self.name; :expire; end
+        end
 
         # FIXME Puppet::State::UserInactive is currently non-functional
-        #newstate(:inactive, @parentstate) do
-        #    desc "The expected return code.  An error will be returned if the
-        #        executed command returns something else."
-        #    @objectaddflag = "-f"
-        #    isautogen
-        #end
-
-        newparam(:name) do
-            desc "User name.  While limitations are determined for
-                each operating system, it is generally a good idea to keep to
-                the degenerate 8 characters, beginning with a letter."
-            isnamevar
-        end
-
-        @doc = "Manage users.  Currently can create and modify users, but
-            cannot delete them.  Theoretically all of the parameters are
-            optional, but if no parameters are specified the comment will
-            be set to the user name in order to make the internals work out
-            correctly."
-
-        @netinfodir = "users"
-
-        def exists?
-            self.class.parentmodule.exists?(self)
-        end
-
-        def getinfo(refresh = false)
-            if @userinfo.nil? or refresh == true
-                begin
-                    @userinfo = Etc.getpwnam(self[:name])
-                rescue ArgumentError => detail
-                    @userinfo = nil
-                end
+        module UserInactive 
+            def self.doc
+                "The expected return code.  An error will be returned if the
+                executed command returns something else."
             end
 
-            @userinfo
+            def self.name; :inactive; end
         end
 
-        def initialize(hash)
-            @userinfo = nil
-            super
+    end
 
-            # Verify that they have provided everything necessary, if we
-            # are trying to manage the user
-            if self.managed?
-                self.class.states.each { |state|
-                    next if @states.include?(state.name)
-
-                    unless state.autogen? or state.optional?
-                        if state.method_defined?(:autogen)
-                            self[state.name] = :auto
-                        else
-                            raise Puppet::Error,
-                                "Users require a value for %s" % state.name
-                        end
-                    end
-                }
-
-                if @states.empty?
-                    self[:comment] = self[:name]
-                end
-            end
-        end
-
-        def retrieve
-            info = self.getinfo(true)
-
-            if info.nil?
-                # the user does not exist
-                @states.each { |name, state|
-                    state.is = :notfound
-                }
-                return
+    class Type
+        class User < Type
+            statenames = [
+                "UserUID",
+                "UserGID",
+                "UserComment",
+                "UserHome",
+                "UserShell"
+            ]
+            @statemodule = nil
+            case Facter["operatingsystem"].value
+            when "Darwin":
+                @statemodule = Puppet::NameService::NetInfo
             else
+                @statemodule = Puppet::NameService::ObjectAdd
+            end
+
+            class << self
+                attr_accessor :netinfodir
+                attr_accessor :statemodule
+            end
+
+            @states = []
+
+            @states = statenames.collect { |name|
+                fullname = @statemodule.to_s + "::" + name
+                begin
+                    eval(fullname)
+                rescue NameError
+                    raise Puppet::DevError, "Could not retrieve state class %s" %
+                        fullname
+                end
+            }.each { |klass|
+                klass.complete
+            }
+
+            @parameters = [
+                :name
+            ]
+
+            @paramdoc[:name] = "User name.  While limitations are determined for
+                each operating system, it is generally a good idea to keep to the
+                degenerate 8 characters, beginning with a letter."
+
+            @doc = "Manage users.  Currently can create and modify users, but
+                cannot delete them.  Theoretically all of the parameters are
+                optional, but if no parameters are specified the comment will
+                be set to the user name in order to make the internals work out
+                correctly."
+            @name = :user
+            @namevar = :name
+
+            @netinfodir = "users"
+
+            def exists?
+                self.class.statemodule.exists?(self)
+            end
+
+            def getinfo(refresh = false)
+                if @userinfo.nil? or refresh == true
+                    begin
+                        @userinfo = Etc.getpwnam(self[:name])
+                    rescue ArgumentError => detail
+                        @userinfo = nil
+                    end
+                end
+
+                @userinfo
+            end
+
+            def initialize(hash)
+                @userinfo = nil
                 super
+
+                # Verify that they have provided everything necessary, if we
+                # are trying to manage the user
+                if self.managed?
+                    self.class.states.each { |state|
+                        next if @states.include?(state.name)
+
+                        unless state.autogen? or state.optional?
+                            if state.method_defined?(:autogen)
+                                self[state.name] = :auto
+                            else
+                                raise Puppet::Error,
+                                    "Users require a value for %s" % state.name
+                            end
+                        end
+                    }
+
+                    if @states.empty?
+                        self[:comment] = self[:name]
+                    end
+                end
+            end
+
+            def retrieve
+                info = self.getinfo(true)
+
+                if info.nil?
+                    # the user does not exist
+                    @states.each { |name, state|
+                        state.is = :notfound
+                    }
+                    return
+                else
+                    super
+                end
             end
         end
     end

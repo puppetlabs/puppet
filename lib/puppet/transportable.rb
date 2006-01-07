@@ -102,7 +102,7 @@ module Puppet
             if parent
                 hash[:parent] = parent
             end
-            container = Puppet.type(:component).create(hash)
+            container = Puppet::Type::Component.create(hash)
 
             if parent
                 parent.push container

@@ -53,7 +53,7 @@ module Puppet
                             fields.zip(match.captures) { |field,value|
                                 hash[field] = value
                             }
-                            packages.push Puppet.type(:package).installedpkg(hash)
+                            packages.push Puppet::Type::Package.installedpkg(hash)
                         else
                             raise "failed to match rpm line %s" % line
                         end

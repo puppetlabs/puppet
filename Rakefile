@@ -35,12 +35,8 @@ end
 
 DOWNDIR = "/export/docroots/reductivelabs.com/htdocs/downloads"
 
-if ENV['HOSTS']
-    TESTHOSTS = ENV['HOSTS'].split(/\s+/)
-else
-    TESTHOSTS = %w{fedora1 rh3a kirby culain}
-end
-#TESTHOSTS = %w{sol10b}
+#TESTHOSTS = %w{sol10b fedora1 rh3a}
+TESTHOSTS = %w{sol10b}
 
 # The default task is run if rake is given no explicit arguments.
 
@@ -344,9 +340,8 @@ task :hosttest do
     out = ""
     TESTHOSTS.each { |host|
         puts "testing %s" % host
-        cwd = Dir.getwd
         #out += %x{ssh #{host} 'cd puppet/test; sudo ./test' 2>&1} 
-        sh %{ssh #{host} 'cd #{cwd}/test; sudo ./test' 2>&1} 
+        sh %{ssh #{host} 'cd puppet/test; sudo ./test' 2>&1} 
     }
 
     #IO.popen("mail -s 'Puppet Test Results' luke@madstop.com") do |m|

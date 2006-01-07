@@ -7,20 +7,15 @@ require 'puppet/type'
 require 'puppet/transaction'
 
 module Puppet
-    newtype(:component) do
+    class Type
+	class Component < Puppet::Type
         include Enumerable
 
-        newparam(:name) do
-            desc "The name of the component.  Generally optional."
-            isnamevar
-        end
+        @name = :component
+        @namevar = :name
 
-        newparam(:type) do
-            desc "The type that this component maps to.  Generally some kind of
-                class from the language."
-
-            defaultto "component"
-        end
+        @states = []
+        @parameters = [:name,:type]
 
         # topo sort functions
         def self.sort(objects)
@@ -45,7 +40,7 @@ module Puppet
                 self.recurse(req, inlist, list)
             }
 
-            if obj.is_a? self
+            if obj.is_a?(Puppet::Type::Component)
                 obj.each { |child|
                     self.recurse(child, inlist, list)
                 }
@@ -78,6 +73,11 @@ module Puppet
         # Initialize a new component
         def initialize(args)
             @children = []
+
+            # it makes sense to have a more reasonable default here than 'false'
+            unless args.include?(:type) or args.include?("type")
+                args[:type] = "component"
+            end
             super(args)
         end
 
@@ -120,7 +120,6 @@ module Puppet
             @children.collect { |child|
                 if child.respond_to?(:refresh)
                     child.refresh
-                    child.log "triggering %s" % :refresh
                 end
             }
         end
@@ -135,6 +134,7 @@ module Puppet
             return "component(%s)" % self.name
         end
 	end
+    end
 end
 
 # $Id$

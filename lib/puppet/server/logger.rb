@@ -10,11 +10,6 @@ class Server # :nodoc:
 
         # accept a log message from a client, and route it accordingly
         def addlog(message, client = nil, clientip = nil)
-            unless message
-                raise Puppet::DevError, "Did not receive message"
-            end
-
-            Puppet.info message.inspect
             # if the client is set, then we're not local
             if client
                 begin
@@ -25,10 +20,6 @@ class Server # :nodoc:
                         1, "Could not unMarshal log message from %s" % client
                     )
                 end
-            end
-
-            unless message
-                raise Puppet::DevError, "Could not resurrect message"
             end
 
             # Mark it as remote, so it's not sent to syslog

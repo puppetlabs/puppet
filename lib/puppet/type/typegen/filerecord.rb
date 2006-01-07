@@ -5,7 +5,7 @@ require 'etc'
 require 'puppet/type'
 require 'puppet/type/typegen'
 
-class Puppet.type(:filerecord) < Puppet::Type::TypeGenerator
+class Puppet::Type::FileRecord < Puppet::Type::TypeGenerator
     class << self
         # The name of the record type.  Probably superfluous.
         attr_accessor :name
@@ -131,7 +131,7 @@ class Puppet.type(:filerecord) < Puppet::Type::TypeGenerator
     end
 
     def initialize(hash)
-        if self.class == Puppet.type(:filerecord)
+        if self.class == Puppet::Type::FileRecord
             self.class.newtype(hash)
             return
         end

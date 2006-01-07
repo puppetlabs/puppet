@@ -5,6 +5,11 @@ require 'puppet'
 require 'puppet/type/nameservice/posix'
 
 module Puppet
+    class Type
+        # Return the NetInfo directory in which a given object type is stored.
+        # Defaults to the type's name if @netinfodir is unset.
+    end
+
     module NameService
         module NetInfo
             # Verify that we've got all of the commands we need.
@@ -51,22 +56,16 @@ module Puppet
                 end
             end
 
-            # The state responsible for handling netinfo objects.  Because they
-            # are all accessed using the exact same interface, we can just 
-            # abstract the differents using a simple map where necessary
-            # (the netinfokeymap).
-            class NetInfoState < Puppet::State::NSSState
-                @netinfokeymap = {
-                    :comment => "realname"
-                }
+            class NetInfoState < POSIX::POSIXState
+                # Should we do all of the changes at once?
+                def self.allatonce?
+                    false
+                end
 
-                @@allatonce = false
-
-                # Similar to posixmethod, what key do we use to get data?  Defaults
-                # to being the object name.
+                # Similar to posixmethod, what key do we use to get data?
                 def self.netinfokey
-                    if @netinfokeymap.include?(self.name)
-                        return @netinfokeymap[self.name]
+                    if defined? @netinfokey and @netinfokey
+                        return @netinfokey
                     else
                         return self.name
                     end
@@ -147,6 +146,34 @@ module Puppet
                     end
                     cmd.join(" ")
                 end
+            end
+
+            class GroupGID < NetInfoState
+            end
+
+            class UserUID       < NetInfoState
+            end
+
+            class UserGID       < NetInfoState
+            end
+
+            class UserComment   < NetInfoState
+                @netinfokey = "realname"
+            end
+
+            class UserHome      < NetInfoState
+            end
+
+            class UserShell     < NetInfoState
+            end
+
+            class UserLocked    < NetInfoState
+            end
+
+            class UserExpire    < NetInfoState
+            end
+
+            class UserInactive  < NetInfoState
             end
         end
     end

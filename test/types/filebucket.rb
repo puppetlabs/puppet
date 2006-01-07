@@ -19,7 +19,7 @@ class TestFileBucket < Test::Unit::TestCase
     def mkfile(hash)
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(hash)
+            file = Puppet::Type::PFile.create(hash)
         }
         return file
     end
@@ -27,7 +27,7 @@ class TestFileBucket < Test::Unit::TestCase
     def mkbucket(name,path)
         bucket = nil
         assert_nothing_raised {
-            bucket = Puppet.type(:filebucket).create(
+            bucket = Puppet::Type::PFileBucket.create(
                 :name => name,
                 :path => path
             )
@@ -77,7 +77,7 @@ class TestFileBucket < Test::Unit::TestCase
 
         bucket = nil
         assert_nothing_raised {
-            bucket = Puppet.type(:filebucket).bucket(name)
+            bucket = Puppet::Type::PFileBucket.bucket(name)
         }
 
         assert_instance_of(Puppet::Client::Dipper, bucket)
@@ -94,8 +94,6 @@ class TestFileBucket < Test::Unit::TestCase
 
         newmd5 = nil
 
-        # Just in case the file isn't writable
-        File.chmod(0644, newpath)
         File.open(newpath, "w") { |f| f.puts ";lkjasdf;lkjasdflkjwerlkj134lkj" }
 
         assert_nothing_raised {
@@ -119,7 +117,7 @@ class TestFileBucket < Test::Unit::TestCase
 
         bucket = nil
         assert_nothing_raised {
-            bucket = Puppet.type(:filebucket).bucket(name)
+            bucket = Puppet::Type::PFileBucket.bucket(name)
         }
 
         file = mktestfile()
@@ -155,7 +153,6 @@ class TestFileBucket < Test::Unit::TestCase
             File.open(file.name) { |f| newmd5 = Digest::MD5.hexdigest(f.read) }
         )
 
-        #File.chmod(0644, file.name)
         assert_nothing_raised {
             bucket.restore(file.name, origmd5)
         }

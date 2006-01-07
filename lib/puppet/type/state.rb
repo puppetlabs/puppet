@@ -7,7 +7,7 @@ require 'puppet/statechange'
 
 module Puppet
 class State < Puppet::Element
-    attr_accessor :is
+    attr_accessor :is, :parent
 
     # Because 'should' uses an array, we have a special method for handling
     # it.  We also want to keep copies of the original values, so that
@@ -19,19 +19,10 @@ class State < Puppet::Element
     class << self
         attr_accessor :unmanaged
         attr_reader :name
-
-        def inspect
-            "State(%s)" % self.name
-        end
-
-        def to_s
-            self.inspect
-        end
     end
-    
+
     # initialize our state
     def initialize(hash)
-        super()
         @is = nil
 
         unless hash.include?(:parent)
@@ -45,21 +36,6 @@ class State < Puppet::Element
 
         if hash.include?(:is)
             self.is = hash[:is]
-        end
-    end
-
-    def inspect
-        str = "State('%s', " % self.name
-        if defined? @is and @is
-            str += "@is = '%s', " % @is
-        else
-            str += "@is = nil, "
-        end
-
-        if defined? @should and @should
-            str += "@should = '%s')" % @should.join(", ")
-        else
-            str += "@should = nil)"
         end
     end
 
@@ -136,6 +112,7 @@ class State < Puppet::Element
     def should
         if defined? @should
             unless @should.is_a?(Array)
+                self.warning @should.inspect
                 raise Puppet::DevError, "should for %s on %s is not an array" %
                     [self.class.name, @parent.name]
             end
@@ -153,19 +130,15 @@ class State < Puppet::Element
 
         @shouldorig = values
 
-        if self.respond_to?(:validate)
-            values.each { |val|
-                validate(val)
-            }
-        end
-        if self.respond_to?(:munge)
+        if self.respond_to?(:shouldprocess)
             @should = values.collect { |val|
-                self.munge(val)
+                self.shouldprocess(val)
             }
         else
             @should = values
         end
     end
+
 
     # How should a state change be printed as a string?
     def change_to_s

@@ -41,7 +41,7 @@ class TestSymlink < Test::Unit::TestCase
         unless hash.include?(:target)
             hash[:target] = mktmpfile()
         end
-        link = Puppet.type(:symlink).create(hash)
+        link = Puppet::Type::Symlink.create(hash)
         return link
     end
 
@@ -56,7 +56,9 @@ class TestSymlink < Test::Unit::TestCase
         }
         # we might already be in sync
         assert(!link.insync?())
-        assert_apply(link)
+        assert_nothing_raised() {
+            link.sync
+        }
         assert_nothing_raised() {
             link.retrieve
         }

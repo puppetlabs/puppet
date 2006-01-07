@@ -17,7 +17,7 @@ class TestFile < Test::Unit::TestCase
     def mkfile(hash)
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(hash)
+            file = Puppet::Type::PFile.create(hash)
         }
         return file
     end
@@ -88,14 +88,19 @@ class TestFile < Test::Unit::TestCase
         us = {}
         us[uid] = name
         users.each { |uid, name|
-            assert_apply(file)
+            # just make sure we don't try to manage users
+            assert_nothing_raised() {
+                file.sync
+            }
             assert_nothing_raised() {
                 file[:owner] = name
             }
             assert_nothing_raised() {
                 file.retrieve
             }
-            assert_apply(file)
+            assert_nothing_raised() {
+                file.sync
+            }
         }
     end
 
@@ -120,7 +125,7 @@ class TestFile < Test::Unit::TestCase
 
             file = nil
             assert_nothing_raised {
-                file = Puppet.type(:file).create(
+                file = Puppet::Type::PFile.create(
                     :path => path,
                     :owner => user.name,
                     :create => true,
@@ -130,7 +135,7 @@ class TestFile < Test::Unit::TestCase
 
             comp = newcomp("createusertest", file)
 
-            assert_events([:file_created], comp)
+            assert_events(comp, [:file_created])
         end
 
         def test_ownerasroot
@@ -170,14 +175,19 @@ class TestFile < Test::Unit::TestCase
                     changes << file.evaluate
                 }
                 assert(changes.length > 0)
-                assert_apply(file)
-                file.retrieve
+                assert_nothing_raised() {
+                    file.sync
+                }
+                assert_nothing_raised() {
+                    file.evaluate
+                }
                 assert(file.insync?())
                 assert_nothing_raised() {
                     file[:owner] = uid
                 }
-                assert_apply(file)
-                file.retrieve
+                assert_nothing_raised() {
+                    file.evaluate
+                }
                 # make sure changing to number doesn't cause a sync
                 assert(file.insync?())
             }
@@ -201,8 +211,15 @@ class TestFile < Test::Unit::TestCase
                 }
                 assert(file.state(:group))
                 assert(file.state(:group).should)
-                assert_apply(file)
-                file.retrieve
+                assert_nothing_raised() {
+                    file.evaluate
+                }
+                assert_nothing_raised() {
+                    file.sync
+                }
+                assert_nothing_raised() {
+                    file.evaluate
+                }
                 assert(file.insync?())
                 assert_nothing_raised() {
                     file.delete(:group)
@@ -217,15 +234,22 @@ class TestFile < Test::Unit::TestCase
         %w{a b c d}.collect { |name| tempfile() + name.to_s }.each { |path|
             file =nil
             assert_nothing_raised() {
-                file = Puppet.type(:file).create(
+                file = Puppet::Type::PFile.create(
                     :name => path,
                     :create => true
                 )
             }
-            assert_events([:file_created], file)
-            assert_events([], file)
-            assert(FileTest.file?(path), "File does not exist")
+            assert_nothing_raised() {
+                file.evaluate
+            }
+            assert_nothing_raised() {
+                file.sync
+            }
+            assert_nothing_raised() {
+                file.evaluate
+            }
             assert(file.insync?())
+            assert(FileTest.file?(path))
             @@tmpfiles.push path
         }
     end
@@ -234,13 +258,20 @@ class TestFile < Test::Unit::TestCase
         %w{a b c d}.collect { |name| "/tmp/createst%s" % name }.each { |path|
             file = nil
             assert_nothing_raised() {
-                file = Puppet.type(:file).create(
+                file = Puppet::Type::PFile.create(
                     :name => path,
                     :create => "directory"
                 )
             }
-            assert_events([:directory_created], file)
-            assert_events([], file)
+            assert_nothing_raised() {
+                file.evaluate
+            }
+            assert_nothing_raised() {
+                file.sync
+            }
+            assert_nothing_raised() {
+                file.evaluate
+            }
             assert(file.insync?())
             assert(FileTest.directory?(path))
             @@tmpfiles.push path
@@ -249,17 +280,20 @@ class TestFile < Test::Unit::TestCase
 
     def test_modes
         file = mktestfile
-        # Set it to something else initially
-        File.chmod(0775, file.name)
         [0644,0755,0777,0641].each { |mode|
             assert_nothing_raised() {
                 file[:mode] = mode
             }
-            assert_events([:inode_changed], file)
-            assert_events([], file)
-
+            assert_nothing_raised() {
+                file.evaluate
+            }
+            assert_nothing_raised() {
+                file.sync
+            }
+            assert_nothing_raised() {
+                file.evaluate
+            }
             assert(file.insync?())
-
             assert_nothing_raised() {
                 file.delete(:mode)
             }
@@ -291,13 +325,13 @@ class TestFile < Test::Unit::TestCase
                 events = nil
                 # okay, we now know that we have a file...
                 assert_nothing_raised() {
-                    file = Puppet.type(:file).create(
+                    file = Puppet::Type::PFile.create(
                         :name => path,
                         :create => true,
                         :checksum => type
                     )
                 }
-                comp = Puppet.type(:component).create(
+                comp = Puppet::Type::Component.create(
                     :name => "componentfile"
                 )
                 comp.push file
@@ -325,28 +359,38 @@ class TestFile < Test::Unit::TestCase
                         of.puts rand(100)
                     }
                 }
-                Puppet.type(:file).clear
-                Puppet.type(:component).clear
+                Puppet::Type::PFile.clear
+                Puppet::Type::Component.clear
                 sleep 1
 
                 # now recreate the file
                 assert_nothing_raised() {
-                    file = Puppet.type(:file).create(
+                    file = Puppet::Type::PFile.create(
                         :name => path,
                         :checksum => type
                     )
                 }
-                comp = Puppet.type(:component).create(
+                comp = Puppet::Type::Component.create(
                     :name => "componentfile"
                 )
                 comp.push file
                 trans = nil
-                assert_events([:file_modified], comp)
+                assert_nothing_raised() {
+                    trans = comp.evaluate
+                }
+                assert_nothing_raised() {
+                    events = trans.evaluate.collect { |e| e.event }
+                }
+
+                sum = file.state(:checksum)
 
                 # verify that we're actually getting notified when a file changes
+                assert(
+                    events.include?(:file_modified)
+                )
                 assert_nothing_raised() {
-                    Puppet.type(:file).clear
-                    Puppet.type(:component).clear
+                    Puppet::Type::PFile.clear
+                    Puppet::Type::Component.clear
                 }
             }
         }
@@ -362,13 +406,13 @@ class TestFile < Test::Unit::TestCase
 
             initstorage
             assert_nothing_raised {
-                file = Puppet.type(:file).create(
+                file = Puppet::Type::PFile.create(
                     param => path,
                     :recurse => true,
                     :checksum => "md5"
                 )
             }
-            comp = Puppet.type(:component).create(
+            comp = Puppet::Type::Component.create(
                 :name => "component"
             )
             comp.push file
@@ -378,6 +422,9 @@ class TestFile < Test::Unit::TestCase
             assert_nothing_raised {
                 trans.evaluate
             }
+            #assert_nothing_raised {
+            #    file.sync
+            #}
             clearstorage
             Puppet::Type.allclear
         }
@@ -391,7 +438,7 @@ class TestFile < Test::Unit::TestCase
 
         dir = nil
         assert_nothing_raised {
-            dir = Puppet.type(:file).create(
+            dir = Puppet::Type::PFile.create(
                 :path => basedir,
                 :recurse => true,
                 :check => %w{owner mode group}
@@ -404,7 +451,7 @@ class TestFile < Test::Unit::TestCase
 
         subobj = nil
         assert_nothing_raised {
-            subobj = Puppet.type(:file)[subdir]
+            subobj = Puppet::Type::PFile[subdir]
         }
 
         assert(subobj, "Could not retrieve subdir object")
@@ -415,7 +462,7 @@ class TestFile < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file)[tmpfile]
+            file = Puppet::Type::PFile[tmpfile]
         }
 
         assert(file, "Could not retrieve file object")
@@ -459,9 +506,8 @@ class TestFile < Test::Unit::TestCase
     def test_filetype_retrieval
         file = nil
 
-        # Verify it retrieves files of type directory
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type::PFile.create(
                 :name => tmpdir(),
                 :check => :type
             )
@@ -473,27 +519,28 @@ class TestFile < Test::Unit::TestCase
 
         assert_equal("directory", file.state(:type).is)
 
-        # And then check files
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
-                :name => tempfile(),
-                :create => true
+            file = Puppet::Type::PFile.create(
+                :name => "/etc/passwd",
+                :check => :type
             )
         }
 
-        assert_apply(file)
-        file[:check] = "type"
-        assert_apply(file)
+        assert_nothing_raised {
+            file.evaluate
+        }
 
         assert_equal("file", file.state(:type).is)
 
-        file[:type] = "directory"
+        assert_raise(Puppet::Error) {
+            file[:type] = "directory"
+        }
 
-        assert_nothing_raised { file.retrieve }
-
-        # The 'retrieve' method sets @should to @is, so they're never
-        # out of sync.  It's a read-only class.
         assert(file.insync?)
+
+        assert_raise(Puppet::Error) {
+            file.sync
+        }
     end
 
     def test_remove
@@ -503,7 +550,7 @@ class TestFile < Test::Unit::TestCase
 
         dir = nil
         assert_nothing_raised {
-            dir = Puppet.type(:file).create(
+            dir = Puppet::Type::PFile.create(
                 :path => basedir,
                 :recurse => true,
                 :check => %w{owner mode group}
@@ -516,7 +563,7 @@ class TestFile < Test::Unit::TestCase
 
         obj = nil
         assert_nothing_raised {
-            obj = Puppet.type(:file)[subdir]
+            obj = Puppet::Type::PFile[subdir]
         }
 
         assert(obj, "Could not retrieve subdir object")
@@ -526,7 +573,7 @@ class TestFile < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            obj = Puppet.type(:file)[subdir]
+            obj = Puppet::Type::PFile[subdir]
         }
 
         assert_nil(obj, "Retrieved removed object")
@@ -545,7 +592,7 @@ class TestFile < Test::Unit::TestCase
         file = nil
         dirobj = nil
         assert_nothing_raised("Could not make file object") {
-            dirobj = Puppet.type(:file).create(
+            dirobj = Puppet::Type::PFile.create(
                 :path => dir,
                 :recurse => true,
                 :check => %w{mode owner group}

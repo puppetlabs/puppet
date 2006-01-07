@@ -13,12 +13,6 @@ require 'cgi'
 class TestLogger < Test::Unit::TestCase
 	include ServerTest
 
-    def setup
-        super
-        #Puppet[:debug] = true
-        Puppet[:logdest] = :console
-    end
-
     # Test the log driver manually
     def test_localaddlog
         logger = nil
@@ -29,7 +23,7 @@ class TestLogger < Test::Unit::TestCase
         msg = nil
         assert_nothing_raised {
             msg = Puppet::Log.create(
-                :level => :warning,
+                :level => :info,
                 :message => "This is a message"
             )
         }
@@ -49,7 +43,7 @@ class TestLogger < Test::Unit::TestCase
         msg = nil
         assert_nothing_raised {
             msg = Puppet::Log.create(
-                :level => :warning,
+                :level => :info,
                 :message => "This is a remote message"
             )
         }
@@ -72,7 +66,7 @@ class TestLogger < Test::Unit::TestCase
         msg = nil
         assert_nothing_raised {
             msg = Puppet::Log.create(
-                :level => :warning,
+                :level => :info,
                 :message => "This is a logclient message"
             )
         }

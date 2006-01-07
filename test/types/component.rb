@@ -42,7 +42,7 @@ class TestComponent < Test::Unit::TestCase
         end
         name = tempfile() + num.to_s
 
-        file = Puppet.type(:file).create(
+        file = Puppet::Type::PFile.create(
             :path => name,
             :checksum => "md5"
         )
@@ -51,7 +51,7 @@ class TestComponent < Test::Unit::TestCase
     end
 
     def mkcomp
-        Puppet.type(:component).create(:name => "component_" + randnum(1000).to_s)
+        Puppet::Type::Component.create(:name => "component_" + randnum(1000).to_s)
     end
 
     def mkrandcomp(numfiles, numdivs)
@@ -114,12 +114,12 @@ class TestComponent < Test::Unit::TestCase
         File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
             of.puts rand(100)
         }
-        file = Puppet.type(:file).create(
+        file = Puppet::Type::PFile.create(
             :path => tmpfile,
             :checksum => "md5"
         )
         assert_nothing_raised {
-            cmd = Puppet.type(:exec).create(
+            cmd = Puppet::Type::Exec.create(
                 :command => "pwd",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :subscribe => [[file.class.name,file.name]],
@@ -129,7 +129,7 @@ class TestComponent < Test::Unit::TestCase
 
         order = nil
         assert_nothing_raised {
-            order = Puppet.type(:component).sort([file, cmd])
+            order = Puppet::Type::Component.sort([file, cmd])
         }
 
         [cmd, file].each { |obj|
@@ -145,12 +145,12 @@ class TestComponent < Test::Unit::TestCase
         File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
             of.puts rand(100)
         }
-        file = Puppet.type(:file).create(
+        file = Puppet::Type::PFile.create(
             :path => tmpfile,
             :checksum => "md5"
         )
         assert_nothing_raised {
-            cmd = Puppet.type(:exec).create(
+            cmd = Puppet::Type::Exec.create(
                 :command => "pwd",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :subscribe => [[file.class.name,file.name]],
@@ -158,7 +158,7 @@ class TestComponent < Test::Unit::TestCase
             )
         }
 
-        comp = Puppet.type(:component).create(:name => "RefreshTest")
+        comp = Puppet::Type::Component.create(:name => "RefreshTest")
         [cmd, file].each { |obj|
             comp.push obj
         }
@@ -183,12 +183,12 @@ class TestComponent < Test::Unit::TestCase
         File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
             of.puts rand(100)
         }
-        file = Puppet.type(:file).create(
+        file = Puppet::Type::PFile.create(
             :path => tmpfile,
             :checksum => "md5"
         )
         assert_nothing_raised {
-            cmd = Puppet.type(:exec).create(
+            cmd = Puppet::Type::Exec.create(
                 :command => "pwd",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :refreshonly => true
@@ -224,12 +224,12 @@ class TestComponent < Test::Unit::TestCase
         File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
             of.puts rand(100)
         }
-        file = Puppet.type(:file).create(
+        file = Puppet::Type::PFile.create(
             :path => tmpfile,
             :checksum => "md5"
         )
         assert_nothing_raised {
-            cmd = Puppet.type(:exec).create(
+            cmd = Puppet::Type::Exec.create(
                 :command => "pwd",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :refreshonly => true
@@ -238,7 +238,7 @@ class TestComponent < Test::Unit::TestCase
 
         ocmd = nil
         assert_nothing_raised {
-            ocmd = Puppet.type(:exec).create(
+            ocmd = Puppet::Type::Exec.create(
                 :command => "echo true",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :refreshonly => true

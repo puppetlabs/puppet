@@ -19,11 +19,11 @@ class TestEvents < Test::Unit::TestCase
 
     def test_simplesubscribe
         name = tempfile()
-        file = Puppet.type(:file).create(
+        file = Puppet::Type::PFile.create(
             :name => name,
             :create => true
         )
-        exec = Puppet.type(:exec).create(
+        exec = Puppet::Type::Exec.create(
             :name => "echo true",
             :path => "/usr/bin:/bin",
             :refreshonly => true,
@@ -32,18 +32,18 @@ class TestEvents < Test::Unit::TestCase
 
         comp = newcomp("eventtesting", file, exec)
 
-        trans = assert_events([:file_created], comp)
+        trans = assert_events(comp, [:file_created], "events")
 
         assert_equal(1, trans.triggered?(exec, :refresh))
     end
 
     def test_simplerequire
         name = tempfile()
-        file = Puppet.type(:file).create(
+        file = Puppet::Type::PFile.create(
             :name => name,
             :create => true
         )
-        exec = Puppet.type(:exec).create(
+        exec = Puppet::Type::Exec.create(
             :name => "echo true",
             :path => "/usr/bin:/bin",
             :refreshonly => true,
@@ -51,7 +51,7 @@ class TestEvents < Test::Unit::TestCase
         )
 
 
-        comp = Puppet.type(:component).create(
+        comp = Puppet::Type::Component.create(
             :name => "eventtesting"
         )
         comp.push exec
@@ -74,13 +74,13 @@ class TestEvents < Test::Unit::TestCase
             case l
             when :a
                 name = tempfile() + l.to_s
-                objects[l] = Puppet.type(:file).create(
+                objects[l] = Puppet::Type::PFile.create(
                     :name => name,
                     :create => true
                 )
                 @@tmpfiles << name
             when :b
-                objects[l] = Puppet.type(:exec).create(
+                objects[l] = Puppet::Type::Exec.create(
                     :name => "touch %s" % fname,
                     :path => "/usr/bin:/bin",
                     :refreshonly => true
@@ -89,7 +89,7 @@ class TestEvents < Test::Unit::TestCase
             end
 
 
-            comps[l] = Puppet.type(:component).create(
+            comps[l] = Puppet::Type::Component.create(
                 :name => "eventtesting%s" % l
             )
 

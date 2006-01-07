@@ -3,7 +3,7 @@
 require 'puppet/type'
 require 'puppet/type/typegen'
 
-class Puppet.type(:filetype) < Puppet::Type::TypeGenerator
+class Puppet::Type::FileType < Puppet::Type::TypeGenerator
     @parameters = [:name, :recordsep, :escapednewlines]
 
     @namevar = :name
@@ -32,11 +32,11 @@ class Puppet.type(:filetype) < Puppet::Type::TypeGenerator
     # Add a new record to our filetype.  This should never be called on the FileType
     # class itself, only on its subclasses.
     def FileType.addrecord(hash = {})
-        if self == Puppet.type(:filerecord)
+        if self == Puppet::Type::FileRecord
             raise Puppet::DevError, "Cannot add records to the FileType base class"
         end
 
-        newrecord = Puppet.type(:filerecord).newtype(hash)
+        newrecord = Puppet::Type::FileRecord.newtype(hash)
         newrecord.filetype = self
 
         if block_given?
@@ -186,7 +186,7 @@ class Puppet.type(:filetype) < Puppet::Type::TypeGenerator
         # if we are the FileType object itself, we create a new type
         # otherwise, we create an instance of an existing type
         # yes, this should be more straightforward
-        if self.class == Puppet.type(:filetype)
+        if self.class == Puppet::Type::FileType
             self.class.newtype(hash)
             return
         end

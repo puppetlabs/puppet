@@ -44,8 +44,6 @@ class TestLog < Test::Unit::TestCase
     def test_logfile
         fact = nil
         levels = nil
-        oldlevel = Puppet[:loglevel]
-        Puppet[:loglevel] = :debug
         levels = getlevels
         logfile = tempfile()
         assert_nothing_raised() {
@@ -61,7 +59,6 @@ class TestLog < Test::Unit::TestCase
             }
         }
         assert(count == levels.length)
-        Puppet[:loglevel] = oldlevel
     end
 
     def test_syslog
@@ -103,14 +100,12 @@ class TestLog < Test::Unit::TestCase
     end
 
     def test_output
-        olddebug = Puppet[:debug]
         Puppet[:debug] = false
         assert(Puppet.err("This is an error").is_a?(Puppet::Log))
         assert(Puppet.debug("This is debugging").nil?)
         Puppet[:debug] = true
         assert(Puppet.err("This is an error").is_a?(Puppet::Log))
         assert(Puppet.debug("This is debugging").is_a?(Puppet::Log))
-        Puppet[:debug] = olddebug
     end
 
     def test_creatingdirs
@@ -126,7 +121,7 @@ class TestLog < Test::Unit::TestCase
         path = tempfile
         File.open(path, "w") { |f| f.puts "yayness" }
 
-        file = Puppet.type(:file).create(
+        file = Puppet::Type::PFile.create(
             :path => path,
             :check => [:owner, :group, :mode, :checksum]
         )
@@ -162,7 +157,7 @@ class TestLog < Test::Unit::TestCase
     # Verify that the error and source are always strings
     def test_argsAreStrings
         msg = nil
-        file = Puppet.type(:file).create(
+        file = Puppet::Type::PFile.create(
             :path => tempfile(),
             :check => %w{owner group}
         )
@@ -180,7 +175,7 @@ class TestLog < Test::Unit::TestCase
     # Verify that loglevel behaves as one expects
     def test_loglevel
         path = tempfile()
-        file = Puppet.type(:file).create(
+        file = Puppet::Type::PFile.create(
             :path => path,
             :create => true
         )

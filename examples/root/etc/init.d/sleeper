@@ -15,8 +15,7 @@ fi
 
 function start
 {
-    cd $path
-    ./sleeper
+    sleeper
 }
 
 function stop

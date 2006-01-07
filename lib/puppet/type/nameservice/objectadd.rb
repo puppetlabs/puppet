@@ -1,6 +1,17 @@
 require 'puppet'
 
 module Puppet
+    class State
+        # The flag to use to add an object
+        def self.objectaddflag
+            if defined? @objectaddflag and @objectaddflag
+                return @objectaddflag
+            else
+                return @name
+            end
+        end
+    end
+
     module NameService
         module ObjectAdd
             # Verify that we've got the commands necessary to manage flat files.
@@ -24,45 +35,16 @@ module Puppet
                 end
             end
 
-            # The base state class for <object>add operations.
-            class ObjectAddState < Puppet::State::NSSState
-                class << self
-                    # Determine the flag to pass to our command.
-                    def objectaddflag
-                        unless defined? @objectaddflag
-                            # Else, return the first letter of the name.  I have to
-                            # user a range here, else the character will show up
-                            # as a number, rather than as a string, for some reason.
-                            @objectaddflag = "-" + self.name.to_s[0,1]
-                            Puppet.debug "Setting flag on %s to %s" %
-                                [self.name, @objectaddflag]
-                        end
-                        return @objectaddflag
-                    end
-
-                    # Set the flag manually.
-                    def setflag(value)
-                        @objectaddflag = value
-                    end
-                end
-            end
-
-            # The state class for doing group operations using groupadd or whatever.
-            # I could probably have abstracted the User and Group classes into
-            # a single class, but eh, it just didn't seem worth it.
-            class ObjectAddGroup < ObjectAddState
-                class << self
-                    # This is hackish, but hey, it works.
-                    def finish
-                        @allatonce = true
-                    end
+            class ObjectAddGroup < POSIX::POSIXState
+                def self.allatonce?
+                    true
                 end
 
                 def addcmd
                     cmd = ["groupadd"]
                     if gid = @parent.should(:gid)
                         unless gid == :auto
-                            cmd << self.class.objectaddflag << gid 
+                            cmd << "-g" << gid 
                         end
                     end
                     cmd << @parent.name
@@ -84,17 +66,16 @@ module Puppet
                 end
             end
 
-            # The class for adding users using 'adduser'.
-            class ObjectAddUser < ObjectAddState
-                class << self
-                    # This is hackish, but hey, it works.
-                    def finish
-                        @allatonce = true
-                        case self.name
-                        when :home: setflag "-d"
-                        end
-                    end
+            class GroupGID       < ObjectAddGroup
+                @objectaddflag = "-g"
+                @autogen = true
+            end
+
+            class ObjectAddUser < POSIX::POSIXState
+                def self.allatonce?
+                    true
                 end
+
                 def addcmd
                     cmd = ["useradd"]
                     @parent.eachstate { |state|
@@ -118,13 +99,49 @@ module Puppet
                 end
 
                 def modifycmd
-                    cmd = [
-                        "usermod",
-                        self.class.objectaddflag,
-                        "'%s'" % self.should,
-                        @parent.name
-                    ].join(" ")
+                cmd = [
+                    "usermod",
+                    self.class.objectaddflag,
+                    "'%s'" % self.should,
+                    @parent.name
+                ].join(" ")
                 end
+            end
+            class UserUID       < ObjectAddUser
+                @objectaddflag = "-u"
+                @autogen = true
+            end
+
+            class UserGID       < ObjectAddUser
+                @objectaddflag = "-g"
+                @autogen = true
+            end
+
+            class UserComment   < ObjectAddUser
+                @objectaddflag = "-c"
+            end
+
+            class UserHome      < ObjectAddUser
+                @objectaddflag = "-d"
+                @autogen = true
+            end
+
+            class UserShell     < ObjectAddUser
+                @objectaddflag = "-s"
+                @autogen = true
+            end
+
+            class UserLocked    < ObjectAddUser
+            end
+
+            class UserExpire    < ObjectAddUser
+                @objectaddflag = "-e"
+                @autogen = true
+            end
+
+            class UserInactive  < ObjectAddUser
+                @objectaddflag = "-f"
+                @autogen = true
             end
         end
     end

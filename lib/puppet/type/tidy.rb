@@ -4,87 +4,10 @@ require 'puppet/type/state'
 require 'puppet/type/pfile'
 
 module Puppet
-    newtype(:tidy, Puppet.type(:file)) do
-        @doc = "Remove unwanted files based on specific criteria."
-
-        newparam(:path) do
-            desc "The path to the file to manage.  Must be fully qualified."
-            isnamevar
-        end
-
-        copyparam(Puppet.type(:file), :backup)
-
-        newparam(:age) do
-            desc "Tidy files whose age is equal to or greater than
-                the specified number of days."
-
-            munge do |age|
-                case age
-                when /^[0-9]+$/, /^[0-9]+[dD]/:
-                    Integer(age.gsub(/[^0-9]+/,'')) *
-                        60 * 60 * 24
-                when /^[0-9]+$/, /^[0-9]+[hH]/:
-                    Integer(age.gsub(/[^0-9]+/,'')) * 60 * 60
-                when /^[0-9]+[mM]/:
-                    Integer(age.gsub(/[^0-9]+/,'')) * 60
-                when /^[0-9]+[sS]/:
-                    Integer(age.gsub(/[^0-9]+/,''))
-                else
-                    raise Puppet::Error.new("Invalid tidy age %s" % age)
-                end
-            end
-        end
-
-        newparam(:size) do
-            desc "Tidy files whose size is equal to or greater than
-                the specified size.  Unqualified values are in kilobytes, but
-                *b*, *k*, and *m* can be appended to specify *bytes*, *kilobytes*,
-                and *megabytes*, respectively.  Only the first character is
-                significant, so the full word can also be used."
-            
-            munge do |size|
-                if FileTest.directory?(@parent[:path])
-                    # don't do size comparisons for directories
-                    return
-                end
-                case size
-                when /^[0-9]+$/, /^[0-9]+[kK]/:
-                    Integer(size.gsub(/[^0-9]+/,'')) * 1024
-                when /^[0-9]+[bB]/:
-                    Integer(size.gsub(/[^0-9]+/,''))
-                when /^[0-9]+[mM]/:
-                    Integer(size.gsub(/[^0-9]+/,'')) *
-                        1024 * 1024
-                else
-                    raise Puppet::Error.new("Invalid tidy size %s" % size)
-                end
-            end
-        end
-
-        newparam(:type) do
-            desc "Set the mechanism for determining age.  Access
-                time is the default mechanism, but modification."
-            
-            munge do |type|
-                case type
-                when "atime", "mtime", "ctime":
-                    @parameters[:type] = type.intern
-                else
-                    raise Puppet::Error.new("Invalid tidy type %s" % type)
-                end
-            end
-        end
-
-        newparam(:recurse) do
-            desc "If target is a directory, recursively descend
-                into the directory looking for files to tidy."
-        end
-
-        newparam(:rmdirs) do
-            desc "Tidy directories in addition to files."
-        end
-
-        newstate(:tidyup) do
+    # okay, how do we deal with parameters that don't have operations
+    # associated with them?
+    class State
+        class TidyUp < Puppet::State
             require 'etc'
 
             @nodoc = true
@@ -150,30 +73,110 @@ module Puppet
                 return :file_tidied
             end
         end
+    end
 
-        @depthfirst = true
+    class Type
+        class Tidy < PFile
 
-        def initialize(hash)
-            super
+            # class instance variable
+            @states = [
+                Puppet::State::TidyUp
+            ]
 
-            unless  @parameters.include?(:age) or
-                    @parameters.include?(:size)
-                unless FileTest.directory?(self[:path])
-                    # don't do size comparisons for directories
-                    raise Puppet::Error, "Tidy must specify size, age, or both"
+            @parameters = [
+                :path,
+                :age,
+                :size,
+                :type,
+                :backup,
+                :rmdirs,
+                :recurse
+            ]
+
+            @paramdoc[:age] = "Tidy files whose age is equal to or greater than
+                the specified number of days."
+            @paramdoc[:size] = "Tidy files whose size is equal to or greater than
+                the specified size.  Unqualified values are in kilobytes, but
+                *b*, *k*, and *m* can be appended to specify *bytes*, *kilobytes*,
+                and *megabytes*, respectively.  Only the first character is
+                significant, so the full word can also be used."
+            @paramdoc[:type] = "Set the mechanism for determining age.  Access
+                time is the default mechanism, but modification."
+            @paramdoc[:recurse] = "If target is a directory, recursively descend
+                into the directory looking for files to tidy."
+            @paramdoc[:rmdirs] = "Tidy directories in addition to files."
+            @doc = "Remove unwanted files based on specific criteria."
+            @name = :tidy
+            @namevar = :path
+
+            @depthfirst = true
+
+            def initialize(hash)
+                super
+
+                unless  @parameters.include?(:age) or
+                        @parameters.include?(:size)
+                    unless FileTest.directory?(self[:path])
+                        # don't do size comparisons for directories
+                        raise Puppet::Error, "Tidy must specify size, age, or both"
+                    end
+                end
+
+                # only allow backing up into filebuckets
+                unless self[:backup].is_a? Puppet::Client::Dipper
+                    self[:backup] = false
+                end
+                self[:tidyup] = [:age, :size].collect { |param|
+                    @parameters[param]
+                }.reject { |p| p == false }
+            end
+
+            def paramage=(age)
+                @parameters[:age] = age
+                case age
+                when /^[0-9]+$/, /^[0-9]+[dD]/:
+                    @parameters[:age] = Integer(age.gsub(/[^0-9]+/,'')) *
+                        60 * 60 * 24
+                when /^[0-9]+$/, /^[0-9]+[hH]/:
+                    @parameters[:age] = Integer(age.gsub(/[^0-9]+/,'')) * 60 * 60
+                when /^[0-9]+[mM]/:
+                    @parameters[:age] = Integer(age.gsub(/[^0-9]+/,'')) * 60
+                when /^[0-9]+[sS]/:
+                    @parameters[:age] = Integer(age.gsub(/[^0-9]+/,''))
+                else
+                    raise Puppet::Error.new("Invalid tidy age %s" % age)
                 end
             end
 
-            # only allow backing up into filebuckets
-            unless self[:backup].is_a? Puppet::Client::Dipper
-                self[:backup] = false
+            def paramsize=(size)
+                if FileTest.directory?(self[:path])
+                    # don't do size comparisons for directories
+                    return
+                end
+                case size
+                when /^[0-9]+$/, /^[0-9]+[kK]/:
+                    @parameters[:size] = Integer(size.gsub(/[^0-9]+/,'')) * 1024
+                when /^[0-9]+[bB]/:
+                    @parameters[:size] = Integer(size.gsub(/[^0-9]+/,''))
+                when /^[0-9]+[mM]/:
+                    @parameters[:size] = Integer(size.gsub(/[^0-9]+/,'')) *
+                        1024 * 1024
+                else
+                    raise Puppet::Error.new("Invalid tidy size %s" % size)
+                end
             end
-            self[:tidyup] = [:age, :size].collect { |param|
-                @parameters[param]
-            }.reject { |p| p == false }
-        end
 
-    end
+            def paramtype=(type)
+                case type
+                when "atime", "mtime", "ctime":
+                    @parameters[:type] = type.intern
+                else
+                    raise Puppet::Error.new("Invalid tidy type %s" % type)
+                end
+            end
+
+        end # Puppet::Type::Symlink
+    end # Puppet::Type
 end
 
 # $Id$

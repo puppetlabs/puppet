@@ -76,7 +76,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
         #makes Puppet file Object
         assert_nothing_raised {
-            tofile = Puppet.type(:file).create(
+            tofile = Puppet::Type::PFile.create(
                 :name => topath,
                 :source => frompath,
                 :recurse => true,                             
@@ -85,7 +85,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         }
 
         #make a component and adds the file
-        comp = Puppet.type(:component).create(
+        comp = Puppet::Type::Component.create(
             :name => "component"
         )
         comp.push tofile
@@ -153,7 +153,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
         #makes Puppet file Object
         assert_nothing_raised {
-            tofile = Puppet.type(:file).create(
+            tofile = Puppet::Type::PFile.create(
                 :name => topath,
                 :source => frompath,
                 :recurse => true,                             
@@ -162,7 +162,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         }
 
         #make a component and adds the file
-        comp = Puppet.type(:component).create(
+        comp = Puppet::Type::Component.create(
             :name => "component"
         )
         comp.push tofile
@@ -237,7 +237,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
         #makes Puppet file Object
         assert_nothing_raised {
-            tofile = Puppet.type(:file).create(
+            tofile = Puppet::Type::PFile.create(
                 :name => topath,
                 :source => frompath,
                 :recurse => true,
@@ -247,7 +247,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         }
 
         #make a component and adds the file
-        comp = Puppet.type(:component).create(
+        comp = Puppet::Type::Component.create(
             :name => "component"
         )
         comp.push tofile

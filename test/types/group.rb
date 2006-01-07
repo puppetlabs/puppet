@@ -19,7 +19,7 @@ class TestGroup < Test::Unit::TestCase
     end
 
     def teardown
-        Puppet.type(:group).clear
+        Puppet::Type::Group.clear
         @@tmpgroups.each { |group|
             unless missing?(group)
                 remove(group)
@@ -99,7 +99,7 @@ class TestGroup < Test::Unit::TestCase
 
         group[:gid] = old
 
-        trans = assert_events([], comp, "group")
+        trans = assert_events(comp, [], "group")
 
         newgid = old
         while true
@@ -120,7 +120,7 @@ class TestGroup < Test::Unit::TestCase
             group[:gid] = newgid
         }
 
-        trans = assert_events([:group_modified], comp, "group")
+        trans = assert_events(comp, [:group_modified], "group")
 
         curgid = nil
         assert_nothing_raised {
@@ -144,7 +144,7 @@ class TestGroup < Test::Unit::TestCase
 
         assert(obj, "Could not retrieve test group object")
 
-        Puppet.type(:group).validstates.each { |name, state|
+        Puppet::Type::Group.validstates.each { |name, state|
             assert_nothing_raised {
                 method = state.infomethod
                 assert(method, "State %s has no infomethod" % name)
@@ -170,7 +170,7 @@ class TestGroup < Test::Unit::TestCase
             gobj = nil
             comp = nil
             assert_nothing_raised {
-                gobj = Puppet.type(:group).create(
+                gobj = Puppet::Type::Group.create(
                     :name => group,
                     :check => [:gid]
                 )
@@ -198,8 +198,8 @@ class TestGroup < Test::Unit::TestCase
         }
         user = nil
         assert_nothing_raised {
-            checks = Puppet.type(:group).validstates
-            user = Puppet.type(:group).create(
+            checks = Puppet::Type::Group.validstates
+            user = Puppet::Type::Group.create(
                 :name => name,
                 :check => checks
             )
@@ -234,7 +234,7 @@ class TestGroup < Test::Unit::TestCase
             assert(missing?(name), "Group %s is still present" % name)
 
             assert_nothing_raised {
-                gobj = Puppet.type(:group).create(
+                gobj = Puppet::Type::Group.create(
                     :name => name
                 )
 
@@ -242,7 +242,7 @@ class TestGroup < Test::Unit::TestCase
             }
 
             @@tmpgroups << name
-            trans = assert_events([:group_created], comp, "group")
+            trans = assert_events(comp, [:group_created], "group")
 
             obj = nil
             assert_nothing_raised {
@@ -250,7 +250,7 @@ class TestGroup < Test::Unit::TestCase
             }
             assert(!missing?(name), "Group %s is missing" % name)
 
-            tests = Puppet.type(:group).validstates
+            tests = Puppet::Type::Group.validstates
 
             gobj.retrieve
             tests.each { |test|

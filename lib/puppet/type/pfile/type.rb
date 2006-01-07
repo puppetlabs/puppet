@@ -1,26 +1,29 @@
 module Puppet
-    Puppet.type(:file).newstate(:type) do
-        require 'etc'
-        desc "A read-only state to check the file type."
+    class State
+        class PFileType < Puppet::State
+            require 'etc'
+            @doc = "A read-only state to check the file type."
+            @name = :type
 
-        #munge do |value|
-        #    raise Puppet::Error, ":type is read-only"
-        #end
-        
-        def retrieve
-            if stat = @parent.stat(true)
-                @is = stat.ftype
-            else
-                @is = :notfound
+            def shouldprocess(value)
+                raise Puppet::Error, ":type is read-only"
+            end
+            
+            def retrieve
+                if stat = @parent.stat(true)
+                    @is = stat.ftype
+                else
+                    @is = :notfound
+                end
+
+                # so this state is never marked out of sync
+                @should = [@is]
             end
 
-            # so this state is never marked out of sync
-            @should = [@is]
-        end
 
-
-        def sync
-            raise Puppet::Error, ":type is read-only"
+            def sync
+                raise Puppet::Error, ":type is read-only"
+            end
         end
     end
 end

@@ -11,7 +11,7 @@ require 'facter'
 
 $platform = Facter["operatingsystem"].value
 
-unless Puppet.type(:package).default
+unless Puppet::Type::Package.default
     puts "No default package type for %s; skipping package tests" % $platform
 else
 
@@ -31,8 +31,8 @@ class TestPackages < Test::Unit::TestCase
 	include FileTesting
     def setup
         super
-        #@list = Puppet.type(:package).getpkglist
-        Puppet.type(:package).clear
+        #@list = Puppet::Type::Package.getpkglist
+        Puppet::Type::Package.clear
     end
 
     # These are packages that we're sure will be installed
@@ -81,7 +81,7 @@ class TestPackages < Test::Unit::TestCase
 
     def mkpkgcomp(pkg)
         assert_nothing_raised {
-            pkg = Puppet.type(:package).create(:name => pkg, :install => true)
+            pkg = Puppet::Type::Package.create(:name => pkg, :install => true)
         }
         assert_nothing_raised {
             pkg.retrieve
@@ -96,7 +96,7 @@ class TestPackages < Test::Unit::TestCase
         installedpkgs().each { |pkg|
             obj = nil
             assert_nothing_raised {
-                obj = Puppet.type(:package).create(
+                obj = Puppet::Type::Package.create(
                     :name => pkg
                 )
             }
@@ -114,7 +114,7 @@ class TestPackages < Test::Unit::TestCase
     def test_nosuchpkg
         obj = nil
         assert_nothing_raised {
-            obj = Puppet.type(:package).create(
+            obj = Puppet::Type::Package.create(
                 :name => "thispackagedoesnotexist"
             )
         }
@@ -131,7 +131,7 @@ class TestPackages < Test::Unit::TestCase
         pkgs = tstpkg || return
 
         pkgs.each { |name|
-            pkg = Puppet.type(:package).create(:name => name)
+            pkg = Puppet::Type::Package.create(:name => name)
             assert_nothing_raised {
                 assert(pkg.latest, "Package did not return value for 'latest'")
             }
@@ -147,7 +147,7 @@ class TestPackages < Test::Unit::TestCase
             # we first set install to 'true', and make sure something gets
             # installed
             assert_nothing_raised {
-                pkg = Puppet.type(:package).create(:name => pkg, :install => true)
+                pkg = Puppet::Type::Package.create(:name => pkg, :install => true)
             }
             assert_nothing_raised {
                 pkg.retrieve
@@ -160,7 +160,7 @@ class TestPackages < Test::Unit::TestCase
 
             comp = newcomp("package", pkg)
 
-            assert_events([:package_installed], comp, "package")
+            assert_events(comp, [:package_installed], "package")
 
             # then uninstall it
             assert_nothing_raised {
@@ -172,7 +172,7 @@ class TestPackages < Test::Unit::TestCase
 
             assert(! pkg.insync?, "Package is insync")
 
-            assert_events([:package_removed], comp, "package")
+            assert_events(comp, [:package_removed], "package")
 
             # and now set install to 'latest' and verify it installs
             # FIXME this isn't really a very good test -- we should install
@@ -181,7 +181,7 @@ class TestPackages < Test::Unit::TestCase
                 pkg[:install] = "latest"
             }
 
-            assert_events([:package_installed], comp, "package")
+            assert_events(comp, [:package_installed], "package")
 
             pkg.retrieve
             assert(pkg.insync?, "After install, package is not insync")
@@ -195,7 +195,7 @@ class TestPackages < Test::Unit::TestCase
 
             assert(! pkg.insync?, "Package is insync")
 
-            assert_events([:package_removed], comp, "package")
+            assert_events(comp, [:package_removed], "package")
         }
     end
     end

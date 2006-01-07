@@ -12,7 +12,7 @@ class TestRelationships < Test::Unit::TestCase
 	include TestPuppet
     def newfile
         assert_nothing_raised() {
-            return Puppet.type(:file).create(
+            return Puppet::Type::PFile.create(
                 :path => tempfile,
                 :check => [:mode, :owner, :group]
             )
