@@ -1,14 +1,19 @@
 # The library for manipulating SSL certs.
 
 require 'puppet'
-require 'openssl'
+
+begin
+    require 'openssl'
+rescue LoadError
+    raise Puppet::Error, "You must have the Ruby openssl library installed"
+end
 
 module Puppet
 module SSLCertificates
     def self.mkdir(dir)
         # this is all a bunch of stupid hackery
         unless FileTest.exists?(dir)
-            comp = Puppet::Type::Component.create(
+            comp = Puppet.type(:component).create(
                 :name => "certdir creation"
             )
             path = ['']

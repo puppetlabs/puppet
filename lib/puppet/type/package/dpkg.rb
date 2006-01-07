@@ -32,7 +32,7 @@ module Puppet
                         fields.zip(match.captures) { |field,value|
                             hash[field] = value
                         }
-                        #packages.push Puppet::Type::Package.installedpkg(hash)
+                        #packages.push Puppet.type(:package).installedpkg(hash)
                     else
                         raise Puppet::DevError,
                             "failed to match dpkg line %s" % line
@@ -82,7 +82,7 @@ module Puppet
                             fields.zip(match.captures) { |field,value|
                                 hash[field] = value
                             }
-                            packages.push Puppet::Type::Package.installedpkg(hash)
+                            packages.push Puppet.type(:package).installedpkg(hash)
                         else
                             raise Puppet::DevError,
                                 "Failed to match dpkg line %s" % line

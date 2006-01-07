@@ -160,7 +160,6 @@ class Transaction
 
     #---------------------------------------------------------------
     def triggered(object, method)
-        Puppet.notice "Triggered %s" % method
         @triggered[object][method] += 1
         #@triggerevents << ("%s_%sed" % [object.class.name.to_s, method.to_s]).intern
     end
@@ -168,7 +167,6 @@ class Transaction
 
     #---------------------------------------------------------------
     def triggered?(object, method)
-        Puppet.notice "Looking for triggered %s" % method
         @triggered[object][method]
     end
     #---------------------------------------------------------------

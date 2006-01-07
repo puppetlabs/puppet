@@ -54,7 +54,7 @@ class TestFileSources < Test::Unit::TestCase
         comp = nil
         trans = nil
         assert_nothing_raised {
-            file = Puppet::Type::PFile.create(
+            file = Puppet.type(:file).create(
                 :name => path
             )
         }
@@ -82,12 +82,12 @@ class TestFileSources < Test::Unit::TestCase
             of.puts "yayness"
         }
         assert_nothing_raised {
-            tofile = Puppet::Type::PFile.create(
+            tofile = Puppet.type(:file).create(
                 :name => topath,
                 :source => frompath
             )
         }
-        comp = Puppet::Type::Component.create(
+        comp = Puppet.type(:component).create(
             :name => "component"
         )
         comp.push tofile
@@ -97,9 +97,6 @@ class TestFileSources < Test::Unit::TestCase
         assert_nothing_raised {
             trans.evaluate
         }
-   #     assert_nothing_raised {
-   #         comp.sync
-   #     }
 
         assert(FileTest.exists?(topath))
         from = File.open(frompath) { |o| o.read }
@@ -115,14 +112,14 @@ class TestFileSources < Test::Unit::TestCase
         trans = nil
 
         assert_nothing_raised {
-            tofile = Puppet::Type::PFile.create(
+            tofile = Puppet.type(:file).create(
                 :name => todir,
                 "recurse" => true,
                 "backup" => false,
                 "source" => fromdir
             )
         }
-        comp = Puppet::Type::Component.create(
+        comp = Puppet.type(:component).create(
             :name => "component"
         )
         comp.push tofile
@@ -246,7 +243,7 @@ class TestFileSources < Test::Unit::TestCase
         File.open(file1, "w") { |f| 3.times { f.print rand(100) } }
         rootobj = nil
         assert_nothing_raised {
-            rootobj = Puppet::Type::PFile.create(
+            rootobj = Puppet.type(:file).create(
                 :name => basedir,
                 :recurse => true,
                 :check => %w{type owner}
@@ -255,7 +252,7 @@ class TestFileSources < Test::Unit::TestCase
             rootobj.evaluate
         }
 
-        klass = Puppet::Type::PFile
+        klass = Puppet.type(:file)
         assert(klass[basedir])
         assert(klass[file1])
         assert_nil(klass[file2])
@@ -454,7 +451,7 @@ class TestFileSources < Test::Unit::TestCase
         sleep(1)
 
         name = File.join(tmpdir(), "nosourcefile")
-        file = Puppet::Type::PFile.create(
+        file = Puppet.type(:file).create(
             :source => "puppet://localhost/dist/file",
             :name => name
         )
@@ -510,7 +507,7 @@ class TestFileSources < Test::Unit::TestCase
         sleep(1)
 
         name = File.join(tmpdir(), "nosourcefile")
-        file = Puppet::Type::PFile.create(
+        file = Puppet.type(:file).create(
             :source => "puppet://localhost/noexist/file",
             :name => name
         )
@@ -540,7 +537,7 @@ class TestFileSources < Test::Unit::TestCase
         # Now the files should be exactly the same, so we should not see attempts
         # at copying
         assert_nothing_raised {
-            file = Puppet::Type::PFile.create(
+            file = Puppet.type(:file).create(
                 :path => to,
                 :source => from
             )
@@ -566,14 +563,14 @@ class TestFileSources < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet::Type::PFile.create(
+            file = Puppet.type(:file).create(
                 :name => to,
                 :source => files
             )
         }
 
         comp = newcomp(file)
-        assert_events(comp, [:file_changed])
+        assert_events([:file_changed], comp)
 
         assert(File.exists?(to), "File does not exist")
 

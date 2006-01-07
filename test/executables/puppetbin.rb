@@ -35,7 +35,9 @@ class TestPuppetBin < Test::Unit::TestCase
 
         output = nil
         cmd = "puppet"
-        cmd += " --verbose"
+        if Puppet[:debug]
+            cmd += " --debug"
+        end
         #cmd += " --fqdn %s" % fqdn
         cmd += " --confdir %s" % Puppet[:puppetconf]
         cmd += " --vardir %s" % Puppet[:puppetvar]

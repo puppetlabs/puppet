@@ -19,10 +19,14 @@ libdirs = $:.find_all { |dir|
 }
 ENV["RUBYLIB"] = libdirs.join(":")
 
-$module = File.join($puppetbase, "ext", "module:puppet")
+$module = File.join($puppetbase, "ext", "module_puppet")
 
 class TestPuppetModule < Test::Unit::TestCase
 	include ServerTest
+
+    def test_existence
+        assert(FileTest.exists?($module), "Module does not exist")
+    end
 
     def test_execution
         file = tempfile()
@@ -41,6 +45,7 @@ class TestPuppetModule < Test::Unit::TestCase
         cmd += " --vardir %s" % Puppet[:puppetvar]
         if Puppet[:debug]
             cmd += " --logdest %s" % "console"
+            cmd += " --debug"
         else
             cmd += " --logdest %s" % "/dev/null"
         end

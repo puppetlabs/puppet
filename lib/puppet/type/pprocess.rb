@@ -89,7 +89,7 @@ module Puppet
 				:pattern => :pattern
 			})
 
-		end # Puppet::Type::PProcess
+		end # Puppet.type(:pprocess)
 	end # Puppet::Type
 
 end

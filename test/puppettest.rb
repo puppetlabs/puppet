@@ -7,12 +7,15 @@ require 'puppet'
 require 'test/unit'
 
 module TestPuppet
-    def newcomp(name,*ary)
-        if name.is_a?(Puppet::Type)
-            ary.unshift name
-            name = name.name
+    def newcomp(*ary)
+        name = nil
+        if ary[0].is_a?(String)
+            name = ary.shift
+        else
+            name = ary[0].name
         end
-        comp = Puppet::Type::Component.create(
+
+        comp = Puppet.type(:component).create(
             :name => name
         )
         ary.each { |item| comp.push item }
@@ -78,7 +81,7 @@ module TestPuppet
         if stype = Puppet::Type.type(:service)
             stype.each { |service|
                 service[:running] = false
-                service.sync
+                service.evaluate
             }
         end
     end
@@ -103,6 +106,9 @@ module TestPuppet
 
         # reset all of the logs
         Puppet::Log.close
+
+        # Just in case there are processes waiting to die...
+        Process.waitall
     end
 
     def tempfile
@@ -136,6 +142,7 @@ module TestPuppet
                 "/tmp"
             end
 
+
             @tmpdir = File.join(@tmpdir, "puppettesting")
 
             unless File.exists?(@tmpdir)
@@ -146,18 +153,57 @@ module TestPuppet
         @tmpdir
     end
 
-    def assert_rollback_events(trans, events, msg)
-        run_events(:rollback, trans, events, msg)
+    def assert_rollback_events(events, trans, msg = nil)
+        run_events(:rollback, events, trans, msg)
     end
 
-    def assert_events(comp, events, msg = nil)
+    def assert_events(events, *items)
         trans = nil
+        comp = nil
+        msg = nil
+
+        unless events.is_a? Array
+            raise Puppet::DevError, "Incorrect call of assert_events"
+        end
+        if items[-1].is_a? String
+            msg = items.pop
+        end
+
+        remove_comp = false
+        # They either passed a comp or a list of items.
+        if items[0].is_a? Puppet.type(:component)
+            comp = items.shift
+        else
+            comp = newcomp(items[0].name, *items)
+            remove_comp = true
+        end
         msg ||= comp.name
         assert_nothing_raised("Component %s failed" % [msg]) {
             trans = comp.evaluate
         }
 
         run_events(:evaluate, trans, events, msg)
+
+        if remove_comp
+            Puppet.type(:component).delete(comp)
+        end
+
+        return trans
+    end
+
+    # A simpler method that just applies what we have.
+    def assert_apply(*objects)
+        comp = newcomp(*objects)
+        trans = nil
+
+        assert_nothing_raised("Failed to create transaction") {
+            trans = comp.evaluate
+        }
+
+        assert_nothing_raised("Failed to evaluate transaction") {
+            trans.evaluate
+        }
+        Puppet.type(:component).delete(comp)
     end
 
     def run_events(type, trans, events, msg)

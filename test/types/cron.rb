@@ -34,8 +34,9 @@ class TestCron < Test::Unit::TestCase
         unless defined? @me
             raise "Could not retrieve user name; 'id' did not work"
         end
+
         # god i'm lazy
-        @crontype = Puppet::Type::Cron
+        @crontype = Puppet.type(:cron)
 
         # Here we just create a fake cron type that answers to all of the methods
         # but does not modify our actual system.
@@ -74,7 +75,7 @@ class TestCron < Test::Unit::TestCase
     def cronback
         tab = nil
         assert_nothing_raised {
-            tab = Puppet::Type::Cron.crontype.read(@me)
+            tab = Puppet.type(:cron).crontype.read(@me)
         }
 
         if $? == 0
@@ -118,14 +119,14 @@ class TestCron < Test::Unit::TestCase
         name = cron.name
         comp = newcomp(name, cron)
 
-        trans = assert_events(comp, [:cron_created], name)
+        trans = assert_events([:cron_created], comp)
         cron.retrieve
         assert(cron.insync?)
-        trans = assert_events(comp, [], name)
+        trans = assert_events([], comp)
         cron[:command] = :notfound
-        trans = assert_events(comp, [:cron_deleted], name)
+        trans = assert_events([:cron_deleted], comp)
         # the cron should no longer exist, not even in the comp
-        trans = assert_events(comp, [], name)
+        trans = assert_events([], comp)
 
         assert(!comp.include?(cron),
             "Cron is still a member of comp, after being deleted")
@@ -175,15 +176,14 @@ class TestCron < Test::Unit::TestCase
                 :user => @me
             )
         }
-        assert_nothing_raised {
-            cron.sync
-        }
+        comp = newcomp(cron)
+        assert_events([:cron_created], comp)
+
         assert_nothing_raised {
             cron[:month] = "June"
         }
-        comp = newcomp(cron)
 
-        assert_events(comp, [:cron_changed], "did not change cron job")
+        assert_events([:cron_changed], comp)
     end
 
     # Test that a cron job with spaces at the end doesn't get rewritten
@@ -201,8 +201,8 @@ class TestCron < Test::Unit::TestCase
         }
         comp = newcomp(cron)
 
-        assert_events(comp, [:cron_created], "did not create cron job")
-        assert_events(comp, [], "cron job got rewritten")
+        assert_events([:cron_created], comp, "did not create cron job")
+        assert_events([], comp, "cron job got rewritten")
     end
     
     # Test that comments are correctly retained
@@ -247,15 +247,15 @@ class TestCron < Test::Unit::TestCase
 
     # Test adding a cron when there is currently no file.
     def test_mkcronwithnotab
-        Puppet::Type::Cron.crontype.remove(@me)
+        Puppet.type(:cron).crontype.remove(@me)
 
         cron = mkcron("testwithnotab")
         cyclecron(cron)
     end
 
     def test_mkcronwithtab
-        Puppet::Type::Cron.crontype.remove(@me)
-        Puppet::Type::Cron.crontype.write(@me,
+        Puppet.type(:cron).crontype.remove(@me)
+        Puppet.type(:cron).crontype.write(@me,
 "1 1 1 1 * date > %s/crontesting\n" % testdir()
         )
 
@@ -264,20 +264,20 @@ class TestCron < Test::Unit::TestCase
     end
 
     def test_makeandretrievecron
-        Puppet::Type::Cron.crontype.remove(@me)
+        Puppet.type(:cron).crontype.remove(@me)
 
         name = "storeandretrieve"
         cron = mkcron(name)
         comp = newcomp(name, cron)
-        trans = assert_events(comp, [:cron_created], name)
+        trans = assert_events([:cron_created], comp, name)
         
         cron = nil
 
-        Puppet::Type::Cron.clear
-        Puppet::Type::Cron.retrieve(@me)
+        Puppet.type(:cron).clear
+        Puppet.type(:cron).retrieve(@me)
 
-        assert(cron = Puppet::Type::Cron[name], "Could not retrieve named cron")
-        assert_instance_of(Puppet::Type::Cron, cron)
+        assert(cron = Puppet.type(:cron)[name], "Could not retrieve named cron")
+        assert_instance_of(Puppet.type(:cron), cron)
     end
 
     # Do input validation testing on all of the parameters.
@@ -302,14 +302,16 @@ class TestCron < Test::Unit::TestCase
             },
             :month => {
                 :valid => [ 1, 11, 12, "mar", "March", "apr", "October", "DeCeMbEr" ],
-                :invalid => [ 0, 13, "marc", "sept" ]
+                :invalid => [ -1, 0, 13, "marc", "sept" ]
             }
         }
 
         cron = mkcron("valtesting")
         values.each { |param, hash|
-            hash.each { |type, values|
-                values.each { |value|
+            # We have to test the valid ones first, because otherwise the
+            # state will fail to create at all.
+            [:valid, :invalid].each { |type|
+                hash[type].each { |value|
                     case type
                     when :valid:
                         assert_nothing_raised {

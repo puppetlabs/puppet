@@ -1,18 +1,33 @@
-
-require 'open3'
-require 'puppet/type/state'
-
 module Puppet
-    # okay, how do we deal with parameters that don't have operations
-    # associated with them?
-    class State
-        # this always runs
-        class Returns < Puppet::State
-            attr_reader :output
+    newtype(:exec) do
+        @doc = "Executes external commands.  It is critical that all commands
+            executed using this mechanism can be run multiple times without
+            harm, i.e., they are *idempotent*.  One useful way to create idempotent
+            commands is to use the *creates* parameter.
 
-            @doc = "The expected return code.  An error will be returned if the
+            It is worth nothing that ``exec`` is special, in that it is not
+            currently considered an error to have multiple ``exec`` instances
+            with the same name.  This was done purely because it had to be this
+            way in order to get certain functionality, but it complicates things.
+            In particular, you will not be able to use ``exec`` instances that
+            share their commands with other instances as a dependency, since
+            Puppet has no way of knowing which instance you mean.
+
+            It is recommended to avoid duplicate names whenever possible."
+
+        require 'open3'
+        require 'puppet/type/state'
+
+        newstate(:returns) do |state|
+            munge do |value|
+                value.to_s
+            end
+
+            defaultto "0"
+
+            attr_reader :output
+            desc "The expected return code.  An error will be returned if the
                 executed command returns something else."
-            @name = :returns
 
             # Make output a bit prettier
             def change_to_s
@@ -90,14 +105,6 @@ module Puppet
                         # handlers correctly
                         Puppet::Util.asuser(@parent[:user], @parent[:group]) {
                             # capture both stdout and stderr
-
-                            #stdin, stdout, stderr = Open3.popen3(self.parent[:command])
-                            #@output = stdout.read
-                            #err = stderr.read
-
-                            #stderr = Puppet::Util.capture_stderr {
-                            #    @output = %x{#{self.parent[:command]}}
-                            #}
                             if @parent[:user]
                                 unless defined? @@alreadywarned
                                     Puppet.warning(
@@ -109,12 +116,6 @@ module Puppet
                             else
                                 @output = %x{#{self.parent[:command]} 2>&1}
                             end
-
-                            #if err != ""
-                            #    stderr.split(/\n/).each { |line|
-                            #        self.send(:err, line)
-                            #    }
-                            #end
                         }
                         status = $?
 
@@ -142,142 +143,23 @@ module Puppet
                 return :executed_command
             end
         end
-    end
 
-    class Type
-        class Exec < Type
-            # this is kind of hackish, using the return value as the
-            # state, but apparently namevars can't also be states
-            # who knew?
-            @states = [
-                Puppet::State::Returns
-            ]
+        newparam(:command) do
+            isnamevar
+            desc "The actual command to execute."
+        end
 
-            @parameters = [
-                :path,
-                :user,
-                :group,
-                :creates,
-                :cwd,
-                :refreshonly,
-                :command
-            ]
-
-            @paramdoc[:path] = "The search path used for command execution.
+        newparam(:path) do
+            desc "The search path used for command execution.
                 Commands must be fully qualified if no path is specified."
-            @paramdoc[:user] = "The user to run the command as.  Note that if you use
-                this then any error output is not currently captured.  This is mostly
-                because of a bug within Ruby."
-            @paramdoc[:group] = "The group to run the command as."
-            @paramdoc[:cwd] = "The directory from which to run the command.  If
-                this directory does not exist, the command will fail."
-            @paramdoc[:refreshonly] = "The command should only be run as a
-                refresh mechanism for when a dependent object is changed."
-            @paramdoc[:command] = "The actual command to execute."
-            @paramdoc[:creates] = "A file that this command creates.  If this
-                parameter is provided, then the command will only be run
-                if the specified file does not exist."
+        end
 
-            @doc = "Executes external commands.  It is critical that all commands
-                executed using this mechanism can be run multiple times without
-                harm, i.e., they are *idempotent*.  One useful way to create idempotent
-                commands is to use the *creates* parameter.
+        newparam(:user) do
+            desc "The user to run the command as.  Note that if you
+                use this then any error output is not currently captured.  This
+                is mostly because of a bug within Ruby."
 
-                It is worth nothing that ``exec`` is special, in that it is not
-                currently considered an error to have multiple ``exec`` instances
-                with the same name.  This was done purely because it had to be this
-                way in order to get certain functionality, but it complicates things.
-                In particular, you will not be able to use ``exec`` instances that
-                share their commands with other instances as a dependency, since
-                Puppet has no way of knowing which instance you mean.
-
-                It is recommended to avoid duplicate names whenever possible."
-            @name = :exec
-            @namevar = :command
-
-            # Exec names are not isomorphic with the objects.
-            @isomorphic = false
-
-            def initialize(hash)
-                # default to erroring on a non-zero return
-                if hash.include?("returns") 
-                    if hash["returns"].is_a?(Fixnum)
-                        hash["returns"] = hash["returns"].to_s
-                    end
-                elsif hash.include?(:returns) 
-                    if hash[:returns].is_a?(Fixnum)
-                        hash[:returns] = hash[:returns].to_s
-                    end
-                else
-                    hash[:returns] = "0"
-                end
-
-                super
-
-                if self[:command].nil?
-                    raise TypeError.new("Somehow the command is nil")
-                end
-
-                # if we're not fully qualified, require a path
-                if self[:command] !~ /^\//
-                    if self[:path].nil?
-                        raise TypeError,
-                            "both unqualifed and specified no search path"
-                    end
-                end
-            end
-
-            def output
-                if self.state(:returns).nil?
-                    return nil
-                else
-                    return self.state(:returns).output
-                end
-            end
-
-            # FIXME if they try to set this and fail, then we should probably 
-            # fail the entire exec, right?
-            def paramcreates=(file)
-                unless file =~ %r{^#{File::SEPARATOR}}
-                    raise Puppet::Error, "'creates' files must be fully qualified."
-                end
-                @parameters[:creates] = file
-            end
-
-            def paramcwd=(dir)
-                if dir.is_a?(Array)
-                    dir = dir[0]
-                end
-
-                unless File.directory?(dir)
-                    raise Puppet::Error, "Directory '%s' does not exist" % dir
-                end
-
-                @parameters[:cwd] = dir
-            end
-
-            # Execute the command as the specified group
-            def paramgroup=(group)
-                require 'etc'
-                method = :getgrnam
-                case group
-                when Integer: method = :getgrgid
-                when /^\d+$/
-                    group = group.to_i
-                    method = :getgrgid
-                end
-
-                begin
-                    Etc.send(method, group)
-                rescue ArgumentError
-                    raise Puppet::Error, "No such group %s" % group
-                end
-
-                @parameters[:group] = group
-            end
-
-            # Execute the command as the specified user
-            def paramuser=(user)
+            munge do |user|
                 unless Process.uid == 0
                     raise Puppet::Error,
                         "Only root can execute commands as other users"
@@ -298,17 +180,98 @@ module Puppet
                     raise Puppet::Error, "No such user %s" % user
                 end
 
-                @parameters[:user] = user
+                return user
             end
+        end
 
-            # this might be a very, very bad idea...
-            def refresh
-                self.state(:returns).sync
-            end
+        newparam(:group) do
+            desc "The group to run the command as."
 
-            def to_s
-                "exec(%s)" % self.name
+            # Execute the command as the specified group
+            munge do |group|
+                require 'etc'
+                method = :getgrnam
+                case group
+                when Integer: method = :getgrgid
+                when /^\d+$/
+                    group = group.to_i
+                    method = :getgrgid
+                end
+
+                begin
+                    Etc.send(method, group)
+                rescue ArgumentError
+                    raise Puppet::Error, "No such group %s" % group
+                end
+
+                group
             end
+        end
+
+        newparam(:cwd) do
+            desc "The directory from which to run the command.  If
+                this directory does not exist, the command will fail."
+
+            munge do |dir|
+                if dir.is_a?(Array)
+                    dir = dir[0]
+                end
+
+                unless File.directory?(dir)
+                    raise Puppet::Error, "Directory '%s' does not exist" % dir
+                end
+                
+                dir
+            end
+        end
+
+        newparam(:refreshonly) do
+            desc "The command should only be run as a
+                refresh mechanism for when a dependent object is changed."
+        end
+
+        newparam(:creates) do 
+            desc "A file that this command creates.  If this
+                parameter is provided, then the command will only be run
+                if the specified file does not exist."
+
+            # FIXME if they try to set this and fail, then we should probably 
+            # fail the entire exec, right?
+            validate do |file|
+                unless file =~ %r{^#{File::SEPARATOR}}
+                    raise Puppet::Error, "'creates' files must be fully qualified."
+                end
+            end
+        end
+
+        # Exec names are not isomorphic with the objects.
+        @isomorphic = false
+
+        validate do
+            # if we're not fully qualified, require a path
+            if self[:command] !~ /^\//
+                if self[:path].nil?
+                    raise TypeError,
+                        "both unqualifed and specified no search path"
+                end
+            end
+        end
+
+        def output
+            if self.state(:returns).nil?
+                return nil
+            else
+                return self.state(:returns).output
+            end
+        end
+
+        # this might be a very, very bad idea...
+        def refresh
+            self.state(:returns).sync
+        end
+
+        def to_s
+            "exec(%s)" % self.name
         end
     end
 end

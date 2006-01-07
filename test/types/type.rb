@@ -52,7 +52,7 @@ class TestType < Test::Unit::TestCase
         path = tempfile()
         assert_nothing_raised() {
             system("rm -f %s" % path)
-            file = Puppet::Type::PFile.create(
+            file = Puppet.type(:file).create(
                 :path => path,
                 :create => true,
                 :recurse => true,
@@ -63,12 +63,12 @@ class TestType < Test::Unit::TestCase
             file.retrieve
         }
         assert_nothing_raised() {
-            file.sync
+            file.evaluate
         }
-        Puppet::Type::PFile.clear
+        Puppet.type(:file).clear
         assert_nothing_raised() {
             system("rm -f %s" % path)
-            file = Puppet::Type::PFile.create(
+            file = Puppet.type(:file).create(
                 "path" => path,
                 "create" => true,
                 "recurse" => true,
@@ -91,7 +91,7 @@ class TestType < Test::Unit::TestCase
             file["recurse"]
         }
         assert_nothing_raised() {
-            file.sync
+            file.evaluate
         }
     end
 
@@ -102,7 +102,7 @@ class TestType < Test::Unit::TestCase
         # currently groups are the only objects with the namevar as a state
         group = nil
         assert_nothing_raised {
-            group = Puppet::Type::Group.create(
+            group = Puppet.type(:group).create(
                 :name => "testing"
             )
         }
@@ -116,7 +116,7 @@ class TestType < Test::Unit::TestCase
 
         # Create the first version
         assert_nothing_raised {
-            Puppet::Type::PFile.create(
+            Puppet.type(:file).create(
                 :path => file,
                 :owner => ["root", "bin"]
             )
@@ -124,7 +124,7 @@ class TestType < Test::Unit::TestCase
 
         # Make sure no other statements are allowed
         assert_raise(Puppet::Error) {
-            Puppet::Type::PFile.create(
+            Puppet.type(:file).create(
                 :path => file,
                 :group => "root"
             )

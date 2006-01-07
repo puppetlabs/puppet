@@ -28,8 +28,8 @@ class Server
             end
 
             obj = nil
-            unless obj = Puppet::Type::PFile[dir]
-                obj = Puppet::Type::PFile.create(
+            unless obj = Puppet.type(:file)[dir]
+                obj = Puppet.type(:file).create(
                     :name => dir,
                     :check => CHECKPARAMS
                 )
@@ -87,7 +87,7 @@ class Server
 
         # Deal with ignore parameters.
         def handleignore(children, path, ignore)            
-            ignore.each { |ignore|                
+            ignore.value.each { |ignore|                
                 Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) { |match|
                     children.delete(File.basename(match))
                 }                

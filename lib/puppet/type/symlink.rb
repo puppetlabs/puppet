@@ -1,13 +1,11 @@
-
 require 'etc'
 require 'puppet/type/state'
 require 'puppet/type/pfile'
 
 module Puppet
-    # okay, how do we deal with parameters that don't have operations
-    # associated with them?
-    class State
-        class SymlinkTarget < Puppet::State
+    newtype(:symlink) do
+        @doc = "Create symbolic links to existing files."
+        newstate(:target) do
             require 'etc'
             attr_accessor :file
 
@@ -85,46 +83,26 @@ module Puppet
                 #self.parent.newevent(:event => :inode_changed)
             end
         end
-    end
 
-    class Type
-        class Symlink < Type
-            attr_reader :stat, :path, :params
-            # class instance variable
-            @states = [
-                Puppet::State::SymlinkTarget
-            ]
+        attr_reader :stat, :path, :params
 
-            @parameters = [
-                :path,
-                :recurse
-            ]
+        copyparam(Puppet.type(:file), :path)
 
-            @paramdoc[:path] = "Path of link to create."
-            @paramdoc[:recurse] = "If target is a directory, recursively create
+        newparam(:recurse) do
+            desc "If target is a directory, recursively create
                 directories (using `file`'s `source` parameter) and link all
                 contained files."
-            @doc = "Create symbolic links to existing files."
-            @name = :symlink
-            @namevar = :path
 
-            def initialize(hash)
-                @arghash = self.argclean(hash.dup)
-                @arghash.delete(self.class.namevar)
-
-                super
-            end
-
-            def paramrecurse=(value)
+            munge do |value|
                 @stat = nil
-                @target = self.state(:target).should
+                @target = @parent.state(:target).should
 
                 # we want to remove our state, because we're creating children
                 # to do the links
                 if FileTest.exist?(@target)
                     @stat = File.stat(@target)
                 else
-                    self.info "Target %s must exist for recursive links" %
+                    @parent.info "Target %s must exist for recursive links" %
                         @target
                     return
                 end
@@ -135,7 +113,7 @@ module Puppet
                     return
                 end
 
-                self.delete(:target)
+                @parent.delete(:target)
 
                 recurse = value
                 # we might have a string, rather than a number
@@ -158,25 +136,25 @@ module Puppet
                 # working in pfile
 
                 args = {
-                    :name => self.name,
+                    :name => @parent.name,
                     :linkmaker => true,
                     :recurse => recurse,
                     :source => @target
                 }
 
-                dir = Puppet::Type::PFile.implicitcreate(args)
-                dir.parent = self
-                self.debug "Got dir %s" % dir.name
-                self.push dir
-                #Dir.foreach(@target) { |file|
-                #    next if file =~ /^\.\.?$/ # skip . and ..
-                #    newtarget = File.join(@target,file)
-                #    #stat = File.stat(File.join(@target,file))
-                #    self.newchild(file, :target => newtarget)
-                #}
+                dir = Puppet.type(:file).implicitcreate(args)
+                dir.parent = @parent
+                @parent.debug "Got dir %s" % dir.name
+                @parent.push dir
             end
-        end # Puppet::Type::Symlink
-    end # Puppet::Type
+        end
+
+        def initialize(hash)
+            @arghash = self.argclean(hash.dup)
+            @arghash.delete(self.class.namevar)
+            super
+        end
+    end # Puppet.type(:symlink)
 end
 
 # $Id$
