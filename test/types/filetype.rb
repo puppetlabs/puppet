@@ -5,8 +5,8 @@ if __FILE__ == $0
 end
 
 require 'puppet'
-require 'puppet/type/typegen/filetype'
-require 'puppet/type/typegen/filerecord'
+#require 'puppet/type/typegen/filetype'
+#require 'puppet/type/typegen/filerecord'
 require 'test/unit'
 
 #class TestFileType < Test::Unit::TestCase
