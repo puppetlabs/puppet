@@ -20,6 +20,7 @@ begin
     require 'xmlrpc/server'
 rescue LoadError => detail
     $noclientnetworking = detail
+    raise Puppet::Error, "You must have the Ruby XMLRPC, CGI, and Webrick libraries installed"
 end
 
 module Puppet
@@ -413,9 +414,17 @@ module Puppet
                     if tmp = @driver.getfile(sum)
                         newcontents = Base64.decode64(tmp)
                         newsum = Digest::MD5.hexdigest(newcontents)
+                        changed = nil
+                        unless FileTest.writable?(file)
+                            changed = File.stat(file).mode
+                            File.chmod(changed | 0200, file)
+                        end
                         File.open(file,File::WRONLY|File::TRUNC) { |of|
                             of.print(newcontents)
                         }
+                        if changed
+                            File.chmod(changed, file)
+                        end
                     else
                         Puppet.err "Could not find file with checksum %s" % sum
                         return nil

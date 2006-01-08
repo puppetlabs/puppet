@@ -40,7 +40,7 @@ class Puppet::Element
     def path
         unless defined? @path
             if defined? @parent and @parent
-                if self.is_a?(Puppet::Type::Component)
+                if self.is_a?(Puppet.type(:component))
                     @path = [@parent.path, self.name]
                 else
                     @path = [@parent.path, self.class.name.to_s + "=" + self.name]
@@ -54,10 +54,10 @@ class Puppet::Element
                 else
                     # We assume that if we don't have a parent that we should not
                     # cache the path
-                    if self.is_a?(Puppet::Type::Component)
+                    if self.is_a?(Puppet.type(:component))
                         @path = [self.name]
                     else
-                        @path = [self.class.name.to_s + "=" + self.name]
+                        @path = [self.class.name.to_s + "=" + self.name.to_s]
                     end
                 end
             end

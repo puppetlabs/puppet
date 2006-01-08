@@ -1,5 +1,6 @@
 require 'singleton'
 require 'puppet/log'
+require 'puppet/util'
 
 # see the bottom of the file for further inclusions
 
@@ -239,9 +240,28 @@ PUPPETVERSION = '0.9.4'
             return true
         end
     end
+
+    # Create a new type
+    def self.newtype(name, parent = nil, &block)
+        parent ||= Puppet::Type
+        Puppet::Util.symbolize(name)
+        t = Class.new(parent) do
+            @name = name
+        end
+        t.class_eval(&block)
+        @types ||= {}
+        @types[name] = t 
+    end
+
+    # Retrieve a type by name
+    def self.type(name)
+        unless defined? @types
+            return nil
+        end
+        return @types[name]
+    end
 end
 
-require 'puppet/util'
 require 'puppet/server'
 require 'puppet/type'
 require 'puppet/storage'

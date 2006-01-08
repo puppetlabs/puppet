@@ -170,7 +170,6 @@ begin
                 Puppet[:puppetvar] = arg
             when "--waitforcert"
                 waitforcert = arg.to_i
-                rescue
         end
     }
 rescue GetoptLong::InvalidOption => detail

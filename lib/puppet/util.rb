@@ -19,8 +19,8 @@ module Util
                 if group.is_a?(Integer)
                     gid = group
                 else
-                    unless obj = Puppet::Type::Group[group]
-                        obj = Puppet::Type::Group.create(
+                    unless obj = Puppet.type(:group)[group]
+                        obj = Puppet.type(:group).create(
                             :name => group,
                             :check => [:gid]
                         )
@@ -47,8 +47,8 @@ module Util
                 if user.is_a?(Integer)
                     uid = user
                 else
-                    unless obj = Puppet::Type::User[user]
-                        obj = Puppet::Type::User.create(
+                    unless obj = Puppet.type(:user)[user]
+                        obj = Puppet.type(:user).create(
                             :name => user,
                             :check => [:uid, :gid]
                         )
@@ -114,12 +114,12 @@ module Util
                 if useself
                     Puppet::Log.create(
                         :level => level,
+                        :source => self,
                         :message => args
                     )
                 else
                     Puppet::Log.create(
                         :level => level,
-                        :source => self,
                         :message => args
                     )
                 end
@@ -147,6 +147,15 @@ module Util
                 end
             }
             return true
+        end
+    end
+
+    def self.symbolize(value)
+        case value
+        when String: value = value.intern
+        when Symbol: # nothing
+        else
+            raise ArgumentError, "'%s' must be a string or symbol" % value
         end
     end
 end

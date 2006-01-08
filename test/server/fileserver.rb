@@ -151,7 +151,7 @@ class TestFileServer < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            file = Puppet::Type::PFile[tmpfile]
+            file = Puppet.type(:file)[tmpfile]
         }
 
         output = "/\tfile"

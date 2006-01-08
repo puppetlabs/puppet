@@ -17,46 +17,29 @@ class TestExec < Test::Unit::TestCase
         command = nil
         output = nil
         assert_nothing_raised {
-            command = Puppet::Type::Exec.create(
+            command = Puppet.type(:exec).create(
                 :command => "/bin/echo"
             )
         }
         assert_nothing_raised {
             command.evaluate
         }
-        assert_nothing_raised {
-            output = command.sync
-        }
-        assert_equal([:executed_command],output)
+        assert_events([:executed_command], command)
     end
 
     def test_numvsstring
-        command = nil
-        output = nil
-        assert_nothing_raised {
-            command = Puppet::Type::Exec.create(
-                :command => "/bin/echo",
-                :returns => 0
-            )
-        }
-        assert_nothing_raised {
-            command.evaluate
-        }
-        assert_nothing_raised {
-            output = command.sync
-        }
-        Puppet::Type::Exec.clear
-        assert_nothing_raised {
-            command = Puppet::Type::Exec.create(
-                :command => "/bin/echo",
-                :returns => "0"
-            )
-        }
-        assert_nothing_raised {
-            command.evaluate
-        }
-        assert_nothing_raised {
-            output = command.sync
+        [0, "0"].each { |val|
+            Puppet.type(:exec).clear
+            Puppet.type(:component).clear
+            command = nil
+            output = nil
+            assert_nothing_raised {
+                command = Puppet.type(:exec).create(
+                    :command => "/bin/echo",
+                    :returns => val
+                )
+            }
+            assert_events([:executed_command], command)
         }
     end
 
@@ -64,27 +47,27 @@ class TestExec < Test::Unit::TestCase
         command = nil
         output = nil
         assert_nothing_raised {
-            command = Puppet::Type::Exec.create(
+            command = Puppet.type(:exec).create(
                 :command => "echo"
             )
             assert_nil(command)
         }
-        Puppet::Type::Exec.clear
+        Puppet.type(:exec).clear
         assert_nothing_raised {
-            command = Puppet::Type::Exec.create(
+            command = Puppet.type(:exec).create(
                 :command => "echo",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin"
             )
         }
-        Puppet::Type::Exec.clear
+        Puppet.type(:exec).clear
         assert_nothing_raised {
-            command = Puppet::Type::Exec.create(
+            command = Puppet.type(:exec).create(
                 :command => "/bin/echo"
             )
         }
-        Puppet::Type::Exec.clear
+        Puppet.type(:exec).clear
         assert_nothing_raised {
-            command = Puppet::Type::Exec.create(
+            command = Puppet.type(:exec).create(
                 :command => "/bin/echo",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin"
             )
@@ -93,21 +76,21 @@ class TestExec < Test::Unit::TestCase
 
     def test_nonzero_returns
         assert_nothing_raised {
-            command = Puppet::Type::Exec.create(
+            command = Puppet.type(:exec).create(
                 :command => "mkdir /this/directory/does/not/exist",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :returns => 1
             )
         }
         assert_nothing_raised {
-            command = Puppet::Type::Exec.create(
+            command = Puppet.type(:exec).create(
                 :command => "touch /etc",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :returns => 1
             )
         }
         assert_nothing_raised {
-            command = Puppet::Type::Exec.create(
+            command = Puppet.type(:exec).create(
                 :command => "thiscommanddoesnotexist",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :returns => 127
@@ -122,19 +105,14 @@ class TestExec < Test::Unit::TestCase
             Dir.getwd
         }
         assert_nothing_raised {
-            command = Puppet::Type::Exec.create(
+            command = Puppet.type(:exec).create(
                 :command => "pwd",
                 :cwd => dir,
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :returns => 0
             )
         }
-        assert_nothing_raised {
-            command.evaluate
-        }
-        assert_nothing_raised {
-            command.sync
-        }
+        assert_events([:executed_command], command)
         assert_equal(wd,command.output.chomp)
     end
 
@@ -147,12 +125,13 @@ class TestExec < Test::Unit::TestCase
         File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
             of.puts rand(100)
         }
-        file = Puppet::Type::PFile.create(
+        file = Puppet.type(:file).create(
             :path => tmpfile,
             :checksum => "md5"
         )
+        assert_instance_of(Puppet.type(:file), file)
         assert_nothing_raised {
-            cmd = Puppet::Type::Exec.create(
+            cmd = Puppet.type(:exec).create(
                 :command => "pwd",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :subscribe => [[file.class.name,file.name]],
@@ -160,7 +139,9 @@ class TestExec < Test::Unit::TestCase
             )
         }
 
-        comp = Puppet::Type::Component.create(:name => "RefreshTest")
+        assert_instance_of(Puppet.type(:exec), cmd)
+
+        comp = Puppet.type(:component).create(:name => "RefreshTest")
         [file,cmd].each { |obj|
             comp.push obj
         }
@@ -198,8 +179,9 @@ class TestExec < Test::Unit::TestCase
     def test_creates
         file = tempfile()
         exec = nil
+        assert(! FileTest.exists?(file), "File already exists")
         assert_nothing_raised {
-            exec = Puppet::Type::Exec.create(
+            exec = Puppet.type(:exec).create(
                 :command => "touch %s" % file,
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :creates => file
@@ -207,8 +189,8 @@ class TestExec < Test::Unit::TestCase
         }
 
         comp = newcomp("createstest", exec)
-        assert_events(comp, [:executed_command], "creates")
-        assert_events(comp, [], "creates")
+        assert_events([:executed_command], comp, "creates")
+        assert_events([], comp, "creates")
     end
 
     if Process.uid == 0
@@ -239,11 +221,11 @@ class TestExec < Test::Unit::TestCase
             end
             exec = nil
             assert_nothing_raised {
-                exec = Puppet::Type::Exec.create(args)
+                exec = Puppet.type(:exec).create(args)
             }
 
             comp = newcomp("usertest", exec)
-            assert_events(comp, [:executed_command], "usertest")
+            assert_events([:executed_command], comp, "usertest")
 
             assert(FileTest.exists?(file), "File does not exist")
             if user

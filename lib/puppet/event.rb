@@ -192,7 +192,7 @@ module Puppet
                 end
 
                 if transaction.triggered?(self.target, @callback) > 0
-                    Puppet.debug "%s has already run" % self
+                    self.target.info "already applied %s" % [@callback]
                 else
                     # We need to call the method, so that it gets retrieved
                     # as a real object.
@@ -201,6 +201,7 @@ module Puppet
                     #    [@source,@event,@method,target]
                     begin
                         if target.respond_to?(@callback)
+                            target.log "triggering %s" % @callback
                             event = target.send(@callback)
                         else
                             Puppet.debug(   
@@ -240,14 +241,6 @@ module Puppet
 			@event = args[:event]
 			@source = args[:source]
 			@transaction = args[:transaction]
-
-            #Puppet.info "%s: %s(%s)" %
-            #Puppet.info "%s: %s changed from %s to %s" %
-            #    [@object,@state.name, @state.is,@state.should]
-
-            # initially, just stuff all instances into a central bucket
-            # to be handled as a batch
-            #@@events.push self
 		end
 
         def to_s

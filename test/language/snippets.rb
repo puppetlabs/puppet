@@ -159,7 +159,7 @@ class TestSnippets < Test::Unit::TestCase
         %w{a b c d}.each { |letter|
             file = "/tmp/create%stest" % letter
             Puppet.info "testing %s" % file
-            assert(Puppet::Type::PFile[file], "File %s does not exist" % file)
+            assert(Puppet.type(:file)[file], "File %s does not exist" % file)
             assert(FileTest.exists?(file))
             @@tmpfiles << file
         }
@@ -217,7 +217,7 @@ class TestSnippets < Test::Unit::TestCase
 
         obj = nil
         assert_nothing_raised {
-            obj = Puppet::Type::PFile[file]
+            obj = Puppet.type(:file)[file]
         }
 
         assert_nothing_raised {

@@ -42,7 +42,7 @@ class TestUser < Test::Unit::TestCase
         end
 
         def current?(param, name)
-            state = Puppet::Type::User.states.find { |st|
+            state = Puppet.type(:user).states.find { |st|
                 st.name == param
             }
 
@@ -80,7 +80,7 @@ class TestUser < Test::Unit::TestCase
         end
 
         def current?(param, name)
-            state = Puppet::Type::User.states.find { |st|
+            state = Puppet.type(:user).states.find { |st|
                 st.name == param
             }
 
@@ -112,7 +112,7 @@ class TestUser < Test::Unit::TestCase
     def mkuser(name)
         user = nil
         assert_nothing_raised {
-            user = Puppet::Type::User.create(
+            user = Puppet.type(:user).create(
                 :name => name,
                 :comment => "Puppet Testing User",
                 :gid => Process.gid,
@@ -130,7 +130,7 @@ class TestUser < Test::Unit::TestCase
 
         comp = newcomp("commenttest", user)
 
-        trans = assert_events(comp, [:user_modified], "user")
+        trans = assert_events([:user_modified], comp, "user")
 
         assert_equal("A different comment", current?(:comment, user[:name]),
             "Comment was not changed")
@@ -148,11 +148,11 @@ class TestUser < Test::Unit::TestCase
         old = current?(:home, user[:name])
         user[:home] = old
 
-        trans = assert_events(comp, [], "user")
+        trans = assert_events([], comp, "user")
 
         user[:home] = "/tmp"
 
-        trans = assert_events(comp, [:user_modified], "user")
+        trans = assert_events([:user_modified], comp, "user")
 
         assert_equal("/tmp", current?(:home, user[:name]), "Home was not changed")
 
@@ -167,7 +167,7 @@ class TestUser < Test::Unit::TestCase
 
         user[:shell] = old
 
-        trans = assert_events(comp, [], "user")
+        trans = assert_events([], comp, "user")
 
         newshell = findshell(old)
 
@@ -178,7 +178,7 @@ class TestUser < Test::Unit::TestCase
 
         user[:shell] = newshell
 
-        trans = assert_events(comp, [:user_modified], "user")
+        trans = assert_events([:user_modified], comp, "user")
 
         assert_equal(newshell, current?(:shell, user[:name]),
             "Shell was not changed")
@@ -197,7 +197,7 @@ class TestUser < Test::Unit::TestCase
 
         user[:gid] = old
 
-        trans = assert_events(comp, [], "user")
+        trans = assert_events([], comp, "user")
 
         newgid = %w{nogroup nobody staff users daemon}.find { |gid|
                 begin
@@ -218,7 +218,7 @@ class TestUser < Test::Unit::TestCase
             user[:gid] = newgid
         }
 
-        trans = assert_events(comp, [:user_modified], "user")
+        trans = assert_events([:user_modified], comp, "user")
 
         # then by id
         newgid = Etc.getgrnam(newgid).gid
@@ -229,7 +229,7 @@ class TestUser < Test::Unit::TestCase
 
         user.retrieve
 
-        assert_events(comp, [], "user")
+        assert_events([], comp, "user")
 
         assert_equal(newgid, current?(:gid,user[:name]), "GID was not changed")
 
@@ -245,7 +245,7 @@ class TestUser < Test::Unit::TestCase
         old = current?(:uid, user[:name])
         user[:uid] = old
 
-        trans = assert_events(comp, [], "user")
+        trans = assert_events([], comp, "user")
 
         newuid = old
         while true
@@ -266,7 +266,7 @@ class TestUser < Test::Unit::TestCase
             user[:uid] = newuid
         }
 
-        trans = assert_events(comp, [:user_modified], "user")
+        trans = assert_events([:user_modified], comp, "user")
 
         assert_equal(newuid, current?(:uid, user[:name]), "UID was not changed")
 
@@ -281,7 +281,7 @@ class TestUser < Test::Unit::TestCase
 
         assert(obj, "Could not retrieve test group object")
 
-        Puppet::Type::User.validstates.each { |name|
+        Puppet.type(:user).validstates.each { |name|
             assert_nothing_raised {
                 method = state.posixmethod
                 assert(method, "State %s has no infomethod" % name)
@@ -301,8 +301,8 @@ class TestUser < Test::Unit::TestCase
         }
         user = nil
         assert_nothing_raised {
-            checks = Puppet::Type::User.validstates
-            user = Puppet::Type::User.create(
+            checks = Puppet.type(:user).validstates
+            user = Puppet.type(:user).create(
                 :name => name,
                 :check => checks
             )
@@ -327,7 +327,7 @@ class TestUser < Test::Unit::TestCase
 
             comp = newcomp("usercomp", user)
 
-            trans = assert_events(comp, [:user_created], "user")
+            trans = assert_events([:user_created], comp, "user")
 
             assert_equal("Puppet Testing User", current?(:comment, user[:name]),
                 "Comment was not set")
@@ -349,12 +349,12 @@ class TestUser < Test::Unit::TestCase
 
             comp = newcomp("usercomp", user)
 
-            trans = assert_events(comp, [:user_created], "user")
+            trans = assert_events([:user_created], comp, "user")
 
             assert_equal("Puppet Testing User", current?(:comment, user[:name]),
                 "Comment was not set")
 
-            tests = Puppet::Type::User.validstates
+            tests = Puppet.type(:user).validstates
 
             user.retrieve
             tests.each { |test|

@@ -4,15 +4,21 @@ require 'puppet/element'
 require 'puppet/event'
 require 'puppet/metric'
 require 'puppet/type/state'
+require 'puppet/parameter'
+require 'puppet/util'
 # see the bottom of the file for the rest of the inclusions
 
 module Puppet # :nodoc:
-# This class is the abstract base class for the mechanism for organizing
-# work.  No work is actually done by this class or its subclasses; rather,
-# the subclasses include states which do the actual work.
-#   See state.rb for how work is actually done.
 class Type < Puppet::Element
-    attr_accessor :children, :parameters, :parent
+    # Types (which map to elements in the languages) are entirely composed of
+    # attribute value pairs.  Generally, Puppet calls any of these things an
+    # 'attribute', but these attributes always take one of three specific
+    # forms:  parameters, metaparams, or states.
+
+    # In naming methods, I have tried to consistently name the method so
+    # that it is clear whether it operates on all attributes (thus has 'attr' in
+    # the method name, or whether it operates on a specific type of attributes.
+    attr_accessor :children, :parent
     attr_accessor :file, :line, :tags
 
     attr_writer :implicit
@@ -47,17 +53,6 @@ class Type < Puppet::Element
     @parameters = [:notused]
     
     # @paramdoc = Hash.new
-
-    # the parameters that all instances will accept
-    @@metaparams = [
-        :onerror,
-        :noop,
-        :schedule,
-        :check,
-        :subscribe,
-        :require,
-        :loglevel
-    ]
     
     @@metaparamdoc = Hash.new { |hash,key|
         if key.is_a?(String)
@@ -69,25 +64,6 @@ class Type < Puppet::Element
             "Metaparam Documentation for %s not found" % key
         end
     }
-
-    @@metaparamdoc[:onerror] = "How to handle errors -- roll back innermost
-        transaction, roll back entire transaction, ignore, etc.  Currently
-        non-functional."
-    @@metaparamdoc[:noop] = "Boolean flag indicating whether work should actually
-        be done."
-    @@metaparamdoc[:schedule] = "On what schedule the object should be managed.
-        Currently non-functional."
-    @@metaparamdoc[:check] = "States which should have their values retrieved
-        but which should not actually be modified.  This is currently used
-        internally, but will eventually be used for querying."
-    @@metaparamdoc[:require] = "One or more objects that this object depends on.
-        This is used purely for guaranteeing that changes to required objects
-        happen before the dependent object."
-    @@metaparamdoc[:subscribe] = "One or more objects that this object depends on.
-        Changes in the subscribed to objects result in the dependent objects being
-        refreshed (e.g., a service will get restarted)."
-    @@metaparamdoc[:loglevel] = "Sets the level that information will be logged:
-         debug, info, verbose, notice, warning, err, alert, emerg or crit"
 
     # class methods dealing with Type management
 
@@ -112,7 +88,15 @@ class Type < Puppet::Element
 
     # the Type class attribute accessors
     class << self
-        attr_reader :name, :namevar, :states, :parameters
+        attr_reader :name, :states, :parameters
+
+        def inspect
+            "Type(%s)" % self.name
+        end
+
+        def to_s
+            self.inspect
+        end
     end
 
     # Create @@typehash from @@typeary.  This is meant to be run
@@ -133,7 +117,12 @@ class Type < Puppet::Element
 
     # iterate across all of the subclasses of Type
     def self.eachtype
-        @@typeary.each { |type| yield type }
+        @@typeary.each do |type|
+            # Only consider types that have names
+            if type.name
+                yield type 
+            end
+        end
     end
 
     # The work that gets done for every subclass of Type
@@ -315,17 +304,126 @@ class Type < Puppet::Element
         }
     end
 
-    # set the parameters for a type; probably only used by FileRecord
-    # objects
-    def self.parameters=(params)
-        Puppet.debug "setting parameters to [%s]" % params.join(" ")
-        @parameters = params.collect { |param|
-            if param.class == Symbol
-                param
-            else
-                param.intern
-            end
-        }
+    # Find the namevar
+    def self.namevar
+        unless defined? @namevar
+            @namevar = @parameters.find { |name, param|
+                param.isnamevar?
+                unless param
+                    raise Puppet::DevError, "huh? %s" % name
+                end
+            }[0]
+        end
+        @namevar
+    end
+
+    # Copy an existing class parameter.  This allows other types to avoid
+    # duplicating a parameter definition, and is mostly used by subclasses
+    # of the File class.
+    def self.copyparam(klass, name)
+        param = klass.attrclass(name)
+
+        unless param
+            raise Puppet::DevError, "Class %s has no param %s" % [klass, name]
+        end
+        @parameters ||= []
+        @parameters << param
+
+        @paramhash ||= {}
+        @parameters.each { |p| @paramhash[name] = p }
+
+        if param.isnamevar?
+            @namevar = param.name
+        end
+    end
+
+    # Create a new metaparam.  Requires a block and a name, stores it in the
+    # @parameters array, and does some basic checking on it.
+    def self.newmetaparam(name, &block)
+        Puppet::Util.symbolize(name)
+        param = Class.new(Puppet::Parameter) do
+            @name = name
+        end
+        param.ismetaparameter
+        param.class_eval(&block)
+        @@metaparams ||= []
+        @@metaparams << param
+
+        @@metaparamhash ||= {}
+        @@metaparams.each { |p| @@metaparamhash[name] = p }
+    end
+
+    # Create a new parameter.  Requires a block and a name, stores it in the
+    # @parameters array, and does some basic checking on it.
+    def self.newparam(name, &block)
+        Puppet::Util.symbolize(name)
+        param = Class.new(Puppet::Parameter) do
+            @name = name
+        end
+        param.element = self
+        param.class_eval(&block)
+        @parameters ||= []
+        @parameters << param
+
+        @paramhash ||= {}
+        @parameters.each { |p| @paramhash[name] = p }
+
+        if param.isnamevar?
+            @namevar = param.name
+        end
+    end
+
+    # Create a new state.
+    def self.newstate(name, parent = nil, &block)
+        parent ||= Puppet::State
+        if @validstates.include?(name) 
+            raise Puppet::DevError, "Class %s already has a state named %s" %
+                [self.name, name]
+        end
+        s = Class.new(parent) do
+            @name = name
+        end
+        s.class_eval(&block)
+        @states ||= []
+        @states << s
+        @validstates[name] = s
+
+        return s
+    end
+
+    # Return the parameter names
+    def self.parameters
+        @parameters.collect { |klass| klass.name }
+    end
+
+    # Find the metaparameter class associated with a given metaparameter name.
+    def self.metaparamclass(name)
+        @@metaparamhash[name]
+    end
+
+    # Find the parameter class associated with a given parameter name.
+    def self.paramclass(name)
+        @paramhash[name]
+    end
+
+    # Find the class associated with any given attribute.
+    def self.attrclass(name)
+        case self.attrtype(name)
+        when :param: @paramhash[name]
+        when :meta: @@metaparamhash[name]
+        when :state: @validstates[name]
+        end
+    end
+
+    def self.to_s
+        "Puppet::Type::" + @name.to_s.capitalize
+    end
+
+    # Create a block to validate that our object is set up entirely.  This will
+    # be run before the object is operated on.
+    def self.validate(&block)
+        define_method(:validate, &block)
+        #@validate = block
     end
 
     # does the name reflect a valid state?
@@ -362,14 +460,43 @@ class Type < Puppet::Element
         unless defined? @parameters
             raise Puppet::DevError, "Class %s has not defined parameters" % self
         end
-        if @parameters.include?(name) or @@metaparams.include?(name)
+        if @paramhash.include?(name) or @@metaparamhash.include?(name)
             return true
         else
             return false
         end
     end
 
-    def self.validarg?(name)
+    # What type of parameter are we dealing with?
+    def self.attrtype(name)
+        case
+        when @paramhash.include?(name): return :param
+        when @@metaparamhash.include?(name): return :meta
+        when @validstates.include?(name): return :state
+        else
+            raise Puppet::DevError, "Invalid parameter %s" % [name]
+        end
+    end
+
+    # All parameters, in the appropriate order.  The namevar comes first,
+    # then the states, then the params and metaparams in the order they
+    # were specified in the files.
+    def self.allattrs
+        # now get all of the arguments, in a specific order
+        order = [self.namevar]
+        order << [self.states.collect { |state| state.name },
+            self.parameters,
+            self.metaparams].flatten.reject { |param|
+                # we don't want our namevar in there multiple times
+                param == self.namevar
+        }
+
+        order.flatten!
+
+        return order
+    end
+
+    def self.validattr?(name)
         if name.is_a?(String)
             name = name.intern
         end
@@ -401,18 +528,26 @@ class Type < Puppet::Element
             end
         elsif Puppet::Type.metaparam?(name)
             if @metaparams.include?(name)
-                return @metaparams[name]
+                return @metaparams[name].value
             else
-                return nil
+                if default = self.class.metaattrclass(name).default
+                    return default
+                else
+                    return nil
+                end
             end
         elsif self.class.validparameter?(name)
             if @parameters.include?(name)
-                return @parameters[name]
+                return @parameters[name].value
             else
-                return nil
+                if default = self.class.attrclass(name).default
+                    return default
+                else
+                    return nil
+                end
             end
         else
-            raise TypeError.new("Invalid parameter %s" % [name])
+            raise TypeError.new("Invalid parameter %s(%s)" % [name, name.inspect])
         end
     end
 
@@ -430,10 +565,9 @@ class Type < Puppet::Element
         if value.nil?
             raise Puppet::Error.new("Got nil value for %s" % name)
         end
+
         if Puppet::Type.metaparam?(name)
-            @parameters[name] = value
-            # call the metaparam method 
-            self.send(("meta" + name.id2name + "="),value)
+            self.newmetaparam(self.class.metaparamclass(name), value)
         elsif stateklass = self.class.validstate?(name) 
             if value.is_a?(Puppet::State)
                 self.debug "'%s' got handed a state for '%s'" % [self,name]
@@ -452,13 +586,7 @@ class Type < Puppet::Element
             end
         elsif self.class.validparameter?(name)
             # if they've got a method to handle the parameter, then do it that way
-            method = "param" + name.id2name + "="
-            if self.respond_to?(method)
-                self.send(method,value)
-            else
-                # else just set it
-                @parameters[name] = value
-            end
+            self.newparam(self.class.attrclass(name), value)
         else
             raise Puppet::Error, "Invalid parameter %s" % [name]
         end
@@ -534,7 +662,7 @@ class Type < Puppet::Element
     # create a log at specified level
     def log(msg)
         Puppet::Log.create(
-            :level => @metaparams[:loglevel],
+            :level => @metaparams[:loglevel].value,
             :message => msg,
             :source => self
         )
@@ -558,10 +686,52 @@ class Type < Puppet::Element
         end
     end
 
+    # Create a new parameter.
+    def newparam(klass, value = nil)
+        newattr(:param, klass, value)
+    end
+
+    # Create a new parameter or metaparameter.  We'll leave the calling
+    # method to store it appropriately.
+    def newmetaparam(klass, value = nil)
+        newattr(:meta, klass, value)
+    end
+
+    # The base function that the others wrap.
+    def newattr(type, klass, value = nil)
+        # This should probably be a bit, um, different, but...
+        if type == :state
+            return newstate(klass)
+        end
+        param = klass.new
+        param.parent = self
+        if value
+            param.value = value
+        end
+
+        case type
+        when :meta
+            @metaparams[klass.name] = param
+        when :param
+            @parameters[klass.name] = param
+        else
+            raise Puppet::DevError, "Invalid param type %s" % type
+        end
+
+        return param
+    end
+
     # create a new state
     def newstate(name, hash = {})
-        unless stateklass = self.class.validstate?(name) 
-            raise Puppet::Error, "Invalid parameter %s" % name
+        stateklass = nil
+        if name.is_a?(Class)
+            stateklass = name
+            name = stateklass.name
+        else
+            stateklass = self.class.validstate?(name) 
+            unless stateklass
+                raise Puppet::Error, "Invalid state %s" % name
+            end
         end
         if @states.include?(name)
             hash.each { |var,value|
@@ -575,7 +745,7 @@ class Type < Puppet::Element
                 # make sure the state doesn't have any errors
                 newstate = stateklass.new(hash)
                 @states[name] = newstate
-                return true
+                return newstate
             rescue Puppet::Error => detail
                 # the state failed, so just ignore it
                 self.warning "State %s failed: %s" %
@@ -630,6 +800,14 @@ class Type < Puppet::Element
         if defined? @parent and @parent
             @parent.delete(self)
         end
+    end
+
+    # Is the named state defined?
+    def statedefined?(name)
+        unless name.is_a? Symbol
+            name = name.intern
+        end
+        return @states.include?(name)
     end
 
     # return an actual type by name; to return the value, use 'inst[name]'
@@ -782,23 +960,9 @@ class Type < Puppet::Element
         unless defined? @metaparams
             @metaparams = Hash.new(false)
         end
-           
-        #unless defined? @paramdoc
-        #   @paramdoc = Hash.new { |hash,key|
-        #      if key.is_a?(String)
-        #         key = key.intern
-        #      end
-        #      if hash.include?(key)
-        #         hash[key]
-        #      else
-        #         "Param Documentation for %s not found" % key
-        #      end
-        #   }
-        #end
 
         # set defalts
         @noop = false
-        @metaparams[:loglevel] = :notice
         # keeping stats for the total number of changes, and how many were
         # completely sync'ed
         # this isn't really sufficient either, because it adds lots of special cases
@@ -817,16 +981,7 @@ class Type < Puppet::Element
 
         hash = self.argclean(hash)
 
-        # now get all of the arguments, in a specific order
-        order = [self.class.namevar]
-        order << [self.class.states.collect { |state| state.name },
-            self.class.parameters,
-            self.class.eachmetaparam { |param| param }].flatten.reject { |param|
-                # we don't want our namevar in there multiple times
-                param == self.class.namevar
-        }
-  
-        order.flatten.each { |name|
+        self.class.allattrs.each { |name|
             if hash.include?(name)
                 begin
                     self[name] = hash[name]
@@ -839,6 +994,8 @@ class Type < Puppet::Element
             end
         }
 
+        self.setdefaults
+
         if hash.length > 0
             self.debug hash.inspect
             raise Puppet::Error.new("Class %s does not accept argument(s) %s" %
@@ -848,6 +1005,40 @@ class Type < Puppet::Element
         # add this object to the specific class's list of objects
         #puts caller
         self.class[self.name] = self
+
+        if self.respond_to?(:validate)
+            self.validate
+        end
+    end
+
+    # Is the specified parameter set?
+    def attrset?(type, attr)
+        case type
+        when :state: return @states.include?(attr)
+        when :param: return @parameters.include?(attr)
+        when :meta: return @metaparams.include?(attr)
+        else
+            raise Puppet::DevError, "Invalid set type %s" % [type]
+        end
+    end
+
+    # For any parameters or states that have defaults and have not yet been
+    # set, set them now.
+    def setdefaults
+        self.class.allattrs.each { |attr|
+            type = self.class.attrtype(attr)
+            next if self.attrset?(type, attr)
+
+            klass = self.class.attrclass(attr)
+            unless klass
+                raise Puppet::DevError, "Could not retrieve class for %s" % attr
+            end
+            if klass.default
+                obj = self.newattr(type, klass)
+                obj.value = obj.default
+            end
+        }
+
     end
 
     # Merge new information with an existing object, checking for conflicts
@@ -903,7 +1094,7 @@ class Type < Puppet::Element
         unless defined? @name and @name
             namevar = self.class.namevar
             if self.class.validparameter?(namevar)
-                @name = @parameters[namevar]
+                @name = self[:name]
             elsif self.class.validstate?(namevar)
                 @name = self.should(namevar)
             else
@@ -913,7 +1104,7 @@ class Type < Puppet::Element
         end
 
         unless @name
-            raise Puppet::DevError, "Could not find name %s for %s" %
+            raise Puppet::DevError, "Could not find namevar '%s' for %s" %
                 [namevar, self.class.name]
         end
 
@@ -969,7 +1160,7 @@ class Type < Puppet::Element
     # FIXME this method is essentially obviated, but it's still used by tests
     # and i don't feel like fixing it yet
     def sync
-        #raise Puppet::DevError, "Type#sync called"
+        raise Puppet::DevError, "Type#sync called"
         events = self.collect { |child|
             child.sync
         }.reject { |event|
@@ -1110,86 +1301,13 @@ class Type < Puppet::Element
     # Meta-parameter methods:  These methods deal with the results
     # of specifying metaparameters
 
-    def self.eachmetaparam
-        @@metaparams.each { |param|
-            yield param
-        }
-    end
-
-    # This just marks states that we definitely want to retrieve values
-    # on.  There is currently no way to uncheck a parameter.
-    def metacheck=(args)
-        unless args.is_a?(Array)
-            args = [args]
-        end
-
-        # these are states that we might not have 'should'
-        # values for but we want to retrieve 'is' values for anyway
-        args.each { |state|
-            unless state.is_a?(Symbol)
-                state = state.intern
-            end
-            next if @states.include?(state)
-
-            stateklass = nil
-            self.newstate(state)
-        }
+    def self.metaparams
+        @@metaparams.collect { |param| param.name }
     end
 
     # Is the parameter in question a meta-parameter?
     def self.metaparam?(param)
-        @@metaparams.include?(param)
-    end
-
-    # for each object we require, subscribe to all events that it
-    # generates
-    # we might reduce the level of subscription eventually, but for now...
-    def metarequire=(requires)
-        self.handledepends(requires, :NONE, nil)
-    end
-
-    # for each object we require, subscribe to all events that it
-    # generates
-    # we might reduce the level of subscription eventually, but for now...
-    def metasubscribe=(requires)
-        self.handledepends(requires, :ALL_EVENTS, :refresh)
-    end
-
-    def metanoop=(noop)
-        if noop == "true" or noop == true
-            @noop = true
-        elsif noop == "false" or noop == false
-            @noop = false
-        else
-            raise Puppet::Error.new("Invalid noop value '%s'" % noop)
-        end
-    end
-
-    # Currently nonfunctional
-    def metaonerror=(response)
-        self.debug("Would have called metaonerror")
-        @onerror = response
-    end
-
-    # Currently nonfunctional
-    def metaschedule=(schedule)
-        @schedule = schedule
-    end
-
-    # Determines what our objects log at.  Defaults to :notice.
-    def metaloglevel=(loglevel)
-        if loglevel.is_a?(String)
-            loglevel = loglevel.intern
-        end
-        if loglevel == :verbose
-            loglevel = :info 
-        end        
-
-        if Puppet::Log.validlevel?(loglevel)
-            @metaparams[:loglevel] = loglevel
-        else
-            raise Puppet::Error.new("Invalid loglevel '%s'" % loglevel)       
-        end
+        @@metaparamhash.include?(param)
     end
 
     # Subscription and relationship methods
@@ -1291,15 +1409,6 @@ class Type < Puppet::Element
         }
     end
 
-    # return all of the subscriptions to a given event
-    #def subscribers?(event)
-    #    Puppet::Event::Subscription.subscriptions(self).find_all { |sub|
-    #        sub.match?(event)
-    #    }.collect { |sub|
-    #        sub.target
-    #    }
-    #end
-
     # we've received an event
     # we only support local events right now, so we can pass actual
     # objects around, including the transaction object
@@ -1331,6 +1440,106 @@ class Type < Puppet::Element
     end
     def self.metaparamdoc(metaparam)
         @@metaparamdoc[metaparam]
+    end
+
+    # Add all of the meta parameters.
+    newmetaparam(:onerror) do
+        desc "How to handle errors -- roll back innermost
+            transaction, roll back entire transaction, ignore, etc.  Currently
+            non-functional."
+    end
+
+    newmetaparam(:noop) do
+        desc "Boolean flag indicating whether work should actually
+            be done."
+        munge do |noop|
+            if noop == "true" or noop == true
+                return true
+            elsif noop == "false" or noop == false
+                return false
+            else
+                raise Puppet::Error.new("Invalid noop value '%s'" % noop)
+            end
+        end
+    end
+
+    newmetaparam(:schedule) do
+        desc "On what schedule the object should be managed.
+            Currently non-functional."
+    end
+
+    newmetaparam(:check) do
+        desc "States which should have their values retrieved
+            but which should not actually be modified.  This is currently used
+            internally, but will eventually be used for querying."
+
+        munge do |args|
+            unless args.is_a?(Array)
+                args = [args]
+            end
+
+            unless defined? @parent
+                raise Puppet::DevError, "No parent for %s, %s?" %
+                    [self.class, self.name]
+            end
+
+            args.each { |state|
+                unless state.is_a?(Symbol)
+                    state = state.intern
+                end
+                next if @parent.statedefined?(state)
+
+                @parent.newstate(state)
+            }
+        end
+    end
+    # For each object we require, subscribe to all events that it generates. We
+    # might reduce the level of subscription eventually, but for now...
+    newmetaparam(:require) do
+        desc "One or more objects that this object depends on.
+            This is used purely for guaranteeing that changes to required objects
+            happen before the dependent object."
+
+        munge do |requires|
+            @parent.handledepends(requires, :NONE, nil)
+        end
+    end
+
+    # For each object we require, subscribe to all events that it generates.
+    # We might reduce the level of subscription eventually, but for now...
+    newmetaparam(:subscribe) do
+        desc "One or more objects that this object depends on.
+            Changes in the subscribed to objects result in the dependent objects being
+            refreshed (e.g., a service will get restarted)."
+
+        munge do |requires|
+            @parent.handledepends(requires, :ALL_EVENTS, :refresh)
+        end
+    end
+
+    newmetaparam(:loglevel) do
+        desc "Sets the level that information will be logged:
+             debug, info, verbose, notice, warning, err, alert, emerg or crit"
+        defaultto :notice
+
+        validate do |loglevel|
+            if loglevel.is_a?(String)
+                loglevel = loglevel.intern
+            end
+            unless Puppet::Log.validlevel?(loglevel)
+                raise Puppet::Error, "Invalid log level %s" % loglevel
+            end
+        end
+
+        munge do |loglevel|
+            if loglevel.is_a?(String)
+                loglevel = loglevel.intern
+            end
+            if loglevel == :verbose
+                loglevel = :info 
+            end        
+            loglevel
+        end
     end
 end # Puppet::Type
 end
