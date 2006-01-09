@@ -182,7 +182,7 @@ module Puppet
                 self.class.states.each { |state|
                     next if @states.include?(state.name)
 
-                    unless state.autogen? or state.optional?
+                    unless state.autogen? or state.isoptional?
                         if state.method_defined?(:autogen)
                             self[state.name] = :auto
                         else

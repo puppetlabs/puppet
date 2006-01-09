@@ -56,19 +56,28 @@ module Puppet
             # abstract the differents using a simple map where necessary
             # (the netinfokeymap).
             class NetInfoState < Puppet::State::NSSState
-                @netinfokeymap = {
-                    :comment => "realname"
-                }
-
-                @@allatonce = false
-
                 # Similar to posixmethod, what key do we use to get data?  Defaults
                 # to being the object name.
                 def self.netinfokey
-                    if @netinfokeymap.include?(self.name)
-                        return @netinfokeymap[self.name]
+                    if defined? @netinfokey
+                        return @netinfokey
                     else
                         return self.name
+                    end
+                end
+
+                def self.setkey(key)
+                    @netinfokey = key
+                end
+
+                def self.finish
+                    @allatonce = false
+                    case self.name
+                    when :comment: setkey "realname"
+                    when :uid:
+                        noautogen
+                    when :gid:
+                        noautogen
                     end
                 end
 

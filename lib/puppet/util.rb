@@ -98,7 +98,11 @@ module Util
         rescue
             raise
         ensure
-            File.delete(lock)
+            # I don't really understand how the lock file could disappear,
+            # but just in case...
+            if FileTest.exists?(lock)
+                File.delete(lock)
+            end
         end
     end
 

@@ -249,6 +249,7 @@ class TestUser < Test::Unit::TestCase
 
         newuid = old
         while true
+            Puppet.warning newuid.inspect
             newuid += 1
 
             if newuid - old > 1000
@@ -351,17 +352,17 @@ class TestUser < Test::Unit::TestCase
 
             trans = assert_events([:user_created], comp, "user")
 
+            user.retrieve
             assert_equal("Puppet Testing User", current?(:comment, user[:name]),
                 "Comment was not set")
 
             tests = Puppet.type(:user).validstates
 
-            user.retrieve
             tests.each { |test|
                 if self.respond_to?("attrtest_%s" % test)
                     self.send("attrtest_%s" % test, user)
                 else
-                    $stderr.puts "Not testing attr %s of user" % test
+                    Puppet.err "Not testing attr %s of user" % test
                 end
             }
         end

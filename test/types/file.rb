@@ -146,6 +146,7 @@ class TestFile < Test::Unit::TestCase
                 else
                     count += 1
                 end
+                next if passwd.uid < 0
                 users[passwd.uid] = passwd.name
             }
 

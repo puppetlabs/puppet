@@ -45,6 +45,8 @@ class TestGroup < Test::Unit::TestCase
         def gid(name)
             %x{nireport / /groups name gid}.split("\n").each { |line|
                 group, id = line.chomp.split(/\s+/)
+                assert(id =~ /^-?\d+$/, "Group id %s for %s is not a number" %
+                    [id, group])
                 if group == name
                     return Integer(id)
                 end

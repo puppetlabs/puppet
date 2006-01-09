@@ -8,6 +8,14 @@ require 'puppet'
 require 'puppettest'
 require 'test/unit'
 
+$skipsvcs = false
+case Facter["operatingsystem"].value
+when "Darwin": $skipsvcs = true
+end
+
+if $skipsvcs
+    puts "Skipping service testing on %s" % Facter["operatingsystem"].value
+else
 class TestService < Test::Unit::TestCase
 	include TestPuppet
     # hmmm
@@ -104,6 +112,7 @@ class TestService < Test::Unit::TestCase
     #            Puppet.type(:service).defaulttype
     #    end
     #end
+end
 end
 
 # $Id$
