@@ -345,8 +345,12 @@ task :hosttest do
     TESTHOSTS.each { |host|
         puts "testing %s" % host
         cwd = Dir.getwd
-        #out += %x{ssh #{host} 'cd puppet/test; sudo ./test' 2>&1} 
-        sh %{ssh #{host} 'cd #{cwd}/test; sudo ./test' 2>&1} 
+        out += %x{ssh #{host} 'cd puppet/test; sudo ./test' 2>&1} 
+
+        if $? != 0
+            puts out
+        end
+        #sh %{ssh #{host} 'cd #{cwd}/test; sudo ./test' 2>&1} 
     }
 
     #IO.popen("mail -s 'Puppet Test Results' luke@madstop.com") do |m|
