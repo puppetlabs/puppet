@@ -1,3 +1,11 @@
+0.10.0
+    Significant refactoring of how types, states, and parameters work, including
+    breaking out parameters into a separate class.  This refactoring did not
+    introduce much new functionality, but made extension of Puppet significantly
+    easier
+
+    Also, fixed the bug with 'waitforcert' in puppetd.
+
 0.9.4
     Small fix to wrap the StatusServer class in the checks for required classes.
     
