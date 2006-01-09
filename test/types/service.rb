@@ -10,7 +10,7 @@ require 'test/unit'
 
 $skipsvcs = false
 case Facter["operatingsystem"].value
-when "Darwin": $skipsvcs = true
+when "Darwin", "OpenBSD": $skipsvcs = true
 end
 
 if $skipsvcs

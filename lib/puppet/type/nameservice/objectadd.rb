@@ -103,7 +103,7 @@ module Puppet
                         cmd << state.class.objectaddflag << "'%s'" % state.should
                     }
                     # stupid fedora
-                    case Facter["distro"].value
+                    case Facter["operatingsystem"].value
                     when "Fedora", "RedHat":
                         cmd << "-M"
                     else

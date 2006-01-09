@@ -332,7 +332,7 @@ module Puppet
         @instances = {}
 
         case Facter["operatingsystem"].value
-        when "SunOS":
+        when "Solaris":
             @crontype = Puppet::CronType::SunOS
         else
             @crontype = Puppet::CronType::Default

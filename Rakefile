@@ -38,7 +38,7 @@ DOWNDIR = "/export/docroots/reductivelabs.com/htdocs/downloads"
 if ENV['HOSTS']
     TESTHOSTS = ENV['HOSTS'].split(/\s+/)
 else
-    TESTHOSTS = %w{fedora1 rh3a kirby culain}
+    TESTHOSTS = %w{fedora1 rh3a kirby culain openbsd1}
 end
 #TESTHOSTS = %w{sol10b}
 
@@ -147,7 +147,7 @@ the configuration.
         # I'd love to explicitly list all of the libraries that I need,
         # but gems seem to only be able to handle dependencies on other
         # gems, which is, um, stupid.
-        s.add_dependency('facter', '>= 1.0.1')
+        s.add_dependency('facter', '>= 1.1.0')
         #s.requirements << ""
 
         s.files = PKG_FILES.to_a

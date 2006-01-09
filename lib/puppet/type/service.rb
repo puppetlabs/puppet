@@ -244,19 +244,20 @@ module Puppet
                 @defsvctype = nil
                 os = Facter["operatingsystem"].value
                 case os
-                when "Linux":
-                    case Facter["distro"].value
-                    when "Debian":
-                        @defsvctype = self.svctype(:debian)
-                    else
-                        @defsvctype = self.svctype(:init)
-                    end
-                when "SunOS":
+                when "Debian":
+                    @defsvctype = self.svctype(:debian)
+                when "Solaris":
                     release = Facter["operatingsystemrelease"].value
-                    if release.sub(/5\./,'').to_f < 10
+                    if release.sub(/5\./,'').to_i < 10
                         @defsvctype = self.svctype(:init)
                     else
                         @defsvctype = self.svctype(:smf)
+                    end
+                else
+                    if Facter["kernel"] == "Linux"
+                        Puppet.notice "Using service type %s for %s" %
+                            ["init", Facter["operatingsystem"].value]
+                        @defsvctype = self.svctype(:init)
                     end
                 end
 

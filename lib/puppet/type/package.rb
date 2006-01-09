@@ -228,22 +228,23 @@ module Puppet
                 )
             end
             case @platform
-            when "sunos": @default = :sun
-            when "linux":
-                case Facter["distro"].value.downcase
-                when "gentoo":
-                    Puppet.notice "No support for gentoo yet"
-                    @default = nil
-                when "debian": @default = :apt
-                when "fedora": @default = :yum
-                when "redhat": @default = :rpm
-                else
-                    Puppet.warning "Using rpm as default type for %s" %
-                        Facter["distro"].value
-                    @default = :rpm
-                end
-            else
+            when "solaris": @default = :sun
+            when "gentoo":
+                Puppet.notice "No support for gentoo yet"
                 @default = nil
+            when "debian": @default = :apt
+            when "fedora": @default = :yum
+            when "redhat": @default = :rpm
+            else
+                if Facter["kernel"] == "Linux"
+                    Puppet.warning "Defaulting to RPM for %s" %
+                        Facter["operatingsystem"].value
+                    @default = nil
+                else
+                    Puppet.warning "No default package system for %s" %
+                        Facter["operatingsystem"].value
+                    @default = nil
+                end
             end
         end
 

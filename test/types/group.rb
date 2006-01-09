@@ -220,7 +220,7 @@ class TestGroup < Test::Unit::TestCase
             comp = nil
             name = "pptestgr"
 
-            os = Facter["operatingsystem"].value
+            #os = Facter["operatingsystem"].value
 
             #if os == "Darwin"
             #    obj = nil

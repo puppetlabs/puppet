@@ -41,15 +41,8 @@ class TestPackages < Test::Unit::TestCase
         case $platform
         when "SunOS"
             pkgs = %w{SMCossh}
-        when "Linux"
-            case Facter["distro"].value
-            when "Debian": pkgs = %w{ssh openssl}
-            when "Fedora": pkgs = %w{openssh}
-            #when "RedHat": type = :rpm
-            else
-                Puppet.notice "No test package for %s" % $platform 
-                return []
-            end
+        when "Debian": pkgs = %w{ssh openssl}
+        when "Fedora": pkgs = %w{openssh}
         else
             Puppet.notice "No test package for %s" % $platform
             return []
@@ -62,17 +55,11 @@ class TestPackages < Test::Unit::TestCase
         case $platform
         #when "SunOS"
         #    type = "sunpkg"
-        when "Linux"
-            case Facter["distro"].value
-            when "Debian":
-                return %w{zec}
-            #when "RedHat": type = :rpm
-            when "Fedora":
-                return %w{wv}
-            else
-                Puppet.notice "No test packags for %s" % $platform
-                return nil
-            end
+        when "Debian":
+            return %w{zec}
+        #when "RedHat": type = :rpm
+        when "Fedora":
+            return %w{wv}
         else
             Puppet.notice "No test packags for %s" % $platform
             return nil
