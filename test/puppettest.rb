@@ -312,15 +312,41 @@ end
 
 module ExeTest
     include ServerTest
-    unless ENV["PATH"] =~ /puppet/
-        # ok, we have to add the bin directory to our search path
-        ENV["PATH"] += ":" + File.join($puppetbase, "bin")
 
-        # and then the library directories
-        libdirs = $:.find_all { |dir|
+    def setup
+        super
+        setbindir
+        setlibdir
+    end
+
+    def bindir
+        File.join($puppetbase, "bin")
+    end
+
+    def setbindir
+        unless ENV["PATH"] =~ /puppet/
+            ENV["PATH"] += ":" + bindir
+        end
+    end
+
+    def setlibdir
+        ENV["RUBYLIB"] = $:.find_all { |dir|
             dir =~ /puppet/ or dir =~ /\.\./
+        }.join(":")
+    end
+
+    # Run a ruby command.  This explicitly uses ruby to run stuff, since we
+    # don't necessarily know where our ruby binary is, dernit.
+    # Currently unused, because I couldn't get it to work.
+    def rundaemon(*cmd)
+        @ruby ||= %x{which ruby}.chomp
+        cmd = cmd.unshift(@ruby).join(" ")
+
+        out = nil
+        Dir.chdir(bindir()) {
+            out = %x{#{@ruby} #{cmd}}
         }
-        ENV["RUBYLIB"] = libdirs.join(":")
+        return out
     end
 
     def startmasterd(args = "")

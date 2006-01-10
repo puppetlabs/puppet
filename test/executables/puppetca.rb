@@ -10,19 +10,8 @@ require 'puppet/sslcertificates'
 require 'test/unit'
 require 'puppettest.rb'
 
-# $Id$
-
-# ok, we have to add the bin directory to our search path
-ENV["PATH"] += ":" + File.join($puppetbase, "bin")
-
-# and then the library directories
-libdirs = $:.find_all { |dir|
-    dir =~ /puppet/ or dir =~ /\.\./
-}
-ENV["RUBYLIB"] = libdirs.join(":")
-
 class TestPuppetCA < Test::Unit::TestCase
-	include ServerTest
+	include ExeTest
     def mkcert(hostname)
         cert = nil
         assert_nothing_raised {
@@ -77,3 +66,5 @@ class TestPuppetCA < Test::Unit::TestCase
         assert_equal([], output)
     end
 end
+
+# $Id$

@@ -11,17 +11,6 @@ require 'puppettest.rb'
 require 'socket'
 require 'facter'
 
-# $Id$
-
-# ok, we have to add the bin directory to our search path
-ENV["PATH"] += ":" + File.join($puppetbase, "bin")
-
-# and then the library directories
-libdirs = $:.find_all { |dir|
-    dir =~ /puppet/ or dir =~ /\.\./
-}
-ENV["RUBYLIB"] = libdirs.join(":")
-
 class TestPuppetDExe < Test::Unit::TestCase
 	include ExeTest
     def test_normalstart
@@ -69,3 +58,5 @@ class TestPuppetDExe < Test::Unit::TestCase
         stopmasterd
     end
 end
+
+# $Id$

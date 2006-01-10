@@ -12,8 +12,6 @@ require 'puppettest.rb'
 require 'socket'
 require 'facter'
 
-# $Id$
-
 class TestPuppetMasterD < Test::Unit::TestCase
 	include ExeTest
     def getcerts
@@ -151,3 +149,5 @@ class TestPuppetMasterD < Test::Unit::TestCase
         #stopmasterd
     end
 end
+
+# $Id$

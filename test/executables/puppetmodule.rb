@@ -10,19 +10,10 @@ require 'puppet/sslcertificates'
 require 'test/unit'
 require 'puppettest.rb'
 
-# add the bin directory to our search path
-ENV["PATH"] += ":" + File.join($puppetbase, "bin")
-
-# and then the library directories
-libdirs = $:.find_all { |dir|
-    dir =~ /puppet/ or dir =~ /\.\./
-}
-ENV["RUBYLIB"] = libdirs.join(":")
-
 $module = File.join($puppetbase, "ext", "module_puppet")
 
 class TestPuppetModule < Test::Unit::TestCase
-	include ServerTest
+	include ExeTest
 
     def test_existence
         assert(FileTest.exists?($module), "Module does not exist")
