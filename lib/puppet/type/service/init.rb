@@ -6,10 +6,10 @@ Puppet.type(:service).newsvctype(:init) do
     Puppet.type(:service).attrclass(:path).defaultto do
         case Facter["operatingsystem"].value
         when "FreeBSD":
-            @defaultinit = "/etc/rc.d"
+            "/etc/rc.d"
         else
-            @defaultinit = "/etc/init.d"
-            @defaultrc = "/etc/rc%s.d"
+            #@defaultrc = "/etc/rc%s.d"
+            "/etc/init.d"
         end
     end
 #    # Make sure we've got a search path set up.  If they don't
