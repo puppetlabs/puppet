@@ -163,6 +163,11 @@ when :sign
     end
 
     unless all
+        ARGV.each { |host|
+            unless hosts.include?(host)
+                $stderr.puts "No waiting request for %s" % host
+            end
+        }
         hosts = hosts.find_all { |host|
             ARGV.include?(host)
         }
@@ -177,6 +182,7 @@ when :sign
 
         begin
             ca.sign(csr)
+            $stderr.puts "Signed %s" % host
         rescue => detail
             $stderr.puts "Could not sign request for %s: %s" % [host, detail]
         end
