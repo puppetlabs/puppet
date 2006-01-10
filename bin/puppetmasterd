@@ -38,6 +38,12 @@
 #   /etc/puppet/fileserver.conf.  If the fileserver config file exists,
 #   the puppetmasterd daemon will automatically also become a fileserver.
 #
+# group::
+#   Print this help message.
+#
+# group::
+#   The group to run as.  Can be either a name or number.  Defaults to 'puppet'.
+#
 # help::
 #   Print this help message.
 #
@@ -69,6 +75,9 @@
 #
 # ssldir::
 #   The directory in which to store certificates.  Defaults to /etc/puppet/ssl.
+#
+# user::
+#   The user to run as.  Can be either a name or number.  Defaults to 'user'.
 #
 # vardir::
 #   The variable-size directory, used for storing state.  Defaults to
@@ -111,6 +120,8 @@ result = GetoptLong.new(
 	[ "--parseonly",   			    GetoptLong::NO_ARGUMENT ],
 	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--ssldir",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--user",	"-u",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--group",	"-g",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--vardir",	    			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
@@ -129,6 +140,10 @@ master = {}
 ca = {}
 fs = {}
 args = {}
+#user = Puppet[:user]
+#group = Puppet[:group]
+user = nil
+group = nil
 
 parseonly = false
 
@@ -176,6 +191,10 @@ begin
                 rescue => detail
                     $stderr.puts detail.to_s
                 end
+            when "--group"
+                group = arg
+            when "--user"
+                user = arg
             when "--vardir"
                 Puppet[:puppetvar] = arg
             when "--version"
@@ -197,6 +216,38 @@ rescue GetoptLong::InvalidOption => detail
     #    RDoc::usage(1,'usage')
     #end
     exit(1)
+end
+
+require 'etc'
+
+if group
+    if group =~ /^\d+$/
+        group = Integer(group)
+    else
+        begin
+            g = Etc.getgrnam(group)
+        rescue ArgumentError
+            $stderr.puts "Could not find group %s" % group
+        end
+        group = g.gid
+    end
+    Process.egid = group 
+    Process.gid = group 
+end
+
+if user
+    if user =~ /^\d+$/
+        user = Integer(user)
+    else
+        begin
+            u = Etc.getpwnam(user)
+        rescue ArgumentError
+            $stderr.puts "Could not find user %s" % user
+        end
+        user = u.uid
+    end
+    Process.euid = user 
+    Process.uid = user 
 end
 
 if Puppet[:loglevel] == :debug or Puppet[:loglevel] == :info or parseonly

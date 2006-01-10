@@ -43,6 +43,7 @@ class TestFile < Test::Unit::TestCase
     def teardown
         clearstorage
         Puppet::Storage.clear
+        system("rm -rf %s" % Puppet[:checksumfile])
         super
     end
 

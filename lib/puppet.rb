@@ -70,6 +70,7 @@ PUPPETVERSION = '0.10.0'
     alias :error :err
 
     @defaults = {
+        :name           => $0.gsub(/.+#{File::SEPARATOR}/,''),
         :rrddir         => [:puppetvar,      "rrd"],
         :logdir         => [:puppetvar,      "log"],
         :bucketdir      => [:puppetvar,      "bucket"],
@@ -88,18 +89,24 @@ PUPPETVERSION = '0.10.0'
 
         # and finally the simple answers,
         :server         => "puppet",
+        :user           => "puppet",
+        :group          => "puppet",
         :rrdgraph       => false,
         :noop           => false,
         :parseonly      => false,
         :puppetport     => 8139,
         :masterport     => 8140,
     }
-    if Process.uid == 0
-        @defaults[:puppetconf] = "/etc/puppet"
-        @defaults[:puppetvar] = "/var/puppet"
-    else
+
+    # If we're running the standalone puppet process as a non-root user,
+    # use basedirs that are in the user's home directory.
+    if @defaults[:name] == "puppet" and Process.uid != 0
         @defaults[:puppetconf] = File.expand_path("~/.puppet")
         @defaults[:puppetvar] = File.expand_path("~/.puppet/var")
+    else
+        # Else, use system-wide directories.
+        @defaults[:puppetconf] = "/etc/puppet"
+        @defaults[:puppetvar] = "/var/puppet"
     end
 
     def self.clear

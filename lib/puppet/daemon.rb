@@ -30,24 +30,7 @@ module Puppet # :nodoc:
                 exit(12)
             end
 
-            name = $0.gsub(/.+#{File::SEPARATOR}/,'')
-            @pidfile = File.join(Puppet[:puppetvar], name + ".pid")
-            if FileTest.exists?(@pidfile)
-                Puppet.info "Deleting old pid file"
-                begin
-                    File.unlink(@pidfile)
-                rescue Errno::EACCES
-                    Puppet.err "Could not delete old PID file; cannot create new one"
-                    return
-                end
-            end
-
-            begin
-                File.open(@pidfile, "w") { |f| f.puts $$ }
-            rescue => detail
-                Puppet.err "Could not create PID file: %s" % detail
-            end
-            Puppet.info "pid file is %s" % @pidfile
+            setpidfile()
         end
 
         def fqdn
@@ -184,6 +167,28 @@ module Puppet # :nodoc:
                 raise Puppet::DevError, "Received invalid certificate"
             end
             return retrieved
+        end
+
+        # Create the pid file.
+        def setpidfile
+            name = $0.gsub(/.+#{File::SEPARATOR}/,'')
+            @pidfile = File.join(Puppet[:puppetvar], "run", name + ".pid")
+            if FileTest.exists?(@pidfile)
+                Puppet.info "Deleting old pid file"
+                begin
+                    File.unlink(@pidfile)
+                rescue Errno::EACCES
+                    Puppet.err "Could not delete old PID file; cannot create new one"
+                    return
+                end
+            end
+
+            begin
+                File.open(@pidfile, "w") { |f| f.puts $$ }
+            rescue => detail
+                Puppet.err "Could not create PID file: %s" % detail
+            end
+            Puppet.info "pid file is %s" % @pidfile
         end
 
         # Shut down our server

@@ -28,6 +28,7 @@ module Puppet
             include Puppet::Daemon
 
             def initialize(hash = {})
+                Puppet.info "Starting server for Puppet version %s" % Puppet.version
                 daemonize = nil
                 if hash.include?(:Daemonize)
                     daemonize = hash[:Daemonize]

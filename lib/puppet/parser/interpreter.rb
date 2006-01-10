@@ -133,7 +133,9 @@ module Puppet
                     end
                 end
 
-                Puppet.info "Reloading files"
+                if defined? @parser
+                    Puppet.info "Reloading files"
+                end
                 # should i be creating a new parser each time...?
                 @parser = Puppet::Parser::Parser.new()
                 @parser.file = @file

@@ -30,7 +30,10 @@ class Server
             end
 
             unless FileTest.exists?(@autosign)
-                Puppet.info "Autosign is enabled but %s is missing" % @autosign
+                unless defined? @@warnedonautosign
+                    @@warnedonautosign = true
+                    Puppet.info "Autosign is enabled but %s is missing" % @autosign
+                end
                 return false
             end
             auth = Puppet::Server::AuthStore.new

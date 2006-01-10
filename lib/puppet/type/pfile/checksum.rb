@@ -81,6 +81,10 @@ module Puppet
 
             @checktypes << value
             state = Puppet::Storage.state(self)
+
+            unless state
+                raise Puppet::DevError, "Did not get state back from Storage"
+            end
             if hash = state[@parent[:path]]
                 if hash.include?(value)
                     return hash[value]

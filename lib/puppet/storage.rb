@@ -31,27 +31,28 @@ module Puppet
 
 			unless File.exists?(Puppet[:checksumfile])
                 Puppet.info "Statefile %s does not exist" % Puppet[:checksumfile]
+                unless defined? @@state and ! @@state.nil?
+                    self.init
+                end
                 return
             end
             #Puppet.debug "Loading statefile %s" % Puppet[:checksumfile]
             Puppet::Util.lock(Puppet[:checksumfile]) { |file|
                 #@@state = Marshal.load(file)
-                @@state = YAML.load(file)
-                #File.open(Puppet[:checksumfile]) { |file|
-                #    file.each { |line|
-                #        line.chomp!
-                #        myclass, key, value = line.split(@@splitchar)
-#
-#                        begin
-#                            @@state[eval(myclass)][key] = Marshal::load(value)
-#                        rescue => detail
-#                            raise Puppet::Error,
-#                                "Failed to load value for %s::%s => %s" % [
-#                                    myclass,key,detail
-#                                ], caller
-#                        end
-#                    }
-                #}
+                begin
+                    @@state = YAML.load(file)
+                rescue => detail
+                    Puppet.err "Checksumfile %s is corrupt; replacing" %
+                        Puppet[:checksumfile]
+                    begin
+                        File.rename(Puppet[:checksumfile],
+                            Puppet[:checksumfile] + ".bad")
+                    rescue
+                        raise Puppet::Error,
+                            "Could not rename corrupt %s; remove manually" %
+                            Puppet[:checksumfile]
+                    end
+                end
             }
 
             #Puppet.debug "Loaded state is %s" % @@state.inspect

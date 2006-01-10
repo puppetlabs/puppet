@@ -93,7 +93,7 @@ module Puppet
         def name
             #return self[:name]
             unless defined? @name
-                if self[:type] == self[:name]
+                if self[:type] == self[:name] or self[:name] =~ /--\d+$/
                     @name = self[:type]
                 else
                     @name = "%s[%s]" % [self[:type],self[:name]]

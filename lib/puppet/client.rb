@@ -100,7 +100,8 @@ module Puppet
                 hash[:Path] ||= "/RPC2"
                 hash[:Server] ||= "localhost"
                 hash[:Port] ||= Puppet[:masterport]
-                Puppet.debug "Creating client for %s" % hash[:Server]
+                Puppet.info "Starting Puppet client version %s for %s" %
+                    [Puppet.version, hash[:Server]]
 
                 @puppetserver = hash[:Server]
 
