@@ -193,6 +193,55 @@ class TestExec < Test::Unit::TestCase
         assert_events([], comp, "creates")
     end
 
+    # Verify that we can download the file that we're going to execute.
+    def test_retrievethenmkexe
+        exe = tempfile()
+        oexe = tempfile()
+        sh = %x{which sh}
+        File.open(exe, "w") { |f| f.puts "#!#{sh}\necho yup" }
+
+        file = Puppet.type(:file).create(
+            :name => oexe,
+            :source => exe,
+            :mode => 0755
+        )
+
+        exec = Puppet.type(:exec).create(
+            :name => oexe,
+            :require => [:file, oexe]
+        )
+
+        comp = newcomp("Testing", file, exec)
+
+        assert_events([:file_changed, :executed_command], comp)
+    end
+
+    # Verify that we auto-require any managed scripts.
+    def test_autorequire
+        exe = tempfile()
+        oexe = tempfile()
+        sh = %x{which sh}
+        File.open(exe, "w") { |f| f.puts "#!#{sh}\necho yup" }
+
+        file = Puppet.type(:file).create(
+            :name => oexe,
+            :source => exe,
+            :mode => 755
+        )
+
+        ofile = Puppet.type(:file).create(
+            :name => exe,
+            :mode => 755
+        )
+
+        exec = Puppet.type(:exec).create(
+            :name => oexe
+        )
+
+        assert(exec.requires?(file), "Exec did not autorequire file")
+        assert(!exec.requires?(ofile), "Exec incorrectly required file")
+    end
+
     if Process.uid == 0
         # Verify that we can execute commands as a special user
         def mknverify(file, user, group = nil, id = true)

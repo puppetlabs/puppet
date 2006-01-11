@@ -1310,7 +1310,7 @@ class Type < Puppet::Element
     #    @callbacks[object][event] = method
     #end
 
-    # return all objects subscribed to the current object
+    # return all objects that we depend on
     def eachdependency
         Puppet::Event::Subscription.dependencies(self).each { |dep|
             yield dep.source
@@ -1365,10 +1365,6 @@ class Type < Puppet::Element
                 subargs[:callback] = method
             end
             Puppet::Event::Subscription.new(subargs)
-            #if self.respond_to?(method)
-            #    self.addcallback(object, event, method)
-            #end
-            #object.addnotify(self)
         }
     end
 
@@ -1380,6 +1376,19 @@ class Type < Puppet::Element
         if defined? @parent
             @parent.propagate(event, transaction)
         end
+    end
+
+    def requires?(object)
+        #Puppet.notice "Checking reqs for %s" % object.name
+        req = false
+        self.eachdependency { |dep|
+            if dep == object
+                req = true
+                break
+            end
+        }
+
+        return req
     end
 
     def subscribe(hash)

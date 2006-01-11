@@ -34,18 +34,8 @@ module Puppet
                 return "executed successfully"
             end
 
-            # because this command always runs,
-            # we're just using retrieve to verify that the command
-            # exists and such
-            def retrieve
-                if file = @parent[:creates]
-                    if FileTest.exists?(file)
-                        @is = true
-                        @should = [true]
-                        return
-                    end
-                end
-
+            # Verify that we have the executable
+            def checkexe
                 cmd = self.parent[:command]
                 if cmd =~ /^\//
                     exe = cmd.split(/ /)[0]
@@ -77,6 +67,19 @@ module Puppet
                             self.parent[:command]
                     )
                 end
+            end
+
+            # because this command always runs,
+            # we're just using retrieve to verify that the command
+            # exists and such
+            def retrieve
+                if file = @parent[:creates]
+                    if FileTest.exists?(file)
+                        @is = true
+                        @should = [true]
+                        return
+                    end
+                end
 
                 if self.parent[:refreshonly]
                     # if refreshonly is enabled, then set things so we
@@ -92,10 +95,13 @@ module Puppet
             def sync
                 olddir = nil
 
+                self.checkexe
+
                 # We need a dir to change to, even if it's just the cwd
                 dir = self.parent[:cwd] || Dir.pwd
                 tmppath = ENV["PATH"]
 
+                event = :executed_command
                 begin
                     # Do our chdir
                     Dir.chdir(dir) {
@@ -126,6 +132,7 @@ module Puppet
 
                             # if we've had a failure, up the log level
                             loglevel = :err
+                            event = :failed_command
                         end
 
                         # and log
@@ -140,7 +147,7 @@ module Puppet
                     ENV["PATH"] = tmppath
                 end
 
-                return :executed_command
+                return event
             end
         end
 
@@ -253,6 +260,24 @@ module Puppet
                 if self[:path].nil?
                     raise TypeError,
                         "both unqualifed and specified no search path"
+                end
+            end
+        end
+
+        def initialize(*args)
+            super
+
+            # If the command is fully qualified and we're managing it, let's go
+            # ahead and auto-require it.
+            if self[:command] =~ /^#{File::SEPARATOR}/
+                cmd = self[:command].sub(/\s.+/,'')
+                if file = Puppet.type(:file)[cmd]
+                    unless self.requires?(file)
+                        self.info "Auto-requiring %s" % cmd
+                        self[:require] = [:file, cmd]
+                    #else
+                    #    self.info "Already require %s" % cmd
+                    end
                 end
             end
         end
