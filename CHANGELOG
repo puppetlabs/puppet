@@ -1,3 +1,7 @@
+0.10.1
+    Added Solaris package support and changed puppetmasterd to run as
+    a non-root user.
+
 0.10.0
     Significant refactoring of how types, states, and parameters work, including
     breaking out parameters into a separate class.  This refactoring did not
