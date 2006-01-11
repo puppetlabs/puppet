@@ -75,6 +75,7 @@ PUPPETVERSION = '0.10.0'
         :logdir         => [:puppetvar,      "log"],
         :bucketdir      => [:puppetvar,      "bucket"],
         :statedir       => [:puppetvar,      "state"],
+        :rundir         => [:puppetvar,      "run"],
 
         # then the files},
         :manifestdir    => [:puppetconf,     "manifests"],

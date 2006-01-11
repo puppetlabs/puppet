@@ -27,7 +27,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
     def test_normalstart
         startmasterd
 
-        pidfile = File.join(Puppet[:puppetvar], "puppetmasterd.pid")
+        pidfile = File.join(Puppet[:puppetvar], "run", "puppetmasterd.pid")
         assert(FileTest.exists?(pidfile), "PID file does not exist")
 
         sleep(1)

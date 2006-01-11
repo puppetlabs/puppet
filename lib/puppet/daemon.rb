@@ -5,12 +5,23 @@ require 'puppet'
 module Puppet # :nodoc:
     # A module that handles operations common to all daemons.
     module Daemon
+        def daemonname
+            $0.sub(/.+#{File::SEPARATOR}/,'')
+        end
+
+        # The path to the pid file for this server
+        def pidfile
+            File.join(Puppet[:rundir], daemonname() + ".pid")
+        end
+
         # Put the daemon into the background.
         def daemonize
             if pid = fork()
                 Process.detach(pid)
                 exit(0)
             end
+
+            setpidfile()
 
             # Get rid of console logging
             Puppet::Log.close(:console)
@@ -29,8 +40,6 @@ module Puppet # :nodoc:
                 Puppet.err "Could not start %s: %s" % [$0, detail]
                 exit(12)
             end
-
-            setpidfile()
         end
 
         def fqdn
@@ -171,8 +180,7 @@ module Puppet # :nodoc:
 
         # Create the pid file.
         def setpidfile
-            name = $0.gsub(/.+#{File::SEPARATOR}/,'')
-            @pidfile = File.join(Puppet[:puppetvar], "run", name + ".pid")
+            @pidfile = self.pidfile
             if FileTest.exists?(@pidfile)
                 Puppet.info "Deleting old pid file"
                 begin
@@ -183,10 +191,17 @@ module Puppet # :nodoc:
                 end
             end
 
+            unless FileTest.exists?(Puppet[:rundir])
+                Puppet.recmkdir(Puppet[:rundir])
+                File.chmod(01777, Puppet[:rundir])
+            end
+
+            Puppet.info "Setting pidfile to %s" % @pidfile
             begin
                 File.open(@pidfile, "w") { |f| f.puts $$ }
             rescue => detail
                 Puppet.err "Could not create PID file: %s" % detail
+                exit(74)
             end
             Puppet.info "pid file is %s" % @pidfile
         end

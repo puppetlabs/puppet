@@ -4,11 +4,6 @@
 # systems.
 
 require 'puppet/type/state'
-require 'puppet/type/package/dpkg.rb'
-require 'puppet/type/package/apt.rb'
-require 'puppet/type/package/rpm.rb'
-require 'puppet/type/package/yum.rb'
-require 'puppet/type/package/sun.rb'
 
 module Puppet
     class PackageError < Puppet::Error; end
@@ -16,6 +11,55 @@ module Puppet
         @doc = "Manage packages.  Eventually will support retrieving packages
             from remote sources but currently only supports packaging
             systems which can retrieve their own packages, like ``apt``."
+
+        # Create a new packaging type
+        def self.newpkgtype(name, parent = nil, &block)
+            @pkgtypes ||= {}
+
+            if @pkgtypes.include?(name)
+                raise Puppet::DevError, "Package type %s already defined" % name
+            end
+
+            mod = Module.new
+
+            # Add our parent, if it exists
+            if parent
+                unless @pkgtypes.include?(parent)
+                    raise Puppet::DevError, "No parent type %s for package type %s" %
+                        [parent, name]
+                end
+                mod.send(:include, @pkgtypes[parent])
+            end
+
+            # And now define the support methods
+            code = %{
+                def self.name
+                    "#{name}"
+                end
+
+                def self.to_s
+                    "PkgType(#{name})"
+                end
+
+                def pkgtype
+                    "#{name}"
+                end
+            }
+
+            mod.module_eval(code)
+
+            mod.module_eval(&block)
+
+            @pkgtypes[name] = mod
+        end
+
+        def self.pkgtype(name)
+            @pkgtypes[name]
+        end
+
+        def self.pkgtypes
+            @pkgtypes.keys
+        end
 
         newstate(:install) do
             desc "What state the package should be in.  Specifying *true* will
@@ -32,8 +76,8 @@ module Puppet
                     unless @parent.respond_to?(:latest)
                         self.err @parent.inspect
                         raise Puppet::Error,
-                            "Package type %s does not support querying versions" %
-                            @parent[:type]
+                            "Package type %s cannot install later versions" %
+                            @parent[:type].name
                     end
                     return :latest
                 when true, :installed:
@@ -135,37 +179,32 @@ module Puppet
         # into the general package object...
         attr_reader :version, :pkgtype
 
-        @pkgtypes = [
-            Puppet::PackagingType::APT,
-            Puppet::PackagingType::DPKG,
-            Puppet::PackagingType::RPM,
-            Puppet::PackagingType::Yum,
-            Puppet::PackagingType::Sun
-        ]
-
-        pkgstr = @pkgtypes.collect {|t|
-                "``" + t.name.to_s + "``"
-            }.join(", ")
-
-        @pkgtypehash = {}
-
-        # Now collect the name of each type and store it thusly
-        @pkgtypes.each { |type|
-            if type.respond_to?(:typename)
-                @pkgtypehash[type.typename] = type
-            else
-                name = type.to_s.sub(/.+::/, '').downcase.intern
-                @pkgtypehash[name] = type
-            end
-        }
-
         newparam(:name) do
             desc "The package name."
             isnamevar
         end
 
         newparam(:type) do
-            desc "The package format.  Currently supports " + pkgstr
+            desc "The package format, e.g., rpm or dpkg."
+
+            defaultto { @parent.class.default }
+
+            # We cannot log in this routine, because this gets called before
+            # there's a name for the package.
+            munge do |type|
+                @parent.type2module(type)
+            end
+        end
+
+        newparam(:source) do
+            desc "From where to retrieve the package."
+
+            validate do |value|
+                unless value =~ /^#{File::SEPARATOR}/
+                    raise Puppet::Error,
+                        "Package sources must be fully qualified files"
+                end
+            end
         end
         newparam(:instance) do
             desc "A read-only parameter set by the package."
@@ -228,7 +267,7 @@ module Puppet
                 )
             end
             case @platform
-            when "solaris": @default = :sun
+            when "solaris": @default = :sunpkg
             when "gentoo":
                 Puppet.notice "No support for gentoo yet"
                 @default = nil
@@ -316,25 +355,26 @@ module Puppet
             end
         end
 
-        # Retrieve a package type by name; names are symbols.
-        def self.pkgtype(pkgtype)
-            if pkgtype.is_a?(String)
-                pkgtype = pkgtype.intern
-            end
-            return @pkgtypehash[pkgtype]
-        end
-
         # okay, there are two ways that a package could be created...
         # either through the language, in which case the hash's values should
         # be set in 'should', or through comparing against the system, in which
         # case the hash's values should be set in 'is'
         def initialize(hash)
-            type = hash["type"] || hash[:type] || self.class.default
-            self.type2module(type)
+            self.initvars
+            type = nil
+            [:type, "type"].each { |label|
+                if hash.include?(label)
+                    type = hash[label]
+                    hash.delete(label)
+                end
+            }
+            if type
+                self[:type] = type
+            else
+                self.setdefaults(:type)
+            end
 
             super
-
-            self.debug "Extending to package type %s" % [@type]
 
             unless @states.include?(:install)
                 self.debug "Defaulting to installing a package"
@@ -367,8 +407,9 @@ module Puppet
         # Extend the package with the appropriate package type.
         def type2module(typename)
             if type = self.class.pkgtype(typename)
-                @type = type
                 self.extend(type)
+
+                return type
             else
                 raise Puppet::Error, "Invalid package type %s" % typename
             end
@@ -419,5 +460,12 @@ module Puppet
         }
     }
 end
+
+# The order these are loaded is important.
+require 'puppet/type/package/dpkg.rb'
+require 'puppet/type/package/apt.rb'
+require 'puppet/type/package/rpm.rb'
+require 'puppet/type/package/yum.rb'
+require 'puppet/type/package/sun.rb'
 
 # $Id$

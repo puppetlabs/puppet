@@ -51,19 +51,46 @@ class TestPackages < Test::Unit::TestCase
         return pkgs
     end
 
-    def tstpkg
+    def mkpkgs
+        tstpkgs().each { |pkg|
+            if pkg.is_a?(Array)
+                hash = {:name => pkg[0], :source => pkg[1]}
+                hash[:install] = "true"
+
+                unless File.exists?(hash[:source])
+                    Puppet.info "No package file %s for %s; skipping some package tests" %
+                        [hash[:source], Facter["operatingsystem"].value]
+                end
+                yield Puppet.type(:package).create(hash)
+            else
+                yield Puppet.type(:package).create(
+                    :name => pkg, :install => "latest"
+                )
+            end
+        }
+    end
+
+    def tstpkgs
+        retval = []
         case $platform
-        #when "SunOS"
-        #    type = "sunpkg"
+        when "Solaris":
+            arch = Facter["hardwareisa"].value + Facter["operatingsystemrelease"].value
+            case arch
+            when "sparc5.8":
+                retval = [["SMCarc", "/usr/local/pkg/arc-5.21e-sol8-sparc-local"]]
+            when "i3865.8":
+                retval = [["SMCarc", "/usr/local/pkg/arc-5.21e-sol8-intel-local"]]
+            end
         when "Debian":
-            return %w{zec}
+            retval = %w{zec}
         #when "RedHat": type = :rpm
         when "Fedora":
-            return %w{wv}
+            retval = %w{wv}
         else
-            Puppet.notice "No test packags for %s" % $platform
-            return nil
+            Puppet.notice "No test packages for %s" % $platform
         end
+
+        return retval
     end
 
     def mkpkgcomp(pkg)
@@ -115,10 +142,7 @@ class TestPackages < Test::Unit::TestCase
     end
 
     def test_latestpkg
-        pkgs = tstpkg || return
-
-        pkgs.each { |name|
-            pkg = Puppet.type(:package).create(:name => name)
+        tstpkgs { |pkg|
             assert_nothing_raised {
                 assert(pkg.latest, "Package did not return value for 'latest'")
             }
@@ -129,13 +153,9 @@ class TestPackages < Test::Unit::TestCase
         $stderr.puts "Run as root to perform package installation tests"
     else
     def test_installpkg
-        pkgs = tstpkg || return
-        pkgs.each { |pkg|
+        mkpkgs { |pkg|
             # we first set install to 'true', and make sure something gets
             # installed
-            assert_nothing_raised {
-                pkg = Puppet.type(:package).create(:name => pkg, :install => true)
-            }
             assert_nothing_raised {
                 pkg.retrieve
             }
@@ -157,32 +177,33 @@ class TestPackages < Test::Unit::TestCase
 
             pkg.retrieve
 
-            assert(! pkg.insync?, "Package is insync")
+            assert(! pkg.insync?, "Package is in sync")
 
             assert_events([:package_removed], comp, "package")
 
             # and now set install to 'latest' and verify it installs
             # FIXME this isn't really a very good test -- we should install
             # a low version, and then upgrade using this.  But, eh.
-            assert_nothing_raised {
-                pkg[:install] = "latest"
-            }
+            if pkg.respond_to?(:latest)
+                assert_nothing_raised {
+                    pkg[:install] = "latest"
+                }
 
-            assert_events([:package_installed], comp, "package")
+                assert_events([:package_installed], comp, "package")
 
-            pkg.retrieve
-            assert(pkg.insync?, "After install, package is not insync")
+                pkg.retrieve
+                assert(pkg.insync?, "After install, package is not insync")
 
-            assert_nothing_raised {
-                pkg[:install] = false
-            }
+                assert_nothing_raised {
+                    pkg[:install] = false
+                }
 
+                pkg.retrieve
 
-            pkg.retrieve
+                assert(! pkg.insync?, "Package is insync")
 
-            assert(! pkg.insync?, "Package is insync")
-
-            assert_events([:package_removed], comp, "package")
+                assert_events([:package_removed], comp, "package")
+            end
         }
     end
     end

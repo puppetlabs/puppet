@@ -231,8 +231,10 @@ if group
         end
         group = g.gid
     end
-    Process.egid = group 
-    Process.gid = group 
+    unless Process.gid == group
+        Process.egid = group 
+        Process.gid = group 
+    end
 end
 
 if user
@@ -246,8 +248,10 @@ if user
         end
         user = u.uid
     end
-    Process.euid = user 
-    Process.uid = user 
+    unless Process.uid == user
+        Process.euid = user 
+        Process.uid = user 
+    end
 end
 
 if Puppet[:loglevel] == :debug or Puppet[:loglevel] == :info or parseonly

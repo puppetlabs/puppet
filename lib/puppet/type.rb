@@ -935,8 +935,7 @@ class Type < Puppet::Element
         private :new
     end
 
-    # initialize the type instance
-    def initialize(hash)
+    def initvars
         @children = []
         @evalcount = 0
 
@@ -972,6 +971,15 @@ class Type < Puppet::Element
         @totalchanges = 0
         @syncedchanges = 0
         @failedchanges = 0
+
+        @inited = true
+    end
+
+    # initialize the type instance
+    def initialize(hash)
+        unless defined? @inited
+            self.initvars
+        end
 
         # Before anything else, set our parent if it was included
         if hash.include?(:parent)
@@ -1024,8 +1032,11 @@ class Type < Puppet::Element
 
     # For any parameters or states that have defaults and have not yet been
     # set, set them now.
-    def setdefaults
-        self.class.allattrs.each { |attr|
+    def setdefaults(*ary)
+        if ary.empty?
+            ary = self.class.allattrs
+        end
+        ary.each { |attr|
             type = self.class.attrtype(attr)
             next if self.attrset?(type, attr)
 

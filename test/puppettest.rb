@@ -357,8 +357,14 @@ module ExeTest
         args += " --confdir %s" % Puppet[:puppetconf]
         args += " --vardir %s" % Puppet[:puppetvar]
         args += " --port %s" % @@port
+        args += " --user %s" % Process.uid
+        args += " --group %s" % Process.gid
         args += " --nonodes"
         args += " --autosign"
+
+        #if Puppet[:debug]
+        #    args += " --debug"
+        #end
 
         cmd = "puppetmasterd %s" % args
 
@@ -366,8 +372,8 @@ module ExeTest
         assert_nothing_raised {
             output = %x{#{cmd}}.chomp
         }
-        assert($? == 0, "Puppetmasterd exit status was %s" % $?)
         assert_equal("", output, "Puppetmasterd produced output %s" % output)
+        assert($? == 0, "Puppetmasterd exit status was %s" % $?)
         sleep(1)
 
         return manifest
@@ -376,7 +382,7 @@ module ExeTest
     def stopmasterd(running = true)
         ps = Facter["ps"].value || "ps -ef"
 
-        pidfile = File.join(Puppet[:puppetvar], "puppetmasterd.pid")
+        pidfile = File.join(Puppet[:puppetvar], "run", "puppetmasterd.pid")
 
         pid = nil
         if FileTest.exists?(pidfile)
