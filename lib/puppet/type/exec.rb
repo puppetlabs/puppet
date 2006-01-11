@@ -264,21 +264,9 @@ module Puppet
             end
         end
 
-        def initialize(*args)
-            super
-
-            # If the command is fully qualified and we're managing it, let's go
-            # ahead and auto-require it.
+        autorequire(:file) do
             if self[:command] =~ /^#{File::SEPARATOR}/
-                cmd = self[:command].sub(/\s.+/,'')
-                if file = Puppet.type(:file)[cmd]
-                    unless self.requires?(file)
-                        self.info "Auto-requiring %s" % cmd
-                        self[:require] = [:file, cmd]
-                    #else
-                    #    self.info "Already require %s" % cmd
-                    end
-                end
+                self[:command].sub(/\s.+/,'')
             end
         end
 

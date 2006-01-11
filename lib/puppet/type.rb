@@ -391,6 +391,22 @@ class Type < Puppet::Element
         return s
     end
 
+    # Specify a block for generating a list of objects to autorequire.  This
+    # makes it so that you don't have to manually specify things that you clearly
+    # require.
+    def self.autorequire(name, &block)
+        @autorequires ||= {}
+        @autorequires[name] = block
+    end
+
+    # Yield each of those autorequires in turn, yo.
+    def self.eachautorequire
+        @autorequires ||= {}
+        @autorequires.each { |type, block|
+            yield(type, block)
+        }
+    end
+
     # Return the parameter names
     def self.parameters
         @parameters.collect { |klass| klass.name }
@@ -1017,6 +1033,28 @@ class Type < Puppet::Element
         if self.respond_to?(:validate)
             self.validate
         end
+
+        self.autorequire
+    end
+
+    # Figure out of there are any objects we can automatically add as
+    # dependencies.
+    def autorequire
+        self.class.eachautorequire { |type, block|
+            # Ignore any types we can't find, although that would be a bit odd.
+            next unless typeobj = Puppet.type(type)
+
+            # Retrieve the list of names from the block.
+            next unless list = self.instance_eval(&block)
+            list.each { |dep|
+                if obj = typeobj[dep]
+                    unless self.requires?(obj)
+                        self.info "Auto-requiring %s" % obj.name
+                        self[:require] = [type, dep]
+                    end
+                end
+            }
+        }
     end
 
     # Is the specified parameter set?
