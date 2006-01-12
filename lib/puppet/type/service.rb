@@ -70,7 +70,7 @@ module Puppet
                     should = :running
                 else
                     self.warning "%s: interpreting '%s' as false" %
-                        [self.class,should]
+                        [self.class,should.inspect]
                     should = 0
                 end
                 self.debug "Service should is %s" % should
@@ -87,8 +87,10 @@ module Puppet
                 case self.should
                 when :running
                     @parent.start
+                    self.info "started"
                     return :service_started
                 when :stopped
+                    self.info "stopped"
                     @parent.stop
                     return :service_stopped
                 else

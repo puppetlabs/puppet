@@ -78,6 +78,7 @@ module TestPuppet
 
     # stop any services that might be hanging around
     def stopservices
+        Puppet.info "Clearing services"
         if stype = Puppet::Type.type(:service)
             stype.each { |service|
                 service[:running] = false

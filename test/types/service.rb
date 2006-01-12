@@ -16,11 +16,10 @@ end
 if $skipsvcs
     puts "Skipping service testing on %s" % Facter["operatingsystem"].value
 else
-class TestService < Test::Unit::TestCase
+#class TestInitService < Test::Unit::TestCase
+class TestInitService
 	include TestPuppet
-    # hmmm
-    # this is complicated, because we store references to the created
-    # objects in a central store
+
     def setup
         super
         sleeper = nil
@@ -32,6 +31,13 @@ class TestService < Test::Unit::TestCase
     def teardown
         super
         stopservices
+    end
+
+    def tstsvcs
+        case Facter["operatingsystem"].value
+        when "Solaris":
+            return ["smtp", "xf"]
+        end
     end
 
     def mksleeper(hash = {})
@@ -99,19 +105,111 @@ class TestService < Test::Unit::TestCase
 
         assert(! sleeper[:path].include?(fakedir))
     end
+end
 
-    #unless Process.uid == 0
-    #    puts "run as root to test service enable/disable"
-    #else
-    #    case Puppet.type(:service).defaulttype
-    #    when Puppet::ServiceTypes::InitSvc
-    #    when Puppet::ServiceTypes::SMFSvc
-    #        # yay
-    #    else
-    #        Puppet.notice "Not testing service type %s" %
-    #            Puppet.type(:service).defaulttype
-    #    end
-    #end
+class TestLocalService < Test::Unit::TestCase
+	include TestPuppet
+
+    def teardown
+        Puppet.type(:service).clear
+        super
+    end
+
+    def mktestsvcs
+        tstsvcs.collect { |svc|
+            Puppet.type(:service).create(
+                :name => svc,
+                :check => [:running]
+            )
+        }
+    end
+
+    def tstsvcs
+        case Facter["operatingsystem"].value
+        when "Solaris":
+            case Facter["operatingsystemrelease"].value
+            when "5.10":
+                return ["smtp", "xfs"]
+            end
+        end
+
+        Puppet.notice "No test services for %s-%s" %
+            [Facter["operatingsystem"].value,
+                Facter["operatingsystemrelease"].value]
+        return []
+    end
+
+    def cycleservice(service)
+        assert_nothing_raised() {
+            service.retrieve
+        }
+
+        comp = newcomp("servicetst", service)
+        service[:running] = true
+
+        Puppet.info "Starting %s" % service.name
+        assert_apply(service)
+
+        # Some package systems background the work, so we need to give them
+        # time to do their work.
+        sleep(1.5)
+        assert_nothing_raised() {
+            service.retrieve
+        }
+        assert(service.insync?, "Service %s is not running" % service.name)
+
+        # test refreshing it
+        assert_nothing_raised() {
+            service.refresh
+        }
+
+        assert(service.respond_to?(:refresh))
+
+        # now stop it
+        assert_nothing_raised() {
+            service[:running] = 0
+        }
+        assert_nothing_raised() {
+            service.retrieve
+        }
+        assert(!service.insync?(), "Service %s is not running" % service.name)
+        Puppet.info "stopping %s" % service.name
+        assert_events([:service_stopped], comp)
+        sleep(1.5)
+        assert_nothing_raised() {
+            service.retrieve
+        }
+        assert(service.insync?, "Service %s has not stopped" % service.name)
+    end
+
+    def test_status
+        mktestsvcs.each { |svc|
+            val = nil
+            assert_nothing_raised("Could not get status") {
+                val = svc.status
+            }
+            assert_instance_of(Symbol, val)
+        }
+    end
+
+    unless Process.uid == 0
+        puts "run as root to test service start/stop"
+    else
+        def test_servicestartstop
+            mktestsvcs.each { |svc|
+                startstate = nil
+                assert_nothing_raised("Could not get status") {
+                    startstate = svc.status
+                }
+                cycleservice(svc)
+
+                svc[:running] = startstate
+                assert_apply(svc)
+                Puppet.type(:service).clear
+                Puppet.type(:component).clear
+            }
+        end
+    end
 end
 end
 
