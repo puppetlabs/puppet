@@ -1,3 +1,12 @@
+0.10.2
+    Added SMF support
+    Added autorequire functionality, with specific support for exec and file
+        Exec elements autorequire any mentioned files, including the scripts,
+        along with their CWDs.
+        Files autorequire any parent directories.
+    Added 'alias' metaparam.
+    Fixed dependencies so they don't depend on file order.
+
 0.10.1
     Added Solaris package support and changed puppetmasterd to run as
     a non-root user.
