@@ -317,7 +317,7 @@ casestatement:  CASE rvalue LBRACE caseopts RBRACE {
     end
     result = AST::CaseStatement.new(
         :test => val[1],
-        :options => val[3],
+        :options => options,
         :file => @lexer.file,
         :line => @lexer.line
     )

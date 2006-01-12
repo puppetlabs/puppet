@@ -88,14 +88,10 @@ class Type < Puppet::Element
 
     # the Type class attribute accessors
     class << self
-        attr_reader :name, :states, :parameters
+        attr_reader :name, :states
 
         def inspect
             "Type(%s)" % self.name
-        end
-
-        def to_s
-            self.inspect
         end
     end
 

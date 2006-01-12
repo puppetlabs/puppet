@@ -37,3 +37,11 @@ case $ovar {
         file { "/tmp/existsfile3": mode => 755, create => true }
     }
 }
+
+$bool = true
+
+case $bool {
+    true: {
+        file { "/tmp/existsfile4": mode => 755, create => true }
+    }
+}

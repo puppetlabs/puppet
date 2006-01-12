@@ -32,7 +32,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..idd1811897f0', 'grammar.ra', 635
+module_eval <<'..end grammar.ra modeval..ida8383b5566', 'grammar.ra', 635
 attr_reader :file
 attr_accessor :files
 
@@ -149,7 +149,7 @@ def string=(string)
 end
 
 # $Id$
-..end grammar.ra modeval..idd1811897f0
+..end grammar.ra modeval..ida8383b5566
 
 ##### racc 1.4.4 generates ###
 
@@ -950,7 +950,7 @@ module_eval <<'.,.,', 'grammar.ra', 324
     end
     result = AST::CaseStatement.new(
         :test => val[1],
-        :options => val[3],
+        :options => options,
         :file => @lexer.file,
         :line => @lexer.line
     )

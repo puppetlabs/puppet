@@ -5,6 +5,10 @@ module Puppet
             primary purpose of this parameter is to provide a kind of limited
             templating."
 
+        def change_to_s
+            "synced"
+        end
+
         # We should probably take advantage of existing md5 sums if they're there,
         # but I really don't feel like dealing with the complexity right now.
         def retrieve

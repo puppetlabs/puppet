@@ -251,6 +251,7 @@ class TestSnippets < Test::Unit::TestCase
             /tmp/existsfile
             /tmp/existsfile2
             /tmp/existsfile3
+            /tmp/existsfile4
         }
 
         files.each { |file|

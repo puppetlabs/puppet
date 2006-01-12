@@ -110,7 +110,7 @@ module Puppet
 
         # And then define one of these proxies for each method in our
         # ParamHandler class.
-        proxymethods("required?", "default", "isnamevar?")
+        proxymethods("required?", "isnamevar?")
 
         attr_accessor :parent
 
@@ -170,10 +170,6 @@ module Puppet
                 value = munge(value)
             end
             @value = value
-        end
-
-        def to_s
-            "%s => %s" % [self.class.name, self.value]
         end
 
         def inspect

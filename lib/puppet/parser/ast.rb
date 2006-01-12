@@ -788,10 +788,13 @@ module Puppet
                     values = {}
 
                     super
-                    # this won't work if we move away from only allowing constants
-                    # here
-                    # but for now, it's fine and useful
+
+                    # This won't work if we move away from only allowing
+                    # constants here, but for now, it's fine and useful.
                     @options.each { |option|
+                        unless option.is_a?(CaseOpt)
+                            raise Puppet::DevError, "Option is not a CaseOpt"
+                        end
                         if option.default?
                             @default = option
                         end
