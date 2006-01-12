@@ -631,7 +631,7 @@ class TestFileServer < Test::Unit::TestCase
     def test_filereread
         server = nil
 
-        dir = testdir()
+        dir = tstdir()
 
         files = mktestfiles(dir)
 

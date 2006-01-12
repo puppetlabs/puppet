@@ -229,17 +229,39 @@ class TestExec < Test::Unit::TestCase
             :mode => 755
         )
 
+        basedir = File.dirname(oexe)
+        baseobj = Puppet.type(:file).create(
+            :name => basedir,
+            :source => exe,
+            :mode => 755
+        )
+
         ofile = Puppet.type(:file).create(
             :name => exe,
             :mode => 755
         )
 
         exec = Puppet.type(:exec).create(
-            :name => oexe
+            :name => oexe,
+            :cwd => basedir
         )
 
+        cat = Puppet.type(:exec).create(
+            :name => "cat %s" % oexe,
+            :path => ENV["PATH"]
+        )
+
+        # Verify we get the script itself
         assert(exec.requires?(file), "Exec did not autorequire file")
+
+        # Verify we catch the cwd
+        assert(exec.requires?(baseobj), "Exec did not autorequire cwd")
+
+        # Verify we don't require ourselves
         assert(!exec.requires?(ofile), "Exec incorrectly required file")
+
+        # Verify that we catch inline files
+        assert(cat.requires?(file), "Exec did not catch inline file")
     end
 
     if Process.uid == 0

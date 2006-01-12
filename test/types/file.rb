@@ -566,6 +566,26 @@ class TestFile < Test::Unit::TestCase
 
         assert_equal("file=%s" % file.name, file.path)
     end
+
+    def test_autorequire
+        basedir = tempfile()
+        subfile = File.join(basedir, "subfile")
+
+        baseobj = Puppet.type(:file).create(
+            :name => basedir,
+            :create => "directory"
+        )
+
+        subobj = Puppet.type(:file).create(
+            :name => subfile,
+            :create => "file"
+        )
+
+        assert(subobj.requires?(baseobj), "File did not require basedir")
+        assert(!subobj.requires?(subobj), "File required itself")
+        comp = newcomp(subobj, baseobj)
+        assert_events([:directory_created, :file_created], comp)
+    end
 end
 
 # $Id$

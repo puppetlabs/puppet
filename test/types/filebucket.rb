@@ -56,11 +56,6 @@ class TestFileBucket < Test::Unit::TestCase
         end
     end
 
-    def teardown
-        super
-        clearstorage
-    end
-
     def initstorage
         Puppet::Storage.init
         Puppet::Storage.load

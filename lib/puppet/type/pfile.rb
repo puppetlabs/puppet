@@ -75,6 +75,16 @@ module Puppet
             end
         end
 
+        autorequire(:file) do
+            cur = []
+            # Skip the nil in the beginning and don't add ourselves as a prereq
+            # either.
+            self.name.split(File::SEPARATOR)[1..-2].collect { |dir|
+                cur << dir
+                "/" + cur.join(File::SEPARATOR)
+            }
+        end
+
         @depthfirst = false
 
 

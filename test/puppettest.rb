@@ -122,7 +122,7 @@ module TestPuppet
         return f
     end
 
-    def testdir
+    def tstdir
         if defined? @testdirnum
             @testdirnum += 1
         else

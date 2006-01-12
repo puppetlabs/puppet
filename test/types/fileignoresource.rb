@@ -24,11 +24,6 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         end
     end
 
-    def teardown
-        super
-        clearstorage
-    end
-
 #This is not needed unless using md5 (correct me if I'm wrong)
     def initstorage
         Puppet::Storage.init

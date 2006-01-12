@@ -265,9 +265,24 @@ module Puppet
         end
 
         autorequire(:file) do
-            if self[:command] =~ /^#{File::SEPARATOR}/
-                self[:command].sub(/\s.+/,'')
+            reqs = []
+
+            # Stick the cwd in there if we have it
+            if self[:cwd]
+                reqs << self[:cwd]
             end
+
+            tmp = self[:command].dup
+
+            # And search the command line for files, adding any we find.  This
+            # will also catch the command itself if it's fully qualified.  It might
+            # not be a bad idea to add unqualified files, but, well, that's a
+            # bit more annoying to do.
+            while tmp.sub!(%r{(#{File::SEPARATOR}\S+)}, '')
+                reqs << $1
+            end
+
+            reqs
         end
 
         def output

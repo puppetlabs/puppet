@@ -1046,6 +1046,9 @@ class Type < Puppet::Element
 
             # Retrieve the list of names from the block.
             next unless list = self.instance_eval(&block)
+            unless list.is_a?(Array)
+                list = [list]
+            end
             list.each { |dep|
                 if obj = typeobj[dep]
                     unless self.requires?(obj)
