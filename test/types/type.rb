@@ -130,6 +130,21 @@ class TestType < Test::Unit::TestCase
             )
         }
     end
+
+    # Verify that aliasing works
+    def test_aliasing
+        file = tempfile()
+
+        baseobj = Puppet.type(:file).create(
+            :name => file,
+            :create => true,
+            :alias => "funtest"
+        )
+
+        assert_instance_of(Puppet.type(:file), Puppet.type(:file)["funtest"],
+            "Could not retrieve alias")
+
+    end
 end
 
 # $Id$

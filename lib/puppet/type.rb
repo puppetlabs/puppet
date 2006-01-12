@@ -198,16 +198,16 @@ class Type < Puppet::Element
             raise Puppet::DevError, "must pass a Puppet::Type object"
         end
 
-        if @objects.has_key?(newobj.name) and self.isomorphic?
+        if @objects.has_key?(name) and self.isomorphic?
             raise Puppet::Error.new(
                 "Object '%s' of type '%s' already exists with id '%s' vs. '%s'" %
-                [newobj.name,newobj.class.name,
-                    @objects[newobj.name].object_id,newobj.object_id]
+                [name,newobj.class.name,
+                    @objects[name].object_id,newobj.object_id]
             )
         else
-            #debug("adding %s of type %s to class list" %
-            #    [object.name,object.class])
-            @objects[newobj.name] = newobj
+            #Puppet.info("adding %s of type %s to class list" %
+            #    [name,object.class])
+            @objects[name] = newobj
         end
 
         # and then add it to the master list
@@ -1583,6 +1583,23 @@ class Type < Puppet::Element
                 loglevel = :info 
             end        
             loglevel
+        end
+    end
+
+    newmetaparam(:alias) do
+        desc "Creates an alias for the object.  This simplifies lookup of the
+            object so is useful in the language.  It is especially useful when
+            you are creating long commands using exec or when many different systems
+            call a given package different names."
+
+        munge do |*aliases|
+            unless aliases.is_a?(Array)
+                aliases = [aliases]
+            end
+            @parent.info "Adding aliases %s" % aliases.join(", ")
+            aliases.each do |other|
+                @parent.class[other] = @parent
+            end
         end
     end
 end # Puppet::Type
