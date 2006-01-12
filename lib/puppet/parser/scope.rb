@@ -534,7 +534,7 @@ module Puppet
                     end
                 end
                 #Puppet.debug("result is '%s'" % newstring)
-                return newstring
+                return newstring.gsub(/\\t/, "\t").gsub(/\\n/, "\n").gsub(/\\s/, "\s")
             end
 
             # This method will fail if the named object is already defined anywhere

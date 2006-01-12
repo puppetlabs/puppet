@@ -587,6 +587,46 @@ class TestFile < Test::Unit::TestCase
         comp = newcomp(subobj, baseobj)
         assert_events([:directory_created, :file_created], comp)
     end
+
+    def test_content
+        file = tempfile()
+        str = "This is some content"
+
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet.type(:file).create(
+                :name => file,
+                :content => str
+            )
+        }
+
+        assert(!obj.insync?, "Object is incorrectly in sync")
+
+        assert_events([:file_created], obj)
+
+        obj.retrieve
+
+        assert(obj.insync?, "Object is not in sync")
+
+        text = File.read(file)
+
+        assert_equal(str, text, "Content did not copy correctly")
+
+        newstr = "Another string, yo"
+
+        obj[:content] = newstr
+
+        assert(!obj.insync?, "Object is incorrectly in sync")
+
+        assert_events([:file_changed], obj)
+
+        text = File.read(file)
+
+        assert_equal(newstr, text, "Content did not copy correctly")
+
+        obj.retrieve
+        assert(obj.insync?, "Object is not in sync")
+    end
 end
 
 # $Id$

@@ -85,6 +85,12 @@ module Puppet
             }
         end
 
+        validate do
+            if self[:content] and self[:source]
+                raise Puppet::Error, "You cannot specify both content and a source"
+            end
+        end
+
         @depthfirst = false
 
 
@@ -540,6 +546,7 @@ end
 # the order they are in the state list.
 require 'puppet/type/pfile/create'
 require 'puppet/type/pfile/checksum'
+require 'puppet/type/pfile/content'
 require 'puppet/type/pfile/source'
 require 'puppet/type/pfile/uid'
 require 'puppet/type/pfile/group'
