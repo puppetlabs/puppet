@@ -593,14 +593,12 @@ class Type < Puppet::Element
         end
         case self.class.attrtype(name)
         when :state
-        #if self.class.validstate?(name)
             if @states.include?(name)
                 return @states[name].is
             else
                 return nil
             end
         when :meta
-        #elsif Puppet::Type.metaparam?(name)
             if @metaparams.include?(name)
                 return @metaparams[name].value
             else
@@ -611,7 +609,6 @@ class Type < Puppet::Element
                 end
             end
         when :param
-        #elsif self.class.validparameter?(name)
             if @parameters.include?(name)
                 return @parameters[name].value
             else
@@ -950,7 +947,7 @@ class Type < Puppet::Element
             else
                 # We will probably want to support merging of some kind in
                 # the future, but for now, just throw an error.
-                raise Puppet::Error, "%s %s is already being managed" %
+                raise Puppet::Error, "%s '%s' is already being managed" %
                     [self.name, name]
                 #retobj.merge(hash)
 
@@ -1751,6 +1748,7 @@ require 'puppet/type/component'
 require 'puppet/type/cron'
 require 'puppet/type/exec'
 require 'puppet/type/group'
+require 'puppet/type/host'
 require 'puppet/type/package'
 require 'puppet/type/pfile'
 require 'puppet/type/pfilebucket'
