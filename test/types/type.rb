@@ -153,6 +153,34 @@ class TestType < Test::Unit::TestCase
             "Could not retrieve alias")
 
     end
+
+    # Verify that requirements don't depend on file order
+    def test_prereqorder
+        one = tempfile()
+        two = tempfile()
+
+        twoobj = nil
+        oneobj = nil
+        assert_nothing_raised("Could not create prereq that doesn't exist yet") {
+            twoobj = Puppet.type(:file).create(
+                :name => two,
+                :require => [:file, one]
+            )
+        }
+
+        assert_nothing_raised {
+            oneobj = Puppet.type(:file).create(
+                :name => one
+            )
+        }
+
+        assert_nothing_raised {
+            Puppet::Type.finalize
+        }
+
+
+        assert(twoobj.requires?(oneobj), "Requirement was not created")
+    end
 end
 
 # $Id$

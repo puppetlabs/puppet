@@ -235,10 +235,9 @@ module Puppet
                 facts
             end
 
-            # this method is how the client receives the tree of Transportable
-            # objects
-            # for now, just descend into the tree and perform and necessary
-            # manipulations
+            # This method is how the client receives the tree of Transportable
+            # objects.  For now, just descend into the tree and perform and
+            # necessary manipulations.
             def apply
                 unless defined? @objects
                     raise Puppet::Error, "Cannot apply; objects not defined"
@@ -260,6 +259,9 @@ module Puppet
 
                 # FIXME this should be in getconfig, not apply
                 container = @objects.to_type
+
+                # Now perform any necessary final actions before we evaluate.
+                Puppet::Type.finalize
                 #if @local
                 #    container = @objects.to_type
                 #else

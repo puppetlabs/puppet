@@ -26,6 +26,8 @@ class TestRelationships < Test::Unit::TestCase
             file1[:require] = [file2.class.name, file2.name]
         }
 
+        Puppet::Type.finalize
+
         deps = []
         assert_nothing_raised {
             file1.eachdependency { |obj|

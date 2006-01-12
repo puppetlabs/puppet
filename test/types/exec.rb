@@ -243,13 +243,16 @@ class TestExec < Test::Unit::TestCase
 
         exec = Puppet.type(:exec).create(
             :name => oexe,
+            :path => ENV["PATH"],
             :cwd => basedir
         )
 
         cat = Puppet.type(:exec).create(
-            :name => "cat %s" % oexe,
+            :name => "cat %s %s" % [exe, oexe],
             :path => ENV["PATH"]
         )
+
+        Puppet::Type.finalize
 
         # Verify we get the script itself
         assert(exec.requires?(file), "Exec did not autorequire file")
@@ -261,6 +264,7 @@ class TestExec < Test::Unit::TestCase
         assert(!exec.requires?(ofile), "Exec incorrectly required file")
 
         # Verify that we catch inline files
+        assert(cat.requires?(ofile), "Exec did not catch second inline file")
         assert(cat.requires?(file), "Exec did not catch inline file")
     end
 

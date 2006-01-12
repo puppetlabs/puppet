@@ -98,6 +98,8 @@ class TestEvents < Test::Unit::TestCase
 
         comps[:b][:subscribe] = [[comps[:a].class.name, comps[:a].name]]
 
+        Puppet::Type.finalize
+
         trans = comps[:a].evaluate
         events = nil
         assert_nothing_raised {

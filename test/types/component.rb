@@ -22,7 +22,7 @@ class TestComponent < Test::Unit::TestCase
         looped = 0
         loop do
             looped += 1
-            if looped > 1000
+            if looped > 2000
                 raise "Reached limit of looping"
                 break
             end
@@ -89,6 +89,7 @@ class TestComponent < Test::Unit::TestCase
             comp.push obj
         }
 
+        Puppet::Type.finalize
         comp
     end
 
@@ -158,6 +159,7 @@ class TestComponent < Test::Unit::TestCase
             )
         }
 
+        Puppet::Type.finalize
         comp = Puppet.type(:component).create(:name => "RefreshTest")
         [cmd, file].each { |obj|
             comp.push obj
@@ -202,6 +204,7 @@ class TestComponent < Test::Unit::TestCase
         ecomp[:subscribe] = [[fcomp.class.name,fcomp.name]]
 
         comp = newcomp("bflatten", ecomp, fcomp)
+        Puppet::Type.finalize
         objects = nil
         assert_nothing_raised {
             objects = comp.flatten
@@ -254,6 +257,7 @@ class TestComponent < Test::Unit::TestCase
         ocmd[:subscribe] = [[cmd.class.name,cmd.name]]
 
         comp = newcomp("bflatten", ocomp, ecomp, fcomp)
+        Puppet::Type.finalize
         objects = nil
         assert_nothing_raised {
             objects = comp.flatten

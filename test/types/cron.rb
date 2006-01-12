@@ -14,11 +14,11 @@ require 'facter'
 
 
 # Here we just want to unit-test our cron type, to verify that 
-class TestCronType < Test::Unit::TestCase
-	include TestPuppet
-
-
-end
+#class TestCronType < Test::Unit::TestCase
+#	include TestPuppet
+#
+#
+#end
 
 class TestCron < Test::Unit::TestCase
 	include TestPuppet
@@ -256,7 +256,7 @@ class TestCron < Test::Unit::TestCase
     def test_mkcronwithtab
         Puppet.type(:cron).crontype.remove(@me)
         Puppet.type(:cron).crontype.write(@me,
-"1 1 1 1 * date > %s/crontesting\n" % testdir()
+"1 1 1 1 * date > %s/crontesting\n" % tstdir()
         )
 
         cron = mkcron("testwithtab")

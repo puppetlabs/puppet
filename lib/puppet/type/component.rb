@@ -85,6 +85,12 @@ module Puppet
         # this is only called on one component over the whole system
         # this also won't work with scheduling, but eh
         def evaluate
+            # The normal client process will automatically finalize things, but
+            # this simplifies a lot of test code -- as long as we use a
+            # compontent, we get finalized.
+            unless Puppet::Type.finalized?
+                Puppet::Type.finalize
+            end
             transaction = Puppet::Transaction.new(self.flatten)
             transaction.component = self
             return transaction

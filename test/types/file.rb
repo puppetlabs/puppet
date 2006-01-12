@@ -581,6 +581,7 @@ class TestFile < Test::Unit::TestCase
             :create => "file"
         )
 
+        Puppet::Type.finalize
         assert(subobj.requires?(baseobj), "File did not require basedir")
         assert(!subobj.requires?(subobj), "File required itself")
         comp = newcomp(subobj, baseobj)

@@ -142,6 +142,7 @@ class Type < Puppet::Element
     def self.initvars
         # all of the instances of this class
         @objects = Hash.new
+        @aliases = Hash.new
 
         @validstates = {}
 
@@ -180,10 +181,32 @@ class Type < Puppet::Element
 
     public
 
+    # Create an alias.  We keep these in a separate hash so that we don't encounter
+    # the objects multiple times when iterating over them.
+    def self.alias(name, obj)
+        if @objects.include?(name)
+            raise Puppet::Error.new(
+                "Cannot create alias %s: object already exists" %
+                [name]
+            )
+        end
+
+        if @aliases.include?(name)
+            raise Puppet::Error.new(
+                "Object %s already has alias %s" %
+                [@aliases[name].name, name]
+            )
+        end
+
+        @aliases[name] = obj
+    end
+
     # retrieve a named instance of the current type
     def self.[](name)
         if @objects.has_key?(name)
             return @objects[name]
+        elsif @aliases.has_key?(name)
+            return @aliases[name]
         else
             return nil
         end
@@ -221,6 +244,7 @@ class Type < Puppet::Element
         @@typeary.each { |subtype|
             subtype.clear
         }
+        @finalized = false
     end
 
     # remove all of the instances of a single type
@@ -247,6 +271,23 @@ class Type < Puppet::Element
         @objects.each { |name,instance|
             yield instance
         }
+    end
+
+    # Perform any operations that need to be done between instance creation
+    # and instance evaluation.
+    def self.finalize
+        self.mkdepends
+
+        @finalized = true
+    end
+
+    # Has the finalize method been called yet?
+    def self.finalized?
+        if defined? @finalized
+            return @finalized
+        else
+            return false
+        end
     end
 
     # does the type have an object with the given name?
@@ -540,27 +581,31 @@ class Type < Puppet::Element
         if name == :name
             name = self.class.namevar
         end
-        if self.class.validstate?(name)
+        case self.class.attrtype(name)
+        when :state
+        #if self.class.validstate?(name)
             if @states.include?(name)
                 return @states[name].is
             else
                 return nil
             end
-        elsif Puppet::Type.metaparam?(name)
+        when :meta
+        #elsif Puppet::Type.metaparam?(name)
             if @metaparams.include?(name)
                 return @metaparams[name].value
             else
-                if default = self.class.metaattrclass(name).default
+                if default = self.class.metaparamclass(name).default
                     return default
                 else
                     return nil
                 end
             end
-        elsif self.class.validparameter?(name)
+        when :param
+        #elsif self.class.validparameter?(name)
             if @parameters.include?(name)
                 return @parameters[name].value
             else
-                if default = self.class.attrclass(name).default
+                if default = self.class.paramclass(name).default
                     return default
                 else
                     return nil
@@ -1053,14 +1098,21 @@ class Type < Puppet::Element
             unless list.is_a?(Array)
                 list = [list]
             end
+
+            # Collect the current prereqs
             list.each { |dep|
-                if obj = typeobj[dep]
-                    unless self.requires?(obj)
-                        self.info "Auto-requiring %s" % obj.name
-                        self[:require] = [type, dep]
-                    end
-                end
+                # Skip autorequires that we aren't managing
+                next unless obj = typeobj[dep]
+
+                # Skip autorequires that we already require
+                next if self.requires?(obj)
+                self.info "Auto-requiring %s" % obj.name
+
+                self[:require] = [type, dep]
             }
+
+            #self.info reqs.inspect
+            #self[:require] = reqs
         }
     end
 
@@ -1355,6 +1407,39 @@ class Type < Puppet::Element
     #    @callbacks[object][event] = method
     #end
 
+    # Build all of the dependencies for all of the different types.  This is called
+    # after all of the objects are instantiated, so that we don't depend on
+    # file order.  If we didn't use this (and instead just checked dependencies
+    # as we came across them), any required object would have to come before the
+    # requiring object in the file(s).
+    def self.mkdepends
+        @@typeary.each { |type|
+            type.builddepends
+        }
+    end
+
+    # The per-type version of dependency building.  This actually goes through
+    # all of the objects themselves and builds deps.
+    def self.builddepends
+        return unless defined? @objects
+        @objects.each { |name, obj|
+            obj.builddepends
+        }
+    end
+
+    # Build the dependencies associated with an individual object.
+    def builddepends
+        # Handle the requires
+        if self[:require]
+            self.handledepends(self[:require], :NONE, nil)
+        end
+
+        # And the subscriptions
+        if self[:subscribe]
+            self.handledepends(self[:subscribe], :ALL_EVENTS, :refresh)
+        end
+    end
+
     # return all objects that we depend on
     def eachdependency
         Puppet::Event::Subscription.dependencies(self).each { |dep|
@@ -1424,7 +1509,6 @@ class Type < Puppet::Element
     end
 
     def requires?(object)
-        #Puppet.notice "Checking reqs for %s" % object.name
         req = false
         self.eachdependency { |dep|
             if dep == object
@@ -1548,8 +1632,22 @@ class Type < Puppet::Element
             This is used purely for guaranteeing that changes to required objects
             happen before the dependent object."
 
+        # Take whatever dependencies currently exist and add these.
+        # Note that this probably doesn't behave correctly with unsubscribe.
         munge do |requires|
-            @parent.handledepends(requires, :NONE, nil)
+            # We need to be two arrays deep...
+            unless requires.is_a?(Array)
+                requires = [requires]
+            end
+            unless requires[0].is_a?(Array)
+                requires = [requires]
+            end
+            if values = @parent[:require]
+                requires = values + requires
+            end
+            requires
+            #p @parent[:require]
+            #@parent.handledepends(requires, :NONE, nil)
         end
     end
 
@@ -1561,7 +1659,11 @@ class Type < Puppet::Element
             refreshed (e.g., a service will get restarted)."
 
         munge do |requires|
-            @parent.handledepends(requires, :ALL_EVENTS, :refresh)
+            if values = @parent[:subscribe]
+                requires = values + requires
+            end
+            requires
+        #    @parent.handledepends(requires, :ALL_EVENTS, :refresh)
         end
     end
 
@@ -1610,7 +1712,7 @@ class Type < Puppet::Element
                     end
                     next
                 end
-                @parent.class[other] = @parent
+                @parent.class.alias(other, @parent)
             end
         end
     end
