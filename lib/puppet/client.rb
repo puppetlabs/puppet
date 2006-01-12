@@ -18,6 +18,7 @@ begin
     require 'cgi'
     require 'xmlrpc/client'
     require 'xmlrpc/server'
+    require 'yaml'
 rescue LoadError => detail
     $noclientnetworking = detail
     raise Puppet::Error, "You must have the Ruby XMLRPC, CGI, and Webrick libraries installed"
@@ -257,25 +258,18 @@ module Puppet
                     end
                 end
 
-                # FIXME this should be in getconfig, not apply
-                container = @objects.to_type
-
-                # Now perform any necessary final actions before we evaluate.
-                Puppet::Type.finalize
-                #if @local
-                #    container = @objects.to_type
-                #else
-                #    container = Marshal::load(@objects).to_type
-                #end
-
+                #Puppet.err :yay
+                #p @objects
+                #Puppet.err :mark
+                #@objects = @objects.to_type
                 # this is a gross hack... but i don't see a good way around it
                 # set all of the variables to empty
                 Puppet::Transaction.init
 
-                # for now we just evaluate the top-level container, but eventually
+                # For now we just evaluate the top-level object, but eventually
                 # there will be schedules and such associated with each object,
-                # and probably with the container itself
-                transaction = container.evaluate
+                # and probably with the container itself.
+                transaction = @objects.evaluate
                 #transaction = Puppet::Transaction.new(objects)
                 transaction.toplevel = true
                 begin
@@ -297,8 +291,9 @@ module Puppet
                 return transaction
             end
 
+            # Retrieve the config from a remote server.  If this fails, then
+            # use the cached copy.
             def getconfig
-                #client.loadproperty('files/sslclient.properties')
                 Puppet.debug("getting config")
 
                 facts = self.class.facts
@@ -311,16 +306,16 @@ module Puppet
 
                 objects = nil
                 if @local
-                    objects = @driver.getconfig(facts)
+                    objects = @driver.getconfig(facts, "yaml")
 
                     if objects == ""
                         raise Puppet::Error, "Could not retrieve configuration"
                     end
                 else
-                    textfacts = CGI.escape(Marshal::dump(facts))
+                    textfacts = CGI.escape(YAML.dump(facts))
 
                     # error handling for this is done in the network client
-                    textobjects = @driver.getconfig(textfacts)
+                    textobjects = @driver.getconfig(textfacts, "yaml")
 
                     unless textobjects == ""
                         begin
@@ -330,23 +325,26 @@ module Puppet
                         end
                     end
 
+                    cachefile = Puppet[:localconfig] + ".yaml"
                     if @cache
                         if textobjects == ""
-                            if FileTest.exists?(Puppet[:localconfig])
-                                textobjects = File.read(Puppet[:localconfig])
+                            if FileTest.exists?(cachefile)
+                                textobjects = File.read(cachefile)
                             else
                                 raise Puppet::Error.new(
                                     "Cannot connect to server and there is no cached configuration"
                                 )
                             end
                         else
-                            # we store the config so that if we can't connect next time, we
-                            # can just run against the most recently acquired copy
+                            # We store the config so that if we can't connect
+                            # next time, we can just run against the most
+                            # recently acquired copy.
+                            Puppet.info "Caching configuration at %s" % cachefile
                             confdir = File.dirname(Puppet[:localconfig])
                             unless FileTest.exists?(confdir)
                                 Puppet.recmkdir(confdir, 0770)
                             end
-                            File.open(Puppet[:localconfig], "w", 0660) { |f|
+                            File.open(cachefile, "w", 0660) { |f|
                                 f.print textobjects
                             }
                         end
@@ -355,16 +353,53 @@ module Puppet
                     end
 
                     begin
-                        objects = Marshal::load(textobjects)
+                        objects = YAML.load(textobjects)
                     rescue => detail
-                        raise Puppet::Error.new("Could not understand configuration")
+                        raise Puppet::Error,
+                            "Could not understand configuration: %s" %
+                            detail.to_s
                     end
                 end
-                if objects.is_a?(Puppet::TransBucket)
-                    @objects = objects
-                else
+
+                unless objects.is_a?(Puppet::TransBucket)
                     raise NetworkClientError,
                         "Invalid returned objects of type %s" % objects.class
+                end
+
+                if classes = objects.classes
+                    self.setclasses(classes)
+                else
+                    Puppet.info "No classes"
+                end
+
+                # Clear all existing objects, so we can recreate our stack.
+                @objects = nil
+                if defined? @objects
+                    Puppet::Type.allclear
+                end
+
+                # Now convert the objects to real Puppet objects
+                @objects = objects.to_type
+
+                if @objects.nil?
+                    raise Puppet::Error, "Configuration could not be processed"
+                end
+                #@objects = objects
+
+                # and perform any necessary final actions before we evaluate.
+                Puppet::Type.finalize
+
+                return @objects
+            end
+
+            def setclasses(ary)
+                begin
+                    File.open(Puppet[:classfile], "w") { |f|
+                        f.puts ary.join("\n")
+                    }
+                rescue => detail
+                    Puppet.err "Could not create class file %s: %s" %
+                        [Puppet[:classfile], detail]
                 end
             end
         end

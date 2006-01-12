@@ -196,8 +196,9 @@ class TestSnippets < Test::Unit::TestCase
         @@tmpfiles += files
 
         files.each { |file|
-            assert(FileTest.exists?(file))
-            assert(File.stat(file).mode & 007777 == 0755)
+            assert(FileTest.exists?(file), "File %s does not exist" % file)
+            assert(File.stat(file).mode & 007777 == 0755,
+                "File %s is the incorrect mode" % file)
             @@tmpfiles << file
         }
 

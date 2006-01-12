@@ -1,3 +1,5 @@
+require 'yaml'
+
 module Puppet
 class Server # :nodoc:
     class LoggerError < RuntimeError; end
@@ -18,11 +20,11 @@ class Server # :nodoc:
             # if the client is set, then we're not local
             if client
                 begin
-                    message = Marshal::load(CGI.unescape(message))
+                    message = YAML.load(CGI.unescape(message))
                     #message = message
                 rescue => detail
                     raise XMLRPC::FaultException.new(
-                        1, "Could not unMarshal log message from %s" % client
+                        1, "Could not unYAML log message from %s" % client
                     )
                 end
             end

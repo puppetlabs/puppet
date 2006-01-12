@@ -5,11 +5,13 @@ if __FILE__ == $0
 end
 
 require 'puppet'
+require 'puppettest'
 require 'test/unit'
 
 # $Id$
 
 class TestPuppetDefaults < Test::Unit::TestCase
+    include TestPuppet
     @@dirs = %w{rrddir puppetconf puppetvar logdir statedir}
     @@files = %w{logfile checksumfile manifest masterlog}
     @@normals = %w{puppetport masterport server}
@@ -77,7 +79,7 @@ class TestPuppetDefaults < Test::Unit::TestCase
             value = Puppet[param]
 
             unless value !~ notval
-                assert_nothing_raised { raise "%s is in wrong dir: %s" %
+                assert_nothing_raised { raise "%s is incorrectly set to %s" %
                     [param,value] }
             end
         }

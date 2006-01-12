@@ -149,6 +149,14 @@ module Puppet
                 @level == 1
             end
 
+            # Return a list of all of the defined classes.
+            def classlist
+                unless defined? @classtable
+                    raise Puppet::DevError, "Scope did not receive class table"
+                end
+                return @classtable.keys
+            end
+
             # Yield each child scope in turn
             def each
                 @children.reject { |child|
@@ -714,7 +722,7 @@ module Puppet
 
                     # it'd be nice not to have to do this...
                     results.each { |result|
-                        #Puppet.debug "Result type is %s" % result.class
+                        #Puppet.warning "Result type is %s" % result.class
                         bucket.push(result)
                     }
                     if defined? @type

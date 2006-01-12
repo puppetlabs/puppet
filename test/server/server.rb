@@ -23,10 +23,6 @@ end
 
 class TestServer < Test::Unit::TestCase
 	include ServerTest
-    def teardown
-        super
-        #print "\n\n\n\n" if Puppet[:debug]
-    end
 
     # test that we can connect to the server
     # we have to use fork here, because we apparently can't use threads
@@ -120,9 +116,8 @@ class TestServer < Test::Unit::TestCase
         assert_nothing_raised() {
             retval = client.getconfig
         }
-        assert_instance_of(Puppet::TransBucket, retval,
-            "Server returned something other than a TransBucket")
 
+        # Try it again, just for kicks
         assert_nothing_raised() {
             retval = client.getconfig
         }

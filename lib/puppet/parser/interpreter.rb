@@ -61,6 +61,9 @@ module Puppet
 
                         # We've already evaluated the AST, in this case
                         retval = @scope.evalnode(names, facts)
+                        if classes = @scope.classlist
+                            retval.classes = classes
+                        end
                         return retval
                     else
                         # We've already evaluated the AST, in this case
@@ -68,7 +71,11 @@ module Puppet
                         @scope.interp = self
                         @scope.type = "puppet"
                         @scope.name = "top"
-                        return @scope.evaluate(@ast, facts, @classes)
+                        retval = @scope.evaluate(@ast, facts, @classes)
+                        if classes = @scope.classlist
+                            retval.classes = classes + @classes
+                        end
+                        return retval
                     end
                     #@ast.evaluate(@scope)
                 rescue Puppet::DevError, Puppet::Error, Puppet::ParseError => except

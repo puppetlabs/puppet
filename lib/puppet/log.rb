@@ -216,9 +216,9 @@ module Puppet # :nodoc:
                         begin
                             #puts "would have sent %s" % msg
                             #puts "would have sent %s" %
-                            #    CGI.escape(Marshal::dump(msg))
+                            #    CGI.escape(YAML.dump(msg))
                             begin
-                                tmp = CGI.escape(Marshal::dump(msg))
+                                tmp = CGI.escape(YAML.dump(msg))
                             rescue => detail
                                 puts "Could not dump: %s" % detail.to_s
                                 return

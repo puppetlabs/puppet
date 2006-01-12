@@ -18,6 +18,7 @@ end
 
 if $haverrd
     class TestMetric < Test::Unit::TestCase
+        include TestPuppet
 
         def gendata
             totalmax = 1000
@@ -52,13 +53,8 @@ if $haverrd
         end
 
         def setup
-            Puppet[:rrddir] = File.join(Puppet[:puppetvar], "rrdtesting")
+            super
             Puppet[:rrdgraph] = true
-            Puppet[:loglevel] = :debug if __FILE__ == $0
-        end
-
-        def teardown
-            system("rm -rf %s" % Puppet[:rrddir])
         end
 
         def test_fakedata

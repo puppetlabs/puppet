@@ -12,6 +12,8 @@ class TestPuppetUtil < Test::Unit::TestCase
     include TestPuppet
     unless Process.uid == 0
         $stderr.puts "Run as root to perform Utility tests"
+        def test_nothing
+        end
     else
 
     def mknverify(file, user, group = nil, id = false)

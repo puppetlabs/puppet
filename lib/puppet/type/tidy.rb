@@ -151,6 +151,10 @@ module Puppet
             end
         end
 
+        # Erase PFile's validate method
+        validate do
+        end
+
         @depthfirst = true
 
         def initialize(hash)

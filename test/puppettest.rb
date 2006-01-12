@@ -59,21 +59,21 @@ module TestPuppet
     def spin
         # Just disable spin, unless we really need it
         return
-        if Puppet[:debug]
-            return
-        end
-        @modes = %w{| / - \\}
-        unless defined? @mode
-            @mode = 0
-        end
-
-        $stderr.print "%s" % @modes[@mode]
-        if @mode == @modes.length - 1
-            @mode = 0
-        else
-            @mode += 1
-        end
-        $stderr.flush
+#        if Puppet[:debug]
+#            return
+#        end
+#        @modes = %w{| / - \\}
+#        unless defined? @mode
+#            @mode = 0
+#        end
+#
+#        $stderr.print "%s" % @modes[@mode]
+#        if @mode == @modes.length - 1
+#            @mode = 0
+#        else
+#            @mode += 1
+#        end
+#        $stderr.flush
     end
 
     # stop any services that might be hanging around

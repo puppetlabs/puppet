@@ -55,7 +55,7 @@ class TestLogger < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            msg = CGI.escape(Marshal::dump(msg))
+            msg = CGI.escape(YAML.dump(msg))
         }
         assert_nothing_raised {
             logger.addlog(msg, "localhost", "127.0.0.1")
@@ -77,7 +77,7 @@ class TestLogger < Test::Unit::TestCase
             )
         }
 
-        msg = CGI.escape(Marshal::dump(msg))
+        msg = CGI.escape(YAML.dump(msg))
 
         assert_nothing_raised {
             client.addlog(msg, "localhost", "127.0.0.1")
@@ -140,7 +140,7 @@ class TestLogger < Test::Unit::TestCase
             :warning => "XMLRPC2",
             :err => "XMLRPC3"
         }.each { |level, str|
-            msg = CGI.escape(Marshal::dump(Puppet::Log.create(
+            msg = CGI.escape(YAML.dump(Puppet::Log.create(
                 :level => level,
                 :message => str
             )))

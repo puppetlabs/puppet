@@ -150,7 +150,11 @@ module Puppet
             if self.is_a?(Puppet::State)
                 return self.should
             else
-                return @value
+                if defined? @value
+                    return @value
+                else
+                    return nil
+                end
             end
         end
 

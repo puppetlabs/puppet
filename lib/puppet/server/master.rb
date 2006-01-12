@@ -3,6 +3,7 @@ require 'puppet'
 require 'puppet/parser/interpreter'
 require 'puppet/sslcertificates'
 require 'xmlrpc/server'
+require 'yaml'
 
 module Puppet
 class Server
@@ -57,7 +58,7 @@ class Server
             end
         end
 
-        def getconfig(facts, client = nil, clientip = nil)
+        def getconfig(facts, format = "marshal", client = nil, clientip = nil)
             if @local
                 # we don't need to do anything, since we should already
                 # have raw objects
@@ -66,11 +67,26 @@ class Server
                 Puppet.debug "Our client is remote"
 
                 # XXX this should definitely be done in the protocol, somehow
-                begin
-                    facts = Marshal::load(CGI.unescape(facts))
-                rescue => detail
+                case format
+                when "marshal":
+                    begin
+                        facts = Marshal::load(CGI.unescape(facts))
+                    rescue => detail
+                        raise XMLRPC::FaultException.new(
+                            1, "Could not rebuild facts"
+                        )
+                    end
+                when "yaml":
+                    begin
+                        facts = YAML.load(CGI.unescape(facts))
+                    rescue => detail
+                        raise XMLRPC::FaultException.new(
+                            1, "Could not rebuild facts"
+                        )
+                    end
+                else
                     raise XMLRPC::FaultException.new(
-                        1, "Could not rebuild facts"
+                        1, "Unavailable config format %s" % format
                     )
                 end
             end
@@ -95,7 +111,18 @@ class Server
             if @local
                 return retobjects
             else
-                return CGI.escape(Marshal::dump(retobjects))
+                str = nil
+                case format
+                when "marshal":
+                    str = Marshal::dump(retobjects)
+                when "yaml":
+                    str = YAML.dump(retobjects)
+                else
+                    raise XMLRPC::FaultException.new(
+                        1, "Unavailable config format %s" % format
+                    )
+                end
+                return CGI.escape(str)
             end
         end
     end

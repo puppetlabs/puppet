@@ -1,17 +1,32 @@
 require 'puppet'
+require 'yaml'
 
 module Puppet
     # The transportable objects themselves.  Basically just a hash with some
-    # metadata and a few extra methods.
-    class TransObject < Hash
+    # metadata and a few extra methods.  I used to have the object actually
+    # be a subclass of Hash, but I could never correctly dump them using
+    # YAML.
+    class TransObject
+        include Enumerable
         attr_accessor :type, :name, :file, :line
 
         attr_writer :tags
 
+        %w{has_key? include? length delete empty? << [] []=}.each { |method|
+            define_method(method) do |*args|
+                @params.send(method, *args)
+            end
+        }
+
+        def each
+            @params.each { |p,v| yield p, v }
+        end
+
         def initialize(name,type)
-            self[:name] = name
             @type = type
             @name = name
+            @params = {"name" => name}
+            #Puppet.info @params.inspect
             #self.class.add(self)
         end
 
@@ -23,8 +38,18 @@ module Puppet
             return @tags
         end
 
+        def to_hash
+            @params.dup
+        end
+
         def to_s
             return "%s(%s) => %s" % [@type,self[:name],super]
+        end
+
+        def to_yaml_properties
+            instance_variables
+            #%w{ @type @name @file @line @tags }.find_all { |v|
+            #}
         end
 
         def to_type(parent = nil)
@@ -34,34 +59,55 @@ module Puppet
             retobj = nil
             if type = Puppet::Type.type(self.type)
                 unless retobj = type.create(self)
+                    Puppet.info "Could not create object"
                     return nil
                 end
-                retobj.file = @file
-                retobj.line = @line
+                #retobj.file = @file
+                #retobj.line = @line
             else
                 raise Puppet::Error.new("Could not find object type %s" % self.type)
             end
 
-            if defined? @tags and @tags
-                #Puppet.debug "%s(%s) tags: %s" % [@type, @name, @tags.join(" ")]
-                retobj.tags = @tags
-            end
+            #if defined? @tags and @tags
+            #    #Puppet.debug "%s(%s) tags: %s" % [@type, @name, @tags.join(" ")]
+            #    retobj.tags = @tags
+            #end
 
             if parent
                 parent.push retobj
             end
 
+            Puppet.info retobj.class
+
             return retobj
         end
     end
-    #------------------------------------------------------------
 
-    #------------------------------------------------------------
-    # just a linear container for objects
-    class TransBucket < Array
-        attr_accessor :name, :type, :file, :line
+    # Just a linear container for objects.  Behaves mostly like an array, except
+    # that YAML will correctly dump them even with their instance variables.
+    class TransBucket
+        include Enumerable
+
+        attr_accessor :name, :type, :file, :line, :classes
+
+        %w{delete shift include? length empty? << []}.each { |method|
+            define_method(method) do |*args|
+                #Puppet.warning "Calling %s with %s" % [method, args.inspect]
+                @children.send(method, *args)
+                #Puppet.warning @params.inspect
+            end
+        }
+
+        def each
+            @children.each { |c| yield c }
+        end
+
+        def initialize
+            @children = []
+        end
 
         def push(*args)
+            #Puppet.warning "calling push"
             args.each { |arg|
                 case arg
                 when Puppet::TransBucket, Puppet::TransObject
@@ -72,7 +118,12 @@ module Puppet
                             arg.class
                 end
             }
-            super
+            @children += args
+            #Puppet.warning @children.inspect
+        end
+
+        def to_yaml_properties
+            instance_variables
         end
 
         def to_type(parent = nil)
@@ -103,6 +154,7 @@ module Puppet
                 hash[:parent] = parent
             end
             container = Puppet.type(:component).create(hash)
+            #Puppet.info container.inspect
 
             if parent
                 parent.push container

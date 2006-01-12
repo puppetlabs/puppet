@@ -80,8 +80,6 @@ class TestPuppetMasterD < Test::Unit::TestCase
         }
 
         objects = nil
-        assert_instance_of(Puppet::TransBucket, retval,
-            "Retrieved non-transportable object")
         stopmasterd
         sleep(1)
     end
@@ -135,16 +133,16 @@ class TestPuppetMasterD < Test::Unit::TestCase
         Facter.each { |p,v|
             facts[p] = v
         }
-        textfacts = CGI.escape(Marshal::dump(facts))
+        textfacts = CGI.escape(YAML.dump(facts))
         assert_nothing_raised() {
             #Puppet.notice "calling status"
             #retval = client.call("status.status", "")
-            retval = client.call("puppetmaster.getconfig", textfacts)
+            retval = client.call("puppetmaster.getconfig", textfacts, "yaml")
         }
 
         objects = nil
         assert_nothing_raised {
-            Marshal::load(CGI.unescape(retval))
+            YAML.load(CGI.unescape(retval))
         }
         #stopmasterd
     end

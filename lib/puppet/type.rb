@@ -95,6 +95,19 @@ class Type < Puppet::Element
         end
     end
 
+    def inspect
+        str = "Type(%s)" % self.name
+        if defined? @states
+            str += " States(" + @states.inspect + ")"
+        end
+        if defined? @parameters
+            str += " Parameters(" + @parameters.inspect + ")"
+        end
+        if defined? @metaparams
+            str += " Metaparams(" + @metaparams.inspect + ")"
+        end
+    end
+
     # Create @@typehash from @@typeary.  This is meant to be run
     # multiple times -- whenever it is discovered that the two
     # objects have differents lengths.
@@ -531,7 +544,8 @@ class Type < Puppet::Element
         when @@metaparamhash.include?(name): return :meta
         when @validstates.include?(name): return :state
         else
-            raise Puppet::DevError, "Invalid parameter %s" % [name]
+            raise Puppet::DevError, "Invalid attribute '%s' for class '%s'" %
+                [name, self.name]
         end
     end
 
@@ -1042,6 +1056,21 @@ class Type < Puppet::Element
             self.initvars
         end
 
+        # If we got passed a transportable object, we just pull a bunch of info
+        # directly from it.
+        if hash.is_a?(Puppet::TransObject)
+            #self[:name] = hash[:name]
+            [:file, :line, :tags].each { |getter|
+                if hash.respond_to?(getter)
+                    setter = getter.to_s + "="
+                    if val = hash.send(getter)
+                        self.send(setter, val)
+                    end
+                end
+            }
+            hash = hash.to_hash
+        end
+
         # Before anything else, set our parent if it was included
         if hash.include?(:parent)
             @parent = hash[:parent]
@@ -1217,9 +1246,11 @@ class Type < Puppet::Element
 
     # fix any namevar => param translations
     def argclean(hash)
-        # we have to set the name of our object before anything else,
-        # because it might be used in creating the other states
-        hash = hash.dup
+        # We have to set the name of our object before anything else,
+        # because it might be used in creating the other states.  We dup and
+        # then convert to a hash here because TransObjects behave strangely
+        # here.
+        hash = hash.dup.to_hash
 
         if hash.include?(:parent)
             hash.delete(:parent)
