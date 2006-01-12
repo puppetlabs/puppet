@@ -135,11 +135,19 @@ class TestType < Test::Unit::TestCase
     def test_aliasing
         file = tempfile()
 
-        baseobj = Puppet.type(:file).create(
-            :name => file,
-            :create => true,
-            :alias => "funtest"
-        )
+        baseobj = nil
+        assert_nothing_raised {
+            baseobj = Puppet.type(:file).create(
+                :name => file,
+                :create => true,
+                :alias => ["funtest"]
+            )
+        }
+
+        # Verify we adding ourselves as an alias isn't an error.
+        assert_nothing_raised {
+            baseobj[:alias] = file
+        }
 
         assert_instance_of(Puppet.type(:file), Puppet.type(:file)["funtest"],
             "Could not retrieve alias")

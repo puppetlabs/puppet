@@ -201,7 +201,7 @@ class Type < Puppet::Element
         if @objects.has_key?(name) and self.isomorphic?
             raise Puppet::Error.new(
                 "Object '%s' of type '%s' already exists with id '%s' vs. '%s'" %
-                [name,newobj.class.name,
+                [name, newobj.class.name,
                     @objects[name].object_id,newobj.object_id]
             )
         else
@@ -351,6 +351,10 @@ class Type < Puppet::Element
 
         @@metaparamhash ||= {}
         @@metaparams.each { |p| @@metaparamhash[name] = p }
+    end
+
+    def self.eachmetaparam
+        @@metaparams.each { |p| yield p.name }
     end
 
     # Create a new parameter.  Requires a block and a name, stores it in the
@@ -1480,10 +1484,10 @@ class Type < Puppet::Element
 
     # Documentation methods
     def self.paramdoc(param)
-        @paramdoc[param]
+        @paramhash[param].doc
     end
     def self.metaparamdoc(metaparam)
-        @@metaparamdoc[metaparam]
+        @@metaparamhash[metaparam].doc
     end
 
     # Add all of the meta parameters.
@@ -1592,12 +1596,20 @@ class Type < Puppet::Element
             you are creating long commands using exec or when many different systems
             call a given package different names."
 
-        munge do |*aliases|
+        munge do |aliases|
             unless aliases.is_a?(Array)
                 aliases = [aliases]
             end
             @parent.info "Adding aliases %s" % aliases.join(", ")
             aliases.each do |other|
+                if obj = @parent.class[other]
+                    unless obj == @parent
+                        raise Puppet::Error,
+                            "%s an not create alias %s: object already exists" %
+                            [@parent.name, other]
+                    end
+                    next
+                end
                 @parent.class[other] = @parent
             end
         end
