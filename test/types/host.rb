@@ -38,7 +38,7 @@ class TestHost < Test::Unit::TestCase
             host = Puppet.type(:host).create(
                 :name => "culain",
                 :ip => "192.168.0.3",
-                :aliases => "puppet"
+                :alias => "puppet"
             )
         }
 
@@ -90,16 +90,31 @@ class TestHost < Test::Unit::TestCase
         # This was a hard bug to track down.
         assert_instance_of(String, host.is(:ip))
 
-        host[:aliases] = %w{madstop kirby yayness}
+        host[:alias] = %w{madstop kirby yayness}
 
         assert_events([:host_changed], host)
+    end
+
+    def test_aliasisstate
+        assert_equal(:state, @hosttype.attrtype(:alias))
     end
 
     def test_multivalues
         host = mkhost
         assert_raise(Puppet::Error) {
-            host[:aliases] = "puppetmasterd yayness"
+            host[:alias] = "puppetmasterd yayness"
         }
+    end
+
+    def test_puppetalias
+        host = mkhost()
+
+        assert_nothing_raised {
+            host[:alias] = "testing"
+        }
+
+        same = host.class["testing"]
+        assert(same, "Could not retrieve by alias")
     end
 end
 

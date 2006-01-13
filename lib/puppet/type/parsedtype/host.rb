@@ -9,9 +9,12 @@ module Puppet
             desc "The host's IP address."
         end
 
-        newstate(:aliases) do
-            desc "Any aliases the host might have.  Multiple values must be
-                specified as an array."
+        newstate(:alias) do
+            desc "Any alias the host might have.  Multiple values must be
+                specified as an array.  Note that this state has the same name
+                as one of the metaparams; using this state to set aliases will
+                make those aliases available in your Puppet scripts and also on
+                disk."
 
             # We have to override the feeding mechanism; it might be nil or 
             # white-space separated
@@ -36,6 +39,12 @@ module Puppet
                     raise Puppet::Error, "Aliases cannot include whitespace"
                 end
             end
+
+            munge do |value|
+                # Add the :alias metaparam in addition to the state
+                @parent.newmetaparam(@parent.class.metaparamclass(:alias), value)
+                value
+            end
         end
 
         newparam(:name) do
@@ -51,7 +60,7 @@ module Puppet
         @instances = []
 
         @path = "/etc/hosts"
-        @fields = [:ip, :name, :aliases]
+        @fields = [:ip, :name, :alias]
 
         @filetype = Puppet::FileType.filetype(:flat)
 #        case Facter["operatingsystem"].value
@@ -83,8 +92,8 @@ module Puppet
                         raise Puppet::Error, "Could not match '%s'" % line
                     end
 
-                    if hash[:aliases] == ""
-                        hash.delete(:aliases)
+                    if hash[:alias] == ""
+                        hash.delete(:alias)
                     end
 
                     hash2obj(hash)

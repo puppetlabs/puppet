@@ -40,7 +40,7 @@ class TestPort < Test::Unit::TestCase
                 :number => 8139,
                 :protocols => "tcp",
                 :description => "The port that Puppet runs on",
-                :aliases => "coolness"
+                :alias => "coolness"
             )
         }
 
@@ -117,7 +117,7 @@ class TestPort < Test::Unit::TestCase
             port[:protocols] = "udp tcp"
         }
         assert_raise(Puppet::Error) {
-            port[:aliases] = "puppetmasterd yayness"
+            port[:alias] = "puppetmasterd yayness"
         }
     end
 end

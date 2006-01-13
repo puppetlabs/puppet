@@ -44,9 +44,11 @@ module Puppet
             desc "The port description."
         end
 
-        newstate(:aliases) do
+        newstate(:alias) do
             desc "Any aliases the port might have.  Multiple values must be specified
-                as an array."
+                as an array.  Note that this state has the same name as one of the
+                metaparams; using this state to set aliases will make those aliases
+                available in your Puppet scripts and also on disk."
 
             # We have to override the feeding mechanism; it might be nil or 
             # white-space separated
@@ -71,6 +73,12 @@ module Puppet
                     raise Puppet::Error, "Aliases cannot have whitespace in them"
                 end
             end
+
+            munge do |value|
+                # Add the :alias metaparam in addition to the state
+                @parent.newmetaparam(@parent.class.metaparamclass(:alias), value)
+                value
+            end
         end
 
         newparam(:name) do
@@ -84,7 +92,7 @@ module Puppet
             will have different solutions."
 
         @path = "/etc/services"
-        @fields = [:ip, :name, :aliases]
+        @fields = [:ip, :name, :alias]
 
         @filetype = Puppet::FileType.filetype(:flat)
 #        case Facter["operatingsystem"].value
@@ -121,7 +129,7 @@ module Puppet
                             line.sub!(/^([^#]+)\s*/) do |value|
                                 aliases = $1
                                 unless aliases =~ /^\s*$/
-                                    hash[:aliases] = aliases
+                                    hash[:alias] = aliases
                                 end
 
                                 ""

@@ -196,17 +196,21 @@ class Type < Puppet::Element
     # the objects multiple times when iterating over them.
     def self.alias(name, obj)
         if @objects.include?(name)
-            raise Puppet::Error.new(
-                "Cannot create alias %s: object already exists" %
-                [name]
-            )
+            unless @objects[name] == obj
+                raise Puppet::Error.new(
+                    "Cannot create alias %s: object already exists" %
+                    [name]
+                )
+            end
         end
 
         if @aliases.include?(name)
-            raise Puppet::Error.new(
-                "Object %s already has alias %s" %
-                [@aliases[name].name, name]
-            )
+            unless @aliases[name] == obj
+                raise Puppet::Error.new(
+                    "Object %s already has alias %s" %
+                    [@aliases[name].name, name]
+                )
+            end
         end
 
         @aliases[name] = obj
@@ -262,6 +266,9 @@ class Type < Puppet::Element
     def self.clear
         if defined? @objects
             @objects.clear
+        end
+        if defined? @aliases
+            @aliases.clear
         end
     end
 
@@ -484,9 +491,9 @@ class Type < Puppet::Element
     # Find the class associated with any given attribute.
     def self.attrclass(name)
         case self.attrtype(name)
-        when :param: @paramhash[name]
-        when :meta: @@metaparamhash[name]
         when :state: @validstates[name]
+        when :meta: @@metaparamhash[name]
+        when :param: @paramhash[name]
         end
     end
 
@@ -546,9 +553,9 @@ class Type < Puppet::Element
     # What type of parameter are we dealing with?
     def self.attrtype(name)
         case
-        when @paramhash.include?(name): return :param
-        when @@metaparamhash.include?(name): return :meta
         when @validstates.include?(name): return :state
+        when @@metaparamhash.include?(name): return :meta
+        when @paramhash.include?(name): return :param
         else
             raise Puppet::DevError, "Invalid attribute '%s' for class '%s'" %
                 [name, self.name]
@@ -644,9 +651,8 @@ class Type < Puppet::Element
             raise Puppet::Error.new("Got nil value for %s" % name)
         end
 
-        if Puppet::Type.metaparam?(name)
-            self.newmetaparam(self.class.metaparamclass(name), value)
-        elsif stateklass = self.class.validstate?(name) 
+        case self.class.attrtype(name)
+        when :state
             if value.is_a?(Puppet::State)
                 self.debug "'%s' got handed a state for '%s'" % [self,name]
                 @states[name] = value
@@ -662,7 +668,9 @@ class Type < Puppet::Element
                     end
                 end
             end
-        elsif self.class.validparameter?(name)
+        when :meta
+            self.newmetaparam(self.class.metaparamclass(name), value)
+        when :param
             # if they've got a method to handle the parameter, then do it that way
             self.newparam(self.class.attrclass(name), value)
         else
