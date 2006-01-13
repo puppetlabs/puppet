@@ -11,7 +11,7 @@ require 'puppet'
 require 'test/unit'
 require 'facter'
 
-class TestCron < Test::Unit::TestCase
+class TestHost < Test::Unit::TestCase
 	include TestPuppet
     def setup
         super
@@ -29,34 +29,7 @@ class TestCron < Test::Unit::TestCase
     # Here we just create a fake host type that answers to all of the methods
     # but does not modify our actual system.
     def mkfaketype
-        @fakehosttype = Class.new {
-            attr_accessor :synced, :loaded, :path
-            @tabs = Hash.new("")
-            def clear
-                @text = nil
-            end
-
-            def initialize(path)
-                @path = path
-                @text = nil
-            end
-
-            def read
-                @loaded = Time.now
-                @text
-            end
-
-            def write(text)
-                @syned = Time.now
-                @text = text
-            end
-
-            def remove
-                @text = ""
-            end
-        }
-
-        @hosttype.filetype = @fakehosttype
+        @hosttype.filetype = Puppet::FileType.filetype(:ram)
     end
 
     def test_simplehost

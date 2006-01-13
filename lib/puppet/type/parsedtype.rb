@@ -142,7 +142,9 @@ module Puppet
 
                 # if the obj already exists with that name...
                 if obj = self[hash[:name]]
-                    # do nothing...
+                    # We're assuming here that objects with the same name
+                    # are the same object, which *should* be the case, assuming
+                    # we've set up our naming stuff correctly everywhere.
                 else
                     # create a new obj, since no existing one seems to
                     # match
@@ -175,7 +177,7 @@ module Puppet
                 @fileobj ||= @filetype.new(@path)
 
                 if @instances.empty?
-                    Puppet.notice "No host instances for %s" % user
+                    Puppet.notice "No %s instances for %s" % [self.name, @path]
                 else
                     @fileobj.write(self.to_file())
                 end
@@ -219,5 +221,6 @@ module Puppet
 end
 
 require 'puppet/type/parsedtype/host'
+require 'puppet/type/parsedtype/port'
 
 # $Id$

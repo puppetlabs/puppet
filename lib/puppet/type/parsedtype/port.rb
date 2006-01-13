@@ -1,0 +1,210 @@
+require 'etc'
+require 'facter'
+require 'puppet/type/parsedtype'
+require 'puppet/type/state'
+
+module Puppet
+    newtype(:port, Puppet::Type::ParsedType) do
+        newstate(:protocols) do
+            desc "The protocols the port uses.  Valid values are *udp* and *tcp*.
+                Most services have both protocols, but not all."
+
+            def is=(proto)
+                unless proto.is_a?(Array)
+                    proto = [proto]
+                end
+                #self.info "setting to %s" % proto.inspect
+                @is = proto
+            end
+
+            def is
+                #self.notice "returning is %s" % @is.inspect
+                @is
+            end
+
+            # We actually want to return the whole array here, not just the first
+            # value.
+            def should
+                @should
+            end
+        end
+
+        newstate(:number) do
+            desc "The port number."
+        end
+
+        newstate(:description) do
+            desc "The port description."
+        end
+
+        newstate(:aliases) do
+            desc "Any aliases the port might have.  Values can be either an array
+                or a comma-separated list."
+
+            # We have to override the feeding mechanism; it might be nil or 
+            # white-space separated
+            def is=(value)
+                # If it's just whitespace, ignore it
+                if value =~ /^\s+$/
+                    @is = nil
+                else
+                    # Else split based on whitespace and store as an array
+                    @is = value.split(/\s+/)
+                end
+            end
+
+            # We actually want to return the whole array here, not just the first
+            # value.
+            def should
+                @should
+            end
+
+            munge do |values|
+                unless values.is_a?(Array)
+                    values = [values]
+                end
+                # Split based on comma, then flatten the whole thing
+                values.collect { |values|
+                    values.split(/,\s*/)
+                }.flatten
+            end
+        end
+
+        newparam(:name) do
+            desc "The port name."
+
+            isnamevar
+        end
+
+        @doc = "Installs and manages port entries.  For most systems, these
+            entries will just be in /etc/services, but some systems (notably OS X)
+            will have different solutions."
+
+        @path = "/etc/services"
+        @fields = [:ip, :name, :aliases]
+
+        @filetype = Puppet::FileType.filetype(:flat)
+#        case Facter["operatingsystem"].value
+#        when "Solaris":
+#            @filetype = Puppet::FileType::SunOS
+#        else
+#            @filetype = Puppet::CronType::Default
+#        end
+
+        # Parse a services file
+        #
+        # This method also stores existing comments, and it stores all host
+        # jobs in order, mostly so that comments are retained in the order
+        # they were written and in proximity to the same jobs.
+        def self.parse(text)
+            count = 0
+            hash = {}
+            text.chomp.split("\n").each { |line|
+                case line
+                when /^#/, /^\s*$/:
+                    # add comments and blank lines to the list as they are
+                    @instances << line 
+                else
+                    #if match = /^(\S+)\s+(\d+)\/(\w+)/.match(line)
+                    #    Puppet.warning "%s %s %s" % [$1, $2, $3]
+                    #    next
+                    #if line.sub(/^(\S+)\s+(\d+)\/(\w+)\s*(\S*)$/.match(line)
+                    if line.sub!(/^(\S+)\s+(\d+)\/(\w+)\s*/, '')
+                        hash[:name] = $1
+                        hash[:number] = $2
+                        hash[:protocols] = $3
+
+                        unless line == ""
+                            line.sub!(/^([^#]+)\s*/) do |value|
+                                aliases = $1
+                                unless aliases =~ /^\s*$/
+                                    hash[:aliases] = aliases
+                                end
+
+                                ""
+                            end
+
+                            line.sub!(/^\s*#\s*(.+)$/) do |value|
+                                desc = $1
+                                unless desc =~ /^\s*$/
+                                    hash[:description] = desc.sub(/\s*$/, '')
+                                end
+
+                                ""
+                            end
+                        end
+                    else
+                        raise Puppet::Error, "Could not match '%s'" % line
+                    end
+
+                    # If there's already a service with this name, then check
+                    # to see if the only difference is the proto; if so, just
+                    # add our proto and walk away
+                    if obj = self[hash[:name]]
+                        if obj.portmerge(hash)
+                            next
+                        end
+                    end
+
+                    hash2obj(hash)
+
+                    hash.clear
+                    count += 1
+                end
+            }
+        end
+
+        def portmerge(hash)
+            unless @states.include?(:protocols)
+                return false
+            end
+            proto = self.state(:protocols).is
+
+            if proto.nil?
+                # We are an unitialized object; we've got 'should'
+                # values but no 'is' values
+                return false
+            end
+
+            if hash[:protocols]
+                # Check to see if it already includes our proto
+                if proto.include?(hash[:protocols])
+                    Puppet.warning(
+                        "There is already a port with our name and protocols"
+                    )
+                else
+                    # We are missing their proto
+                    proto << hash[:protocols]
+                    #Puppet.info "new proto is %s" % proto.inspect
+                    @states[:protocols].is = proto
+                    #Puppet.info "new value is %s" % @states[:protocols].is.inspect
+                end
+            end
+
+            if hash.include?(:description) and ! @states.include?(:description)
+                Puppet.info "Adding description to %s" % hash[:name]
+                self.is = [:description, hash[:description]]
+            end
+
+            return true
+        end
+
+        # Convert the current object into a host-style string.
+        def to_str
+            str = "%s\t%s/%s" % [self[:name], self.state(:number).should,
+                self.state(:protocols).should]
+
+            if state = self.state(:alias)
+                str += "\t%s" % state.should.join(" ")
+            end
+
+            if state = self.state(:description)
+                str += "\t# %s" % state.should
+            end
+
+            str
+        end
+    end
+end
+
+# $Id$
