@@ -10,14 +10,14 @@ module Puppet
             # default to just about anything meaning 'true'
             case value
             when "false", false, nil:
-                return false
+                false
             when "true", true, "file", "plain", /^f/:
-                return "file"
+                "file"
             when "directory", /^d/:
-                return "directory"
+                "directory"
             when :notfound:
                 # this is where a creation is being rolled back
-                return :notfound
+                :notfound
             else
                 raise Puppet::Error, "Cannot create files of type %s" % value
             end
@@ -36,6 +36,24 @@ module Puppet
 
         def sync
             event = nil
+            basedir = File.dirname(@parent.name)
+
+            if ! FileTest.exists?(basedir)
+                raise Puppet::Error,
+                    "Can not create %s; parent directory does not exist" %
+                    @parent.name
+            elsif ! FileTest.directory?(basedir)
+                raise Puppet::Error,
+                    "Can not create %s; %s is not a directory" %
+                    [@parent.name, dirname]
+            end
+
+            self.retrieve
+            if self.insync?
+                self.info "already in sync"
+                return nil
+            end
+
             mode = @parent.should(:mode)
 
             # First, determine if a user has been specified and if so if

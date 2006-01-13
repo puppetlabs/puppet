@@ -194,7 +194,14 @@ module TestPuppet
 
     # A simpler method that just applies what we have.
     def assert_apply(*objects)
-        comp = newcomp(*objects)
+        if objects[0].is_a?(Puppet.type(:component))
+            comp = objects.shift
+            unless objects.empty?
+                objects.each { |o| comp.push o }
+            end
+        else
+            comp = newcomp(*objects)
+        end
         trans = nil
 
         assert_nothing_raised("Failed to create transaction") {

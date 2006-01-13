@@ -627,6 +627,27 @@ class TestFile < Test::Unit::TestCase
         obj.retrieve
         assert(obj.insync?, "Object is not in sync")
     end
+
+    # Unfortunately, I know this fails
+    def disabled_test_recursivemkdir
+        path = tempfile()
+        subpath = File.join(path, "this", "is", "a", "dir")
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :name => subpath,
+                :create => "directory",
+                :recurse => true
+            )
+        }
+
+        comp = newcomp("yay", file)
+        Puppet::Type.finalize
+        assert_apply(comp)
+        #assert_events([:directory_created], comp)
+
+        assert(FileTest.directory?(subpath), "Did not create directory")
+    end
 end
 
 # $Id$

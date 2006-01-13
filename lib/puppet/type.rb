@@ -294,6 +294,16 @@ class Type < Puppet::Element
     # Perform any operations that need to be done between instance creation
     # and instance evaluation.
     def self.finalize
+        finished = {}
+        self.eachtype do |type|
+            type.each do |object|
+                unless finished.has_key?(object)
+                    Puppet.debug "Finishing %s" % object.name
+                    object.finish
+                    finished[object] = true
+                end
+            end
+        end
         self.mkdepends
 
         @finalized = true
@@ -1103,7 +1113,7 @@ class Type < Puppet::Element
             end
         }
 
-        self.setdefaults
+        #self.setdefaults
 
         if hash.length > 0
             self.debug hash.inspect
@@ -1118,8 +1128,6 @@ class Type < Puppet::Element
         if self.respond_to?(:validate)
             self.validate
         end
-
-        self.autorequire
     end
 
     # Figure out of there are any objects we can automatically add as
@@ -1150,6 +1158,12 @@ class Type < Puppet::Element
             #self.info reqs.inspect
             #self[:require] = reqs
         }
+    end
+
+    # Set up all of our autorequires.
+    def finish
+        self.setdefaults
+        self.autorequire
     end
 
     # Is the specified parameter set?
