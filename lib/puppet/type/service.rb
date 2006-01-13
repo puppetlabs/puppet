@@ -208,6 +208,10 @@ module Puppet
                     "#{svcname}"
                 end
 
+                def self.inspect
+                    "SvcType(#{svcname})"
+                end
+
                 def self.to_s
                     "SvcType(#{svcname})"
                 end

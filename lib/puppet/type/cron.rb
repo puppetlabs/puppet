@@ -1,89 +1,9 @@
 require 'etc'
 require 'facter'
 require 'puppet/type/state'
+require 'puppet/filetype'
 
 module Puppet
-    # The Puppet::CronType modules are responsible for the actual abstraction.
-    # They must implement three module functions: +read+, +write+, and +remove+,
-    # analogous to the three flags accepted by most implementations of +crontab+.
-    # All of these methods require the user name to be passed in.
-    #
-    # These modules operate on the strings that are ore become the cron tabs --
-    # they do not have any semantic understanding of what they are reading or
-    # writing.
-    module CronType
-        # Retrieve the uid of a user.  This is duplication of code, but the unless
-        # I start using Puppet.type(:user) objects here, it's a much better design.
-        def self.uid(user)
-            begin
-                return Etc.getpwnam(user).uid
-            rescue ArgumentError
-                raise Puppet::Error, "User %s not found" % user
-            end
-        end
-
-        # This module covers nearly everyone; SunOS is only known exception so far.
-        module Default
-            # Only add the -u flag when the user is different.  Fedora apparently
-            # does not think I should be allowed to set the user to myself.
-            def self.cmdbase(user)
-                uid = CronType.uid(user)
-                cmd = nil
-                if uid == Process.uid
-                    return "crontab"
-                else
-                    return "crontab -u #{user}"
-                end
-            end
-
-            # Read a specific user's cron tab.
-            def self.read(user)
-                tab = %x{#{self.cmdbase(user)} -l 2>/dev/null}
-            end
-
-            # Remove a specific user's cron tab.
-            def self.remove(user)
-                %x{#{self.cmdbase(user)} -r 2>/dev/null}
-            end
-
-            # Overwrite a specific user's cron tab; must be passed the user name
-            # and the text with which to create the cron tab.
-            def self.write(user, text)
-                IO.popen("#{self.cmdbase(user)} -", "w") { |p|
-                    p.print text
-                }
-            end
-        end
-
-        # SunOS has completely different cron commands; this module implements
-        # its versions.
-        module SunOS
-            # Read a specific user's cron tab.
-            def self.read(user)
-                Puppet::Util.asuser(user) {
-                    %x{crontab -l 2>/dev/null}
-                }
-            end
-
-            # Remove a specific user's cron tab.
-            def self.remove(user)
-                Puppet.asuser(user) {
-                    %x{crontab -r 2>/dev/null}
-                }
-            end
-
-            # Overwrite a specific user's cron tab; must be passed the user name
-            # and the text with which to create the cron tab.
-            def self.write(user, text)
-                Puppet.asuser(user) {
-                    IO.popen("crontab", "w") { |p|
-                        p.print text
-                    }
-                }
-            end
-        end
-    end
-
     # Model the actual cron jobs.  Supports all of the normal cron job fields
     # as parameters, with the 'command' as the single state.  Also requires a
     # completely symbolic 'name' paremeter, which gets written to the file
@@ -305,12 +225,29 @@ module Puppet
         newparam(:name) do
             desc "The symbolic name of the cron job.  This name
                 is used for human reference only."
+
+            isnamevar
         end
 
         newparam(:user) do
             desc "The user to run the command as.  This user must
                 be allowed to run cron jobs, which is not currently checked by
                 Puppet."
+
+            # This validation isn't really a good idea, since the user might
+            # be created by Puppet, in which case the validation will fail.
+            validate do |user|
+                require 'etc'
+
+                begin
+                    obj = Etc.getpwnam(user)
+                    parent.uid = obj.uid
+                rescue ArgumentError
+                    raise Puppet::Error, "User %s not found" % user
+                end
+
+                user
+            end
         end
 
         @doc = "Installs and manages cron jobs.  All fields except the command 
@@ -322,24 +259,19 @@ module Puppet
             then the jobs will be considered equivalent and the new name will
             be permanently associated with that job.  Once this association is
             made and synced to disk, you can then manage the job normally."
-        @name = :cron
-        @namevar = :name
-
-        @loaded = {}
-
-        @synced = {}
 
         @instances = {}
+        @tabs = {}
 
         case Facter["operatingsystem"].value
         when "Solaris":
-            @crontype = Puppet::CronType::SunOS
+            @filetype = Puppet::FileType.filetype(:suntab)
         else
-            @crontype = Puppet::CronType::Default
+            @filetype = Puppet::FileType.filetype(:crontab)
         end
 
         class << self
-            attr_accessor :crontype
+            attr_accessor :filetype
         end
 
         attr_accessor :uid
@@ -355,8 +287,7 @@ module Puppet
         # per-user cron tab information.
         def self.clear
             @instances = {}
-            @loaded = {}
-            @synced = {}
+            @tabs = {}
             super
         end
 
@@ -478,28 +409,33 @@ module Puppet
             }
         end
 
-        # Retrieve a given user's cron job, using the @crontype's +retrieve+
+        # Retrieve a given user's cron job, using the @filetype's +retrieve+
         # method.  Returns nil if there was no cron job; else, returns the
         # number of cron instances found.
         def self.retrieve(user)
-            text = @crontype.read(user)
+            @tabs[user] ||= @filetype.new(user)
+            text = @tabs[user].read
             if $? != 0
                 # there is no cron file
                 return nil
             else
                 self.parse(user, text)
             end
+        end
 
-            @loaded[user] = Time.now
+        # Remove a user's cron tab.
+        def self.remove(user)
+            @tabs[user] ||= @filetype.new(user)
+            @tabs[user].remove
         end
 
         # Store the user's cron tab.  Collects the text of the new tab and
-        # sends it to the +@crontype+ module's +write+ function.  Also adds
+        # sends it to the +@filetype+ module's +write+ function.  Also adds
         # header warning users not to modify the file directly.
         def self.store(user)
+            @tabs[user] ||= @filetype.new(user)
             if @instances.include?(user)
-                @crontype.write(user, self.header + self.tab(user))
-                @synced[user] = Time.now
+                @tabs[user].write(self.tab(user))
             else
                 Puppet.notice "No cron instances for %s" % user
             end
@@ -509,13 +445,14 @@ module Puppet
         # into literal text.
         def self.tab(user)
             if @instances.include?(user)
-                return @instances[user].collect { |obj|
+                return self.header() + @instances[user].collect { |obj|
                     if obj.is_a? self
                         obj.to_cron
                     else
                         obj.to_s
                     end
                 }.join("\n") + "\n"
+
             else
                 Puppet.notice "No cron instances for %s" % user
             end
@@ -524,27 +461,15 @@ module Puppet
         # Return the last time a given user's cron tab was loaded.  Could
         # be used for reducing writes, but currently is not.
         def self.loaded?(user)
-            if @loaded.include?(user)
-                return @loaded[user]
+            if @tabs.include?(user)
+                return @loaded[user].loaded
             else
                 return nil
             end
         end
 
-        def paramuser=(user)
-            require 'etc'
-
-            begin
-                obj = Etc.getpwnam(user)
-                @uid = obj.uid
-            rescue ArgumentError
-                raise Puppet::Error, "User %s not found" % user
-            end
-            @parameters[:user] = user
-        end
-
         # Override the default Puppet::Type method because we need to call
-        # the +@crontype+ retrieve method.
+        # the +@filetype+ retrieve method.
         def retrieve
             unless @parameters.include?(:user)
                 raise Puppet::Error, "You must specify the cron user"

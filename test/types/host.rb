@@ -18,11 +18,11 @@ class TestCron < Test::Unit::TestCase
         super
         # god i'm lazy
         @hosttype = Puppet.type(:host)
-        @oldhosttype = @hosttype.hosttype
+        @oldhosttype = @hosttype.filetype
     end
 
     def teardown
-        @hosttype.hosttype = @oldhosttype
+        @hosttype.filetype = @oldhosttype
         Puppet.type(:file).clear
         super
     end
@@ -57,7 +57,7 @@ class TestCron < Test::Unit::TestCase
             end
         }
 
-        @hosttype.hosttype = @fakehosttype
+        @hosttype.filetype = @fakehosttype
     end
 
     def test_simplehost

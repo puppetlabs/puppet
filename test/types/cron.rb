@@ -37,37 +37,13 @@ class TestCron < Test::Unit::TestCase
 
         # god i'm lazy
         @crontype = Puppet.type(:cron)
-
-        # Here we just create a fake cron type that answers to all of the methods
-        # but does not modify our actual system.
-        unless defined? @fakecrontype
-            @fakecrontype = Class.new {
-                @tabs = Hash.new("")
-                def self.clear
-                    @tabs = Hash.new("")
-                end
-
-                def self.read(user)
-                    @tabs[user]
-                end
-
-                def self.write(user, text)
-                    @tabs[user] = text
-                end
-
-                def self.remove(user)
-                    @tabs.delete(user)
-                end
-            }
-
-            @oldcrontype = @crontype.crontype
-            @crontype.crontype = @fakecrontype
-        end
+        @oldfiletype = @crontype.filetype
+        @fakefiletype = Puppet::FileType.filetype(:ram)
+        @crontype.filetype = @fakefiletype
     end
 
     def teardown
-        @crontype.crontype = @oldcrontype
-        @fakecrontype.clear
+        @crontype.filetype = @oldfiletype
         super
     end
 
@@ -75,7 +51,7 @@ class TestCron < Test::Unit::TestCase
     def cronback
         tab = nil
         assert_nothing_raised {
-            tab = Puppet.type(:cron).crontype.read(@me)
+            tab = Puppet.type(:cron).filetype.read(@me)
         }
 
         if $? == 0
@@ -89,9 +65,9 @@ class TestCron < Test::Unit::TestCase
     def cronrestore
         assert_nothing_raised {
             if @currenttab
-                @crontype.crontype.write(@me, @currenttab)
+                @crontype.filetype.write(@me, @currenttab)
             else
-                @crontype.crontype.remove(@me)
+                @crontype.filetype.remove(@me)
             end
         }
     end
@@ -176,6 +152,7 @@ class TestCron < Test::Unit::TestCase
                 :user => @me
             )
         }
+        assert(cron, "Cron did not get created")
         comp = newcomp(cron)
         assert_events([:cron_created], comp)
 
@@ -215,7 +192,7 @@ class TestCron < Test::Unit::TestCase
 
         assert_nothing_raised {
             newstr = @crontype.tab(user)
-            assert_equal(str, newstr, "Cron comments were changed or lost")
+            assert(newstr.include?(str), "Comments were lost")
         }
     end
 
@@ -241,21 +218,24 @@ class TestCron < Test::Unit::TestCase
 
         assert_nothing_raised {
             newstr = @crontype.tab(@me)
-            assert_equal(modstr, newstr, "Cron was not correctly matched")
+            assert(newstr.include?(modstr),
+                "Cron was not correctly matched")
         }
     end
 
     # Test adding a cron when there is currently no file.
     def test_mkcronwithnotab
-        Puppet.type(:cron).crontype.remove(@me)
+        tab = @fakefiletype.new(@me)
+        tab.remove
 
         cron = mkcron("testwithnotab")
         cyclecron(cron)
     end
 
     def test_mkcronwithtab
-        Puppet.type(:cron).crontype.remove(@me)
-        Puppet.type(:cron).crontype.write(@me,
+        tab = @fakefiletype.new(@me)
+        tab.remove
+        tab.write(@me,
 "1 1 1 1 * date > %s/crontesting\n" % tstdir()
         )
 
@@ -264,7 +244,8 @@ class TestCron < Test::Unit::TestCase
     end
 
     def test_makeandretrievecron
-        Puppet.type(:cron).crontype.remove(@me)
+        tab = @fakefiletype.new(@me)
+        tab.remove
 
         name = "storeandretrieve"
         cron = mkcron(name)
@@ -273,7 +254,6 @@ class TestCron < Test::Unit::TestCase
         
         cron = nil
 
-        Puppet.type(:cron).clear
         Puppet.type(:cron).retrieve(@me)
 
         assert(cron = Puppet.type(:cron)[name], "Could not retrieve named cron")

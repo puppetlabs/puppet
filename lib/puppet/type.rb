@@ -1719,8 +1719,8 @@ class Type < Puppet::Element
     newmetaparam(:alias) do
         desc "Creates an alias for the object.  This simplifies lookup of the
             object so is useful in the language.  It is especially useful when
-            you are creating long commands using exec or when many different systems
-            call a given package different names."
+            you are creating long commands using exec or when many different
+            systems call a given package different names."
 
         munge do |aliases|
             unless aliases.is_a?(Array)
