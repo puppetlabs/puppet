@@ -32,6 +32,19 @@ class TestHost < Test::Unit::TestCase
         @hosttype.filetype = Puppet::FileType.filetype(:ram)
     end
 
+    def mkhost
+        host = nil
+        assert_nothing_raised {
+            host = Puppet.type(:host).create(
+                :name => "culain",
+                :ip => "192.168.0.3",
+                :aliases => "puppet"
+            )
+        }
+
+        return host
+    end
+
     def test_simplehost
         mkfaketype
         host = nil
@@ -51,13 +64,41 @@ class TestHost < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            assert_equal(Puppet.type(:host).fileobj.read, Puppet.type(:host).to_file)
+            assert(
+                Puppet.type(:host).to_file.include?(
+                    Puppet.type(:host).fileobj.read
+                ),
+                "File does not include all of our objects"
+            )
         }
     end
 
     def test_hostsparse
         assert_nothing_raised {
             Puppet.type(:host).retrieve
+        }
+    end
+
+    def test_moddinghost
+        mkfaketype
+        host = mkhost()
+
+        assert_events([:host_created], host)
+
+        host.retrieve
+
+        # This was a hard bug to track down.
+        assert_instance_of(String, host.is(:ip))
+
+        host[:aliases] = %w{madstop kirby yayness}
+
+        assert_events([:host_changed], host)
+    end
+
+    def test_multivalues
+        host = mkhost
+        assert_raise(Puppet::Error) {
+            host[:aliases] = "puppetmasterd yayness"
         }
     end
 end

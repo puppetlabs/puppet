@@ -49,8 +49,6 @@ class Type < Puppet::Element
 
     # again, silence the tests; the :notused has to be there because it's
     # the namevar
-    @states = []
-    @parameters = [:notused]
     
     # @paramdoc = Hash.new
     
@@ -128,7 +126,7 @@ class Type < Puppet::Element
     def self.eachtype
         @@typeary.each do |type|
             # Only consider types that have names
-            if type.name
+            if ! type.parameters.empty? or ! type.validstates.empty?
                 yield type 
             end
         end
@@ -152,6 +150,10 @@ class Type < Puppet::Element
         # all of the instances of this class
         @objects = Hash.new
         @aliases = Hash.new
+
+        unless defined? @parameters
+            @parameters = []
+        end
 
         @validstates = {}
 
@@ -339,6 +341,7 @@ class Type < Puppet::Element
         unless defined? @validstates
             @validstates = Hash.new(false)
         end
+        return unless defined? @states
         @states.each { |stateklass|
             name = stateklass.name
             if @validstates.include?(name) 
@@ -357,6 +360,7 @@ class Type < Puppet::Element
     # Find the namevar
     def self.namevar
         unless defined? @namevar
+            return nil unless defined? @parameters and ! @parameters.empty?
             @namevar = @parameters.find { |name, param|
                 param.isnamevar?
                 unless param
@@ -463,6 +467,7 @@ class Type < Puppet::Element
 
     # Return the parameter names
     def self.parameters
+        return [] unless defined? @parameters
         @parameters.collect { |klass| klass.name }
     end
 
@@ -510,6 +515,7 @@ class Type < Puppet::Element
 
     # Return the list of validstates
     def self.validstates
+        return {} unless defined? @states
         unless @validstates.length == @states.length
             self.buildstatehash
         end

@@ -94,17 +94,22 @@ Meta-Parameters
 ---------------
 
 }
-params = []
-Puppet::Type.eachmetaparam { |param|
-    params << param
-}
+begin
+    params = []
+    Puppet::Type.eachmetaparam { |param|
+        params << param
+    }
 
-params.sort { |a,b|
-    a.to_s <=> b.to_s
-}.each { |param|
-    puts "- **" + param.to_s + "**"
-    puts tab(1) + Puppet::Type.metaparamdoc(param).gsub(/\n\s*/,' ')
-}
+    params.sort { |a,b|
+        a.to_s <=> b.to_s
+    }.each { |param|
+        puts "- **" + param.to_s + "**"
+        puts tab(1) + Puppet::Type.metaparamdoc(param).gsub(/\n\s*/,' ')
+    }
+rescue => detail
+    puts "type %s had incorrect params: %s" % detail
+    exit(1)
+end
 
 puts %{
 -----

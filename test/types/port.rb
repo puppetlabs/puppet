@@ -32,6 +32,21 @@ class TestPort < Test::Unit::TestCase
         @porttype.filetype = Puppet::FileType.filetype(:ram)
     end
 
+    def mkport
+        port = nil
+        assert_nothing_raised {
+            port = Puppet.type(:port).create(
+                :name => "puppet",
+                :number => 8139,
+                :protocols => "tcp",
+                :description => "The port that Puppet runs on",
+                :aliases => "coolness"
+            )
+        }
+
+        return port
+    end
+
     def test_simplehost
         mkfaketype
         host = nil
@@ -40,7 +55,7 @@ class TestPort < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            host = Puppet.type(:port).create(
+            port = Puppet.type(:port).create(
                 :name => "puppet",
                 :number => 8139,
                 :protocols => "tcp",
@@ -53,11 +68,16 @@ class TestPort < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            assert_equal(Puppet.type(:port).fileobj.read, Puppet.type(:port).to_file)
+            assert(
+                Puppet.type(:port).to_file.include?(
+                    Puppet.type(:port).fileobj.read
+                ),
+                "File does not include all of our objects"
+            )
         }
     end
 
-    def test_hostsparse
+    def test_portsparse
         assert_nothing_raised {
             Puppet.type(:port).retrieve
         }
@@ -69,6 +89,35 @@ class TestPort < Test::Unit::TestCase
         assert_equal("53", dns.is(:number), "DNS number was wrong")
         %w{udp tcp}.each { |v|
             assert(dns.is(:protocols).include?(v), "DNS did not include proto %s" % v)
+        }
+    end
+
+    def test_moddingport
+        mkfaketype
+        port = nil
+        assert_nothing_raised {
+            port = Puppet.type(:port).create(
+                :name => "puppet",
+                :number => 8139,
+                :protocols => "tcp",
+                :description => "The port that Puppet runs on"
+            )
+        }
+
+        assert_events([:port_created], port)
+
+        port[:protocols] = %w{tcp udp}
+
+        assert_events([:port_changed], port)
+    end
+
+    def test_multivalues
+        port = mkport
+        assert_raise(Puppet::Error) {
+            port[:protocols] = "udp tcp"
+        }
+        assert_raise(Puppet::Error) {
+            port[:aliases] = "puppetmasterd yayness"
         }
     end
 end

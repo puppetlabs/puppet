@@ -7,18 +7,19 @@ module Puppet
     newtype(:port, Puppet::Type::ParsedType) do
         newstate(:protocols) do
             desc "The protocols the port uses.  Valid values are *udp* and *tcp*.
-                Most services have both protocols, but not all."
+                Most services have both protocols, but not all.  If you want
+                both protocols, you must specify that; Puppet replaces the
+                current values, it does not merge with them.  If you specify
+                multiple protocols they must be as an array."
 
             def is=(proto)
                 unless proto.is_a?(Array)
-                    proto = [proto]
+                    proto = [proto.split(/\s+/)].flatten
                 end
-                #self.info "setting to %s" % proto.inspect
                 @is = proto
             end
 
             def is
-                #self.notice "returning is %s" % @is.inspect
                 @is
             end
 
@@ -26,6 +27,12 @@ module Puppet
             # value.
             def should
                 @should
+            end
+
+            validate do |value|
+                unless value == "udp" or value == "tcp"
+                    raise Puppet::Error, "Protocols can be either 'udp' or 'tcp'"
+                end
             end
         end
 
@@ -38,8 +45,8 @@ module Puppet
         end
 
         newstate(:aliases) do
-            desc "Any aliases the port might have.  Values can be either an array
-                or a comma-separated list."
+            desc "Any aliases the port might have.  Multiple values must be specified
+                as an array."
 
             # We have to override the feeding mechanism; it might be nil or 
             # white-space separated
@@ -59,14 +66,10 @@ module Puppet
                 @should
             end
 
-            munge do |values|
-                unless values.is_a?(Array)
-                    values = [values]
+            validate do |value|
+                if value =~ /\s/
+                    raise Puppet::Error, "Aliases cannot have whitespace in them"
                 end
-                # Split based on comma, then flatten the whole thing
-                values.collect { |values|
-                    values.split(/,\s*/)
-                }.flatten
             end
         end
 
@@ -167,12 +170,12 @@ module Puppet
             end
 
             if hash[:protocols]
+                # The protocol can be a symbol, so...
+                if proto.is_a?(Symbol)
+                    proto = []
+                end
                 # Check to see if it already includes our proto
-                if proto.include?(hash[:protocols])
-                    Puppet.warning(
-                        "There is already a port with our name and protocols"
-                    )
-                else
+                unless proto.include?(hash[:protocols])
                     # We are missing their proto
                     proto << hash[:protocols]
                     #Puppet.info "new proto is %s" % proto.inspect
@@ -190,19 +193,24 @@ module Puppet
         end
 
         # Convert the current object into a host-style string.
-        def to_str
-            str = "%s\t%s/%s" % [self[:name], self.state(:number).should,
-                self.state(:protocols).should]
+        def to_s
+            self.state(:protocols).should.collect { |proto|
+                str = "%s\t%s/%s" % [self[:name], self.state(:number).should,
+                    proto]
 
-            if state = self.state(:alias)
-                str += "\t%s" % state.should.join(" ")
-            end
+                if state = self.state(:alias)
+                    str += "\t%s" % state.should.join(" ")
+                else
+                    str += "\t"
+                end
 
-            if state = self.state(:description)
-                str += "\t# %s" % state.should
-            end
-
-            str
+                if state = self.state(:description)
+                    str += "\t# %s" % state.should
+                else
+                    str += "\t"
+                end
+                str
+            }.join("\n")
         end
     end
 end

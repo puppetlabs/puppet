@@ -198,7 +198,7 @@ class State < Puppet::Parameter
     end
 
     def should_to_s
-        @should
+        @should.join(" ")
     end
 
     def to_s

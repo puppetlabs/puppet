@@ -30,6 +30,11 @@ class TestType < Test::Unit::TestCase
                 "Failed to retrieve %s by name" % name
             )
 
+            # Skip types with no parameters or valid states
+            #unless ! type.parameters.empty? or ! type.validstates.empty?
+            #    next
+            #end
+
             assert(
                 type.namevar,
                 "Failed to retrieve namevar for %s" % name

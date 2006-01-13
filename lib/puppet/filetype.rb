@@ -38,12 +38,12 @@ module Puppet # :nodoc:
                     begin
                         val = real_read()
                         @loaded = Time.now
-                        return val
+                        return val.gsub(/# HEADER.*\n/,'')
                     rescue Puppet::Error => detail
                         raise
                     rescue => detail
-                        raise Puppet::Error, "%s could not read %s" %
-                            [self.class, @path]
+                        raise Puppet::Error, "%s could not read %s: %s" %
+                            [self.class, @path, detail]
                     end
                 end
 

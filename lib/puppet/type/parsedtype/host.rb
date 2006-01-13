@@ -10,8 +10,8 @@ module Puppet
         end
 
         newstate(:aliases) do
-            desc "Any aliases the host might have.  Values can be either an array
-                or a comma-separated list."
+            desc "Any aliases the host might have.  Multiple values must be
+                specified as an array."
 
             # We have to override the feeding mechanism; it might be nil or 
             # white-space separated
@@ -31,14 +31,10 @@ module Puppet
                 @should
             end
 
-            munge do |values|
-                unless values.is_a?(Array)
-                    values = [values]
+            validate do |value|
+                if value =~ /\s/
+                    raise Puppet::Error, "Aliases cannot include whitespace"
                 end
-                # Split based on comma, then flatten the whole thing
-                values.collect { |values|
-                    values.split(/,\s*/)
-                }.flatten
             end
         end
 
@@ -100,7 +96,7 @@ module Puppet
         end
 
         # Convert the current object into a host-style string.
-        def to_str
+        def to_s
             str = "%s\t%s" % [self.state(:ip).should, self[:name]]
 
             if state = self.state(:alias)
