@@ -1,14 +1,26 @@
 require 'etc'
 require 'facter'
+require 'puppet/filetype'
 require 'puppet/type/state'
 
 module Puppet
     class State
+        # The base parameter for all of these types.  Its only job is to copy
+        # the 'should' value to the 'is' value and to do support the right logging
+        # and such.
         class ParsedParam < Puppet::State
             @name = :parsedparam
             # Normally this would retrieve the current value, but our state is not
             # actually capable of doing so.
             def retrieve
+                # If we've synced, then just copy the values over and return.
+                # This allows this state to behave like any other state.
+                if defined? @synced and @synced
+                    @is = self.should
+                    @synced = false
+                    return
+                end
+
                 unless defined? @is and ! @is.nil?
                     @is = :notfound
                 end
@@ -18,17 +30,28 @@ module Puppet
             # out which event to return.  Finally, call @parent.sync to write the
             # host tab.
             def sync(nostore = false)
-                ebase = @parent.class
+                ebase = @parent.class.name.to_s
                 if @is == :notfound
                     @is = self.should
                     tail = "created"
+
+                    # If we're creating it, then sync all of the other states
+                    # but tell them not to store (we'll store just once,
+                    # at the end).
+                    @parent.eachstate { |state|
+                        next if state == self
+                        state.sync(true)
+                    }
                 elsif self.should == :notfound
                     @parent.remove(true)
                     tail = "deleted"
                 elsif self.insync?
                     return nil
                 else
-                    @is = self.should
+                    #@is = self.should
+                    # Mark that we've synced it, but don't copy the value, because
+                    # that will make the 'change' log inscrutable.
+                    @synced = true
                     tail = "changed"
                 end
 
@@ -41,7 +64,7 @@ module Puppet
         end
     end
 
-    class Type
+    class Type # :nodoc:
         # The collection of classes that are just simple records aggregated
         # into a file. See 'host.rb' for an example.
         class ParsedType < Puppet::Type
@@ -194,5 +217,7 @@ module Puppet
         end
     end
 end
+
+require 'puppet/type/parsedtype/host'
 
 # $Id$

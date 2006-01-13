@@ -8,7 +8,6 @@ end
 
 require 'puppettest'
 require 'puppet'
-require 'puppet/type/cron'
 require 'test/unit'
 require 'facter'
 
@@ -65,9 +64,9 @@ class TestCron < Test::Unit::TestCase
     def cronrestore
         assert_nothing_raised {
             if @currenttab
-                @crontype.filetype.write(@me, @currenttab)
+                @crontype.filetype.new(@me).write(@currenttab)
             else
-                @crontype.filetype.remove(@me)
+                @crontype.filetype.new(@me).remove
             end
         }
     end
@@ -235,7 +234,7 @@ class TestCron < Test::Unit::TestCase
     def test_mkcronwithtab
         tab = @fakefiletype.new(@me)
         tab.remove
-        tab.write(@me,
+        tab.write(
 "1 1 1 1 * date > %s/crontesting\n" % tstdir()
         )
 

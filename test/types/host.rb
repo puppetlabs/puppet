@@ -8,7 +8,6 @@ end
 
 require 'puppettest'
 require 'puppet'
-require 'puppet/type/host'
 require 'test/unit'
 require 'facter'
 

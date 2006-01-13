@@ -2,6 +2,7 @@ require 'etc'
 require 'facter'
 require 'puppet/type/state'
 require 'puppet/filetype'
+require 'puppet/type/parsedtype'
 
 module Puppet
     # Model the actual cron jobs.  Supports all of the normal cron job fields
@@ -10,44 +11,12 @@ module Puppet
     # and is used to manage the job.
     newtype(:cron) do
         # A base class for all of the Cron parameters, since they all have
-        # similar argument checking going on.
-        class CronParam < Puppet::State
+        # similar argument checking going on.  We're stealing the base class
+        # from parsedtype, and we should probably subclass Cron from there,
+        # but it was just too annoying to do.
+        class CronParam < Puppet::State::ParsedParam
             class << self
                 attr_accessor :boundaries
-            end
-
-            # Normally this would retrieve the current value, but our state is not
-            # actually capable of doing so.  The Cron class does the actual tab
-            # retrieval, so all this method does is default to :notfound for @is.
-            def retrieve
-                unless defined? @is and ! @is.nil?
-                    @is = :notfound
-                end
-            end
-
-            # Determine whether the cron job should be destroyed, and figure
-            # out which event to return.  Finally, call @parent.sync to write the
-            # cron tab.
-            def sync(nostore = false)
-                event = nil
-                if @is == :notfound
-                    @is = self.should
-                    event = :cron_created
-                elsif self.should == :notfound
-                    @parent.remove(true)
-                    event = :cron_deleted
-                elsif self.insync?
-                    return nil
-                else
-                    @is = self.should
-                    event = :cron_changed
-                end
-
-                unless nostore
-                    @parent.store
-                end
-                
-                return event
             end
 
             # A method used to do parameter input handling.  Converts integers
@@ -110,6 +79,7 @@ module Puppet
             # a boolean of whether to do alpha checking, and if so requires
             # the ary against which to do the checking.
             munge do |value|
+                return value unless self.class.boundaries
                 lower, upper = self.class.boundaries
                 retval = nil
                 if num = numfix(value)
@@ -136,52 +106,12 @@ module Puppet
         #
         # Note that this means that managing many cron jobs for a given user
         # could currently result in multiple write sessions for that user.
-        newstate(:command) do
+        newstate(:command, CronParam) do
             desc "The command to execute in the cron job.  The environment
                 provided to the command varies by local system rules, and it is
                 best to always provide a fully qualified command.  The user's
                 profile is not sourced when the command is run, so if the
                 user's environment is desired it should be sourced manually."
-
-            # Normally this would retrieve the current value, but our state is not
-            # actually capable of doing so.  The Cron class does the actual tab
-            # retrieval, so all this method does is default to :notfound for @is.
-            def retrieve
-                unless defined? @is and ! @is.nil?
-                    @is = :notfound
-                end
-            end
-
-            # Determine whether the cron job should be destroyed, and figure
-            # out which event to return.  Finally, call @parent.sync to write the
-            # cron tab.
-            def sync
-                event = nil
-                if @is == :notfound
-                    #@is = @should
-                    event = :cron_created
-                    # We're the first state, so if we're creating the job
-                    # then sync all of the other states
-                    @parent.eachstate { |state|
-                        next if state == self
-                        state.sync(true)
-                    }
-
-                    @is = self.should
-                elsif self.should == :notfound
-                    @parent.remove(true)
-                    event = :cron_deleted
-                elsif self.insync?
-                    return nil
-                else
-                    @is = self.should
-                    event = :cron_changed
-                end
-
-                @parent.store
-                
-                return event
-            end
         end
 
         newstate(:minute, CronParam) do
