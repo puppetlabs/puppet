@@ -3,7 +3,7 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk"
+    $puppetbase = "../.."
 end
 
 require 'puppettest'
@@ -74,8 +74,14 @@ class TestHost < Test::Unit::TestCase
     end
 
     def test_hostsparse
-        assert_nothing_raised {
-            Puppet.type(:host).retrieve
+        fakedata("data/types/hosts").each { |file|
+            @hosttype.path = file
+            Puppet.info "Parsing %s" % file
+            assert_nothing_raised {
+                Puppet.type(:host).retrieve
+            }
+
+            @hosttype.clear
         }
     end
 

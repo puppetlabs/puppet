@@ -250,6 +250,23 @@ module TestPuppet
             end
         }
     end
+
+    # If there are any fake data files, retrieve them
+    def fakedata(dir)
+
+        ary = [$puppetbase, "test"]
+        ary += dir.split("/")
+        dir = File.join(ary)
+
+        unless FileTest.exists?(dir)
+            raise Puppet::DevError, "No fakedata dir %s" % dir
+        end
+        files = Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f|
+            File.join(dir, f)
+        }
+
+        return files
+    end
 end
 
 
@@ -803,7 +820,8 @@ class PuppetTestSuite
     def self.list
         Dir.entries(self.basedir).find_all { |file|
             path = File.join(@basedir, file)
-            FileTest.directory?(path) and file !~ /^\./
+            # Data is for storing test data
+            FileTest.directory?(path) and file !~ /^\./ and file != "data"
         }
     end
 

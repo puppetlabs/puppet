@@ -3,7 +3,7 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk"
+    $puppetbase = "../.."
 end
 
 require 'puppettest'
@@ -78,17 +78,23 @@ class TestPort < Test::Unit::TestCase
     end
 
     def test_portsparse
-        assert_nothing_raised {
-            Puppet.type(:port).retrieve
-        }
+        fakedata("data/types/ports").each { |file|
+            @porttype.path = file
+            Puppet.info "Parsing %s" % file
+            assert_nothing_raised {
+                @porttype.retrieve
+            }
 
-        # Now just make we've got some ports we know will be there
-        dns = @porttype["domain"]
-        assert(dns, "Could not retrieve DNS port")
+            # Now just make we've got some ports we know will be there
+            dns = @porttype["domain"]
+            assert(dns, "Could not retrieve DNS port")
 
-        assert_equal("53", dns.is(:number), "DNS number was wrong")
-        %w{udp tcp}.each { |v|
-            assert(dns.is(:protocols).include?(v), "DNS did not include proto %s" % v)
+            assert_equal("53", dns.is(:number), "DNS number was wrong")
+            %w{udp tcp}.each { |v|
+                assert(dns.is(:protocols).include?(v), "DNS did not include proto %s" % v)
+            }
+
+            @porttype.clear
         }
     end
 

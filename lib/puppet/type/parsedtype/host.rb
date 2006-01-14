@@ -31,7 +31,11 @@ module Puppet
             # We actually want to return the whole array here, not just the first
             # value.
             def should
-                @should
+                if defined? @should
+                    return @should
+                else
+                    return []
+                end
             end
 
             validate do |value|
@@ -84,13 +88,31 @@ module Puppet
                     # add comments and blank lines to the list as they are
                     @instances << line 
                 else
-                    if match = /^(\S+)\s+(\S+)\s*(\S*)$/.match(line)
-                        fields().zip(match.captures).each { |param, value|
-                            hash[param] = value
-                        }
+                    if line.sub!(/^(\S+)\s+(\S+)\s*/, '')
+                        hash[:ip] = $1
+                        hash[:name] = $2
+
+                        unless line == ""
+                            line.sub!(/\s*/, '')
+                            line.sub!(/^([^#]+)\s*/) do |value|
+                                aliases = $1
+                                unless aliases =~ /^\s*$/
+                                    hash[:alias] = aliases
+                                end
+
+                                ""
+                            end
+                        end
                     else
                         raise Puppet::Error, "Could not match '%s'" % line
                     end
+                    #if match = /^(\S+)\s+(\S+)\s*(\S*)\s*$/.match(line)
+                    #    fields().zip(match.captures).each { |param, value|
+                    #        hash[param] = value
+                    #    }
+                    #else
+                    #    raise Puppet::Error, "Could not match '%s'" % line
+                    #end
 
                     if hash[:alias] == ""
                         hash.delete(:alias)

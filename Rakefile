@@ -38,7 +38,7 @@ DOWNDIR = "/export/docroots/reductivelabs.com/htdocs/downloads"
 if ENV['HOSTS']
     TESTHOSTS = ENV['HOSTS'].split(/\s+/)
 else
-    TESTHOSTS = %w{fedora1 rh3a kirby culain openbsd1}
+    TESTHOSTS = %w{fedora1 rh3a kirby culain openbsd1 centos1}
 end
 #TESTHOSTS = %w{sol10b}
 
