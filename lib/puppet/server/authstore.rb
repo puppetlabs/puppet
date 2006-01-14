@@ -63,7 +63,7 @@ class Server
                 }
             }
 
-            self.info "Defaulting to false for %s" % name
+            self.info "defaulting to no access for %s" % name
             # default to false
             return false
         end

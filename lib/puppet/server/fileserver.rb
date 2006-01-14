@@ -19,6 +19,14 @@ class Server
             iface.add_method("string retrieve(string)")
         }
 
+        def authcheck(file, mount, client, clientip)
+            unless mount.allowed?(client, clientip)
+                Puppet.warning "%s cannot access %s in %s" %
+                    [client, mount, file]
+                raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
+            end
+        end
+
         # Run 'retrieve' on a file.  This gets the actual parameters, so
         # we can pass them to the client.
         def check(dir)
@@ -49,9 +57,7 @@ class Server
             readconfig
             mount, path = splitpath(file)
 
-            unless mount.allowed?(client, clientip)
-                raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
-            end
+            authcheck(file, mount, client, clientip)
 
             sdir = nil
             unless sdir = subdir(mount, path)
@@ -140,9 +146,7 @@ class Server
             readconfig
             mount, path = splitpath(dir)
 
-            unless mount.allowed?(client, clientip)
-                raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
-            end
+            authcheck(dir, mount, client, clientip)
 
             subdir = nil
             unless subdir = subdir(mount, path)
@@ -245,7 +249,7 @@ class Server
                             when "allow":
                                 value.split(/\s*,\s*/).each { |val|
                                     begin
-                                        mount.info "Allowing %s access" % val
+                                        mount.info "allowing %s access" % val
                                         mount.allow(val)
                                     rescue AuthStoreError => detail
                                         raise FileServerError, "%s at line %s of %s" %
@@ -255,7 +259,7 @@ class Server
                             when "deny":
                                 value.split(/\s*,\s*/).each { |val|
                                     begin
-                                        mount.info "Denying %s access" % val
+                                        mount.info "denying %s access" % val
                                         mount.deny(val)
                                     rescue AuthStoreError => detail
                                         raise FileServerError, "%s at line %s of %s" %
@@ -301,9 +305,7 @@ class Server
             readconfig
             mount, path = splitpath(file)
 
-            unless mount.allowed?(client, clientip)
-                raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
-            end
+            authcheck(file, mount, client, clientip)
 
             fpath = nil
             if path
