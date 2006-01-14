@@ -91,6 +91,21 @@ class Type < Puppet::Element
         def inspect
             "Type(%s)" % self.name
         end
+
+        # This class is aggregatable, meaning that instances are defined on
+        # one system but instantiated on another
+        def isaggregatable
+            @aggregatable = true
+        end
+
+        # Is this one aggregatable?
+        def aggregatable?
+            if defined? @aggregatable
+                return @aggregatable
+            else
+                return false
+            end
+        end
     end
 
     def inspect
