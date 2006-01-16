@@ -41,14 +41,14 @@ module Puppet
             if hash[:error] != " "
                 raise Puppet::PackageError.new(
                     "Package %s, version %s is in error state: %s" %
-                        [hash[:name], hash[:install], hash[:error]]
+                        [hash[:name], hash[:version], hash[:error]]
                 )
             end
 
             if hash[:status] == "i"
-                hash[:install] = hash[:version]
+                hash[:ensure] = :present
             else
-                hash[:install] = :notinstalled
+                hash[:ensure] = :absent
             end
 
             return hash
@@ -67,7 +67,7 @@ module Puppet
             open("| dpkg -l") { |process|
                 # our regex for matching dpkg output
                 regex = %r{^(\S+)\s+(\S+)\s+(\S+)\s+(.+)$}
-                fields = [:status, :name, :install, :description]
+                fields = [:status, :name, :absent, :description]
                 hash = {}
 
                 5.times { process.gets } # throw away the header
@@ -92,7 +92,7 @@ module Puppet
             return packages
         end
 
-        def remove
+        def destroy
             cmd = "dpkg -r %s" % self.name
             output = %x{#{cmd} 2>&1}
             if $? != 0

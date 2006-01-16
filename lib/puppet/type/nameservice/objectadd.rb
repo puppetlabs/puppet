@@ -98,6 +98,7 @@ module Puppet
                 def addcmd
                     cmd = ["useradd"]
                     @parent.eachstate { |state|
+                        next if state.name == :ensure
                         # the value needs to be quoted, mostly because -c might
                         # have spaces in it
                         cmd << state.class.objectaddflag << "'%s'" % state.should

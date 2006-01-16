@@ -4,12 +4,14 @@ module Puppet
             attr_reader :validater, :munger, :name, :default
             attr_accessor :ismetaparameter, :element
 
-            # This means that 'nil' is an invalid default value.
+            # Define the default value for a given state or parameter.  This
+            # means that 'nil' is an invalid default value.  This defines
+            # the 'default' instance method.
             def defaultto(value = nil, &block)
                 if block
-                    @default = block
+                    define_method(:default, &block)
                 else
-                    @default = value
+                    define_method(:default) do value end
                 end
             end
 
@@ -134,15 +136,15 @@ module Puppet
 #            end
 #        end
 
-        def default
-            default = self.class.default
-            if default.is_a?(Proc)
-                val = self.instance_eval(&default)
-                return val
-            else
-                return default
-            end
-        end
+        #def default
+        #    default = self.class.default
+        #    if default.is_a?(Proc)
+        #        val = self.instance_eval(&default)
+        #        return val
+        #    else
+        #        return default
+        #    end
+        #end
 
         # This should only be called for parameters, but go ahead and make
         # it possible to call for states, too.

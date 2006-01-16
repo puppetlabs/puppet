@@ -29,7 +29,8 @@ class TestPort < Test::Unit::TestCase
     # Here we just create a fake host type that answers to all of the methods
     # but does not modify our actual system.
     def mkfaketype
-        @porttype.filetype = Puppet::FileType.filetype(:ram)
+        @faketype = Puppet::FileType.filetype(:ram)
+        @porttype.filetype = @faketype
     end
 
     def mkport
@@ -37,7 +38,7 @@ class TestPort < Test::Unit::TestCase
         assert_nothing_raised {
             port = Puppet.type(:port).create(
                 :name => "puppet",
-                :number => 8139,
+                :number => "8139",
                 :protocols => "tcp",
                 :description => "The port that Puppet runs on",
                 :alias => "coolness"
@@ -47,21 +48,14 @@ class TestPort < Test::Unit::TestCase
         return port
     end
 
-    def test_simplehost
+    def test_simpleport
         mkfaketype
         host = nil
         assert_nothing_raised {
             assert_nil(Puppet.type(:port).retrieve)
         }
 
-        assert_nothing_raised {
-            port = Puppet.type(:port).create(
-                :name => "puppet",
-                :number => 8139,
-                :protocols => "tcp",
-                :description => "The port that Puppet runs on"
-            )
-        }
+        port = mkport
 
         assert_nothing_raised {
             Puppet.type(:port).store
@@ -101,16 +95,11 @@ class TestPort < Test::Unit::TestCase
     def test_moddingport
         mkfaketype
         port = nil
-        assert_nothing_raised {
-            port = Puppet.type(:port).create(
-                :name => "puppet",
-                :number => 8139,
-                :protocols => "tcp",
-                :description => "The port that Puppet runs on"
-            )
-        }
+        port = mkport
 
         assert_events([:port_created], port)
+
+        port.retrieve
 
         port[:protocols] = %w{tcp udp}
 
@@ -125,6 +114,25 @@ class TestPort < Test::Unit::TestCase
         assert_raise(Puppet::Error) {
             port[:alias] = "puppetmasterd yayness"
         }
+    end
+
+    def test_removal
+        mkfaketype
+        port = mkport()
+        assert_nothing_raised {
+            port[:ensure] = :present
+        }
+        assert_events([:port_created], port)
+
+        port.retrieve
+        assert(port.insync?)
+        assert_nothing_raised {
+            port[:ensure] = :absent
+        }
+
+        assert_events([:port_removed], port)
+        port.retrieve
+        assert_events([], port)
     end
 end
 

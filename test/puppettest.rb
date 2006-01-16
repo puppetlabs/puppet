@@ -100,6 +100,7 @@ module TestPuppet
         @@tmppids.each { |pid|
             %x{kill -INT #{pid} 2>/dev/null}
         }
+
         @@tmppids.clear
         Puppet::Type.allclear
         Puppet::Storage.clear

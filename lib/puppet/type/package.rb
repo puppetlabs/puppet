@@ -21,11 +21,13 @@ module Puppet
             end
 
             mod = Module.new
+            const_set("PkgType" + name.to_s.capitalize,mod)
 
             # Add our parent, if it exists
             if parent
                 unless @pkgtypes.include?(parent)
-                    raise Puppet::DevError, "No parent type %s for package type %s" %
+                    raise Puppet::DevError,
+                        "No parent type %s for package type %s" %
                         [parent, name]
                 end
                 mod.send(:include, @pkgtypes[parent])
@@ -61,13 +63,13 @@ module Puppet
             @pkgtypes.keys
         end
 
-        newstate(:install) do
+        ensurable do
             desc "What state the package should be in.  Specifying *true* will
                 only result in a change if the package is not installed at all;
                 use *latest* to keep the package (and, depending on the package
                 system, its prerequisites) up to date.  Specifying *false* will
                 uninstall the package if it is installed.
-                *true*/*false*/*latest*/``version``"
+                *true*/*false*/*latest*"
 
             munge do |value|
                 # possible values are: true, false, and a version number
@@ -80,10 +82,10 @@ module Puppet
                             @parent[:type].name
                     end
                     return :latest
-                when true, :installed:
-                    return :installed
-                when false, :notinstalled:
-                    return :notinstalled
+                when true, :present:
+                    return :present
+                when false, :absent:
+                    return :absent
                 else
                     # We allow them to set a should value however they want,
                     # but only specific package types will be able to use this
@@ -92,26 +94,42 @@ module Puppet
                 end
             end
 
+            # Alias the 'present' value.
+            newvalue(:installed) do
+                self.set(:present)
+            end
+
+            newvalue(:latest) do
+                @parent.update
+            end
+
             # Override the parent method, because we've got all kinds of
             # funky definitions of 'in sync'.
             def insync?
+                @should ||= []
                 # Iterate across all of the should values, and see how they
                 # turn out.
                 @should.each { |should|
                     case should
-                    when :installed
-                        unless @is == :notinstalled
+                    when :present
+                        unless @is == :absent
                             return true
                         end
                     when :latest
                         latest = @parent.latest
-                        if @is == latest
+                        case @is
+                        when latest:
                             return true
+                        when :present:
+                            if @parent[:version] == latest
+                                return true
+                            end
                         else
-                            self.debug "latest %s is %s" % [@parent.name, latest]
+                            self.debug "@is is %s, latest %s is %s" %
+                                [@is, @parent.name, latest]
                         end
-                    when :notinstalled
-                        if @is == :notinstalled
+                    when :absent
+                        if @is == :absent
                             return true
                         end
                     when @is
@@ -124,60 +142,30 @@ module Puppet
 
             # This retrieves the current state
             def retrieve
-                unless defined? @is
-                    @parent.retrieve
-                end
+                #unless defined? @is
+                @parent.retrieve
+                #end
             end
 
             def sync
-                method = nil
-                event = nil
-                case @should[0]
-                when :installed:
-                    method = :install
-                    event = :package_installed
-                when :notinstalled:
-                    method = :remove
-                    event = :package_removed
-                when :latest
-                    if @is == :notinstalled
-                        method = :install
-                        event = :package_installed
-                    else
-                        method = :update
-                        event = :package_updated
-                    end
-                else
-                    unless ! @parent.respond_to?(:versionable?) or @parent.versionable?
-                        self.warning value
-                        raise Puppet::Error,
-                            "Package type %s does not support specifying versions" %
-                            @parent[:type]
-                    else
-                        method = :install
-                        event = :package_installed
-                    end
+                value = self.should
+                unless value.is_a?(Symbol)
+                    value = value.intern
                 end
-
-                if @parent.respond_to?(method)
-                    begin
-                        @parent.send(method)
-                    rescue => detail
-                        self.err "Could not run %s: %s" % [method, detail.to_s]
-                        raise
-                    end
+                # If we're a normal value, then just pass tothe parent method
+                if self.class.values.include?(value)
+                    self.info "setting %s" % value
+                    super
                 else
-                    raise Puppet::Error, "Packages of type %s do not support %s" %
-                        [@parent[:type], method]
+                    self.info "updating from %s" % value
+                    @parent.update
                 end
-
-                return event
             end
         end
-        # packages are complicated because each package format has completely
-        # different commands.  We need some way to convert specific packages
-        # into the general package object...
-        attr_reader :version, :pkgtype
+
+        # Packages are complicated because each package format has completely
+        # different commands.
+        attr_reader :pkgtype
 
         newparam(:name) do
             desc "The package name."
@@ -212,9 +200,22 @@ module Puppet
         newparam(:status) do
             desc "A read-only parameter set by the package."
         end
-        #newparam(:version) do
-        #    desc "A read-only parameter set by the package."
-        #end
+
+        # FIXME Version is screwy -- most package systems can't specify a
+        # version, but people will definitely want to query versions, so
+        # it almost seems like versions should be a read-only state,
+        # supporting syncing only in certain cases.
+        newparam(:version) do
+            desc "A read-only parameter set by the package."
+
+#            validate do |value|
+#                unless @parent.respond_to?(:versionable?) and @parent.versionable?
+#                    raise Puppet::Error,
+#                        "Package type %s does not support specifying versions." %
+#                            @parent.pkgtype
+#                end
+#            end
+        end
         newparam(:category) do
             desc "A read-only parameter set by the package."
         end
@@ -355,6 +356,16 @@ module Puppet
             end
         end
 
+        def create
+            self.install
+        end
+
+        # The 'query' method returns a hash of info if the package
+        # exists and returns nil if it does not.
+        def exists?
+            self.query
+        end
+
         # okay, there are two ways that a package could be created...
         # either through the language, in which case the hash's values should
         # be set in 'should', or through comparing against the system, in which
@@ -376,10 +387,10 @@ module Puppet
 
             super
 
-            unless @states.include?(:install)
-                self.debug "Defaulting to installing a package"
-                self[:install] = true
-            end
+            #unless @states.include?(:ensure)
+            #    self.debug "Defaulting to installing a package"
+            #    self[:ensure] = true
+            #end
 
             unless @parameters.include?(:type)
                 self[:type] = self.class.default
@@ -387,6 +398,8 @@ module Puppet
         end
 
         def retrieve
+            # If the package is installed, then retrieve all of the information
+            # about it and set it appropriately.
             if hash = self.query
                 hash.each { |param, value|
                     unless self.class.validattr?(param)
@@ -398,8 +411,9 @@ module Puppet
                     self.is = [param, value]
                 }
             else
+                # Else just mark all of the states absent.
                 self.class.validstates.each { |name|
-                    self.is = [name, :notinstalled]
+                    self.is = [name, :absent]
                 }
             end
         end

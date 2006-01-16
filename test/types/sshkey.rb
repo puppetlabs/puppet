@@ -116,6 +116,25 @@ class TestSSHKey < Test::Unit::TestCase
         same = key.class["testing"]
         assert(same, "Could not retrieve by alias")
     end
+
+    def test_removal
+        mkfaketype
+        sshkey = mkkey()
+        assert_nothing_raised {
+            sshkey[:ensure] = :present
+        }
+        assert_events([:sshkey_created], sshkey)
+
+        sshkey.retrieve
+        assert(sshkey.insync?)
+        assert_nothing_raised {
+            sshkey[:ensure] = :absent
+        }
+
+        assert_events([:sshkey_removed], sshkey)
+        sshkey.retrieve
+        assert_events([], sshkey)
+    end
 end
 
 # $Id$

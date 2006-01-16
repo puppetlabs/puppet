@@ -94,17 +94,21 @@ class TestCron < Test::Unit::TestCase
         name = cron.name
         comp = newcomp(name, cron)
 
-        trans = assert_events([:cron_created], comp)
+        assert_events([:cron_created], comp)
         cron.retrieve
-        assert(cron.insync?)
-        trans = assert_events([], comp)
-        cron[:command] = :notfound
-        trans = assert_events([:cron_deleted], comp)
-        # the cron should no longer exist, not even in the comp
-        trans = assert_events([], comp)
 
-        assert(!comp.include?(cron),
-            "Cron is still a member of comp, after being deleted")
+        assert(cron.insync?)
+
+        assert_events([], comp)
+
+        cron[:ensure] = :absent
+
+        assert_events([:cron_removed], comp)
+
+        cron.retrieve
+
+        assert(cron.insync?)
+        assert_events([], comp)
     end
 
     # A simple test to see if we can load the cron from disk.
@@ -130,7 +134,7 @@ class TestCron < Test::Unit::TestCase
         str = nil
         # generate the text
         assert_nothing_raised {
-            str = cron.to_cron
+            str = cron.to_record
         }
 
         assert_equal(str, "# Puppet Name: #{name}\n* * * * * date > /dev/null",
@@ -159,6 +163,8 @@ class TestCron < Test::Unit::TestCase
             cron[:month] = "June"
         }
 
+        cron.retrieve
+
         assert_events([:cron_changed], comp)
     end
 
@@ -178,6 +184,7 @@ class TestCron < Test::Unit::TestCase
         comp = newcomp(cron)
 
         assert_events([:cron_created], comp, "did not create cron job")
+        cron.retrieve
         assert_events([], comp, "cron job got rewritten")
     end
     

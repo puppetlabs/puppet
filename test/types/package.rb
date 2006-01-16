@@ -55,7 +55,7 @@ class TestPackages < Test::Unit::TestCase
         tstpkgs().each { |pkg|
             if pkg.is_a?(Array)
                 hash = {:name => pkg[0], :source => pkg[1]}
-                hash[:install] = "true"
+                hash[:ensure] = "present"
 
                 unless File.exists?(hash[:source])
                     Puppet.info "No package file %s for %s; skipping some package tests" %
@@ -64,7 +64,7 @@ class TestPackages < Test::Unit::TestCase
                 yield Puppet.type(:package).create(hash)
             else
                 yield Puppet.type(:package).create(
-                    :name => pkg, :install => "latest"
+                    :name => pkg, :ensure => "latest"
                 )
             end
         }
@@ -95,7 +95,7 @@ class TestPackages < Test::Unit::TestCase
 
     def mkpkgcomp(pkg)
         assert_nothing_raised {
-            pkg = Puppet.type(:package).create(:name => pkg, :install => true)
+            pkg = Puppet.type(:package).create(:name => pkg, :ensure => "present")
         }
         assert_nothing_raised {
             pkg.retrieve
@@ -121,7 +121,7 @@ class TestPackages < Test::Unit::TestCase
                 obj.retrieve
             }
 
-            assert(obj.is(:install), "Could not retrieve package version")
+            assert(obj.is(:ensure), "Could not retrieve package version")
         }
     end
 
@@ -137,7 +137,7 @@ class TestPackages < Test::Unit::TestCase
             obj.retrieve
         }
 
-        assert_equal(:notinstalled, obj.is(:install),
+        assert_equal(:absent, obj.is(:ensure),
             "Somehow retrieved unknown pkg's version")
     end
 
@@ -167,11 +167,11 @@ class TestPackages < Test::Unit::TestCase
 
             comp = newcomp("package", pkg)
 
-            assert_events([:package_installed], comp, "package")
+            assert_events([:package_created], comp, "package")
 
             # then uninstall it
             assert_nothing_raised {
-                pkg[:install] = false
+                pkg[:ensure] = "absent"
             }
 
 
@@ -186,16 +186,16 @@ class TestPackages < Test::Unit::TestCase
             # a low version, and then upgrade using this.  But, eh.
             if pkg.respond_to?(:latest)
                 assert_nothing_raised {
-                    pkg[:install] = "latest"
+                    pkg[:ensure] = "latest"
                 }
 
-                assert_events([:package_installed], comp, "package")
+                assert_events([:package_created], comp, "package")
 
                 pkg.retrieve
                 assert(pkg.insync?, "After install, package is not insync")
 
                 assert_nothing_raised {
-                    pkg[:install] = false
+                    pkg[:ensure] = "absent"
                 }
 
                 pkg.retrieve

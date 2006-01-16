@@ -263,7 +263,7 @@ class TestGroup < Test::Unit::TestCase
                 end
             }
 
-            assert_rollback_events(trans, [:group_deleted], "group")
+            assert_rollback_events(trans, [:group_removed], "group")
 
             assert(missing?(name), "Group %s is still present" % name)
         end

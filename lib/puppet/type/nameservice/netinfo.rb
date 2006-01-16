@@ -114,7 +114,7 @@ module Puppet
                     }
 
                     unless defined? @is
-                        @is = :notfound
+                        @is = :absent
                     end
                 end
 

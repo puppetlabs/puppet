@@ -7,7 +7,7 @@ module Puppet
         # Install a package using 'apt-get'.  This function needs to support
         # installing a specific version.
         def install
-            should = self.should(:install)
+            should = self.should(:ensure)
 
             str = self.name
             case should
@@ -62,6 +62,10 @@ module Puppet
 
         def update
             self.install
+        end
+
+        def versionable?
+            true
         end
     end
 end

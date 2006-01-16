@@ -10,6 +10,8 @@ module Puppet
     # completely symbolic 'name' paremeter, which gets written to the file
     # and is used to manage the job.
     newtype(:cron) do
+        ensurable
+
         # A base class for all of the Cron parameters, since they all have
         # similar argument checking going on.  We're stealing the base class
         # from parsedtype, and we should probably subclass Cron from there,
@@ -306,7 +308,8 @@ module Puppet
                     end
                     # if the cron already exists with that name...
                     if cron = Puppet.type(:cron)[name]
-                        # do nothing...
+                        # Mark the cron job as present
+                        cron.is = [:ensure, :present]
                     elsif tmp = @instances[user].reject { |obj|
                                 ! obj.is_a?(self)
                             }.find { |obj|
@@ -316,7 +319,7 @@ module Puppet
 
                         # we now have a cron job whose command exactly matches
                         # let's see if the other fields match
-                        txt = tmp.to_cron.sub(/#.+\n/,'')
+                        txt = tmp.to_record.sub(/#.+\n/,'')
 
                         if txt == line
                             cron = tmp
@@ -349,6 +352,15 @@ module Puppet
                 # there is no cron file
                 return nil
             else
+                # Preemptively mark everything absent, so that retrieving it
+                # can mark it present again.
+                self.find_all { |obj|
+                    obj[:user] == user
+                }.each { |obj|
+                    obj.each { |state|
+                        state.is = :absent
+                    }
+                }
                 self.parse(user, text)
             end
         end
@@ -374,10 +386,19 @@ module Puppet
         # Collect all Cron instances for a given user and convert them
         # into literal text.
         def self.tab(user)
+            Puppet.info "writing cron tab for %s" % user
             if @instances.include?(user)
-                return self.header() + @instances[user].collect { |obj|
+                return self.header() + @instances[user].reject { |obj|
+                    if obj.is_a?(self) and obj.should(:ensure) == :absent
+                        #obj.log "now absent"
+                        #obj.is = [:ensure, :absent]
+                        true
+                    else
+                        false
+                    end
+                }.collect { |obj|
                     if obj.is_a? self
-                        obj.to_cron
+                        obj.to_record
                     else
                         obj.to_s
                     end
@@ -386,6 +407,11 @@ module Puppet
             else
                 Puppet.notice "No cron instances for %s" % user
             end
+        end
+
+        # Return the tab object itself.  Pretty much just used for testing.
+        def self.tabobj(user)
+            @tabs[user]
         end
 
         # Return the last time a given user's cron tab was loaded.  Could
@@ -398,6 +424,30 @@ module Puppet
             end
         end
 
+        def create
+            # nothing
+            self.info "creating"
+            self.store
+        end
+
+        def destroy
+            # nothing, since the 'Cron.tab' method just doesn't write out
+            # crons whose 'ensure' states are set to 'absent'.
+            #@states.each { |n, state|
+            #    next if n == :ensure
+            #    state.should == :absent
+            #}
+            self.store
+        end
+
+        def exists?
+            val = false
+            if @states.include?(:command) and @states[:command].is != :absent
+                val = true
+            end
+            return val
+        end
+
         # Override the default Puppet::Type method because we need to call
         # the +@filetype+ retrieve method.
         def retrieve
@@ -405,7 +455,7 @@ module Puppet
                 raise Puppet::Error, "You must specify the cron user"
             end
 
-            self.class.retrieve(@parameters[:user])
+            self.class.retrieve(self[:user])
             self.eachstate { |st| st.retrieve }
         end
 
@@ -416,7 +466,7 @@ module Puppet
 
         # Convert the current object a cron-style string.  Adds the cron name
         # as a comment above the cron job, in the form '# Puppet Name: <name>'.
-        def to_cron
+        def to_record
             hash = {:command => @states[:command].should || @states[:command].is }
 
             # Collect all of the values that we have

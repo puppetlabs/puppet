@@ -15,8 +15,6 @@ class State < Puppet::Parameter
     # they can be retrieved and compared later when merging.
     attr_reader :shouldorig
 
-    @virtual = true
-
     class << self
         attr_accessor :unmanaged
         attr_reader :name
@@ -27,6 +25,68 @@ class State < Puppet::Parameter
 
         def to_s
             self.inspect
+        end
+    end
+
+    # Define a new value for our state.
+    def self.newvalue(name, &block)
+        @statevalues ||= {}
+
+        if @statevalues.include?(name)
+            Puppet.warning "%s already has a value for %s" % [self.name, name]
+        end
+        @statevalues[name] = block
+
+        define_method("set_" + name.to_s, &block)
+    end
+
+    # Return the list of valid values.
+    def self.values
+        @statevalues ||= {}
+
+        @statevalues.keys
+    end
+
+    # Call the method associated with a given value.
+    def set
+        if self.insync?
+            self.log "already in sync"
+            return nil
+        end
+
+        value = self.should
+        method = "set_" + value.to_s
+        unless self.respond_to?(method)
+            raise Puppet::Error, "%s is not a valid value for %s" %
+                [value, self.class.name]
+        end
+        self.debug "setting %s (currently %s)" % [value, self.is]
+
+        begin
+            event = self.send(method)
+        rescue Puppet::Error
+            raise
+        rescue => detail
+            if Puppet[:debug]
+                puts detail.backtrace
+            end
+            raise Puppet::Error, "Could not set %s on %s: %s" %
+                [value, self.class.name, detail]
+        end
+
+        if event and event.is_a?(Symbol)
+            self.log "got event back %s" % event
+            return event
+        else
+            # Return the appropriate event.
+            event = case self.should
+            when :present: (@parent.class.name.to_s + "_created").intern
+            when :absent: (@parent.class.name.to_s + "_removed").intern
+            else
+                (@parent.class.name.to_s + "_changed").intern
+            end
+
+            return event
         end
     end
     
@@ -99,8 +159,9 @@ class State < Puppet::Parameter
 
     def log(msg)
         unless @parent[:loglevel]
+            p @parent
             raise Puppet::DevError, "Parent %s has no loglevel" %
-                @parent.to_s
+                @parent.name
         end
         Puppet::Log.create(
             :level => @parent[:loglevel],
@@ -168,13 +229,41 @@ class State < Puppet::Parameter
         end
     end
 
+    # The default 'sync' method only selects among a list of registered
+    # values.
+    def sync
+        unless self.class.values
+            raise Puppet::DevError, "No values defined for %s" %
+                self.class.name
+        end
+
+        # Set ourselves to whatever our should value is.
+        self.set
+    end
+
+    # Verify that the passed value is valid.
+    validate do |value|
+        if self.class.values.empty?
+            # This state isn't using defined values to do its work.
+            return 
+        end
+        unless value.is_a?(Symbol)
+            value = value.to_s.intern
+        end
+        unless self.class.values.include?(value)
+            raise Puppet::Error,
+                "Invalid '%s' value '%s'.  Valid values are '%s'" %
+                    [self.class.name, value, self.class.values.join(", ")]
+        end
+    end
+
     # How should a state change be printed as a string?
     def change_to_s
         begin
-            if @is == :notfound
+            if @is == :absent
                 return "defined '%s' as '%s'" %
                     [self.name, self.should_to_s]
-            elsif self.should == :notfound
+            elsif self.should == :absent
                 return "undefined %s from '%s'" %
                     [self.name, self.is_to_s]
             else
@@ -203,6 +292,41 @@ class State < Puppet::Parameter
 
     def to_s
         return "%s(%s)" % [@parent.name,self.name]
+    end
+
+    # This state will get automatically added to any type that responds
+    # to the methods 'exists?', 'create', and 'remove'.
+    class Ensure < Puppet::State
+        @name = :ensure
+
+        def self.inherited(sub)
+            # Add in the two states that everyone will have.
+            sub.class_eval do
+                newvalue(:present) do
+                    @parent.create
+                end
+
+                newvalue(:absent) do
+                    @parent.destroy
+                end
+
+                # This doc will probably get overridden
+                @doc = "The fundamental states that the object can be in.  Allowed
+                    values are %s." % self.values.join(", ")
+            end
+        end
+
+        def retrieve
+            if @parent.exists?
+                @is = :present
+            else
+                @is = :absent
+            end
+        end
+
+        # If they're talking about the thing at all, they generally want to
+        # say it should exist.
+        defaultto :present
     end
 end
 end

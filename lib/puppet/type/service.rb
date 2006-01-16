@@ -196,6 +196,7 @@ module Puppet
             end
             svcname = name
             mod = Module.new
+            const_set("SvcType" + name.to_s.capitalize,mod)
 
             # Add our parent, if it exists
             if parent

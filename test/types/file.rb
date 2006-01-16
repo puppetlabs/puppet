@@ -233,7 +233,9 @@ class TestFile < Test::Unit::TestCase
     end
 
     def test_create_dir
-        %w{a b c d}.collect { |name| "/tmp/createst%s" % name }.each { |path|
+        basedir = tempfile()
+        Dir.mkdir(basedir)
+        %w{a b c d}.collect { |name| "#{basedir}/%s" % name }.each { |path|
             file = nil
             assert_nothing_raised() {
                 file = Puppet.type(:file).create(
@@ -241,6 +243,8 @@ class TestFile < Test::Unit::TestCase
                     :create => "directory"
                 )
             }
+            assert(! FileTest.directory?(path), "Directory %s already exists" %
+                [path])
             assert_events([:directory_created], file)
             assert_events([], file)
             assert(file.insync?())

@@ -3,7 +3,7 @@ module Puppet
         def query
             fields = {
                 :name => "NAME",
-                :install => "VERSION",
+                :ensure => "VERSION",
                 :description => "DESCRIPTION"
             }
 
@@ -18,8 +18,8 @@ module Puppet
             end
 
             regex = %r{^(\S+)\s+(\S+)}
-            #fields = [:name, :install, :description]
-            fields = [:name, :install]
+            #fields = [:name, :ensure, :description]
+            fields = [:name, :ensure]
             hash = {}
             if match = regex.match(output)
                 fields.zip(match.captures) { |field,value|
@@ -41,7 +41,7 @@ module Puppet
             open("| rpm -q -a --qf '%{NAME} %{VERSION}\n'") { |process|
                 # our regex for matching dpkg output
                 regex = %r{^(\S+)\s+(\S+)}
-                fields = [:name, :install]
+                fields = [:name, :ensure]
                 hash = {}
 
                 # now turn each returned line into a package object

@@ -42,27 +42,14 @@ class Type < Puppet::Element
     # a little fakery, since Puppet itself isn't a type
     # I don't think this is used any more, now that the language can't
     # call methods
-    @name = :puppet
+    #@name = :puppet
 
     # set it to something to silence the tests, but otherwise not used
-    @namevar = :notused
+    #@namevar = :notused
 
     # again, silence the tests; the :notused has to be there because it's
     # the namevar
     
-    # @paramdoc = Hash.new
-    
-    @@metaparamdoc = Hash.new { |hash,key|
-        if key.is_a?(String)
-            key = key.intern
-        end
-        if hash.include?(key)
-            hash[key]
-        else
-            "Metaparam Documentation for %s not found" % key
-        end
-    }
-
     # class methods dealing with Type management
 
     public
@@ -72,23 +59,26 @@ class Type < Puppet::Element
     # called before the <subclass>.name method is defined, we need
     # to store each class in an array, and then later actually iterate
     # across that array and make a map
-    @@typeary = [self] # so that the allowedmethods stuff works
-    @@typehash = Hash.new { |hash,key|
-        if key.is_a?(String)
-            key = key.intern
-        end
-        if hash.include?(key)
-            hash[key]
-        else
-            raise TypeError.new("Object type %s not found" % key)
-        end
-    }
+    #@@typeary = [self] # so that the allowedmethods stuff works
+    #@@typehash = Hash.new { |hash,key|
+    #    if key.is_a?(String)
+    #        key = key.intern
+    #    end
+    #    if hash.include?(key)
+    #        hash[key]
+    #    else
+    #        raise TypeError.new("Object type %s not found" % key)
+    #    end
+    #}
 
     # the Type class attribute accessors
     class << self
         attr_reader :name, :states
 
+        include Enumerable
+
         def inspect
+            Puppet.info "inspecting class with name %s" % self.name
             "Type(%s)" % self.name
         end
 
@@ -119,46 +109,45 @@ class Type < Puppet::Element
         if defined? @metaparams
             str += " Metaparams(" + @metaparams.inspect + ")"
         end
-    end
-
-    # Create @@typehash from @@typeary.  This is meant to be run
-    # multiple times -- whenever it is discovered that the two
-    # objects have differents lengths.
-    def self.buildtypehash
-        @@typeary.each { |otype|
-            if @@typehash.include?(otype.name)
-                if @@typehash[otype.name] != otype
-                    Puppet.warning("Object type %s is already defined (%s vs %s)" %
-                        [otype.name,@@typehash[otype.name],otype])
-                end
-            else
-                @@typehash[otype.name] = otype
-            end
-        }
+        str
     end
 
     # iterate across all of the subclasses of Type
     def self.eachtype
-        @@typeary.each do |type|
+        @types.each do |name, type|
             # Only consider types that have names
-            if ! type.parameters.empty? or ! type.validstates.empty?
+            #if ! type.parameters.empty? or ! type.validstates.empty?
                 yield type 
-            end
+            #end
         end
+    end
+
+    # Should we add the 'ensure' state to this class?
+    def self.ensurable?
+        # If the class has all three of these methods defined, then it's
+        # ensurable.
+        #ens = [:create, :destroy].inject { |set, method|
+        ens = [:exists?, :create, :destroy].inject { |set, method|
+            set &&= self.public_method_defined?(method)
+        }
+
+        #puts "%s ensurability: %s" % [self.name, ens]
+
+        return ens
     end
 
     # The work that gets done for every subclass of Type
     # this is an implicit method called by Ruby for us
-    def self.inherited(sub)
-        sub.initvars
+    #def self.inherited(sub)
+    #    sub.initvars
 
         #debug("subtype %s(%s) just created" % [sub,sub.superclass])
         # add it to the master list
         # unfortunately we can't yet call sub.name, because the #inherited
         # method gets called before any commands in the class definition
         # get executed, which, um, sucks
-        @@typeary.push(sub)
-    end
+        #@@typeary.push(sub)
+    #end
 
     # all of the variables that must be initialized for each subclass
     def self.initvars
@@ -193,14 +182,52 @@ class Type < Puppet::Element
 
     end
 
-    # return a Type instance by name
-    def self.type(type)
-        unless @@typeary.length == @@typehash.length
-            # call bulidtypehash if types have been added since it
-            # was last called
-            Type.buildtypehash
+    # Define a new type.
+    def self.newtype(name, parent = nil, &block)
+        parent ||= Puppet::Type
+        Puppet::Util.symbolize(name)
+
+
+        # Create the class, with the correct name.
+        t = Class.new(parent) do
+            @name = name
         end
-        @@typehash[type]
+        const_set(name.to_s.capitalize,t)
+
+        # Initialize any necessary variables.
+        t.initvars
+
+        # Evaluate the passed block.  This should usually define all of the work.
+        t.class_eval(&block)
+
+        # If they've got all the necessary methods defined and they haven't
+        # already added the state, then do so now.
+        if t.ensurable? and ! t.validstate?(:ensure)
+            t.ensurable
+        end
+
+        @types ||= {}
+
+        # And add it to our bucket.
+        @types[name] = t
+    end
+
+    # Create the 'ensure' class.  This is a separate method so other types
+    # can easily call it and create their own 'ensure' values.
+    def self.ensurable(&block)
+        if block_given?
+            self.newstate(:ensure, Puppet::State::Ensure, &block)
+        else
+            self.newstate(:ensure, Puppet::State::Ensure) do
+                # don't actually do anything with the block, but it's required...
+            end
+        end
+    end
+
+    # Return a Type instance by name.
+    def self.type(name)
+        @types ||= {}
+        @types[name]
     end
 
     # class methods dealing with type instance management
@@ -271,8 +298,8 @@ class Type < Puppet::Element
     def self.allclear
         @@allobjects.clear
         Puppet::Event::Subscription.clear
-        @@typeary.each { |subtype|
-            subtype.clear
+        @types.each { |name, type|
+            type.clear
         }
         @finalized = false
     end
@@ -473,9 +500,16 @@ class Type < Puppet::Element
         s = Class.new(parent) do
             @name = name
         end
+        const_set("State" + name.to_s.capitalize,s)
         s.class_eval(&block)
         @states ||= []
-        @states << s
+
+        # If it's the 'ensure' state, always put it first.
+        if name == :ensure
+            @states.unshift s
+        else
+            @states << s
+        end
         @validstates[name] = s
 
         return s
@@ -523,7 +557,11 @@ class Type < Puppet::Element
     end
 
     def self.to_s
-        "Puppet::Type::" + @name.to_s.capitalize
+        if defined? @name
+            "Puppet::Type::" + @name.to_s.capitalize
+        else
+            super
+        end
     end
 
     # Create a block to validate that our object is set up entirely.  This will
@@ -1000,9 +1038,7 @@ class Type < Puppet::Element
             obj = new(hash)
         rescue => detail
             if Puppet[:debug]
-                if detail.respond_to?(:stack)
-                    puts detail.stack
-                end
+                puts detail.backtrace
             end
             Puppet.err "Could not create %s: %s" % [name, detail.to_s]
             if obj
@@ -1128,7 +1164,9 @@ class Type < Puppet::Element
             end
         }
 
-        #self.setdefaults
+        # While this could theoretically be set after all of the objects are
+        # created, it seems to make more sense to set them immediately.
+        self.setdefaults
 
         if hash.length > 0
             self.debug hash.inspect
@@ -1177,7 +1215,6 @@ class Type < Puppet::Element
 
     # Set up all of our autorequires.
     def finish
-        self.setdefaults
         self.autorequire
     end
 
@@ -1206,8 +1243,9 @@ class Type < Puppet::Element
             unless klass
                 raise Puppet::DevError, "Could not retrieve class for %s" % attr
             end
-            if klass.default
+            if klass.method_defined?(:default)
                 obj = self.newattr(type, klass)
+                self.info "defaulting %s to %s" % [obj.name, obj.default]
                 obj.value = obj.default
             end
         }
@@ -1326,7 +1364,7 @@ class Type < Puppet::Element
     def retrieve
         # it's important to use the method here, as it follows the order
         # in which they're defined in the object
-        states.each { |state|
+        states().each { |state|
             state.retrieve
         }
     end
@@ -1347,6 +1385,34 @@ class Type < Puppet::Element
             return @depthfirst
         else
             return false
+        end
+    end
+
+    # Retrieve the changes associated with all of the states.
+    def statechanges
+        # If we are changing the existence of the object, then none of
+        # the other states matter.
+        if @states.include?(:ensure) and ! @states[:ensure].insync?
+            #self.info "ensuring %s from %s" %
+            #    [@states[:ensure].should, @states[:ensure].is]
+            return [Puppet::StateChange.new(@states[:ensure])]
+        # Else, if the 'ensure' state is correctly absent, then do
+        # nothing
+        elsif @states.include?(:ensure) and @states[:ensure].is == :absent
+            #self.info "Object is correctly absent"
+            return []
+        else
+            #if @states.include?(:ensure)
+            #    self.info "ensure: Is: %s, Should: %s" %
+            #        [@states[:ensure].is, @states[:ensure].should]
+            #else
+            #    self.info "no ensure state"
+            #end
+            return states().find_all { |state|
+                ! state.insync?
+            }.collect { |state|
+                Puppet::StateChange.new(state)
+            }
         end
     end
 
@@ -1389,11 +1455,7 @@ class Type < Puppet::Element
 
         # states() is a private method, returning an ordered list
         unless self.class.depthfirst?
-            changes << states().find_all { |state|
-                ! state.insync?
-            }.collect { |state|
-                Puppet::StateChange.new(state)
-            }
+            changes += statechanges()
         end
 
         if changes.length > 0
@@ -1417,11 +1479,7 @@ class Type < Puppet::Element
         #}
 
         if self.class.depthfirst?
-            changes << states().find_all { |state|
-                ! state.insync?
-            }.collect { |state|
-                Puppet::StateChange.new(state)
-            }
+            changes += statechanges()
         end
 
         changes.flatten!
@@ -1443,6 +1501,12 @@ class Type < Puppet::Element
     # it's really only used for testing
     def insync?
         insync = true
+
+        if state = @states[:ensure]
+            if state.insync? and state.should == :absent
+                return true
+            end
+        end
 
         states.each { |state|
             unless state.insync?
@@ -1480,8 +1544,11 @@ class Type < Puppet::Element
     # as we came across them), any required object would have to come before the
     # requiring object in the file(s).
     def self.mkdepends
-        @@typeary.each { |type|
-            type.builddepends
+        @types.each { |name, type|
+            type.each { |obj|
+                Puppet.info "building depends for %s(%s)" % [type.name, obj.name]
+                obj.builddepends
+            }
         }
     end
 

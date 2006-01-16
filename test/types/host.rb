@@ -122,6 +122,25 @@ class TestHost < Test::Unit::TestCase
         same = host.class["testing"]
         assert(same, "Could not retrieve by alias")
     end
+
+    def test_removal
+        mkfaketype
+        host = mkhost()
+        assert_nothing_raised {
+            host[:ensure] = :present
+        }
+        assert_events([:host_created], host)
+
+        host.retrieve
+        assert(host.insync?)
+        assert_nothing_raised {
+            host[:ensure] = :absent
+        }
+
+        assert_events([:host_removed], host)
+        host.retrieve
+        assert_events([], host)
+    end
 end
 
 # $Id$

@@ -42,21 +42,12 @@ class TestTidy < Test::Unit::TestCase
             :size => "1b",
             :recurse => true
         )
+        Puppet::Type.finalize
 
         comp = newcomp("tidytesting", tidy)
 
         trans = nil
-        assert_nothing_raised {
-            trans = comp.evaluate
-        }
-        event = nil
-        assert_nothing_raised {
-            event = trans.evaluate.collect { |e| e.event }
-        }
-
-        assert_equal(1, event.length, "Got no events on tidy")
-        assert_equal([:file_tidied], event, "Got incorrect event on tidy")
-
+        assert_events([:file_tidied], comp)
         assert(!FileTest.exists?(file), "Tidied file still exists")
     end
 

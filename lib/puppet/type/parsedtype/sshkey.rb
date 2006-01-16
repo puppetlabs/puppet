@@ -116,7 +116,7 @@ module Puppet
         end
 
         # Convert the current object into a host-style string.
-        def to_s
+        def to_record
             name = self[:name]
             if @states.include?(:alias)
                 name += "," + @states[:alias].should.join(",")

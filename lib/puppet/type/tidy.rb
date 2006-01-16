@@ -68,7 +68,7 @@ module Puppet
             munge do |type|
                 case type
                 when "atime", "mtime", "ctime":
-                    @parameters[:type] = type.intern
+                    type.intern
                 else
                     raise Puppet::Error.new("Invalid tidy type %s" % type)
                 end
@@ -159,6 +159,7 @@ module Puppet
 
         def initialize(hash)
             super
+            #self.setdefaults
 
             unless  @parameters.include?(:age) or
                     @parameters.include?(:size)
@@ -173,7 +174,7 @@ module Puppet
                 self[:backup] = false
             end
             self[:tidyup] = [:age, :size].collect { |param|
-                @parameters[param]
+                self[param]
             }.reject { |p| p == false }
         end
 

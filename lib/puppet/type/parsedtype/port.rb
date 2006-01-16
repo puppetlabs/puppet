@@ -12,11 +12,13 @@ module Puppet
                 current values, it does not merge with them.  If you specify
                 multiple protocols they must be as an array."
 
-            def is=(proto)
-                unless proto.is_a?(Array)
-                    proto = [proto.split(/\s+/)].flatten
+            def is=(value)
+                case value
+                when String
+                    @is = value.split(/\s+/)
+                else
+                    @is = value
                 end
-                @is = proto
             end
 
             def is
@@ -54,11 +56,15 @@ module Puppet
             # white-space separated
             def is=(value)
                 # If it's just whitespace, ignore it
-                if value =~ /^\s+$/
+                case value
+                when /^\s+$/
                     @is = nil
-                else
-                    # Else split based on whitespace and store as an array
+                when String
                     @is = value.split(/\s+/)
+                when Symbol
+                    @is = value
+                else
+                    raise Puppet::DevError, "Invalid value %s" % value.inspect
                 end
             end
 
@@ -171,7 +177,7 @@ module Puppet
             end
             proto = self.state(:protocols).is
 
-            if proto.nil?
+            if proto.nil? or proto == :absent
                 # We are an unitialized object; we've got 'should'
                 # values but no 'is' values
                 return false
@@ -201,7 +207,7 @@ module Puppet
         end
 
         # Convert the current object into a host-style string.
-        def to_s
+        def to_record
             self.state(:protocols).should.collect { |proto|
                 str = "%s\t%s/%s" % [self[:name], self.state(:number).should,
                     proto]

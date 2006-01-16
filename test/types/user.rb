@@ -25,6 +25,7 @@ class TestUser < Test::Unit::TestCase
             end
         }
         super
+        #Puppet.type(:user).clear
     end
 
     case Facter["operatingsystem"].value
@@ -333,7 +334,7 @@ class TestUser < Test::Unit::TestCase
             assert_equal("Puppet Testing User", current?(:comment, user[:name]),
                 "Comment was not set")
 
-            assert_rollback_events(trans, [:user_deleted], "user")
+            assert_rollback_events(trans, [:user_removed], "user")
 
             assert(missing?(user[:name]))
         end

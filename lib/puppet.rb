@@ -250,24 +250,14 @@ PUPPETVERSION = '0.10.2'
         end
     end
 
-    # Create a new type
+    # Create a new type.  Just proxy to the Type class.
     def self.newtype(name, parent = nil, &block)
-        parent ||= Puppet::Type
-        Puppet::Util.symbolize(name)
-        t = Class.new(parent) do
-            @name = name
-        end
-        t.class_eval(&block)
-        @types ||= {}
-        @types[name] = t 
+        Puppet::Type.newtype(name, parent, &block)
     end
 
-    # Retrieve a type by name
+    # Retrieve a type by name.  Just proxy to the Type class.
     def self.type(name)
-        unless defined? @types
-            return nil
-        end
-        return @types[name]
+        Puppet::Type.type(name)
     end
 end
 

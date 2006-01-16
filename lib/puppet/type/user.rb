@@ -14,6 +14,9 @@ module Puppet
             @parentmodule = Puppet::NameService::ObjectAdd
         end
 
+        # The 'create' and 'destroy' methods are defined in type/nameservice.rb
+        self.ensurable()
+
         newstate(:uid, @parentstate) do
             desc "The user ID.  Must be specified numerically.  For new users
                 being created, if no user ID is specified then one will be
@@ -43,7 +46,7 @@ module Puppet
                         value = Integer(value)
                     end
                 when Symbol
-                    unless value == :notfound or value == :auto
+                    unless value == :absent or value == :auto
                         raise Puppet::DevError, "Invalid UID %s" % value
                     end
 
@@ -72,7 +75,7 @@ module Puppet
                         method = :getgrnam
                     end
                 when Symbol
-                    unless gid == :auto or gid == :notfound
+                    unless gid == :auto or gid == :absent
                         raise Puppet::DevError, "Invalid GID %s" % gid
                     end
                     # these are treated specially by sync()
@@ -181,6 +184,7 @@ module Puppet
             if self.managed?
                 self.class.states.each { |state|
                     next if @states.include?(state.name)
+                    next if state.name == :ensure
 
                     unless state.autogen? or state.isoptional?
                         if state.method_defined?(:autogen)
@@ -204,7 +208,7 @@ module Puppet
             if info.nil?
                 # the user does not exist
                 @states.each { |name, state|
-                    state.is = :notfound
+                    state.is = :absent
                 }
                 return
             else

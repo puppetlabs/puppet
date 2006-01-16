@@ -37,6 +37,8 @@ module Puppet
                 return nil
             end
 
+            #@state.info "Is: %s, Should: %s" % [@state.is.inspect, @state.should.inspect]
+
             begin
                 events = @state.sync
                 if events.nil?
@@ -75,6 +77,9 @@ module Puppet
                 }
             rescue => detail
                 #@state.err "%s failed: %s" % [self.to_s,detail]
+                if Puppet[:debug]
+                    puts detail.backtrace
+                end
                 raise
                 # there should be a way to ask the state what type of event
                 # it would have generated, but...

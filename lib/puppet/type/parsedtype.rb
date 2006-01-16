@@ -28,7 +28,7 @@ module Puppet
                 end
 
                 unless defined? @is and ! @is.nil?
-                    @is = :notfound
+                    @is = :absent
                 end
             end
 
@@ -37,7 +37,7 @@ module Puppet
             # host tab.
             def sync(nostore = false)
                 ebase = @parent.class.name.to_s
-                if @is == :notfound
+                if @is == :absent
                     #@is = self.should
                     tail = "created"
 
@@ -46,11 +46,11 @@ module Puppet
                     # at the end).
                     unless nostore
                         @parent.eachstate { |state|
-                            next if state == self
+                            next if state == self or state.name == :ensure
                             state.sync(true)
                         }
                     end
-                elsif self.should == :notfound
+                elsif self.should == :absent
                     @parent.remove(true)
                     tail = "deleted"
                 #elsif @is == @should
@@ -157,6 +157,10 @@ module Puppet
                     # We're assuming here that objects with the same name
                     # are the same object, which *should* be the case, assuming
                     # we've set up our naming stuff correctly everywhere.
+
+                    # Mark found objects as present
+                    Puppet.debug "Found %s %s" % [self.name, obj.name]
+                    obj.is = [:ensure, :present]
                 else
                     # create a new obj, since no existing one seems to
                     # match
@@ -180,6 +184,13 @@ module Puppet
                     # there is no host file
                     return nil
                 else
+                    # First we mark all of our objects absent; any objects
+                    # subsequently found will be marked present
+                    self.each { |obj|
+                        obj.each { |state|
+                            state.is = :absent
+                        }
+                    }
                     self.parse(text)
                 end
             end
@@ -193,14 +204,36 @@ module Puppet
                 else
                     @fileobj.write(self.to_file())
                 end
+
+                #self.each { |obj|
+                #    obj.each { |state|
+                #        obj.notice "Changing from %s to %s" %
+                #            [state.is.inspect, state.should.inspect]
+                #        state.is = state.should
+                #    }
+                #}
             end
 
             # Collect all Host instances convert them into literal text.
             def self.to_file
                 str = self.header()
                 unless @instances.empty?
-                    str += @instances.collect { |obj|
-                        obj.to_s
+                    str += @instances.reject { |obj|
+                        # Don't write out objects that should be absent
+                        if obj.is_a?(self)
+                            if obj.should(:ensure) == :absent
+                                #obj.warning "removing; is = %s, should = %s" %
+                                #    [obj.is(:ensure).inspect, obj.should(:ensure).inspect]
+                                #obj.is = [:ensure, :absent]
+                                true
+                            end
+                        end
+                    }.collect { |obj|
+                        if obj.is_a?(self)
+                            obj.to_record
+                        else
+                            obj.to_s
+                        end
                     }.join("\n") + "\n"
 
                     return str
@@ -217,10 +250,34 @@ module Puppet
                 @fileobj.loaded
             end
 
+            def create
+                self[:ensure] = :present
+                self.store
+            end
+
+            # We just find any state and check whether it's marked absent
+            def exists?
+                name, state = @states.find { |name, state|
+                    state.is_a?(Puppet::State::ParsedParam)
+                }
+
+                if state.is == :absent
+                    return false
+                else
+                    return true
+                end
+            end
+
+            def destroy
+                self[:ensure] = :absent
+                self.store
+            end
+
             # Override the default Puppet::Type method because we need to call
             # the +@filetype+ retrieve method.
             def retrieve
                 self.class.retrieve()
+
                 self.eachstate { |st| st.retrieve }
             end
 

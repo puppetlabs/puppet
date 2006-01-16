@@ -19,6 +19,22 @@ class Type
                 end
             end
         end
+
+        # Create the object.  We have to call the 'syncname' method
+        # on one of the non-ensure states, because the ensure state is not
+        # a subclass of NSSState.  Just find the first one and call it.
+        def create
+            @states.find { |name, state|
+                state.is_a?(Puppet::State::NSSState)
+            }[1].syncname(:present)
+        end
+
+        # Remove it
+        def destroy
+            @states.find { |name, state|
+                state.is_a?(Puppet::State::NSSState)
+            }[1].syncname(:absent)
+        end
     end
 end
 
@@ -107,7 +123,7 @@ class State
                         "%s has no posixmethod" % self.class
                 end
             else
-                @is = :notfound
+                @is = :absent
             end
         end
 
@@ -118,27 +134,27 @@ class State
             if self.insync?
                 return nil
             end
-            if @is == :notfound
+            if @is == :absent
                 self.retrieve
                 if self.insync?
                     return nil
                 end
             end
-            # if the object needs to be created or deleted,
-            # depend on another method to do it all at once
-            if @is == :notfound or self.should == :notfound
-                Puppet.info "creating"
-                event = syncname()
-
-                Puppet.info "created with event %s" % event
-
-                return event
-                # if the whole object is created at once, just return
-                # an event saying so
-                #if self.class.allatonce?
-                #    return event
-                #end
-            end
+#            # if the object needs to be created or deleted,
+#            # depend on another method to do it all at once
+#            if @is == :absent or self.should == :absent
+#                Puppet.info "creating"
+#                event = syncname()
+#
+#                Puppet.info "created with event %s" % event
+#
+#                return event
+#                # if the whole object is created at once, just return
+#                # an event saying so
+#                #if self.class.allatonce?
+#                #    return event
+#                #end
+#            end
 
             unless @parent.exists?
                 raise Puppet::DevError,
@@ -168,16 +184,16 @@ class State
             end
         end
 
-        private
         # This is only used when creating or destroying the object.
-        def syncname
-            Puppet.info "Creating %s" % self.name
+        def syncname(value)
             cmd = nil
             event = nil
-            if self.should == :notfound
+            case value
+            when :absent
                 # we need to remove the object...
                 unless @parent.exists?
-                    # the group already doesn't exist
+                    @parent.info "already absent"
+                    # the object already doesn't exist
                     return nil
                 end
 
@@ -185,8 +201,10 @@ class State
                 # parent
                 cmd = self.deletecmd
                 type = "delete"
-            else
+            when :present
                 if @parent.exists?
+                    @parent.info "already exists"
+                    # The object already exists
                     return nil
                 end
 
@@ -214,8 +232,6 @@ class State
                     }
                 end
             end
-
-            return "#{@parent.class.name}_#{type}d".intern
         end
     end
 end

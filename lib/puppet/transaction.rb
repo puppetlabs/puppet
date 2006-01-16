@@ -53,9 +53,11 @@ class Transaction
                     events = [change.forward].flatten.reject { |e| e.nil? }
                     #@@changed.push change.state.parent
                 rescue => detail
-                    Puppet.err("%s failed: %s" % [change.to_s,detail])
-                    if Puppet[:debug] and detail.respond_to?(:stack)
-                        puts detail.stack
+                    change.state.err "change from %s to %s failed: %s" %
+                        [change.state.is_to_s, change.state.should_to_s, detail]
+                    #Puppet.err("%s failed: %s" % [change.to_s,detail])
+                    if Puppet[:debug]
+                        puts detail.backtrace
                     end
                     next
                     # FIXME this should support using onerror to determine
@@ -130,6 +132,9 @@ class Transaction
                     #@@changed.push change.state.parent
                 rescue => detail
                     Puppet.err("%s rollback failed: %s" % [change,detail])
+                    if Puppet[:debug]
+                        puts detail.backtrace
+                    end
                     next
                     # at this point, we would normally do error handling
                     # but i haven't decided what to do for that yet

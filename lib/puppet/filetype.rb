@@ -29,6 +29,8 @@ module Puppet # :nodoc:
 
             klass.class_eval(&block)
 
+            const_set(name.to_s.capitalize, klass)
+
             # Rename the read and write methods, so that we're sure they
             # maintain the stats.
             klass.class_eval do
@@ -57,8 +59,11 @@ module Puppet # :nodoc:
                     rescue Puppet::Error => detail
                         raise
                     rescue => detail
-                        raise Puppet::Error, "%s could not write %s" %
-                            [self.class, @path]
+                        if Puppet[:debug]
+                            puts detail.backtrace
+                        end
+                        raise Puppet::Error, "%s could not write %s: %s" %
+                            [self.class, @path, detail]
                     end
                 end
             end

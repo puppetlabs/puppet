@@ -20,11 +20,13 @@ module Puppet
             # white-space separated
             def is=(value)
                 # If it's just whitespace, ignore it
-                if value =~ /^\s+$/
+                case value
+                when /^\s+$/
                     @is = nil
-                else
-                    # Else split based on whitespace and store as an array
+                when String
                     @is = value.split(/\s+/)
+                else
+                    @is = value
                 end
             end
 
@@ -36,6 +38,10 @@ module Puppet
                 else
                     return []
                 end
+            end
+
+            def should_to_s
+                @should.join(" ")
             end
 
             validate do |value|
@@ -106,17 +112,12 @@ module Puppet
                     else
                         raise Puppet::Error, "Could not match '%s'" % line
                     end
-                    #if match = /^(\S+)\s+(\S+)\s*(\S*)\s*$/.match(line)
-                    #    fields().zip(match.captures).each { |param, value|
-                    #        hash[param] = value
-                    #    }
-                    #else
-                    #    raise Puppet::Error, "Could not match '%s'" % line
-                    #end
 
                     if hash[:alias] == ""
                         hash.delete(:alias)
                     end
+
+                    Puppet.notice "sending %s" % hash.inspect
 
                     hash2obj(hash)
 
@@ -127,7 +128,7 @@ module Puppet
         end
 
         # Convert the current object into a host-style string.
-        def to_s
+        def to_record
             str = "%s\t%s" % [self.state(:ip).should, self[:name]]
 
             if state = self.state(:alias)

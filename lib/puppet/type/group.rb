@@ -53,7 +53,7 @@ module Puppet
                         raise Puppet::Error, "Invalid GID %s" % gid
                     end
                 when Symbol
-                    unless gid == :auto or gid == :notfound
+                    unless gid == :auto or gid == :absent
                         raise Puppet::DevError, "Invalid GID %s" % gid
                     end
                     if gid == :auto
@@ -116,7 +116,7 @@ module Puppet
                 end
 
                 @states.each { |name, state|
-                    state.is = :notfound
+                    state.is = :absent
                 }
 
                 return
