@@ -1,3 +1,13 @@
+0.11.1
+    Fixed bug with recursive copying with 'ignore' set.
+    Added OpenBSD package support.
+
+0.11.0
+    Added 'ensure' state to many elements.
+    Modified puppetdoc to correctly handle indentation and such.
+    Significantly rewrote much of the builtin documentation to take advantage
+        of the new features in puppetdoc, including many examples.
+
 0.10.2
     Added SMF support
     Added autorequire functionality, with specific support for exec and file
