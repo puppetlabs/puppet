@@ -93,7 +93,7 @@ class Server
 
         # Deal with ignore parameters.
         def handleignore(children, path, ignore)            
-            ignore.value.each { |ignore|                
+            ignore.each { |ignore|                
                 Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) { |match|
                     children.delete(File.basename(match))
                 }                

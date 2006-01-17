@@ -76,8 +76,10 @@ module Puppet
                 Matches that would descend into the directory structure are ignored,
                 e.g., ``*/*``."
        
+            defaultto false
+
             validate do |value|
-                unless value.is_a?(Array) or value.is_a?(String)
+                unless value.is_a?(Array) or value.is_a?(String) or value == false
                     raise Puppet::DevError.new("Ignore must be a string or an Array")
                 end
             end
@@ -164,7 +166,8 @@ module Puppet
         end
         
         def handleignore(children)
-            @parameters[:ignore].value.each { |ignore|
+            return children unless self[:ignore]
+            self[:ignore].each { |ignore|
                 ignored = []
                 Dir.glob(File.join(self.name,ignore), File::FNM_DOTMATCH) { |match|
                     ignored.push(File.basename(match))
@@ -223,8 +226,12 @@ module Puppet
 
             child = nil
             klass = nil
-            if @parameters[:linkmaker] and args.include?(:source) and
-                ! FileTest.directory?(args[:source])
+
+            # We specifically look in @parameters here, because 'linkmaker' isn't
+            # a valid attribute for subclasses, so using 'self[:linkmaker]' throws
+            # an error.
+            if @parameters.include?(:linkmaker) and
+                args.include?(:source) and ! FileTest.directory?(args[:source])
                 klass = Puppet.type(:symlink)
 
                 self.debug "%s is a link" % path
@@ -324,7 +331,7 @@ module Puppet
         # Recurse into the directory.  This basically just calls 'localrecurse'
         # and maybe 'sourcerecurse'.
         def recurse
-            recurse = @parameters[:recurse]
+            recurse = self[:recurse]
             # we might have a string, rather than a number
             if recurse.is_a?(String)
                 if recurse =~ /^[0-9]+$/
@@ -419,8 +426,8 @@ module Puppet
                 end
             end
 
-            ignore = @parameters[:ignore]
-           
+            ignore = self[:ignore]
+
             #self.warning "Listing path %s" % path.inspect
             desc = server.list(path, r, ignore)
            

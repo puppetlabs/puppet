@@ -34,6 +34,8 @@ module Puppet
         newparam(:port) do
             desc "The port on which the remote server is listening.
                 Defaults to the normal Puppet port, %s." % Puppet[:masterport]
+
+            defaultto Puppet[:masterport]
         end
 
         newparam(:path) do
@@ -51,12 +53,11 @@ module Puppet
         def initialize(hash)
             super
 
-            if @parameters.include?(:server)
-                @parameters[:port] ||= FileBucket::DEFAULTPORT
+            if self[:server]
                 begin
                     @bucket = Puppet::Client::Dipper.new( 
-                        :Server => @parameters[:server],
-                        :Port => @parameters[:port]
+                        :Server => self[:server],
+                        :Port => self[:port]
                     )
                 rescue => detail
                     raise Puppet::Error.new(
@@ -64,10 +65,12 @@ module Puppet
                     )
                 end
             else
-                @parameters[:path] ||= Puppet[:bucketdir]
+                unless self[:path]
+                    self[:path] = Puppet[:bucketdir] 
+                end
                 begin
                     @bucket = Puppet::Client::Dipper.new(
-                        :Path => @parameters[:path]
+                        :Path => self[:path]
                     )
                 rescue => detail
                     raise Puppet::Error.new(

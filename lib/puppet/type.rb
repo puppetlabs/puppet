@@ -429,7 +429,7 @@ class Type < Puppet::Element
                 unless param
                     raise Puppet::DevError, "huh? %s" % name
                 end
-            }[0]
+            }[0].value
         end
         @namevar
     end
@@ -923,7 +923,7 @@ class Type < Puppet::Element
         unless name.is_a? Symbol
             name = name.intern
         end
-        return @parameters[name]
+        return @parameters[name].value
     end
 
     def push(*childs)

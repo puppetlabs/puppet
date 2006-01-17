@@ -178,8 +178,6 @@ class TestPackages < Test::Unit::TestCase
 
             pkg.retrieve
 
-            p pkg
-
             assert(! pkg.insync?, "Package is in sync")
 
             assert_events([:package_removed], comp, "package")
