@@ -43,6 +43,7 @@ class TestPackages < Test::Unit::TestCase
             pkgs = %w{SMCossh}
         when "Debian": pkgs = %w{ssh openssl}
         when "Fedora": pkgs = %w{openssh}
+        when "OpenBSD": pkgs = %{vim}
         else
             Puppet.notice "No test package for %s" % $platform
             return []
@@ -81,6 +82,8 @@ class TestPackages < Test::Unit::TestCase
             when "i3865.8":
                 retval = [["SMCarc", "/usr/local/pkg/arc-5.21e-sol8-intel-local"]]
             end
+        when "OpenBSD":
+            retval = [["aalib", "ftp://ftp.usa.openbsd.org/pub/OpenBSD/3.8/packages/i386/aalib-1.2-no_x11.tgz"]]
         when "Debian":
             retval = %w{zec}
         #when "RedHat": type = :rpm
@@ -121,7 +124,7 @@ class TestPackages < Test::Unit::TestCase
                 obj.retrieve
             }
 
-            assert(obj.is(:ensure), "Could not retrieve package version")
+            assert(obj[:version], "Could not retrieve package version")
         }
     end
 
@@ -167,7 +170,6 @@ class TestPackages < Test::Unit::TestCase
 
             comp = newcomp("package", pkg)
 
-            Puppet.err :mark
             assert_events([:package_created], comp, "package")
 
             # then uninstall it

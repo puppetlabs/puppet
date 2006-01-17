@@ -266,8 +266,8 @@ class State < Puppet::Parameter
         if self.insync?
             self.info "already in sync"
             return nil
-        else
-            self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
+        #else
+            #self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
         end
         unless self.class.values
             raise Puppet::DevError, "No values defined for %s" %
@@ -379,6 +379,7 @@ class State < Puppet::Parameter
         end
 
         def retrieve
+            self.warning "retrieving"
             if @parent.exists?
                 @is = :present
             else

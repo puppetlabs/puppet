@@ -174,12 +174,12 @@ module Puppet
                 unless value.is_a?(Symbol)
                     value = value.intern
                 end
-                # If we're a normal value, then just pass tothe parent method
+                # If we're a normal value, then just pass to the parent method
                 if self.class.values.include?(value)
-                    self.info "setting %s" % value
+                    #self.info "setting %s" % value
                     super
                 else
-                    self.info "updating from %s" % value
+                    #self.info "updating from %s" % value
                     @parent.update
                 end
             end
@@ -245,9 +245,9 @@ module Puppet
             desc "From where to retrieve the package."
 
             validate do |value|
-                unless value =~ /^#{File::SEPARATOR}/
+                unless value =~ /^#{File::SEPARATOR}/ or value =~ /\w+:\/\//
                     raise Puppet::Error,
-                        "Package sources must be fully qualified files"
+                        "Package sources must be fully qualified files or URLs, depending on the platform."
                 end
             end
         end
@@ -291,8 +291,6 @@ module Puppet
         newparam(:description) do
             desc "A read-only parameter set by the package."
         end
-        @name = :package
-        @namevar = :name
         @listed = false
 
         @allowedmethods = [:types]
@@ -335,6 +333,7 @@ module Puppet
             when "debian": @default = :apt
             when "fedora": @default = :yum
             when "redhat": @default = :rpm
+            when "openbsd": @default = :bsd
             else
                 if Facter["kernel"] == "Linux"
                     Puppet.warning "Defaulting to RPM for %s" %
@@ -456,6 +455,7 @@ module Puppet
         def retrieve
             # If the package is installed, then retrieve all of the information
             # about it and set it appropriately.
+            #@states[:ensure].retrieve
             if hash = self.query
                 hash.each { |param, value|
                     unless self.class.validattr?(param)
@@ -537,5 +537,6 @@ require 'puppet/type/package/apt.rb'
 require 'puppet/type/package/rpm.rb'
 require 'puppet/type/package/yum.rb'
 require 'puppet/type/package/sun.rb'
+require 'puppet/type/package/bsd.rb'
 
 # $Id$
