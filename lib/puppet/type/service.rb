@@ -7,12 +7,16 @@
 module Puppet
 
     newtype(:service) do
-        @doc = "Manage running services.  Rather than supporting managing
-            individual processes, puppet uses init scripts to simplify
-            specification of how to start, stop, or test processes.  The
-            `path` parameter is provided to enable creation of multiple
-            init script directories, including supporting them for normal
-            users."
+        @doc = "Manage running services.  Service support unfortunately varies
+            widely by platform -- some platforms have very little if any
+            concept of a running service, and some have a very codified and
+            powerful concept.  Puppet's service support will generally be able
+            to make up for any inherent shortcomings (e.g., if there is no
+            'status' command, then Puppet will look in the process table for a
+            command matching the service name), but the more information you
+            can provide the better behaviour you will get.  Or, you can just
+            use a platform that has very good service support."
+        
         attr_reader :stat
 
 #        newstate(:enabled) do
@@ -101,7 +105,9 @@ module Puppet
         end
 
         newparam(:type) do
-            desc "The service type"
+            desc "The service type.  For most platforms, it does not make
+                sense to change set this parameter, as the default is based on
+                the builtin service facilities."
 
             defaultto { @parent.class.defaulttype }
 
@@ -119,23 +125,30 @@ module Puppet
         end
         newparam(:binary) do
             desc "The path to the daemon.  This is only used for
-                systems that do not support init scripts."
+                systems that do not support init scripts.  This binary will be
+                used to start the service if no ``start`` parameter is
+                provided."
         end
         newparam(:hasstatus) do
             desc "Declare the the service's init script has a
-                functional status command.  This is assumed to be default for
-                most systems, although there might be platforms on which this is
-                assumed to be true."
+                functional status command.  Based on testing, it was found
+                that a large number of init scripts on different platforms do
+                not support any kind of status command; thus, you must specify
+                manually whether the service you are running has such a
+                command (or you can specify a specific command using the
+                ``status`` parameter).
+                
+                If you do not specify anything, then the service name will be
+                looked for in the process table."
         end
         newparam(:name) do
             desc "The name of the service to run.  This name
-                is used to find the init script in the search path."
+                is used to find the service in whatever service subsystem it
+                is in."
             isnamevar
         end
         newparam(:path) do
-            desc "The search path for finding init scripts.
-                There is currently no default, but hopefully soon there will
-                be a reasonable default for all platforms."
+            desc "The search path for finding init scripts."
 
             munge do |value|
                 paths = []
@@ -168,25 +181,32 @@ module Puppet
                 This is used for stopping services on platforms that do not
                 support init scripts, and is also used for determining service
                 status on those service whose init scripts do not include a status
-                command."
+                command.
+                
+                If this is left unspecified and is needed to check the status
+                of a service, then the service name will be used instead.
+                
+                The pattern can be a simple string or any legal Ruby pattern."
             defaultto { @parent.name }
         end
         newparam(:restart) do
             desc "Specify a *restart* command manually.  If left
-                unspecified, the restart method will be determined automatically."
+                unspecified, the service will be stopped and then started."
         end
         newparam(:start) do
-            desc "Specify a *start* command manually.  If left
-                unspecified, the start method will be determined automatically."
+            desc "Specify a *start* command manually.  Most service subsystems
+                support a ``start`` command, so this will not need to be
+                specified."
         end
         newparam(:status) do
             desc "Specify a *status* command manually.  If left
-                unspecified, the status method will be determined automatically."
+                unspecified, the status method will be determined
+                automatically, usually by looking for the service int he
+                process table."
         end
 
         newparam(:stop) do
-            desc "Specify a *stop* command manually.  If left
-                unspecified, the stop method will be determined automatically."
+            desc "Specify a *stop* command manually."
         end
 
         # Create new subtypes of service management.

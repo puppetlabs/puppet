@@ -40,10 +40,39 @@ class State < Puppet::Parameter
         define_method("set_" + name.to_s, &block)
     end
 
+    def self.aliasvalue(name, other)
+        @statevalues ||= {}
+        unless @statevalues.include?(other)
+            raise Puppet::DevError, "Cannot alias nonexistent value %s" % other
+        end
+
+        @aliasvalues ||= {}
+        @aliasvalues[name] = other
+    end
+
+    def self.alias(name)
+        @aliasvalues[name]
+    end
+
+    def self.defaultvalues
+        newvalue(:present) do
+            @parent.create
+        end
+
+        newvalue(:absent) do
+            @parent.destroy
+        end
+
+        # This doc will probably get overridden
+        @doc ||= "The basic state that the object should be in."
+    end
+
     # Return the list of valid values.
     def self.values
         @statevalues ||= {}
+        @aliasvalues ||= {}
 
+        #[@aliasvalues.keys, @statevalues.keys].flatten
         @statevalues.keys
     end
 
@@ -75,7 +104,6 @@ class State < Puppet::Parameter
         end
 
         if event and event.is_a?(Symbol)
-            self.log "got event back %s" % event
             return event
         else
             # Return the appropriate event.
@@ -85,6 +113,9 @@ class State < Puppet::Parameter
             else
                 (@parent.class.name.to_s + "_changed").intern
             end
+
+            #self.log "made event %s because 'should' is %s, 'is' is %s" %
+            #    [event, self.should.inspect, self.is.inspect]
 
             return event
         end
@@ -232,6 +263,12 @@ class State < Puppet::Parameter
     # The default 'sync' method only selects among a list of registered
     # values.
     def sync
+        if self.insync?
+            self.info "already in sync"
+            return nil
+        else
+            self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
+        end
         unless self.class.values
             raise Puppet::DevError, "No values defined for %s" %
                 self.class.name
@@ -239,6 +276,24 @@ class State < Puppet::Parameter
 
         # Set ourselves to whatever our should value is.
         self.set
+    end
+
+    munge do |value|
+        if self.class.values.empty?
+            # This state isn't using defined values to do its work.
+            return value
+        end
+        intern = value.to_s.intern
+        # If it's a valid value, always return it as a symbol.
+        if self.class.values.include?(intern)
+            retval = intern
+        elsif other = self.class.alias(intern)
+            self.info "returning alias %s for %s" % [other, intern]
+            retval = other
+        else
+            retval = value
+        end
+        retval
     end
 
     # Verify that the passed value is valid.
@@ -250,7 +305,7 @@ class State < Puppet::Parameter
         unless value.is_a?(Symbol)
             value = value.to_s.intern
         end
-        unless self.class.values.include?(value)
+        unless self.class.values.include?(value) or self.class.alias(value)
             raise Puppet::Error,
                 "Invalid '%s' value '%s'.  Valid values are '%s'" %
                     [self.class.name, value, self.class.values.join(", ")]
@@ -302,17 +357,24 @@ class State < Puppet::Parameter
         def self.inherited(sub)
             # Add in the two states that everyone will have.
             sub.class_eval do
-                newvalue(:present) do
-                    @parent.create
-                end
+            end
+        end
 
-                newvalue(:absent) do
-                    @parent.destroy
+        def change_to_s
+            begin
+                if @is == :absent
+                    return "created"
+                elsif self.should == :absent
+                    return "removed"
+                else
+                    return "%s changed '%s' to '%s'" %
+                        [self.name, self.is_to_s, self.should_to_s]
                 end
-
-                # This doc will probably get overridden
-                @doc = "The fundamental states that the object can be in.  Allowed
-                    values are %s." % self.values.join(", ")
+            rescue Puppet::Error, Puppet::DevError
+                raise
+            rescue => detail
+                raise Puppet::DevError, "Could not convert change %s to string: %s" %
+                    [self.name, detail]
             end
         end
 

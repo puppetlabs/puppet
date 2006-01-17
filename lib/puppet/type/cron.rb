@@ -156,7 +156,12 @@ module Puppet
 
         newparam(:name) do
             desc "The symbolic name of the cron job.  This name
-                is used for human reference only."
+                is used for human reference only and is generated
+                automatically for cron jobs found on the system.  This generally
+                won't matter, as Puppet will do its best to match existing
+                cron jobs against specified jobs (and Puppet adds a tag to
+                cron jobs it adds), but it is at least possible that converting
+                from unmanaged jobs to managed jobs might require manual intervention."
 
             isnamevar
         end
@@ -186,11 +191,23 @@ module Puppet
             and the user are optional, although specifying no periodic
             fields would result in the command being executed every
             minute.  While the name of the cron job is not part of the actual
-            job, it is used by Puppet to store and retrieve it.  If you specify
-            a cron job that matches an existing job in every way except name,
-            then the jobs will be considered equivalent and the new name will
-            be permanently associated with that job.  Once this association is
-            made and synced to disk, you can then manage the job normally."
+            job, it is used by Puppet to store and retrieve it.
+            
+            If you specify a cron job that matches an existing job in every way
+            except name, then the jobs will be considered equivalent and the
+            new name will be permanently associated with that job.  Once this
+            association is made and synced to disk, you can then manage the job
+            normally (e.g., change the schedule of the job).
+            
+            Example::
+                
+                cron { logrotate:
+                    command => \"/usr/sbin/logrotate\",
+                    user => root,
+                    hour => 2,
+                    minute => 0
+                }
+            "
 
         @instances = {}
         @tabs = {}

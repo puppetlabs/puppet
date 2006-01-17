@@ -25,7 +25,7 @@ class TestPuppetModule < Test::Unit::TestCase
         createdfile = tempfile()
 
         File.open(file, "w") { |f|
-            f.puts "class yaytest { file { \"#{createdfile}\": create => true } }"
+            f.puts "class yaytest { file { \"#{createdfile}\": ensure => file } }"
         }
 
         output = nil

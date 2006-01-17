@@ -1,11 +1,11 @@
 # $Id$
 
 file {
-    "/tmp/atest": create => true, mode => 755;
-    "/tmp/btest": create => true, mode => 755
+    "/tmp/atest": ensure => file, mode => 755;
+    "/tmp/btest": ensure => file, mode => 755
 }
 
 file {
-    "/tmp/ctest": create => true;
-    "/tmp/dtest": create => true;
+    "/tmp/ctest": ensure => file;
+    "/tmp/dtest": ensure => file;
 }

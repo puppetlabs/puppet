@@ -59,7 +59,7 @@ class TestType < Test::Unit::TestCase
             system("rm -f %s" % path)
             file = Puppet.type(:file).create(
                 :path => path,
-                :create => true,
+                :ensure => "file",
                 :recurse => true,
                 :checksum => "md5"
             )
@@ -75,7 +75,7 @@ class TestType < Test::Unit::TestCase
             system("rm -f %s" % path)
             file = Puppet.type(:file).create(
                 "path" => path,
-                "create" => true,
+                "ensure" => "file",
                 "recurse" => true,
                 "checksum" => "md5"
             )
@@ -144,7 +144,7 @@ class TestType < Test::Unit::TestCase
         assert_nothing_raised {
             baseobj = Puppet.type(:file).create(
                 :name => file,
-                :create => true,
+                :ensure => "file",
                 :alias => ["funtest"]
             )
         }

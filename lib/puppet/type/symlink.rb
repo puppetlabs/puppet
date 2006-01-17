@@ -91,7 +91,18 @@ module Puppet
         newparam(:recurse) do
             desc "If target is a directory, recursively create
                 directories (using `file`'s `source` parameter) and link all
-                contained files."
+                contained files.  For instance::
+
+                    # The Solaris Blastwave repository installs everything
+                    # in /opt/csw; link it into /usr/local
+                    symlink { \"/usr/local\":
+                        target => \"/opt/csw\",
+                        recurse => 1
+                    }
+
+
+                Note that this does not link directories -- any directories
+                are created in the destination, and any files are linked over."
 
             munge do |value|
                 @stat = nil

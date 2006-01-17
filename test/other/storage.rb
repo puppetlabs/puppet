@@ -62,6 +62,16 @@ class TestParsedFile < Test::Unit::TestCase
         }
         threads.each { |th| th.join }
     end
+
+    def test_emptyrestore
+        Puppet::Storage.load
+        Puppet::Storage.store
+        Puppet::Storage.clear
+        Puppet::Storage.load
+        state = Puppet::Storage.state('newstate')
+        assert_same Hash, state.class
+        assert_equal 0, state.size
+    end
 end
 
 # $Id$

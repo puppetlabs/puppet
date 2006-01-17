@@ -171,7 +171,7 @@ class TestExec < Test::Unit::TestCase
         # verify that only the file_changed event was kicked off, not the
         # command_executed
         assert_equal(
-            [:file_modified],
+            [:file_changed],
             events
         )
     end
@@ -213,7 +213,7 @@ class TestExec < Test::Unit::TestCase
 
         comp = newcomp("Testing", file, exec)
 
-        assert_events([:file_changed, :executed_command], comp)
+        assert_events([:file_created, :executed_command], comp)
     end
 
     # Verify that we auto-require any managed scripts.

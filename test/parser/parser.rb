@@ -66,7 +66,7 @@ class TestParser < Test::Unit::TestCase
         @@tmpfiles << name
 
         File.open(file, "w") { |f|
-            f.puts "file { \"%s\": create => true, mode => 755 }\n" %
+            f.puts "file { \"%s\": ensure => file, mode => 755 }\n" %
                name
         }
     end

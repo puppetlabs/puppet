@@ -118,7 +118,7 @@ module Puppet
         #    raise "installation not implemented yet"
         #}
 
-        def remove
+        def uninstall
             cmd = "pkgrm -n %s 2>&1" % self.name
             output = %x{#{cmd}}
             if $? != 0

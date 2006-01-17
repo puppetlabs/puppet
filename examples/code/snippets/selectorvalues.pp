@@ -17,6 +17,6 @@ $mode3 = $value3 ? {
     default => 644
 }
 
-file { "/tmp/selectorvalues1": create => true, mode => $mode1 }
-file { "/tmp/selectorvalues2": create => true, mode => $mode2 }
-file { "/tmp/selectorvalues3": create => true, mode => $mode3 }
+file { "/tmp/selectorvalues1": ensure => file, mode => $mode1 }
+file { "/tmp/selectorvalues2": ensure => file, mode => $mode2 }
+file { "/tmp/selectorvalues3": ensure => file, mode => $mode3 }

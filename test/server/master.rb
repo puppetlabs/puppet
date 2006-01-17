@@ -134,7 +134,7 @@ class TestMaster < Test::Unit::TestCase
         Puppet::Type.allclear
 
         File.open(manifest, "w") { |f|
-            f.puts "file { \"%s\": create => true }\n" % file2
+            f.puts "file { \"%s\": ensure => file }\n" % file2
         }
         assert_nothing_raised {
             client.getconfig

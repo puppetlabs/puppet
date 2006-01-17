@@ -219,7 +219,7 @@ class Type < Puppet::Element
             self.newstate(:ensure, Puppet::State::Ensure, &block)
         else
             self.newstate(:ensure, Puppet::State::Ensure) do
-                # don't actually do anything with the block, but it's required...
+                self.defaultvalues
             end
         end
     end
@@ -227,6 +227,10 @@ class Type < Puppet::Element
     # Return a Type instance by name.
     def self.type(name)
         @types ||= {}
+
+        if name.is_a?(String)
+            name = name.intern
+        end
         @types[name]
     end
 
@@ -1245,7 +1249,7 @@ class Type < Puppet::Element
             end
             if klass.method_defined?(:default)
                 obj = self.newattr(type, klass)
-                self.info "defaulting %s to %s" % [obj.name, obj.default]
+                #self.debug "defaulting %s to %s" % [obj.name, obj.default]
                 obj.value = obj.default
             end
         }
@@ -1511,7 +1515,7 @@ class Type < Puppet::Element
         states.each { |state|
             unless state.insync?
                 self.debug("%s is not in sync: %s vs %s" %
-                    [state, state.is, state.should])
+                    [state, state.is.inspect, state.should.inspect])
                 insync = false
             end
         }
@@ -1709,15 +1713,15 @@ class Type < Puppet::Element
     end
 
     # Add all of the meta parameters.
-    newmetaparam(:onerror) do
-        desc "How to handle errors -- roll back innermost
-            transaction, roll back entire transaction, ignore, etc.  Currently
-            non-functional."
-    end
+    #newmetaparam(:onerror) do
+    #    desc "How to handle errors -- roll back innermost
+    #        transaction, roll back entire transaction, ignore, etc.  Currently
+    #        non-functional."
+    #end
 
     newmetaparam(:noop) do
         desc "Boolean flag indicating whether work should actually
-            be done."
+            be done.  *true*/**false**"
         munge do |noop|
             if noop == "true" or noop == true
                 return true
@@ -1729,15 +1733,18 @@ class Type < Puppet::Element
         end
     end
 
-    newmetaparam(:schedule) do
-        desc "On what schedule the object should be managed.
-            Currently non-functional."
-    end
+    #newmetaparam(:schedule) do
+    #    desc "On what schedule the object should be managed.
+    #        Currently non-functional."
+    #end
 
     newmetaparam(:check) do
         desc "States which should have their values retrieved
             but which should not actually be modified.  This is currently used
-            internally, but will eventually be used for querying."
+            internally, but will eventually be used for querying, so that you
+            could specify that you wanted to check the install state of all
+            packages, and then query the Puppet client daemon to get reports
+            on all packages."
 
         munge do |args|
             unless args.is_a?(Array)
@@ -1764,7 +1771,37 @@ class Type < Puppet::Element
     newmetaparam(:require) do
         desc "One or more objects that this object depends on.
             This is used purely for guaranteeing that changes to required objects
-            happen before the dependent object."
+            happen before the dependent object.  For instance::
+            
+                # Create the destination directory before you copy things down
+                file { \"/usr/local/scripts\":
+                    ensure => directory
+                }
+
+                file { \"/usr/local/scripts/myscript\":
+                    source => \"puppet://server/module/myscript\",
+                    mode => 755,
+                    require => file[\"/usr/local/scripts\"]
+                }
+
+            Note that Puppet will autorequire everything that it can, and
+            there are hooks in place so that it's easy for elements to add new
+            ways to autorequire objects, so if you think Puppet could be
+            smarter here, let us know.
+
+            In fact, the above code was redundant -- Puppet will autorequire
+            any parent directories that are being managed; it will
+            automatically realize that the parent directory should be created
+            before the script is pulled down.
+            
+            Currently, exec_ elements will autorequire their CWD (if it is
+            specified) plus any fully qualified paths that appear in the
+            command.   For instance, if you had an ``exec`` command that ran
+            the ``myscript`` mentioned above, the above code that pulls the
+            file down would be automatically listed as a requirement to the
+            ``exec`` code, so that you would always be running againts the
+            most recent version.
+            "
 
         # Take whatever dependencies currently exist and add these.
         # Note that this probably doesn't behave correctly with unsubscribe.
@@ -1788,9 +1825,22 @@ class Type < Puppet::Element
     # For each object we require, subscribe to all events that it generates.
     # We might reduce the level of subscription eventually, but for now...
     newmetaparam(:subscribe) do
-        desc "One or more objects that this object depends on.
-            Changes in the subscribed to objects result in the dependent objects being
-            refreshed (e.g., a service will get restarted)."
+        desc "One or more objects that this object depends on.  Changes in the
+            subscribed to objects result in the dependent objects being
+            refreshed (e.g., a service will get restarted).  For instance::
+            
+                class nagios {
+                    file { \"/etc/nagios/nagios.conf\":
+                        source => \"puppet://server/module/nagios.conf\",
+                        alias => nagconf # just to make things easier for me
+                    }
+
+                    service { nagios:
+                        running => true,
+                        require => file[nagconf]
+                    }
+                }
+            "
 
         munge do |requires|
             if values = @parent[:subscribe]
@@ -1803,7 +1853,9 @@ class Type < Puppet::Element
 
     newmetaparam(:loglevel) do
         desc "Sets the level that information will be logged:
-             debug, info, verbose, notice, warning, err, alert, emerg or crit"
+             debug, info, verbose, notice, warning, err, alert, emerg or crit.
+             The log levels have the biggest impact when logs are sent to
+             syslog (which is currently the default)."
         defaultto :notice
 
         validate do |loglevel|
@@ -1830,7 +1882,23 @@ class Type < Puppet::Element
         desc "Creates an alias for the object.  This simplifies lookup of the
             object so is useful in the language.  It is especially useful when
             you are creating long commands using exec or when many different
-            systems call a given package different names."
+            systems call a given package_ different names::
+
+            
+                file { \"/usr/local/scripts/myscript\":
+                    source => \"puppet://server/module/myscript\",
+                    mode => 755,
+                    alias => myscript
+                }
+
+                exec { \"/usr/local/scripts/myscript\":
+                    require => file[myscript]
+                }
+            
+            Again, this is somewhat redundant, since any sane person would
+            just use a variable (unless the two statements were in different
+            scopes), and Puppet will autorequire the script anyway, but it
+            gets the point across."
 
         munge do |aliases|
             unless aliases.is_a?(Array)

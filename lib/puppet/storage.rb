@@ -2,34 +2,32 @@ require 'yaml'
 
 module Puppet
     # a class for storing state
-	class Storage
-		include Singleton
-		
-		def initialize
-			self.class.load
-		end
+    class Storage
+        include Singleton
+        
+        def initialize
+            self.class.load
+        end
 
         def self.clear
-            @@state = nil
+            @@state.clear
             Storage.init
         end
 
         def self.init
             Puppet.debug "Initializing Storage"
-            @@state = Hash.new { |hash,key|
-                hash[key] = Hash.new(nil)
-            }
+            @@state = {}
             @@splitchar = "\t"
         end
 
         self.init
 
-		def self.load
+        def self.load
             if Puppet[:checksumfile].nil?
                 raise Puppet::DevError, "Somehow the statefile is nil"
             end
 
-			unless File.exists?(Puppet[:checksumfile])
+            unless File.exists?(Puppet[:checksumfile])
                 Puppet.info "Statefile %s does not exist" % Puppet[:checksumfile]
                 unless defined? @@state and ! @@state.nil?
                     self.init
@@ -56,16 +54,22 @@ module Puppet
             }
 
             #Puppet.debug "Loaded state is %s" % @@state.inspect
-		end
+        end
 
-		def self.state(myclass)
+        def self.stateinspect
+            @@state.inspect
+        end
+
+        def self.state(myclass)
             unless myclass.is_a? Class
                 myclass = myclass.class
             end
-            return @@state[myclass.to_s]
-		end
 
-		def self.store
+            @@state[myclass.to_s] ||= {}
+            return @@state[myclass.to_s]
+        end
+
+        def self.store
             unless FileTest.directory?(File.dirname(Puppet[:checksumfile]))
                 begin
                     Puppet.recmkdir(File.dirname(Puppet[:checksumfile]))
@@ -95,8 +99,8 @@ module Puppet
                 #    }
                 #}
             }
-		end
-	end
+        end
+    end
 end
 
 # $Id$

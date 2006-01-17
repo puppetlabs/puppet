@@ -1,6 +1,5 @@
 module Puppet
-
-        # Copy files from a local or remote source.
+    # Copy files from a local or remote source.
     Puppet.type(:file).newstate(:source) do
         PINPARAMS = [:mode, :type, :owner, :group, :checksum]
 
@@ -8,7 +7,26 @@ module Puppet
         desc "Copy a file over the current file.  Uses `checksum` to
             determine when a file should be copied.  Valid values are either
             fully qualified paths to files, or URIs.  Currently supported URI
-            types are *puppet* and *file*."
+            types are *puppet* and *file*.
+
+            This is one of the primary mechanisms for getting content into
+            applications that Puppet does not directly support and is very
+            useful for those configuration files that don't change much across
+            sytems.  For instance::
+
+                class sendmail {
+                    file { \"/etc/mail/sendmail.cf\":
+                        source => \"puppet://server/module/sendmail.cf\"
+                    }
+                }
+            
+            See the `fileserver docs`_ for information on how to configure
+            and use file services within Puppet.
+
+
+            .. _fileserver docs: /projects/puppet/documentation/fsconfigref
+
+            "
 
         # Ask the file server to describe our file.
         def describe(source)
@@ -98,41 +116,41 @@ module Puppet
             when "file":
                 if sum = @parent.state(:checksum)
                     if sum.is
-                        if sum.is == :notfound
+                        if sum.is == :absent
                             sum.retrieve
                         end
                         @is = sum.is
                     else
-                        @is = :notfound
+                        @is = :absent
                     end
                 else
                     self.info "File does not have checksum"
-                    @is = :notfound
+                    @is = :absent
                 end
 
                 @should = [@stats[:checksum]]
 
-                if state = @parent.state(:create)
-                    unless state.should == "file"
-                        self.notice(
-                            "File %s had both create and source enabled" %
-                                @parent.name
-                        )
-                        @parent.delete(:create)
-                    end
-                end
+                #if state = @parent.state(:ensure)
+                #    unless state.should == "file"
+                #        self.notice(
+                #            "File %s had both create and source enabled" %
+                #                @parent.name
+                #        )
+                #        @parent.delete(:ensure)
+                #    end
+                #end
             # If we're a directory, then do not copy anything, and instead just
             # create the directory using the 'create' state.
             when "directory":
-                if state = @parent.state(:create)
+                if state = @parent.state(:ensure)
                     unless state.should == "directory"
                         state.should = "directory"
                     end
                 else
-                    @parent[:create] = "directory"
-                    @parent.state(:create).retrieve
+                    @parent[:ensure] = "directory"
+                    @parent.state(:ensure).retrieve
                 end
-                # we'll let the :create state do our work
+                # we'll let the :ensure state do our work
                 @should.clear
                 @is = true
             # FIXME We should at least support symlinks, I would think...
@@ -223,12 +241,13 @@ module Puppet
 
             # try to create it with the correct modes to start
             # we should also be changing our effective uid/gid, but...
-            if @parent.should(:mode) and @parent.should(:mode) != :notfound
+            if @parent.should(:mode) and @parent.should(:mode) != :absent
                 args.push @parent.should(:mode)
             end
 
             # FIXME we should also change our effective user and group id
 
+            exists = File.exists?(@parent.name)
             begin
                 File.open(*args) { |f|
                     f.print contents
@@ -256,7 +275,11 @@ module Puppet
                     [@parent.name, detail]
             end
 
-            return :file_changed
+            if exists
+                return :file_changed
+            else
+                return :file_created
+            end
         end
     end
 end

@@ -1,6 +1,6 @@
 define distloc(path) {
     file { "/tmp/exectesting1":
-        create => file
+        ensure => file
     }
     exec { "touch $path":
         subscribe => file["/tmp/exectesting1"],

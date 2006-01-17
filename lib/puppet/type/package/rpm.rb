@@ -14,6 +14,9 @@ module Puppet
             output = %x{#{cmd} 2>/dev/null}.chomp
 
             if $? != 0
+                #if Puppet[:debug]
+                #    puts output
+                #end
                 return nil
             end
 
@@ -68,7 +71,7 @@ module Puppet
         #    raise "installation not implemented yet"
         #}
 
-        def remove
+        def uninstall
             cmd = "rpm -e %s" % self.name
             output = %x{#{cmd}}
             if $? != 0

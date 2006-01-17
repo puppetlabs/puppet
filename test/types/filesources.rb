@@ -565,7 +565,7 @@ class TestFileSources < Test::Unit::TestCase
         }
 
         comp = newcomp(file)
-        assert_events([:file_changed], comp)
+        assert_events([:file_created], comp)
 
         assert(File.exists?(to), "File does not exist")
 

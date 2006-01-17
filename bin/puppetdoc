@@ -45,17 +45,13 @@ rescue LoadError
     $haveusage = false
 end
 
-def tab(num)
-    return $tab * num
-end
-
 result = GetoptLong.new(
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
 )
 
 debug = false
 
-$tab = "   "
+$tab = "    "
 
 begin
     result.each { |opt,arg|
@@ -77,6 +73,33 @@ rescue GetoptLong::InvalidOption => detail
     exit(1)
 end
 
+def scrub(text)
+    # For text with no carriage returns, there's nothing to do.
+    if text !~ /\n/
+        return text
+    end
+    indent = nil
+
+    # If we can match an indentation, then just remove that same level of
+    # indent from every line.
+    if text =~ /^(\s+)/
+        indent = $1
+        return text.gsub(/^#{indent}/,'')
+    else
+        return text
+    end
+
+end
+
+# Indent every line in the chunk except those which begin with '..'.
+def indent(text, tab)
+    return text.gsub(/(^|\A)/, tab).gsub(/^ +\.\./, "..")
+end
+
+#def tab(num)
+#    return $tab * num
+#end
+
 puts %{
 ==============
 Type Reference
@@ -93,6 +116,11 @@ puts %{
 Meta-Parameters
 ---------------
 
+Metaparameters are parameters that work with any element; they are part of the
+Puppet framework itself rather than being part of the implementation of any
+given instance.  Thus, any defined metaparameter can be used with any instance
+in your manifest, including defined components.
+
 }
 begin
     params = []
@@ -104,10 +132,11 @@ begin
         a.to_s <=> b.to_s
     }.each { |param|
         puts "- **" + param.to_s + "**"
-        puts tab(1) + Puppet::Type.metaparamdoc(param).gsub(/\n\s*/,' ')
+        #puts tab(1) + Puppet::Type.metaparamdoc(param).scrub.indent($tab)gsub(/\n\s*/,' ')
+        puts indent(scrub(Puppet::Type.metaparamdoc(param)), $tab)
     }
 rescue => detail
-    puts "type %s had incorrect params: %s" % detail
+    puts "incorrect metaparams: %s" % detail
     exit(1)
 end
 
@@ -118,9 +147,25 @@ Types
 
 - *namevar* is the parameter used to uniquely identify a type instance.
   This is the parameter that gets assigned when a string is provided before
-  the colon in a type declaration.
-- *parameters* determine the specific configuration of the instance.
+  the colon in a type declaration.  In general, only developers will need to
+  worry about which parameter is the ``namevar``.
+  
+  In the following code::
 
+    file { "/etc/passwd":
+        owner => root,
+        group => root,
+        mode => 644
+    }
+
+  "/etc/passwd" is considered the name of the file object (used for things like
+  dependency handling), and because ``path`` is the namevar for ``file``, that
+  string is assigned to the ``path`` parameter.
+
+- *parameters* determine the specific configuration of the instance.  They either
+  directly modify the system (internally, these are called states) or they affect
+  how the instance behaves (e.g., adding a search path for ``exec`` instances
+  or determining recursion on ``file`` instances).
 
 }
 
@@ -141,8 +186,8 @@ types.sort { |a,b|
 %s" % [name, "=" * (name.to_s.length + 4)]
     #String.new('n%s\n') % name.to_s
     #puts "**" + type.doc.gsub(/\n\s*/, ' ') + "**\n\n"
-    puts type.doc.gsub(/\n\s*/, ' ') + "\n\n"
-    type.buildstatehash
+    puts scrub(type.doc) + "\n\n"
+
     #puts tab(1) + "* namevar: %s" % type.namevar
     docs = {}
     #puts "%s States\n'''''''''''''''''''''''''''''''" % name.to_s.capitalize
@@ -153,7 +198,33 @@ types.sort { |a,b|
         state.nodoc
     }.each { |sname|
         state = type.statebyname(sname)
-        docs[sname] = state.doc.gsub(/\n\s*/,' ')
+
+        doc = nil
+        str = nil
+        unless doc = state.doc.dup
+            $stderr.puts "No docs for %s[%s]" % [type, sname]
+            next
+        end
+        str = doc
+        #puts "A---" + str + "---"
+        str = scrub(str)
+        #puts "B---" + str + "---"
+        #str = indent(str, $tab)
+        #puts "C---" + str + "---"
+        #str = indent($tab, scrub(doc))
+
+        # If the state has values, then add them: 
+
+        #if values = state.values
+        #    unless values.empty?
+        #        extra = "Acceptable values are %s." % values.join(", ")
+        #        str += "\n\n#{extra}"
+        #    end
+        #end
+
+        str = indent(str, $tab)
+        #puts "---" + str + "---"
+        docs[sname]  = str
         #puts "- **%s**" % sname
         #puts tab(1) + state.doc.gsub(/\n\s*/,' ')
     }
@@ -162,7 +233,7 @@ types.sort { |a,b|
     type.parameters.sort { |a,b|
         a.to_s <=> b.to_s
     }.each { |name,param|
-        docs[name] = type.paramdoc(name).gsub(/\n\s*/,' ')
+        docs[name] = indent(scrub(type.paramdoc(name)), $tab)
     }
 
     docs.sort { |a, b|
@@ -174,7 +245,7 @@ types.sort { |a,b|
         else
             puts ""
         end
-        puts tab(1) + doc
+        puts doc
     }
     puts "\n"
 }

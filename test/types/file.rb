@@ -124,7 +124,7 @@ class TestFile < Test::Unit::TestCase
                 file = Puppet.type(:file).create(
                     :path => path,
                     :owner => user.name,
-                    :create => true,
+                    :ensure => "file",
                     :mode => "755"
                 )
             }
@@ -221,7 +221,7 @@ class TestFile < Test::Unit::TestCase
             assert_nothing_raised() {
                 file = Puppet.type(:file).create(
                     :name => path,
-                    :create => true
+                    :ensure => "file"
                 )
             }
             assert_events([:file_created], file)
@@ -240,7 +240,7 @@ class TestFile < Test::Unit::TestCase
             assert_nothing_raised() {
                 file = Puppet.type(:file).create(
                     :name => path,
-                    :create => "directory"
+                    :ensure => "directory"
                 )
             }
             assert(! FileTest.directory?(path), "Directory %s already exists" %
@@ -261,7 +261,7 @@ class TestFile < Test::Unit::TestCase
             assert_nothing_raised() {
                 file[:mode] = mode
             }
-            assert_events([:inode_changed], file)
+            assert_events([:file_changed], file)
             assert_events([], file)
 
             assert(file.insync?())
@@ -283,15 +283,13 @@ class TestFile < Test::Unit::TestCase
         # try it both with files that exist and ones that don't
         files = [exists, nonexists]
         initstorage
-        File.open(exists,"w") { |of|
-            10.times { 
-                of.puts rand(100)
-            }
+        File.open(exists,File::CREAT|File::TRUNC|File::WRONLY) { |of|
+            of.puts "initial text"
         }
         types.each { |type|
             files.each { |path|
                 if Puppet[:debug]
-                    Puppet.info "Testing %s on %s" % [type,path]
+                    Puppet.warning "Testing %s on %s" % [type,path]
                 end
                 file = nil
                 events = nil
@@ -299,12 +297,12 @@ class TestFile < Test::Unit::TestCase
                 assert_nothing_raised() {
                     file = Puppet.type(:file).create(
                         :name => path,
-                        :create => true,
+                        :ensure => "file",
                         :checksum => type
                     )
                 }
                 comp = Puppet.type(:component).create(
-                    :name => "componentfile"
+                    :name => "checksum %s" % type
                 )
                 comp.push file
                 trans = nil
@@ -324,16 +322,19 @@ class TestFile < Test::Unit::TestCase
                 # we don't want to kick off an event the first time we
                 # come across a file
                 assert(
-                    ! events.include?(:file_modified)
+                    ! events.include?(:file_changed)
                 )
                 assert_nothing_raised() {
-                    File.open(path,"w") { |of|
-                        of.puts rand(100)
+                    File.open(path,File::CREAT|File::TRUNC|File::WRONLY) { |of|
+                        of.puts "some more text, yo"
                     }
                 }
                 Puppet.type(:file).clear
                 Puppet.type(:component).clear
-                sleep 1
+
+                # We have to sleep because the time resolution of the time-based
+                # mechanisms is greater than one second
+                sleep 1.1
 
                 # now recreate the file
                 assert_nothing_raised() {
@@ -343,17 +344,41 @@ class TestFile < Test::Unit::TestCase
                     )
                 }
                 comp = Puppet.type(:component).create(
-                    :name => "componentfile"
+                    :name => "checksum, take 2, %s" % type
                 )
                 comp.push file
                 trans = nil
-                assert_events([:file_modified], comp)
+
+                # If the file was missing, it should not generate an event
+                # when it gets created.
+                if path =~ /nonexists/e
+                    assert_events([], comp)
+                else
+                    assert_events([:file_changed], comp)
+                end
+                assert_nothing_raised() {
+                    File.unlink(path)
+                    File.open(path,File::CREAT|File::TRUNC|File::WRONLY) { |of|
+                        # We have to put a certain amount of text in here or
+                        # the md5-lite test fails
+                        2.times {
+                            of.puts rand(100)
+                        }
+                        of.flush
+                    }
+                }
+                #assert_apply(comp)
+                assert_events([:file_changed], comp)
 
                 # verify that we're actually getting notified when a file changes
                 assert_nothing_raised() {
                     Puppet.type(:file).clear
                     Puppet.type(:component).clear
                 }
+
+                if path =~ /nonexists/
+                    File.unlink(path)
+                end
             }
         }
     end
@@ -444,7 +469,7 @@ class TestFile < Test::Unit::TestCase
             file = mkfile(
                 :name => path,
                 :recurse => true,
-                :create => true
+                :ensure => "file"
             )
         }
 
@@ -483,7 +508,7 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised {
             file = Puppet.type(:file).create(
                 :name => tempfile(),
-                :create => true
+                :ensure => "file"
             )
         }
 
@@ -577,12 +602,12 @@ class TestFile < Test::Unit::TestCase
 
         baseobj = Puppet.type(:file).create(
             :name => basedir,
-            :create => "directory"
+            :ensure => "directory"
         )
 
         subobj = Puppet.type(:file).create(
             :name => subfile,
-            :create => "file"
+            :ensure => "file"
         )
 
         Puppet::Type.finalize
@@ -640,7 +665,7 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised {
             file = Puppet.type(:file).create(
                 :name => subpath,
-                :create => "directory",
+                :ensure => "directory",
                 :recurse => true
             )
         }

@@ -9,7 +9,15 @@ require 'puppet/server/fileserver'
 module Puppet
     newtype(:file) do
         @doc = "Manages local files, including setting ownership and
-            permissions, and allowing creation of both files and directories."
+            permissions, creation of both files and directories, and
+            retrieving entire files from remote servers.  As Puppet matures, it
+            expected that the ``file`` element will be used less and less to
+            manage content, and instead native elements will be used to do so.
+            
+            If you find that you are often copying files in from a central
+            location, rather than using native elements, please contact
+            Reductive Labs and we can hopefully work with you to develop a
+            native element to support what you are doing."
 
         newparam(:path) do
             desc "The path to the file to manage.  Must be fully qualified."
@@ -18,7 +26,7 @@ module Puppet
 
         newparam(:backup) do
             desc "Whether files should be backed up before
-                being replaced.  If a ``filebucket`` is specified, files will be
+                being replaced.  If a filebucket_ is specified, files will be
                 backed up there; else, they will be backed up in the same directory
                 with a ``.puppet-bak`` extension."
 
@@ -391,8 +399,8 @@ module Puppet
             sourceobj, path = uri2obj(source)
 
             # we'll set this manually as necessary
-            if @arghash.include?(:create)
-                @arghash.delete(:create)
+            if @arghash.include?(:ensure)
+                @arghash.delete(:ensure)
             end
 
             # okay, we've got our source object; now we need to
@@ -453,7 +461,7 @@ module Puppet
                     # want to overwrite whatever it did.  This is a bit
                     # of a hack, but oh well, source is definitely special.
                     next if name == :source
-                    state.is = :notfound
+                    state.is = :absent
                 }
                 return
             end
@@ -539,17 +547,17 @@ module Puppet
     class FileSource
         attr_accessor :mount, :root, :server, :local
     end
-end
 
-# We put all of the states in separate files, because there are so many
-# of them.  The order these are loaded is important, because it determines
-# the order they are in the state list.
-require 'puppet/type/pfile/create'
-require 'puppet/type/pfile/checksum'
-require 'puppet/type/pfile/content'
-require 'puppet/type/pfile/source'
-require 'puppet/type/pfile/uid'
-require 'puppet/type/pfile/group'
-require 'puppet/type/pfile/mode'
-require 'puppet/type/pfile/type'
+    # We put all of the states in separate files, because there are so many
+    # of them.  The order these are loaded is important, because it determines
+    # the order they are in the state list.
+    require 'puppet/type/pfile/ensure'
+    require 'puppet/type/pfile/checksum'
+    require 'puppet/type/pfile/content'
+    require 'puppet/type/pfile/source'
+    require 'puppet/type/pfile/uid'
+    require 'puppet/type/pfile/group'
+    require 'puppet/type/pfile/mode'
+    require 'puppet/type/pfile/type'
+end
 # $Id$

@@ -2,14 +2,14 @@
 
 $files = ["/tmp/iterationatest", "/tmp/iterationbtest"]
 
-file { $files: create => true, mode => 755 }
+file { $files: ensure => file, mode => 755 }
 
 file { ["/tmp/iterationctest", "/tmp/iterationdtest"]:
-    create => true,
+    ensure => file,
     mode => 755
 }
 
 file {
-    ["/tmp/iterationetest", "/tmp/iterationftest"]: create => true, mode => 755;
-    ["/tmp/iterationgtest", "/tmp/iterationhtest"]: create => true, mode => 755;
+    ["/tmp/iterationetest", "/tmp/iterationftest"]: ensure => file, mode => 755;
+    ["/tmp/iterationgtest", "/tmp/iterationhtest"]: ensure => file, mode => 755;
 }

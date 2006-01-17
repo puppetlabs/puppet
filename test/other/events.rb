@@ -21,7 +21,7 @@ class TestEvents < Test::Unit::TestCase
         name = tempfile()
         file = Puppet.type(:file).create(
             :name => name,
-            :create => true
+            :ensure => "file"
         )
         exec = Puppet.type(:exec).create(
             :name => "echo true",
@@ -41,7 +41,7 @@ class TestEvents < Test::Unit::TestCase
         name = tempfile()
         file = Puppet.type(:file).create(
             :name => name,
-            :create => true
+            :ensure => "file"
         )
         exec = Puppet.type(:exec).create(
             :name => "echo true",
@@ -76,7 +76,7 @@ class TestEvents < Test::Unit::TestCase
                 name = tempfile() + l.to_s
                 objects[l] = Puppet.type(:file).create(
                     :name => name,
-                    :create => true
+                    :ensure => "file"
                 )
                 @@tmpfiles << name
             when :b

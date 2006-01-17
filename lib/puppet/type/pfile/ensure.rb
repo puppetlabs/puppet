@@ -1,40 +1,108 @@
 module Puppet
-    Puppet.type(:file).newstate(:create) do
+    Puppet.type(:file).ensurable do
         require 'etc'
         desc "Whether to create files that don't currently exist.
-            **false**/*true*/*file*/*directory*"
+            Possible values are *absent*, *present* (equivalent to *file*),
+            **file**/*directory*.  Specifying 'absent' will delete the file,
+            although currently this will not recursively delete directories.
+            
+            This is the only element with an *ensure* state that does not have
+            a default value."
 
-        @event = :file_created
+        # Most 'ensure' states have a default, but with files we, um, don't.
+        nodefault
 
-        munge do |value|
-            # default to just about anything meaning 'true'
-            case value
-            when "false", false, nil:
-                false
-            when "true", true, "file", "plain", /^f/:
-                "file"
-            when "directory", /^d/:
-                "directory"
-            when :notfound:
-                # this is where a creation is being rolled back
-                :notfound
-            else
-                raise Puppet::Error, "Cannot create files of type %s" % value
+        #newvalue(:false) do
+        #    # If they say "false" here, we just don't do anything at all; either
+        #    # the file is there or it's not.
+        #end
+
+        newvalue(:absent) do
+            File.unlink(@parent.name)
+        end
+
+        aliasvalue(:false, :absent)
+
+        newvalue(:file) do
+            mode = @parent.should(:mode)
+            Puppet::Util.asuser(asuser(), @parent.should(:group)) {
+                f = nil
+                if mode
+                    f = File.open(@parent[:path],"w", mode)
+                else
+                    f = File.open(@parent[:path],"w")
+                end
+
+                if @parent[:content]
+                    f.print @parent.should(:content)
+                end
+                f.flush
+                f.close
+            }
+            return :file_created
+        end
+
+        aliasvalue(:present, :file)
+
+        newvalue(:directory) do
+            mode = @parent.should(:mode)
+            Puppet::Util.asuser(asuser()) {
+                if mode
+                    Dir.mkdir(@parent.name,mode)
+                else
+                    Dir.mkdir(@parent.name)
+                end
+            }
+            return :directory_created
+        end
+
+        def asuser
+            if @parent.should(:owner) and ! @parent.should(:owner).is_a?(Symbol)
+                writeable = Puppet::Util.asuser(@parent.should(:owner)) {
+                    FileTest.writable?(File.dirname(@parent[:path]))
+                }
+
+                # If the parent directory is writeable, then we execute
+                # as the user in question.  Otherwise we'll rely on
+                # the 'owner' state to do things.
+                if writeable
+                    asuser = @parent.should(:owner)
+                end
+            end
+
+            return asuser
+        end
+
+        def check
+            basedir = File.dirname(@parent.name)
+
+            if ! FileTest.exists?(basedir)
+                raise Puppet::Error,
+                    "Can not create %s; parent directory does not exist" %
+                    @parent.name
+            elsif ! FileTest.directory?(basedir)
+                raise Puppet::Error,
+                    "Can not create %s; %s is not a directory" %
+                    [@parent.name, dirname]
             end
         end
 
         def retrieve
             if stat = @parent.stat(true)
-                @is = stat.ftype
+                @is = stat.ftype.intern
             else
-                @is = :notfound
+                if self.should == :false
+                    @is = :false
+                else
+                    @is = :absent
+                end
             end
 
             #self.debug "'exists' state is %s" % self.is
         end
 
 
-        def sync
+        def disabled_sync
             event = nil
             basedir = File.dirname(@parent.name)
 
@@ -94,7 +162,7 @@ module Puppet
                         end
                     }
                     event = :directory_created
-                when :notfound:
+                when :absent:
                     # this is where the file should be deleted...
 
                     # This value is only valid when we're rolling back a creation,

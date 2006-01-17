@@ -92,7 +92,7 @@ module Puppet
             return packages
         end
 
-        def destroy
+        def uninstall
             cmd = "dpkg -r %s" % self.name
             output = %x{#{cmd} 2>&1}
             if $? != 0

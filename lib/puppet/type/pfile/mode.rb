@@ -6,7 +6,7 @@ module Puppet
         require 'etc'
         desc "Mode the file should be.  Currently relatively limited:
             you must specify the exact mode the file should be."
-        @event = :inode_changed
+        @event = :file_changed
 
         # Our modes are octal, so make sure they print correctly.  Other
         # valid values are symbols, basically
@@ -83,18 +83,18 @@ module Puppet
                     end
                 end
             else
-                self.is = :notfound
+                self.is = :absent
             end
 
             #self.debug "chmod state is %o" % self.is
         end
 
         def sync
-            if @is == :notfound
+            if @is == :absent
                 @parent.stat(true)
                 self.retrieve
                 #self.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
-                if @is == :notfound
+                if @is == :absent
                     self.info "File does not exist; cannot set mode" %
                         @parent.name
                     return nil
@@ -108,7 +108,7 @@ module Puppet
 
             mode = self.should
 
-            if mode == :notfound
+            if mode == :absent
                 # This is really only valid for create states...
                 return nil
             end
@@ -120,7 +120,7 @@ module Puppet
                     [@parent.name, detail.message])
                 raise error
             end
-            return :inode_changed
+            return :file_changed
         end
     end
 end

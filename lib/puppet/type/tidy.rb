@@ -8,7 +8,8 @@ module Puppet
         @doc = "Remove unwanted files based on specific criteria."
 
         newparam(:path) do
-            desc "The path to the file to manage.  Must be fully qualified."
+            desc "The path to the file or directory to manage.  Must be fully
+                qualified."
             isnamevar
         end
 
@@ -62,8 +63,8 @@ module Puppet
         end
 
         newparam(:type) do
-            desc "Set the mechanism for determining age.  Access
-                time is the default mechanism, but modification."
+            desc "Set the mechanism for determining age.
+            **atime**/*mtime*/*ctime*."
             
             munge do |type|
                 case type
@@ -81,7 +82,8 @@ module Puppet
         end
 
         newparam(:rmdirs) do
-            desc "Tidy directories in addition to files."
+            desc "Tidy directories in addition to files; that is, remove
+                directories whose age is older than the specified criteria."
         end
 
         newstate(:tidyup) do

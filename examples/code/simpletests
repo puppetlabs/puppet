@@ -1,11 +1,11 @@
 # $Id$
 
 file {
-    "/tmp/atest": create => true;
-    "/tmp/btest": create => true
+    "/tmp/atest": ensure => file;
+    "/tmp/btest": ensure => file
 }
 
 file {
-    "/tmp/ctest": create => true;
-    "/tmp/dtest": create => true;
+    "/tmp/ctest": ensure => file;
+    "/tmp/dtest": ensure => file;
 }

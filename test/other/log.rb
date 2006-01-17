@@ -182,7 +182,7 @@ class TestLog < Test::Unit::TestCase
         path = tempfile()
         file = Puppet.type(:file).create(
             :path => path,
-            :create => true
+            :ensure => "file"
         )
 
         assert_nothing_raised {

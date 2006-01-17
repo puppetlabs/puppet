@@ -3,7 +3,7 @@ module Puppet
         require 'etc'
         desc "To whom the file should belong.  Argument can be user name or
             user ID."
-        @event = :inode_changed
+        @event = :file_changed
 
         def id2name(id)
             if id.is_a?(Symbol)
@@ -81,7 +81,7 @@ module Puppet
 
         def retrieve
             unless stat = @parent.stat(true)
-                @is = :notfound
+                @is = :absent
                 return
             end
 
@@ -92,7 +92,7 @@ module Puppet
             # it's an OS X bug, since it shows up in perl, too.
             if @is > 120000
                 self.warning "current state is silly: %s" % @is
-                @is = :notfound
+                @is = :absent
             end
         end
 
@@ -135,10 +135,10 @@ module Puppet
                 end
             end
 
-            if @is == :notfound
+            if @is == :absent
                 @parent.stat(true)
                 self.retrieve
-                if @is == :notfound
+                if @is == :absent
                     self.info "File does not exist; cannot set owner"
                     return nil
                 end
@@ -155,7 +155,7 @@ module Puppet
                     [user, detail]
             end
 
-            return :inode_changed
+            return :file_changed
         end
     end
 end

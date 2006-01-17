@@ -33,7 +33,7 @@ class TestBasic < Test::Unit::TestCase
             @@tmpfiles << @filepath
             @configfile = Puppet.type(:file).create(
                 :path => @filepath,
-                :create => true,
+                :ensure => "file",
                 :checksum => "md5"
             )
         }

@@ -59,7 +59,7 @@ define sleeper(path,mode) {
     }
     $files = ["/tmp/testness","/tmp/funtest"]
     file { $files:
-        create => true
+        ensure => file
     }
 }
 

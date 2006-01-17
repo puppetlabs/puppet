@@ -14,7 +14,14 @@ require 'puppet/type/nameservice'
 module Puppet
     newtype(:group, Puppet::Type::NSSType) do
         @doc = "Manage groups.  This type can only create groups.  Group
-            membership must be managed on individual users."
+            membership must be managed on individual users.  This element type
+            uses the prescribed native tools for creating groups and generally
+            uses POSIX APIs for retrieving information about them.  It does
+            not directly modify /etc/group or anything.
+            
+            For most platforms, the tools used are ``groupadd`` and its ilk;
+            for Mac OS X, NetInfo is used.  This is currently unconfigurable,
+            but if you desperately need it to be so, please contact us."
 
         case Facter["operatingsystem"].value
         when "Darwin":

@@ -22,7 +22,7 @@ class TestInterpreter < Test::Unit::TestCase
         createdfile = tempfile()
 
         File.open(file, "w") { |f|
-            f.puts "node %s { file { \"%s\": create => true, mode => 755 } }\n" %
+            f.puts "node %s { file { \"%s\": ensure => file, mode => 755 } }\n" %
                 [node, createdfile]
         }
 

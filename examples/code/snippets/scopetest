@@ -2,7 +2,7 @@
 $mode = 640
 
 define thing {
-    file { "/tmp/scopetest": create => true, mode => $mode }
+    file { "/tmp/scopetest": ensure => file, mode => $mode }
 }
 
 class testing {

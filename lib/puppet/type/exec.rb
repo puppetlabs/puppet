@@ -5,7 +5,7 @@ module Puppet
             harm, i.e., they are *idempotent*.  One useful way to create idempotent
             commands is to use the *creates* parameter.
 
-            It is worth nothing that ``exec`` is special, in that it is not
+            It is worth noting that ``exec`` is special, in that it is not
             currently considered an error to have multiple ``exec`` instances
             with the same name.  This was done purely because it had to be this
             way in order to get certain functionality, but it complicates things.
@@ -13,7 +13,34 @@ module Puppet
             share their commands with other instances as a dependency, since
             Puppet has no way of knowing which instance you mean.
 
-            It is recommended to avoid duplicate names whenever possible."
+            For example::
+
+                # defined in the production class
+                exec { \"make\":
+                    cwd => \"/prod/build/dir\"
+                }
+
+                . etc. .
+
+                # defined in the test class
+                exec { \"make\":
+                    cwd => \"/test/build/dir\"
+                }
+
+            Any other type would throw an error, complaining that you had
+            the same instance being managed in multiple places, but these are
+            obviously different images, so ``exec`` had to be treated specially.
+
+            It is recommended to avoid duplicate names whenever possible.
+            
+            There is a strong tendency to use ``exec`` to do whatever work Puppet
+            can't already do; while this is obviously acceptable (and unavoidable)
+            in the short term, it is highly recommended to migrate work from ``exec``
+            to real Puppet element types as quickly as possible.  If you find that
+            you are doing a lot of work with ``exec``, please at least notify
+            us at Reductive Labs what you are doing, and hopefully we can work with
+            you to get a native element type for the work you are doing.  In general,
+            it is a Puppet bug if you need ``exec`` to do your work."
 
         require 'open3'
         require 'puppet/type/state'
@@ -27,7 +54,7 @@ module Puppet
 
             attr_reader :output
             desc "The expected return code.  An error will be returned if the
-                executed command returns something else."
+                executed command returns something else.  Defaults to 0."
 
             # Make output a bit prettier
             def change_to_s
@@ -153,18 +180,24 @@ module Puppet
 
         newparam(:command) do
             isnamevar
-            desc "The actual command to execute."
+            desc "The actual command to execute.  Must either be fully qualified
+                or a search path for the command must be provided.  If the command
+                succeeds, any output produced will be logged at the instance's
+                normal log level (usually ``notice``), but if the command fails
+                (meaning its return code does not match the specified code) then
+                any output is logged at the ``err`` log level."
         end
 
         newparam(:path) do
             desc "The search path used for command execution.
-                Commands must be fully qualified if no path is specified."
+                Commands must be fully qualified if no path is specified.  Paths
+                must be specified as an array, not as a colon-separated list."
         end
 
         newparam(:user) do
             desc "The user to run the command as.  Note that if you
                 use this then any error output is not currently captured.  This
-                is mostly because of a bug within Ruby."
+                is because of a bug within Ruby."
 
             munge do |user|
                 unless Process.uid == 0
@@ -192,7 +225,10 @@ module Puppet
         end
 
         newparam(:group) do
-            desc "The group to run the command as."
+            desc "The group to run the command as.  This seems to work quite
+                haphazardly on different platforms -- it is a platform issue
+                not a Ruby or Puppet one, since the same variety exists when
+                running commnands as different users in the shell."
 
             # Execute the command as the specified group
             munge do |group|
@@ -234,13 +270,39 @@ module Puppet
 
         newparam(:refreshonly) do
             desc "The command should only be run as a
-                refresh mechanism for when a dependent object is changed."
+                refresh mechanism for when a dependent object is changed.  It only
+                makes sense to use this option when this command depends on some
+                other object; it is useful for triggering an action::
+                    
+                    # Pull down the main aliases file
+                    file { \"/etc/aliases\":
+                        source => \"puppet://server/module/aliases\"
+                    }
+
+                    # Rebuild the database, but only when the file changes
+                    exec { newaliases:
+                        path => [\"/usr/bin\", \"/usr/sbin\"],
+                        require => file[\"/etc/aliases\"],
+                        refreshonly => true
+                    }
+                
+                "
         end
 
         newparam(:creates) do 
             desc "A file that this command creates.  If this
                 parameter is provided, then the command will only be run
-                if the specified file does not exist."
+                if the specified file does not exist.
+                
+                ::
+
+                    exec { \"tar xf /my/tar/file.tar\":
+                        cwd => \"/var/tmp\",
+                        creates => \"/var/tmp/myfile\",
+                        path => [\"/usr/bin\", \"/usr/sbin\"]
+                    }
+                
+                "
 
             # FIXME if they try to set this and fail, then we should probably 
             # fail the entire exec, right?

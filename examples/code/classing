@@ -12,7 +12,7 @@ class base() {
 
 class server inherits base {
     file { "/tmp/puppetfiletest":
-        create => true
+        ensure => file
     }
 }
 

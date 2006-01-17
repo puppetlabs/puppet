@@ -15,6 +15,12 @@ module Puppet
                 end
             end
 
+            def nodefault
+                undef_method :default
+                #if defined_method? :default
+                #end
+            end
+
             # Store documentation for this parameter.
             def desc(str)
                 @doc = str

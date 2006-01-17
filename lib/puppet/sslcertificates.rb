@@ -28,7 +28,7 @@ module SSLCertificates
                     obj = Puppet::Type.type(:file).create(
                         :name => File.join(path),
                         :mode => "750",
-                        :create => "directory"
+                        :ensure => "directory"
                     )
 
                     comp.push obj

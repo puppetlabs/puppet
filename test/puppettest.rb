@@ -289,7 +289,7 @@ module ServerTest
         @createdfile = File.join(tmpdir(), self.class.to_s + "servermanifesttesting")
 
         File.open(file, "w") { |f|
-            f.puts "file { \"%s\": create => true, mode => 755 }\n" % @createdfile
+            f.puts "file { \"%s\": ensure => file, mode => 755 }\n" % @createdfile
         }
 
         @@tmpfiles << @createdfile

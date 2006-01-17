@@ -3,7 +3,22 @@ module Puppet
         desc "Specify the contents of a file as a string.  Newlines, tabs, and spaces
             can be specified using the escaped syntax (e.g., \\n for a newline).  The
             primary purpose of this parameter is to provide a kind of limited
-            templating."
+            templating::
+
+                define resolve(nameserver1, nameserver2, domain, search) {
+                    $str = \"search $search
+                domain $domain
+                nameserver $nameserver1
+                nameserver $nameserver2
+                \"
+
+                    file { \"/etc/resolv.conf\":
+                        content => $str
+                    }
+                }
+            
+            Yes, it's very primitive, and it's useless for larger files, but it
+            is mostly meant as a stopgap measure for simple cases."
 
         def change_to_s
             "synced"
@@ -13,7 +28,7 @@ module Puppet
         # but I really don't feel like dealing with the complexity right now.
         def retrieve
             unless FileTest.exists?(@parent.name)
-                @is = :notfound
+                @is = :absent
                 return
             end
             begin
@@ -38,7 +53,7 @@ module Puppet
                     [@parent.name, detail]
             end
 
-            if @is == :notfound
+            if @is == :absent
                 return :file_created
             else
                 return :file_changed

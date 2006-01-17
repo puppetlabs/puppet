@@ -167,6 +167,7 @@ class TestPackages < Test::Unit::TestCase
 
             comp = newcomp("package", pkg)
 
+            Puppet.err :mark
             assert_events([:package_created], comp, "package")
 
             # then uninstall it
@@ -176,6 +177,8 @@ class TestPackages < Test::Unit::TestCase
 
 
             pkg.retrieve
+
+            p pkg
 
             assert(! pkg.insync?, "Package is in sync")
 

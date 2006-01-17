@@ -1,8 +1,8 @@
 # $Id$
 
 file {
-    "/tmp/dirchmodtesta": create => directory;
-    "/tmp/dirchmodtesta/testing": create => true
+    "/tmp/dirchmodtesta": ensure => directory;
+    "/tmp/dirchmodtesta/testing": ensure => file
 }
 
 file { "/tmp/dirchmodtesta":
@@ -10,8 +10,8 @@ file { "/tmp/dirchmodtesta":
 }
 
 file {
-    "/tmp/dirchmodtestb": create => directory;
-    "/tmp/dirchmodtestb/testing": create => true
+    "/tmp/dirchmodtestb": ensure => directory;
+    "/tmp/dirchmodtestb/testing": ensure => file
 }
 
 file { "/tmp/dirchmodtestb":

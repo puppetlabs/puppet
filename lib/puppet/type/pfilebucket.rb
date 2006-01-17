@@ -10,7 +10,13 @@ module Puppet
             for backing up.  It stores files and returns the MD5 sum, which
             can later be used to retrieve the file if restoration becomes
             necessary.  A filebucket does not do any work itself; instead,
-            it can be specified as the value of *backup* in a **file** object."
+            it can be specified as the value of *backup* in a **file** object.
+            
+            Currently, filebuckets are only useful for manual retrieval of
+            accidentally removed files (e.g., you look in the log for the md5
+            sum and retrieve the file with that sum from the filebucket), but
+            when transactions are fully supported filebuckets will be used to
+            undo transactions."
 
         @states = []
 

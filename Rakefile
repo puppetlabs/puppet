@@ -52,11 +52,15 @@ task :default => :alltests
 task :u => :unittests
 task :a => :alltests
 
-Rake::TestTask.new(:alltests) do |t|
-    t.test_files = FileList['test/*/*.rb']
-    t.warning = true
-    t.verbose = false
+task :alltests do
+    sh %{cd test; ./test}
 end
+
+#Rake::TestTask.new(:alltests) do |t|
+#    t.test_files = FileList['test/*/*.rb']
+#    t.warning = true
+#    t.verbose = false
+#end
 
 #Rake::TestTask.new(:unittests) do |t|
 #    t.test_files = FileList['test/test']
@@ -348,6 +352,9 @@ task :hosttest do
         out += %x{ssh #{host} 'cd puppet/test; sudo ./test' 2>&1} 
 
         if $? != 0
+            file = File.join("/tmp", "%stest.out" % host)
+            File.open(file, "w") { |of| of.print out }
+            puts "%s failed; output is in %s" % [host, file]
             puts out
         end
         #sh %{ssh #{host} 'cd #{cwd}/test; sudo ./test' 2>&1} 

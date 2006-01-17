@@ -8,9 +8,17 @@ require 'puppet/type/state'
 module Puppet
     class PackageError < Puppet::Error; end
     newtype(:package) do
-        @doc = "Manage packages.  Eventually will support retrieving packages
-            from remote sources but currently only supports packaging
-            systems which can retrieve their own packages, like ``apt``."
+        @doc = "Manage packages.  There is a basic dichotomy in package
+            support right now:  Some package types (e.g., yum and apt) can
+            retrieve their own package files, while others (e.g., rpm and
+            sunpkg) cannot.  For those package formats that cannot retrieve
+            their own files, you can use the ``source`` parameter to point to
+            the correct file.
+
+            Puppet will automatically guess the packaging format that you are
+            using based on the platform you are on, but you can override it
+            using the ``type`` parameter; obviously, if you specify that you
+            want to use ``rpm`` then the ``rpm`` tools must be available."
 
         # Create a new packaging type
         def self.newpkgtype(name, parent = nil, &block)
@@ -64,43 +72,57 @@ module Puppet
         end
 
         ensurable do
-            desc "What state the package should be in.  Specifying *true* will
-                only result in a change if the package is not installed at all;
-                use *latest* to keep the package (and, depending on the package
-                system, its prerequisites) up to date.  Specifying *false* will
-                uninstall the package if it is installed.
-                *true*/*false*/*latest*"
+            desc "What state the package should be in.  The primary options
+                are *installed* (also called *present*), *uninstalled* (also
+                called *absent*), and *latest*.  *latest* only makes sense for
+                those packaging formats that can retrieve new packages on
+                their own."
 
-            munge do |value|
-                # possible values are: true, false, and a version number
-                case value
-                when "latest":
-                    unless @parent.respond_to?(:latest)
-                        self.err @parent.inspect
-                        raise Puppet::Error,
-                            "Package type %s cannot install later versions" %
-                            @parent[:type].name
-                    end
-                    return :latest
-                when true, :present:
-                    return :present
-                when false, :absent:
-                    return :absent
-                else
-                    # We allow them to set a should value however they want,
-                    # but only specific package types will be able to use this
-                    # value
-                    return value
-                end
+            #munge do |value|
+            #    # possible values are: true, false, and a version number
+            #    case value
+            #    when "latest":
+            #        unless @parent.respond_to?(:latest)
+            #            self.err @parent.inspect
+            #            raise Puppet::Error,
+            #                "Package type %s cannot install later versions" %
+            #                @parent[:type].name
+            #        end
+            #        return :latest
+            #    when true, :present:
+            #        return :present
+            #    when false, :absent:
+            #        return :absent
+            #    else
+            #        # We allow them to set a should value however they want,
+            #        # but only specific package types will be able to use this
+            #        # value
+            #        return value
+            #    end
+            #end
+
+            newvalue(:present) do
+                @parent.install
+            end
+
+            newvalue(:absent) do
+                @parent.uninstall
             end
 
             # Alias the 'present' value.
-            newvalue(:installed) do
-                self.set(:present)
-            end
+            aliasvalue(:installed, :present)
+            #newvalue(:installed) do
+            #    self.set(:present)
+            #end
 
             newvalue(:latest) do
                 @parent.update
+
+                if self.is == :absent
+                    return :package_created
+                else
+                    return :package_changed
+                end
             end
 
             # Override the parent method, because we've got all kinds of
@@ -168,12 +190,47 @@ module Puppet
         attr_reader :pkgtype
 
         newparam(:name) do
-            desc "The package name."
+            desc "The package name.  This is the name that the packaging
+            system uses internally, which is sometimes (especially on Solaris)
+            a name that is basically useless to humans.  If you want to
+            abstract package installation, then you can use aliases to provide
+            a common name to packages::
+
+                # In the 'openssl' class
+                $ssl = $operationgsystem ? {
+                    solaris => SMCossl,
+                    default => openssl
+                }
+
+                # It is not an error to set an alias to the same value as the
+                # object name.
+                package { $ssl:
+                    ensure => installed,
+                    alias => openssl
+                }
+
+                . etc. .
+
+                $ssh = $operationgsystem ? {
+                    solaris => SMCossh,
+                    default => openssh
+                }
+
+                # Use the alias to specify a dependency, rather than
+                # having another selector to figure it out again.
+                package { $ssh:
+                    ensure => installed,
+                    alias => openssh,
+                    require => package[openssl]
+                }
+            
+            "
             isnamevar
         end
 
         newparam(:type) do
-            desc "The package format, e.g., rpm or dpkg."
+            desc "The package format.  You will seldom need to specify this -- Puppet
+                will discover the appropriate format for your platform."
 
             defaultto { @parent.class.default }
 
@@ -206,7 +263,10 @@ module Puppet
         # it almost seems like versions should be a read-only state,
         # supporting syncing only in certain cases.
         newparam(:version) do
-            desc "A read-only parameter set by the package."
+            desc "For some platforms this is a read-only parameter set by the
+                package, but for others, setting this parameter will cause
+                the package of that version to be installed.  It just depends
+                on the features of the packaging system."
 
 #            validate do |value|
 #                unless @parent.respond_to?(:versionable?) and @parent.versionable?
@@ -354,10 +414,6 @@ module Puppet
                 }
                 return obj
             end
-        end
-
-        def create
-            self.install
         end
 
         # The 'query' method returns a hash of info if the package

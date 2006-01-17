@@ -155,7 +155,15 @@ module Puppet
             cannot delete them.  Theoretically all of the parameters are
             optional, but if no parameters are specified the comment will
             be set to the user name in order to make the internals work out
-            correctly."
+            correctly.
+            
+            This element type uses the prescribed native tools for creating
+            groups and generally uses POSIX APIs for retrieving information
+            about them.  It does not directly modify /etc/passwd or anything.
+            
+            For most platforms, the tools used are ``useradd`` and its ilk;
+            for Mac OS X, NetInfo is used.  This is currently unconfigurable,
+            but if you desperately need it to be so, please contact us."
 
         @netinfodir = "users"
 

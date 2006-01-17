@@ -8,7 +8,7 @@ $path = "../examples/root/etc/configfile"
 
 define files {
     file { "/tmp/yaytest":
-        create => true,
+        ensure => file,
         mode => 755
     }
     file { "/tmp/exists":

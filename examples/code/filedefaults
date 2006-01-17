@@ -6,5 +6,5 @@ File {
 }
 
 file { "/tmp/filedefaultstest":
-    create => true
+    ensure => file
 }

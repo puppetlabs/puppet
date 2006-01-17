@@ -6,7 +6,7 @@ module Puppet
     Puppet.type(:file).newstate(:checksum) do
         desc "How to check whether a file has changed.  **md5**/*lite-md5*/
             *time*/*mtime*"
-        @event = :file_modified
+        @event = :file_changed
 
         @unmanaged = true
 
@@ -96,7 +96,7 @@ module Puppet
                     return :nosum
                 end
             else
-                # We can't use :notfound here, because then it'll match on
+                # We can't use :absent here, because then it'll match on
                 # non-existent files
                 return :nosum
             end
@@ -111,7 +111,7 @@ module Puppet
             end
 
             unless FileTest.exists?(@parent.name)
-                self.is = :notfound
+                self.is = :absent
                 return
             end
 
@@ -141,7 +141,7 @@ module Puppet
                     @parent.name
             end
 
-            if @is == :notfound
+            if @is == :absent
                 self.retrieve
 
                 if self.insync?
@@ -153,7 +153,7 @@ module Puppet
 
                 # If we still can't retrieve a checksum, it means that
                 # the file still doesn't exist
-                if @is == :notfound
+                if @is == :absent
                     # if they're copying, then we won't worry about the file
                     # not existing yet
                     unless @parent.state(:source)
@@ -168,7 +168,7 @@ module Puppet
 
             # If the sums are different, then return an event.
             if self.updatesum
-                return :file_modified
+                return :file_changed
             else
                 return nil
             end
@@ -188,7 +188,7 @@ module Puppet
                 error = Puppet::Error.new("%s has invalid checksum" %
                     @parent.name)
                 raise error
-            #elsif @should == :notfound
+            #elsif @should == :absent
             #    error = Puppet::Error.new("%s has invalid 'should' checksum" %
             #        @parent.name)
             #    raise error
@@ -212,6 +212,7 @@ module Puppet
                 result = false
             end
             state[@parent.name][@checktypes[0]] = @is
+            self.info "result is %s" % result.inspect
             return result
         end
     end

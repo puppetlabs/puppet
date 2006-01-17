@@ -19,6 +19,7 @@ module Puppet
         # What's the latest package version available?
         def latest
             cmd = "yum list %s" % self.name 
+            self.info "Executing %s" % cmd.inspect
             output = %x{#{cmd} 2>&1}
 
             unless $? == 0
@@ -38,6 +39,12 @@ module Puppet
         end
 
         def update
+            # Yum can't update packages that aren't there; we have to install
+            # them first
+            if self.is(:ensure) == :absent
+                self.info "performing initial install"
+                return self.install
+            end
             cmd = "yum -y update %s" % self.name
 
             self.info "Executing %s" % cmd.inspect

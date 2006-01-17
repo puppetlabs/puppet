@@ -1,7 +1,7 @@
 # $Id$
 
 define testargs(file, mode = 755) {
-    file { $file: create => true, mode => $mode }
+    file { $file: ensure => file, mode => $mode }
 }
 
 testargs { "testingname":

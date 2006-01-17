@@ -123,9 +123,9 @@ class TestTransactions < Test::Unit::TestCase
 
             file[:mode] = "755"
         }
-        trans = assert_events([:inode_changed, :inode_changed], component)
+        trans = assert_events([:file_changed, :file_changed], component)
 
-        assert_rollback_events(trans, [:inode_changed, :inode_changed], "file")
+        assert_rollback_events(trans, [:file_changed, :file_changed], "file")
 
         assert_nothing_raised() {
             file.retrieve
@@ -188,7 +188,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:mode] = "755"
         }
 
-        trans = assert_events( [:inode_changed], component)
+        trans = assert_events( [:file_changed], component)
 
         assert(FileTest.exists?(execfile), "Execfile does not exist")
         File.unlink(execfile)
@@ -196,7 +196,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:group] = @groups[1]
         }
 
-        trans = assert_events([:inode_changed], component)
+        trans = assert_events([:file_changed], component)
         assert(FileTest.exists?(execfile), "Execfile does not exist")
     end
 
@@ -227,7 +227,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:mode] = "755"
         }
 
-        trans = assert_events([:inode_changed, :inode_changed], component)
+        trans = assert_events([:file_changed, :file_changed], component)
 
     end
 

@@ -11,7 +11,7 @@ module Puppet
             if stat = @parent.stat(true)
                 @is = stat.ftype
             else
-                @is = :notfound
+                @is = :absent
             end
 
             # so this state is never marked out of sync

@@ -4,7 +4,7 @@ module Puppet
         require 'etc'
         desc "Which group should own the file.  Argument can be either group
             name or group ID."
-        @event = :inode_changed
+        @event = :file_changed
 
         def id2name(id)
             begin
@@ -95,11 +95,11 @@ module Puppet
         # we'll just let it fail, but we should probably set things up so
         # that users get warned if they try to change to an unacceptable group.
         def sync
-            if @is == :notfound
+            if @is == :absent
                 @parent.stat(true)
                 self.retrieve
 
-                if @is == :notfound
+                if @is == :absent
                     self.err "File '%s' does not exist; cannot chgrp" %
                         @parent[:path]
                     return nil
@@ -118,7 +118,7 @@ module Puppet
                     [@parent[:path], self.should, detail.message])
                 raise error
             end
-            return :inode_changed
+            return :file_changed
         end
     end
 end
