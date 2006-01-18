@@ -1,3 +1,10 @@
+0.11.2
+    Fixed bugs related to specifying arrays of requirements
+    Fixed a key bug in retrieving checksums
+    Fixed lots of usability bugs
+    Added 'fail' methods that automatically add file and line info when possible,
+    and converted many errors to use that method
+
 0.11.1
     Fixed bug with recursive copying with 'ignore' set.
     Added OpenBSD package support.
