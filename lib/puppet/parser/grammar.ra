@@ -36,7 +36,7 @@ program:    statements {
 #    end
 }
 
-statements:   statement
+statements: statement
             | statements statement {
     if val[0].is_a?(AST::ASTArray)
         val[0].push(val[1])
@@ -345,6 +345,18 @@ caseopt:        casevalues COLON LBRACE statements RBRACE {
         :line => @lexer.line,
         :statements => val[3]
     )
+}               | casevalues COLON LBRACE RBRACE {
+    result = AST::CaseOpt.new(
+        :pin => ":",
+        :value => val[0],
+        :file => @lexer.file,
+        :line => @lexer.line,
+        :statements => AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => []
+        )
+    )
 }
 
 casevalues:       selectlhand
@@ -473,6 +485,18 @@ definition: DEFINE NAME argumentlist LBRACE statements RBRACE {
         :line => @lexer.line,
         :code => val[4]
     )
+}           | DEFINE NAME argumentlist LBRACE RBRACE {
+    result = AST::CompDef.new(
+        :name => AST::Name.new(:value => val[1], :line => @lexer.line),
+        :args => val[2],
+        :file => @lexer.file,
+        :line => @lexer.line,
+        :code => AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => []
+        )
+    )
 }
 
 #hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
@@ -483,6 +507,22 @@ hostclass: CLASS NAME parent LBRACE statements RBRACE {
         :file => @lexer.file,
         :line => @lexer.line,
         :code => val[4]
+    }
+    # It'll be an ASTArray if we didn't get a parent
+    if val[2].is_a?(AST::Name)
+        args[:parentclass] = val[2]
+    end
+    result = AST::ClassDef.new(args)
+}           | CLASS NAME parent LBRACE RBRACE {
+    args = {
+        :name => AST::Name.new(:value => val[1], :line => @lexer.line),
+        :file => @lexer.file,
+        :line => @lexer.line,
+        :code => AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => []
+        )
     }
     # It'll be an ASTArray if we didn't get a parent
     if val[2].is_a?(AST::Name)
@@ -504,6 +544,28 @@ nodedef: NODE names parent LBRACE statements RBRACE {
         :line => @lexer.line,
         :names => val[1],
         :code => val[4]
+    }
+    if val[2].is_a?(AST::Name)
+        args[:parentclass] = val[2]
+    end
+    result = AST::NodeDef.new(args)
+}       |  NODE names parent LBRACE RBRACE {
+    unless val[1].is_a?(AST::ASTArray)
+        val[1] = AST::ASTArray.new(
+            :line => val[1].line,
+            :file => val[1].file,
+            :children => [val[1]]
+        )
+    end
+    args = {
+        :file => @lexer.file,
+        :line => @lexer.line,
+        :names => val[1],
+        :code => AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => []
+        )
     }
     if val[2].is_a?(AST::Name)
         args[:parentclass] = val[2]
