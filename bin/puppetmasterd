@@ -61,6 +61,9 @@
 #   configurations.  Defaults to /etc/puppet/manifests/site.pp.
 #
 # noca::
+#   Do not function as a file bucket.
+#
+# noca::
 #   Do not function as a certificate authority.
 #
 # nonodes::
@@ -116,6 +119,7 @@ result = GetoptLong.new(
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--manifest",	"-m",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--noca",         			GetoptLong::NO_ARGUMENT ],
+	[ "--nobucket",        			GetoptLong::NO_ARGUMENT ],
 	[ "--nonodes",         			GetoptLong::NO_ARGUMENT ],
 	[ "--parseonly",   			    GetoptLong::NO_ARGUMENT ],
 	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
@@ -139,11 +143,14 @@ haveca = true
 master = {}
 ca = {}
 fs = {}
+bucket = {}
 args = {}
 #user = Puppet[:user]
 #group = Puppet[:group]
 user = nil
 group = nil
+
+havebucket = true
 
 parseonly = false
 
@@ -177,6 +184,8 @@ begin
                 master[:File] = arg
             when "--noca"
                 haveca = false
+            when "--nobucket"
+                havebucket = false
             when "--nonodes"
                 master[:UseNodes] = false
             when "--parseonly"
@@ -270,6 +279,10 @@ handlers = {
 if haveca
     handlers[:CA] = ca
 end
+
+#if havebucket
+#    handlers[:FileBucket] = bucket
+#end
 
 unless fs.include?(:Config)
     if File.exists?(Puppet[:fileserverconfig])

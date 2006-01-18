@@ -10,7 +10,7 @@ require 'puppet/parser/scope'
 module Puppet
     module Parser
         class Interpreter
-            attr_accessor :ast
+            attr_accessor :ast, :filetimeout
             # just shorten the constant path a bit, using what amounts to an alias
             AST = Puppet::Parser::AST
 
@@ -21,6 +21,9 @@ module Puppet
                 end
 
                 @file = hash[:Manifest]
+                @filetimeout = hash[:ParseCheck] || 15
+
+                @lastchecked = 0
 
                 if hash.include?(:UseNodes)
                     @usenodes = hash[:UseNodes]
@@ -36,6 +39,11 @@ module Puppet
                 parsefiles
 
                 evaluate
+            end
+
+            def parsedate
+                parsefiles()
+                @parsedate
             end
 
             # evaluate our whole tree
@@ -124,14 +132,20 @@ module Puppet
 
             def parsefiles
                 if defined? @parser
-                    unless @parser.reparse?
-                        return false
+                    # Only check the files every 15 seconds or so, not on
+                    # every single connection
+                    if (Time.now - @lastchecked).to_i >= @filetimeout.to_i
+                        unless @parser.reparse?
+                            @lastchecked = Time.now
+                            return false
+                        end
+                    else
+                        return
                     end
                 end
 
                 unless FileTest.exists?(@file)
                     if @ast
-                        Puppet.warning "Manifest %s has disappeared" % @file
                         return
                     else
                         raise Puppet::Error, "Manifest %s must exist" % @file
@@ -145,6 +159,10 @@ module Puppet
                 @parser = Puppet::Parser::Parser.new()
                 @parser.file = @file
                 @ast = @parser.parse
+
+                # Mark when we parsed, so we can check freshness
+                @parsedate = Time.now.to_i
+                @lastchecked = Time.now
 
                 # Reevaluate the config.  This is what actually replaces the
                 # existing scope.

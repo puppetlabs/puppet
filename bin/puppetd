@@ -10,7 +10,8 @@
 #
 #   puppetd  [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
 #               [--ssldir <cert directory>] [-l|--logdest <syslog|<file>|console>]
-#               [--fqdn <host name>] [-p|--port <port>] [-s|--server <server>]
+#               [--fqdn <host name>] [-p|--port <port>] [-o|--onetime]
+#               [-s|--server <server>]
 #               [-w|--waitforcert <seconds>] [-c|--confdir <configuration directory>]
 #               [--vardir <var directory>] [--centrallogging]
 #
@@ -55,6 +56,9 @@
 #
 # port::
 #   The port to which to connect on the remote server.  Currently defaults to 8139.
+#
+# onetime::
+#   Run the configuration once, rather than as a long-running daemon.
 #
 # server::
 #   The remote server from whom to receive the local configuration.  Currently
@@ -111,6 +115,7 @@ result = GetoptLong.new(
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--noop",	    "-n",			GetoptLong::NO_ARGUMENT ],
+	[ "--onetime",  "-o",			GetoptLong::NO_ARGUMENT ],
 	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--server",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--ssldir",   				GetoptLong::REQUIRED_ARGUMENT ],
@@ -125,6 +130,8 @@ fqdn = nil
 args = {}
 
 waitforcert = false
+
+onetime = false
 
 centrallogs = false
 begin
@@ -158,6 +165,8 @@ begin
                 fqdn = arg
             when "--server"
                 server = arg
+            when "--onetime"
+                onetime = true
             when "--port"
                 args[:Port] = arg
             when "--logdest"
@@ -239,16 +248,8 @@ trap(:INT) {
     exit(1)
 }
 
-# and then retrieve and apply our configuration
-begin
-    client.getconfig
-    client.apply
-rescue => detail
-    Puppet.err detail.to_s
-    if Puppet[:debug]
-        puts detail.backtrace
-    end
-    exit(13)
-end
+client.run(onetime)
+
+#Puppet.join
 
 # $Id$

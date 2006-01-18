@@ -14,7 +14,25 @@ class Server
 
         @interface = XMLRPC::Service::Interface.new("puppetmaster") { |iface|
                 iface.add_method("string getconfig(string)")
+                iface.add_method("int freshness()")
         }
+
+        def filetimeout
+            @interpreter.filetimeout
+        end
+
+        def filetimeout=(int)
+            @interpreter.filetimeout = int
+        end
+
+        # Tell a client whether there's a fresh config for it
+        def freshness(client = nil, clientip = nil)
+            if defined? @interpreter
+                return @interpreter.parsedate
+            else
+                return 0
+            end
+        end
 
         def initialize(hash = {})
 
@@ -35,9 +53,11 @@ class Server
                 @ca = nil
             end
 
+            @parsecheck = hash[:FileTimeout] || 15
+
             Puppet.debug("Creating interpreter")
 
-            args = {:Manifest => @file}
+            args = {:Manifest => @file, :ParseCheck => @parsecheck}
 
             if hash.include?(:UseNodes)
                 args[:UseNodes] = hash[:UseNodes]

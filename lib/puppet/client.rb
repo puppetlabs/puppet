@@ -276,6 +276,26 @@ module Puppet
                 return transaction
             end
 
+            # Cache the config
+            def cache(text)
+                Puppet.info "Caching configuration at %s" % self.cachefile
+                confdir = File.dirname(Puppet[:localconfig])
+                unless FileTest.exists?(confdir)
+                    Puppet.recmkdir(confdir, 0770)
+                end
+                File.open(self.cachefile + ".tmp", "w", 0660) { |f|
+                    f.print text
+                }
+                File.rename(self.cachefile + ".tmp", self.cachefile)
+            end
+
+            def cachefile
+                unless defined? @cachefile
+                    @cachefile = Puppet[:localconfig] + ".yaml"
+                end
+                @cachefile
+            end
+
             # Initialize and load storage
             def dostorage
                 begin
@@ -293,9 +313,27 @@ module Puppet
                 end
             end
 
+            # Check whether our configuration is up to date
+            def fresh?
+                unless defined? @configstamp
+                    return false
+                end
+
+                # We're willing to give a 2 second drift
+                if @driver.freshness - @configstamp < 1
+                    return true
+                else
+                    return false
+                end
+            end
+
             # Retrieve the config from a remote server.  If this fails, then
             # use the cached copy.
             def getconfig
+                if self.fresh?
+                    Puppet.info "Config is up to date"
+                    return
+                end
                 Puppet.debug("getting config")
                 dostorage()
 
@@ -309,50 +347,47 @@ module Puppet
 
                 objects = nil
                 if @local
+                    # If we're local, we don't have to do any of the conversion
+                    # stuff.
                     objects = @driver.getconfig(facts, "yaml")
+                    @configstamp = Time.now.to_i
 
                     if objects == ""
                         raise Puppet::Error, "Could not retrieve configuration"
                     end
                 else
+                    textobjects = ""
+
                     textfacts = CGI.escape(YAML.dump(facts))
 
                     # error handling for this is done in the network client
-                    textobjects = @driver.getconfig(textfacts, "yaml")
-
-                    unless textobjects == ""
-                        begin
-                            textobjects = CGI.unescape(textobjects)
-                        rescue => detail
-                            raise Puppet::Error, "Could not CGI.unescape configuration"
-                        end
+                    begin
+                        textobjects = @driver.getconfig(textfacts, "yaml")
+                    rescue => detail
+                        Puppet.err "Could not retrieve configuration: %s" % detail
                     end
 
-                    cachefile = Puppet[:localconfig] + ".yaml"
-                    if @cache
+                    fromcache = false
+                    if textobjects == ""
+                        textobjects = self.retrievecache
                         if textobjects == ""
-                            if FileTest.exists?(cachefile)
-                                textobjects = File.read(cachefile)
-                            else
-                                raise Puppet::Error.new(
-                                    "Cannot connect to server and there is no cached configuration"
-                                )
-                            end
-                        else
-                            # We store the config so that if we can't connect
-                            # next time, we can just run against the most
-                            # recently acquired copy.
-                            Puppet.info "Caching configuration at %s" % cachefile
-                            confdir = File.dirname(Puppet[:localconfig])
-                            unless FileTest.exists?(confdir)
-                                Puppet.recmkdir(confdir, 0770)
-                            end
-                            File.open(cachefile, "w", 0660) { |f|
-                                f.print textobjects
-                            }
+                            raise Puppet::Error.new(
+                                "Cannot connect to server and there is no cached configuration"
+                            )
                         end
-                    elsif textobjects == ""
-                        raise Puppet::Error, "Could not retrieve configuration"
+                        Puppet.notice "Could not get config; using cached copy"
+                        fromcache = true
+                    end
+
+                    begin
+                        textobjects = CGI.unescape(textobjects)
+                        @configstamp = Time.now.to_i
+                    rescue => detail
+                        raise Puppet::Error, "Could not CGI.unescape configuration"
+                    end
+
+                    if @cache and ! fromcache
+                        self.cache(textobjects)
                     end
 
                     begin
@@ -372,14 +407,14 @@ module Puppet
                 if classes = objects.classes
                     self.setclasses(classes)
                 else
-                    Puppet.info "No classes"
+                    Puppet.info "No classes to store"
                 end
 
                 # Clear all existing objects, so we can recreate our stack.
-                @objects = nil
                 if defined? @objects
                     Puppet::Type.allclear
                 end
+                @objects = nil
 
                 # Now convert the objects to real Puppet objects
                 @objects = objects.to_type
@@ -393,6 +428,46 @@ module Puppet
                 Puppet::Type.finalize
 
                 return @objects
+            end
+
+            # Retrieve the cached config
+            def retrievecache
+                if FileTest.exists?(self.cachefile)
+                    return File.read(self.cachefile)
+                else
+                    return ""
+                end
+            end
+
+            # The code that actually runs the configuration.  For now, just
+            # ignore the onetime thing.
+            def run(onetime = false)
+                #if onetime
+                    begin
+                        self.getconfig
+                        self.apply
+                    rescue => detail
+                        Puppet.err detail.to_s
+                        if Puppet[:debug]
+                            puts detail.backtrace
+                        end
+                        exit(13)
+                    end
+                    return
+                #end
+
+#                Puppet.newthread do
+#                    begin
+#                        self.getconfig
+#                        self.apply
+#                    rescue => detail
+#                        Puppet.err detail.to_s
+#                        if Puppet[:debug]
+#                            puts detail.backtrace
+#                        end
+#                        exit(13)
+#                    end
+#                end
             end
 
             def setclasses(ary)

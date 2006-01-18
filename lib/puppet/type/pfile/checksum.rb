@@ -134,7 +134,6 @@ module Puppet
             # out of sync.  We don't want to generate an event the first
             # time we get a sum.
             if ! defined? @should or @should == [:nosum]
-                self.info "@should is %s" % @should.inspect
                 @should = [@is]
                 # FIXME we should support an updatechecksums-like mechanism
                 self.updatesum

@@ -207,6 +207,18 @@ PUPPETVERSION = '0.11.2'
         return retval
     end
 
+    def self.join
+        return unless defined? @threads
+        @threads.each { |th| th.join }
+    end
+
+    def self.newthread
+        @threads ||= []
+        @threads << Thread.new {
+            yield
+        }
+    end
+
     def self.setdefault(param,value)
         if value.is_a?(Array) 
             if value[0].is_a?(Symbol) 
