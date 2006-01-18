@@ -17,15 +17,15 @@ module Puppet
 
             def create
                 begin
-                    debug("Creating symlink '%s' to '%s'" %
+                    @parent.debug("Creating symlink '%s' to '%s'" %
                         [self.parent[:path],self.should])
                     unless File.symlink(self.should,self.parent[:path])
-                        raise TypeError.new("Could not create symlink '%s'" %
-                            self.parent[:path])
+                        self.fail "Could not create symlink '%s'" %
+                            self.parent[:path]
                     end
                 rescue => detail
-                    raise TypeError.new("Cannot create symlink '%s': %s" %
-                        [self.parent[:path],detail])
+                    self.fail "Cannot create symlink '%s': %s" %
+                        [self.parent[:path],detail]
                 end
             end
 
@@ -35,14 +35,14 @@ module Puppet
                     begin
                         File.unlink(self.parent[:path])
                     rescue
-                        raise TypeError.new("Failed to remove symlink '%s'" %
-                            self.parent[:path])
+                        self.fail "Failed to remove symlink '%s'" %
+                            self.parent[:path]
                     end
                 elsif FileTest.exists?(self.parent[:path])
-                    raise TypeError.new("Cannot remove normal file '%s'" %
-                        self.parent[:path])
+                    self.fail "Cannot remove normal file '%s'" %
+                        self.parent[:path]
                 else
-                    debug("Symlink '%s' does not exist" %
+                    @parent.debug("Symlink '%s' does not exist" %
                         self.parent[:path])
                 end
             end
@@ -73,8 +73,8 @@ module Puppet
                             self.create()
                         end
                     elsif FileTest.exists?(self.parent[:path])
-                        raise TypeError.new("Cannot replace normal file '%s'" %
-                            self.parent[:path])
+                        self.fail "Cannot replace normal file '%s'" %
+                            self.parent[:path]
                     else
                         self.create()
                     end

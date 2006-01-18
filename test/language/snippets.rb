@@ -370,6 +370,14 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
+    def snippet_singleary(trans)
+        [1,2,3,4].each { |num|
+            file = "/tmp/singleary%s" % num
+            @@tmpfiles << file
+            assert(FileTest.file?(file), "File %s does not exist" % file)
+        }
+    end
+
     def snippet_classincludes(trans)
         [1,2,3].each { |num|
             file = "/tmp/classincludes%s" % num
@@ -378,6 +386,10 @@ class TestSnippets < Test::Unit::TestCase
             assert(File.stat(file).mode & 007777 == 0755,
                 "File %s is not 755" % file)
         }
+    end
+
+    def snippet_emptyclass(trans)
+        # There's nothing to check other than that it works
     end
 
     def disabled_snippet_dirchmod(trans)

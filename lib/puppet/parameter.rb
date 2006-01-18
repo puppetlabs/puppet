@@ -152,6 +152,31 @@ module Puppet
         #    end
         #end
 
+        def devfail(msg)
+            self.fail(Puppet::DevError, msg)
+        end
+
+        def fail(*args)
+            type = nil
+            if args[0].is_a?(Class)
+                type = args.shift
+            else
+                type = Puppet::Error
+            end
+
+            error = type.new(args.join(" "))
+
+            if defined? @parent and @parent and @parent.line
+                error.line = @parent.line
+            end
+
+            if defined? @parent and @parent and @parent.file
+                error.file = @parent.file
+            end
+
+            raise error
+        end
+
         # This should only be called for parameters, but go ahead and make
         # it possible to call for states, too.
         def value

@@ -26,7 +26,6 @@ module Puppet
             @type = type
             @name = name
             @params = {"name" => name}
-            #Puppet.info @params.inspect
             #self.class.add(self)
         end
 
@@ -53,13 +52,11 @@ module Puppet
         end
 
         def to_type(parent = nil)
-            if parent
-                self[:parent] = parent
-            end
             retobj = nil
             if type = Puppet::Type.type(self.type)
                 unless retobj = type.create(self)
-                    Puppet.info "Could not create object"
+                    Puppet.notice "Could not create %s[%s]" %
+                        [self.type, self.name]
                     return nil
                 end
                 #retobj.file = @file
@@ -74,10 +71,9 @@ module Puppet
             #end
 
             if parent
+                self[:parent] = parent
                 parent.push retobj
             end
-
-            Puppet.info retobj.class
 
             return retobj
         end
@@ -147,7 +143,7 @@ module Puppet
                     hash[param] = value
                 }
             else
-                Puppet.debug "%s[%s] has no parameters" % [@type, @name]
+                #Puppet.debug "%s[%s] has no parameters" % [@type, @name]
             end
 
             if parent

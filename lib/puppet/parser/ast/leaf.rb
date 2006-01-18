@@ -29,11 +29,8 @@ class Puppet::Parser::AST
             super
 
             unless @value == 'true' or @value == 'false'
-                error = Puppet::DevError.new(
+                raise Puppet::DevError,
                     "'%s' is not a boolean" % @value
-                )
-                error.stack = caller
-                raise error
             end
             if @value == 'true'
                 @value = true
@@ -80,7 +77,7 @@ class Puppet::Parser::AST
                 error = Puppet::DevError.new(detail)
                 error.line = self.line
                 error.file = self.file
-                error.stack = caller
+                error.backtrace = detail.backtrace
                 raise error
             end
         end

@@ -273,6 +273,9 @@ class TestFile < Test::Unit::TestCase
     end
 
     def test_checksums
+    end
+
+    def test_checksums
         types = %w{md5 md5lite timestamp time}
         exists = "/tmp/sumtest-exists"
         nonexists = "/tmp/sumtest-nonexists"

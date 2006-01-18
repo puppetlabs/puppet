@@ -86,7 +86,7 @@ class State < Puppet::Parameter
         value = self.should
         method = "set_" + value.to_s
         unless self.respond_to?(method)
-            raise Puppet::Error, "%s is not a valid value for %s" %
+            self.fail "%s is not a valid value for %s" %
                 [value, self.class.name]
         end
         self.debug "setting %s (currently %s)" % [value, self.is]
@@ -99,7 +99,7 @@ class State < Puppet::Parameter
             if Puppet[:debug]
                 puts detail.backtrace
             end
-            raise Puppet::Error, "Could not set %s on %s: %s" %
+            self.fail "Could not set %s on %s: %s" %
                 [value, self.class.name, detail]
         end
 
@@ -127,7 +127,7 @@ class State < Puppet::Parameter
         @is = nil
 
         unless hash.include?(:parent)
-            raise Puppet::DevError, "State %s was not passed a parent" % self
+            self.devfail "State %s was not passed a parent" % self
         end
         @parent = hash[:parent]
 
@@ -169,7 +169,7 @@ class State < Puppet::Parameter
         end
 
         unless @should.is_a?(Array)
-            raise Puppet::DevError, "%s's should is not array" % self.class.name
+            self.devfail "%s's should is not array" % self.class.name
         end
 
         # an empty array is analogous to no should values
@@ -191,7 +191,7 @@ class State < Puppet::Parameter
     def log(msg)
         unless @parent[:loglevel]
             p @parent
-            raise Puppet::DevError, "Parent %s has no loglevel" %
+            self.devfail "Parent %s has no loglevel" %
                 @parent.name
         end
         Puppet::Log.create(
@@ -229,7 +229,7 @@ class State < Puppet::Parameter
     def should
         if defined? @should
             unless @should.is_a?(Array)
-                raise Puppet::DevError, "should for %s on %s is not an array" %
+                self.devfail "should for %s on %s is not an array" %
                     [self.class.name, @parent.name]
             end
             return @should[0]
@@ -270,7 +270,7 @@ class State < Puppet::Parameter
             #self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
         end
         unless self.class.values
-            raise Puppet::DevError, "No values defined for %s" %
+            self.devfail "No values defined for %s" %
                 self.class.name
         end
 
@@ -306,8 +306,7 @@ class State < Puppet::Parameter
             value = value.to_s.intern
         end
         unless self.class.values.include?(value) or self.class.alias(value)
-            raise Puppet::Error,
-                "Invalid '%s' value '%s'.  Valid values are '%s'" %
+            self.fail "Invalid '%s' value '%s'.  Valid values are '%s'" %
                     [self.class.name, value, self.class.values.join(", ")]
         end
     end

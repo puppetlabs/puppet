@@ -360,7 +360,6 @@ module Puppet
                         "Could not retrieve %s table at level %s" %
                             [type,self.level]
                     )
-                    error.stack = caller
                     raise error
                 end
 
@@ -412,32 +411,32 @@ module Puppet
 
             # Look up a node by name
             def lookupnode(name)
-                Puppet.debug "Looking up type %s" % name
+                #Puppet.debug "Looking up type %s" % name
                 value = self.lookup("type",name)
                 if value == :undefined
                     return nil
                 else
-                    Puppet.debug "Found type %s" % name
+                    #Puppet.debug "Found node %s" % name
                     return value
                 end
             end
 
             # Look up a defined type.
             def lookuptype(name)
-                Puppet.debug "Looking up type %s" % name
+                #Puppet.debug "Looking up type %s" % name
                 value = self.lookup("type",name)
                 if value == :undefined
                     return nil
                 else
-                    Puppet.debug "Found type %s" % name
+                    #Puppet.debug "Found type %s" % name
                     return value
                 end
             end
 
             # Look up an object by name and type.
             def lookupobject(name,type)
-                Puppet.debug "Looking up object %s of type %s in level %s" %
-                    [name, type, @level]
+                #Puppet.debug "Looking up object %s of type %s in level %s" %
+                #    [name, type, @level]
                 sub = proc { |table|
                     if table.include?(type)
                         if table[type].include?(name)
@@ -457,13 +456,12 @@ module Puppet
 
             # Look up a variable.  The simplest value search we do.
             def lookupvar(name)
-                Puppet.debug "Looking up variable %s" % name
+                #Puppet.debug "Looking up variable %s" % name
                 value = self.lookup("variable", name)
                 if value == :undefined
                     error = Puppet::ParseError.new(
                         "Undefined variable '%s'" % name
                     )
-                    error.stack = caller
                     raise error
                 else
                     #Puppet.debug "Value of '%s' is '%s'" % [name,value]
@@ -473,7 +471,7 @@ module Puppet
 
             # Create a new scope.
             def newscope
-                Puppet.debug "Creating new scope, level %s" % [self.level + 1]
+                #Puppet.debug "Creating new scope, level %s" % [self.level + 1]
                 return Puppet::Parser::Scope.new(self)
             end
 
@@ -498,15 +496,14 @@ module Puppet
                 end
 
                 params.each { |ary|
-                    Puppet.debug "Default for %s is %s => %s" %
-                        [type,ary[0].inspect,ary[1].inspect]
+                    #Puppet.debug "Default for %s is %s => %s" %
+                    #    [type,ary[0].inspect,ary[1].inspect]
                     if @@declarative
                         if table.include?(ary[0])
                             error = Puppet::ParseError.new(
                                 "Default already defined for %s { %s }" %
                                     [type,ary[0]]
                             )
-                            error.stack = caller
                             raise error
                         end
                     else
@@ -601,14 +598,10 @@ module Puppet
             # in scopes above, but will not allow variables in the current scope
             # to be reassigned if we're declarative (which is the default).
             def setvar(name,value)
-                Puppet.debug "Setting %s to '%s' at level %s" %
-                    [name.inspect,value,self.level]
+                #Puppet.debug "Setting %s to '%s' at level %s" %
+                #    [name.inspect,value,self.level]
                 if @@declarative and @symtable.include?(name)
-                    error = Puppet::ParseError.new(
-                        "Cannot reassign variable %s" % name
-                    )
-                    error.stack = caller
-                    raise error
+                    raise Puppet::ParseError, "Cannot reassign variable %s" % name
                 else
                     if @symtable.include?(name)
                         Puppet.warning "Reassigning %s to %s" % [name,value]
@@ -699,12 +692,9 @@ module Puppet
                         @topscope.addtags(child)
                         results.push(child)
                     else
-                        error = Puppet::DevError.new(
+                        raise Puppet::DevError,
                             "Puppet::Parse::Scope cannot handle objects of type %s" %
                                 child.class
-                        )
-                        error.stack = caller
-                        raise error
                     end
                 }
 
@@ -728,11 +718,8 @@ module Puppet
                     if defined? @type
                         bucket.type = @type
                     else
-                        error = Puppet::ParseError.new(
+                        raise Puppet::ParseError,
                             "No type for scope %s" % @name
-                        )
-                        error.stack = caller
-                        raise error
                     end
                     #Puppet.debug(
                     #    "TransBucket with name %s and type %s in scope %s" %
@@ -752,7 +739,7 @@ module Puppet
                     #    [bucket.name,self.object_id]
                     return bucket
                 else
-                    Puppet.debug "nameless scope; just returning a list"
+                    #Puppet.debug "nameless scope; just returning a list"
                     return results
                 end
             end

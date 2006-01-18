@@ -25,8 +25,8 @@ module Puppet
             case checktype
             when "md5", "md5lite":
                 unless FileTest.file?(@parent[:path])
-                    #@parent.info "Cannot MD5 sum directory %s" %
-                    #    @parent[:path]
+                    @parent.info "Cannot MD5 sum directory %s" %
+                        @parent[:path]
 
                     # because we cannot sum directories, just delete ourselves
                     # from the file so we won't sync
@@ -76,28 +76,34 @@ module Puppet
                 @checktypes = []
             end
             unless self.class.validtype?(value)
-                raise Puppet::Error, "Invalid checksum type '%s'" % value
+                self.fail "Invalid checksum type '%s'" % value
+            end
+
+            if FileTest.directory?(@parent.name)
+                self.info "Reverting directory sum type to timestamp"
+                value = "time"
             end
 
             @checktypes << value
             state = Puppet::Storage.state(self)
 
             unless state
-                raise Puppet::DevError, "Did not get state back from Storage"
+                self.devfail "Did not get state back from Storage"
             end
             if hash = state[@parent[:path]]
                 if hash.include?(value)
+                    #self.notice "Found checksum %s for %s" %
+                    #    [hash[value] ,@parent[:path]]
                     return hash[value]
-                    #@parent.debug "Found checksum %s for %s" %
-                    #    [self.should,@parent[:path]]
                 else
-                    #@parent.debug "Found checksum for %s but not of type %s" %
-                    #    [@parent[:path],@checktype]
+                    #self.notice "Found checksum for %s but not of type %s" %
+                    #    [@parent[:path],@checktypes[0]]
                     return :nosum
                 end
             else
                 # We can't use :absent here, because then it'll match on
                 # non-existent files
+                #self.notice "Could not find sum of type %s" % @checktypes[0]
                 return :nosum
             end
         end
@@ -115,6 +121,11 @@ module Puppet
                 return
             end
 
+            if FileTest.directory?(@parent.name) and @checktypes[0] =~ /md5/
+                self.info "Using timestamp on directory"
+                @checktypes = ["time"]
+            end
+
             # Just use the first allowed check type
             @is = getsum(@checktypes[0])
 
@@ -123,6 +134,7 @@ module Puppet
             # out of sync.  We don't want to generate an event the first
             # time we get a sum.
             if ! defined? @should or @should == [:nosum]
+                self.info "@should is %s" % @should.inspect
                 @should = [@is]
                 # FIXME we should support an updatechecksums-like mechanism
                 self.updatesum
@@ -179,7 +191,7 @@ module Puppet
             result = false
             state = Puppet::Storage.state(self)
             unless state.include?(@parent.name)
-                self.debug "Initializing state hash"
+                self.debug "Initializing state hash for %s" % @parent.name
 
                 state[@parent.name] = Hash.new
             end
@@ -212,7 +224,6 @@ module Puppet
                 result = false
             end
             state[@parent.name][@checktypes[0]] = @is
-            self.info "result is %s" % result.inspect
             return result
         end
     end

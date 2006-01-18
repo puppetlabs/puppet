@@ -21,7 +21,7 @@ class Puppet::Parser::AST
                 objnames = [objnames]
             end
 
-            # Verify we can find the object.
+            # See if we can look the object up in our scope tree.
             begin
                 object = scope.lookuptype(objtype)
             rescue Puppet::ParseError => except
@@ -32,20 +32,32 @@ class Puppet::Parser::AST
                 error = Puppet::ParseError.new(detail)
                 error.line = self.line
                 error.file = self.file
-                error.stack = caller
+                error.backtrace = detail.backtrace
                 raise error
             end
-            Puppet.debug "ObjectRef returned type %s" % object
+
+            # If the type isn't defined, verify that it's builtin
+            unless object or Puppet::Type.type(objtype)
+                error = Puppet::ParseError.new("Could not find type %s" %
+                    objtype.inspect)
+                error.line = self.line
+                error.file = self.file
+                raise error
+            end
 
             # should we implicitly iterate here?
             # yes, i believe that we essentially have to...
-            objnames.collect { |objname|
+            ret = objnames.collect { |objname|
                 if object.is_a?(AST::Component)
                     objname = "%s[%s]" % [objtype,objname]
                     objtype = "component"
                 end
                 [objtype,objname]
             }.reject { |obj| obj.nil? }
+
+            # Return a flattened array, since we know that we've created an
+            # array
+            return *ret
         end
 
         def tree(indent = 0)

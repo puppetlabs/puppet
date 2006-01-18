@@ -58,19 +58,24 @@ module Puppet
             def safeevaluate(*args)
                 begin
                     self.evaluate(*args)
-                rescue Puppet::DevError
+                rescue Puppet::DevError => except
+                    except.line ||= @line
+                    except.file ||= @file
                     raise
-                rescue Puppet::ParseError
+                rescue Puppet::ParseError => except
+                    except.line ||= @line
+                    except.file ||= @file
                     raise
                 rescue => detail
                     if Puppet[:debug]
-                        puts caller
+                        puts detail.backtrace
                     end
                     error = Puppet::DevError.new(
                         "Child of type %s failed with error %s: %s" %
                             [self.class, detail.class, detail.to_s]
                     )
-                    error.stack = caller
+                    error.line ||= @line
+                    error.file ||= @file
                     raise error
                 end
             end
@@ -83,23 +88,22 @@ module Puppet
                     "(" + self.class.to_s.sub(/.+::/,'') + ")"
             end
 
-            # Initialize the object.  Requires a hash as the argument, and takes
-            # each of the parameters of the hash and calls the settor method for
-            # them.  This is probably pretty inefficient and should likely be changed
-            # at some point.
+            # Initialize the object.  Requires a hash as the argument, and
+            # takes each of the parameters of the hash and calls the settor
+            # method for them.  This is probably pretty inefficient and should
+            # likely be changed at some point.
             def initialize(args)
                 @file = nil
                 @line = nil
                 args.each { |param,value|
                     method = param.to_s + "="
                     unless self.respond_to?(method)
-                        error = Puppet::DevError.new(
+                        error = Puppet::ParseError.new(
                             "Invalid parameter %s to object class %s" %
                                 [param,self.class.to_s]
                         )
                         error.line = self.line
                         error.file = self.file
-                        error.stack = caller
                         raise error
                     end
 
@@ -111,7 +115,8 @@ module Puppet
                             "Could not set parameter %s on class %s: %s" %
                                 [method,self.class.to_s,detail]
                         )
-                        error.stack = caller
+                        error.line ||= self.line
+                        error.file ||= self.file
                         raise error
                     end
                 }

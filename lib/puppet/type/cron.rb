@@ -96,7 +96,7 @@ module Puppet
                 if retval
                     return retval.to_s
                 else
-                    raise Puppet::Error, "%s is not a valid %s" %
+                    self.fail "%s is not a valid %s" %
                         [value, self.class.name]
                 end
             end
@@ -180,7 +180,7 @@ module Puppet
                     obj = Etc.getpwnam(user)
                     parent.uid = obj.uid
                 rescue ArgumentError
-                    raise Puppet::Error, "User %s not found" % user
+                    self.fail "User %s not found" % user
                 end
 
                 user
@@ -469,7 +469,7 @@ module Puppet
         # the +@filetype+ retrieve method.
         def retrieve
             unless @parameters.include?(:user)
-                raise Puppet::Error, "You must specify the cron user"
+                self.fail "You must specify the cron user"
             end
 
             self.class.retrieve(self[:user])

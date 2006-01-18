@@ -44,16 +44,15 @@ module Puppet
                         if bucket = Puppet.type(:filebucket).bucket(value[1])
                             bucket
                         else
-                            raise Puppet::Error,
-                                "Could not retrieve filebucket %s" %
+                            self.fail "Could not retrieve filebucket %s" %
                                 value[1]
                         end
                     else
-                        raise Puppet::Error, "Invalid backup object type %s" %
+                        self.fail "Invalid backup object type %s" %
                             value[0].inspect
                     end
                 else
-                    raise Puppet::Error, "Invalid backup type %s" %
+                    self.fail "Invalid backup type %s" %
                         value.inspect
                 end
             end
@@ -67,6 +66,10 @@ module Puppet
         newparam(:recurse) do
             desc "Whether and how deeply to do recursive
                 management.  **false**/*true*/*inf*/*number*"
+
+            munge do |value|
+                value
+            end
         end
 
         newparam(:ignore) do
@@ -80,7 +83,7 @@ module Puppet
 
             validate do |value|
                 unless value.is_a?(Array) or value.is_a?(String) or value == false
-                    raise Puppet::DevError.new("Ignore must be a string or an Array")
+                    self.devfail "Ignore must be a string or an Array"
                 end
             end
         end
@@ -97,7 +100,7 @@ module Puppet
 
         validate do
             if self[:content] and self[:source]
-                raise Puppet::Error, "You cannot specify both content and a source"
+                self.fail "You cannot specify both content and a source"
             end
         end
 
@@ -151,8 +154,8 @@ module Puppet
                     rescue => detail
                         # since they said they want a backup, let's error out
                         # if we couldn't make one
-                        raise Puppet::Error.new("Could not back %s up: %s" %
-                            [file, detail.message])
+                        self.fail "Could not back %s up: %s" %
+                            [file, detail.message]
                     end
                 else
                     self.err "Invalid backup type %s" % backup
@@ -201,7 +204,7 @@ module Puppet
             args = @arghash.dup
 
             if path =~ %r{^#{File::SEPARATOR}}
-                raise Puppet::DevError.new(
+                self.devfail(
                     "Must pass relative paths to PFile#newchild()"
                 )
             else
@@ -366,7 +369,7 @@ module Puppet
             end
 
             unless FileTest.directory? self.name
-                raise Puppet::Error.new(
+                self.devfail(
                     "Uh, somehow trying to manage non-dir %s" % self.name
                 )
             end
@@ -402,6 +405,11 @@ module Puppet
         def sourcerecurse(recurse)
             # FIXME sourcerecurse should support purging non-remote files
             source = @states[:source].source
+
+            unless ! source.nil? and source !~ /^\s*$/
+                self.notice "source %s does not exist" % @states[:source].should
+                return nil
+            end
             
             sourceobj, path = uri2obj(source)
 
@@ -503,7 +511,7 @@ module Puppet
             begin
                 uri = URI.parse(source)
             rescue => detail
-                raise Puppet::Error, "Could not understand source %s: %s" %
+                self.fail "Could not understand source %s: %s" %
                     [source, detail.to_s]
             end
 
@@ -537,11 +545,10 @@ module Puppet
                     path = tmp
                     #path = tmp.sub(%r{^/\w+},'') || "/"
                 else
-                    raise Puppet::Error, "Invalid source path %s" % tmp
+                    self.fail "Invalid source path %s" % tmp
                 end
             else
-                raise Puppet::Error,
-                    "Got other recursive file proto %s from %s" %
+                self.fail "Got other recursive file proto %s from %s" %
                         [uri.scheme, source]
             end
 

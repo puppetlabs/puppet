@@ -305,7 +305,7 @@ module Puppet
             self.info "Executing %s" % cmd.inspect
             output = %x(#{cmd} 2>&1)
             unless $? == 0
-                raise Puppet::Error, "Could not %s %s: %s" %
+                self.fail "Could not %s %s: %s" %
                     [type, self.name, output.chomp]
             end
         end
@@ -314,13 +314,13 @@ module Puppet
         # parameter.
         def getpid
             unless self[:pattern]
-                raise Puppet::Error,
-                    "Either a stop command or a pattern must be specified"
+                self.fail "Either a stop command or a pattern must be specified"
             end
             ps = Facter["ps"].value
             unless ps and ps != ""
-                raise Puppet::Error,
+                self.fail(
                     "You must upgrade Facter to a version that includes 'ps'"
+                )
             end
             regex = Regexp.new(self[:pattern])
             IO.popen(ps) { |table|
@@ -418,8 +418,7 @@ module Puppet
                 end
                 output = %x("kill #{pid} 2>&1")
                 if $? != 0
-                    raise Puppet::Error,
-                        "Could not kill %s, PID %s: %s" %
+                    self.fail "Could not kill %s, PID %s: %s" %
                             [self.name, pid, output]
                 end
                 return true

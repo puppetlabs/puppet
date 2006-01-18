@@ -101,8 +101,6 @@ module Puppet
                 hash[:Path] ||= "/RPC2"
                 hash[:Server] ||= "localhost"
                 hash[:Port] ||= Puppet[:masterport]
-                Puppet.info "Starting Puppet client version %s for %s" %
-                    [Puppet.version, hash[:Server]]
 
                 @puppetserver = hash[:Server]
 
@@ -240,22 +238,9 @@ module Puppet
             # objects.  For now, just descend into the tree and perform and
             # necessary manipulations.
             def apply
+                dostorage()
                 unless defined? @objects
                     raise Puppet::Error, "Cannot apply; objects not defined"
-                end
-
-                begin
-                    Puppet::Storage.init
-                    Puppet::Storage.load
-                rescue => detail
-                    Puppet.err "Corrupt state file %s" % Puppet[:checksumfile]
-                    begin
-                        File.unlink(Puppet[:checksumfile])
-                        retry
-                    rescue => detail
-                        raise Puppet::Error.new("Cannot remove %s: %s" %
-                            [Puppet[statefile], detail])
-                    end
                 end
 
                 #Puppet.err :yay
@@ -291,10 +276,28 @@ module Puppet
                 return transaction
             end
 
+            # Initialize and load storage
+            def dostorage
+                begin
+                    Puppet::Storage.init
+                    Puppet::Storage.load
+                rescue => detail
+                    Puppet.err "Corrupt state file %s" % Puppet[:checksumfile]
+                    begin
+                        File.unlink(Puppet[:checksumfile])
+                        retry
+                    rescue => detail
+                        raise Puppet::Error.new("Cannot remove %s: %s" %
+                            [Puppet[statefile], detail])
+                    end
+                end
+            end
+
             # Retrieve the config from a remote server.  If this fails, then
             # use the cached copy.
             def getconfig
                 Puppet.debug("getting config")
+                dostorage()
 
                 facts = self.class.facts
 

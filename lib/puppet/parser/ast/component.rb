@@ -48,8 +48,8 @@ class Puppet::Parser::AST
                     unless hash.include?(arg)
                         if defined? default and ! default.nil?
                             hash[arg] = default
-                            Puppet.debug "Got default %s for %s in %s" %
-                                [default.inspect, arg.inspect, objname.inspect]
+                            #Puppet.debug "Got default %s for %s in %s" %
+                            #    [default.inspect, arg.inspect, objname.inspect]
                         else
                             error = Puppet::ParseError.new(
                                 "Must pass %s to %s of type %s" %
@@ -57,7 +57,6 @@ class Puppet::Parser::AST
                             )
                             error.line = self.line
                             error.file = self.file
-                            error.stack = caller
                             raise error
                         end
                     end
@@ -82,7 +81,7 @@ class Puppet::Parser::AST
                     error = Puppet::ParseError.new(except.message)
                     error.line = self.line
                     error.file = self.file
-                    error.stack = caller
+                    error.backtrace = except.backtrace
                     raise error
                 end
             }

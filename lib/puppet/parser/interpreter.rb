@@ -82,19 +82,15 @@ module Puppet
                     #Puppet.err "File %s, line %s: %s" %
                     #    [except.file, except.line, except.message]
                     if Puppet[:debug]
-                        puts except.stack
-                    end
-                    if Puppet[:debug]
-                        puts caller
+                        puts except.backtrace
                     end
                     #exit(1)
                     raise
                 rescue => except
                     error = Puppet::DevError.new("%s: %s" %
                         [except.class, except.message])
-                    error.stack = caller
                     if Puppet[:debug]
-                        puts caller
+                        puts except.backtrace
                     end
                     raise error
                 end
@@ -111,6 +107,8 @@ module Puppet
             # entire configuration each time we get a connect.
             def evaluate
 
+                # FIXME When this produces errors, it should specify which
+                # node caused those errors.
                 if @usenodes
                     @scope = Puppet::Parser::Scope.new() # no parent scope
                     @scope.name = "top"

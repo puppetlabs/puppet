@@ -131,8 +131,8 @@ module Puppet
                 else
                     self.notice "user %s does not exist" % tmp
                     @@usermissing[tmp] = 1
-                    return nil
                 end
+                return nil
             end
 
             if @is == :absent

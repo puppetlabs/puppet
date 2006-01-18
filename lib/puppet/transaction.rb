@@ -41,7 +41,8 @@ class Transaction
     # then, we need to pass the event to the object's containing component,
     # to see if it or any of its parents have subscriptions on the event
     def evaluate
-        Puppet.debug "executing %s changes " % @changes.length
+        Puppet.debug "Beginning transaction %s with %s changes" %
+            [self.object_id, @changes.length]
 
         events = @changes.collect { |change|
             if change.is_a?(Puppet::StateChange)

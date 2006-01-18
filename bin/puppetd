@@ -205,6 +205,7 @@ if centrallogs
 end
 
 
+Puppet.info "Starting Puppet client version %s" % [Puppet.version]
 client = Puppet::Client::MasterClient.new(args)
 
 
@@ -234,12 +235,19 @@ end
 # now set up the network client with the certs, now that we have them
 client.setcerts
 
+trap(:INT) {
+    exit(1)
+}
+
 # and then retrieve and apply our configuration
 begin
     client.getconfig
     client.apply
 rescue => detail
     Puppet.err detail.to_s
+    if Puppet[:debug]
+        puts detail.backtrace
+    end
     exit(13)
 end
 

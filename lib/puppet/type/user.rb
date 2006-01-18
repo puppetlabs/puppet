@@ -47,7 +47,7 @@ module Puppet
                     end
                 when Symbol
                     unless value == :absent or value == :auto
-                        raise Puppet::DevError, "Invalid UID %s" % value
+                        self.devfail "Invalid UID %s" % value
                     end
 
                     if value == :auto
@@ -76,7 +76,7 @@ module Puppet
                     end
                 when Symbol
                     unless gid == :auto or gid == :absent
-                        raise Puppet::DevError, "Invalid GID %s" % gid
+                        self.devfail "Invalid GID %s" % gid
                     end
                     # these are treated specially by sync()
                     return gid
@@ -88,7 +88,7 @@ module Puppet
                 begin
                     ginfo = Etc.send(method, gid)
                 rescue ArgumentError => detail
-                    raise Puppet::Error, "Could not find group %s: %s" %
+                    self.fail "Could not find group %s: %s" %
                         [gid, detail]
                 end
 
@@ -198,8 +198,7 @@ module Puppet
                         if state.method_defined?(:autogen)
                             self[state.name] = :auto
                         else
-                            raise Puppet::Error,
-                                "Users require a value for %s" % state.name
+                            self.fail "Users require a value for %s" % state.name
                         end
                     end
                 }

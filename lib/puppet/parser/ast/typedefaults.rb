@@ -24,7 +24,7 @@ class Puppet::Parser::AST
                 error = Puppet::ParseError.new(detail)
                 error.line = self.line
                 error.file = self.file
-                error.stack = caller
+                error.backtrace = detail.backtrace
                 raise error
             end
         end

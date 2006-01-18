@@ -14,10 +14,7 @@ require 'puppet/parser/ast'
 #require 'puppet/parser/interpreter'
 
 module Puppet
-    # this exception class already has a :stack accessor
-    class ParseError < Puppet::Error
-        attr_accessor :line, :file
-    end
+    class ParseError < Puppet::Error; end
 
     class ImportError < Racc::ParseError; end
 end
@@ -32,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id082f0a899d', 'grammar.ra', 697
+module_eval <<'..end grammar.ra modeval..idc16574e75e', 'grammar.ra', 697
 attr_reader :file
 attr_accessor :files
 
@@ -103,7 +100,7 @@ def parse
         error = Puppet::ParseError.new(except)
         error.line = @lexer.line
         error.file = @lexer.file
-        error.stack = caller
+        error.backtrace = except.backtrace
         raise error
     rescue Puppet::ParseError => except
         except.line ||= @lexer.line
@@ -113,7 +110,6 @@ def parse
         # and this is a framework error
         except.line ||= @lexer.line
         except.file ||= @lexer.file
-        except.stack ||= except.stack
         #if Puppet[:debug]
         #    puts except.stack
         #end
@@ -121,7 +117,6 @@ def parse
     rescue Puppet::DevError => except
         except.line ||= @lexer.line
         except.file ||= @lexer.file
-        except.stack ||= caller
         #if Puppet[:debug]
         #    puts except.stack
         #end
@@ -130,7 +125,7 @@ def parse
         error = Puppet::DevError.new(except.message)
         error.line = @lexer.line
         error.file = @lexer.file
-        error.stack = caller
+        error.backtrace = except.backtrace
         #if Puppet[:debug]
         #    puts caller
         #end
@@ -149,7 +144,7 @@ def string=(string)
 end
 
 # $Id$
-..end grammar.ra modeval..id082f0a899d
+..end grammar.ra modeval..idc16574e75e
 
 ##### racc 1.4.4 generates ###
 
@@ -1404,13 +1399,16 @@ module_eval <<'.,.,', 'grammar.ra', 659
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 668
+module_eval <<'.,.,', 'grammar.ra', 671
   def _reduce_90( val, _values, result )
     if val[1].is_a?(AST::ASTArray)
         result = val[1]
     else
-        result = AST::ASTArray.new
-        result.push val[1]
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[1]]
+        )
     end
    result
   end
@@ -1422,7 +1420,7 @@ module_eval <<'.,.,', 'grammar.ra', 668
 
  # reduce 93 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 673
+module_eval <<'.,.,', 'grammar.ra', 676
   def _reduce_94( val, _values, result )
  result = nil
    result

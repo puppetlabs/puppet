@@ -158,7 +158,12 @@ module Puppet
             end
 
             def source
-                self.class.retrieve(@source)
+                if source = self.class.retrieve(@source)
+                    return source
+                else
+                    raise Puppet::Error, "Could not retreive dependency %s[%s]" %
+                        @source
+                end
             end
 
             def sourcearray

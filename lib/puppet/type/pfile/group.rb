@@ -31,7 +31,11 @@ module Puppet
         def retrieve
             stat = @parent.stat(true)
 
-            self.is = stat.gid
+            if stat
+                self.is = stat.gid
+            else
+                self.is = :absent
+            end
         end
 
         munge do |value|
@@ -100,7 +104,7 @@ module Puppet
                 self.retrieve
 
                 if @is == :absent
-                    self.err "File '%s' does not exist; cannot chgrp" %
+                    self.info "File '%s' does not exist; cannot chgrp" %
                         @parent[:path]
                     return nil
                 end

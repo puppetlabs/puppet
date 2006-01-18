@@ -36,7 +36,7 @@ class Puppet::Parser::AST
                 error = Puppet::ParseError.new(detail)
                 error.line = self.line
                 error.file = self.file
-                error.stack = caller
+                error.backtrace = detail.backtrace
                 raise error
             end
         end
@@ -45,7 +45,7 @@ class Puppet::Parser::AST
             @parentclass = nil
             super
 
-            Puppet.debug "Defining type %s" % @name.value
+            #Puppet.debug "Defining type %s" % @name.value
 
             # we need to both mark that a given argument is valid,
             # and we need to also store any provided default arguments

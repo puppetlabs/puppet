@@ -20,10 +20,18 @@ PUPPETVERSION = '0.11.1'
 
     class Error < RuntimeError
         attr_accessor :stack, :line, :file
+        attr_writer :backtrace
+
+        def backtrace
+            if defined? @backtrace
+                return @backtrace
+            else
+                return super
+            end
+        end
+
         def initialize(message)
             @message = message
-
-            @stack = caller
         end
 
         def to_s

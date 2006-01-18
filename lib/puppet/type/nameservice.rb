@@ -119,8 +119,7 @@ class State
                 if method = self.class.posixmethod || self.class.name
                     @is = obj.send(method)
                 else
-                    raise Puppet::DevError,
-                        "%s has no posixmethod" % self.class
+                    self.devfail "%s has no posixmethod" % self.class
                 end
             else
                 @is = :absent
@@ -157,8 +156,7 @@ class State
 #            end
 
             unless @parent.exists?
-                raise Puppet::DevError,
-                    "%s %s does not exist; cannot set %s" %
+                self.devfail "%s %s does not exist; cannot set %s" %
                     [@parent.class.name, @parent.name, self.class.name]
             end
 
@@ -172,7 +170,7 @@ class State
 
 
             unless $? == 0
-                raise Puppet::Error, "Could not modify %s on %s %s: %s" %
+                self.fail "Could not modify %s on %s %s: %s" %
                     [self.class.name, @parent.class.name,
                         @parent.name, output]
             end

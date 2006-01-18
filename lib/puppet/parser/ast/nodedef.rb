@@ -18,8 +18,8 @@ class Puppet::Parser::AST
             end
             
             names.each { |name|
-                Puppet.debug("defining host '%s' in scope %s" %
-                    [name, scope.object_id])
+                #Puppet.debug("defining host '%s' in scope %s" %
+                #    [name, scope.object_id])
                 arghash = {
                     :name => name,
                     :code => @code
@@ -41,7 +41,6 @@ class Puppet::Parser::AST
                     error = Puppet::ParseError.new(detail)
                     error.line = self.line
                     error.file = self.file
-                    error.stack = caller
                     raise error
                 end
             }

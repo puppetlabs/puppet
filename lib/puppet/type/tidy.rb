@@ -31,7 +31,7 @@ module Puppet
                 when /^[0-9]+[sS]/:
                     Integer(age.gsub(/[^0-9]+/,''))
                 else
-                    raise Puppet::Error.new("Invalid tidy age %s" % age)
+                    self.fail "Invalid tidy age %s" % age
                 end
             end
         end
@@ -57,7 +57,7 @@ module Puppet
                     Integer(size.gsub(/[^0-9]+/,'')) *
                         1024 * 1024
                 else
-                    raise Puppet::Error.new("Invalid tidy size %s" % size)
+                    self.fail "Invalid tidy size %s" % size
                 end
             end
         end
@@ -71,7 +71,7 @@ module Puppet
                 when "atime", "mtime", "ctime":
                     type.intern
                 else
-                    raise Puppet::Error.new("Invalid tidy type %s" % type)
+                    self.fail "Invalid tidy type %s" % type
                 end
             end
         end
@@ -145,7 +145,7 @@ module Puppet
                     File.unlink(file)
                 when "symlink":     File.unlink(file)
                 else
-                    raise Puppet::Error, "Cannot tidy files of type %s" %
+                    self.fail "Cannot tidy files of type %s" %
                         File.lstat(file).ftype
                 end
 
@@ -167,7 +167,7 @@ module Puppet
                     @parameters.include?(:size)
                 unless FileTest.directory?(self[:path])
                     # don't do size comparisons for directories
-                    raise Puppet::Error, "Tidy must specify size, age, or both"
+                    self.fail "Tidy must specify size, age, or both"
                 end
             end
 

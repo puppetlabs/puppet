@@ -41,9 +41,13 @@ module Puppet
                 return
             end
             inlist[obj.object_id] = true
-            obj.eachdependency { |req|
-                self.recurse(req, inlist, list)
-            }
+            begin
+                obj.eachdependency { |req|
+                    self.recurse(req, inlist, list)
+                }
+            rescue Puppet::Error => detail
+                raise Puppet::Error, "%s: %s" % [obj.path, detail]
+            end
 
             if obj.is_a? self
                 obj.each { |child|
@@ -112,7 +116,7 @@ module Puppet
             ary.each { |child|
                 unless child.is_a?(Puppet::Element)
                     self.debug "Got object of type %s" % child.class
-                    raise Puppet::DevError.new(
+                    self.devfail(
                         "Containers can only contain Puppet::Elements, not %s" %
                         child.class
                     )

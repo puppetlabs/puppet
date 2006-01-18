@@ -231,6 +231,7 @@ class Type < Puppet::Element
         if name.is_a?(String)
             name = name.intern
         end
+
         @types[name]
     end
 
@@ -344,7 +345,6 @@ class Type < Puppet::Element
         self.eachtype do |type|
             type.each do |object|
                 unless finished.has_key?(object)
-                    Puppet.debug "Finishing %s" % object.name
                     object.finish
                     finished[object] = true
                 end
@@ -794,6 +794,32 @@ class Type < Puppet::Element
         }
     end
 
+    def devfail(msg)
+        self.fail(Puppet::DevError, msg)
+    end
+
+    # Throw an error, defaulting to a Puppet::Error
+    def fail(*args)
+        type = nil
+        if args[0].is_a?(Class)
+            type = args.shift
+        else
+            type = Puppet::Error
+        end
+
+        error = type.new(args.join(" "))
+
+        if @line
+            error.line = @line
+        end
+
+        if @file
+            error.file = @file
+        end
+
+        raise error
+    end
+
     # retrieve the 'is' value for a specified state
     def is(state)
         if @states.include?(state)
@@ -868,7 +894,7 @@ class Type < Puppet::Element
         when :param
             @parameters[klass.name] = param
         else
-            raise Puppet::DevError, "Invalid param type %s" % type
+            self.devfail("Invalid param type %s" % type)
         end
 
         return param
@@ -883,7 +909,7 @@ class Type < Puppet::Element
         else
             stateklass = self.class.validstate?(name) 
             unless stateklass
-                raise Puppet::Error, "Invalid state %s" % name
+                self.fail("Invalid state %s" % name)
             end
         end
         if @states.include?(name)
@@ -983,8 +1009,9 @@ class Type < Puppet::Element
             end
         }
         unless tmpstates.length == @states.length
-            raise Puppet::DevError,
+            self.devfail(
                 "Something went very wrong with tmpstates creation"
+            )
         end
         return tmpstates
     end
@@ -1160,7 +1187,7 @@ class Type < Puppet::Element
                 begin
                     self[name] = hash[name]
                 rescue => detail
-                    raise Puppet::DevError.new( 
+                    self.devfail(
                         "Could not set %s on %s: %s" % [name, self.class.name, detail]
                     )
                 end
@@ -1174,7 +1201,7 @@ class Type < Puppet::Element
 
         if hash.length > 0
             self.debug hash.inspect
-            raise Puppet::Error.new("Class %s does not accept argument(s) %s" %
+            self.fail("Class %s does not accept argument(s) %s" %
                 [self.class.name, hash.keys.join(" ")])
         end
 
@@ -1229,7 +1256,7 @@ class Type < Puppet::Element
         when :param: return @parameters.include?(attr)
         when :meta: return @metaparams.include?(attr)
         else
-            raise Puppet::DevError, "Invalid set type %s" % [type]
+            self.devfail "Invalid set type %s" % [type]
         end
     end
 
@@ -1245,7 +1272,7 @@ class Type < Puppet::Element
 
             klass = self.class.attrclass(attr)
             unless klass
-                raise Puppet::DevError, "Could not retrieve class for %s" % attr
+                self.devfail "Could not retrieve class for %s" % attr
             end
             if klass.method_defined?(:default)
                 obj = self.newattr(type, klass)
@@ -1286,10 +1313,10 @@ class Type < Puppet::Element
                 # take the intersection
                 newvals = oldvals & value
                 if newvals.empty?
-                    raise Puppet::Error, "No common values for %s on %s(%s)" %
+                    self.fail "No common values for %s on %s(%s)" %
                         [param, self.class.name, self.name]
                 elsif newvals.length > 1
-                    raise Puppet::Error, "Too many values for %s on %s(%s)" %
+                    self.fail "Too many values for %s on %s(%s)" %
                         [param, self.class.name, self.name]
                 else
                     self.debug "Reduced old values %s and new values %s to %s" %
@@ -1313,13 +1340,13 @@ class Type < Puppet::Element
             elsif self.class.validstate?(namevar)
                 @name = self.should(namevar)
             else
-                raise Puppet::DevError, "Could not find namevar %s for %s" %
+                self.devfail "Could not find namevar %s for %s" %
                     [namevar, self.class.name]
             end
         end
 
         unless @name
-            raise Puppet::DevError, "Could not find namevar '%s' for %s" %
+            self.devfail "Could not find namevar '%s' for %s" %
                 [namevar, self.class.name]
         end
 
@@ -1550,7 +1577,6 @@ class Type < Puppet::Element
     def self.mkdepends
         @types.each { |name, type|
             type.each { |obj|
-                Puppet.info "building depends for %s(%s)" % [type.name, obj.name]
                 obj.builddepends
             }
         }
@@ -1605,11 +1631,11 @@ class Type < Puppet::Element
             object = nil
             tname = rname[0]
             unless type = Puppet::Type.type(tname)
-                raise Puppet::Error, "Could not find type %s" % tname
+                self.fail "Could not find type %s" % tname.inspect
             end
             name = rname[1]
             unless object = type[name]
-                raise Puppet::Error, "Could not retrieve object '%s' of type '%s'" %
+                self.fail "Could not retrieve object '%s' of type '%s'" %
                     [name,type]
             end
             self.debug("subscribes to %s" % [object])
@@ -1728,7 +1754,7 @@ class Type < Puppet::Element
             elsif noop == "false" or noop == false
                 return false
             else
-                raise Puppet::Error.new("Invalid noop value '%s'" % noop)
+                self.fail("Invalid noop value '%s'" % noop)
             end
         end
     end
@@ -1752,7 +1778,7 @@ class Type < Puppet::Element
             end
 
             unless defined? @parent
-                raise Puppet::DevError, "No parent for %s, %s?" %
+                self.devfail "No parent for %s, %s?" %
                     [self.class, self.name]
             end
 
@@ -1863,7 +1889,7 @@ class Type < Puppet::Element
                 loglevel = loglevel.intern
             end
             unless Puppet::Log.validlevel?(loglevel)
-                raise Puppet::Error, "Invalid log level %s" % loglevel
+                self.fail "Invalid log level %s" % loglevel
             end
         end
 
@@ -1908,9 +1934,10 @@ class Type < Puppet::Element
             aliases.each do |other|
                 if obj = @parent.class[other]
                     unless obj == @parent
-                        raise Puppet::Error,
+                        self.fail(
                             "%s an not create alias %s: object already exists" %
                             [@parent.name, other]
+                        )
                     end
                     next
                 end

@@ -63,24 +63,23 @@ class Puppet::Parser::AST
                 error = Puppet::ParseError.new(detail)
                 error.line = self.line
                 error.file = self.file
-                error.stack = caller
+                error.backtrace = detail.backtrace
                 raise error
             end
 
             unless object
                 # If not, verify that it's a builtin type
-                begin
-                    object = Puppet::Type.type(objtype)
-                rescue TypeError
-                    # otherwise, the user specified an invalid type
-                    error = Puppet::ParseError.new(
-                        "Invalid type %s" % objtype
-                    )
-                    error.line = @line
-                    error.file = @file
+                object = Puppet::Type.type(objtype)
+
+                # Type.type returns nil on object types that aren't found
+                unless object
+                    error = Puppet::ParseError.new("Invalid type %s" % objtype)
+                    error.line = self.line
+                    error.file = self.file
                     raise error
                 end
             end
+
 
             # Autogenerate the name if one was not passed.
             if defined? @name
@@ -110,12 +109,12 @@ class Puppet::Parser::AST
                 # If the object is a class, that means it's a builtin type
                 if object.is_a?(Class)
                     begin
-                        Puppet.debug(
-                            ("Setting object '%s' " +
-                            "in scope %s " +
-                            "with arguments %s") %
-                            [objname, scope.object_id, hash.inspect]
-                        )
+                        #Puppet.debug(
+                        #    ("Setting object '%s' " +
+                        #    "in scope %s " +
+                        #    "with arguments %s") %
+                        #    [objname, scope.object_id, hash.inspect]
+                        #)
                         obj = scope.setobject(
                             objtype,
                             objname,
@@ -131,14 +130,14 @@ class Puppet::Parser::AST
                         error = Puppet::ParseError.new(detail)
                         error.line = self.line
                         error.file = self.file
-                        error.stack = caller
+                        error.backtrace = detail.backtrace
                         raise error
                     end
                 else
                     # but things like components create a new type; if we find
                     # one of those, evaluate that with our arguments
-                    Puppet.debug("Calling object '%s' with arguments %s" %
-                        [object.name, hash.inspect])
+                    #Puppet.debug("Calling object '%s' with arguments %s" %
+                    #    [object.name, hash.inspect])
                     object.safeevaluate(scope,hash,objtype,objname)
                 end
             }.reject { |obj| obj.nil? }
@@ -150,8 +149,8 @@ class Puppet::Parser::AST
             begin
                 defaults = scope.lookupdefaults(objtype)
                 if defaults.length > 0
-                    Puppet.debug "Got defaults for %s: %s" %
-                        [objtype,defaults.inspect]
+                    #Puppet.debug "Got defaults for %s: %s" %
+                    #    [objtype,defaults.inspect]
                 end
             rescue => detail
                 raise Puppet::DevError, 
@@ -219,7 +218,6 @@ class Puppet::Parser::AST
                     "Invalid parameter '%s' for type '%s'" %
                         [pname,type.name]
                 )
-                error.stack = caller
                 error.line = self.line
                 error.file = self.file
                 raise error
@@ -243,7 +241,6 @@ class Puppet::Parser::AST
                     "Invalid parameter '%s' for type '%s'" %
                         [pname,objtype]
                 )
-                error.stack = caller
                 error.line = self.line
                 error.file = self.file
                 raise error
@@ -277,7 +274,7 @@ class Puppet::Parser::AST
                         error = Puppet::DevError.new(
                             "failed to tree a %s" % self.class
                         )
-                        error.stack = caller
+                        error.backtrace = detail.backtrace
                         raise error
                     end
                 }.join("\n")
@@ -306,13 +303,12 @@ class Puppet::Parser::AST
                 )
                 error.line = self.line
                 error.file = self.file
-                error.stack = caller
                 raise error
             end
 
-            unless builtin
-                Puppet.debug "%s is a defined type" % objtype
-            end
+            #unless builtin
+            #    Puppet.debug "%s is a defined type" % objtype
+            #end
 
             self.paramcheck(builtin, objtype)
 

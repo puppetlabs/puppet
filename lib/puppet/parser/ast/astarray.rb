@@ -43,7 +43,10 @@ class Puppet::Parser::AST
                     item.safeevaluate(scope)
                 }
             end
+
             rets = rets.reject { |obj| obj.nil? }
+
+            return rets
         end
 
         def push(*ary)

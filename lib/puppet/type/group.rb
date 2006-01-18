@@ -57,11 +57,11 @@ module Puppet
                     if gid =~ /^[-0-9]+$/
                         gid = Integer(gid)
                     else
-                        raise Puppet::Error, "Invalid GID %s" % gid
+                        self.fail "Invalid GID %s" % gid
                     end
                 when Symbol
                     unless gid == :auto or gid == :absent
-                        raise Puppet::DevError, "Invalid GID %s" % gid
+                        self.devfail "Invalid GID %s" % gid
                     end
                     if gid == :auto
                         unless self.class.autogen?

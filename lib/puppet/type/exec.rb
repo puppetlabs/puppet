@@ -67,29 +67,29 @@ module Puppet
                 if cmd =~ /^\//
                     exe = cmd.split(/ /)[0]
                     unless FileTest.exists?(exe)
-                        raise TypeError.new(
+                        self.fail(
                             "Could not find executable %s" % exe
                         )
                     end
                     unless FileTest.executable?(exe)
-                        raise TypeError.new(
+                        self.fail(
                             "%s is not executable" % exe
                         )
                     end
                 elsif path = self.parent[:path]
                     exe = cmd.split(/ /)[0]
                     tmppath = ENV["PATH"]
-                    ENV["PATH"] = self.parent[:path]
+                    ENV["PATH"] = self.parent[:path].join(":")
 
                     path = %{which #{exe}}.chomp
                     if path == ""
-                        raise TypeError.new(
+                        self.fail(
                             "Could not find command '%s'" % exe
                         )
                     end
                     ENV["PATH"] = tmppath
                 else
-                    raise TypeError.new(
+                    self.fail(
                         "%s is somehow not qualified with no search path" %
                             self.parent[:command]
                     )
@@ -132,7 +132,9 @@ module Puppet
                 begin
                     # Do our chdir
                     Dir.chdir(dir) {
-                        ENV["PATH"] = self.parent[:path]
+                        if self.parent[:path]
+                            ENV["PATH"] = self.parent[:path].join(":")
+                        end
 
                         # The user and group default to nil, which 'asuser'
                         # handlers correctly
@@ -168,7 +170,7 @@ module Puppet
                         }
                     }
                 rescue Errno::ENOENT => detail
-                    raise Puppet::Error, detail.to_s
+                    self.fail detail.to_s
                 ensure
                     # reset things to how we found them
                     ENV["PATH"] = tmppath
@@ -191,7 +193,14 @@ module Puppet
         newparam(:path) do
             desc "The search path used for command execution.
                 Commands must be fully qualified if no path is specified.  Paths
-                must be specified as an array, not as a colon-separated list."
+                can be specified as an array or as a colon-separated list."
+
+            # Support both arrays and colon-separated fields.
+            def value=(*values)
+                @value = values.collect { |val|
+                    val.split(":")
+                }.flatten
+            end
         end
 
         newparam(:user) do
@@ -201,8 +210,7 @@ module Puppet
 
             munge do |user|
                 unless Process.uid == 0
-                    raise Puppet::Error,
-                        "Only root can execute commands as other users"
+                    self.fail "Only root can execute commands as other users"
                 end
                 require 'etc'
 
@@ -217,7 +225,7 @@ module Puppet
                 begin
                     Etc.send(method, user)
                 rescue ArgumentError
-                    raise Puppet::Error, "No such user %s" % user
+                    self.fail "No such user %s" % user
                 end
 
                 return user
@@ -244,7 +252,7 @@ module Puppet
                 begin
                     Etc.send(method, group)
                 rescue ArgumentError
-                    raise Puppet::Error, "No such group %s" % group
+                    self.fail "No such group %s" % group
                 end
 
                 group
@@ -261,7 +269,7 @@ module Puppet
                 end
 
                 unless File.directory?(dir)
-                    raise Puppet::Error, "Directory '%s' does not exist" % dir
+                    self.fail "Directory '%s' does not exist" % dir
                 end
                 
                 dir
@@ -308,7 +316,7 @@ module Puppet
             # fail the entire exec, right?
             validate do |file|
                 unless file =~ %r{^#{File::SEPARATOR}}
-                    raise Puppet::Error, "'creates' files must be fully qualified."
+                    self.fail "'creates' files must be fully qualified."
                 end
             end
         end
@@ -320,8 +328,7 @@ module Puppet
             # if we're not fully qualified, require a path
             if self[:command] !~ /^\//
                 if self[:path].nil?
-                    raise TypeError,
-                        "both unqualifed and specified no search path"
+                    self.fail "both unqualifed and specified no search path"
                 end
             end
         end

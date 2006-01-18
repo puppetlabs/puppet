@@ -60,7 +60,7 @@ module Puppet
                         :Port => self[:port]
                     )
                 rescue => detail
-                    raise Puppet::Error.new(
+                    self.fail(
                         "Could not create remote filebucket: %s" % detail
                     )
                 end
@@ -73,7 +73,7 @@ module Puppet
                         :Path => self[:path]
                     )
                 rescue => detail
-                    raise Puppet::Error.new(
+                    self.fail(
                         "Could not create local filebucket: %s" % detail
                     )
                 end

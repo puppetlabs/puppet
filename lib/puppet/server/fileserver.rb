@@ -59,6 +59,10 @@ class Server
 
             authcheck(file, mount, client, clientip)
 
+            if client
+                Puppet.debug "Describing %s for %s" % [file, client]
+            end
+
             sdir = nil
             unless sdir = subdir(mount, path)
                 mount.notice "Could not find subdirectory %s" %
@@ -147,6 +151,10 @@ class Server
             mount, path = splitpath(dir)
 
             authcheck(dir, mount, client, clientip)
+
+            if client
+                Puppet.debug "Listing %s for %s" % [dir, client]
+            end
 
             subdir = nil
             unless subdir = subdir(mount, path)
@@ -306,6 +314,10 @@ class Server
             mount, path = splitpath(file)
 
             authcheck(file, mount, client, clientip)
+
+            if client
+                Puppet.info "Sending %s to %s" % [file, client]
+            end
 
             fpath = nil
             if path

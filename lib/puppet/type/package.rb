@@ -116,7 +116,17 @@ module Puppet
             #end
 
             newvalue(:latest) do
-                @parent.update
+                unless @parent.respond_to?(:latest)
+                    self.fail(
+                        "Package type %s does not support specifying 'latest'" %
+                        @parent[:type]
+                    )
+                end
+                begin
+                    @parent.update
+                rescue => detail
+                    self.fail "Could not update: %s" % detail
+                end
 
                 if self.is == :absent
                     return :package_created
@@ -138,7 +148,18 @@ module Puppet
                             return true
                         end
                     when :latest
-                        latest = @parent.latest
+                        unless @parent.respond_to?(:latest)
+                            self.fail(
+                                "Package type %s does not support specifying 'latest'" %
+                                @parent[:type]
+                            )
+                        end
+
+                        begin
+                            latest = @parent.latest
+                        rescue => detail
+                            self.fail "Could not get latest version: %s" % detail
+                        end
                         case @is
                         when latest:
                             return true
@@ -229,8 +250,8 @@ module Puppet
         end
 
         newparam(:type) do
-            desc "The package format.  You will seldom need to specify this -- Puppet
-                will discover the appropriate format for your platform."
+            desc "The package format.  You will seldom need to specify this --
+                Puppet will discover the appropriate format for your platform."
 
             defaultto { @parent.class.default }
 
@@ -246,8 +267,9 @@ module Puppet
 
             validate do |value|
                 unless value =~ /^#{File::SEPARATOR}/ or value =~ /\w+:\/\//
-                    raise Puppet::Error,
+                    self.fail(
                         "Package sources must be fully qualified files or URLs, depending on the platform."
+                    )
                 end
             end
         end
@@ -360,7 +382,7 @@ module Puppet
                     # pull all of the objects
                     typeobj.list
                 else
-                    raise "Could not find package type '%s'" % type
+                    raise Puppet::Error, "Could not find package type '%s'" % type
                 end
             }.flatten
             @listed = true
@@ -481,7 +503,7 @@ module Puppet
 
                 return type
             else
-                raise Puppet::Error, "Invalid package type %s" % typename
+                self.fail "Invalid package type %s" % typename
             end
         end
     end # Puppet.type(:package)
@@ -499,7 +521,7 @@ module Puppet
             if source = @@sources[type]
                 return source.retrieve(file)
             else
-                raise "Unknown package source: %s" % type
+                raise Puppet::Error, "Unknown package source: %s" % type
             end
         end
 
@@ -525,7 +547,7 @@ module Puppet
             if FileTest.exists?(file)
                 return file
             else
-                raise "File %s does not exist" % file
+                raise Puppet::Error, "File %s does not exist" % file
             end
         }
     }
