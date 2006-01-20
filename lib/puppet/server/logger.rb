@@ -1,7 +1,7 @@
 require 'yaml'
 
 module Puppet
-class Server # :nodoc:
+class Server
     class LoggerError < RuntimeError; end
 
     # Receive logs from remote hosts.

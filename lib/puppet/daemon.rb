@@ -2,7 +2,7 @@
 
 require 'puppet'
 
-module Puppet # :nodoc:
+module Puppet
     # A module that handles operations common to all daemons.
     module Daemon
         def daemonname

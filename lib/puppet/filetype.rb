@@ -1,4 +1,4 @@
-module Puppet # :nodoc:
+module Puppet
     # Basic classes for reading, writing, and emptying files.  Not much
     # to see here.
     class FileType

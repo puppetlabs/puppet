@@ -1,6 +1,6 @@
 require 'syslog'
 
-module Puppet # :nodoc:
+module Puppet
     # Pass feedback to the user.  Log levels are modeled after syslog's, and it is
     # expected that that will be the most common log destination.  Supports
     # multiple destinations, one of which is a remote server.

@@ -8,7 +8,7 @@ require 'puppet/parameter'
 require 'puppet/util'
 # see the bottom of the file for the rest of the inclusions
 
-module Puppet # :nodoc:
+module Puppet
 class Type < Puppet::Element
     # Types (which map to elements in the languages) are entirely composed of
     # attribute value pairs.  Generally, Puppet calls any of these things an
@@ -1247,6 +1247,22 @@ class Type < Puppet::Element
     # Set up all of our autorequires.
     def finish
         self.autorequire
+
+        # Scheduling has to be done when the whole config is instantiated, so
+        # that file order doesn't matter in finding them.
+        self.schedule
+    end
+
+    def schedule
+        unless self[:schedule]
+            return
+        end
+
+        if sched = Puppet.type(:schedule)[self[:schedule]]
+            self[:schedule] = sched
+        else
+            self.fail "Could not find schedule %s" % self[:schedule]
+        end
     end
 
     # Is the specified parameter set?
@@ -1759,10 +1775,10 @@ class Type < Puppet::Element
         end
     end
 
-    #newmetaparam(:schedule) do
-    #    desc "On what schedule the object should be managed.
-    #        Currently non-functional."
-    #end
+    newmetaparam(:schedule) do
+        desc "On what schedule the object should be managed.
+            Currently non-functional."
+    end
 
     newmetaparam(:check) do
         desc "States which should have their values retrieved

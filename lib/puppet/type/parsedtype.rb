@@ -76,7 +76,7 @@ module Puppet
         end
     end
 
-    class Type # :nodoc:
+    class Type
         # The collection of classes that are just simple records aggregated
         # into a file. See 'host.rb' for an example.
         class ParsedType < Puppet::Type

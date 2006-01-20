@@ -1,4 +1,4 @@
-module Puppet # :nodoc:
+module Puppet
 # The class for handling configuration files.
 class Config < Hash
     # Slight override, since we can't seem to have a subclass where all instances

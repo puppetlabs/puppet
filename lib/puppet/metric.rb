@@ -1,7 +1,7 @@
 # included so we can test object types
 require 'puppet'
 
-module Puppet # :nodoc:
+module Puppet
     # A class for handling metrics.  This is currently ridiculously hackish.
 	class Metric
         def Metric.init
