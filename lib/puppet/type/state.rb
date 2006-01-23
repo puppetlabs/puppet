@@ -28,32 +28,32 @@ class State < Puppet::Parameter
         end
     end
 
-    # Define a new value for our state.
+    # Parameters just use 'newvalues', since there's no work associated with them.
     def self.newvalue(name, &block)
-        @statevalues ||= {}
+        @parametervalues ||= {}
 
-        if @statevalues.include?(name)
-            Puppet.warning "%s already has a value for %s" % [self.name, name]
+        if @parametervalues.include?(name)
+            Puppet.warning "%s already has a value for %s" % [name, name]
         end
-        @statevalues[name] = block
+        @parametervalues[name] = block
 
         define_method("set_" + name.to_s, &block)
     end
-
-    def self.aliasvalue(name, other)
-        @statevalues ||= {}
-        unless @statevalues.include?(other)
-            raise Puppet::DevError, "Cannot alias nonexistent value %s" % other
-        end
-
-        @aliasvalues ||= {}
-        @aliasvalues[name] = other
-    end
-
-    def self.alias(name)
-        @aliasvalues[name]
-    end
-
+#
+#    def self.aliasvalue(name, other)
+#        @statevalues ||= {}
+#        unless @statevalues.include?(other)
+#            raise Puppet::DevError, "Cannot alias nonexistent value %s" % other
+#        end
+#
+#        @aliasvalues ||= {}
+#        @aliasvalues[name] = other
+#    end
+#
+#    def self.alias(name)
+#        @aliasvalues[name]
+#    end
+#
     def self.defaultvalues
         newvalue(:present) do
             @parent.create
@@ -66,15 +66,15 @@ class State < Puppet::Parameter
         # This doc will probably get overridden
         @doc ||= "The basic state that the object should be in."
     end
-
-    # Return the list of valid values.
-    def self.values
-        @statevalues ||= {}
-        @aliasvalues ||= {}
-
-        #[@aliasvalues.keys, @statevalues.keys].flatten
-        @statevalues.keys
-    end
+#
+#    # Return the list of valid values.
+#    def self.values
+#        @statevalues ||= {}
+#        @aliasvalues ||= {}
+#
+#        #[@aliasvalues.keys, @statevalues.keys].flatten
+#        @statevalues.keys
+#    end
 
     # Call the method associated with a given value.
     def set
@@ -278,38 +278,38 @@ class State < Puppet::Parameter
         self.set
     end
 
-    munge do |value|
-        if self.class.values.empty?
-            # This state isn't using defined values to do its work.
-            return value
-        end
-        intern = value.to_s.intern
-        # If it's a valid value, always return it as a symbol.
-        if self.class.values.include?(intern)
-            retval = intern
-        elsif other = self.class.alias(intern)
-            self.info "returning alias %s for %s" % [other, intern]
-            retval = other
-        else
-            retval = value
-        end
-        retval
-    end
-
-    # Verify that the passed value is valid.
-    validate do |value|
-        if self.class.values.empty?
-            # This state isn't using defined values to do its work.
-            return 
-        end
-        unless value.is_a?(Symbol)
-            value = value.to_s.intern
-        end
-        unless self.class.values.include?(value) or self.class.alias(value)
-            self.fail "Invalid '%s' value '%s'.  Valid values are '%s'" %
-                    [self.class.name, value, self.class.values.join(", ")]
-        end
-    end
+#    munge do |value|
+#        if self.class.values.empty?
+#            # This state isn't using defined values to do its work.
+#            return value
+#        end
+#        intern = value.to_s.intern
+#        # If it's a valid value, always return it as a symbol.
+#        if self.class.values.include?(intern)
+#            retval = intern
+#        elsif other = self.class.alias(intern)
+#            self.info "returning alias %s for %s" % [other, intern]
+#            retval = other
+#        else
+#            retval = value
+#        end
+#        retval
+#    end
+#
+#    # Verify that the passed value is valid.
+#    validate do |value|
+#        if self.class.values.empty?
+#            # This state isn't using defined values to do its work.
+#            return 
+#        end
+#        unless value.is_a?(Symbol)
+#            value = value.to_s.intern
+#        end
+#        unless self.class.values.include?(value) or self.class.alias(value)
+#            self.fail "Invalid '%s' value '%s'.  Valid values are '%s'" %
+#                    [self.class.name, value, self.class.values.join(", ")]
+#        end
+#    end
 
     # How should a state change be printed as a string?
     def change_to_s
@@ -378,7 +378,6 @@ class State < Puppet::Parameter
         end
 
         def retrieve
-            self.warning "retrieving"
             if @parent.exists?
                 @is = :present
             else

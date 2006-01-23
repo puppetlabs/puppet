@@ -11,12 +11,28 @@ require 'test/unit'
 class TestParsedFile < Test::Unit::TestCase
 	include TestPuppet
 
+    def mkfile
+        path = tempfile()
+        File.open(path, "w") { |f| f.puts :yayness }
+
+        f = Puppet.type(:file).create(
+            :name => path,
+            :check => %w{checksum type}
+        )
+
+        return f
+    end
+
     def test_storeandretrieve
+        path = tempfile()
+
+        f = mkfile()
+
         hash = {:a => :b, :c => :d}
 
         state = nil
         assert_nothing_raised {
-            state = Puppet::Storage.state(hash)
+            state = Puppet::Storage.cache(f)
         }
 
         assert(!state.include?("name"))
@@ -34,8 +50,11 @@ class TestParsedFile < Test::Unit::TestCase
         assert_nothing_raised {
             Puppet::Storage.load
         }
+
+        # Reset it
+        state = nil
         assert_nothing_raised {
-            state = Puppet::Storage.state(hash)
+            state = Puppet::Storage.cache(f)
         }
 
         assert_equal(state["name"], hash)
@@ -45,6 +64,8 @@ class TestParsedFile < Test::Unit::TestCase
     # are reading or writing the file at once
     # so we need to test that
     def test_multiwrite
+        f = mkfile()
+
         value = {:a => :b}
         threads = []
         9.times { |a|
@@ -52,7 +73,7 @@ class TestParsedFile < Test::Unit::TestCase
                 9.times { |b|
                     assert_nothing_raised {
                         Puppet::Storage.load
-                        state = Puppet::Storage.state(value)
+                        state = Puppet::Storage.cache(f)
                         value.each { |k,v| state[k] = v }
                         state[:e] = rand(100)
                         Puppet::Storage.store
@@ -68,7 +89,9 @@ class TestParsedFile < Test::Unit::TestCase
         Puppet::Storage.store
         Puppet::Storage.clear
         Puppet::Storage.load
-        state = Puppet::Storage.state('newstate')
+
+        f = mkfile()
+        state = Puppet::Storage.cache(f)
         assert_same Hash, state.class
         assert_equal 0, state.size
     end

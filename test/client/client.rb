@@ -114,11 +114,11 @@ class TestClient < Test::Unit::TestCase
 
         # now verify that our client cannot do non-cert operations
         # because its certs are signed by a different CA
-        assert_raise(Puppet::NetworkClientError,
+        assert_raise(Puppet::Error,
             "Client was allowed to call getconfig with no certs") {
             nonemaster.getconfig
         }
-        assert_raise(Puppet::NetworkClientError,
+        assert_raise(Puppet::Error,
             "Client was allowed to call getconfig with untrusted certs") {
             certmaster.getconfig
         }

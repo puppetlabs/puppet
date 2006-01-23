@@ -11,7 +11,7 @@
 #   puppetd  [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
 #               [--ssldir <cert directory>] [-l|--logdest <syslog|<file>|console>]
 #               [--fqdn <host name>] [-p|--port <port>] [-o|--onetime]
-#               [-s|--server <server>]
+#               [-s|--server <server>] [-i|--ignoreschedules]
 #               [-w|--waitforcert <seconds>] [-c|--confdir <configuration directory>]
 #               [--vardir <var directory>] [--centrallogging]
 #
@@ -58,7 +58,15 @@
 #   The port to which to connect on the remote server.  Currently defaults to 8139.
 #
 # onetime::
-#   Run the configuration once, rather than as a long-running daemon.
+#   Run the configuration once, rather than as a long-running daemon.  This is
+#   useful for interactively running puppetd.
+#
+# schedule::
+#   What schedule Puppet itself should run on.  This dictates how often the
+#   entire configuration is retrieved and run.  The default is named 'puppet',
+#   and runs every half hour or so.  The schedules themselves are defined in the
+#   configuration, which means that on startup puppetd will always retrieve
+#   the configuration and then check to see if it's scheduled to run.
 #
 # server::
 #   The remote server from whom to receive the local configuration.  Currently
@@ -117,6 +125,7 @@ result = GetoptLong.new(
 	[ "--noop",	    "-n",			GetoptLong::NO_ARGUMENT ],
 	[ "--onetime",  "-o",			GetoptLong::NO_ARGUMENT ],
 	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--schedule", "-S",	        GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--server",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--ssldir",   				GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
@@ -134,6 +143,7 @@ waitforcert = false
 onetime = false
 
 centrallogs = false
+
 begin
     result.each { |opt,arg|
         case opt
@@ -159,6 +169,10 @@ begin
                 Puppet[:logdest] = :console
             when "--noop"
                 Puppet[:noop] = true
+            when "--schedule"
+                # This is late-binding -- it'll only look up the schedule name
+                # when it needs to run
+                Puppet[:schedule] = arg
             when "--ssldir"
                 Puppet[:ssldir] = arg
             when "--fqdn"

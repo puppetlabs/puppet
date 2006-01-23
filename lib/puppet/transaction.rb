@@ -44,6 +44,7 @@ class Transaction
         Puppet.debug "Beginning transaction %s with %s changes" %
             [self.object_id, @changes.length]
 
+        now = Time.now.to_i
         events = @changes.collect { |change|
             if change.is_a?(Puppet::StateChange)
                 change.transaction = self
@@ -66,13 +67,19 @@ class Transaction
                     # should do so
                 end
 
+                # This is kinda lame, because it can result in the same
+                # object being modified multiple times, but that's difficult
+                # to avoid as long as we're syncing each state individually.
+                change.state.parent.cache(:synced, now)
+
                 unless events.nil? or (events.is_a?(Array) and events.empty?)
                     change.changed = true
                 end
                 events
             else
+                puts caller
                 raise Puppet::DevError,
-                    "Transactions cannot handle objects of type %s" % child.class
+                    "Transactions cannot handle objects of type %s" % change.class
             end
         }.flatten.reject { |event|
             event.nil?
@@ -107,11 +114,16 @@ class Transaction
         end
         # change collection is in-band, and message generation is out-of-band
         # of course, exception raising is also out-of-band
-        @changes = @objects.collect { |child|
+        now = Time.now.to_i
+        @changes = @objects.find_all { |child|
+            child.scheduled?
+        }.collect { |child|
             # these children are all Puppet::Type instances
             # not all of the children will return a change, and Containers
             # return transactions
-            child.evaluate
+            ary = child.evaluate
+            child.cache(:checked, now)
+            ary
         }.flatten.reject { |child|
             child.nil? # remove empties
         }

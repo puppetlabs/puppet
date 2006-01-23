@@ -4,7 +4,7 @@ module Puppet
             attr_reader :validater, :munger, :name, :default
             attr_accessor :ismetaparameter, :element
 
-            # Define the default value for a given state or parameter.  This
+            # Define the default value for a given parameter or parameter.  This
             # means that 'nil' is an invalid default value.  This defines
             # the 'default' instance method.
             def defaultto(value = nil, &block)
@@ -29,7 +29,7 @@ module Puppet
             # This is how we munge the value.  Basically, this is our
             # opportunity to convert the value from one form into another.
             def munge(&block)
-                # I need to wrap the unsafe version in begin/rescue statements,
+                # I need to wrap the unsafe version in begin/rescue parameterments,
                 # but if I directly call the block then it gets bound to the
                 # class's context, not the instance's, thus the two methods,
                 # instead of just one.
@@ -107,6 +107,41 @@ module Puppet
                     end
                 end
             end
+
+            # Define a new value for our parameter.
+            def newvalues(*names)
+                @parametervalues ||= []
+
+                names.each { |name|
+                    if @parametervalues.include?(name)
+                        Puppet.warning "%s already has a value for %s" % [name, name]
+                    end
+                    @parametervalues << name
+                }
+            end
+
+            def aliasvalue(name, other)
+                @parametervalues ||= []
+                unless @parametervalues.include?(other)
+                    raise Puppet::DevError, "Cannot alias nonexistent value %s" % other
+                end
+
+                @aliasvalues ||= {}
+                @aliasvalues[name] = other
+            end
+
+            def alias(name)
+                @aliasvalues[name]
+            end
+
+            # Return the list of valid values.
+            def values
+                @parametervalues ||= []
+                @aliasvalues ||= {}
+
+                #[@aliasvalues.keys, @parametervalues.keys].flatten
+                @parametervalues.dup
+            end
         end
 
         # Just a simple method to proxy instance methods to class methods
@@ -177,6 +212,78 @@ module Puppet
             raise error
         end
 
+        # Log a message using the parent's log level.
+        def log(msg)
+            unless @parent[:loglevel]
+                p @parent
+                self.devfail "Parent %s has no loglevel" %
+                    @parent.name
+            end
+            Puppet::Log.create(
+                :level => @parent[:loglevel],
+                :message => msg,
+                :source => self
+            )
+        end
+
+        # each parameter class must define the name() method, and parameter instances
+        # do not change that name
+        # this implicitly means that a given object can only have one parameter
+        # instance of a given parameter class
+        def name
+            return self.class.name
+        end
+
+        # for testing whether we should actually do anything
+        def noop
+            unless defined? @noop
+                @noop = false
+            end
+            tmp = @noop || self.parent.noop || Puppet[:noop] || false
+            #debug "noop is %s" % tmp
+            return tmp
+        end
+
+        # return the full path to us, for logging and rollback; not currently
+        # used
+        def path
+            return [@parent.path, self.name].join("/")
+        end
+
+        # If the specified value is allowed, then munge appropriately.
+        munge do |value|
+            if self.class.values.empty?
+                # This parameter isn't using defined values to do its work.
+                return value
+            end
+            intern = value.to_s.intern
+            # If it's a valid value, always return it as a symbol.
+            if self.class.values.include?(intern)
+                retval = intern
+            elsif other = self.class.alias(intern)
+                self.info "returning alias %s for %s" % [other, intern]
+                retval = other
+            else
+                retval = value
+            end
+            retval
+        end
+
+        # Verify that the passed value is valid.
+        validate do |value|
+            if self.class.values.empty?
+                # This parameter isn't using defined values to do its work.
+                return 
+            end
+            unless value.is_a?(Symbol)
+                value = value.to_s.intern
+            end
+            unless self.class.values.include?(value) or self.class.alias(value)
+                self.fail "Invalid '%s' value '%s'.  Valid values are '%s'" %
+                        [self.class.name, value, self.class.values.join(", ")]
+            end
+        end
+
         # This should only be called for parameters, but go ahead and make
         # it possible to call for states, too.
         def value
@@ -195,7 +302,7 @@ module Puppet
         # late-binding (e.g., users might not exist when the value is assigned
         # but might when it is asked for).
         def value=(value)
-            # If we're a state, just hand the processing off to the should method.
+            # If we're a parameter, just hand the processing off to the should method.
             if self.is_a?(Puppet::State)
                 return self.should = value
             end

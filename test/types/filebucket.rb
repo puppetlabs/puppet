@@ -52,7 +52,7 @@ class TestFileBucket < Test::Unit::TestCase
         begin
             initstorage
         rescue
-            system("rm -rf %s" % Puppet[:checksumfile])
+            system("rm -rf %s" % Puppet[:statefile])
         end
     end
 

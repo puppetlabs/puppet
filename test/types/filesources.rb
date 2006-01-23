@@ -18,7 +18,7 @@ class TestFileSources < Test::Unit::TestCase
         begin
             initstorage
         rescue
-            system("rm -rf %s" % Puppet[:checksumfile])
+            system("rm -rf %s" % Puppet[:statefile])
         end
         if defined? @port
             @port += 1

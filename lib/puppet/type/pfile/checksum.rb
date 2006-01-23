@@ -20,6 +20,27 @@ module Puppet
             @checktypes[0]
         end
 
+        # Checksums need to invert how changes are printed.
+        def change_to_s
+            begin
+                if @is == :absent
+                    return "defined '%s' as '%s'" %
+                        [self.name, self.should_to_s]
+                elsif self.should == :absent
+                    return "undefined %s from '%s'" %
+                        [self.name, self.is_to_s]
+                else
+                    return "%s changed '%s' to '%s'" %
+                        [self.name, self.should_to_s, self.is_to_s]
+                end
+            rescue Puppet::Error, Puppet::DevError
+                raise
+            rescue => detail
+                raise Puppet::DevError, "Could not convert change %s to string: %s" %
+                    [self.name, detail]
+            end
+        end
+
         def getsum(checktype)
             sum = ""
             case checktype
@@ -85,27 +106,45 @@ module Puppet
             end
 
             @checktypes << value
-            state = Puppet::Storage.state(self)
 
-            unless state
-                self.devfail "Did not get state back from Storage"
+            hash = nil
+            unless hash = @parent.cached(:checksums) 
+                hash = {}
+                @parent.cache(:checksums, hash)
             end
-            if hash = state[@parent[:path]]
-                if hash.include?(value)
-                    #self.notice "Found checksum %s for %s" %
-                    #    [hash[value] ,@parent[:path]]
-                    return hash[value]
-                else
-                    #self.notice "Found checksum for %s but not of type %s" %
-                    #    [@parent[:path],@checktypes[0]]
-                    return :nosum
-                end
-            else
-                # We can't use :absent here, because then it'll match on
-                # non-existent files
+
+            #unless state
+            #    self.devfail "Did not get state back from Storage"
+            #end
+
+            if hash.include?(value)
+                #self.notice "Found checksum %s for %s" %
+                #    [hash[value] ,@parent[:path]]
+                return hash[value]
+            elsif hash.empty?
                 #self.notice "Could not find sum of type %s" % @checktypes[0]
                 return :nosum
+            else
+                #self.notice "Found checksum for %s but not of type %s" %
+                #    [@parent[:path],@checktypes[0]]
+                return :nosum
             end
+#            if hash = state[@parent[:path]]
+#                if hash.include?(value)
+#                    #self.notice "Found checksum %s for %s" %
+#                    #    [hash[value] ,@parent[:path]]
+#                    return hash[value]
+#                else
+#                    #self.notice "Found checksum for %s but not of type %s" %
+#                    #    [@parent[:path],@checktypes[0]]
+#                    return :nosum
+#                end
+#            else
+#                # We can't use :absent here, because then it'll match on
+#                # non-existent files
+#                #self.notice "Could not find sum of type %s" % @checktypes[0]
+#                return :nosum
+#            end
         end
 
         # Even though they can specify multiple checksums, the insync?
@@ -188,11 +227,11 @@ module Puppet
         # Store the new sum to the state db.
         def updatesum
             result = false
-            state = Puppet::Storage.state(self)
-            unless state.include?(@parent.name)
-                self.debug "Initializing state hash for %s" % @parent.name
-
-                state[@parent.name] = Hash.new
+            state = nil
+            unless state = @parent.cached(:checksums) 
+                self.debug "Initializing checksum hash for %s" % @parent.name
+                state = {}
+                @parent.cache(:checksums, state)
             end
 
             if @is.is_a?(Symbol)
@@ -206,7 +245,7 @@ module Puppet
             end
 
             # if we're replacing, vs. updating
-            if state[@parent.name].include?(@checktypes[0])
+            if state.include?(@checktypes[0])
                 unless defined? @should
                     raise Puppet::Error.new(
                         ("@should is not initialized for %s, even though we " +
@@ -214,7 +253,7 @@ module Puppet
                     )
                 end
                 self.debug "Replacing %s checksum %s with %s" %
-                    [@parent.name, state[@parent.name][@checktypes[0]],@is]
+                    [@parent.name, state[@checktypes[0]],@is]
                 #@parent.debug "@is: %s; @should: %s" % [@is,@should]
                 result = true
             else
@@ -222,7 +261,7 @@ module Puppet
                     [@is,@checktypes[0]]
                 result = false
             end
-            state[@parent.name][@checktypes[0]] = @is
+            state[@checktypes[0]] = @is
             return result
         end
     end

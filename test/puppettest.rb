@@ -53,6 +53,8 @@ module TestPuppet
             Puppet[:logdest] = "/dev/null"
             Puppet[:httplog] = "/dev/null"
         end
+
+        Puppet[:ignoreschedules] = true
     end
 
 
@@ -209,10 +211,12 @@ module TestPuppet
             trans = comp.evaluate
         }
 
+        events = nil
         assert_nothing_raised("Failed to evaluate transaction") {
-            trans.evaluate
+            events = trans.evaluate.collect { |e| e.event }
         }
         Puppet.type(:component).delete(comp)
+        events
     end
 
     def run_events(type, trans, events, msg)

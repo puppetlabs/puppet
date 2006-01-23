@@ -54,23 +54,6 @@ class Type < Puppet::Element
 
     public
 
-    # these objects are used for mapping type names (e.g., 'file')
-    # to actual object classes; because Type.inherited is
-    # called before the <subclass>.name method is defined, we need
-    # to store each class in an array, and then later actually iterate
-    # across that array and make a map
-    #@@typeary = [self] # so that the allowedmethods stuff works
-    #@@typehash = Hash.new { |hash,key|
-    #    if key.is_a?(String)
-    #        key = key.intern
-    #    end
-    #    if hash.include?(key)
-    #        hash[key]
-    #    else
-    #        raise TypeError.new("Object type %s not found" % key)
-    #    end
-    #}
-
     # the Type class attribute accessors
     class << self
         attr_reader :name, :states
@@ -463,6 +446,7 @@ class Type < Puppet::Element
         end
         param.ismetaparameter
         param.class_eval(&block)
+        const_set("MetaParam" + name.to_s.capitalize,param)
         @@metaparams ||= []
         @@metaparams << param
 
@@ -483,6 +467,7 @@ class Type < Puppet::Element
         end
         param.element = self
         param.class_eval(&block)
+        const_set("Parameter" + name.to_s.capitalize,param)
         @parameters ||= []
         @parameters << param
 
@@ -756,8 +741,12 @@ class Type < Puppet::Element
         else
             if @states.has_key?(attr)
                 @states.delete(attr)
+            elsif @parameters.has_key?(attr)
+                @parameters.delete(attr)
+            elsif @metaparams.has_key?(attr)
+                @metaparams.delete(attr)
             else
-                raise Puppet::DevError.new("Undefined state '#{attr}' in #{self}")
+                raise Puppet::DevError.new("Undefined attribute '#{attr}' in #{self}")
             end
         end
     end
@@ -809,11 +798,11 @@ class Type < Puppet::Element
 
         error = type.new(args.join(" "))
 
-        if @line
+        if defined? @line and @line
             error.line = @line
         end
 
-        if @file
+        if defined? @file and @file
             error.file = @file
         end
 
@@ -1142,8 +1131,8 @@ class Type < Puppet::Element
         @noop = false
         # keeping stats for the total number of changes, and how many were
         # completely sync'ed
-        # this isn't really sufficient either, because it adds lots of special cases
-        # such as failed changes
+        # this isn't really sufficient either, because it adds lots of special
+        # cases such as failed changes
         # it also doesn't distinguish between changes from the current transaction
         # vs. changes over the process lifetime
         @totalchanges = 0
@@ -1180,15 +1169,42 @@ class Type < Puppet::Element
             hash.delete(:parent)
         end
 
+        # Convert all args to symbols
         hash = self.argclean(hash)
 
-        self.class.allattrs.each { |name|
+        # Let's do the name first, because some things need to happen once
+        # we have the name but before anything else
+
+        attrs = self.class.allattrs
+        namevar = self.class.namevar
+
+        if hash.include?(namevar)
+            self[namevar] = hash[namevar]
+            hash.delete(namevar)
+            if attrs.include?(namevar)
+                attrs.delete(namevar)
+            else
+                self.devfail "My namevar isn't a valid attribute...?"
+            end
+        else
+            self.devfail "I was not passed a namevar"
+        end
+
+        # The information to cache to disk.  We have to do this after
+        # the name is set because it uses the name and/or path, but before
+        # everything else is set because the states need to be able to
+        # retrieve their stored info.
+        #@cache = Puppet::Storage.cache(self)
+
+        # This is all of our attributes except the namevar.
+        attrs.each { |name|
             if hash.include?(name)
                 begin
                     self[name] = hash[name]
                 rescue => detail
                     self.devfail(
-                        "Could not set %s on %s: %s" % [name, self.class.name, detail]
+                        "Could not set %s on %s: %s" %
+                            [name, self.class.name, detail]
                     )
                 end
                 hash.delete name
@@ -1253,16 +1269,64 @@ class Type < Puppet::Element
         self.schedule
     end
 
-    def schedule
-        unless self[:schedule]
-            return
-        end
+    # Return a cached value
+    def cached(name)
+        Puppet::Storage.cache(self)[name]
+        #@cache[name] ||= nil
+    end
 
-        if sched = Puppet.type(:schedule)[self[:schedule]]
-            self[:schedule] = sched
+    # Cache a value
+    def cache(name, value)
+        Puppet::Storage.cache(self)[name] = value
+        #@cache[name] = value
+    end
+
+    # Look up the schedule and set it appropriately.  This is done after
+    # the instantiation phase, so that the schedule can be anywhere in the
+    # file.
+    def schedule
+
+        # If we've already set the schedule, then just move on
+        return if self[:schedule].is_a?(Puppet.type(:schedule))
+
+        # Schedules don't need to be scheduled
+        return if self.is_a?(Puppet.type(:schedule))
+
+        # Nor do components
+        return if self.is_a?(Puppet.type(:component))
+
+        if self[:schedule]
+            if sched = Puppet.type(:schedule)[self[:schedule]]
+                self[:schedule] = sched
+            else
+                self.fail "Could not find schedule %s" % self[:schedule]
+            end
+        elsif Puppet[:schedule] and ! Puppet[:ignoreschedules]
+            # We handle schedule defaults here mostly because otherwise things
+            # will behave very very erratically during testing.
+            if sched = Puppet.type(:schedule)[Puppet[:schedule]]
+                self[:schedule] = sched
+            else
+                self.fail "Could not find default schedule %s" % Puppet[:schedule]
+            end
         else
-            self.fail "Could not find schedule %s" % self[:schedule]
+            # While it's unlikely we won't have any schedule (since there's a
+            # default), it's at least possible during testing
+            return true
         end
+    end
+
+    # Check whether we are scheduled to run right now or not.
+    def scheduled?
+        return true if Puppet[:ignoreschedules]
+        return true unless schedule = self[:schedule]
+
+        # We use 'checked' here instead of 'synced' because otherwise we'll
+        # end up checking most elements most times, because they will generally
+        # have been synced a long time ago (e.g., a file only gets updated
+        # once a month on the server and its schedule is daily; the last sync time
+        # will have been a month ago, so we'd end up checking every run).
+        return schedule.match?(self.cached(:checked))
     end
 
     # Is the specified parameter set?
@@ -1776,8 +1840,29 @@ class Type < Puppet::Element
     end
 
     newmetaparam(:schedule) do
-        desc "On what schedule the object should be managed.
-            Currently non-functional."
+        desc "On what schedule the object should be managed.  You must create a
+            schedule_ object, and then reference the name of that object to use
+            that for your schedule:
+
+                schedule { daily:
+                    period => daily,
+                    range => \"2-4\"
+                }
+
+                exec { \"/usr/bin/apt-get update\":
+                    schedule => daily
+                }
+
+            The creation of the schedule object does not need to appear in the
+            configuration before objects that use it."
+
+        munge do |name|
+            if schedule = Puppet.type(:schedule)[name]
+                return schedule
+            else
+                return name
+            end
+        end
     end
 
     newmetaparam(:check) do

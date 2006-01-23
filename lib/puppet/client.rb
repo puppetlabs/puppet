@@ -264,6 +264,11 @@ module Puppet
                         detail
                 rescue => detail
                     Puppet.err "Found a bug: %s" % detail
+                    if Puppet[:debug]
+                        puts detail.backtrace
+                    end
+                ensure
+                    Puppet::Storage.store
                 end
                 Puppet::Metric.gather
                 Puppet::Metric.tally
@@ -271,7 +276,6 @@ module Puppet
                     Metric.store
                     Metric.graph
                 end
-                Puppet::Storage.store
 
                 return transaction
             end
@@ -415,6 +419,9 @@ module Puppet
                     Puppet::Type.allclear
                 end
                 @objects = nil
+
+                # First create the default scheduling objects
+                Puppet.type(:schedule).mkdefaultschedules
 
                 # Now convert the objects to real Puppet objects
                 @objects = objects.to_type

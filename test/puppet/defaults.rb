@@ -13,7 +13,7 @@ require 'test/unit'
 class TestPuppetDefaults < Test::Unit::TestCase
     include TestPuppet
     @@dirs = %w{rrddir puppetconf puppetvar logdir statedir}
-    @@files = %w{logfile checksumfile manifest masterlog}
+    @@files = %w{logfile statefile manifest masterlog}
     @@normals = %w{puppetport masterport server}
     @@booleans = %w{rrdgraph noop}
 

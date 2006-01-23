@@ -36,14 +36,14 @@ class TestFile < Test::Unit::TestCase
         begin
             initstorage
         rescue
-            system("rm -rf %s" % Puppet[:checksumfile])
+            system("rm -rf %s" % Puppet[:statefile])
         end
     end
 
     def teardown
         clearstorage
         Puppet::Storage.clear
-        system("rm -rf %s" % Puppet[:checksumfile])
+        system("rm -rf %s" % Puppet[:statefile])
         super
     end
 
@@ -306,9 +306,8 @@ class TestFile < Test::Unit::TestCase
                 )
                 comp.push file
                 trans = nil
-                assert_nothing_raised() {
-                    trans = comp.evaluate
-                }
+
+                file.retrieve
 
                 if file.name !~ /nonexists/
                     sum = file.state(:checksum)
@@ -316,14 +315,16 @@ class TestFile < Test::Unit::TestCase
                     assert(sum.insync?)
                 end
 
-                assert_nothing_raised() {
-                    events = trans.evaluate.collect { |e| e.event }
-                }
-                # we don't want to kick off an event the first time we
-                # come across a file
-                assert(
-                    ! events.include?(:file_changed)
-                )
+                events = assert_apply(comp)
+
+                assert(! events.include?(:file_changed),
+                    "File incorrectly changed")
+                assert_events([], comp)
+
+                # We have to sleep because the time resolution of the time-based
+                # mechanisms is greater than one second
+                sleep 1
+
                 assert_nothing_raised() {
                     File.open(path,File::CREAT|File::TRUNC|File::WRONLY) { |of|
                         of.puts "some more text, yo"
@@ -331,10 +332,6 @@ class TestFile < Test::Unit::TestCase
                 }
                 Puppet.type(:file).clear
                 Puppet.type(:component).clear
-
-                # We have to sleep because the time resolution of the time-based
-                # mechanisms is greater than one second
-                sleep 1.1
 
                 # now recreate the file
                 assert_nothing_raised() {
@@ -351,11 +348,11 @@ class TestFile < Test::Unit::TestCase
 
                 # If the file was missing, it should not generate an event
                 # when it gets created.
-                if path =~ /nonexists/e
-                    assert_events([], comp)
-                else
+                #if path =~ /nonexists/
+                #    assert_events([], comp)
+                #else
                     assert_events([:file_changed], comp)
-                end
+                #end
                 assert_nothing_raised() {
                     File.unlink(path)
                     File.open(path,File::CREAT|File::TRUNC|File::WRONLY) { |of|

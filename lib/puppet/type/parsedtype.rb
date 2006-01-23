@@ -238,7 +238,7 @@ module Puppet
 
                     return str
                 else
-                    Puppet.notice "No host instances for %s" % user
+                    Puppet.notice "No host instances"
                     return ""
                 end
             end
