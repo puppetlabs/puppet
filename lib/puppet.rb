@@ -110,7 +110,7 @@ PUPPETVERSION = '0.11.2'
         :parseonly      => false,
         :puppetport     => 8139,
         :masterport     => 8140,
-        :runinterval    => 60,
+        :runinterval    => 500, # 30 minutes
     }
 
     # If we're running the standalone puppet process as a non-root user,

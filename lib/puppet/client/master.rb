@@ -15,6 +15,7 @@ class Puppet::Client::MasterClient < Puppet::Client
     # objects.  For now, just descend into the tree and perform and
     # necessary manipulations.
     def apply
+        Puppet.notice "Beginning configuration run"
         dostorage()
         unless defined? @objects
             raise Puppet::Error, "Cannot apply; objects not defined"

@@ -80,6 +80,10 @@ module Puppet
             end
         end
 
+        def Log.destinations
+            return @destinations.keys
+        end
+
         # Yield each valid level in turn
         def Log.eachlevel
             @levels.each { |level| yield level }
@@ -159,11 +163,11 @@ module Puppet
             end
         end
 
-        # Route the actual message. FIXME There are lots of things this method should
-        # do, like caching, storing messages when there are not yet destinations,
-        # a bit more.
-        # It's worth noting that there's a potential for a loop here, if
-        # the machine somehow gets the destination set as itself.
+        # Route the actual message. FIXME There are lots of things this method
+        # should do, like caching, storing messages when there are not yet
+        # destinations, a bit more.  It's worth noting that there's a potential
+        # for a loop here, if the machine somehow gets the destination set as
+        # itself.
         def Log.newmessage(msg)
             if @levels.index(msg.level) < @loglevel 
                 return
@@ -179,7 +183,9 @@ module Puppet
                         dest.send(msg.level, msg.to_s.gsub("%", '%%'))
                     else
                         dest.send(msg.level, "(%s) %s" %
-                            [msg.source.to_s.gsub("%", ""), msg.to_s.gsub("%", '%%')]
+                            [msg.source.to_s.gsub("%", ""),
+                                msg.to_s.gsub("%", '%%')
+                            ]
                         )
                     end
                 when File:

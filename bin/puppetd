@@ -144,6 +144,8 @@ onetime = false
 
 centrallogs = false
 
+setdest = false
+
 begin
     result.each { |opt,arg|
         case opt
@@ -164,9 +166,11 @@ begin
             when "--verbose"
                 Puppet[:loglevel] = :info
                 Puppet[:logdest] = :console
+                setdest = true
             when "--debug"
                 Puppet[:loglevel] = :debug
                 Puppet[:logdest] = :console
+                setdest = true
             when "--noop"
                 Puppet[:noop] = true
             when "--schedule"
@@ -205,12 +209,14 @@ rescue GetoptLong::InvalidOption => detail
     exit(1)
 end
 
-bg = false
-
 if Puppet[:loglevel] == :debug or Puppet[:loglevel] == :info
     args[:Daemonize] = false
 else
     args[:Daemonize] = true
+end
+
+unless setdest
+    Puppet[:logdest] = :syslog
 end
 
 args[:Server] = server
@@ -228,7 +234,7 @@ if centrallogs
 end
 
 
-Puppet.info "Starting Puppet client version %s" % [Puppet.version]
+Puppet.notice "Starting Puppet client version %s" % [Puppet.version]
 client = Puppet::Client::MasterClient.new(args)
 
 
@@ -251,7 +257,8 @@ unless client.readcert
     end
 end
 
-if bg
+if args[:Daemonize]
+    #exit(13)
     client.daemonize
 end
 

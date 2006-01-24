@@ -130,6 +130,9 @@ module Puppet
             # Stick it in the loop
             EventLoop.current.monitor_timer timer
 
+            # Run once before we start following the timer
+            self.runnow
+
             # And run indefinitely
             observe_signal timer, :alarm do
                 if self.scheduled?

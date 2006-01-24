@@ -154,6 +154,8 @@ havebucket = true
 
 parseonly = false
 
+setdest = false
+
 begin
     result.each { |opt,arg|
         case opt
@@ -164,6 +166,7 @@ begin
             when "--debug"
                 Puppet[:debug] = true
                 Puppet[:logdest] = :console
+                setdest = true
             when "--fsconfig"
                 unless FileTest.exists?(arg)
                     $stderr.puts "File server configuration file %s does not exist" %
@@ -197,6 +200,7 @@ begin
             when "--logdest"
                 begin
                     Puppet[:logdest] = arg
+                    setdest = true
                 rescue => detail
                     $stderr.puts detail.to_s
                 end
@@ -210,6 +214,7 @@ begin
                 puts "%s" % Puppet.version
                 exit
             when "--verbose"
+                setdest = true
                 Puppet[:loglevel] = :info
                 Puppet[:logdest] = :console
             else
@@ -275,6 +280,9 @@ handlers = {
     :Logger => {}
 }
 
+unless setdest
+    Puppet[:logdest] = :syslog
+end
 
 if haveca
     handlers[:CA] = ca
@@ -298,6 +306,8 @@ if fs.include?(:Config)
 end
 
 args[:Handlers] = handlers
+
+Puppet.notice "Starting Puppet server version %s" % [Puppet.version]
 
 begin
     # use the default, um, everything
