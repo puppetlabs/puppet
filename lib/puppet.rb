@@ -1,4 +1,5 @@
 require 'singleton'
+require 'puppet/event-loop'
 require 'puppet/log'
 require 'puppet/util'
 
@@ -85,7 +86,7 @@ PUPPETVERSION = '0.11.2'
         :statedir       => [:puppetvar,      "state"],
         :rundir         => [:puppetvar,      "run"],
 
-        # then the files},
+        # then the files,
         :manifestdir    => [:puppetconf,     "manifests"],
         :manifest       => [:manifestdir,    "site.pp"],
         :localconfig    => [:puppetconf,     "localconfig"],
@@ -109,6 +110,7 @@ PUPPETVERSION = '0.11.2'
         :parseonly      => false,
         :puppetport     => 8139,
         :masterport     => 8140,
+        :runinterval    => 60,
     }
 
     # If we're running the standalone puppet process as a non-root user,
@@ -181,47 +183,30 @@ PUPPETVERSION = '0.11.2'
         end
 	end
 
-    def self.asuser(user)
-        # FIXME this should use our user object, since it already knows how
-        # to find users and such
-        require 'etc'
-
-        begin
-            obj = Etc.getpwnam(user)
-        rescue ArgumentError
-            raise Puppet::Error, "User %s not found"
-        end
-
-        uid = obj.uid
-
-        olduid = nil
-        if Process.uid != uid
-            olduid = Process.uid
-            Process.euid = uid
-        end
-
-        retval = yield
-
-
-        if olduid
-            Process.euid = olduid
-        end
-
-        return retval
+    # Start our event loop.  This blocks, waiting for someone, somewhere,
+    # to generate events of some kind.
+    def self.start
+        #Puppet.info "Starting loop"
+        EventLoop.current.run
     end
 
-    def self.join
-        return unless defined? @threads
-        @threads.each { |th| th.join }
+    # Create the timer that our different objects (uh, mostly the client)
+    # check.
+    def self.timer
+        unless defined? @timer
+            #Puppet.info "Interval is %s" % Puppet[:runinterval]
+            #@timer = EventLoop::Timer.new(:interval => Puppet[:runinterval])
+            @timer = EventLoop::Timer.new(
+                :interval => Puppet[:runinterval],
+                :tolerance => 1,
+                :start? => true
+            )
+            EventLoop.current.monitor_timer @timer
+        end
+        @timer
     end
 
-    def self.newthread
-        @threads ||= []
-        @threads << Thread.new {
-            yield
-        }
-    end
-
+    # Store a new default value.
     def self.setdefault(param,value)
         if value.is_a?(Array) 
             if value[0].is_a?(Symbol) 

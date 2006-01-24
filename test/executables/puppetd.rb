@@ -25,6 +25,7 @@ class TestPuppetDExe < Test::Unit::TestCase
 
         cmd = "puppetd"
         cmd += " --verbose"
+        cmd += " --onetime"
         #cmd += " --fqdn %s" % fqdn
         cmd += " --port %s" % @@port
         cmd += " --confdir %s" % Puppet[:puppetconf]

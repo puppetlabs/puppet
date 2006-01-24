@@ -89,13 +89,29 @@ module Util
     def self.lock(*opts)
         lock = opts[0] + ".lock"
         while File.exists?(lock)
+            stamp = File.stat(lock).mtime.to_i 
+            if Time.now.to_i - stamp > 5
+                Puppet.notice "Lock file %s is %s seconds old; removing"
+                File.delete(lock)
+            end
             #Puppet.debug "%s is locked" % opts[0]
             sleep 0.1
         end
         File.open(lock, "w") { |f| f.print " "; f.flush }
+        writing = false
+        if opts[1] == "w"
+            writing = true
+            tmp = opts[0] + ".tmp"
+            orig = opts[0]
+            opts[0] = tmp
+        end
         begin
             File.open(*opts) { |file| yield file }
-        rescue
+            if writing
+                File.rename(tmp, orig)
+            end
+        rescue => detail
+            Puppet.err "Storage error: %s" % detail
             raise
         ensure
             # I don't really understand how the lock file could disappear,

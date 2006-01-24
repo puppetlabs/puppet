@@ -33,7 +33,7 @@ module Puppet
             Puppet automatically creates a schedule for each valid period with the
             same name as that period (e.g., hourly and daily).  Additionally,
             a schedule named *puppet* is created and used as the default,
-            with the following attributes:
+            with the following attributes::
 
                 schedule { puppet:
                     period => hourly,

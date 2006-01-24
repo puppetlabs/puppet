@@ -52,8 +52,8 @@ module Puppet
                 begin
                     @@state = YAML.load(file)
                 rescue => detail
-                    Puppet.err "Checksumfile %s is corrupt; replacing" %
-                        Puppet[:statefile]
+                    Puppet.err "Checksumfile %s is corrupt (%s); replacing" %
+                        [Puppet[:statefile], detail]
                     begin
                         File.rename(Puppet[:statefile],
                             Puppet[:statefile] + ".bad")
@@ -65,6 +65,11 @@ module Puppet
                 end
             }
 
+            unless @@state.is_a?(Hash)
+                Puppet.err "State got corrupted"
+                self.init
+            end
+
             #Puppet.debug "Loaded state is %s" % @@state.inspect
         end
 
@@ -73,6 +78,7 @@ module Puppet
         end
 
         def self.store
+            Puppet.debug "Storing state"
             unless FileTest.directory?(File.dirname(Puppet[:statefile]))
                 begin
                     Puppet.recmkdir(File.dirname(Puppet[:statefile]))
@@ -89,7 +95,7 @@ module Puppet
             end
 
             Puppet::Util.lock(
-                Puppet[:statefile], File::CREAT|File::WRONLY, 0600
+                Puppet[:statefile], "w", 0600
             ) { |file|
                 file.print YAML.dump(@@state)
             }

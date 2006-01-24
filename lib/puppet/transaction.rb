@@ -121,9 +121,9 @@ class Transaction
             # these children are all Puppet::Type instances
             # not all of the children will return a change, and Containers
             # return transactions
-            ary = child.evaluate
-            child.cache(:checked, now)
-            ary
+            #ary = child.evaluate
+            #ary
+            child.evaluate
         }.flatten.reject { |child|
             child.nil? # remove empties
         }

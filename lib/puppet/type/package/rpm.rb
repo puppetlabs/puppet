@@ -3,13 +3,14 @@ module Puppet
         def query
             fields = {
                 :name => "NAME",
-                :ensure => "VERSION",
+                :version => "VERSION",
                 :description => "DESCRIPTION"
             }
 
             cmd = "rpm -q #{self.name} --qf '%s\n'" %
                 "%{NAME} %{VERSION}-%{RELEASE}"
 
+            self.debug "Executing %s" % cmd.inspect
             # list out all of the packages
             output = %x{#{cmd} 2>/dev/null}.chomp
 
@@ -22,7 +23,7 @@ module Puppet
 
             regex = %r{^(\S+)\s+(\S+)}
             #fields = [:name, :ensure, :description]
-            fields = [:name, :ensure]
+            fields = [:name, :version]
             hash = {}
             if match = regex.match(output)
                 fields.zip(match.captures) { |field,value|
@@ -33,6 +34,8 @@ module Puppet
                     "Failed to match rpm output '%s'" %
                     output
             end
+
+            hash[:ensure] = :present
 
             return hash
         end

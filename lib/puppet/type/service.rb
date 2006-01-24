@@ -77,7 +77,6 @@ module Puppet
                         [self.class,should.inspect]
                     should = 0
                 end
-                self.debug "Service should is %s" % should
                 return should
             end
 

@@ -254,7 +254,7 @@ module Puppet
             # than this last bit, so it doesn't really make sense.
             if child = klass[path]
                 unless @children.include?(child)
-                    self.notice "Not managing more explicit file %s" %
+                    self.debug "Not managing more explicit file %s" %
                         path
                     return nil
                 end

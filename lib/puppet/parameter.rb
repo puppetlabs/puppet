@@ -226,10 +226,10 @@ module Puppet
             )
         end
 
-        # each parameter class must define the name() method, and parameter instances
-        # do not change that name
-        # this implicitly means that a given object can only have one parameter
-        # instance of a given parameter class
+        # each parameter class must define the name() method, and parameter
+        # instances do not change that name this implicitly means that a given
+        # object can only have one parameter instance of a given parameter
+        # class
         def name
             return self.class.name
         end
@@ -323,10 +323,6 @@ module Puppet
             else
                 s += ")"
             end
-        end
-
-        def name
-            self.class.name
         end
 
         def to_s

@@ -1289,31 +1289,33 @@ class Type < Puppet::Element
         # If we've already set the schedule, then just move on
         return if self[:schedule].is_a?(Puppet.type(:schedule))
 
+        return unless self[:schedule]
+
         # Schedules don't need to be scheduled
-        return if self.is_a?(Puppet.type(:schedule))
+        #return if self.is_a?(Puppet.type(:schedule))
 
         # Nor do components
-        return if self.is_a?(Puppet.type(:component))
+        #return if self.is_a?(Puppet.type(:component))
 
-        if self[:schedule]
-            if sched = Puppet.type(:schedule)[self[:schedule]]
-                self[:schedule] = sched
-            else
-                self.fail "Could not find schedule %s" % self[:schedule]
-            end
-        elsif Puppet[:schedule] and ! Puppet[:ignoreschedules]
-            # We handle schedule defaults here mostly because otherwise things
-            # will behave very very erratically during testing.
-            if sched = Puppet.type(:schedule)[Puppet[:schedule]]
-                self[:schedule] = sched
-            else
-                self.fail "Could not find default schedule %s" % Puppet[:schedule]
-            end
+        if sched = Puppet.type(:schedule)[self[:schedule]]
+            self[:schedule] = sched
         else
-            # While it's unlikely we won't have any schedule (since there's a
-            # default), it's at least possible during testing
-            return true
+            self.fail "Could not find schedule %s" % self[:schedule]
         end
+#        if self[:schedule]
+#        elsif Puppet[:schedule] and ! Puppet[:ignoreschedules]
+#            # We handle schedule defaults here mostly because otherwise things
+#            # will behave very very erratically during testing.
+#            if sched = Puppet.type(:schedule)[Puppet[:schedule]]
+#                self[:schedule] = sched
+#            else
+#                self.fail "Could not find default schedule %s" % Puppet[:schedule]
+#            end
+#        else
+#            # While it's unlikely we won't have any schedule (since there's a
+#            # default), it's at least possible during testing
+#            return true
+#        end
     end
 
     # Check whether we are scheduled to run right now or not.
@@ -1533,6 +1535,8 @@ class Type < Puppet::Element
     # this returns any changes resulting from testing, thus 'collect'
     # rather than 'each'
     def evaluate
+        now = Time.now.to_i
+
         #Puppet.err "Evaluating %s" % self.path.join(":")
         unless defined? @evalcount
             self.err "No evalcount defined on '%s' of type '%s'" %
@@ -1576,7 +1580,9 @@ class Type < Puppet::Element
         #end
 
         changes << @children.collect { |child|
-            child.evaluate
+            ch = child.evaluate
+            child.cache(:checked, now)
+            ch
         }
         #unless self.class.depthfirst?
         #    changes << self.collect { |child|
@@ -1604,6 +1610,7 @@ class Type < Puppet::Element
             #    self.debug "change: %s" % change.state.name
             #}
         end
+        self.cache(:checked, now)
         return changes.flatten
     end
 
@@ -2057,6 +2064,7 @@ require 'puppet/type/group'
 require 'puppet/type/package'
 require 'puppet/type/pfile'
 require 'puppet/type/pfilebucket'
+require 'puppet/type/schedule'
 require 'puppet/type/service'
 require 'puppet/type/symlink'
 require 'puppet/type/user'
