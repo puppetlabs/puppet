@@ -13,12 +13,6 @@ Group: System Environment/Base
 
 URL: http://reductivelabs.com/projects/puppet/
 Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
-Source1: client.init
-Source2: client.sysconfig
-Source3: client.cron
-Source4: server.sysconfig
-Source5: server.init
-Source6: fileserver.conf
 
 Vendor: Reductive Labs
 Packager: Duane Griffin <d.griffin@psenterprise.com>
@@ -46,6 +40,7 @@ The server can also function as a certificate authority and file server.
 %prep
 %setup -q
 
+%{__cp} -p %{confdir}/* %{_sourcedir}
 %{__cp} -p %{confdir}/* .
 
 %install
@@ -58,12 +53,12 @@ The server can also function as a certificate authority and file server.
 %{__install} -Dp -m0755 %{_pbuild}/bin/* %{buildroot}%{_sbindir}
 %{__install} -Dp -m0644 %{_pbuild}/lib/puppet.rb %{buildroot}%{rubylibdir}/puppet.rb
 %{__cp} -a %{_pbuild}/lib/puppet %{buildroot}%{rubylibdir}
-%{__install} -Dp -m0644 client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
-%{__install} -Dp -m0755 client.init %{buildroot}%{_initrddir}/puppet
-%{__install} -Dp -m0644 client.cron %{buildroot}%{_sysconfdir}/cron.hourly/puppet.cron
-%{__install} -Dp -m0644 server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
-%{__install} -Dp -m0755 server.init %{buildroot}%{_initrddir}/puppetmaster
-%{__install} -Dp -m0644 fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
+%{__install} -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
+%{__install} -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
+%{__install} -Dp -m0644 %{confdir}/client.cron %{buildroot}%{_sysconfdir}/cron.hourly/puppet.cron
+%{__install} -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
+%{__install} -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
+%{__install} -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
 
 %files
 %defattr(-, root, root, 0755)

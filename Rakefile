@@ -136,7 +136,6 @@ PKG_FILES = FileList[
     'lib/**/*.rb',
     'test/**/*.rb',
     'bin/**/*',
-    'conf/**/*',
     'ext/**/*',
     'examples/**/*'
 ]
@@ -413,7 +412,7 @@ task :rpm do
     sh %{cp conf/redhat/puppet.spec %s/puppet.spec} % basedir
 
     Dir.chdir(basedir) do
-        system("rpmbuild -ba puppet.spec")
+        sh %{rpmbuild -ba puppet.spec}
     end
 
     sh %{mv %s/puppet.spec %s} % [basedir, specdir]
