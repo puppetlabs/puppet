@@ -329,8 +329,8 @@ task :update_version => [:prerelease] do
         open("conf/redhat/puppet.spec") do |rakein|
             open("conf/redhat/puppet.spec.new", "w") do |rakeout|
                 rakein.each do |line|
-                    if line =~ /^Version:=\s*/
-                        rakeout.puts "Version: '#{PKG_VERSION}'"
+                    if line =~ /^Version:\s*/
+                        rakeout.puts "Version: #{PKG_VERSION}"
                     else
                         rakeout.puts line
                     end
@@ -342,7 +342,7 @@ task :update_version => [:prerelease] do
         if ENV['RELTEST']
             announce "Release Task Testing, skipping commiting of new version"
         else
-            sh %{svn commit -m "Updated to version #{PKG_VERSION}" lib/puppet.rb}
+            sh %{svn commit -m "Updated to version #{PKG_VERSION}" lib/puppet.rb conf/redhat/puppet.spec}
         end
     end
 end
