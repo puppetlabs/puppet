@@ -54,6 +54,7 @@ class Puppet::Client::MasterClient < Puppet::Client
             Metric.store
             Metric.graph
         end
+        Puppet.notice "Finished configuration run"
 
         return transaction
     end

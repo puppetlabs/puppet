@@ -1,6 +1,6 @@
 module Puppet
 # The class for handling configuration files.
-class Config < Hash
+class Config
     # Slight override, since we can't seem to have a subclass where all instances
     # have the same default block.
     def [](section)
@@ -42,6 +42,57 @@ class Config < Hash
                 raise Puppet::Error, "Could not match line %s" % line
             end
         }
+    end
+
+    def setdefaults(hash)
+        hash.each { |param, value|
+            if @defaults.include?(param)
+                raise Puppet::Error, "Default %s is already defined" % param
+            end
+
+            case value
+            when true, false:
+                @defaults[param] = Boolean.new(param, value)
+            when String:
+                @defaults[param] = Element.new(param, value)
+            when Hash:
+                type = nil
+                unless value.include?(:type)
+                    raise Puppet::Error, "You must include the object type"
+                end
+                unless type = Puppet.type(value[:type])
+                    raise Puppet::Error, "Invalid type %s" % value[:type]
+                end
+
+                value.delete(:type)
+
+                # FIXME this won't work, because we don't want to interpolate the
+                # file name until they actually ask for it
+                begin
+                    @defaults[param] = type.create(value)
+                rescue => detail
+                    raise Puppet::Error, "Could not create default %s: %s" %
+                        [param, detail]
+                end
+            end
+        }
+    end
+
+    class Element
+        attr_accessor :name, :value
+    end
+
+    class File < Element
+    end
+
+    class Boolean < Element
+        def value=(value)
+            unless value == true or value == false
+                raise Puppet::DevError, "Invalid value %s for %s" % [value, @name]
+            end
+
+            @value = value
+        end
     end
 end
 end

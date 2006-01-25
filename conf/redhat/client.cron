@@ -1,0 +1,24 @@
+#!/bin/sh
+
+if [ -f /etc/sysconfig/puppet ]; then
+	. /etc/sysconfig/puppet
+fi
+
+# The server must be specified explicitly
+if [ -z "${PUPPET_SERVER}" ]; then
+	echo $"No puppet server specified."
+	return 1
+fi
+
+[ -z "$PUPPET_LOG" ] && PUPPET_LOG="/var/log/puppet.log"
+[ -z "$PUPPET_PORT" ] && PUPPET_PORT=8139
+PUPPET_OPTS="\
+	--server=$PUPPET_SERVER \
+	--port=$PUPPET_PORT \
+	--logdest=$PUPPET_LOG \
+	$PUPPET_EXTRA_OPTS"
+
+# Run if puppet is enabled
+if [ -f /var/lock/subsys/puppet ]; then
+	/usr/sbin/puppetd ${PUPPET_OPTS}
+fi

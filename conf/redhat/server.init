@@ -1,0 +1,89 @@
+#!/bin/bash
+# puppetmaster  This shell script enables the puppetmaster server.
+#
+# Author:       Duane Griffin <d.griffin@psenterprise.com>
+#
+# chkconfig: 345 65 45
+#
+# description: Server for the puppet system management tool.
+# processname: puppetmasterd
+
+PATH=/usr/bin:/sbin:/bin:/usr/sbin
+export PATH
+
+lockfile=/var/lock/subsys/puppetmaster
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+if [ -f /etc/sysconfig/puppetmaster ]; then
+	. /etc/sysconfig/puppetmaster
+fi
+
+[ -z "$PUPPETMASTER_MANIFEST" ] && PUPPETMASTER_MANIFEST=/etc/puppet/manifests/site.pp
+[ -z "$PUPPETMASTER_LOG" ] && PUPPETMASTER_LOG="/var/log/puppetmaster.log"
+PUPPETMASTER_OPTS="
+	--manifest=$PUPPETMASTER_MANIFEST \
+	--logdest=${PUPPETMASTER_LOG} \
+	${PUPPETMASTER_EXTRA_OPTS}"
+
+RETVAL=0
+
+prog=puppetmasterd
+PUPPETMASTER=/usr/sbin/$prog
+
+start() {
+	echo -n $"Starting $prog: "
+
+	# Confirm the manifest exists
+	if [ -r $PUPPETMASTER_MANIFEST ]; then
+		$PUPPETMASTER $PUPPETMASTER_OPTS
+		RETVAL=$?
+	else
+		failure $"Manifest does not exist: $PUPPETMASTER_MANIFEST"
+		echo
+		return 1
+	fi
+	[ $RETVAL -eq 0 ] && touch "$lockfile"
+	[ $RETVAL -eq 0 ] && echo_success
+	[ $RETVAL -ne 0 ] && echo_failure
+	echo
+	return $RETVAL
+}
+
+stop() {
+	echo -n  $"Stopping $prog: "
+	killproc $PUPPETMASTER
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && rm -f "$lockfile"
+	return $RETVAL
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop) 
+	stop
+	;;
+  restart|reload|force-reload)
+	restart
+	;;
+  condrestart)
+	[ -f "$lockfile" ] && restart
+	;;
+  status)
+	status $PUPPETMASTER
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart}"
+	exit 1
+esac
+
+exit $RETVAL

@@ -1,0 +1,11 @@
+# You must specify the puppetmaster server here
+PUPPET_SERVER=
+
+# If you wish to specify the port to connect to do so here
+#PUPPET_PORT=8139
+
+# Where to log to. Specify syslog to send log messages to the system log.
+#PUPPET_LOG=syslog
+
+# You may specify other parameters to the puppet client here
+#PUPPET_EXTRA_OPTS=--waitforcert=3600

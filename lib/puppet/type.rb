@@ -1849,7 +1849,7 @@ class Type < Puppet::Element
     newmetaparam(:schedule) do
         desc "On what schedule the object should be managed.  You must create a
             schedule_ object, and then reference the name of that object to use
-            that for your schedule:
+            that for your schedule::
 
                 schedule { daily:
                     period => daily,

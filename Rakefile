@@ -7,11 +7,19 @@ rescue Exception
     nil
 end
 
-require 'rdoc/rdoc'
+$rdoc = true
+begin
+    require 'rdoc/rdoc'
+rescue => detail
+    $rdoc = false
+    puts "No rdoc: %s" % detail
+end
 require 'rake/clean'
 require 'rake/testtask'
 
-require 'rake/rdoctask'
+if $rdoc
+    require 'rake/rdoctask'
+end
 CLEAN.include('**/*.o')
 CLOBBER.include('doc/*')
 
@@ -89,28 +97,32 @@ end
 #    rdoc.rdoc_files.include('lib/**/*.rb', 'doc/**/*.rdoc')
 #}
 
-Rake::RDocTask.new(:html) { |rdoc|
-    rdoc.rdoc_dir = 'html'
-    rdoc.template = 'html'
-    rdoc.title    = "Puppet"
-    rdoc.options << '--line-numbers' << '--inline-source' << '--main' << 'README'
-    rdoc.rdoc_files.include('README', 'LICENSE', 'TODO', 'CHANGELOG')
-    rdoc.rdoc_files.include('lib/**/*.rb')
-    CLEAN.include("html")
-}
+if $rdoc
+    Rake::RDocTask.new(:html) { |rdoc|
+        rdoc.rdoc_dir = 'html'
+        rdoc.template = 'html'
+        rdoc.title    = "Puppet"
+        rdoc.options << '--line-numbers' << '--inline-source' << '--main' << 'README'
+        rdoc.rdoc_files.include('README', 'LICENSE', 'TODO', 'CHANGELOG')
+        rdoc.rdoc_files.include('lib/**/*.rb')
+        CLEAN.include("html")
+    }
+end
 
-task :ri do |ri|
-    files = ['README', 'LICENSE', 'TODO', 'CHANGELOG'] + Dir.glob('lib/**/*.rb')
-    puts "files are \n%s" % files.join("\n")
-    begin
-        ri = RDoc::RDoc.new
-        ri.document(["--ri-site"] + files)
-    rescue RDoc::RDocError => detail
-        puts "Failed to build docs: %s" % detail
-        return nil
-    rescue LoadError
-        puts "Missing rdoc; cannot build documentation"
-        return nil
+if $rdoc
+    task :ri do |ri|
+        files = ['README', 'LICENSE', 'TODO', 'CHANGELOG'] + Dir.glob('lib/**/*.rb')
+        puts "files are \n%s" % files.join("\n")
+        begin
+            ri = RDoc::RDoc.new
+            ri.document(["--ri-site"] + files)
+        rescue RDoc::RDocError => detail
+            puts "Failed to build docs: %s" % detail
+            return nil
+        rescue LoadError
+            puts "Missing rdoc; cannot build documentation"
+            return nil
+        end
     end
 end
 
@@ -124,6 +136,7 @@ PKG_FILES = FileList[
     'lib/**/*.rb',
     'test/**/*.rb',
     'bin/**/*',
+    'conf/**/*',
     'ext/**/*',
     'examples/**/*'
 ]
@@ -251,6 +264,7 @@ task :release => [
         :tag, # tag everything before we make a bunch of extra dirs
         :html,
         :package,
+        :fedorarpm,
         :copy
       ] do
   
@@ -303,16 +317,29 @@ task :update_version => [:prerelease] do
         open("lib/puppet.rb") do |rakein|
             open("lib/puppet.rb.new", "w") do |rakeout|
                 rakein.each do |line|
-                    if line =~ /^\s*PUPPETVERSION\s*=\s*/
-                        rakeout.puts "PUPPETVERSION = '#{PKG_VERSION}'"
+                    if line =~ /^(\s*)PUPPETVERSION\s*=\s*/
+                        rakeout.puts "#{$1}PUPPETVERSION = '#{PKG_VERSION}'"
                     else
                         rakeout.puts line
                     end
                 end
             end
         end
-
         mv "lib/puppet.rb.new", "lib/puppet.rb"
+
+        open("conf/redhat/puppet.spec") do |rakein|
+            open("conf/redhat/puppet.spec.new", "w") do |rakeout|
+                rakein.each do |line|
+                    if line =~ /^Version:=\s*/
+                        rakeout.puts "Version: '#{PKG_VERSION}'"
+                    else
+                        rakeout.puts line
+                    end
+                end
+            end
+        end
+        mv "conf/redhat/puppet.spec.new", "conf/redhat/puppet.spec"
+
         if ENV['RELTEST']
             announce "Release Task Testing, skipping commiting of new version"
         else
@@ -322,12 +349,14 @@ task :update_version => [:prerelease] do
 end
 
 desc "Copy the newly created package into the downloads directory"
-task :copy => [:package, :html] do
+task :copy => [:package, :html, :fedorarpm] do
+    puts Dir.getwd
     sh %{cp pkg/puppet-#{PKG_VERSION}.gem #{DOWNDIR}/gems}
     sh %{generate_yaml_index.rb -d #{DOWNDIR}}
     sh %{cp pkg/puppet-#{PKG_VERSION}.tgz #{DOWNDIR}/puppet}
     sh %{ln -sf puppet-#{PKG_VERSION}.tgz #{DOWNDIR}/puppet/puppet-latest.tgz}
     sh %{cp -r html #{DOWNDIR}/puppet/apidocs}
+    sh %{rsync -av /home/luke/rpm/. #{DOWNDIR}/rpm}
 end
 
 desc "Tag all the SVN files with the latest release number (REL=x.y.z)"
@@ -363,6 +392,42 @@ task :hosttest do
     #IO.popen("mail -s 'Puppet Test Results' luke@madstop.com") do |m|
     #    m.puts out
     #end
+end
+
+desc "Create an RPM"
+task :rpm do
+    tarball = File.join(Dir.getwd, "pkg", "puppet-#{PKG_VERSION}.tgz")
+
+    sourcedir = `rpm --define 'name puppet' --define 'version #{PKG_VERSION}' --eval '%_sourcedir'`.chomp
+    specdir = `rpm --define 'name puppet' --define 'version #{PKG_VERSION}' --eval '%_specdir'`.chomp
+    basedir = File.dirname(sourcedir)
+
+    if ! FileTest::exist?(sourcedir)
+        FileUtils.mkdir_p(sourcedir)
+    end
+    FileUtils.mkdir_p(basedir)
+
+    target = "#{sourcedir}/#{File::basename(tarball)}"
+
+    sh %{cp %s %s} % [tarball, target]
+    sh %{cp conf/redhat/puppet.spec %s/puppet.spec} % basedir
+
+    Dir.chdir(basedir) do
+        system("rpmbuild -ba puppet.spec")
+    end
+
+    sh %{mv %s/puppet.spec %s} % [basedir, specdir]
+end
+
+desc "Create an rpm on a system that can actually do so"
+task :fedorarpm => [:package] do
+    sh %{ssh fedora1 'cd puppet; rake rpm'}
+end
+
+desc "Create a Native Package"
+task :nativepkg do
+    # Okay, first we get a file list
+    
 end
 
 # $Id$

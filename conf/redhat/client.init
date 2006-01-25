@@ -1,0 +1,67 @@
+#!/bin/bash
+# puppet        This shell script enables system auto-conf through puppet.
+#
+# Author:       Duane Griffin <d.griffin@psenterprise.com>
+#
+# chkconfig: - 98 02
+#
+# description: Enables periodic system configuration checks through puppet.
+# processname: puppetd
+
+PATH=/usr/bin:/sbin:/bin:/usr/sbin
+export PATH
+
+lockfile=/var/lock/subsys/puppet
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+
+start() {
+	echo -n $"Enabling hourly puppet update: "
+	touch "$lockfile" && success || failure
+	RETVAL=$?
+	echo
+}
+
+stop() {
+	echo -n $"Disabling hourly puppet update: "
+	rm -f "$lockfile" && success || failure
+	RETVAL=$?
+	echo
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop) 
+	stop
+	;;
+  restart|force-reload)
+	restart
+	;;
+  reload)
+	;;
+  condrestart)
+	[ -f "$lockfile" ] && restart
+	;;
+  status)
+	if [ -f "$lockfile" ]; then
+		echo $"Hourly puppet update is enabled."
+	else
+		echo $"Hourly puppet update is disabled."
+	fi
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart}"
+	exit 1
+esac
+
+exit $RETVAL
