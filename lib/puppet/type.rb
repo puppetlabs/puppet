@@ -1328,7 +1328,7 @@ class Type < Puppet::Element
         # have been synced a long time ago (e.g., a file only gets updated
         # once a month on the server and its schedule is daily; the last sync time
         # will have been a month ago, so we'd end up checking every run).
-        return schedule.match?(self.cached(:checked))
+        return schedule.match?(self.cached(:checked).to_i)
     end
 
     # Is the specified parameter set?
@@ -1535,7 +1535,7 @@ class Type < Puppet::Element
     # this returns any changes resulting from testing, thus 'collect'
     # rather than 'each'
     def evaluate
-        now = Time.now.to_i
+        now = Time.now
 
         #Puppet.err "Evaluating %s" % self.path.join(":")
         unless defined? @evalcount

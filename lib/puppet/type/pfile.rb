@@ -216,7 +216,6 @@ module Puppet
             unless hash.include?(:recurse)
                 if args.include?(:recurse)
                     if args[:recurse].is_a?(Integer)
-                        self.notice "Decrementing recurse on %s" % path
                         args[:recurse] -= 1 # reduce the level of recursion
                     end
                 end
