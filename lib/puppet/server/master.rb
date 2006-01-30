@@ -145,6 +145,14 @@ class Server
                 return CGI.escape(str)
             end
         end
+
+        def local?
+            if defined? @local and @local
+                return true
+            else
+                return false
+            end
+        end
     end
 end
 end

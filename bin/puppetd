@@ -255,6 +255,14 @@ unless client.readcert
             exit(1)
         end
     end
+
+    # Now, because the Net::HTTP object cannot be modified once we've connected,
+    # we need to recreate the client with the certs intact
+    client = Puppet::Client::MasterClient.new(args)
+    unless client.readcert
+        PUppet.err "Could not read certificates after retrieving them"
+        exit(34)
+    end
 end
 
 if args[:Daemonize]

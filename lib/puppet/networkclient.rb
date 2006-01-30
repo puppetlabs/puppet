@@ -134,6 +134,10 @@ module Puppet
             def local
                 false
             end
+
+            def local?
+                false
+            end
         end
     end
 end

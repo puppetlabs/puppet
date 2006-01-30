@@ -3,7 +3,8 @@
 require 'puppet'
 
 module Puppet
-    # A module that handles operations common to all daemons.
+    # A module that handles operations common to all daemons.  This is included
+    # into the Server and Client base classes.
     module Daemon
         def daemonname
             $0.sub(/.+#{File::SEPARATOR}/,'')
@@ -74,6 +75,7 @@ module Puppet
             return log
         end
 
+        # Read in an existing certificate.
         def readcert
             return unless @secureinit
             # verify we've got all of the certs set up and such
@@ -109,6 +111,9 @@ module Puppet
             return true
         end
 
+        # Request a certificate from the remote system.  This does all of the work
+        # of creating the cert request, contacting the remote system, and
+        # storing the cert locally.
         def requestcert
             retrieved = false
             # create the directories involved
