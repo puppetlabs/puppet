@@ -41,11 +41,13 @@ The server can also function as a certificate authority and file server.
 %install
 %{__rm} -rf %{buildroot}
 %{__install} -d -m0755 %{buildroot}%{_sbindir}
+%{__install} -d -m0755 %{buildroot}%{_bindir}
 %{__install} -d -m0755 %{buildroot}%{rubylibdir}
 %{__install} -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
 %{__install} -d -m0755 %{buildroot}%{_docdir}/%{name}-%{version}
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/puppet
 %{__install} -Dp -m0755 %{_pbuild}/bin/* %{buildroot}%{_sbindir}
+%{__mv} %{buildroot}%{_sbindir}/puppet %{buildroot}%{_bindir}/puppet
 %{__install} -Dp -m0644 %{_pbuild}/lib/puppet.rb %{buildroot}%{rubylibdir}/puppet.rb
 %{__cp} -a %{_pbuild}/lib/puppet %{buildroot}%{rubylibdir}
 %{__install} -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
@@ -57,7 +59,7 @@ The server can also function as a certificate authority and file server.
 
 %files
 %defattr(-, root, root, 0755)
-%{_sbindir}/puppet
+%{_bindir}/puppet
 %{_sbindir}/puppetd
 %{rubylibdir}/*
 %{_localstatedir}/puppet
