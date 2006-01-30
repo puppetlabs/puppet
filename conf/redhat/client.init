@@ -1,7 +1,8 @@
 #!/bin/bash
-# puppet        This shell script enables system auto-conf through puppet.
+# puppet        Init script for running the puppet client daemon
 #
 # Author:       Duane Griffin <d.griffin@psenterprise.com>
+#               David Lutterkort <dlutter@redhat.com>
 #
 # chkconfig: - 98 02
 #
@@ -11,25 +12,35 @@
 PATH=/usr/bin:/sbin:/bin:/usr/sbin
 export PATH
 
-lockfile=/var/lock/subsys/puppet
+[ -f /etc/sysconfig/puppet ] && . /etc/sysconfig/puppet
+lockfile=${LOCKFILE-/var/lock/subsys/puppet}
+pidfile=${PIDFILE-/var/run/puppet.pid}
+puppetd=${PUPPETD-/usr/sbin/puppetd}
+RETVAL=0
 
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-RETVAL=0
+PUPPET_OPTS=""
+[ -n "${PUPPET_SERVER}" ] && PUPPET_OPTS="--server=${PUPPET_SERVER}"
+[ -n "$PUPPET_LOG" ] && PUPPET_OPTS="${PUPPET_OPTS} --logdest=${PUPPET_LOG}"
+[ -n "$PUPPET_PORT" ] && PUPPET_OPTS="${PUPPET_OPTS} --port=${PUPPET_PORT}"
 
 start() {
-	echo -n $"Enabling hourly puppet update: "
-	touch "$lockfile" && success || failure
+	echo -n $"Starting puppetd: "
+        daemon $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS}
 	RETVAL=$?
 	echo
+        [ $RETVAL = 0 ] && touch ${lockfile}
+        return $RETVAL
 }
 
 stop() {
-	echo -n $"Disabling hourly puppet update: "
-	rm -f "$lockfile" && success || failure
+	echo -n $"Stopping puppetd: "
+        killproc $puppetd
 	RETVAL=$?
 	echo
+	[ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
 }
 
 restart() {
@@ -48,19 +59,19 @@ case "$1" in
 	restart
 	;;
   reload)
+        restart
 	;;
   condrestart)
-	[ -f "$lockfile" ] && restart
+	[ -f "$pidfile" ] && restart
 	;;
   status)
-	if [ -f "$lockfile" ]; then
-		echo $"Hourly puppet update is enabled."
-	else
-		echo $"Hourly puppet update is disabled."
-	fi
+        status $puppetd
 	;;
+  once)
+        $puppetd -o ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS}
+        ;;
   *)
-	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart}"
+	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|once}"
 	exit 1
 esac
 

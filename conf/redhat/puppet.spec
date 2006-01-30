@@ -4,7 +4,7 @@
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 0.12.0
+Version: 0.12.0.1
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -52,7 +52,6 @@ The server can also function as a certificate authority and file server.
 %{__cp} -a %{_pbuild}/lib/puppet %{buildroot}%{rubylibdir}
 %{__install} -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
 %{__install} -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
-%{__install} -Dp -m0644 %{confdir}/client.cron %{buildroot}%{_sysconfdir}/cron.hourly/puppet.cron
 %{__install} -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
 %{__install} -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 %{__install} -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
@@ -64,7 +63,6 @@ The server can also function as a certificate authority and file server.
 %{rubylibdir}/*
 %{_localstatedir}/puppet
 %config %{_initrddir}/puppet
-%config %{_sysconfdir}/cron.hourly/puppet.cron
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %doc CHANGELOG COPYING LICENSE README TODO examples
 %exclude %{_sbindir}/puppetdoc
