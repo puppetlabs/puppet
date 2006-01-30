@@ -68,22 +68,14 @@ module Puppet
                         end
 
                         # We've already evaluated the AST, in this case
-                        retval = @scope.evalnode(names, facts)
-                        if classes = @scope.classlist
-                            retval.classes = classes
-                        end
-                        return retval
+                        return @scope.evalnode(names, facts)
                     else
                         # We've already evaluated the AST, in this case
                         @scope = Puppet::Parser::Scope.new() # no parent scope
                         @scope.interp = self
                         @scope.type = "puppet"
                         @scope.name = "top"
-                        retval = @scope.evaluate(@ast, facts, @classes)
-                        if classes = @scope.classlist
-                            retval.classes = classes + @classes
-                        end
-                        return retval
+                        return @scope.evaluate(@ast, facts, @classes)
                     end
                     #@ast.evaluate(@scope)
                 rescue Puppet::DevError, Puppet::Error, Puppet::ParseError => except

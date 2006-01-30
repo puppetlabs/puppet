@@ -195,15 +195,20 @@ module Puppet
                 # cache the results, but it's not worth it at this stage.
 
                 # Note that we evaluate the node code with its containing
-                # scope, not with the top scope.
-                code.safeevaluate(scope, facts)
+                # scope, not with the top scope.  We also retrieve the created
+                # nodescope so that we can get any classes set within it
+                nodescope = code.safeevaluate(scope, facts)
 
                 # We don't need to worry about removing the Node code because
                 # it will be removed during translation.
 
-                # And now return the whole thing
-                #return self.to_trans
+                # convert the whole thing
                 objects = self.to_trans
+
+                # Add any evaluated classes to our top-level object
+                unless nodescope.classlist.empty?
+                    objects.classes = nodescope.classlist
+                end
 
                 # I should do something to add the node as an object with tags
                 # but that will possibly end up with far too many tags.
@@ -256,7 +261,14 @@ module Puppet
                     end
                 }
 
-                return self.to_trans
+                objects = self.to_trans
+
+                # Add our class list
+                unless self.classlist.empty?
+                    objects.classes = self.classlist
+                end
+
+                return objects
             end
 
             # Initialize our new scope.  Defaults to having no parent and to

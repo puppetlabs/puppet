@@ -219,7 +219,6 @@ class TestSchedule < Test::Unit::TestCase
         assert(s.match?(day("+", 1)), "didn't match plus a day")
         assert(s.match?(week("+", 1)), "didn't match plus a week")
         assert(! s.match?(@now), "matched today")
-        assert(! s.match?(hour("-", 11)), "matched minus 11 hours")
         assert(! s.match?(hour("-", 1)), "matched minus an hour")
         assert(! s.match?(hour("-", 2)), "matched plus two hours")
 

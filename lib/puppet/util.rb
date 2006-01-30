@@ -91,7 +91,8 @@ module Util
         while File.exists?(lock)
             stamp = File.stat(lock).mtime.to_i 
             if Time.now.to_i - stamp > 5
-                Puppet.notice "Lock file %s is %s seconds old; removing"
+                Puppet.notice "Lock file %s is %s seconds old; removing" %
+                    [lock, Time.now.to_i - stamp]
                 File.delete(lock)
             end
             #Puppet.debug "%s is locked" % opts[0]

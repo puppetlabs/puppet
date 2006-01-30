@@ -44,7 +44,7 @@ class Transaction
         Puppet.debug "Beginning transaction %s with %s changes" %
             [self.object_id, @changes.length]
 
-        now = Time.now.to_i
+        now = Time.now
         events = @changes.collect { |change|
             if change.is_a?(Puppet::StateChange)
                 change.transaction = self
