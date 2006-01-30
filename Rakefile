@@ -1,3 +1,4 @@
+# -*- ruby -*- (Make emacs happy)
 # Rakefile for Puppet
 
 begin
@@ -137,7 +138,8 @@ PKG_FILES = FileList[
     'test/**/*.rb',
     'bin/**/*',
     'ext/**/*',
-    'examples/**/*'
+    'examples/**/*',
+    'conf/**/*'
 ]
 PKG_FILES.delete_if {|item| item.include?(".svn")}
 

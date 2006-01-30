@@ -1,8 +1,6 @@
 %define rubylibdir %(ruby -rrbconfig -e 'puts Config::CONFIG["sitelibdir"]')
 %define _pbuild %{_builddir}/%{name}-%{version}
-%define puppetroot /home/luke/svn/puppet/trunk
-%define confdir %{puppetroot}/conf/redhat
-%define pkgdir %{puppetroot}/pkg
+%define confdir conf/redhat
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
@@ -39,9 +37,6 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
-
-%{__cp} -p %{confdir}/* %{_sourcedir}
-%{__cp} -p %{confdir}/* .
 
 %install
 %{__rm} -rf %{buildroot}
