@@ -427,7 +427,7 @@ class TestFile < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            dir.retrieve
+            dir.evaluate
         }
 
         subobj = nil
@@ -435,18 +435,18 @@ class TestFile < Test::Unit::TestCase
             subobj = Puppet.type(:file)[subdir]
         }
 
-        assert(subobj, "Could not retrieve subdir object")
+        assert(subobj, "Could not retrieve %s object" % subdir)
 
         File.open(tmpfile, "w") { |f| f.puts "yayness" }
 
-        dir.retrieve
+        dir.evaluate
 
         file = nil
         assert_nothing_raised {
             file = Puppet.type(:file)[tmpfile]
         }
 
-        assert(file, "Could not retrieve file object")
+        assert(file, "Could not retrieve %s object" % tmpfile)
 
     end
 
@@ -560,7 +560,7 @@ class TestFile < Test::Unit::TestCase
         assert_nil(obj, "Retrieved removed object")
     end
 
-    def test_zpath
+    def test_path
         dir = tempfile()
 
         path = File.join(dir, "and", "a", "sub", "dir")
@@ -581,7 +581,7 @@ class TestFile < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            dirobj.retrieve
+            dirobj.evaluate
         }
 
         assert_nothing_raised {

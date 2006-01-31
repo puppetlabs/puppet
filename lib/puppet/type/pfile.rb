@@ -199,7 +199,9 @@ module Puppet
             super
         end
         
-        def newchild(path, hash = {})
+        # Create a new file or directory object as a child to the current
+        # object.
+        def newchild(path, local, hash = {})
             # make local copy of arguments
             args = @arghash.dup
 
@@ -257,14 +259,20 @@ module Puppet
                         path
                     return nil
                 end
-                args.each { |var,value|
-                    next if var == :path
-                    next if var == :name
-                    # behave idempotently
-                    unless child.should(var) == value
-                        child[var] = value
-                    end
-                }
+
+                # This is only necessary for sourcerecurse, because we might have
+                # created the object with different 'should' values than are
+                # set remotely.
+                unless local
+                    args.each { |var,value|
+                        next if var == :path
+                        next if var == :name
+                        # behave idempotently
+                        unless child.should(var) == value
+                            child[var] = value
+                        end
+                    }
+                end
             else # create it anew
                 #notice "Creating new file with args %s" % args.inspect
                 args[:parent] = self
@@ -367,11 +375,6 @@ module Puppet
                 return
             end
 
-            unless FileTest.directory? self.name
-                self.devfail(
-                    "Uh, somehow trying to manage non-dir %s" % self.name
-                )
-            end
             unless FileTest.readable? self.name
                 self.notice "Cannot manage %s: permission denied" % self.name
                 return
@@ -388,13 +391,11 @@ module Puppet
             children.each { |file|
                 file = File.basename(file)
                 next if file =~ /^\.\.?$/ # skip . and .. 
-                if child = self.newchild(file, :recurse => recurse)
+                if child = self.newchild(file, true, :recurse => recurse)
                     unless @children.include?(child)
                         self.push child
                         added.push file
-
                     end
-                    child.retrieve
                 end
             }
         end
@@ -447,7 +448,7 @@ module Puppet
                 if type == file
                     args[:recurse] = nil
                 end
-                self.newchild(name, args)
+                self.newchild(name, false, args)
                 #self.newchild(hash, source, recurse)
                 #hash2child(hash, source, recurse)
             }

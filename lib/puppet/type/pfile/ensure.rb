@@ -88,7 +88,7 @@ module Puppet
         end
 
         def retrieve
-            if stat = @parent.stat(true)
+            if stat = @parent.stat(false)
                 @is = stat.ftype.intern
             else
                 if self.should == :false

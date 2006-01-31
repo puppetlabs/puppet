@@ -80,7 +80,7 @@ module Puppet
         end
 
         def retrieve
-            unless stat = @parent.stat(true)
+            unless stat = @parent.stat(false)
                 @is = :absent
                 return
             end

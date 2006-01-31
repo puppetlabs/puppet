@@ -55,11 +55,11 @@ class TestFileSources < Test::Unit::TestCase
         }
         child = nil
         assert_nothing_raised {
-            child = file.newchild("childtest")
+            child = file.newchild("childtest", true)
         }
         assert(child)
         assert_raise(Puppet::DevError) {
-            file.newchild(File.join(path,"childtest"))
+            file.newchild(File.join(path,"childtest"), true)
         }
     end
 
@@ -114,18 +114,9 @@ class TestFileSources < Test::Unit::TestCase
                 "source" => fromdir
             )
         }
-        comp = Puppet.type(:component).create(
-            :name => "component"
-        )
-        comp.push tofile
-        assert_nothing_raised {
-            trans = comp.evaluate
-        }
-        assert_nothing_raised {
-            trans.evaluate
-        }
+        assert_apply(tofile)
 
-        assert(FileTest.exists?(todir))
+        assert(FileTest.exists?(todir), "Created dir %s does not exist" % todir)
         Puppet::Type.allclear
     end
 
@@ -369,9 +360,6 @@ class TestFileSources < Test::Unit::TestCase
         server = nil
         basedir = tempfile()
         @@tmpfiles << basedir
-        if File.exists?(basedir)
-            system("rm -rf %s" % basedir)
-        end
         Dir.mkdir(basedir)
 
         mounts = {

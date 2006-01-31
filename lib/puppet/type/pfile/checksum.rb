@@ -81,9 +81,11 @@ module Puppet
                     end
                 end
             when "timestamp","mtime":
-                sum = File.stat(@parent[:path]).mtime.to_s
+                sum = @parent.stat.mtime.to_s
+                #sum = File.stat(@parent[:path]).mtime.to_s
             when "time":
-                sum = File.stat(@parent[:path]).ctime.to_s
+                sum = @parent.stat.ctime.to_s
+                #sum = File.stat(@parent[:path]).ctime.to_s
             else
                 raise Puppet::Error, "Invalid sum type %s" % checktype
             end

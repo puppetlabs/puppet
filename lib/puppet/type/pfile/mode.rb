@@ -75,7 +75,7 @@ module Puppet
         end
 
         def retrieve
-            if stat = @parent.stat(true)
+            if stat = @parent.stat(false)
                 self.is = stat.mode & 007777
                 unless defined? @fixed
                     if defined? @should and @should

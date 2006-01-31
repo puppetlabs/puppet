@@ -538,11 +538,18 @@ class Type < Puppet::Element
 
     # Find the class associated with any given attribute.
     def self.attrclass(name)
-        case self.attrtype(name)
-        when :state: @validstates[name]
-        when :meta: @@metaparamhash[name]
-        when :param: @paramhash[name]
+        @attrclasses ||= {}
+
+        # We cache the value, since this method gets called such a huge number
+        # of times (as in, hundreds of thousands in a given run).
+        unless @attrclasses.include?(name)
+            @attrclasses[name] = case self.attrtype(name)
+            when :state: @validstates[name]
+            when :meta: @@metaparamhash[name]
+            when :param: @paramhash[name]
+            end
         end
+        @attrclasses[name]
     end
 
     def self.to_s
@@ -602,16 +609,22 @@ class Type < Puppet::Element
         end
     end
 
-    # What type of parameter are we dealing with?
+    # What type of parameter are we dealing with? Cache the results, because
+    # this method gets called so many times.
     def self.attrtype(name)
-        case
-        when @validstates.include?(name): return :state
-        when @@metaparamhash.include?(name): return :meta
-        when @paramhash.include?(name): return :param
-        else
-            raise Puppet::DevError, "Invalid attribute '%s' for class '%s'" %
-                [name, self.name]
+        @attrtypes ||= {}
+        unless @attrtypes.include?(name)
+            @attrtypes[name] = case
+                when @validstates.include?(name): :state
+                when @@metaparamhash.include?(name): :meta
+                when @paramhash.include?(name): :param
+                else
+                    raise Puppet::DevError, "Invalid attribute '%s' for class '%s'" %
+                        [name, self.name]
+                end
         end
+
+        @attrtypes[name]
     end
 
     # All parameters, in the appropriate order.  The namevar comes first,
@@ -619,12 +632,15 @@ class Type < Puppet::Element
     # were specified in the files.
     def self.allattrs
         # now get all of the arguments, in a specific order
-        order = [self.namevar]
+        # Cache this, since it gets called so many times
+        namevar = self.namevar
+
+        order = [namevar]
         order << [self.states.collect { |state| state.name },
             self.parameters,
             self.metaparams].flatten.reject { |param|
                 # we don't want our namevar in there multiple times
-                param == self.namevar
+                param == namevar
         }
 
         order.flatten!
@@ -1429,7 +1445,7 @@ class Type < Puppet::Element
 
         unless @name
             self.devfail "Could not find namevar '%s' for %s" %
-                [namevar, self.class.name]
+                [self.class.namevar, self.class.name]
         end
 
         return @name

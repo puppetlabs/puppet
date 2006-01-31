@@ -29,7 +29,7 @@ module Puppet
         end
 
         def retrieve
-            stat = @parent.stat(true)
+            stat = @parent.stat(false)
 
             if stat
                 self.is = stat.gid
