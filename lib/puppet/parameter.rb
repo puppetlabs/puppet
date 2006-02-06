@@ -49,9 +49,9 @@ module Puppet
                 #@munger = block
             end
 
-            def inspect
-                "Parameter(#{self.name})"
-            end
+            #def inspect
+            #    "Parameter(#{self.name})"
+            #end
 
             # Mark whether we're the namevar.
             def isnamevar
@@ -114,7 +114,8 @@ module Puppet
 
                 names.each { |name|
                     if @parametervalues.include?(name)
-                        Puppet.warning "%s already has a value for %s" % [name, name]
+                        Puppet.warning "%s already has a value for %s" %
+                            [name, name]
                     end
                     @parametervalues << name
                 }
@@ -123,7 +124,8 @@ module Puppet
             def aliasvalue(name, other)
                 @parametervalues ||= []
                 unless @parametervalues.include?(other)
-                    raise Puppet::DevError, "Cannot alias nonexistent value %s" % other
+                    raise Puppet::DevError,
+                        "Cannot alias nonexistent value %s" % other
                 end
 
                 @aliasvalues ||= {}
@@ -302,7 +304,8 @@ module Puppet
         # late-binding (e.g., users might not exist when the value is assigned
         # but might when it is asked for).
         def value=(value)
-            # If we're a parameter, just hand the processing off to the should method.
+            # If we're a parameter, just hand the processing off to the should
+            # method.
             if self.is_a?(Puppet::State)
                 return self.should = value
             end

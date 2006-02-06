@@ -19,9 +19,9 @@ class State < Puppet::Parameter
         attr_accessor :unmanaged
         attr_reader :name
 
-        def inspect
-            "State(%s)" % self.name
-        end
+        #def inspect
+        #    "State(%s)" % self.name
+        #end
 
         def to_s
             self.inspect

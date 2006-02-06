@@ -474,6 +474,15 @@ class Type < Puppet::Element
         @paramhash ||= {}
         @parameters.each { |p| @paramhash[name] = p }
 
+        # These might be enabled later.
+#        define_method(name) do
+#            @parameters[name].value
+#        end
+#
+#        define_method(name.to_s + "=") do |value|
+#            newparam(param, value)
+#        end
+
         if param.isnamevar?
             @namevar = param.name
         end
@@ -500,6 +509,14 @@ class Type < Puppet::Element
             @states << s
         end
         @validstates[name] = s
+
+#        define_method(name) do
+#            @states[name].should
+#        end
+#
+#        define_method(name.to_s + "=") do |value|
+#            newstate(name, :should => value)
+#        end
 
         return s
     end
@@ -646,6 +663,28 @@ class Type < Puppet::Element
         order.flatten!
 
         return order
+    end
+
+    # A similar function but one that yields the name, type, and class.
+    # This is mainly so that setdefaults doesn't call quite so many functions.
+    def self.eachattr(*ary)
+        # now get all of the arguments, in a specific order
+        # Cache this, since it gets called so many times
+
+        if ary.empty?
+            ary = nil
+        end
+        self.states.each { |state|
+            yield(state, :state) if ary.nil? or ary.include?(state.name)
+        }
+
+        @parameters.each { |param|
+            yield(param, :param) if ary.nil? or ary.include?(param.name)
+        }
+
+        @@metaparams.each { |param|
+            yield(param, :meta) if ary.nil? or ary.include?(param.name)
+        }
     end
 
     def self.validattr?(name)
@@ -1195,6 +1234,7 @@ class Type < Puppet::Element
         namevar = self.class.namevar
 
         if hash.include?(namevar)
+            #self.send(namevar.to_s + "=", hash[namevar])
             self[namevar] = hash[namevar]
             hash.delete(namevar)
             if attrs.include?(namevar)
@@ -1358,25 +1398,26 @@ class Type < Puppet::Element
         end
     end
 
+#    def set(name, value)
+#        send(name.to_s + "=", value)
+#    end
+#
+#    def get(name)
+#        send(name)
+#    end
+
     # For any parameters or states that have defaults and have not yet been
     # set, set them now.
     def setdefaults(*ary)
-        if ary.empty?
-            ary = self.class.allattrs
-        end
-        ary.each { |attr|
-            type = self.class.attrtype(attr)
-            next if self.attrset?(type, attr)
+        self.class.eachattr(*ary) { |klass, type|
+            # not many attributes will have defaults defined, so we short-circuit
+            # those away
+            next unless klass.method_defined?(:default)
+            next if self.attrset?(type, klass.name)
 
-            klass = self.class.attrclass(attr)
-            unless klass
-                self.devfail "Could not retrieve class for %s" % attr
-            end
-            if klass.method_defined?(:default)
-                obj = self.newattr(type, klass)
-                #self.debug "defaulting %s to %s" % [obj.name, obj.default]
-                obj.value = obj.default
-            end
+            obj = self.newattr(type, klass)
+            #self.debug "defaulting %s to %s" % [obj.name, obj.default]
+            obj.value = obj.default
         }
 
     end
