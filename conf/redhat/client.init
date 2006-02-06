@@ -7,7 +7,8 @@
 # chkconfig: - 98 02
 #
 # description: Enables periodic system configuration checks through puppet.
-# processname: puppetd
+# processname: puppet
+# config: /etc/sysconfig/puppet
 
 PATH=/usr/bin:/sbin:/bin:/usr/sbin
 export PATH
@@ -68,7 +69,8 @@ case "$1" in
         status $puppetd
 	;;
   once)
-        $puppetd -o ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS}
+        shift
+        $puppetd -o ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} $@
         ;;
   *)
 	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|once}"
