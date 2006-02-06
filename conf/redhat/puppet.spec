@@ -4,20 +4,17 @@
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 0.12.0.1
-Release: 1
+Version: 0.12.1
+Release: 1%{?dist}
 License: GPL
 Group: System Environment/Base
 
 URL: http://reductivelabs.com/projects/puppet/
 Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
 
-Vendor: Reductive Labs
-Packager: Duane Griffin <d.griffin@psenterprise.com>
-
 Requires: ruby >= 1.8.1
 Requires: facter >= 1.1
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArchitectures: noarch
 
 %description
@@ -28,7 +25,7 @@ along with obviously discrete elements like packages, services, and files.
 
 %package server
 Group: System Environment/Base
-Summary: Server for the puppet system management tool.
+Summary: Server for the puppet system management tool
 Requires: puppet = %{version}-%{release}
 
 %description server
@@ -62,14 +59,14 @@ The server can also function as a certificate authority and file server.
 %{_sbindir}/puppetd
 %{rubylibdir}/*
 %{_localstatedir}/puppet
-%config %{_initrddir}/puppet
+%{_initrddir}/puppet
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %doc CHANGELOG COPYING LICENSE README TODO examples
 %exclude %{_sbindir}/puppetdoc
 
 %files server
 %{_sbindir}/puppetmasterd
-%config %{_initrddir}/puppetmaster
+%{_initrddir}/puppetmaster
 %config(noreplace) %{_sysconfdir}/puppet/*
 %config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
 %config(noreplace) %{_sysconfdir}/puppet/fileserver.conf
@@ -107,6 +104,12 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Mon Feb  6 2006 David Lutterkort <dlutter@redhat.com> - 0.12.1-1
+- Don't mark initscripts as config files
+
+* Mon Feb  6 2006 David Lutterkort <dlutter@redhat.com> - 0.12.0-2
+- Fix BuildRoot. Add dist to release
+
 * Tue Jan 17 2006 David Lutterkort <dlutter@redhat.com> - 0.11.0-1
 - Rebuild
 
@@ -122,5 +125,6 @@ initscripts into separate files. Folded tools rpm into server
 
 * Thu Nov 24 2005 Duane Griffin <d.griffin@psenterprise.com>
 - Added init scripts for the client
+
 * Wed Nov 23 2005 Duane Griffin <d.griffin@psenterprise.com>
 - First packaging
