@@ -6,7 +6,7 @@
 # chkconfig: 345 65 45
 #
 # description: Server for the puppet system management tool.
-# processname: puppetmasterd
+# processname: puppetmaster
 
 PATH=/usr/bin:/sbin:/bin:/usr/sbin
 export PATH
