@@ -36,9 +36,9 @@ class Puppet::Parser::AST
             #    [name,args])
 
             begin
-                scope.settype(name,
-                    HostClass.new(arghash)
-                )
+                hclass = HostClass.new(arghash)
+                hclass.keyword = self.keyword
+                scope.settype(name, hclass)
             rescue Puppet::ParseError => except
                 except.line = self.line
                 except.file = self.file
@@ -54,6 +54,7 @@ class Puppet::Parser::AST
 
         def initialize(hash)
             @parentclass = nil
+            @keyword = "class"
             super
         end
 

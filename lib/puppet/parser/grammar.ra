@@ -483,6 +483,7 @@ definition: DEFINE NAME argumentlist LBRACE statements RBRACE {
         :args => val[2],
         :file => @lexer.file,
         :line => @lexer.line,
+        :keyword => val[0],
         :code => val[4]
     )
 }           | DEFINE NAME argumentlist LBRACE RBRACE {
@@ -491,6 +492,7 @@ definition: DEFINE NAME argumentlist LBRACE statements RBRACE {
         :args => val[2],
         :file => @lexer.file,
         :line => @lexer.line,
+        :keyword => val[0],
         :code => AST::ASTArray.new(
             :line => @lexer.line,
             :file => @lexer.file,
@@ -506,6 +508,7 @@ hostclass: CLASS NAME parent LBRACE statements RBRACE {
         :name => AST::Name.new(:value => val[1], :line => @lexer.line),
         :file => @lexer.file,
         :line => @lexer.line,
+        :keyword => val[0],
         :code => val[4]
     }
     # It'll be an ASTArray if we didn't get a parent
@@ -518,6 +521,7 @@ hostclass: CLASS NAME parent LBRACE statements RBRACE {
         :name => AST::Name.new(:value => val[1], :line => @lexer.line),
         :file => @lexer.file,
         :line => @lexer.line,
+        :keyword => val[0],
         :code => AST::ASTArray.new(
             :line => @lexer.line,
             :file => @lexer.file,
@@ -543,6 +547,7 @@ nodedef: NODE names parent LBRACE statements RBRACE {
         :file => @lexer.file,
         :line => @lexer.line,
         :names => val[1],
+        :keyword => val[0],
         :code => val[4]
     }
     if val[2].is_a?(AST::Name)
@@ -560,6 +565,7 @@ nodedef: NODE names parent LBRACE statements RBRACE {
     args = {
         :file => @lexer.file,
         :line => @lexer.line,
+        :keyword => val[0],
         :names => val[1],
         :code => AST::ASTArray.new(
             :line => @lexer.line,

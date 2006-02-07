@@ -10,7 +10,7 @@ class Puppet::Parser::AST
         # The class name
         @name = :component
 
-        attr_accessor :name, :args, :code, :scope
+        attr_accessor :name, :args, :code, :scope, :autoname, :keyword
 
         def evaluate(scope,hash,objtype,objname)
 
@@ -22,6 +22,13 @@ class Puppet::Parser::AST
             # The name is the name the user has chosen or that has
             # been dynamically generated.  This is almost never used
             scope.name = objname
+
+            scope.keyword = self.keyword
+
+            # Retain the fact that we were autonamed, if so
+            if self.autoname
+                scope.autoname = true
+            end
 
             #if self.is_a?(Node)
             #    scope.isnodescope

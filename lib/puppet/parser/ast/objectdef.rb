@@ -52,7 +52,7 @@ class Puppet::Parser::AST
                 self.typecheck(objtype)
             end
 
-            # See if our object was defined
+            # See if our object type was defined
             begin
                 object = scope.lookuptype(objtype)
             rescue Puppet::ParseError => except
@@ -81,11 +81,13 @@ class Puppet::Parser::AST
             end
 
 
+            autonamed = false
             # Autogenerate the name if one was not passed.
             if defined? @name
                 objnames = @name.safeevaluate(scope)
             else
                 objnames = self.autoname(objtype, object)
+                autonamed = true
             end
 
             # it's easier to always use an array, even for only one name
@@ -106,7 +108,8 @@ class Puppet::Parser::AST
             # if someone passed an array as the name, then we act
             # just like the called us many times
             objnames.collect { |objname|
-                # If the object is a class, that means it's a builtin type
+                # If the object is a class, that means it's a builtin type, so
+                # we just store it in the scope
                 if object.is_a?(Class)
                     begin
                         #Puppet.debug(
@@ -138,7 +141,13 @@ class Puppet::Parser::AST
                     # one of those, evaluate that with our arguments
                     #Puppet.debug("Calling object '%s' with arguments %s" %
                     #    [object.name, hash.inspect])
-                    object.safeevaluate(scope,hash,objtype,objname)
+                    obj = object.safeevaluate(scope,hash,objtype,objname)
+
+                    # Retain any name generation stuff
+                    obj.autoname = autonamed
+
+                    # and pass the result on
+                    obj
                 end
             }.reject { |obj| obj.nil? }
         end

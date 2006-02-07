@@ -8,7 +8,9 @@ module Puppet
         class Scope
             include Enumerable
             attr_accessor :parent, :level, :interp
-            attr_accessor :name, :type, :topscope, :base
+            attr_accessor :name, :type, :topscope, :base, :keyword, :autoname
+
+            attr_accessor :top
 
             # This is probably not all that good of an idea, but...
             # This way a parent can share its tables with all of its children.
@@ -210,6 +212,9 @@ module Puppet
                     objects.classes = nodescope.classlist
                 end
 
+                if objects.is_a?(Puppet::TransBucket)
+                    objects.top = true
+                end
                 # I should do something to add the node as an object with tags
                 # but that will possibly end up with far too many tags.
                 #self.logtags
@@ -262,6 +267,7 @@ module Puppet
                 }
 
                 objects = self.to_trans
+                objects.top = true
 
                 # Add our class list
                 unless self.classlist.empty?
@@ -732,6 +738,10 @@ module Puppet
                     else
                         raise Puppet::ParseError,
                             "No type for scope %s" % @name
+                    end
+
+                    if defined? @keyword
+                        bucket.keyword = @keyword
                     end
                     #Puppet.debug(
                     #    "TransBucket with name %s and type %s in scope %s" %

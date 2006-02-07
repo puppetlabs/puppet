@@ -58,6 +58,7 @@ class Config
     # Parse a configuration file.
     def parse(file)
         text = nil
+        @file = file
 
         begin
             text = File.read(file)
@@ -150,21 +151,120 @@ class Config
         }
     end
 
-    def to_manifest
-        fest = ""
+    # Convert our list of objects into a component that can be applied.
+    def to_component
+        transport = self.to_transportable
+        return transport.to_type
+#        comp = Puppet.type(:component).create(
+#            :name => "PuppetConfig"
+#        )
+#        self.to_objects.each { |hash|
+#            type = hash[:type]
+#            hash.delete(:name)
+#            comp.push Puppet.type(type).create(hash)
+#        }
+#
+#        return comp
+    end
+
+    # Convert our configuration into a list of transportable objects.
+    def to_transportable
+        objects = []
+        done = {
+            :user => [],
+            :group => [],
+        }
+        sections = {}
+        sectionlist = []
         self.each { |name, obj|
-            [:user, :group].each { |type|
-                if obj.respond_to? type and val = obj.send(type)
-                    fest += "#{type.to_s} { \"#{val}\": ensure => exists }\n\n"
+            section = obj.section || "puppet"
+            sections[section] ||= []
+            unless sectionlist.include?(section)
+                sectionlist << section
+            end
+            sections[section] << obj
+        }
+
+        topbucket = Puppet::TransBucket.new
+        if defined? @file and @file
+            topbucket.name = @file
+        else
+            topbucket.name = "configtop"
+        end
+        topbucket.type = "puppetconfig"
+        topbucket.top = true
+        topbucket.autoname = true
+        sectionlist.each { |section|
+            objects = []
+            sections[section].each { |obj|
+                Puppet.notice "changing %s" % obj.name
+                [:user, :group].each { |type|
+                    if obj.respond_to? type and val = obj.send(type)
+                        # Skip users and groups we've already done, but tag them with
+                        # our section if necessary
+                        if done[type].include?(val)
+                            next unless defined? @section and @section
+
+                            tags = done[type][val].tags
+                            unless tags.include?(@section)
+                                done[type][val].tags = tags << @section
+                            end
+                        else
+                            newobj = TransObject.new(val, type.to_s)
+                            newobj[:ensure] = "exists"
+                            done[type] << newobj
+                        end
+                    end
+                }
+
+                if obj.respond_to? :to_transportable
+                    objects << obj.to_transportable
+                else
+                    Puppet.notice "%s is not transportable" % obj.name
                 end
             }
 
-            if obj.respond_to? :to_manifest
-                fest += obj.to_manifest + "\n"
-            end
-        }
+            bucket = Puppet::TransBucket.new
+            bucket.autoname = true
+            bucket.name = "autosection-%s" % bucket.object_id
+            bucket.type = section
+            bucket.push(*objects)
+            bucket.keyword = "class"
 
-        fest
+            topbucket.push bucket
+        }
+#        self.each { |name, obj|
+#            [:user, :group].each { |type|
+#                if obj.respond_to? type and val = obj.send(type)
+#                    # Skip users and groups we've already done, but tag them with
+#                    # our section if necessary
+#                    if done[type].include?(val)
+#                        next unless defined? @section and @section
+#
+#                        tags = done[type][val].tags
+#                        unless tags.include?(@section)
+#                            done[type][val].tags = tags << @section
+#                        end
+#                    else
+#                        obj = TransObject.new(val, type.to_s)
+#                        obj[:ensure] = "exists"
+#                        done[type] << obj
+#                    end
+#                end
+#            }
+#
+#            if obj.respond_to? :to_transportable
+#                objects << obj.to_transportable
+#            end
+#        }
+
+        topbucket
+    end
+
+    # Convert to a parseable manifest
+    def to_manifest
+        transport = self.to_transportable
+        return transport.to_manifest
     end
 
     # The base element type.
@@ -236,26 +336,33 @@ class Config
             end
         end
 
-        # Set the type appropriately.  Yep, a hack.
+        # Set the type appropriately.  Yep, a hack.  This supports either naming
+        # the variable 'dir', or adding a slash at the end.
         def munge(value)
-            if @name.to_s =~ /dir/
+            if value.to_s =~ /dir/
                 @type = :directory
+            elsif value =~ /\/$/
+                @type = :directory
+                return value.sub(/\/$/, '')
             else
                 @type = :file
             end
             return value
         end
 
-        def to_manifest
-            hash = {"ensure" => self.type}
-            %w{user group mode}.each { |var|
+        def to_transportable
+            Puppet.notice "transportabling %s" % self.name
+            obj = Puppet::TransObject.new(self.value, "file")
+            obj[:ensure] = self.type
+            [:user, :group, :mode].each { |var|
                 if value = self.send(var)
-                    hash[var] = value
+                    obj[var] = value
                 end
             }
-            "file { \"#{self.value}\":\n    %s\n}" % hash.collect { |p, v|
-                "#{p} => \"#{v}\""
-            }.join(",\n    ")
+            if self.section
+                obj.tags = ["puppet", "configuration", self.section]
+            end
+            obj
         end
 
         # Make sure any provided variables look up to something.

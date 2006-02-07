@@ -3,7 +3,7 @@ class Puppet::Parser::AST
     # specified node, and this parse tree is only ever looked up when
     # a client connects.
     class NodeDef < AST::Branch
-        attr_accessor :names, :code, :parentclass
+        attr_accessor :names, :code, :parentclass, :keyword
 
         def each
             [@names,@code].each { |child| yield child }
@@ -30,9 +30,9 @@ class Puppet::Parser::AST
                 end
 
                 begin
-                    scope.setnode(name,
-                        Node.new(arghash)
-                    )
+                    node = Node.new(arghash)
+                    node.keyword = true
+                    scope.setnode(name, node)
                 rescue Puppet::ParseError => except
                     except.line = self.line
                     except.file = self.file
@@ -48,6 +48,7 @@ class Puppet::Parser::AST
 
         def initialize(hash)
             @parentclass = nil
+            @keyword = "node"
             super
         end
 

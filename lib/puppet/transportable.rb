@@ -27,6 +27,7 @@ module Puppet
             @name = name
             @params = {"name" => name}
             #self.class.add(self)
+            @tags = []
         end
 
         def longname
@@ -43,6 +44,12 @@ module Puppet
 
         def to_s
             return "%s(%s) => %s" % [@type,self[:name],super]
+        end
+
+        def to_manifest
+            "#{self.type.to_s} { \"#{self.name}\":\n%s\n}" % @params.collect { |p, v|
+                "    #{p} => \"#{v}\""
+            }.join(",\n")
         end
 
         def to_yaml_properties
@@ -84,7 +91,7 @@ module Puppet
     class TransBucket
         include Enumerable
 
-        attr_accessor :name, :type, :file, :line, :classes
+        attr_accessor :name, :type, :file, :line, :classes, :autoname, :keyword, :top
 
         %w{delete shift include? length empty? << []}.each { |method|
             define_method(method) do |*args|
@@ -116,6 +123,32 @@ module Puppet
             }
             @children += args
             #Puppet.warning @children.inspect
+        end
+
+        # Convert to a parseable manifest
+        def to_manifest
+            unless self.top
+                unless defined? @keyword and @keyword
+                    raise Puppet::DevError, "No keyword; cannot convert to manifest"
+                end
+            end
+
+            str = nil
+            if self.top
+                str = "%s"
+            else
+                str = "#{@keyword} #{@type} {\n%s\n}"
+            end
+            str % @children.collect { |child|
+                Puppet.info "manifesting %s" % child.name
+                child.to_manifest
+            }.collect { |str|
+                if self.top
+                    str
+                else
+                    str.gsub(/^/, "    ") # indent everything once
+                end
+            }.join("\n\n") # and throw in a blank line
         end
 
         def to_yaml_properties

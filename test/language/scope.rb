@@ -396,6 +396,8 @@ class TestScope < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate") {
             scope = Puppet::Parser::Scope.new()
+            scope.name =  "topscope"
+            scope.type =  "topscope"
             objects = scope.evaluate(top)
         }
 

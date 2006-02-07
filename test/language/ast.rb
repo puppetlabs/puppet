@@ -172,6 +172,10 @@ class TestAST < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate node") {
             scope = Puppet::Parser::Scope.new()
+            scope.name = "nodetest"
+            scope.type = "nodetest"
+            scope.keyword = "nodetest"
+            scope.top = true
             top.evaluate(scope)
         }
 
@@ -339,7 +343,7 @@ class TestAST < Test::Unit::TestCase
     end
 
     # Test that node inheritance works correctly
-    def test_znodeinheritance
+    def test_nodeinheritance
         children = []
 
         # create the base node

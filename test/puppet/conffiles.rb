@@ -27,11 +27,6 @@ class TestConfFiles < Test::Unit::TestCase
             "boo" => {
                 "eb" => "fb"
             },
-            "rah" => {
-                "aa" => "this is a sentence",
-                "ca" => "dk",
-                "ea" => "fk"
-            },
         },
         {
             "puppet" => {
@@ -41,7 +36,7 @@ class TestConfFiles < Test::Unit::TestCase
                 "okay" => "rah"
             },
             "back" => {
-                "okay" => "rah"
+                "yayness" => "rah"
             },
         }
     ]
@@ -54,7 +49,7 @@ class TestConfFiles < Test::Unit::TestCase
             data = data.dup
             str += "[puppet]\n"
             data["puppet"].each { |var, value|
-                str += "%s %s\n" % [var, value]
+                str += "%s = %s\n" % [var, value]
             }
             data.delete("puppet")
         end
@@ -62,7 +57,7 @@ class TestConfFiles < Test::Unit::TestCase
         data.each { |type, settings|
             str += "[%s]\n" % type
             settings.each { |var, value|
-                str += "%s %s\n" % [var, value]
+                str += "%s = %s\n" % [var, value]
             }
         }
 
@@ -85,14 +80,15 @@ class TestConfFiles < Test::Unit::TestCase
             File.open(path, "w") { |f| f.print data2config(data) }
             config = nil
             assert_nothing_raised {
-                config = Puppet::Config.new(path)
+                config = Puppet::Config.new
+                config.parse(path)
             }
 
             data.each { |section, hash|
                 hash.each { |var, value|
                     assert_equal(
                         data[section][var],
-                        config[section][var],
+                        config[var],
                         "Got different values at %s/%s" % [section, var]
                     )
                 }

@@ -124,6 +124,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:mode] = "755"
         }
         trans = assert_events([:file_changed, :file_changed], component)
+        file.retrieve
 
         assert_rollback_events(trans, [:file_changed, :file_changed], "file")
 

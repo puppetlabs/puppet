@@ -137,6 +137,7 @@ yay = /a/path
 
         assert_equal("value", c[:attr])
         assert_equal("/some/dir", c[:attr2])
+        assert_equal(:directory, c.element(:attr2).type)
         assert_equal("/some/dir/other", c[:attr3])
 
         elem = nil
@@ -146,8 +147,6 @@ yay = /a/path
 
         assert(elem)
         assert_equal("puppet", elem.user)
-
-        puts c.to_manifest
     end
 end
 

@@ -16,6 +16,7 @@ class Puppet::Parser::AST
             # string.
             scope.type = @name
             scope.name = @name
+            scope.keyword = @keyword
 
             # Mark this scope as a nodescope, so that classes will be
             # singletons within it

@@ -95,7 +95,7 @@ class TestParser < Test::Unit::TestCase
         }
     end
 
-    def test_zdefaults
+    def test_defaults
         basedir = File.join(tmpdir(), "defaulttesting")
         @@tmpfiles << basedir
         Dir.mkdir(basedir)
@@ -151,6 +151,8 @@ class TestParser < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate defaults parse tree") {
             scope = Puppet::Parser::Scope.new()
+            scope.name = "parsetest"
+            scope.type = "parsetest"
             objects = scope.evaluate(ast)
         }
 
