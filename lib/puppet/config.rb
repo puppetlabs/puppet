@@ -20,6 +20,9 @@ class Config
         unless @config.include?(param)
             @config[param] = newelement(param, value)
         end
+        unless @order.include?(param)
+            @order << param
+        end
         @config[param].value = value
     end
 
@@ -30,8 +33,25 @@ class Config
         }
     end
 
+    def each
+        @order.each { |name|
+            if @config.include?(name)
+                yield name, @config[name]
+            else
+                raise Puppet::DevError, "%s is in the order but does not exist" % name
+            end
+        }
+    end
+
+    # Return an object by name.
+    def element(param)
+        param = param.intern unless param.is_a? Symbol
+        @config[param]
+    end
+
     # Create a new config object
     def initialize
+        @order = []
         @config = {}
     end
 
@@ -55,6 +75,8 @@ class Config
         }
 
         section = "puppet"
+        metas = %w{user group mode}
+        values = Hash.new { |hash, key| hash[key] = {} }
         text.split(/\n/).each { |line|
             case line
             when /^\[(\w+)\]$/: section = $1 # Section names
@@ -63,10 +85,26 @@ class Config
             when /^\s*(\w+)\s*=\s*(.+)$/: # settings
                 var = $1.intern
                 value = $2
-                Puppet.info "%s: Setting %s to '%s'" % [section, var, value]
 
+                # Mmm, "special" attributes
+                if metas.include?(var.to_s)
+                    unless values.include?(section)
+                        values[section] = {}
+                    end
+                    values[section][var.to_s] = value
+                    next
+                end
+                Puppet.info "%s: Setting %s to '%s'" % [section, var, value]
                 self[var] = value
                 @config[var].section = section
+
+                metas.each { |meta|
+                    if values[section][meta]
+                        if @config[var].respond_to?(meta + "=")
+                            @config[var].send(meta + "=", values[section][meta])
+                        end
+                    end
+                }
             else
                 raise Puppet::Error, "Could not match line %s" % line
             end
@@ -110,6 +148,23 @@ class Config
             @config[param].default = value
             @config[param].section = section
         }
+    end
+
+    def to_manifest
+        fest = ""
+        self.each { |name, obj|
+            [:user, :group].each { |type|
+                if obj.respond_to? type and val = obj.send(type)
+                    fest += "#{type.to_s} { \"#{val}\": ensure => exists }\n\n"
+                end
+            }
+
+            if obj.respond_to? :to_manifest
+                fest += obj.to_manifest + "\n"
+            end
+        }
+
+        fest
     end
 
     # The base element type.
@@ -189,6 +244,18 @@ class Config
                 @type = :file
             end
             return value
+        end
+
+        def to_manifest
+            hash = {"ensure" => self.type}
+            %w{user group mode}.each { |var|
+                if value = self.send(var)
+                    hash[var] = value
+                end
+            }
+            "file { \"#{self.value}\":\n    %s\n}" % hash.collect { |p, v|
+                "#{p} => \"#{v}\""
+            }.join(",\n    ")
         end
 
         # Make sure any provided variables look up to something.
