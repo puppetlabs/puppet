@@ -388,6 +388,12 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
+    def snippet_componentmetaparams(trans)
+        ["/tmp/component1", "/tmp/component2"].each { |file|
+            assert(FileTest.file?(file), "File %s does not exist" % file)
+        }
+    end
+
     def snippet_emptyclass(trans)
         # There's nothing to check other than that it works
     end
