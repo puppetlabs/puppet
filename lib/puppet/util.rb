@@ -85,6 +85,53 @@ module Util
         return retval
     end
 
+    # Change the process to a different user
+    def self.chuser
+        if group = Puppet[:group]
+            if group =~ /^\d+$/
+                group = Integer(group)
+            else
+                begin
+                    g = Etc.getgrnam(group)
+                rescue ArgumentError
+                    $stderr.puts "Could not find group %s" % group
+                end
+                group = g.gid
+            end
+            unless Process.gid == group
+                begin
+                    Process.egid = group 
+                    Process.gid = group 
+                rescue
+                    $stderr.puts "could not change to group %s" % group
+                    exit(74)
+                end
+            end
+        end
+
+        if user = Puppet[:user]
+            if user =~ /^\d+$/
+                user = Integer(user)
+            else
+                begin
+                    u = Etc.getpwnam(user)
+                rescue ArgumentError
+                    $stderr.puts "Could not find user %s" % user
+                end
+                user = u.uid
+            end
+            unless Process.uid == user
+                begin
+                    Process.euid = user 
+                    Process.uid = user 
+                rescue
+                    $stderr.puts "could not change to user %s" % user
+                    exit(74)
+                end
+            end
+        end
+    end
+
     # Create a lock file while something is happening
     def self.lock(*opts)
         lock = opts[0] + ".lock"

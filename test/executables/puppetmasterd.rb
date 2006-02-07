@@ -27,7 +27,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
     def test_normalstart
         startmasterd
 
-        pidfile = File.join(Puppet[:puppetvar], "run", "puppetmasterd.pid")
+        pidfile = File.join(Puppet[:vardir], "run", "puppetmasterd.pid")
         assert(FileTest.exists?(pidfile), "PID file does not exist")
 
         sleep(1)
@@ -92,7 +92,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
         pid = nil
         ps = Facter["ps"].value || "ps -ef"
         %x{#{ps}}.chomp.split(/\n/).each { |line|
-            if line =~ /puppetmasterd --manifest/
+            if line =~ /puppetmasterd.+--manifest/
                 ary = line.split(" ")
                 pid = ary[1].to_i
             end

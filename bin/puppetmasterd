@@ -8,59 +8,32 @@
 # = Usage
 #
 #   puppetmasterd [-h|--help] [-d|--debug] [-v|--verbose] [-V|--version]
-#               [-l|--logdest <syslog|console|<file>>] [--httplog <file>]
-#               [-m|--manifest <site manifest>] [--noca] [-p|--port <port>]
-#               [--parseonly] [-s|--ssldir <cert directory>]
-#               [-c|--confdir <configuration directory>] [--vardir <var dir>]
+#               [--noca] [--nobucket]
 #
 # = Description
 #
-# This is the standalone puppet execution script; use it to execute
-# individual scripts that you write.  If you need to execute site-wide
-# scripts, use +puppetd+ and +puppetmasterd+.
+# This is the puppet central daemon.
 #
 # = Options
 #
-# autosign::
-#   Enable autosign (which presents a potential security problem).  If enabled,
-#   refers to the autosign configuration file at /etc/puppet/autosign.conf to
-#   determine which hosts should have their certificates signed.
+# Note that any configuration parameter that's valid in the configuration file
+# is also a valid long argument.  For example, 'ssldir' is a valid configuration
+# parameter, so you can specify '--ssldir <directory>' as an argument.
 #
-# confdir::
-#   The configuration root directory, where +puppetmasterd+ defaults to looking
-#   for all of its configuration files.  Defaults to +/etc/puppet+.
+# See the configuration file for the full list of acceptable parameters.
 #
 # debug::
 #   Enable full debugging.  Causes the daemon not to go into the background.
 #
-# fsconfig::
-#   Where to find the fileserver configuration file.  Defaults to
-#   /etc/puppet/fileserver.conf.  If the fileserver config file exists,
-#   the puppetmasterd daemon will automatically also become a fileserver.
-#
-# group::
-#   Print this help message.
-#
-# group::
-#   The group to run as.  Can be either a name or number.  Defaults to 'puppet'.
-#
 # help::
 #   Print this help message.
-#
-# httplog::
-#   Where to send http logs (which are currently separate from Puppet logs).
-#   Defaults to /var/puppet/log/http.log.
 #
 # logdest::
 #   Where to send messages.  Choose between syslog, the console, and a log file.
 #   Defaults to sending messages to /var/puppet/log/puppet.log, or the console
 #   if debugging or verbosity is enabled.
 #
-# manifest::
-#   The central site manifest to use for providing clients with their individual
-#   configurations.  Defaults to /etc/puppet/manifests/site.pp.
-#
-# noca::
+# nobucket::
 #   Do not function as a file bucket.
 #
 # noca::
@@ -69,23 +42,6 @@
 # nonodes::
 #   Do not use individual node designations; each node will receive the result
 #   of evaluating the entire configuration.
-#
-# parseonly::
-#   Just parse the central manifest to verify it is syntactically correct.
-#
-# port::
-#   The port on which to listen.  Defaults to 8139.
-#
-# ssldir::
-#   The directory in which to store certificates.  Defaults to /etc/puppet/ssl.
-#
-# user::
-#   The user to run as.  Can be either a name or number.  Defaults to 'user'.
-#
-# vardir::
-#   The variable-size directory, used for storing state.  Defaults to
-#   /var/puppet.
-#
 # verbose::
 #   Enable verbosity.  Causes the daemon not to go into the background.
 #
@@ -109,27 +65,22 @@ require 'getoptlong'
 require 'puppet'
 require 'puppet/server'
 
-result = GetoptLong.new(
-	[ "--autosign", "-a",			GetoptLong::NO_ARGUMENT ],
-	[ "--confdir",	"-c",			GetoptLong::REQUIRED_ARGUMENT ],
+options = [
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
-	[ "--fsconfig",	"-f",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
-	[ "--httplog",					GetoptLong::NO_ARGUMENT ],
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--manifest",	"-m",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--noca",         			GetoptLong::NO_ARGUMENT ],
 	[ "--nobucket",        			GetoptLong::NO_ARGUMENT ],
 	[ "--nonodes",         			GetoptLong::NO_ARGUMENT ],
-	[ "--parseonly",   			    GetoptLong::NO_ARGUMENT ],
-	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--ssldir",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--user",	"-u",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--group",	"-g",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--vardir",	    			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
-)
+]
+Puppet::Log.newdestination(:syslog)
+
+# Add all of the config parameters as valid options.
+Puppet.config.addargs(options)
+
+result = GetoptLong.new(*options)
 
 $haveusage = true
 
@@ -159,21 +110,10 @@ setdest = false
 begin
     result.each { |opt,arg|
         case opt
-            when "--autosign"
-                ca[:autosign] = Puppet[:autosign]
-            when "--confdir"
-                Puppet[:puppetconf] = arg
             when "--debug"
-                Puppet[:debug] = true
-                Puppet[:logdest] = :console
+                Puppet::Log.level = :debug
+                Puppet::Log.newdestination(:console)
                 setdest = true
-            when "--fsconfig"
-                unless FileTest.exists?(arg)
-                    $stderr.puts "File server configuration file %s does not exist" %
-                        arg
-                    exit(23)
-                end
-                fs[:Config] = arg
             when "--help"
                 if $haveusage
                     RDoc::usage && exit
@@ -181,45 +121,28 @@ begin
                     puts "No help available unless you have RDoc::usage installed"
                     exit
                 end
-            when "--httplog"
-                args[:AccessLog] = arg
-            when "--manifest"
-                master[:File] = arg
             when "--noca"
                 haveca = false
             when "--nobucket"
                 havebucket = false
             when "--nonodes"
                 master[:UseNodes] = false
-            when "--parseonly"
-                parseonly = true
-            when "--port"
-                args[:Port] = arg
-            when "--ssldir"
-                Puppet[:ssldir] = arg
             when "--logdest"
                 begin
-                    Puppet[:logdest] = arg
+                    Puppet::Log.newdestination(arg)
                     setdest = true
                 rescue => detail
                     $stderr.puts detail.to_s
                 end
-            when "--group"
-                group = arg
-            when "--user"
-                user = arg
-            when "--vardir"
-                Puppet[:puppetvar] = arg
             when "--version"
                 puts "%s" % Puppet.version
                 exit
             when "--verbose"
                 setdest = true
-                Puppet[:loglevel] = :info
-                Puppet[:logdest] = :console
+                Puppet::Log.level = :info
+                Puppet::Log.newdestination :console
             else
-                $stderr.puts "Invalid option '#{opt}'"
-                exit(1)
+                Puppet.config.handlearg(opt, arg)
         end
     }
 rescue GetoptLong::InvalidOption => detail
@@ -231,44 +154,21 @@ rescue GetoptLong::InvalidOption => detail
     #end
     exit(1)
 end
+ca[:autosign] = Puppet[:autosign]
+
+# Now parse the config
+if Puppet[:config] and File.exists? Puppet[:config]
+    Puppet.config.parse(Puppet[:config])
+end
+
+Puppet.genconfig
+Puppet.genmanifest
 
 require 'etc'
 
-if group
-    if group =~ /^\d+$/
-        group = Integer(group)
-    else
-        begin
-            g = Etc.getgrnam(group)
-        rescue ArgumentError
-            $stderr.puts "Could not find group %s" % group
-        end
-        group = g.gid
-    end
-    unless Process.gid == group
-        Process.egid = group 
-        Process.gid = group 
-    end
-end
+Puppet::Util.chuser
 
-if user
-    if user =~ /^\d+$/
-        user = Integer(user)
-    else
-        begin
-            u = Etc.getpwnam(user)
-        rescue ArgumentError
-            $stderr.puts "Could not find user %s" % user
-        end
-        user = u.uid
-    end
-    unless Process.uid == user
-        Process.euid = user 
-        Process.uid = user 
-    end
-end
-
-if Puppet[:loglevel] == :debug or Puppet[:loglevel] == :info or parseonly
+if Puppet::Log.level == :debug or Puppet::Log.level == :info or parseonly
     args[:Daemonize] = false
 else
     args[:Daemonize] = true
@@ -281,7 +181,7 @@ handlers = {
 }
 
 unless setdest
-    Puppet[:logdest] = :syslog
+    Puppet::Log.newdestination(:syslog)
 end
 
 if haveca
@@ -292,13 +192,11 @@ end
 #    handlers[:FileBucket] = bucket
 #end
 
-unless fs.include?(:Config)
-    if File.exists?(Puppet[:fileserverconfig])
-        fs[:Config] = Puppet[:fileserverconfig]
-    #else
-    #    Puppet.notice "File server config %s does not exist; skipping file serving" %
-    #        Puppet[:fileserverconfig]
-    end
+if File.exists?(Puppet[:fileserverconfig])
+    fs[:Config] = Puppet[:fileserverconfig]
+#else
+#    Puppet.notice "File server config %s does not exist; skipping file serving" %
+#        Puppet[:fileserverconfig]
 end
 
 if fs.include?(:Config)
@@ -306,8 +204,6 @@ if fs.include?(:Config)
 end
 
 args[:Handlers] = handlers
-
-Puppet.notice "Starting Puppet server version %s" % [Puppet.version]
 
 begin
     # use the default, um, everything
@@ -318,14 +214,21 @@ rescue => detail
     exit(1)
 end
 
-if parseonly
+if Puppet[:parseonly]
     # we would have already exited if the file weren't syntactically correct
     exit(0)
+end
+
+if args[:Daemonize]
+    server.daemonize
 end
 
 trap(:INT) {
     server.shutdown
 }
+
+Puppet.notice "Starting Puppet server version %s" % [Puppet.version]
+
 begin
     server.start
 rescue => detail

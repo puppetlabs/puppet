@@ -76,11 +76,15 @@ class TestConfFiles < Test::Unit::TestCase
         path = tempfile()
 
         sampledata { |data|
+            config = Puppet::Config.new
+            data.each { |section, hash|
+                hash.each { |param, value|
+                    config.setdefaults(section, [param, value, value])
+                }
+            }
             # Write it out as a config file
             File.open(path, "w") { |f| f.print data2config(data) }
-            config = nil
             assert_nothing_raised {
-                config = Puppet::Config.new
                 config.parse(path)
             }
 

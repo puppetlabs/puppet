@@ -78,7 +78,7 @@ class TestConfig < Test::Unit::TestCase
         c = mkconfig
 
         assert_nothing_raised {
-            c.setdefaults(:testing, [:booltest, "testing", true])
+            c.setdefaults(:testing, [:booltest, true, "testing"])
         }
 
         assert(c[:booltest])
@@ -181,8 +181,8 @@ yay = /a/path
     attr = value
     owner = puppet
     group = puppet
-    attr2 = /some/dir
-    attr3 = $attr2/other
+    attrdir = /some/dir
+    attr3 = $attrdir/other
         }
 
         file = tempfile()
@@ -200,8 +200,8 @@ yay = /a/path
         assert_nothing_raised {
             c.setdefaults("section1",
                 [:attr, "a", "one"],
-                [:attr2, "/another/dir", "two"],
-                [:attr3, "$attr2/maybe", "boo"]
+                [:attrdir, "/another/dir", "two"],
+                [:attr3, "$attrdir/maybe", "boo"]
             )
         }
         
@@ -210,8 +210,8 @@ yay = /a/path
         }
 
         assert_equal("value", c[:attr])
-        assert_equal("/some/dir", c[:attr2])
-        assert_equal(:directory, c.element(:attr2).type)
+        assert_equal("/some/dir", c[:attrdir])
+        assert_equal(:directory, c.element(:attrdir).type)
         assert_equal("/some/dir/other", c[:attr3])
 
         elem = nil
@@ -238,6 +238,78 @@ yay = /a/path
         check_to_config(c)
         Puppet::Type.allclear
         check_to_transportable(c)
+    end
+
+    def test_arghandling
+        c = mkconfig
+
+        assert_nothing_raised {
+            c.setdefaults("testing",
+                [:onboolean, true, "An on bool"],
+                [:offboolean, false, "An off bool"],
+                [:string, "a string", "A string arg"],
+                [:file, "/path/to/file", "A file arg"]
+            )
+        }
+
+        data = {
+            :onboolean => [true, false],
+            :offboolean => [true, false],
+            :string => ["one string", "another string"],
+            :file => %w{/a/file /another/file}
+        }
+        data.each { |param, values|
+            values.each { |val|
+                opt = nil
+                arg = nil
+                if c.boolean?(param)
+                    if val
+                        opt = "--%s" % param
+                    else
+                        opt = "--no-%s" % param
+                    end
+                else
+                    opt = "--%s" % param
+                    arg = val
+                end
+
+                assert_nothing_raised("Could not handle arg %s with value %s" %
+                    [opt, val]) {
+
+                    c.handlearg(opt, arg)
+                }
+            }
+        }
+    end
+
+    def test_argadding
+        c = mkconfig
+
+        assert_nothing_raised {
+            c.setdefaults("testing",
+                [:onboolean, true, "An on bool"],
+                [:offboolean, false, "An off bool"],
+                [:string, "a string", "A string arg"],
+                [:file, "/path/to/file", "A file arg"]
+            )
+        }
+        options = []
+
+        c.addargs(options)
+
+        c.each { |param, obj|
+            opt = "--%s" % param
+            assert(options.find { |ary|
+                ary[0] == opt
+            }, "Argument %s was not added" % opt)
+
+            if c.boolean?(param)
+                o = "--no-%s" % param
+                assert(options.find { |ary|
+                ary[0] == o
+                }, "Boolean off %s was not added" % o)
+            end
+        }
     end
 end
 

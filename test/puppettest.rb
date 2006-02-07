@@ -31,11 +31,11 @@ module TestPuppet
         end
 
         @configpath = File.join(tmpdir,
-            self.class.to_s + "configdir" + @@testcount.to_s
+            self.class.to_s + "configdir" + @@testcount.to_s + "/"
         )
 
-        Puppet[:puppetconf] = @configpath
-        Puppet[:puppetvar] = @configpath
+        Puppet[:confdir] = @configpath
+        Puppet[:vardir] = @configpath
 
         unless File.exists?(@configpath)
             Dir.mkdir(@configpath)
@@ -45,12 +45,12 @@ module TestPuppet
         @@tmppids = []
 
         if $0 =~ /.+\.rb/ or Puppet[:debug]
-            Puppet[:logdest] = :console
-            Puppet[:loglevel] = :debug
+            Puppet::Log.newdestination :console
+            Puppet::Log.level = :debug
             $VERBOSE = 1
         else
             Puppet::Log.close
-            Puppet[:logdest] = "/dev/null"
+            Puppet::Log.newdestination "/dev/null"
             Puppet[:httplog] = "/dev/null"
         end
 
@@ -288,7 +288,7 @@ module ServerTest
 
     # create a simple manifest that just creates a file
     def mktestmanifest
-        file = File.join(Puppet[:puppetconf], "%ssite.pp" % (self.class.to_s + "test"))
+        file = File.join(Puppet[:confdir], "%ssite.pp" % (self.class.to_s + "test"))
         @createdfile = File.join(tmpdir(), self.class.to_s + "servermanifesttesting")
 
         File.open(file, "w") { |f|
@@ -383,13 +383,13 @@ module ExeTest
 
         manifest = mktestmanifest()
         args += " --manifest %s" % manifest
-        args += " --confdir %s" % Puppet[:puppetconf]
-        args += " --vardir %s" % Puppet[:puppetvar]
-        args += " --port %s" % @@port
+        args += " --confdir %s" % Puppet[:confdir]
+        args += " --vardir %s" % Puppet[:vardir]
+        args += " --masterport %s" % @@port
         args += " --user %s" % Process.uid
         args += " --group %s" % Process.gid
         args += " --nonodes"
-        args += " --autosign"
+        args += " --autosign true"
 
         #if Puppet[:debug]
         #    args += " --debug"
@@ -411,7 +411,7 @@ module ExeTest
     def stopmasterd(running = true)
         ps = Facter["ps"].value || "ps -ef"
 
-        pidfile = File.join(Puppet[:puppetvar], "run", "puppetmasterd.pid")
+        pidfile = File.join(Puppet[:vardir], "run", "puppetmasterd.pid")
 
         pid = nil
         if FileTest.exists?(pidfile)

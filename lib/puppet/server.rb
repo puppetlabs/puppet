@@ -34,9 +34,6 @@ module Puppet
                     daemonize = hash[:Daemonize]
                 end
 
-                if daemonize
-                    self.daemonize
-                end
                 # FIXME we should have some kind of access control here, using
                 # :RequestHandler
                 hash[:Port] ||= Puppet[:masterport]

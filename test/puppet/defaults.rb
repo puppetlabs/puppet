@@ -12,8 +12,8 @@ require 'test/unit'
 
 class TestPuppetDefaults < Test::Unit::TestCase
     include TestPuppet
-    @@dirs = %w{rrddir puppetconf puppetvar logdir statedir}
-    @@files = %w{logfile statefile manifest masterlog}
+    @@dirs = %w{rrddir confdir vardir logdir statedir}
+    @@files = %w{statefile manifest masterlog}
     @@normals = %w{puppetport masterport server}
     @@booleans = %w{rrdgraph noop}
 
@@ -43,8 +43,8 @@ class TestPuppetDefaults < Test::Unit::TestCase
 
     if __FILE__ == $0
         def disabled_testContained
-            confdir = Regexp.new(Puppet[:puppetconf])
-            vardir = Regexp.new(Puppet[:puppetvar])
+            confdir = Regexp.new(Puppet[:confdir])
+            vardir = Regexp.new(Puppet[:vardir])
             [@@dirs,@@files].flatten.each { |param|
                 value = Puppet[param]
 
@@ -62,8 +62,8 @@ class TestPuppetDefaults < Test::Unit::TestCase
     end
 
     def testFailOnBogusArgs
-        [0, "ashoweklj", ";", :thisisafakesymbol].each { |param|
-            assert_raise(ArgumentError) { Puppet[param] }
+        [0, "ashoweklj", ";"].each { |param|
+            assert_raise(ArgumentError, "No error on %s" % param) { Puppet[param] }
         }
     end
 
@@ -87,15 +87,15 @@ class TestPuppetDefaults < Test::Unit::TestCase
 
     def test_settingdefaults
         testvals = {
-            :fakeparam => [:puppetconf, "yaytest"],
-            :anotherparam => proc { File.join(Puppet[:puppetvar], "goodtest") },
+            :fakeparam => "$confdir/yaytest",
+            :anotherparam => "$vardir/goodtest",
             :string => "a yay string",
             :boolean => true
         }
 
         testvals.each { |param, default|
             assert_nothing_raised {
-                Puppet.setdefault(param,default)
+                Puppet.setdefaults("testing", [param, default, "a value"])
             }
         }
     end

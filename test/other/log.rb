@@ -44,8 +44,7 @@ class TestLog < Test::Unit::TestCase
     def test_logfile
         fact = nil
         levels = nil
-        oldlevel = Puppet[:loglevel]
-        Puppet[:loglevel] = :debug
+        Puppet::Log.level = :debug
         levels = getlevels
         logfile = tempfile()
         assert_nothing_raised() {
@@ -61,7 +60,6 @@ class TestLog < Test::Unit::TestCase
             }
         }
         assert(count == levels.length)
-        Puppet[:loglevel] = oldlevel
     end
 
     def test_syslog
@@ -80,7 +78,6 @@ class TestLog < Test::Unit::TestCase
     end
 
     def test_consolelog
-        Puppet[:debug] = true if __FILE__ == $0
         fact = nil
         levels = getlevels
         assert_nothing_raised() {
@@ -103,20 +100,18 @@ class TestLog < Test::Unit::TestCase
     end
 
     def test_output
-        olddebug = Puppet[:debug]
-        Puppet[:debug] = false
+        Puppet.debug = false
         assert(Puppet.err("This is an error").is_a?(Puppet::Log))
         assert(Puppet.debug("This is debugging").nil?)
-        Puppet[:debug] = true
+        Puppet.debug = true
         assert(Puppet.err("This is an error").is_a?(Puppet::Log))
         assert(Puppet.debug("This is debugging").is_a?(Puppet::Log))
-        Puppet[:debug] = olddebug
     end
 
     def test_creatingdirs
         dir = tempfile()
         file = File.join(dir, "logfile")
-        Puppet[:logdest] = file
+        Puppet::Log.newdestination file
         Puppet.info "testing logs"
         assert(FileTest.directory?(dir))
         assert(FileTest.file?(file))
@@ -149,7 +144,7 @@ class TestLog < Test::Unit::TestCase
 
     # Verify that we can pass strings that match printf args
     def test_percentlogs
-        Puppet[:logdest] = :syslog
+        Puppet::Log.newdestination :syslog
 
         assert_nothing_raised {
             Puppet::Log.new(

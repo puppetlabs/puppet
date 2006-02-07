@@ -54,7 +54,7 @@ class Puppet::SSLCertificates::Certificate
 
     def initialize(hash)
         unless hash.include?(:name)
-            raise "You must specify the common name for the certificate"
+            raise Puppet::Error, "You must specify the common name for the certificate"
         end
         @name = hash[:name]
 
@@ -72,7 +72,7 @@ class Puppet::SSLCertificates::Certificate
         @cacertfile ||= File.join(Puppet[:certdir], "ca.pem")
 
         unless FileTest.directory?(@dir)
-            Puppet::SSLCertificates.mkdir(@dir)
+            Puppet.recmkdir(@dir)
         end
 
         unless @certfile =~ /\.pem$/
@@ -82,14 +82,14 @@ class Puppet::SSLCertificates::Certificate
             Puppet[:privatekeydir], [@name,"pem"].join(".")
         )
         unless FileTest.directory?(@dir)
-            Puppet::SSLCertificates.mkdir(@dir)
+            Puppet.recmkdir(@dir)
         end
 
         [@keyfile].each { |file|
             dir = File.dirname(file)
 
             unless FileTest.directory?(dir)
-                Puppet::SSLCertificates.mkdir(dir)
+                Puppet.recmkdir(dir)
             end
         }
 
@@ -122,7 +122,7 @@ class Puppet::SSLCertificates::Certificate
                     @password = f.read.chomp
                 }
             else
-                raise ":encrypt must be a path to a pass phrase file"
+                raise Puppet::Error, ":encrypt must be a path to a pass phrase file"
             end
         else
             @password = nil

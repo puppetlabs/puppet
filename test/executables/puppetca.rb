@@ -23,17 +23,20 @@ class TestPuppetCA < Test::Unit::TestCase
 
         return cert
     end
+    
+    def runca(args)
+        return %x{puppetca --confdir=#{Puppet[:confdir]} --user #{Process.uid} --group #{Process.gid} #{args} 2>&1}
+
+    end
 
     def test_signing
         ca = nil
-        Puppet[:ssldir] = tempfile()
-        @@tmpfiles << Puppet[:ssldir]
         Puppet[:autosign] = false
         assert_nothing_raised {
             ca = Puppet::Server::CA.new()
         }
-        #Puppet.warning "SSLDir is %s" % Puppet[:ssldir]
-        #system("find %s" % Puppet[:ssldir])
+        #Puppet.warning "SSLDir is %s" % Puppet[:confdir]
+        #system("find %s" % Puppet[:confdir])
 
         cert = mkcert("host.test.com")
         resp = nil
@@ -43,24 +46,24 @@ class TestPuppetCA < Test::Unit::TestCase
             resp = ca.getcert(cert.csr.to_pem, "fakename", "127.0.0.1")
         }
         assert_equal(["",""], resp)
-        #Puppet.warning "SSLDir is %s" % Puppet[:ssldir]
-        #system("find %s" % Puppet[:ssldir])
+        #Puppet.warning "SSLDir is %s" % Puppet[:confdir]
+        #system("find %s" % Puppet[:confdir])
 
         output = nil
         assert_nothing_raised {
-            output = %x{puppetca --list --ssldir=#{Puppet[:ssldir]} 2>&1}.chomp.split("\n").reject { |line| line =~ /warning:/ } # stupid ssl.rb
+            output = runca("--list").chomp.split("\n").reject { |line| line =~ /warning:/ } # stupid ssl.rb
         }
-        #Puppet.warning "SSLDir is %s" % Puppet[:ssldir]
-        #system("find %s" % Puppet[:ssldir])
+        #Puppet.warning "SSLDir is %s" % Puppet[:confdir]
+        #system("find %s" % Puppet[:confdir])
         assert_equal($?,0)
         assert_equal(%w{host.test.com}, output)
         assert_nothing_raised {
-            output = %x{puppetca --sign -a --ssldir=#{Puppet[:ssldir]}}.chomp.split("\n")
+            output = runca("--sign -a").chomp.split("\n")
         }
         assert_equal($?,0)
-        assert_equal([], output)
+        assert_equal(["Signed host.test.com"], output)
         assert_nothing_raised {
-            output = %x{puppetca --list --ssldir=#{Puppet[:ssldir]}}.chomp.split("\n")
+            output = runca("--list").chomp.split("\n")
         }
         assert_equal($?,0)
         assert_equal([], output)

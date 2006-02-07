@@ -5,23 +5,22 @@ class Config
 
     # Retrieve a config value
     def [](param)
-        param = param.intern unless param.is_a? Symbol
+        param = convert(param)
         if @config.include?(param)
             if @config[param]
                 val = @config[param].value
                 return val
             end
         else
-            nil
+            raise ArgumentError, "Invalid argument %s" % param
         end
     end
 
     # Set a config value.  This doesn't set the defaults, it sets the value itself.
     def []=(param, value)
-        param = param.intern unless param.is_a? Symbol
+        param = convert(param)
         unless @config.include?(param)
-            raise Puppet::Error, "Unknown configuration parameter %s" % param
-            #@config[param] = newelement(param, value)
+            raise Puppet::Error, "Unknown configuration parameter %s" % param.inspect
         end
         unless @order.include?(param)
             @order << param
@@ -40,11 +39,61 @@ class Config
         return true
     end
 
+    # Generate the list of valid arguments, in a format that GetoptLong can
+    # understand, and add them to the passed option list.
+    def addargs(options)
+        require 'getoptlong'
+        # Add all of the config parameters as valid options.
+        self.each { |param, obj|
+            if self.boolean?(param)
+                options << ["--#{param}", GetoptLong::NO_ARGUMENT]
+                options << ["--no-#{param}", GetoptLong::NO_ARGUMENT]
+            else
+                options << ["--#{param}", GetoptLong::REQUIRED_ARGUMENT]
+            end
+        }
+
+        return options
+    end
+
+    # Turn the config into a transaction and apply it
+    def apply
+        trans = self.to_transportable
+        begin
+            comp = trans.to_type
+            trans = comp.evaluate
+            trans.evaluate
+            comp.remove
+        rescue => detail
+                puts detail.backtrace
+            Puppet.err "Could not configure myself: %s" % detail
+        end
+    end
+
+    # Is our parameter a boolean parameter?
+    def boolean?(param)
+        param = convert(param)
+        if @config.include?(param) and @config[param].kind_of? CBoolean
+            return true
+        else
+            return false
+        end
+    end
+
     # Remove all set values.
     def clear
         @config.each { |name, obj|
             obj.clear
         }
+    end
+
+    def convert(param)
+        case param
+        when String: return param.intern
+        when Symbol: return param
+        else
+            raise ArgumentError, "Invalid param type %s" % param.class
+        end
     end
 
     def each
@@ -75,8 +124,38 @@ class Config
 
     # Return an object by name.
     def element(param)
-        param = param.intern unless param.is_a? Symbol
+        param = convert(param)
         @config[param]
+    end
+
+    # Handle a command-line argument.
+    def handlearg(opt, value = nil)
+        if value == "true"
+            value = true
+        end
+        if value == "false"
+            value = false
+        end
+        str = opt.sub(/^--/,'')
+        bool = true
+        newstr = str.sub(/^no-/, '')
+        if newstr != str
+            str = newstr
+            bool = false
+        end
+        if self.valid?(str)
+            if self.boolean?(str)
+                self[str] = bool
+            else
+                self[str] = value
+            end
+
+            # Mark that this was set on the cli, so it's not overridden if the config
+            # gets reread.
+            @config[str.intern].setbycli = true
+        else
+            raise ArgumentError, "Invalid argument %s" % opt
+        end
     end
 
     # Create a new config object
@@ -87,6 +166,7 @@ class Config
 
     # Return all of the parameters associated with a given section.
     def params(section)
+        section = section.intern if section.is_a? String
         @config.find_all { |name, obj|
             obj.section == section
         }.collect { |name, obj|
@@ -134,8 +214,13 @@ class Config
                     values[section][var.to_s] = value
                     next
                 end
-                Puppet.info "%s: Setting %s to '%s'" % [section, var, value]
-                self[var] = value
+
+                # Don't override set parameters, since the file is parsed
+                # after cli arguments are handled.
+                unless @config.include?(var) and @config[var].setbycli
+                    Puppet.debug "%s: Setting %s to '%s'" % [section, var, value]
+                    self[var] = value
+                end
                 @config[var].section = section
 
                 metas.each { |meta|
@@ -155,6 +240,7 @@ class Config
     # what kind of element we're creating, but the value itself might be either
     # a default or a value, so we can't actually assign it.
     def newelement(param, desc, value)
+        param = convert(param)
         mod = nil
         case value
         when true, false, "true", "false":
@@ -171,9 +257,12 @@ class Config
             element.extend(mod)
         end
 
+        @order << param
+
         return element
     end
 
+    # Iterate across all of the objects in a given section.
     def persection(section)
         self.each { |name, obj|
             if obj.section == section
@@ -221,7 +310,13 @@ class Config
             }
 
             if obj.respond_to? :to_transportable
-                objects << obj.to_transportable
+                unless done[:file].include? obj.value
+                    trans = obj.to_transportable
+                    # transportable could return nil
+                    next unless trans
+                    objects << trans
+                    done[:file] << obj.value
+                end
             end
         }
 
@@ -241,6 +336,7 @@ class Config
         section = section.intern unless section.is_a? Symbol
         #hash.each { |param, value|
         defs.each { |param, value, desc|
+            param = convert(param)
             if @config.include?(param) and @config[param].default
                 raise Puppet::Error, "Default %s is already defined" % param
             end
@@ -260,11 +356,27 @@ class Config
 
     # Convert our list of objects into a configuration file.
     def to_config
-        str = ""
+        str = %{The configuration file for #{Puppet.name}.  Note that this file
+is likely to have unused configuration parameters in it; any parameter that's
+valid anywhere in Puppet can be in any config file, even if it's not used.
+
+Every section can specify three special parameters: owner, group, and mode.
+These parameters affect the required permissions of any files specified after
+their specification.  Puppet will sometimes use these parameters to check its
+own configured state, so they can be used to make Puppet a bit more self-managing.
+
+Note also that the section names are entirely for human-level organizational
+purposes; they don't provide separate namespaces.  All parameters are in a
+single namespace.
+
+Generated on #{Time.now}.
+
+}.gsub(/^/, "# ")
+
         eachsection do |section|
             str += "[#{section}]\n"
             persection(section) do |obj|
-                str += obj.to_s + "\n"
+                str += obj.to_config + "\n"
             end
         end
 
@@ -276,6 +388,7 @@ class Config
         done = {
             :owner => [],
             :group => [],
+            :file => []
         }
 
         topbucket = Puppet::TransBucket.new
@@ -299,12 +412,23 @@ class Config
     # Convert to a parseable manifest
     def to_manifest
         transport = self.to_transportable
-        return transport.to_manifest
+
+        manifest = transport.to_manifest + "\n"
+        eachsection { |section|
+            manifest += "include #{section}\n"
+        }
+
+        return manifest
+    end
+
+    def valid?(param)
+        param = convert(param)
+        @config.has_key?(param)
     end
 
     # The base element type.
     class CElement
-        attr_accessor :name, :section, :default, :parent, :desc
+        attr_accessor :name, :section, :default, :parent, :desc, :setbycli
 
         # Unset any set value.
         def clear
@@ -314,15 +438,43 @@ class Config
         # Create the new element.  Pretty much just sets the name.
         def initialize(name, desc, value = nil)
             @name = name
-            @desc = desc
+            @desc = desc.gsub(/^\s*/, '')
             if value
                 @value = value
             end
         end
 
-        def to_s
-            str = @desc.gsub(/^/, "    # ") +
-                "\n    %s = %s" % [@name, self.value]
+        def set?
+            if defined? @value and ! @value.nil?
+                return true
+            else
+                return false
+            end
+        end
+
+        # Convert the object to a config statement.
+        def to_config
+            str = @desc.gsub(/^/, "# ") + "\n"
+
+            # Add in a statement about the default.
+            if defined? @default and @default
+                str += "# The default value is '%s'.\n" % @default
+            end
+
+            line = "%s = %s" % [@name, self.value]
+
+            # If the value has not been overridden, then print it out commented
+            # and unconverted, so it's clear that that's the default and how it
+            # works.
+            if defined? @value and ! @value.nil?
+                line = "%s = %s" % [@name, self.value]
+            else
+                line = "# %s = %s" % [@name, @default]
+            end
+
+            str += line + "\n"
+
+            str.gsub(/^/, "    ")
         end
 
         # Retrieves the value, or if it's not set, retrieves the default.
@@ -358,12 +510,11 @@ class Config
 
     # A file.
     module CFile
-        attr_accessor :owner, :group, :mode, :type
+        attr_accessor :owner, :group, :mode
 
         def convert(value)
-            unless value
-                return nil
-            end
+            return value unless value
+            return value unless value.is_a? String
             if value =~ /\$(\w+)/
                 parent = $1
                 if pval = @parent[parent]
@@ -380,20 +531,33 @@ class Config
         # Set the type appropriately.  Yep, a hack.  This supports either naming
         # the variable 'dir', or adding a slash at the end.
         def munge(value)
-            if value.to_s =~ /dir/
-                @type = :directory
-            elsif value =~ /\/$/
+            if value.to_s =~ /\/$/
                 @type = :directory
                 return value.sub(/\/$/, '')
-            else
-                @type = :file
             end
             return value
         end
 
+        # Return the appropriate type.
+        def type
+            value = self.value
+            if @name.to_s =~ /dir/
+                return :directory
+            elsif value.to_s =~ /\/$/
+                return :directory
+            elsif value.is_a? String
+                return :file
+            else
+                return nil
+            end
+        end
+
+        # Convert the object to a TransObject instance.
         def to_transportable
+            type = self.type
+            return nil unless type
             obj = Puppet::TransObject.new(self.value, "file")
-            obj[:ensure] = self.type
+            obj[:ensure] = type
             [:owner, :group, :mode].each { |var|
                 if value = self.send(var)
                     obj[var] = value
@@ -407,6 +571,7 @@ class Config
 
         # Make sure any provided variables look up to something.
         def validate(value)
+            return true unless value.is_a? String
             value.scan(/\$(\w+)/) { |name|
                 name = name[0]
                 unless @parent[name]
@@ -423,7 +588,8 @@ class Config
             when true, "true": return true
             when false, "false": return false
             else
-                raise Puppet::Error, "Invalid value %s for %s" % [value, @name]
+                raise Puppet::Error, "Invalid value '%s' for %s" %
+                    [value.inspect, @name]
             end
         end
     end

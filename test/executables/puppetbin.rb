@@ -30,8 +30,8 @@ class TestPuppetBin < Test::Unit::TestCase
             cmd += " --debug"
         end
         #cmd += " --fqdn %s" % fqdn
-        cmd += " --confdir %s" % Puppet[:puppetconf]
-        cmd += " --vardir %s" % Puppet[:puppetvar]
+        cmd += " --confdir %s" % Puppet[:confdir]
+        cmd += " --vardir %s" % Puppet[:vardir]
         cmd += " --logdest %s" % "/dev/null"
 
         assert_nothing_raised {

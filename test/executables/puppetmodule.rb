@@ -32,8 +32,8 @@ class TestPuppetModule < Test::Unit::TestCase
         cmd = $module
         cmd += " --verbose"
         #cmd += " --fqdn %s" % fqdn
-        cmd += " --confdir %s" % Puppet[:puppetconf]
-        cmd += " --vardir %s" % Puppet[:puppetvar]
+        cmd += " --confdir %s" % Puppet[:confdir]
+        cmd += " --vardir %s" % Puppet[:vardir]
         if Puppet[:debug]
             cmd += " --logdest %s" % "console"
             cmd += " --debug"

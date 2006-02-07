@@ -9,9 +9,7 @@
 # = Usage
 #
 #   puppetca [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
-#               [--cadir <ca directory>] [-g|--generate] [-l|--list]
-#               [-s|--sign] [--ssldir <cert directory>]
-#               [-c|--confdir <configuration directory>]
+#               [-g|--generate] [-l|--list] [-s|--sign]
 #
 # = Description
 #
@@ -22,15 +20,14 @@
 #
 # = Options
 #
+# Note that any configuration parameter that's valid in the configuration file
+# is also a valid long argument.  For example, 'ssldir' is a valid configuration
+# parameter, so you can specify '--ssldir <directory>' as an argument.
+#
+# See the configuration file for the full list of acceptable parameters.
+#
 # all::
 #   Operate on all outstanding requests.  Only makes sense with '--sign'.
-#
-# cadir::
-#   Where to look for the ca directory.  Defaults to /etc/puppet/ssl/ca.
-#
-# confdir::
-#   The configuration root directory, where +puppetmasterd+ defaults to looking
-#   for all of its configuration files.  Defaults to +/etc/puppet+.
 #
 # debug::
 #   Enable full debugging.
@@ -48,9 +45,6 @@
 # sign::
 #   Sign an outstanding certificate request.  Unless '--all' is specified,
 #   hosts must be listed after all flags.
-#
-# ssldir::
-#   The directory in which to store certificates.  Defaults to /etc/puppet/ssl.
 #
 # verbose::
 #   Enable verbosity.
@@ -82,18 +76,20 @@ rescue LoadError
     $haveusage = false
 end
 
-result = GetoptLong.new(
+options = [
 	[ "--all",	    "-a",			GetoptLong::NO_ARGUMENT ],
-	[ "--cadir",	    			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--confdir",	"-c",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--debug",    "-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--generate", "-g",  			GetoptLong::NO_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
 	[ "--list",	    "-l",			GetoptLong::NO_ARGUMENT ],
 	[ "--sign",	    "-s",			GetoptLong::NO_ARGUMENT ],
-	[ "--ssldir",	    			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ]
-)
+]
+
+# Add all of the config parameters as valid options.
+Puppet.config.addargs(options)
+
+result = GetoptLong.new(*options)
 
 mode = nil
 all = false
@@ -104,12 +100,8 @@ begin
         case opt
             when "--all"
                 all = true
-            when "--cadir"
-                Puppet[:cadir] = arg
-            when "--confdir"
-                Puppet[:puppetconf] = arg
             when "--debug"
-                Puppet[:loglevel] = :debug
+                Puppet::Log.level = :debug
             when "--generate"
                 generate = arg
                 mode = :generate
@@ -124,10 +116,10 @@ begin
                 mode = :list
             when "--sign"
                 mode = :sign
-            when "--ssldir"
-                Puppet[:ssldir] = arg
             when "--verbose"
-                Puppet[:loglevel] = :info
+                Puppet::Log.level = :info
+            else
+                Puppet.config.handlearg(opt, arg)
         end
     }
 rescue GetoptLong::InvalidOption => detail
@@ -138,7 +130,22 @@ rescue GetoptLong::InvalidOption => detail
     exit(1)
 end
 
-ca = Puppet::SSLCertificates::CA.new()
+# Now parse the config
+if Puppet[:config] and File.exists? Puppet[:config]
+    Puppet.config.parse(Puppet[:config])
+end
+
+Puppet.genconfig
+Puppet.genmanifest
+
+Puppet::Util.chuser
+
+begin
+    ca = Puppet::SSLCertificates::CA.new()
+rescue => detail
+    puts detail.to_s
+    exit(23)
+end
 
 unless mode
     $stderr.puts "You must specify --list or --sign"

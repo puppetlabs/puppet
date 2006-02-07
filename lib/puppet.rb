@@ -102,28 +102,42 @@ module Puppet
         var = "/var/puppet"
     end
     self.setdefaults("puppet",
-        [:puppetconf, conf, "The main Puppet configuration directory."],
-        [:puppetvar, var, "Where Puppet stores dynamic and growing data."]
+        [:confdir, conf, "The main Puppet configuration directory."],
+        [:vardir, var, "Where Puppet stores dynamic and growing data."]
+    )
+
+    # Define the config default.
+    self.setdefaults(self.name,
+        [:config, "$confdir/#{self.name}.conf",
+            "The configuration file for #{self.name}."]
     )
 
     self.setdefaults("puppet",
-        [:logdir,          "$puppetvar/log",
+        [:logdir,          "$vardir/log",
             "The Puppet log directory."],
-        [:bucketdir,       "$puppetvar/bucket",
+        [:bucketdir,       "$vardir/bucket",
             "Where FileBucket files are stored."],
-        [:statedir,        "$puppetvar/state",
+        [:statedir,        "$vardir/state",
             "The directory where Puppet state is stored.  Generally, this
             directory can be removed without causing harm (although it might
             result in spurious service restarts)."],
-        [:rundir,          "$puppetvar/run", "Where Puppet PID files are kept."],
+        [:rundir,          "$vardir/run", "Where Puppet PID files are kept."],
         [:statefile,       "$statedir/state.yaml",
             "Where puppetd and puppetmasterd store state associated with the running
             configuration.  In the case of puppetmasterd, this file reflects the
             state discovered through interacting with clients."],
-        [:ssldir,          "$puppetconf/ssl", "Where SSL certificates are kept."]
+        [:ssldir,          "$confdir/ssl", "Where SSL certificates are kept."],
+        [:genconfig,        false,
+            "Whether to just print a configuration to stdout and exit.  Only makes
+            sense when used interactively.  Takes into account arguments specified
+            on the CLI."],
+        [:genmanifest,        false,
+            "Whether to just print a manifest to stdout and exit.  Only makes
+            sense when used interactively.  Takes into account arguments specified
+            on the CLI."]
     )
     self.setdefaults("puppetmasterd",
-        [:manifestdir,     "$puppetconf/manifests",
+        [:manifestdir,     "$confdir/manifests",
             "Where puppetmasterd looks for its manifests."],
         [:manifest,        "$manifestdir/site.pp",
             "The entry-point manifest for puppetmasterd."],
@@ -137,15 +151,15 @@ module Puppet
     )
 
     self.setdefaults("puppetd",
-        [:localconfig,     "$puppetconf/localconfig",
+        [:localconfig,     "$confdir/localconfig",
             "Where puppetd caches the local configuration.  An extension reflecting
             the cache format is added automatically."],
-        [:classfile,       "$puppetconf/classes.txt",
+        [:classfile,       "$confdir/classes.txt",
             "The file in which puppetd stores a list of the classes associated
             with the retrieved configuratiion."],
         [:puppetdlog,         "$logdir/puppetd.log",
             "The log file for puppetd.  This is generally not used."],
-        [:httplogfile,     "$logdir/http.log", "Where the puppetd web server logs."],
+        [:httplog,     "$logdir/http.log", "Where the puppetd web server logs."],
         [:server,          "puppet",
             "The server to which server puppetd should connect"],
         [:user,            "puppet", "The user puppetmasterd should run as."],
@@ -159,41 +173,74 @@ module Puppet
             "How often puppetd applies the client configuration; in seconds"]
     )
     self.setdefaults("metrics",
-        [:rrddir,          "$puppetvar/rrd",
+        [:rrddir,          "$vardir/rrd",
             "The directory where RRD database files are stored."],
         [:rrdgraph,        false, "Whether RRD information should be graphed."]
     )
 
 	# configuration parameter access and stuff
 	def self.[](param)
-        @@config[param]
+        case param
+        when :debug:
+            if Puppet::Log.level == :debug
+                return true
+            else
+                return false
+            end
+        else
+            return @@config[param]
+        end
 	end
 
 	# configuration parameter access and stuff
 	def self.[]=(param,value)
-        case param
-        when :debug:
-            if value
-                Puppet::Log.level=(:debug)
-            else
-                Puppet::Log.level=(:notice)
-            end
-        when :loglevel:
-            Puppet::Log.level=(value)
-        when :logdest:
-            Puppet::Log.newdestination(value)
-        else
-            @@config[param] = value
-        end
+        @@config[param] = value
+#        case param
+#        when :debug:
+#            if value
+#                Puppet::Log.level=(:debug)
+#            else
+#                Puppet::Log.level=(:notice)
+#            end
+#        when :loglevel:
+#            Puppet::Log.level=(value)
+#        when :logdest:
+#            Puppet::Log.newdestination(value)
+#        else
+#            @@config[param] = value
+#        end
 	end
 
     def self.clear
         @@config.clear
     end
 
+    def self.debug=(value)
+        if value
+            Puppet::Log.level=(:debug)
+        else
+            Puppet::Log.level=(:notice)
+        end
+    end
+
     def self.config
         @@config
     end
+
+    def self.genconfig
+        if Puppet[:genconfig]
+            puts Puppet.config.to_config
+            exit(0)
+        end
+    end
+
+    def self.genmanifest
+        if Puppet[:genmanifest]
+            puts Puppet.config.to_manifest
+            exit(0)
+        end
+    end
+
     # Start our event loop.  This blocks, waiting for someone, somewhere,
     # to generate events of some kind.
     def self.start
@@ -258,11 +305,19 @@ module Puppet
             tmp.split(File::SEPARATOR).each { |dir|
                 path.push dir
                 if ! FileTest.exist?(File.join(path))
-                    Dir.mkdir(File.join(path), mode)
+                    begin
+                        Dir.mkdir(File.join(path), mode)
+                    rescue Errno::EACCES => detail
+                        Puppet.err detail.to_s
+                        return false
+                    rescue => detail
+                        Puppet.err "Could not create %s: %s" % [path, detail.to_s]
+                        return false
+                    end
                 elsif FileTest.directory?(File.join(path))
                     next
                 else FileTest.exist?(File.join(path))
-                    raise "Cannot create %s: basedir %s is a file" %
+                    raise Puppet::Error, "Cannot create %s: basedir %s is a file" %
                         [dir, File.join(path)]
                 end
             }

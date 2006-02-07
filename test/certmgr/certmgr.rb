@@ -26,7 +26,6 @@ class TestCertMgr < Test::Unit::TestCase
         super
         #@dir = File.join(Puppet[:certdir], "testing")
         @dir = File.join(@configpath, "certest")
-        Puppet.notice @dir
         system("mkdir -p %s" % @dir)
     end
 

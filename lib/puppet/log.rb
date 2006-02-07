@@ -27,14 +27,14 @@ module Puppet
             :crit => RESET
 		}
 
-        @destinations = {:syslog => Syslog.open("puppet")}
+        #@destinations = {:syslog => Syslog.open("puppet")}
+        @destinations = {:console => :console}
 
         # Reset all logs to basics.  Basically just closes all files and undefs
         # all of the other objects.
         def Log.close(dest = nil)
             if dest
                 if @destinations.include?(dest)
-                    Puppet.warning "Closing %s" % dest
                     if @destinations.respond_to?(:close)
                         @destinations[dest].close
                     end

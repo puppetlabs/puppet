@@ -1008,17 +1008,22 @@ class Type < Puppet::Element
 
     # Remove an object.  The argument determines whether the object's
     # subscriptions get eliminated, too.
-    def remove(rmdeps)
+    def remove(rmdeps = true)
         @children.each { |child|
-            child.remove
+            child.remove(rmdeps)
         }
-        self.class.delete(self)
 
         if rmdeps
             Puppet::Event::Subscription.dependencies(self).each { |dep|
-                self.unsubscribe(dep)
+                begin
+                    self.unsubscribe(dep)
+                rescue
+                    # ignore failed unsubscribes
+                end
             }
         end
+        self.warning "Removing"
+        self.class.delete(self)
 
         if defined? @parent and @parent
             @parent.delete(self)

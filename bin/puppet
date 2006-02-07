@@ -8,8 +8,7 @@
 # = Usage
 #
 #   puppet [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
-#               [-l|--logfile <file>] [-p|--parse-only] <file>
-#               [-c|--confdir <configuration directory>] [--vardir <var directory>]
+#               [-l|--logfile <file>] <file>
 #
 # = Description
 #
@@ -19,9 +18,11 @@
 #
 # = Options
 #
-# confdir::
-#   The configuration root directory, where +puppetmasterd+ defaults to looking
-#   for all of its configuration files.  Defaults to +/etc/puppet+.
+# Note that any configuration parameter that's valid in the configuration file
+# is also a valid long argument.  For example, 'ssldir' is a valid configuration
+# parameter, so you can specify '--ssldir <directory>' as an argument.
+#
+# See the configuration file for the full list of acceptable parameters.
 #
 # debug::
 #   Enable full debugging.
@@ -32,13 +33,6 @@
 # logfile::
 #   Where to send messages.  Choose between syslog, the console, and a log file.
 #   Defaults to sending messages to the console.
-#
-# parse-only::
-#   Just verify syntax, do not apply anything.
-#
-# vardir::
-#   The variable-size directory, used for storing state.  Defaults to
-#   /var/puppet.
 #
 # verbose::
 #   Print extra information.
@@ -69,18 +63,19 @@ rescue LoadError
     $haveusage = false
 end
 
-result = GetoptLong.new(
-	[ "--confdir",	"-c",			GetoptLong::REQUIRED_ARGUMENT ],
+options = [
     [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
     [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
     [ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
     [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
-    [ "--noop",     "-n",			GetoptLong::NO_ARGUMENT ],
     [ "--use-nodes",    			GetoptLong::NO_ARGUMENT ],
-    [ "--parse-only",  "-p",		GetoptLong::NO_ARGUMENT ],
-	[ "--vardir",	    			GetoptLong::REQUIRED_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
-)
+]
+
+# Add all of the config parameters as valid options.
+Puppet.config.addargs(options)
+
+result = GetoptLong.new(*options)
 
 debug = false
 verbose = false
@@ -92,13 +87,11 @@ master = {
     :Local => true
 }
 
-Puppet[:logdest] = :console
+Puppet::Log.newdestination(:console)
 
 begin
     result.each { |opt,arg|
         case opt
-            when "--confdir"
-                Puppet[:puppetconf] = arg
             when "--version"
                 puts "%s" % Puppet.version
                 exit
@@ -109,24 +102,20 @@ begin
                     puts "No help available unless you have RDoc::usage installed"
                     exit
                 end
-            when "--noop"
-                Puppet[:noop] = true
             when "--use-nodes"
                 master[:UseNodes] = true
             when "--verbose"
                 verbose = true
-            when "--parse-only"
-                parseonly = true
             when "--debug"
                 debug = true
             when "--logdest"
                 begin
-                    Puppet[:logdest] = arg
+                    Puppet::Log.newdestination(arg)
                 rescue => detail
                     $stderr.puts detail.to_s
                 end
-            when "--vardir"
-                Puppet[:puppetvar] = arg
+            else
+                Puppet.config.handlearg(opt, arg)
         end
     }
 rescue GetoptLong::InvalidOption => detail
@@ -138,10 +127,18 @@ rescue GetoptLong::InvalidOption => detail
 end
 
 if debug
-    Puppet[:loglevel] = :debug
+    Puppet::Log.level = :debug
 elsif verbose
-    Puppet[:loglevel] = :info
+    Puppet::Log.level = :info
 end
+
+# Now parse the config
+if Puppet[:config] and File.exists? Puppet[:config]
+    Puppet.config.parse(Puppet[:config])
+end
+
+Puppet.genconfig
+Puppet.genmanifest
 
 master[:File] = ARGV.shift
 

@@ -9,7 +9,7 @@ class Server
         attr_accessor :local
 
         Puppet.setdefaults("fileserver",
-            [:fileserverconfig, "$puppetconf/fileserver.conf",
+            [:fileserverconfig, "$confdir/fileserver.conf",
                 "Where the fileserver configuration is stored."])
 
         #CHECKPARAMS = %w{checksum type mode owner group}

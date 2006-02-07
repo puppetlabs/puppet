@@ -62,8 +62,8 @@ module Puppet
             retobj = nil
             if type = Puppet::Type.type(self.type)
                 unless retobj = type.create(self)
-                    Puppet.notice "Could not create %s[%s]" %
-                        [self.type, self.name]
+                    #Puppet.notice "Could not create %s[%s]" %
+                    #    [self.type, self.name]
                     return nil
                 end
                 #retobj.file = @file
@@ -208,7 +208,7 @@ module Puppet
                 # Now just call to_type on them with the container as a parent
                 unless obj = child.to_type(container)
                     # nothing; we assume the method already warned
-                    Puppet.warning "Could not create child %s" % child.name
+                    #Puppet.warning "Could not create child %s" % child.name
                 end
             }
 

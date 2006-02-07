@@ -27,15 +27,14 @@ class TestPuppetDExe < Test::Unit::TestCase
         cmd += " --verbose"
         cmd += " --onetime"
         #cmd += " --fqdn %s" % fqdn
-        cmd += " --port %s" % @@port
-        cmd += " --confdir %s" % Puppet[:puppetconf]
-        cmd += " --vardir %s" % Puppet[:puppetvar]
+        cmd += " --masterport %s" % @@port
+        cmd += " --confdir %s" % Puppet[:confdir]
+        cmd += " --vardir %s" % Puppet[:vardir]
         cmd += " --server localhost"
 
         # and verify our daemon runs
         assert_nothing_raised {
-            output = %x{#{cmd}}.chomp
-            puts output
+            system cmd
         }
         sleep 1
         assert($? == 0, "Puppetd exited with code %s" % $?)

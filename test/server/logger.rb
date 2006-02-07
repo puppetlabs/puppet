@@ -16,7 +16,7 @@ class TestLogger < Test::Unit::TestCase
     def setup
         super
         #Puppet[:debug] = true
-        Puppet[:logdest] = :console
+        Puppet::Log.newdestination :console
     end
 
     # Test the log driver manually
@@ -92,7 +92,7 @@ class TestLogger < Test::Unit::TestCase
         clientlog = tempfile()
         serverlog = tempfile()
         Puppet.warning "serverlog is %s" % serverlog
-        Puppet[:logdest] = clientlog
+        Puppet::Log.newdestination clientlog
         Puppet::Log.close(:syslog)
 
         # For testing
@@ -113,7 +113,7 @@ class TestLogger < Test::Unit::TestCase
         # Start our server
         serverpid = fork {
             Puppet::Log.close(clientlog)
-            Puppet[:logdest] = serverlog
+            Puppet::Log.newdestination serverlog
             assert_nothing_raised() {
                 trap(:INT) { logger.shutdown }
                 logger.start
@@ -152,7 +152,7 @@ class TestLogger < Test::Unit::TestCase
         # and now use the normal client action
 
         # Set the log destination to be the server
-        Puppet[:logdest] = "localhost:%s" % @@port
+        Puppet::Log.newdestination "localhost:%s" % @@port
 
         # And now do some logging
         assert_nothing_raised {

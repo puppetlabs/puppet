@@ -122,7 +122,7 @@ class TestBucket < Test::Unit::TestCase
 
     def setup
         super
-        @bucket = File.join(Puppet[:puppetconf], "buckettesting")
+        @bucket = File.join(Puppet[:confdir], "buckettesting")
 
         @@tmpfiles << @bucket
     end

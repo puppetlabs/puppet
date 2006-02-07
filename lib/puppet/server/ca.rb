@@ -26,7 +26,7 @@ class Server
             # we only otherwise know how to handle files
             unless @autosign =~ /^\//
                 raise Puppet::Error, "Invalid autosign value %s" %
-                    @autosign
+                    @autosign.inspect
             end
 
             unless FileTest.exists?(@autosign)

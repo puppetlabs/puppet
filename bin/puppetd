@@ -9,11 +9,8 @@
 # = Usage
 #
 #   puppetd  [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
-#               [--ssldir <cert directory>] [-l|--logdest <syslog|<file>|console>]
-#               [--fqdn <host name>] [-p|--port <port>] [-o|--onetime]
-#               [-s|--server <server>] [-i|--ignoreschedules]
-#               [-w|--waitforcert <seconds>] [-c|--confdir <configuration directory>]
-#               [--vardir <var directory>] [--centrallogging]
+#               [-l|--logdest <syslog|<file>|console>] [--fqdn <host name>]
+#               [-o|--onetime] [-w|--waitforcert <seconds>] [--centrallogging]
 #
 # = Description
 #
@@ -30,13 +27,15 @@
 #
 # = Options
 #
+# Note that any configuration parameter that's valid in the configuration file
+# is also a valid long argument.  For example, 'server' is a valid configuration
+# parameter, so you can specify '--server <servername>' as an argument.
+#
+# See the configuration file for the full list of acceptable parameters.
+#
 # centrallogging::
 #   Send all produced logs to the central puppetmasterd system.  This currently
 #   results in a significant slowdown, so it is not recommended.
-#
-# confdir::
-#   The configuration root directory, where +puppetmasterd+ defaults to looking
-#   for all of its configuration files.  Defaults to +/etc/puppet+.
 #
 # debug::
 #   Enable full debugging.
@@ -51,33 +50,12 @@
 #
 # logdest::
 #   Where to send messages.  Choose between syslog, the console, and a log file.
-#   Defaults to sending messages to /var/puppet/log/puppet.log, or the console
-#   if debugging or verbosity is enabled.
-#
-# port::
-#   The port to which to connect on the remote server.  Currently defaults to 8139.
+#   Defaults to sending messages to syslog, or the console if debugging or
+#   verbosity is enabled.
 #
 # onetime::
 #   Run the configuration once, rather than as a long-running daemon.  This is
 #   useful for interactively running puppetd.
-#
-# schedule::
-#   What schedule Puppet itself should run on.  This dictates how often the
-#   entire configuration is retrieved and run.  The default is named 'puppet',
-#   and runs every half hour or so.  The schedules themselves are defined in the
-#   configuration, which means that on startup puppetd will always retrieve
-#   the configuration and then check to see if it's scheduled to run.
-#
-# server::
-#   The remote server from whom to receive the local configuration.  Currently
-#   must also be the certificate authority.  Currently defaults to 'puppet'.
-#
-# ssldir::
-#   Where to store and find certificates.  Defaults to /etc/puppet/ssl.
-#
-# vardir::
-#   The variable-size directory, used for storing state.  Defaults to
-#   /var/puppet.
 #
 # verbose::
 #   Turn on verbose reporting.
@@ -91,7 +69,7 @@
 #
 # = Example
 #
-#   puppet -s puppet.domain.com
+#   puppetd --server puppet.domain.com
 #
 # = Author
 #
@@ -99,7 +77,7 @@
 #
 # = Copyright
 #
-# Copyright (c) 2005 Reductive Labs, LLC
+# Copyright (c) 2005, 2006 Reductive Labs, LLC
 # Licensed under the GNU Public License
 
 
@@ -115,24 +93,22 @@ rescue LoadError
     $haveusage = false
 end
 
-result = GetoptLong.new(
+options = [
 	[ "--centrallogging",			GetoptLong::NO_ARGUMENT ],
-	[ "--confdir",	"-c",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--fqdn",     "-f",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--noop",	    "-n",			GetoptLong::NO_ARGUMENT ],
 	[ "--onetime",  "-o",			GetoptLong::NO_ARGUMENT ],
-	[ "--port",	    "-p",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--schedule", "-S",	        GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--server",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--ssldir",   				GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
 	[ "--version",	"-V",			GetoptLong::NO_ARGUMENT ],
-	[ "--vardir",	    			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--waitforcert",	"-w",		GetoptLong::REQUIRED_ARGUMENT ]
-)
+]
+
+# Add all of the config parameters as valid options.
+Puppet.config.addargs(options)
+
+result = GetoptLong.new(*options)
 
 server = "puppet"
 fqdn = nil
@@ -149,10 +125,10 @@ setdest = false
 begin
     result.each { |opt,arg|
         case opt
+            # First check to see if the argument is a valid configuration parameter;
+            # if so, set it.
             when "--centrallogging"
                 centrallogs = true
-            when "--confdir"
-                Puppet[:puppetconf] = arg
             when "--help"
                 if $haveusage
                     RDoc::usage && exit
@@ -164,44 +140,34 @@ begin
                 puts "%s" % Puppet.version
                 exit
             when "--verbose"
-                Puppet[:loglevel] = :info
-                Puppet[:logdest] = :console
+                Puppet::Log.level = :info
+                Puppet::Log.newdestination(:console)
                 setdest = true
             when "--debug"
-                Puppet[:loglevel] = :debug
-                Puppet[:logdest] = :console
+                Puppet::Log.level = :debug
+                Puppet::Log.newdestination(:console)
                 setdest = true
-            when "--noop"
-                Puppet[:noop] = true
-            when "--schedule"
-                # This is late-binding -- it'll only look up the schedule name
-                # when it needs to run
-                Puppet[:schedule] = arg
-            when "--ssldir"
-                Puppet[:ssldir] = arg
             when "--fqdn"
                 fqdn = arg
-            when "--server"
-                server = arg
             when "--onetime"
                 onetime = true
             when "--port"
                 args[:Port] = arg
             when "--logdest"
                 begin
-                    Puppet[:logdest] = arg
+                    Puppet::Log.newdestination(arg)
                 rescue => detail
                     $stderr.puts detail.to_s
                 end
-            when "--vardir"
-                Puppet[:puppetvar] = arg
             when "--waitforcert"
                 waitforcert = arg.to_i
+            else
+                Puppet.config.handlearg(opt, arg)
         end
     }
 rescue GetoptLong::InvalidOption => detail
+    $stderr.puts detail
     $stderr.puts "Try '#{$0} --help'"
-    #$stderr.puts detail
     # FIXME RDoc::usage doesn't seem to work
     #if $haveusage
     #    RDoc::usage(1,'usage')
@@ -209,17 +175,25 @@ rescue GetoptLong::InvalidOption => detail
     exit(1)
 end
 
-if Puppet[:loglevel] == :debug or Puppet[:loglevel] == :info
+Puppet.genconfig
+Puppet.genmanifest
+
+# Now parse the config
+if Puppet[:config] and File.exists? Puppet[:config]
+    Puppet.config.parse(Puppet[:config])
+end
+
+if Puppet::Log.level == :debug or Puppet::Log.level == :info
     args[:Daemonize] = false
 else
     args[:Daemonize] = true
 end
 
 unless setdest
-    Puppet[:logdest] = :syslog
+    Puppet::Log.newdestination(:syslog)
 end
 
-args[:Server] = server
+args[:Server] = Puppet[:server]
 if fqdn
     args[:FQDN] = fqdn
 end
@@ -230,13 +204,11 @@ if centrallogs
     if args.include?(:Port)
         logdest += ":" + args[:Port]
     end
-    Puppet[:logdest] = logdest
+    Puppet::Log.newdestination(logdest)
 end
-
 
 Puppet.notice "Starting Puppet client version %s" % [Puppet.version]
 client = Puppet::Client::MasterClient.new(args)
-
 
 unless client.readcert
     if waitforcert

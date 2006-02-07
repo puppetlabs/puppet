@@ -290,8 +290,8 @@ class TestFileSources < Test::Unit::TestCase
         end
         Dir.mkdir(basedir)
 
-        Puppet[:puppetconf] = basedir
-        Puppet[:puppetvar] = basedir
+        Puppet[:confdir] = basedir
+        Puppet[:vardir] = basedir
         Puppet[:autosign] = true
 
         tmpname = "yaytesting"
@@ -368,8 +368,8 @@ class TestFileSources < Test::Unit::TestCase
 
         fileserverconf = mkfileserverconf(mounts)
 
-        Puppet[:puppetconf] = basedir
-        Puppet[:puppetvar] = basedir
+        Puppet[:confdir] = basedir
+        Puppet[:vardir] = basedir
         Puppet[:autosign] = true
 
         Puppet[:masterport] = 8762
