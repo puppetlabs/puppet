@@ -12,6 +12,60 @@ require 'test/unit'
 class TestConfig < Test::Unit::TestCase
 	include TestPuppet
 
+    def check_to_transportable(config)
+        trans = nil
+        assert_nothing_raised("Could not convert to a transportable") {
+            trans = config.to_transportable
+        }
+
+        comp = nil
+        assert_nothing_raised("Could not convert transportable to component") {
+            comp = trans.to_type
+        }
+
+        assert_nothing_raised("Could not retrieve transported config") {
+            comp.retrieve
+        }
+    end
+
+    def check_to_manifest(config)
+        manifest = nil
+        assert_nothing_raised("Could not convert to a manifest") {
+            manifest = config.to_manifest
+        }
+
+        Puppet[:parseonly] = true
+        parser = Puppet::Parser::Parser.new()
+
+        assert_nothing_raised("Could not parse generated manifest") {
+            parser.string = manifest
+            parser.parse
+        }
+    end
+
+    def check_to_comp(config)
+        comp = nil
+        assert_nothing_raised("Could not convert to a component") {
+            comp = config.to_component
+        }
+
+        assert_nothing_raised("Could not retrieve component") {
+            comp.retrieve
+        }
+    end
+
+    def check_to_config(config)
+        newc = config.dup
+
+        newfile = tempfile()
+        File.open(newfile, "w") { |f| f.print config.to_config }
+        assert_nothing_raised("Could not parse generated configuration") {
+            newc.parse(newfile)
+        }
+
+        assert_equal(config, newc, "Configurations are not equal")
+    end
+
     def mkconfig
         c = nil
         assert_nothing_raised {
@@ -24,14 +78,14 @@ class TestConfig < Test::Unit::TestCase
         c = mkconfig
 
         assert_nothing_raised {
-            c.setdefaults(:testing, :booltest => true)
+            c.setdefaults(:testing, [:booltest, "testing", true])
         }
 
         assert(c[:booltest])
         c = mkconfig
 
         assert_nothing_raised {
-            c.setdefaults(:testing, :booltest => "true")
+            c.setdefaults(:testing, [:booltest, "true", "testing"])
         }
 
         assert(c[:booltest])
@@ -61,7 +115,7 @@ class TestConfig < Test::Unit::TestCase
         c = mkconfig
         val = "this is a string"
         assert_nothing_raised {
-            c.setdefaults(:testing, :strtest => val)
+            c.setdefaults(:testing, [:strtest, val, "testing"])
         }
 
         assert_equal(val, c[:strtest])
@@ -72,11 +126,11 @@ class TestConfig < Test::Unit::TestCase
 
         parent = "/puppet"
         assert_nothing_raised {
-            c.setdefaults(:testing, :parentdir => parent)
+            c.setdefaults(:testing, [:parentdir, parent, "booh"])
         }
 
         assert_nothing_raised {
-            c.setdefaults(:testing, :child => "$parent/child")
+            c.setdefaults(:testing, [:child, "$parent/child", "rah"])
         }
 
         assert_equal(parent, c[:parentdir])
@@ -86,14 +140,19 @@ class TestConfig < Test::Unit::TestCase
     def test_getset
         c = mkconfig
         initial = "an initial value"
-        assert_nothing_raised {
+        assert_raise(Puppet::Error) {
             c[:yayness] = initial
         }
-        assert_equal(initial, c[:yayness])
 
         default = "this is a default"
         assert_nothing_raised {
-            c.setdefaults(:testing, :yayness => default)
+            c.setdefaults(:testing, [:yayness, default, "rah"])
+        }
+
+        assert_equal(default, c[:yayness])
+
+        assert_nothing_raised {
+            c[:yayness] = initial
         }
 
         assert_equal(initial, c[:yayness])
@@ -114,13 +173,13 @@ class TestConfig < Test::Unit::TestCase
         text = %{
 one = this is a test
 two = another test
-user = root
+owner = root
 group = root
 yay = /a/path
 
 [section1]
     attr = value
-    user = puppet
+    owner = puppet
     group = puppet
     attr2 = /some/dir
     attr3 = $attr2/other
@@ -130,6 +189,21 @@ yay = /a/path
         File.open(file, "w") { |f| f.puts text }
 
         c = mkconfig
+        assert_nothing_raised {
+            c.setdefaults("puppet",
+                [:one, "a", "one"],
+                [:two, "a", "two"],
+                [:yay, "/default/path", "boo"]
+            )
+        }
+
+        assert_nothing_raised {
+            c.setdefaults("section1",
+                [:attr, "a", "one"],
+                [:attr2, "/another/dir", "two"],
+                [:attr3, "$attr2/maybe", "boo"]
+            )
+        }
         
         assert_nothing_raised {
             c.parse(file)
@@ -146,7 +220,24 @@ yay = /a/path
         }
 
         assert(elem)
-        assert_equal("puppet", elem.user)
+        assert_equal("puppet", elem.owner)
+
+        config = nil
+        assert_nothing_raised {
+            config = c.to_config
+        }
+
+        assert_nothing_raised("Could not create transportable config") {
+            c.to_transportable
+        }
+
+        check_to_comp(c)
+        Puppet::Type.allclear
+        check_to_manifest(c)
+        Puppet::Type.allclear
+        check_to_config(c)
+        Puppet::Type.allclear
+        check_to_transportable(c)
     end
 end
 

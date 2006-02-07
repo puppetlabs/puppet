@@ -2,52 +2,77 @@ class Puppet::SSLCertificates::CA
     Certificate = Puppet::SSLCertificates::Certificate
     attr_accessor :keyfile, :file, :config, :dir, :cert
 
-    @@params = [
-        :certdir,
-        :publickeydir,
-        :privatekeydir,
-        :cadir,
-        :cakey,
-        :cacert,
-        :capass,
-        :capub,
-        :csrdir,
-        :signeddir,
-        :serial,
-        :privatedir,
-        :ca_crl_days,
-        :ca_days,
-        :ca_md,
-        :req_bits,
-        :keylength,
-        :autosign
-    ]
+#    @@params = [
+#        :certdir,
+#        :publickeydir,
+#        :privatekeydir,
+#        :cadir,
+#        :cakey,
+#        :cacert,
+#        :capass,
+#        :capub,
+#        :csrdir,
+#        :signeddir,
+#        :serial,
+#        :privatedir,
+#        :ca_crl_days,
+#        :ca_days,
+#        :ca_md,
+#        :req_bits,
+#        :keylength,
+#        :autosign
+#    ]
+#        :certdir        => [:ssldir,         "certs"],
+#        :publickeydir   => [:ssldir,         "public_keys"],
+#        :privatekeydir  => [:ssldir,         "private_keys"],
+#        :cadir          => [:ssldir,         "ca"],
+#        :cacert         => [:cadir,          "ca_crt.pem"],
+#        :cakey          => [:cadir,          "ca_key.pem"],
+#        :capub          => [:cadir,          "ca_pub.pem"],
+#        :csrdir         => [:cadir,          "requests"],
+#        :signeddir      => [:cadir,          "signed"],
+#        :capass         => [:cadir,          "ca.pass"],
+#        :serial         => [:cadir,          "serial"],
+#        :privatedir     => [:ssldir,         "private"],
+#        :passfile       => [:privatedir,     "password"],
+#        :autosign       => [:puppetconf,     "autosign.conf"],
+#        :ca_crl_days    => 365,
+#        :ca_days        => 1825,
+#        :ca_md          => "md5",
+#        :req_bits       => 2048,
+#        :keylength      => 1024,
 
-    @@defaults = {
-        :certdir        => [:ssldir,         "certs"],
-        :publickeydir   => [:ssldir,         "public_keys"],
-        :privatekeydir  => [:ssldir,         "private_keys"],
-        :cadir          => [:ssldir,         "ca"],
-        :cacert         => [:cadir,          "ca_crt.pem"],
-        :cakey          => [:cadir,          "ca_key.pem"],
-        :capub          => [:cadir,          "ca_pub.pem"],
-        :csrdir         => [:cadir,          "requests"],
-        :signeddir      => [:cadir,          "signed"],
-        :capass         => [:cadir,          "ca.pass"],
-        :serial         => [:cadir,          "serial"],
-        :privatedir     => [:ssldir,         "private"],
-        :passfile       => [:privatedir,     "password"],
-        :autosign       => [:puppetconf,     "autosign.conf"],
-        :ca_crl_days    => 365,
-        :ca_days        => 1825,
-        :ca_md          => "md5",
-        :req_bits       => 2048,
-        :keylength      => 1024,
-    }
+    Puppet.setdefaults("ca",
+        [:certdir,         "$ssldir/certs", "The certificate directory."],
+        [:publickeydir,    "$ssldir/public_keys", "The public key directory."],
+        [:privatekeydir,   "$ssldir/private_keys", "The private key directory."],
+        [:cadir,           "$ssldir/ca",
+            "The root directory for the certificate authority."],
+        [:cacert,          "$cadir/ca_crt.pem", "The CA certificate."],
+        [:cakey,           "$cadir/ca_key.pem", "The CA private key."],
+        [:capub,           "$cadir/ca_pub.pem", "The CA public key."],
+        [:csrdir,          "$cadir/requests",
+            "Where the CA stores certificate requests"],
+        [:signeddir,       "$cadir/signed",
+            "Where the CA stores signed certificates."],
+        [:capass,          "$cadir/ca.pass",
+            "Where the CA stores the password for the private key; usually not used."],
+        [:serial,          "$cadir/serial",
+            "Where the serial number for certificates is stored."],
+        [:passfile,        "$privatedir/password",
+            "Where puppetd stores the password for its private key.  Generally
+            unused."],
+        [:autosign,        "$puppetconf/autosign.conf",
+            "Where to look for the autosigning configuration file."],
+        [:ca_days,         1825, "How long a certificate should be valid."],
+        [:ca_md,           "md5", "The type of hash used in certificates."],
+        [:req_bits,        2048, "The bit length of the certificates."],
+        [:keylength,       1024, "The bit length of keys."]
+    )
 
-    @@params.each { |param|
-        Puppet.setdefault(param,@@defaults[param])
-    }
+    #@@params.each { |param|
+    #    Puppet.setdefault(param,@@defaults[param])
+    #}
 
     def certfile
         @config[:cacert]
@@ -161,7 +186,7 @@ class Puppet::SSLCertificates::CA
 
     def setconfig(hash)
         @config = {}
-        @@params.each { |param|
+        Puppet.config.params("ca").each { |param|
             if hash.include?(param)
                 begin
                 @config[param] = hash[param]

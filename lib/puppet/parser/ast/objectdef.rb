@@ -221,7 +221,7 @@ class Puppet::Parser::AST
             rescue => detail
                 raise Puppet::DevError, detail.to_s
             end
-            next if pname == "name" # always allow these
+            return if pname == "name" # always allow these
             unless type.validattr?(pname)
                 error = Puppet::ParseError.new(
                     "Invalid parameter '%s' for type '%s'" %

@@ -1,6 +1,7 @@
 require 'singleton'
 require 'puppet/event-loop'
 require 'puppet/log'
+require 'puppet/config'
 require 'puppet/util'
 
 # see the bottom of the file for further inclusions
@@ -57,8 +58,12 @@ module Puppet
 
     class DevError < Error; end
 
+    def self.name
+        $0.gsub(/.+#{File::SEPARATOR}/,'')
+    end
+
     # the hash that determines how our system behaves
-    @@config = Hash.new(false)
+    @@config = Puppet::Config.new
 
     # define helper messages for each of the message levels
     Puppet::Log.eachlevel { |level|
@@ -78,91 +83,90 @@ module Puppet
     # XXX this isn't actually working right now
     alias :error :err
 
-    @defaults = {
-        :name           => $0.gsub(/.+#{File::SEPARATOR}/,''),
-        :rrddir         => [:puppetvar,      "rrd"],
-        :logdir         => [:puppetvar,      "log"],
-        :bucketdir      => [:puppetvar,      "bucket"],
-        :statedir       => [:puppetvar,      "state"],
-        :rundir         => [:puppetvar,      "run"],
-
-        # then the files,
-        :manifestdir    => [:puppetconf,     "manifests"],
-        :manifest       => [:manifestdir,    "site.pp"],
-        :localconfig    => [:puppetconf,     "localconfig"],
-        :classfile      => [:puppetconf,     "classes.txt"],
-        :logfile        => [:logdir,         "puppet.log"],
-        :httplogfile    => [:logdir,         "http.log"],
-        :masterlog      => [:logdir,         "puppetmaster.log"],
-        :masterhttplog  => [:logdir,         "masterhttp.log"],
-        :statefile      => [:statedir,       "state.yaml"],
-        :checksumfile   => [:statedir,       "state.yaml"],
-        :ssldir         => [:puppetconf,     "ssl"],
-
-        # and finally the simple answers,
-        :server         => "puppet",
-        :user           => "puppet",
-        :group          => "puppet",
-        :schedule       => "puppet",
-        :ignoreschedules => false,
-        :rrdgraph       => false,
-        :noop           => false,
-        :parseonly      => false,
-        :puppetport     => 8139,
-        :masterport     => 8140,
-        :runinterval    => 1800, # 30 minutes
-    }
+    # Store a new default value.
+    def self.setdefaults(section, *arrays)
+        start = Time.now
+        @@config.setdefaults(section, *arrays)
+    end
 
     # If we're running the standalone puppet process as a non-root user,
     # use basedirs that are in the user's home directory.
-    if @defaults[:name] == "puppet" and Process.uid != 0
-        @defaults[:puppetconf] = File.expand_path("~/.puppet")
-        @defaults[:puppetvar] = File.expand_path("~/.puppet/var")
+    conf = nil
+    var = nil
+    if self.name == "puppet" and Process.uid != 0
+        conf = File.expand_path("~/.puppet")
+        var = File.expand_path("~/.puppet/var")
     else
         # Else, use system-wide directories.
-        @defaults[:puppetconf] = "/etc/puppet"
-        @defaults[:puppetvar] = "/var/puppet"
+        conf = "/etc/puppet"
+        var = "/var/puppet"
     end
+    self.setdefaults("puppet",
+        [:puppetconf, conf, "The main Puppet configuration directory."],
+        [:puppetvar, var, "Where Puppet stores dynamic and growing data."]
+    )
 
-    def self.clear
-        @@config = Hash.new(false)
-    end
+    self.setdefaults("puppet",
+        [:logdir,          "$puppetvar/log",
+            "The Puppet log directory."],
+        [:bucketdir,       "$puppetvar/bucket",
+            "Where FileBucket files are stored."],
+        [:statedir,        "$puppetvar/state",
+            "The directory where Puppet state is stored.  Generally, this
+            directory can be removed without causing harm (although it might
+            result in spurious service restarts)."],
+        [:rundir,          "$puppetvar/run", "Where Puppet PID files are kept."],
+        [:statefile,       "$statedir/state.yaml",
+            "Where puppetd and puppetmasterd store state associated with the running
+            configuration.  In the case of puppetmasterd, this file reflects the
+            state discovered through interacting with clients."],
+        [:ssldir,          "$puppetconf/ssl", "Where SSL certificates are kept."]
+    )
+    self.setdefaults("puppetmasterd",
+        [:manifestdir,     "$puppetconf/manifests",
+            "Where puppetmasterd looks for its manifests."],
+        [:manifest,        "$manifestdir/site.pp",
+            "The entry-point manifest for puppetmasterd."],
+        [:masterlog,       "$logdir/puppetmaster.log",
+            "Where puppetmasterd logs.  This is generally not used, since syslog
+            is the default log destination."],
+        [:masterhttplog,   "$logdir/masterhttp.log",
+            "Where the puppetmasterd web server logs."],
+        [:masterport,      8140, "Which port puppetmasterd listens on."],
+        [:parseonly,       false, "Just check the syntax of the manifests."]
+    )
+
+    self.setdefaults("puppetd",
+        [:localconfig,     "$puppetconf/localconfig",
+            "Where puppetd caches the local configuration.  An extension reflecting
+            the cache format is added automatically."],
+        [:classfile,       "$puppetconf/classes.txt",
+            "The file in which puppetd stores a list of the classes associated
+            with the retrieved configuratiion."],
+        [:puppetdlog,         "$logdir/puppetd.log",
+            "The log file for puppetd.  This is generally not used."],
+        [:httplogfile,     "$logdir/http.log", "Where the puppetd web server logs."],
+        [:server,          "puppet",
+            "The server to which server puppetd should connect"],
+        [:user,            "puppet", "The user puppetmasterd should run as."],
+        [:group,           "puppet", "The group puppetmasterd should run as."],
+        [:ignoreschedules, false,
+            "Boolean; whether puppetd should ignore schedules.  This is useful
+            for initial puppetd runs."],
+        [:puppetport,      8139, "Which port puppetd listens on."],
+        [:noop,            false, "Whether puppetd should be run in noop mode."],
+        [:runinterval,     1800, # 30 minutes
+            "How often puppetd applies the client configuration; in seconds"]
+    )
+    self.setdefaults("metrics",
+        [:rrddir,          "$puppetvar/rrd",
+            "The directory where RRD database files are stored."],
+        [:rrdgraph,        false, "Whether RRD information should be graphed."]
+    )
 
 	# configuration parameter access and stuff
 	def self.[](param)
-        if param.is_a?(String)
-            param = param.intern
-        elsif ! param.is_a?(Symbol)
-            raise ArgumentError, "Invalid parameter type %s" % param.class
-        end
-        case param
-        when :debug:
-            if Puppet::Log.level == :debug
-                return true
-            else
-                return false
-            end
-        when :loglevel:
-            return Puppet::Log.level
-        else
-            # allow manual override
-            if @@config.include?(param)
-                return @@config[param]
-            else
-                if @defaults.include?(param)
-                    default = @defaults[param]
-                    if default.is_a?(Proc)
-                        return default.call()
-                    elsif default.is_a?(Array)
-                        return File.join(self[default[0]], default[1])
-                    else
-                        return default
-                    end
-                else
-                    raise ArgumentError, "Invalid parameter %s" % param
-                end
-            end
-        end
+        @@config[param]
 	end
 
 	# configuration parameter access and stuff
@@ -183,6 +187,13 @@ module Puppet
         end
 	end
 
+    def self.clear
+        @@config.clear
+    end
+
+    def self.config
+        @@config
+    end
     # Start our event loop.  This blocks, waiting for someone, somewhere,
     # to generate events of some kind.
     def self.start
@@ -207,33 +218,34 @@ module Puppet
     end
 
     # Store a new default value.
-    def self.setdefault(param,value)
-        if value.is_a?(Array) 
-            if value[0].is_a?(Symbol) 
-                unless @defaults.include?(value[0])
-                    raise ArgumentError, "Unknown basedir %s for param %s" %
-                        [value[0], param]
-                end
-            else
-                raise ArgumentError, "Invalid default %s for param %s" %
-                    [value.inspect, param]
-            end
-
-            unless value[1].is_a?(String)
-                raise ArgumentError, "Invalid default %s for param %s" %
-                    [value.inspect, param]
-            end
-
-            unless value.length == 2
-                raise ArgumentError, "Invalid default %s for param %s" %
-                    [value.inspect, param]
-            end
-
-            @defaults[param] = value
-        else
-            @defaults[param] = value
-        end
-    end
+#    def self.setdefaults(section, hash)
+#        @@config.setdefaults(section, hash)
+#        if value.is_a?(Array) 
+#            if value[0].is_a?(Symbol) 
+#                unless @defaults.include?(value[0])
+#                    raise ArgumentError, "Unknown basedir %s for param %s" %
+#                        [value[0], param]
+#                end
+#            else
+#                raise ArgumentError, "Invalid default %s for param %s" %
+#                    [value.inspect, param]
+#            end
+#
+#            unless value[1].is_a?(String)
+#                raise ArgumentError, "Invalid default %s for param %s" %
+#                    [value.inspect, param]
+#            end
+#
+#            unless value.length == 2
+#                raise ArgumentError, "Invalid default %s for param %s" %
+#                    [value.inspect, param]
+#            end
+#
+#            @defaults[param] = value
+#        else
+#            @defaults[param] = value
+#        end
+#    end
 
     # XXX this should all be done using puppet objects, not using
     # normal mkdir

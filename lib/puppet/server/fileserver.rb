@@ -8,7 +8,9 @@ class Server
     class FileServer < Handler
         attr_accessor :local
 
-        Puppet.setdefault(:fileserverconfig, [:puppetconf, "fileserver.conf"])
+        Puppet.setdefaults("fileserver",
+            [:fileserverconfig, "$puppetconf/fileserver.conf",
+                "Where the fileserver configuration is stored."])
 
         #CHECKPARAMS = %w{checksum type mode owner group}
         CHECKPARAMS = [:mode, :type, :owner, :group, :checksum]

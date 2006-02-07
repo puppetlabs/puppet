@@ -85,9 +85,9 @@ class Puppet::Client::MasterClient < Puppet::Client
             Puppet::Storage.init
             Puppet::Storage.load
         rescue => detail
-            Puppet.err "Corrupt state file %s: %s" % [Puppet[:checksumfile], detail]
+            Puppet.err "Corrupt state file %s: %s" % [Puppet[:statefile], detail]
             begin
-                File.unlink(Puppet[:checksumfile])
+                File.unlink(Puppet[:statefile])
                 retry
             rescue => detail
                 raise Puppet::Error.new("Cannot remove %s: %s" %

@@ -140,7 +140,6 @@ module Puppet
                 str = "#{@keyword} #{@type} {\n%s\n}"
             end
             str % @children.collect { |child|
-                Puppet.info "manifesting %s" % child.name
                 child.to_manifest
             }.collect { |str|
                 if self.top

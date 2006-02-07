@@ -11,8 +11,10 @@ module Puppet
             # Do this so I don't have to type the full path in all of the subclasses
             AST = Puppet::Parser::AST
 
-            Puppet.setdefault(:typecheck, true)
-            Puppet.setdefault(:paramcheck, true)
+            Puppet.setdefaults("ast",
+                [:typecheck, true, "Whether to validate types during parsing."],
+                [:paramcheck, true, "Whether to validate parameters during parsing."]
+            )
             attr_accessor :line, :file, :parent
 
             # Just used for 'tree', which is only used in debugging.

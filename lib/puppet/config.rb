@@ -1,6 +1,8 @@
 module Puppet
 # The class for handling configuration files.
 class Config
+    include Enumerable
+
     # Retrieve a config value
     def [](param)
         param = param.intern unless param.is_a? Symbol
@@ -18,12 +20,24 @@ class Config
     def []=(param, value)
         param = param.intern unless param.is_a? Symbol
         unless @config.include?(param)
-            @config[param] = newelement(param, value)
+            raise Puppet::Error, "Unknown configuration parameter %s" % param
+            #@config[param] = newelement(param, value)
         end
         unless @order.include?(param)
             @order << param
         end
         @config[param].value = value
+    end
+
+    # A simplified equality operator.
+    def ==(other)
+        self.each { |myname, myobj|
+            unless other[myname] == myobj.value
+                return false
+            end
+        }
+
+        return true
     end
 
     # Remove all set values.
@@ -43,6 +57,22 @@ class Config
         }
     end
 
+    # Iterate over each section name.
+    def eachsection
+        yielded = []
+        @order.each { |name|
+            if @config.include?(name)
+                section = @config[name].section
+                unless yielded.include? section
+                    yield section
+                    yielded << section
+                end
+            else
+                raise Puppet::DevError, "%s is in the order but does not exist" % name
+            end
+        }
+    end
+
     # Return an object by name.
     def element(param)
         param = param.intern unless param.is_a? Symbol
@@ -53,6 +83,15 @@ class Config
     def initialize
         @order = []
         @config = {}
+    end
+
+    # Return all of the parameters associated with a given section.
+    def params(section)
+        @config.find_all { |name, obj|
+            obj.section == section
+        }.collect { |name, obj|
+            name
+        }
     end
 
     # Parse a configuration file.
@@ -76,7 +115,7 @@ class Config
         }
 
         section = "puppet"
-        metas = %w{user group mode}
+        metas = %w{owner group mode}
         values = Hash.new { |hash, key| hash[key] = {} }
         text.split(/\n/).each { |line|
             case line
@@ -115,18 +154,18 @@ class Config
     # Create a new element.  The value is passed in because it's used to determine
     # what kind of element we're creating, but the value itself might be either
     # a default or a value, so we can't actually assign it.
-    def newelement(param, value)
+    def newelement(param, desc, value)
         mod = nil
         case value
         when true, false, "true", "false":
             mod = CBoolean
         when /^\$/, /^\//:
             mod = CFile
-        when String: # nothing
+        when String, Integer, Float: # nothing
         else
-            raise Puppet::Error, "Invalid value '%s'" % value
+            raise Puppet::Error, "Invalid value '%s' for %s" % [value, param]
         end
-        element = CElement.new(param)
+        element = CElement.new(param, desc)
         element.parent = self
         if mod
             element.extend(mod)
@@ -135,16 +174,78 @@ class Config
         return element
     end
 
+    def persection(section)
+        self.each { |name, obj|
+            if obj.section == section
+                yield obj
+            end
+        }
+    end
+
+    # Get a list of objects per section
+    def sectionlist
+        sectionlist = []
+        self.each { |name, obj|
+            section = obj.section || "puppet"
+            sections[section] ||= []
+            unless sectionlist.include?(section)
+                sectionlist << section
+            end
+            sections[section] << obj
+        }
+
+        return sectionlist, sections
+    end
+
+    # Convert a single section into transportable objects.
+    def section_to_transportable(section, done)
+        objects = []
+        persection(section) { |obj|
+            [:owner, :group].each { |type|
+                if obj.respond_to? type and val = obj.send(type)
+                    # Skip owners and groups we've already done, but tag them with
+                    # our section if necessary
+                    if done[type].include?(val)
+                        next unless defined? @section and @section
+
+                        tags = done[type][val].tags
+                        unless tags.include?(@section)
+                            done[type][val].tags = tags << @section
+                        end
+                    else
+                        newobj = TransObject.new(val, type.to_s)
+                        newobj[:ensure] = "exists"
+                        done[type] << newobj
+                    end
+                end
+            }
+
+            if obj.respond_to? :to_transportable
+                objects << obj.to_transportable
+            end
+        }
+
+        bucket = Puppet::TransBucket.new
+        bucket.autoname = true
+        bucket.name = "autosection-%s" % bucket.object_id
+        bucket.type = section
+        bucket.push(*objects)
+        bucket.keyword = "class"
+
+        return bucket
+    end
+
     # Set a bunch of defaults in a given section.  The sections are actually pretty
     # pointless, but they help break things up a bit, anyway.
-    def setdefaults(section, hash)
+    def setdefaults(section, *defs)
         section = section.intern unless section.is_a? Symbol
-        hash.each { |param, value|
+        #hash.each { |param, value|
+        defs.each { |param, value, desc|
             if @config.include?(param) and @config[param].default
                 raise Puppet::Error, "Default %s is already defined" % param
             end
             unless @config.include?(param)
-                @config[param] = newelement(param, value)
+                @config[param] = newelement(param, desc, value)
             end
             @config[param].default = value
             @config[param].section = section
@@ -155,34 +256,26 @@ class Config
     def to_component
         transport = self.to_transportable
         return transport.to_type
-#        comp = Puppet.type(:component).create(
-#            :name => "PuppetConfig"
-#        )
-#        self.to_objects.each { |hash|
-#            type = hash[:type]
-#            hash.delete(:name)
-#            comp.push Puppet.type(type).create(hash)
-#        }
-#
-#        return comp
+    end
+
+    # Convert our list of objects into a configuration file.
+    def to_config
+        str = ""
+        eachsection do |section|
+            str += "[#{section}]\n"
+            persection(section) do |obj|
+                str += obj.to_s + "\n"
+            end
+        end
+
+        return str
     end
 
     # Convert our configuration into a list of transportable objects.
     def to_transportable
-        objects = []
         done = {
-            :user => [],
+            :owner => [],
             :group => [],
-        }
-        sections = {}
-        sectionlist = []
-        self.each { |name, obj|
-            section = obj.section || "puppet"
-            sections[section] ||= []
-            unless sectionlist.include?(section)
-                sectionlist << section
-            end
-            sections[section] << obj
         }
 
         topbucket = Puppet::TransBucket.new
@@ -194,69 +287,11 @@ class Config
         topbucket.type = "puppetconfig"
         topbucket.top = true
         topbucket.autoname = true
-        sectionlist.each { |section|
-            objects = []
-            sections[section].each { |obj|
-                Puppet.notice "changing %s" % obj.name
-                [:user, :group].each { |type|
-                    if obj.respond_to? type and val = obj.send(type)
-                        # Skip users and groups we've already done, but tag them with
-                        # our section if necessary
-                        if done[type].include?(val)
-                            next unless defined? @section and @section
 
-                            tags = done[type][val].tags
-                            unless tags.include?(@section)
-                                done[type][val].tags = tags << @section
-                            end
-                        else
-                            newobj = TransObject.new(val, type.to_s)
-                            newobj[:ensure] = "exists"
-                            done[type] << newobj
-                        end
-                    end
-                }
-
-                if obj.respond_to? :to_transportable
-                    objects << obj.to_transportable
-                else
-                    Puppet.notice "%s is not transportable" % obj.name
-                end
-            }
-
-            bucket = Puppet::TransBucket.new
-            bucket.autoname = true
-            bucket.name = "autosection-%s" % bucket.object_id
-            bucket.type = section
-            bucket.push(*objects)
-            bucket.keyword = "class"
-
-            topbucket.push bucket
-        }
-#        self.each { |name, obj|
-#            [:user, :group].each { |type|
-#                if obj.respond_to? type and val = obj.send(type)
-#                    # Skip users and groups we've already done, but tag them with
-#                    # our section if necessary
-#                    if done[type].include?(val)
-#                        next unless defined? @section and @section
-#
-#                        tags = done[type][val].tags
-#                        unless tags.include?(@section)
-#                            done[type][val].tags = tags << @section
-#                        end
-#                    else
-#                        obj = TransObject.new(val, type.to_s)
-#                        obj[:ensure] = "exists"
-#                        done[type] << obj
-#                    end
-#                end
-#            }
-#
-#            if obj.respond_to? :to_transportable
-#                objects << obj.to_transportable
-#            end
-#        }
+        # Now iterate over each section
+        eachsection do |section|
+            topbucket.push section_to_transportable(section, done)
+        end
 
         topbucket
     end
@@ -269,7 +304,7 @@ class Config
 
     # The base element type.
     class CElement
-        attr_accessor :name, :section, :default, :parent
+        attr_accessor :name, :section, :default, :parent, :desc
 
         # Unset any set value.
         def clear
@@ -277,11 +312,17 @@ class Config
         end
 
         # Create the new element.  Pretty much just sets the name.
-        def initialize(name, value = nil)
+        def initialize(name, desc, value = nil)
             @name = name
+            @desc = desc
             if value
                 @value = value
             end
+        end
+
+        def to_s
+            str = @desc.gsub(/^/, "    # ") +
+                "\n    %s = %s" % [@name, self.value]
         end
 
         # Retrieves the value, or if it's not set, retrieves the default.
@@ -317,7 +358,7 @@ class Config
 
     # A file.
     module CFile
-        attr_accessor :user, :group, :mode, :type
+        attr_accessor :owner, :group, :mode, :type
 
         def convert(value)
             unless value
@@ -351,10 +392,9 @@ class Config
         end
 
         def to_transportable
-            Puppet.notice "transportabling %s" % self.name
             obj = Puppet::TransObject.new(self.value, "file")
             obj[:ensure] = self.type
-            [:user, :group, :mode].each { |var|
+            [:owner, :group, :mode].each { |var|
                 if value = self.send(var)
                     obj[var] = value
                 end
