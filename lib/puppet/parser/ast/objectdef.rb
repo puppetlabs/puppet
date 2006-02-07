@@ -227,7 +227,7 @@ class Puppet::Parser::AST
         def paramdefinedcheck(objtype, param)
             # FIXME we might need to do more here eventually...
             if Puppet::Type.metaparam?(param.param.value.intern)
-                next
+                return
             end
 
             begin
