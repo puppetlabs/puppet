@@ -1022,7 +1022,6 @@ class Type < Puppet::Element
                 end
             }
         end
-        self.warning "Removing"
         self.class.delete(self)
 
         if defined? @parent and @parent
