@@ -49,6 +49,35 @@ module Puppet
             end
         end
 
+        # Retrieve the cached sum
+        def getcachedsum
+            hash = nil
+            unless hash = @parent.cached(:checksums) 
+                hash = {}
+                @parent.cache(:checksums, hash)
+            end
+
+            sumtype = @checktypes[0]
+
+            #unless state
+            #    self.devfail "Did not get state back from Storage"
+            #end
+
+            if hash.include?(sumtype)
+                #self.notice "Found checksum %s for %s" %
+                #    [hash[sumtype] ,@parent[:path]]
+                return hash[sumtype]
+            elsif hash.empty?
+                #self.notice "Could not find sum of type %s" % sumtype
+                return :nosum
+            else
+                #self.notice "Found checksum for %s but not of type %s" %
+                #    [@parent[:path],sumtype]
+                return :nosum
+            end
+        end
+
+        # Calculate the sum from disk.
         def getsum(checktype)
             sum = ""
             case checktype
@@ -117,44 +146,7 @@ module Puppet
 
             @checktypes << value
 
-            hash = nil
-            unless hash = @parent.cached(:checksums) 
-                hash = {}
-                @parent.cache(:checksums, hash)
-            end
-
-            #unless state
-            #    self.devfail "Did not get state back from Storage"
-            #end
-
-            if hash.include?(value)
-                #self.notice "Found checksum %s for %s" %
-                #    [hash[value] ,@parent[:path]]
-                return hash[value]
-            elsif hash.empty?
-                #self.notice "Could not find sum of type %s" % @checktypes[0]
-                return :nosum
-            else
-                #self.notice "Found checksum for %s but not of type %s" %
-                #    [@parent[:path],@checktypes[0]]
-                return :nosum
-            end
-#            if hash = state[@parent[:path]]
-#                if hash.include?(value)
-#                    #self.notice "Found checksum %s for %s" %
-#                    #    [hash[value] ,@parent[:path]]
-#                    return hash[value]
-#                else
-#                    #self.notice "Found checksum for %s but not of type %s" %
-#                    #    [@parent[:path],@checktypes[0]]
-#                    return :nosum
-#                end
-#            else
-#                # We can't use :absent here, because then it'll match on
-#                # non-existent files
-#                #self.notice "Could not find sum of type %s" % @checktypes[0]
-#                return :nosum
-#            end
+            return getcachedsum()
         end
 
         # Even though they can specify multiple checksums, the insync?
@@ -178,11 +170,18 @@ module Puppet
             # Just use the first allowed check type
             @is = getsum(@checktypes[0])
 
+            # @should should always be set, so if it's not set at all, we
+            # know we haven't looked in the cache yet.
+            unless defined? @should and ! @should.nil?
+                @should = [getcachedsum()]
+            end
+
             # If there is no should defined, then store the current value
             # into the 'should' value, so that we're not marked as being
             # out of sync.  We don't want to generate an event the first
             # time we get a sum.
-            if ! defined? @should or @should == [:nosum]
+            if @should == [:nosum]
+                self.warning "updatingness from %s" % @should.inspect
                 @should = [@is]
                 # FIXME we should support an updatechecksums-like mechanism
                 self.updatesum

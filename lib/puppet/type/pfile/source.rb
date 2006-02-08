@@ -129,16 +129,6 @@ module Puppet
                 end
 
                 @should = [@stats[:checksum]]
-
-                #if state = @parent.state(:ensure)
-                #    unless state.should == "file"
-                #        self.notice(
-                #            "File %s had both create and source enabled" %
-                #                @parent.name
-                #        )
-                #        @parent.delete(:ensure)
-                #    end
-                #end
             # If we're a directory, then do not copy anything, and instead just
             # create the directory using the 'create' state.
             when "directory":

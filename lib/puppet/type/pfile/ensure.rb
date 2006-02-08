@@ -56,6 +56,7 @@ module Puppet
                     Dir.mkdir(@parent.name)
                 end
             }
+            @parent.setchecksum
             return :directory_created
         end
 
