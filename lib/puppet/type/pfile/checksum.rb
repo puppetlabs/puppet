@@ -236,7 +236,6 @@ module Puppet
 
         # Store the new sum to the state db.
         def updatesum
-            self.warning "Updating"
             result = false
             state = nil
             unless state = @parent.cached(:checksums) 

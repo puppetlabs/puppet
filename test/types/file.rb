@@ -674,6 +674,47 @@ class TestFile < Test::Unit::TestCase
 
         assert(FileTest.directory?(subpath), "Did not create directory")
     end
+
+    # Make sure that content updates the checksum on the same run
+    def test_checksumchange_for_content
+        dest = tempfile()
+        File.open(dest, "w") { |f| f.puts "yayness" }
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :name => dest,
+                :checksum => "md5",
+                :content => "This is some content"
+            )
+        }
+
+        file.retrieve
+
+        assert_events([:file_changed], file)
+        file.retrieve
+        assert_events([], file)
+    end
+
+    # Make sure that content updates the checksum on the same run
+    def test_checksumchange_for_ensure
+        dest = tempfile()
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :name => dest,
+                :checksum => "md5",
+                :ensure => "file"
+            )
+        }
+
+        file.retrieve
+
+        assert_events([:file_created], file)
+        file.retrieve
+        assert_events([], file)
+    end
 end
 
 # $Id$

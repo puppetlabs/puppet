@@ -484,11 +484,19 @@ module Puppet
             super
         end
 
-        # This method assumes that the checksum types are all correct, and we
-        # just want to carry over the value.
-        def setchecksum(sum)
+        # Set the checksum, from another state.  There are multiple states that
+        # modify the contents of a file, and they need the ability to make sure
+        # that the checksum value is in sync.
+        def setchecksum(sum = nil)
             if @states.include? :checksum
-                @states[:checksum].checksum = sum
+                if sum
+                    @states[:checksum].checksum = sum
+                else
+                    # If they didn't pass in a sum, then tell checksum to
+                    # figure it out.
+                    @states[:checksum].retrieve
+                    @states[:checksum].checksum = @states[:checksum].is
+                end
             end
         end
 

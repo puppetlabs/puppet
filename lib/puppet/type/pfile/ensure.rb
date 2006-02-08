@@ -102,6 +102,12 @@ module Puppet
         end
 
 
+        def sync
+            event = super
+            @parent.setchecksum
+            return event
+        end
+
         def disabled_sync
             event = nil
             basedir = File.dirname(@parent.name)

@@ -53,6 +53,8 @@ module Puppet
                     [@parent.name, detail]
             end
 
+            @parent.setchecksum
+
             if @is == :absent
                 return :file_created
             else

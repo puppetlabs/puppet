@@ -23,9 +23,9 @@ class State < Puppet::Parameter
         #    "State(%s)" % self.name
         #end
 
-        def to_s
-            self.inspect
-        end
+        #def to_s
+        #    self.inspect
+        #end
     end
 
     # Parameters just use 'newvalues', since there's no work associated with them.
