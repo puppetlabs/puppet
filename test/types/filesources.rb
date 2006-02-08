@@ -584,6 +584,29 @@ class TestFileSources < Test::Unit::TestCase
         file.retrieve
         assert_events([], file)
     end
+
+    # Make sure that source-copying updates the checksum on the same run
+    def test_sourcebeatsensure
+        source = tempfile()
+        dest = tempfile()
+        File.open(source, "w") { |f| f.puts "yay" }
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :name => dest,
+                :ensure => "file",
+                :source => source
+            )
+        }
+
+        file.retrieve
+
+        assert_events([:file_created], file)
+        file.retrieve
+        assert_events([], file)
+        assert_events([], file)
+    end
 end
 
 # $Id$

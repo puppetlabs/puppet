@@ -24,21 +24,24 @@ module Puppet
         aliasvalue(:false, :absent)
 
         newvalue(:file) do
-            mode = @parent.should(:mode)
-            Puppet::Util.asuser(asuser(), @parent.should(:group)) {
-                f = nil
-                if mode
-                    f = File.open(@parent[:path],"w", mode)
-                else
-                    f = File.open(@parent[:path],"w")
-                end
+            # Make sure we're not managing the content some other way
+            if state = @parent.state(:content) or state = @parent.state(:source)
+                state.sync
+            else
+                mode = @parent.should(:mode)
+                Puppet::Util.asuser(asuser(), @parent.should(:group)) {
+                    f = nil
+                    if mode
+                        f = File.open(@parent[:path],"w", mode)
+                    else
+                        f = File.open(@parent[:path],"w")
+                    end
 
-                if @parent[:content]
-                    f.print @parent.should(:content)
-                end
-                f.flush
-                f.close
-            }
+                    f.flush
+                    f.close
+                    @parent.setchecksum
+                }
+            end
             return :file_created
         end
 
@@ -102,11 +105,21 @@ module Puppet
         end
 
 
-        def sync
-            event = super
-            @parent.setchecksum
-            return event
-        end
+        # We can mostly rely on the superclass method, but we want other states
+        # to take precedence over 'ensure' if they are present.
+#        def sync
+#            # XXX This is a bad idea, because it almost guarantees bugs if we
+#            # introduce more states to manage content, but anything else is just
+#            # about as bad.
+#            event = nil
+#            #if state = @parent.state(:source) or state = @parent.state(:content)
+#            #    event = state.sync
+#            #else
+#                event = super
+#                @parent.setchecksum
+#            #end
+#            return event
+#        end
 
         def disabled_sync
             event = nil

@@ -715,6 +715,27 @@ class TestFile < Test::Unit::TestCase
         file.retrieve
         assert_events([], file)
     end
+
+    # Make sure that content gets used before ensure
+    def test_contentbeatsensure
+        dest = tempfile()
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :name => dest,
+                :ensure => "file",
+                :content => "this is some content, yo"
+            )
+        }
+
+        file.retrieve
+
+        assert_events([:file_created], file)
+        file.retrieve
+        assert_events([], file)
+        assert_events([], file)
+    end
 end
 
 # $Id$
