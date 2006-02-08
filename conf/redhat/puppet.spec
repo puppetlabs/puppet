@@ -104,7 +104,7 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
-* Mon Feb  6 2006 David Lutterkort <dlutter@redhat.com> - 0.12.1-1
+* Mon Feb  6 2006 David Lutterkort <dlutter@redhat.com> - 0.13.0-1
 - Don't mark initscripts as config files
 
 * Mon Feb  6 2006 David Lutterkort <dlutter@redhat.com> - 0.12.0-2
