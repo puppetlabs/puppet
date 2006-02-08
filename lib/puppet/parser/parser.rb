@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id3b98377f5e', 'grammar.ra', 703
+module_eval <<'..end grammar.ra modeval..id6f2ed69196', 'grammar.ra', 703
 attr_reader :file
 attr_accessor :files
 
@@ -144,7 +144,7 @@ def string=(string)
 end
 
 # $Id$
-..end grammar.ra modeval..id3b98377f5e
+..end grammar.ra modeval..id6f2ed69196
 
 ##### racc 1.4.4 generates ###
 
@@ -1327,13 +1327,13 @@ module_eval <<'.,.,', 'grammar.ra', 607
 
 module_eval <<'.,.,', 'grammar.ra', 618
   def _reduce_82( val, _values, result )
-    if val[1].is_a?(AST::ASTArray)
+    if val[1].instance_of?(AST::ASTArray)
         result = val[1]
     else
         result = AST::ASTArray.new(
             :line => @lexer.line,
             :file => @lexer.file,
-            :children => [val[0]]
+            :children => [val[1]]
         )
     end
    result

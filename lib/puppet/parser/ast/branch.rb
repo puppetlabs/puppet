@@ -31,7 +31,7 @@ class Puppet::Parser::AST
             @children.each { |child|
                 unless child.is_a?(AST)
                     raise Puppet::DevError,
-                        "child %s is not an ast" % child
+                        "child %s is a %s instead of ast" % [child, child.class]
                 end
             }
         end

@@ -606,13 +606,13 @@ argumentlist: nothing
     result = val[1]
 }
             | LPAREN arguments RPAREN {
-    if val[1].is_a?(AST::ASTArray)
+    if val[1].instance_of?(AST::ASTArray)
         result = val[1]
     else
         result = AST::ASTArray.new(
             :line => @lexer.line,
             :file => @lexer.file,
-            :children => [val[0]]
+            :children => [val[1]]
         )
     end
 }
