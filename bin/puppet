@@ -144,30 +144,19 @@ master[:File] = ARGV.shift
 
 begin
     server = Puppet::Server::Master.new(master)
-rescue => detail
-    $stderr.puts detail
-    exit(1)
-end
-
-begin
     client = Puppet::Client::MasterClient.new(
         :Master => server,
         :Cache => false
     )
-rescue => detail
-    $stderr.puts detail
-    exit(1)
-end
-
-
-if parseonly
-    exit(0)
-end
-
-begin
+    if parseonly
+        exit(0)
+    end
     client.getconfig
     client.apply
 rescue => detail
-    Puppet.err detail
+    $stderr.puts detail
+    if Puppet[:debug]
+        puts detail.backtrace
+    end
     exit(1)
 end
