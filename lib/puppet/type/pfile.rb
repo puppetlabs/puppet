@@ -484,6 +484,14 @@ module Puppet
             super
         end
 
+        # This method assumes that the checksum types are all correct, and we
+        # just want to carry over the value.
+        def setchecksum(sum)
+            if @states.include? :checksum
+                @states[:checksum].checksum = sum
+            end
+        end
+
         def stat(refresh = false)
             if @stat.nil? or refresh == true
                 begin
@@ -565,10 +573,10 @@ module Puppet
     # We put all of the states in separate files, because there are so many
     # of them.  The order these are loaded is important, because it determines
     # the order they are in the state list.
-    require 'puppet/type/pfile/ensure'
     require 'puppet/type/pfile/checksum'
-    require 'puppet/type/pfile/content'
-    require 'puppet/type/pfile/source'
+    require 'puppet/type/pfile/content'     # can create the file
+    require 'puppet/type/pfile/source'      # can create the file
+    require 'puppet/type/pfile/ensure'      # can create the file
     require 'puppet/type/pfile/uid'
     require 'puppet/type/pfile/group'
     require 'puppet/type/pfile/mode'

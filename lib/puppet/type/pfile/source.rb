@@ -275,6 +275,12 @@ module Puppet
                     [@parent.name, detail]
             end
 
+            if @stats.include? :checksum
+                @parent.setchecksum @stats[:checksum]
+            else
+                raise Puppet::DevError, "We're somehow missing the remote checksum"
+            end
+
             if exists
                 return :file_changed
             else

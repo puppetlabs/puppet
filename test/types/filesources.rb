@@ -562,6 +562,28 @@ class TestFileSources < Test::Unit::TestCase
 
         assert_equal("yee-haw", txt, "Contents do not match")
     end
+
+    # Make sure that source-copying updates the checksum on the same run
+    def test_checksumchange
+        source = tempfile()
+        dest = tempfile()
+        File.open(dest, "w") { |f| f.puts "boo" }
+        File.open(source, "w") { |f| f.puts "yay" }
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :name => dest,
+                :source => source
+            )
+        }
+
+        file.retrieve
+
+        assert_events([:file_changed], file)
+        file.retrieve
+        assert_events([], file)
+    end
 end
 
 # $Id$

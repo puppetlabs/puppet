@@ -20,6 +20,14 @@ module Puppet
             @checktypes[0]
         end
 
+        # Because source and content and whomever else need to set the checksum
+        # and do the updating, we provide a simple mechanism for doing so.
+        def checksum=(value)
+            @is = value
+            @should = [value]
+            self.updatesum
+        end
+
         # Checksums need to invert how changes are printed.
         def change_to_s
             begin
@@ -228,6 +236,7 @@ module Puppet
 
         # Store the new sum to the state db.
         def updatesum
+            self.warning "Updating"
             result = false
             state = nil
             unless state = @parent.cached(:checksums) 
@@ -240,10 +249,6 @@ module Puppet
                 error = Puppet::Error.new("%s has invalid checksum" %
                     @parent.name)
                 raise error
-            #elsif @should == :absent
-            #    error = Puppet::Error.new("%s has invalid 'should' checksum" %
-            #        @parent.name)
-            #    raise error
             end
 
             # if we're replacing, vs. updating
