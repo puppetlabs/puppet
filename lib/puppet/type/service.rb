@@ -106,7 +106,14 @@ module Puppet
         newparam(:type) do
             desc "The service type.  For most platforms, it does not make
                 sense to change set this parameter, as the default is based on
-                the builtin service facilities."
+                the builtin service facilities.  The service types available are:
+                
+                * ``base``: You must specify everything.
+                * ``init``: Assumes ``start`` and ``stop`` commands exist, but you
+                  must specify everything else.
+                * ``debian``: Debian's own specific version of ``init``.
+                * ``smf``: Solaris 10's new Service Management Facility.
+                "
 
             defaultto { @parent.class.defaulttype }
 
