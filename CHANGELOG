@@ -1,3 +1,12 @@
+0.13.0
+    Added support for configuration files.
+    Even more bug fixes, including the infamous 'frozen object' bug, which was a
+        problem with 'waitforcert'.
+    David Lutterkort got RPM into good shape.
+
+0.12.0
+    Added Scheduling, and many bug fixes, of course.
+
 0.11.2
     Fixed bugs related to specifying arrays of requirements
     Fixed a key bug in retrieving checksums
