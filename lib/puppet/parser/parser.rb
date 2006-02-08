@@ -29,13 +29,13 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id6f2ed69196', 'grammar.ra', 703
+module_eval <<'..end grammar.ra modeval..id4d297a9dfb', 'grammar.ra', 703
 attr_reader :file
 attr_accessor :files
 
 # Create an AST array out of all of the args
 def aryfy(*args)
-    if args[0].is_a?(AST::ASTArray)
+    if args[0].instance_of?(AST::ASTArray)
         result = args.shift
         args.each { |arg|
             result.push arg
@@ -144,7 +144,7 @@ def string=(string)
 end
 
 # $Id$
-..end grammar.ra modeval..id6f2ed69196
+..end grammar.ra modeval..id4d297a9dfb
 
 ##### racc 1.4.4 generates ###
 
@@ -585,7 +585,7 @@ module_eval <<'.,.,', 'grammar.ra', 37
 
 module_eval <<'.,.,', 'grammar.ra', 51
   def _reduce_3( val, _values, result )
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[1])
         result = val[0]
     else
@@ -660,11 +660,11 @@ module_eval <<'.,.,', 'grammar.ra', 95
 
 module_eval <<'.,.,', 'grammar.ra', 129
   def _reduce_17( val, _values, result )
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         raise Puppet::ParseError, "Invalid name"
     end
     array = val[2]
-    if array.is_a?(AST::ObjectInst)
+    if array.instance_of?(AST::ObjectInst)
         array = [array]
     end
     result = AST::ASTArray.new(
@@ -673,7 +673,7 @@ module_eval <<'.,.,', 'grammar.ra', 129
     )
     # this iterates across each specified objectinstance
     array.each { |instance|
-        unless instance.is_a?(AST::ObjectInst)
+        unless instance.instance_of?(AST::ObjectInst)
             raise Puppet::Dev, "Got something that isn't an instance"
         end
         # now, i need to somehow differentiate between those things with
@@ -693,7 +693,7 @@ module_eval <<'.,.,', 'grammar.ra', 129
 
 module_eval <<'.,.,', 'grammar.ra', 145
   def _reduce_18( val, _values, result )
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         Puppet.notice "invalid name"
         raise Puppet::ParseError, "Invalid name"
     end
@@ -715,7 +715,7 @@ module_eval <<'.,.,', 'grammar.ra', 145
 module_eval <<'.,.,', 'grammar.ra', 157
   def _reduce_19( val, _values, result )
     # a template setting for a type
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         raise Puppet::ParseError, "Invalid type"
     end
     result = AST::TypeDefaults.new(
@@ -744,7 +744,7 @@ module_eval <<'.,.,', 'grammar.ra', 165
 
 module_eval <<'.,.,', 'grammar.ra', 179
   def _reduce_22( val, _values, result )
-    if val[0].is_a?(AST::ObjectInst)
+    if val[0].instance_of?(AST::ObjectInst)
         result = AST::ASTArray.new(
             :line => @lexer.line,
             :file => @lexer.file,
@@ -835,7 +835,7 @@ module_eval <<'.,.,', 'grammar.ra', 230
 
 module_eval <<'.,.,', 'grammar.ra', 243
   def _reduce_36( val, _values, result )
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
     else
@@ -871,7 +871,7 @@ module_eval <<'.,.,', 'grammar.ra', 258
 
 module_eval <<'.,.,', 'grammar.ra', 271
   def _reduce_39( val, _values, result )
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         result = val[0].push(val[2])
     else
         result = AST::ASTArray.new(
@@ -940,7 +940,7 @@ module_eval <<'.,.,', 'grammar.ra', 307
 module_eval <<'.,.,', 'grammar.ra', 324
   def _reduce_52( val, _values, result )
     options = val[3]
-    unless options.is_a?(AST::ASTArray)
+    unless options.instance_of?(AST::ASTArray)
         options = AST::ASTArray.new(
             :line => @lexer.line,
             :file => @lexer.file,
@@ -961,7 +961,7 @@ module_eval <<'.,.,', 'grammar.ra', 324
 
 module_eval <<'.,.,', 'grammar.ra', 338
   def _reduce_54( val, _values, result )
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         val[0].push val[1]
         result = val[0]
     else
@@ -1009,7 +1009,7 @@ module_eval <<'.,.,', 'grammar.ra', 360
 
 module_eval <<'.,.,', 'grammar.ra', 374
   def _reduce_58( val, _values, result )
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
     else
@@ -1049,7 +1049,7 @@ module_eval <<'.,.,', 'grammar.ra', 386
 
 module_eval <<'.,.,', 'grammar.ra', 401
   def _reduce_63( val, _values, result )
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
     else
@@ -1205,7 +1205,7 @@ module_eval <<'.,.,', 'grammar.ra', 519
         :code => val[4]
     }
     # It'll be an ASTArray if we didn't get a parent
-    if val[2].is_a?(AST::Name)
+    if val[2].instance_of?(AST::Name)
         args[:parentclass] = val[2]
     end
     result = AST::ClassDef.new(args)
@@ -1227,7 +1227,7 @@ module_eval <<'.,.,', 'grammar.ra', 536
         )
     }
     # It'll be an ASTArray if we didn't get a parent
-    if val[2].is_a?(AST::Name)
+    if val[2].instance_of?(AST::Name)
         args[:parentclass] = val[2]
     end
     result = AST::ClassDef.new(args)
@@ -1237,7 +1237,7 @@ module_eval <<'.,.,', 'grammar.ra', 536
 
 module_eval <<'.,.,', 'grammar.ra', 557
   def _reduce_75( val, _values, result )
-    unless val[1].is_a?(AST::ASTArray)
+    unless val[1].instance_of?(AST::ASTArray)
         val[1] = AST::ASTArray.new(
             :line => val[1].line,
             :file => val[1].file,
@@ -1251,7 +1251,7 @@ module_eval <<'.,.,', 'grammar.ra', 557
         :keyword => val[0],
         :code => val[4]
     }
-    if val[2].is_a?(AST::Name)
+    if val[2].instance_of?(AST::Name)
         args[:parentclass] = val[2]
     end
     result = AST::NodeDef.new(args)
@@ -1261,7 +1261,7 @@ module_eval <<'.,.,', 'grammar.ra', 557
 
 module_eval <<'.,.,', 'grammar.ra', 580
   def _reduce_76( val, _values, result )
-    unless val[1].is_a?(AST::ASTArray)
+    unless val[1].instance_of?(AST::ASTArray)
         val[1] = AST::ASTArray.new(
             :line => val[1].line,
             :file => val[1].file,
@@ -1279,7 +1279,7 @@ module_eval <<'.,.,', 'grammar.ra', 580
             :children => []
         )
     }
-    if val[2].is_a?(AST::Name)
+    if val[2].instance_of?(AST::Name)
         args[:parentclass] = val[2]
     end
     result = AST::NodeDef.new(args)
@@ -1291,7 +1291,7 @@ module_eval <<'.,.,', 'grammar.ra', 580
 
 module_eval <<'.,.,', 'grammar.ra', 594
   def _reduce_78( val, _values, result )
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         result = val[0]
         result.push val[1]
     else
@@ -1407,7 +1407,7 @@ module_eval <<'.,.,', 'grammar.ra', 665
 
 module_eval <<'.,.,', 'grammar.ra', 677
   def _reduce_90( val, _values, result )
-    if val[1].is_a?(AST::ASTArray)
+    if val[1].instance_of?(AST::ASTArray)
         result = val[1]
     else
         result = AST::ASTArray.new(

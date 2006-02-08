@@ -38,7 +38,7 @@ program:    statements {
 
 statements: statement
             | statements statement {
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[1])
         result = val[0]
     else
@@ -99,11 +99,11 @@ classname:        name
 
 #object:       name LBRACE objectname COLON params endcomma RBRACE {
 object:       name LBRACE objectinstances endsemi RBRACE {
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         raise Puppet::ParseError, "Invalid name"
     end
     array = val[2]
-    if array.is_a?(AST::ObjectInst)
+    if array.instance_of?(AST::ObjectInst)
         array = [array]
     end
     result = AST::ASTArray.new(
@@ -112,7 +112,7 @@ object:       name LBRACE objectinstances endsemi RBRACE {
     )
     # this iterates across each specified objectinstance
     array.each { |instance|
-        unless instance.is_a?(AST::ObjectInst)
+        unless instance.instance_of?(AST::ObjectInst)
             raise Puppet::Dev, "Got something that isn't an instance"
         end
         # now, i need to somehow differentiate between those things with
@@ -127,7 +127,7 @@ object:       name LBRACE objectinstances endsemi RBRACE {
         )
     }
 }           | name LBRACE params endcomma RBRACE {
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         Puppet.notice "invalid name"
         raise Puppet::ParseError, "Invalid name"
     end
@@ -144,7 +144,7 @@ object:       name LBRACE objectinstances endsemi RBRACE {
     )
 }           | type LBRACE params endcomma RBRACE {
     # a template setting for a type
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         raise Puppet::ParseError, "Invalid type"
     end
     result = AST::TypeDefaults.new(
@@ -166,7 +166,7 @@ objectinst:   objectname COLON params {
 
 objectinstances:   objectinst
                  | objectinstances SEMIC objectinst {
-    if val[0].is_a?(AST::ObjectInst)
+    if val[0].instance_of?(AST::ObjectInst)
         result = AST::ASTArray.new(
             :line => @lexer.line,
             :file => @lexer.file,
@@ -230,7 +230,7 @@ params:   # nothing
 }
         | param { result = val[0] }
         | params COMMA param {
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
     else
@@ -259,7 +259,7 @@ param:        NAME FARROW rvalue {
 
 rvalues:      rvalue
             | rvalues comma rvalue {
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         result = val[0].push(val[2])
     else
         result = AST::ASTArray.new(
@@ -308,7 +308,7 @@ objectref: name LBRACK rvalue RBRACK {
 
 casestatement:  CASE rvalue LBRACE caseopts RBRACE {
     options = val[3]
-    unless options.is_a?(AST::ASTArray)
+    unless options.instance_of?(AST::ASTArray)
         options = AST::ASTArray.new(
             :line => @lexer.line,
             :file => @lexer.file,
@@ -325,7 +325,7 @@ casestatement:  CASE rvalue LBRACE caseopts RBRACE {
 
 caseopts:     caseopt
             | caseopts caseopt {
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         val[0].push val[1]
         result = val[0]
     else
@@ -361,7 +361,7 @@ caseopt:        casevalues COLON LBRACE statements RBRACE {
 
 casevalues:       selectlhand
                 | casevalues COMMA selectlhand {
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
     else
@@ -388,7 +388,7 @@ svalues:      selectval
 
 sintvalues:   selectval
             | sintvalues comma selectval {
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
     else
@@ -512,7 +512,7 @@ hostclass: CLASS NAME parent LBRACE statements RBRACE {
         :code => val[4]
     }
     # It'll be an ASTArray if we didn't get a parent
-    if val[2].is_a?(AST::Name)
+    if val[2].instance_of?(AST::Name)
         args[:parentclass] = val[2]
     end
     result = AST::ClassDef.new(args)
@@ -529,14 +529,14 @@ hostclass: CLASS NAME parent LBRACE statements RBRACE {
         )
     }
     # It'll be an ASTArray if we didn't get a parent
-    if val[2].is_a?(AST::Name)
+    if val[2].instance_of?(AST::Name)
         args[:parentclass] = val[2]
     end
     result = AST::ClassDef.new(args)
 }
 
 nodedef: NODE names parent LBRACE statements RBRACE {
-    unless val[1].is_a?(AST::ASTArray)
+    unless val[1].instance_of?(AST::ASTArray)
         val[1] = AST::ASTArray.new(
             :line => val[1].line,
             :file => val[1].file,
@@ -550,12 +550,12 @@ nodedef: NODE names parent LBRACE statements RBRACE {
         :keyword => val[0],
         :code => val[4]
     }
-    if val[2].is_a?(AST::Name)
+    if val[2].instance_of?(AST::Name)
         args[:parentclass] = val[2]
     end
     result = AST::NodeDef.new(args)
 }       |  NODE names parent LBRACE RBRACE {
-    unless val[1].is_a?(AST::ASTArray)
+    unless val[1].instance_of?(AST::ASTArray)
         val[1] = AST::ASTArray.new(
             :line => val[1].line,
             :file => val[1].file,
@@ -573,7 +573,7 @@ nodedef: NODE names parent LBRACE statements RBRACE {
             :children => []
         )
     }
-    if val[2].is_a?(AST::Name)
+    if val[2].instance_of?(AST::Name)
         args[:parentclass] = val[2]
     end
     result = AST::NodeDef.new(args)
@@ -581,7 +581,7 @@ nodedef: NODE names parent LBRACE statements RBRACE {
 
 names:    name
         | names name {
-    if val[0].is_a?(AST::ASTArray)
+    if val[0].instance_of?(AST::ASTArray)
         result = val[0]
         result.push val[1]
     else
@@ -665,7 +665,7 @@ variable:     VARIABLE {
 }
 
 array:        LBRACK rvalues RBRACK {
-    if val[1].is_a?(AST::ASTArray)
+    if val[1].instance_of?(AST::ASTArray)
         result = val[1]
     else
         result = AST::ASTArray.new(
@@ -705,7 +705,7 @@ attr_accessor :files
 
 # Create an AST array out of all of the args
 def aryfy(*args)
-    if args[0].is_a?(AST::ASTArray)
+    if args[0].instance_of?(AST::ASTArray)
         result = args.shift
         args.each { |arg|
             result.push arg
