@@ -280,6 +280,14 @@ module Puppet
             desc "A read-only parameter set by the package."
         end
 
+        newparam(:answerfile) do
+            desc "A file containing any necessary answers to questions asked by
+                the package.  This is currently only used on Solaris.  The
+                value will be validated according to system rules, which in
+                the case of Solaris means that it should either be a fully qualified
+                path or it should be in /var/sadm/install/admin."
+        end
+
         # FIXME Version is screwy -- most package systems can't specify a
         # version, but people will definitely want to query versions, so
         # it almost seems like versions should be a read-only state,

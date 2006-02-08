@@ -4,7 +4,16 @@ module Puppet
             unless self[:source]
                 raise Puppet::Error, "Sun packages must specify a package source"
             end
-            cmd = "pkgadd -d %s -n %s 2>&1" % [self[:source], self[:name]]
+            #cmd = "pkgadd -d %s -n %s 2>&1" % [self[:source], self[:name]]
+            cmd = ["pkgadd"]
+            cmd += ["-d", self[:source]]
+            cmd += ["-n", self[:name]]
+
+            if self[:answerfile]
+                cmd += ["-a", self[:answerfile]]
+            end
+            cmd << "2>&1"
+            cmd = cmd.join(" ")
 
             self.info "Executing %s" % cmd.inspect
             output = %x{#{cmd} 2>&1}
