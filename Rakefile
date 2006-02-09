@@ -333,6 +333,8 @@ task :update_version => [:prerelease] do
                 rakein.each do |line|
                     if line =~ /^Version:\s*/
                         rakeout.puts "Version: #{PKG_VERSION}"
+                    elsif line =~ /^Release:\s*/
+                      rakeout.puts "Release: 1%{?dist}"
                     else
                         rakeout.puts line
                     end
