@@ -142,11 +142,9 @@ begin
             when "--verbose"
                 Puppet::Log.level = :info
                 Puppet::Log.newdestination(:console)
-                setdest = true
             when "--debug"
                 Puppet::Log.level = :debug
                 Puppet::Log.newdestination(:console)
-                setdest = true
             when "--fqdn"
                 fqdn = arg
             when "--onetime"
@@ -156,6 +154,7 @@ begin
             when "--logdest"
                 begin
                     Puppet::Log.newdestination(arg)
+                    setdest = true
                 rescue => detail
                     $stderr.puts detail.to_s
                 end

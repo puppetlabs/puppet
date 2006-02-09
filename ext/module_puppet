@@ -83,9 +83,7 @@ master = {
     :Local => true
 }
 
-# We default to a non-console log destination, because we assume this is being
-# run non-interactively.
-#Puppet[:logdest] = :console
+setdest = false
 
 begin
     result.each { |opt,arg|
@@ -103,12 +101,17 @@ begin
             when "--use-nodes"
                 master[:UseNodes] = true
             when "--verbose"
+                Puppet::Log.level = :info
+                Puppet::Log.newdestination(:console)
                 verbose = true
             when "--debug"
+                Puppet::Log.level = :debug
+                Puppet::Log.newdestination(:console)
                 debug = true
             when "--logdest"
                 begin
                     Puppet::Log.newdestination arg
+                    setdest=true
                 rescue => detail
                     $stderr.puts detail.to_s
                 end
@@ -124,14 +127,6 @@ rescue GetoptLong::InvalidOption => detail
     exit(1)
 end
 
-if debug
-    Puppet::Log.level = :debug
-    Puppet::Log.newdestination :console
-elsif verbose
-    Puppet::Log.level = :info
-    Puppet::Log.newdestination :console
-end
-
 # Now parse the config
 if Puppet[:config] and File.exists? Puppet[:config]
     Puppet.config.parse(Puppet[:config])
@@ -143,6 +138,10 @@ Puppet.genmanifest
 unless ARGV.length > 0
     $stderr.puts "You must pass a script to parse"
     exit(14)
+end
+
+unless setdest
+    Puppet::Log.newdestination(:syslog)
 end
 
 master[:File] = ARGV.shift

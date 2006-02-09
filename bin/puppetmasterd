@@ -113,7 +113,6 @@ begin
             when "--debug"
                 Puppet::Log.level = :debug
                 Puppet::Log.newdestination(:console)
-                setdest = true
             when "--help"
                 if $haveusage
                     RDoc::usage && exit
@@ -138,7 +137,6 @@ begin
                 puts "%s" % Puppet.version
                 exit
             when "--verbose"
-                setdest = true
                 Puppet::Log.level = :info
                 Puppet::Log.newdestination :console
             else
