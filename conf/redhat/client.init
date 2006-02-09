@@ -15,7 +15,7 @@ export PATH
 
 [ -f /etc/sysconfig/puppet ] && . /etc/sysconfig/puppet
 lockfile=${LOCKFILE-/var/lock/subsys/puppet}
-pidfile=${PIDFILE-/var/run/puppet.pid}
+pidfile=${PIDFILE-/var/run/puppet/puppet.pid}
 puppetd=${PUPPETD-/usr/sbin/puppetd}
 RETVAL=0
 
@@ -28,7 +28,7 @@ PUPPET_OPTS=""
 [ -n "$PUPPET_PORT" ] && PUPPET_OPTS="${PUPPET_OPTS} --port=${PUPPET_PORT}"
 
 start() {
-	echo -n $"Starting puppetd: "
+	echo -n $"Starting puppet: "
         daemon $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS}
 	RETVAL=$?
 	echo
@@ -37,7 +37,7 @@ start() {
 }
 
 stop() {
-	echo -n $"Stopping puppetd: "
+	echo -n $"Stopping puppet: "
         killproc $puppetd
 	RETVAL=$?
 	echo

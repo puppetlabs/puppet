@@ -21,7 +21,7 @@ if [ -f /etc/sysconfig/puppetmaster ]; then
 fi
 
 [ -z "$PUPPETMASTER_MANIFEST" ] && PUPPETMASTER_MANIFEST=/etc/puppet/manifests/site.pp
-[ -z "$PUPPETMASTER_LOG" ] && PUPPETMASTER_LOG="/var/log/puppetmaster.log"
+[ -z "$PUPPETMASTER_LOG" ] && PUPPETMASTER_LOG="/var/log/puppet/puppetmaster.log"
 PUPPETMASTER_OPTS="
 	--manifest=$PUPPETMASTER_MANIFEST \
 	--logdest=${PUPPETMASTER_LOG} \
@@ -33,7 +33,7 @@ prog=puppetmasterd
 PUPPETMASTER=/usr/sbin/$prog
 
 start() {
-	echo -n $"Starting $prog: "
+	echo -n $"Starting puppetmaster: "
 
 	# Confirm the manifest exists
 	if [ -r $PUPPETMASTER_MANIFEST ]; then
@@ -52,7 +52,7 @@ start() {
 }
 
 stop() {
-	echo -n  $"Stopping $prog: "
+	echo -n  $"Stopping puppetmaster: "
 	killproc $PUPPETMASTER
 	RETVAL=$?
 	echo
