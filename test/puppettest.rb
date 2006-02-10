@@ -57,6 +57,14 @@ module TestPuppet
         Puppet[:ignoreschedules] = true
     end
 
+    def newobj(type, name, hash)
+        transport = Puppet::TransObject.new(name, "file")
+        transport[:path] = path
+        transport[:ensure] = "file"
+        assert_nothing_raised {
+            file = transport.to_type
+        }
+    end
 
     def spin
         # Just disable spin, unless we really need it

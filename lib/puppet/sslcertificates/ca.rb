@@ -69,12 +69,10 @@ class Puppet::SSLCertificates::CA
                 #puts "Reading %s" % Puppet[:capass]
                 #system "ls -al %s" % Puppet[:capass]
                 #File.read Puppet[:capass]
-                Puppet.info "Getting pass"
                 @config[:password] = self.getpass
             else
                 # Don't create a password if the cert already exists
                 unless FileTest.exists?(@config[:cacert])
-                    Puppet.info "Genning pass"
                     @config[:password] = self.genpass
                 end
             end

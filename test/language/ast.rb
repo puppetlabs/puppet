@@ -293,11 +293,11 @@ class TestAST < Test::Unit::TestCase
 
         # And now verify that we got both the top and node objects
         assert_nothing_raised("Could not find top-declared object") {
-            assert_equal("/testing", objects[0]["name"])
+            assert_equal("/testing", objects[0].name)
         }
 
         assert_nothing_raised("Could not find node-declared object") {
-            assert_equal("/%s" % name, objects[1][0]["name"])
+            assert_equal("/%s" % name, objects[1][0].name)
         }
     end
 
@@ -338,7 +338,7 @@ class TestAST < Test::Unit::TestCase
         assert(objects, "Could not retrieve objects")
 
         assert_nothing_raised("Could not find top-declared object") {
-            assert_equal("/%s" % klassname, objects[0][0]["name"])
+            assert_equal("/%s" % klassname, objects[0][0].name)
         }
     end
 
@@ -395,19 +395,19 @@ class TestAST < Test::Unit::TestCase
             # And now verify that we got the subnode file
             assert_nothing_raised("Could not find basenode file") {
                 base = inner[0]
-                assert_equal("/basenode", base["name"])
+                assert_equal("/basenode", base.name)
             }
 
             # and the parent node file
             assert_nothing_raised("Could not find subnode file") {
                 sub = inner[1]
-                assert_equal("/subnode", sub["name"])
+                assert_equal("/subnode", sub.name)
             }
 
             inner.each { |obj|
                 %w{basenode subnode}.each { |tag|
                     assert(obj.tags.include?(tag),
-                        "%s did not include %s tag" % [obj["name"], tag]
+                        "%s did not include %s tag" % [obj.name, tag]
                     )
                 }
             }

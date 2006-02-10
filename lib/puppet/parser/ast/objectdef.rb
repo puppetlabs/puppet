@@ -21,10 +21,10 @@ class Puppet::Parser::AST
             when Puppet::Type:
                 raise Puppet::Error,
                     "Built-in types must be provided with a name"
-            when HostClass:
+            when Node:
                 return type
             else
-                Puppet.info "Autogenerating name for object of type %s" %
+                Puppet.debug "Autogenerating name for object of type %s" %
                     type
                 return [type, "-", self.object_id].join("")
             end

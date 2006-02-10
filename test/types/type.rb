@@ -186,6 +186,31 @@ class TestType < Test::Unit::TestCase
 
         assert(twoobj.requires?(oneobj), "Requirement was not created")
     end
+
+    # Verify that names are aliases, not equivalents
+    def test_nameasalias
+        file = nil
+        path = tempfile()
+        name = "a test file"
+        transport = Puppet::TransObject.new(name, "file")
+        transport[:path] = path
+        transport[:ensure] = "file"
+        assert_nothing_raised {
+            file = transport.to_type
+        }
+
+        assert_equal(path, file[:path])
+        assert_equal([name], file[:alias])
+
+        assert_nothing_raised {
+            file.retrieve
+        }
+
+        assert_apply(file)
+
+        assert(Puppet.type(:file)[name], "Could not look up object by name")
+        #assert(Puppet.type(:file)[path], "Could not look up object by path")
+    end
 end
 
 # $Id$

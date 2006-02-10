@@ -25,13 +25,13 @@ module Puppet
         def initialize(name,type)
             @type = type
             @name = name
-            @params = {"name" => name}
+            @params = {}
             #self.class.add(self)
             @tags = []
         end
 
         def longname
-            return [self.type,self[:name]].join('--')
+            return [@type,@name].join('--')
         end
 
         def tags
@@ -43,7 +43,7 @@ module Puppet
         end
 
         def to_s
-            return "%s(%s) => %s" % [@type,self[:name],super]
+            return "%s(%s) => %s" % [@type,@name,super]
         end
 
         def to_manifest
@@ -164,24 +164,51 @@ module Puppet
             unless defined? @type
                 Puppet.debug "TransBucket '%s' has no type" % @name
             end
-            hash = {
-                :name => @name,
-                :type => @type
-            }
-            if defined? @parameters
-                @parameters.each { |param,value|
-                    Puppet.debug "Defining %s on %s of type %s" %
-                        [param,@name,@type]
-                    hash[param] = value
-                }
-            else
-                #Puppet.debug "%s[%s] has no parameters" % [@type, @name]
-            end
+            usetrans = true
 
-            if parent
-                hash[:parent] = parent
+            if usetrans
+                name = nil
+                #if self.autoname or @name =~ /-\d+$/
+                if self.autoname
+                    name = @type
+                else
+                    name = "%s[%s]" % [@type, @name]
+                end
+                trans = TransObject.new(name, :component)
+                if defined? @parameters
+                    @parameters.each { |param,value|
+                        Puppet.debug "Defining %s on %s of type %s" %
+                            [param,@name,@type]
+                        trans[param] = value
+                    }
+                else
+                    #Puppet.debug "%s[%s] has no parameters" % [@type, @name]
+                end
+
+                if parent
+                    trans[:parent] = parent
+                end
+                container = Puppet.type(:component).create(trans)
+            else
+                hash = {
+                    :name => @name,
+                    :type => @type
+                }
+                if defined? @parameters
+                    @parameters.each { |param,value|
+                        Puppet.debug "Defining %s on %s of type %s" %
+                            [param,@name,@type]
+                        hash[param] = value
+                    }
+                else
+                    #Puppet.debug "%s[%s] has no parameters" % [@type, @name]
+                end
+
+                if parent
+                    hash[:parent] = parent
+                end
+                container = Puppet.type(:component).create(hash)
             end
-            container = Puppet.type(:component).create(hash)
             #Puppet.info container.inspect
 
             if parent

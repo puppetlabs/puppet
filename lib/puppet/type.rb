@@ -1081,11 +1081,13 @@ class Type < Puppet::Element
         end
 
         name = nil
-        unless name =   hash["name"] || hash[:name] ||
-                    hash[self.namevar] || hash[self.namevar.to_s]
-            raise Puppet::Error, "You must specify a name for objects of type %s" %
-                self.to_s
+        unless hash.is_a? TransObject
+            # if it's not a transobject, then make it one, just to make people's
+            # lives easier
+            hash = self.hash2trans(hash)
         end
+        name = hash.name
+
         # if the object already exists
         if self.isomorphic? and retobj = self[name]
             # if only one of our objects is implicit, then it's easy to see
@@ -1132,7 +1134,49 @@ class Type < Puppet::Element
             obj.implicit = true
         end
 
+        # Store the object by name
+        self[obj.name] = obj
+
+        if name != obj[self.namevar]
+            self.alias(obj[self.namevar], obj)
+        end
+
         return obj
+    end
+
+    # Convert a hash to a TransObject.
+    def self.hash2trans(hash)
+        name = nil
+        ["name", :name, self.namevar, self.namevar.to_s].each { |param|
+            if hash.include? param
+                name = hash[param]
+                hash.delete(param)
+            end
+        }
+        unless name
+            raise Puppet::Error,
+                "You must specify a name for objects of type %s" % self.to_s
+        end
+
+        [:type, "type"].each do |type|
+            if hash.include? type
+                unless self.validattr? :type
+                    hash.delete type
+                end
+            end
+        end
+        # okay, now make a transobject out of hash
+        begin
+            trans = TransObject.new(name, self.name.to_s)
+            hash.each { |param, value|
+                trans[param] = value
+            }
+        rescue => detail
+            raise Puppet::Error, "Could not create %s: %s" %
+                [name, detail]
+        end
+
+        return trans
     end
 
     def self.implicitcreate(hash)
@@ -1206,9 +1250,10 @@ class Type < Puppet::Element
         unless defined? @inited
             self.initvars
         end
+        namevar = self.class.namevar
 
         # If we got passed a transportable object, we just pull a bunch of info
-        # directly from it.
+        # directly from it.  This is the main object instantiation mechanism.
         if hash.is_a?(Puppet::TransObject)
             #self[:name] = hash[:name]
             [:file, :line, :tags].each { |getter|
@@ -1219,6 +1264,15 @@ class Type < Puppet::Element
                     end
                 end
             }
+
+            @name = hash.name
+
+            # If they did not provide a namevar,
+            if hash.include? namevar
+                self[:alias] = hash.name
+            else
+                hash[namevar] = hash.name
+            end
             hash = hash.to_hash
         end
 
@@ -1235,7 +1289,6 @@ class Type < Puppet::Element
         # we have the name but before anything else
 
         attrs = self.class.allattrs
-        namevar = self.class.namevar
 
         if hash.include?(namevar)
             #self.send(namevar.to_s + "=", hash[namevar])
@@ -1280,10 +1333,6 @@ class Type < Puppet::Element
             self.fail("Class %s does not accept argument(s) %s" %
                 [self.class.name, hash.keys.join(" ")])
         end
-
-        # add this object to the specific class's list of objects
-        #puts caller
-        self.class[self.name] = self
 
         if self.respond_to?(:validate)
             self.validate
@@ -1518,18 +1567,18 @@ class Type < Puppet::Element
 
         # if they're not using :name for the namevar but we got :name (probably
         # from the parser)
-        if namevar != :name and hash.include?(:name) and ! hash[:name].nil?
-            #self[namevar] = hash[:name]
-            hash[namevar] = hash[:name]
-            hash.delete(:name)
-        # else if we got the namevar
-        elsif hash.has_key?(namevar) and ! hash[namevar].nil?
-            #self[namevar] = hash[namevar]
-            #hash.delete(namevar)
-        # else something's screwy
-        else
-            # they didn't specify anything related to names
-        end
+#        if namevar != :name and hash.include?(:name) and ! hash[:name].nil?
+#            #self[namevar] = hash[:name]
+#            hash[namevar] = hash[:name]
+#            hash.delete(:name)
+#        # else if we got the namevar
+#        elsif hash.has_key?(namevar) and ! hash[namevar].nil?
+#            #self[namevar] = hash[namevar]
+#            #hash.delete(namevar)
+#        # else something's screwy
+#        else
+#            # they didn't specify anything related to names
+#        end
 
         return hash
     end

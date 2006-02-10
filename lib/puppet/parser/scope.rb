@@ -727,6 +727,7 @@ module Puppet
                 if defined? @name
                     bucket = TransBucket.new
                     bucket.name = @name
+                    bucket.autoname = self.autoname
 
                     # it'd be nice not to have to do this...
                     results.each { |result|

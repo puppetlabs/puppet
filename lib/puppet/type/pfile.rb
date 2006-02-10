@@ -22,6 +22,12 @@ module Puppet
         newparam(:path) do
             desc "The path to the file to manage.  Must be fully qualified."
             isnamevar
+
+            validate do |value|
+                unless value =~ /^#{File::SEPARATOR}/
+                    raise Puppet::Error, "File paths must be fully qualified"
+                end
+            end
         end
 
         newparam(:backup) do
