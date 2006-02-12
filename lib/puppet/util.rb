@@ -1,7 +1,12 @@
 # A module to collect utility functions.
 
+require 'sync'
+require 'puppet/lock'
+
 module Puppet
 module Util
+    # Create a sync point for any threads
+    @@sync = Sync.new
     # Execute a block as a given user or group
     def self.asuser(user = nil, group = nil)
         require 'etc'
@@ -132,8 +137,43 @@ module Util
         end
     end
 
+    # Create a shared lock for reading
+    def self.readlock(file)
+        @@sync.synchronize(Sync::SH) do
+            File.open(file) { |f|
+                f.lock_shared { |lf| yield lf }
+            }
+        end
+    end
+
+    def self.sync
+    end
+
+    # Create an exclusive lock fro writing, and do the writing in a
+    # tmp file.
+    def self.writelock(file, mode = 0600)
+        tmpfile = file + ".tmp"
+        @@sync.synchronize(Sync::EX) do
+            File.open(file, "w", mode) do |rf|
+                rf.lock_exclusive do |lrf|
+                    yield lrf
+                    File.open(tmpfile, "w", mode) do |tf|
+                        yield tf
+                        tf.flush
+                    end
+                    begin
+                        File.rename(tmpfile, file)
+                    rescue => detail
+                        Puppet.err "Could not rename %s to %s: %s" %
+                            [file, tmpfile, detail]
+                    end
+                end
+            end
+        end
+    end
+
     # Create a lock file while something is happening
-    def self.lock(*opts)
+    def self.disabledlock(*opts)
         lock = opts[0] + ".lock"
         while File.exists?(lock)
             stamp = File.stat(lock).mtime.to_i 
@@ -141,9 +181,11 @@ module Util
                 Puppet.notice "Lock file %s is %s seconds old; removing" %
                     [lock, Time.now.to_i - stamp]
                 File.delete(lock)
+                break
+            else
+                sleep 0.1
             end
             #Puppet.debug "%s is locked" % opts[0]
-            sleep 0.1
         end
         File.open(lock, "w") { |f| f.print " "; f.flush }
         writing = false
@@ -155,8 +197,16 @@ module Util
         end
         begin
             File.open(*opts) { |file| yield file }
-            if writing
-                File.rename(tmp, orig)
+            begin
+                if writing
+                    Puppet.warning "opts were %s" % opts.inspect
+                    system("ls -l %s 2>/dev/null" % tmp)
+                    system("ls -l %s 2>/dev/null" % orig)
+                    File.rename(tmp, orig)
+                end
+            rescue => detail
+                Puppet.err "Could not replace %s: %s" % [orig, detail]
+                File.unlink(tmp)
             end
         rescue => detail
             Puppet.err "Storage error: %s" % detail

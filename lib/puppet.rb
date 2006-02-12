@@ -122,10 +122,11 @@ module Puppet
             directory can be removed without causing harm (although it might
             result in spurious service restarts)."],
         [:rundir,          "$vardir/run", "Where Puppet PID files are kept."],
+        [:lockdir,         "$vardir/locks", "Where lock files are kept."],
         [:statefile,       "$statedir/state.yaml",
-            "Where puppetd and puppetmasterd store state associated with the running
-            configuration.  In the case of puppetmasterd, this file reflects the
-            state discovered through interacting with clients."],
+            "Where puppetd and puppetmasterd store state associated with the
+            running configuration.  In the case of puppetmasterd, this file
+            reflects the state discovered through interacting with clients."],
         [:ssldir,          "$confdir/ssl", "Where SSL certificates are kept."],
         [:genconfig,        false,
             "Whether to just print a configuration to stdout and exit.  Only makes

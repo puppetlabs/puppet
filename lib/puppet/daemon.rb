@@ -221,7 +221,8 @@ module Puppet
                 begin
                     File.unlink(@pidfile)
                 rescue => detail
-                    Puppet.err "Could not remove PID file %s: %s" % [@pidfile, detail]
+                    Puppet.err "Could not remove PID file %s: %s" %
+                        [@pidfile, detail]
                 end
             end
 

@@ -1,10 +1,12 @@
 require 'yaml'
+require 'sync'
+#require 'puppet/lockfile'
 
 module Puppet
     # a class for storing state
     class Storage
         include Singleton
-        
+
         def initialize
             self.class.load
         end
@@ -46,9 +48,7 @@ module Puppet
                 end
                 return
             end
-            #Puppet.debug "Loading statefile %s" % Puppet[:statefile]
-            Puppet::Util.lock(Puppet[:statefile]) { |file|
-                #@@state = Marshal.load(file)
+            Puppet::Util.readlock(Puppet[:statefile]) do |file|
                 begin
                     @@state = YAML.load(file)
                 rescue => detail
@@ -63,7 +63,7 @@ module Puppet
                             Puppet[:statefile]
                     end
                 end
-            }
+            end
 
             unless @@state.is_a?(Hash)
                 Puppet.err "State got corrupted"
@@ -78,7 +78,7 @@ module Puppet
         end
 
         def self.store
-            Puppet.debug "Storing state"
+            #Puppet.debug "Storing state"
             unless FileTest.directory?(File.dirname(Puppet[:statefile]))
                 begin
                     Puppet.recmkdir(File.dirname(Puppet[:statefile]))
@@ -94,11 +94,9 @@ module Puppet
                 Puppet.info "Creating state file %s" % Puppet[:statefile]
             end
 
-            Puppet::Util.lock(
-                Puppet[:statefile], "w", 0600
-            ) { |file|
+            Puppet::Util.writelock(Puppet[:statefile], 0600) do |file|
                 file.print YAML.dump(@@state)
-            }
+            end
         end
     end
 end

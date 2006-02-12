@@ -145,7 +145,7 @@ class TestSchedule < Test::Unit::TestCase
                     "%s matched %s incorrectly" % [value.inspect, @now])
             }
 
-            assert_nothing_raised("Could not parse %s" % values) {
+            assert_nothing_raised("Could not parse %s" % [values]) {
                 s[:range] = values
             }
 

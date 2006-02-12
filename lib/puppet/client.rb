@@ -11,9 +11,9 @@ module Puppet
         include Puppet
         include SignalObserver
 
-        # FIXME the cert stuff should only come up with networking, so it
-        # should be in the network client, not the normal client
-        # but if i do that, it's hard to tell whether the certs have been initialized
+        # FIXME The cert stuff should only come up with networking, so it
+        # should be in the network client, not the normal client.  But if i do
+        # that, it's hard to tell whether the certs have been initialized.
         include Puppet::Daemon
         attr_reader :local, :secureinit
         attr_accessor :schedule, :lastrun
