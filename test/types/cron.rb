@@ -361,8 +361,6 @@ class TestCron < Test::Unit::TestCase
         assert_events([:cron_created], cron)
         cron.retrieve
         assert_events([], cron)
-
-        p cron.evaluate
     end
 end
 

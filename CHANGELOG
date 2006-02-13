@@ -1,3 +1,8 @@
+0.13.1
+    Fixed RPM spec files to create puppet user and group (lutter)
+    Fixed crontab reading and writing (luke)
+    Added symbolic naming in the language (luke)
+
 0.13.0
     Added support for configuration files.
     Even more bug fixes, including the infamous 'frozen object' bug, which was a

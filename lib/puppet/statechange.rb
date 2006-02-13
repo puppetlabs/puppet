@@ -37,7 +37,8 @@ module Puppet
                 return nil
             end
 
-            #@state.info "Is: %s, Should: %s" % [@state.is.inspect, @state.should.inspect]
+            #@state.info "Is: %s, Should: %s" %
+            #    [@state.is.inspect, @state.should.inspect]
 
             begin
                 events = @state.sync

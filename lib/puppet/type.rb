@@ -2123,26 +2123,44 @@ class Type < Puppet::Element
     end
 
     newmetaparam(:alias) do
-        desc "Creates an alias for the object.  This simplifies lookup of the
-            object so is useful in the language.  It is especially useful when
-            you are creating long commands using exec or when many different
-            systems call a given package_ different names::
-
+        desc "Creates an alias for the object.  Puppet uses this internally when you
+            provide a symbolic name:
             
-                file { \"/usr/local/scripts/myscript\":
-                    source => \"puppet://server/module/myscript\",
-                    mode => 755,
-                    alias => myscript
+                file { sshdconfig:
+                    path => $operatingsystem ? {
+                        solaris => \"/usr/local/etc/ssh/sshd_config\",
+                        default => \"/etc/ssh/sshd_config\"
+                    },
+                    source => \"...\"
                 }
 
-                exec { \"/usr/local/scripts/myscript\":
-                    require => file[myscript]
+                service { sshd:
+                    subscribe => file[sshdconfig]
                 }
-            
-            Again, this is somewhat redundant, since any sane person would
-            just use a variable (unless the two statements were in different
-            scopes), and Puppet will autorequire the script anyway, but it
-            gets the point across."
+
+            When you use this feature, the parser sets *sshdconfig* as the name,
+            and the library sets that as an alias for the file so the dependency
+            lookup for *sshd* works.  You can use this parameter yourself,
+            but note that only the library can use these aliases; for instance,
+            the following code will not work:
+
+                file { \"/etc/ssh/sshd_config\":
+                    owner => root,
+                    group => root,
+                    alias => sshdconfig
+                }
+
+                file { sshdconfig:
+                    mode => 644
+                }
+
+            There's no way here for the Puppet parser to know that these two stanzas
+            should be affecting the same file.
+
+            See the `language tutorial`_ for more information.
+
+            .. _language tutorial: http://reductivelabs.com/projects/puppet/documentation/languagetutorial
+            "
 
         munge do |aliases|
             unless aliases.is_a?(Array)
