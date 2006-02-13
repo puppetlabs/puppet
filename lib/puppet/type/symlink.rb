@@ -5,20 +5,26 @@ require 'puppet/type/pfile'
 module Puppet
     newtype(:symlink) do
         @doc = "Create symbolic links to existing files."
-        newstate(:target) do
+        #newstate(:ensure) do
+        ensurable do
             require 'etc'
             attr_accessor :file
 
-            @doc = "Create a link to another file.  Currently only symlinks
+            desc "Create a link to another file.  Currently only symlinks
                 are supported, and attempts to replace normal files with
                 links will currently fail, while existing but incorrect symlinks
                 will be removed."
-            @name = :target
+
+            validate do |value|
+                unless value == :absent or value =~ /^#{File::SEPARATOR}/
+                    raise Puppet::Error, "Invalid symlink %s" % value
+                end
+            end
+
+            nodefault
 
             def create
                 begin
-                    @parent.debug("Creating symlink '%s' to '%s'" %
-                        [self.parent[:path],self.should])
                     unless File.symlink(self.should,self.parent[:path])
                         self.fail "Could not create symlink '%s'" %
                             self.parent[:path]
@@ -31,7 +37,6 @@ module Puppet
 
             def remove
                 if FileTest.symlink?(self.parent[:path])
-                    debug("Removing symlink '%s'" % self.parent[:path])
                     begin
                         File.unlink(self.parent[:path])
                     rescue
@@ -52,10 +57,9 @@ module Puppet
 
                 if FileTest.symlink?(self.parent[:path])
                     self.is = File.readlink(self.parent[:path])
-                    debug("link value is '%s'" % self.is)
                     return
                 else
-                    self.is = nil
+                    self.is = :absent
                     return
                 end
             end
@@ -63,28 +67,36 @@ module Puppet
             # this is somewhat complicated, because it could exist and be
             # a file
             def sync
-                if self.should.nil?
+                case self.should
+                when :absent
                     self.remove()
-                else # it should exist and be a symlink
+                    return :symlink_removed
+                when /^#{File::SEPARATOR}/
                     if FileTest.symlink?(self.parent[:path])
                         path = File.readlink(self.parent[:path])
                         if path != self.should
                             self.remove()
                             self.create()
+                            return :symlink_changed
+                        else
+                            self.info "Already in sync"
+                            return nil
                         end
                     elsif FileTest.exists?(self.parent[:path])
                         self.fail "Cannot replace normal file '%s'" %
                             self.parent[:path]
                     else
                         self.create()
+                        return :symlink_created
                     end
+                else
+                    raise Puppet::DevError, "Got invalid symlink value %s" %
+                        self.should
                 end
-
-                #self.parent.newevent(:event => :inode_changed)
             end
         end
 
-        attr_reader :stat, :path, :params
+        attr_reader :stat, :params
 
         copyparam(Puppet.type(:file), :path)
 
@@ -96,7 +108,7 @@ module Puppet
                     # The Solaris Blastwave repository installs everything
                     # in /opt/csw; link it into /usr/local
                     symlink { \"/usr/local\":
-                        target => \"/opt/csw\",
+                        ensure => \"/opt/csw\",
                         recurse => 1
                     }
 
@@ -106,7 +118,7 @@ module Puppet
 
             munge do |value|
                 @stat = nil
-                @target = @parent.state(:target).should
+                @target = @parent.state(:ensure).should
 
                 # we want to remove our state, because we're creating children
                 # to do the links
@@ -124,7 +136,7 @@ module Puppet
                     return
                 end
 
-                @parent.delete(:target)
+                @parent.delete(:ensure)
 
                 recurse = value
                 # we might have a string, rather than a number
@@ -147,7 +159,7 @@ module Puppet
                 # working in pfile
 
                 args = {
-                    :name => @parent.name,
+                    :path => @parent.name,
                     :linkmaker => true,
                     :recurse => recurse,
                     :source => @target
@@ -155,7 +167,6 @@ module Puppet
 
                 dir = Puppet.type(:file).implicitcreate(args)
                 dir.parent = @parent
-                @parent.debug "Got dir %s" % dir.name
                 @parent.push dir
             end
         end
