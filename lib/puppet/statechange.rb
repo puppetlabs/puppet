@@ -12,7 +12,7 @@ module Puppet
             @path = [state.path,"change"].flatten
             @is = state.is
 
-            if state.is == state.should
+            if state.insync?
                 raise Puppet::Error.new(
                     "Tried to create a change for in-sync state %s" % state.name
                 )
@@ -25,8 +25,8 @@ module Puppet
 
 		#---------------------------------------------------------------
         def go
-            if @state.is == @state.should
-                @state.info "already in sync"
+            if @state.insync?
+                @state.info "Already in sync"
                 return nil
             end
 

@@ -323,6 +323,47 @@ class TestCron < Test::Unit::TestCase
             }
         }
     end
+
+    # Test that we can read and write cron tabs
+    def test_crontab
+        Puppet.type(:cron).filetype = Puppet.type(:cron).defaulttype
+        type = nil
+        unless type = Puppet.type(:cron).filetype
+            $stderr.puts "No crontab type; skipping test"
+        end
+
+        obj = nil
+        assert_nothing_raised {
+            obj = type.new(Process.uid)
+        }
+
+        txt = nil
+        assert_nothing_raised {
+            txt = obj.read
+        }
+
+        assert_nothing_raised {
+            obj.write(txt)
+        }
+    end
+
+    # Verify that comma-separated numbers are not resulting in rewrites
+    def test_norewrite
+        cron = nil
+        assert_nothing_raised {
+            cron = Puppet.type(:cron).create(
+                :command => "/bin/date > /dev/null",
+                :minute => [0, 30],
+                :name => "crontest"
+            )
+        }
+
+        assert_events([:cron_created], cron)
+        cron.retrieve
+        assert_events([], cron)
+
+        p cron.evaluate
+    end
 end
 
 # $Id$

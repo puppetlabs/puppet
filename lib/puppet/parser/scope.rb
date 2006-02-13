@@ -564,6 +564,9 @@ module Puppet
             # in the scope tree, which is what provides some minimal closure-like
             # behaviour.
             def setobject(type, name, params, file, line)
+                # FIXME This objectlookup stuff should be looking up using both
+                # the name and the namevar.
+
                 # First see if we can look the object up using normal scope
                 # rules, i.e., one of our parent classes has defined the
                 # object or something

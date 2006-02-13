@@ -21,21 +21,7 @@ module Util
             # The gid has to be changed first, because, well, otherwise we won't
             # be able to
             if group
-                if group.is_a?(Integer)
-                    gid = group
-                else
-                    unless obj = Puppet.type(:group)[group]
-                        obj = Puppet.type(:group).create(
-                            :name => group,
-                            :check => [:gid]
-                        )
-                    end
-                    obj.retrieve
-                    gid = obj.is(:gid)
-                    unless gid.is_a?(Integer)
-                        raise Puppet::Error, "Could not find group %s" % group
-                    end
-                end
+                gid = self.gid(group)
 
                 if Process.gid != gid
                     oldgid = Process.gid
@@ -48,23 +34,7 @@ module Util
             end
 
             if user
-                # Retrieve the user id
-                if user.is_a?(Integer)
-                    uid = user
-                else
-                    unless obj = Puppet.type(:user)[user]
-                        obj = Puppet.type(:user).create(
-                            :name => user,
-                            :check => [:uid, :gid]
-                        )
-                    end
-                    obj.retrieve
-                    uid = obj.is(:uid)
-                    unless uid.is_a?(Integer)
-                        raise Puppet::Error, "Could not find user %s" % user
-                    end
-                end
-
+                uid = self.uid(user)
                 # Now change the uid
                 if Process.uid != uid
                     olduid = Process.uid
@@ -93,16 +63,7 @@ module Util
     # Change the process to a different user
     def self.chuser
         if group = Puppet[:group]
-            if group =~ /^\d+$/
-                group = Integer(group)
-            else
-                begin
-                    g = Etc.getgrnam(group)
-                rescue ArgumentError
-                    $stderr.puts "Could not find group %s" % group
-                end
-                group = g.gid
-            end
+            group = self.gid(group)
             unless Process.gid == group
                 begin
                     Process.egid = group 
@@ -115,16 +76,7 @@ module Util
         end
 
         if user = Puppet[:user]
-            if user =~ /^\d+$/
-                user = Integer(user)
-            else
-                begin
-                    u = Etc.getpwnam(user)
-                rescue ArgumentError
-                    $stderr.puts "Could not find user %s" % user
-                end
-                user = u.uid
-            end
+            user = self.uid(user)
             unless Process.uid == user
                 begin
                     Process.euid = user 
@@ -144,9 +96,6 @@ module Util
                 f.lock_shared { |lf| yield lf }
             }
         end
-    end
-
-    def self.sync
     end
 
     # Create an exclusive lock fro writing, and do the writing in a
@@ -170,6 +119,56 @@ module Util
                 end
             end
         end
+    end
+
+    # Get the GID of a given group, provided either a GID or a name
+    def self.gid(group)
+        if group =~ /^\d+$/
+            group = Integer(group)
+        end
+        gid = nil
+        if group.is_a?(Integer)
+            gid = group
+        else
+            unless obj = Puppet.type(:group)[group]
+                obj = Puppet.type(:group).create(
+                    :name => group,
+                    :check => [:gid]
+                )
+            end
+            obj.retrieve
+            gid = obj.is(:gid)
+            unless gid.is_a?(Integer)
+                raise Puppet::Error, "Could not find group %s" % group
+            end
+        end
+
+        return gid
+    end
+
+    # Get the UID of a given user, whether a UID or name is provided
+    def self.uid(user)
+        uid = nil
+        if user =~ /^\d+$/
+            user = Integer(user)
+        end
+        if user.is_a?(Integer)
+            uid = user
+        else
+            unless obj = Puppet.type(:user)[user]
+                obj = Puppet.type(:user).create(
+                    :name => user,
+                    :check => [:uid, :gid]
+                )
+            end
+            obj.retrieve
+            uid = obj.is(:uid)
+            unless uid.is_a?(Integer)
+                raise Puppet::Error, "Could not find user %s" % user
+            end
+        end
+
+        return uid
     end
 
     # Create a lock file while something is happening

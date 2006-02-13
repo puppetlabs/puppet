@@ -55,7 +55,8 @@ module Puppet
                     tail = "deleted"
                 #elsif @is == @should
                 elsif self.insync?
-                    self.info "already in sync"
+                    self.info "Already in sync: %s vs %s" %
+                        [@is.inspect, @should.inspect]
                     return nil
                 else
                     #@is = self.should

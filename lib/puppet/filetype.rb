@@ -44,6 +44,9 @@ module Puppet
                     rescue Puppet::Error => detail
                         raise
                     rescue => detail
+                        if Puppet[:debug]
+                            puts detail.backtrace
+                        end
                         raise Puppet::Error, "%s could not read %s: %s" %
                             [self.class, @path, detail]
                     end
@@ -134,29 +137,38 @@ module Puppet
             # Only add the -u flag when the @path is different.  Fedora apparently
             # does not think I should be allowed to set the @path to my
             def cmdbase
-                uid = CronType.uid(@path)
                 cmd = nil
-                if uid == Process.uid
+                if @path == Process.uid
                     return "crontab"
                 else
                     return "crontab -u #{@path}"
                 end
             end
 
+            def initialize(user)
+                begin
+                    uid = Puppet::Util.uid(user)
+                rescue Puppet::Error => detail
+                    raise Puppet::Error, "Could not retrieve user %s" % user
+                end
+
+                @path = uid
+            end
+
             # Read a specific @path's cron tab.
             def read
-                %x{#{cmdbase(@path)} -l 2>/dev/null}
+                %x{#{cmdbase()} -l 2>/dev/null}
             end
 
             # Remove a specific @path's cron tab.
             def remove
-                %x{#{cmdbase(@path)} -r 2>/dev/null}
+                %x{#{cmdbase()} -r 2>/dev/null}
             end
 
             # Overwrite a specific @path's cron tab; must be passed the @path name
             # and the text with which to create the cron tab.
             def write(text)
-                IO.popen("#{cmdbase(@path)} -", "w") { |p|
+                IO.popen("#{cmdbase()} -", "w") { |p|
                     p.print text
                 }
             end

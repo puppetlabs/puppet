@@ -21,6 +21,16 @@ module Puppet
                 attr_accessor :boundaries
             end
 
+            # We have to override the parent method, because we consume the entire
+            # "should" array
+            def insync?
+                if self.class.name == :command
+                    return super
+                else
+                    return @is == @should
+                end
+            end
+
             # A method used to do parameter input handling.  Converts integers
             # in string form to actual integers, and returns the value if it's
             # an integer or false if it's just a normal string.
@@ -65,6 +75,18 @@ module Puppet
                 end
 
                 return false
+            end
+
+            def is_to_s
+                if @is.empty?
+                    return "*"
+                else
+                    if @is.is_a? Array
+                        return @is.join(",")
+                    else
+                        return @is.to_s
+                    end
+                end
             end
 
             def should_to_s
@@ -169,16 +191,18 @@ module Puppet
         newparam(:user) do
             desc "The user to run the command as.  This user must
                 be allowed to run cron jobs, which is not currently checked by
-                Puppet."
+                Puppet.
+                
+                The user defaults to whomever Puppet is running as."
 
-            # This validation isn't really a good idea, since the user might
-            # be created by Puppet, in which case the validation will fail.
+            defaultto Process.uid
+
             validate do |user|
                 require 'etc'
 
                 begin
-                    obj = Etc.getpwnam(user)
-                    parent.uid = obj.uid
+                    parent.uid = Puppet::Util.uid(user)
+                    #obj = Etc.getpwnam(user)
                 rescue ArgumentError
                     self.fail "User %s not found" % user
                 end
@@ -212,13 +236,6 @@ module Puppet
         @instances = {}
         @tabs = {}
 
-        case Facter["operatingsystem"].value
-        when "Solaris":
-            @filetype = Puppet::FileType.filetype(:suntab)
-        else
-            @filetype = Puppet::FileType.filetype(:crontab)
-        end
-
         class << self
             attr_accessor :filetype
         end
@@ -239,6 +256,17 @@ module Puppet
             @tabs = {}
             super
         end
+
+        def self.defaulttype
+            case Facter["operatingsystem"].value
+            when "Solaris":
+                return Puppet::FileType.filetype(:suntab)
+            else
+                return Puppet::FileType.filetype(:crontab)
+            end
+        end
+
+        self.filetype = self.defaulttype()
 
         # Override the default Puppet::Type method, because instances
         # also need to be deleted from the @instances hash
@@ -303,9 +331,9 @@ module Puppet
                         fields().zip(match.captures).each { |param, value|
                             unless value == "*"
                                 unless param == :command
-                                    if value =~ /,/
-                                        value = value.split(",")
-                                    end
+                                    # We always want the 'is' value to be an
+                                    # array
+                                    value = value.split(",")
                                 end
                                 hash[param] = value
                             end
@@ -403,7 +431,7 @@ module Puppet
         # Collect all Cron instances for a given user and convert them
         # into literal text.
         def self.tab(user)
-            Puppet.info "writing cron tab for %s" % user
+            Puppet.info "Writing cron tab for %s" % user
             if @instances.include?(user)
                 return self.header() + @instances[user].reject { |obj|
                     if obj.is_a?(self) and obj.should(:ensure) == :absent
