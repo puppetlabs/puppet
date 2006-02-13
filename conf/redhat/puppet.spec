@@ -4,8 +4,8 @@
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 0.13.0
-Release: 3%{?dist}
+Version: 0.13.1
+Release: 1%{?dist}
 License: GPL
 Group: System Environment/Base
 
