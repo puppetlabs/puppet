@@ -38,8 +38,8 @@ class TestSymlink < Test::Unit::TestCase
 
     def newlink(hash = {})
         hash[:name] = tmplink()
-        unless hash.include?(:target)
-            hash[:target] = mktmpfile()
+        unless hash.include?(:ensure)
+            hash[:ensure] = mktmpfile()
         end
         link = Puppet.type(:symlink).create(hash)
         return link
@@ -71,7 +71,7 @@ class TestSymlink < Test::Unit::TestCase
 
         link = nil
         assert_nothing_raised {
-            link = newlink(:target => source, :recurse => true)
+            link = newlink(:ensure => source, :recurse => true)
         }
         comp = newcomp("linktest",link)
         cycle(comp)
