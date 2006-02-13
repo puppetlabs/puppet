@@ -248,7 +248,7 @@ module Puppet
                 # clean up the args a lot for links
                 old = args.dup
                 args = {
-                    :target => old[:source],
+                    :ensure => old[:source],
                     :path => path
                 }
             else
