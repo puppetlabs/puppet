@@ -27,8 +27,17 @@
 # debug::
 #   Enable full debugging.
 #
+# extclassfile::
+#   Specify the location of the class file to load.  Only affects the
+#   +--loadclasses+ option.
+#
 # help::
 #   Print this help message
+#
+# loadclasses::
+#   Load any stored classes.  +puppetd+ caches configured classes (usually at
+#   /etc/puppet/classes.txt), and setting this option causes all of those classes
+#   to be set in your +puppet+ manifest.
 #
 # logfile::
 #   Where to send messages.  Choose between syslog, the console, and a log file.
@@ -65,8 +74,10 @@ end
 
 options = [
     [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+    [ "--extclassfile", "-e",		GetoptLong::REQUIRED_ARGUMENT ],
     [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
     [ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--loadclasses",				GetoptLong::NO_ARGUMENT ],
     [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
     [ "--use-nodes",    			GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
@@ -82,6 +93,8 @@ verbose = false
 noop = false
 logfile = false
 parseonly = false
+loadclasses = false
+classfile = nil
 
 master = {
     :Local => true
@@ -108,6 +121,10 @@ begin
                 verbose = true
             when "--debug"
                 debug = true
+            when "--extclassfile"
+                classfile = arg
+            when "--loadclasses"
+                loadclasses = true
             when "--logdest"
                 begin
                     Puppet::Log.newdestination(arg)
@@ -141,6 +158,18 @@ Puppet.genconfig
 Puppet.genmanifest
 
 master[:File] = ARGV.shift
+
+if loadclasses
+    file = classfile || Puppet[:classfile]
+    if FileTest.exists?(file)
+        unless FileTest.readable?(file)
+            $stderr.puts "%s is not readable" % file
+            exit(63)
+        end
+
+        master[:Classes] = File.read(file).split(/[\s\n]/)
+    end
+end
 
 begin
     server = Puppet::Server::Master.new(master)
