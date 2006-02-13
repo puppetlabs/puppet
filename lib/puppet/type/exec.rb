@@ -17,14 +17,16 @@ module Puppet
 
                 # defined in the production class
                 exec { \"make\":
-                    cwd => \"/prod/build/dir\"
+                    cwd => \"/prod/build/dir\",
+                    path => \"/usr/bin:/usr/sbin:/bin\"
                 }
 
                 . etc. .
 
                 # defined in the test class
                 exec { \"make\":
-                    cwd => \"/test/build/dir\"
+                    cwd => \"/test/build/dir\",
+                    path => \"/usr/bin:/usr/sbin:/bin\"
                 }
 
             Any other type would throw an error, complaining that you had
@@ -44,6 +46,19 @@ module Puppet
 
         require 'open3'
         require 'puppet/type/state'
+
+        # Create a new check mechanism.  It's basically just a parameter that provides
+        # one extra 'check' method.
+        def self.newcheck(name, &block)
+            @checks ||= {}
+
+            check = newparam(name, &block)
+            @checks[name] = check
+        end
+
+        def self.checks
+            @checks.keys
+        end
 
         newstate(:returns) do |state|
             munge do |value|
@@ -96,25 +111,14 @@ module Puppet
                 end
             end
 
-            # because this command always runs,
-            # we're just using retrieve to verify that the command
-            # exists and such
+            # First verify that all of our checks pass.
             def retrieve
-                if file = @parent[:creates]
-                    if FileTest.exists?(file)
-                        @is = true
-                        @should = [true]
-                        return
-                    end
-                end
+                # Default to somethinng
 
-                if self.parent[:refreshonly]
-                    # if refreshonly is enabled, then set things so we
-                    # won't sync
-                    self.is = self.should
+                if @parent.check
+                    self.is = :notrun
                 else
-                    # else, just set it to something we know it won't be
-                    self.is = nil
+                    self.is = self.should
                 end
             end
 
@@ -129,52 +133,23 @@ module Puppet
                 tmppath = ENV["PATH"]
 
                 event = :executed_command
-                begin
-                    # Do our chdir
-                    Dir.chdir(dir) {
-                        if self.parent[:path]
-                            ENV["PATH"] = self.parent[:path].join(":")
-                        end
 
-                        # The user and group default to nil, which 'asuser'
-                        # handlers correctly
-                        Puppet::Util.asuser(@parent[:user], @parent[:group]) {
-                            # capture both stdout and stderr
-                            if @parent[:user]
-                                unless defined? @@alreadywarned
-                                    Puppet.warning(
-                            "Cannot capture STDERR when running as another user"
-                                    )
-                                    @@alreadywarned = true
-                                end
-                                @output = %x{#{self.parent[:command]}}
-                            else
-                                @output = %x{#{self.parent[:command]} 2>&1}
-                            end
-                        }
-                        status = $?
+                @output, status = @parent.run(self.parent[:command])
 
-                        loglevel = @parent[:loglevel]
-                        if status.exitstatus.to_s != self.should.to_s
-                            err("%s returned %s" %
-                                [self.parent[:command],status.exitstatus])
+                loglevel = @parent[:loglevel]
+                if status.exitstatus.to_s != self.should.to_s
+                    err("%s returned %s instead of %s" %
+                        [self.parent[:command], status.exitstatus, self.should.to_s])
 
-                            # if we've had a failure, up the log level
-                            loglevel = :err
-                            event = :failed_command
-                        end
-
-                        # and log
-                        @output.split(/\n/).each { |line|
-                            self.send(loglevel, line)
-                        }
-                    }
-                rescue Errno::ENOENT => detail
-                    self.fail detail.to_s
-                ensure
-                    # reset things to how we found them
-                    ENV["PATH"] = tmppath
+                    # if we've had a failure, up the log level
+                    loglevel = :err
+                    event = :failed_command
                 end
+
+                # and log
+                @output.split(/\n/).each { |line|
+                    self.send(loglevel, line)
+                }
 
                 return event
             end
@@ -276,7 +251,7 @@ module Puppet
             end
         end
 
-        newparam(:refreshonly) do
+        newcheck(:refreshonly) do
             desc "The command should only be run as a
                 refresh mechanism for when a dependent object is changed.  It only
                 makes sense to use this option when this command depends on some
@@ -295,9 +270,15 @@ module Puppet
                     }
                 
                 "
+
+            # We always fail this test, because we're only supposed to run
+            # on refresh.
+            def check
+                false
+            end
         end
 
-        newparam(:creates) do 
+        newcheck(:creates) do 
             desc "A file that this command creates.  If this
                 parameter is provided, then the command will only be run
                 if the specified file does not exist.
@@ -318,6 +299,59 @@ module Puppet
                 unless file =~ %r{^#{File::SEPARATOR}}
                     self.fail "'creates' files must be fully qualified."
                 end
+            end
+
+            # If the file exists, return false (i.e., don't run the command),
+            # else return true
+            def check
+                return ! FileTest.exists?(self.value)
+            end
+        end
+
+        newcheck(:unless) do
+            desc "If this parameter is set, then this +exec+ will run unless
+                the command returns 0.  For example::
+                    
+                    exec { \"/bin/echo root >> /usr/lib/cron/cron.allow\":
+                        path => \"/usr/bin:/usr/sbin:/bin\",
+                        unless => \"grep root /usr/lib/cron/cron.allow 2>/dev/null\"
+                    }
+
+                This would add +root+ to the cron.allow file (on Solaris) unless
+                +grep+ determines it's already there.
+
+                Note that this command follows the same rules as the main command,
+                which is to say that it must be fully qualified if the path is not set.
+                "
+
+            # Return true if the command does not return 0.
+            def check
+                output, status = @parent.run(self.value)
+
+                return status.exitstatus != 0
+            end
+        end
+
+        newcheck(:onlyif) do
+            desc "If this parameter is set, then this +exec+ will only run if
+                the command returns 0.  For example::
+                    
+                    exec { \"logrotate\":
+                        path => \"/usr/bin:/usr/sbin:/bin\",
+                        onlyif => \"test `du /var/log/messages | cut -f1` -gt 100000\"
+                    }
+
+                This would run +logrotate+ only if that test returned true.
+
+                Note that this command follows the same rules as the main command,
+                which is to say that it must be fully qualified if the path is not set.
+                "
+
+            # Return true if the command returns 0.
+            def check
+                output, status = @parent.run(self.value)
+
+                return status.exitstatus == 0
             end
         end
 
@@ -341,17 +375,36 @@ module Puppet
                 reqs << self[:cwd]
             end
 
-            tmp = self[:command].dup
+            [:command, :onlyif, :unless].each { |param|
+                next unless tmp = self[param]
 
-            # And search the command line for files, adding any we find.  This
-            # will also catch the command itself if it's fully qualified.  It might
-            # not be a bad idea to add unqualified files, but, well, that's a
-            # bit more annoying to do.
-            while tmp.sub!(%r{(#{File::SEPARATOR}\S+)}, '')
-                reqs << $1
-            end
+                # And search the command line for files, adding any we find.  This
+                # will also catch the command itself if it's fully qualified.  It might
+                # not be a bad idea to add unqualified files, but, well, that's a
+                # bit more annoying to do.
+                reqs += tmp.scan(%r{(#{File::SEPARATOR}\S+)})
+            }
+
+            # For some reason, the += isn't causing a flattening
+            reqs.flatten!
 
             reqs
+        end
+
+        # Verify that we pass all of the checks.
+        def check
+            self.class.checks.each { |check|
+                if @parameters.include?(check)
+                    if @parameters[check].check
+                        self.debug "%s returned true" % check
+                    else
+                        self.debug "%s returned false" % check
+                        return false
+                    end
+                end
+            }
+
+            return true
         end
 
         def output
@@ -365,6 +418,47 @@ module Puppet
         # this might be a very, very bad idea...
         def refresh
             self.state(:returns).sync
+        end
+
+        # Run a command.
+        def run(command)
+            output = nil
+            status = nil
+            tmppath = ENV["PATH"]
+            dir = self[:cwd] || Dir.pwd
+            begin
+                # Do our chdir
+                Dir.chdir(dir) {
+                    if self[:path]
+                        ENV["PATH"] = self[:path].join(":")
+                    end
+
+                    # The user and group default to nil, which 'asuser'
+                    # handlers correctly
+                    Puppet::Util.asuser(self[:user], self[:group]) {
+                        # capture both stdout and stderr
+                        if self[:user]
+                            unless defined? @@alreadywarned
+                                Puppet.warning(
+                        "Cannot capture STDERR when running as another user"
+                                )
+                                @@alreadywarned = true
+                            end
+                            output = %x{#{command}}
+                        else
+                            output = %x{#{command} 2>&1}
+                        end
+                    }
+                    status = $?.dup
+                }
+            rescue Errno::ENOENT => detail
+                self.fail detail.to_s
+            ensure
+                # reset things to how we found them
+                ENV["PATH"] = tmppath
+            end
+
+            return output, status
         end
 
         def to_s

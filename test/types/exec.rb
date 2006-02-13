@@ -255,7 +255,7 @@ class TestExec < Test::Unit::TestCase
         Puppet::Type.finalize
 
         # Verify we get the script itself
-        assert(exec.requires?(file), "Exec did not autorequire file")
+        assert(exec.requires?(file), "Exec did not autorequire %s" % file)
 
         # Verify we catch the cwd
         assert(exec.requires?(baseobj), "Exec did not autorequire cwd")
@@ -266,6 +266,50 @@ class TestExec < Test::Unit::TestCase
         # Verify that we catch inline files
         assert(cat.requires?(ofile), "Exec did not catch second inline file")
         assert(cat.requires?(file), "Exec did not catch inline file")
+    end
+
+    def test_ifonly
+        afile = tempfile()
+        bfile = tempfile()
+
+        exec = nil
+        assert_nothing_raised {
+            exec = Puppet.type(:exec).create(
+                :command => "touch %s" % bfile,
+                :onlyif => "test -f %s" % afile,
+                :path => ENV['PATH']
+            )
+        }
+
+        assert_events([], exec)
+        system("touch %s" % afile)
+        assert_events([:executed_command], exec)
+        assert_events([:executed_command], exec)
+        system("rm %s" % afile)
+        assert_events([], exec)
+    end
+
+    def test_unless
+        afile = tempfile()
+        bfile = tempfile()
+
+        exec = nil
+        assert_nothing_raised {
+            exec = Puppet.type(:exec).create(
+                :command => "touch %s" % bfile,
+                :unless => "test -f %s" % afile,
+                :path => ENV['PATH']
+            )
+        }
+
+        assert_events([:executed_command], exec)
+        assert_events([:executed_command], exec)
+        system("touch %s" % afile)
+        assert_events([], exec)
+        assert_events([], exec)
+        system("rm %s" % afile)
+        assert_events([:executed_command], exec)
+        assert_events([:executed_command], exec)
     end
 
     if Process.uid == 0

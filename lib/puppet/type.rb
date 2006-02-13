@@ -452,6 +452,8 @@ class Type < Puppet::Element
 
         @@metaparamhash ||= {}
         @@metaparams.each { |p| @@metaparamhash[name] = p }
+
+        return param
     end
 
     def self.eachmetaparam
@@ -486,6 +488,8 @@ class Type < Puppet::Element
         if param.isnamevar?
             @namevar = param.name
         end
+
+        return param
     end
 
     # Create a new state.
