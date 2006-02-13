@@ -2097,9 +2097,10 @@ class Type < Puppet::Element
 
     newmetaparam(:loglevel) do
         desc "Sets the level that information will be logged:
-             debug, info, verbose, notice, warning, err, alert, emerg or crit.
-             The log levels have the biggest impact when logs are sent to
-             syslog (which is currently the default)."
+             ``debug``, ``info``, ``verbose``, ``notice``, ``warning``,
+             ``err``, ``alert``, ``emerg`` or ``crit``.  The log levels have
+             the biggest impact when logs are sent to syslog (which is
+             currently the default)."
         defaultto :notice
 
         validate do |loglevel|
@@ -2124,7 +2125,7 @@ class Type < Puppet::Element
 
     newmetaparam(:alias) do
         desc "Creates an alias for the object.  Puppet uses this internally when you
-            provide a symbolic name:
+            provide a symbolic name::
             
                 file { sshdconfig:
                     path => $operatingsystem ? {
@@ -2138,11 +2139,11 @@ class Type < Puppet::Element
                     subscribe => file[sshdconfig]
                 }
 
-            When you use this feature, the parser sets *sshdconfig* as the name,
+            When you use this feature, the parser sets ``sshdconfig`` as the name,
             and the library sets that as an alias for the file so the dependency
-            lookup for *sshd* works.  You can use this parameter yourself,
+            lookup for ``sshd`` works.  You can use this parameter yourself,
             but note that only the library can use these aliases; for instance,
-            the following code will not work:
+            the following code will not work::
 
                 file { \"/etc/ssh/sshd_config\":
                     owner => root,
@@ -2157,9 +2158,8 @@ class Type < Puppet::Element
             There's no way here for the Puppet parser to know that these two stanzas
             should be affecting the same file.
 
-            See the `language tutorial`_ for more information.
-
-            .. _language tutorial: http://reductivelabs.com/projects/puppet/documentation/languagetutorial
+            See the `language tutorial <http://reductivelabs.com/projects/puppet/documentation/languagetutorial>`__ for more information.
+            
             "
 
         munge do |aliases|
