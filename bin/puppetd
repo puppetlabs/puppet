@@ -37,8 +37,23 @@
 #   Send all produced logs to the central puppetmasterd system.  This currently
 #   results in a significant slowdown, so it is not recommended.
 #
+# disable::
+#   Disable working on the local system.  This puts a lock file in place,
+#   causing +puppetd+ not to work on the system until the lock file is removed.
+#   This is useful if you are testing a configuration and do not want the central
+#   configuration to override the local state until everything is tested and
+#   committed.
+#
+#   +puppetd+ exits after executing this.
+#
 # debug::
 #   Enable full debugging.
+#
+# enable::
+#   Enable working on the local system.  This removes any lock file, causing
+#   +puppetd+ to start managing the local system again.
+#
+#   +puppetd+ exits after executing this.
 #
 # fqdn::
 #   Set the fully-qualified domain name of the client.  This is only used for
@@ -95,7 +110,9 @@ end
 
 options = [
 	[ "--centrallogging",			GetoptLong::NO_ARGUMENT ],
+	[ "--disable",	    			GetoptLong::NO_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+	[ "--enable",	    			GetoptLong::NO_ARGUMENT ],
 	[ "--fqdn",     "-f",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
@@ -122,11 +139,18 @@ centrallogs = false
 
 setdest = false
 
+enable = false
+disable = false
+
 begin
     result.each { |opt,arg|
         case opt
             # First check to see if the argument is a valid configuration parameter;
             # if so, set it.
+            when "--disable"
+                disable = true
+            when "--enable"
+                enable = true
             when "--centrallogging"
                 centrallogs = true
             when "--help"
@@ -208,6 +232,16 @@ end
 
 Puppet.notice "Starting Puppet client version %s" % [Puppet.version]
 client = Puppet::Client::MasterClient.new(args)
+
+if enable
+    client.enable
+elsif disable
+    client.disable
+end
+
+if enable or disable
+    exit(0)
+end
 
 unless client.readcert
     if waitforcert

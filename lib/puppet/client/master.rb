@@ -1,5 +1,10 @@
 # The client for interacting with the puppetmaster config server.
 class Puppet::Client::MasterClient < Puppet::Client
+    Puppet.setdefaults("puppetd",
+        [:puppetdlockfile, "$statedir/puppetdlock",
+            "A lock file to temporarily stop puppetd from doing anything."]
+    )
+
     @drivername = :Master
 
     def self.facts
@@ -79,6 +84,19 @@ class Puppet::Client::MasterClient < Puppet::Client
         @cachefile
     end
 
+    # Disable running the configuration.
+    def disable
+        Puppet.notice "Disabling puppetd"
+        unless FileTest.exists? File.dirname(Puppet[:puppetdlockfile])
+            Puppet.recmkdir(File.dirname(Puppet[:puppetdlockfile]))
+        end
+        begin
+            File.open(Puppet[:puppetdlockfile], "w") { |f| f.puts ""; f.flush }
+        rescue => detail
+            raise Puppet::Error, "Could not lock puppetd: %s" % detail
+        end
+    end
+
     # Initialize and load storage
     def dostorage
         begin
@@ -93,6 +111,14 @@ class Puppet::Client::MasterClient < Puppet::Client
                 raise Puppet::Error.new("Cannot remove %s: %s" %
                     [Puppet[statefile], detail])
             end
+        end
+    end
+
+    # Enable running again.
+    def enable
+        Puppet.notice "Enabling puppetd"
+        if FileTest.exists? Puppet[:puppetdlockfile]
+            File.unlink(Puppet[:puppetdlockfile])
         end
     end
 
@@ -227,8 +253,13 @@ class Puppet::Client::MasterClient < Puppet::Client
 
     # The code that actually runs the configuration.  
     def run
-        self.getconfig
-        self.apply
+        if FileTest.exists? Puppet[:puppetdlockfile]
+            Puppet.notice "%s exists; skipping configuration run" %
+                Puppet[:puppetdlockfile]
+        else
+            self.getconfig
+            self.apply
+        end
     end
 
     def setclasses(ary)
