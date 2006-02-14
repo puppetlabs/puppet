@@ -169,9 +169,16 @@ module Puppet
             # Evaluate a specific node's code.  This method will normally be called
             # on the top-level scope, but it actually evaluates the node at the
             # appropriate scope.
-            def evalnode(names, facts)
-                scope = code = nil
+            def evalnode(names, facts, classes = nil, parent = nil)
+                # First make sure there aren't any other node scopes lying around
+                self.nodeclean
 
+                # If they've passed classes in, then just generate from there.
+                if classes
+                    return self.gennode(names, facts, classes, parent)
+                end
+
+                scope = code = nil
                 # Find a node that matches one of our names
                 names.each { |node|
                     if hash = @nodetable[node]
@@ -186,9 +193,6 @@ module Puppet
                     raise Puppet::Error, "Could not find configuration for %s" %
                         names.join(" or ")
                 end
-
-                # First make sure there aren't any other node scopes lying around
-                self.nodeclean
 
                 # We need to do a little skullduggery here.  We want a
                 # temporary scope, because we don't want this scope to
@@ -219,6 +223,40 @@ module Puppet
                 # but that will possibly end up with far too many tags.
                 #self.logtags
                 return objects
+            end
+
+            # Pull in all of the appropriate classes and evaluate them.  It'd
+            # be nice if this didn't know quite so much about how AST::Node
+            # operated internally.
+            def gennode(names, facts, classes, parent)
+                name = names.shift
+                arghash = {
+                    :name => name,
+                    :code => AST::ASTArray.new(:pin => "[]")
+                }
+
+                if parent
+                    arghash[:parentclass] = parent
+                end
+
+                # Create the node
+                node = AST::Node.new(arghash)
+                node.keyword = "node"
+                node.name = name
+
+                # Now evaluate it, which evaluates the parent but doesn't really
+                # do anything else but does return the nodescope
+                scope = node.safeevaluate(self)
+
+                # And now evaluate each set klass within the nodescope.
+                classes.each { |klass|
+                    if code = scope.lookuptype(klass)
+                        Puppet.warning "evaluating %s" % klass
+                        code.safeevaluate(scope, {}, klass, klass)
+                    end
+                }
+
+                return scope.to_trans
             end
 
             # Retrieve a specific node.  This is used in ast.rb to find a

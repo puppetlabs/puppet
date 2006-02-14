@@ -10,6 +10,32 @@ require 'puppet/parser/scope'
 module Puppet
     module Parser
         class Interpreter
+            Puppet.setdefaults("ldap",
+                [:ldapnodes, false,
+                    "Whether to search for node configurations in LDAP."],
+                [:ldapserver, "ldap",
+                    "The LDAP server.  Only used if ``ldapnodes`` is enabled."],
+                [:ldapport, 389,
+                    "The LDAP port.  Only used if ``ldapnodes`` is enabled."],
+                [:ldapstring, "(&(objectclass=puppetClient)(cn=%s))",
+                    "The search string used to find an LDAP node."],
+                [:ldapattrs, "puppetclass",
+                    "The LDAP attributes to use to define Puppet classes.  Values
+                    should be comma-separated."],
+                [:ldapparentattr, "parentnode",
+                    "The attribute to use to define the parent node."],
+                [:ldapuser, "",
+                    "The user to use to connect to LDAP.  Must be specified as a
+                    full DN."],
+                [:ldappassword, "",
+                    "The password to use to connect to LDAP."],
+                [:ldapbase, "",
+                    "The search base for LDAP searches.  It's impossible to provide
+                    a meaningful default here, although the LDAP libraries might
+                    have one already set.  Generally, it should be the 'ou=Hosts'
+                    branch under your main directory."]
+            )
+
             attr_accessor :ast, :filetimeout
             # just shorten the constant path a bit, using what amounts to an alias
             AST = Puppet::Parser::AST
@@ -31,6 +57,20 @@ module Puppet
                     @usenodes = true
                 end
 
+                @nodesources = hash[:NodeSources] || [:file]
+
+                @nodesources.each { |source|
+                    method = "setup_%s" % source.to_s
+                    if respond_to? method
+                        begin
+                            self.send(method)
+                        rescue => detail
+                            raise Puppet::Error,
+                                "Could not set up node source %s" % source
+                        end
+                    end
+                }
+
                 # Set it to either the value or nil.  This is currently only used
                 # by the cfengine module.
                 @classes = hash[:Classes] || []
@@ -39,6 +79,73 @@ module Puppet
                 parsefiles
 
                 evaluate
+            end
+
+            # Connect to the LDAP Server
+            def setup_ldap
+                require 'ldap'
+                begin
+                    @ldap = LDAP::Conn.new(Puppet[:ldapserver], Puppet[:ldapport])
+                    @ldap.set_option(LDAP::LDAP_OPT_PROTOCOL_VERSION, 3)
+                    @ldap.simple_bind(Puppet[:ldapuser], Puppet[:ldappassword])
+                rescue => detail
+                    raise Puppet::Error, "Could not connect to LDAP: %s" % detail
+                end
+            end
+
+            # Find the ldap node and extra the info, returning just
+            # the critical data.
+            def nodesearch_ldap(node)
+                unless defined? @ldap
+                    ldapconnect()
+                end
+
+                filter = Puppet[:ldapstring]
+                attrs = Puppet[:ldapattrs].split("\s*,\s*")
+                sattrs = attrs.dup
+                pattr = nil
+                if pattr = Puppet[:ldapparentattr]
+                    if pattr == ""
+                        pattr = nil
+                    else
+                        sattrs << pattr
+                    end
+                end
+
+                if filter =~ /%s/
+                    filter = filter.gsub(/%s/, node)
+                end
+
+                parent = nil
+                classes = []
+
+                found = false
+                # We're always doing a sub here; oh well.
+                @ldap.search(Puppet[:ldapbase], 2, filter, sattrs) do |entry|
+                    found = true
+                    if pattr
+                        if values = entry.vals(pattr)
+                            if values.length > 1
+                                raise Puppet::Error,
+                                    "Node %s has more than one parent: %s" %
+                                    [node, values.inspect]
+                            end
+                            unless values.empty?
+                                parent = values.shift
+                            end
+                        end
+                    end
+
+                    attrs.each { |attr|
+                        if values = entry.vals(attr)
+                            classes += values
+                        end
+                    }
+                end
+
+                classes.flatten!
+
+                return parent, classes
             end
 
             def parsedate
@@ -67,8 +174,24 @@ module Puppet
                                 "Cannot evaluate nodes with a nil client"
                         end
 
+                        classes = nil
+                        parent = nil
+                        # At this point, stop at the first source that defines
+                        # the node
+                        @nodesources.each do |source|
+                            method = "nodesearch_%s" % source
+                            if self.respond_to? method
+                                parent, classes = self.send(method, client)
+                            end
+
+                            if classes
+                                Puppet.info "Found %s in %s" % [client, source]
+                                break
+                            end
+                        end
+
                         # We've already evaluated the AST, in this case
-                        return @scope.evalnode(names, facts)
+                        return @scope.evalnode(names, facts, classes, parent)
                     else
                         # We've already evaluated the AST, in this case
                         @scope = Puppet::Parser::Scope.new() # no parent scope

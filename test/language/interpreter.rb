@@ -68,4 +68,90 @@ class TestInterpreter < Test::Unit::TestCase
 
         assert(config != newconfig, "Configs are somehow the same")
     end
+
+    # Only test ldap stuff on luke's network, since that's the only place we
+    # have data for.
+    if Facter["domain"].value == "madstop.com"
+    def ldapconnect
+        require 'ldap'
+
+        @ldap = LDAP::Conn.new("ldap", 389)
+        @ldap.set_option( LDAP::LDAP_OPT_PROTOCOL_VERSION, 3 )
+        @ldap.simple_bind("", "")
+
+        return @ldap
+    end
+
+    def ldaphost(node)
+        parent = nil
+        classes = nil
+        @ldap.search( "ou=hosts, dc=madstop, dc=com", 2,
+            "(&(objectclass=puppetclient)(cn=%s))" % node
+        ) do |entry|
+            parent = entry.vals("parentnode").shift
+            classes = entry.vals("puppetclass")
+        end
+
+        return parent, classes
+    end
+
+    def test_ldapnodes
+        Puppet[:ldapbase] = "ou=hosts, dc=madstop, dc=com"
+
+        ldapconnect()
+        file = tempfile()
+        files = []
+        parentfile = tempfile() + "-parent"
+        files << parentfile
+        hostname = Facter["hostname"].value
+        lparent, lclasses = ldaphost(Facter["hostname"].value)
+        File.open(file, "w") { |f|
+            f.puts "node #{lparent} {
+    file { \"#{parentfile}\": ensure => file }
+}"
+
+            lclasses.each { |klass|
+                kfile = tempfile() + "-klass"
+                files << kfile
+                f.puts "class #{klass} { file { \"#{kfile}\": ensure => file } }"
+            }
+        }
+        interp = nil
+        assert_nothing_raised {
+            interp = Puppet::Parser::Interpreter.new(
+                :Manifest => file,
+                :NodeSources => [:ldap]
+            )
+        }
+
+        assert_nothing_raised {
+            interp.setup_ldap
+        }
+
+        parent = nil
+        classes = nil
+        assert_nothing_raised {
+            parent, classes = interp.nodesearch_ldap(hostname)
+        }
+
+        assert_equal(lparent, parent, "Parent node did not match")
+        assert_equal(lclasses, classes, "Class list did not match")
+
+        objects = nil
+        assert_nothing_raised {
+            objects = interp.run(hostname, Puppet::Client::MasterClient.facts)
+        }
+
+        comp = nil
+        assert_nothing_raised {
+            comp = objects.to_type
+        }
+
+        assert_apply(comp)
+        files.each { |cfile|
+            @@tmpfiles << cfile
+            assert(FileTest.exists?(cfile), "Did not make %s" % cfile)
+        }
+    end
+    end
 end

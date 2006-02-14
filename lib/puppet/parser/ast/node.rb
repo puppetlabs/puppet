@@ -48,6 +48,7 @@ class Puppet::Parser::AST
         # Evaluate our parent class.
         def evalparent(scope)
             if @parentclass
+                Puppet.warning "evaluating parent %s" % @parentclass
                 # This is pretty messed up.  I don't know if this will
                 # work in the long term, but we need to evaluate the node
                 # in our own scope, even though our parent node has
