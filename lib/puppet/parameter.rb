@@ -11,6 +11,10 @@ module Puppet
                 if block
                     define_method(:default, &block)
                 else
+                    if value.nil?
+                        raise Puppet::DevError,
+                            "Either a default value or block must be provided"
+                    end
                     define_method(:default) do value end
                 end
             end
@@ -104,6 +108,9 @@ module Puppet
                     rescue ArgumentError, Puppet::Error, TypeError
                         raise
                     rescue => detail
+                        if Puppet[:debug]
+                            puts detail.backtrace
+                        end
                         raise Puppet::DevError,
                             "Validate method failed for class %s: %s" %
                             [self.name, detail]
@@ -145,7 +152,13 @@ module Puppet
                 @aliasvalues ||= {}
 
                 #[@aliasvalues.keys, @parametervalues.keys].flatten
-                @parametervalues.dup
+                if @parametervalues.is_a? Array
+                    return @parametervalues.dup
+                elsif @parametervalues.is_a? Hash
+                    return @parametervalues.keys
+                else
+                    return []
+                end
             end
         end
 
@@ -161,36 +174,6 @@ module Puppet
         proxymethods("required?", "isnamevar?")
 
         attr_accessor :parent
-
-        # This doesn't work, because the instance_eval doesn't bind the inner block
-        # only the outer one.
-#        def munge(value)
-#            if munger = self.class.munger
-#                return @parent.instance_eval {
-#                    munger.call(value)
-#                }
-#            else
-#                return value
-#            end
-#        end
-#
-#        def validate(value)
-#            if validater = self.class.validater
-#                return @parent.instance_eval {
-#                    validater.call(value)
-#                }
-#            end
-#        end
-
-        #def default
-        #    default = self.class.default
-        #    if default.is_a?(Proc)
-        #        val = self.instance_eval(&default)
-        #        return val
-        #    else
-        #        return default
-        #    end
-        #end
 
         def devfail(msg)
             self.fail(Puppet::DevError, msg)
@@ -276,16 +259,17 @@ module Puppet
 
         # Verify that the passed value is valid.
         validate do |value|
-            if self.class.values.empty?
+            values = self.class.values
+            if values.empty?
                 # This parameter isn't using defined values to do its work.
                 return 
             end
             unless value.is_a?(Symbol)
                 value = value.to_s.intern
             end
-            unless self.class.values.include?(value) or self.class.alias(value)
+            unless values.include?(value) or self.class.alias(value)
                 self.fail "Invalid '%s' value '%s'.  Valid values are '%s'" %
-                        [self.class.name, value, self.class.values.join(", ")]
+                        [self.class.name, value, values.join(", ")]
             end
         end
 

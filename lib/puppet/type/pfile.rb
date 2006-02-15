@@ -440,9 +440,11 @@ module Puppet
                 end
             end
 
+            #ignore = self[:ignore] || false
             ignore = self[:ignore]
 
-            #self.warning "Listing path %s" % path.inspect
+            #self.warning "Listing path %s with ignore %s" %
+            #    [path.inspect, ignore.inspect]
             desc = server.list(path, r, ignore)
            
             desc.split("\n").each { |line|

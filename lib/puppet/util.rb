@@ -21,7 +21,11 @@ module Util
             # The gid has to be changed first, because, well, otherwise we won't
             # be able to
             if group
-                gid = self.gid(group)
+                if group.is_a? Integer
+                    gid = group
+                else
+                    gid = self.gid(group)
+                end
 
                 if Process.gid != gid
                     oldgid = Process.gid
@@ -34,6 +38,11 @@ module Util
             end
 
             if user
+                if user.is_a? Integer
+                    uid = user
+                else
+                    uid = self.uid(user)
+                end
                 uid = self.uid(user)
                 # Now change the uid
                 if Process.uid != uid
@@ -133,11 +142,21 @@ module Util
         obj = nil
 
         # We want to look the group up either way
-        if group.is_a?(Integer)
+        if group.is_a?(Integer) 
+            # If this doesn't find anything
             obj = Puppet.type(:group).find { |gobj|
                 gobj.should(:gid) == group ||
                     gobj.is(:gid) == group
             }
+
+            unless obj
+                begin
+                    gobj = Etc.getgrgid(group)
+                    gid = gobj.gid
+                rescue ArgumentError => detail
+                    # ignore it; we couldn't find the group
+                end
+            end
         else
             unless obj = Puppet.type(:group)[group]
                 obj = Puppet.type(:group).create(
@@ -160,8 +179,22 @@ module Util
         if user =~ /^\d+$/
             user = Integer(user)
         end
+
         if user.is_a?(Integer)
-            uid = user
+            # If this doesn't find anything
+            obj = Puppet.type(:user).find { |uobj|
+                uobj.should(:uid) == user ||
+                    uobj.is(:uid) == user
+            }
+
+            unless obj
+                begin
+                    uobj = Etc.getpwuid(user)
+                    uid = uobj.uid
+                rescue ArgumentError => detail
+                    # ignore it; we couldn't find the user
+                end
+            end
         else
             unless obj = Puppet.type(:user)[user]
                 obj = Puppet.type(:user).create(
@@ -169,11 +202,11 @@ module Util
                     :check => [:uid, :gid]
                 )
             end
+        end
+
+        if obj
             obj.retrieve
             uid = obj.is(:uid)
-            unless uid.is_a?(Integer)
-                raise Puppet::Error, "Could not find user %s" % user
-            end
         end
 
         return uid

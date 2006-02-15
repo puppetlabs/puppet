@@ -386,8 +386,8 @@ task :hosttest do
         if $? != 0
             file = File.join("/tmp", "%stest.out" % host)
             File.open(file, "w") { |of| of.print out }
-            puts "%s failed; output is in %s" % [host, file]
             puts out
+            puts "%s failed; output is in %s" % [host, file]
         end
         #sh %{ssh #{host} 'cd #{cwd}/test; sudo ./test' 2>&1} 
     }

@@ -1,3 +1,7 @@
+0.13.2
+    Changed package[answerfile] to package[adminfile], and added package[responsefile]
+    Fixed a bunch of internal functions to behave more consistently and usefully
+
 0.13.1
     Fixed RPM spec files to create puppet user and group (lutter)
     Fixed crontab reading and writing (luke)

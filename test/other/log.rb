@@ -14,9 +14,15 @@ require 'test/unit'
 class TestLog < Test::Unit::TestCase
     include TestPuppet
 
+    def setup
+        super
+        @oldloglevel = Puppet::Log.level
+    end
+
     def teardown
         super
         Puppet::Log.close
+        Puppet::Log.level = @oldloglevel
     end
 
     def getlevels
@@ -44,6 +50,7 @@ class TestLog < Test::Unit::TestCase
     def test_logfile
         fact = nil
         levels = nil
+        oldlevel = Puppet::Log.level
         Puppet::Log.level = :debug
         levels = getlevels
         logfile = tempfile()

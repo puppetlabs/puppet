@@ -139,21 +139,6 @@ class State
                     return nil
                 end
             end
-#            # if the object needs to be created or deleted,
-#            # depend on another method to do it all at once
-#            if @is == :absent or self.should == :absent
-#                Puppet.info "creating"
-#                event = syncname()
-#
-#                Puppet.info "created with event %s" % event
-#
-#                return event
-#                # if the whole object is created at once, just return
-#                # an event saying so
-#                #if self.class.allatonce?
-#                #    return event
-#                #end
-#            end
 
             unless @parent.exists?
                 self.devfail "%s %s does not exist; cannot set %s" %

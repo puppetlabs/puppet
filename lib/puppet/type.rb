@@ -1497,7 +1497,8 @@ class Type < Puppet::Element
             next if self.attrset?(type, klass.name)
 
             obj = self.newattr(type, klass)
-            if value = obj.default
+            value = obj.default
+            unless value.nil?
                 #self.debug "defaulting %s to %s" % [obj.name, obj.default]
                 obj.value = value
             else
