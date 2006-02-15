@@ -6,12 +6,13 @@ module Puppet
             end
             #cmd = "pkgadd -d %s -n %s 2>&1" % [self[:source], self[:name]]
             cmd = ["pkgadd"]
-            cmd += ["-d", self[:source]]
-            cmd += ["-n", self[:name]]
 
             if self[:answerfile]
                 cmd += ["-a", self[:answerfile]]
             end
+
+            cmd += ["-d", self[:source]]
+            cmd += ["-n", self[:name]]
             cmd << "2>&1"
             cmd = cmd.join(" ")
 
