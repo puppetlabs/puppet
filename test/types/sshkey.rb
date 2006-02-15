@@ -35,12 +35,19 @@ class TestSSHKey < Test::Unit::TestCase
 
     def mkkey
         key = nil
+
+        if defined? @kcount
+            @kcount += 1
+        else
+            @kcount = 1
+        end
+
         assert_nothing_raised {
             key = @sshtype.create(
-                :name => "culain.madstop.com",
-                :key => "AAAAB3NzaC1kc3MAAACBAMnhSiku76y3EGkNCDsUlvpO8tRgS9wL4Eh54WZfQ2lkxqfd2uT/RTT9igJYDtm/+UHuBRdNGpJYW1Nw2i2JUQgQEEuitx4QKALJrBotejGOAWxxVk6xsh9xA0OW8Q3ZfuX2DDitfeC8ZTCl4xodUMD8feLtP+zEf8hxaNamLlt/AAAAFQDYJyf3vMCWRLjTWnlxLtOyj/bFpwAAAIEAmRxxXb4jjbbui9GYlZAHK00689DZuX0EabHNTl2yGO5KKxGC6Esm7AtjBd+onfu4Rduxut3jdI8GyQCIW8WypwpJofCIyDbTUY4ql0AQUr3JpyVytpnMijlEyr41FfIb4tnDqnRWEsh2H7N7peW+8DWZHDFnYopYZJ9Yu4/jHRYAAACAERG50e6aRRb43biDr7Ab9NUCgM9bC0SQscI/xdlFjac0B/kSWJYTGVARWBDWug705hTnlitY9cLC5Ey/t/OYOjylTavTEfd/bh/8FkAYO+pWdW3hx6p97TBffK0b6nrc6OORT2uKySbbKOn0681nNQh4a6ueR3JRppNkRPnTk5c=",
+                :name => "host%s.madstop.com" % @kcount,
+                :key => "%sAAAAB3NzaC1kc3MAAACBAMnhSiku76y3EGkNCDsUlvpO8tRgS9wL4Eh54WZfQ2lkxqfd2uT/RTT9igJYDtm/+UHuBRdNGpJYW1Nw2i2JUQgQEEuitx4QKALJrBotejGOAWxxVk6xsh9xA0OW8Q3ZfuX2DDitfeC8ZTCl4xodUMD8feLtP+zEf8hxaNamLlt/AAAAFQDYJyf3vMCWRLjTWnlxLtOyj/bFpwAAAIEAmRxxXb4jjbbui9GYlZAHK00689DZuX0EabHNTl2yGO5KKxGC6Esm7AtjBd+onfu4Rduxut3jdI8GyQCIW8WypwpJofCIyDbTUY4ql0AQUr3JpyVytpnMijlEyr41FfIb4tnDqnRWEsh2H7N7peW+8DWZHDFnYopYZJ9Yu4/jHRYAAACAERG50e6aRRb43biDr7Ab9NUCgM9bC0SQscI/xdlFjac0B/kSWJYTGVARWBDWug705hTnlitY9cLC5Ey/t/OYOjylTavTEfd/bh/8FkAYO+pWdW3hx6p97TBffK0b6nrc6OORT2uKySbbKOn0681nNQh4a6ueR3JRppNkRPnTk5c=" % @kcount,
                 :type => "ssh-dss",
-                :alias => ["192.168.0.3"]
+                :alias => ["192.168.0.%s" % @kcount]
             )
         }
 
@@ -134,6 +141,40 @@ class TestSSHKey < Test::Unit::TestCase
         assert_events([:sshkey_removed], sshkey)
         sshkey.retrieve
         assert_events([], sshkey)
+    end
+
+    def test_modifyingfile
+        keyfile = tempfile()
+        Puppet.type(:sshkey).path = keyfile
+
+        keys = []
+        names = []
+        3.times {
+            k = mkkey()
+            #h[:ensure] = :present
+            #h.retrieve
+            keys << k
+            names << k.name
+        }
+        assert_apply(*keys)
+        keys.clear
+        Puppet.type(:sshkey).clear
+        newkey = mkkey()
+        #newkey[:ensure] = :present
+        names << newkey.name
+        assert_apply(newkey)
+        Puppet.type(:sshkey).clear
+        # Verify we can retrieve that info
+        assert_nothing_raised("Could not retrieve after second write") {
+            newkey.retrieve
+        }
+
+        # And verify that we have data for everything
+        names.each { |name|
+            key = Puppet.type(:sshkey)[name]
+            assert(key)
+            assert(key[:type])
+        }
     end
 end
 

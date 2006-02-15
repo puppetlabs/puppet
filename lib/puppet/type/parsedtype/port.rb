@@ -28,12 +28,22 @@ module Puppet
             # We actually want to return the whole array here, not just the first
             # value.
             def should
-                @should
+                if defined? @should
+                    if @should[0] == :absent
+                        return :absent
+                    else
+                        return @should
+                    end
+                else
+                    return nil
+                end
             end
 
             validate do |value|
-                unless value == "udp" or value == "tcp"
-                    raise Puppet::Error, "Protocols can be either 'udp' or 'tcp'"
+                valids = ["udp", "tcp", "ddp", :absent]
+                unless valids.include? value
+                    raise Puppet::Error,
+                        "Protocols can be either 'udp' or 'tcp', not %s" % value
                 end
             end
         end
@@ -47,10 +57,10 @@ module Puppet
         end
 
         newstate(:alias) do
-            desc "Any aliases the port might have.  Multiple values must be specified
-                as an array.  Note that this state has the same name as one of the
-                metaparams; using this state to set aliases will make those aliases
-                available in your Puppet scripts and also on disk."
+            desc "Any aliases the port might have.  Multiple values must be
+                specified as an array.  Note that this state has the same name as
+                one of the metaparams; using this state to set aliases will make
+                those aliases available in your Puppet scripts and also on disk."
 
             # We have to override the feeding mechanism; it might be nil or 
             # white-space separated
@@ -71,18 +81,32 @@ module Puppet
             # We actually want to return the whole array here, not just the first
             # value.
             def should
-                @should
+                if defined? @should
+                    if @should[0] == :absent
+                        return :absent
+                    else
+                        return @should
+                    end
+                else
+                    return nil
+                end
             end
 
             validate do |value|
-                if value =~ /\s/
-                    raise Puppet::Error, "Aliases cannot have whitespace in them"
+                if value.is_a? String and value =~ /\s/
+                    raise Puppet::Error,
+                        "Aliases cannot have whitespace in them: %s" %
+                        value.inspect
                 end
             end
 
             munge do |value|
-                # Add the :alias metaparam in addition to the state
-                @parent.newmetaparam(@parent.class.metaparamclass(:alias), value)
+                unless value == "absent" or value == :absent
+                    # Add the :alias metaparam in addition to the state
+                    @parent.newmetaparam(
+                        @parent.class.metaparamclass(:alias), value
+                    )
+                end
                 value
             end
         end
@@ -101,12 +125,6 @@ module Puppet
         @fields = [:ip, :name, :alias]
 
         @filetype = Puppet::FileType.filetype(:flat)
-#        case Facter["operatingsystem"].value
-#        when "Solaris":
-#            @filetype = Puppet::FileType::SunOS
-#        else
-#            @filetype = Puppet::CronType::Default
-#        end
 
         # Parse a services file
         #
@@ -122,10 +140,6 @@ module Puppet
                     # add comments and blank lines to the list as they are
                     @instances << line 
                 else
-                    #if match = /^(\S+)\s+(\d+)\/(\w+)/.match(line)
-                    #    Puppet.warning "%s %s %s" % [$1, $2, $3]
-                    #    next
-                    #if line.sub(/^(\S+)\s+(\d+)\/(\w+)\s*(\S*)$/.match(line)
                     if line.sub!(/^(\S+)\s+(\d+)\/(\w+)\s*/, '')
                         hash[:name] = $1
                         hash[:number] = $2
@@ -134,6 +148,9 @@ module Puppet
                         unless line == ""
                             line.sub!(/^([^#]+)\s*/) do |value|
                                 aliases = $1
+
+                                # Remove any trailing whitespace
+                                aliases.strip!
                                 unless aliases =~ /^\s*$/
                                     hash[:alias] = aliases
                                 end
@@ -175,6 +192,9 @@ module Puppet
             unless @states.include?(:protocols)
                 return false
             end
+
+            # This method is only called from parsing, so we only worry
+            # about 'is' values.
             proto = self.state(:protocols).is
 
             if proto.nil? or proto == :absent
@@ -192,9 +212,7 @@ module Puppet
                 unless proto.include?(hash[:protocols])
                     # We are missing their proto
                     proto << hash[:protocols]
-                    #Puppet.info "new proto is %s" % proto.inspect
                     @states[:protocols].is = proto
-                    #Puppet.info "new value is %s" % @states[:protocols].is.inspect
                 end
             end
 
@@ -206,20 +224,20 @@ module Puppet
             return true
         end
 
-        # Convert the current object into a host-style string.
+        # Convert the current object into one or more services entry.
         def to_record
-            self.state(:protocols).should.collect { |proto|
-                str = "%s\t%s/%s" % [self[:name], self.state(:number).should,
+            self.state(:protocols).value.collect { |proto|
+                str = "%s\t%s/%s" % [self[:name], self.value(:number),
                     proto]
 
-                if state = self.state(:alias)
-                    str += "\t%s" % state.should.join(" ")
+                if value = self.value(:alias) and value != :absent
+                    str += "\t%s" % value.join(" ")
                 else
                     str += "\t"
                 end
 
-                if state = self.state(:description)
-                    str += "\t# %s" % state.should
+                if value = self.value(:description) and value != :absent
+                    str += "\t# %s" % value
                 else
                     str += "\t"
                 end

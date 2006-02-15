@@ -1658,23 +1658,9 @@ class Type < Puppet::Element
             @evalcount = 0
         end
         @@retrieved[self] += 1
-        # if we're a metaclass and we've already evaluated once...
-        #if self.metaclass and @evalcount > 0
-        #    return
-        #end
         @evalcount += 1
 
-        #changes = @children.collect { |child|
-        #    child.evaluate
-        #}
-
         changes = []
-        # collect all of the changes from children and states
-        #if self.class.depthfirst?
-        #    changes << self.collect { |child|
-        #        child.evaluate
-        #    }
-        #end
 
         # this only operates on states, not states + children
         # it's important that we call retrieve() on the type instance,
@@ -1698,16 +1684,6 @@ class Type < Puppet::Element
             child.cache(:checked, now)
             ch
         }
-        #unless self.class.depthfirst?
-        #    changes << self.collect { |child|
-        #        child.evaluate
-        #    }
-        #end
-        # collect changes and return them
-        # these changes could be from child objects or from contained states
-        #self.collect { |child|
-        #    child.evaluate
-        #}
 
         if self.class.depthfirst?
             changes += statechanges()
@@ -1720,9 +1696,6 @@ class Type < Puppet::Element
         if changes.length > 0
             self.info "%s change(s)" %
                 [changes.length]
-            #changes.each { |change|
-            #    self.debug "change: %s" % change.state.name
-            #}
         end
         self.cache(:checked, now)
         return changes.flatten

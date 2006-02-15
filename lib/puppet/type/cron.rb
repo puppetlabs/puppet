@@ -103,6 +103,11 @@ module Puppet
             # a boolean of whether to do alpha checking, and if so requires
             # the ary against which to do the checking.
             munge do |value|
+                # Support 'absent' as a value, so that they can remove
+                # a value
+                if value == "absent" or value == :absent
+                    return :absent
+                end
                 return value unless self.class.boundaries
                 lower, upper = self.class.boundaries
                 retval = nil
@@ -135,7 +140,10 @@ module Puppet
                 provided to the command varies by local system rules, and it is
                 best to always provide a fully qualified command.  The user's
                 profile is not sourced when the command is run, so if the
-                user's environment is desired it should be sourced manually."
+                user's environment is desired it should be sourced manually.
+                
+                All cron parameters support ``absent`` as a value; this will
+                remove any existing values for that field."
         end
 
         newstate(:minute, CronParam) do
@@ -178,12 +186,13 @@ module Puppet
 
         newparam(:name) do
             desc "The symbolic name of the cron job.  This name
-                is used for human reference only and is generated
-                automatically for cron jobs found on the system.  This generally
-                won't matter, as Puppet will do its best to match existing
-                cron jobs against specified jobs (and Puppet adds a tag to
-                cron jobs it adds), but it is at least possible that converting
-                from unmanaged jobs to managed jobs might require manual intervention."
+                is used for human reference only and is generated automatically
+                for cron jobs found on the system.  This generally won't
+                matter, as Puppet will do its best to match existing cron jobs
+                against specified jobs (and Puppet adds a tag to cron jobs it
+                adds), but it is at least possible that converting from
+                unmanaged jobs to managed jobs might require manual
+                intervention."
 
             isnamevar
         end
@@ -487,7 +496,9 @@ module Puppet
 
         def exists?
             val = false
-            if @states.include?(:command) and @states[:command].is != :absent
+            if @states.include?(:command) and
+                @states[:command].is != :absent and
+                ! @states[:command].is.nil?
                 val = true
             end
             return val
@@ -523,7 +534,11 @@ module Puppet
 
             return "# Puppet Name: %s\n" % self.name +
                 self.class.fields.collect { |f|
-                    hash[f] || "*"
+                    if hash[f] and hash[f] != :absent
+                        hash[f]
+                    else
+                        "*"
+                    end
                 }.join(" ")
         end
     end

@@ -40,7 +40,11 @@ module Puppet
                     begin
                         val = real_read()
                         @loaded = Time.now
-                        return val.gsub(/# HEADER.*\n/,'')
+                        if val
+                            return val.gsub(/# HEADER.*\n/,'')
+                        else
+                            return ""
+                        end
                     rescue Puppet::Error => detail
                         raise
                     rescue => detail

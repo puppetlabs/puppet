@@ -29,19 +29,25 @@ class TestPort < Test::Unit::TestCase
     # Here we just create a fake host type that answers to all of the methods
     # but does not modify our actual system.
     def mkfaketype
-        @faketype = Puppet::FileType.filetype(:ram)
-        @porttype.filetype = @faketype
+        pfile = tempfile()
+        @porttype.path = pfile
     end
 
     def mkport
         port = nil
+
+        if defined? @pcount
+            @pcount += 1
+        else
+            @pcount = 1
+        end
         assert_nothing_raised {
             port = Puppet.type(:port).create(
-                :name => "puppet",
-                :number => "8139",
+                :name => "puppet%s" % @pcount,
+                :number => "813%s" % @pcount,
                 :protocols => "tcp",
                 :description => "The port that Puppet runs on",
-                :alias => "coolness"
+                :alias => "coolness%s" % @pcount
             )
         }
 
@@ -133,6 +139,59 @@ class TestPort < Test::Unit::TestCase
         assert_events([:port_removed], port)
         port.retrieve
         assert_events([], port)
+    end
+
+    def test_modifyingfile
+        mkfaketype()
+
+        ports = []
+        names = []
+        3.times {
+            k = mkport()
+            ports << k
+            names << k.name
+        }
+        assert_apply(*ports)
+        ports.clear
+        Puppet.type(:port).clear
+        newport = mkport()
+        #newport[:ensure] = :present
+        names << newport.name
+        assert_apply(newport)
+        Puppet.type(:port).clear
+        # Verify we can retrieve that info
+        assert_nothing_raised("Could not retrieve after second write") {
+            newport.retrieve
+        }
+
+        # And verify that we have data for everything
+        names.each { |name|
+            port = Puppet.type(:port)[name]
+            assert(port)
+            port.retrieve
+            assert(port[:number], "port %s has no number" % name)
+        }
+    end
+
+    def test_addingstates
+        mkfaketype
+
+        port = mkport()
+        assert_events([:port_created], port)
+
+        port.delete(:alias)
+        assert(! port.state(:alias))
+        assert_events([:port_changed], port)
+        assert_nothing_raised {
+            port.retrieve
+        }
+
+        assert(port.state(:alias).is == :absent)
+
+        port[:alias] = "yaytest"
+        assert_events([:port_changed], port)
+        port.retrieve
+        assert(port.state(:alias).is == ["yaytest"])
     end
 end
 

@@ -27,7 +27,11 @@ module Puppet
             # We actually want to return the whole array here, not just the first
             # value.
             def should
-                @should
+                if defined? @should
+                    return @should
+                else
+                    return nil
+                end
             end
 
             validate do |value|
@@ -119,9 +123,9 @@ module Puppet
         def to_record
             name = self[:name]
             if @states.include?(:alias)
-                name += "," + @states[:alias].should.join(",")
+                name += "," + @states[:alias].value.join(",")
             end
-            [name, @states[:type].should, @states[:key].should].join(" ")
+            [name, @states[:type].value, @states[:key].value].join(" ")
         end
     end
 end

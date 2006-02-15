@@ -5,6 +5,7 @@ require 'puppet/type/state'
 
 module Puppet
     newtype(:host, Puppet::Type::ParsedType) do
+
         newstate(:ip) do
             desc "The host's IP address."
         end
@@ -73,12 +74,6 @@ module Puppet
         @fields = [:ip, :name, :alias]
 
         @filetype = Puppet::FileType.filetype(:flat)
-#        case Facter["operatingsystem"].value
-#        when "Solaris":
-#            @filetype = Puppet::FileType::SunOS
-#        else
-#            @filetype = Puppet::CronType::Default
-#        end
 
         # Parse a host file
         #
@@ -117,8 +112,6 @@ module Puppet
                         hash.delete(:alias)
                     end
 
-                    Puppet.notice "sending %s" % hash.inspect
-
                     hash2obj(hash)
 
                     hash.clear
@@ -129,10 +122,10 @@ module Puppet
 
         # Convert the current object into a host-style string.
         def to_record
-            str = "%s\t%s" % [self.state(:ip).should, self[:name]]
+            str = "%s\t%s" % [self.state(:ip).value, self[:name]]
 
-            if state = self.state(:alias)
-                str += "\t%s" % state.should.join("\t")
+            if value = self.value(:alias)
+                str += "\t%s" % value.join("\t")
             end
 
             str

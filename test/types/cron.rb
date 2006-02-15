@@ -362,6 +362,26 @@ class TestCron < Test::Unit::TestCase
         cron.retrieve
         assert_events([], cron)
     end
+
+    def test_fieldremoval
+        cron = nil
+        assert_nothing_raised {
+            cron = Puppet.type(:cron).create(
+                :command => "/bin/date > /dev/null",
+                :minute => [0, 30],
+                :name => "crontest"
+            )
+        }
+
+        assert_events([:cron_created], cron)
+
+        cron[:minute] = :absent
+        assert_events([:cron_changed], cron)
+        assert_nothing_raised {
+            cron.retrieve
+        }
+        assert_equal(:absent, cron.is(:minute))
+    end
 end
 
 # $Id$

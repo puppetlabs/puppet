@@ -33,12 +33,17 @@ class TestHost < Test::Unit::TestCase
     end
 
     def mkhost
+        if defined? @hcount
+            @hcount += 1
+        else
+            @hcount = 1
+        end
         host = nil
         assert_nothing_raised {
             host = Puppet.type(:host).create(
-                :name => "culain",
-                :ip => "192.168.0.3",
-                :alias => "puppet"
+                :name => "fakehost%s" % @hcount,
+                :ip => "192.168.27.%s" % @hcount,
+                :alias => "alias%s" % @hcount
             )
         }
 
@@ -140,6 +145,40 @@ class TestHost < Test::Unit::TestCase
         assert_events([:host_removed], host)
         host.retrieve
         assert_events([], host)
+    end
+
+    def test_modifyingfile
+        hostfile = tempfile()
+        Puppet.type(:host).path = hostfile
+
+        hosts = []
+        names = []
+        3.times {
+            h = mkhost()
+            #h[:ensure] = :present
+            #h.retrieve
+            hosts << h
+            names << h.name
+        }
+        assert_apply(*hosts)
+        hosts.clear
+        Puppet.type(:host).clear
+        newhost = mkhost()
+        #newhost[:ensure] = :present
+        names << newhost.name
+        assert_apply(newhost)
+        Puppet.type(:host).clear
+        # Verify we can retrieve that info
+        assert_nothing_raised("Could not retrieve after second write") {
+            newhost.retrieve
+        }
+
+        # And verify that we have data for everything
+        names.each { |name|
+            host = Puppet.type(:host)[name]
+            assert(host)
+            assert(host[:ip])
+        }
     end
 end
 

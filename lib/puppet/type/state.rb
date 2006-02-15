@@ -39,42 +39,6 @@ class State < Puppet::Parameter
 
         define_method("set_" + name.to_s, &block)
     end
-#
-#    def self.aliasvalue(name, other)
-#        @statevalues ||= {}
-#        unless @statevalues.include?(other)
-#            raise Puppet::DevError, "Cannot alias nonexistent value %s" % other
-#        end
-#
-#        @aliasvalues ||= {}
-#        @aliasvalues[name] = other
-#    end
-#
-#    def self.alias(name)
-#        @aliasvalues[name]
-#    end
-#
-    def self.defaultvalues
-        newvalue(:present) do
-            @parent.create
-        end
-
-        newvalue(:absent) do
-            @parent.destroy
-        end
-
-        # This doc will probably get overridden
-        @doc ||= "The basic state that the object should be in."
-    end
-#
-#    # Return the list of valid values.
-#    def self.values
-#        @statevalues ||= {}
-#        @aliasvalues ||= {}
-#
-#        #[@aliasvalues.keys, @statevalues.keys].flatten
-#        @statevalues.keys
-#    end
 
     # Call the method associated with a given value.
     def set
@@ -278,46 +242,13 @@ class State < Puppet::Parameter
         self.set
     end
 
-#    munge do |value|
-#        if self.class.values.empty?
-#            # This state isn't using defined values to do its work.
-#            return value
-#        end
-#        intern = value.to_s.intern
-#        # If it's a valid value, always return it as a symbol.
-#        if self.class.values.include?(intern)
-#            retval = intern
-#        elsif other = self.class.alias(intern)
-#            self.info "returning alias %s for %s" % [other, intern]
-#            retval = other
-#        else
-#            retval = value
-#        end
-#        retval
-#    end
-#
-#    # Verify that the passed value is valid.
-#    validate do |value|
-#        if self.class.values.empty?
-#            # This state isn't using defined values to do its work.
-#            return 
-#        end
-#        unless value.is_a?(Symbol)
-#            value = value.to_s.intern
-#        end
-#        unless self.class.values.include?(value) or self.class.alias(value)
-#            self.fail "Invalid '%s' value '%s'.  Valid values are '%s'" %
-#                    [self.class.name, value, self.class.values.join(", ")]
-#        end
-#    end
-
     # How should a state change be printed as a string?
     def change_to_s
         begin
             if @is == :absent
                 return "defined '%s' as '%s'" %
                     [self.name, self.should_to_s]
-            elsif self.should == :absent
+            elsif self.should == :absent or self.should == [:absent]
                 return "undefined %s from '%s'" %
                     [self.name, self.is_to_s]
             else
@@ -341,7 +272,11 @@ class State < Puppet::Parameter
     end
 
     def should_to_s
-        @should.join(" ")
+        if defined? @should
+            @should.join(" ")
+        else
+            return nil
+        end
     end
 
     def to_s
@@ -349,9 +284,22 @@ class State < Puppet::Parameter
     end
 
     # This state will get automatically added to any type that responds
-    # to the methods 'exists?', 'create', and 'remove'.
+    # to the methods 'exists?', 'create', and 'destroy'.
     class Ensure < Puppet::State
         @name = :ensure
+
+        def self.defaultvalues
+            newvalue(:present) do
+                @parent.create
+            end
+
+            newvalue(:absent) do
+                @parent.destroy
+            end
+
+            # This doc will probably get overridden
+            @doc ||= "The basic state that the object should be in."
+        end
 
         def self.inherited(sub)
             # Add in the two states that everyone will have.
@@ -378,6 +326,11 @@ class State < Puppet::Parameter
         end
 
         def retrieve
+            # XXX This is a problem -- whether the object exists or not often
+            # depends on the results of other states, yet we're the first state
+            # to get checked, which means that those other states do not have
+            # @is values set.  This seems to be the source of quite a few bugs,
+            # although they're mostly logging bugs, not functional ones.
             if @parent.exists?
                 @is = :present
             else
