@@ -54,6 +54,7 @@ module Puppet
 
         newstate(:description) do
             desc "The port description."
+            isoptional
         end
 
         newstate(:alias) do
@@ -61,6 +62,8 @@ module Puppet
                 specified as an array.  Note that this state has the same name as
                 one of the metaparams; using this state to set aliases will make
                 those aliases available in your Puppet scripts and also on disk."
+
+            isoptional
 
             # We have to override the feeding mechanism; it might be nil or 
             # white-space separated

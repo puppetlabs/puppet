@@ -83,7 +83,11 @@ module Puppet
 
             # Connect to the LDAP Server
             def setup_ldap
-                require 'ldap'
+                begin
+                    require 'ldap'
+                rescue LoadError
+                    @ldap = nil
+                end
                 begin
                     @ldap = LDAP::Conn.new(Puppet[:ldapserver], Puppet[:ldapport])
                     @ldap.set_option(LDAP::LDAP_OPT_PROTOCOL_VERSION, 3)

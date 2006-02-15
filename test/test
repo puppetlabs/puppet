@@ -16,30 +16,37 @@ require 'getoptlong'
 	#[ "--size",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
 result = GetoptLong.new(
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+	[ "-n",			                GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
 )
 
 usage = "USAGE: %s [--help] <testsuite> <testsuite> .." % $0
 
+opts = []
+
 result.each { |opt,arg|
 	case opt
 		when "--debug"
-            Puppet[:debug] = true
+            Puppet::Log.level = :debug
 		when "--help"
 			puts usage
 			exit
 		else
-			raise "Invalid option '#{opt}'"
+            opts << opt << arg
+			#raise "Invalid option '#{opt}'"
 	end
 }
-
 suites = nil
 
 if ARGV.length != 0
-    suites = ARGV
+    suites = ARGV.dup
 else
     suites = PuppetTestSuite.list
 end
+
+ARGV.clear
+
+opts.each { |o| ARGV << o }
 
 suites.each { |suite|
     PuppetTestSuite.new(suite)

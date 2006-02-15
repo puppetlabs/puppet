@@ -72,8 +72,15 @@ class TestInterpreter < Test::Unit::TestCase
     # Only test ldap stuff on luke's network, since that's the only place we
     # have data for.
     if Facter["domain"].value == "madstop.com"
-    def ldapconnect
+    begin
         require 'ldap'
+        $haveldap = true
+    rescue LoadError
+        $stderr.puts "Missing ldap; skipping ldap source tests"
+        $haveldap = false
+    end
+    if $haveldap
+    def ldapconnect
 
         @ldap = LDAP::Conn.new("ldap", 389)
         @ldap.set_option( LDAP::LDAP_OPT_PROTOCOL_VERSION, 3 )
@@ -152,6 +159,7 @@ class TestInterpreter < Test::Unit::TestCase
             @@tmpfiles << cfile
             assert(FileTest.exists?(cfile), "Did not make %s" % cfile)
         }
+    end
     end
     end
 end

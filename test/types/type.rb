@@ -190,7 +190,14 @@ class TestType < Test::Unit::TestCase
     # Verify that names are aliases, not equivalents
     def test_nameasalias
         file = nil
-        path = tempfile()
+        # Create the parent dir, so we make sure autorequiring the parent dir works
+        parentdir = tempfile()
+        dir = Puppet.type(:file).create(
+            :name => parentdir,
+            :ensure => "directory"
+        )
+        assert_apply(dir)
+        path = File.join(parentdir, "subdir")
         name = "a test file"
         transport = Puppet::TransObject.new(name, "file")
         transport[:path] = path

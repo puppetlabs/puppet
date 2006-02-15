@@ -186,6 +186,8 @@ class TestPort < Test::Unit::TestCase
             port.retrieve
         }
 
+        assert_equal(:present, port.is(:ensure))
+
         assert(port.state(:alias).is == :absent)
 
         port[:alias] = "yaytest"

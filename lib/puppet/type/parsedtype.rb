@@ -280,18 +280,9 @@ module Puppet
                 self.store
             end
 
-            # We just find any state and check whether it's marked absent
+            # hash2obj marks the 'ensure' state as present
             def exists?
-                name, state = @states.find { |name, state|
-                    state.is_a?(Puppet::State::ParsedParam)
-                }
-
-                # Unless we've retrieved, we don't know if we exist
-                if ! state.is or state.is == :absent
-                    return false
-                else
-                    return true
-                end
+                @states.include?(:ensure) and @states[:ensure].is == :present
             end
 
             def destroy
