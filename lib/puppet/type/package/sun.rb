@@ -7,8 +7,12 @@ module Puppet
             #cmd = "pkgadd -d %s -n %s 2>&1" % [self[:source], self[:name]]
             cmd = ["pkgadd"]
 
-            if self[:answerfile]
-                cmd += ["-a", self[:answerfile]]
+            if self[:adminfile]
+                cmd += ["-a", self[:adminfile]]
+            end
+
+            if self[:responsefile]
+                cmd += ["-r", self[:responsefile]]
             end
 
             cmd += ["-d", self[:source]]
@@ -34,6 +38,7 @@ module Puppet
                 "BASEDIR" => :root,
                 "HOTLINE" => nil,
                 "EMAIL" => nil,
+                "VSTOCK" => nil,
                 "VENDOR" => :vendor,
                 "DESC" => :description,
                 "PSTAMP" => nil,
@@ -59,8 +64,7 @@ module Puppet
                                 hash[names[name]] = value
                             end
                         else
-                            self.err "'pkginfo' returned invalid name %s" %
-                                name
+                            self.notice "Ignoring unknown name %s" % name
                         end
                     when /\s+\d+.+/:
                         # nothing; we're ignoring the FILES info

@@ -168,8 +168,8 @@ module Puppet
                                 return true
                             end
                         else
-                            self.debug "@is is %s, latest %s is %s" %
-                                [@is, @parent.name, latest]
+                            #self.debug "@is is %s, latest %s is %s" %
+                            #    [@is, @parent.name, latest]
                         end
                     when :absent
                         if @is == :absent
@@ -280,12 +280,19 @@ module Puppet
             desc "A read-only parameter set by the package."
         end
 
-        newparam(:answerfile) do
+        newparam(:adminfile) do
+            desc "A file containing package defaults for installing packages.
+                This is currently only used on Solaris.  The value will be
+                validated according to system rules, which in the case of
+                Solaris means that it should either be a fully qualified path
+                or it should be in /var/sadm/install/admin."
+        end
+
+        newparam(:responsefile) do
             desc "A file containing any necessary answers to questions asked by
                 the package.  This is currently only used on Solaris.  The
-                value will be validated according to system rules, which in
-                the case of Solaris means that it should either be a fully qualified
-                path or it should be in /var/sadm/install/admin."
+                value will be validated according to system rules, but it should
+                generally be a fully qualified path."
         end
 
         # FIXME Version is screwy -- most package systems can't specify a
@@ -321,6 +328,23 @@ module Puppet
         newparam(:description) do
             desc "A read-only parameter set by the package."
         end
+
+        autorequire(:file) do
+            autos = []
+            [:responsefile, :adminfile].each { |param|
+                if val = self[param]
+                    autos << val
+                end
+            }
+
+            if source = self[:source]
+                if source =~ /^#{File::SEPARATOR}/
+                    autos << source
+                end
+            end
+            autos
+        end
+
         @listed = false
 
         @allowedmethods = [:types]
