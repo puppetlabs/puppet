@@ -82,19 +82,30 @@ module Puppet
                     return gid
                 end
 
-                # FIXME this should really check to see if we already have a
-                # group ready to be managed; if so, then we should just mark it
-                # as a prereq
-                begin
-                    ginfo = Etc.send(method, gid)
-                rescue ArgumentError => detail
-                    self.fail "Could not find group %s: %s" %
-                        [gid, detail]
+                if group = Puppet::Util.gid(gid)
+                    @found = true
+                    return group
+                else
+                    @found = false
+                    return gid
                 end
-
-                self.notice "setting gid to %s" % ginfo.gid.inspect
-                return ginfo.gid
             end
+
+            # *shudder*  Make sure that we've looked up the group and gotten
+            # an ID for it.  Yuck-o.
+            def should
+                unless defined? @should
+                    return super
+                end
+                unless defined? @found and @found
+                    @should = @should.each { |val|
+                        next unless val
+                        Puppet::Util.gid(val)
+                    }
+                end
+                super
+            end
+
         end
 
         newstate(:comment, @parentstate) do
@@ -166,6 +177,47 @@ module Puppet
             but if you desperately need it to be so, please contact us."
 
         @netinfodir = "users"
+
+        # Autorequire the group, if it's around
+        autorequire(:group) do
+            #return nil unless @states.include?(:gid)
+            #return nil unless groups = @states[:gid].shouldorig
+            autos = []
+
+            if @states.include?(:gid) and groups = @states[:gid].shouldorig
+                groups = groups.collect { |group|
+                    if group =~ /^\d+$/
+                        Integer(group)
+                    else
+                        group
+                    end
+                }
+                groups.each { |group|
+                    case group
+                    when Integer:
+                        if obj = Puppet.type(:group).find { |gobj|
+                            gobj.should(:gid) == group
+                        }
+                            autos << obj
+                            
+                        end
+                    else
+                        autos << group
+                    end
+                }
+            end
+
+            autos
+        end
+
+        autorequire(:file) do
+            dir = self.should(:home) or self.is(:home)
+            if dir =~ /^#{File::SEPARATOR}/
+                dir
+            else
+                nil
+            end
+        end
 
         def exists?
             self.class.parentmodule.exists?(self)

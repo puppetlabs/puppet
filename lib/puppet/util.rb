@@ -126,21 +126,29 @@ module Util
         if group =~ /^\d+$/
             group = Integer(group)
         end
+        unless group
+            raise Puppet::DevError, "Invalid group %s" % group.inspect
+        end
         gid = nil
+        obj = nil
+
+        # We want to look the group up either way
         if group.is_a?(Integer)
-            gid = group
+            obj = Puppet.type(:group).find { |gobj|
+                gobj.should(:gid) == group ||
+                    gobj.is(:gid) == group
+            }
         else
             unless obj = Puppet.type(:group)[group]
                 obj = Puppet.type(:group).create(
                     :name => group,
                     :check => [:gid]
                 )
+                obj.retrieve
             end
-            obj.retrieve
-            gid = obj.is(:gid)
-            unless gid.is_a?(Integer)
-                raise Puppet::Error, "Could not find group %s" % group
-            end
+        end
+        if obj
+            gid = obj.should(:gid) || obj.is(:gid)
         end
 
         return gid
@@ -171,53 +179,6 @@ module Util
         return uid
     end
 
-    # Create a lock file while something is happening
-    def self.disabledlock(*opts)
-        lock = opts[0] + ".lock"
-        while File.exists?(lock)
-            stamp = File.stat(lock).mtime.to_i 
-            if Time.now.to_i - stamp > 5
-                Puppet.notice "Lock file %s is %s seconds old; removing" %
-                    [lock, Time.now.to_i - stamp]
-                File.delete(lock)
-                break
-            else
-                sleep 0.1
-            end
-            #Puppet.debug "%s is locked" % opts[0]
-        end
-        File.open(lock, "w") { |f| f.print " "; f.flush }
-        writing = false
-        if opts[1] == "w"
-            writing = true
-            tmp = opts[0] + ".tmp"
-            orig = opts[0]
-            opts[0] = tmp
-        end
-        begin
-            File.open(*opts) { |file| yield file }
-            begin
-                if writing
-                    Puppet.warning "opts were %s" % opts.inspect
-                    system("ls -l %s 2>/dev/null" % tmp)
-                    system("ls -l %s 2>/dev/null" % orig)
-                    File.rename(tmp, orig)
-                end
-            rescue => detail
-                Puppet.err "Could not replace %s: %s" % [orig, detail]
-                File.unlink(tmp)
-            end
-        rescue => detail
-            Puppet.err "Storage error: %s" % detail
-            raise
-        ensure
-            # I don't really understand how the lock file could disappear,
-            # but just in case...
-            if FileTest.exists?(lock)
-                File.delete(lock)
-            end
-        end
-    end
 
     # Create instance methods for each of the log levels.  This allows
     # the messages to be a little richer.  Most classes will be calling this

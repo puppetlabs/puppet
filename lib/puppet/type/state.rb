@@ -340,7 +340,14 @@ class State < Puppet::Parameter
 
         # If they're talking about the thing at all, they generally want to
         # say it should exist.
-        defaultto :present
+        #defaultto :present
+        defaultto do
+            if @parent.managed?
+                :present
+            else
+                nil
+            end
+        end
     end
 end
 end

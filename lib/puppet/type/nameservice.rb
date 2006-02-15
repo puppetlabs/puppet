@@ -52,7 +52,7 @@ class State
             # things like useradd, in which creation can be done with all
             # information in one swell foop.
             def allatonce?
-                Puppet.info "Returning allatonce %s" % @allatonce
+                #Puppet.info "Returning allatonce %s" % @allatonce
                 if defined? @allatonce
                     return @allatonce
                 else

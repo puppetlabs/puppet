@@ -16,9 +16,9 @@ module Puppet
             end
 
             def nodefault
-                undef_method :default
-                #if defined_method? :default
-                #end
+                if public_method_defined? :default
+                    undef_method :default
+                end
             end
 
             # Store documentation for this parameter.
@@ -42,6 +42,9 @@ module Puppet
                         Puppet.debug "Reraising %s" % detail
                         raise
                     rescue => detail
+                        if Puppet[:debug]
+                            puts detail.backtrace
+                        end
                         raise Puppet::DevError, "Munging failed for class %s: %s" %
                             [self.name, detail]
                     end

@@ -900,13 +900,17 @@ class Type < Puppet::Element
     # in order resolve other questions, such as finding a package
     # in a list
     def managed?
-        if defined? @managed
+        # Once an object is managed, it always stays managed; but an object
+        # that is listed as unmanaged might become managed later in the process,
+        # so we have to check that every time
+        if defined? @managed and @managed
             return @managed
         else
             @managed = false
             states.each { |state|
                 if state.should and ! state.class.unmanaged
                     @managed = true
+                    break
                 end
             }
             return @managed
@@ -1107,10 +1111,16 @@ class Type < Puppet::Element
 
                 return retobj
             else
+                # If only one of the objects is being managed, then merge them
+                if retobj.managed?
+                    raise Puppet::Error, "%s '%s' is already being managed" %
+                        [self.name, name]
+                else
+                    retobj.merge(hash)
+                    return retobj
+                end
                 # We will probably want to support merging of some kind in
                 # the future, but for now, just throw an error.
-                raise Puppet::Error, "%s '%s' is already being managed" %
-                    [self.name, name]
                 #retobj.merge(hash)
 
                 #return retobj
@@ -1341,6 +1351,13 @@ class Type < Puppet::Element
         if self.respond_to?(:validate)
             self.validate
         end
+
+        # Ensure defaults to present for managed objects, but not otherwise.
+        # Because of this complication, we can't use normal defaulting mechanisms
+#        if ! @states.include?(:ensure) and self.managed? and
+#                    self.class.validstate?(:ensure)
+#            self[:ensure] = :present
+#        end
     end
 
     # Figure out of there are any objects we can automatically add as
@@ -1358,12 +1375,19 @@ class Type < Puppet::Element
 
             # Collect the current prereqs
             list.each { |dep|
-                # Skip autorequires that we aren't managing
-                next unless obj = typeobj[dep]
+                obj = nil
+                # Support them passing objects directly, to save some effort.
+                if dep.is_a? Puppet::Type
+                    type = dep.class.name
+                    obj = dep
+                else
+                    # Skip autorequires that we aren't managing
+                    next unless obj = typeobj[dep]
+                end
 
                 # Skip autorequires that we already require
                 next if self.requires?(obj)
-                self.info "Auto-requiring %s" % obj.name
+                #self.info "Auto-requiring %s %s" % [obj.class.name, obj.name]
 
                 self[:require] = [type, dep]
             }
@@ -1473,8 +1497,13 @@ class Type < Puppet::Element
             next if self.attrset?(type, klass.name)
 
             obj = self.newattr(type, klass)
-            #self.debug "defaulting %s to %s" % [obj.name, obj.default]
-            obj.value = obj.default
+            if value = obj.default
+                #self.debug "defaulting %s to %s" % [obj.name, obj.default]
+                obj.value = value
+            else
+                #self.debug "No default for %s" % obj.name
+                self.delete(obj.name)
+            end
         }
 
     end
@@ -1497,7 +1526,7 @@ class Type < Puppet::Element
                 value = [value]
             end
 
-            if oldvals = @states[param].shouldorig
+            if @states.include?(param) and oldvals = @states[param].shouldorig
                 unless oldvals.is_a?(Array)
                     oldvals = [oldvals]
                 end
@@ -1525,6 +1554,9 @@ class Type < Puppet::Element
                 self[param] = value
             end
         }
+
+        # Set the defaults again, just in case.
+        self.setdefaults
     end
 
     # derive the instance name based on class.namevar

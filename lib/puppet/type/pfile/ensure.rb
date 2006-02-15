@@ -12,11 +12,6 @@ module Puppet
         # Most 'ensure' states have a default, but with files we, um, don't.
         nodefault
 
-        #newvalue(:false) do
-        #    # If they say "false" here, we just don't do anything at all; either
-        #    # the file is there or it's not.
-        #end
-
         newvalue(:absent) do
             File.unlink(@parent.name)
         end

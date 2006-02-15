@@ -209,7 +209,38 @@ class TestType < Test::Unit::TestCase
         assert_apply(file)
 
         assert(Puppet.type(:file)[name], "Could not look up object by name")
-        #assert(Puppet.type(:file)[path], "Could not look up object by path")
+    end
+
+    def test_ensuredefault
+        user = nil
+        assert_nothing_raised {
+            user = Puppet.type(:user).create(
+                :name => "pptestAA",
+                :check => [:uid]
+            )
+        }
+
+        # make sure we don't get :ensure for unmanaged files
+        assert(! user.state(:ensure), "User got an ensure state")
+
+        assert_nothing_raised {
+            user = Puppet.type(:user).create(
+                :name => "pptestAA",
+                :comment => "Testingness"
+            )
+        }
+        # but make sure it gets added once we manage them
+        assert(user.state(:ensure), "User did not add ensure state")
+
+        assert_nothing_raised {
+            user = Puppet.type(:user).create(
+                :name => "pptestBB",
+                :comment => "A fake user"
+            )
+        }
+
+        # and make sure managed objects start with them
+        assert(user.state(:ensure), "User did not get an ensure state")
     end
 end
 

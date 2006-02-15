@@ -250,7 +250,6 @@ class TestUser < Test::Unit::TestCase
 
         newuid = old
         while true
-            Puppet.warning newuid.inspect
             newuid += 1
 
             if newuid - old > 1000
@@ -366,6 +365,28 @@ class TestUser < Test::Unit::TestCase
                     Puppet.err "Not testing attr %s of user" % test
                 end
             }
+        end
+
+        def test_autorequire
+            file = tempfile()
+            user = Puppet.type(:user).create(
+                :name => "pptestu",
+                :home => file,
+                :gid => "pptestg"
+            )
+            home = Puppet.type(:file).create(
+                :path => file,
+                :ensure => "directory"
+            )
+            group = Puppet.type(:group).create(
+                :name => "pptestg"
+            )
+            Puppet::Type.finalize
+            comp = newcomp(user, group)
+            comp.retrieve
+
+            assert(user.requires?(group), "User did not require group")
+            assert(user.requires?(home), "User did not require home dir")
         end
     else
         $stderr.puts "Not root; skipping user creation/modification tests"
