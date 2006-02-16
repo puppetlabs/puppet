@@ -1096,6 +1096,8 @@ class Type < Puppet::Element
         end
         name = hash.name
 
+        Puppet.warning "creating %s with name %s" % [self.name, name]
+
         # if the object already exists
         if self.isomorphic? and retobj = self[name]
             # if only one of our objects is implicit, then it's easy to see
@@ -1165,6 +1167,7 @@ class Type < Puppet::Element
             if hash.include? param
                 name = hash[param]
                 hash.delete(param)
+                break
             end
         }
         unless name
