@@ -180,9 +180,10 @@ class TestGroup < Test::Unit::TestCase
                 comp = newcomp("grouptest %s" % group, gobj)
             }
 
-            trans = nil
+            #trans = nil
             assert_nothing_raised {
-                trans = comp.evaluate
+                gobj.retrieve
+                #trans = comp.evaluate
             }
 
             assert(gobj.is(:gid), "Failed to retrieve gid")

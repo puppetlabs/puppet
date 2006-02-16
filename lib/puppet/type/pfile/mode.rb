@@ -59,7 +59,7 @@ module Puppet
         # If we're a directory, we need to be executable for all cases
         # that are readable.  This should probably be selectable, but eh.
         def dirmask(value)
-            if FileTest.directory?(@parent.name)
+            if FileTest.directory?(@parent[:path])
                 if value & 0400 != 0
                     value |= 0100
                 end
@@ -96,7 +96,7 @@ module Puppet
                 self.debug "%s: after refresh, is '%o'" % [self.class.name,@is]
                 if @is == :absent
                     self.info "File does not exist; cannot set mode" %
-                        @parent.name
+                        @parent[:path]
                     return nil
                 end
 
@@ -117,7 +117,7 @@ module Puppet
                 File.chmod(mode,@parent[:path])
             rescue => detail
                 error = Puppet::Error.new("failed to chmod %s: %s" %
-                    [@parent.name, detail.message])
+                    [@parent[:path], detail.message])
                 raise error
             end
             return :file_changed

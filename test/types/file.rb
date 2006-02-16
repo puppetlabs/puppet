@@ -736,6 +736,23 @@ class TestFile < Test::Unit::TestCase
         assert_events([], file)
         assert_events([], file)
     end
+
+    def test_nameandpath
+        path = tempfile()
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :name => "fileness",
+                :path => path,
+                :content => "this is some content"
+            )
+        }
+
+        assert_apply(file)
+
+        assert(FileTest.exists?(path))
+    end
 end
 
 # $Id$

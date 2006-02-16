@@ -9,7 +9,7 @@ module Puppet
         def install
             should = self.should(:ensure)
 
-            str = self.name
+            str = self[:name]
             case should
             when true, false, Symbol
                 # pass
@@ -29,7 +29,7 @@ module Puppet
 
         # What's the latest package version available?
         def latest
-            cmd = "apt-cache showpkg %s" % self.name 
+            cmd = "apt-cache showpkg %s" % self[:name] 
             output = %x{#{cmd} 2>&1}
 
             unless $? == 0

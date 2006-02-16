@@ -251,7 +251,6 @@ module Puppet
                 # And now evaluate each set klass within the nodescope.
                 classes.each { |klass|
                     if code = scope.lookuptype(klass)
-                        Puppet.warning "evaluating %s" % klass
                         code.safeevaluate(scope, {}, klass, klass)
                     end
                 }

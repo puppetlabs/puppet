@@ -88,7 +88,7 @@ module Puppet
 
                     # because we cannot sum directories, just delete ourselves
                     # from the file so we won't sync
-                    @parent.delete(self.name)
+                    @parent.delete(self[:path])
                     return
                 else
                     begin
@@ -101,7 +101,7 @@ module Puppet
                             end
                             if text.nil?
                                 self.info "Not checksumming empty file %s" %
-                                    @parent.name
+                                    @parent[:path]
                                 sum = 0
                             else
                                 sum = Digest::MD5.hexdigest(text)
@@ -109,7 +109,7 @@ module Puppet
                         }
                     rescue Errno::EACCES => detail
                         self.notice "Cannot checksum %s: permission denied" %
-                            @parent.name
+                            @parent[:path]
                         @parent.delete(self.class.name)
                     rescue => detail
                         self.notice "Cannot checksum %s: %s" %
@@ -139,8 +139,8 @@ module Puppet
                 self.fail "Invalid checksum type '%s'" % value
             end
 
-            if FileTest.directory?(@parent.name)
-                self.info "Reverting directory sum type to timestamp"
+            if FileTest.directory?(@parent[:path])
+                self.debug "Reverting directory sum type to timestamp"
                 value = "time"
             end
 
@@ -157,13 +157,13 @@ module Puppet
                 @checktypes = ["md5"]
             end
 
-            unless FileTest.exists?(@parent.name)
+            unless FileTest.exists?(@parent[:path])
                 self.is = :absent
                 return
             end
 
-            if FileTest.directory?(@parent.name) and @checktypes[0] =~ /md5/
-                self.info "Using timestamp on directory"
+            if FileTest.directory?(@parent[:path]) and @checktypes[0] =~ /md5/
+                self.debug "Using timestamp on directory"
                 @checktypes = ["time"]
             end
 
@@ -217,7 +217,7 @@ module Puppet
                     unless @parent.state(:source)
                         self.warning(
                             "File %s does not exist -- cannot checksum" %
-                            @parent.name
+                            @parent[:path]
                         )
                     end
                     return nil

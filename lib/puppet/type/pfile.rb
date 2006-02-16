@@ -178,7 +178,7 @@ module Puppet
             return children unless self[:ignore]
             self[:ignore].each { |ignore|
                 ignored = []
-                Dir.glob(File.join(self.name,ignore), File::FNM_DOTMATCH) { |match|
+                Dir.glob(File.join(self[:path],ignore), File::FNM_DOTMATCH) { |match|
                     ignored.push(File.basename(match))
                 }
                 children = children - ignored
@@ -216,7 +216,7 @@ module Puppet
                     "Must pass relative paths to PFile#newchild()"
                 )
             else
-                path = File.join(self.name, path)
+                path = File.join(self[:path], path)
             end
 
             args[:path] = path
@@ -375,18 +375,18 @@ module Puppet
         end
 
         def localrecurse(recurse)
-            unless FileTest.exist?(self.name) and self.stat.directory?
+            unless FileTest.exist?(self[:path]) and self.stat.directory?
                 #self.info "%s is not a directory; not recursing" %
-                #    self.name
+                #    self[:path]
                 return
             end
 
-            unless FileTest.readable? self.name
+            unless FileTest.readable? self[:path]
                 self.notice "Cannot manage %s: permission denied" % self.name
                 return
             end
 
-            children = Dir.entries(self.name)
+            children = Dir.entries(self[:path])
          
             #Get rid of ignored children
             if @parameters.include?(:ignore)
@@ -511,7 +511,7 @@ module Puppet
         def stat(refresh = false)
             if @stat.nil? or refresh == true
                 begin
-                    @stat = File.lstat(self.name)
+                    @stat = File.lstat(self[:path])
                 rescue Errno::ENOENT => error
                     @stat = nil
                 rescue => error

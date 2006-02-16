@@ -296,7 +296,7 @@ module Puppet
         end
 
         def self.mkdefaultschedules
-            Puppet.info "Creating default schedules"
+            Puppet.debug "Creating default schedules"
             # Create our default schedule
             self.create(
                 :name => "puppet",

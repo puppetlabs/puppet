@@ -159,7 +159,7 @@ module Puppet
                 # working in pfile
 
                 args = {
-                    :path => @parent.name,
+                    :path => @parent[:path],
                     :linkmaker => true,
                     :recurse => recurse,
                     :source => @target

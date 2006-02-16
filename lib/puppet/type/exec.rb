@@ -393,7 +393,6 @@ module Puppet
             end
 
             self[:command].scan(/^(#{File::SEPARATOR}\S+)/) { |str|
-                self.warning "adding %s" % str
                 reqs << str
             }
 
@@ -417,10 +416,7 @@ module Puppet
         def check
             self.class.checks.each { |check|
                 if @parameters.include?(check)
-                    if @parameters[check].check
-                        self.debug "%s returned true" % check
-                    else
-                        self.debug "%s returned false" % check
+                    unless @parameters[check].check
                         return false
                     end
                 end

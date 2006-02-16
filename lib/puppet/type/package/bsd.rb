@@ -21,10 +21,10 @@ module Puppet
         def query
             hash = {}
             # list out our specific package
-            info = %x{pkg_info #{self.name} 2>/dev/null}
+            info = %x{pkg_info #{self[:name]} 2>/dev/null}
 
             # Search for the version info
-            if info =~ /Information for #{self.name}-(\S+)/
+            if info =~ /Information for #{self[:name]}-(\S+)/
                 hash[:version] = $1
                 hash[:ensure] = :present
             else
@@ -70,7 +70,7 @@ module Puppet
         end
 
         def uninstall
-            cmd = "pkg_delete %s" % self.name
+            cmd = "pkg_delete %s" % self[:name]
             output = %x{#{cmd} 2>&1}
             if $? != 0
                 raise Puppet::PackageError.new(output)

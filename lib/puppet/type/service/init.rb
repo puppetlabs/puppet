@@ -85,7 +85,7 @@ Puppet.type(:service).newsvctype(:init) do
         if defined? @initscript
             return @initscript
         else
-            @initscript = self.search(self.name)
+            @initscript = self.search(self[:name])
         end
     end
 

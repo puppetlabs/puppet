@@ -146,6 +146,7 @@ class TestExec < Test::Unit::TestCase
         events = nil
         assert_nothing_raised {
             trans = comp.evaluate
+            file.retrieve
 
             sum = file.state(:checksum)
             assert_equal(sum.is, sum.should)
@@ -262,8 +263,9 @@ class TestExec < Test::Unit::TestCase
         assert(!exec.requires?(ofile), "Exec incorrectly required file")
 
         # Verify that we catch inline files
-        assert(cat.requires?(ofile), "Exec did not catch second inline file")
-        assert(cat.requires?(file), "Exec did not catch inline file")
+        # We not longer autorequire inline files
+        assert(! cat.requires?(ofile), "Exec required second inline file")
+        assert(! cat.requires?(file), "Exec required inline file")
     end
 
     def test_ifonly

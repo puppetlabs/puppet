@@ -41,12 +41,26 @@ class Transaction
     # then, we need to pass the event to the object's containing component,
     # to see if it or any of its parents have subscriptions on the event
     def evaluate
-        Puppet.debug "Beginning transaction %s with %s changes" %
-            [self.object_id, @changes.length]
+        #Puppet.debug "Beginning transaction %s with %s changes" %
+        #    [self.object_id, @changes.length]
 
+        count = 0
         now = Time.now
-        events = @changes.collect { |change|
-            if change.is_a?(Puppet::StateChange)
+        events = @objects.find_all { |child|
+            child.scheduled?
+        }.collect { |child|
+            # these children are all Puppet::Type instances
+            # not all of the children will return a change, and Containers
+            # return transactions
+            #ary = child.evaluate
+            #ary
+            changes = child.evaluate
+            unless changes.is_a? Array
+                changes = [changes]
+            end
+            changes.collect { |change|
+                @changes << change
+                count += 1
                 change.transaction = self
                 events = nil
                 begin
@@ -76,15 +90,52 @@ class Transaction
                     change.changed = true
                 end
                 events
-            else
-                puts caller
-                raise Puppet::DevError,
-                    "Transactions cannot handle objects of type %s" % change.class
-            end
-        }.flatten.reject { |event|
-            event.nil?
+            }
+        }.flatten.reject { |child|
+            child.nil? # remove empties
         }
+#        events = @changes.collect { |change|
+#            if change.is_a?(Puppet::StateChange)
+#                change.transaction = self
+#                events = nil
+#                begin
+#                    # use an array, so that changes can return more than one
+#                    # event if they want
+#                    events = [change.forward].flatten.reject { |e| e.nil? }
+#                    #@@changed.push change.state.parent
+#                rescue => detail
+#                    change.state.err "change from %s to %s failed: %s" %
+#                        [change.state.is_to_s, change.state.should_to_s, detail]
+#                    #Puppet.err("%s failed: %s" % [change.to_s,detail])
+#                    if Puppet[:debug]
+#                        puts detail.backtrace
+#                    end
+#                    next
+#                    # FIXME this should support using onerror to determine
+#                    # behaviour; or more likely, the client calling us
+#                    # should do so
+#                end
+#
+#                # This is kinda lame, because it can result in the same
+#                # object being modified multiple times, but that's difficult
+#                # to avoid as long as we're syncing each state individually.
+#                change.state.parent.cache(:synced, now)
+#
+#                unless events.nil? or (events.is_a?(Array) and events.empty?)
+#                    change.changed = true
+#                end
+#                events
+#            else
+#                puts caller
+#                raise Puppet::DevError,
+#                    "Transactions cannot handle objects of type %s" % change.class
+#            end
+#        }.flatten.reject { |event|
+#            event.nil?
+#        }
 
+        Puppet.debug "Finishing transaction %s with %s changes" %
+            [self.object_id, count]
         #@triggerevents = []
         events.each { |event|
             object = event.source
@@ -112,21 +163,24 @@ class Transaction
             @toplevel = true
             self.class.init
         end
+
+        @changes = []
+
         # change collection is in-band, and message generation is out-of-band
         # of course, exception raising is also out-of-band
         now = Time.now.to_i
-        @changes = @objects.find_all { |child|
-            child.scheduled?
-        }.collect { |child|
-            # these children are all Puppet::Type instances
-            # not all of the children will return a change, and Containers
-            # return transactions
-            #ary = child.evaluate
-            #ary
-            child.evaluate
-        }.flatten.reject { |child|
-            child.nil? # remove empties
-        }
+#        @changes = @objects.find_all { |child|
+#            child.scheduled?
+#        }.collect { |child|
+#            # these children are all Puppet::Type instances
+#            # not all of the children will return a change, and Containers
+#            # return transactions
+#            #ary = child.evaluate
+#            #ary
+#            child.evaluate
+#        }.flatten.reject { |child|
+#            child.nil? # remove empties
+#        }
     end
     #---------------------------------------------------------------
 

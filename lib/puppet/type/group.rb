@@ -99,7 +99,7 @@ module Puppet
         def getinfo(refresh = false)
             if @groupinfo.nil? or refresh == true
                 begin
-                    @groupinfo = Etc.getgrnam(self.name)
+                    @groupinfo = Etc.getgrnam(self[:name])
                 rescue ArgumentError => detail
                     @groupinfo = nil
                 end

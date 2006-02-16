@@ -7,7 +7,7 @@ module Puppet
                 :description => "DESCRIPTION"
             }
 
-            cmd = "rpm -q #{self.name} --qf '%s\n'" %
+            cmd = "rpm -q #{self[:name]} --qf '%s\n'" %
                 "%{NAME} %{VERSION}-%{RELEASE}"
 
             self.debug "Executing %s" % cmd.inspect
@@ -75,7 +75,7 @@ module Puppet
         #}
 
         def uninstall
-            cmd = "rpm -e %s" % self.name
+            cmd = "rpm -e %s" % self[:name]
             output = %x{#{cmd}}
             if $? != 0
                 raise output

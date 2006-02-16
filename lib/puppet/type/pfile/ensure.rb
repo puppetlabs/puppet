@@ -13,7 +13,7 @@ module Puppet
         nodefault
 
         newvalue(:absent) do
-            File.unlink(@parent.name)
+            File.unlink(@parent[:path])
         end
 
         aliasvalue(:false, :absent)
@@ -46,9 +46,9 @@ module Puppet
             mode = @parent.should(:mode)
             Puppet::Util.asuser(asuser()) {
                 if mode
-                    Dir.mkdir(@parent.name,mode)
+                    Dir.mkdir(@parent[:path],mode)
                 else
-                    Dir.mkdir(@parent.name)
+                    Dir.mkdir(@parent[:path])
                 end
             }
             @parent.setchecksum
@@ -73,7 +73,7 @@ module Puppet
         end
 
         def check
-            basedir = File.dirname(@parent.name)
+            basedir = File.dirname(@parent[:path])
 
             if ! FileTest.exists?(basedir)
                 raise Puppet::Error,
@@ -119,7 +119,7 @@ module Puppet
 
         def disabled_sync
             event = nil
-            basedir = File.dirname(@parent.name)
+            basedir = File.dirname(@parent[:path])
 
             if ! FileTest.exists?(basedir)
                 raise Puppet::Error,
@@ -171,9 +171,9 @@ module Puppet
                 when "directory":
                     Puppet::Util.asuser(asuser) {
                         if mode
-                            Dir.mkdir(@parent.name,mode)
+                            Dir.mkdir(@parent[:path],mode)
                         else
-                            Dir.mkdir(@parent.name)
+                            Dir.mkdir(@parent[:path])
                         end
                     }
                     event = :directory_created
@@ -182,13 +182,13 @@ module Puppet
 
                     # This value is only valid when we're rolling back a creation,
                     # so we verify that the file has not been modified since then.
-                    unless FileTest.size(@parent.name) == 0
+                    unless FileTest.size(@parent[:path]) == 0
                         raise Puppet::Error.new(
                             "Created file %s has since been modified; cannot roll back."
                         )
                     end
 
-                    File.unlink(@parent.name)
+                    File.unlink(@parent[:path])
                 else
                     error = Puppet::Error.new(
                         "Somehow got told to create a %s file" % self.should)

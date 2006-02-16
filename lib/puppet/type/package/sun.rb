@@ -50,7 +50,7 @@ module Puppet
             hash = {}
 
             # list out all of the packages
-            open("| pkginfo -l %s 2>/dev/null" % self.name) { |process|
+            open("| pkginfo -l %s 2>/dev/null" % self[:name]) { |process|
                 # we're using the long listing, so each line is a separate
                 # piece of information
                 process.each { |line|
@@ -133,7 +133,7 @@ module Puppet
         #}
 
         def uninstall
-            cmd = "pkgrm -n %s 2>&1" % self.name
+            cmd = "pkgrm -n %s 2>&1" % self[:name]
             output = %x{#{cmd}}
             if $? != 0
                 raise Puppet::Error, "Removal of %s failed: %s" % [self.name, output]

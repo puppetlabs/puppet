@@ -6,7 +6,7 @@ module Puppet
 
         # Install a package using 'apt-get'.
         def install
-            cmd = "yum -y install %s" % self.name
+            cmd = "yum -y install %s" % self[:name]
 
             self.info "Executing %s" % cmd.inspect
             output = %x{#{cmd} 2>&1}
@@ -18,7 +18,7 @@ module Puppet
 
         # What's the latest package version available?
         def latest
-            cmd = "yum list %s" % self.name 
+            cmd = "yum list %s" % self[:name] 
             self.info "Executing %s" % cmd.inspect
             output = %x{#{cmd} 2>&1}
 
@@ -26,7 +26,7 @@ module Puppet
                 raise Puppet::PackageError.new(output)
             end
 
-            if output =~ /#{self.name}\S+\s+(\S+)\s/
+            if output =~ /#{self[:name]}\S+\s+(\S+)\s/
                 return $1
             else
                 self.debug "No version"
@@ -45,7 +45,7 @@ module Puppet
                 self.info "performing initial install"
                 return self.install
             end
-            cmd = "yum -y update %s" % self.name
+            cmd = "yum -y update %s" % self[:name]
 
             self.info "Executing %s" % cmd.inspect
             output = %x{#{cmd} 2>&1}

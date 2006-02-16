@@ -2,11 +2,11 @@
 # somewhat obvious.
 Puppet.type(:service).newsvctype(:smf) do
     def restartcmd
-        "svcadm restart %s" % self.name
+        "svcadm restart %s" % self[:name]
     end
 
     def startcmd
-        "svcadm enable %s" % self.name
+        "svcadm enable %s" % self[:name]
     end
 
     def status
@@ -14,7 +14,7 @@ Puppet.type(:service).newsvctype(:smf) do
             super
             return
         end
-        %x{/usr/bin/svcs -l #{self.name} 2>/dev/null}.split("\n").each { |line|
+        %x{/usr/bin/svcs -l #{self[:name]} 2>/dev/null}.split("\n").each { |line|
             var = nil
             value = nil
             if line =~ /^(\w+)\s+(.+)/
@@ -50,7 +50,7 @@ Puppet.type(:service).newsvctype(:smf) do
     end
 
     def stopcmd
-        "svcadm disable %s" % self.name
+        "svcadm disable %s" % self[:name]
     end
 end
 

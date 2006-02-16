@@ -5,7 +5,7 @@ require 'puppet/type/service/init'
 Puppet.type(:service).newsvctype(:debian, :init) do
     # Remove the symlinks
     def disable
-        output = %x{update-rc.d -f #{self.name} remove 2>/dev/null}
+        output = %x{update-rc.d -f #{self[:name]} remove 2>/dev/null}
 
         unless $? == 0
             raise Puppet::Error, "Could not disable %s: %s" %
@@ -14,7 +14,7 @@ Puppet.type(:service).newsvctype(:debian, :init) do
     end
 
     def enabled?
-        output = %x{update-rc.d -n -f #{self.name} remove 2>/dev/null}
+        output = %x{update-rc.d -n -f #{self[:name]} remove 2>/dev/null}
         unless $? == 0
             raise Puppet::Error, "Could not check %s: %s" %
                 [self.name, output]
@@ -33,7 +33,7 @@ Puppet.type(:service).newsvctype(:debian, :init) do
         if runlevel
             raise Puppet::Error, "Specification of runlevels is not supported"
         else
-            output = %x{update-rc.d #{self.name} defaults 2>/dev/null}
+            output = %x{update-rc.d #{self[:name]} defaults 2>/dev/null}
         end
 
         unless $? == 0

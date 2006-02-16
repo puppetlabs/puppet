@@ -1,3 +1,8 @@
+0.13.3
+    Changed transactions to be one-stage instead of two
+    Changed all types to use self[:name] instead of self.name, to support
+        the symbolic naming implemented in 0.13.1
+
 0.13.2
     Changed package[answerfile] to package[adminfile], and added package[responsefile]
     Fixed a bunch of internal functions to behave more consistently and usefully

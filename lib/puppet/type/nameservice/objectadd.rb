@@ -65,13 +65,13 @@ module Puppet
                             cmd << self.class.objectaddflag << gid 
                         end
                     end
-                    cmd << @parent.name
+                    cmd << @parent[:name]
 
                     return cmd.join(" ")
                 end
 
                 def deletecmd
-                    "groupdel %s" % @parent.name
+                    "groupdel %s" % @parent[:name]
                 end
 
                 def modifycmd
@@ -79,7 +79,7 @@ module Puppet
                         "groupmod",
                         self.class.objectaddflag,
                         "'%s'" % self.should,
-                        @parent.name
+                        @parent[:name]
                     ].join(" ")
                 end
             end
@@ -109,13 +109,13 @@ module Puppet
                         cmd << "-M"
                     else
                     end
-                    cmd << @parent.name
+                    cmd << @parent[:name]
 
                     cmd.join(" ")
                 end
                 
                 def deletecmd
-                    ["userdel", @parent.name].join(" ")
+                    ["userdel", @parent[:name]].join(" ")
                 end
 
                 def modifycmd
@@ -123,7 +123,7 @@ module Puppet
                         "usermod",
                         self.class.objectaddflag,
                         "'%s'" % self.should,
-                        @parent.name
+                        @parent[:name]
                     ].join(" ")
                 end
             end

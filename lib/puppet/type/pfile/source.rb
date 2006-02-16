@@ -188,11 +188,11 @@ module Puppet
             end
 
             unless @stats[:type] == "file"
-                if @stats[:type] == "directory"
-                        [@parent.name, @is.inspect, @should.inspect]
-                end
+                #if @stats[:type] == "directory"
+                        #[@parent.name, @is.inspect, @should.inspect]
+                #end
                 raise Puppet::DevError, "Got told to copy non-file %s" %
-                    @parent.name
+                    @parent[:path]
             end
 
             unless defined? @source
@@ -220,13 +220,13 @@ module Puppet
                     @source
             end
 
-            if FileTest.exists?(@parent.name)
+            if FileTest.exists?(@parent[:path])
                 # this makes sure we have a copy for posterity
                 @backed = @parent.handlebackup
             end
 
             # create the file in a tmp location
-            args = [@parent.name + ".puppettmp", 
+            args = [@parent[:path] + ".puppettmp", 
                 File::CREAT | File::WRONLY | File::TRUNC]
 
             # try to create it with the correct modes to start
@@ -237,7 +237,7 @@ module Puppet
 
             # FIXME we should also change our effective user and group id
 
-            exists = File.exists?(@parent.name)
+            exists = File.exists?(@parent[:path])
             begin
                 File.open(*args) { |f|
                     f.print contents
@@ -246,23 +246,23 @@ module Puppet
                 # since they said they want a backup, let's error out
                 # if we couldn't make one
                 raise Puppet::Error, "Could not create %s to %s: %s" %
-                    [@source, @parent.name, detail.message]
+                    [@source, @parent[:path], detail.message]
             end
 
-            if FileTest.exists?(@parent.name)
+            if FileTest.exists?(@parent[:path])
                 begin
-                    File.unlink(@parent.name)
+                    File.unlink(@parent[:path])
                 rescue => detail
                     self.err "Could not remove %s for replacing: %s" %
-                        [@parent.name, detail]
+                        [@parent[:path], detail]
                 end
             end
 
             begin
-                File.rename(@parent.name + ".puppettmp", @parent.name)
+                File.rename(@parent[:path] + ".puppettmp", @parent[:path])
             rescue => detail
                 self.err "Could not rename tmp %s for replacing: %s" %
-                    [@parent.name, detail]
+                    [@parent[:path], detail]
             end
 
             if @stats.include? :checksum

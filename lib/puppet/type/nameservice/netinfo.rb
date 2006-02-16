@@ -31,7 +31,7 @@ module Puppet
             # Does the object already exist?
             def self.exists?(obj)
                 cmd = "nidump -r /%s/%s /" %
-                    [obj.class.netinfodir, obj.name]
+                    [obj.class.netinfodir, obj[:name]]
 
                 output = %x{#{cmd} 2>/dev/null}
                 if output == ""
@@ -101,7 +101,7 @@ module Puppet
                             name = $1
                             value = $2.sub(/\s+$/, '')
 
-                            if name == @parent.name
+                            if name == @parent[:name]
                                 if value =~ /^[-0-9]+$/
                                     @is = Integer(value)
                                 else
@@ -128,7 +128,7 @@ module Puppet
                     cmd << arg
 
                     cmd << "/" << "/%s/%s" %
-                        [@parent.class.netinfodir, @parent.name]
+                        [@parent.class.netinfodir, @parent[:name]]
 
                     #if arg == "-create"
                     #    return [cmd.join(" "), self.modifycmd].join(";")
@@ -145,7 +145,7 @@ module Puppet
                     cmd = ["niutil"]
 
                     cmd << "-createprop" << "/" << "/%s/%s" %
-                        [@parent.class.netinfodir, @parent.name]
+                        [@parent.class.netinfodir, @parent[:name]]
 
                     if key = self.class.netinfokey
                         cmd << key << "'%s'" % self.should

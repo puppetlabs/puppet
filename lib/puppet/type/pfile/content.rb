@@ -27,12 +27,12 @@ module Puppet
         # We should probably take advantage of existing md5 sums if they're there,
         # but I really don't feel like dealing with the complexity right now.
         def retrieve
-            unless FileTest.exists?(@parent.name)
+            unless FileTest.exists?(@parent[:path])
                 @is = :absent
                 return
             end
             begin
-                @is = File.read(@parent.name)
+                @is = File.read(@parent[:path])
             rescue => detail
                 @is = nil
                 raise Puppet::Error, "Could not read %s: %s" %
@@ -44,7 +44,7 @@ module Puppet
         # Just write our content out to disk.
         def sync
             begin
-                File.open(@parent.name, "w") { |f|
+                File.open(@parent[:path], "w") { |f|
                     f.print self.should
                     f.flush
                 }

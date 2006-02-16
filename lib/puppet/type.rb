@@ -1151,7 +1151,7 @@ class Type < Puppet::Element
         # Store the object by name
         self[obj.name] = obj
 
-        if name != obj[self.namevar]
+        if name != obj[self.namevar] and obj.class.isomorphic?
             self.alias(obj[self.namevar], obj)
         end
 

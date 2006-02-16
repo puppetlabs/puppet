@@ -193,7 +193,7 @@ module Puppet
                 of a service, then the service name will be used instead.
                 
                 The pattern can be a simple string or any legal Ruby pattern."
-            defaultto { @parent.name }
+            defaultto { @parent[:name] }
         end
         newparam(:restart) do
             desc "Specify a *restart* command manually.  If left

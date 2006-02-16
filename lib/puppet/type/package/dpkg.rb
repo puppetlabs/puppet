@@ -12,7 +12,7 @@ module Puppet
 
             hash = {}
             # list out our specific package
-            open("| dpkg -l %s 2>/dev/null" % self.name) { |process|
+            open("| dpkg -l %s 2>/dev/null" % self[:name]) { |process|
                 # our regex for matching dpkg output
                 regex = %r{^(.)(.)(.)\s(\S+)\s+(\S+)\s+(.+)$}
 
@@ -93,7 +93,7 @@ module Puppet
         end
 
         def uninstall
-            cmd = "dpkg -r %s" % self.name
+            cmd = "dpkg -r %s" % self[:name]
             output = %x{#{cmd} 2>&1}
             if $? != 0
                 raise Puppet::PackageError.new(output)
