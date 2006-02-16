@@ -9,8 +9,6 @@ require 'puppettest'
 require 'test/unit'
 require 'facter'
 
-# $Id$
-
 class TestExec < Test::Unit::TestCase
 	include TestPuppet
     def test_execution
@@ -399,4 +397,39 @@ class TestExec < Test::Unit::TestCase
 
         assert_apply(exec)
     end
+
+    def test_execthenfile
+        exec = nil
+        file = nil
+        basedir = tempfile()
+        path = File.join(basedir, "subfile")
+        assert_nothing_raised {
+            exec = Puppet.type(:exec).create(
+                :name => "mkdir",
+                :path => "/usr/bin:/bin",
+                :creates => basedir,
+                :command => "mkdir %s; touch %s" % [basedir, path]
+
+            )
+        }
+
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :path => basedir,
+                :recurse => true,
+                :mode => "755",
+                :require => ["exec", "mkdir"]
+            )
+        }
+
+        Puppet::Type.finalize
+
+        comp = newcomp(file, exec)
+        assert_events([:executed_command, :file_changed], comp)
+
+        assert(FileTest.exists?(path), "Exec ran first")
+        assert(File.stat(path).mode & 007777 == 0755)
+    end
 end
+
+# $Id$

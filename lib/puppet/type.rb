@@ -1383,7 +1383,9 @@ class Type < Puppet::Element
                     obj = dep
                 else
                     # Skip autorequires that we aren't managing
-                    next unless obj = typeobj[dep]
+                    unless obj = typeobj[dep]
+                        next
+                    end
                 end
 
                 # Skip autorequires that we already require

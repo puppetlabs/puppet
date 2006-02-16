@@ -392,7 +392,12 @@ module Puppet
                 reqs << self[:cwd]
             end
 
-            [:command, :onlyif, :unless].each { |param|
+            self[:command].scan(/^(#{File::SEPARATOR}\S+)/) { |str|
+                self.warning "adding %s" % str
+                reqs << str
+            }
+
+            [:onlyif, :unless].each { |param|
                 next unless tmp = self[param]
 
                 # And search the command line for files, adding any we find.  This
