@@ -146,10 +146,16 @@ module Puppet
                     event = :failed_command
                 end
 
-                # and log
-                @output.split(/\n/).each { |line|
-                    self.send(loglevel, line)
-                }
+                if log = @parent[:logoutput]
+                    if log == :true
+                        log = @parent[:loglevel]
+                    end
+                    unless log == :false
+                        @output.split(/\n/).each { |line|
+                            self.send(log, line)
+                        }
+                    end
+                end
 
                 return event
             end
@@ -249,6 +255,17 @@ module Puppet
                 
                 dir
             end
+        end
+
+        newparam(:logoutput) do
+            desc "Whether to log output.  Defaults to logging output at the
+                loglevel for the ``exec`` element.  Values are **true**, *false*,
+                and any legal log level."
+
+            values = [:true, :false]
+            # And all of the log levels
+            Puppet::Log.eachlevel { |level| values << level }
+            newvalues(*values)
         end
 
         newcheck(:refreshonly) do

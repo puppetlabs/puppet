@@ -371,4 +371,32 @@ class TestExec < Test::Unit::TestCase
             }
         end
     end
+
+    def test_logoutput
+        exec = nil
+        assert_nothing_raised {
+            exec = Puppet.type(:exec).create(
+                :name => "logoutputesting",
+                :path => "/usr/bin:/bin",
+                :command => "echo logoutput is false",
+                :logoutput => false
+            )
+        }
+
+        assert_apply(exec)
+
+        assert_nothing_raised {
+            exec[:command] = "echo logoutput is true"
+            exec[:logoutput] = true
+        }
+
+        assert_apply(exec)
+
+        assert_nothing_raised {
+            exec[:command] = "echo logoutput is warning"
+            exec[:logoutput] = "warning"
+        }
+
+        assert_apply(exec)
+    end
 end
