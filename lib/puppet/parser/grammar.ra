@@ -4,7 +4,7 @@
 
 class Puppet::Parser::Parser
 
-token LBRACK QTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE FALSE EQUALS
+token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE FALSE EQUALS
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL NOTEQUAL
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN DOT COLON TYPE
 token NAME SEMIC CASE DEFAULT INCLUDE
@@ -280,8 +280,14 @@ rvalue:       quotedtext
             | array
             | objectref
 
-quotedtext: QTEXT {
+quotedtext: DQTEXT {
     result = AST::String.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+}           | SQTEXT {
+    result = AST::FlatString.new(
         :line => @lexer.line,
         :file => @lexer.file,
         :value => val[0]
@@ -424,13 +430,7 @@ selectlhand:  NAME {
         :value => val[0]
     )
 }
-            | QTEXT {
-    result = AST::String.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
-}
+            | quotedtext
             | DEFAULT {
     result = AST::Default.new(
         :line => @lexer.line,
@@ -440,7 +440,7 @@ selectlhand:  NAME {
 }
             | boolean
 
-import: IMPORT QTEXT {
+import: IMPORT quotedtext {
     # importing files
     # yuk, i hate keywords
     # we'll probably have to have some kind of search path eventually

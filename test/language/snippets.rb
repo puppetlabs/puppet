@@ -400,6 +400,18 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
+    def snippet_singlequote(trans)
+        {   1 => 'a $quote',
+            2 => 'some "\yayness\"'
+        }.each { |count, str|
+            path = "/tmp/singlequote%s" % count
+            assert(FileTest.exists?(path), "File %s is missing" % path)
+            text = File.read(path)
+
+            assert_equal(str, text)
+        }
+    end
+
     def snippet_emptyclass(trans)
         # There's nothing to check other than that it works
     end

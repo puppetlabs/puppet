@@ -177,13 +177,20 @@ module Puppet
                     when :RETURN then
                         @line += 1
                         @scanner.skip(@skip)
+                    when :SQUOTE then
+                        #Puppet.debug("searching '%s' after '%s'" % [self.rest,value])
+                        value = self.slurpstring(value)
+                        yield [:SQTEXT,value]
+                        @last = value
+                        #stoken = :DQTEXT
+                        #Puppet.debug("got string '%s' => '%s'" % [:DQTEXT,value])
                     when :DQUOTE then
                         #Puppet.debug("searching '%s' after '%s'" % [self.rest,value])
                         value = self.slurpstring(value)
-                        yield [:QTEXT,value]
+                        yield [:DQTEXT,value]
                         @last = value
-                        #stoken = :QTEXT
-                        #Puppet.debug("got string '%s' => '%s'" % [:QTEXT,value])
+                        #stoken = :DQTEXT
+                        #Puppet.debug("got string '%s' => '%s'" % [:DQTEXT,value])
                     else
                         yield [stoken,value]
                         @last = value
@@ -205,7 +212,7 @@ module Puppet
                     raise Puppet::LexError.new("Unclosed quote after '%s' in '%s'" %
                         [self.last,self.rest])
                 else
-                    str.sub!(/#{quote}$/,"")
+                    str.sub!(/#{quote}\Z/,"")
                     str.gsub!(/\\#{quote}/,quote)
                 end
 

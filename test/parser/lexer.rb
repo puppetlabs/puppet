@@ -42,12 +42,20 @@ class TestLexer < Test::Unit::TestCase
     def test_quoted_strings
         strings = {
 %q{a simple "scanner" test
-} => [[:NAME,"a"],[:NAME,"simple"],[:QTEXT,"scanner"],[:NAME,"test"],[false,false]],
+} => [[:NAME,"a"],[:NAME,"simple"],[:DQTEXT,"scanner"],[:NAME,"test"],[false,false]],
+%q{a simple 'single quote scanner' test
+} => [[:NAME,"a"],[:NAME,"simple"],[:SQTEXT,"single quote scanner"],[:NAME,"test"],[false,false]],
+%q{a harder 'a $b \c"'
+} => [[:NAME,"a"],[:NAME,"harder"],[:SQTEXT,'a $b \c"'],[false,false]],
 %q{a harder "scanner test"
-} => [[:NAME,"a"],[:NAME,"harder"],[:QTEXT,"scanner test"],[false,false]],
+} => [[:NAME,"a"],[:NAME,"harder"],[:DQTEXT,"scanner test"],[false,false]],
 %q{a hardest "scanner \"test\""
-} => [[:NAME,"a"],[:NAME,"hardest"],[:QTEXT,'scanner "test"'],[false,false]],
-%q{function("call")} => [[:NAME,"function"],[:LPAREN,"("],[:QTEXT,'call'],[:RPAREN,")"],[false,false]]
+} => [[:NAME,"a"],[:NAME,"hardest"],[:DQTEXT,'scanner "test"'],[false,false]],
+%q{a hardestest "scanner \"test\"
+"
+} => [[:NAME,"a"],[:NAME,"hardestest"],[:DQTEXT,'scanner "test"
+'],[false,false]],
+%q{function("call")} => [[:NAME,"function"],[:LPAREN,"("],[:DQTEXT,'call'],[:RPAREN,")"],[false,false]]
 }
         strings.each { |str,array|
             @lexer.string = str

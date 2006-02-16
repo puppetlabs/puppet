@@ -48,7 +48,15 @@ class Puppet::Parser::AST
             return scope.strinterp(@value)
         end
     end
-    #---------------------------------------------------------------
+
+    # The base string class.
+    class FlatString < AST::Leaf
+        # Interpolate the string looking for variables, and then return
+        # the result.
+        def evaluate(scope)
+            return @value
+        end
+    end
 
     # The 'default' option on case statements and selectors.
     class Default < AST::Leaf; end
