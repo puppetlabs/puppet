@@ -92,7 +92,6 @@ debug = false
 verbose = false
 noop = false
 logfile = false
-parseonly = false
 loadclasses = false
 classfile = nil
 
@@ -177,7 +176,7 @@ begin
         :Master => server,
         :Cache => false
     )
-    if parseonly
+    if Puppet[:parseonly]
         exit(0)
     end
     client.getconfig
