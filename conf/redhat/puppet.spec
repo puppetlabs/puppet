@@ -5,7 +5,7 @@
 Summary: A network tool for managing many disparate systems
 Name: puppet
 Version: 0.13.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPL
 Group: System Environment/Base
 
@@ -14,6 +14,7 @@ Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
 
 Requires: ruby >= 1.8.1
 Requires: facter >= 1.1
+Requires: fedora-usermgmt
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArchitectures: noarch
 
@@ -49,6 +50,7 @@ The server can also function as a certificate authority and file server.
 %{__mv} %{buildroot}%{_sbindir}/puppet %{buildroot}%{_bindir}/puppet
 %{__install} -Dp -m0644 %{_pbuild}/lib/puppet.rb %{buildroot}%{rubylibdir}/puppet.rb
 %{__cp} -a %{_pbuild}/lib/puppet %{buildroot}%{rubylibdir}
+find %{buildroot}%{rubylibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__chmod} a-x
 %{__install} -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
 %{__install} -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
 %{__install} -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
@@ -80,15 +82,12 @@ The server can also function as a certificate authority and file server.
 %{_initrddir}/puppetmaster
 %config(noreplace) %{_sysconfdir}/puppet/*
 %config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
-%config(noreplace) %{_sysconfdir}/puppet/fileserver.conf
-%config(noreplace) %{_sysconfdir}/puppet/puppetmasterd.conf
 %{_sbindir}/cf2puppet
 %{_sbindir}/puppetca
 
 %pre
-# Use uid 317 - we need to find out how to properly assign
-# uid's for system users
-/usr/sbin/useradd -c "Puppet" -u 317 \
+/usr/sbin/fedora-groupadd 24 puppet
+/usr/sbin/fedora-useradd 24 -g puppet -c "Puppet" \
         -s /sbin/nologin -r -d /var/puppet puppet 2> /dev/null || :
 
 %post
@@ -122,6 +121,10 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Sun Feb 19 2006 David Lutterkort <dlutter@redhat.com> - 0.13.0-4
+- Use fedora-usermgmt to create puppet user/group. Use uid/gid 24. Fixed 
+problem with listing fileserver.conf and puppetmaster.conf twice
+
 * Wed Feb  8 2006 David Lutterkort <dlutter@redhat.com> - 0.13.0-3
 - Fix puppetd.conf
 
