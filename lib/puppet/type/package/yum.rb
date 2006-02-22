@@ -1,10 +1,7 @@
 module Puppet
     Puppet.type(:package).newpkgtype(:yum, :rpm) do
-        # A derivative of DPKG; this is how most people actually manage
-        # Debian boxes, and the only thing that differs is that it can
-        # install packages from remote sites.
 
-        # Install a package using 'apt-get'.
+        # Install a package using 'yum'.
         def install
             cmd = "yum -y install %s" % self[:name]
 
@@ -18,7 +15,7 @@ module Puppet
 
         # What's the latest package version available?
         def latest
-            cmd = "yum list %s" % self[:name] 
+            cmd = "yum list updates %s" % self[:name] 
             self.info "Executing %s" % cmd.inspect
             output = %x{#{cmd} 2>&1}
 
@@ -29,12 +26,9 @@ module Puppet
             if output =~ /#{self[:name]}\S+\s+(\S+)\s/
                 return $1
             else
-                self.debug "No version"
-                if Puppet[:debug]
-                    print output
-                end
-
-                return nil
+                # Yum didn't find updates, pretend the current
+                # version is the latest
+                return self[:version]
             end
         end
 
