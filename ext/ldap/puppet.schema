@@ -2,16 +2,16 @@
 #
 # $Id$
 
-attributetype ( 1.1.2.10 NAME 'puppetclass'
+attributetype ( 1.1.3.10 NAME 'puppetclass'
 	DESC 'Puppet Node Class'
 	EQUALITY caseIgnoreIA5Match
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
 
-attributetype ( 1.1.2.9 NAME 'parentnode'
+attributetype ( 1.1.3.9 NAME 'parentnode'
 	DESC 'Puppet Parent Node'
 	EQUALITY caseIgnoreIA5Match
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
 
-objectclass ( 1.1.1.1 NAME 'puppetClient' SUP ipHost AUXILIARY
+objectclass ( 1.1.1.2 NAME 'puppetClient' SUP ipHost AUXILIARY
 	DESC 'Puppet Client objectclass'
 	MAY ( puppetclass $ parentnode ))
