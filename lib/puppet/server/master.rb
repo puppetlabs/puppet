@@ -70,12 +70,7 @@ class Server
                 args[:Classes] = hash[:Classes]
             end
 
-            begin
-                @interpreter = Puppet::Parser::Interpreter.new(args)
-            rescue => detail
-                Puppet.err detail
-                raise
-            end
+            @interpreter = Puppet::Parser::Interpreter.new(args)
         end
 
         def getconfig(facts, format = "marshal", client = nil, clientip = nil)
