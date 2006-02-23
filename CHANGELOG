@@ -1,3 +1,6 @@
+0.13.4
+    A few important bug fixes, mostly in the parser.
+
 0.13.3
     Changed transactions to be one-stage instead of two
     Changed all types to use self[:name] instead of self.name, to support
