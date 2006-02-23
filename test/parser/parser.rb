@@ -95,6 +95,21 @@ class TestParser < Test::Unit::TestCase
         }
     end
 
+    def test_nonexistent_import
+        basedir = File.join(tmpdir(), "importesting")
+        @@tmpfiles << basedir
+        Dir.mkdir(basedir)
+        manifest = File.join(basedir, "manifest")
+        File.open(manifest, "w") do |f|
+            f.puts "import \" no such file \""
+        end
+        assert_raise(Puppet::ParseError) {
+            parser = Puppet::Parser::Parser.new()
+            parser.file = manifest
+            parser.parse
+        }
+    end
+
     def test_defaults
         basedir = File.join(tmpdir(), "defaulttesting")
         @@tmpfiles << basedir

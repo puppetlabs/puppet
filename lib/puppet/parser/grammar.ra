@@ -464,7 +464,12 @@ import: IMPORT quotedtext {
                  "in file #{@lexer.file} at line #{@lexer.line}"
              )
         end         
-        Dir.glob(pat).each { |file|
+        files = Dir.glob(pat)
+        if files.size == 0
+            raise Puppet::ImportError.new("No file(s) found for import " + 
+                                          "of '#{pat}'")
+        end
+        files.each { |file|
             parser = Puppet::Parser::Parser.new()
             parser.files = self.files
             Puppet.debug("importing '%s'" % file)
