@@ -279,6 +279,7 @@ end
 client.setcerts
 
 trap(:INT) {
+    Puppet.notice "Caught INT; shutting down"
     client.shutdown
 }
 

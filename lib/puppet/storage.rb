@@ -78,7 +78,7 @@ module Puppet
         end
 
         def self.store
-            #Puppet.debug "Storing state"
+            Puppet.debug "Storing state"
             unless FileTest.directory?(File.dirname(Puppet[:statefile]))
                 begin
                     Puppet.recmkdir(File.dirname(Puppet[:statefile]))
@@ -97,6 +97,7 @@ module Puppet
             Puppet::Util.writelock(Puppet[:statefile], 0600) do |file|
                 file.print YAML.dump(@@state)
             end
+            Puppet.debug "Stored state"
         end
     end
 end
