@@ -1,3 +1,7 @@
+0.13.5
+    Fixed packages so types can be specified
+    Added 'enable' state to services, although it does not work everywhere yet
+
 0.13.4
     A few important bug fixes, mostly in the parser.
 
