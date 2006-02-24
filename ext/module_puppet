@@ -132,6 +132,20 @@ if Puppet[:config] and File.exists? Puppet[:config]
     Puppet.config.parse(Puppet[:config])
 end
 
+client = nil
+server = nil
+
+[:INT, :TERM].each do |signal|
+    trap(signal) do
+        Puppet.notice "Caught #{signal}; shutting down"
+        [client, server].each { |obj|
+            if obj
+                obj.shutdown
+            end
+        }
+    end
+end
+
 Puppet.genconfig
 Puppet.genmanifest
 

@@ -278,10 +278,12 @@ end
 # now set up the network client with the certs, now that we have them
 client.setcerts
 
-trap(:INT) {
-    Puppet.notice "Caught INT; shutting down"
-    client.shutdown
-}
+[:INT, :TERM].each do |signal|
+    trap(signal) do
+        Puppet.notice "Caught #{signal}; shutting down"
+        client.shutdown
+    end
+end
 
 if onetime
     begin

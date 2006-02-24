@@ -221,9 +221,13 @@ if args[:Daemonize]
     server.daemonize
 end
 
-trap(:INT) {
-    server.shutdown
-}
+
+[:INT, :TERM].each do |signal|
+    trap(signal) do
+        Puppet.notice "Caught #{signal}; shutting down"
+        server.shutdown
+    end
+end
 
 Puppet.notice "Starting Puppet server version %s" % [Puppet.version]
 
