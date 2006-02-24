@@ -420,6 +420,9 @@ class Server
 
             if path == ""
                 path = nil
+            else
+                # Remove any double slashes that might have occurred
+                path.gsub!(/\/\//, "/")
             end
             return mount, path
         end
