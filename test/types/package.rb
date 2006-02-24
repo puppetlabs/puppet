@@ -144,6 +144,15 @@ class TestPackages < Test::Unit::TestCase
             "Somehow retrieved unknown pkg's version")
     end
 
+    def test_specifypkgtype
+        assert_nothing_raised {
+            pkg = Puppet.type(:package).create(
+                :name => "mypkg",
+                :type => "yum"
+            )
+        }
+    end
+
     def test_latestpkg
         tstpkgs { |pkg|
             assert_nothing_raised {

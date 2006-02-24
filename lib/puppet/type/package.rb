@@ -258,6 +258,9 @@ module Puppet
             # We cannot log in this routine, because this gets called before
             # there's a name for the package.
             munge do |type|
+                if type.is_a? String
+                    type = type.intern
+                end
                 @parent.type2module(type)
             end
         end
@@ -385,6 +388,7 @@ module Puppet
                 Puppet.notice "No support for gentoo yet"
                 @default = nil
             when "debian": @default = :apt
+            when "centos": @default = :rpm
             when "fedora": @default = :yum
             when "redhat": @default = :rpm
             when "openbsd": @default = :bsd
@@ -392,7 +396,7 @@ module Puppet
                 if Facter["kernel"] == "Linux"
                     Puppet.warning "Defaulting to RPM for %s" %
                         Facter["operatingsystem"].value
-                    @default = nil
+                    @default = :rpm
                 else
                     Puppet.warning "No default package system for %s" %
                         Facter["operatingsystem"].value
