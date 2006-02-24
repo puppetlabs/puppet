@@ -2,10 +2,10 @@ require 'puppet/type/service/init'
 
 # Manage debian services.  Start/stop is the same as InitSvc, but enable/disable
 # is special.
-Puppet.type(:service).newsvctype(:debian, :init) do
+Puppet.type(:service).newsvctype(:redhat, :init) do
     # Remove the symlinks
     def disable
-        output = %x{update-rc.d -f #{self[:name]} remove 2>&1}
+        output = %x{chkconfig #{self[:name]} off 2>&1}
 
         unless $? == 0
             raise Puppet::Error, "Could not disable %s: %s" %
@@ -14,23 +14,18 @@ Puppet.type(:service).newsvctype(:debian, :init) do
     end
 
     def enabled?
-        output = %x{update-rc.d -n -f #{self[:name]} remove 2>&1}
-        unless $? == 0
-            raise Puppet::Error, "Could not check %s: %s" %
-                [self.name, output]
-        end
-
-        # If it's enabled, then it will print output showing removal of
-        # links.
-        if output =~ /etc\/rc\d.d/
+        output = %x{chkconfig #{self[:name]} 2>&1}.chomp
+        if $? == 0
             return :true
         else
             return :false
         end
     end
 
-    def enable(runlevel)
-        output = %x{update-rc.d #{self[:name]} defaults 2>&1}
+    # Don't support them specifying runlevels; always use the runlevels
+    # in the init scripts.
+    def enable
+        output = %x{chkconfig #{self[:name]} on 2>&1}
 
         unless $? == 0
             raise Puppet::Error, "Could not enable %s: %s" %

@@ -1,6 +1,13 @@
-# Solaris 10 SMF-style services.  This is not yet implemented, which is probably
-# somewhat obvious.
+# Solaris 10 SMF-style services.
 Puppet.type(:service).newsvctype(:smf) do
+    def enable
+        "svcadm enable %s" % self[:name]
+    end
+
+    def dsiable
+        "svcadm disable %s" % self[:name]
+    end
+
     def restartcmd
         "svcadm restart %s" % self[:name]
     end

@@ -34,8 +34,8 @@ class TestInitService
     end
 
     def tstsvcs
-        case Facter["operatingsystem"].value
-        when "Solaris":
+        case Facter["operatingsystem"].value.downcase
+        when "solaris":
             return ["smtp", "xf"]
         end
     end
@@ -43,7 +43,7 @@ class TestInitService
     def mksleeper(hash = {})
         hash[:name] = "sleeper"
         hash[:path] = File.join($puppetbase,"examples/root/etc/init.d")
-        hash[:running] = true
+        hash[:ensure] = true
         hash[:hasstatus] = true
         #hash[:type] = "init"
         assert_nothing_raised() {
@@ -74,7 +74,7 @@ class TestInitService
 
         # now stop it
         assert_nothing_raised() {
-            sleeper[:running] = 0
+            sleeper[:ensure] = 0
         }
         assert_nothing_raised() {
             sleeper.retrieve
@@ -116,21 +116,24 @@ class TestLocalService < Test::Unit::TestCase
     end
 
     def mktestsvcs
-        tstsvcs.collect { |svc|
-            Puppet.type(:service).create(
-                :name => svc,
-                :check => [:running]
-            )
+        tstsvcs.collect { |svc,svcargs|
+            args = svcargs.dup
+            args[:name] = svc
+            Puppet.type(:service).create(args)
         }
     end
 
     def tstsvcs
-        case Facter["operatingsystem"].value
-        when "Solaris":
+        case Facter["operatingsystem"].value.downcase
+        when "solaris":
             case Facter["operatingsystemrelease"].value
             when "5.10":
-                return ["smtp", "xfs"]
+                return {"smtp" => {}, "xfs" => {}}
             end
+        when "debian":
+            return {"hddtemp" => {}}
+        when "centos":
+            return {"cups" => {:hasstatus => true}}
         end
 
         Puppet.notice "No test services for %s-%s" %
@@ -145,7 +148,7 @@ class TestLocalService < Test::Unit::TestCase
         }
 
         comp = newcomp("servicetst", service)
-        service[:running] = true
+        service[:ensure] = true
 
         Puppet.info "Starting %s" % service.name
         assert_apply(service)
@@ -167,7 +170,7 @@ class TestLocalService < Test::Unit::TestCase
 
         # now stop it
         assert_nothing_raised() {
-            service[:running] = 0
+            service[:ensure] = :stopped
         }
         assert_nothing_raised() {
             service.retrieve
@@ -180,6 +183,42 @@ class TestLocalService < Test::Unit::TestCase
             service.retrieve
         }
         assert(service.insync?, "Service %s has not stopped" % service.name)
+    end
+
+    def cycleenable(service)
+        assert_nothing_raised() {
+            service.retrieve
+        }
+
+        comp = newcomp("servicetst", service)
+        service[:enable] = true
+
+        Puppet.info "Enabling %s" % service.name
+        assert_apply(service)
+
+        # Some package systems background the work, so we need to give them
+        # time to do their work.
+        sleep(1.5)
+        assert_nothing_raised() {
+            service.retrieve
+        }
+        assert(service.insync?, "Service %s is not enabled" % service.name)
+
+        # now stop it
+        assert_nothing_raised() {
+            service[:enable] = false
+        }
+        assert_nothing_raised() {
+            service.retrieve
+        }
+        assert(!service.insync?(), "Service %s is not enabled" % service.name)
+        Puppet.info "disabling %s" % service.name
+        assert_events([:service_disabled], comp)
+        sleep(1.5)
+        assert_nothing_raised() {
+            service.retrieve
+        }
+        assert(service.insync?, "Service %s has not been disabled" % service.name)
     end
 
     def test_status
@@ -197,13 +236,29 @@ class TestLocalService < Test::Unit::TestCase
     else
         def test_servicestartstop
             mktestsvcs.each { |svc|
+                svc[:check] = :enable
                 startstate = nil
                 assert_nothing_raised("Could not get status") {
                     startstate = svc.status
                 }
                 cycleservice(svc)
 
-                svc[:running] = startstate
+                svc[:ensure] = startstate
+                assert_apply(svc)
+                Puppet.type(:service).clear
+                Puppet.type(:component).clear
+            }
+        end
+
+        def test_serviceenabledisable
+            mktestsvcs.each { |svc|
+                startstate = nil
+                assert_nothing_raised("Could not get status") {
+                    startstate = svc.enabled?
+                }
+                cycleenable(svc)
+
+                svc[:enable] = startstate
                 assert_apply(svc)
                 Puppet.type(:service).clear
                 Puppet.type(:component).clear

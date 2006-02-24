@@ -19,66 +19,104 @@ module Puppet
         
         attr_reader :stat
 
-#        newstate(:enabled) do
-#            desc "Whether a service should be enabled to start at boot.
-#                **true**/*false*/*runlevel*"
-#
-#            def retrieve
-#                unless @parent.respond_to?(:enabled?)
-#                    raise Puppet::Error, "Service %s does not support enabling"
-#                end
-#                @is = @parent.enabled?
-#            end
-#
-#            munge do |should|
-#                @runlevel = nil
-#                case should
-#                when true: return :enabled
-#                when false: return :disabled
-#                when /^\d+$/:
-#                    @runlevel = should
-#                    return :enabled
-#                else
-#                    raise Puppet::Error, "Invalid 'enabled' value %s" % should
-#                end
-#            end
-#
-#            def sync
-#                case self.should
-#                when :enabled
-#                    unless @parent.respond_to?(:enable)
-#                        raise Puppet::Error, "Service %s does not support enabling"
-#                    end
-#                    @parent.enable(@runlevel)
-#                    return :service_enabled
-#                when :disabled
-#                    unless @parent.respond_to?(:disable)
-#                        raise Puppet::Error,
-#                            "Service %s does not support disabling"
-#                    end
-#                    @parent.disable
-#                    return :service_disabled
-#                end
-#            end
-#        end
+        newstate(:enable) do
+            attr_reader :runlevel
+            desc "Whether a service should be enabled to start at boot.
+                This state behaves quite differently depending on the platform;
+                wherever possible, it relies on local tools to enable or disable
+                a given service.  *true*/*false*/*runlevels*"
 
-        # Handle whether the service should actually be running right now.
-        newstate(:running) do
-            desc "Whether a service should be running.  **true**/*false*"
+            newvalue(:true) do
+                unless @parent.respond_to?(:enable)
+                    raise Puppet::Error, "Service %s does not support enabling"
+                end
+                @parent.enable
+            end
+
+            newvalue(:false) do
+                unless @parent.respond_to?(:disable)
+                    raise Puppet::Error, "Service %s does not support enabling"
+                end
+                @parent.disable
+            end
+
+            def retrieve
+                unless @parent.respond_to?(:enabled?)
+                    raise Puppet::Error, "Service %s does not support enabling"
+                end
+                @is = @parent.enabled?
+            end
+
+            validate do |value|
+                unless value =~ /^\d+/
+                    super(value)
+                end
+            end
 
             munge do |should|
-                case should
-                when false,0,"0", "stopped", :stopped:
-                    should = :stopped
-                when true,1,"1", :running, "running":
-                    should = :running
+                @runlevel = nil
+                if should =~ /^\d+$/
+                    arity = @parent.method(:enable)
+                    if @runlevel and arity != 1
+                        raise Puppet::Error,
+                            "Services on %s do not accept runlevel specs" %
+                                @parent.type
+                    elsif arity != 0
+                        raise Puppet::Error,
+                            "Services on %s must specify runlevels" %
+                                @parent.type
+                    end
+                    @runlevel = should
+                    return :true
                 else
-                    self.warning "%s: interpreting '%s' as false" %
-                        [self.class,should.inspect]
-                    should = 0
+                    super(should)
                 end
-                return should
             end
+
+            def sync
+                case self.should
+                when :true
+                    if @runlevel
+                        @parent.enable(@runlevel)
+                    else
+                        @parent.enable()
+                    end
+                    return :service_enabled
+                when :false
+                    @parent.disable
+                    return :service_disabled
+                end
+            end
+        end
+
+        # Handle whether the service should actually be running right now.
+        newstate(:ensure) do
+            desc "Whether a service should be running.  **true**/*false*"
+
+            newvalue(:stopped) do
+                @parent.stop
+            end
+
+            newvalue(:running) do
+                @parent.start
+            end
+
+            aliasvalue(:false, :stopped)
+            aliasvalue(:true, :running)
+
+#            munge do |should|
+#                case should
+#                when false,0,"0", "stopped", :stopped:
+#                    should = :stopped
+#                when true,1,"1", :running, "running":
+#                    should = :running
+#                else
+#                    self.warning "%s: interpreting '%s' as false" %
+#                        [self.class,should.inspect]
+#                    should = 0
+#                end
+#                return should
+#            end
 
             def retrieve
                 self.is = @parent.status
@@ -103,9 +141,22 @@ module Puppet
             end
         end
 
+        # Produce a warning, rather than just failing.
+        newparam(:running) do
+            desc "A place-holder parameter that wraps ``ensure``, because
+                ``running`` is deprecated.  You should use ``ensure`` instead
+                of this, but using this will still work, albeit with a
+                warning."
+
+            def should=(values)
+                @parent.warning "'running' is deprecated; please use 'ensure'"
+                @parent[:ensure] = values
+            end
+        end
+
         newparam(:type) do
             desc "The service type.  For most platforms, it does not make
-                sense to change set this parameter, as the default is based on
+                sense to set this parameter, as the default is based on
                 the builtin service facilities.  The service types available are:
                 
                 * ``base``: You must specify everything.
@@ -286,6 +337,8 @@ module Puppet
                     else
                         @defsvctype = self.svctype(:smf)
                     end
+                when "CentOS", "RedHat", "Fedora":
+                    @defsvctype = self.svctype(:redhat)
                 else
                     if Facter["kernel"] == "Linux"
                         Puppet.notice "Using service type %s for %s" %
@@ -438,6 +491,7 @@ end
 require 'puppet/type/service/base'
 require 'puppet/type/service/init'
 require 'puppet/type/service/debian'
+require 'puppet/type/service/redhat'
 require 'puppet/type/service/smf'
 
 # $Id$
