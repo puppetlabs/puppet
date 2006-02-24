@@ -35,7 +35,7 @@ ARGV.each do |file|
 
             puts fields.zip(ary).collect { |field, val|
                 "        %s => \"%s\"" % [field, val]
-            }.join("\n") + ";"
+            }.join(",\n") + ";"
 
         end
     end
