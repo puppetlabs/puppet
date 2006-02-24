@@ -75,7 +75,7 @@ options = [
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
 ]
-Puppet::Log.newdestination(:syslog)
+#Puppet::Log.newdestination(:syslog)
 
 # Add all of the config parameters as valid options.
 Puppet.config.addargs(options)
