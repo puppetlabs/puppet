@@ -1655,10 +1655,11 @@ class Type < Puppet::Element
     def statechanges
         # If we are changing the existence of the object, then none of
         # the other states matter.
+        changes = nil
         if @states.include?(:ensure) and ! @states[:ensure].insync?
             #self.info "ensuring %s from %s" %
             #    [@states[:ensure].should, @states[:ensure].is]
-            return [Puppet::StateChange.new(@states[:ensure])]
+            changes = [Puppet::StateChange.new(@states[:ensure])]
         # Else, if the 'ensure' state is correctly absent, then do
         # nothing
         elsif @states.include?(:ensure) and @states[:ensure].is == :absent
@@ -1671,12 +1672,22 @@ class Type < Puppet::Element
             #else
             #    self.info "no ensure state"
             #end
-            return states().find_all { |state|
+            changes = states().find_all { |state|
                 ! state.insync?
             }.collect { |state|
                 Puppet::StateChange.new(state)
             }
         end
+
+        if Puppet[:debug] and changes.length > 0
+            self.debug("Changing " + changes.collect { |ch|
+                    self.info ch.state.class
+                    ch.state.name
+                }.join(",")
+            )
+        end
+
+        changes
     end
 
     # this method is responsible for collecting state changes
