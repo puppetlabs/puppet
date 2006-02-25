@@ -168,8 +168,9 @@ module Puppet
 
             if usetrans
                 name = nil
-                #if self.autoname or @name =~ /-\d+$/
-                if self.autoname
+
+                # Nodes have the same name and type
+                if self.autoname or @name == @type
                     name = @type
                 else
                     name = "%s[%s]" % [@type, @name]
