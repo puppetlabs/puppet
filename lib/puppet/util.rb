@@ -73,6 +73,9 @@ module Util
     def self.chuser
         if group = Puppet[:group]
             group = self.gid(group)
+            unless group
+                raise Puppet::Error, "No such group %s" % Puppet[:group]
+            end
             unless Process.gid == group
                 begin
                     Process.egid = group 
@@ -86,6 +89,9 @@ module Util
 
         if user = Puppet[:user]
             user = self.uid(user)
+            unless user
+                raise Puppet::Error, "No such user %s" % Puppet[:user]
+            end
             unless Process.uid == user
                 begin
                     Process.euid = user 
@@ -168,6 +174,9 @@ module Util
         end
         if obj
             gid = obj.should(:gid) || obj.is(:gid)
+            if gid == :absent
+                gid = nil
+            end
         end
 
         return gid
@@ -206,7 +215,10 @@ module Util
 
         if obj
             obj.retrieve
-            uid = obj.is(:uid)
+            uid = obj.should(:uid) || obj.is(:uid)
+            if uid == :absent
+                uid = nil
+            end
         end
 
         return uid
