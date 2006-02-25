@@ -140,7 +140,6 @@ module Puppet
             end
 
             if FileTest.directory?(@parent[:path])
-                self.debug "Reverting directory sum type to timestamp"
                 value = "time"
             end
 
@@ -163,7 +162,6 @@ module Puppet
             end
 
             if FileTest.directory?(@parent[:path]) and @checktypes[0] =~ /md5/
-                self.debug "Using timestamp on directory"
                 @checktypes = ["time"]
             end
 
