@@ -49,13 +49,6 @@ class Puppet::Parser::AST
             super
 
             #Puppet.debug "Defining type %s" % @name.value
-
-            # we need to both mark that a given argument is valid,
-            # and we need to also store any provided default arguments
-            # FIXME This creates a global list of types and their
-            # acceptable arguments.  This should really be scoped
-            # instead.
-            @@settypes[@name.value] = self
         end
 
         def tree(indent = 0)
@@ -70,42 +63,7 @@ class Puppet::Parser::AST
         def to_s
             return "define %s(%s) {\n%s }" % [@name, @args, @code]
         end
-
-        # Check whether a given argument is valid.  Searches up through
-        # any parent classes that might exist.
-        def validarg?(param)
-            found = false
-            if @args.is_a?(AST::ASTArray)
-                found = @args.detect { |arg|
-                    if arg.is_a?(AST::ASTArray)
-                        arg[0].value == param
-                    else
-                        arg.value == param
-                    end
-                }
-            else
-                found = @args.value == param
-                #Puppet.warning "got arg %s" % @args.inspect
-                #hash[@args.value] += 1
-            end
-
-            if found
-                return true
-            # a nil parentclass is an empty astarray
-            # stupid but true
-            elsif @parentclass
-                parent = @@settypes[@parentclass.value]
-                if parent and parent != []
-                    return parent.validarg?(param)
-                else
-                    raise Puppet::Error, "Could not find parent class %s" %
-                        @parentclass.value
-                end
-            else
-                return false
-            end
-
-        end
     end
-
 end
+
+# $Id$

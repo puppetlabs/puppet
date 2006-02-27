@@ -41,6 +41,7 @@ class Puppet::Parser::AST
         # Does not actually return an object; instead sets an object
         # in the current scope.
         def evaluate(scope)
+            @scope = scope
             hash = {}
 
             # Get our type and name.
@@ -52,7 +53,8 @@ class Puppet::Parser::AST
                 self.typecheck(objtype)
             end
 
-            # See if our object type was defined
+            # See if our object type was defined.  If not, we know it's
+            # builtin because we already typechecked.
             begin
                 object = scope.lookuptype(objtype)
             rescue Puppet::ParseError => except
@@ -66,20 +68,6 @@ class Puppet::Parser::AST
                 error.backtrace = detail.backtrace
                 raise error
             end
-
-            unless object
-                # If not, verify that it's a builtin type
-                object = Puppet::Type.type(objtype)
-
-                # Type.type returns nil on object types that aren't found
-                unless object
-                    error = Puppet::ParseError.new("Invalid type %s" % objtype)
-                    error.line = self.line
-                    error.file = self.file
-                    raise error
-                end
-            end
-
 
             autonamed = false
             # Autogenerate the name if one was not passed.
@@ -110,7 +98,7 @@ class Puppet::Parser::AST
             objnames.collect { |objname|
                 # If the object is a class, that means it's a builtin type, so
                 # we just store it in the scope
-                if object.is_a?(Class)
+                unless object
                     begin
                         #Puppet.debug(
                         #    ("Setting object '%s' " +
@@ -184,15 +172,7 @@ class Puppet::Parser::AST
             @checked = false
             super
 
-            if @type.is_a?(Variable)
-                Puppet.debug "Delaying typecheck"
-                return
-            else
-                self.typecheck(@type.value)
-
-                objtype = @type.value
-            end
-
+            self.typecheck(@type.value)
         end
 
         # Verify that all passed parameters are valid
@@ -209,6 +189,9 @@ class Puppet::Parser::AST
                     self.paramdefinedcheck(objtype, param)
                 end
             }
+
+            # Mark that we've made it all the way through.
+            @checked = true
         end
 
         def parambuiltincheck(type, param)
@@ -234,7 +217,8 @@ class Puppet::Parser::AST
         end
 
         def paramdefinedcheck(objtype, param)
-            # FIXME we might need to do more here eventually...
+            # FIXME We might need to do more here eventually.  Metaparams
+            # behave strangely on containers.
             if Puppet::Type.metaparam?(param.param.value.intern)
                 return
             end
@@ -245,7 +229,9 @@ class Puppet::Parser::AST
                 raise Puppet::DevError, detail.to_s
             end
 
-            unless @@settypes[objtype].validarg?(pname)
+            # FIXME This should look through the scope tree, not in a global
+            # hash
+            unless objtype.validarg?(pname)
                 error = Puppet::ParseError.new(
                     "Invalid parameter '%s' for type '%s'" %
                         [pname,objtype]
@@ -306,22 +292,29 @@ class Puppet::Parser::AST
                 # nothing; we've already set builtin to false
             end
 
-            unless builtin or @@settypes.include?(objtype) 
-                error = Puppet::ParseError.new(
-                    "Unknown type '%s'" % objtype
-                )
-                error.line = self.line
-                error.file = self.file
-                raise error
+            typeobj = nil
+            if builtin
+                self.paramcheck(builtin, objtype)
+            else
+                # If there's no set scope, then we're in initialize, not
+                # evaluate, so we can't test defined types.
+                return true unless defined? @scope and @scope
+
+                # Unless we can look up the type, throw an error
+                unless objtype = @scope.lookuptype(objtype)
+                    error = Puppet::ParseError.new(
+                        "Unknown type '%s'" % objtype
+                    )
+                    error.line = self.line
+                    error.file = self.file
+                    raise error
+                end
+
+                # Now that we have the type, verify all of the parameters.
+                # Note that we're now passing an AST Class object or whatever
+                # as the type, not a simple string.
+                self.paramcheck(builtin, objtype)
             end
-
-            #unless builtin
-            #    Puppet.debug "%s is a defined type" % objtype
-            #end
-
-            self.paramcheck(builtin, objtype)
-
-            @checked = true
         end
 
         def to_s
@@ -332,5 +325,4 @@ class Puppet::Parser::AST
             ]
         end
     end
-
 end

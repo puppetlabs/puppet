@@ -15,7 +15,7 @@ module Puppet
                 [:typecheck, true, "Whether to validate types during parsing."],
                 [:paramcheck, true, "Whether to validate parameters during parsing."]
             )
-            attr_accessor :line, :file, :parent
+            attr_accessor :line, :file, :parent, :scope
 
             # Just used for 'tree', which is only used in debugging.
             @@pink = "[0;31m"

@@ -413,4 +413,107 @@ class TestAST < Test::Unit::TestCase
             }
         }
     end
+
+    def test_typechecking
+        object = nil
+        children = []
+        type = "deftype"
+        assert_nothing_raised("Could not add AST nodes for calling") {
+            object = AST::ObjectDef.new(
+                :type => nameobj(type),
+                :name => nameobj("yayness"),
+                :params => astarray()
+            )
+        }
+
+        assert_nothing_raised("Typecheck failed") {
+            object.typecheck(type)
+        }
+
+        # Add a scope, which makes it think it's evaluating
+        assert_nothing_raised {
+            scope = Puppet::Parser::Scope.new()
+            object.scope = scope
+        }
+
+        # Verify an error is thrown when it can't find the type
+        assert_raise(Puppet::ParseError) {
+            object.typecheck(type)
+        }
+
+        # Create child class one
+        children << classobj(type)
+        children << object
+
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        scope = nil
+        assert_nothing_raised("Could not evaluate") {
+            scope = Puppet::Parser::Scope.new()
+            objects = top.evaluate(scope)
+        }
+    end
+
+    def disabled_test_paramcheck
+        object = nil
+        children = []
+        type = "deftype"
+        params = %w{param1 param2}
+
+        comp = compobj(type, {
+            :args => astarray(
+                argobj("param1", "yay"),
+                argobj("param2", "rah")
+            ),
+            :code => AST::ASTArray.new(
+                :children => [
+                    varobj("%svar" % name, "%svalue" % name),
+                    fileobj("/%s" % name)
+                ]
+            )
+        })
+        assert_nothing_raised("Could not add AST nodes for calling") {
+            object = AST::ObjectDef.new(
+                :type => nameobj(type),
+                :name => nameobj("yayness"),
+                :params => astarray(
+                    astarray(stringobj("param1"), stringobj("value1")),
+                    astarray(stringobj("param2"), stringobj("value2"))
+                )
+            )
+        }
+
+        # Add a scope, which makes it think it's evaluating
+        assert_nothing_raised {
+            scope = Puppet::Parser::Scope.new()
+            object.scope = scope
+        }
+
+        # Verify an error is thrown when it can't find the type
+        assert_raise(Puppet::ParseError) {
+            object.paramcheck(false, comp)
+        }
+
+        # Create child class one
+        children << classobj(type)
+        children << object
+
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        scope = nil
+        assert_nothing_raised("Could not evaluate") {
+            scope = Puppet::Parser::Scope.new()
+            objects = top.evaluate(scope)
+        }
+    end
 end

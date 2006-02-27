@@ -695,9 +695,9 @@ module ParserTesting
     include TestPuppet
     AST = Puppet::Parser::AST
 
-    def astarray
+    def astarray(*args)
         AST::ASTArray.new(
-            :children => []
+            :children => args
         )
     end
 
@@ -721,10 +721,10 @@ module ParserTesting
     end
 
     def compobj(name, args = {})
-        args[:file] = tempfile()
-        args[:line] = rand(100)
-        args[:name] = nameobj(name)
-        args[:code] = AST::ASTArray.new(
+        args[:file] ||= tempfile()
+        args[:line] ||= rand(100)
+        args[:name] ||= nameobj(name)
+        args[:code] ||= AST::ASTArray.new(
             :file => tempfile(),
             :line => rand(100),
             :children => [
@@ -814,6 +814,14 @@ module ParserTesting
                 :line => rand(100),
                 :name => nameobj(name),
                 :value => stringobj(value)
+            )
+        }
+    end
+
+    def argobj(name, value)
+        assert_nothing_raised("Could not create %s compargument" % name) {
+            return AST::CompArgument.new(
+                :children => [nameobj(name), stringobj(value)]
             )
         }
     end

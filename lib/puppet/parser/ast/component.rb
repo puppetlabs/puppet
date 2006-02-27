@@ -13,8 +13,8 @@ class Puppet::Parser::AST
         attr_accessor :name, :args, :code, :scope, :autoname, :keyword
 
         def evaluate(scope,hash,objtype,objname)
-
             scope = scope.newscope
+            @scope = scope
 
             # The type is the component or class name
             scope.type = objtype
@@ -100,6 +100,41 @@ class Puppet::Parser::AST
             # under ours.  This allows them to find our definitions.
             return scope
         end
-    end
 
+        # Check whether a given argument is valid.  Searches up through
+        # any parent classes that might exist.
+        def validarg?(param)
+            found = false
+            unless @args.is_a? Array
+                @args = [@args]
+            end
+
+            found = @args.detect { |arg|
+                if arg.is_a? Array
+                    arg[0] == param
+                else
+                    arg == param
+                end
+            }
+
+            if found
+                # It's a valid arg for us
+                return true
+            elsif @parentclass
+                # Else, check any existing parent
+                parent = @scope.lookuptype(@parentclass)
+                if parent and parent != []
+                    return parent.validarg?(param)
+                else
+                    raise Puppet::Error, "Could not find parent class %s" %
+                        @parentclass
+                end
+            else
+                # Or just return false
+                return false
+            end
+        end
+    end
 end
+
+# $Id$

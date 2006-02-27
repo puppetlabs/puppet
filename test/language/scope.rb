@@ -305,7 +305,7 @@ class TestScope < Test::Unit::TestCase
 
     # Verify that two statements about a file within the same scope tree
     # will cause a conflict.
-    def test_znoconflicts
+    def test_noconflicts
         filename = tempfile()
         children = []
 
@@ -410,5 +410,8 @@ class TestScope < Test::Unit::TestCase
 
             assert_equal("bin", file["owner"], "Value did not override correctly")
         }
+    end
+
+    def test_classscopes
     end
 end
