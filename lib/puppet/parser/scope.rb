@@ -530,13 +530,15 @@ module Puppet
                 return Puppet::Parser::Scope.new(self)
             end
 
-            # Store the fact that we've evaluated a given class.
-            # FIXME Shouldn't setclass actually store the code, not just a boolean?
-            def setclass(klass)
+            # Store the fact that we've evaluated a given class.  We use a hash
+            # that gets inherited from the nodescope down, rather than a global
+            # hash.  We store the object ID, not class name, so that we
+            # can support multiple unrelated classes with the same name.
+            def setclass(id)
                 if self.nodescope? or self.topscope?
-                    @classtable[klass] = true
+                    @classtable[id] = true
                 else
-                    @parent.setclass(klass)
+                    @parent.setclass(id)
                 end
             end
 
@@ -578,7 +580,6 @@ module Puppet
             end
 
             # Return an interpolated string.
-            # FIXME We do not yet support a non-interpolated string.
             def strinterp(string)
                 newstring = string.dup
                 regex = Regexp.new('\$\{(\w+)\}|\$(\w+)')

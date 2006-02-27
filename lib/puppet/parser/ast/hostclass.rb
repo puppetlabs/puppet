@@ -7,7 +7,10 @@ class Puppet::Parser::AST
         attr_accessor :parentclass
 
         def evaluate(scope,hash,objtype,objname)
-            if scope.lookupclass(@name)
+            # Verify that we haven't already been evaluated
+            # FIXME The second subclass won't evaluate the parent class
+            # code at all, and any overrides will throw an error.
+            if scope.lookupclass(self.object_id)
                 Puppet.debug "%s class already evaluated" % @name
                 return nil
             end
@@ -26,7 +29,7 @@ class Puppet::Parser::AST
 
             # Set the mark after we evaluate, so we don't record it but
             # then encounter an error
-            scope.setclass(@name)
+            scope.setclass(self.object_id)
             return retval
         end
 
