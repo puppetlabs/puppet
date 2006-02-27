@@ -639,7 +639,13 @@ module Puppet
 
             # Define our type.
             def settype(name,ltype)
-                @typetable[name] = ltype
+                # Don't let them redefine the class in this scope.
+                if @typetable.include?(name)
+                    raise Puppet::ParseError,
+                        "%s is already defined" % name
+                else
+                    @typetable[name] = ltype
+                end
             end
 
             # Return an interpolated string.

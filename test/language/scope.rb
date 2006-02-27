@@ -411,7 +411,25 @@ class TestScope < Test::Unit::TestCase
             assert_equal("bin", file["owner"], "Value did not override correctly")
         }
     end
+    
+    def test_multipletypes
+        scope = Puppet::Parser::Scope.new()
+        children = []
 
-    def test_classscopes
+        # create the parent class
+        children << classobj("aclass")
+        children << classobj("aclass")
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        scope = nil
+        assert_raise(Puppet::ParseError) {
+            scope = Puppet::Parser::Scope.new()
+            objects = top.evaluate(:scope => scope)
+        }
     end
 end
