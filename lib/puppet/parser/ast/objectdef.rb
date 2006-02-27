@@ -15,21 +15,6 @@ class Puppet::Parser::AST
             return @params[index]
         end
 
-        # Auto-generate a name
-        def autoname(type, object)
-            case object
-            when Puppet::Type:
-                raise Puppet::Error,
-                    "Built-in types must be provided with a name"
-            when Node:
-                return type
-            else
-                Puppet.debug "Autogenerating name for object of type %s" %
-                    type
-                return [type, "-", self.object_id].join("")
-            end
-        end
-
         # Iterate across all of our children.
         def each
             [@type,@name,@params].flatten.each { |param|
@@ -70,7 +55,6 @@ class Puppet::Parser::AST
                 raise error
             end
 
-            autonamed = false
             objnames = [nil]
             # Autogenerate the name if one was not passed.
             if self.name
@@ -79,10 +63,6 @@ class Puppet::Parser::AST
                 unless objnames.is_a?(Array)
                     objnames = [objnames]
                 end
-            #else
-            #    objnames = self.autoname(objtype, object)
-            #    autonamed = true
-
             end
 
             # Retrieve the defaults for our type
@@ -143,9 +123,6 @@ class Puppet::Parser::AST
                         :type => objtype,
                         :name => objname
                     )
-
-                    # Retain any name generation stuff
-                    obj.autoname = autonamed
 
                     # and pass the result on
                     obj

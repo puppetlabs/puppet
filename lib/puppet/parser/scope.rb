@@ -10,7 +10,7 @@ module Puppet
 
             include Enumerable
             attr_accessor :parent, :level, :interp
-            attr_accessor :name, :type, :topscope, :base, :keyword, :autoname
+            attr_accessor :name, :type, :topscope, :base, :keyword
 
             attr_accessor :top, :context
 
@@ -843,7 +843,6 @@ module Puppet
 
                     if defined? @name and @name
                         bucket.name = @name
-                        bucket.autoname = self.autoname
                     end
 
                     # it'd be nice not to have to do this...

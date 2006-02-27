@@ -91,7 +91,7 @@ module Puppet
     class TransBucket
         include Enumerable
 
-        attr_accessor :name, :type, :file, :line, :classes, :autoname, :keyword, :top
+        attr_accessor :name, :type, :file, :line, :classes, :keyword, :top
 
         %w{delete shift include? length empty? << []}.each { |method|
             define_method(method) do |*args|
@@ -170,7 +170,6 @@ module Puppet
                 name = nil
 
                 # Nodes have the same name and type
-                #if self.autoname or @name == @type
                 if self.name
                     name = "%s[%s]" % [@type, self.name]
                 else

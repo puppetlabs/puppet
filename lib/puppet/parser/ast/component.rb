@@ -10,7 +10,7 @@ class Puppet::Parser::AST
         # The class name
         @name = :component
 
-        attr_accessor :type, :args, :code, :scope, :autoname, :keyword
+        attr_accessor :type, :args, :code, :scope, :keyword
 
         #def evaluate(scope,hash,objtype,objname)
         def evaluate(hash)
@@ -22,8 +22,7 @@ class Puppet::Parser::AST
             scope = scope.newscope(
                 :type => @type,
                 :name => objname,
-                :keyword => self.keyword,
-                :autoname => self.autoname
+                :keyword => self.keyword
             )
             if hash[:newcontext]
                 #scope.warning "Setting context to %s" % self.object_id
@@ -39,11 +38,6 @@ class Puppet::Parser::AST
             #scope.name = objname
 
             #scope.keyword = self.keyword
-
-            # Retain the fact that we were autonamed, if so
-            if self.autoname
-                scope.autoname = true
-            end
 
             #if self.is_a?(Node)
             #    scope.isnodescope

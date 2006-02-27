@@ -321,7 +321,6 @@ class Config
         }
 
         bucket = Puppet::TransBucket.new
-        bucket.autoname = true
         bucket.name = "autosection-%s" % bucket.object_id
         bucket.type = section
         bucket.push(*objects)
@@ -399,7 +398,6 @@ Generated on #{Time.now}.
         end
         topbucket.type = "puppetconfig"
         topbucket.top = true
-        topbucket.autoname = true
 
         # Now iterate over each section
         eachsection do |section|
