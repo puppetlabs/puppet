@@ -9,21 +9,22 @@ class Puppet::Parser::AST
         end
 
         # Find the value that corresponds with the test.
-        def evaluate(scope)
+        def evaluate(hash)
+            scope = hash[:scope]
             retvalue = nil
             found = nil
 
             # Get our parameter.
-            paramvalue = @param.safeevaluate(scope)
+            paramvalue = @param.safeevaluate(:scope => scope)
 
             default = nil
 
             # Then look for a match in the options.
             @values.each { |obj|
-                param = obj.param.safeevaluate(scope)
+                param = obj.param.safeevaluate(:scope => scope)
                 if param == paramvalue
                     # we found a matching option
-                    retvalue = obj.value.safeevaluate(scope)
+                    retvalue = obj.value.safeevaluate(:scope => scope)
                     found = true
                     break
                 elsif obj.param.is_a?(Default)
@@ -34,7 +35,7 @@ class Puppet::Parser::AST
             # Unless we found something, look for the default.
             unless found
                 if default
-                    retvalue = default.value.safeevaluate(scope)
+                    retvalue = default.value.safeevaluate(:scope => scope)
                 else
                     error = Puppet::ParseError.new(
                         "No value for selector param '%s'" % paramvalue

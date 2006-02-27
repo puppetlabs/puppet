@@ -44,10 +44,10 @@ module Puppet
             # Evaluate the current object.  Basically just iterates across all
             # of the contained children and evaluates them in turn, returning a
             # list of all of the collected values, rejecting nil values
-            def evaluate(scope)
+            def evaluate(args)
                 #Puppet.debug("Evaluating ast %s" % @name)
                 value = self.collect { |obj|
-                    obj.safeevaluate(scope)
+                    obj.safeevaluate(args)
                 }.reject { |obj|
                     obj.nil?
                 }

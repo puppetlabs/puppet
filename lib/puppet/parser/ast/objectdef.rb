@@ -40,12 +40,13 @@ class Puppet::Parser::AST
 
         # Does not actually return an object; instead sets an object
         # in the current scope.
-        def evaluate(scope)
+        def evaluate(hash)
+            scope = hash[:scope]
             @scope = scope
             hash = {}
 
             # Get our type and name.
-            objtype = @type.safeevaluate(scope)
+            objtype = @type.safeevaluate(:scope => scope)
 
             # If the type was a variable, we wouldn't have typechecked yet.
             # Do it now, if so.
@@ -70,17 +71,18 @@ class Puppet::Parser::AST
             end
 
             autonamed = false
+            objnames = [nil]
             # Autogenerate the name if one was not passed.
-            if defined? @name
-                objnames = @name.safeevaluate(scope)
-            else
-                objnames = self.autoname(objtype, object)
-                autonamed = true
-            end
+            if self.name
+                objnames = @name.safeevaluate(:scope => scope)
+                # it's easier to always use an array, even for only one name
+                unless objnames.is_a?(Array)
+                    objnames = [objnames]
+                end
+            #else
+            #    objnames = self.autoname(objtype, object)
+            #    autonamed = true
 
-            # it's easier to always use an array, even for only one name
-            unless objnames.is_a?(Array)
-                objnames = [objnames]
             end
 
             # Retrieve the defaults for our type
@@ -88,7 +90,7 @@ class Puppet::Parser::AST
 
             # then set all of the specified params
             @params.each { |param|
-                ary = param.safeevaluate(scope)
+                ary = param.safeevaluate(:scope => scope)
                 hash[ary[0]] = ary[1]
             }
 
@@ -99,6 +101,11 @@ class Puppet::Parser::AST
                 # If the object is a class, that means it's a builtin type, so
                 # we just store it in the scope
                 unless object
+                    unless objname
+                        raise Puppet::ParseError,
+                            "Object of type %s created with no name" % objtype
+                    end
+
                     begin
                         #Puppet.debug(
                         #    ("Setting object '%s' " +
@@ -107,11 +114,11 @@ class Puppet::Parser::AST
                         #    [objname, scope.object_id, hash.inspect]
                         #)
                         obj = scope.setobject(
-                            objtype,
-                            objname,
-                            hash,
-                            @file,
-                            @line
+                            :type => objtype,
+                            :name => objname,
+                            :arguments => hash,
+                            :file => @file,
+                            :line => @line
                         )
                     rescue Puppet::ParseError => except
                         except.line = self.line
@@ -129,7 +136,13 @@ class Puppet::Parser::AST
                     # one of those, evaluate that with our arguments
                     #Puppet.debug("Calling object '%s' with arguments %s" %
                     #    [object.name, hash.inspect])
-                    obj = object.safeevaluate(scope,hash,objtype,objname)
+                    #obj = object.safeevaluate(scope,hash,objtype,objname)
+                    obj = object.safeevaluate(
+                        :scope => scope,
+                        :arguments => hash,
+                        :type => objtype,
+                        :name => objname
+                    )
 
                     # Retain any name generation stuff
                     obj.autoname = autonamed

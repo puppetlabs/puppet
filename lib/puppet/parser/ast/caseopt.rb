@@ -50,8 +50,9 @@ class Puppet::Parser::AST
 
         # Evaluate the actual statements; this only gets called if
         # our option matched.
-        def evaluate(scope)
-            return @statements.safeevaluate(scope.newscope)
+        def evaluate(hash)
+            scope = hash[:scope]
+            return @statements.safeevaluate(:scope => scope.newscope)
         end
 
         def tree(indent = 0)

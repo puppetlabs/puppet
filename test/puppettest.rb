@@ -703,7 +703,7 @@ module ParserTesting
 
     def classobj(name, args = {})
         unless args.include?(:name)
-            args[:name] = nameobj(name)
+            args[:type] = nameobj(name)
         end
         unless args.include?(:code)
             args[:code] = AST::ASTArray.new(
@@ -723,7 +723,7 @@ module ParserTesting
     def compobj(name, args = {})
         args[:file] ||= tempfile()
         args[:line] ||= rand(100)
-        args[:name] ||= nameobj(name)
+        args[:type] ||= nameobj(name)
         args[:code] ||= AST::ASTArray.new(
             :file => tempfile(),
             :line => rand(100),

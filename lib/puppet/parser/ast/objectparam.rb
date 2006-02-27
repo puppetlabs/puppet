@@ -8,9 +8,10 @@ class Puppet::Parser::AST
         end
 
         # Return the parameter and the value.
-        def evaluate(scope)
-            param = @param.safeevaluate(scope)
-            value = @value.safeevaluate(scope)
+        def evaluate(hash)
+            scope = hash[:scope]
+            param = @param.safeevaluate(:scope => scope)
+            value = @value.safeevaluate(:scope => scope)
             return [param, value]
         end
 

@@ -10,9 +10,10 @@ class Puppet::Parser::AST
 
         # As opposed to ObjectDef, this stores each default for the given
         # object type.
-        def evaluate(scope)
-            type = @type.safeevaluate(scope)
-            params = @params.safeevaluate(scope)
+        def evaluate(hash)
+            scope = hash[:scope]
+            type = @type.safeevaluate(:scope => scope)
+            params = @params.safeevaluate(:scope => scope)
 
             begin
                 scope.setdefaults(type.downcase,params)

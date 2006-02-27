@@ -54,11 +54,11 @@ class TestTagging < Test::Unit::TestCase
 
         assert_nothing_raised {
             scope.setobject(
-                "file",
-                "/etc/passwd",
-                {"owner" => "root"},
-                "/yay",
-                1
+                :type => "file",
+                :name => "/etc/passwd",
+                :arguments => {"owner" => "root"},
+                :file => "/yay",
+                :line => 1
             )
         }
 

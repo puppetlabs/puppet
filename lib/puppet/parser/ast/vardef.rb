@@ -5,9 +5,10 @@ class Puppet::Parser::AST
 
         # Look up our name and value, and store them appropriately.  The
         # lexer strips off the syntax stuff like '$'.
-        def evaluate(scope)
-            name = @name.safeevaluate(scope)
-            value = @value.safeevaluate(scope)
+        def evaluate(hash)
+            scope = hash[:scope]
+            name = @name.safeevaluate(:scope => scope)
+            value = @value.safeevaluate(:scope => scope)
 
             begin
                 scope.setvar(name,value)

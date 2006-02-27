@@ -42,7 +42,7 @@ class TestScope < Test::Unit::TestCase
 
         10.times { |index|
             # slap some recursion in there
-            scope = Puppet::Parser::Scope.new(scope)
+            scope = Puppet::Parser::Scope.new(:parent => scope)
             scopes.push scope
 
             var = "var%s" % index
@@ -102,8 +102,8 @@ class TestScope < Test::Unit::TestCase
 
     def test_declarative
         # set to declarative
-        top = Puppet::Parser::Scope.new(nil,true)
-        sub = Puppet::Parser::Scope.new(top)
+        top = Puppet::Parser::Scope.new(:declarative => true)
+        sub = Puppet::Parser::Scope.new(:parent => top)
 
         assert_nothing_raised {
             top.setvar("test","value")
@@ -121,8 +121,8 @@ class TestScope < Test::Unit::TestCase
 
     def test_notdeclarative
         # set to not declarative
-        top = Puppet::Parser::Scope.new(nil,false)
-        sub = Puppet::Parser::Scope.new(top)
+        top = Puppet::Parser::Scope.new(:declarative => false)
+        sub = Puppet::Parser::Scope.new(:parent => top)
 
         assert_nothing_raised {
             top.setvar("test","value")
@@ -160,7 +160,7 @@ class TestScope < Test::Unit::TestCase
         types = %w{a set of types that could be used to set defaults}
 
         10.times { |index|
-            scope = Puppet::Parser::Scope.new(scope)
+            scope = Puppet::Parser::Scope.new(:parent => scope)
             scopes.push scope
 
             tmptypes = []
@@ -237,7 +237,7 @@ class TestScope < Test::Unit::TestCase
     end
     
     def test_strinterp
-        scope = Puppet::Parser::Scope.new(nil)
+        scope = Puppet::Parser::Scope.new()
 
         assert_nothing_raised {
             scope.setvar("test","value")
@@ -261,18 +261,18 @@ class TestScope < Test::Unit::TestCase
 
     # Test some of the host manipulations
     def test_hostlookup
-        top = Puppet::Parser::Scope.new(nil)
+        top = Puppet::Parser::Scope.new()
 
         # Create a deep scope tree, so that we know we're doing a deeply recursive
         # search.
-        mid1 = Puppet::Parser::Scope.new(top)
-        mid2 = Puppet::Parser::Scope.new(mid1)
-        mid3 = Puppet::Parser::Scope.new(mid2)
-        child1 = Puppet::Parser::Scope.new(mid3)
-        mida = Puppet::Parser::Scope.new(top)
-        midb = Puppet::Parser::Scope.new(mida)
-        midc = Puppet::Parser::Scope.new(midb)
-        child2 = Puppet::Parser::Scope.new(midc)
+        mid1 = Puppet::Parser::Scope.new(:parent => top)
+        mid2 = Puppet::Parser::Scope.new(:parent => mid1)
+        mid3 = Puppet::Parser::Scope.new(:parent => mid2)
+        child1 = Puppet::Parser::Scope.new(:parent => mid3)
+        mida = Puppet::Parser::Scope.new(:parent => top)
+        midb = Puppet::Parser::Scope.new(:parent => mida)
+        midc = Puppet::Parser::Scope.new(:parent => midb)
+        child2 = Puppet::Parser::Scope.new(:parent => midc)
 
         # verify we can set a host
         assert_nothing_raised("Could not create host") {
@@ -352,7 +352,7 @@ class TestScope < Test::Unit::TestCase
         # in some pukey-pukeyness.
         assert_raise(Puppet::ParseError) {
             scope = Puppet::Parser::Scope.new()
-            objects = scope.evaluate(top)
+            objects = scope.evaluate(:ast => top)
         }
     end
 
@@ -398,7 +398,7 @@ class TestScope < Test::Unit::TestCase
             scope = Puppet::Parser::Scope.new()
             scope.name =  "topscope"
             scope.type =  "topscope"
-            objects = scope.evaluate(top)
+            objects = scope.evaluate(:ast => top)
         }
 
         assert_equal(1, objects.length, "Returned too many objects: %s" %

@@ -158,9 +158,9 @@ module Puppet
             # this container will contain the equivalent of all objects at
             # this level
             #container = Puppet::Component.new(:name => @name, :type => @type)
-            unless defined? @name
-                raise Puppet::DevError, "TransBuckets must have names"
-            end
+            #unless defined? @name
+            #    raise Puppet::DevError, "TransBuckets must have names"
+            #end
             unless defined? @type
                 Puppet.debug "TransBucket '%s' has no type" % @name
             end
@@ -170,10 +170,11 @@ module Puppet
                 name = nil
 
                 # Nodes have the same name and type
-                if self.autoname or @name == @type
-                    name = @type
+                #if self.autoname or @name == @type
+                if self.name
+                    name = "%s[%s]" % [@type, self.name]
                 else
-                    name = "%s[%s]" % [@type, @name]
+                    name = @type
                 end
                 trans = TransObject.new(name, :component)
                 if defined? @parameters
@@ -194,7 +195,7 @@ module Puppet
                 end
             else
                 hash = {
-                    :name => @name,
+                    :name => self.name,
                     :type => @type
                 }
                 if defined? @parameters

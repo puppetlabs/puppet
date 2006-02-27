@@ -10,8 +10,9 @@ class Puppet::Parser::AST
         end
 
         # Do implicit iteration over each of the names passed.
-        def evaluate(scope)
-            names = @names.safeevaluate(scope)
+        def evaluate(hash)
+            scope = hash[:scope]
+            names = @names.safeevaluate(:scope => scope)
 
             unless names.is_a?(Array)
                 names = [names]
@@ -26,7 +27,7 @@ class Puppet::Parser::AST
                 }
 
                 if @parentclass
-                    arghash[:parentclass] = @parentclass.safeevaluate(scope)
+                    arghash[:parentclass] = @parentclass.safeevaluate(:scope => scope)
                 end
 
                 begin

@@ -4,6 +4,9 @@
 # run any or all test suites
 
 basedir = File.dirname(__FILE__)
+if basedir == "."
+    basedir = Dir.getwd
+end
 $puppetbase = File.expand_path(File.join(basedir, ".."))
 
 $:.unshift basedir

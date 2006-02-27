@@ -54,7 +54,7 @@ class TestAST < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate") {
             scope = Puppet::Parser::Scope.new()
-            objects = top.evaluate(scope)
+            objects = top.evaluate(:scope => scope)
         }
 
         assert_equal(1, scope.find_all { |child|
@@ -78,7 +78,7 @@ class TestAST < Test::Unit::TestCase
 
         scope = Puppet::Parser::Scope.new()
         assert_nothing_raised("Could not evaluate") {
-            top.evaluate(scope)
+            top.evaluate(:scope => scope)
         }
 
         obj = nil
@@ -124,7 +124,7 @@ class TestAST < Test::Unit::TestCase
         scope = nil
         assert_raise(Puppet::ParseError, "Invalid parent type was allowed") {
             scope = Puppet::Parser::Scope.new()
-            objects = top.evaluate(scope)
+            objects = top.evaluate(:scope => scope)
         }
     end
 
@@ -176,7 +176,7 @@ class TestAST < Test::Unit::TestCase
             scope.type = "nodetest"
             scope.keyword = "nodetest"
             scope.top = true
-            top.evaluate(scope)
+            top.evaluate(:scope => scope)
         }
 
         # Verify that, well, nothing really happened, and especially verify
@@ -191,7 +191,7 @@ class TestAST < Test::Unit::TestCase
         # And verify that we can evaluate it okay
         objects = nil
         assert_nothing_raised("Could not retrieve node definition") {
-            objects = scope.evalnode([nodename], {})
+            objects = scope.evalnode(:name => [nodename], :facts => {})
         }
         assert(objects, "Could not retrieve node definition")
 
@@ -212,7 +212,7 @@ class TestAST < Test::Unit::TestCase
 
         # Verify that we can evaluate the node twice
         assert_nothing_raised("Could not retrieve node definition") {
-            scope.evalnode([nodename], {})
+            scope.evalnode(:name => [nodename], :facts => {})
         }
     end
 
@@ -241,19 +241,23 @@ class TestAST < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate node") {
             scope = Puppet::Parser::Scope.new()
-            top.evaluate(scope)
+            top.evaluate(:scope => scope)
         }
 
         # Verify we can find the node via a search list
         objects = nil
         assert_nothing_raised("Could not retrieve short node definition") {
-            objects = scope.evalnode(["%s.domain.com" % shortname, shortname], {})
+            objects = scope.evalnode(
+                :name => ["%s.domain.com" % shortname, shortname], :facts => {}
+            )
         }
         assert(objects, "Could not retrieve short node definition")
 
         # and then look for the long name
         assert_nothing_raised("Could not retrieve long node definition") {
-            objects = scope.evalnode([longname.sub(/\..+/, ''), longname], {})
+            objects = scope.evalnode(
+                :name => [longname.sub(/\..+/, ''), longname], :facts => {}
+            )
         }
         assert(objects, "Could not retrieve long node definition")
     end
@@ -281,13 +285,13 @@ class TestAST < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate node") {
             scope = Puppet::Parser::Scope.new()
-            top.evaluate(scope)
+            top.evaluate(:scope => scope)
         }
 
         # Verify we can find the node via a search list
         objects = nil
         assert_nothing_raised("Could not retrieve short node definition") {
-            objects = scope.evalnode([name], {})
+            objects = scope.evalnode(:name => [name], :facts => {})
         }
         assert(objects, "Could not retrieve short node definition")
 
@@ -327,7 +331,7 @@ class TestAST < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate node") {
             scope = Puppet::Parser::Scope.new()
-            top.evaluate(scope)
+            top.evaluate(:scope => scope)
         }
 
         # Verify we can find the node via a search list
@@ -379,13 +383,13 @@ class TestAST < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate node") {
             scope = Puppet::Parser::Scope.new()
-            top.evaluate(scope)
+            top.evaluate(:scope => scope)
         }
 
         # Verify we can find the node via a search list
         objects = nil
         assert_nothing_raised("Could not retrieve node definition") {
-            objects = scope.evalnode([name], {})
+            objects = scope.evalnode(:name => [name], :facts => {})
         }
         assert(objects, "Could not retrieve node definition")
 
@@ -455,7 +459,7 @@ class TestAST < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate") {
             scope = Puppet::Parser::Scope.new()
-            objects = top.evaluate(scope)
+            objects = top.evaluate(:scope => scope)
         }
     end
 
@@ -513,7 +517,7 @@ class TestAST < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate") {
             scope = Puppet::Parser::Scope.new()
-            objects = top.evaluate(scope)
+            objects = top.evaluate(:scope => scope)
         }
     end
 end

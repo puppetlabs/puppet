@@ -494,7 +494,7 @@ import: IMPORT quotedtext {
 
 definition: DEFINE NAME argumentlist LBRACE statements RBRACE {
     result = AST::CompDef.new(
-        :name => AST::Name.new(:value => val[1], :line => @lexer.line),
+        :type => AST::Name.new(:value => val[1], :line => @lexer.line),
         :args => val[2],
         :file => @lexer.file,
         :line => @lexer.line,
@@ -503,7 +503,7 @@ definition: DEFINE NAME argumentlist LBRACE statements RBRACE {
     )
 }           | DEFINE NAME argumentlist LBRACE RBRACE {
     result = AST::CompDef.new(
-        :name => AST::Name.new(:value => val[1], :line => @lexer.line),
+        :type => AST::Name.new(:value => val[1], :line => @lexer.line),
         :args => val[2],
         :file => @lexer.file,
         :line => @lexer.line,
@@ -520,7 +520,7 @@ definition: DEFINE NAME argumentlist LBRACE statements RBRACE {
 hostclass: CLASS NAME parent LBRACE statements RBRACE {
         #:args => val[2],
     args = {
-        :name => AST::Name.new(:value => val[1], :line => @lexer.line),
+        :type => AST::Name.new(:value => val[1], :line => @lexer.line),
         :file => @lexer.file,
         :line => @lexer.line,
         :keyword => val[0],
@@ -533,7 +533,7 @@ hostclass: CLASS NAME parent LBRACE statements RBRACE {
     result = AST::ClassDef.new(args)
 }           | CLASS NAME parent LBRACE RBRACE {
     args = {
-        :name => AST::Name.new(:value => val[1], :line => @lexer.line),
+        :type => AST::Name.new(:value => val[1], :line => @lexer.line),
         :file => @lexer.file,
         :line => @lexer.line,
         :keyword => val[0],

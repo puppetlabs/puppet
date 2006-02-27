@@ -3,10 +3,11 @@
 # enables no-op and logging/rollback
 
 module Puppet
+    # Handle all of the work around performing an actual change,
+    # including calling 'sync' on the states and producing events.
 	class StateChange
         attr_accessor :is, :should, :type, :path, :state, :transaction, :changed
 
-		#---------------------------------------------------------------
         def initialize(state)
             @state = state
             @path = [state.path,"change"].flatten
@@ -21,9 +22,9 @@ module Puppet
 
             @changed = false
         end
-		#---------------------------------------------------------------
 
-		#---------------------------------------------------------------
+        # Perform the actual change.  This method can go either forward or
+        # backward, and produces an event.
         def go
             if @state.insync?
                 @state.info "Already in sync"
@@ -99,9 +100,7 @@ module Puppet
                 )
             end
         end
-		#---------------------------------------------------------------
 
-		#---------------------------------------------------------------
         def forward
             #@state.debug "moving change forward"
 
@@ -113,9 +112,8 @@ module Puppet
 
             return self.go
         end
-		#---------------------------------------------------------------
 
-		#---------------------------------------------------------------
+        # Switch the goals of the state, thus running the change in reverse.
         def backward
             @state.should = @is
             @state.retrieve
@@ -137,13 +135,10 @@ module Puppet
             #raise "Moving statechanges backward is currently unsupported"
             #@type.change(@path,@should,@is)
         end
-		#---------------------------------------------------------------
         
-		#---------------------------------------------------------------
         def noop
             return @state.noop
         end
-		#---------------------------------------------------------------
 
         def to_s
             return "change %s.%s(%s)" %

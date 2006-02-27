@@ -6,8 +6,9 @@ class Puppet::Parser::AST
 
         # Short-curcuit evaluation.  Return the value of the statements for
         # the first option that matches.
-        def evaluate(scope)
-            value = @test.safeevaluate(scope)
+        def evaluate(hash)
+            scope = hash[:scope]
+            value = @test.safeevaluate(:scope => scope)
 
             retvalue = nil
             found = false
@@ -16,7 +17,7 @@ class Puppet::Parser::AST
             @options.each { |option|
                 if option.eachvalue { |opval| break true if opval == value }
                     # we found a matching option
-                    retvalue = option.safeevaluate(scope)
+                    retvalue = option.safeevaluate(:scope => scope)
                     found = true
                     break
                 end
@@ -25,7 +26,7 @@ class Puppet::Parser::AST
             # Unless we found something, look for the default.
             unless found
                 if defined? @default
-                    retvalue = @default.safeevaluate(scope)
+                    retvalue = @default.safeevaluate(:scope => scope)
                 else
                     Puppet.debug "No true answers and no default"
                 end

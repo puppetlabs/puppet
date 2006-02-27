@@ -92,6 +92,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
         pid = nil
         ps = Facter["ps"].value || "ps -ef"
         %x{#{ps}}.chomp.split(/\n/).each { |line|
+            next if line =~ /^puppet/ # skip normal master procs
             if line =~ /puppetmasterd.+--manifest/
                 ary = line.split(" ")
                 pid = ary[1].to_i

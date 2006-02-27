@@ -1,7 +1,7 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../.."
+    $puppetbase = File.join(Dir.getwd(), "../..")
 end
 
 require 'puppet'
@@ -37,7 +37,7 @@ class TestQuery < Test::Unit::TestCase
                     :type => "init",
                     :path => File.join($puppetbase,"examples/root/etc/init.d"),
                     :hasstatus => true,
-                    :check => [:running]
+                    :check => [:ensure]
                 )
             end
             @sleeper = Puppet.type(:service)["sleeper"]

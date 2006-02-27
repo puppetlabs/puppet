@@ -195,14 +195,25 @@ module Puppet
                         end
 
                         # We've already evaluated the AST, in this case
-                        return @scope.evalnode(names, facts, classes, parent)
+                        #return @scope.evalnode(names, facts, classes, parent)
+                        return @scope.evalnode(
+                            :name => names,
+                            :facts => facts,
+                            :classes => classes,
+                            :parent => parent
+                        )
                     else
                         # We've already evaluated the AST, in this case
                         @scope = Puppet::Parser::Scope.new() # no parent scope
                         @scope.interp = self
                         @scope.type = "puppet"
                         @scope.name = "top"
-                        return @scope.evaluate(@ast, facts, @classes)
+                        #return @scope.evaluate(@ast, facts, @classes)
+                        return @scope.evaluate(
+                            :ast => @ast,
+                            :facts => facts,
+                            :classes => @classes
+                        )
                     end
                     #@ast.evaluate(@scope)
                 rescue Puppet::DevError, Puppet::Error, Puppet::ParseError => except
@@ -233,7 +244,6 @@ module Puppet
             # this doesn't actually do anything, because we have to evaluate the
             # entire configuration each time we get a connect.
             def evaluate
-
                 # FIXME When this produces errors, it should specify which
                 # node caused those errors.
                 if @usenodes
@@ -242,7 +252,7 @@ module Puppet
                     @scope.type = "puppet"
                     @scope.interp = self
                     Puppet.debug "Nodes defined"
-                    @ast.safeevaluate(@scope)
+                    @ast.safeevaluate(:scope => @scope)
                 else
                     Puppet.debug "No nodes defined"
                     return

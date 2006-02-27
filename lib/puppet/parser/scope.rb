@@ -6,11 +6,13 @@ require 'puppet/transportable'
 module Puppet
     module Parser
         class Scope
+            Puppet::Util.logmethods(self)
+
             include Enumerable
             attr_accessor :parent, :level, :interp
             attr_accessor :name, :type, :topscope, :base, :keyword, :autoname
 
-            attr_accessor :top
+            attr_accessor :top, :context
 
             # This is probably not all that good of an idea, but...
             # This way a parent can share its tables with all of its children.
@@ -40,13 +42,21 @@ module Puppet
                 obj.tags.each { |tag|
                     unless list.include?(tag)
                         if tag.nil? or tag == ""
-                            Puppet.warning "Got tag %s from %s(%s)" %
+                            Puppet.debug "Got tag %s from %s(%s)" %
                                 [tag.inspect, obj.type, obj.name]
                         else
                             list << tag
                         end
                     end
                 }
+            end
+
+            def declarative=(val)
+                self.class.declarative = val
+            end
+
+            def declarative
+                self.class.declarative
             end
 
             # Log the existing tags.  At some point this should be in a better
@@ -169,7 +179,12 @@ module Puppet
             # Evaluate a specific node's code.  This method will normally be called
             # on the top-level scope, but it actually evaluates the node at the
             # appropriate scope.
-            def evalnode(names, facts, classes = nil, parent = nil)
+            #def evalnode(names, facts, classes = nil, parent = nil)
+            def evalnode(hash)
+                names = hash[:name]
+                facts = hash[:facts]
+                classes = hash[:classes]
+                parent = hash[:parent]
                 # First make sure there aren't any other node scopes lying around
                 self.nodeclean
 
@@ -203,7 +218,7 @@ module Puppet
                 # Note that we evaluate the node code with its containing
                 # scope, not with the top scope.  We also retrieve the created
                 # nodescope so that we can get any classes set within it
-                nodescope = code.safeevaluate(scope, facts)
+                nodescope = code.safeevaluate(:scope => scope, :facts => facts)
 
                 # We don't need to worry about removing the Node code because
                 # it will be removed during translation.
@@ -246,12 +261,17 @@ module Puppet
 
                 # Now evaluate it, which evaluates the parent but doesn't really
                 # do anything else but does return the nodescope
-                scope = node.safeevaluate(self)
+                scope = node.safeevaluate(:scope => self)
 
                 # And now evaluate each set klass within the nodescope.
                 classes.each { |klass|
                     if code = scope.lookuptype(klass)
-                        code.safeevaluate(scope, {}, klass, klass)
+                        #code.safeevaluate(scope, {}, klass, klass)
+                        code.safeevaluate(
+                            :scope => scope,
+                            :facts => {},
+                            :type => klass
+                        )
                     end
                 }
 
@@ -288,18 +308,26 @@ module Puppet
             # silly method, in that it just calls evaluate on the passed-in
             # objects, and then calls to_trans on itself.  It just conceals
             # a paltry amount of info from whomever's using the scope object.
-            def evaluate(objects, facts = {}, classes = [])
+            #def evaluate(objects, facts = {}, classes = [])
+            def evaluate(hash)
+                objects = hash[:ast]
+                facts = hash[:facts] || {}
+                classes = hash[:classes] || []
                 facts.each { |var, value|
                     self.setvar(var, value)
                 }
 
-                objects.safeevaluate(self)
+                objects.safeevaluate(:scope => self)
 
                 # These classes would be passed in manually, via something like
                 # a cfengine module
                 classes.each { |klass|
                     if code = self.lookuptype(klass)
-                        code.safeevaluate(self, {}, klass, klass)
+                        code.safeevaluate(
+                            :scope => self,
+                            :facts => {},
+                            :type => klass
+                        )
                     end
                 }
 
@@ -316,8 +344,20 @@ module Puppet
 
             # Initialize our new scope.  Defaults to having no parent and to
             # being declarative.
-            def initialize(parent = nil, declarative = true)
-                @parent = parent
+            #def initialize(parent = nil, declarative = true)
+            def initialize(hash = {})
+                @parent = nil
+                @type = nil
+                @name = nil
+                hash.each { |name, val|
+                    method = name.to_s + "="
+                    if self.respond_to? method
+                        self.send(method, val)
+                    else
+                        raise Puppet::DevError, "Invalid scope argument %s" % name
+                    end
+                }
+                #@parent = hash[:parent]
                 @nodescope = false
 
                 @tags = []
@@ -326,11 +366,13 @@ module Puppet
                     # the level is mostly used for debugging
                     @level = 1
 
-                    @@declarative = declarative
-
                     # The table for storing class singletons.  This will only actually
                     # be used by top scopes and node scopes.
                     @classtable = Hash.new(nil)
+
+                    unless hash.include? :declarative
+                        self.class.declarative = true
+                    end
 
                     # The table for all defined objects.  This will only be
                     # used in the top scope if we don't have any nodescopes.
@@ -356,11 +398,14 @@ module Puppet
                             names[name] = []
                         }
                     }
+
+                    @context = nil
                 else
                     @parent.child = self
                     @level = @parent.level + 1
                     @interp = @parent.interp
                     @topscope = @parent.topscope
+                    @context = @parent.context
                 end
 
                 # Our child scopes
@@ -408,7 +453,7 @@ module Puppet
             # This method abstracts recursive searching.  It accepts the type
             # of search being done and then either a literal key to search for or
             # a Proc instance to do the searching.
-            def lookup(type,sub)
+            def lookup(type,sub, usecontext = false)
                 table = @map[type]
                 if table.nil?
                     error = Puppet::ParseError.new(
@@ -423,7 +468,13 @@ module Puppet
                 elsif table.include?(sub)
                     return table[sub]
                 elsif ! @parent.nil?
-                    return @parent.lookup(type,sub)
+                    #self.notice "Context is %s, parent %s is %s" %
+                    #    [self.context, @parent.type, @parent.context]
+                    if usecontext and self.context != @parent.context
+                        return :undefined
+                    else
+                        return @parent.lookup(type,sub, usecontext)
+                    end
                 else
                     return :undefined
                 end
@@ -488,7 +539,8 @@ module Puppet
                 end
             end
 
-            # Look up an object by name and type.
+            # Look up an object by name and type.  This should only look up objects
+            # within a class structure, not within the entire scope structure.
             def lookupobject(name,type)
                 #Puppet.debug "Looking up object %s of type %s in level %s" %
                 #    [name, type, @level]
@@ -501,7 +553,7 @@ module Puppet
                         nil
                     end
                 }
-                value = self.lookup("object",sub)
+                value = self.lookup("object",sub, true)
                 if value == :undefined
                     return nil
                 else
@@ -525,9 +577,10 @@ module Puppet
             end
 
             # Create a new scope.
-            def newscope
+            def newscope(hash = {})
+                hash[:parent] = self
                 #Puppet.debug "Creating new scope, level %s" % [self.level + 1]
-                return Puppet::Parser::Scope.new(self)
+                return Puppet::Parser::Scope.new(hash)
             end
 
             # Store the fact that we've evaluated a given class.  We use a hash
@@ -601,13 +654,21 @@ module Puppet
             # This method will fail if the named object is already defined anywhere
             # in the scope tree, which is what provides some minimal closure-like
             # behaviour.
-            def setobject(type, name, params, file, line)
+            #def setobject(type, name, params, file, line)
+            def setobject(hash)
                 # FIXME This objectlookup stuff should be looking up using both
                 # the name and the namevar.
 
                 # First see if we can look the object up using normal scope
                 # rules, i.e., one of our parent classes has defined the
                 # object or something
+
+                name = hash[:name]
+                type = hash[:type]
+                params = hash[:arguments]
+                file = hash[:file]
+                line = hash[:line]
+
                 obj = self.lookupobject(name,type)
 
                 # If we can't find it...
@@ -632,6 +693,7 @@ module Puppet
                     end
 
                     # And if it's not, then create it anew
+                    #self.info "Adding %s[%s] to table" % [type, name]
                     obj = @objectable[type][name]
 
                     # only set these if we've created the object, which is the
@@ -674,7 +736,8 @@ module Puppet
             def tag(*ary)
                 ary.each { |tag|
                     if tag.nil? or tag == ""
-                        Puppet.warning "got told to tag with %s" % tag.inspect
+                        Puppet.debug "got told to tag with %s" % tag.inspect
+                        next
                     end
                     unless @tags.include?(tag)
                         #Puppet.info "Tagging scope %s with %s" % [self.object_id, tag]
@@ -693,7 +756,8 @@ module Puppet
                 if @parent
                     @parent.tags.each { |tag|
                         if tag.nil? or tag == ""
-                            Puppet.warning "parent returned tag %s" % tag.inspect
+                            Puppet.debug "parent returned tag %s" % tag.inspect
+                            next
                         end
                         unless tmp.include?(tag)
                             tmp << tag
@@ -701,6 +765,15 @@ module Puppet
                     }
                 end
                 return tmp
+            end
+
+            # Used mainly for logging
+            def to_s
+                if @name
+                    return "%s[%s]" % [@type, @name]
+                else
+                    return @type.to_s
+                end
             end
 
             # Convert our scope to a list of Transportable objects.
@@ -765,10 +838,13 @@ module Puppet
                 # If we have a name and type, then make a TransBucket, which
                 # becomes a component.
                 # Else, just stack all of the objects into the current bucket.
-                if defined? @name
+                if @type
                     bucket = TransBucket.new
-                    bucket.name = @name
-                    bucket.autoname = self.autoname
+
+                    if defined? @name and @name
+                        bucket.name = @name
+                        bucket.autoname = self.autoname
+                    end
 
                     # it'd be nice not to have to do this...
                     results.each { |result|

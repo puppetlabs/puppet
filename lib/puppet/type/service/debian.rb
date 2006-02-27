@@ -29,7 +29,7 @@ Puppet.type(:service).newsvctype(:debian, :init) do
         end
     end
 
-    def enable(runlevel)
+    def enable
         output = %x{update-rc.d #{self[:name]} defaults 2>&1}
 
         unless $? == 0

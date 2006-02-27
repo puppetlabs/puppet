@@ -12,9 +12,10 @@ class Puppet::Parser::AST
 
         # Evaluate our object, but just return a simple array of the type
         # and name.
-        def evaluate(scope)
-            objtype = @type.safeevaluate(scope)
-            objnames = @name.safeevaluate(scope)
+        def evaluate(hash)
+            scope = hash[:scope]
+            objtype = @type.safeevaluate(:scope => scope)
+            objnames = @name.safeevaluate(:scope => scope)
 
             # it's easier to always use an array, even for only one name
             unless objnames.is_a?(Array)

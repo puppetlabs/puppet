@@ -9,36 +9,37 @@ class Puppet::Parser::AST
 
         def each
             if @parentclass
-                #[@name,@args,@parentclass,@code].each { |child| yield child }
-                [@name,@parentclass,@code].each { |child| yield child }
+                #[@type,@args,@parentclass,@code].each { |child| yield child }
+                [@type,@parentclass,@code].each { |child| yield child }
             else
-                #[@name,@args,@code].each { |child| yield child }
-                [@name,@code].each { |child| yield child }
+                #[@type,@args,@code].each { |child| yield child }
+                [@type,@code].each { |child| yield child }
             end
         end
 
-        # Store our parse tree according to name.
-        def evaluate(scope)
-            name = @name.safeevaluate(scope)
-            #args = @args.safeevaluate(scope)
+        # Store our parse tree according to type.
+        def evaluate(hash)
+            scope = hash[:scope]
+            type = @type.safeevaluate(:scope => scope)
+            #args = @args.safeevaluate(:scope => scope)
 
                 #:args => args,
             arghash = {
-                :name => name,
+                :type => type,
                 :code => @code
             }
 
             if @parentclass
-                arghash[:parentclass] = @parentclass.safeevaluate(scope)
+                arghash[:parentclass] = @parentclass.safeevaluate(:scope => scope)
             end
 
             #Puppet.debug("defining hostclass '%s' with arguments [%s]" %
-            #    [name,args])
+            #    [type,args])
 
             begin
                 hclass = HostClass.new(arghash)
                 hclass.keyword = self.keyword
-                scope.settype(name, hclass)
+                scope.settype(type, hclass)
             rescue Puppet::ParseError => except
                 except.line = self.line
                 except.file = self.file
@@ -61,7 +62,7 @@ class Puppet::Parser::AST
         def tree(indent = 0)
                 #@args.tree(indent + 1),
             return [
-                @name.tree(indent + 1),
+                @type.tree(indent + 1),
                 ((@@indline * 4 * indent) + self.typewrap("class")),
                 @parentclass ? @parentclass.tree(indent + 1) : "",
                 @code.tree(indent + 1),
@@ -70,8 +71,8 @@ class Puppet::Parser::AST
 
         def to_s
             return "class %s(%s) inherits %s {\n%s }" %
-                [@name, @parentclass, @code]
-                #[@name, @args, @parentclass, @code]
+                [@type, @parentclass, @code]
+                #[@type, @args, @parentclass, @code]
         end
     end
 

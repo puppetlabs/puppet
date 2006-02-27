@@ -9,25 +9,26 @@ class Puppet::Parser::AST
     # encounter an error if the component is instantiated more than
     # once.
     class CompDef < AST::Branch
-        attr_accessor :name, :args, :code, :keyword
+        attr_accessor :type, :args, :code, :keyword
 
         def each
-            [@name,@args,@code].each { |child| yield child }
+            [@type,@args,@code].each { |child| yield child }
         end
 
         # Store the parse tree.
-        def evaluate(scope)
-            name = @name.safeevaluate(scope)
-            args = @args.safeevaluate(scope)
+        def evaluate(hash)
+            scope = hash[:scope]
+            type = @type.safeevaluate(:scope => scope)
+            args = @args.safeevaluate(:scope => scope)
 
             begin
                 comp = AST::Component.new(
-                    :name => name,
+                    :type => type,
                     :args => args,
                     :code => @code
                 )
                 comp.keyword = self.keyword
-                scope.settype(name, comp)
+                scope.settype(type, comp)
             rescue Puppet::ParseError => except
                 except.line = self.line
                 except.file = self.file
@@ -48,12 +49,17 @@ class Puppet::Parser::AST
             @keyword = "define"
             super
 
-            #Puppet.debug "Defining type %s" % @name.value
+            #if @parentclass
+            #    Puppet.notice "Parent class of %s is %s" %
+            #        [@type.value, @parentclass.value]
+            #end
+
+            #Puppet.debug "Defining type %s" % @type.value
         end
 
         def tree(indent = 0)
             return [
-                @name.tree(indent + 1),
+                @type.tree(indent + 1),
                 ((@@indline * 4 * indent) + self.typewrap("define")),
                 @args.tree(indent + 1),
                 @code.tree(indent + 1),
@@ -61,7 +67,7 @@ class Puppet::Parser::AST
         end
 
         def to_s
-            return "define %s(%s) {\n%s }" % [@name, @args, @code]
+            return "define %s(%s) {\n%s }" % [@type, @args, @code]
         end
     end
 end

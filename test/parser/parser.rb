@@ -42,7 +42,8 @@ class TestParser < Test::Unit::TestCase
             Puppet.debug("parsing failer %s" % file) if __FILE__ == $0
             assert_raise(Puppet::ParseError) {
                 @parser.file = file
-                @parser.parse
+                ast = @parser.parse
+                Puppet::Parser::Scope.new.evaluate(:ast => ast)
             }
             Puppet::Type.allclear
         }
@@ -168,7 +169,7 @@ class TestParser < Test::Unit::TestCase
             scope = Puppet::Parser::Scope.new()
             scope.name = "parsetest"
             scope.type = "parsetest"
-            objects = scope.evaluate(ast)
+            objects = scope.evaluate(:ast => ast)
         }
 
         method = nil

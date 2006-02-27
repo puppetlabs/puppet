@@ -10,20 +10,35 @@ class Puppet::Parser::AST
         # The class name
         @name = :component
 
-        attr_accessor :name, :args, :code, :scope, :autoname, :keyword
+        attr_accessor :type, :args, :code, :scope, :autoname, :keyword
 
-        def evaluate(scope,hash,objtype,objname)
-            scope = scope.newscope
+        #def evaluate(scope,hash,objtype,objname)
+        def evaluate(hash)
+            scope = hash[:scope]
+            objtype = hash[:type]
+            objname = hash[:name]
+            arguments = hash[:arguments] || {}
+
+            scope = scope.newscope(
+                :type => @type,
+                :name => objname,
+                :keyword => self.keyword,
+                :autoname => self.autoname
+            )
+            if hash[:newcontext]
+                #scope.warning "Setting context to %s" % self.object_id
+                scope.context = self.object_id
+            end
             @scope = scope
 
             # The type is the component or class name
-            scope.type = objtype
+            #scope.type = objtype
 
             # The name is the name the user has chosen or that has
             # been dynamically generated.  This is almost never used
-            scope.name = objname
+            #scope.name = objname
 
-            scope.keyword = self.keyword
+            #scope.keyword = self.keyword
 
             # Retain the fact that we were autonamed, if so
             if self.autoname
@@ -36,9 +51,10 @@ class Puppet::Parser::AST
 
             # Additionally, add a tag for whatever kind of class
             # we are
-            scope.tag(objtype)
+            scope.tag(@type)
 
-            unless objname =~ /-\d+/ # it was generated
+            unless objname.nil?
+                #Puppet.info "tagging with %s" % objname.inspect
                 scope.tag(objname)
             end
             #scope.base = self.class.name
@@ -46,21 +62,20 @@ class Puppet::Parser::AST
 
             # define all of the arguments in our local scope
             if self.args
-
                 # Verify that all required arguments are either present or
                 # have been provided with defaults.
                 # FIXME This should probably also require each parent
                 # class's arguments...
                 self.args.each { |arg, default|
-                    unless hash.include?(arg)
+                    unless arguments.include?(arg)
                         if defined? default and ! default.nil?
-                            hash[arg] = default
+                            arguments[arg] = default
                             #Puppet.debug "Got default %s for %s in %s" %
                             #    [default.inspect, arg.inspect, objname.inspect]
                         else
                             error = Puppet::ParseError.new(
                                 "Must pass %s to %s of type %s" %
-                                    [arg.inspect,name,objtype]
+                                    [arg.inspect,objname,@type]
                             )
                             error.line = self.line
                             error.file = self.file
@@ -72,10 +87,10 @@ class Puppet::Parser::AST
 
             # Set each of the provided arguments as variables in the
             # component's scope.
-            hash["name"] = objname
-            hash.each { |arg,value|
+            arguments["name"] = objname
+            arguments.each { |arg,value|
                 begin
-                    scope.setvar(arg,hash[arg])
+                    scope.setvar(arg,arguments[arg])
                 rescue Puppet::ParseError => except
                     except.line = self.line
                     except.file = self.file
@@ -94,7 +109,7 @@ class Puppet::Parser::AST
             }
 
             # Now just evaluate the code with our new bindings.
-            self.code.safeevaluate(scope)
+            self.code.safeevaluate(:scope => scope)
 
             # We return the scope, so that our children can make their scopes
             # under ours.  This allows them to find our definitions.
@@ -120,7 +135,7 @@ class Puppet::Parser::AST
             if found
                 # It's a valid arg for us
                 return true
-            elsif @parentclass
+            elsif defined? @parentclass and @parentclass
                 # Else, check any existing parent
                 parent = @scope.lookuptype(@parentclass)
                 if parent and parent != []

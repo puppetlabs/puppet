@@ -5,18 +5,19 @@ class Puppet::Parser::AST
         @name = :node
         attr_accessor :name, :args, :code, :parentclass
 
-        def evaluate(scope, facts = {})
-            scope = scope.newscope
-
+        #def evaluate(scope, facts = {})
+        def evaluate(hash)
+            scope = hash[:scope]
+            facts = hash[:facts] || {}
             # nodes are never instantiated like a normal object,
             # but we need the type to be the name users would use for
             # instantiation, otherwise tags don't work out
-
-            # The name has already been evaluated, so it's a normal
-            # string.
-            scope.type = @name
-            scope.name = @name
-            scope.keyword = @keyword
+            scope = scope.newscope(
+                :type => @name,
+                :name => @name,
+                :keyword => @keyword
+            )
+            scope.context = self.object_id
 
             # Mark this scope as a nodescope, so that classes will be
             # singletons within it
@@ -40,7 +41,7 @@ class Puppet::Parser::AST
             #super(scope, facts, @name, @name)
 
             # And then evaluate our code.
-            @code.safeevaluate(scope)
+            @code.safeevaluate(:scope => scope)
 
             return scope
         end
@@ -69,14 +70,18 @@ class Puppet::Parser::AST
                 end
 
                 node = hash[:node]
-                # Tag the scope with the parent's name/type.
-                name = node.name
-                #Puppet.info "Tagging with parent node %s" % name
-                scope.tag(name)
+                type = nil
+                if type = node.type
+                    scope.tag(node.type)
+                end
+
+                if name = node.name
+                    scope.tag(node.name) unless name == type
+                end
 
                 begin
                     code = node.code
-                    code.safeevaluate(scope)
+                    code.safeevaluate(:scope => scope)
                 rescue Puppet::ParseError => except
                     except.line = self.line
                     except.file = self.file
