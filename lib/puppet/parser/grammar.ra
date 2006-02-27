@@ -133,8 +133,6 @@ object:       name LBRACE objectinstances endsemi RBRACE {
     end
     # an object but without a name
     # this cannot be an instance of a library type
-
-    # the objects will autogenerate a name if we don't provide one
     result = AST::ObjectDef.new(
         :pin => "{}",
         :line => @lexer.line,
@@ -156,7 +154,7 @@ object:       name LBRACE objectinstances endsemi RBRACE {
     )
 }
 
-objectinst:   objectname COLON params {
+objectinst:   objectname COLON params endcomma {
     result = AST::ObjectInst.new(
         :line => @lexer.line,
         :file => @lexer.file,

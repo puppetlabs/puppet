@@ -194,6 +194,19 @@ class TestParser < Test::Unit::TestCase
             }
         }
     end
+
+    def test_trailingcomma
+        path = tempfile()
+        str = %{file { "#{path}": ensure => file, }
+        }
+
+        parser = Puppet::Parser::Parser.new
+        parser.string = str
+
+        assert_nothing_raised("Could not parse trailing comma") {
+            parser.parse
+        }
+    end
 end
 
 # $Id$
