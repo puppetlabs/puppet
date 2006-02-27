@@ -190,7 +190,12 @@ module Puppet
 
                 # If they've passed classes in, then just generate from there.
                 if classes
-                    return self.gennode(names, facts, classes, parent)
+                    return self.gennode(
+                        :names => names,
+                        :facts => facts,
+                        :classes => classes,
+                        :parent => parent
+                    )
                 end
 
                 scope = code = nil
@@ -243,7 +248,12 @@ module Puppet
             # Pull in all of the appropriate classes and evaluate them.  It'd
             # be nice if this didn't know quite so much about how AST::Node
             # operated internally.
-            def gennode(names, facts, classes, parent)
+            #def gennode(names, facts, classes, parent)
+            def gennode(hash)
+                names = hash[:names]
+                facts = hash[:facts]
+                classes = hash[:classes]
+                parent = hash[:parent]
                 name = names.shift
                 arghash = {
                     :name => name,

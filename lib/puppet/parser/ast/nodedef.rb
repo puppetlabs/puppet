@@ -21,8 +21,12 @@ class Puppet::Parser::AST
             names.each { |name|
                 #Puppet.debug("defining host '%s' in scope %s" %
                 #    [name, scope.object_id])
+                # We use 'type' here instead of name, because every component
+                # type supports both 'type' and 'name', and 'type' is a more
+                # appropriate description of the syntactic role that this term
+                # plays.
                 arghash = {
-                    :name => name,
+                    :type => name,
                     :code => @code
                 }
 

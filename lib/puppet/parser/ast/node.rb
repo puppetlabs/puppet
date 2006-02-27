@@ -3,18 +3,18 @@ class Puppet::Parser::AST
     # other objects.  That's just the way it is, at least for now.
     class Node < AST::HostClass
         @name = :node
-        attr_accessor :name, :args, :code, :parentclass
+        attr_accessor :type, :args, :code, :parentclass
 
         #def evaluate(scope, facts = {})
         def evaluate(hash)
             scope = hash[:scope]
             facts = hash[:facts] || {}
+            #scope.info "name is %s, type is %s" % [self.name, self.type]
             # nodes are never instantiated like a normal object,
             # but we need the type to be the name users would use for
             # instantiation, otherwise tags don't work out
             scope = scope.newscope(
-                :type => @name,
-                :name => @name,
+                :type => self.type,
                 :keyword => @keyword
             )
             scope.context = self.object_id

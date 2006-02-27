@@ -172,9 +172,8 @@ class TestAST < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate node") {
             scope = Puppet::Parser::Scope.new()
-            scope.name = "nodetest"
-            scope.type = "nodetest"
-            scope.keyword = "nodetest"
+            scope.type = "puppet"
+            scope.name = "top"
             scope.top = true
             top.evaluate(:scope => scope)
         }
@@ -210,9 +209,20 @@ class TestAST < Test::Unit::TestCase
         # of the parent class
         assert(! scope.lookupclass("parent"), "Found parent class in top scope")
 
+        trans = nil
         # Verify that we can evaluate the node twice
         assert_nothing_raised("Could not retrieve node definition") {
-            scope.evalnode(:name => [nodename], :facts => {})
+            trans = scope.evalnode(:name => [nodename], :facts => {})
+        }
+
+        objects = nil
+        assert_nothing_raised("Could not convert to objects") {
+            objects = trans.to_type
+        }
+
+        Puppet.type(:file).each { |obj|
+            assert(obj.path !~ /#{nodename}\[#{nodename}\]/,
+                "Node name appears twice")
         }
     end
 
