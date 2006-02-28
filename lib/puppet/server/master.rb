@@ -35,7 +35,6 @@ class Server
         end
 
         def initialize(hash = {})
-
             # FIXME this should all be s/:File/:Manifest/g or something
             # build our AST
             @file = hash[:File] || Puppet[:manifest]
@@ -110,7 +109,8 @@ class Server
                 client = facts["hostname"]
                 clientip = facts["ipaddress"]
             end
-            Puppet.debug("Running interpreter")
+
+            Puppet.notice("Compiling configuration for %s" % client)
             begin
                 retobjects = @interpreter.run(client, facts)
             rescue Puppet::Error => detail
