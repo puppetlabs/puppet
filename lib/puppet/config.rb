@@ -290,38 +290,44 @@ class Config
     def section_to_transportable(section, done)
         objects = []
         persection(section) { |obj|
-            [:owner, :group].each { |type|
-                if obj.respond_to? type and val = obj.send(type)
+            [:owner, :group].each { |attr|
+                type = nil
+                if attr == :owner
+                    type = :user
+                else
+                    type = attr
+                end
+                if obj.respond_to? attr and name = obj.send(attr)
                     # Skip owners and groups we've already done, but tag them with
                     # our section if necessary
-                    if done[type].include?(val)
-                        next unless defined? @section and @section
-
-                        tags = done[type][val].tags
-                        unless tags.include?(@section)
-                            done[type][val].tags = tags << @section
+                    if done[type].include?(name)
+                        tags = done[type][name].tags
+                        unless tags.include?(section)
+                            done[type][name].tags = tags << section
                         end
+                    elsif newobj = Puppet::Type.type(type)[name]
+                        newobj.tag(section)
                     else
-                        newobj = TransObject.new(val, type.to_s)
-                        newobj[:ensure] = "exists"
-                        done[type] << newobj
+                        newobj = TransObject.new(name, type.to_s)
+                        newobj[:ensure] = "present"
+                        done[type][name] = newobj
+                        objects << newobj
                     end
                 end
             }
 
             if obj.respond_to? :to_transportable
-                unless done[:file].include? obj.value
+                unless done[:file].include? obj.name
                     trans = obj.to_transportable
                     # transportable could return nil
                     next unless trans
                     objects << trans
-                    done[:file] << obj.value
+                    done[:file][obj.name] = obj
                 end
             end
         }
 
         bucket = Puppet::TransBucket.new
-        bucket.name = "autosection-%s" % bucket.object_id
         bucket.type = section
         bucket.push(*objects)
         bucket.keyword = "class"
@@ -384,10 +390,8 @@ Generated on #{Time.now}.
 
     # Convert our configuration into a list of transportable objects.
     def to_transportable
-        done = {
-            :owner => [],
-            :group => [],
-            :file => []
+        done = Hash.new { |hash, key|
+            hash[key] = {}
         }
 
         topbucket = Puppet::TransBucket.new

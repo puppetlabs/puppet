@@ -12,6 +12,13 @@ require 'test/unit'
 class TestConfig < Test::Unit::TestCase
 	include TestPuppet
 
+    def check_for_users
+        count = Puppet::Type.type(:user).inject(0) { |c,o|
+            c + 1
+        }
+        assert(count > 0, "Found no users")
+    end
+
     def check_to_transportable(config)
         trans = nil
         assert_nothing_raised("Could not convert to a transportable") {
@@ -22,6 +29,8 @@ class TestConfig < Test::Unit::TestCase
         assert_nothing_raised("Could not convert transportable to component") {
             comp = trans.to_type
         }
+
+        check_for_users()
 
         assert_nothing_raised("Could not retrieve transported config") {
             comp.retrieve
@@ -37,10 +46,23 @@ class TestConfig < Test::Unit::TestCase
         Puppet[:parseonly] = true
         parser = Puppet::Parser::Parser.new()
 
+        objects = nil
         assert_nothing_raised("Could not parse generated manifest") {
             parser.string = manifest
-            parser.parse
+            objects = parser.parse
         }
+        scope = Puppet::Parser::Scope.new
+        assert_nothing_raised("Could not compile objects") {
+            scope.evaluate(:ast => objects)
+        }
+        trans = nil
+        assert_nothing_raised("Could not convert objects to transportable") {
+            trans = scope.to_trans
+        }
+        assert_nothing_raised("Could not instantiate objects") {
+            trans.to_type
+        }
+        check_for_users()
     end
 
     def check_to_comp(config)
@@ -52,6 +74,8 @@ class TestConfig < Test::Unit::TestCase
         assert_nothing_raised("Could not retrieve component") {
             comp.retrieve
         }
+
+        check_for_users()
     end
 
     def check_to_config(config)
