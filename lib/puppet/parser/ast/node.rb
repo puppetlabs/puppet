@@ -75,10 +75,6 @@ class Puppet::Parser::AST
                     scope.tag(node.type)
                 end
 
-                if name = node.name
-                    scope.tag(node.name) unless name == type
-                end
-
                 begin
                     code = node.code
                     code.safeevaluate(:scope => scope)

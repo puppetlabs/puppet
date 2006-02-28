@@ -80,53 +80,47 @@ class Puppet::Parser::AST
             objnames.collect { |objname|
                 # If the object is a class, that means it's a builtin type, so
                 # we just store it in the scope
-                unless object
-                    unless objname
-                        raise Puppet::ParseError,
-                            "Object of type %s created with no name" % objtype
-                    end
-
-                    begin
-                        #Puppet.debug(
-                        #    ("Setting object '%s' " +
-                        #    "in scope %s " +
-                        #    "with arguments %s") %
-                        #    [objname, scope.object_id, hash.inspect]
-                        #)
-                        obj = scope.setobject(
-                            :type => objtype,
-                            :name => objname,
-                            :arguments => hash,
-                            :file => @file,
-                            :line => @line
-                        )
-                    rescue Puppet::ParseError => except
-                        except.line = self.line
-                        except.file = self.file
-                        raise except
-                    rescue => detail
-                        error = Puppet::ParseError.new(detail)
-                        error.line = self.line
-                        error.file = self.file
-                        error.backtrace = detail.backtrace
-                        raise error
-                    end
-                else
-                    # but things like components create a new type; if we find
-                    # one of those, evaluate that with our arguments
-                    #Puppet.debug("Calling object '%s' with arguments %s" %
-                    #    [object.name, hash.inspect])
-                    #obj = object.safeevaluate(scope,hash,objtype,objname)
-                    obj = object.safeevaluate(
-                        :scope => scope,
-                        :arguments => hash,
+                begin
+                    #Puppet.debug(
+                    #    ("Setting object '%s' " +
+                    #    "in scope %s " +
+                    #    "with arguments %s") %
+                    #    [objname, scope.object_id, hash.inspect]
+                    #)
+                    obj = scope.setobject(
                         :type => objtype,
-                        :name => objname
+                        :name => objname,
+                        :arguments => hash,
+                        :file => @file,
+                        :line => @line
                     )
-
-                    # and pass the result on
-                    obj
+                rescue Puppet::ParseError => except
+                    except.line = self.line
+                    except.file = self.file
+                    raise except
+                rescue => detail
+                    error = Puppet::ParseError.new(detail)
+                    error.line = self.line
+                    error.file = self.file
+                    error.backtrace = detail.backtrace
+                    raise error
                 end
+#                else
+#                    # but things like components create a new type; if we find
+#                    # one of those, evaluate that with our arguments
+#                    #Puppet.debug("Calling object '%s' with arguments %s" %
+#                    #    [object.name, hash.inspect])
+#                    #obj = object.safeevaluate(scope,hash,objtype,objname)
+#                    obj = object.safeevaluate(
+#                        :scope => scope,
+#                        :arguments => hash,
+#                        :type => objtype,
+#                        :name => objname
+#                    )
+#
+#                    # and pass the result on
+#                    obj
+#                end
             }.reject { |obj| obj.nil? }
         end
 

@@ -58,7 +58,7 @@ class TestAST < Test::Unit::TestCase
         }
 
         assert_equal(1, scope.find_all { |child|
-            child.lookupobject("/parent", "file")
+            child.lookupobject(:name => "/parent", :type => "file")
         }.length, "Found incorrect number of '/parent' objects")
     end
 
@@ -83,7 +83,7 @@ class TestAST < Test::Unit::TestCase
 
         obj = nil
         assert_nothing_raised("Could not retrieve file object") {
-            obj = scope.lookupobject("/etc", "file")
+            obj = scope.lookupobject(:name => "/etc", :type => "file")
         }
 
         assert(obj, "could not retrieve file object")
@@ -172,9 +172,6 @@ class TestAST < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate node") {
             scope = Puppet::Parser::Scope.new()
-            scope.type = "puppet"
-            scope.name = "top"
-            scope.top = true
             top.evaluate(:scope => scope)
         }
 
@@ -192,6 +189,7 @@ class TestAST < Test::Unit::TestCase
         assert_nothing_raised("Could not retrieve node definition") {
             objects = scope.evalnode(:name => [nodename], :facts => {})
         }
+
         assert(objects, "Could not retrieve node definition")
 
         # Because node scopes are temporary (i.e., they get destroyed after the node's
@@ -224,6 +222,9 @@ class TestAST < Test::Unit::TestCase
             assert(obj.path !~ /#{nodename}\[#{nodename}\]/,
                 "Node name appears twice")
         }
+
+        assert(Puppet::Type.type(:file)["/child1"], "Could not find child")
+        assert(Puppet::Type.type(:file)["/parent"], "Could not find parent")
     end
 
     # Test that you can look a host up using multiple names, e.g., an FQDN and

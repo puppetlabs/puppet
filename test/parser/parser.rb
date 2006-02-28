@@ -10,7 +10,7 @@ require 'test/unit'
 require 'puppettest'
 
 class TestParser < Test::Unit::TestCase
-	include TestPuppet
+	include ParserTesting
     def setup
         super
         Puppet[:parseonly] = true

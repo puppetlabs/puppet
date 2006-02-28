@@ -277,7 +277,7 @@ class TestScope < Test::Unit::TestCase
         # verify we can set a host
         assert_nothing_raised("Could not create host") {
             child1.setnode("testing", AST::Node.new(
-                :name => "testing",
+                :type => "testing",
                 :code => :notused
                 )
             )
@@ -286,7 +286,7 @@ class TestScope < Test::Unit::TestCase
         # Verify we cannot redefine it
         assert_raise(Puppet::ParseError, "Duplicate host creation succeeded") {
             child2.setnode("testing", AST::Node.new(
-                :name => "testing",
+                :type => "testing",
                 :code => :notused
                 )
             )
@@ -356,6 +356,38 @@ class TestScope < Test::Unit::TestCase
         }
     end
 
+    # Verify that statements about the same element within the same scope
+    # cause a conflict.
+    def test_failonconflictinsamescope
+        filename = tempfile()
+        children = []
+
+        # Now call the child class
+        assert_nothing_raised("Could not add AST nodes for calling") {
+            children << fileobj(filename, "owner" => "root")
+            children << fileobj(filename, "owner" => "bin")
+        }
+
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        objects = nil
+        scope = nil
+
+        # Here's where we should encounter the failure.  It should find that
+        # it has already created an object with that name, and this should result
+        # in some pukey-pukeyness.
+        assert_raise(Puppet::ParseError) {
+            scope = Puppet::Parser::Scope.new()
+            scope.top = true
+            objects = scope.evaluate(:ast => top)
+        }
+    end
+
     # Verify that we override statements that we find within our scope
     def test_suboverrides
         filename = tempfile()
@@ -396,8 +428,8 @@ class TestScope < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate") {
             scope = Puppet::Parser::Scope.new()
-            scope.name =  "topscope"
-            scope.type =  "topscope"
+            #scope.name =  "topscope"
+            #scope.type =  "topscope"
             objects = scope.evaluate(:ast => top)
         }
 

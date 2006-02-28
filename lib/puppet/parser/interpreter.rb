@@ -206,8 +206,6 @@ module Puppet
                         # We've already evaluated the AST, in this case
                         @scope = Puppet::Parser::Scope.new() # no parent scope
                         @scope.interp = self
-                        @scope.type = "puppet"
-                        @scope.name = "top"
                         #return @scope.evaluate(@ast, facts, @classes)
                         return @scope.evaluate(
                             :ast => @ast,

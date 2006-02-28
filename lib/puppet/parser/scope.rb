@@ -6,6 +6,10 @@ require 'puppet/transportable'
 module Puppet
     module Parser
         class Scope
+            class ScopeObj < Hash
+                attr_accessor :file, :line, :type, :name
+            end
+
             Puppet::Util.logmethods(self)
 
             include Enumerable
@@ -49,6 +53,45 @@ module Puppet
                         end
                     end
                 }
+            end
+
+            # Is the type a builtin type?
+            def builtintype?(type)
+                if typeklass = Puppet::Type.type(type)
+                    return typeklass
+                else
+                    return false
+                end
+            end
+
+            # Verify that the given object isn't defined elsewhere.
+            def chkobjectclosure(hash)
+                type = hash[:type]
+                name = hash[:name]
+                unless name
+                    return true
+                end
+                if @definedtable[type].include?(name)
+                    typeklass = Puppet::Type.type(type)
+                    if typeklass and ! typeklass.isomorphic?
+                        Puppet.info "Allowing duplicate %s" % type
+                    else
+                        # Either it's a defined type, which are never
+                        # isomorphic, or it's a non-isomorphic type.
+                        msg = "Duplicate definition: %s[%s] is already defined" %
+                            [type, name]
+                        error = Puppet::ParseError.new(msg)
+                        if hash[:line]
+                            error.line = hash[:line]
+                        end
+                        if hash[:file]
+                            error.file = hash[:file]
+                        end
+                        raise error
+                    end
+                end
+
+                return true
             end
 
             def declarative=(val)
@@ -147,15 +190,6 @@ module Puppet
                 }
             end
 
-            # Has a given object been defined anywhere in the scope tree?
-            def objectdefined?(name, type)
-                unless defined? @definedtable
-                    raise Puppet::DevError, "Scope did not receive definedtable"
-                end
-
-                return @definedtable[type][name]
-            end
-
             # Are we the top scope?
             def topscope?
                 @level == 1
@@ -181,7 +215,7 @@ module Puppet
             # appropriate scope.
             #def evalnode(names, facts, classes = nil, parent = nil)
             def evalnode(hash)
-                names = hash[:name]
+                names = hash[:name] 
                 facts = hash[:facts]
                 classes = hash[:classes]
                 parent = hash[:parent]
@@ -256,7 +290,7 @@ module Puppet
                 parent = hash[:parent]
                 name = names.shift
                 arghash = {
-                    :name => name,
+                    :type => name,
                     :code => AST::ASTArray.new(:pin => "[]")
                 }
 
@@ -267,7 +301,6 @@ module Puppet
                 # Create the node
                 node = AST::Node.new(arghash)
                 node.keyword = "node"
-                node.name = name
 
                 # Now evaluate it, which evaluates the parent but doesn't really
                 # do anything else but does return the nodescope
@@ -318,7 +351,6 @@ module Puppet
             # silly method, in that it just calls evaluate on the passed-in
             # objects, and then calls to_trans on itself.  It just conceals
             # a paltry amount of info from whomever's using the scope object.
-            #def evaluate(objects, facts = {}, classes = [])
             def evaluate(hash)
                 objects = hash[:ast]
                 facts = hash[:facts] || {}
@@ -352,13 +384,59 @@ module Puppet
                 return objects
             end
 
+            # Take all of our objects and evaluate them.
+            def finish
+                self.info "finishing"
+                @objectlist.each { |object|
+                    if object.is_a? ScopeObj
+                        self.info "finishing %s" % object.name
+                        if obj = finishobject(object)
+                            @children << obj
+                        end
+                    end
+                }
+
+                @finished = true
+
+                self.info "finished"
+            end
+
+            # If the object is defined in an upper scope, then add our
+            # params to that upper scope; else, create a transobject
+            # or evaluate the definition.
+            def finishobject(object)
+                type = object.type
+                name = object.name
+
+                # It should be a defined type.
+                definedtype = self.lookuptype(type)
+
+                unless definedtype
+                    error = Puppet::ParseError.new("No such type %s" % type)
+                    error.line = object.line
+                    error.file = object.file
+                    raise error
+                end
+
+                return definedtype.safeevaluate(
+                    :scope => self,
+                    :arguments => object,
+                    :type => type,
+                    :name => name
+                )
+            end
+
+            def finished?
+                @finished
+            end
+
             # Initialize our new scope.  Defaults to having no parent and to
             # being declarative.
-            #def initialize(parent = nil, declarative = true)
             def initialize(hash = {})
                 @parent = nil
                 @type = nil
                 @name = nil
+                @finished = false
                 hash.each { |name, val|
                     method = name.to_s + "="
                     if self.respond_to? method
@@ -373,43 +451,10 @@ module Puppet
                 @tags = []
 
                 if @parent.nil?
-                    # the level is mostly used for debugging
-                    @level = 1
-
-                    # The table for storing class singletons.  This will only actually
-                    # be used by top scopes and node scopes.
-                    @classtable = Hash.new(nil)
-
-                    unless hash.include? :declarative
-                        self.class.declarative = true
+                    unless hash.include?(:declarative)
+                        hash[:declarative] = true
                     end
-
-                    # The table for all defined objects.  This will only be
-                    # used in the top scope if we don't have any nodescopes.
-                    @definedtable = Hash.new { |types, type|
-                        types[type] = {}
-                    }
-
-                    # A table for storing nodes.
-                    @nodetable = Hash.new(nil)
-
-                    # Eventually, if we support sites, this will allow definitions
-                    # of nodes with the same name in different sites.  For now
-                    # the top-level scope is always the only site scope.
-                    @sitescope = true
-
-                    # We're the top scope, so record that fact for our children
-                    @topscope = self
-
-                    # And create a tag table, so we can collect all of the tags
-                    # associated with any objects created in this scope tree
-                    @tagtable = Hash.new { |types, type|
-                        types[type] = Hash.new { |names, name|
-                            names[name] = []
-                        }
-                    }
-
-                    @context = nil
+                    self.istop(hash[:declarative])
                 else
                     @parent.child = self
                     @level = @parent.level + 1
@@ -418,7 +463,7 @@ module Puppet
                     @context = @parent.context
                 end
 
-                # Our child scopes
+                # Our child scopes and objects
                 @children = []
 
                 # The symbol table for this scope
@@ -437,17 +482,17 @@ module Puppet
                 # The object table is similar, but it is actually a hash of hashes
                 # where the innermost objects are TransObject instances.
                 @objectable = Hash.new { |typehash,typekey|
-                    #hash[key] = TransObject.new(key)
-                    typehash[typekey] = Hash.new { |namehash, namekey|
-                        #Puppet.debug("Creating iobject with name %s and type %s" %
-                        #    [namekey,typekey])
-                        namehash[namekey] = TransObject.new(namekey,typekey)
-                        @children.push namehash[namekey]
+                    # See #newobject for how to create the actual objects
+                    typehash[typekey] = Hash.new(nil)
+                }
 
-                        # this has to be last, because the return value of the
-                        # block is the actual hash
-                        namehash[namekey]
-                    }
+                # The list of simpler hash objects.
+                @objectlist = []
+
+                # This is just for collecting statements locally, so we can
+                # verify that there is no overlap within this specific scope
+                @localobjectable = Hash.new { |typehash,typekey|
+                    typehash[typekey] = Hash.new(nil)
                 }
 
                 # Map the names to the tables.
@@ -458,6 +503,45 @@ module Puppet
                     "object" => @objectable,
                     "defaults" => @defaultstable
                 }
+            end
+
+            # Mark that we're the top scope, and set some hard-coded info.
+            def istop(declarative = true)
+                # the level is mostly used for debugging
+                @level = 1
+
+                # The table for storing class singletons.  This will only actually
+                # be used by top scopes and node scopes.
+                @classtable = Hash.new(nil)
+
+                self.class.declarative = declarative
+
+                # The table for all defined objects.  This will only be
+                # used in the top scope if we don't have any nodescopes.
+                @definedtable = Hash.new { |types, type|
+                    types[type] = {}
+                }
+
+                # A table for storing nodes.
+                @nodetable = Hash.new(nil)
+
+                # Eventually, if we support sites, this will allow definitions
+                # of nodes with the same name in different sites.  For now
+                # the top-level scope is always the only site scope.
+                @sitescope = true
+
+                # And create a tag table, so we can collect all of the tags
+                # associated with any objects created in this scope tree
+                @tagtable = Hash.new { |types, type|
+                    types[type] = Hash.new { |names, name|
+                        names[name] = []
+                    }
+                }
+
+                @context = nil
+                @topscope = self
+                @type = "puppet"
+                @name = "top"
             end
 
             # This method abstracts recursive searching.  It accepts the type
@@ -551,7 +635,9 @@ module Puppet
 
             # Look up an object by name and type.  This should only look up objects
             # within a class structure, not within the entire scope structure.
-            def lookupobject(name,type)
+            def lookupobject(hash)
+                type = hash[:type]
+                name = hash[:name]
                 #Puppet.debug "Looking up object %s of type %s in level %s" %
                 #    [name, type, @level]
                 sub = proc { |table|
@@ -581,9 +667,41 @@ module Puppet
                     )
                     raise error
                 else
-                    #Puppet.debug "Value of '%s' is '%s'" % [name,value]
                     return value
                 end
+            end
+
+            # Add a new object to our object table.
+            def newobject(hash)
+                if @objectable[hash[:type]].include?(hash[:name])
+                    raise Puppet::DevError, "Object %s[%s] is already defined" %
+                        [hash[:type], hash[:name]]
+                end
+
+                self.chkobjectclosure(hash)
+
+                obj = nil
+
+                # If it's a builtin type, then use a transobject, else use
+                # a ScopeObj, which will get replaced later.
+                if self.builtintype?(hash[:type])
+                    obj = TransObject.new(hash[:name], hash[:type])
+
+                    @children << obj
+                else
+                    obj = ScopeObj.new(nil)
+                    obj.name = hash[:name]
+                    obj.type = hash[:type]
+                end
+
+                @objectable[hash[:type]][hash[:name]] = obj
+
+                @definedtable[hash[:type]][hash[:name]] = obj
+
+                # Keep them in order, just for kicks
+                @objectlist << obj
+
+                return obj
             end
 
             # Create a new scope.
@@ -670,7 +788,6 @@ module Puppet
             # This method will fail if the named object is already defined anywhere
             # in the scope tree, which is what provides some minimal closure-like
             # behaviour.
-            #def setobject(type, name, params, file, line)
             def setobject(hash)
                 # FIXME This objectlookup stuff should be looking up using both
                 # the name and the namevar.
@@ -685,48 +802,67 @@ module Puppet
                 file = hash[:file]
                 line = hash[:line]
 
-                obj = self.lookupobject(name,type)
+                # Verify that we're not overriding any already-set parameters.
+                if localobj = @localobjectable[type][name]
+                    params.each { |var, value|
+                        if localobj.include?(var)
+                            msg = "Cannot reassign attribute %s on %s[%s]" %
+                                [var, type, name]
 
-                # If we can't find it...
-                if obj == :undefined or obj.nil?
-                    # Make sure it's not defined elsewhere in the configuration
-                    if tmp = self.objectdefined?(name, type)
-                        typeklass = Puppet::Type.type(type)
-                        if typeklass and ! typeklass.isomorphic?
-                            Puppet.info "Allowing duplicate %s" % type
-                        else
-                            msg = "Duplicate definition: %s[%s] is already defined" %
-                                [type, name]
                             error = Puppet::ParseError.new(msg)
-                            if tmp.line
-                                error.line = tmp.line
-                            end
-                            if tmp.file
-                                error.file = tmp.file
-                            end
+                            error.line = line
+                            error.file = file
                             raise error
                         end
-                    end
-
-                    # And if it's not, then create it anew
-                    #self.info "Adding %s[%s] to table" % [type, name]
-                    obj = @objectable[type][name]
-
-                    # only set these if we've created the object, which is the
-                    # most common case
-                    obj.file = file
-                    obj.line = line
+                    }
                 end
 
-                # Now add our parameters.  This has the function of overriding
-                # existing values, which might have been defined in a higher
-                # scope.
-                params.each { |var,value|
-                    obj[var] = value
-                }
+                if objecttype = self.lookuptype(type)
+                    # It's a defined type
+                    objecttype.safeevaluate(
+                        :name => name,
+                        :type => type,
+                        :arguments => params,
+                        :scope => self
+                    )
+                else
+                    # First look for it in a parent scope
+                    obj = self.lookupobject(:name => name, :type => type)
 
-                # And finally store the fact that we've defined this object.
-                @definedtable[type][name] = obj
+                    unless obj and obj != :undefined
+                        unless obj = @objectable[type][name]
+                            obj = self.newobject(
+                                :type => type,
+                                :name => name,
+                                :line => line,
+                                :file => file
+                            )
+
+                            # only set these if we've created the object,
+                            # which is the most common case
+                            # FIXME we eventually need to store the file
+                            # and line with each param, not the object
+                            # itself.
+                            obj.file = file
+                            obj.line = line
+                        end
+
+                        # Now add our parameters.  This has the function of
+                        # overriding existing values, which might have been
+                        # defined in a higher scope.
+                    end
+                    params.each { |var,value|
+                        # Add it to our found object
+                        obj[var] = value
+                    }
+                end
+
+                @localobjectable[type][name] ||= {}
+
+                params.each { |var,value|
+                    # And add it to the local table; mmm, hack
+                    @localobjectable[type][name][var] = value
+                }
 
                 return obj
             end
@@ -794,6 +930,11 @@ module Puppet
 
             # Convert our scope to a list of Transportable objects.
             def to_trans
+                #unless self.finished?
+                #    raise Puppet::DevError, "%s not finished" % self.type
+                #    self.err "Not finished"
+                #    self.finish
+                #end
                 #Puppet.debug "Translating scope %s at level %s" %
                 #    [self.object_id,self.level]
 
