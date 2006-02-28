@@ -365,6 +365,9 @@ class TestUser < Test::Unit::TestCase
                     Puppet.err "Not testing attr %s of user" % test
                 end
             }
+
+            user[:ensure] = :absent
+            assert_apply(user)
         end
 
         def test_autorequire

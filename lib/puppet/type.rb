@@ -1655,7 +1655,7 @@ class Type < Puppet::Element
     def statechanges
         # If we are changing the existence of the object, then none of
         # the other states matter.
-        changes = nil
+        changes = []
         if @states.include?(:ensure) and ! @states[:ensure].insync?
             #self.info "ensuring %s from %s" %
             #    [@states[:ensure].should, @states[:ensure].is]
@@ -1681,7 +1681,6 @@ class Type < Puppet::Element
 
         if Puppet[:debug] and changes.length > 0
             self.debug("Changing " + changes.collect { |ch|
-                    self.info ch.state.class
                     ch.state.name
                 }.join(",")
             )

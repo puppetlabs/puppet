@@ -224,6 +224,8 @@ end
 case Facter["operatingsystem"].value
 when "Darwin":
     require 'puppet/type/nameservice/netinfo'
+when "FreeBSD":
+    require 'puppet/type/nameservice/pw'
 else
     require 'puppet/type/nameservice/objectadd'
 end

@@ -9,6 +9,9 @@ module Puppet
         when "Darwin":
             @parentstate = Puppet::NameService::NetInfo::NetInfoState
             @parentmodule = Puppet::NameService::NetInfo
+        when "FreeBSD":
+            @parentstate = Puppet::NameService::PW::PWUser
+            @parentmodule = Puppet::NameService::PW
         else
             @parentstate = Puppet::NameService::ObjectAdd::ObjectAddUser
             @parentmodule = Puppet::NameService::ObjectAdd
