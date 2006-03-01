@@ -104,14 +104,14 @@ class TestConfig < Test::Unit::TestCase
         c = mkconfig
 
         assert_nothing_raised {
-            c.setdefaults(:testing, [:booltest, true, "testing"])
+            c.setdefaults(:testing, :booltest => [true, "testing"])
         }
 
         assert(c[:booltest])
         c = mkconfig
 
         assert_nothing_raised {
-            c.setdefaults(:testing, [:booltest, "true", "testing"])
+            c.setdefaults(:testing, :booltest => ["true", "testing"])
         }
 
         assert(c[:booltest])
@@ -141,7 +141,7 @@ class TestConfig < Test::Unit::TestCase
         c = mkconfig
         val = "this is a string"
         assert_nothing_raised {
-            c.setdefaults(:testing, [:strtest, val, "testing"])
+            c.setdefaults(:testing, :strtest => [val, "testing"])
         }
 
         assert_equal(val, c[:strtest])
@@ -152,11 +152,11 @@ class TestConfig < Test::Unit::TestCase
 
         parent = "/puppet"
         assert_nothing_raised {
-            c.setdefaults(:testing, [:parentdir, parent, "booh"])
+            c.setdefaults(:testing, :parentdir => [parent, "booh"])
         }
 
         assert_nothing_raised {
-            c.setdefaults(:testing, [:child, "$parent/child", "rah"])
+            c.setdefaults(:testing, :child => ["$parent/child", "rah"])
         }
 
         assert_equal(parent, c[:parentdir])
@@ -172,7 +172,7 @@ class TestConfig < Test::Unit::TestCase
 
         default = "this is a default"
         assert_nothing_raised {
-            c.setdefaults(:testing, [:yayness, default, "rah"])
+            c.setdefaults(:testing, :yayness => [default, "rah"])
         }
 
         assert_equal(default, c[:yayness])
@@ -217,17 +217,17 @@ yay = /a/path
         c = mkconfig
         assert_nothing_raised {
             c.setdefaults("puppet",
-                [:one, "a", "one"],
-                [:two, "a", "two"],
-                [:yay, "/default/path", "boo"]
+                :one => ["a", "one"],
+                :two => ["a", "two"],
+                :yay => ["/default/path", "boo"]
             )
         }
 
         assert_nothing_raised {
             c.setdefaults("section1",
-                [:attr, "a", "one"],
-                [:attrdir, "/another/dir", "two"],
-                [:attr3, "$attrdir/maybe", "boo"]
+                :attr => ["a", "one"],
+                :attrdir => ["/another/dir", "two"],
+                :attr3 => ["$attrdir/maybe", "boo"]
             )
         }
         
@@ -271,10 +271,10 @@ yay = /a/path
 
         assert_nothing_raised {
             c.setdefaults("testing",
-                [:onboolean, true, "An on bool"],
-                [:offboolean, false, "An off bool"],
-                [:string, "a string", "A string arg"],
-                [:file, "/path/to/file", "A file arg"]
+                :onboolean => [true, "An on bool"],
+                :offboolean => [false, "An off bool"],
+                :string => ["a string", "A string arg"],
+                :file => ["/path/to/file", "A file arg"]
             )
         }
 
@@ -313,10 +313,10 @@ yay = /a/path
 
         assert_nothing_raised {
             c.setdefaults("testing",
-                [:onboolean, true, "An on bool"],
-                [:offboolean, false, "An off bool"],
-                [:string, "a string", "A string arg"],
-                [:file, "/path/to/file", "A file arg"]
+                :onboolean => [true, "An on bool"],
+                :offboolean => [false, "An off bool"],
+                :string => ["a string", "A string arg"],
+                :file => ["/path/to/file", "A file arg"]
             )
         }
         options = []
@@ -347,8 +347,8 @@ yay = /a/path
         section = "testing"
         assert_nothing_raised {
             c.setdefaults(section,
-                [:mydir, dir, "A dir arg"],
-                [:myfile, file, "A file arg"]
+                :mydir => [dir, "A dir arg"],
+                :myfile => [file, "A file arg"]
             )
         }
 
@@ -358,6 +358,34 @@ yay = /a/path
 
         assert(FileTest.directory?(dir), "Did not create directory")
         assert(!FileTest.exists?(realfile), "Created file")
+    end
+
+    def test_setdefaultsarray
+        c = mkconfig
+
+        assert_nothing_raised {
+            c.setdefaults("yay",
+                :a => [false, "some value"],
+                :b => ["/my/file", "a file"]
+            )
+        }
+
+        assert_equal(false, c[:a], "Values are not equal")
+        assert_equal("/my/file", c[:b], "Values are not equal")
+    end
+
+    def test_setdefaultshash
+        c = mkconfig
+
+        assert_nothing_raised {
+            c.setdefaults("yay",
+                :a => {:default => false, :desc => "some value"},
+                :b => {:default => "/my/file", :desc => "a file"}
+            )
+        }
+
+        assert_equal(false, c[:a], "Values are not equal")
+        assert_equal("/my/file", c[:b], "Values are not equal")
     end
 end
 

@@ -11,25 +11,25 @@ module Puppet
     module Parser
         class Interpreter
             Puppet.setdefaults("ldap",
-                [:ldapnodes, false,
+                :ldapnodes => [false,
                     "Whether to search for node configurations in LDAP."],
-                [:ldapserver, "ldap",
+                :ldapserver => ["ldap",
                     "The LDAP server.  Only used if ``ldapnodes`` is enabled."],
-                [:ldapport, 389,
+                :ldapport => [389,
                     "The LDAP port.  Only used if ``ldapnodes`` is enabled."],
-                [:ldapstring, "(&(objectclass=puppetClient)(cn=%s))",
+                :ldapstring => ["(&(objectclass=puppetClient)(cn=%s))",
                     "The search string used to find an LDAP node."],
-                [:ldapattrs, "puppetclass",
+                :ldapattrs => ["puppetclass",
                     "The LDAP attributes to use to define Puppet classes.  Values
                     should be comma-separated."],
-                [:ldapparentattr, "parentnode",
+                :ldapparentattr => ["parentnode",
                     "The attribute to use to define the parent node."],
-                [:ldapuser, "",
+                :ldapuser => ["",
                     "The user to use to connect to LDAP.  Must be specified as a
                     full DN."],
-                [:ldappassword, "",
+                :ldappassword => ["",
                     "The password to use to connect to LDAP."],
-                [:ldapbase, "",
+                :ldapbase => ["",
                     "The search base for LDAP searches.  It's impossible to provide
                     a meaningful default here, although the LDAP libraries might
                     have one already set.  Generally, it should be the 'ou=Hosts'

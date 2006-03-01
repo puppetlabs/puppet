@@ -102,81 +102,81 @@ module Puppet
         var = "/var/puppet"
     end
     self.setdefaults("puppet",
-        [:confdir, conf, "The main Puppet configuration directory."],
-        [:vardir, var, "Where Puppet stores dynamic and growing data."]
+        :confdir => [conf, "The main Puppet configuration directory."],
+        :vardir => [var, "Where Puppet stores dynamic and growing data."]
     )
 
     # Define the config default.
     self.setdefaults(self.name,
-        [:config, "$confdir/#{self.name}.conf",
+        :config => ["$confdir/#{self.name}.conf",
             "The configuration file for #{self.name}."]
     )
 
     self.setdefaults("puppet",
-        [:logdir,          "$vardir/log",
+        :logdir => ["$vardir/log",
             "The Puppet log directory."],
-        [:bucketdir,       "$vardir/bucket",
+        :bucketdir => ["$vardir/bucket",
             "Where FileBucket files are stored."],
-        [:statedir,        "$vardir/state",
+        :statedir => ["$vardir/state",
             "The directory where Puppet state is stored.  Generally, this
             directory can be removed without causing harm (although it might
             result in spurious service restarts)."],
-        [:rundir,          "$vardir/run", "Where Puppet PID files are kept."],
-        [:lockdir,         "$vardir/locks", "Where lock files are kept."],
-        [:statefile,       "$statedir/state.yaml",
+        :rundir => ["$vardir/run", "Where Puppet PID files are kept."],
+        :lockdir => ["$vardir/locks", "Where lock files are kept."],
+        :statefile => ["$statedir/state.yaml",
             "Where puppetd and puppetmasterd store state associated with the
             running configuration.  In the case of puppetmasterd, this file
             reflects the state discovered through interacting with clients."],
-        [:ssldir,          "$confdir/ssl", "Where SSL certificates are kept."],
-        [:genconfig,        false,
+        :ssldir => ["$confdir/ssl", "Where SSL certificates are kept."],
+        :genconfig => [false,
             "Whether to just print a configuration to stdout and exit.  Only makes
             sense when used interactively.  Takes into account arguments specified
             on the CLI."],
-        [:genmanifest,        false,
+        :genmanifest => [false,
             "Whether to just print a manifest to stdout and exit.  Only makes
             sense when used interactively.  Takes into account arguments specified
             on the CLI."]
     )
     self.setdefaults("puppetmasterd",
-        [:manifestdir,     "$confdir/manifests",
+        :manifestdir => ["$confdir/manifests",
             "Where puppetmasterd looks for its manifests."],
-        [:manifest,        "$manifestdir/site.pp",
+        :manifest => ["$manifestdir/site.pp",
             "The entry-point manifest for puppetmasterd."],
-        [:masterlog,       "$logdir/puppetmaster.log",
+        :masterlog => ["$logdir/puppetmaster.log",
             "Where puppetmasterd logs.  This is generally not used, since syslog
             is the default log destination."],
-        [:masterhttplog,   "$logdir/masterhttp.log",
+        :masterhttplog => ["$logdir/masterhttp.log",
             "Where the puppetmasterd web server logs."],
-        [:masterport,      8140, "Which port puppetmasterd listens on."],
-        [:parseonly,       false, "Just check the syntax of the manifests."]
+        :masterport => [8140, "Which port puppetmasterd listens on."],
+        :parseonly => [false, "Just check the syntax of the manifests."]
     )
 
     self.setdefaults("puppetd",
-        [:localconfig,     "$confdir/localconfig",
-            "Where puppetd caches the local configuration.  An extension reflecting
-            the cache format is added automatically."],
-        [:classfile,       "$confdir/classes.txt",
+        :localconfig => ["$confdir/localconfig",
+            "Where puppetd caches the local configuration.  An extension
+            indicating the cache format is added automatically."],
+        :classfile => ["$confdir/classes.txt",
             "The file in which puppetd stores a list of the classes associated
             with the retrieved configuratiion."],
-        [:puppetdlog,         "$logdir/puppetd.log",
+        :puppetdlog => ["$logdir/puppetd.log",
             "The log file for puppetd.  This is generally not used."],
-        [:httplog,     "$logdir/http.log", "Where the puppetd web server logs."],
-        [:server,          "puppet",
+        :httplog => ["$logdir/http.log", "Where the puppetd web server logs."],
+        :server => ["puppet",
             "The server to which server puppetd should connect"],
-        [:user,            "puppet", "The user puppetmasterd should run as."],
-        [:group,           "puppet", "The group puppetmasterd should run as."],
-        [:ignoreschedules, false,
+        :user => ["puppet", "The user puppetmasterd should run as."],
+        :group => ["puppet", "The group puppetmasterd should run as."],
+        :ignoreschedules => [false,
             "Boolean; whether puppetd should ignore schedules.  This is useful
             for initial puppetd runs."],
-        [:puppetport,      8139, "Which port puppetd listens on."],
-        [:noop,            false, "Whether puppetd should be run in noop mode."],
-        [:runinterval,     1800, # 30 minutes
+        :puppetport => [8139, "Which port puppetd listens on."],
+        :noop => [false, "Whether puppetd should be run in noop mode."],
+        :runinterval => [1800, # 30 minutes
             "How often puppetd applies the client configuration; in seconds"]
     )
     self.setdefaults("metrics",
-        [:rrddir,          "$vardir/rrd",
+        :rrddir => ["$vardir/rrd",
             "The directory where RRD database files are stored."],
-        [:rrdgraph,        false, "Whether RRD information should be graphed."]
+        :rrdgraph => [false, "Whether RRD information should be graphed."]
     )
 
 	# configuration parameter access and stuff
@@ -196,20 +196,6 @@ module Puppet
 	# configuration parameter access and stuff
 	def self.[]=(param,value)
         @@config[param] = value
-#        case param
-#        when :debug:
-#            if value
-#                Puppet::Log.level=(:debug)
-#            else
-#                Puppet::Log.level=(:notice)
-#            end
-#        when :loglevel:
-#            Puppet::Log.level=(value)
-#        when :logdest:
-#            Puppet::Log.newdestination(value)
-#        else
-#            @@config[param] = value
-#        end
 	end
 
     def self.clear
@@ -264,36 +250,6 @@ module Puppet
         end
         @timer
     end
-
-    # Store a new default value.
-#    def self.setdefaults(section, hash)
-#        @@config.setdefaults(section, hash)
-#        if value.is_a?(Array) 
-#            if value[0].is_a?(Symbol) 
-#                unless @defaults.include?(value[0])
-#                    raise ArgumentError, "Unknown basedir %s for param %s" %
-#                        [value[0], param]
-#                end
-#            else
-#                raise ArgumentError, "Invalid default %s for param %s" %
-#                    [value.inspect, param]
-#            end
-#
-#            unless value[1].is_a?(String)
-#                raise ArgumentError, "Invalid default %s for param %s" %
-#                    [value.inspect, param]
-#            end
-#
-#            unless value.length == 2
-#                raise ArgumentError, "Invalid default %s for param %s" %
-#                    [value.inspect, param]
-#            end
-#
-#            @defaults[param] = value
-#        else
-#            @defaults[param] = value
-#        end
-#    end
 
     # XXX this should all be done using puppet objects, not using
     # normal mkdir

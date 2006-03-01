@@ -253,7 +253,7 @@ class Config
         when String, Integer, Float: # nothing
             klass = CElement
         else
-            raise Puppet::Error, "Invalid value '%s' for %s" % [value, param]
+            raise Puppet::Error, "Invalid value '%s' for %s" % [value, hash[:name]]
         end
         element = klass.new(hash)
         element.parent = self
@@ -345,16 +345,16 @@ class Config
 
     # Set a bunch of defaults in a given section.  The sections are actually pretty
     # pointless, but they help break things up a bit, anyway.
-    def setdefaults(section, *defs)
+    def setdefaults(section, defs)
         section = symbolize(section)
-        #hash.each { |param, value|
-        defs.each { |hash|
+        defs.each { |name, hash|
             if hash.is_a? Array
                 tmp = hash
                 hash = {}
-                [:name, :default, :desc].zip(tmp).each { |p, v| hash[p] = v }
+                [:default, :desc].zip(tmp).each { |p,v| hash[p] = v }
             end
-            hash[:name] = symbolize(hash[:name])
+            name = symbolize(name)
+            hash[:name] = name
             hash[:section] = section
             name = hash[:name]
             if @config.include?(name)

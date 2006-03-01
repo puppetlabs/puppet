@@ -1,7 +1,7 @@
 # The client for interacting with the puppetmaster config server.
 class Puppet::Client::MasterClient < Puppet::Client
     Puppet.setdefaults("puppetd",
-        [:puppetdlockfile, "$statedir/puppetdlock",
+        :puppetdlockfile => [ "$statedir/puppetdlock",
             "A lock file to temporarily stop puppetd from doing anything."]
     )
 
