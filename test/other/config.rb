@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
@@ -334,6 +336,28 @@ yay = /a/path
                 }, "Boolean off %s was not added" % o)
             end
         }
+    end
+
+    def test_usesection
+        c = mkconfig
+
+        dir = tempfile()
+        file = "$mydir/myfile"
+        realfile = File.join(dir, "myfile")
+        section = "testing"
+        assert_nothing_raised {
+            c.setdefaults(section,
+                [:mydir, dir, "A dir arg"],
+                [:myfile, file, "A file arg"]
+            )
+        }
+
+        assert_nothing_raised("Could not use a section") {
+            c.use(section)
+        }
+
+        assert(FileTest.directory?(dir), "Did not create directory")
+        assert(!FileTest.exists?(realfile), "Created file")
     end
 end
 

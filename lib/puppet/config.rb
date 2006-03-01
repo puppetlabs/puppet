@@ -5,7 +5,7 @@ class Config
 
     # Retrieve a config value
     def [](param)
-        param = convert(param)
+        param = symbolize(param)
         if @config.include?(param)
             if @config[param]
                 val = @config[param].value
@@ -18,7 +18,7 @@ class Config
 
     # Set a config value.  This doesn't set the defaults, it sets the value itself.
     def []=(param, value)
-        param = convert(param)
+        param = symbolize(param)
         unless @config.include?(param)
             raise Puppet::Error, "Unknown configuration parameter %s" % param.inspect
         end
@@ -72,7 +72,7 @@ class Config
 
     # Is our parameter a boolean parameter?
     def boolean?(param)
-        param = convert(param)
+        param = symbolize(param)
         if @config.include?(param) and @config[param].kind_of? CBoolean
             return true
         else
@@ -87,7 +87,7 @@ class Config
         }
     end
 
-    def convert(param)
+    def symbolize(param)
         case param
         when String: return param.intern
         when Symbol: return param
@@ -124,7 +124,7 @@ class Config
 
     # Return an object by name.
     def element(param)
-        param = convert(param)
+        param = symbolize(param)
         @config[param]
     end
 
@@ -150,8 +150,8 @@ class Config
                 self[str] = value
             end
 
-            # Mark that this was set on the cli, so it's not overridden if the config
-            # gets reread.
+            # Mark that this was set on the cli, so it's not overridden if the
+            # config gets reread.
             @config[str.intern].setbycli = true
         else
             raise ArgumentError, "Invalid argument %s" % opt
@@ -221,7 +221,7 @@ class Config
                     Puppet.debug "%s: Setting %s to '%s'" % [section, var, value]
                     self[var] = value
                 end
-                @config[var].section = section
+                @config[var].section = symbolize(section)
 
                 metas.each { |meta|
                     if values[section][meta]
@@ -239,31 +239,33 @@ class Config
     # Create a new element.  The value is passed in because it's used to determine
     # what kind of element we're creating, but the value itself might be either
     # a default or a value, so we can't actually assign it.
-    def newelement(param, desc, value)
-        param = convert(param)
-        mod = nil
+    def newelement(hash)
+        value = hash[:value] || hash[:default]
+        klass = nil
+        if hash[:section]
+            hash[:section] = symbolize(hash[:section])
+        end
         case value
         when true, false, "true", "false":
-            mod = CBoolean
+            klass = CBoolean
         when /^\$/, /^\//:
-            mod = CFile
+            klass = CFile
         when String, Integer, Float: # nothing
+            klass = CElement
         else
             raise Puppet::Error, "Invalid value '%s' for %s" % [value, param]
         end
-        element = CElement.new(param, desc)
+        element = klass.new(hash)
         element.parent = self
-        if mod
-            element.extend(mod)
-        end
 
-        @order << param
+        @order << element.name
 
         return element
     end
 
     # Iterate across all of the objects in a given section.
     def persection(section)
+        section = symbolize(section)
         self.each { |name, obj|
             if obj.section == section
                 yield obj
@@ -287,7 +289,8 @@ class Config
     end
 
     # Convert a single section into transportable objects.
-    def section_to_transportable(section, done)
+    def section_to_transportable(section, done = nil, includefiles = true)
+        done ||= Hash.new { |hash, key| hash[key] = {} }
         objects = []
         persection(section) { |obj|
             [:owner, :group].each { |attr|
@@ -317,12 +320,17 @@ class Config
             }
 
             if obj.respond_to? :to_transportable
-                unless done[:file].include? obj.name
-                    trans = obj.to_transportable
-                    # transportable could return nil
+                transobjects = obj.to_transportable
+                transobjects = [transobjects] unless transobjects.is_a? Array
+                transobjects.each do |trans|
                     next unless trans
-                    objects << trans
-                    done[:file][obj.name] = obj
+                    unless done[:file].include? trans.name
+                        # transportable could return nil
+                        unless !includefiles and trans[:ensure] == :file
+                            objects << trans
+                        end
+                        done[:file][obj.name] = obj
+                    end
                 end
             end
         }
@@ -338,18 +346,21 @@ class Config
     # Set a bunch of defaults in a given section.  The sections are actually pretty
     # pointless, but they help break things up a bit, anyway.
     def setdefaults(section, *defs)
-        section = section.intern unless section.is_a? Symbol
+        section = symbolize(section)
         #hash.each { |param, value|
-        defs.each { |param, value, desc|
-            param = convert(param)
-            if @config.include?(param) and @config[param].default
-                raise Puppet::Error, "Default %s is already defined" % param
+        defs.each { |hash|
+            if hash.is_a? Array
+                tmp = hash
+                hash = {}
+                [:name, :default, :desc].zip(tmp).each { |p, v| hash[p] = v }
             end
-            unless @config.include?(param)
-                @config[param] = newelement(param, desc, value)
+            hash[:name] = symbolize(hash[:name])
+            hash[:section] = section
+            name = hash[:name]
+            if @config.include?(name)
+                raise Puppet::Error, "Parameter %s is already defined" % name
             end
-            @config[param].default = value
-            @config[param].section = section
+            @config[name] = newelement(hash)
         }
     end
 
@@ -423,26 +434,57 @@ Generated on #{Time.now}.
         return manifest
     end
 
+    # Create the necessary objects to use a section
+    def use(section)
+        section = section.intern if section.is_a? String
+        bucket = section_to_transportable(section, nil, false)
+
+        objects = bucket.to_type
+
+        trans = objects.evaluate
+        trans.evaluate
+    end
+
     def valid?(param)
-        param = convert(param)
+        param = symbolize(param)
         @config.has_key?(param)
     end
 
     # The base element type.
     class CElement
-        attr_accessor :name, :section, :default, :parent, :desc, :setbycli
+        attr_accessor :name, :section, :default, :parent, :setbycli
+        attr_reader :desc
 
         # Unset any set value.
         def clear
             @value = nil
         end
 
+        def desc=(value)
+            @desc = value.gsub(/^\s*/, '')
+        end
+
         # Create the new element.  Pretty much just sets the name.
-        def initialize(name, desc, value = nil)
-            @name = name
-            @desc = desc.gsub(/^\s*/, '')
-            if value
-                @value = value
+        def initialize(args = {})
+            args.each do |param, value|
+                method = param.to_s + "="
+                unless self.respond_to? method
+                    raise ArgumentError, "%s does not accept %s" % [self.class, param]
+                end
+
+                self.send(method, value)
+            end
+        end
+
+        def iscreated
+            @iscreated = true
+        end
+
+        def iscreated?
+            if defined? @iscreated
+                return @iscreated
+            else
+                return false
             end
         end
 
@@ -511,7 +553,7 @@ Generated on #{Time.now}.
     end
 
     # A file.
-    module CFile
+    class CFile < CElement
         attr_accessor :owner, :group, :mode
 
         def convert(value)
@@ -555,9 +597,16 @@ Generated on #{Time.now}.
         end
 
         # Convert the object to a TransObject instance.
+        # FIXME There's no dependency system in place right now; if you use
+        # a section that requires another section, there's nothing done to
+        # correct that for you, at the moment.
         def to_transportable
             type = self.type
             return nil unless type
+            path = self.value.split(File::SEPARATOR)
+            path.shift # remove the leading nil
+
+            objects = []
             obj = Puppet::TransObject.new(self.value, "file")
             obj[:ensure] = type
             [:owner, :group, :mode].each { |var|
@@ -568,7 +617,8 @@ Generated on #{Time.now}.
             if self.section
                 obj.tags = ["puppet", "configuration", self.section]
             end
-            obj
+            objects << obj
+            objects
         end
 
         # Make sure any provided variables look up to something.
@@ -584,7 +634,7 @@ Generated on #{Time.now}.
     end
 
     # A simple boolean.
-    module CBoolean
+    class CBoolean < CElement
         def munge(value)
             case value
             when true, "true": return true
