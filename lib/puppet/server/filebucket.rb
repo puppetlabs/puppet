@@ -15,6 +15,15 @@ module Puppet
 class Server
     class BucketError < RuntimeError; end
     class FileBucket < Handler
+        Puppet.config.setdefaults("filebucket",
+            :bucketdir => {
+                :default => "$vardir/bucket",
+                :mode => 0770,
+                :owner => "$user",
+                :group => "$group",
+                :desc => "Where FileBucket files are stored."
+            }
+        )
         @interface = XMLRPC::Service::Interface.new("puppetbucket") { |iface|
             iface.add_method("string addfile(string, string)")
             iface.add_method("string getfile(string)")

@@ -1,3 +1,6 @@
+require 'puppet'
+require 'puppet/transportable'
+
 module Puppet
 # The class for handling configuration files.
 class Config
@@ -460,6 +463,22 @@ Generated on #{Time.now}.
             @value = nil
         end
 
+        def convert(value)
+            return value unless value
+            return value unless value.is_a? String
+            if value =~ /\$(\w+)/
+                parent = $1
+                if pval = @parent[parent]
+                    newval = value.sub(/\$#{parent}/, pval)
+                    return File.join(newval.split("/"))
+                else
+                    raise Puppet::DevError, "Could not find value for %s" % parent
+                end
+            else
+                return value
+            end
+        end
+
         def desc=(value)
             @desc = value.gsub(/^\s*/, '')
         end
@@ -554,23 +573,7 @@ Generated on #{Time.now}.
 
     # A file.
     class CFile < CElement
-        attr_accessor :owner, :group, :mode
-
-        def convert(value)
-            return value unless value
-            return value unless value.is_a? String
-            if value =~ /\$(\w+)/
-                parent = $1
-                if pval = @parent[parent]
-                    newval = value.sub(/\$#{parent}/, pval)
-                    return File.join(newval.split("/"))
-                else
-                    raise Puppet::DevError, "Could not find value for %s" % parent
-                end
-            else
-                return value
-            end
-        end
+        attr_accessor :owner, :group, :mode, :create
 
         # Set the type appropriately.  Yep, a hack.  This supports either naming
         # the variable 'dir', or adding a slash at the end.
@@ -608,7 +611,12 @@ Generated on #{Time.now}.
 
             objects = []
             obj = Puppet::TransObject.new(self.value, "file")
-            obj[:ensure] = type
+
+            # Only create directories, or files that are specifically marked to
+            # create.
+            if type == :directory or self.create
+                obj[:ensure] = type
+            end
             [:owner, :group, :mode].each { |var|
                 if value = self.send(var)
                     obj[var] = value

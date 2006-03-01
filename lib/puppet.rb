@@ -84,9 +84,8 @@ module Puppet
     alias :error :err
 
     # Store a new default value.
-    def self.setdefaults(section, *arrays)
-        start = Time.now
-        @@config.setdefaults(section, *arrays)
+    def self.setdefaults(section, hash)
+        @@config.setdefaults(section, hash)
     end
 
     # If we're running the standalone puppet process as a non-root user,
@@ -113,21 +112,36 @@ module Puppet
     )
 
     self.setdefaults("puppet",
-        :logdir => ["$vardir/log",
-            "The Puppet log directory."],
-        :bucketdir => ["$vardir/bucket",
-            "Where FileBucket files are stored."],
-        :statedir => ["$vardir/state",
-            "The directory where Puppet state is stored.  Generally, this
-            directory can be removed without causing harm (although it might
-            result in spurious service restarts)."],
-        :rundir => ["$vardir/run", "Where Puppet PID files are kept."],
-        :lockdir => ["$vardir/locks", "Where lock files are kept."],
-        :statefile => ["$statedir/state.yaml",
-            "Where puppetd and puppetmasterd store state associated with the
-            running configuration.  In the case of puppetmasterd, this file
-            reflects the state discovered through interacting with clients."],
-        :ssldir => ["$confdir/ssl", "Where SSL certificates are kept."],
+        :logdir => ["$vardir/log", "The Puppet log directory."],
+        :statedir => { :default => "$vardir/state",
+            :mode => 01777,
+            :desc => "The directory where Puppet state is stored.  Generally,
+                this directory can be removed without causing harm (although it
+                might result in spurious service restarts)."
+        },
+        :rundir => { :default => "$vardir/run",
+            :mode => 01777,
+            :desc => "Where Puppet PID files are kept."
+        },
+        :lockdir => { :default => "$vardir/locks",
+            :mode => 01777,
+            :desc => "Where lock files are kept."
+        },
+        :statefile => { :default => "$statedir/state.yaml",
+            :mode => 0770,
+            :owner => "$user",
+            :owner => "$group",
+            :desc => "Where puppetd and puppetmasterd store state associated
+                with the running configuration.  In the case of puppetmasterd,
+                this file reflects the state discovered through interacting
+                with clients."
+            },
+        :ssldir => {
+            :default => "$confdir/ssl",
+            :mode => 0770,
+            :owner => "root",
+            :desc => "Where SSL certificates are kept."
+        },
         :genconfig => [false,
             "Whether to just print a configuration to stdout and exit.  Only makes
             sense when used interactively.  Takes into account arguments specified
@@ -138,33 +152,53 @@ module Puppet
             on the CLI."]
     )
     self.setdefaults("puppetmasterd",
+        :user => ["puppet", "The user puppetmasterd should run as."],
+        :group => ["puppet", "The group puppetmasterd should run as."],
         :manifestdir => ["$confdir/manifests",
             "Where puppetmasterd looks for its manifests."],
         :manifest => ["$manifestdir/site.pp",
             "The entry-point manifest for puppetmasterd."],
-        :masterlog => ["$logdir/puppetmaster.log",
-            "Where puppetmasterd logs.  This is generally not used, since syslog
-            is the default log destination."],
-        :masterhttplog => ["$logdir/masterhttp.log",
-            "Where the puppetmasterd web server logs."],
+        :masterlog => { :default => "$logdir/puppetmaster.log",
+            :owner => "$user",
+            :group => "$group",
+            :mode => 0660,
+            :desc => "Where puppetmasterd logs.  This is generally not used,
+                since syslog is the default log destination."
+        },
+        :masterhttplog => { :default => "$logdir/masterhttp.log",
+            :owner => "$user",
+            :group => "$group",
+            :mode => 0660,
+            :create => true,
+            :desc => "Where the puppetmasterd web server logs."
+        },
         :masterport => [8140, "Which port puppetmasterd listens on."],
         :parseonly => [false, "Just check the syntax of the manifests."]
     )
 
     self.setdefaults("puppetd",
-        :localconfig => ["$confdir/localconfig",
-            "Where puppetd caches the local configuration.  An extension
-            indicating the cache format is added automatically."],
-        :classfile => ["$confdir/classes.txt",
-            "The file in which puppetd stores a list of the classes associated
-            with the retrieved configuratiion."],
-        :puppetdlog => ["$logdir/puppetd.log",
-            "The log file for puppetd.  This is generally not used."],
-        :httplog => ["$logdir/http.log", "Where the puppetd web server logs."],
+        :localconfig => { :default => "$confdir/localconfig",
+            :owner => "root",
+            :mode => 0660,
+            :desc => "Where puppetd caches the local configuration.  An
+                extension indicating the cache format is added automatically."},
+        :classfile => { :default => "$confdir/classes.txt",
+            :owner => "root",
+            :mode => 0644,
+            :desc => "The file in which puppetd stores a list of the classes
+                associated with the retrieved configuratiion."},
+        :puppetdlog => { :default => "$logdir/puppetd.log",
+            :owner => "root",
+            :mode => 0640,
+            :desc => "The log file for puppetd.  This is generally not used."
+        },
+        :httplog => { :default => "$logdir/http.log",
+            :owner => "root",
+            :mode => 0640,
+            :desc => "Where the puppetd web server logs."
+        },
         :server => ["puppet",
             "The server to which server puppetd should connect"],
-        :user => ["puppet", "The user puppetmasterd should run as."],
-        :group => ["puppet", "The group puppetmasterd should run as."],
         :ignoreschedules => [false,
             "Boolean; whether puppetd should ignore schedules.  This is useful
             for initial puppetd runs."],
