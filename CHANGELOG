@@ -1,3 +1,10 @@
+0.13.6
+    Many, many small bug fixes
+    FreeBSD user/group support has been added
+    The configuration system has been rewritten so that daemons can now generate
+        and repair the files and directories they need. (Fixed bug #68.)
+    Fixed the element override issues; now only subclasses can override values.
+
 0.13.5
     Fixed packages so types can be specified
     Added 'enable' state to services, although it does not work everywhere yet
