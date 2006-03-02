@@ -14,7 +14,6 @@ Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
 
 Requires: ruby >= 1.8.1
 Requires: facter >= 1.1
-Requires: fedora-usermgmt
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArchitectures: noarch
 
@@ -86,9 +85,9 @@ find %{buildroot}%{rubylibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__ch
 %{_sbindir}/puppetca
 
 %pre
-/usr/sbin/fedora-groupadd 24 puppet
-/usr/sbin/fedora-useradd 24 -g puppet -c "Puppet" \
-        -s /sbin/nologin -r -d /var/puppet puppet 2> /dev/null || :
+/usr/sbin/groupadd -r puppet 2>/dev/null || :
+/usr/sbin/useradd -g puppet -c "Puppet" \
+    -s /sbin/nologin -r -d /var/puppet puppet 2> /dev/null || :
 
 %post
 touch %{_localstatedir}/log/puppet.log
@@ -121,6 +120,11 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Wed Mar  1 2006 David Lutterkort <dlutter@redhat.com> - 0.13.5-1
+- Removed use of fedora-usermgmt. It is not required for Fedora Extras and
+  makes it unnecessarily hard to use this rpm outside of Fedora. Just
+  allocate the puppet uid/gid dynamically
+
 * Sun Feb 19 2006 David Lutterkort <dlutter@redhat.com> - 0.13.0-4
 - Use fedora-usermgmt to create puppet user/group. Use uid/gid 24. Fixed 
 problem with listing fileserver.conf and puppetmaster.conf twice
