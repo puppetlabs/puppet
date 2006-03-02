@@ -90,6 +90,25 @@ class TestGroup < Test::Unit::TestCase
         Process.groups
     end
 
+    def attrtest_ensure(group)
+        old = group.is(:ensure)
+        group[:ensure] = :absent
+
+        comp = newcomp("ensuretest", group)
+        assert_apply(group)
+        assert(missing?(group.name), "User is still present")
+        group[:ensure] = :present
+        assert_events([:group_created], comp)
+        assert(!missing?(group.name), "User is absent")
+        group[:ensure] = :absent
+        trans = assert_events([:group_removed], comp)
+
+        assert_rollback_events(trans, [:group_created], "group")
+
+        group[:ensure] = old
+        assert_apply(group)
+    end
+
     def attrtest_gid(group)
         obj = nil
         #assert_nothing_raised {

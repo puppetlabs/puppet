@@ -766,6 +766,21 @@ class TestFile < Test::Unit::TestCase
 
         assert(file.state(:group), "Group state failed")
     end
+
+    def test_modecreation
+        path = tempfile()
+        file = Puppet.type(:file).create(
+            :path => path,
+            :ensure => "file",
+            :mode => "0777"
+        )
+        assert_apply(file)
+        assert_equal(0777, File.stat(path).mode & 007777)
+        File.unlink(path)
+        file[:ensure] = "directory"
+        assert_apply(file)
+        assert_equal(0777, File.stat(path).mode & 007777)
+    end
 end
 
 # $Id$

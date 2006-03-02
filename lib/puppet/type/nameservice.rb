@@ -19,22 +19,6 @@ class Type
                 end
             end
         end
-
-        # Create the object.  We have to call the 'syncname' method
-        # on one of the non-ensure states, because the ensure state is not
-        # a subclass of NSSState.  Just find the first one and call it.
-        def create
-            @states.find { |name, state|
-                state.is_a?(Puppet::State::NSSState)
-            }[1].syncname(:present)
-        end
-
-        # Remove it
-        def destroy
-            @states.find { |name, state|
-                state.is_a?(Puppet::State::NSSState)
-            }[1].syncname(:absent)
-        end
     end
 end
 
@@ -175,7 +159,7 @@ class State
             when :absent
                 # we need to remove the object...
                 unless @parent.exists?
-                    @parent.info "already absent"
+                    self.info "already absent"
                     # the object already doesn't exist
                     return nil
                 end
@@ -186,7 +170,7 @@ class State
                 type = "delete"
             when :present
                 if @parent.exists?
-                    @parent.info "already exists"
+                    self.info "already exists"
                     # The object already exists
                     return nil
                 end
@@ -207,7 +191,7 @@ class State
             # we want object creation to show up as one event, 
             # not many
             unless self.class.allatonce?
-                Puppet.debug "%s is not allatonce" % self.class.name
+                Puppet.debug "%s is not allatonce" % @parent.class.name
                 if type == "create"
                     @parent.eachstate { |state|
                         state.sync

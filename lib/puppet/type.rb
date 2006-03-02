@@ -1073,6 +1073,7 @@ class Type < Puppet::Element
     # necessary.  FIXME This method should be responsible for most of the
     # error handling.
     def self.create(hash)
+        #Puppet.warning "Creating %s" % hash.inspect
         # Handle this new object being implicit
         implicit = hash[:implicit] || false
         if hash.include?(:implicit)

@@ -28,7 +28,8 @@ module Puppet
 		}
 
         #@destinations = {:syslog => Syslog.open("puppet")}
-        @destinations = {:console => :console}
+        #@destinations = {:console => :console}
+        @destinations = {}
 
         # Reset all logs to basics.  Basically just closes all files and undefs
         # all of the other objects.

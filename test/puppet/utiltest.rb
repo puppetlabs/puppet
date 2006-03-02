@@ -143,6 +143,18 @@ class TestPuppetUtil < Test::Unit::TestCase
         assert_equal(user, uid, "Got mismatched ids")
     end
 
+    def test_withumask
+        File.umask(022)
+
+        path = tempfile()
+        Puppet::Util.withumask(000) do
+            Dir.mkdir(path, 01777)
+        end
+
+        assert(File.stat(path).mode & 007777 == 01777)
+        assert_equal(022, File.umask)
+    end
+
     unless Process.uid == 0
         $stderr.puts "Run as root to perform Utility tests"
         def test_nothing

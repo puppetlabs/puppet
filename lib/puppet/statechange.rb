@@ -131,9 +131,6 @@ module Puppet
                     [@state.is.inspect, @state.should.inspect]
                 return nil
             end
-
-            #raise "Moving statechanges backward is currently unsupported"
-            #@type.change(@path,@should,@is)
         end
         
         def noop

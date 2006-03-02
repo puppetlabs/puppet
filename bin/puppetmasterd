@@ -164,8 +164,6 @@ Puppet.genmanifest
 
 require 'etc'
 
-Puppet::Util.chuser
-
 if Puppet::Log.level == :debug or Puppet::Log.level == :info or parseonly
     args[:Daemonize] = false
 else
@@ -210,6 +208,15 @@ begin
 rescue => detail
     $stderr.puts detail
     exit(1)
+end
+
+if Process.uid == 0
+    begin
+        Puppet::Util.chuser
+    rescue => detail
+        $stderr.puts "Could not change user to %s: %s" % [Puppet[:user], detail]
+        exit(39)
+    end
 end
 
 if Puppet[:parseonly]

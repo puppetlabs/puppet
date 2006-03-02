@@ -124,8 +124,7 @@ module Puppet
         },
         :statefile => { :default => "$statedir/state.yaml",
             :mode => 0660,
-            :owner => "$user",
-            :owner => "$group",
+            :group => "$group",
             :desc => "Where puppetd and puppetmasterd store state associated
                 with the running configuration.  In the case of puppetmasterd,
                 this file reflects the state discovered through interacting

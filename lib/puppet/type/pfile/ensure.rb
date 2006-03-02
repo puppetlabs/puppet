@@ -27,7 +27,9 @@ module Puppet
                 Puppet::Util.asuser(asuser(), @parent.should(:group)) {
                     f = nil
                     if mode
-                        f = File.open(@parent[:path],"w", mode)
+                        Puppet::Util.withumask(000) do
+                            f = File.open(@parent[:path],"w", mode)
+                        end
                     else
                         f = File.open(@parent[:path],"w")
                     end
@@ -52,7 +54,9 @@ module Puppet
             end
             Puppet::Util.asuser(asuser()) {
                 if mode
-                    Dir.mkdir(@parent[:path],mode)
+                    Puppet::Util.withumask(000) do
+                        Dir.mkdir(@parent[:path],mode)
+                    end
                 else
                     Dir.mkdir(@parent[:path])
                 end

@@ -326,6 +326,7 @@ class Config
                             newobj.tag(section)
                         else
                             newobj = TransObject.new(name, type.to_s)
+                            newobj.tags = ["puppet", "configuration", section]
                             newobj[:ensure] = "present"
                             done[type][name] = newobj
                             objects << newobj
@@ -476,8 +477,11 @@ Generated on #{Time.now}.
             bucket = Puppet::TransBucket.new
             bucket.type = "puppetconfig"
             bucket.top = true
+
+            # Create a hash to keep track of what we've done so far.
+            @done = Hash.new { |hash, key| hash[key] = {} }
             runners.each do |section|
-                bucket.push section_to_transportable(section, nil, false)
+                bucket.push section_to_transportable(section, @done, false)
             end
 
             objects = bucket.to_type
@@ -486,15 +490,11 @@ Generated on #{Time.now}.
             trans = objects.evaluate
             trans.evaluate
 
-            # And then clean up.  We're now a tree of objects, so we have to
-            # use delve, instead of each.
-            #objects.delve do |object|
+            # Remove is a recursive process, so it's sufficient to just call
+            # it on the component.
             objects.remove
-            #trans.objects.each do |object|
-            #    object.remove(true)
-            #end
 
-            sections.each { |s| @used << s }
+            runners.each { |s| @used << s }
         end
     end
 

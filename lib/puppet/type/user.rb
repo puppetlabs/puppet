@@ -17,8 +17,73 @@ module Puppet
             @parentmodule = Puppet::NameService::ObjectAdd
         end
 
-        # The 'create' and 'destroy' methods are defined in type/nameservice.rb
-        self.ensurable()
+        newstate(:ensure, @parentstate) do
+            newvalue(:present) do
+                self.syncname(:present)
+            end
+
+            newvalue(:absent) do
+                self.syncname(:absent)
+            end
+
+            desc "The basic state that the object should be in."
+
+            # If they're talking about the thing at all, they generally want to
+            # say it should exist.
+            #defaultto :present
+            defaultto do
+                if @parent.managed?
+                    :present
+                else
+                    nil
+                end
+            end
+
+            def change_to_s
+                begin
+                    if @is == :absent
+                        return "created"
+                    elsif self.should == :absent
+                        return "removed"
+                    else
+                        return "%s changed '%s' to '%s'" %
+                            [self.name, self.is_to_s, self.should_to_s]
+                    end
+                rescue Puppet::Error, Puppet::DevError
+                    raise
+                rescue => detail
+                    raise Puppet::DevError,
+                        "Could not convert change %s to string: %s" %
+                        [self.name, detail]
+                end
+            end
+
+            def retrieve
+                if @parent.exists?
+                    @is = :present
+                else
+                    @is = :absent
+                end
+            end
+            # The default 'sync' method only selects among a list of registered
+            # values.
+            def sync
+                if self.insync?
+                    self.info "already in sync"
+                    return nil
+                #else
+                    #self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
+                end
+                unless self.class.values
+                    self.devfail "No values defined for %s" %
+                        self.class.name
+                end
+
+                # Set ourselves to whatever our should value is.
+                self.set
+            end
+
+        end
 
         newstate(:uid, @parentstate) do
             desc "The user ID.  Must be specified numerically.  For new users

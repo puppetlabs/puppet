@@ -125,6 +125,25 @@ class TestUser < Test::Unit::TestCase
         return user
     end
 
+    def attrtest_ensure(user)
+        old = user.is(:ensure)
+        user[:ensure] = :absent
+
+        comp = newcomp("ensuretest", user)
+        assert_apply(user)
+        assert(missing?(user.name), "User is still present")
+        user[:ensure] = :present
+        assert_events([:user_created], comp)
+        assert(!missing?(user.name), "User is absent")
+        user[:ensure] = :absent
+        trans = assert_events([:user_removed], comp)
+
+        assert_rollback_events(trans, [:user_created], "user")
+
+        user[:ensure] = old
+        assert_apply(user)
+    end
+
     def attrtest_comment(user)
         old = user.is(:comment)
         user[:comment] = "A different comment"

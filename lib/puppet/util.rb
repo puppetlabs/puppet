@@ -164,13 +164,15 @@ module Util
                 end
             end
         else
-            unless obj = Puppet.type(:group)[group]
+            if obj = Puppet.type(:group)[group]
+                obj[:check] = [:gid]
+            else
                 obj = Puppet.type(:group).create(
                     :name => group,
                     :check => [:gid]
                 )
-                obj.retrieve
             end
+            obj.retrieve
         end
         if obj
             gid = obj.should(:gid) || obj.is(:gid)
@@ -207,10 +209,10 @@ module Util
         else
             unless obj = Puppet.type(:user)[user]
                 obj = Puppet.type(:user).create(
-                    :name => user,
-                    :check => [:uid, :gid]
+                    :name => user
                 )
             end
+            obj[:check] = [:uid, :gid]
         end
 
         if obj
@@ -279,6 +281,16 @@ module Util
         when Symbol: # nothing
         else
             raise ArgumentError, "'%s' must be a string or symbol" % value
+        end
+    end
+
+    def self.withumask(mask)
+        cur = File.umask(mask)
+
+        begin
+            yield
+        ensure
+            File.umask(cur)
         end
     end
 end
