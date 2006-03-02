@@ -48,8 +48,9 @@ class Server
         end
 
         def initialize(hash = {})
+            Puppet.config.use(:puppet, :certificates, :ca)
             @autosign = hash[:autosign] || Puppet[:autosign]
-            @ca = Puppet::SSLCertificates::CA.new()
+            @ca = Puppet::SSLCertificates::CA.new(hash)
         end
 
         # our client sends us a csr, and we either store it for later signing,
@@ -81,9 +82,9 @@ class Server
             # okay, we're now going to store the public key if we don't already
             # have it
             public_key = csr.public_key
-            unless FileTest.directory?(Puppet[:publickeydir])
-                Puppet.recmkdir(Puppet[:publickeydir])
-            end
+            #unless FileTest.directory?(Puppet[:publickeydir])
+            #    Puppet.recmkdir(Puppet[:publickeydir])
+            #end
             pkeyfile = File.join(Puppet[:publickeydir], [hostname, "pem"].join('.'))
 
             if FileTest.exists?(pkeyfile)
@@ -96,17 +97,17 @@ class Server
                     f.print public_key.to_s
                 }
             end
-            unless FileTest.directory?(Puppet[:certdir])
-                Puppet.recmkdir(Puppet[:certdir], 0770)
-            end
+            #unless FileTest.directory?(Puppet[:certdir])
+            #    Puppet.recmkdir(Puppet[:certdir], 0770)
+            #end
             certfile = File.join(Puppet[:certdir], [hostname, "pem"].join("."))
 
             #puts hostname
             #puts certfile
 
-            unless FileTest.directory?(Puppet[:csrdir])
-                Puppet.recmkdir(Puppet[:csrdir], 0770)
-            end
+            #unless FileTest.directory?(Puppet[:csrdir])
+            #    Puppet.recmkdir(Puppet[:csrdir], 0770)
+            #end
             # first check to see if we already have a signed cert for the host
             cert, cacert = ca.getclientcert(hostname)
             if cert and cacert

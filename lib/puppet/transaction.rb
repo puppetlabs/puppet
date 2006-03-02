@@ -11,7 +11,7 @@ require 'puppet/statechange'
 #---------------------------------------------------------------
 module Puppet
 class Transaction
-    attr_accessor :toplevel, :component
+    attr_accessor :toplevel, :component, :objects
 
     #---------------------------------------------------------------
     # a bit of a gross hack; a global list of objects that have failed to sync,

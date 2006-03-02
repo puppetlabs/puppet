@@ -93,9 +93,8 @@ module Puppet
             if @is == :absent
                 @parent.stat(true)
                 self.retrieve
-                self.debug "%s: after refresh, is '%o'" % [self.class.name,@is]
                 if @is == :absent
-                    self.info "File does not exist; cannot set mode" %
+                    self.debug "File does not exist; cannot set mode" %
                         @parent[:path]
                     return nil
                 end

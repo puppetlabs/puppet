@@ -72,6 +72,32 @@ module Puppet
         def each
             @children.each { |child| yield child }
         end
+
+        # Do all of the polishing off, mostly doing autorequires and making
+        # dependencies.  This will get run once on the top-level component,
+        # and it will do everything necessary.
+        def finalize
+            finished = {}
+            
+            # First do all of the finish work, which mostly involves
+            self.delve do |object|
+                unless finished.has_key?(object)
+                    object.finish
+                    object.builddepends
+                    finished[object] = true
+                end
+            end
+
+            @finalized = true
+        end
+
+        def finalized?
+            if defined? @finalized
+                return @finalized
+            else
+                return false
+            end
+        end
         
         # Return a flattened array containing all of the children
         # and all child components' children, sorted in order of dependencies.
@@ -89,12 +115,7 @@ module Puppet
         # this is only called on one component over the whole system
         # this also won't work with scheduling, but eh
         def evaluate
-            # The normal client process will automatically finalize things, but
-            # this simplifies a lot of test code -- as long as we use a
-            # compontent, we get finalized.
-            unless Puppet::Type.finalized?
-                Puppet::Type.finalize
-            end
+            self.finalize unless self.finalized?
             transaction = Puppet::Transaction.new(self.flatten)
             transaction.component = self
             return transaction

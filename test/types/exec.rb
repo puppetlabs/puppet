@@ -251,7 +251,8 @@ class TestExec < Test::Unit::TestCase
             :path => ENV["PATH"]
         )
 
-        Puppet::Type.finalize
+        comp = newcomp(ofile, exec, cat, file, baseobj)
+        comp.finalize
 
         # Verify we get the script itself
         assert(exec.requires?(file), "Exec did not autorequire %s" % file)
@@ -424,9 +425,8 @@ class TestExec < Test::Unit::TestCase
             )
         }
 
-        Puppet::Type.finalize
-
         comp = newcomp(file, exec)
+        comp.finalize
         assert_events([:executed_command, :file_changed], comp)
 
         assert(FileTest.exists?(path), "Exec ran first")

@@ -26,8 +26,8 @@ class TestRelationships < Test::Unit::TestCase
             file1[:require] = [file2.class.name, file2.name]
         }
 
-        Puppet::Type.finalize
-
+        comp = newcomp(file1, file2)
+        comp.finalize
         deps = []
         assert_nothing_raised {
             file1.eachdependency { |obj|
@@ -109,6 +109,34 @@ class TestRelationships < Test::Unit::TestCase
         assert(! sub.match?(:file_created), "Invalid match")
         assert(! sub.match?(:ALL_EVENTS), "ALL_EVENTS matched")
         assert(! sub.match?(:NONE), "matched :NONE")
+    end
+
+    def test_deletingsubs
+        file1 = newfile()
+        file2 = newfile()
+
+        file1[:subscribe] = [:file, file2.name]
+
+        comp = newcomp(file1, file2)
+        comp.finalize
+
+        assert(file1.requires?(file2))
+
+        assert_nothing_raised {
+            file1.unsubscribe(file2)
+        }
+        assert(!file1.requires?(file2))
+
+        # Now readd it, so we can use 'remove'
+        file1[:subscribe] = [:file, file2.name]
+        comp.finalize
+
+        assert_nothing_raised {
+            file1.remove
+        }
+
+        assert(!comp.include?(file1))
+        assert(!file2.subscribesto?(file1))
     end
 end
 

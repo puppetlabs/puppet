@@ -66,11 +66,12 @@ class Puppet::Client::MasterClient < Puppet::Client
 
     # Cache the config
     def cache(text)
+        Puppet.config.use(:puppet, :sslcertificates, :puppetd)
         Puppet.info "Caching configuration at %s" % self.cachefile
         confdir = File.dirname(Puppet[:localconfig])
-        unless FileTest.exists?(confdir)
-            Puppet.recmkdir(confdir, 0770)
-        end
+        #unless FileTest.exists?(confdir)
+        #    Puppet.recmkdir(confdir, 0770)
+        #end
         File.open(self.cachefile + ".tmp", "w", 0660) { |f|
             f.print text
         }
@@ -87,9 +88,10 @@ class Puppet::Client::MasterClient < Puppet::Client
     # Disable running the configuration.
     def disable
         Puppet.notice "Disabling puppetd"
-        unless FileTest.exists? File.dirname(Puppet[:puppetdlockfile])
-            Puppet.recmkdir(File.dirname(Puppet[:puppetdlockfile]))
-        end
+        Puppet.config.use(:puppet)
+        #unless FileTest.exists? File.dirname(Puppet[:puppetdlockfile])
+        #    Puppet.recmkdir(File.dirname(Puppet[:puppetdlockfile]))
+        #end
         begin
             File.open(Puppet[:puppetdlockfile], "w") { |f| f.puts ""; f.flush }
         rescue => detail
@@ -237,7 +239,7 @@ class Puppet::Client::MasterClient < Puppet::Client
         #@objects = objects
 
         # and perform any necessary final actions before we evaluate.
-        Puppet::Type.finalize
+        @objects.finalize
 
         return @objects
     end

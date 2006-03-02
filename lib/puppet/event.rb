@@ -123,7 +123,13 @@ module Puppet
                 type, name = self.split(source)
                 return @subscriptions[type][name].collect { |sub|
                     sub.target
+                }.reject { |o|
+                    o.nil?
                 }
+            end
+
+            def delete
+                self.class.delete(self)
             end
 
             # The hash here must include the target and source objects, the event,
@@ -161,8 +167,9 @@ module Puppet
                 if source = self.class.retrieve(@source)
                     return source
                 else
-                    raise Puppet::Error, "Could not retreive dependency %s[%s]" %
-                        @source
+                    raise Puppet::Error,
+                        "Could not retreive dependency %s[%s] for %s[%s]" %
+                        [@source[0], @source[1], @target[0], @target[1]]
                 end
             end
 

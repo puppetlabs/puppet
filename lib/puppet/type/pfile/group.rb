@@ -21,11 +21,20 @@ module Puppet
 
         # We want to print names, not numbers
         def is_to_s
-            id2name(@is) || @is
+            if @is.is_a? Integer
+                id2name(@is) || @is
+            else
+                return @is.to_s
+            end
         end
 
         def should_to_s
-            id2name(self.should) || self.should
+            should = self.should
+            if should.is_a? Integer
+                id2name(should) || should
+            else
+                return should.to_s
+            end
         end
 
         def retrieve
@@ -38,60 +47,28 @@ module Puppet
             end
         end
 
+        # Determine if the group is valid, and if so, return the UID
+        def validgroup?(value)
+            if value =~ /^\d+$/
+                value = value.to_i
+            end
+
+            if value = Puppet::Util.gid(value)
+                return value
+            else
+                return false
+            end
+        end
+
         munge do |value|
             method = nil
             gid = nil
             gname = nil
 
-            if value.is_a?(Integer)
-                method = :getgrgid
+            if val = validgroup?(value)
+                return val
             else
-                method = :getgrnam
-            end
-
-            begin
-                group = Etc.send(method,value)
-
-                # at one time, os x was putting the gid into the passwd
-                # field of the group struct, but that appears to not
-                # be the case any more
-                #os = Puppet::Fact["Operatingsystem"]
-                #case os
-                #when "Darwin":
-                #    #gid = group.passwd
-                #    gid = group.gid
-                #else
-                #end
-
-                gid = group.gid
-                gname = group.name
-
-            rescue ArgumentError => detail
-                raise Puppet::Error.new(
-                    "Could not find group %s" % value)
-            rescue => detail
-                raise Puppet::Error.new(
-                    "Could not find group %s: %s" % [self.should,detail])
-            end
-            if gid.nil?
-                raise Puppet::Error.new(
-                    "Could not retrieve gid for %s" % @parent.name)
-            end
-
-            #unless Process.uid == 0
-            #    groups = %x{groups}.chomp.split(/\s/)
-            #    unless groups.include?(gname)
-            #        self.notice "Cannot chgrp: not in group %s" % gname
-            #        raise Puppet::Error.new(
-            #            "Cannot chgrp: not in group %s" % gname)
-            #    end
-            #end
-
-            if gid.nil?
-                raise Puppet::Error.new(
-                    "Nil gid for %s" % @parent.name)
-            else
-                return gid
+                return value
             end
         end
 
@@ -114,9 +91,14 @@ module Puppet
                 end
             end
 
+            gid = nil
+            unless gid = Puppet::Util.gid(self.should)
+                raise Puppet::Error, "Could not find group %s" % self.should
+            end
+
             begin
                 # set owner to nil so it's ignored
-                File.chown(nil,self.should,@parent[:path])
+                File.chown(nil,gid,@parent[:path])
             rescue => detail
                 error = Puppet::Error.new( "failed to chgrp %s to %s: %s" %
                     [@parent[:path], self.should, detail.message])

@@ -9,36 +9,16 @@ rescue LoadError
 end
 
 module Puppet::SSLCertificates
-#    def self.mkdir(dir)
-#        # this is all a bunch of stupid hackery
-#        unless FileTest.exists?(dir)
-#            comp = Puppet.type(:component).create(
-#                :name => "certdir creation"
-#            )
-#            path = ['']
-#
-#            dir.split(File::SEPARATOR).each { |d|
-#                path << d
-#                if FileTest.exists?(File.join(path))
-#                    unless FileTest.directory?(File.join(path))
-#                        raise "%s exists but is not a directory" % File.join(path)
-#                    end
-#                else
-#                    obj = Puppet::Type.type(:file).create(
-#                        :name => File.join(path),
-#                        :mode => "750",
-#                        :ensure => "directory"
-#                    )
-#
-#                    comp.push obj
-#                end
-#            }
-#            trans = comp.evaluate
-#            trans.evaluate
-#        end
-#
-#        Puppet::Type.allclear
-#    end
+    Puppet.setdefaults("certificates",
+        :certdir => ["$ssldir/certs", "The certificate directory."],
+        :publickeydir => ["$ssldir/public_keys", "The public key directory."],
+        :privatekeydir => ["$ssldir/private_keys", "The private key directory."],
+        :privatedir => ["$ssldir/private",
+            "Where the client stores private certificate information."],
+        :passfile => ["$privatedir/password",
+            "Where puppetd stores the password for its private key.  Generally
+            unused."]
+    )
 
     #def self.mkcert(type, name, days, issuercert, issuername, serial, publickey)
     def self.mkcert(hash)

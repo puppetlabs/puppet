@@ -145,6 +145,13 @@ class TestConfig < Test::Unit::TestCase
         }
 
         assert_equal(val, c[:strtest])
+
+        # Verify that variables are interpolated
+        assert_nothing_raised {
+            c.setdefaults(:testing, :another => ["another $strtest", "testing"])
+        }
+
+        assert_equal("another #{val}", c[:another])
     end
 
     def test_files
@@ -219,7 +226,8 @@ yay = /a/path
             c.setdefaults("puppet",
                 :one => ["a", "one"],
                 :two => ["a", "two"],
-                :yay => ["/default/path", "boo"]
+                :yay => ["/default/path", "boo"],
+                :mkusers => [true, "uh, yeah"]
             )
         }
 
@@ -344,10 +352,16 @@ yay = /a/path
         dir = tempfile()
         file = "$mydir/myfile"
         realfile = File.join(dir, "myfile")
+        otherfile = File.join(dir, "otherfile")
         section = "testing"
         assert_nothing_raised {
             c.setdefaults(section,
                 :mydir => [dir, "A dir arg"],
+                :otherfile => {
+                    :default => "$mydir/otherfile",
+                    :create => true,
+                    :desc => "A file arg"
+                },
                 :myfile => [file, "A file arg"]
             )
         }
@@ -356,7 +370,12 @@ yay = /a/path
             c.use(section)
         }
 
+        assert_nothing_raised("Could not reuse a section") {
+            c.use(section)
+        }
+
         assert(FileTest.directory?(dir), "Did not create directory")
+        assert(FileTest.exists?(otherfile), "Did not create file")
         assert(!FileTest.exists?(realfile), "Created file")
     end
 
@@ -386,6 +405,78 @@ yay = /a/path
 
         assert_equal(false, c[:a], "Values are not equal")
         assert_equal("/my/file", c[:b], "Values are not equal")
+    end
+
+    def test_reuse
+        c = mkconfig
+
+        file = tempfile()
+        section = "testing"
+        assert_nothing_raised {
+            c.setdefaults(section,
+                :myfile => {:default => file, :create => true}
+            )
+        }
+
+        assert_nothing_raised("Could not use a section") {
+            c.use(section)
+        }
+
+        assert(FileTest.exists?(file), "Did not create file")
+
+        assert(! Puppet::Type.type(:file)[file], "File obj still exists")
+
+        File.unlink(file)
+
+        c.reuse
+        assert(FileTest.exists?(file), "Did not create file")
+    end
+
+    def test_mkusers
+        c = mkconfig
+
+        file = tempfile()
+        section = "testing"
+        assert_nothing_raised {
+            c.setdefaults(section,
+                :mkusers => [false, "yay"],
+                :myfile => {
+                    :default => file,
+                    :owner => "pptest",
+                    :group => "pptest",
+                    :create => true
+                }
+            )
+        }
+
+        comp = nil
+        assert_nothing_raised {
+            comp = c.to_component
+        }
+
+        [:user, :group].each do |type|
+            # The objects might get created internally by Puppet::Util; just
+            # make sure they're not being managed
+            if obj = Puppet.type(type)["pptest"]
+                assert(! obj.managed?, "%s objectis managed" % type)
+            end
+        end
+        comp.each { |o| o.remove }
+
+        c[:mkusers] = true
+
+        assert_nothing_raised {
+            c.to_component
+        }
+
+        assert(Puppet.type(:user)["pptest"], "User object did not get created")
+        assert(Puppet.type(:user)["pptest"].managed?,
+            "User object is not managed."
+        )
+        assert(Puppet.type(:group)["pptest"], "Group object did not get created")
+        assert(Puppet.type(:group)["pptest"].managed?,
+            "Group object is not managed."
+        )
     end
 end
 

@@ -83,9 +83,12 @@ class TestClient < Test::Unit::TestCase
         }
 
         # create a ca so we can create a set of certs
+        # make a new ssldir for it
         ca = nil
         assert_nothing_raised {
-            ca = Puppet::Client::CAClient.new(:CA => true, :Local => true)
+            ca = Puppet::Client::CAClient.new(
+                :CA => true, :Local => true
+            )
             ca.requestcert
         }
 
@@ -107,9 +110,24 @@ class TestClient < Test::Unit::TestCase
         }
 
         # clean up the existing certs, so the server creates a new CA
-        system("rm -rf %s" % Puppet[:ssldir])
+        #system("rm -rf %s" % Puppet[:ssldir])
+        confdir = tempfile()
+        Puppet[:confdir] = confdir
 
-        # start our server
+        # Now we need to recreate the directory structure
+        [:certificates, :ca].each { |section|
+            Puppet.config.params(section).each { |param|
+                val = Puppet[param]
+                if val =~ /^#{File::SEPARATOR}/
+                    if param.to_s =~ /dir/
+                        Puppet::Util.recmkdir(val)
+                    else
+                        Puppet::Util.recmkdir(File.dirname(val))
+                    end
+                end
+            }
+        }
+
         mkserver
 
         # now verify that our client cannot do non-cert operations

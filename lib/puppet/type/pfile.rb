@@ -96,12 +96,17 @@ module Puppet
 
         autorequire(:file) do
             cur = []
-            # Skip the nil in the beginning and don't add ourselves as a prereq
-            # either.
-            self[:path].split(File::SEPARATOR)[1..-2].collect { |dir|
-                cur << dir
-                "/" + cur.join(File::SEPARATOR)
-            }
+            pary = self[:path].split(File::SEPARATOR)
+            pary.shift # remove the initial nil
+            pary.pop   # remove us
+
+            pary.inject([""]) do |ary, dir|
+                ary << dir
+                cur << ary.join(File::SEPARATOR)
+                ary
+            end
+
+            cur
         end
 
         validate do

@@ -89,7 +89,7 @@ class TestComponent < Test::Unit::TestCase
             comp.push obj
         }
 
-        Puppet::Type.finalize
+        comp.finalize
         comp
     end
 
@@ -159,11 +159,8 @@ class TestComponent < Test::Unit::TestCase
             )
         }
 
-        Puppet::Type.finalize
-        comp = Puppet.type(:component).create(:name => "RefreshTest")
-        [cmd, file].each { |obj|
-            comp.push obj
-        }
+        comp = newcomp(cmd, file)
+        comp.finalize
         objects = nil
         assert_nothing_raised {
             objects = comp.flatten
@@ -204,7 +201,7 @@ class TestComponent < Test::Unit::TestCase
         ecomp[:subscribe] = [[fcomp.class.name,fcomp.name]]
 
         comp = newcomp("bflatten", ecomp, fcomp)
-        Puppet::Type.finalize
+        comp.finalize
         objects = nil
         assert_nothing_raised {
             objects = comp.flatten
@@ -257,7 +254,7 @@ class TestComponent < Test::Unit::TestCase
         ocmd[:subscribe] = [[cmd.class.name,cmd.name]]
 
         comp = newcomp("bflatten", ocomp, ecomp, fcomp)
-        Puppet::Type.finalize
+        comp.finalize
         objects = nil
         assert_nothing_raised {
             objects = comp.flatten
@@ -272,5 +269,30 @@ class TestComponent < Test::Unit::TestCase
         assert(objects[0] == file, "File was not first object")
         assert(objects[1] == cmd, "Exec was not second object")
         assert(objects[2] == ocmd, "Other exec was not second object")
+    end
+
+    def test_moreordering
+        dir = tempfile()
+
+        comp = Puppet.type(:component).create(
+            :name => "ordertesting"
+        )
+
+        10.times { |i|
+            fileobj = Puppet.type(:file).create(
+                :path => File.join(dir, "file%s" % i),
+                :ensure => "file"
+            )
+            comp.push(fileobj)
+        }
+
+        dirobj = Puppet.type(:file).create(
+            :path => dir,
+            :ensure => "directory"
+        )
+
+        comp.push(dirobj)
+
+        assert_apply(comp)
     end
 end

@@ -384,8 +384,8 @@ class TestUser < Test::Unit::TestCase
             group = Puppet.type(:group).create(
                 :name => "pptestg"
             )
-            Puppet::Type.finalize
             comp = newcomp(user, group)
+            comp.finalize
             comp.retrieve
 
             assert(user.requires?(group), "User did not require group")

@@ -179,8 +179,10 @@ class TestType < Test::Unit::TestCase
             )
         }
 
+        comp = newcomp(twoobj, oneobj)
+
         assert_nothing_raised {
-            Puppet::Type.finalize
+            comp.finalize
         }
 
 

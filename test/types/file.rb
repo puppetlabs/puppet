@@ -606,11 +606,11 @@ class TestFile < Test::Unit::TestCase
             :name => subfile,
             :ensure => "file"
         )
+        comp = newcomp(baseobj, subobj)
+        comp.finalize
 
-        Puppet::Type.finalize
         assert(subobj.requires?(baseobj), "File did not require basedir")
         assert(!subobj.requires?(subobj), "File required itself")
-        comp = newcomp(subobj, baseobj)
         assert_events([:directory_created, :file_created], comp)
     end
 
@@ -668,7 +668,7 @@ class TestFile < Test::Unit::TestCase
         }
 
         comp = newcomp("yay", file)
-        Puppet::Type.finalize
+        comp.finalize
         assert_apply(comp)
         #assert_events([:directory_created], comp)
 
@@ -752,6 +752,19 @@ class TestFile < Test::Unit::TestCase
         assert_apply(file)
 
         assert(FileTest.exists?(path))
+    end
+
+    # Make sure that a missing group isn't fatal at object instantiation time.
+    def test_missinggroup
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :path => tempfile(),
+                :group => "fakegroup"
+            )
+        }
+
+        assert(file.state(:group), "Group state failed")
     end
 end
 

@@ -95,7 +95,7 @@ class TestPuppetDefaults < Test::Unit::TestCase
 
         testvals.each { |param, default|
             assert_nothing_raised {
-                Puppet.setdefaults("testing", [param, default, "a value"])
+                Puppet.setdefaults("testing", param => [default, "a value"])
             }
         }
     end

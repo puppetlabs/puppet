@@ -44,6 +44,12 @@ module Puppet
 
         newvalue(:directory) do
             mode = @parent.should(:mode)
+            parent = File.dirname(@parent[:path])
+            unless FileTest.exists? parent
+                raise Puppet::Error,
+                    "Cannot create %s; parent directory %s does not exist" %
+                        [@parent[:path], parent]
+            end
             Puppet::Util.asuser(asuser()) {
                 if mode
                     Dir.mkdir(@parent[:path],mode)

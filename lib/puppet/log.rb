@@ -123,6 +123,8 @@ module Puppet
             when /^\// # files
                 Puppet.info "opening %s as a log" % dest
                 # first make sure the directory exists
+                # We can't just use 'Config.use' here, because they've
+                # specified a "special" destination.
                 unless FileTest.exist?(File.dirname(dest))
                     begin
                         Puppet.recmkdir(File.dirname(dest))

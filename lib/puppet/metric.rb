@@ -132,25 +132,7 @@ module Puppet
 
 
         def create
-            dir = Puppet[:rrddir]
-            unless dir
-                raise "Cannot store metrics unless RRDDir is set"
-            end
-
-            unless FileTest.exist?(dir)
-                tmp = dir.sub(/^\//,'')
-                path = [File::SEPARATOR]
-                tmp.split(File::SEPARATOR).each { |d|
-                    path.push d
-                    unless FileTest.exist?(File.join(path))
-                        Dir.mkdir(File.join(path))
-                    end
-                }
-            end
-
-            unless FileTest.directory?(dir)
-                raise Puppet::Error.new("%s must be a directory" % dir)
-            end
+            Puppet.config.use(:metrics)
 
             path = self.path
             args = [

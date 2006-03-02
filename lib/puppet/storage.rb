@@ -29,7 +29,6 @@ module Puppet
         end
 
         def self.init
-            Puppet.debug "Initializing Storage"
             @@state = {}
             @@splitchar = "\t"
         end
@@ -78,17 +77,18 @@ module Puppet
         end
 
         def self.store
+            Puppet.config.use(:puppet)
             Puppet.debug "Storing state"
-            unless FileTest.directory?(File.dirname(Puppet[:statefile]))
-                begin
-                    Puppet.recmkdir(File.dirname(Puppet[:statefile]))
-                    Puppet.info "Creating state directory %s" %
-                        File.dirname(Puppet[:statefile])
-                rescue => detail
-                    Puppet.err "Could not create state file: %s" % detail
-                    return
-                end
-            end
+#            unless FileTest.directory?(File.dirname(Puppet[:statefile]))
+#                begin
+#                    Puppet.recmkdir(File.dirname(Puppet[:statefile]))
+#                    Puppet.info "Creating state directory %s" %
+#                        File.dirname(Puppet[:statefile])
+#                rescue => detail
+#                    Puppet.err "Could not create state file: %s" % detail
+#                    return
+#                end
+#            end
 
             unless FileTest.exist?(Puppet[:statefile])
                 Puppet.info "Creating state file %s" % Puppet[:statefile]

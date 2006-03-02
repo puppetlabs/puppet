@@ -201,7 +201,7 @@ class TestTransactions < Test::Unit::TestCase
         assert(FileTest.exists?(execfile), "Execfile does not exist")
     end
 
-    def test_zrefreshAcrossTwoComponents
+    def test_refreshAcrossTwoComponents
         transaction = nil
         file = newfile()
         execfile = File.join(tmpdir(), "exectestingness2")

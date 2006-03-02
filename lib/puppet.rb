@@ -59,7 +59,11 @@ module Puppet
     class DevError < Error; end
 
     def self.name
-        $0.gsub(/.+#{File::SEPARATOR}/,'')
+        unless defined? @name
+            @name = $0.gsub(/.+#{File::SEPARATOR}/,'').sub(/\.rb$/, '')
+        end
+
+        return @name
     end
 
     # the hash that determines how our system behaves
@@ -100,18 +104,9 @@ module Puppet
         conf = "/etc/puppet"
         var = "/var/puppet"
     end
-    self.setdefaults("puppet",
+    self.setdefaults(:puppet,
         :confdir => [conf, "The main Puppet configuration directory."],
-        :vardir => [var, "Where Puppet stores dynamic and growing data."]
-    )
-
-    # Define the config default.
-    self.setdefaults(self.name,
-        :config => ["$confdir/#{self.name}.conf",
-            "The configuration file for #{self.name}."]
-    )
-
-    self.setdefaults("puppet",
+        :vardir => [var, "Where Puppet stores dynamic and growing data."],
         :logdir => ["$vardir/log", "The Puppet log directory."],
         :statedir => { :default => "$vardir/state",
             :mode => 01777,
@@ -128,7 +123,7 @@ module Puppet
             :desc => "Where lock files are kept."
         },
         :statefile => { :default => "$statedir/state.yaml",
-            :mode => 0770,
+            :mode => 0660,
             :owner => "$user",
             :owner => "$group",
             :desc => "Where puppetd and puppetmasterd store state associated
@@ -149,8 +144,18 @@ module Puppet
         :genmanifest => [false,
             "Whether to just print a manifest to stdout and exit.  Only makes
             sense when used interactively.  Takes into account arguments specified
-            on the CLI."]
+            on the CLI."],
+        :mkusers => [false,
+            "Whether to create the necessary user and group that puppetd will
+            run as."]
     )
+
+    # Define the config default.
+    self.setdefaults(self.name,
+        :config => ["$confdir/#{self.name}.conf",
+            "The configuration file for #{self.name}."]
+    )
+
     self.setdefaults("puppetmasterd",
         :user => ["puppet", "The user puppetmasterd should run as."],
         :group => ["puppet", "The group puppetmasterd should run as."],

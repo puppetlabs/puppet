@@ -1,10 +1,14 @@
 require 'puppet'
+require 'sync'
 require 'puppet/transportable'
 
 module Puppet
 # The class for handling configuration files.
 class Config
     include Enumerable
+
+    @@sync = Sync.new
+
 
     # Retrieve a config value
     def [](param)
@@ -88,6 +92,7 @@ class Config
         @config.each { |name, obj|
             obj.clear
         }
+        @used = []
     end
 
     def symbolize(param)
@@ -165,6 +170,8 @@ class Config
     def initialize
         @order = []
         @config = {}
+
+        @created = []
     end
 
     # Return all of the parameters associated with a given section.
@@ -296,43 +303,47 @@ class Config
         done ||= Hash.new { |hash, key| hash[key] = {} }
         objects = []
         persection(section) { |obj|
-            [:owner, :group].each { |attr|
-                type = nil
-                if attr == :owner
-                    type = :user
-                else
-                    type = attr
-                end
-                if obj.respond_to? attr and name = obj.send(attr)
-                    # Skip owners and groups we've already done, but tag them with
-                    # our section if necessary
-                    if done[type].include?(name)
-                        tags = done[type][name].tags
-                        unless tags.include?(section)
-                            done[type][name].tags = tags << section
-                        end
-                    elsif newobj = Puppet::Type.type(type)[name]
-                        newobj.tag(section)
+            if @config[:mkusers] and @config[:mkusers].value
+                [:owner, :group].each { |attr|
+                    type = nil
+                    if attr == :owner
+                        type = :user
                     else
-                        newobj = TransObject.new(name, type.to_s)
-                        newobj[:ensure] = "present"
-                        done[type][name] = newobj
-                        objects << newobj
+                        type = attr
                     end
-                end
-            }
+                    if obj.respond_to? attr and name = obj.send(attr)
+                        # Skip owners and groups we've already done, but tag them with
+                        # our section if necessary
+                        if done[type].include?(name)
+                            tags = done[type][name].tags
+                            unless tags.include?(section)
+                                done[type][name].tags = tags << section
+                            end
+                        elsif newobj = Puppet::Type.type(type)[name]
+                            unless newobj.state(:ensure)
+                                newobj[:ensure] = "present"
+                            end
+                            newobj.tag(section)
+                        else
+                            newobj = TransObject.new(name, type.to_s)
+                            newobj[:ensure] = "present"
+                            done[type][name] = newobj
+                            objects << newobj
+                        end
+                    end
+                }
+            end
 
             if obj.respond_to? :to_transportable
                 transobjects = obj.to_transportable
                 transobjects = [transobjects] unless transobjects.is_a? Array
                 transobjects.each do |trans|
+                    # transportable could return nil
                     next unless trans
                     unless done[:file].include? trans.name
-                        # transportable could return nil
-                        unless !includefiles and trans[:ensure] == :file
-                            objects << trans
-                        end
-                        done[:file][obj.name] = obj
+                        @created << trans.name
+                        objects << trans
+                        done[:file][trans.name] = trans
                     end
                 end
             end
@@ -437,15 +448,54 @@ Generated on #{Time.now}.
         return manifest
     end
 
-    # Create the necessary objects to use a section
-    def use(section)
-        section = section.intern if section.is_a? String
-        bucket = section_to_transportable(section, nil, false)
+    def reuse
+        return unless defined? @used
+        @@sync.synchronize do # yay, thread-safe
+            @used.each do |section|
+                @used.delete(section)
+                self.use(section)
+            end
+        end
+    end
 
-        objects = bucket.to_type
+    # Create the necessary objects to use a section.  This is idempotent;
+    # you can 'use' a section as many times as you want.
+    def use(*sections)
+        @@sync.synchronize do # yay, thread-safe
+            unless defined? @used
+                @used = []
+            end
 
-        trans = objects.evaluate
-        trans.evaluate
+            runners = sections.collect { |s|
+                symbolize(s)
+            }.find_all { |s|
+                ! @used.include? s
+            }
+            return if runners.empty?
+
+            bucket = Puppet::TransBucket.new
+            bucket.type = "puppetconfig"
+            bucket.top = true
+            runners.each do |section|
+                bucket.push section_to_transportable(section, nil, false)
+            end
+
+            objects = bucket.to_type
+
+            objects.finalize
+            trans = objects.evaluate
+            trans.evaluate
+
+            # And then clean up.  We're now a tree of objects, so we have to
+            # use delve, instead of each.
+            #objects.delve do |object|
+            objects.remove
+            #trans.objects.each do |object|
+            #    object.remove(true)
+            #end
+
+            sections.each { |s| @used << s }
+        end
     end
 
     def valid?(param)
@@ -551,7 +601,7 @@ Generated on #{Time.now}.
                 return nil
             end
 
-            if respond_to?(:convert)
+            if retval.is_a? String
                 return convert(retval)
             else
                 return retval
@@ -573,7 +623,24 @@ Generated on #{Time.now}.
 
     # A file.
     class CFile < CElement
-        attr_accessor :owner, :group, :mode, :create
+        attr_writer :owner, :group
+        attr_accessor :mode, :create
+
+        def group
+            if defined? @group
+                return convert(@group)
+            else
+                return nil
+            end
+        end
+
+        def owner
+            if defined? @owner
+                return convert(@owner)
+            else
+                return nil
+            end
+        end
 
         # Set the type appropriately.  Yep, a hack.  This supports either naming
         # the variable 'dir', or adding a slash at the end.
@@ -617,11 +684,15 @@ Generated on #{Time.now}.
             if type == :directory or self.create
                 obj[:ensure] = type
             end
-            [:owner, :group, :mode].each { |var|
+            [:group, :mode].each { |var|
                 if value = self.send(var)
                     obj[var] = value
                 end
             }
+
+            if Process.uid == 0 and value = self.send(:owner)
+                obj[:owner] = value
+            end
             if self.section
                 obj.tags = ["puppet", "configuration", self.section]
             end

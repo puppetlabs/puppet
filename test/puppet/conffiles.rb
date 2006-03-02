@@ -79,7 +79,7 @@ class TestConfFiles < Test::Unit::TestCase
             config = Puppet::Config.new
             data.each { |section, hash|
                 hash.each { |param, value|
-                    config.setdefaults(section, [param, value, value])
+                    config.setdefaults(section, param => [value, value])
                 }
             }
             # Write it out as a config file

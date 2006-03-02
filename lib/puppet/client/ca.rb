@@ -7,7 +7,11 @@ class Puppet::Client::CAClient < Puppet::Client::ProxyClient
 
     def initialize(hash = {})
         if hash.include?(:CA)
-            hash[:CA] = Puppet::Server::CA.new()
+            if hash[:CA].is_a? Hash
+                hash[:CA] = Puppet::Server::CA.new(hash[:CA])
+            else
+                hash[:CA] = Puppet::Server::CA.new()
+            end
         end
 
         super(hash)

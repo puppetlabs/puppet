@@ -289,7 +289,6 @@ class Type < Puppet::Element
         @types.each { |name, type|
             type.clear
         }
-        @finalized = false
     end
 
     # remove all of the instances of a single type
@@ -319,32 +318,6 @@ class Type < Puppet::Element
         @objects.each { |name,instance|
             yield instance
         }
-    end
-
-    # Perform any operations that need to be done between instance creation
-    # and instance evaluation.
-    def self.finalize
-        finished = {}
-        self.eachtype do |type|
-            type.each do |object|
-                unless finished.has_key?(object)
-                    object.finish
-                    finished[object] = true
-                end
-            end
-        end
-        self.mkdepends
-
-        @finalized = true
-    end
-
-    # Has the finalize method been called yet?
-    def self.finalized?
-        if defined? @finalized
-            return @finalized
-        else
-            return false
-        end
     end
 
     # does the type have an object with the given name?
@@ -834,6 +807,16 @@ class Type < Puppet::Element
         end
     end
 
+    # Recurse deeply through the tree, but only yield types, not states.
+    def delve(&block)
+        self.each do |obj|
+            if obj.is_a? Puppet::Type
+                obj.delve(&block)
+            end
+        end
+        block.call(self)
+    end
+
     # iterate across the existing states
     def eachstate
         # states() is a private method
@@ -1023,8 +1006,16 @@ class Type < Puppet::Element
 
         if rmdeps
             Puppet::Event::Subscription.dependencies(self).each { |dep|
+                #begin
+                #    self.unsubscribe(dep)
+                #rescue
+                #    # ignore failed unsubscribes
+                #end
+                dep.delete
+            }
+            Puppet::Event::Subscription.subscribers(self).each { |dep|
                 begin
-                    self.unsubscribe(dep)
+                    dep.unsubscribe(self)
                 rescue
                     # ignore failed unsubscribes
                 end
@@ -1198,10 +1189,13 @@ class Type < Puppet::Element
         unless hash.include?(:implicit)
             hash[:implicit] = true
         end
-        obj = self.create(hash)
-        obj.implicit = true
+        if obj = self.create(hash)
+            obj.implicit = true
 
-        return obj
+            return obj
+        else
+            return nil
+        end
     end
 
     # Is this type's name isomorphic with the object?  That is, if the
@@ -1223,6 +1217,7 @@ class Type < Puppet::Element
     def initvars
         @children = []
         @evalcount = 0
+        @tags = []
 
         # callbacks are per object and event
         @callbacks = Hash.new { |chash, key|
@@ -1387,7 +1382,6 @@ class Type < Puppet::Element
                         next
                     end
                 end
-
                 # Skip autorequires that we already require
                 next if self.requires?(obj)
                 #self.info "Auto-requiring %s %s" % [obj.class.name, obj.name]
@@ -1442,20 +1436,6 @@ class Type < Puppet::Element
         else
             self.fail "Could not find schedule %s" % self[:schedule]
         end
-#        if self[:schedule]
-#        elsif Puppet[:schedule] and ! Puppet[:ignoreschedules]
-#            # We handle schedule defaults here mostly because otherwise things
-#            # will behave very very erratically during testing.
-#            if sched = Puppet.type(:schedule)[Puppet[:schedule]]
-#                self[:schedule] = sched
-#            else
-#                self.fail "Could not find default schedule %s" % Puppet[:schedule]
-#            end
-#        else
-#            # While it's unlikely we won't have any schedule (since there's a
-#            # default), it's at least possible during testing
-#            return true
-#        end
     end
 
     # Check whether we are scheduled to run right now or not.
@@ -1469,6 +1449,10 @@ class Type < Puppet::Element
         # once a month on the server and its schedule is daily; the last sync time
         # will have been a month ago, so we'd end up checking every run).
         return schedule.match?(self.cached(:checked).to_i)
+    end
+
+    def tag(tag)
+        @tags << tag
     end
 
     # Is the specified parameter set?
@@ -1789,28 +1773,6 @@ class Type < Puppet::Element
     #    @callbacks[object][event] = method
     #end
 
-    # Build all of the dependencies for all of the different types.  This is called
-    # after all of the objects are instantiated, so that we don't depend on
-    # file order.  If we didn't use this (and instead just checked dependencies
-    # as we came across them), any required object would have to come before the
-    # requiring object in the file(s).
-    def self.mkdepends
-        @types.each { |name, type|
-            type.each { |obj|
-                obj.builddepends
-            }
-        }
-    end
-
-    # The per-type version of dependency building.  This actually goes through
-    # all of the objects themselves and builds deps.
-    def self.builddepends
-        return unless defined? @objects
-        @objects.each { |name, obj|
-            obj.builddepends
-        }
-    end
-
     # Build the dependencies associated with an individual object.
     def builddepends
         # Handle the requires
@@ -1832,11 +1794,11 @@ class Type < Puppet::Element
     end
 
     # return all objects subscribed to the current object
-    #def eachsubscriber
-    #    Puppet::Event::Subscriptions.subscribers?(self).each { |sub|
-    #        yield sub.targetobject
-    #    }
-    #end
+    def eachsubscriber
+        Puppet::Event::Subscription.subscribers(self).each { |sub|
+            yield sub.target
+        }
+    end
 
     def handledepends(requires, event, method)
         # Requires are specified in the form of [type, name], so they're always
@@ -1912,6 +1874,18 @@ class Type < Puppet::Element
         #@subscriptions.push sub
     end
 
+    def subscribesto?(object)
+        sub = false
+        self.eachsubscriber { |o|
+            if o == object
+                sub = true
+                break
+            end
+        }
+
+        return sub
+    end
+
     # Unsubscribe from a given object, possibly with a specific event.
     def unsubscribe(object, event = nil)
         Puppet::Event::Subscription.dependencies(self).find_all { |sub|
@@ -1921,7 +1895,7 @@ class Type < Puppet::Element
                 sub.source == object
             end
         }.each { |sub|
-            Puppet::Event::Subscription.delete(sub)
+            sub.delete
         }
     end
 

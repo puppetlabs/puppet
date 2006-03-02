@@ -54,17 +54,20 @@ module Puppet
 
         def httplog
             args = []
+
             # yuck; separate http logs
             file = nil
-            if self.is_a?(Puppet::Server)
+            Puppet.config.use(:puppet, :certificates, Puppet.name)
+            if Puppet.name == "puppetmasterd"
                 file = Puppet[:masterhttplog]
             else
                 file = Puppet[:httplog]
             end
+#
+#            unless FileTest.exists?(File.dirname(file))
+#                Puppet.recmkdir(File.dirname(file))
+#            end
 
-            unless FileTest.exists?(File.dirname(file))
-                Puppet.recmkdir(File.dirname(file))
-            end
             args << file
             if Puppet[:debug]
                 args << WEBrick::Log::DEBUG
@@ -72,12 +75,14 @@ module Puppet
 
             log = WEBrick::Log.new(*args)
 
+
             return log
         end
 
         # Read in an existing certificate.
         def readcert
             return unless @secureinit
+            Puppet.config.use(:puppet, :certificates)
             # verify we've got all of the certs set up and such
 
             if defined? @cert and defined? @key and @cert and @key
@@ -116,13 +121,15 @@ module Puppet
         # storing the cert locally.
         def requestcert
             retrieved = false
+            Puppet.config.use(:puppet, :certificates)
             # create the directories involved
-            [Puppet[:certdir], Puppet[:privatekeydir], Puppet[:csrdir],
-                Puppet[:publickeydir]].each { |dir|
-                unless FileTest.exists?(dir)
-                    Puppet.recmkdir(dir, 0770)
-                end
-            }
+            # FIXME it's a stupid hack that i have to do this
+#            [Puppet[:certdir], Puppet[:privatekeydir], Puppet[:csrdir],
+#                Puppet[:publickeydir]].each { |dir|
+#                unless FileTest.exists?(dir)
+#                    Puppet.recmkdir(dir, 0770)
+#                end
+#            }
 
             if self.readcert
                 Puppet.info "Certificate already exists; not requesting"
@@ -188,6 +195,7 @@ module Puppet
 
         # Create the pid file.
         def setpidfile
+            Puppet.config.use(:puppet)
             @pidfile = self.pidfile
             if FileTest.exists?(@pidfile)
                 Puppet.info "Deleting old pid file"
@@ -199,10 +207,10 @@ module Puppet
                 end
             end
 
-            unless FileTest.exists?(Puppet[:rundir])
-                Puppet.recmkdir(Puppet[:rundir])
-                File.chmod(01777, Puppet[:rundir])
-            end
+            #unless FileTest.exists?(Puppet[:rundir])
+            #    Puppet.recmkdir(Puppet[:rundir])
+            #    File.chmod(01777, Puppet[:rundir])
+            #end
 
             Puppet.info "Setting pidfile to %s" % @pidfile
             begin

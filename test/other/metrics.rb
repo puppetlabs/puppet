@@ -6,6 +6,7 @@ end
 
 require 'puppet/metric'
 require 'puppet'
+require 'puppettest'
 require 'puppet/type'
 require 'test/unit'
 

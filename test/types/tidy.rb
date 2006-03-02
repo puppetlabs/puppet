@@ -42,9 +42,8 @@ class TestTidy < Test::Unit::TestCase
             :size => "1b",
             :recurse => true
         )
-        Puppet::Type.finalize
-
         comp = newcomp("tidytesting", tidy)
+        comp.finalize
 
         trans = nil
         assert_events([:file_tidied], comp)

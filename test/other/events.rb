@@ -70,37 +70,26 @@ class TestEvents < Test::Unit::TestCase
         comps = {}
         objects = {}
         fname = tempfile()
-        [:a, :b].each { |l|
-            case l
-            when :a
-                name = tempfile() + l.to_s
-                objects[l] = Puppet.type(:file).create(
-                    :name => name,
-                    :ensure => "file"
-                )
-                @@tmpfiles << name
-            when :b
-                objects[l] = Puppet.type(:exec).create(
-                    :name => "touch %s" % fname,
-                    :path => "/usr/bin:/bin",
-                    :refreshonly => true
-                )
-                @@tmpfiles << fname
-            end
+        file = Puppet.type(:file).create(
+            :name => tempfile(),
+            :ensure => "file"
+        )
 
+        exec = Puppet.type(:exec).create(
+            :name => "touch %s" % fname,
+            :path => "/usr/bin:/bin",
+            :refreshonly => true
+        )
 
-            comps[l] = Puppet.type(:component).create(
-                :name => "eventtesting%s" % l
-            )
+        comps[:f] = newcomp(file)
+        comps[:e] = newcomp(exec)
 
-            comps[l].push objects[l]
+        comps[:e][:subscribe] = [[comps[:f].class.name, comps[:f].name]]
+        comps.each { |l, c|
+            c.finalize
         }
 
-        comps[:b][:subscribe] = [[comps[:a].class.name, comps[:a].name]]
-
-        Puppet::Type.finalize
-
-        trans = comps[:a].evaluate
+        trans = comps[:f].evaluate
         events = nil
         assert_nothing_raised {
             events = trans.evaluate
