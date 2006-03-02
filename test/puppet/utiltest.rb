@@ -144,15 +144,17 @@ class TestPuppetUtil < Test::Unit::TestCase
     end
 
     def test_withumask
-        File.umask(022)
+        oldmask = File.umask
 
         path = tempfile()
+
+        # FIXME this fails on FreeBSD with a mode of 01777
         Puppet::Util.withumask(000) do
-            Dir.mkdir(path, 01777)
+            Dir.mkdir(path, 0777)
         end
 
-        assert(File.stat(path).mode & 007777 == 01777)
-        assert_equal(022, File.umask)
+        assert(File.stat(path).mode & 007777 == 0777, "File has the incorrect mode")
+        assert_equal(oldmask, File.umask, "Umask was not reset")
     end
 
     unless Process.uid == 0

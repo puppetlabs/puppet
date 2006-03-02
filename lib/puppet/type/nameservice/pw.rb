@@ -18,7 +18,7 @@ module Puppet
 
             # Does the object already exist?
             def self.exists?(obj)
-                if obj.getinfo
+                if obj.getinfo(true)
                     return true
                 else
                     return false
@@ -33,7 +33,7 @@ module Puppet
                     cmd = ["pw", "groupadd", @parent[:name]]
                     if gid = @parent.should(:gid)
                         unless gid == :auto
-                            cmd << self.class.objectaddflag << gid 
+                            cmd << @parent.state(:gid).class.objectaddflag << gid 
                         end
                     end
 

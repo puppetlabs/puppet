@@ -284,6 +284,7 @@ module Util
         end
     end
 
+    # Execute a given chunk of code with a new umask.
     def self.withumask(mask)
         cur = File.umask(mask)
 

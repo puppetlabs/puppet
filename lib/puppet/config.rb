@@ -336,6 +336,7 @@ class Config
             end
 
             if obj.respond_to? :to_transportable
+                next if obj.value =~ /^\/dev/
                 transobjects = obj.to_transportable
                 transobjects = [transobjects] unless transobjects.is_a? Array
                 transobjects.each do |trans|

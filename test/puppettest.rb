@@ -50,8 +50,8 @@ module TestPuppet
             $VERBOSE = 1
         else
             Puppet::Log.close
-            Puppet::Log.newdestination "/dev/null"
-            Puppet[:httplog] = "/dev/null"
+            Puppet::Log.newdestination tempfile()
+            Puppet[:httplog] = tempfile()
         end
 
         Puppet[:ignoreschedules] = true
@@ -120,6 +120,12 @@ module TestPuppet
 
         # Just in case there are processes waiting to die...
         Process.waitall
+        if File.stat("/dev/null").mode & 007777 != 0666
+            File.open("/tmp/nullfailure", "w") { |f|
+                f.puts self.class
+            }
+            exit(74)
+        end
     end
 
     def tempfile

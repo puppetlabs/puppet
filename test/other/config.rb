@@ -478,6 +478,24 @@ yay = /a/path
             "Group object is not managed."
         )
     end
+
+    def test_notmanagingdev
+        c = mkconfig
+        path = "/dev/testing"
+        c.setdefaults(:test,
+            :file => {
+                :default => path,
+                :mode => 0640,
+                :desc => 'yay'
+            }
+        )
+
+        assert_nothing_raised {
+            c.to_component
+        }
+
+        assert(! Puppet.type(:file)["/dev/testing"], "Created dev file")
+    end
 end
 
 # $Id$
