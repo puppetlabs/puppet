@@ -186,7 +186,7 @@ class Puppet::Client::MasterClient < Puppet::Client
                         "Cannot connect to server and there is no cached configuration"
                     )
                 end
-                Puppet.notice "Could not get config; using cached copy"
+                Puppet.warning "Could not get config; using cached copy"
                 fromcache = true
             end
 
