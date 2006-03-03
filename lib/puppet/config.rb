@@ -685,14 +685,19 @@ Generated on #{Time.now}.
             if type == :directory or self.create
                 obj[:ensure] = type
             end
-            [:group, :mode].each { |var|
+            [:mode].each { |var|
                 if value = self.send(var)
                     obj[var] = value
                 end
             }
 
-            if Process.uid == 0 and value = self.send(:owner)
-                obj[:owner] = value
+            # Only chown or chgrp when root
+            if Process.uid == 0
+                [:group, :owner].each { |var|
+                    if value = self.send(var)
+                        obj[var] = value
+                    end
+                }
             end
 
             # And set the loglevel to debug for everything
