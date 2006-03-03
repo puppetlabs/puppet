@@ -148,9 +148,9 @@ module Puppet
                 of this, but using this will still work, albeit with a
                 warning."
 
-            def should=(values)
+            munge do |value|
                 @parent.warning "'running' is deprecated; please use 'ensure'"
-                @parent[:ensure] = values
+                @parent[:ensure] = value
             end
         end
 
