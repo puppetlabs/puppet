@@ -1725,7 +1725,7 @@ class Type < Puppet::Element
         # now record how many changes we've resulted in
         Puppet::Metric.add(self.class,self,:changes,changes.length)
         if changes.length > 0
-            self.info "%s change(s)" %
+            self.debug "%s change(s)" %
                 [changes.length]
         end
         self.cache(:checked, now)

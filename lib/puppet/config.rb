@@ -694,6 +694,10 @@ Generated on #{Time.now}.
             if Process.uid == 0 and value = self.send(:owner)
                 obj[:owner] = value
             end
+
+            # And set the loglevel to debug for everything
+            obj[:loglevel] = "debug"
+
             if self.section
                 obj.tags = ["puppet", "configuration", self.section]
             end
