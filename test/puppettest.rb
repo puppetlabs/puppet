@@ -708,19 +708,15 @@ module ParserTesting
     end
 
     def classobj(name, args = {})
-        unless args.include?(:name)
-            args[:type] = nameobj(name)
-        end
-        unless args.include?(:code)
-            args[:code] = AST::ASTArray.new(
-                :file => tempfile(),
-                :line => rand(100),
-                :children => [
-                    varobj("%svar" % name, "%svalue" % name),
-                    fileobj("/%s" % name)
-                ]
-            )
-        end
+        args[:type] ||= nameobj(name)
+        args[:code] ||= AST::ASTArray.new(
+            :file => tempfile(),
+            :line => rand(100),
+            :children => [
+                varobj("%svar" % name, "%svalue" % name),
+                fileobj("/%s" % name)
+            ]
+        )
         assert_nothing_raised("Could not create class %s" % name) {
             return AST::ClassDef.new(args)
         }
@@ -730,6 +726,11 @@ module ParserTesting
         args[:file] ||= tempfile()
         args[:line] ||= rand(100)
         args[:type] ||= nameobj(name)
+        args[:args] ||= AST::ASTArray.new(
+            :file => tempfile(),
+            :line => rand(100),
+            :children => []
+        )
         args[:code] ||= AST::ASTArray.new(
             :file => tempfile(),
             :line => rand(100),

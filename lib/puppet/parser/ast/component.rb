@@ -24,24 +24,14 @@ class Puppet::Parser::AST
                 :name => objname,
                 :keyword => self.keyword
             )
-            if hash[:newcontext]
+            newcontext = hash[:newcontext]
+
+            unless self.is_a? AST::HostClass and ! newcontext
                 #scope.warning "Setting context to %s" % self.object_id
                 scope.context = self.object_id
             end
             @scope = scope
 
-            # The type is the component or class name
-            #scope.type = objtype
-
-            # The name is the name the user has chosen or that has
-            # been dynamically generated.  This is almost never used
-            #scope.name = objname
-
-            #scope.keyword = self.keyword
-
-            #if self.is_a?(Node)
-            #    scope.isnodescope
-            #end
 
             # Additionally, add a tag for whatever kind of class
             # we are

@@ -464,4 +464,53 @@ class TestScope < Test::Unit::TestCase
             objects = top.evaluate(:scope => scope)
         }
     end
+
+    # Verify that definitions have a different context than classes.
+    def test_newsubcontext
+        filename = tempfile()
+        children = []
+
+        # Create a component
+        children << compobj("comp", :code => AST::ASTArray.new(
+            :children => [
+                fileobj(filename, "owner" => "root" )
+            ]
+        ))
+
+        # Now create a class that modifies the same file and also
+        # calls the component
+        children << classobj("klass", :code => AST::ASTArray.new(
+            :children => [
+                fileobj(filename, "owner" => "bin" ),
+                AST::ObjectDef.new(
+                    :type => nameobj("comp"),
+                    :params => astarray()
+                )
+            ]
+        ))
+
+        # Now call the class
+        children << AST::ObjectDef.new(
+            :type => nameobj("klass"),
+            :params => astarray()
+        )
+
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        trans = nil
+        scope = nil
+        #assert_nothing_raised {
+        assert_raise(Puppet::ParseError, "A conflict was allowed") {
+            scope = Puppet::Parser::Scope.new()
+            trans = scope.evaluate(:ast => top)
+        }
+        #    scope = Puppet::Parser::Scope.new()
+        #    trans = scope.evaluate(:ast => top)
+        #}
+    end
 end

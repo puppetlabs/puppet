@@ -285,7 +285,7 @@ class Puppet::Parser::AST
                 return true unless defined? @scope and @scope
 
                 # Unless we can look up the type, throw an error
-                unless objtype = @scope.lookuptype(objtype)
+                unless typeobj = @scope.lookuptype(objtype)
                     error = Puppet::ParseError.new(
                         "Unknown type '%s'" % objtype
                     )
@@ -297,7 +297,7 @@ class Puppet::Parser::AST
                 # Now that we have the type, verify all of the parameters.
                 # Note that we're now passing an AST Class object or whatever
                 # as the type, not a simple string.
-                self.paramcheck(builtin, objtype)
+                self.paramcheck(builtin, typeobj)
             end
         end
 
