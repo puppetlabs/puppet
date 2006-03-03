@@ -249,7 +249,6 @@ module Puppet
             if self.class.values.include?(intern)
                 retval = intern
             elsif other = self.class.alias(intern)
-                self.info "returning alias %s for %s" % [other, intern]
                 retval = other
             else
                 retval = value
