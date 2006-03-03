@@ -25,8 +25,8 @@ class Server
 
         def authcheck(file, mount, client, clientip)
             unless mount.allowed?(client, clientip)
-                mount.warning "%s cannot access %s in %s" %
-                    [client, mount, file]
+                mount.warning "%s cannot access %s" %
+                    [client, file]
                 raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
             end
         end
@@ -448,11 +448,18 @@ class Server
 
                     @comp.push(obj)
                 end
-                # we should really have a timeout here -- we don't
+
+                # FIXME we should really have a timeout here -- we don't
                 # want to actually check on every connection, maybe no more
-                # than every 60 seconds or something
-                #@files[mount].evaluate
-                obj.evaluate
+                # than every 60 seconds or something.  It'd be nice if we
+                # could use the builtin scheduling to do this.
+
+                # Retrieval is enough here, because we don't want to cache
+                # any information in the state file, and we don't want to generate
+                # any state changes or anything.  We don't even need to sync
+                # the checksum, because we're always going to hit the disk
+                # directly.
+                obj.retrieve
 
                 return obj
             end
