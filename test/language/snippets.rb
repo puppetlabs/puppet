@@ -253,6 +253,7 @@ class TestSnippets < Test::Unit::TestCase
             /tmp/existsfile2
             /tmp/existsfile3
             /tmp/existsfile4
+            /tmp/existsfile5
         }
 
         files.each { |file|
@@ -331,7 +332,7 @@ class TestSnippets < Test::Unit::TestCase
     end
 
     def snippet_selectorvalues(trans)
-        nums = %w{1 2 3}
+        nums = %w{1 2 3 4 5}
         files = nums.collect { |n|
             "/tmp/selectorvalues%s" % n
         }

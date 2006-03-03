@@ -13,6 +13,7 @@ class Puppet::Parser::AST
 
         # Are we the default option?
         def default?
+            # Cache the @default value.
             if defined? @default
                 return @default
             end
@@ -38,13 +39,21 @@ class Puppet::Parser::AST
         end
 
         # You can specify a list of values; return each in turn.
-        def eachvalue
+        def eachvalue(scope)
             if @value.is_a?(AST::ASTArray)
                 @value.each { |subval|
-                    yield subval.value
+                    if scope
+                        yield subval.evaluate(:scope => scope)
+                    elsif subval.is_a? AST::Leaf
+                        yield subval.value
+                    end
                 }
             else
-                yield @value.value
+                if scope
+                    yield @value.evaluate(:scope => scope)
+                elsif @value.is_a? AST::Leaf
+                    yield @value.value
+                end
             end
         end
 

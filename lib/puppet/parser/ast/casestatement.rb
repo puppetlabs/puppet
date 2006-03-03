@@ -15,7 +15,7 @@ class Puppet::Parser::AST
             
             # Iterate across the options looking for a match.
             @options.each { |option|
-                if option.eachvalue { |opval| break true if opval == value }
+                if option.eachvalue(scope) { |opval| break true if opval == value }
                     # we found a matching option
                     retvalue = option.safeevaluate(:scope => scope)
                     found = true
@@ -49,7 +49,7 @@ class Puppet::Parser::AST
                 if option.default?
                     @default = option
                 end
-                option.eachvalue { |val|
+                option.eachvalue(nil) { |val|
                     if values.include?(val)
                         raise Puppet::ParseError,
                             "Value %s appears twice in case statement" %

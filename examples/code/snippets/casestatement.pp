@@ -45,3 +45,14 @@ case $bool {
         file { "/tmp/existsfile4": mode => 755, ensure => file }
     }
 }
+
+$yay = yay
+$a = yay
+$b = boo
+
+case $yay {
+    $a: { file { "/tmp/existsfile5": mode => 755, ensure => file } }
+    $b: { file { "/tmp/existsfile5": mode => 644, ensure => file } }
+    default: { file { "/tmp/existsfile5": mode => 711, ensure => file } }
+
+}

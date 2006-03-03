@@ -377,7 +377,7 @@ casevalues:       selectlhand
     end
 }
 
-selector:     variable QMARK svalues {
+selector:     selectlhand QMARK svalues {
     result = AST::Selector.new(
         :pin => "?",
         :line => @lexer.line,
@@ -429,6 +429,7 @@ selectlhand:  NAME {
     )
 }
             | quotedtext
+            | variable
             | DEFAULT {
     result = AST::Default.new(
         :line => @lexer.line,
