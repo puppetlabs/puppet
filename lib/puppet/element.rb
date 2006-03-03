@@ -52,8 +52,6 @@ class Puppet::Element
                 if self.name == "puppet[top]"
                     @path = ["/"]
                 else
-                    # We assume that if we don't have a parent that we should not
-                    # cache the path
                     if self.is_a?(Puppet.type(:component))
                         @path = [self.name]
                     else

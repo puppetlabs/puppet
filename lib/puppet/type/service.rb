@@ -120,7 +120,7 @@ module Puppet
 
             def retrieve
                 self.is = @parent.status
-                self.debug "Running value is '%s'" % self.is
+                self.debug "Current status is '%s'" % self.is
             end
 
             def sync

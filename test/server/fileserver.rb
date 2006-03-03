@@ -702,7 +702,7 @@ class TestFileServer < Test::Unit::TestCase
             mount = Puppet::Server::FileServer::Mount.new(name, path)
         }
 
-        assert_equal(name + ":" + path, mount.to_s)
+        assert_equal("mount[#{name}]", mount.to_s)
     end
 end
 

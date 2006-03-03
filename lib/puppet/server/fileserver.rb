@@ -8,6 +8,8 @@ class Server
     class FileServer < Handler
         attr_accessor :local
 
+        Puppet::Util.logmethods(self, true)
+
         Puppet.setdefaults("fileserver",
             :fileserverconfig => ["$confdir/fileserver.conf",
                 "Where the fileserver configuration is stored."])
@@ -23,34 +25,10 @@ class Server
 
         def authcheck(file, mount, client, clientip)
             unless mount.allowed?(client, clientip)
-                Puppet.warning "%s cannot access %s in %s" %
+                mount.warning "%s cannot access %s in %s" %
                     [client, mount, file]
                 raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
             end
-        end
-
-        # Run 'retrieve' on a file.  This gets the actual parameters, so
-        # we can pass them to the client.
-        def check(dir)
-            unless FileTest.exists?(dir)
-                Puppet.notice "File source %s does not exist" % dir
-                return nil
-            end
-
-            obj = nil
-            unless obj = Puppet.type(:file)[dir]
-                obj = Puppet.type(:file).create(
-                    :name => dir,
-                    :check => CHECKPARAMS
-                )
-            end
-            # we should really have a timeout here -- we don't
-            # want to actually check on every connection, maybe no more
-            # than every 60 seconds or something
-            #@files[mount].evaluate
-            obj.evaluate
-
-            return obj
         end
 
         # Describe a given file.  This returns all of the manageable aspects
@@ -62,7 +40,7 @@ class Server
             authcheck(file, mount, client, clientip)
 
             if client
-                Puppet.debug "Describing %s for %s" % [file, client]
+                self.debug "Describing %s for %s" % [file, client]
             end
 
             sdir = nil
@@ -73,7 +51,7 @@ class Server
             end
 
             obj = nil
-            unless obj = self.check(sdir)
+            unless obj = mount.check(sdir)
                 return ""
             end
 
@@ -155,7 +133,7 @@ class Server
             authcheck(dir, mount, client, clientip)
 
             if client
-                Puppet.debug "Listing %s for %s" % [dir, client]
+                mount.debug "Listing %s for %s" % [dir, client]
             end
 
             subdir = nil
@@ -199,7 +177,7 @@ class Server
             if FileTest.directory?(path)
                 if FileTest.readable?(path)
                     @mounts[name] = Mount.new(name, path)
-                    @mounts[name].info "Mounted"
+                    @mounts[name].info "Mounted %s" % path
                 else
                     raise FileServerError, "%s is not readable" % path
                 end
@@ -318,7 +296,7 @@ class Server
             authcheck(file, mount, client, clientip)
 
             if client
-                Puppet.info "Sending %s to %s" % [file, client]
+                mount.info "Sending %s to %s" % [file, client]
             end
 
             fpath = nil
@@ -441,6 +419,10 @@ class Server
             dirname
         end
 
+        def to_s
+            "fileserver"
+        end
+
         # A simple class for wrapping mount points.  Instances of this class
         # don't know about the enclosing object; they're mainly just used for
         # authorization.
@@ -448,6 +430,32 @@ class Server
             attr_reader :path, :name
 
             Puppet::Util.logmethods(self, true)
+
+            # Run 'retrieve' on a file.  This gets the actual parameters, so
+            # we can pass them to the client.
+            def check(dir)
+                unless FileTest.exists?(dir)
+                    self.notice "File source %s does not exist" % dir
+                    return nil
+                end
+
+                obj = nil
+                unless obj = Puppet.type(:file)[dir]
+                    obj = Puppet.type(:file).create(
+                        :name => dir,
+                        :check => CHECKPARAMS
+                    )
+
+                    @comp.push(obj)
+                end
+                # we should really have a timeout here -- we don't
+                # want to actually check on every connection, maybe no more
+                # than every 60 seconds or something
+                #@files[mount].evaluate
+                obj.evaluate
+
+                return obj
+            end
 
             # Create out orbject.  It must have a name.
             def initialize(name, path = nil)
@@ -462,6 +470,12 @@ class Server
                     @path = nil
                 end
 
+                @comp = Puppet.type(:component).create(
+                    :name => "mount[#{name}]"
+                )
+                #@comp.type = "mount"
+                #@comp.name = name
+
                 super()
             end
 
@@ -474,11 +488,12 @@ class Server
             end
 
             def to_s
-                if @path
-                    @name + ":" + @path
-                else
-                    @name
-                end
+                #if @path
+                #    "mount[#{@name}]" + ":" + @path
+                #else
+                #    "mount[#{@name}]"
+                #end
+                "mount[#{@name}]"
             end
 
             # Verify our configuration is valid.  This should really check to
