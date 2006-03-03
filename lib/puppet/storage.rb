@@ -94,7 +94,9 @@ module Puppet
                 Puppet.info "Creating state file %s" % Puppet[:statefile]
             end
 
-            Puppet::Util.writelock(Puppet[:statefile], 0600) do |file|
+            # FIXME This should be done as the puppet user, so that it isn't
+            # constantly chowned
+            Puppet::Util.writelock(Puppet[:statefile], 0660) do |file|
                 file.print YAML.dump(@@state)
             end
             Puppet.debug "Stored state"
