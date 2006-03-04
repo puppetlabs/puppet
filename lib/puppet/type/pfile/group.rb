@@ -40,6 +40,13 @@ module Puppet
         def retrieve
             stat = @parent.stat(false)
 
+            # Set our method appropriately, depending on links.
+            if stat.ftype == "link" and @parent[:links] == :skip
+                @method = :lchown
+            else
+                @method = :chown
+            end
+
             if stat
                 self.is = stat.gid
             else
@@ -98,7 +105,7 @@ module Puppet
 
             begin
                 # set owner to nil so it's ignored
-                File.chown(nil,gid,@parent[:path])
+                File.send(@method,nil,gid,@parent[:path])
             rescue => detail
                 error = Puppet::Error.new( "failed to chgrp %s to %s: %s" %
                     [@parent[:path], self.should, detail.message])

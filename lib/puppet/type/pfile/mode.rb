@@ -75,7 +75,15 @@ module Puppet
         end
 
         def retrieve
+            # If we're not following links and we're a link, then we just turn
+            # off mode management entirely.
+
             if stat = @parent.stat(false)
+                if stat.ftype == "link" and @parent[:links] == :skip
+                    self.info "Not managing symlink mode"
+                    self.is = self.should
+                    return
+                end
                 self.is = stat.mode & 007777
                 unless defined? @fixed
                     if defined? @should and @should

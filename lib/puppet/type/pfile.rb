@@ -94,6 +94,18 @@ module Puppet
             end
         end
 
+        newparam(:links) do
+            desc "How to handle links during file actions.  During file copying,
+                ``follow`` will copy the target file instead of the link, ``copy``
+                will copy the link itself, and ``skip`` will just pass it by.
+                When not doing copying, ``follow`` and ``copy`` behave
+                equivalently."
+
+            newvalues(:follow, :copy, :skip)
+
+            defaultto :skip
+        end
+
         autorequire(:file) do
             cur = []
             pary = self[:path].split(File::SEPARATOR)
@@ -513,15 +525,21 @@ module Puppet
             end
         end
 
+        # Stat our file.  Depending on the value of the 'links' attribute, we use
+        # either 'stat' or 'lstat', and we expect the states to use the resulting
+        # stat object accordingly (mostly by testing the 'ftype' value).
         def stat(refresh = false)
+            method = :lstat
+            unless self[:links] == :skip
+                method = :stat
+            end
             if @stat.nil? or refresh == true
                 begin
-                    @stat = File.lstat(self[:path])
+                    @stat = File.send(method, self[:path])
                 rescue Errno::ENOENT => error
                     @stat = nil
-                rescue => error
-                    self.debug "Failed to stat %s: %s" %
-                        [self.name,error]
+                rescue Errno::EACCES => error
+                    self.warning "Could not stat; permission denied"
                     @stat = nil
                 end
             end

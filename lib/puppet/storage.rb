@@ -79,23 +79,11 @@ module Puppet
         def self.store
             Puppet.config.use(:puppet)
             Puppet.debug "Storing state"
-#            unless FileTest.directory?(File.dirname(Puppet[:statefile]))
-#                begin
-#                    Puppet.recmkdir(File.dirname(Puppet[:statefile]))
-#                    Puppet.info "Creating state directory %s" %
-#                        File.dirname(Puppet[:statefile])
-#                rescue => detail
-#                    Puppet.err "Could not create state file: %s" % detail
-#                    return
-#                end
-#            end
 
             unless FileTest.exist?(Puppet[:statefile])
                 Puppet.info "Creating state file %s" % Puppet[:statefile]
             end
 
-            # FIXME This should be done as the puppet user, so that it isn't
-            # constantly chowned
             Puppet::Util.writelock(Puppet[:statefile], 0660) do |file|
                 file.print YAML.dump(@@state)
             end

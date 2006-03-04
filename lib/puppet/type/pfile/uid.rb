@@ -85,6 +85,13 @@ module Puppet
                 return
             end
 
+            # Set our method appropriately, depending on links.
+            if stat.ftype == "link" and @parent[:links] == :skip
+                @method = :lchown
+            else
+                @method = :chown
+            end
+
             self.is = stat.uid
 
             # On OS X, files that are owned by -2 get returned as really
@@ -149,7 +156,7 @@ module Puppet
             end
 
             begin
-                File.chown(user, nil, @parent[:path])
+                File.send(@method, user, nil, @parent[:path])
             rescue => detail
                 raise Puppet::Error, "Failed to set owner to '%s': %s" %
                     [user, detail]

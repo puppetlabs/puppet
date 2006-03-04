@@ -244,7 +244,11 @@ module Puppet
                 # This parameter isn't using defined values to do its work.
                 return value
             end
+
+            # We convert to a string and then a symbol so that things like
+            # booleans work as we expect.
             intern = value.to_s.intern
+
             # If it's a valid value, always return it as a symbol.
             if self.class.values.include?(intern)
                 retval = intern

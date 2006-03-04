@@ -27,10 +27,18 @@ module Puppet
         # We should probably take advantage of existing md5 sums if they're there,
         # but I really don't feel like dealing with the complexity right now.
         def retrieve
-            unless FileTest.exists?(@parent[:path])
+            stat = nil
+            unless stat = @parent.stat
                 @is = :absent
                 return
             end
+
+            if stat.ftype == "link" and @parent[:links] == :skip
+                self.info "Not changing the content of symlink"
+                self.is = self.should
+                return
+            end
+
             begin
                 @is = File.read(@parent[:path])
             rescue => detail

@@ -156,12 +156,19 @@ module Puppet
                 @checktypes = ["md5"]
             end
 
-            unless FileTest.exists?(@parent[:path])
+            stat = nil
+            unless stat = @parent.stat
                 self.is = :absent
                 return
             end
 
-            if FileTest.directory?(@parent[:path]) and @checktypes[0] =~ /md5/
+            if stat.ftype == "link" and @parent[:links] == :skip
+                self.info "Not checksumming symlink"
+                self.is = self.should
+                return
+            end
+
+            if stat.ftype == "directory" and @checktypes[0] =~ /md5/
                 @checktypes = ["time"]
             end
 

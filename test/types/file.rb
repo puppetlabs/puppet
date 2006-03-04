@@ -41,7 +41,6 @@ class TestFile < Test::Unit::TestCase
     end
 
     def teardown
-        clearstorage
         Puppet::Storage.clear
         system("rm -rf %s" % Puppet[:statefile])
         super
@@ -132,6 +131,61 @@ class TestFile < Test::Unit::TestCase
             comp = newcomp("createusertest", file)
 
             assert_events([:file_created], comp)
+        end
+
+        def test_nofollowlinks
+            basedir = tempfile()
+            Dir.mkdir(basedir)
+            file = File.join(basedir, "file")
+            link = File.join(basedir, "link")
+
+            File.open(file, "w", 0644) { |f| f.puts "yayness"; f.flush }
+            File.symlink(file, link)
+
+            user = nonrootuser()
+
+            obj = nil
+            assert_nothing_raised {
+                obj = Puppet.type(:file).create(
+                    :name => link,
+                    :owner => user.name
+                )
+            }
+            obj.retrieve
+
+            assert_events([:file_changed], obj)
+
+            assert_equal(0, File.stat(file).uid)
+
+            obj[:links] = :follow
+            assert_events([:file_changed], obj)
+            assert_equal(user.uid, File.stat(file).uid)
+            File.chown(0, nil, file)
+
+            obj[:links] = :copy
+            assert_events([:file_changed], obj)
+            assert_equal(user.uid, File.stat(file).uid)
+
+            obj.delete(:owner)
+            obj[:links] = :skip
+
+            group = nonrootgroup
+
+            initgroup = File.stat(file).gid
+            obj[:group] = group.name
+
+            assert_events([:file_changed], obj)
+
+            assert_equal(initgroup, File.stat(file).gid)
+
+            obj[:links] = :follow
+            assert_events([:file_changed], obj)
+            assert_equal(group.gid, File.stat(file).gid)
+            File.chown(nil, initgroup, file)
+
+            obj[:links] = :copy
+            assert_events([:file_changed], obj)
+            assert_equal(group.gid, File.stat(file).gid)
         end
 
         def test_ownerasroot
@@ -780,6 +834,64 @@ class TestFile < Test::Unit::TestCase
         file[:ensure] = "directory"
         assert_apply(file)
         assert_equal(0777, File.stat(path).mode & 007777)
+    end
+
+    def test_followlinks
+        basedir = tempfile()
+        Dir.mkdir(basedir)
+        file = File.join(basedir, "file")
+        link = File.join(basedir, "link")
+
+        File.open(file, "w", 0644) { |f| f.puts "yayness"; f.flush }
+        File.symlink(file, link)
+
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet.type(:file).create(
+                :name => link,
+                :mode => "755"
+            )
+        }
+        obj.retrieve
+
+        assert_events([], obj)
+
+        # Assert that we default to not following links
+        assert_equal("%o" % 0644, "%o" % (File.stat(file).mode & 007777))
+
+        obj[:links] = :follow
+        assert_events([:file_changed], obj)
+
+        assert_equal("%o" % 0755, "%o" % (File.stat(file).mode & 007777))
+
+        File.chmod(0644, file)
+        obj[:links] = :copy
+        assert_events([:file_changed], obj)
+
+        assert_equal("%o" % 0755, "%o" % (File.stat(file).mode & 007777))
+
+        # Now verify that content and checksum don't update, either
+        obj.delete(:mode)
+        obj[:checksum] = "md5"
+        obj[:links] = :skip
+
+        assert_events([], obj)
+        File.open(file, "w") { |f| f.puts "more text" }
+        assert_events([], obj)
+        obj[:links] = :follow
+        assert_events([], obj)
+        File.open(file, "w") { |f| f.puts "even more text" }
+        assert_events([:file_changed], obj)
+
+        obj.delete(:checksum)
+        obj[:content] = "this is some content"
+        obj[:links] = :skip
+
+        assert_events([], obj)
+        File.open(file, "w") { |f| f.puts "more text" }
+        assert_events([], obj)
+        obj[:links] = :follow
+        assert_events([:file_changed], obj)
     end
 end
 
