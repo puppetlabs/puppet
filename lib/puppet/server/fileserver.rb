@@ -3,12 +3,10 @@ require 'webrick/httpstatus'
 require 'cgi'
 
 module Puppet
+class FileServerError < Puppet::Error; end
 class Server
-    class FileServerError < Puppet::Error; end
     class FileServer < Handler
         attr_accessor :local
-
-        Puppet::Util.logmethods(self, true)
 
         Puppet.setdefaults("fileserver",
             :fileserverconfig => ["$confdir/fileserver.conf",
@@ -18,9 +16,9 @@ class Server
         CHECKPARAMS = [:mode, :type, :owner, :group, :checksum]
 
         @interface = XMLRPC::Service::Interface.new("fileserver") { |iface|
-            iface.add_method("string describe(string)")
-            iface.add_method("string list(string, boolean, array)")
-            iface.add_method("string retrieve(string)")
+            iface.add_method("string describe(string, string)")
+            iface.add_method("string list(string, string, boolean, array)")
+            iface.add_method("string retrieve(string, string)")
         }
 
         def authcheck(file, mount, client, clientip)
@@ -33,14 +31,21 @@ class Server
 
         # Describe a given file.  This returns all of the manageable aspects
         # of that file.
-        def describe(file, client = nil, clientip = nil)
+        def describe(file, links = :ignore, client = nil, clientip = nil)
             readconfig
+
+            links = links.intern if links.is_a? String
+
+            if links == :manage
+                raise Puppet::FileServerError, "Cannot currently copy links"
+            end
+
             mount, path = splitpath(file)
 
             authcheck(file, mount, client, clientip)
 
             if client
-                self.debug "Describing %s for %s" % [file, client]
+                mount.debug "Describing %s for %s" % [file, client]
             end
 
             sdir = nil
@@ -51,9 +56,14 @@ class Server
             end
 
             obj = nil
-            unless obj = mount.check(sdir)
+            unless obj = mount.check(sdir, links)
                 return ""
             end
+
+            #if links == :ignore and obj[:type] == "link"
+            #    mount.info "Ignoring link %s" % obj.name
+            #    return ""
+            #end
 
             desc = []
             CHECKPARAMS.each { |check|
@@ -126,7 +136,7 @@ class Server
         end
 
         # List a specific directory's contents.
-        def list(dir, recurse = false, ignore = false, client = nil, clientip = nil)
+        def list(dir, links = :ignore, recurse = false, ignore = false, client = nil, clientip = nil)
             readconfig
             mount, path = splitpath(dir)
 
@@ -289,8 +299,9 @@ class Server
 
         # Retrieve a file from the local disk and pass it to the remote
         # client.
-        def retrieve(file, client = nil, clientip = nil)
+        def retrieve(file, links = :ignore, client = nil, clientip = nil)
             readconfig
+            links = links.intern if links.is_a? String
             mount, path = splitpath(file)
 
             authcheck(file, mount, client, clientip)
@@ -310,7 +321,18 @@ class Server
                 return ""
             end
 
-            str = File.read(fpath)
+            links = links.intern if links.is_a? String
+
+            if links == :ignore and FileTest.symlink?(fpath)
+                return ""
+            end
+
+            str = nil
+            if links == :manage
+                raise Puppet::Error, "Cannot copy links yet."
+            else
+                str = File.read(fpath)
+            end
 
             if @local
                 return str
@@ -331,7 +353,8 @@ class Server
             )
         end
 
-        # Recursively list the directory.
+        # Recursively list the directory. FIXME This should be using
+        # puppet objects, not directly listing.
         def reclist(mount, root, path, recurse, ignore)
             # Take out the root of the path.
             name = path.sub(root, '')
@@ -433,21 +456,13 @@ class Server
 
             # Run 'retrieve' on a file.  This gets the actual parameters, so
             # we can pass them to the client.
-            def check(dir)
+            def check(dir, links)
                 unless FileTest.exists?(dir)
                     self.notice "File source %s does not exist" % dir
                     return nil
                 end
 
-                obj = nil
-                unless obj = Puppet.type(:file)[dir]
-                    obj = Puppet.type(:file).create(
-                        :name => dir,
-                        :check => CHECKPARAMS
-                    )
-
-                    @comp.push(obj)
-                end
+                obj = fileobj(dir, links)
 
                 # FIXME we should really have a timeout here -- we don't
                 # want to actually check on every connection, maybe no more
@@ -486,6 +501,30 @@ class Server
                 super()
             end
 
+            def fileobj(path, links)
+                obj = nil
+                unless obj = Puppet.type(:file)[path]
+                    obj = Puppet.type(:file).create(
+                        :name => path,
+                        :check => CHECKPARAMS
+                    )
+
+                    @comp.push(obj)
+                end
+
+                if links == :manage
+                    links = :follow
+                end
+
+                # This, ah, might be completely redundant
+                unless obj[:links] == links
+                    obj.info "setting links to %s" % links.inspect
+                    obj[:links] = links
+                end
+
+                return obj
+            end
+
             # Set the path.
             def path=(path)
                 unless FileTest.exists?(path)
@@ -501,6 +540,9 @@ class Server
                 #    "mount[#{@name}]"
                 #end
                 "mount[#{@name}]"
+            end
+
+            def type?(file)
             end
 
             # Verify our configuration is valid.  This should really check to

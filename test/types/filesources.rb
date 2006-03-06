@@ -82,16 +82,8 @@ class TestFileSources < Test::Unit::TestCase
                 :source => frompath
             )
         }
-        comp = Puppet.type(:component).create(
-            :name => "component"
-        )
-        comp.push tofile
-        assert_nothing_raised {
-            trans = comp.evaluate
-        }
-        assert_nothing_raised {
-            trans.evaluate
-        }
+
+        assert_apply(tofile)
 
         assert(FileTest.exists?(topath))
         from = File.open(frompath) { |o| o.read }
@@ -333,19 +325,19 @@ class TestFileSources < Test::Unit::TestCase
         list = nil
         rpath = "/root%s" % tmpfile
         assert_nothing_raised {
-            list = client.call("fileserver.list", rpath, false, false)
+            list = client.call("fileserver.list", rpath, :skip, false, false)
         }
 
         assert_equal("/\tfile", list)
 
         assert_nothing_raised {
-            list = client.call("fileserver.describe", rpath)
+            list = client.call("fileserver.describe", rpath, :skip)
         }
 
         assert_match(/^\d+\tfile\t\d+\t\d+\t.+$/, list)
 
         assert_nothing_raised {
-            list = client.call("fileserver.retrieve", rpath)
+            list = client.call("fileserver.retrieve", rpath, :skip)
         }
 
         contents = File.read(tmpfile)
@@ -606,6 +598,43 @@ class TestFileSources < Test::Unit::TestCase
         file.retrieve
         assert_events([], file)
         assert_events([], file)
+    end
+
+    def test_sourcewithlinks
+        source = tempfile()
+        link = tempfile()
+        dest = tempfile()
+
+        File.open(source, "w") { |f| f.puts "yay" }
+        File.symlink(source, link)
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :name => dest,
+                :source => link
+            )
+        }
+
+        # Default to skipping links
+        assert_events([], file)
+        assert(! FileTest.exists?(dest), "Created link")
+
+        # Now follow the links
+        file[:links] = :follow
+        assert_events([:file_created], file)
+        assert(FileTest.file?(dest), "Destination is not a file")
+
+        # Now copy the links
+        assert_raise(Puppet::FileServerError) {
+            file[:links] = :manage
+            comp = newcomp(file)
+            trans = comp.evaluate
+            trans.evaluate
+        }
+        #assert(FileTest.symlink?(dest), "Destination is not a symlink")
+        #assert_equal(File.readlink(link), File.readlink(dest),
+        #    "Link did not copy correctly")
     end
 end
 

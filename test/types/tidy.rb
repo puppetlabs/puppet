@@ -65,25 +65,13 @@ class TestTidy < Test::Unit::TestCase
             :recurse => true
         )
 
-        comp = newcomp("tidytesting", tidy)
 
         sleep(2)
-        trans = nil
-        assert_nothing_raised {
-            trans = comp.evaluate
-        }
-        event = nil
-        assert_nothing_raised {
-            event = trans.evaluate.collect { |e| e.event }
-        }
+        assert_events([:file_tidied, :file_tidied], tidy)
 
         assert(!FileTest.exists?(file), "Tidied %s still exists" % file)
         assert(!FileTest.exists?(dir), "Tidied %s still exists" % dir)
 
-        assert_equal(2, event.length, "Got %s events instead of %s on tidy" %
-            [event.length, 2])
-        assert_equal([:file_tidied, :file_tidied], event,
-            "Got incorrect events on tidy")
     end
 
     def disabled_test_recursion

@@ -4,7 +4,7 @@ module Puppet
         PINPARAMS = [:mode, :type, :owner, :group, :checksum]
 
         attr_accessor :source, :local
-        desc "Copy a file over the current file.  Uses `checksum` to
+        desc "Copy a file over the current file.  Uses ``checksum`` to
             determine when a file should be copied.  Valid values are either
             fully qualified paths to files, or URIs.  Currently supported URI
             types are *puppet* and *file*.
@@ -34,7 +34,7 @@ module Puppet
             server = sourceobj.server
 
             begin
-                desc = server.describe(path)
+                desc = server.describe(path, @parent[:links])
             rescue NetworkClientError => detail
                 self.err "Could not describe %s: %s" %
                     [path, detail]
@@ -94,23 +94,6 @@ module Puppet
                 return nil
             end
 
-            # Take each of the stats and set them as states on the local file
-            # if a value has not already been provided.
-            @stats.each { |stat, value|
-                next if stat == :checksum
-                next if stat == :type
-
-                # was the stat already specified, or should the value
-                # be inherited from the source?
-                unless @parent.argument?(stat)
-                    if state = @parent.state(stat)
-                        state.should = value
-                    else
-                        @parent[stat] = value
-                    end
-                end
-            }
-
             # If we're a normal file, then set things up to copy the file down.
             case @stats[:type]
             when "file":
@@ -143,13 +126,44 @@ module Puppet
                 # we'll let the :ensure state do our work
                 @should.clear
                 @is = true
-            # FIXME We should at least support symlinks, I would think...
+            when "link":
+                case @parent[:links]
+                when :ignore
+                    @is = :nocopy
+                    @should = [:nocopy]
+                    self.info "Ignoring link %s" % @source
+                    return
+                when :follow
+                    @stats = self.describe(source, :follow)
+                    if @stats.empty?
+                        raise Puppet::Error, "Could not follow link %s" % @source
+                    end
+                when :copy
+                    raise Puppet::Error, "Cannot copy links yet"
+                end
             else
                 self.err "Cannot use files of type %s as sources" %
                     @stats[:type]
-                @should = nil
-                @is = true
+                @should = [:nocopy]
+                @is = :nocopy
             end
+
+            # Take each of the stats and set them as states on the local file
+            # if a value has not already been provided.
+            @stats.each { |stat, value|
+                next if stat == :checksum
+                next if stat == :type
+
+                # was the stat already specified, or should the value
+                # be inherited from the source?
+                unless @parent.argument?(stat)
+                    if state = @parent.state(stat)
+                        state.should = value
+                    else
+                        @parent[stat] = value
+                    end
+                end
+            }
         end
 
         # The special thing here is that we need to make sure that 'should'
@@ -189,6 +203,9 @@ module Puppet
                 end
             end
 
+            case @stats[:type]
+            when "link":
+            end
             unless @stats[:type] == "file"
                 #if @stats[:type] == "directory"
                         #[@parent.name, @is.inspect, @should.inspect]
@@ -204,7 +221,7 @@ module Puppet
             sourceobj, path = @parent.uri2obj(@source)
 
             begin
-                contents = sourceobj.server.retrieve(path)
+                contents = sourceobj.server.retrieve(path, @parent[:links])
             rescue NetworkClientError => detail
                 self.err "Could not retrieve %s: %s" %
                     [path, detail]

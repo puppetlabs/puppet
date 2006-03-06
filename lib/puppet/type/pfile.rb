@@ -96,14 +96,18 @@ module Puppet
 
         newparam(:links) do
             desc "How to handle links during file actions.  During file copying,
-                ``follow`` will copy the target file instead of the link, ``copy``
-                will copy the link itself, and ``skip`` will just pass it by.
-                When not doing copying, ``follow`` and ``copy`` behave
-                equivalently."
+                ``follow`` will copy the target file instead of the link, ``manage``
+                will copy the link itself, and ``ignore`` will just pass it by.
+                When not copying, ``manage`` and ``ignore`` behave equivalently
+                (because you cannot really ignore links entirely during local
+                recursion), and ``follow`` will manage the file to which the
+                link points."
 
-            newvalues(:follow, :copy, :skip)
+            newvalues(:follow, :manage, :ignore)
 
-            defaultto :skip
+            # :ignore and :manage behave equivalently on local files,
+            # but don't copy remote links
+            defaultto :ignore
         end
 
         autorequire(:file) do
@@ -462,7 +466,7 @@ module Puppet
 
             #self.warning "Listing path %s with ignore %s" %
             #    [path.inspect, ignore.inspect]
-            desc = server.list(path, r, ignore)
+            desc = server.list(path, self[:links], r, ignore)
            
             desc.split("\n").each { |line|
                 file, type = line.split("\t")
@@ -529,9 +533,10 @@ module Puppet
         # either 'stat' or 'lstat', and we expect the states to use the resulting
         # stat object accordingly (mostly by testing the 'ftype' value).
         def stat(refresh = false)
-            method = :lstat
-            unless self[:links] == :skip
-                method = :stat
+            method = :stat
+            # Files are the only types that support links
+            if self.class.name == :file and self[:links] != :follow
+                method = :lstat
             end
             if @stat.nil? or refresh == true
                 begin

@@ -704,6 +704,51 @@ class TestFileServer < Test::Unit::TestCase
 
         assert_equal("mount[#{name}]", mount.to_s)
     end
+
+    def test_servinglinks
+        server = nil
+        source = tempfile()
+        file = File.join(source, "file")
+        link = File.join(source, "link")
+        Dir.mkdir(source)
+        File.open(file, "w") { |f| f.puts "yay" }
+        File.symlink(file, link)
+        assert_nothing_raised {
+            server = Puppet::Server::FileServer.new(
+                :Local => true,
+                :Config => false
+            )
+        }
+
+        assert_nothing_raised {
+            server.mount(source, "mount")
+        }
+
+        # First describe the link when following
+        results = {}
+        assert_nothing_raised {
+            server.describe("/mount/link", :follow).split("\t").zip(
+                Puppet::Server::FileServer::CHECKPARAMS
+            ).each { |v,p| results[p] = v }
+        }
+
+        assert_equal("file", results[:type])
+
+        # Then not
+        results = {}
+        assert_nothing_raised {
+            server.describe("/mount/link", :ignore).split("\t").zip(
+                Puppet::Server::FileServer::CHECKPARAMS
+            ).each { |v,p| results[p] = v }
+        }
+
+        assert_equal("link", results[:type])
+
+        results.each { |p,v|
+            assert(v, "%s has no value" % p)
+            assert(v != "", "%s has no value" % p)
+        }
+    end
 end
 
 # $Id$

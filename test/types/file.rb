@@ -142,7 +142,11 @@ class TestFile < Test::Unit::TestCase
             File.open(file, "w", 0644) { |f| f.puts "yayness"; f.flush }
             File.symlink(file, link)
 
+            # First test 'user'
             user = nonrootuser()
+
+            inituser = File.lstat(link).uid
+            File.lchown(inituser, nil, link)
 
             obj = nil
             assert_nothing_raised {
@@ -153,39 +157,52 @@ class TestFile < Test::Unit::TestCase
             }
             obj.retrieve
 
+            # Make sure it defaults to managing the link
             assert_events([:file_changed], obj)
+            assert_equal(user.uid, File.lstat(link).uid)
+            assert_equal(inituser, File.stat(file).uid)
+            File.chown(inituser, nil, file)
+            File.lchown(inituser, nil, link)
 
-            assert_equal(0, File.stat(file).uid)
-
+            # Try following
             obj[:links] = :follow
             assert_events([:file_changed], obj)
             assert_equal(user.uid, File.stat(file).uid)
-            File.chown(0, nil, file)
+            assert_equal(inituser, File.lstat(link).uid)
 
-            obj[:links] = :copy
+            # And then explicitly managing
+            File.chown(inituser, nil, file)
+            File.lchown(inituser, nil, link)
+            obj[:links] = :manage
             assert_events([:file_changed], obj)
-            assert_equal(user.uid, File.stat(file).uid)
+            assert_equal(user.uid, File.lstat(link).uid)
+            assert_equal(inituser, File.stat(file).uid)
 
             obj.delete(:owner)
-            obj[:links] = :skip
+            obj[:links] = :ignore
 
+            # And then test 'group'
             group = nonrootgroup
 
             initgroup = File.stat(file).gid
             obj[:group] = group.name
 
             assert_events([:file_changed], obj)
-
             assert_equal(initgroup, File.stat(file).gid)
+            assert_equal(group.gid, File.lstat(link).gid)
+            File.chown(nil, initgroup, file)
+            File.lchown(nil, initgroup, link)
 
             obj[:links] = :follow
             assert_events([:file_changed], obj)
             assert_equal(group.gid, File.stat(file).gid)
             File.chown(nil, initgroup, file)
+            File.lchown(nil, initgroup, link)
 
-            obj[:links] = :copy
+            obj[:links] = :manage
             assert_events([:file_changed], obj)
-            assert_equal(group.gid, File.stat(file).gid)
+            assert_equal(group.gid, File.lstat(link).gid)
+            assert_equal(initgroup, File.stat(file).gid)
         end
 
         def test_ownerasroot
@@ -859,13 +876,13 @@ class TestFile < Test::Unit::TestCase
         # Assert that we default to not following links
         assert_equal("%o" % 0644, "%o" % (File.stat(file).mode & 007777))
 
+        # Assert that we can manage the link directly, but modes still don't change
+        obj[:links] = :manage
+        assert_events([], obj)
+
+        assert_equal("%o" % 0644, "%o" % (File.stat(file).mode & 007777))
+
         obj[:links] = :follow
-        assert_events([:file_changed], obj)
-
-        assert_equal("%o" % 0755, "%o" % (File.stat(file).mode & 007777))
-
-        File.chmod(0644, file)
-        obj[:links] = :copy
         assert_events([:file_changed], obj)
 
         assert_equal("%o" % 0755, "%o" % (File.stat(file).mode & 007777))
@@ -873,7 +890,7 @@ class TestFile < Test::Unit::TestCase
         # Now verify that content and checksum don't update, either
         obj.delete(:mode)
         obj[:checksum] = "md5"
-        obj[:links] = :skip
+        obj[:links] = :ignore
 
         assert_events([], obj)
         File.open(file, "w") { |f| f.puts "more text" }
@@ -885,7 +902,7 @@ class TestFile < Test::Unit::TestCase
 
         obj.delete(:checksum)
         obj[:content] = "this is some content"
-        obj[:links] = :skip
+        obj[:links] = :ignore
 
         assert_events([], obj)
         File.open(file, "w") { |f| f.puts "more text" }

@@ -33,7 +33,7 @@ module Puppet
                 return
             end
 
-            if stat.ftype == "link" and @parent[:links] == :skip
+            if stat.ftype == "link" and @parent[:links] == :ignore
                 self.info "Not changing the content of symlink"
                 self.is = self.should
                 return

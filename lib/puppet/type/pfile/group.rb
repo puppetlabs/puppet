@@ -41,7 +41,7 @@ module Puppet
             stat = @parent.stat(false)
 
             # Set our method appropriately, depending on links.
-            if stat.ftype == "link" and @parent[:links] == :skip
+            if stat.ftype == "link" and @parent[:links] != :follow
                 @method = :lchown
             else
                 @method = :chown

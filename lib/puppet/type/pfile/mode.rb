@@ -40,7 +40,8 @@ module Puppet
             value = should
             if value.is_a?(String)
                 unless value =~ /^[0-9]+$/
-                    raise Puppet::Error, "File modes can only be numbers"
+                    raise Puppet::Error, "File modes can only be numbers, not %s" %
+                        value.inspect
                 end
                 unless value =~ /^0/
                     value = "0" + value
@@ -74,16 +75,20 @@ module Puppet
             return value
         end
 
+        def insync?
+            if stat = @parent.stat and stat.ftype == "link" and @parent[:links] != :follow
+                self.info "Not managing symlink mode"
+                return true
+            else
+                return super
+            end
+        end
+
         def retrieve
             # If we're not following links and we're a link, then we just turn
             # off mode management entirely.
 
             if stat = @parent.stat(false)
-                if stat.ftype == "link" and @parent[:links] == :skip
-                    self.info "Not managing symlink mode"
-                    self.is = self.should
-                    return
-                end
                 self.is = stat.mode & 007777
                 unless defined? @fixed
                     if defined? @should and @should
