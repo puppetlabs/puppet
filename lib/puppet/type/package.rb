@@ -162,8 +162,6 @@ module Puppet
                         if @latest and ((Time.now.to_i - @lateststamp) / 60) < 5
                             #self.debug "Skipping latest check"
                         else
-                            self.warning "latest: %s, stamp: %s" %
-                                [@latest.inspect, (Time.now.to_i - @lateststamp) / 60]
                             begin
                                 @latest = @parent.latest
                                 @lateststamp = Time.now.to_i

@@ -69,7 +69,7 @@ class Server
             CHECKPARAMS.each { |check|
                 if state = obj.state(check)
                     unless state.is
-                        mount.notice "Manually retrieving info for %s" % check
+                        mount.debug "Manually retrieving info for %s" % check
                         state.retrieve
                     end
                     desc << state.is
@@ -518,7 +518,6 @@ class Server
 
                 # This, ah, might be completely redundant
                 unless obj[:links] == links
-                    obj.info "setting links to %s" % links.inspect
                     obj[:links] = links
                 end
 

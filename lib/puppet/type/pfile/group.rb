@@ -40,18 +40,18 @@ module Puppet
         def retrieve
             stat = @parent.stat(false)
 
+            unless stat
+                self.is = :absent
+                return
+            end
+
             # Set our method appropriately, depending on links.
             if stat.ftype == "link" and @parent[:links] != :follow
                 @method = :lchown
             else
                 @method = :chown
             end
-
-            if stat
-                self.is = stat.gid
-            else
-                self.is = :absent
-            end
+            self.is = stat.gid
         end
 
         # Determine if the group is valid, and if so, return the UID
