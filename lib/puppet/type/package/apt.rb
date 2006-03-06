@@ -30,6 +30,7 @@ module Puppet
         # What's the latest package version available?
         def latest
             cmd = "apt-cache showpkg %s" % self[:name] 
+            self.info "Executing %s" % cmd.inspect
             output = %x{#{cmd} 2>&1}
 
             unless $? == 0

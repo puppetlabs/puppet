@@ -1,3 +1,10 @@
+0.14.0
+    Added some ability to selectively manage symlinks when doing file management
+    Many bug fixes
+    Variables can now be used as the test values in case statements and selectors
+    Bumping a minor release number because 0.13.4 introduced a protocol
+        incompatibility and should have had a minor rev bump
+
 0.13.6
     Many, many small bug fixes
     FreeBSD user/group support has been added

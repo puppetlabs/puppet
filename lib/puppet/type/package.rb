@@ -139,6 +139,9 @@ module Puppet
             # funky definitions of 'in sync'.
             def insync?
                 @should ||= []
+
+                @latest = nil unless defined? @latest
+                @lateststamp ||= (Time.now.to_i - 1000)
                 # Iterate across all of the should values, and see how they
                 # turn out.
                 @should.each { |should|
@@ -155,16 +158,24 @@ module Puppet
                             )
                         end
 
-                        begin
-                            latest = @parent.latest
-                        rescue => detail
-                            self.fail "Could not get latest version: %s" % detail
+                        # Don't run 'latest' more than about every 5 minutes
+                        if @latest and ((Time.now.to_i - @lateststamp) / 60) < 5
+                            #self.debug "Skipping latest check"
+                        else
+                            self.warning "latest: %s, stamp: %s" %
+                                [@latest.inspect, (Time.now.to_i - @lateststamp) / 60]
+                            begin
+                                @latest = @parent.latest
+                                @lateststamp = Time.now.to_i
+                            rescue => detail
+                                self.fail "Could not get latest version: %s" % detail
+                            end
                         end
                         case @is
-                        when latest:
+                        when @latest:
                             return true
                         when :present:
-                            if @parent[:version] == latest
+                            if @parent[:version] == @latest
                                 return true
                             end
                         else
