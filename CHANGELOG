@@ -1,3 +1,7 @@
+0.14.1
+    Fixed a couple of small logging bugs
+    Fixed a bug with handling group ownership of links
+
 0.14.0
     Added some ability to selectively manage symlinks when doing file management
     Many bug fixes
