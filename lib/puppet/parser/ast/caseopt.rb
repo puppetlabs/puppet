@@ -61,7 +61,7 @@ class Puppet::Parser::AST
         # our option matched.
         def evaluate(hash)
             scope = hash[:scope]
-            return @statements.safeevaluate(:scope => scope.newscope)
+            return @statements.safeevaluate(:scope => scope)
         end
 
         def tree(indent = 0)
