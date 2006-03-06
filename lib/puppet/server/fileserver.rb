@@ -503,7 +503,13 @@ class Server
 
             def fileobj(path, links)
                 obj = nil
-                unless obj = Puppet.type(:file)[path]
+                if obj = Puppet.type(:file)[path]
+                    # This can only happen in local fileserving, but it's an
+                    # important one.  It'd be nice if we didn't just set
+                    # the check params every time, but I'm not sure it's worth
+                    # the effort.
+                    obj[:check] = CHECKPARAMS
+                else
                     obj = Puppet.type(:file).create(
                         :name => path,
                         :check => CHECKPARAMS

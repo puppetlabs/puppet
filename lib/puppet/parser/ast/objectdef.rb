@@ -192,7 +192,7 @@ class Puppet::Parser::AST
             unless type.validattr?(pname)
                 error = Puppet::ParseError.new(
                     "Invalid parameter '%s' for type '%s'" %
-                        [pname,type.name]
+                        [pname,type.type]
                 )
                 error.line = self.line
                 error.file = self.file
@@ -213,12 +213,10 @@ class Puppet::Parser::AST
                 raise Puppet::DevError, detail.to_s
             end
 
-            # FIXME This should look through the scope tree, not in a global
-            # hash
             unless objtype.validarg?(pname)
                 error = Puppet::ParseError.new(
                     "Invalid parameter '%s' for type '%s'" %
-                        [pname,objtype]
+                        [pname,objtype.type]
                 )
                 error.line = self.line
                 error.file = self.file

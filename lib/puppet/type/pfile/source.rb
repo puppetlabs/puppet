@@ -142,6 +142,7 @@ module Puppet
                     raise Puppet::Error, "Cannot copy links yet"
                 end
             else
+                self.info @stats.inspect
                 self.err "Cannot use files of type %s as sources" %
                     @stats[:type]
                 @should = [:nocopy]
@@ -162,6 +163,8 @@ module Puppet
                     else
                         @parent[stat] = value
                     end
+                #else
+                #    @parent.info "Already specified %s" % stat
                 end
             }
         end

@@ -361,7 +361,7 @@ module Puppet
         # Execute a command.  Basically just makes sure it exits with a 0
         # code.
         def execute(type, cmd)
-            self.info "Executing %s" % cmd.inspect
+            self.debug "Executing %s" % cmd.inspect
             output = %x(#{cmd} 2>&1)
             unless $? == 0
                 self.fail "Could not %s %s: %s" %
@@ -437,7 +437,7 @@ module Puppet
                 self.respond_to?(:statuscmd) and self.statuscmd
             )
                 cmd = self[:status] || self.statuscmd
-                self.info "Executing %s" % cmd.inspect
+                self.debug "Executing %s" % cmd.inspect
                 output = %x(#{cmd} 2>&1)
                 self.debug "%s status returned %s" %
                     [self.name, output.inspect]
