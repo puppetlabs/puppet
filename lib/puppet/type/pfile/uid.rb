@@ -146,7 +146,7 @@ module Puppet
                 @parent.stat(true)
                 self.retrieve
                 if @is == :absent
-                    self.info "File does not exist; cannot set owner"
+                    self.debug "File does not exist; cannot set owner"
                     return nil
                 end
                 if self.insync?
