@@ -65,7 +65,7 @@ module Puppet
             end
 
             # this is somewhat complicated, because it could exist and be
-            # a file
+            # a link
             def sync
                 case self.should
                 when :absent
@@ -101,6 +101,8 @@ module Puppet
         copyparam(Puppet.type(:file), :path)
 
         newparam(:recurse) do
+            attr_reader :setparent
+
             desc "If target is a directory, recursively create
                 directories (using `file`'s `source` parameter) and link all
                 contained files.  For instance::
@@ -109,7 +111,7 @@ module Puppet
                     # in /opt/csw; link it into /usr/local
                     symlink { \"/usr/local\":
                         ensure => \"/opt/csw\",
-                        recurse => 1
+                        recurse => true
                     }
 
 
@@ -120,13 +122,16 @@ module Puppet
                 @stat = nil
                 @target = @parent.state(:ensure).should
 
+                self.setparent()
+            end
+
+            def setparent
                 # we want to remove our state, because we're creating children
                 # to do the links
                 if FileTest.exist?(@target)
-                    @stat = File.stat(@target)
+                    @stat = File.lstat(@target)
                 else
-                    @parent.info "Target %s must exist for recursive links" %
-                        @target
+                    @setparent = false
                     return
                 end
 
@@ -168,6 +173,7 @@ module Puppet
                 dir = Puppet.type(:file).implicitcreate(args)
                 dir.parent = @parent
                 @parent.push dir
+                @setparent = true
             end
         end
 

@@ -30,6 +30,12 @@ module Puppet
                 @doc = str
             end
 
+            def initvars
+                @parametervalues = []
+                @aliasvalues = {}
+                @parameterregexes = []
+            end
+
             # This is how we munge the value.  Basically, this is our
             # opportunity to convert the value from one form into another.
             def munge(&block)
@@ -55,10 +61,6 @@ module Puppet
                 end
                 #@munger = block
             end
-
-            #def inspect
-            #    "Parameter(#{self.name})"
-            #end
 
             # Mark whether we're the namevar.
             def isnamevar
@@ -118,27 +120,46 @@ module Puppet
                 end
             end
 
+            # Does the value match any of our regexes?
+            def match?(value)
+                value = value.to_s unless value.is_a? String
+                @parameterregexes.find { |r|
+                    r = r[0] if r.is_a? Array # States use a hash here
+                    r =~ value
+                }
+            end
+
             # Define a new value for our parameter.
             def newvalues(*names)
-                @parametervalues ||= []
-
                 names.each { |name|
-                    if @parametervalues.include?(name)
-                        Puppet.warning "%s already has a value for %s" %
-                            [name, name]
+                    name = name.intern if name.is_a? String
+
+                    case name
+                    when Symbol
+                        if @parametervalues.include?(name)
+                            Puppet.warning "%s already has a value for %s" %
+                                [name, name]
+                        end
+                        @parametervalues << name
+                    when Regexp
+                        if @parameterregexes.include?(name)
+                            Puppet.warning "%s already has a value for %s" %
+                                [name, name]
+                        end
+                        @parameterregexes << name
+                    else
+                        raise ArgumentError, "Invalid value %s of type %s" %
+                            [name, name.class]
                     end
-                    @parametervalues << name
                 }
             end
 
             def aliasvalue(name, other)
-                @parametervalues ||= []
                 unless @parametervalues.include?(other)
                     raise Puppet::DevError,
                         "Cannot alias nonexistent value %s" % other
                 end
 
-                @aliasvalues ||= {}
                 @aliasvalues[name] = other
             end
 
@@ -146,11 +167,12 @@ module Puppet
                 @aliasvalues[name]
             end
 
+            def regexes
+                return @parameterregexes.dup
+            end
+
             # Return the list of valid values.
             def values
-                @parametervalues ||= []
-                @aliasvalues ||= {}
-
                 #[@aliasvalues.keys, @parametervalues.keys].flatten
                 if @parametervalues.is_a? Array
                     return @parametervalues.dup
@@ -240,7 +262,7 @@ module Puppet
 
         # If the specified value is allowed, then munge appropriately.
         munge do |value|
-            if self.class.values.empty?
+            if self.class.values.empty? and self.class.regexes.empty?
                 # This parameter isn't using defined values to do its work.
                 return value
             end
@@ -254,25 +276,51 @@ module Puppet
                 retval = intern
             elsif other = self.class.alias(intern)
                 retval = other
+            elsif ary = self.class.match?(value)
+                retval = value
             else
+                # If it passed the validation but is not a registered value,
+                # we just return it as is.
                 retval = value
             end
+
             retval
         end
 
         # Verify that the passed value is valid.
         validate do |value|
-            values = self.class.values
-            if values.empty?
+            vals = self.class.values
+            regs = self.class.regexes
+
+            if regs.is_a? Hash # this is true on states
+                regs = regs.keys
+            end
+            if vals.empty? and regs.empty?
                 # This parameter isn't using defined values to do its work.
                 return 
             end
+            newval = value
             unless value.is_a?(Symbol)
-                value = value.to_s.intern
+                newval = value.to_s.intern
             end
-            unless values.include?(value) or self.class.alias(value)
-                self.fail "Invalid '%s' value '%s'.  Valid values are '%s'" %
-                        [self.class.name, value, values.join(", ")]
+
+            unless vals.include?(newval) or
+                self.class.alias(newval) or
+                self.class.match?(value) # We match the string, not the symbol
+                    str = "Invalid '%s' value %s. " %
+                        [self.class.name, value.inspect]
+
+                    unless vals.empty?
+                        str += "Valid values are %s. " % vals.join(", ")
+                    end
+
+                    unless regs.empty?
+                        str += "Valid values match %s." % regs.collect { |r|
+                            r.to_s
+                        }.join(", ")
+                    end
+
+                    raise ArgumentError, str
             end
         end
 

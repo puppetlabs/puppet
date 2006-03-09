@@ -18,26 +18,34 @@ class State < Puppet::Parameter
     class << self
         attr_accessor :unmanaged
         attr_reader :name
-
-        #def inspect
-        #    "State(%s)" % self.name
-        #end
-
-        #def to_s
-        #    self.inspect
-        #end
     end
 
-    # Parameters just use 'newvalues', since there's no work associated with them.
+    # Create the value management variables.
+    def self.initvars
+        @parametervalues = {}
+        @aliasvalues = {}
+        @parameterregexes = {}
+    end
+
+    # Parameters just use 'newvalues', since there's no work associated with them,
+    # but states have blocks associated with their allowed values.
     def self.newvalue(name, &block)
-        @parametervalues ||= {}
+        name = name.intern if name.is_a? String
 
-        if @parametervalues.include?(name)
-            Puppet.warning "%s already has a value for %s" % [name, name]
+        case name
+        when Symbol
+            if @parametervalues.include?(name)
+                Puppet.warning "%s reassigning value %s" % [self.name, name]
+            end
+            @parametervalues[name] = block
+
+            define_method("set_" + name.to_s, &block)
+        when Regexp
+            @parameterregexes[name] = block
+        else
+            raise ArgumentError, "Invalid value %s of type %s" %
+                [name, name.class]
         end
-        @parametervalues[name] = block
-
-        define_method("set_" + name.to_s, &block)
     end
 
     # Call the method associated with a given value.
@@ -49,22 +57,26 @@ class State < Puppet::Parameter
 
         value = self.should
         method = "set_" + value.to_s
-        unless self.respond_to?(method)
+        event = nil
+        if self.respond_to?(method)
+            self.debug "setting %s (currently %s)" % [value, self.is]
+
+            begin
+                event = self.send(method)
+            rescue Puppet::Error
+                raise
+            rescue => detail
+                if Puppet[:debug]
+                    puts detail.backtrace
+                end
+                self.fail "Could not set %s on %s: %s" %
+                    [value, self.class.name, detail]
+            end
+        elsif ary = self.class.match?(value)
+            event = ary[1].call(value)
+        else
             self.fail "%s is not a valid value for %s" %
                 [value, self.class.name]
-        end
-        self.debug "setting %s (currently %s)" % [value, self.is]
-
-        begin
-            event = self.send(method)
-        rescue Puppet::Error
-            raise
-        rescue => detail
-            if Puppet[:debug]
-                puts detail.backtrace
-            end
-            self.fail "Could not set %s on %s: %s" %
-                [value, self.class.name, detail]
         end
 
         if event and event.is_a?(Symbol)
@@ -186,7 +198,11 @@ class State < Puppet::Parameter
     # return the full path to us, for logging and rollback; not currently
     # used
     def path
-        return [@parent.path, self.name].join("/")
+        if defined? @parent and @parent
+            return [@parent.path, self.name].join("/")
+        else
+            return self.name
+        end
     end
 
     # Only return the first value

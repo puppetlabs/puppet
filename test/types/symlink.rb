@@ -88,4 +88,30 @@ class TestSymlink < Test::Unit::TestCase
             }
         }
     end
+
+    def test_createdrecursion
+        source = tempfile()
+        file = File.join(source, "file")
+        dest = tempfile()
+        link = File.join(dest, "file")
+
+        objects = []
+        objects << Puppet.type(:file).create(
+            :path => source,
+            :ensure => "directory"
+        )
+        objects << Puppet.type(:file).create(
+            :path => file,
+            :ensure => "file"
+        )
+        objects << Puppet.type(:symlink).create(
+            :path => dest,
+            :ensure => source,
+            :recurse => true
+        )
+
+        assert_apply(*objects)
+
+        assert(FileTest.symlink?(link), "Link was not created")
+    end
 end

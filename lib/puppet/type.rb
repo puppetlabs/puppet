@@ -417,6 +417,9 @@ class Type < Puppet::Element
         param = Class.new(Puppet::Parameter) do
             @name = name
         end
+
+        param.initvars
+
         param.ismetaparameter
         param.class_eval(&block)
         const_set("MetaParam" + name.to_s.capitalize,param)
@@ -440,6 +443,9 @@ class Type < Puppet::Element
         param = Class.new(Puppet::Parameter) do
             @name = name
         end
+
+        param.initvars
+
         param.element = self
         param.class_eval(&block)
         const_set("Parameter" + name.to_s.capitalize,param)
@@ -475,6 +481,9 @@ class Type < Puppet::Element
         s = Class.new(parent) do
             @name = name
         end
+
+        s.initvars
+
         const_set("State" + name.to_s.capitalize,s)
         s.class_eval(&block)
         @states ||= []
