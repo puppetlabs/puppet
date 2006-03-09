@@ -192,7 +192,7 @@ class Puppet::Parser::AST
             unless type.validattr?(pname)
                 error = Puppet::ParseError.new(
                     "Invalid parameter '%s' for type '%s'" %
-                        [pname,type.type]
+                        [pname, type.name]
                 )
                 error.line = self.line
                 error.file = self.file
