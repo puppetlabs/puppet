@@ -140,16 +140,16 @@ module Puppet
 
         # Determine the user to write files as.
         def asuser
-            if @parent.should(:owner) and ! @parent.should(:owner).is_a?(Symbol)
-                writeable = Puppet::Util.asuser(@parent.should(:owner)) {
-                    FileTest.writable?(File.dirname(@parent[:path]))
+            if self.should(:owner) and ! self.should(:owner).is_a?(Symbol)
+                writeable = Puppet::Util.asuser(self.should(:owner)) {
+                    FileTest.writable?(File.dirname(self[:path]))
                 }
 
                 # If the parent directory is writeable, then we execute
                 # as the user in question.  Otherwise we'll rely on
                 # the 'owner' state to do things.
                 if writeable
-                    asuser = @parent.should(:owner)
+                    asuser = self.should(:owner)
                 end
             end
 

@@ -232,4 +232,55 @@ class TestTransactions < Test::Unit::TestCase
 
     end
 
+    # Make sure that multiple subscriptions get triggered.
+    def test_multisubs
+        path = tempfile()
+        file1 = tempfile()
+        file2 = tempfile()
+        file = Puppet.type(:file).create(
+            :path => path,
+            :ensure => "file"
+        )
+        exec1 = Puppet.type(:exec).create(
+            :path => ENV["PATH"],
+            :command => "touch %s" % file1,
+            :refreshonly => true,
+            :subscribe => [:file, path]
+        )
+        exec2 = Puppet.type(:exec).create(
+            :path => ENV["PATH"],
+            :command => "touch %s" % file2,
+            :refreshonly => true,
+            :subscribe => [:file, path]
+        )
+
+        assert_apply(file, exec1, exec2)
+        assert(FileTest.exists?(file1), "File 1 did not get created")
+        assert(FileTest.exists?(file2), "File 2 did not get created")
+    end
+
+    # Make sure that a failed trigger doesn't result in other events not
+    # getting triggered.
+    def test_failedrefreshes
+        path = tempfile()
+        newfile = tempfile()
+        file = Puppet.type(:file).create(
+            :path => path,
+            :ensure => "file"
+        )
+        svc = Puppet.type(:service).create(
+            :name => "thisservicedoesnotexist",
+            :subscribe => [:file, path]
+        )
+        exec = Puppet.type(:exec).create(
+            :path => ENV["PATH"],
+            :command => "touch %s" % newfile,
+            :logoutput => true,
+            :refreshonly => true,
+            :subscribe => [:file, path]
+        )
+
+        assert_apply(file, svc, exec)
+        assert(FileTest.exists?(newfile), "File did not get created")
+    end
 end

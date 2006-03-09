@@ -1845,16 +1845,6 @@ class Type < Puppet::Element
         }
     end
 
-    # Trigger any associated subscriptions, and then pass the event up to our
-    # parent.
-    def propagate(event, transaction)
-        Puppet::Event::Subscription.trigger(self, event, transaction)
-
-        if defined? @parent
-            @parent.propagate(event, transaction)
-        end
-    end
-
     def requires?(object)
         req = false
         self.eachdependency { |dep|

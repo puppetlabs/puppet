@@ -77,12 +77,13 @@ module Puppet
 
             # Trigger the subscriptions related to an event, and then pass it up
             # as appropriate
-            def self.trigger(source, event, transaction)
+            def self.trigger(source, event)
                 type, name = self.split(source)
 
                 @subscriptions[type][name].each { |sub|
                     if sub.match?(event)
-                        sub.trigger(transaction)
+                        yield sub
+                        #sub.trigger(transaction)
                     end
                 }
             end
@@ -211,26 +212,14 @@ module Puppet
                     target = self.target
                     #Puppet.debug "'%s' matched '%s'; triggering '%s' on '%s'" %
                     #    [@source,@event,@method,target]
-                    begin
-                        if target.respond_to?(@callback)
-                            target.log "triggering %s" % @callback
-                            event = target.send(@callback)
-                        else
-                            Puppet.debug(   
-                                "'%s' of type '%s' does not respond to '%s'" %
-                                [target,target.class,@callback.inspect]
-                            )
-                        end
-                    rescue => detail
-                        # um, what the heck do i do when an object fails to
-                        # refresh?  shouldn't that result in the transaction
-                        # rolling back?  the 'onerror' metaparam will be used
-                        # to determine behaviour in that case
-                        Puppet.err "'%s' failed to %s: '%s'" %
-                            [target,@callback,detail]
-                        raise
-                        #raise "We need to roll '%s' transaction back" %
-                            #transaction
+                    if target.respond_to?(@callback)
+                        target.log "triggering %s" % @callback
+                        event = target.send(@callback)
+                    else
+                        Puppet.debug(   
+                            "'%s' of type '%s' does not respond to '%s'" %
+                            [target,target.class,@callback.inspect]
+                        )
                     end
                     transaction.triggered(target, @callback)
                 end
