@@ -910,6 +910,25 @@ class TestFile < Test::Unit::TestCase
         obj[:links] = :follow
         assert_events([:file_changed], obj)
     end
+
+    # If both 'ensure' and 'content' are used, make sure that all of the other
+    # states are handled correctly.
+    def test_contentwithmode
+        path = tempfile()
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :path => path,
+                :ensure => "file",
+                :content => "some text\n",
+                :mode => 0755
+            )
+        }
+
+        assert_apply(file)
+        assert_equal("%o" % 0755, "%o" % (File.stat(path).mode & 007777))
+    end
 end
 
 # $Id$

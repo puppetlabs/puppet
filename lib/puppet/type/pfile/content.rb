@@ -51,17 +51,7 @@ module Puppet
 
         # Just write our content out to disk.
         def sync
-            begin
-                File.open(@parent[:path], "w") { |f|
-                    f.print self.should
-                    f.flush
-                }
-            rescue => detail
-                raise Puppet::Error, "Could not write content to %s: %s" %
-                    [@parent.name, detail]
-            end
-
-            @parent.setchecksum
+            @parent.write { |f| f.print self.should }
 
             if @is == :absent
                 return :file_created

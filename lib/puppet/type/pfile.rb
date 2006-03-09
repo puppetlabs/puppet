@@ -138,6 +138,25 @@ module Puppet
             @arghash.include?(arg)
         end
 
+        # Determine the user to write files as.
+        def asuser
+            if @parent.should(:owner) and ! @parent.should(:owner).is_a?(Symbol)
+                writeable = Puppet::Util.asuser(@parent.should(:owner)) {
+                    FileTest.writable?(File.dirname(@parent[:path]))
+                }
+
+                # If the parent directory is writeable, then we execute
+                # as the user in question.  Otherwise we'll rely on
+                # the 'owner' state to do things.
+                if writeable
+                    asuser = @parent.should(:owner)
+                end
+            end
+
+            return asuser
+        end
+
+        # Deal with backups.
         def handlebackup(file = nil)
             # let the path be specified
             file ||= self[:path]
@@ -605,6 +624,64 @@ module Puppet
             end
 
             return [sourceobj, path.sub(/\/\//, '/')]
+        end
+
+        # Write out the file.  We open the file correctly, with all of the
+        # uid and mode and such, and then yield the file handle for actual
+        # writing.
+        def write(usetmp = true)
+            mode = self.should(:mode)
+
+            if FileTest.exists?(self[:path])
+                # this makes sure we have a copy for posterity
+                @backed = self.handlebackup
+            end
+
+            # The temporary file
+            path = nil
+            if usetmp
+                path = self[:path] + ".puppettmp"
+            else
+                path = self[:path]
+            end
+
+            # As the correct user and group
+            Puppet::Util.asuser(asuser(), self.should(:group)) do
+                f = nil
+                # Open our file with the correct modes
+                if mode
+                    Puppet::Util.withumask(000) do
+                        f = File.open(path,
+                            File::CREAT|File::WRONLY|File::TRUNC, mode)
+                    end
+                else
+                    f = File.open(path, File::CREAT|File::WRONLY|File::TRUNC)
+                end
+
+                # Yield it
+                yield f
+
+                f.flush
+                f.close
+            end
+
+            # And put our new file in place
+            if usetmp
+                begin
+                    File.rename(path, self[:path])
+                rescue => detail
+                    self.err "Could not rename tmp %s for replacing: %s" %
+                        [self[:path], detail]
+                ensure
+                    # Make sure the created file gets removed
+                    if FileTest.exists?(path)
+                        File.unlink(path)
+                    end
+                end
+            end
+
+            # And then update our checksum, so the next run doesn't find it.
+            self.setchecksum
         end
     end # Puppet.type(:pfile)
 

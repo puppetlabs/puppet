@@ -241,57 +241,9 @@ module Puppet
                 self.notice "Could not retrieve contents for %s" %
                     @source
             end
-
-            if FileTest.exists?(@parent[:path])
-                # this makes sure we have a copy for posterity
-                @backed = @parent.handlebackup
-            end
-
-            # create the file in a tmp location
-            args = [@parent[:path] + ".puppettmp", 
-                File::CREAT | File::WRONLY | File::TRUNC]
-
-            # try to create it with the correct modes to start
-            # we should also be changing our effective uid/gid, but...
-            if @parent.should(:mode) and @parent.should(:mode) != :absent
-                args.push @parent.should(:mode)
-            end
-
-            # FIXME we should also change our effective user and group id
-
             exists = File.exists?(@parent[:path])
-            begin
-                File.open(*args) { |f|
-                    f.print contents
-                }
-            rescue => detail
-                # since they said they want a backup, let's error out
-                # if we couldn't make one
-                raise Puppet::Error, "Could not create %s to %s: %s" %
-                    [@source, @parent[:path], detail.message]
-            end
 
-            if FileTest.exists?(@parent[:path])
-                begin
-                    File.unlink(@parent[:path])
-                rescue => detail
-                    self.err "Could not remove %s for replacing: %s" %
-                        [@parent[:path], detail]
-                end
-            end
-
-            begin
-                File.rename(@parent[:path] + ".puppettmp", @parent[:path])
-            rescue => detail
-                self.err "Could not rename tmp %s for replacing: %s" %
-                    [@parent[:path], detail]
-            end
-
-            if @stats.include? :checksum
-                @parent.setchecksum @stats[:checksum]
-            else
-                raise Puppet::DevError, "We're somehow missing the remote checksum"
-            end
+            @parent.write { |f| f.print contents }
 
             if exists
                 return :file_changed
