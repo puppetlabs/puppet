@@ -65,8 +65,7 @@ class Puppet::Parser::AST
                 end
             end
 
-            # Retrieve the defaults for our type
-            hash = getdefaults(objtype, scope)
+            hash = {}
 
             # then set all of the specified params
             @params.each { |param|
@@ -105,50 +104,7 @@ class Puppet::Parser::AST
                     error.backtrace = detail.backtrace
                     raise error
                 end
-#                else
-#                    # but things like components create a new type; if we find
-#                    # one of those, evaluate that with our arguments
-#                    #Puppet.debug("Calling object '%s' with arguments %s" %
-#                    #    [object.name, hash.inspect])
-#                    #obj = object.safeevaluate(scope,hash,objtype,objname)
-#                    obj = object.safeevaluate(
-#                        :scope => scope,
-#                        :arguments => hash,
-#                        :type => objtype,
-#                        :name => objname
-#                    )
-#
-#                    # and pass the result on
-#                    obj
-#                end
             }.reject { |obj| obj.nil? }
-        end
-
-        # Retrieve the defaults for our type
-        def getdefaults(objtype, scope)
-            # first, retrieve the defaults
-            begin
-                defaults = scope.lookupdefaults(objtype)
-                if defaults.length > 0
-                    #Puppet.debug "Got defaults for %s: %s" %
-                    #    [objtype,defaults.inspect]
-                end
-            rescue => detail
-                raise Puppet::DevError, 
-                    "Could not lookup defaults for %s: %s" %
-                        [objtype, detail.to_s]
-            end
-
-            hash = {}
-            # Add any found defaults to our argument list
-            defaults.each { |var,value|
-                Puppet.debug "Found default %s for %s" %
-                    [var,objtype]
-
-                hash[var] = value
-            }
-
-            return hash
         end
 
         # Create our ObjectDef.  Handles type checking for us.

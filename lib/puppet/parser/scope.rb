@@ -35,6 +35,20 @@ module Puppet
                 @@declarative = val
             end
 
+            # Add all of the defaults for a given object to that object.
+            def adddefaults(obj)
+                defaults = self.lookupdefaults(obj.type)
+
+                defaults.each do |var, value|
+                    unless obj[var]
+                        self.debug "Adding default %s for %s" %
+                            [var, obj.type]
+
+                        obj[var] = value
+                    end
+                end
+            end
+
             # Add a single object's tags to the global list of tags for
             # that object.
             def addtags(obj)
@@ -974,6 +988,9 @@ module Puppet
                         # Wait until the last minute to set tags, although this
                         # probably should not matter
                         child.tags = self.tags
+
+                        # Add any defaults.
+                        self.adddefaults(child)
 
                         # Then make sure this child's tags are stored in the
                         # central table.  This should maybe be in the evaluate

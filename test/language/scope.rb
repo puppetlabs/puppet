@@ -513,4 +513,35 @@ class TestScope < Test::Unit::TestCase
         #    trans = scope.evaluate(:ast => top)
         #}
     end
+
+    def test_defaultswithmultiplestatements
+        path = tempfile()
+
+        stats = []
+        stats << defaultobj("file", "group" => "root")
+        stats << fileobj(path, "owner" => "root")
+        stats << fileobj(path, "mode" => "755")
+
+        top = AST::ASTArray.new(
+            :file => __FILE__,
+            :line => __LINE__,
+            :children => stats
+        )
+        scope = Puppet::Parser::Scope.new()
+        assert_nothing_raised {
+            scope.evaluate(:ast => top)
+        }
+
+        trans = nil
+        assert_nothing_raised {
+            trans = scope.to_trans
+        }
+
+        obj = trans.find do |obj| obj.is_a? Puppet::TransObject end
+
+        assert(obj, "Could not retrieve file obj")
+        assert_equal("root", obj["group"], "Default did not take")
+        assert_equal("root", obj["owner"], "Owner did not take")
+        assert_equal("755", obj["mode"], "Mode did not take")
+    end
 end

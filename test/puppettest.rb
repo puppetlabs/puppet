@@ -766,6 +766,16 @@ module ParserTesting
         }
     end
 
+    def typeobj(name)
+        assert_nothing_raised("Could not create type %s" % name) {
+            return AST::Type.new(
+                :file => tempfile(),
+                :line => rand(100),
+                :value => name
+            )
+        }
+    end
+
     def nodeobj(name)
         assert_nothing_raised("Could not create node %s" % name) {
             return AST::NodeDef.new(
@@ -829,6 +839,32 @@ module ParserTesting
         assert_nothing_raised("Could not create %s compargument" % name) {
             return AST::CompArgument.new(
                 :children => [nameobj(name), stringobj(value)]
+            )
+        }
+    end
+
+    def defaultobj(type, params)
+        pary = []
+        params.each { |p,v|
+            pary << AST::ObjectParam.new(
+                :file => __FILE__,
+                :line => __LINE__,
+                :param => nameobj(p),
+                :value => stringobj(v)
+            )
+        }
+        past = AST::ASTArray.new(
+            :file => __FILE__,
+            :line => __LINE__,
+            :children => pary
+        )
+
+        assert_nothing_raised("Could not create defaults for %s" % type) {
+            return AST::TypeDefaults.new(
+                :file => __FILE__,
+                :line => __LINE__,
+                :type => typeobj(type),
+                :params => past
             )
         }
     end
