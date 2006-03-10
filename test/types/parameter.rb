@@ -8,7 +8,7 @@ require 'puppet/type'
 require 'puppettest'
 require 'test/unit'
 
-class TestState < Test::Unit::TestCase
+class TestParameter < Test::Unit::TestCase
 	include TestPuppet
     
     def newparam(name = :fakeparam)

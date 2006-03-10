@@ -122,10 +122,10 @@ module Puppet
                 @stat = nil
                 @target = @parent.state(:ensure).should
 
-                self.setparent()
+                self.setparent(@target)
             end
 
-            def setparent
+            def setparent(value)
                 # we want to remove our state, because we're creating children
                 # to do the links
                 if FileTest.exist?(@target)

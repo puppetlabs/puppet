@@ -63,12 +63,12 @@ class TestState < Test::Unit::TestCase
         assert_equal(2, inst.is)
     end
 
-    def test_newvaluewithregexes
+    def test_newstatevaluewithregexes
         state = newstate()
 
         assert_nothing_raised {
-            state.newvalue(/^\w+$/) do |value|
-                @is = value.upcase
+            state.newvalue(/^\w+$/) do
+                @is = self.should.upcase
                 return :regex_matched
             end
         }

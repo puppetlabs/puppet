@@ -19,6 +19,27 @@ module Puppet
 
         newstate(:ensure, @parentstate) do
             newvalue(:present) do
+                # Verify that they have provided everything necessary, if we
+                # are trying to manage the user
+                if @parent.managed?
+                    @parent.class.states.each { |state|
+                        next if stateobj = @parent.state(state.name)
+                        next if state.name == :ensure
+
+                        unless state.autogen? or state.isoptional?
+                            if state.method_defined?(:autogen)
+                                @parent[state.name] = :auto
+                            else
+                                @parent.fail "Users require a value for %s" %
+                                    state.name
+                            end
+                        end
+                    }
+
+                    #if @states.empty?
+                    #    @parent[:comment] = @parent[:name]
+                    #end
+                end
                 self.syncname(:present)
             end
 
@@ -307,25 +328,8 @@ module Puppet
             @userinfo = nil
             super
 
-            # Verify that they have provided everything necessary, if we
-            # are trying to manage the user
-            if self.managed?
-                self.class.states.each { |state|
-                    next if @states.include?(state.name)
-                    next if state.name == :ensure
-
-                    unless state.autogen? or state.isoptional?
-                        if state.method_defined?(:autogen)
-                            self[state.name] = :auto
-                        else
-                            self.fail "Users require a value for %s" % state.name
-                        end
-                    end
-                }
-
-                if @states.empty?
-                    self[:comment] = self[:name]
-                end
+            unless defined? @states
+                raise "wtf?"
             end
         end
 

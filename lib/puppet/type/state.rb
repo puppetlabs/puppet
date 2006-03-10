@@ -73,7 +73,9 @@ class State < Puppet::Parameter
                     [value, self.class.name, detail]
             end
         elsif ary = self.class.match?(value)
-            event = ary[1].call(value)
+            # FIXME It'd be better here to define a method, so that
+            # the blocks could return values.
+            event = self.instance_eval(&ary[1])
         else
             self.fail "%s is not a valid value for %s" %
                 [value, self.class.name]

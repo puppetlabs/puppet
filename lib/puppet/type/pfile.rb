@@ -218,8 +218,8 @@ module Puppet
             return children unless self[:ignore]
             self[:ignore].each { |ignore|
                 ignored = []
-                Dir.glob(File.join(self[:path],ignore), File::FNM_DOTMATCH) { |match|
-                    ignored.push(File.basename(match))
+                Dir.glob(File.join(self[:path],ignore), File::FNM_DOTMATCH) {
+                    |match| ignored.push(File.basename(match))
                 }
                 children = children - ignored
             }
@@ -229,7 +229,6 @@ module Puppet
         def initialize(hash)
             # clean out as many references to any file paths as possible
             # this was the source of many, many bugs
-            
             @arghash = self.argclean(hash)
             @arghash.delete(self.class.namevar)
 
@@ -409,11 +408,70 @@ module Puppet
             end
 
             self.localrecurse(recurse)
+            if @states.include?(:ensure) and @states[:ensure].should =~ /^#{File::SEPARATOR}/
+                self.linkrecurse(recurse)
+            end
             if @states.include?(:source)
                 self.sourcerecurse(recurse)
             end
         end
 
+        # Build a recursive map of a link source
+        def linkrecurse(recurse)
+            target = @states[:ensure].should
+
+            method = :lstat
+            if self[:links] == :follow
+                method = :stat
+            end
+
+            targetstat = nil
+            unless FileTest.exist?(target)
+                #self.info "%s does not exist; not recursing" %
+                #    target
+                return
+            end
+            # Now stat our target
+            targetstat = File.send(method, target)
+            unless targetstat.ftype == "directory"
+                #self.info "%s is not a directory; not recursing" %
+                #    target
+                return
+            end
+
+            unless FileTest.readable? target
+                self.notice "Cannot manage %s: permission denied" % self.name
+                return
+            end
+
+            children = Dir.entries(target).reject { |d| d =~ /^\.+$/ }
+         
+            #Get rid of ignored children
+            if @parameters.include?(:ignore)
+                children = handleignore(children)
+            end  
+
+            added = []
+            children.each do |file|
+                longname = File.join(@states[:ensure].should, file)
+
+                # Files know to create directories when recursion
+                # is enabled and we're making links
+                args = {
+                    :recurse => recurse,
+                    :ensure => longname
+                }
+
+                if child = self.newchild(file, true, args)
+                    unless @children.include?(child)
+                        self.push child
+                        added.push file
+                    end
+                end
+            end
+        end
+
+        # Build up a recursive map of what's around right now
         def localrecurse(recurse)
             unless FileTest.exist?(self[:path]) and self.stat.directory?
                 #self.info "%s is not a directory; not recursing" %

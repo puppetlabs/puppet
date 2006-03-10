@@ -929,6 +929,149 @@ class TestFile < Test::Unit::TestCase
         assert_apply(file)
         assert_equal("%o" % 0755, "%o" % (File.stat(path).mode & 007777))
     end
+
+    # Make sure we can create symlinks
+    def test_symlinks
+        path = tempfile()
+        link = tempfile()
+
+        File.open(path, "w") { |f| f.puts "yay" }
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :ensure => path,
+                :path => link
+            )
+        }
+
+        assert_events([:link_created], file)
+
+        assert(FileTest.symlink?(link), "Link was not created")
+
+        assert_equal(path, File.readlink(link), "Link was created incorrectly")
+    end
+
+    def test_simplerecursivelinking
+        source = tempfile()
+        dest = tempfile()
+        subdir = File.join(source, "subdir")
+        file = File.join(subdir, "file")
+
+        system("mkdir -p %s" % subdir)
+        system("touch %s" % file)
+
+        link = nil
+        assert_nothing_raised {
+            link = Puppet.type(:file).create(
+                :ensure => source,
+                :path => dest,
+                :recurse => true
+            )
+        }
+
+        assert_apply(link)
+
+        subdest = File.join(dest, "subdir")
+        linkpath = File.join(subdest, "file")
+        assert(File.directory?(dest), "dest is not a dir")
+        assert(File.directory?(subdest), "subdest is not a dir")
+        assert(File.symlink?(linkpath), "path is not a link")
+        assert_equal(file, File.readlink(linkpath))
+    end
+
+    def test_recursivelinking
+        source = tempfile()
+        dest = tempfile()
+
+        files = []
+        dirs = []
+
+        # Make a bunch of files and dirs
+        Dir.mkdir(source)
+        Dir.chdir(source) do
+            system("mkdir -p %s" % "some/path/of/dirs")
+            system("mkdir -p %s" % "other/path/of/dirs")
+            system("touch %s" % "file")
+            system("touch %s" % "other/file")
+            system("touch %s" % "some/path/of/file")
+            system("touch %s" % "some/path/of/dirs/file")
+            system("touch %s" % "other/path/of/file")
+
+            files = %x{find . -type f}.chomp.split(/\n/)
+            dirs = %x{find . -type d}.chomp.split(/\n/).reject{|d| d =~ /^\.+$/ }
+        end
+
+        link = nil
+        assert_nothing_raised {
+            link = Puppet.type(:file).create(
+                :ensure => source,
+                :path => dest,
+                :recurse => true
+            )
+        }
+
+        assert_apply(link)
+
+        files.each do |f|
+            f.sub!(/^\.#{File::SEPARATOR}/, '')
+            path = File.join(dest, f)
+            assert(FileTest.exists?(path), "Link %s was not created" % path)
+            assert(FileTest.symlink?(path), "%s is not a link" % f)
+            target = File.readlink(path)
+            assert_equal(File.join(source, f), target)
+        end
+
+        dirs.each do |d|
+            d.sub!(/^\.#{File::SEPARATOR}/, '')
+            path = File.join(dest, d)
+            assert(FileTest.exists?(path), "Dir %s was not created" % path)
+            assert(FileTest.directory?(path), "%s is not a directory" % d)
+        end
+    end
+
+    def test_localrelativelinks
+        dir = tempfile()
+        Dir.mkdir(dir)
+        source = File.join(dir, "source")
+        File.open(source, "w") { |f| f.puts "yay" }
+        dest = File.join(dir, "link")
+
+        link = nil
+        assert_nothing_raised {
+            link = Puppet.type(:file).create(
+                :path => dest,
+                :ensure => "source"
+            )
+        }
+
+        assert_events([:link_created], link)
+        assert(FileTest.symlink?(dest), "Did not create link")
+        assert_equal("source", File.readlink(dest))
+        assert_equal("yay\n", File.read(dest))
+    end
+
+    def test_recursivelinkingmissingtarget
+        source = tempfile()
+        dest = tempfile()
+
+        objects = []
+        objects << Puppet.type(:exec).create(
+            :command => "mkdir %s; touch %s/file" % [source, source],
+            :path => ENV["PATH"]
+        )
+        objects << Puppet.type(:file).create(
+            :ensure => source,
+            :path => dest,
+            :recurse => true
+        )
+
+        assert_apply(*objects)
+
+        link = File.join(dest, "file")
+        assert(FileTest.symlink?(link), "Did not make link")
+        assert_equal(File.join(source, "file"), File.readlink(link))
+    end
 end
 
 # $Id$
