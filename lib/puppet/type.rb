@@ -1384,8 +1384,13 @@ class Type < Puppet::Element
                 obj = nil
                 # Support them passing objects directly, to save some effort.
                 if dep.is_a? Puppet::Type
+                    self.info "requiring %s" % dep.name
                     type = dep.class.name
                     obj = dep
+
+                    # Now change our dependency to just the string, instead of
+                    # the object itself.
+                    dep = dep.name
                 else
                     # Skip autorequires that we aren't managing
                     unless obj = typeobj[dep]
