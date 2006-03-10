@@ -279,7 +279,7 @@ module Puppet
             # We specifically look in @parameters here, because 'linkmaker' isn't
             # a valid attribute for subclasses, so using 'self[:linkmaker]' throws
             # an error.
-            if @parameters.include?(:linkmaker) and
+            if @parameters.include?(:linkmaker) and @parameters[:linkmaker] == true and
                 args.include?(:source) and ! FileTest.directory?(args[:source])
                 klass = Puppet.type(:symlink)
 
@@ -398,7 +398,8 @@ module Puppet
             end
 
             # are we at the end of the recursion?
-            if recurse == 0
+            #if recurse == 0
+            unless self.recurse?
                 self.info "finished recursing"
                 return
             end
@@ -408,7 +409,7 @@ module Puppet
             end
 
             self.localrecurse(recurse)
-            if @states.include?(:ensure) and @states[:ensure].should =~ /^#{File::SEPARATOR}/
+            if @states.include? :target
                 self.linkrecurse(recurse)
             end
             if @states.include?(:source)
@@ -416,9 +417,19 @@ module Puppet
             end
         end
 
+        def recurse?
+            return false unless @parameters.include?(:recurse)
+
+            if @parameters[:recurse].value == true or @parameters[:recurse].value > 0
+                return true
+            else
+                return false
+            end
+        end
+
         # Build a recursive map of a link source
         def linkrecurse(recurse)
-            target = @states[:ensure].should
+            target = @states[:target].should
 
             method = :lstat
             if self[:links] == :follow
@@ -439,6 +450,10 @@ module Puppet
                 return
             end
 
+            # Now that we know our corresponding target is a directory,
+            # change our type
+            self[:ensure] = :directory
+
             unless FileTest.readable? target
                 self.notice "Cannot manage %s: permission denied" % self.name
                 return
@@ -453,19 +468,21 @@ module Puppet
 
             added = []
             children.each do |file|
-                longname = File.join(@states[:ensure].should, file)
+                Dir.chdir(target) do
+                    longname = File.join(target, file)
 
-                # Files know to create directories when recursion
-                # is enabled and we're making links
-                args = {
-                    :recurse => recurse,
-                    :ensure => longname
-                }
+                    # Files know to create directories when recursion
+                    # is enabled and we're making links
+                    args = {
+                        :recurse => recurse,
+                        :ensure => longname
+                    }
 
-                if child = self.newchild(file, true, args)
-                    unless @children.include?(child)
-                        self.push child
-                        added.push file
+                    if child = self.newchild(file, true, args)
+                        unless @children.include?(child)
+                            self.push child
+                            added.push file
+                        end
                     end
                 end
             end
@@ -759,6 +776,7 @@ module Puppet
     require 'puppet/type/pfile/uid'
     require 'puppet/type/pfile/group'
     require 'puppet/type/pfile/mode'
+    require 'puppet/type/pfile/target'
     require 'puppet/type/pfile/type'
 end
 # $Id$

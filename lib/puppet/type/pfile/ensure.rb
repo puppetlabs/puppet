@@ -73,38 +73,35 @@ module Puppet
             return :directory_created
         end
 
-        # Symlinks.  We pretty much have to match just about anything,
-        # in order to match relative links.  Somewhat ugly, but eh, it
-        # works.
-        newvalue(/./) do
-            Dir.chdir(File.dirname(@parent[:path])) do
-                target = self.should
-                unless FileTest.exists?(target)
-                    self.debug "Not linking to non-existent '%s'" % target
-                    nil # Grrr, can't return
-                else
-                    if FileTest.directory?(target) and @parent[:recurse]
-                        # If we're pointing to a directory and recursion is
-                        # enabled, then make a directory instead of a link.
-                        self.set_directory
-                    else
-                        Puppet::Util.asuser(@parent.asuser()) do
-                            mode = @parent.should(:mode)
-                            if mode
-                                Puppet::Util.withumask(000) do
-                                    File.symlink(self.should, @parent[:path])
-                                end
-                            else
-                                File.symlink(self.should, @parent[:path])
-                            end
-                        end
 
-                        # We can't use "return" here because we're in an anonymous
-                        # block.
-                        :link_created
-                    end
+        newvalue(:link) do
+            if state = @parent.state(:target)
+                state.retrieve
+
+                if state.linkmaker
+                    self.set_directory
+                else
+                    state.sync
                 end
+            else
+                self.fail "Cannot create a symlink without a target"
             end
+        end
+
+        # Symlinks.
+        newvalue(/./) do
+            # This code never gets executed.  We need the regex to support
+            # specifying it, but the work is done in the 'symlink' code block.
+        end
+
+        munge do |value|
+            value = super(value)
+
+            return value if value.is_a? Symbol
+
+            @parent[:target] = value
+
+            return :link
         end
 
         # Check that we can actually create anything
@@ -123,14 +120,9 @@ module Puppet
         end
 
         def retrieve
+
             if stat = @parent.stat(false)
-                # If we're a link, set the 'is' value to the destination
-                # of the link
-                if stat.ftype == "link"
-                    @is = File.readlink(@parent[:path])
-                else
-                    @is = stat.ftype.intern
-                end
+                @is = stat.ftype.intern
             else
                 if self.should == :false
                     @is = :false

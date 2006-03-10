@@ -1651,8 +1651,8 @@ class Type < Puppet::Element
         # the other states matter.
         changes = []
         if @states.include?(:ensure) and ! @states[:ensure].insync?
-            #self.info "ensuring %s from %s" %
-            #    [@states[:ensure].should, @states[:ensure].is]
+            self.info "ensuring %s from %s" %
+                [@states[:ensure].should, @states[:ensure].is]
             changes = [Puppet::StateChange.new(@states[:ensure])]
         # Else, if the 'ensure' state is correctly absent, then do
         # nothing

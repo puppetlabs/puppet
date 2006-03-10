@@ -950,6 +950,9 @@ class TestFile < Test::Unit::TestCase
         assert(FileTest.symlink?(link), "Link was not created")
 
         assert_equal(path, File.readlink(link), "Link was created incorrectly")
+
+        # Make sure running it again works
+        assert_events([], file)
     end
 
     def test_simplerecursivelinking
@@ -978,6 +981,8 @@ class TestFile < Test::Unit::TestCase
         assert(File.directory?(subdest), "subdest is not a dir")
         assert(File.symlink?(linkpath), "path is not a link")
         assert_equal(file, File.readlink(linkpath))
+
+        assert_events([], link)
     end
 
     def test_recursivelinking
