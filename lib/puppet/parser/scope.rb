@@ -676,10 +676,11 @@ module Puppet
                 #Puppet.debug "Looking up variable %s" % name
                 value = self.lookup("variable", name)
                 if value == :undefined
-                    error = Puppet::ParseError.new(
-                        "Undefined variable '%s'" % name
-                    )
-                    raise error
+                    return ""
+                    #error = Puppet::ParseError.new(
+                    #    "Undefined variable '%s'" % name
+                    #)
+                    #raise error
                 else
                     return value
                 end

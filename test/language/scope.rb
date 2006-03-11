@@ -88,9 +88,11 @@ class TestScope < Test::Unit::TestCase
 
                 # verify that they aren't available in upper scopes
                 if parent = s.parent
-                    assert_raise(Puppet::ParseError) {
-                        parent.lookupvar(v)
+                    val = nil
+                    assert_nothing_raised {
+                        val = parent.lookupvar(v)
                     }
+                    assert_equal("", val, "Did not get empty string on missing var")
 
                     # and verify that the parent sees its correct value
                     assert_equal(ovalues[i - 1],parent.lookupvar(over))
