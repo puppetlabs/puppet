@@ -68,11 +68,18 @@ module Puppet
             return packages
         end
 
-        # we need package retrieval mechanisms before we can have package
-        # installation mechanisms...
-        #type.install = proc { |pkg|
-        #    raise "installation not implemented yet"
-        #}
+        def install
+            source = nil
+            unless source = self[:source]
+                self.fail "RPMs must specify a package source"
+            end
+
+            output = %x{rpm -i #{source} 2>&1}
+
+            unless $? == 0
+                raise Puppet::PackageError.new(output)
+            end
+        end
 
         def uninstall
             cmd = "rpm -e %s" % self[:name]
