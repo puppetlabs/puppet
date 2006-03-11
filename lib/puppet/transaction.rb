@@ -8,6 +8,13 @@ module Puppet
 class Transaction
     attr_accessor :toplevel, :component, :objects
 
+
+    Puppet.config.setdefaults(:transaction,
+        :tags => ["", "Tags to use to find objects.  If this is set, then
+            only objects tagged with the specified tags will be applied.  Values must
+            be comma-separated."]
+    )
+
     # a bit of a gross hack; a global list of objects that have failed to sync,
     # so that we can verify during later syncs that our dependencies haven't
     # failed
@@ -35,7 +42,19 @@ class Transaction
 
         count = 0
         now = Time.now
+        tags = Puppet[:tags]
+        if tags == ""
+            tags = nil
+        else
+            tags = tags.split(/\s*,\s*/)
+        end
         events = @objects.find_all { |child|
+            if tags
+                child.tagged?(tags)
+            else
+                true # match everything when there are no tags
+            end
+        }.find_all { |child|
             child.scheduled?
         }.collect { |child|
             # these children are all Puppet::Type instances

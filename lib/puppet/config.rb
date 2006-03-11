@@ -263,7 +263,7 @@ class Config
         when String, Integer, Float: # nothing
             klass = CElement
         else
-            raise Puppet::Error, "Invalid value '%s' for %s" % [value, hash[:name]]
+            raise Puppet::Error, "Invalid value '%s' for %s" % [value.inspect, hash[:name]]
         end
         element = klass.new(hash)
         element.parent = self

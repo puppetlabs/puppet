@@ -19,7 +19,8 @@ class Type < Puppet::Element
     # that it is clear whether it operates on all attributes (thus has 'attr' in
     # the method name, or whether it operates on a specific type of attributes.
     attr_accessor :children, :parent
-    attr_accessor :file, :line, :tags
+    attr_accessor :file, :line
+    attr_reader :tags
 
     attr_writer :implicit
     def implicit?
@@ -1466,8 +1467,36 @@ class Type < Puppet::Element
         return schedule.match?(self.cached(:checked).to_i)
     end
 
+    # Add a new tag.
     def tag(tag)
-        @tags << tag
+        tag = tag.intern if tag.is_a? String
+        unless @tags.include? tag
+            @tags << tag
+        end
+    end
+
+    # Define the initial list of tags.
+    def tags=(list)
+        list = [list] unless list.is_a? Array
+
+        @tags = list.collect do |t|
+            case t
+            when String: t.intern
+            when Symbol: t
+            else
+                self.warning "Ignoring tag %s of type %s" % [tag.inspect, tag.class]
+            end
+        end
+    end
+
+    # Figure out of any of the specified tags apply to this object.  This is an
+    # OR operation.
+    def tagged?(tags)
+        tags = [tags] unless tags.is_a? Array
+
+        tags = tags.collect { |t| t.intern }
+
+        return tags.find { |tag| @tags.include? tag }
     end
 
     # Is the specified parameter set?

@@ -71,9 +71,75 @@ class TestTagging < Test::Unit::TestCase
         object = objects.shift
 
         assert_nothing_raised {
-            assert_equal(%w{solaris}, object.tags,
+            assert_equal([:solaris], object.tags,
                 "Incorrect tags")
         }
+    end
+
+    # Make sure that specifying tags results in only those objects getting
+    # run.
+    def test_tagspecs
+        a = tempfile()
+        b = tempfile()
+
+        afile = Puppet.type(:file).create(
+            :path => a,
+            :ensure => :file
+        )
+        afile.tag("a")
+
+        bfile = Puppet.type(:file).create(
+            :path => b,
+            :ensure => :file
+        )
+        bfile.tag(:b)
+
+        # First, make sure they get created when no spec'ed tags
+        assert_events([:file_created,:file_created], afile, bfile)
+        assert(FileTest.exists?(a), "A did not get created")
+        assert(FileTest.exists?(b), "B did not get created")
+        File.unlink(a)
+        File.unlink(b)
+
+        # Set the tags to a
+        assert_nothing_raised {
+            Puppet[:tags] = "a"
+        }
+
+        assert_events([:file_created], afile, bfile)
+        assert(FileTest.exists?(a), "A did not get created")
+        assert(!FileTest.exists?(b), "B got created")
+        File.unlink(a)
+
+        # Set the tags to b
+        assert_nothing_raised {
+            Puppet[:tags] = "b"
+        }
+
+        assert_events([:file_created], afile, bfile)
+        assert(!FileTest.exists?(a), "A got created")
+        assert(FileTest.exists?(b), "B did not get created")
+        File.unlink(b)
+
+        # Set the tags to something else
+        assert_nothing_raised {
+            Puppet[:tags] = "c"
+        }
+
+        assert_events([], afile, bfile)
+        assert(!FileTest.exists?(a), "A got created")
+        assert(!FileTest.exists?(b), "B got created")
+
+        # Now set both tags
+        assert_nothing_raised {
+            Puppet[:tags] = "b, a"
+        }
+
+        assert_events([:file_created, :file_created], afile, bfile)
+        assert(FileTest.exists?(a), "A did not get created")
+        assert(FileTest.exists?(b), "B did not get created")
+        File.unlink(a)
+
     end
 end
 
