@@ -333,11 +333,10 @@ module Puppet
             # We specifically look in @parameters here, because 'linkmaker' isn't
             # a valid attribute for subclasses, so using 'self[:linkmaker]' throws
             # an error.
-            if @parameters.include?(:linkmaker) and @parameters[:linkmaker] == true and
+            if @parameters.include?(:linkmaker) and 
                 args.include?(:source) and ! FileTest.directory?(args[:source])
                 klass = Puppet.type(:symlink)
 
-                self.debug "%s is a link" % path
                 # clean up the args a lot for links
                 old = args.dup
                 args = {

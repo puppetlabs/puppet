@@ -82,7 +82,8 @@ class TestSymlink < Test::Unit::TestCase
         FileUtils.cd(path) {
             list.each { |file|
                 unless FileTest.directory?(file)
-                    assert(FileTest.symlink?(file))
+                    assert(FileTest.symlink?(file), "file %s is not a symlink" %
+                        file)
                     target = File.readlink(file)
                     assert_equal(target,File.join(source,file.sub(/^\.\//,'')))
                 end
