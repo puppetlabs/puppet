@@ -100,7 +100,7 @@ module Puppet
                                 text = file.read(512)
                             end
                             if text.nil?
-                                self.info "Not checksumming empty file %s" %
+                                self.debug "Not checksumming empty file %s" %
                                     @parent[:path]
                                 sum = 0
                             else
