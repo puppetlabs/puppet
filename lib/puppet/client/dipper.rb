@@ -3,6 +3,8 @@ module Puppet
         # The client class for filebuckets.
         class Dipper < Puppet::Client
             @drivername = :Bucket
+            
+            attr_accessor :name
 
             def initialize(hash = {})
                 if hash.include?(:Path)

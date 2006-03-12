@@ -77,7 +77,7 @@ module Puppet
 
         def insync?
             if stat = @parent.stat and stat.ftype == "link" and @parent[:links] != :follow
-                self.info "Not managing symlink mode"
+                self.debug "Not managing symlink mode"
                 return true
             else
                 return super

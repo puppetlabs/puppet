@@ -3,10 +3,8 @@
 
 
 require 'webrick'
-#require 'webrick/https'
 require 'xmlrpc/server'
 require 'xmlrpc/client'
-#require 'webrick/httpstatus'
 require 'facter'
 require 'digest/md5'
 require 'puppet/base64'
@@ -28,6 +26,9 @@ class Server
             iface.add_method("string addfile(string, string)")
             iface.add_method("string getfile(string)")
         }
+
+        Puppet::Util.logmethods(self, true)
+        attr_reader :name
 
         # this doesn't work for relative paths
         def FileBucket.paths(base,md5)
@@ -59,7 +60,9 @@ class Server
                 end
             end
 
-            Puppet.recmkdir(@bucket)
+            Puppet.config.use(:filebucket)
+
+            @name = "filebucket[#{Puppet[:bucketdir]}]"
         end
 
         # accept a file from a client
@@ -75,9 +78,12 @@ class Server
 
             # if it's a new directory...
             if Puppet.recmkdir(bpath)
+                msg = "Adding %s(%s)" % [path, md5]
+                msg += " from #{client}" if client
+                self.info msg
                 # ...then just create the file
                 #puts "creating file"
-                File.open(bfile, File::WRONLY|File::CREAT) { |of|
+                File.open(bfile, File::WRONLY|File::CREAT, 0440) { |of|
                     of.print contents
                 }
                 #puts "File is created"
@@ -99,6 +105,10 @@ class Server
                     if curfile != contents
                         raise(BucketError,
                             "Got passed new contents for sum %s" % md5, caller)
+                    else
+                        msg = "Got duplicate %s(%s)" % [path, md5]
+                        msg += " from #{client}" if client
+                        self.info msg
                     end
                 end
                 #puts "Conflict check is done"
@@ -146,7 +156,10 @@ class Server
 
             return Base64.encode64(contents)
         end
-        #---------------------------------------------------------------
+
+        def to_s
+            self.name
+        end
     end
 end
 end

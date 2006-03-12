@@ -36,6 +36,7 @@ module Puppet
                 backed up there; else, they will be backed up in the same directory
                 with a ``.puppet-bak`` extension."
 
+            attr_reader :bucket
             defaultto true
 
             munge do |value|
@@ -44,23 +45,21 @@ module Puppet
                     false
                 when true, "true":
                     ".puppet-bak"
-                when Array:
-                    case value[0]
-                    when "filebucket":
-                        if bucket = Puppet.type(:filebucket).bucket(value[1])
-                            bucket
-                        else
-                            self.fail "Could not retrieve filebucket %s" %
-                                value[1]
-                        end
-                    else
-                        self.fail "Invalid backup object type %s" %
-                            value[0].inspect
-                    end
+                when String:
+                    # We can't depend on looking this up right now,
+                    # we have to do it after all of the objects
+                    # have been instantiated.
+                    @bucket = value
                 else
                     self.fail "Invalid backup type %s" %
                         value.inspect
                 end
+            end
+
+            # Provide a straight-through hook for setting the bucket.
+            def bucket=(bucket)
+                @value = bucket
+                @bucket = bucket
             end
         end
 
@@ -156,6 +155,33 @@ module Puppet
             return asuser
         end
 
+        # We have to do some extra finishing, to retrieve our bucket if
+        # there is one
+        def finish
+            # Let's cache these values, since there should really only be
+            # a couple of these buckets
+            @@filebuckets ||= {}
+
+            # Look up our bucket, if there is one
+            if @parameters.include?(:backup) and bucket = @parameters[:backup].bucket
+                case bucket
+                when String:
+                    if obj = @@filebuckets.include?(bucket)
+                        @parameters[:backup].bucket = obj
+                    elsif obj = Puppet.type(:filebucket).bucket(bucket)
+                        @@filebuckets[bucket] = obj
+                        @parameters[:backup].bucket = obj
+                    else
+                        self.fail "Could not find filebucket %s" % bucket
+                    end
+                when Puppet::Client::Dipper: # things are hunky-dorey
+                else
+                    self.fail "Invalid bucket type %s" % bucket.class
+                end
+            end
+            super
+        end
+
         # Deal with backups.
         def handlebackup(file = nil)
             # let the path be specified
@@ -172,6 +198,7 @@ module Puppet
 
             case File.stat(file).ftype
             when "directory":
+                self.info :bc
                 # we don't need to backup directories
                 return true
             when "file":
@@ -179,8 +206,8 @@ module Puppet
                 case backup
                 when Puppet::Client::Dipper:
                     sum = backup.backup(file)
-                    self.info "Filebucketed %s with sum %s" %
-                        [file, sum]
+                    self.info "Filebucketed to %s with sum %s" %
+                        [backup.name, sum]
                     return true
                 when String:
                     newfile = file + backup
@@ -400,7 +427,6 @@ module Puppet
             # are we at the end of the recursion?
             #if recurse == 0
             unless self.recurse?
-                self.info "finished recursing"
                 return
             end
 

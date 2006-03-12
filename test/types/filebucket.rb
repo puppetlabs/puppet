@@ -119,12 +119,12 @@ class TestFileBucket < Test::Unit::TestCase
 
         file = mktestfile()
         assert_nothing_raised {
-            file[:backup] = ["filebucket", name]
+            file[:backup] = name
         }
 
         opath = tempfile()
         @@tmpfiles << opath
-        system("cp /etc/passwd %s" % opath)
+        File.open(opath, "w") { |f| f.puts "yaytest" }
 
         origmd5 = File.open(file.name) { |f| newmd5 = Digest::MD5.hexdigest(f.read) }
 
@@ -133,16 +133,7 @@ class TestFileBucket < Test::Unit::TestCase
         #    file[:backup] = true
         #}
 
-        comp = newcomp("yaytest", file)
-
-        trans = nil
-        assert_nothing_raised {
-            trans = comp.evaluate
-        }
-        events = nil
-        assert_nothing_raised {
-            events = trans.evaluate.collect { |e| e.event }
-        }
+        assert_apply(file)
 
         # so, we've now replaced the file with the opath file
         assert_equal(
@@ -159,7 +150,5 @@ class TestFileBucket < Test::Unit::TestCase
             origmd5,
             File.open(file.name) { |f| newmd5 = Digest::MD5.hexdigest(f.read) }
         )
-
-
     end
 end

@@ -46,8 +46,11 @@ module Puppet
 
         # get the actual filebucket object
         def self.bucket(name)
-            oname, object = @objects.find { |oname, o| oname == name }
-            return object.bucket
+            if object = self[name]
+                return object.bucket
+            else
+                return nil
+            end
         end
 
         def initialize(hash)
@@ -78,6 +81,8 @@ module Puppet
                     )
                 end
             end
+
+            @bucket.name = self.name
         end
     end
 end
