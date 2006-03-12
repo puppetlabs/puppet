@@ -12,43 +12,6 @@ Puppet.type(:service).newsvctype(:init) do
             "/etc/init.d"
         end
     end
-#    # Make sure we've got a search path set up.  If they don't
-#    # specify one, try to determine one.
-#    def configchk
-#        unless defined? @searchpaths
-#            Puppet.notice "Initting search paths"
-#            @searchpaths = []
-#        end
-#        unless @searchpaths.length > 0
-#            if init = self.defaultinit
-#                self.notice "Adding default init"
-#                @searchpaths << init
-#            else
-#                self.notice "No default init for %s" %
-#                    Facter["operatingsystem"].value
-#
-#                raise Puppet::Error.new(
-#                    "You must specify a valid search path for service %s" %
-#                    self.name
-#                )
-#            end
-#        end
-#    end
-#
-#    # Get the default init path.
-#    def defaultinit
-#        unless defined? @defaultinit
-#            case Facter["operatingsystem"].value
-#            when "FreeBSD":
-#                @defaultinit = "/etc/rc.d"
-#            else
-#                @defaultinit = "/etc/init.d"
-#                @defaultrc = "/etc/rc%s.d"
-#            end
-#        end
-#
-#        return @defaultinit
-#    end
 
     # Mark that our init script supports 'status' commands.
     def hasstatus=(value)
@@ -88,20 +51,6 @@ Puppet.type(:service).newsvctype(:init) do
             @initscript = self.search(self[:name])
         end
     end
-
-    # Enable a service, so it's started at boot time.  This basically
-    # just creates links in the RC directories, which means that, well,
-    # we need to know where the rc directories are.
-    # FIXME This should probably be a state or something, and
-    # it should actually create use Symlink objects...
-    # At this point, people should just link objects for enabling,
-    # if they're running on a system that doesn't have a tool to
-    # manage init script links.
-    #def enable
-    #end
-
-    #def disable
-    #end
 
     def search(name)
         self[:path].each { |path|

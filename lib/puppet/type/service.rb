@@ -138,6 +138,13 @@ module Puppet
                     self.debug "Not running '%s' and shouldn't be running" %
                         self
                 end
+
+                if state = @parent.state(:enable)
+                    state.retrieve
+                    unless state.insync?
+                        state.sync
+                    end
+                end
             end
         end
 

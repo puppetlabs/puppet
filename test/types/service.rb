@@ -264,6 +264,39 @@ class TestLocalService < Test::Unit::TestCase
                 Puppet.type(:component).clear
             }
         end
+
+        def test_serviceenableandrun
+            mktestsvcs.each do |svc|
+                startenable = nil
+                startensure = nil
+                svc[:check] = [:ensure, :enable]
+                svc.retrieve
+                assert_nothing_raised("Could not get status") {
+                    startenable = svc.state(:enable).is
+                    startensure = svc.state(:ensure).is
+                }
+
+                svc[:enable] = false
+                svc[:ensure] = :running
+                assert_apply(svc)
+
+                svc.retrieve
+                assert(svc.insync?, "Service did not sync both states")
+
+                svc[:enable] = true
+                svc[:ensure] = :running
+                assert_apply(svc)
+
+                svc.retrieve
+                assert(svc.insync?, "Service did not sync both states")
+
+                svc[:enable] = startenable
+                svc[:ensure] = startensure
+                assert_apply(svc)
+                Puppet.type(:service).clear
+                Puppet.type(:component).clear
+            end
+        end
     end
 end
 end
