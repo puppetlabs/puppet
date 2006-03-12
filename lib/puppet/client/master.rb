@@ -2,7 +2,13 @@
 class Puppet::Client::MasterClient < Puppet::Client
     Puppet.setdefaults("puppetd",
         :puppetdlockfile => [ "$statedir/puppetdlock",
-            "A lock file to temporarily stop puppetd from doing anything."]
+            "A lock file to temporarily stop puppetd from doing anything."],
+        :usecacheonfailure => [true,
+            "Whether to use the cached configuration when the remote
+            configuration will not compile.  This option is useful for testing
+            new configurations, where you want to fix the broken configuration
+            rather than reverting to a known-good one."
+        ]
     )
 
     @drivername = :Master
@@ -176,6 +182,12 @@ class Puppet::Client::MasterClient < Puppet::Client
                 textobjects = @driver.getconfig(textfacts, "yaml")
             rescue => detail
                 Puppet.err "Could not retrieve configuration: %s" % detail
+
+                unless Puppet[:usecacheonfailure]
+                    @objects = nil
+                    Puppet.warning "Not using cache on failed configuration"
+                    return
+                end
             end
 
             fromcache = false
@@ -188,11 +200,12 @@ class Puppet::Client::MasterClient < Puppet::Client
                 end
                 Puppet.warning "Could not get config; using cached copy"
                 fromcache = true
+            else
+                @configstamp = Time.now.to_i
             end
 
             begin
                 textobjects = CGI.unescape(textobjects)
-                @configstamp = Time.now.to_i
             rescue => detail
                 raise Puppet::Error, "Could not CGI.unescape configuration"
             end
@@ -260,7 +273,10 @@ class Puppet::Client::MasterClient < Puppet::Client
                 Puppet[:puppetdlockfile]
         else
             self.getconfig
-            self.apply
+
+            if defined? @objects and @objects
+                self.apply
+            end
         end
     end
 
