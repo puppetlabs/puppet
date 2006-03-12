@@ -34,7 +34,34 @@ module Puppet
             desc "Whether files should be backed up before
                 being replaced.  If a filebucket_ is specified, files will be
                 backed up there; else, they will be backed up in the same directory
-                with a ``.puppet-bak`` extension."
+                with a ``.puppet-bak`` extension.
+                
+                To use filebuckets, you must first create a filebucket in your
+                configuration::
+                    
+                    filebucket { main:
+                        server => puppet
+                    }
+
+                ``puppetmasterd`` creates a filebucket by default, so you can
+                usually back up to your main server with this configuration.  Once
+                you've described the bucket in your configuration, you can use
+                it in any file::
+
+                    file { \"/my/file\":
+                        source => \"/path/in/nfs/or/something\",
+                        backup => main
+                    }
+
+                This will back the file up to the central server.
+
+                At this point, the only benefits to doing so are that you do not
+                have backup files lying around on each of your machines, a given
+                version of a file is only backed up once, and you can restore
+                any given file manually, no matter how old.  Eventually,
+                transactional support will be able to automatically restore
+                filebucketed files.
+                "
 
             attr_reader :bucket
             defaultto true
