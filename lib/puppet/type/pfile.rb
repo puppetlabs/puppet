@@ -420,7 +420,9 @@ module Puppet
         def recurse?
             return false unless @parameters.include?(:recurse)
 
-            if @parameters[:recurse].value == true or @parameters[:recurse].value > 0
+            val = @parameters[:recurse].value
+
+            if val and (val == true or val > 0)
                 return true
             else
                 return false
