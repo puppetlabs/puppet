@@ -163,7 +163,7 @@ module Puppet
             end
 
             if stat.ftype == "link" and @parent[:links] != :follow
-                self.info "Not checksumming symlink"
+                self.debug "Not checksumming symlink"
                 self.is = self.should
                 return
             end
