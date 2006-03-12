@@ -72,19 +72,19 @@ class TestFileServer < Test::Unit::TestCase
             )
         }
 
-        assert_raise(Puppet::Server::FileServerError) {
+        assert_raise(Puppet::FileServerError) {
             server.mount("/tmp", "invalid+name")
         }
 
-        assert_raise(Puppet::Server::FileServerError) {
+        assert_raise(Puppet::FileServerError) {
             server.mount("/tmp", "invalid-name")
         }
 
-        assert_raise(Puppet::Server::FileServerError) {
+        assert_raise(Puppet::FileServerError) {
             server.mount("/tmp", "invalid name")
         }
 
-        assert_raise(Puppet::Server::FileServerError) {
+        assert_raise(Puppet::FileServerError) {
             server.mount("/tmp", "")
         }
     end
@@ -113,13 +113,13 @@ class TestFileServer < Test::Unit::TestCase
         # and verify different iterations of 'root' return the same value
         list = nil
         assert_nothing_raised {
-            list = server.list("/test/", true, false)
+            list = server.list("/test/", :ignore, true, false)
         }
 
         assert(list =~ pattern)
 
         assert_nothing_raised {
-            list = server.list("/test", true, false)
+            list = server.list("/test", :ignore, true, false)
         }
         assert(list =~ pattern)
 
@@ -147,7 +147,7 @@ class TestFileServer < Test::Unit::TestCase
         list = nil
         sfile = "/test/tmpfile"
         assert_nothing_raised {
-            list = server.list(sfile, true, false)
+            list = server.list(sfile, :ignore, true, false)
         }
 
         assert_nothing_raised {
@@ -204,7 +204,7 @@ class TestFileServer < Test::Unit::TestCase
         list = nil
         sfile = "/test/"
         assert_nothing_raised {
-            list = server.list(sfile, true, false)
+            list = server.list(sfile, :ignore, true, false)
         }
 
         # create the new file
@@ -214,7 +214,7 @@ class TestFileServer < Test::Unit::TestCase
 
         newlist = nil
         assert_nothing_raised {
-            newlist = server.list(sfile, true, false)
+            newlist = server.list(sfile, :ignore, true, false)
         }
 
         # verify the list has changed
@@ -243,12 +243,12 @@ class TestFileServer < Test::Unit::TestCase
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/root/" + testdir, true, false)
+            list = server.list("/root/" + testdir, :ignore, true, false)
         }
 
         assert(list =~ pattern)
         assert_nothing_raised {
-            list = server.list("/root" + testdir, true, false)
+            list = server.list("/root" + testdir, :ignore, true, false)
         }
 
         assert(list =~ pattern)
@@ -283,7 +283,7 @@ class TestFileServer < Test::Unit::TestCase
         # get our list
         list = nil
         assert_nothing_raised {
-            list = server.list("/test/with", false, false)
+            list = server.list("/test/with", :ignore, false, false)
         }
 
         # make sure we only got one line, since we're not recursing
@@ -292,7 +292,7 @@ class TestFileServer < Test::Unit::TestCase
         # for each level of recursion, make sure we get the right list
         [0, 1, 2].each { |num|
             assert_nothing_raised {
-                list = server.list("/test/with", num, false)
+                list = server.list("/test/with", :ignore, num, false)
             }
 
             count = 0
@@ -336,13 +336,13 @@ class TestFileServer < Test::Unit::TestCase
         list = nil
         # and then check a few dirs
         assert_nothing_raised {
-            list = server.list("/localhost/with", false, false)
+            list = server.list("/localhost/with", :ignore, false, false)
         }
 
         assert(list !~ /with/)
 
         assert_nothing_raised {
-            list = server.list("/localhost/with/some/sub", true, false)
+            list = server.list("/localhost/with/some/sub", :ignore, true, false)
         }
 
         assert(list !~ /sub/)
@@ -374,7 +374,7 @@ class TestFileServer < Test::Unit::TestCase
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/localhost/", 1, false)
+            list = server.list("/localhost/", :ignore, 1, false)
         }
         assert_instance_of(String, list, "Server returned %s instead of string")
         list = list.split("\n")
@@ -406,7 +406,7 @@ class TestFileServer < Test::Unit::TestCase
         list = nil
         sfile = "/test/"
         assert_nothing_raised {
-            list = server.list(sfile, true, false)
+            list = server.list(sfile, :ignore, true, false)
         }
 
         # and describe each file in the list
@@ -433,7 +433,7 @@ class TestFileServer < Test::Unit::TestCase
 
         # Now try to describe some sources that don't even exist
         retval = nil
-        assert_raise(Puppet::Server::FileServerError,
+        assert_raise(Puppet::FileServerError,
             "Describing non-existent mount did not raise an error") {
             retval = server.describe("/notmounted/" + "noexisties")
         }
@@ -495,7 +495,7 @@ class TestFileServer < Test::Unit::TestCase
         mounts.each { |mount, files|
             mount = "/#{mount}/"
             assert_nothing_raised {
-                list = server.list(mount, true, false)
+                list = server.list(mount, :ignore, true, false)
             }
 
             assert_nothing_raised {
@@ -547,12 +547,12 @@ class TestFileServer < Test::Unit::TestCase
                         assert_raise(Puppet::Server::AuthorizationError,
                             "Host %s, ip %s, allowed %s" %
                             [host, ip, mount]) {
-                                list = server.list(mount, true, false, host, ip)
+                                list = server.list(mount, :ignore, true, false, host, ip)
                         }
                     when :allow:
                         assert_nothing_raised("Host %s, ip %s, denied %s" %
                             [host, ip, mount]) {
-                                list = server.list(mount, true, false, host, ip)
+                                list = server.list(mount, :ignore, true, false, host, ip)
                         }
                     end
                 }
@@ -603,9 +603,9 @@ class TestFileServer < Test::Unit::TestCase
                 )
             }
 
-            assert_raise(Puppet::Server::FileServerError,
+            assert_raise(Puppet::FileServerError,
                 "Invalid mount was mounted") {
-                    server.list(mount)
+                    server.list(mount, :ignore)
             }
         }
 
@@ -617,7 +617,7 @@ class TestFileServer < Test::Unit::TestCase
 
             # create a server with the file
             server = nil
-            assert_raise(Puppet::Server::FileServerError,
+            assert_raise(Puppet::FileServerError,
                 "Invalid config %s did not raise error" % i) {
                 server = Puppet::Server::FileServer.new(
                     :Local => true,
@@ -658,13 +658,13 @@ class TestFileServer < Test::Unit::TestCase
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/thing/", false, false,
+            list = server.list("/thing/", :ignore, false, false,
                 "test1.domain.com", "127.0.0.1")
         }
         assert(list != "", "List returned nothing in rereard test")
 
         assert_raise(Puppet::Server::AuthorizationError, "List allowed invalid host") {
-            list = server.list("/thing/", false, false,
+            list = server.list("/thing/", :ignore, false, false,
                 "test2.domain.com", "127.0.0.1")
         }
 
@@ -679,12 +679,12 @@ class TestFileServer < Test::Unit::TestCase
         }
         
         assert_raise(Puppet::Server::AuthorizationError, "List allowed invalid host") {
-            list = server.list("/thing/", false, false,
+            list = server.list("/thing/", :ignore, false, false,
                 "test1.domain.com", "127.0.0.1")
         }
 
         assert_nothing_raised {
-            list = server.list("/thing/", false, false,
+            list = server.list("/thing/", :ignore, false, false,
                 "test2.domain.com", "127.0.0.1")
         }
 
