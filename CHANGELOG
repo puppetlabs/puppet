@@ -1,3 +1,10 @@
+0.14.2
+    Unset variables no longer throw an error, they just return an empty string
+    You can now specify tags to restrict which objects run.
+    RPMs can now install, as long as they specify a package location, and they'll
+        automatically upgrade if you point them to a new file with an upgrade.
+    Multiple bug fixes.
+
 0.14.1
     Fixed a couple of small logging bugs
     Fixed a bug with handling group ownership of links

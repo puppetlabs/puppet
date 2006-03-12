@@ -78,28 +78,7 @@ module Puppet
                 those packaging formats that can retrieve new packages on
                 their own."
 
-            #munge do |value|
-            #    # possible values are: true, false, and a version number
-            #    case value
-            #    when "latest":
-            #        unless @parent.respond_to?(:latest)
-            #            self.err @parent.inspect
-            #            raise Puppet::Error,
-            #                "Package type %s cannot install later versions" %
-            #                @parent[:type].name
-            #        end
-            #        return :latest
-            #    when true, :present:
-            #        return :present
-            #    when false, :absent:
-            #        return :absent
-            #    else
-            #        # We allow them to set a should value however they want,
-            #        # but only specific package types will be able to use this
-            #        # value
-            #        return value
-            #    end
-            #end
+            attr_accessor :latest
 
             newvalue(:present) do
                 @parent.install
@@ -175,10 +154,13 @@ module Puppet
                         when :present:
                             if @parent[:version] == @latest
                                 return true
+                            else
+                                self.debug "our version is %s and latest is %s" %
+                                    [@parent[:version], @latest]
                             end
                         else
-                            #self.debug "@is is %s, latest %s is %s" %
-                            #    [@is, @parent.name, latest]
+                            self.debug "@is is %s, latest %s is %s" %
+                                [@is, @parent.name, @latest]
                         end
                     when :absent
                         if @is == :absent
@@ -480,6 +462,11 @@ module Puppet
                 }
                 return obj
             end
+        end
+
+        # This only exists for testing.
+        def clear
+            @states[:ensure].latest = nil
         end
 
         # The 'query' method returns a hash of info if the package

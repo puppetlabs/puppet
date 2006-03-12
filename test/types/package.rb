@@ -89,6 +89,8 @@ class TestPackages < Test::Unit::TestCase
         #when "RedHat": type = :rpm
         when "Fedora":
             retval = %w{wv}
+        when "CentOS":
+            retval = [%w{enhost /home/luke/rpm/RPMS/noarch/enhost-1.0.2-1.noarch.rpm}]
         else
             Puppet.notice "No test packages for %s" % $platform
         end
@@ -217,6 +219,54 @@ class TestPackages < Test::Unit::TestCase
                 assert_events([:package_removed], comp, "package")
             end
         }
+    end
+
+    case Facter["operatingsystem"].value
+    when "CentOS":
+        def test_upgradepkg
+            first = "/home/luke/rpm/RPMS/noarch/enhost-1.0.1-1.noarch.rpm"
+            second = "/home/luke/rpm/RPMS/noarch/enhost-1.0.2-1.noarch.rpm"
+
+            unless FileTest.exists?(first) and FileTest.exists?(second)
+                $stderr.puts "Could not find upgrade test pkgs; skipping"
+                return
+            end
+
+            pkg = nil
+            assert_nothing_raised {
+                pkg = Puppet.type(:package).create(
+                    :name => "enhost",
+                    :ensure => :latest,
+                    :source => first
+                )
+            }
+
+            assert_events([:package_created], pkg)
+
+            assert_nothing_raised {
+                pkg.retrieve
+            }
+            assert(pkg.insync?, "Package is not in sync")
+            pkg.clear
+            assert_nothing_raised {
+                pkg[:source] = second
+            }
+            assert_events([:package_changed], pkg)
+
+            assert_nothing_raised {
+                pkg.retrieve
+            }
+            assert(pkg.insync?, "Package is not in sync")
+            assert_nothing_raised {
+                pkg[:ensure] = :absent
+            }
+            assert_events([:package_removed], pkg)
+
+            assert_nothing_raised {
+                pkg.retrieve
+            }
+            assert(pkg.insync?, "Package is not in sync")
+        end
     end
     end
 end

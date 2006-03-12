@@ -1,5 +1,6 @@
 module Puppet
     Puppet.type(:package).newpkgtype(:rpm) do
+        VERSIONSTRING = "%{VERSION}-%{RELEASE}"
         def query
             fields = {
                 :name => "NAME",
@@ -8,7 +9,7 @@ module Puppet
             }
 
             cmd = "rpm -q #{self[:name]} --qf '%s\n'" %
-                "%{NAME} %{VERSION}-%{RELEASE}"
+                "%{NAME} #{VERSIONSTRING}"
 
             self.debug "Executing %s" % cmd.inspect
             # list out all of the packages
@@ -40,11 +41,24 @@ module Puppet
             return hash
         end
 
+        # Here we just retrieve the version from the file specified in the source.
+        def latest
+            unless source = self[:source]
+                self.fail "RPMs must specify a package source"
+            end
+            
+            cmd = "rpm -p -q --qf '#{VERSIONSTRING}' #{self[:source]}"
+            self.debug "Executing %s" % cmd.inspect
+            version = %x{#{cmd}}
+
+            return version
+        end
+
         def list
             packages = []
 
             # list out all of the packages
-            open("| rpm -q -a --qf '%{NAME} %{VERSION}\n'") { |process|
+            open("| rpm -q -a --qf '%{NAME} #{VERSIONSTRING}\n'") { |process|
                 # our regex for matching dpkg output
                 regex = %r{^(\S+)\s+(\S+)}
                 fields = [:name, :ensure]
@@ -74,7 +88,11 @@ module Puppet
                 self.fail "RPMs must specify a package source"
             end
 
-            output = %x{rpm -i #{source} 2>&1}
+            flag = "-i"
+            if @states[:ensure].is != :absent
+                flag = "-U"
+            end
+            output = %x{rpm #{flag} #{source} 2>&1}
 
             unless $? == 0
                 raise Puppet::PackageError.new(output)
@@ -87,6 +105,10 @@ module Puppet
             if $? != 0
                 raise output
             end
+        end
+
+        def update
+            self.install
         end
     end
 end
