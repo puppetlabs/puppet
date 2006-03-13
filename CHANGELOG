@@ -1,9 +1,22 @@
-0.14.2
+0.15.0
+    Upped the minor release because the File server is incompatible with 0.14,
+        because it now handles links.
+
+    The 'symlink' type is deprecated (but still present), in favor of using
+        files with the 'target' parameter.
+
     Unset variables no longer throw an error, they just return an empty string
-    You can now specify tags to restrict which objects run.
-    RPMs can now install, as long as they specify a package location, and they'll
-        automatically upgrade if you point them to a new file with an upgrade.
+
+    You can now specify tags to restrict which objects run during a given run.
+
+    You can also specify to skip running against the cached copy when there's
+    a failure, which is useful for testing new configurations.
+
+    RPMs and Sun packages can now install, as long as they specify a package
+        location, and they'll automatically upgrade if you point them to a new
+        file with an upgrade.
     Multiple bug fixes.
+
 
 0.14.1
     Fixed a couple of small logging bugs
