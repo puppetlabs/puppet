@@ -1,6 +1,18 @@
 # -*- ruby -*- (Make emacs happy)
 # Rakefile for Puppet
 
+PKG = "puppet"
+RPMHOST = "fedora1"
+PKGHOST = "culain"
+
+begin
+    require 'rake/reductive'
+rescue Exception
+    $stderr.puts "You must have the Reductive build library in your RUBYLIB."
+    exit(14)
+end
+
+
 begin
     require 'rubygems'
     require 'rake/gempackagetask'
