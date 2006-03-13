@@ -18,6 +18,8 @@ end
 require 'rake/clean'
 require 'rake/testtask'
 
+require 'facter'
+
 if $rdoc
     require 'rake/rdoctask'
 end
@@ -49,9 +51,18 @@ if ENV['HOSTS']
 else
     TESTHOSTS = %w{fedora1 rh3a culain openbsd1 centos1}
 end
+
+OS = Facter["operatingsystem"].value
+
 #TESTHOSTS = %w{sol10b}
 
 # The default task is run if rake is given no explicit arguments.
+
+$sitedir = $:.find { |d| d =~ /site_ruby$/ }
+
+unless $sitedir
+    raise "Could not find site_ruby directory"
+end
 
 desc "Default Task"
 task :default => :alltests
@@ -203,7 +214,6 @@ the configuration.
     }
 
     Rake::GemPackageTask.new(spec) { |pkg|
-        #pkg.need_zip = true
         pkg.need_tar = true
     }
     CLEAN.include("pkg")
@@ -424,10 +434,45 @@ task :fedorarpm => [:package] do
     sh %{ssh fedora1 'cd puppet; rake rpm'}
 end
 
-desc "Create a Native Package"
-task :nativepkg do
-    # Okay, first we get a file list
-    
+def epmlist(match, prefix = "/usr")
+    dest = "../epmtmp/#{OS}-#{match}"
+
+    list = %x{mkepmlist --prefix #{prefix} ../puppet-#{PKG_VERSION}}.gsub(/luke/, "0")
+
+    list = list.split(/\n/).find_all do |line|
+        line =~ /#{prefix}\/#{match}/
+    end.join("\n")
+
+    File.open(dest, "w") { |f| f.puts list }
+
+    return dest
+end
+
+directory "pkg/epm"
+directory "pkg/epmtmp"
+
+desc "Create packages using EPM"
+task :epmpkg => ["pkg/epm", "pkg/epmtmp", :package] do
+    $epmdir = "pkg/epm"
+    $epmtmpdir = "pkg/epmtmp"
+
+    Dir.chdir($epmdir) do
+        type = nil
+
+        binfile = epmlist("bin", "/usr")
+        libfile = epmlist("lib", $sitedir)
+
+        listfile = "../epmtmp/#{OS}.list"
+        sh %{cat ../../conf/epm.list #{binfile} #{libfile} > #{listfile}}
+        sh %{epm -f native puppet #{listfile}}
+    end
+end
+
+desc "Make all of the appropriate packages"
+task :allepmpkgs => [:package] do
+    %w{freebsd1 culain}.each do |host|
+        sh %{ssh #{host} 'cd puppet; rake epmpkg'}
+    end
 end
 
 # $Id$
