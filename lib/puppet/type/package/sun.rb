@@ -1,34 +1,7 @@
 module Puppet
     Puppet.type(:package).newpkgtype(:sunpkg) do
-        def install
-            unless self[:source]
-                raise Puppet::Error, "Sun packages must specify a package source"
-            end
-            #cmd = "pkgadd -d %s -n %s 2>&1" % [self[:source], self[:name]]
-            cmd = ["pkgadd"]
-
-            if self[:adminfile]
-                cmd += ["-a", self[:adminfile]]
-            end
-
-            if self[:responsefile]
-                cmd += ["-r", self[:responsefile]]
-            end
-
-            cmd += ["-d", self[:source]]
-            cmd += ["-n", self[:name]]
-            cmd << "2>&1"
-            cmd = cmd.join(" ")
-
-            self.info "Executing %s" % cmd.inspect
-            output = %x{#{cmd} 2>&1}
-
-            unless $? == 0
-                raise Puppet::PackageError.new(output)
-            end
-        end
-
-        def query
+        # Get info on a package, optionally specifying a device.
+        def info2hash(device = nil)
             names = {
                 "PKGINST" => :name,
                 "NAME" => nil,
@@ -48,9 +21,14 @@ module Puppet
             }
 
             hash = {}
+            cmd = "pkginfo -l"
+            if device
+                cmd += " -d #{device}"
+            end
+            cmd += " #{self[:name]} 2>/dev/null"
 
             # list out all of the packages
-            open("| pkginfo -l %s 2>/dev/null" % self[:name]) { |process|
+            open("| #{cmd}") { |process|
                 # we're using the long listing, so each line is a separate
                 # piece of information
                 process.each { |line|
@@ -77,6 +55,39 @@ module Puppet
             else
                 return hash
             end
+        end
+
+        def install
+            unless self[:source]
+                raise Puppet::Error, "Sun packages must specify a package source"
+            end
+            cmd = ["pkgadd"]
+
+            if self[:adminfile]
+                cmd += ["-a", self[:adminfile]]
+            end
+
+            if self[:responsefile]
+                cmd += ["-r", self[:responsefile]]
+            end
+
+            cmd += ["-d", self[:source]]
+            cmd += ["-n", self[:name]]
+            cmd << "2>&1"
+            cmd = cmd.join(" ")
+
+            self.info "Executing %s" % cmd.inspect
+            output = %x{#{cmd} 2>&1}
+
+            unless $? == 0
+                raise Puppet::PackageError.new(output)
+            end
+        end
+
+        # Retrieve the version from the current package file.
+        def latest
+            hash = info2hash(self[:source])
+            hash[:ensure]
         end
 
         def list
@@ -126,11 +137,9 @@ module Puppet
             return packages
         end
 
-        # we need package retrieval mechanisms before we can have package
-        # installation mechanisms...
-        #type.install = proc { |pkg|
-        #    raise "installation not implemented yet"
-        #}
+        def query
+            info2hash()
+        end
 
         def uninstall
             cmd = "pkgrm -n %s 2>&1" % self[:name]
@@ -138,6 +147,14 @@ module Puppet
             if $? != 0
                 raise Puppet::Error, "Removal of %s failed: %s" % [self.name, output]
             end
+        end
+
+        # Remove the old package, and install the new one
+        def update
+            if @states[:ensure].is != :absent
+                self.uninstall
+            end
+            self.install
         end
     end
 end

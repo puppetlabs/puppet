@@ -52,22 +52,22 @@ class TestPackages < Test::Unit::TestCase
         return pkgs
     end
 
-    def mkpkgs
-        tstpkgs().each { |pkg|
-            if pkg.is_a?(Array)
-                hash = {:name => pkg[0], :source => pkg[1]}
-                hash[:ensure] = "present"
+    def modpkg(pkg)
+        case $platform
+        when "Solaris":
+            pkg[:adminfile] = "/usr/local/pkg/admin_file"
+        end
+    end
 
-                unless File.exists?(hash[:source])
-                    Puppet.info "No package file %s for %s; skipping some package tests" %
-                        [hash[:source], Facter["operatingsystem"].value]
-                end
-                yield Puppet.type(:package).create(hash)
-            else
-                yield Puppet.type(:package).create(
-                    :name => pkg, :ensure => "latest"
-                )
+    def mkpkgs
+        tstpkgs().each { |pkg, source|
+            hash = {:name => pkg, :ensure => "latest"}
+            if source
+                source = source[0] if source.is_a? Array
+                hash[:source] = source
             end
+            obj = Puppet.type(:package).create(hash)
+            modpkg(obj)
         }
     end
 
@@ -77,20 +77,28 @@ class TestPackages < Test::Unit::TestCase
         when "Solaris":
             arch = Facter["hardwareisa"].value + Facter["operatingsystemrelease"].value
             case arch
+            when "i3865.10":
+                retval = {"SMCrdesk" => [
+                    "/usr/local/pkg/rdesktop-1.3.1-sol10-intel-local",
+                    "/usr/local/pkg/rdesktop-1.4.1-sol10-x86-local"
+                ]}
             when "sparc5.8":
-                retval = [["SMCarc", "/usr/local/pkg/arc-5.21e-sol8-sparc-local"]]
+                retval = {"SMCarc" => "/usr/local/pkg/arc-5.21e-sol8-sparc-local"}
             when "i3865.8":
-                retval = [["SMCarc", "/usr/local/pkg/arc-5.21e-sol8-intel-local"]]
+                retval = {"SMCarc" => "/usr/local/pkg/arc-5.21e-sol8-intel-local"}
             end
         when "OpenBSD":
-            retval = [["aalib", "ftp://ftp.usa.openbsd.org/pub/OpenBSD/3.8/packages/i386/aalib-1.2-no_x11.tgz"]]
+            retval = {"aalib" => "ftp://ftp.usa.openbsd.org/pub/OpenBSD/3.8/packages/i386/aalib-1.2-no_x11.tgz"}
         when "Debian":
-            retval = %w{zec}
+            retval = {"zec" => nil}
         #when "RedHat": type = :rpm
         when "Fedora":
-            retval = %w{wv}
+            retval = {"wv" => nil}
         when "CentOS":
-            retval = [%w{enhost /home/luke/rpm/RPMS/noarch/enhost-1.0.2-1.noarch.rpm}]
+            retval = {"enhost" => [
+                "/home/luke/rpm/RPMS/noarch/enhost-1.0.1-1.noarch.rpm",
+                "/home/luke/rpm/RPMS/noarch/enhost-1.0.2-1.noarch.rpm"
+            ]}
         else
             Puppet.notice "No test packages for %s" % $platform
         end
@@ -156,7 +164,7 @@ class TestPackages < Test::Unit::TestCase
     end
 
     def test_latestpkg
-        tstpkgs { |pkg|
+        mkpkgs { |pkg|
             assert_nothing_raised {
                 assert(pkg.latest, "Package did not return value for 'latest'")
             }
@@ -187,7 +195,6 @@ class TestPackages < Test::Unit::TestCase
             assert_nothing_raised {
                 pkg[:ensure] = "absent"
             }
-
 
             pkg.retrieve
 
@@ -221,11 +228,12 @@ class TestPackages < Test::Unit::TestCase
         }
     end
 
-    case Facter["operatingsystem"].value
-    when "CentOS":
-        def test_upgradepkg
-            first = "/home/luke/rpm/RPMS/noarch/enhost-1.0.1-1.noarch.rpm"
-            second = "/home/luke/rpm/RPMS/noarch/enhost-1.0.2-1.noarch.rpm"
+    def test_upgradepkg
+        tstpkgs.each do |name, sources|
+            unless sources and sources.is_a? Array
+                $stderr.puts "Skipping pkg test for %s" % pkg
+            end
+            first, second = sources
 
             unless FileTest.exists?(first) and FileTest.exists?(second)
                 $stderr.puts "Could not find upgrade test pkgs; skipping"
@@ -235,11 +243,15 @@ class TestPackages < Test::Unit::TestCase
             pkg = nil
             assert_nothing_raised {
                 pkg = Puppet.type(:package).create(
-                    :name => "enhost",
+                    :name => name,
                     :ensure => :latest,
                     :source => first
                 )
             }
+
+            modpkg(pkg)
+
+            assert(pkg.latest, "Could not retrieve latest value")
 
             assert_events([:package_created], pkg)
 
