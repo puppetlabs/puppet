@@ -231,7 +231,8 @@ class TestPackages < Test::Unit::TestCase
     def test_upgradepkg
         tstpkgs.each do |name, sources|
             unless sources and sources.is_a? Array
-                $stderr.puts "Skipping pkg test for %s" % pkg
+                $stderr.puts "Skipping pkg upgrade test for %s" % name
+                next
             end
             first, second = sources
 
