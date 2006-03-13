@@ -381,12 +381,9 @@ task :hosttest do
     TESTHOSTS.each { |host|
         puts "testing %s" % host
         cwd = Dir.getwd
-        out += %x{ssh #{host} 'cd puppet/test; sudo ./test' 2>&1} 
+        system("ssh #{host} 'cd puppet/test; sudo ./test' 2>&1 >/tmp/#{host}test.out")
 
         if $? != 0
-            file = File.join("/tmp", "%stest.out" % host)
-            File.open(file, "w") { |of| of.print out }
-            puts out
             puts "%s failed; output is in %s" % [host, file]
         end
         #sh %{ssh #{host} 'cd #{cwd}/test; sudo ./test' 2>&1} 
