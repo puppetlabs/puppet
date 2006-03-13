@@ -6,6 +6,8 @@ if __FILE__ == $0
     $puppetbase = "../.."
 end
 
+require 'facter'
+
 require 'puppet'
 require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
@@ -69,8 +71,6 @@ class TestInterpreter < Test::Unit::TestCase
         assert(config != newconfig, "Configs are somehow the same")
     end
 
-    # Only test ldap stuff on luke's network, since that's the only place we
-    # have data for.
     if Facter["domain"].value == "madstop.com"
     begin
         require 'ldap'
@@ -79,6 +79,9 @@ class TestInterpreter < Test::Unit::TestCase
         $stderr.puts "Missing ldap; skipping ldap source tests"
         $haveldap = false
     end
+
+    # Only test ldap stuff on luke's network, since that's the only place we
+    # have data for.
     if $haveldap
     def ldapconnect
 
@@ -161,5 +164,7 @@ class TestInterpreter < Test::Unit::TestCase
         }
     end
     end
+    else
+        $stderr.puts "Not in madstop.com; skipping ldap tests"
     end
 end
