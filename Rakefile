@@ -1,15 +1,22 @@
 # -*- ruby -*- (Make emacs happy)
 # Rakefile for Puppet
 
-PKG = "puppet"
-RPMHOST = "fedora1"
-PKGHOST = "culain"
+#begin
+#    require 'rake/reductive'
+#rescue LoadError
+#    puts $:
+#    $stderr.puts "You must have the Reductive build library in your RUBYLIB."
+#    exit(14)
+#end
 
 begin
-    require 'rake/reductive'
-rescue Exception
-    $stderr.puts "You must have the Reductive build library in your RUBYLIB."
-    exit(14)
+    require 'rake/epm'
+    $haveepm = true
+rescue Exception => detail
+    puts detail.backtrace
+    puts detail
+    $stderr.puts "No EPM; skipping those packages"
+    $haveepm = false
 end
 
 
@@ -446,37 +453,27 @@ task :fedorarpm => [:package] do
     sh %{ssh fedora1 'cd puppet; rake rpm'}
 end
 
-def epmlist(match, prefix = "/usr")
-    dest = "../epmtmp/#{OS}-#{match}"
+if $haveepm
+    begin
+        Rake::EPMPackageTask.new("puppet", PKG_VERSION) do |t|
+            t.copyright = "2004-2005 by Reductive Labs, All Rights Reserved"
+            t.vendor = "Reductive Labs"
+            t.description = "System Automation and Configuration Management Software"
 
-    list = %x{mkepmlist --prefix #{prefix} ../puppet-#{PKG_VERSION}}.gsub(/luke/, "0")
+            t.bins = FileList.new("bin", "bin/*") do |list|
+                list.exclude("cf2puppet")
+                list.exclude("puppetdoc")
+                list.exclude("puppetmasterd")
+            end
 
-    list = list.split(/\n/).find_all do |line|
-        line =~ /#{prefix}\/#{match}/
-    end.join("\n")
+            t.sbins = FileList.new("sbin", "bin/puppetmasterd")
 
-    File.open(dest, "w") { |f| f.puts list }
-
-    return dest
-end
-
-directory "pkg/epm"
-directory "pkg/epmtmp"
-
-desc "Create packages using EPM"
-task :epmpkg => ["pkg/epm", "pkg/epmtmp", :package] do
-    $epmdir = "pkg/epm"
-    $epmtmpdir = "pkg/epmtmp"
-
-    Dir.chdir($epmdir) do
-        type = nil
-
-        binfile = epmlist("bin", "/usr")
-        libfile = epmlist("lib", $sitedir)
-
-        listfile = "../epmtmp/#{OS}.list"
-        sh %{cat ../../conf/epm.list #{binfile} #{libfile} > #{listfile}}
-        sh %{epm -f native puppet #{listfile}}
+            t.libs = FileList.new('lib/**/*')
+        end
+    rescue => detail
+        puts detail.backtrace
+        puts detail
+        exit(13)
     end
 end
 
