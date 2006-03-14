@@ -236,7 +236,6 @@ class TestLocalService < Test::Unit::TestCase
     else
         def test_servicestartstop
             mktestsvcs.each { |svc|
-                svc[:check] = :enable
                 startstate = nil
                 assert_nothing_raised("Could not get status") {
                     startstate = svc.status
@@ -253,6 +252,7 @@ class TestLocalService < Test::Unit::TestCase
         def test_serviceenabledisable
             mktestsvcs.each { |svc|
                 startstate = nil
+                svc[:check] = :enable
                 assert_nothing_raised("Could not get status") {
                     startstate = svc.enabled?
                 }
@@ -277,9 +277,10 @@ class TestLocalService < Test::Unit::TestCase
                 }
 
                 svc[:enable] = false
-                svc[:ensure] = :running
+                svc[:ensure] = :stopped
                 assert_apply(svc)
 
+                sleep 1
                 svc.retrieve
                 assert(svc.insync?, "Service did not sync both states")
 
@@ -287,6 +288,7 @@ class TestLocalService < Test::Unit::TestCase
                 svc[:ensure] = :running
                 assert_apply(svc)
 
+                sleep 1
                 svc.retrieve
                 assert(svc.insync?, "Service did not sync both states")
 

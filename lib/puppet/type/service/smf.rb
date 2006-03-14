@@ -1,11 +1,20 @@
 # Solaris 10 SMF-style services.
 Puppet.type(:service).newsvctype(:smf) do
     def enable
-        "svcadm enable %s" % self[:name]
+        self.start
     end
 
-    def dsiable
-        "svcadm disable %s" % self[:name]
+    def enabled?
+        case self.status
+        when :running:
+            return :true
+        else
+            return :false
+        end
+    end
+
+    def disable
+        self.stop
     end
 
     def restartcmd

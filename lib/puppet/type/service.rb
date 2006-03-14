@@ -28,21 +28,24 @@ module Puppet
 
             newvalue(:true) do
                 unless @parent.respond_to?(:enable)
-                    raise Puppet::Error, "Service %s does not support enabling"
+                    raise Puppet::Error, "Service %s does not support enabling" %
+                        self.name
                 end
                 @parent.enable
             end
 
             newvalue(:false) do
                 unless @parent.respond_to?(:disable)
-                    raise Puppet::Error, "Service %s does not support enabling"
+                    raise Puppet::Error, "Service %s does not support enabling" %
+                        self.name
                 end
                 @parent.disable
             end
 
             def retrieve
                 unless @parent.respond_to?(:enabled?)
-                    raise Puppet::Error, "Service %s does not support enabling"
+                    raise Puppet::Error, "Service %s does not support enabling" %
+                        self.name
                 end
                 @is = @parent.enabled?
             end
@@ -104,20 +107,6 @@ module Puppet
             aliasvalue(:false, :stopped)
             aliasvalue(:true, :running)
 
-#            munge do |should|
-#                case should
-#                when false,0,"0", "stopped", :stopped:
-#                    should = :stopped
-#                when true,1,"1", :running, "running":
-#                    should = :running
-#                else
-#                    self.warning "%s: interpreting '%s' as false" %
-#                        [self.class,should.inspect]
-#                    should = 0
-#                end
-#                return should
-#            end
-
             def retrieve
                 self.is = @parent.status
                 self.debug "Current status is '%s'" % self.is
@@ -128,12 +117,10 @@ module Puppet
                 case self.should
                 when :running
                     @parent.start
-                    self.info "started"
-                    return :service_started
+                    event = :service_started
                 when :stopped
-                    self.info "stopped"
                     @parent.stop
-                    return :service_stopped
+                    event = :service_stopped
                 else
                     self.debug "Not running '%s' and shouldn't be running" %
                         self
@@ -145,6 +132,8 @@ module Puppet
                         state.sync
                     end
                 end
+
+                return event
             end
         end
 
