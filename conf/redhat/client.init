@@ -27,6 +27,11 @@ PUPPET_OPTS=""
 [ -n "$PUPPET_LOG" ] && PUPPET_OPTS="${PUPPET_OPTS} --logdest=${PUPPET_LOG}"
 [ -n "$PUPPET_PORT" ] && PUPPET_OPTS="${PUPPET_OPTS} --port=${PUPPET_PORT}"
 
+# Figure out if the system just booted. Let's assume
+# boot doesn't take longer than 5 minutes
+## Not used for now
+##[ -n "$INIT_VERSION" ] && PUPPET_OPTS="${PUPPET_OPTS} --fullrun"
+
 start() {
 	echo -n $"Starting puppet: "
         daemon $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS}
