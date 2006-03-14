@@ -56,7 +56,6 @@ if project.has?(:epm)
         task.bins = FileList.new("bin/puppet", "bin/puppetca")
         task.sbins = FileList.new("bin/puppetmasterd", "bin/puppetd")
         task.rubylibs = FileList.new('lib/**/*')
-        task.add_dependency("ruby", "1.8.1")
     end
 end
 
