@@ -460,15 +460,18 @@ if $haveepm
             t.vendor = "Reductive Labs"
             t.description = "System Automation and Configuration Management Software"
 
-            t.bins = FileList.new("bin", "bin/*") do |list|
+            t.bins = FileList.new("bin/*") do |list|
                 list.exclude("cf2puppet")
                 list.exclude("puppetdoc")
                 list.exclude("puppetmasterd")
             end
 
-            t.sbins = FileList.new("sbin", "bin/puppetmasterd")
+            t.sbins = FileList.new("bin/puppetmasterd")
 
-            t.libs = FileList.new('lib/**/*')
+            t.rubylibs = FileList.new('lib/**/*')
+
+            t.add_dependency("ruby", "1.8.1")
+            t.add_dependency("facter", "1.1")
         end
     rescue => detail
         puts detail.backtrace
@@ -480,7 +483,7 @@ end
 desc "Make all of the appropriate packages"
 task :allepmpkgs => [:package] do
     %w{freebsd1 culain}.each do |host|
-        sh %{ssh #{host} 'cd puppet; rake epmpkg'}
+        sh %{ssh #{host} 'cd puppet; rake epmnative'}
     end
 end
 
