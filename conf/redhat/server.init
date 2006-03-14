@@ -3,7 +3,7 @@
 #
 # Author:       Duane Griffin <d.griffin@psenterprise.com>
 #
-# chkconfig: 345 65 45
+# chkconfig: - 65 45
 #
 # description: Server for the puppet system management tool.
 # processname: puppetmaster
