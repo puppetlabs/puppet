@@ -15,7 +15,10 @@ Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
 Requires: ruby >= 1.8.1
 Requires: facter >= 1.1
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildArchitectures: noarch
+# It's not possible to build ruby noarch packages currently
+# See bz184199
+#BuildArchitectures: noarch
+BuildRequires: ruby >= 1.8.1
 
 %description
 Puppet lets you centrally manage every important aspect of your system using a 
@@ -120,6 +123,12 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Mon Mar 13 2006 David Lutterkort <dlutter@redhat.com> - 0.15.0-1
+- Commented out noarch; requires fix for bz184199
+
+* Mon Mar  6 2006 David Lutterkort <dlutter@redhat.com> - 0.14.0-1
+- Added BuildRequires for ruby
+
 * Wed Mar  1 2006 David Lutterkort <dlutter@redhat.com> - 0.13.5-1
 - Removed use of fedora-usermgmt. It is not required for Fedora Extras and
   makes it unnecessarily hard to use this rpm outside of Fedora. Just
