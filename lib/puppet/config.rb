@@ -222,6 +222,14 @@ class Config
                         values[section] = {}
                     end
                     values[section][var.to_s] = value
+
+                    # Do some annoying skullduggery here.  This is so that
+                    # the group can be set in the config file.  The problem
+                    # is that we're using the word 'group' twice, which is
+                    # confusing.
+                    if var == :group and section == Puppet.name and @config.include?(:group)
+                        @config[:group].value = value
+                    end
                     next
                 end
 

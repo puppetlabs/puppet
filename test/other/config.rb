@@ -496,6 +496,27 @@ yay = /a/path
 
         assert(! Puppet.type(:file)["/dev/testing"], "Created dev file")
     end
+
+    def test_groupsetting
+        cfile = tempfile()
+
+        group = "yayness"
+
+        File.open(cfile, "w") do |f|
+            f.puts "[#{Puppet.name}]
+            group = #{group}
+            "
+        end
+
+        config = mkconfig
+        config.setdefaults(Puppet.name, :group => ["puppet", "a group"])
+
+        assert_nothing_raised {
+            config.parse(cfile)
+        }
+
+        assert_equal(group, config[:group], "Group did not take")
+    end
 end
 
 # $Id$
