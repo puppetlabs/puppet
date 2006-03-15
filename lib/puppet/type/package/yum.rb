@@ -15,7 +15,15 @@ module Puppet
 
         # What's the latest package version available?
         def latest
-            cmd = "yum list %s" % self[:name] 
+            cmd = nil
+            # We have to behave differently if the package is installed vs.
+            # not installed.
+            if @is == :absent
+                cmd = "yum list %s" % self[:name] 
+            else
+                cmd = "yum list updates %s" % self[:name] 
+            end
+            #cmd = "yum list %s" % self[:name] 
             self.info "Executing %s" % cmd.inspect
             output = %x{#{cmd} 2>&1}
 
@@ -54,3 +62,5 @@ module Puppet
         end
     end
 end
+
+# $Id$
