@@ -145,6 +145,7 @@ class TestUser < Test::Unit::TestCase
     end
 
     def attrtest_comment(user)
+        user.retrieve
         old = user.is(:comment)
         user[:comment] = "A different comment"
 

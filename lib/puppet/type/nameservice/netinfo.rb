@@ -96,7 +96,7 @@ module Puppet
                     end
                     self.debug "Executing %s" % cmd.join(" ").inspect
 
-                    output = %x{#{cmd.join(" ")} 2>&1}.split("\n").each { |line|
+                    %x{#{cmd.join(" ")} 2>&1}.split("\n").each { |line|
                         if line =~ /^(\w+)\s+(.+)$/
                             name = $1
                             value = $2.sub(/\s+$/, '')
@@ -116,6 +116,78 @@ module Puppet
                     unless defined? @is
                         @is = :absent
                     end
+                end
+
+                # The list of all groups the user is a member of.  Different
+                # user mgmt systems will need to override this method.
+                def grouplist
+                    groups = []
+
+                    user = @parent[:name]
+                    # Retrieve them all from netinfo
+                    open("| nireport / /groups name users") do |file|
+                        file.each do |line|
+                            name, members = line.split(/\s+/)
+                            next unless members
+                            next if members =~ /NoValue/
+                            members = members.split(",")
+
+                            if members.include? user
+                                groups << name
+                            end
+                        end
+                    end
+
+                    groups
+                end
+
+                # This is really lame.  We have to iterate over each
+                # of the groups and add us to them.
+                def setgrouplist(groups)
+                    self.warning "Setting groups to %s" % groups.inspect
+                    # Get just the groups we need to modify
+                    diff = groups - @is
+
+                    data = {}
+                    open("| nireport / /groups name users") do |file|
+                        file.each do |line|
+                            name, members = line.split(/\s+/)
+
+                            if members.nil? or members =~ /NoValue/
+                                data[name] = []
+                            else
+                                # Add each diff group's current members
+                                data[name] = members.split(/,/)
+                            end
+                        end
+                    end
+
+                    user = @parent[:name]
+                    data.each do |name, members|
+                        if members.include? user and groups.include? name
+                            # I'm in the group and should be
+                            next
+                        elsif members.include? user
+                            # I'm in the group and shouldn't be
+                            self.warning "Removing %s from %s" %
+                                [user, name]
+                            setuserlist(name, members - [user])
+                        elsif groups.include? name
+                            # I'm not in the group and should be
+                            setuserlist(name, members + [user])
+                            self.warning "Adding %s to %s" %
+                                [user, name]
+                        else
+                            # I'm not in the group and shouldn't be
+                            next
+                        end
+                    end
+                end
+
+                def setuserlist(group, list)
+                    cmd = "niutil -createprop / /groups/%s users %s" %
+                        [group, list.join(",")]
+                    output = %x{#{cmd}}
                 end
 
                 # How to add an object.

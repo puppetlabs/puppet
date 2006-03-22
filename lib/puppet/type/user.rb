@@ -221,7 +221,8 @@ module Puppet
 
         newstate(:groups, @parentstate) do
             desc "The groups of which the user is a member.  The primary
-                group should not be listed."
+                group should not be listed.  Multiple groups should be
+                specified as an array."
 
             isoptional
 
@@ -260,6 +261,24 @@ module Puppet
             validate do |value|
                 if value =~ /^\d+$/
                     raise ArgumentError, "Group names must be provided, not numbers"
+                end
+            end
+
+            def sync
+                if respond_to? :setgrouplist
+                    groups = nil
+                    if @parent[:membership] == :inclusive
+                        groups = @should
+                    else
+                        groups = (@is + @should).uniq
+                    end
+
+                    # Pass them the group list, so that the :membership logic
+                    # is all in this class, not in parent classes.
+                    setgrouplist(groups)
+                    return :user_modified
+                else
+                    super
                 end
             end
         end
