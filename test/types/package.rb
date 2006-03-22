@@ -68,6 +68,8 @@ class TestPackages < Test::Unit::TestCase
             end
             obj = Puppet.type(:package).create(hash)
             modpkg(obj)
+
+            yield obj
         }
     end
 
