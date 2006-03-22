@@ -219,6 +219,51 @@ module Puppet
             isautogen
         end
 
+        newstate(:groups, @parentstate) do
+            desc "The groups of which the user is a member.  The primary
+                group should not be listed."
+
+            isoptional
+
+            def should_to_s
+                self.should
+            end
+
+            def is_to_s
+                @is.join(",")
+            end
+
+            # We need to override this because the groups need to
+            # be joined with commas
+            def should
+                if @parent[:membership] == :inclusive
+                    @should.sort.join(",")
+                else
+                    (@is + @should).uniq.sort.join(",")
+                end
+            end
+
+            def retrieve
+                @is = grouplist()
+            end
+
+            def insync?
+                unless defined? @should and @should
+                    return false
+                end
+                unless defined? @is and @is
+                    return false
+                end
+                return @is.sort == @should.sort
+            end
+
+            validate do |value|
+                if value =~ /^\d+$/
+                    raise ArgumentError, "Group names must be provided, not numbers"
+                end
+            end
+        end
+
         # these three states are all implemented differently on each platform,
         # so i'm disabling them for now
 
@@ -249,6 +294,16 @@ module Puppet
                 each operating system, it is generally a good idea to keep to
                 the degenerate 8 characters, beginning with a letter."
             isnamevar
+        end
+
+        newparam(:membership) do
+            desc "Whether specified groups should be treated as the only groups
+                of which the user is a member or whether they should merely
+                be treated as the minimum membership list."
+                
+            newvalues(:inclusive, :minimum)
+
+            defaultto :minimum
         end
 
         @doc = "Manage users.  Currently can create and modify users, but

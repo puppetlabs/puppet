@@ -110,6 +110,33 @@ class State
             end
         end
 
+        # The list of all groups the user is a member of.  Different
+        # user mgmt systems will need to override this method.
+        def grouplist
+            groups = []
+
+            # Reset our group list
+            Etc.setgrent
+
+            user = @parent[:name]
+
+            # Now iterate across all of the groups, adding each one our
+            # user is a member of
+            while group = Etc.getgrent
+                members = group.mem
+
+                if members.include? user
+                    groups << group.name
+                end
+            end
+
+            # We have to close the file, so each listing is a separate
+            # reading of the file.
+            Etc.endgrent
+
+            groups
+        end
+
         # Sync the information.
         def sync
             event = nil

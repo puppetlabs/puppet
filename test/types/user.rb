@@ -295,6 +295,114 @@ class TestUser < Test::Unit::TestCase
         assert_equal(old, current?(:uid, user[:name]), "UID was not reverted")
     end
 
+    def attrtest_groups(user)
+        Etc.setgrent
+        max = 0
+        while group = Etc.getgrent
+            if group.gid > max and group.gid < 5000
+                max = group.gid
+            end
+        end
+
+        groups = []
+        main = []
+        extra = []
+        5.times do |i|
+            i += 1
+            name = "pptstgr%s" % i
+            groups << Puppet.type(:group).create(
+                :name => name,
+                :gid => max + i
+            )
+
+            if i < 3
+                main << name
+            else
+                extra << name
+            end
+        end
+
+        # Create our test groups
+        assert_apply(*groups)
+
+        assert(user[:membership] == :minimum, "Membership did not default correctly")
+
+        assert_nothing_raised {
+            user.retrieve
+        }
+
+        # Now add some of them to our user
+        assert_nothing_raised {
+            user[:groups] = extra
+        }
+        assert_nothing_raised {
+            user.retrieve
+        }
+
+        assert(user.state(:groups).is, "Did not retrieve group list")
+
+        assert(!user.insync?, "User is incorrectly in sync")
+
+        assert_events([:user_modified], user)
+
+        assert_nothing_raised {
+            user.retrieve
+        }
+
+        list = user.state(:groups).is
+        assert_equal(extra.sort, list.sort, "Group list is not equal")
+
+        # Now set to our main list of groups
+        assert_nothing_raised {
+            user[:groups] = main
+        }
+
+        assert_equal((main + extra).sort.join(","), user.state(:groups).should)
+
+        assert_nothing_raised {
+            user.retrieve
+        }
+
+        assert(!user.insync?, "User is incorrectly in sync")
+
+        assert_events([:user_modified], user)
+
+        assert_nothing_raised {
+            user.retrieve
+        }
+
+        # We're not managing inclusively, so it should keep the old group
+        # memberships and add the new ones
+        list = user.state(:groups).is
+        assert_equal((main + extra).sort, list.sort, "Group list is not equal")
+
+        assert_nothing_raised {
+            user[:membership] = :inclusive
+        }
+        assert_nothing_raised {
+            user.retrieve
+        }
+
+        assert(!user.insync?, "User is incorrectly in sync")
+
+        assert_events([:user_modified], user)
+        assert_nothing_raised {
+            user.retrieve
+        }
+
+        list = user.state(:groups).is
+        assert_equal(main.sort, list.sort, "Group list is not equal")
+
+        # Now delete our groups
+        groups.each do |group|
+            group[:ensure] = :absent
+        end
+
+        user.delete(:groups)
+
+        assert_apply(*groups)
+    end
+
     # Disabled, because this is testing too much internal implementation
     def disabled_test_eachmethod
         obj = Etc.getpwuid(Process.uid)

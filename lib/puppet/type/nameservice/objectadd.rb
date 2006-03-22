@@ -92,6 +92,7 @@ module Puppet
                         @allatonce = true
                         case self.name
                         when :home: setflag "-d"
+                        when :groups: setflag "-G"
                         end
                     end
                 end
