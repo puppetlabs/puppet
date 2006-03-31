@@ -110,10 +110,6 @@ module Puppet
             return changes
         end
 
-        def should(name)
-            state(name).should
-        end
-
         def store
             text = ""
             @lines.each do |l|
@@ -135,7 +131,8 @@ module Puppet
 
         newparam(:name) do
             desc "The name of the repository. This is used to find the config
-                  file as $repodir/$name.repo"
+                  file as $repodir/$name.repo. The 'name' parameter in the yum
+                  config file has to be set through **descr**"
             isnamevar
         end
 
@@ -200,5 +197,65 @@ module Puppet
             newvalue(/.*/) { }
         end
 
+        newstate(:include, Puppet::IniState) do
+            desc "A URL from which to include the config.\n#{ABSENT_DOC}"
+            newvalue(:absent) { self.should = :absent }
+            # Should really check that it's a valid URL
+            newvalue(/.*/) { }
+        end
+
+        newstate(:exclude, Puppet::IniState) do
+            desc "List of shell globs. Matching packages will never be
+                  considered in updates or installs for this repo.
+                  #{ABSENT_DOC}"
+            newvalue(:absent) { self.should = :absent }
+            newvalue(/.*/) { }
+        end
+
+        newstate(:includepkgs, Puppet::IniState) do
+            desc "List of shell globs. If this is set, only packages
+                  matching one of the globs will be considered for
+                  update or install.\n#{ABSENT_DOC}"
+            newvalue(:absent) { self.should = :absent }
+            newvalue(/.*/) { }
+        end
+
+        newstate(:enablegroups, Puppet::IniState) do
+            desc "Determines whether yum will allow the use of
+              package groups for this  repository. Possible 
+              values are '0', and '1'.\n#{ABSENT_DOC}"
+            newvalue(:absent) { self.should = :absent }
+            newvalue(%r{(0|1)}) { }
+        end
+
+        newstate(:failovermethod, Puppet::IniState) do
+            desc "Either 'roundrobin' or 'priority'.\n#{ABSENT_DOC}"
+            newvalue(:absent) { self.should = :absent }
+            newvalue(%r(roundrobin|priority)) { }
+        end
+
+        newstate(:keepalive, Puppet::IniState) do
+            desc "Either '1' or '0'. This tells yum whether or not HTTP/1.1 
+              keepalive  should  be  used with this repository.\n#{ABSENT_DOC}"
+            newvalue(:absent) { self.should = :absent }
+            newvalue(%r{(0|1)}) { }
+        end
+
+        newstate(:timeout, Puppet::IniState) do
+            desc "Number of seconds to wait for a connection before timing 
+                  out.\n#{ABSENT_DOC}"
+            newvalue(:absent) { self.should = :absent }
+            newvalue(%r{[0-9]+}) { }
+        end
+
+        newstate(:metadata_expire, Puppet::IniState) do
+            desc "Number of seconds after which the metadata will expire.
+                  #{ABSENT_DOC}"
+            newvalue(:absent) { self.should = :absent }
+            newvalue(%r{[0-9]+}) { }
+        end
+
+        
+        
     end
 end
