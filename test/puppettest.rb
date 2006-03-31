@@ -890,24 +890,26 @@ class PuppetTestSuite
 
     def initialize(name)
         path = File.join(self.class.basedir, name)
-        unless FileTest.directory?(path)
-            puts "TestSuites are directories containing test cases"
+        if FileTest.directory?(path)
+            # load each of the files
+            Dir.entries(path).collect { |file|
+                File.join(path,file)
+            }.find_all { |file|
+                FileTest.file?(file) and file =~ /\.rb$/
+            }.sort { |a,b|
+                # in the order they were modified, so the last modified files
+                # are loaded and thus displayed last
+                File.stat(b) <=> File.stat(a)
+            }.each { |file|
+                require file
+            }
+        elsif FileTest.file?(path) && path =~ /\.rb$/
+            require path
+        else
+            puts "TestSuites are directories or files containing test cases"
             puts "no such directory: %s" % path
             exit(65)
         end
-
-        # load each of the files
-        Dir.entries(path).collect { |file|
-            File.join(path,file)
-        }.find_all { |file|
-            FileTest.file?(file) and file =~ /\.rb$/
-        }.sort { |a,b|
-            # in the order they were modified, so the last modified files
-            # are loaded and thus displayed last
-            File.stat(b) <=> File.stat(a)
-        }.each { |file|
-            require file
-        }
     end
 end
 
