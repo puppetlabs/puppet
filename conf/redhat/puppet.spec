@@ -11,6 +11,7 @@ Group: System Environment/Base
 
 URL: http://reductivelabs.com/projects/puppet/
 Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
+Patch0: no-chuser-0.15.1.patch
 
 Requires: ruby >= 1.8.1
 Requires: facter >= 1.1
@@ -37,6 +38,7 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
+%patch0 -p1
 
 %install
 %{__rm} -rf %{buildroot}
@@ -123,6 +125,9 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Wed Mar 22 2006 David Lutterkort <dlutter@redhat.com> - 0.15.1-1
+- Patch0: Run puppetmaster as root; running as puppet is not ready for primetime
+
 * Mon Mar 13 2006 David Lutterkort <dlutter@redhat.com> - 0.15.0-1
 - Commented out noarch; requires fix for bz184199
 
