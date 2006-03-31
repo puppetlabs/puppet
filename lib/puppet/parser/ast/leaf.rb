@@ -69,6 +69,9 @@ class Puppet::Parser::AST
     # Lower-case words.
     class Name < AST::Leaf; end
 
+    # Host names, either fully qualified or just the short name
+    class HostName < AST::Leaf; end
+
     # A simple variable.  This object is only used during interpolation;
     # the VarDef class is used for assignment.
     class Variable < Name

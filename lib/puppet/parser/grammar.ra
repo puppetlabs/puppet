@@ -7,7 +7,7 @@ class Puppet::Parser::Parser
 token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE FALSE EQUALS
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL NOTEQUAL
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN DOT COLON TYPE
-token NAME SEMIC CASE DEFAULT INCLUDE
+token NAME HOSTNAME SEMIC CASE DEFAULT INCLUDE
 
 rule
 program:    statements {
@@ -549,7 +549,7 @@ hostclass: CLASS NAME parent LBRACE statements RBRACE {
     result = AST::ClassDef.new(args)
 }
 
-nodedef: NODE names parent LBRACE statements RBRACE {
+nodedef: NODE hostnames parent LBRACE statements RBRACE {
     unless val[1].instance_of?(AST::ASTArray)
         val[1] = AST::ASTArray.new(
             :line => val[1].line,
@@ -568,7 +568,7 @@ nodedef: NODE names parent LBRACE statements RBRACE {
         args[:parentclass] = val[2]
     end
     result = AST::NodeDef.new(args)
-}       |  NODE names parent LBRACE RBRACE {
+}       |  NODE hostnames parent LBRACE RBRACE {
     unless val[1].instance_of?(AST::ASTArray)
         val[1] = AST::ASTArray.new(
             :line => val[1].line,
@@ -593,8 +593,8 @@ nodedef: NODE names parent LBRACE statements RBRACE {
     result = AST::NodeDef.new(args)
 }
 
-names:    name
-        | names name {
+hostnames:    hostname
+        | hostnames hostname {
     if val[0].instance_of?(AST::ASTArray)
         result = val[0]
         result.push val[1]
@@ -605,6 +605,30 @@ names:    name
             :children => [val[0], val[1]]
         )
     end
+}
+
+# A hostname; lexically, a hostname can look like
+# a NAME, TYPE, or HOSTNAME
+hostname: NAME {
+   result = AST::HostName.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+}
+| TYPE {
+   result = AST::HostName.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+}
+| HOSTNAME {
+   result = AST::HostName.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
 }
 
 nothing:    {
@@ -827,4 +851,10 @@ def string=(string)
     @lexer.string = string
 end
 
+# Make emacs happy
+# Local Variables:
+# mode: ruby
+# End:
+
 # $Id$
+

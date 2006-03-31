@@ -21,9 +21,9 @@ module Puppet
                 %r{\}} => :RBRACE,
                 %r{\(} => :LPAREN,
                 %r{\)} => :RPAREN,
-                %r{"} => :DQUOTE,
+                %r{\"} => :DQUOTE,
                 %r{\n} => :RETURN,
-                %r{'} => :SQUOTE,
+                %r{\'} => :SQUOTE,
                 %r{=} => :EQUALS,
                 %r{==} => :ISEQUAL,
                 %r{>=} => :GREATEREQUAL,
@@ -40,6 +40,7 @@ module Puppet
                 %r{=>} => :FARROW,
                 %r{[a-z][-\w]*} => :NAME,
                 %r{[A-Z][-\w]*} => :TYPE,
+                %r{[0-9a-zA-Z\-]+\.[0-9a-zA-Z\-.]+} => :HOSTNAME,
                 %r{[0-9]+} => :NUMBER,
                 %r{\$\w+} => :VARIABLE
             }

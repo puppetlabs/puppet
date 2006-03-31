@@ -165,10 +165,12 @@ module Puppet
                 # but for now just make a simple array
                 names = [client]
 
-                # if the client name is fully qualied (which is normally will be)
-                # add the short name
+                # Make sure both the fqdn and the short name of the
+                # host can be used in the manifest
                 if client =~ /\./
                     names << client.sub(/\..+/,'')
+                else
+                    names << "#{client}.#{facts['domain']}"
                 end
 
                 begin
