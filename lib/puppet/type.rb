@@ -1318,7 +1318,7 @@ class Type < Puppet::Element
             if attrs.include?(namevar)
                 attrs.delete(namevar)
             else
-                self.devfail "My namevar isn't a valid attribute...?"
+                self.devfail "My namevar isn\'t a valid attribute...?"
             end
         else
             self.devfail "I was not passed a namevar"
@@ -2229,5 +2229,6 @@ require 'puppet/type/symlink'
 require 'puppet/type/user'
 require 'puppet/type/tidy'
 require 'puppet/type/parsedtype'
+require 'puppet/type/yumrepo'
 
 # $Id$
