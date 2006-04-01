@@ -328,12 +328,12 @@ module Puppet
         # it possible to call for states, too.
         def value
             if self.is_a?(Puppet::State)
-                # We should return the 'is' value if there's not 'should' value.
-                # This might be bad, though, because the 'should' method
-                # knows whether to return an array or not and that info is
-                # not exposed, and the 'is' value could be a symbol.  I can't
-                # seem to create a test in which this is a problem, but that doesn't
-                # mean it's not one.
+                # We should return the 'is' value if there's not 'should'
+                # value.  This might be bad, though, because the 'should'
+                # method knows whether to return an array or not and that info
+                # is not exposed, and the 'is' value could be a symbol.  I
+                # can't seem to create a test in which this is a problem, but
+                # that doesn't mean it's not one.
                 if self.should
                     return self.should
                 else

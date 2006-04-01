@@ -123,19 +123,17 @@ module Puppet
                 super
             end
 
-            # Override the Puppet::Type#[]= method so that we can store the
-            # instances in per-user arrays.  Then just call +super+.
-            def self.[]=(name, object)
-                self.instance(object)
-                super
-            end
-
             # In addition to removing the instances in @objects, we have to remove
             # per-user host tab information.
             def self.clear
                 @instances = []
                 @fileobj = nil
                 super
+            end
+
+            # Add a non-object comment or whatever to our list of instances
+            def self.comment(line)
+                @instances << line
             end
 
             # Override the default Puppet::Type method, because instances
@@ -155,13 +153,6 @@ module Puppet
 # HEADER: is definitely not recommended.\n}
             end
 
-            # Store a new instance of a host.  Called from Host#initialize.
-            def self.instance(obj)
-                unless @instances.include?(obj)
-                    @instances << obj
-                end
-            end
-
             # Parse a file
             #
             # Subclasses must override this method.
@@ -174,12 +165,13 @@ module Puppet
             def self.hash2obj(hash)
                 obj = nil
 
-                unless hash.include?(:name) and hash[:name]
-                    raise Puppet::DevError, "Hash was not passed with name"
+                namevar = self.namevar
+                unless hash.include?(namevar) and hash[namevar]
+                    raise Puppet::DevError, "Hash was not passed with namevar"
                 end
 
                 # if the obj already exists with that name...
-                if obj = self[hash[:name]]
+                if obj = self[hash[namevar]]
                     # We're assuming here that objects with the same name
                     # are the same object, which *should* be the case, assuming
                     # we've set up our naming stuff correctly everywhere.
@@ -200,15 +192,19 @@ module Puppet
                 else
                     # create a new obj, since no existing one seems to
                     # match
-                    obj = self.create(:name => hash[:name])
+                    obj = self.create(namevar => hash[namevar])
 
                     # We can't just pass the hash in at object creation time,
                     # because it sets the should value, not the is value.
-                    hash.delete(:name)
+                    hash.delete(namevar)
                     hash.each { |param, value|
                         obj.is = [param, value]
                     }
                 end
+
+                # And then add it to our list of instances.  This maintains the order
+                # in the file.
+                @instances << obj
             end
 
             # Retrieve the text for the file. Returns nil in the unlikely
@@ -223,10 +219,11 @@ module Puppet
                     # First we mark all of our objects absent; any objects
                     # subsequently found will be marked present
                     self.each { |obj|
-                        obj.each { |state|
-                            state.is = :absent
-                        }
+                        obj.is = [:ensure, :absent]
                     }
+                    
+                    # We clear this, so that non-objects don't get duplicated
+                    @instances.clear
                     self.parse(text)
                 end
             end
@@ -234,6 +231,11 @@ module Puppet
             # Write out the file.
             def self.store
                 @fileobj ||= @filetype.new(@path)
+
+                # Make sure all of our instances are in the to-be-written array
+                self.each do |inst|
+                    @instances << inst unless @instances.include? inst
+                end
 
                 if @instances.empty?
                     Puppet.notice "No %s instances for %s" % [self.name, @path]
@@ -275,19 +277,19 @@ module Puppet
                 @fileobj.loaded
             end
 
+            # The 'store' method knows how to handle absence vs. presence
             def create
-                self[:ensure] = :present
+                self.store
+            end
+
+            # The 'store' method knows how to handle absence vs. presence
+            def destroy
                 self.store
             end
 
             # hash2obj marks the 'ensure' state as present
             def exists?
                 @states.include?(:ensure) and @states[:ensure].is == :present
-            end
-
-            def destroy
-                self[:ensure] = :absent
-                self.store
             end
 
             # Override the default Puppet::Type method because we need to call

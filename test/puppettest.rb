@@ -44,6 +44,8 @@ module TestPuppet
         @@tmpfiles = [@configpath, tmpdir()]
         @@tmppids = []
 
+        @@cleaners = []
+
         if $0 =~ /.+\.rb/ or Puppet[:debug]
             Puppet::Log.newdestination :console
             Puppet::Log.level = :debug
@@ -96,8 +98,15 @@ module TestPuppet
         end
     end
 
+    def cleanup(&block)
+        @@cleaners << block
+    end
+
     def teardown
         stopservices
+
+        @@cleaners.each { |cleaner| cleaner.call() }
+
         @@tmpfiles.each { |file|
             if FileTest.exists?(file)
                 system("chmod -R 755 %s" % file)
