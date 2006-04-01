@@ -182,6 +182,7 @@ class TestPort < Test::Unit::TestCase
         port.delete(:alias)
         assert(! port.state(:alias))
         assert_events([:port_changed], port)
+
         assert_nothing_raised {
             port.retrieve
         }

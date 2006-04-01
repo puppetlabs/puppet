@@ -206,6 +206,9 @@ module Puppet
                 return false
             end
 
+            # If this is happening, our object exists
+            self.is = [:ensure, :present]
+
             if hash[:protocols]
                 # The protocol can be a symbol, so...
                 if proto.is_a?(Symbol)

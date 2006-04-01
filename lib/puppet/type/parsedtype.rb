@@ -328,5 +328,7 @@ end
 
 require 'puppet/type/parsedtype/host'
 require 'puppet/type/parsedtype/port'
+require 'puppet/type/parsedtype/mount'
+require 'puppet/type/parsedtype/sshkey'
 
 # $Id$
