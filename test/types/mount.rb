@@ -8,20 +8,20 @@ end
 
 require 'puppettest'
 require 'puppet'
-require 'puppet/type/parsedtype/filesystem'
+require 'puppet/type/parsedtype/mount'
 require 'test/unit'
 require 'facter'
 
-class TestFilesystem < Test::Unit::TestCase
+class TestMounts < Test::Unit::TestCase
 	include TestPuppet
     def setup
         super
-        @filesystemtype = Puppet.type(:filesystem)
-        @oldfiletype = @filesystemtype.filetype
+        @mounttype = Puppet.type(:mount)
+        @oldfiletype = @mounttype.filetype
     end
 
     def teardown
-        @filesystemtype.filetype = @oldfiletype
+        @mounttype.filetype = @oldfiletype
         Puppet.type(:file).clear
         super
     end
@@ -30,20 +30,20 @@ class TestFilesystem < Test::Unit::TestCase
     # but does not modify our actual system.
     def mkfaketype
         pfile = tempfile()
-        old = @filesystemtype.path
-        @filesystemtype.path = pfile
+        old = @mounttype.path
+        @mounttype.path = pfile
 
         cleanup do
-            @filesystemtype.path = old
-            @filesystemtype.fileobj = nil
+            @mounttype.path = old
+            @mounttype.fileobj = nil
         end
 
         # Reset this, just in case
-        @filesystemtype.fileobj = nil
+        @mounttype.fileobj = nil
     end
 
-    def mkfilesystem
-        filesystem = nil
+    def mkmount
+        mount = nil
 
         if defined? @pcount
             @pcount += 1
@@ -55,60 +55,60 @@ class TestFilesystem < Test::Unit::TestCase
             :device => "/dev/dsk%s" % @pcount,
         }
 
-        Puppet.type(:filesystem).fields.each do |field|
+        Puppet.type(:mount).fields.each do |field|
             unless args.include? field
                 args[field] = "fake%s" % @pcount
             end
         end
 
         assert_nothing_raised {
-            filesystem = Puppet.type(:filesystem).create(args)
+            mount = Puppet.type(:mount).create(args)
         }
 
-        return filesystem
+        return mount
     end
 
-    def test_simplefilesystem
+    def test_simplemount
         mkfaketype
         host = nil
         assert_nothing_raised {
-            assert_nil(Puppet.type(:filesystem).retrieve)
+            assert_nil(Puppet.type(:mount).retrieve)
         }
 
-        filesystem = mkfilesystem
+        mount = mkmount
 
         assert_nothing_raised {
-            Puppet.type(:filesystem).store
+            Puppet.type(:mount).store
         }
 
         assert_nothing_raised {
             assert(
-                Puppet.type(:filesystem).to_file.include?(
-                    Puppet.type(:filesystem).fileobj.read
+                Puppet.type(:mount).to_file.include?(
+                    Puppet.type(:mount).fileobj.read
                 ),
                 "File does not include all of our objects"
             )
         }
     end
 
-    def test_filesystemsparse
+    def test_mountsparse
         assert_nothing_raised {
-            @filesystemtype.retrieve
+            @mounttype.retrieve
         }
 
-        # Now just make we've got some filesystems we know will be there
-        root = @filesystemtype["/"]
-        assert(root, "Could not retrieve root filesystem")
+        # Now just make we've got some mounts we know will be there
+        root = @mounttype["/"]
+        assert(root, "Could not retrieve root mount")
     end
 
     def test_rootfs
         fs = nil
         assert_nothing_raised {
-            Puppet.type(:filesystem).retrieve
+            Puppet.type(:mount).retrieve
         }
 
         assert_nothing_raised {
-            fs = Puppet.type(:filesystem)["/"]
+            fs = Puppet.type(:mount)["/"]
         }
         assert(fs, "Could not retrieve root fs")
 
@@ -120,34 +120,34 @@ class TestFilesystem < Test::Unit::TestCase
     # Make sure it reads and writes correctly.
     def test_readwrite
         assert_nothing_raised {
-            Puppet::Type.type(:filesystem).retrieve
+            Puppet::Type.type(:mount).retrieve
         }
 
         # Now switch to storing in ram
         mkfaketype
 
-        fs = mkfilesystem
+        fs = mkmount
 
-        assert(Puppet::Type.type(:filesystem).path != "/etc/fstab")
+        assert(Puppet::Type.type(:mount).path != "/etc/fstab")
 
-        assert_events([:filesystem_created], fs)
+        assert_events([:mount_created], fs)
 
-        text = Puppet::Type.type(:filesystem).fileobj.read
+        text = Puppet::Type.type(:mount).fileobj.read
 
         assert(text =~ /#{fs[:path]}/, "Text did not include new fs")
 
         fs[:ensure] = :absent
 
-        assert_events([:filesystem_removed], fs)
-        text = Puppet::Type.type(:filesystem).fileobj.read
+        assert_events([:mount_removed], fs)
+        text = Puppet::Type.type(:mount).fileobj.read
 
         assert(text !~ /#{fs[:path]}/, "Text still includes new fs")
 
         fs[:ensure] = :present
 
-        assert_events([:filesystem_created], fs)
+        assert_events([:mount_created], fs)
 
-        text = Puppet::Type.type(:filesystem).fileobj.read
+        text = Puppet::Type.type(:mount).fileobj.read
 
         assert(text =~ /#{fs[:path]}/, "Text did not include new fs")
     end
@@ -158,22 +158,22 @@ class TestFilesystem < Test::Unit::TestCase
         case Facter["hostname"].value
         when "culain": fs = "/ubuntu"
         else
-            $stderr.puts "No filesystem for mount testing; skipping"
+            $stderr.puts "No mount for mount testing; skipping"
             return
         end
 
         backup = tempfile()
 
-        FileUtils.cp(Puppet::Type.type(:filesystem).path, backup)
+        FileUtils.cp(Puppet::Type.type(:mount).path, backup)
 
         # Make sure the original gets reinstalled.
         cleanup do 
-            FileUtils.cp(backup, Puppet::Type.type(:filesystem).path)
+            FileUtils.cp(backup, Puppet::Type.type(:mount).path)
         end
 
-        Puppet.type(:filesystem).retrieve
+        Puppet.type(:mount).retrieve
 
-        obj = Puppet.type(:filesystem)[fs]
+        obj = Puppet.type(:mount)[fs]
 
         assert(obj, "Could not retrieve %s object" % fs)
 
@@ -203,22 +203,22 @@ class TestFilesystem < Test::Unit::TestCase
             state.should = state.is
         end
 
-        # Verify we can remove the filesystem
+        # Verify we can remove the mount
         assert_nothing_raised {
             obj[:ensure] = :absent
         }
 
-        assert_events([:filesystem_removed], obj)
+        assert_events([:mount_removed], obj)
 
         # And verify it's gone
         assert(!obj.mounted?, "Object is mounted after being removed")
 
-        text = Puppet.type(:filesystem).fileobj.read
+        text = Puppet.type(:mount).fileobj.read
 
         assert(text !~ /#{fs}/,
             "Fstab still contains %s" % fs)
 
-        assert_raise(Puppet::Error, "Removed filesystem did not throw an error") {
+        assert_raise(Puppet::Error, "Removed mount did not throw an error") {
             obj.mount
         }
 
@@ -226,9 +226,9 @@ class TestFilesystem < Test::Unit::TestCase
             obj[:ensure] = :present
         }
 
-        assert_events([:filesystem_created], obj)
+        assert_events([:mount_created], obj)
 
-        assert(File.read(Puppet.type(:filesystem).path) =~ /#{fs}/,
+        assert(File.read(Puppet.type(:mount).path) =~ /#{fs}/,
             "Fstab does not contain %s" % fs)
 
         assert(! obj.mounted?, "Object is mounted incorrectly")
@@ -237,9 +237,9 @@ class TestFilesystem < Test::Unit::TestCase
             obj[:ensure] = :mounted
         }
 
-        assert_events([:filesystem_mounted], obj)
+        assert_events([:mount_mounted], obj)
 
-        assert(File.read(Puppet.type(:filesystem).path) =~ /#{fs}/,
+        assert(File.read(Puppet.type(:mount).path) =~ /#{fs}/,
             "Fstab does not contain %s" % fs)
 
         assert(obj.mounted?, "Object is not mounted")

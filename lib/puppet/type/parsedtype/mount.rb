@@ -4,7 +4,7 @@ require 'puppet/type/parsedtype'
 require 'puppet/type/state'
 
 module Puppet
-    newtype(:filesystem, Puppet::Type::ParsedType) do
+    newtype(:mount, Puppet::Type::ParsedType) do
 
         ensurable do
             newvalue(:present) do
@@ -18,7 +18,7 @@ module Puppet
                     @parent.unmount
                 end
 
-                :filesystem_removed
+                :mount_removed
             end
 
             newvalue(:mounted) do
@@ -28,13 +28,13 @@ module Puppet
 
                 @parent.mount
 
-                :filesystem_mounted
+                :mount_mounted
             end
         end
 
         newstate(:device) do
-            desc "The device providing the filesystem.  This can be whatever
-                device is supporting by the filesystem, including network
+            desc "The device providing the mount.  This can be whatever
+                device is supporting by the mount, including network
                 devices or devices specified by UUID rather than device
                 path, depending on the operating system."
         end
@@ -61,37 +61,37 @@ module Puppet
         end
 
         newstate(:fstype) do
-            desc "The filesystem type.  Valid values depend on the
+            desc "The mount type.  Valid values depend on the
                 operating system."
         end
 
         newstate(:options) do
-            desc "Mount options for the filesystems, as they would
+            desc "Mount options for the mounts, as they would
                 appear in the fstab."
         end
 
         newstate(:pass) do
-            desc "The pass in which the filesystem is checked."
+            desc "The pass in which the mount is checked."
         end
 
         newstate(:atboot) do
-            desc "Whether to mount the filesystem at boot.  Not all platforms
+            desc "Whether to mount the mount at boot.  Not all platforms
                 support this."
         end
 
         newstate(:dump) do
-            desc "Whether to dump the filesystem.  Not all platforms
+            desc "Whether to dump the mount.  Not all platforms
                 support this."
         end
 
         newparam(:path) do
-            desc "The mount path for the filesystem."
+            desc "The mount path for the mount."
 
             isnamevar
         end
 
-        @doc = "Manages mounted filesystems, including putting mount
-            information into the filesystem table."
+        @doc = "Manages mounted mounts, including putting mount
+            information into the mount table."
 
         @instances = []
 
@@ -107,10 +107,10 @@ module Puppet
 
         @filetype = Puppet::FileType.filetype(:flat)
 
-        # Parse a filesystem tab.
+        # Parse a mount tab.
         #
         # This method also stores existing comments, and it stores all
-        # filesystems in order, mostly so that comments are retained in the
+        # mounts in order, mostly so that comments are retained in the
         # order they were written and in proximity to the same fses.
         def self.parse(text)
             count = 0
@@ -156,7 +156,7 @@ module Puppet
             end
         end
 
-        # Is the filesystem currently mounted?
+        # Is the mount currently mounted?
         def mounted?
             %x{df}.split("\n").find do |line|
                 fs = line.split(/\s+/)[-1]
