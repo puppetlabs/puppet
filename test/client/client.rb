@@ -109,24 +109,12 @@ class TestClient < Test::Unit::TestCase
             )
         }
 
-        # clean up the existing certs, so the server creates a new CA
-        #system("rm -rf %s" % Puppet[:ssldir])
+        # Create a new ssl root.
         confdir = tempfile()
-        Puppet[:confdir] = confdir
-
-        # Now we need to recreate the directory structure
-        [:certificates, :ca].each { |section|
-            Puppet.config.params(section).each { |param|
-                val = Puppet[param]
-                if val =~ /^#{File::SEPARATOR}/
-                    if param.to_s =~ /dir/
-                        Puppet::Util.recmkdir(val)
-                    else
-                        Puppet::Util.recmkdir(File.dirname(val))
-                    end
-                end
-            }
-        }
+        Puppet[:ssldir] = confdir
+        Puppet.config.mkdir(:ssldir)
+        Puppet.config.clearused
+        Puppet.config.use(:certificates, :ca)
 
         mkserver
 

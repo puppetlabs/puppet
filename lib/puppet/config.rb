@@ -95,6 +95,11 @@ class Config
         @used = []
     end
 
+    # This is mostly just used for testing.
+    def clearused
+        @used = []
+    end
+
     def symbolize(param)
         case param
         when String: return param.intern

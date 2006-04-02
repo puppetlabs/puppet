@@ -79,35 +79,12 @@ class Server
                 return ""
             end
 
-            # okay, we're now going to store the public key if we don't already
-            # have it
-            public_key = csr.public_key
-            #unless FileTest.directory?(Puppet[:publickeydir])
-            #    Puppet.recmkdir(Puppet[:publickeydir])
-            #end
-            pkeyfile = File.join(Puppet[:publickeydir], [hostname, "pem"].join('.'))
+            # We used to save the public key, but it's basically unnecessary
+            # and it mucks with the permissions requirements.
+            # save_pk(hostname, csr.public_key)
 
-            if FileTest.exists?(pkeyfile)
-                currentkey = File.open(pkeyfile) { |k| k.read }
-                unless currentkey == public_key.to_s
-                    raise Puppet::Error, "public keys for %s differ" % hostname
-                end
-            else
-                File.open(pkeyfile, "w", 0644) { |f|
-                    f.print public_key.to_s
-                }
-            end
-            #unless FileTest.directory?(Puppet[:certdir])
-            #    Puppet.recmkdir(Puppet[:certdir], 0770)
-            #end
             certfile = File.join(Puppet[:certdir], [hostname, "pem"].join("."))
 
-            #puts hostname
-            #puts certfile
-
-            #unless FileTest.directory?(Puppet[:csrdir])
-            #    Puppet.recmkdir(Puppet[:csrdir], 0770)
-            #end
             # first check to see if we already have a signed cert for the host
             cert, cacert = ca.getclientcert(hostname)
             if cert and cacert
@@ -139,6 +116,26 @@ class Server
                 raise "huh?"
             end
         end
+
+        private
+
+        # Save the public key.
+        def save_pk(hostname, public_key)
+            pkeyfile = File.join(Puppet[:publickeydir], [hostname, "pem"].join('.'))
+
+            if FileTest.exists?(pkeyfile)
+                currentkey = File.open(pkeyfile) { |k| k.read }
+                unless currentkey == public_key.to_s
+                    raise Puppet::Error, "public keys for %s differ" % hostname
+                end
+            else
+                File.open(pkeyfile, "w", 0644) { |f|
+                    f.print public_key.to_s
+                }
+            end
+        end
     end
 end
 end
+
+# $Id$

@@ -4,34 +4,56 @@ class Puppet::SSLCertificates::CA
 
     Puppet.setdefaults(:ca,
         :cadir => {  :default => "$ssldir/ca",
+            :owner => "$user",
+            :group => "$group",
             :mode => 0770,
             :desc => "The root directory for the certificate authority."
         },
         :cacert => { :default => "$cadir/ca_crt.pem",
+            :owner => "$user",
+            :group => "$group",
             :mode => 0660,
             :desc => "The CA certificate."
         },
         :cakey => { :default => "$cadir/ca_key.pem",
+            :owner => "$user",
+            :group => "$group",
             :mode => 0660,
             :desc => "The CA private key."
         },
-        :capub => ["$cadir/ca_pub.pem", "The CA public key."],
+        :capub => { :default => "$cadir/ca_pub.pem",
+            :owner => "$user",
+            :group => "$group",
+            :desc => "The CA public key."
+        },
         :caprivatedir => { :default => "$cadir/private",
+            :owner => "$user",
+            :group => "$group",
             :mode => 0770,
             :desc => "Where the CA stores private certificate information."
         },
-        :csrdir => ["$cadir/requests",
-            "Where the CA stores certificate requests"],
+        :csrdir => { :default => "$cadir/requests",
+            :owner => "$user",
+            :group => "$group",
+            :desc => "Where the CA stores certificate requests"
+        },
         :signeddir => { :default => "$cadir/signed",
+            :owner => "$user",
+            :group => "$group",
             :mode => 0770,
             :desc => "Where the CA stores signed certificates."
         },
         :capass => { :default => "$caprivatedir/ca.pass",
+            :owner => "$user",
+            :group => "$group",
             :mode => 0660,
             :desc => "Where the CA stores the password for the private key"
         },
-        :serial => ["$cadir/serial",
-            "Where the serial number for certificates is stored."],
+        :serial => { :default => "$cadir/serial",
+            :owner => "$user",
+            :group => "$group",
+            :desc => "Where the serial number for certificates is stored."
+        },
         :autosign => { :default => "$confdir/autosign.conf",
             :mode => 0640,
             :desc => "Whether to enable autosign.  Valid values are true (which
@@ -88,9 +110,9 @@ class Puppet::SSLCertificates::CA
 
         self.getcert
         unless FileTest.exists?(@config[:serial])
-            File.open(@config[:serial], "w") { |f|
+            Puppet.config.write(:serial) do |f|
                 f << "%04X" % 1
-            }
+            end
         end
     end
 
@@ -99,12 +121,12 @@ class Puppet::SSLCertificates::CA
         20.times { pass += (rand(74) + 48).chr }
 
         # FIXME It's a hack that this still needs to be here :/
-        unless FileTest.exists?(File.dirname(@config[:capass]))
-            Puppet::Util.recmkdir(File.dirname(@config[:capass]), 0770)
-        end
+        #unless FileTest.exists?(File.dirname(@config[:capass]))
+        #    Puppet::Util.recmkdir(File.dirname(@config[:capass]), 0770)
+        #end
 
         begin
-            File.open(@config[:capass], "w", 0600) { |f| f.print pass }
+            Puppet.config.write(:capass) { |f| f.print pass }
         rescue Errno::EACCES => detail
             raise Puppet::Error, detail.to_s
         end
@@ -165,10 +187,14 @@ class Puppet::SSLCertificates::CA
             :length => 1825,
             :type => :ca
         )
-        @cert = cert.mkselfsigned
-        File.open(@config[:cacert], "w", 0660) { |f|
+
+        # This creates the cakey file
+        Puppet::Util.asuser(Puppet[:user], Puppet[:group]) do
+            @cert = cert.mkselfsigned
+        end
+        Puppet.config.write(:cacert) do |f|
             f.puts @cert.to_pem
-        }
+        end
         @key = cert.key
         return cert
     end
@@ -238,7 +264,6 @@ class Puppet::SSLCertificates::CA
                 File.read(@config[:cakey]), @config[:password]
             )
         else
-            system("ls -al %s" % Puppet[:capass])
             cakey = OpenSSL::PKey::RSA.new(
                 File.read(@config[:cakey])
             )
@@ -259,9 +284,9 @@ class Puppet::SSLCertificates::CA
         )
 
         # increment the serial
-        File.open(@config[:serial], "w") { |f|
+        Puppet.config.write(:serial) do |f|
             f << "%04X" % (serial + 1)
-        }
+        end
 
         newcert.sign(cakey, OpenSSL::Digest::SHA1.new)
 

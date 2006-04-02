@@ -251,6 +251,40 @@ class TestType < Test::Unit::TestCase
         # and make sure managed objects start with them
         assert(user.state(:ensure), "User did not get an ensure state")
     end
+
+    # Make sure removal works
+    def test_remove
+        objects = {}
+        top = Puppet.type(:component).create(:name => "top")
+        objects[top.class] = top
+
+        base = tempfile()
+
+        # now make a two-tier, 5 piece tree
+        %w{a b}.each do |letter|
+            name = "comp%s" % letter
+            comp = Puppet.type(:component).create(:name => name)
+            top.push comp
+            objects[comp.class] = comp
+
+            5.times do |i|
+                file = base + letter + i.to_s
+
+                obj = Puppet.type(:file).create(:name => file, :ensure => "file")
+
+                comp.push obj
+                objects[obj.class] = obj
+            end
+        end
+
+        assert_nothing_raised do
+            top.remove
+        end
+
+        objects.each do |klass, obj|
+            assert_nil(klass[obj.name], "object %s was not removed" % obj.name)
+        end
+    end
 end
 
 # $Id$

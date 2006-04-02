@@ -62,7 +62,6 @@ class Type < Puppet::Element
         include Enumerable
 
         def inspect
-            Puppet.info "inspecting class with name %s" % self.name
             "Type(%s)" % self.name
         end
 
@@ -1010,7 +1009,11 @@ class Type < Puppet::Element
     # Remove an object.  The argument determines whether the object's
     # subscriptions get eliminated, too.
     def remove(rmdeps = true)
-        @children.each { |child|
+        # Our children remove themselves from our @children array (else the object
+        # we called this on at the top would not be removed), so we duplicate the
+        # array and iterate over that.  If we don't do this, only half of the
+        # objects get removed.
+        @children.dup.each { |child|
             child.remove(rmdeps)
         }
 
