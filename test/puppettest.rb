@@ -294,6 +294,11 @@ module TestPuppet
 
         return files
     end
+
+    # wrap how to retrieve the masked mode
+    def filemode(file)
+        File.stat(file).mode & 007777
+    end
 end
 
 

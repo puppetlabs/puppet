@@ -512,6 +512,32 @@ Generated on #{Time.now}.
         @config.has_key?(param)
     end
 
+    # Open a file with the appropriate user, group, and mode
+    def write(default, *args)
+        obj = nil
+        unless obj = @config[default]
+            raise ArgumentError, "Unknown default %s" % default
+        end
+
+        unless obj.is_a? CFile
+            raise ArgumentError, "Default %s is not a file" % default
+        end
+
+        Puppet::Util.asuser(obj.owner, obj.group) do
+            mode = obj.mode || 0640
+
+            if args.empty?
+                args << "w"
+            end
+
+            args << mode
+
+            File.open(obj.value, *args) do |file|
+                yield file
+            end
+        end
+    end
+
     # The base element type.
     class CElement
         attr_accessor :name, :section, :default, :parent, :setbycli
@@ -695,7 +721,7 @@ Generated on #{Time.now}.
             end
             [:mode].each { |var|
                 if value = self.send(var)
-                    obj[var] = value
+                    obj[var] = "%o" % value
                 end
             }
 

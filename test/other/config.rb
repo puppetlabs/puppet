@@ -517,6 +517,40 @@ yay = /a/path
 
         assert_equal(group, config[:group], "Group did not take")
     end
+
+    # provide a method to modify and create files w/out specifying the info
+    # already stored in a config
+    def test_writingfiles
+        path = tempfile()
+        mode = 0644
+
+        config = mkconfig
+
+        args = { :default => path, :mode => mode }
+
+        user = nonrootuser()
+        group = nonrootgroup()
+
+        if Process.uid == 0
+            args[:owner] = user.name
+            args[:group] = group.name
+        end
+
+        config.setdefaults(:testing, :myfile => args)
+
+        assert_nothing_raised {
+            config.write(:myfile) do |file|
+                file.puts "yay"
+            end
+        }
+
+        assert_equal(mode, filemode(path), "Modes are not equal")
+
+        if Process.uid == 0
+            assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
+            assert_equal(group.gid, File.stat(path).gid, "GIDS are not equal")
+        end
+    end
 end
 
 # $Id$
