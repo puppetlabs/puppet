@@ -174,6 +174,23 @@ class Config
         @created = []
     end
 
+    # Make a directory with the appropriate user, group, and mode
+    def mkdir(default)
+        obj = nil
+        unless obj = @config[default]
+            raise ArgumentError, "Unknown default %s" % default
+        end
+
+        unless obj.is_a? CFile
+            raise ArgumentError, "Default %s is not a file" % default
+        end
+
+        Puppet::Util.asuser(obj.owner, obj.group) do
+            mode = obj.mode || 0750
+            Dir.mkdir(obj.value, mode)
+        end
+    end
+
     # Return all of the parameters associated with a given section.
     def params(section)
         section = section.intern if section.is_a? String

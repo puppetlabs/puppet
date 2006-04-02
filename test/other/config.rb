@@ -551,6 +551,36 @@ yay = /a/path
             assert_equal(group.gid, File.stat(path).gid, "GIDS are not equal")
         end
     end
+
+    def test_mkdir
+        path = tempfile()
+        mode = 0755
+
+        config = mkconfig
+
+        args = { :default => path, :mode => mode }
+
+        user = nonrootuser()
+        group = nonrootgroup()
+
+        if Process.uid == 0
+            args[:owner] = user.name
+            args[:group] = group.name
+        end
+
+        config.setdefaults(:testing, :mydir => args)
+
+        assert_nothing_raised {
+            config.mkdir(:mydir)
+        }
+
+        assert_equal(mode, filemode(path), "Modes are not equal")
+
+        if Process.uid == 0
+            assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
+            assert_equal(group.gid, File.stat(path).gid, "GIDS are not equal")
+        end
+    end
 end
 
 # $Id$
