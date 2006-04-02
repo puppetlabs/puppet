@@ -17,7 +17,7 @@ class TestPuppetBin < Test::Unit::TestCase
         assert_nothing_raised {
           output = %x{puppet --version}.chomp
         }
-        assert(output == Puppet.version)
+        assert_equal(Puppet.version, output)
     end
 
     def test_execution
