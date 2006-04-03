@@ -34,6 +34,13 @@ module TestPuppet
             self.class.to_s + "configdir" + @@testcount.to_s + "/"
         )
 
+        unless defined? $user and $group
+            $user = nonrootuser().uid.to_s
+            $group = nonrootgroup().gid.to_s
+        end
+        Puppet[:user] = $user
+        Puppet[:group] = $group
+
         Puppet[:confdir] = @configpath
         Puppet[:vardir] = @configpath
 

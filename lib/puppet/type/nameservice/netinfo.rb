@@ -144,7 +144,6 @@ module Puppet
                 # This is really lame.  We have to iterate over each
                 # of the groups and add us to them.
                 def setgrouplist(groups)
-                    self.warning "Setting groups to %s" % groups.inspect
                     # Get just the groups we need to modify
                     diff = groups - @is
 
@@ -169,14 +168,10 @@ module Puppet
                             next
                         elsif members.include? user
                             # I'm in the group and shouldn't be
-                            self.warning "Removing %s from %s" %
-                                [user, name]
                             setuserlist(name, members - [user])
                         elsif groups.include? name
                             # I'm not in the group and should be
                             setuserlist(name, members + [user])
-                            self.warning "Adding %s to %s" %
-                                [user, name]
                         else
                             # I'm not in the group and shouldn't be
                             next
