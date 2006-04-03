@@ -221,6 +221,7 @@ class State
                 Puppet.debug "%s is not allatonce" % @parent.class.name
                 if type == "create"
                     @parent.eachstate { |state|
+                        next if state.name == :ensure
                         state.sync
                         state.retrieve
                     }

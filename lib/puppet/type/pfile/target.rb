@@ -15,7 +15,7 @@ module Puppet
                 @linkmaker = true
             else
                 if stat = @parent.stat
-                    if tstat = File.lstat(self.should) and tstat.ftype == "directory" and @parent.recurse?
+                    if File.exists?(self.should) and tstat = File.lstat(self.should) and tstat.ftype == "directory" and @parent.recurse?
                         @parent[:ensure] = :directory
                         @is = self.should
                         @linkmaker = true
