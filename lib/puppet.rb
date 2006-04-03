@@ -131,7 +131,7 @@ module Puppet
             },
         :ssldir => {
             :default => "$confdir/ssl",
-            :mode => 0770,
+            :mode => 0771,
             :owner => "root",
             :desc => "Where SSL certificates are kept."
         },
