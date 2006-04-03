@@ -383,6 +383,7 @@ module Puppet
             when "fedora": @default = :yum
             when "redhat": @default = :rpm
             when "openbsd": @default = :bsd
+            when "darwin": @default = :apple
             else
                 if Facter["kernel"] == "Linux"
                     Puppet.warning "Defaulting to RPM for %s" %
@@ -592,5 +593,6 @@ require 'puppet/type/package/rpm.rb'
 require 'puppet/type/package/yum.rb'
 require 'puppet/type/package/sun.rb'
 require 'puppet/type/package/bsd.rb'
+require 'puppet/type/package/apple.rb'
 
 # $Id$

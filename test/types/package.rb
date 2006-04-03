@@ -167,6 +167,7 @@ class TestPackages < Test::Unit::TestCase
 
     def test_latestpkg
         mkpkgs { |pkg|
+            next unless pkg.respond_to? :latest
             assert_nothing_raised {
                 assert(pkg.latest, "Package did not return value for 'latest'")
             }
@@ -281,6 +282,43 @@ class TestPackages < Test::Unit::TestCase
                 pkg.retrieve
             }
             assert(pkg.insync?, "Package is not in sync")
+        end
+    end
+
+    # Stupid darwin, not supporting package uninstallation
+    if Facter["operatingsystem"].value == "Darwin"
+        def test_darwinpkgs
+            pkg = nil
+            assert_nothing_raised {
+                pkg = Puppet::Type.type(:package).create(
+                    :name => "pkgtesting",
+                    :source => "/Users/luke/Documents/Puppet/pkgtesting.pkg",
+                    :ensure => :present
+                )
+            }
+
+            assert_nothing_raised {
+                pkg.retrieve
+            }
+
+            if pkg.insync?
+                Puppet.notice "Test package is already installed; please remove it"
+                next
+            end
+
+            # The file installed, and the receipt
+            @@tmpfiles << "/tmp/file"
+            @@tmpfiles << "/Library/Receipts/pkgtesting.pkg"
+
+            assert_events([:package_created], pkg, "package")
+
+            assert_nothing_raised {
+                pkg.retrieve
+            }
+
+            assert(pkg.insync?, "Package is not insync")
+
+            assert(FileTest.exists?("/tmp/pkgtesting/file"), "File did not get created")
         end
     end
     end
