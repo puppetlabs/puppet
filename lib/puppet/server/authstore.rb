@@ -9,10 +9,11 @@ class Server
     class AuthorizationError < Puppet::Error; end
 
     class AuthStore
-        ORDER = {
-            :ip => [:ip],
-            :name => [:hostname, :domain]
-        }
+        # This has to be an array, not a hash, else it loses its ordering.
+        ORDER = [
+            [:ip, [:ip]],
+            [:name, [:hostname, :domain]]
+        ]
 
         Puppet::Util.logmethods(self, false)
 
@@ -48,6 +49,7 @@ class Server
                 else
                     value = name.split(".").reverse
                 end
+
 
                 array.each { |type|
                     [[@deny, false], [@allow, true]].each { |ary|
