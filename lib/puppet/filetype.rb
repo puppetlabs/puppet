@@ -205,6 +205,66 @@ module Puppet
                 }
             end
         end
+
+        # Treat netinfo tables as a single file, just for simplicity of certain types
+        newfiletype(:netinfo) do
+            def read
+                %x{nidump -r /#{@path} /}
+            end
+
+            # This really only makes sense for cron tabs.
+            def remove
+                raise TypeError, "Cannot remove netinfo tables"
+            end
+
+            # Convert our table to an array of hashes.  This only works for handling one
+            # table at a time.
+            def to_array(text = nil)
+                text ||= read
+
+                hash = nil
+
+                # Initialize it with the first record
+                records = []
+                text.split("\n").each do |line|
+                    next if line =~ /^[{}]$/ # Skip the wrapping lines
+                    next if line =~ /"name" = \( "#{@path}" \)/ # Skip the table name
+                    next if line =~ /CHILDREN = \(/ # Skip this header
+                    next if line =~ /^  \)/ # and its closer
+
+                    # Now we should have nothing but records, wrapped in braces
+
+                    case line
+                    when /^\s+\{/: hash = {}
+                    when /^\s+\}/: records << hash
+                    when /\s+"(\w+)" = \( (.+) \)/
+                        field = $1
+                        values = $2
+
+                        # Always use an array
+                        hash[field] = []
+
+                        values.split(/, /).each do |value|
+                            if value =~ /^"(.*)"$/
+                                hash[field] << $1
+                            else
+                                raise ArgumentError, "Could not match value %s" % value
+                            end
+                        end
+                    else    
+                        raise ArgumentError, "Could not match line %s" % line
+                    end
+                end
+
+                records
+            end
+
+            def write(text)
+                IO.popen("niload -d #{@path} .", "w") { |p|
+                    p.print text
+                }
+            end
+        end
     end
 end
 
