@@ -107,8 +107,7 @@ module Puppet
                 @parent.stat(true)
                 self.retrieve
                 if @is == :absent
-                    self.debug "File does not exist; cannot set mode" %
-                        @parent[:path]
+                    self.debug "File does not exist; cannot set mode"
                     return nil
                 end
 
