@@ -138,12 +138,8 @@ module Puppet
 
                 loglevel = @parent[:loglevel]
                 if status.exitstatus.to_s != self.should.to_s
-                    err("%s returned %s instead of %s" %
+                    self.fail("%s returned %s instead of %s" %
                         [self.parent[:command], status.exitstatus, self.should.to_s])
-
-                    # if we've had a failure, up the log level
-                    loglevel = :err
-                    event = :failed_command
                 end
 
                 if log = @parent[:logoutput]
