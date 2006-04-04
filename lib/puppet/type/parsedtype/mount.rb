@@ -95,17 +95,36 @@ module Puppet
 
         @instances = []
 
-        case Facter["operatingsystem"].value
+        @platform = Facter["operatingsystem"].value
+        case @platform
         when "Solaris":
             @path = "/etc/vfstab"
             @fields = [:device, :blockdevice, :path, :fstype, :pass, :atboot,
                 :options]
+        when "Darwin":
+            @filetype = Puppet::FileType.filetype(:netinfo)
+            @filetype.format = "fstab"
+            @path = "mounts"
+            @fields = [:device, :path, :fstype, :options, :dump, :pass]
+
+            # How to map the dumped table to what we want
+            @fieldnames = {
+                "name" => :device,
+                "dir" => :path,
+                "dump_freq" => :dump,
+                "passno" => :pass,
+                "vfstype" => :fstype,
+                "opts" => :options
+            }
         else
             @path = "/etc/fstab"
             @fields = [:device, :path, :fstype, :options, :dump, :pass]
         end
 
-        @filetype = Puppet::FileType.filetype(:flat)
+        # Allow Darwin to override the default filetype
+        unless defined? @filetype
+            @filetype = Puppet::FileType.filetype(:flat)
+        end
 
         # Parse a mount tab.
         #
@@ -113,6 +132,11 @@ module Puppet
         # mounts in order, mostly so that comments are retained in the
         # order they were written and in proximity to the same fses.
         def self.parse(text)
+            # provide a single exception for darwin & netinfo
+            if @filetype == Puppet::FileType.filetype(:netinfo)
+                parseninfo(text)
+                return 
+            end
             count = 0
             hash = {}
             text.chomp.split("\n").each { |line|
@@ -138,6 +162,30 @@ module Puppet
             }
         end
 
+        # Parse a netinfo table.
+        def self.parseninfo(text)
+            array = @fileobj.to_array(text)
+
+            hash = {}
+            array.each do |record|
+                @fieldnames.each do |name, field|
+                    if value = record[name]
+                        if field == :options
+                            hash[field] = value.join(",")
+                        else
+                            hash[field] = value[0]
+                        end
+                    else
+                        raise ArgumentError, "Field %s was not provided" % [name]
+                    end
+                end
+
+
+                hash2obj(hash)
+                hash.clear
+            end
+        end
+
         # This only works when the mount point is synced to the fstab.
         def mount
             output = %x{mount #{self[:path]} 2>&1}
@@ -158,9 +206,14 @@ module Puppet
 
         # Is the mount currently mounted?
         def mounted?
+            platform = Facter["operatingsystem"].value
             %x{df}.split("\n").find do |line|
                 fs = line.split(/\s+/)[-1]
-                fs == self[:path]
+                if platform == "Darwin"
+                    fs == "/private/var/automount" + self[:path]
+                else
+                    fs == self[:path]
+                end
             end
         end
 
@@ -170,11 +223,6 @@ module Puppet
                 if value = self.value(field)
                     value
                 else
-                    if @states.include? field
-                        self.warning @states[field].inspect
-                    else
-                        self.warning field.inspect
-                    end
                     raise Puppet::Error,
                         "Could not retrieve value for %s" % field
                 end

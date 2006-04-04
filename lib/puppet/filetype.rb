@@ -208,19 +208,32 @@ module Puppet
 
         # Treat netinfo tables as a single file, just for simplicity of certain types
         newfiletype(:netinfo) do
+            class << self
+                attr_accessor :format
+            end
             def read
                 %x{nidump -r /#{@path} /}
             end
 
             # This really only makes sense for cron tabs.
             def remove
-                raise TypeError, "Cannot remove netinfo tables"
+                %x{nireport / /#{@path} name}.split("\n").each do |name|
+                    newname = name.gsub(/\//, '\/').sub(/\s+$/, '')
+                    output = %x{niutil -destroy / '/#{@path}/#{newname}'}
+
+                    unless $? == 0
+                        raise Puppet::Error, "Could not remove %s from %s" %
+                            [name, @path]
+                    end
+                end
             end
 
             # Convert our table to an array of hashes.  This only works for handling one
             # table at a time.
             def to_array(text = nil)
-                text ||= read
+                unless text
+                    text = read
+                end
 
                 hash = nil
 
@@ -260,9 +273,22 @@ module Puppet
             end
 
             def write(text)
-                IO.popen("niload -d #{@path} .", "w") { |p|
+                text.gsub!(/^#.*\n/,'')
+                text.gsub!(/^$/,'')
+                if text == "" or text == "\n"
+                    self.remove
+                    return
+                end
+                unless format = self.class.format
+                    raise Puppe::DevError, "You must define the NetInfo format to inport"
+                end
+                IO.popen("niload -d #{format} . 1>/dev/null 2>/dev/null", "w") { |p|
                     p.print text
                 }
+
+                unless $? == 0
+                    raise ArgumentError, "Failed to write %s" % @path
+                end
             end
         end
     end

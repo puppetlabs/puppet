@@ -30,8 +30,8 @@ class TestMounts < Test::Unit::TestCase
     # but does not modify our actual system.
     def mkfaketype
         pfile = tempfile()
-        old = @mounttype.path
-        @mounttype.path = pfile
+        old = @mounttype.filetype
+        @mounttype.filetype = Puppet::FileType.filetype(:ram)
 
         cleanup do
             @mounttype.path = old
@@ -123,12 +123,14 @@ class TestMounts < Test::Unit::TestCase
             Puppet::Type.type(:mount).retrieve
         }
 
+        oldtype = Puppet::Type.type(:mount).filetype
+
         # Now switch to storing in ram
         mkfaketype
 
         fs = mkmount
 
-        assert(Puppet::Type.type(:mount).path != "/etc/fstab")
+        assert(Puppet::Type.type(:mount).filetype != oldtype)
 
         assert_events([:mount_created], fs)
 
@@ -157,21 +159,32 @@ class TestMounts < Test::Unit::TestCase
         fs = nil
         case Facter["hostname"].value
         when "culain": fs = "/ubuntu"
+        when "atalanta": fs = "/mnt"
         else
             $stderr.puts "No mount for mount testing; skipping"
             return
         end
 
-        backup = tempfile()
+        assert_nothing_raised {
+            Puppet.type(:mount).retrieve
+        }
 
-        FileUtils.cp(Puppet::Type.type(:mount).path, backup)
+        oldtext = Puppet::Type.type(:mount).fileobj.read
+
+        ftype = Puppet::Type.type(:mount).filetype
 
         # Make sure the original gets reinstalled.
-        cleanup do 
-            FileUtils.cp(backup, Puppet::Type.type(:mount).path)
+        if ftype == Puppet::FileType.filetype(:netinfo)
+            cleanup do 
+                IO.popen("niload -r /mounts .", "w") do |file|
+                    file.puts oldtext
+                end
+            end
+        else
+            cleanup do 
+                Puppet::Type.type(:mount).fileobj.write(oldtext)
+            end
         end
-
-        Puppet.type(:mount).retrieve
 
         obj = Puppet.type(:mount)[fs]
 
@@ -218,18 +231,14 @@ class TestMounts < Test::Unit::TestCase
         assert(text !~ /#{fs}/,
             "Fstab still contains %s" % fs)
 
-        assert_raise(Puppet::Error, "Removed mount did not throw an error") {
-            obj.mount
-        }
-
         assert_nothing_raised {
             obj[:ensure] = :present
         }
 
         assert_events([:mount_created], obj)
 
-        assert(File.read(Puppet.type(:mount).path) =~ /#{fs}/,
-            "Fstab does not contain %s" % fs)
+        text = Puppet::Type.type(:mount).fileobj.read
+        assert(text =~ /#{fs}/, "Fstab does not contain %s" % fs)
 
         assert(! obj.mounted?, "Object is mounted incorrectly")
 
@@ -239,7 +248,8 @@ class TestMounts < Test::Unit::TestCase
 
         assert_events([:mount_mounted], obj)
 
-        assert(File.read(Puppet.type(:mount).path) =~ /#{fs}/,
+        text = Puppet::Type.type(:mount).fileobj.read
+        assert(text =~ /#{fs}/,
             "Fstab does not contain %s" % fs)
 
         assert(obj.mounted?, "Object is not mounted")
