@@ -7,6 +7,7 @@ if __FILE__ == $0
 end
 
 require 'puppettest'
+require 'puppet/type/yumrepo'
 require 'puppet'
 require 'test/unit'
 
