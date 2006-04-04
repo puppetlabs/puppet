@@ -158,7 +158,7 @@ unless setdest
     Puppet::Log.newdestination(:syslog)
 end
 
-master[:File] = ARGV.shift
+master[:Manifest] = ARGV.shift
 
 unless ENV.include?("CFALLCLASSES")
     $stderr.puts "Cfengine classes must be passed to the module"

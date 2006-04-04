@@ -35,10 +35,14 @@ class Server
         end
 
         def initialize(hash = {})
-            # FIXME this should all be s/:File/:Manifest/g or something
-            # build our AST
-            @file = hash[:File] || Puppet[:manifest]
-            hash.delete(:File)
+            args = {}
+
+            # Allow specification of a code snippet or of a file
+            if code = hash[:Code]
+                args[:Code] = code
+            else
+                args[:Manifest] = hash[:Manifest] || Puppet[:manifest]
+            end
 
             if hash[:Local]
                 @local = hash[:Local]
@@ -52,11 +56,9 @@ class Server
                 @ca = nil
             end
 
-            @parsecheck = hash[:FileTimeout] || 15
+            args[:ParseCheck] = hash[:FileTimeout] || 15
 
             Puppet.debug("Creating interpreter")
-
-            args = {:Manifest => @file, :ParseCheck => @parsecheck}
 
             if hash.include?(:UseNodes)
                 args[:UseNodes] = hash[:UseNodes]
@@ -64,7 +66,8 @@ class Server
                 args[:UseNodes] = false
             end
 
-            # This is only used by the cfengine module
+            # This is only used by the cfengine module, or if --loadclasses was specified
+            # in +puppet+.
             if hash.include?(:Classes)
                 args[:Classes] = hash[:Classes]
             end
@@ -110,7 +113,9 @@ class Server
                 clientip = facts["ipaddress"]
             end
 
-            Puppet.notice("Compiling configuration for %s" % client)
+            unless @local
+                Puppet.notice("Compiling configuration for %s" % client)
+            end
             begin
                 retobjects = @interpreter.run(client, facts)
             rescue Puppet::Error => detail

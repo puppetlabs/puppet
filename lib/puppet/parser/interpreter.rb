@@ -42,11 +42,11 @@ module Puppet
 
             # create our interpreter
             def initialize(hash)
-                unless hash.include?(:Manifest)
-                    raise Puppet::DevError, "Interpreter was not passed a manifest"
+                if @code = hash[:Code]
+                    @file = nil # to avoid warnings
+                elsif ! @file = hash[:Manifest]
+                    raise Puppet::DevError, "You must provide code or a manifest"
                 end
-
-                @file = hash[:Manifest]
                 @filetimeout = hash[:ParseCheck] || 15
 
                 @lastchecked = 0
@@ -258,24 +258,26 @@ module Puppet
             end
 
             def parsefiles
-                if defined? @parser
-                    # Only check the files every 15 seconds or so, not on
-                    # every single connection
-                    if (Time.now - @lastchecked).to_i >= @filetimeout.to_i
-                        unless @parser.reparse?
-                            @lastchecked = Time.now
-                            return false
+                if @file
+                    if defined? @parser
+                        # Only check the files every 15 seconds or so, not on
+                        # every single connection
+                        if (Time.now - @lastchecked).to_i >= @filetimeout.to_i
+                            unless @parser.reparse?
+                                @lastchecked = Time.now
+                                return false
+                            end
+                        else
+                            return
                         end
-                    else
-                        return
                     end
-                end
 
-                unless FileTest.exists?(@file)
-                    if @ast
-                        return
-                    else
-                        raise Puppet::Error, "Manifest %s must exist" % @file
+                    unless FileTest.exists?(@file)
+                        if @ast
+                            return
+                        else
+                            raise Puppet::Error, "Manifest %s must exist" % @file
+                        end
                     end
                 end
 
@@ -284,7 +286,11 @@ module Puppet
                 end
                 # should i be creating a new parser each time...?
                 @parser = Puppet::Parser::Parser.new()
-                @parser.file = @file
+                if @code
+                    @parser.string = @code
+                else
+                    @parser.file = @file
+                end
                 @ast = @parser.parse
 
                 # Mark when we parsed, so we can check freshness

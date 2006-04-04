@@ -27,10 +27,6 @@
 # debug::
 #   Enable full debugging.
 #
-# extclassfile::
-#   Specify the location of the class file to load.  Only affects the
-#   +--loadclasses+ option.
-#
 # help::
 #   Print this help message
 #
@@ -74,10 +70,10 @@ end
 
 options = [
     [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
-    [ "--extclassfile", "-e",		GetoptLong::REQUIRED_ARGUMENT ],
     [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
     [ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
-    [ "--loadclasses",				GetoptLong::NO_ARGUMENT ],
+    [ "--execute",	"-e",			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--loadclasses", "-L",		GetoptLong::NO_ARGUMENT ],
     [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
     [ "--use-nodes",    			GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
@@ -93,7 +89,8 @@ verbose = false
 noop = false
 logfile = false
 loadclasses = false
-classfile = nil
+
+code = nil
 
 master = {
     :Local => true
@@ -120,8 +117,8 @@ begin
                 verbose = true
             when "--debug"
                 debug = true
-            when "--extclassfile"
-                classfile = arg
+            when "--execute"
+                code = arg
             when "--loadclasses"
                 loadclasses = true
             when "--logdest"
@@ -170,17 +167,22 @@ end
 Puppet.genconfig
 Puppet.genmanifest
 
-master[:File] = ARGV.shift
+if code
+    master[:Code] = code
+else
+    master[:Manifest] = ARGV.shift
+end
 
+# Allow users to load the classes that puppetd creates.
 if loadclasses
-    file = classfile || Puppet[:classfile]
+    file = Puppet[:classfile]
     if FileTest.exists?(file)
         unless FileTest.readable?(file)
             $stderr.puts "%s is not readable" % file
             exit(63)
         end
 
-        master[:Classes] = File.read(file).split(/[\s\n]/)
+        master[:Classes] = File.read(file).split(/[\s\n]+/)
     end
 end
 

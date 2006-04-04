@@ -22,7 +22,6 @@ class TestPuppetBin < Test::Unit::TestCase
 
     def test_execution
         file = mktestmanifest()
-        @@tmpfiles << tempfile()
 
         output = nil
         cmd = "puppet"
@@ -32,7 +31,9 @@ class TestPuppetBin < Test::Unit::TestCase
         #cmd += " --fqdn %s" % fqdn
         cmd += " --confdir %s" % Puppet[:confdir]
         cmd += " --vardir %s" % Puppet[:vardir]
-        cmd += " --logdest %s" % "/dev/null"
+        unless Puppet[:debug]
+            cmd += " --logdest %s" % "/dev/null"
+        end
 
         assert_nothing_raised {
             system(cmd + " " + file)
@@ -41,6 +42,32 @@ class TestPuppetBin < Test::Unit::TestCase
 
         assert(FileTest.exists?(@createdfile), "Failed to create config'ed file")
     end
+
+    def test_inlineexecution
+        path = tempfile()
+        code = "file { '#{path}': ensure => file }"
+
+        output = nil
+        cmd = "puppet"
+        if Puppet[:debug]
+            cmd += " --debug"
+        end
+        #cmd += " --fqdn %s" % fqdn
+        cmd += " --confdir %s" % Puppet[:confdir]
+        cmd += " --vardir %s" % Puppet[:vardir]
+        unless Puppet[:debug]
+            cmd += " --logdest %s" % "/dev/null"
+        end
+
+        cmd += " -e \"#{code}\""
+
+        assert_nothing_raised {
+            system(cmd)
+        }
+        assert($? == 0, "Puppet exited with code %s" % $?.to_i)
+
+        assert(FileTest.exists?(path), "Failed to create config'ed file")
+    end
 end
 
-# $Id: $
+# $Id$

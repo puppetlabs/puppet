@@ -195,14 +195,20 @@ module Puppet
                     dest.puts("%s %s (%s): %s" %
                         [msg.time, msg.source, msg.level, msg.to_s])
                 when :console
+                    color = ""
+                    reset = ""
+                    if Puppet[:color]
+                        color = @colors[msg.level]
+                        reset = RESET
+                    end
                     if msg.source == "Puppet"
-                        puts @colors[msg.level] + "%s: %s" % [
+                        puts color + "%s: %s" % [
                             msg.level, msg.to_s
-                        ] + RESET
+                        ] + reset
                     else
-                        puts @colors[msg.level] + "%s: %s: %s" % [
+                        puts color + "%s: %s: %s" % [
                             msg.level, msg.source, msg.to_s
-                        ] + RESET
+                        ] + reset
                     end
                 when Puppet::Client::LogClient
                     unless msg.is_a?(String) or msg.remote

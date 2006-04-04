@@ -143,6 +143,7 @@ module Puppet
             "Whether to just print a manifest to stdout and exit.  Only makes
             sense when used interactively.  Takes into account arguments specified
             on the CLI."],
+        :color => [true, "Whether to use ANSI colors when logging to the console."],
         :mkusers => [false,
             "Whether to create the necessary user and group that puppetd will
             run as."]
@@ -189,7 +190,9 @@ module Puppet
             :owner => "root",
             :mode => 0644,
             :desc => "The file in which puppetd stores a list of the classes
-                associated with the retrieved configuratiion."},
+                associated with the retrieved configuratiion.  Can be loaded in
+                the separate ``puppet`` executable using the ``--loadclasses``
+                option."},
         :puppetdlog => { :default => "$logdir/puppetd.log",
             :owner => "root",
             :mode => 0640,

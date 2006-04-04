@@ -26,7 +26,9 @@ class Puppet::Client::MasterClient < Puppet::Client
     # objects.  For now, just descend into the tree and perform and
     # necessary manipulations.
     def apply
-        Puppet.notice "Beginning configuration run"
+        unless @local
+            Puppet.notice "Beginning configuration run"
+        end
         dostorage()
         unless defined? @objects
             raise Puppet::Error, "Cannot apply; objects not defined"
@@ -65,7 +67,9 @@ class Puppet::Client::MasterClient < Puppet::Client
             Metric.store
             Metric.graph
         end
-        Puppet.notice "Finished configuration run"
+        unless @local
+            Puppet.notice "Finished configuration run"
+        end
 
         return transaction
     end
@@ -228,11 +232,7 @@ class Puppet::Client::MasterClient < Puppet::Client
                 "Invalid returned objects of type %s" % objects.class
         end
 
-        if classes = objects.classes
-            self.setclasses(classes)
-        else
-            Puppet.info "No classes to store"
-        end
+        self.setclasses(objects.classes)
 
         # Clear all existing objects, so we can recreate our stack.
         if defined? @objects
@@ -280,7 +280,15 @@ class Puppet::Client::MasterClient < Puppet::Client
         end
     end
 
+    # Store the classes in the classfile, but only if we're not local.
     def setclasses(ary)
+        if @local
+            return
+        end
+        unless ary and ary.length > 0
+            Puppet.info "No classes to store"
+            return
+        end
         begin
             File.open(Puppet[:classfile], "w") { |f|
                 f.puts ary.join("\n")
