@@ -48,7 +48,7 @@ class Puppet::Parser::AST
 
             # Set the mark after we evaluate, so we don't record it but
             # then encounter an error
-            scope.setclass(self.object_id)
+            scope.setclass(self.object_id, @type)
             return retval
         end
 

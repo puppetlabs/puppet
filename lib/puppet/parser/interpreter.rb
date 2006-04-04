@@ -77,8 +77,6 @@ module Puppet
 
                 # Create our parser object
                 parsefiles
-
-                evaluate
             end
 
             # Connect to the LDAP Server

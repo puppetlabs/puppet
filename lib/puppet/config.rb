@@ -545,7 +545,13 @@ Generated on #{Time.now}.
             raise ArgumentError, "Default %s is not a file" % default
         end
 
-        Puppet::Util.asuser(obj.owner, obj.group) do
+        chown = nil
+        if Process.uid == 0
+            chown = [obj.owner, obj.group]
+        else
+            chown = [nil, nil]
+        end
+        Puppet::Util.asuser(*chown) do
             mode = obj.mode || 0640
 
             if args.empty?

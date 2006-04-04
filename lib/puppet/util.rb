@@ -16,6 +16,13 @@ module Util
         olduid = nil
         oldgid = nil
 
+        # If they're running as a normal user, then just execute as that same
+        # user.
+        unless Process.uid == 0
+            yield
+            return
+        end
+
         begin
             # the groupid, if we got passed a group
             # The gid has to be changed first, because, well, otherwise we won't

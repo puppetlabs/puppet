@@ -138,4 +138,36 @@ class TestClient < Test::Unit::TestCase
             certbucket.backup("/etc/passwd")
         }
     end
+
+    def test_classfile
+        manifest = tempfile()
+
+        File.open(manifest, "w") do |file|
+            file.puts "class yaytest {}\n class bootest {}\n include yaytest, bootest"
+        end
+
+        master = client = nil
+        assert_nothing_raised() {
+            master = Puppet::Server::Master.new(
+                :File => manifest,
+                :UseNodes => false,
+                :Local => true
+            )
+        }
+        assert_nothing_raised() {
+            client = Puppet::Client::MasterClient.new(
+                :Master => master
+            )
+        }
+
+        assert_nothing_raised {
+            client.getconfig
+        }
+
+        assert(FileTest.exists?(Puppet[:classfile]), "Class file does not exist")
+
+        classes = File.read(Puppet[:classfile]).split("\n")
+
+        assert_equal(%w{bootest yaytest}, classes.sort)
+    end
 end

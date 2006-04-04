@@ -29,6 +29,7 @@ class TestAST < Test::Unit::TestCase
 
         # Create child class two
         children << classobj("child2", :parentclass => nameobj("parent"))
+        classes = %w{parent child1 child2}
 
         # Now call the two classes
         assert_nothing_raised("Could not add AST nodes for calling") {
@@ -60,6 +61,8 @@ class TestAST < Test::Unit::TestCase
         assert_equal(1, scope.find_all { |child|
             child.lookupobject(:name => "/parent", :type => "file")
         }.length, "Found incorrect number of '/parent' objects")
+
+        assert_equal(classes.sort, scope.classlist.sort)
     end
 
     # Test that 'setobject' collects all of an object's parameters and stores
@@ -319,10 +322,12 @@ class TestAST < Test::Unit::TestCase
     # Test that we can 'include' variables, not just normal strings.
     def test_includevars
         children = []
+        classes = []
 
         # Create our class for testin
         klassname = "include"
         children << classobj(klassname)
+        classes << klassname
 
         # Then add our variable assignment
         children << varobj("klassvar", klassname)
@@ -344,6 +349,9 @@ class TestAST < Test::Unit::TestCase
             scope = Puppet::Parser::Scope.new()
             top.evaluate(:scope => scope)
         }
+
+        # Verify we get the right classlist back
+        assert_equal(classes.sort, scope.classlist.sort)
 
         # Verify we can find the node via a search list
         objects = nil

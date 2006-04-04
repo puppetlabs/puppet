@@ -214,7 +214,7 @@ module Puppet
                 unless defined? @classtable
                     raise Puppet::DevError, "Scope did not receive class table"
                 end
-                return @classtable.keys
+                return @classtable.values
             end
 
             # Yield each child scope in turn
@@ -590,11 +590,11 @@ module Puppet
 
             # Look up a given class.  This enables us to make sure classes are
             # singletons
-            def lookupclass(klass)
+            def lookupclass(klassid)
                 unless defined? @classtable
                     raise Puppet::DevError, "Scope did not receive class table"
                 end
-                return @classtable[klass]
+                return @classtable[klassid]
             end
 
             # Collect all of the defaults set at any higher scopes.
@@ -730,11 +730,11 @@ module Puppet
             # that gets inherited from the nodescope down, rather than a global
             # hash.  We store the object ID, not class name, so that we
             # can support multiple unrelated classes with the same name.
-            def setclass(id)
+            def setclass(id, name)
                 if self.nodescope? or self.topscope?
-                    @classtable[id] = true
+                    @classtable[id] = name
                 else
-                    @parent.setclass(id)
+                    @parent.setclass(id, name)
                 end
             end
 
