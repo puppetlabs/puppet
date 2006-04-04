@@ -15,8 +15,8 @@ module Puppet
         # should be in the network client, not the normal client.  But if i do
         # that, it's hard to tell whether the certs have been initialized.
         include Puppet::Daemon
-        attr_reader :local, :secureinit
-        attr_accessor :schedule, :lastrun
+        attr_reader :secureinit
+        attr_accessor :schedule, :lastrun, :local
 
         class << self
             attr_reader :drivername

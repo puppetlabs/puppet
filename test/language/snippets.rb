@@ -448,7 +448,7 @@ class TestSnippets < Test::Unit::TestCase
             self.send(:define_method, testname) {
                 # first parse the file
                 server = Puppet::Server::Master.new(
-                    :File => File.join($snippetbase, file),
+                    :Manifest => File.join($snippetbase, file),
                     :Local => true
                 )
                 client = Puppet::Client::MasterClient.new(

@@ -21,7 +21,7 @@ class TestMasterClient < Test::Unit::TestCase
         assert_nothing_raised() {
             # this is the default server setup
             master = Puppet::Server::Master.new(
-                :File => file,
+                :Manifest => file,
                 :UseNodes => false,
                 :Local => true
             )

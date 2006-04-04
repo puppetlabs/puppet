@@ -343,7 +343,7 @@ module ServerTest
             handlers = {
                 :CA => {}, # so that certs autogenerate
                 :Master => {
-                    :File => mktestmanifest(),
+                    :Manifest => mktestmanifest(),
                     :UseNodes => false
                 },
             }

@@ -34,7 +34,7 @@ class TestMaster < Test::Unit::TestCase
             assert_nothing_raised() {
                 # this is the default server setup
                 master = Puppet::Server::Master.new(
-                    :File => file,
+                    :Manifest => file,
                     :UseNodes => false,
                     :Local => true
                 )
@@ -79,7 +79,7 @@ class TestMaster < Test::Unit::TestCase
             assert_nothing_raised() {
                 # this is the default server setup
                 master = Puppet::Server::Master.new(
-                    :File => file,
+                    :Manifest => file,
                     :UseNodes => false,
                     :Local => true
                 )
@@ -111,7 +111,7 @@ class TestMaster < Test::Unit::TestCase
         assert_nothing_raised() {
             # this is the default server setup
             master = Puppet::Server::Master.new(
-                :File => manifest,
+                :Manifest => manifest,
                 :UseNodes => false,
                 :Local => true,
                 :FileTimeout => 15

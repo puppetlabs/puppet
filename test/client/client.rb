@@ -149,9 +149,9 @@ class TestClient < Test::Unit::TestCase
         master = client = nil
         assert_nothing_raised() {
             master = Puppet::Server::Master.new(
-                :File => manifest,
+                :Manifest => manifest,
                 :UseNodes => false,
-                :Local => true
+                :Local => false
             )
         }
         assert_nothing_raised() {
@@ -159,6 +159,9 @@ class TestClient < Test::Unit::TestCase
                 :Master => master
             )
         }
+
+        # Fake that it's local, so it creates the class file
+        client.local = false
 
         assert_nothing_raised {
             client.getconfig

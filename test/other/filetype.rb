@@ -86,7 +86,6 @@ class TestFileType < Test::Unit::TestCase
             array.each do |record|
                 assert_instance_of(Hash, record)
                 assert(record.length != 0)
-                p record
             end
         end
     end

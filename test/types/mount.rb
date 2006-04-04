@@ -34,7 +34,7 @@ class TestMounts < Test::Unit::TestCase
         @mounttype.filetype = Puppet::FileType.filetype(:ram)
 
         cleanup do
-            @mounttype.path = old
+            @mounttype.filetype = old
             @mounttype.fileobj = nil
         end
 
@@ -91,30 +91,32 @@ class TestMounts < Test::Unit::TestCase
         }
     end
 
-    def test_mountsparse
-        assert_nothing_raised {
-            @mounttype.retrieve
-        }
+    unless Facter["operatingsystem"].value == "Darwin"
+        def test_mountsparse
+            assert_nothing_raised {
+                @mounttype.retrieve
+            }
 
-        # Now just make we've got some mounts we know will be there
-        root = @mounttype["/"]
-        assert(root, "Could not retrieve root mount")
-    end
+            # Now just make we've got some mounts we know will be there
+            root = @mounttype["/"]
+            assert(root, "Could not retrieve root mount")
+        end
 
-    def test_rootfs
-        fs = nil
-        assert_nothing_raised {
-            Puppet.type(:mount).retrieve
-        }
+        def test_rootfs
+            fs = nil
+            assert_nothing_raised {
+                Puppet.type(:mount).retrieve
+            }
 
-        assert_nothing_raised {
-            fs = Puppet.type(:mount)["/"]
-        }
-        assert(fs, "Could not retrieve root fs")
+            assert_nothing_raised {
+                fs = Puppet.type(:mount)["/"]
+            }
+            assert(fs, "Could not retrieve root fs")
 
-        assert_nothing_raised {
-            assert(fs.mounted?, "Root is considered not mounted")
-        }
+            assert_nothing_raised {
+                assert(fs.mounted?, "Root is considered not mounted")
+            }
+        end
     end
 
     # Make sure it reads and writes correctly.

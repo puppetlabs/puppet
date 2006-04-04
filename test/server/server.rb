@@ -85,7 +85,7 @@ class TestServer < Test::Unit::TestCase
                     :CA => {}, # so that certs autogenerate
                     :Master => {
                         :UseNodes => false,
-                        :File => file
+                        :Manifest => file
                     },
                     :Status => nil
                 }
