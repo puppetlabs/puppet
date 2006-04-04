@@ -7,7 +7,10 @@ class Puppet::Parser::Parser
 token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE FALSE EQUALS
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL NOTEQUAL
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN DOT COLON TYPE
-token NAME HOSTNAME SEMIC CASE DEFAULT INCLUDE
+token NAME SEMIC CASE DEFAULT INCLUDE
+
+# We have 2 shift/reduce conflicts
+expect 2
 
 rule
 program:    statements {
@@ -593,8 +596,8 @@ nodedef: NODE hostnames parent LBRACE statements RBRACE {
     result = AST::NodeDef.new(args)
 }
 
-hostnames:    hostname
-        | hostnames hostname {
+hostnames:    hostname 
+  | hostnames hostname {
     if val[0].instance_of?(AST::ASTArray)
         result = val[0]
         result.push val[1]
@@ -607,23 +610,13 @@ hostnames:    hostname
     end
 }
 
-# A hostname; lexically, a hostname can look like
-# a NAME, TYPE, or HOSTNAME
 hostname: NAME {
    result = AST::HostName.new(
         :line => @lexer.line,
         :file => @lexer.file,
         :value => val[0]
     )
-}
-| TYPE {
-   result = AST::HostName.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
-}
-| HOSTNAME {
+}        | SQTEXT {
    result = AST::HostName.new(
         :line => @lexer.line,
         :file => @lexer.file,

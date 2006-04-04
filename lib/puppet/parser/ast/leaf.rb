@@ -70,7 +70,16 @@ class Puppet::Parser::AST
     class Name < AST::Leaf; end
 
     # Host names, either fully qualified or just the short name
-    class HostName < AST::Leaf; end
+    class HostName < AST::Leaf
+        def initialize(hash)
+            super
+
+            unless @value =~ %r{^[0-9a-zA-Z\-]+(\.[0-9a-zA-Z\-]+)*$}
+                raise Puppet::DevError,
+                    "'%s' is not a valid hostname" % @value
+            end
+        end
+    end
 
     # A simple variable.  This object is only used during interpolation;
     # the VarDef class is used for assignment.
