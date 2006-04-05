@@ -454,6 +454,7 @@ module Puppet
             status = nil
             tmppath = ENV["PATH"]
             dir = self[:cwd] || Dir.pwd
+            debug "Executing '#{command}'"
             begin
                 # Do our chdir
                 Dir.chdir(dir) {
