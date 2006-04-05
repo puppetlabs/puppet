@@ -19,10 +19,6 @@ class Puppet::Parser::AST
             )
             scope.context = self.object_id
 
-            # Mark this scope as a nodescope, so that classes will be
-            # singletons within it
-            scope.isnodescope
-
             # Now set all of the facts inside this scope
             facts.each { |var, value|
                 scope.setvar(var, value)

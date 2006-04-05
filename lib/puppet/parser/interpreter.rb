@@ -85,6 +85,7 @@ module Puppet
                     require 'ldap'
                 rescue LoadError
                     @ldap = nil
+                    return
                 end
                 begin
                     @ldap = LDAP::Conn.new(Puppet[:ldapserver], Puppet[:ldapport])
@@ -93,6 +94,25 @@ module Puppet
                 rescue => detail
                     raise Puppet::Error, "Could not connect to LDAP: %s" % detail
                 end
+            end
+
+            # Search for our node in the various locations.
+            def nodesearch(node)
+                # At this point, stop at the first source that defines
+                # the node
+                @nodesources.each do |source|
+                    method = "nodesearch_%s" % source
+                    if self.respond_to? method
+                        parent, nodeclasses = self.send(method, node)
+                    end
+
+                    if nodeclasses
+                        Puppet.info "Found %s in %s" % [client, source]
+                        return parent, nodeclasses
+                    end
+                end
+
+                return nil, nil
             end
 
             # Find the ldap node and extra the info, returning just
@@ -171,63 +191,42 @@ module Puppet
                     names << "#{client}.#{facts['domain']}"
                 end
 
+                scope = Puppet::Parser::Scope.new() # no parent scope
+                scope.name = "top"
+                scope.type = "puppet"
+                scope.interp = self
+
+                classes = @classes.dup
+
+                args = {:ast => @ast, :facts => facts, :classes => classes}
+
+                if @usenodes
+                    unless client
+                        raise Puppet::Error,
+                            "Cannot evaluate nodes with a nil client"
+                    end
+
+                    Puppet.debug "Nodes defined"
+                    args[:names] = names
+
+                    parent, nodeclasses = nodesearch(client)
+
+                    classes += nodeclasses if nodeclasses
+
+                    args[:parentnode] = parent if parent
+                end
+
                 begin
-                    if @usenodes
-                        unless client
-                            raise Puppet::Error,
-                                "Cannot evaluate nodes with a nil client"
-                        end
-
-                        classes = nil
-                        parent = nil
-                        # At this point, stop at the first source that defines
-                        # the node
-                        @nodesources.each do |source|
-                            method = "nodesearch_%s" % source
-                            if self.respond_to? method
-                                parent, classes = self.send(method, client)
-                            end
-
-                            if classes
-                                Puppet.info "Found %s in %s" % [client, source]
-                                break
-                            end
-                        end
-
-                        # We've already evaluated the AST, in this case
-                        #return @scope.evalnode(names, facts, classes, parent)
-                        return @scope.evalnode(
-                            :name => names,
-                            :facts => facts,
-                            :classes => classes,
-                            :parent => parent
-                        )
-                    else
-                        # We've already evaluated the AST, in this case
-                        @scope = Puppet::Parser::Scope.new() # no parent scope
-                        @scope.interp = self
-                        #return @scope.evaluate(@ast, facts, @classes)
-                        return @scope.evaluate(
-                            :ast => @ast,
-                            :facts => facts,
-                            :classes => @classes
-                        )
-                    end
-                    #@ast.evaluate(@scope)
+                    return scope.evaluate(args)
                 rescue Puppet::DevError, Puppet::Error, Puppet::ParseError => except
-                    #Puppet.err "File %s, line %s: %s" %
-                    #    [except.file, except.line, except.message]
-                    if Puppet[:debug]
-                        puts except.backtrace
-                    end
-                    #exit(1)
                     raise
                 rescue => except
                     error = Puppet::DevError.new("%s: %s" %
                         [except.class, except.message])
-                    if Puppet[:debug]
-                        puts except.backtrace
-                    end
+                    error.backtrace = except.backtrace
+                    #if Puppet[:debug]
+                    #    puts except.backtrace
+                    #end
                     raise error
                 end
             end
