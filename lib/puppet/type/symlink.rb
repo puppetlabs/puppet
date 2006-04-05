@@ -4,7 +4,8 @@ require 'puppet/type/pfile'
 
 module Puppet
     newtype(:symlink) do
-        @doc = "Create symbolic links to existing files."
+        @doc = "Create symbolic links to existing files.  **This type is deprecated;
+            use file_ instead.**"
         #newstate(:ensure) do
         ensurable do
             require 'etc'
