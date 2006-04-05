@@ -7,6 +7,8 @@ module Puppet
     newtype(:mount, Puppet::Type::ParsedType) do
 
         ensurable do
+            desc "Create, remove, or mount a filesystem mount."
+
             newvalue(:present) do
                 @parent.create()
             end
