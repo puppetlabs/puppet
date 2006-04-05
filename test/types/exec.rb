@@ -489,6 +489,47 @@ class TestExec < Test::Unit::TestCase
 
         assert(FileTest.exists?(file))
     end
+
+    def test_checkarrays
+        exec = nil
+        file = tempfile()
+
+        test = "test -f #{file}"
+
+        assert_nothing_raised {
+            exec = Puppet.type(:exec).create(
+                :path => ENV["PATH"],
+                :command => "touch #{file}"
+            )
+        }
+
+        assert_nothing_raised {
+            exec[:unless] = test
+        }
+
+        assert_nothing_raised {
+            assert(exec.check, "Check did not pass")
+        }
+
+        assert_nothing_raised {
+            exec[:unless] = [test, test]
+        }
+
+
+        assert_nothing_raised {
+            exec.finish
+        }
+
+        assert_nothing_raised {
+            assert(exec.check, "Check did not pass")
+        }
+
+        assert_apply(exec)
+
+        assert_nothing_raised {
+            assert(! exec.check, "Check passed")
+        }
+    end
 end
 
 # $Id$

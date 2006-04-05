@@ -288,7 +288,7 @@ module Puppet
 
             # We always fail this test, because we're only supposed to run
             # on refresh.
-            def check
+            def check(value)
                 false
             end
         end
@@ -310,18 +310,22 @@ module Puppet
 
             # FIXME if they try to set this and fail, then we should probably 
             # fail the entire exec, right?
-            validate do |file|
-                self.fail("'creates' must be set to a fully qualified path") unless file
+            validate do |files|
+                files = [files] unless files.is_a? Array
 
-                unless file =~ %r{^#{File::SEPARATOR}}
-                    self.fail "'creates' files must be fully qualified."
+                files.each do |file|
+                    self.fail("'creates' must be set to a fully qualified path") unless file
+
+                    unless file =~ %r{^#{File::SEPARATOR}}
+                        self.fail "'creates' files must be fully qualified."
+                    end
                 end
             end
 
             # If the file exists, return false (i.e., don't run the command),
             # else return true
-            def check
-                return ! FileTest.exists?(self.value)
+            def check(value)
+                return ! FileTest.exists?(value)
             end
         end
 
@@ -341,13 +345,17 @@ module Puppet
                 which is to say that it must be fully qualified if the path is not set.
                 "
 
-            validate do |cmd|
-                @parent.validatecmd(cmd)
+            validate do |cmds|
+                cmds = [cmds] unless cmds.is_a? Array
+
+                cmds.each do |cmd|
+                    @parent.validatecmd(cmd)
+                end
             end
 
             # Return true if the command does not return 0.
-            def check
-                output, status = @parent.run(self.value, true)
+            def check(value)
+                output, status = @parent.run(value, true)
 
                 return status.exitstatus != 0
             end
@@ -368,13 +376,17 @@ module Puppet
                 which is to say that it must be fully qualified if the path is not set.
                 "
 
-            validate do |cmd|
-                @parent.validatecmd(cmd)
+            validate do |cmds|
+                cmds = [cmds] unless cmds.is_a? Array
+
+                cmds.each do |cmd|
+                    @parent.validatecmd(cmd)
+                end
             end
 
             # Return true if the command returns 0.
-            def check
-                output, status = @parent.run(self.value, true)
+            def check(value)
+                output, status = @parent.run(value, true)
 
                 return status.exitstatus == 0
             end
@@ -403,11 +415,15 @@ module Puppet
             [:onlyif, :unless].each { |param|
                 next unless tmp = self[param]
 
-                # And search the command line for files, adding any we find.  This
-                # will also catch the command itself if it's fully qualified.  It might
-                # not be a bad idea to add unqualified files, but, well, that's a
-                # bit more annoying to do.
-                reqs += tmp.scan(%r{(#{File::SEPARATOR}\S+)})
+                tmp = [tmp] unless tmp.is_a? Array
+
+                tmp.each do |line|
+                    # And search the command line for files, adding any we find.  This
+                    # will also catch the command itself if it's fully qualified.  It might
+                    # not be a bad idea to add unqualified files, but, well, that's a
+                    # bit more annoying to do.
+                    reqs += line.scan(%r{(#{File::SEPARATOR}\S+)})
+                end
             }
 
             # For some reason, the += isn't causing a flattening
@@ -420,8 +436,12 @@ module Puppet
         def check
             self.class.checks.each { |check|
                 if @parameters.include?(check)
-                    unless @parameters[check].check
-                        return false
+                    val = @parameters[check].value
+                    val = [val] unless val.is_a? Array
+                    val.each do |value|
+                        unless @parameters[check].check(value)
+                            return false
+                        end
                     end
                 end
             }
