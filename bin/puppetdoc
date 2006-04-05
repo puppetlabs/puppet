@@ -199,12 +199,17 @@ types.sort { |a,b|
     }.each { |sname|
         state = type.statebyname(sname)
 
+        unless state
+            raise "Could not retrieve state %s on type %s" % [sname, type.name]
+        end
+
         doc = nil
         str = nil
-        unless doc = state.doc.dup
+        unless doc = state.doc
             $stderr.puts "No docs for %s[%s]" % [type, sname]
             next
         end
+        doc = doc.dup
         str = doc
         #puts "A---" + str + "---"
         str = scrub(str)
