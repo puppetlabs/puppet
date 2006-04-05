@@ -131,8 +131,122 @@ class TestAST < Test::Unit::TestCase
         }
     end
 
+    # Verify that nodes don't evaluate code in other node scopes but that their
+    # facts work outside their scopes.
+    def test_nodescopes
+        parent = child1 = nil
+        topchildren = []
+
+        # create the parent class
+        topchildren << classobj("everyone")
+
+        topchildren << classobj("parent")
+
+
+        classes = %w{everyone parent}
+
+        # And a variable, so we verify the facts get set at the top
+        assert_nothing_raised {
+            children = []
+            children << varobj("yaytest", "$hostname")
+        }
+
+        nodes = []
+
+        3.times do |i|
+            children = []
+
+            # Create a child class
+            topchildren << classobj("perchild#{i}", :parentclass => nameobj("parent"))
+            classes << "perchild%s"
+
+            # Create a child class
+            children << classobj("child", :parentclass => nameobj("parent"))
+
+            classes << "child"
+
+            ["child", "everyone", "perchild#{i}"].each do |name|
+                # Now call our child class
+                assert_nothing_raised {
+                    children << AST::ObjectDef.new(
+                        :type => nameobj(name),
+                        :params => astarray()
+                    )
+                }
+            end
+
+            # and another variable
+            assert_nothing_raised {
+                children << varobj("rahtest", "$hostname")
+            }
+
+            # create the node
+            nodename = "node#{i}"
+            nodes << nodename
+            assert_nothing_raised("Could not create parent object") {
+                topchildren << AST::NodeDef.new(
+                    :names => nameobj(nodename),
+                    :code => AST::ASTArray.new(
+                        :children => children
+                    )
+                )
+            }
+        end
+
+        # Create the wrapper object
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => topchildren
+            )
+        }
+
+        nodes.each_with_index do |node, i|
+            # Evaluate the parse tree
+            scope = Puppet::Parser::Scope.new()
+            args = {:names => [node], :facts => {"hostname" => node}, :ast => top}
+
+            # verify that we can evaluate it okay
+            trans = nil
+            assert_nothing_raised("Could not retrieve node definition") {
+                trans = scope.evaluate(args)
+            }
+
+            assert_equal(node, scope.lookupvar("hostname"))
+
+            assert(trans, "Could not retrieve trans objects")
+
+            # and that we can convert them to type objects
+            objects = nil
+            assert_nothing_raised("Could not retrieve node definition") {
+                objects = trans.to_type
+            }
+
+            assert(objects, "Could not retrieve trans objects")
+
+            count = 0
+            # Make sure the node name gets into the path correctly.
+            Puppet.type(:file).each { |obj|
+                count += 1
+                assert(obj.path !~ /#{node}\[#{node}\]/,
+                    "Node name appears twice")
+            }
+
+            assert(count > 0, "Did not create any files")
+
+            classes.each do |name|
+                if name =~ /%s/
+                    name = name % i
+                end
+                assert(Puppet::Type.type(:file)["/#{name}"], "Could not find '#{name}'")
+            end
+
+            Puppet::Type.type(:file).clear
+        end
+    end
+
     # Verify that classes are correctly defined in node scopes.
-    def test_nodeclasslookup
+    def disabled_test_nodeclasslookup
         parent = child1 = nil
         children = []
 
@@ -252,25 +366,25 @@ class TestAST < Test::Unit::TestCase
         }
 
         # Evaluate the parse tree
-        scope = nil
-        assert_nothing_raised("Could not evaluate node") {
-            scope = Puppet::Parser::Scope.new()
-            top.evaluate(:scope => scope)
-        }
+        scope = Puppet::Parser::Scope.new()
 
         # Verify we can find the node via a search list
         objects = nil
         assert_nothing_raised("Could not retrieve short node definition") {
-            objects = scope.evalnode(
-                :name => ["%s.domain.com" % shortname, shortname], :facts => {}
+            objects = scope.evaluate(
+                :names => ["%s.domain.com" % shortname, shortname], :facts => {},
+                :ast => top
             )
         }
         assert(objects, "Could not retrieve short node definition")
 
+        scope = Puppet::Parser::Scope.new()
+
         # and then look for the long name
         assert_nothing_raised("Could not retrieve long node definition") {
-            objects = scope.evalnode(
-                :name => [longname.sub(/\..+/, ''), longname], :facts => {}
+            objects = scope.evaluate(
+                :names => [longname.sub(/\..+/, ''), longname], :facts => {},
+                :ast => top
             )
         }
         assert(objects, "Could not retrieve long node definition")
@@ -295,17 +409,12 @@ class TestAST < Test::Unit::TestCase
             )
         }
 
-        # Evaluate the parse tree
-        scope = nil
-        assert_nothing_raised("Could not evaluate node") {
-            scope = Puppet::Parser::Scope.new()
-            top.evaluate(:scope => scope)
-        }
+        scope = Puppet::Parser::Scope.new()
 
         # Verify we can find the node via a search list
         objects = nil
         assert_nothing_raised("Could not retrieve short node definition") {
-            objects = scope.evalnode(:name => [name], :facts => {})
+            objects = scope.evaluate(:names => [name], :facts => {}, :ast => top)
         }
         assert(objects, "Could not retrieve short node definition")
 
@@ -399,16 +508,12 @@ class TestAST < Test::Unit::TestCase
         }
 
         # Evaluate the parse tree
-        scope = nil
-        assert_nothing_raised("Could not evaluate node") {
-            scope = Puppet::Parser::Scope.new()
-            top.evaluate(:scope => scope)
-        }
+        scope = Puppet::Parser::Scope.new()
 
         # Verify we can find the node via a search list
         objects = nil
-        assert_nothing_raised("Could not retrieve node definition") {
-            objects = scope.evalnode(:name => [name], :facts => {})
+        assert_nothing_raised("Could not evaluate node") {
+            objects = scope.evaluate(:names => [name], :facts => {}, :ast => top)
         }
         assert(objects, "Could not retrieve node definition")
 

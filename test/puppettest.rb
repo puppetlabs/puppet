@@ -731,8 +731,8 @@ module ParserTesting
     def classobj(name, args = {})
         args[:type] ||= nameobj(name)
         args[:code] ||= AST::ASTArray.new(
-            :file => tempfile(),
-            :line => rand(100),
+            :file => __FILE__,
+            :line => __LINE__,
             :children => [
                 varobj("%svar" % name, "%svalue" % name),
                 fileobj("/%s" % name)
