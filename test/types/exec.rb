@@ -470,6 +470,11 @@ class TestExec < Test::Unit::TestCase
             )
         }
 
+        # Throw a check in there with our cwd and make sure it works
+        assert_nothing_raised("Could not check with a missing cwd") do
+            exec2[:unless] = "test -f /this/file/does/not/exist"
+        end
+
         assert_raise(Puppet::Error) do
             exec2.state(:returns).sync
         end

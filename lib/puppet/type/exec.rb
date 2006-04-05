@@ -128,12 +128,6 @@ module Puppet
 
                 self.checkexe
 
-                if cwd = self.parent[:cwd]
-                    unless File.directory?(cwd)
-                        self.fail "Working directory '%s' does not exist" % cwd
-                    end
-                end
-
                 # We need a dir to change to, even if it's just the cwd
                 dir = self.parent[:cwd] || Dir.pwd
                 tmppath = ENV["PATH"]
@@ -449,11 +443,25 @@ module Puppet
         end
 
         # Run a command.
-        def run(command)
+        def run(command, check = false)
             output = nil
             status = nil
             tmppath = ENV["PATH"]
-            dir = self[:cwd] || Dir.pwd
+
+            dir = nil
+
+            if dir = self[:cwd]
+                unless File.directory?(dir)
+                    if check
+                        dir = nil
+                    else
+                        self.fail "Working directory '%s' does not exist" % dir
+                    end
+                end
+            end
+
+            dir ||= Dir.pwd
+
             debug "Executing '#{command}'"
             begin
                 # Do our chdir
