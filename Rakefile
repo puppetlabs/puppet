@@ -7,6 +7,8 @@ rescue LoadError
     exit(14)
 end
 
+TESTHOSTS = %w{rh3a fedora1 centos1 freebsd1 culain}
+
 project = Rake::RedLabProject.new("puppet") do |p|
     p.summary = "System Automation and Configuration Management Software"
     p.description = "Puppet is a declarative language for expressing system

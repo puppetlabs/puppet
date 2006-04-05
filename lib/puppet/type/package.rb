@@ -63,7 +63,21 @@ module Puppet
             @pkgtypes[name] = mod
         end
 
+        # Autoload the package types, if they're not already defined.
         def self.pkgtype(name)
+            @pkgtypes ||= {}
+            unless @pkgtypes.include? name
+                begin
+                    require "puppet/type/package/#{name}"
+
+                    unless @pkgtypes.include? name
+                        raise Puppet::DevError, "Loaded %s but pkgtype was not created" %
+                            name
+                    end
+                rescue LoadError
+                    raise Puppet::Error, "Could not load package type %s" % name
+                end
+            end
             @pkgtypes[name]
         end
 
@@ -382,7 +396,8 @@ module Puppet
             when "centos": @default = :rpm
             when "fedora": @default = :yum
             when "redhat": @default = :rpm
-            when "openbsd": @default = :bsd
+            when "freebsd": @default = :freebsd
+            when "openbsd": @default = :openbsd
             when "darwin": @default = :apple
             else
                 if Facter["kernel"] == "Linux"
@@ -422,47 +437,10 @@ module Puppet
             name = hash[:name]
             hash.delete(:name)
 
-            # if it already exists, modify the existing one
-            if object = Package[name]
-                states = {}
-                object.eachstate { |state|
-                    Puppet.debug "Adding %s" % state.name.inspect
-                    states[state.name] = state
-                }
-                hash.each { |var,value|
-                    if states.include?(var)
-                        Puppet.debug "%s is a set state" % var.inspect
-                        states[var].is = value
-                    else
-                        Puppet.debug "%s is not a set state" % var.inspect
-                        if object[var] and object[var] != value
-                            Puppet.warning "Overriding %s => %s on %s with %s" %
-                                [var,object[var],name,value]
-                        end
+            object = self[name] || self.create(:name => name)
+            object.setparams(hash)
 
-                        #object.state(var).is = value
-
-                        # swap the values if we're a state
-                        if states.include?(var)
-                            Puppet.debug "Swapping %s because it's a state" % var
-                            states[var].is = value
-                            states[var].should = nil
-                        else
-                            Puppet.debug "%s is not a state" % var.inspect
-                            Puppet.debug "States are %s" % states.keys.collect { |st|
-                                st.inspect
-                            }.join(" ")
-                        end
-                    end
-                }
-                return object
-            else # just create it
-                obj = self.create(:name => name)
-                hash.each { |var,value|
-                    obj.addis(var,value)
-                }
-                return obj
-            end
+            return object
         end
 
         # This only exists for testing.
@@ -512,21 +490,35 @@ module Puppet
             # about it and set it appropriately.
             #@states[:ensure].retrieve
             if hash = self.query
+                if hash == :listed # Mmmm, hackalicious
+                    return
+                end
                 hash.each { |param, value|
                     unless self.class.validattr?(param)
                         hash.delete(param)
                     end
                 }
 
-                hash.each { |param, value|
-                    self.is = [param, value]
-                }
+                setparams(hash)
             else
                 # Else just mark all of the states absent.
                 self.class.validstates.each { |name|
                     self.is = [name, :absent]
                 }
             end
+        end
+
+        # Set all of the params' "is" value.  Most are parameters, but some
+        # are states.
+        def setparams(hash)
+            # Everything on packages is a parameter except :ensure
+            hash.each { |param, value|
+                if self.class.attrtype(param) == :state
+                    self.is = [param, value]
+                else
+                    self[param] = value
+                end
+            }
         end
 
         # Extend the package with the appropriate package type.
@@ -587,12 +579,13 @@ module Puppet
 end
 
 # The order these are loaded is important.
-require 'puppet/type/package/dpkg.rb'
-require 'puppet/type/package/apt.rb'
-require 'puppet/type/package/rpm.rb'
-require 'puppet/type/package/yum.rb'
-require 'puppet/type/package/sun.rb'
-require 'puppet/type/package/bsd.rb'
-require 'puppet/type/package/apple.rb'
+require 'puppet/type/package/dpkg'
+require 'puppet/type/package/apt'
+require 'puppet/type/package/rpm'
+require 'puppet/type/package/yum'
+require 'puppet/type/package/sun'
+require 'puppet/type/package/openbsd'
+require 'puppet/type/package/freebsd'
+require 'puppet/type/package/apple'
 
 # $Id$

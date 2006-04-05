@@ -44,6 +44,7 @@ class TestPackages < Test::Unit::TestCase
         when "Debian": pkgs = %w{ssh openssl}
         when "Fedora": pkgs = %w{openssh}
         when "OpenBSD": pkgs = %{vim}
+        when "FreeBSD": pkgs = %{sudo}
         else
             Puppet.notice "No test package for %s" % $platform
             return []
@@ -136,6 +137,7 @@ class TestPackages < Test::Unit::TestCase
                 obj.retrieve
             }
 
+            # Version is a parameter, not a state.
             assert(obj[:version], "Could not retrieve package version")
         }
     end

@@ -454,6 +454,7 @@ module ExeTest
             File.unlink(pidfile)
         end
 
+        return unless running
         if running or pid
             runningpid = nil
             %x{#{ps}}.chomp.split(/\n/).each { |line|
@@ -464,12 +465,6 @@ module ExeTest
                 end
             }
 
-            if running
-                assert(runningpid, "Process is not running")
-                assert_equal(pid, runningpid, "PIDs are not equal")
-            else
-                return
-            end
         end
 
         # we default to mandating that it's running, but teardown

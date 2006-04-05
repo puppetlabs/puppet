@@ -1,5 +1,9 @@
 module Puppet
-    Puppet.type(:package).newpkgtype(:bsd) do
+    Puppet.type(:package).newpkgtype(:openbsd) do
+        def listcmd
+            "pkg_info -a"
+        end
+
         def install
             should = self.should(:ensure)
 
@@ -43,7 +47,7 @@ module Puppet
             packages = []
 
             # list out all of the packages
-            open("| pkg_info -a") { |process|
+            open("| #{listcmd()}") { |process|
                 # our regex for matching dpkg output
                 regex = %r{^(\S+)-(\d\S+)\s+(.+)}
                 fields = [:name, :version, :description]
@@ -51,20 +55,22 @@ module Puppet
 
                 # now turn each returned line into a package object
                 process.each { |line|
+                    hash.clear
                     if match = regex.match(line)
-                        hash.clear
-
                         fields.zip(match.captures) { |field,value|
                             hash[field] = value
                         }
-                        packages.push Puppet.type(:package).installedpkg(hash)
+                        yup = nil
+                        name = hash[:name]
+                        hash[:ensure] = :present
+                        pkg = Puppet.type(:package).installedpkg(hash)
+                        packages << pkg
                     else
                         raise Puppet::DevError,
                             "Failed to match dpkg line %s" % line
                     end
                 }
             }
-            ENV["COLUMNS"] = oldcol
 
             return packages
         end

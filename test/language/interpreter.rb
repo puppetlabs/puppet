@@ -115,6 +115,7 @@ class TestInterpreter < Test::Unit::TestCase
         files << parentfile
         hostname = Facter["hostname"].value
         lparent, lclasses = ldaphost(Facter["hostname"].value)
+        assert(lclasses, "Did not retrieve info from ldap")
         File.open(file, "w") { |f|
             f.puts "node #{lparent} {
     file { \"#{parentfile}\": ensure => file }
