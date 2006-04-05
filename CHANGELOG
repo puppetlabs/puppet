@@ -1,3 +1,10 @@
+0.15.2
+    Added darwinport, Apple .pkg, and freebsd package types
+    Added 'mount type
+    Host facts are now set at the top scope (Bug #103)
+    Added -e (inline exection) flag to 'puppet' executable
+    Many small bug fixes
+
 0.15.1
     Fixed 'yum' installs so that they successfully upgrade packages.
     Fixed puppetmasterd.conf file so group settings take.
