@@ -347,7 +347,7 @@ module Puppet
 
             # Return true if the command does not return 0.
             def check
-                output, status = @parent.run(self.value)
+                output, status = @parent.run(self.value, true)
 
                 return status.exitstatus != 0
             end
@@ -374,7 +374,7 @@ module Puppet
 
             # Return true if the command returns 0.
             def check
-                output, status = @parent.run(self.value)
+                output, status = @parent.run(self.value, true)
 
                 return status.exitstatus == 0
             end
@@ -462,7 +462,11 @@ module Puppet
 
             dir ||= Dir.pwd
 
-            debug "Executing '#{command}'"
+            if check
+                debug "Executing check '#{command}'"
+            else
+                debug "Executing '#{command}'"
+            end
             begin
                 # Do our chdir
                 Dir.chdir(dir) {
