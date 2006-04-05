@@ -449,6 +449,40 @@ class TestExec < Test::Unit::TestCase
             end
         end
     end
+
+    def test_createcwdandexe
+        exec1 = exec2 = nil
+        dir = tempfile()
+        file = tempfile()
+
+        assert_nothing_raised {
+            exec1 = Puppet.type(:exec).create(
+                :path => ENV["PATH"],
+                :command => "mkdir #{dir}"
+            )
+        }
+
+        assert_nothing_raised("Could not create exec w/out existing cwd") {
+            exec2 = Puppet.type(:exec).create(
+                :path => ENV["PATH"],
+                :command => "touch #{file}",
+                :cwd => dir
+            )
+        }
+
+        assert_raise(Puppet::Error) do
+            exec2.state(:returns).sync
+        end
+
+        assert_nothing_raised do
+            exec2[:require] = ["exec", exec1.name]
+            exec2.finish
+        end
+
+        assert_apply(exec1, exec2)
+
+        assert(FileTest.exists?(file))
+    end
 end
 
 # $Id$

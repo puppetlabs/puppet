@@ -128,6 +128,12 @@ module Puppet
 
                 self.checkexe
 
+                if cwd = self.parent[:cwd]
+                    unless File.directory?(cwd)
+                        self.fail "Working directory '%s' does not exist" % cwd
+                    end
+                end
+
                 # We need a dir to change to, even if it's just the cwd
                 dir = self.parent[:cwd] || Dir.pwd
                 tmppath = ENV["PATH"]
@@ -247,10 +253,6 @@ module Puppet
             munge do |dir|
                 if dir.is_a?(Array)
                     dir = dir[0]
-                end
-
-                unless File.directory?(dir)
-                    self.fail "Directory '%s' does not exist" % dir
                 end
                 
                 dir
@@ -391,6 +393,7 @@ module Puppet
             validatecmd(self[:command])
         end
 
+        # FIXME exec should autorequire any exec that 'creates' our cwd
         autorequire(:file) do
             reqs = []
 
