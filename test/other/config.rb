@@ -547,9 +547,14 @@ yay = /a/path
         assert_equal(mode, filemode(path), "Modes are not equal")
 
         # OS X is broken in how it chgrps files 
-        if Process.uid == 0 and Facter["operatingsystem"].value != "Darwin"
+        if Process.uid == 0
             assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
-            assert_equal(group.gid, File.stat(path).gid, "GIDS are not equal")
+
+            case Facter["operatingsystem"].value
+            when /BSD/, "Darwin": # nothing
+            else
+                assert_equal(group.gid, File.stat(path).gid, "GIDS are not equal")
+            end
         end
     end
 
@@ -577,10 +582,16 @@ yay = /a/path
 
         assert_equal(mode, filemode(path), "Modes are not equal")
 
-        # OS X is broken in how it chgrps files 
-        if Process.uid == 0 and Facter["operatingsystem"].value != "Darwin"
+
+        # OS X and *BSD is broken in how it chgrps files 
+        if Process.uid == 0
             assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
-            assert_equal(group.gid, File.stat(path).gid, "GIDS are not equal")
+
+            case Facter["operatingsystem"].value
+            when /BSD/, "Darwin": # nothing
+            else
+                assert_equal(group.gid, File.stat(path).gid, "GIDS are not equal")
+            end
         end
     end
 end
