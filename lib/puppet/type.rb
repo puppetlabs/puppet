@@ -928,7 +928,8 @@ class Type < Puppet::Element
         end
         param = klass.new
         param.parent = self
-        if value
+
+        unless value.nil?
             param.value = value
         end
 
@@ -1338,6 +1339,8 @@ class Type < Puppet::Element
             if hash.include?(name)
                 begin
                     self[name] = hash[name]
+                rescue ArgumentError, Puppet::Error, TypeError
+                    raise
                 rescue => detail
                     self.devfail(
                         "Could not set %s on %s: %s" %

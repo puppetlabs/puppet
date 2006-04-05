@@ -432,6 +432,23 @@ class TestExec < Test::Unit::TestCase
         assert(FileTest.exists?(path), "Exec ran first")
         assert(File.stat(path).mode & 007777 == 0755)
     end
+
+    def test_falsevals
+        exec = nil
+        assert_nothing_raised do
+            exec = Puppet.type(:exec).create(
+                :command => "/bin/touch yayness"
+            )
+        end
+
+        Puppet.type(:exec).checks.each do |check|
+            klass = Puppet.type(:exec).paramclass(check)
+            next if klass.values.include? :false
+            assert_raise(Puppet::Error, "Check %s did not fail on false" % check) do
+                exec[check] = false
+            end
+        end
+    end
 end
 
 # $Id$

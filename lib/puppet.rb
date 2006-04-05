@@ -48,10 +48,6 @@ module Puppet
                 str = @message.to_s
             end
 
-            #if Puppet[:debug] and @stack
-            #    str += @stack.to_s
-            #end
-
             return str
         end
     end

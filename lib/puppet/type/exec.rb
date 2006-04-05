@@ -240,6 +240,10 @@ module Puppet
             desc "The directory from which to run the command.  If
                 this directory does not exist, the command will fail."
 
+            validate do |dir|
+                self.fail("CWD must be a fully qualified path") unless dir
+            end
+
             munge do |dir|
                 if dir.is_a?(Array)
                     dir = dir[0]
@@ -284,6 +288,8 @@ module Puppet
                 
                 "
 
+            newvalues(:true, :false)
+
             # We always fail this test, because we're only supposed to run
             # on refresh.
             def check
@@ -309,6 +315,8 @@ module Puppet
             # FIXME if they try to set this and fail, then we should probably 
             # fail the entire exec, right?
             validate do |file|
+                self.fail("'creates' must be set to a fully qualified path") unless file
+
                 unless file =~ %r{^#{File::SEPARATOR}}
                     self.fail "'creates' files must be fully qualified."
                 end
@@ -337,6 +345,10 @@ module Puppet
                 which is to say that it must be fully qualified if the path is not set.
                 "
 
+            validate do |cmd|
+                @parent.validatecmd(cmd)
+            end
+
             # Return true if the command does not return 0.
             def check
                 output, status = @parent.run(self.value)
@@ -360,6 +372,10 @@ module Puppet
                 which is to say that it must be fully qualified if the path is not set.
                 "
 
+            validate do |cmd|
+                @parent.validatecmd(cmd)
+            end
+
             # Return true if the command returns 0.
             def check
                 output, status = @parent.run(self.value)
@@ -372,12 +388,7 @@ module Puppet
         @isomorphic = false
 
         validate do
-            # if we're not fully qualified, require a path
-            if self[:command] !~ /^\//
-                if self[:path].nil?
-                    self.fail "both unqualifed and specified no search path"
-                end
-            end
+            validatecmd(self[:command])
         end
 
         autorequire(:file) do
@@ -477,6 +488,15 @@ module Puppet
 
         def to_s
             "exec(%s)" % self.name
+        end
+
+        def validatecmd(cmd)
+            # if we're not fully qualified, require a path
+            if cmd !~ /^\//
+                if self[:path].nil?
+                    self.fail "both unqualifed and specified no search path"
+                end
+            end
         end
     end
 end
