@@ -33,12 +33,12 @@ module Puppet
 
             # Add our parent, if it exists
             if parent
-                unless @pkgtypes.include?(parent)
+                unless parenttype = pkgtype(parent)
                     raise Puppet::DevError,
                         "No parent type %s for package type %s" %
                         [parent, name]
                 end
-                mod.send(:include, @pkgtypes[parent])
+                mod.send(:include, parenttype)
             end
 
             # And now define the support methods
@@ -577,15 +577,5 @@ module Puppet
         }
     }
 end
-
-# The order these are loaded is important.
-require 'puppet/type/package/dpkg'
-require 'puppet/type/package/apt'
-require 'puppet/type/package/rpm'
-require 'puppet/type/package/yum'
-require 'puppet/type/package/sun'
-require 'puppet/type/package/openbsd'
-require 'puppet/type/package/freebsd'
-require 'puppet/type/package/apple'
 
 # $Id$

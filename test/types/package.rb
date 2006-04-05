@@ -43,8 +43,9 @@ class TestPackages < Test::Unit::TestCase
             pkgs = %w{SMCossh}
         when "Debian": pkgs = %w{ssh openssl}
         when "Fedora": pkgs = %w{openssh}
-        when "OpenBSD": pkgs = %{vim}
-        when "FreeBSD": pkgs = %{sudo}
+        when "OpenBSD": pkgs = %w{vim}
+        when "FreeBSD": pkgs = %w{sudo}
+        when "Darwin": pkgs = %w{gettext}
         else
             Puppet.notice "No test package for %s" % $platform
             return []
@@ -60,12 +61,16 @@ class TestPackages < Test::Unit::TestCase
         end
     end
 
-    def mkpkgs
-        tstpkgs().each { |pkg, source|
+    def mkpkgs(list = nil)
+        list ||= tstpkgs()
+        list.each { |pkg, source|
             hash = {:name => pkg, :ensure => "latest"}
             if source
                 source = source[0] if source.is_a? Array
                 hash[:source] = source
+            end
+            if Facter["operatingsystem"].value == "Darwin"
+                hash[:type] = "darwinport"
             end
             obj = Puppet.type(:package).create(hash)
             modpkg(obj)
@@ -102,6 +107,8 @@ class TestPackages < Test::Unit::TestCase
                 "/home/luke/rpm/RPMS/noarch/enhost-1.0.1-1.noarch.rpm",
                 "/home/luke/rpm/RPMS/noarch/enhost-1.0.2-1.noarch.rpm"
             ]}
+        when "Darwin":
+            retval = {"aop" => nil}
         else
             Puppet.notice "No test packages for %s" % $platform
         end
@@ -123,13 +130,7 @@ class TestPackages < Test::Unit::TestCase
     end
 
     def test_retrievepkg
-        installedpkgs().each { |pkg|
-            obj = nil
-            assert_nothing_raised {
-                obj = Puppet.type(:package).create(
-                    :name => pkg
-                )
-            }
+        mkpkgs(installedpkgs()) { |obj|
 
             assert(obj, "could not create package")
 
@@ -208,8 +209,6 @@ class TestPackages < Test::Unit::TestCase
             assert_events([:package_removed], comp, "package")
 
             # and now set install to 'latest' and verify it installs
-            # FIXME this isn't really a very good test -- we should install
-            # a low version, and then upgrade using this.  But, eh.
             if pkg.respond_to?(:latest)
                 assert_nothing_raised {
                     pkg[:ensure] = "latest"
@@ -288,7 +287,8 @@ class TestPackages < Test::Unit::TestCase
     end
 
     # Stupid darwin, not supporting package uninstallation
-    if Facter["operatingsystem"].value == "Darwin"
+    if Facter["operatingsystem"].value == "Darwin" and
+        FileTest.exists? "/Users/luke/Documents/Puppet/pkgtesting.pkg"
         def test_darwinpkgs
             pkg = nil
             assert_nothing_raised {
