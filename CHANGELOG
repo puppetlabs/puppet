@@ -1,3 +1,10 @@
+0.15.3
+    Fixed many bugs in :exec, including adding support for arrays of checks
+
+    Added autoloading for types and service variants (e.g., you can now
+    just create a new type in the appropriate location and use it in Puppet,
+    without modifying the core Puppet libs).
+
 0.15.2
     Added darwinport, Apple .pkg, and freebsd package types
     Added 'mount type
