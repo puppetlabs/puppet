@@ -221,7 +221,8 @@ module Puppet
             %x{df}.split("\n").find do |line|
                 fs = line.split(/\s+/)[-1]
                 if platform == "Darwin"
-                    fs == "/private/var/automount" + self[:path]
+                    fs == "/private/var/automount" + self[:path] or
+                        fs == self[:path]
                 else
                     fs == self[:path]
                 end
