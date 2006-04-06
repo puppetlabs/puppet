@@ -32,6 +32,15 @@ module Puppet
 
                 :mount_mounted
             end
+
+            def retrieve
+                if @parent.mounted?
+                    @is = :mounted
+                else
+                    val = super()
+                    @is = val
+                end
+            end
         end
 
         newstate(:device) do

@@ -154,6 +154,10 @@ class TestMounts < Test::Unit::TestCase
         text = Puppet::Type.type(:mount).fileobj.read
 
         assert(text =~ /#{fs[:path]}/, "Text did not include new fs")
+
+        fs[:options] = "rw,noauto"
+
+        assert_events([:mount_changed], fs)
     end
 
     if Process.uid == 0
@@ -162,6 +166,7 @@ class TestMounts < Test::Unit::TestCase
         case Facter["hostname"].value
         when "culain": fs = "/ubuntu"
         when "atalanta": fs = "/mnt"
+        when "figurehead": fs = "/cg4/net/depts"
         else
             $stderr.puts "No mount for mount testing; skipping"
             return
@@ -224,6 +229,7 @@ class TestMounts < Test::Unit::TestCase
         }
 
         assert_events([:mount_removed], obj)
+        assert_events([], obj)
 
         # And verify it's gone
         assert(!obj.mounted?, "Object is mounted after being removed")
@@ -238,6 +244,7 @@ class TestMounts < Test::Unit::TestCase
         }
 
         assert_events([:mount_created], obj)
+        assert_events([], obj)
 
         text = Puppet::Type.type(:mount).fileobj.read
         assert(text =~ /#{fs}/, "Fstab does not contain %s" % fs)
@@ -249,11 +256,13 @@ class TestMounts < Test::Unit::TestCase
         }
 
         assert_events([:mount_mounted], obj)
+        assert_events([], obj)
 
         text = Puppet::Type.type(:mount).fileobj.read
         assert(text =~ /#{fs}/,
             "Fstab does not contain %s" % fs)
 
+        obj.retrieve
         assert(obj.mounted?, "Object is not mounted")
 
         unless current
