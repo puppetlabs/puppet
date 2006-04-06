@@ -315,6 +315,22 @@ module Puppet
 
         # Retrieve a service type.
         def self.svctype(name)
+            name = name.intern if name.is_a? String
+
+            # Try autoloading lacking service types.
+            unless @modules.include? name
+                begin
+                    require "puppet/type/service/#{name}"
+                    unless @modules.include? name
+                        Puppet.warning(
+                            "Loaded puppet/type/service/#{name} but " +
+                            "service type was not created"
+                        )
+                    end
+                rescue LoadError
+                    # nothing
+                end
+            end
             @modules[name]
         end
 

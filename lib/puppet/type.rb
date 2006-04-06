@@ -215,6 +215,17 @@ class Type < Puppet::Element
             name = name.intern
         end
 
+        unless @types.include? name
+            begin
+                require "puppet/type/#{name}"
+                unless @types.include? name
+                    Puppet.warning "Loaded puppet/type/#{name} but no class was created"
+                end
+            rescue LoadError
+                # nothing
+            end
+        end
+
         @types[name]
     end
 
