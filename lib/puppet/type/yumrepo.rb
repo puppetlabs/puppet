@@ -1,6 +1,7 @@
 # Description of yum repositories
 
 require 'puppet/statechange'
+require 'puppet/inifile'
 require 'puppet/type/parsedtype'
 
 module Puppet
@@ -10,80 +11,163 @@ module Puppet
 
         def insync?
             # A should state of :absent is the same as nil
-            if self.is.nil? && (self.should.nil? || self.should == :absent)
+            if is.nil? && (should.nil? || should == :absent)
                 return true
             end
             return super
         end
 
+        def sync
+            if insync?
+                result = nil
+            else
+                result = set
+                parent.section[inikey] = should
+            end
+            return result
+        end
+
+        def retrieve
+            @is = parent.section[inikey]
+        end
+        
         def inikey
-            self.name
+            name.to_s
         end
 
-        def format
-            "#{self.inikey}=#{self.should}"
+        # Set the key associated with this state to KEY, instead
+        # of using the state's NAME
+        def self.inikey(key)
+            # Override the inikey instance method
+            # Is there a way to do this without resorting to strings ?
+            # Using a block fails because the block can't access
+            # the variable 'key' in the outer scope
+            self.class_eval("def inikey ; \"#{key.to_s}\" ; end")
         end
 
-        def emit
-            self.should.nil? || self.should == :absent ? "" : "#{format}\n"
-        end
-    end
-
-    # A state for the section header in a .ini-style file
-    class IniSectionState < IniState
-        def format
-            "[#{self.should}]"
-        end
     end
 
     # Doc string for states that can be made 'absent'
     ABSENT_DOC="Set this to 'absent' to remove it from the file completely"
 
     newtype(:yumrepo) do
-        @doc = "The client-side description of a yum repository. Manages
-                the yum repository configuration in the file '$name.repo',
-                usually in the directory /etc/yum.repos.d, though the 
-                directory can be set with the **repodir** parameter.
+        @doc = "The client-side description of a yum repository. Repository
+                configurations are found by parsing /etc/yum.conf and
+                the files indicated by reposdir in that file (see yum.conf(5)
+                for details)
 
                 Most parameters are identical to the ones documented 
                 in yum.conf(5)
 
-                Note that the proper working of this type requires that
-                configurations for individual repos are kept in
-                separate files in **repodir**, and that no attention
-                is paid to the overall /etc/yum.conf"
+                Continuation lines that yum supports for example for the
+                baseurl are not supported. No attempt is made to access
+                files included with the **include** directive"
 
         class << self
             attr_accessor :filetype
+            # The writer is only used for testing, there should be no need
+            # to change yumconf in any other context
+            attr_accessor :yumconf
         end
 
         self.filetype = Puppet::FileType.filetype(:flat)
 
-        def path
-            File.join(self[:repodir], "#{self[:name]}.repo")
-        end
+        @inifile = nil
+        
+        @yumconf = "/etc/yum.conf"
 
-        def retrieve
-            Puppet.debug "Parsing yum config %s" % path
-            text = self.class.filetype().new(path).read
-            # Keep track of how entries were in the initial file
-            # and preserve comments. @lines holds either original
-            # lines (for comments) or a symbol for the entry that was there
-            @lines = []
-            text.each_line do |l|
-                if l =~ /^\[(.+)\]$/
-                    self.is = [:repoid, $1]
-                    @lines << :repoid
-                elsif l =~ /^(\s*\#|\s*$)/
-                    # Preserve comments and empty lines
-                    @lines << l
-                elsif l =~ /^(.+)\=(.+)$/
-                    key = $1.to_sym
-                    key = :descr if $1 == "name"
-                    self.is = [key, $2]
-                    @lines << key
+        # Where to put files for brand new sections
+        @defaultrepodir = nil
+
+        # Return the Puppet::IniConfig::File for the whole yum config
+        def self.inifile
+            if @inifile.nil?
+                @inifile = read()
+                main = @inifile['main']
+                if main.nil?
+                    raise Puppet::Error, "File #{yumconf} does not contain a main section" 
+                end
+                reposdir = main['reposdir'] 
+                reposdir ||= "/etc/yum.repos.d, /etc/yum/repos.d"
+                reposdir.gsub!(/[\n,]/, " ")
+                reposdir.split.each do |dir|
+                    Dir::glob("#{dir}/*.repo").each do |file|
+                        if File.file?(file)
+                            @inifile.read(file)
+                        end
+                    end
+                end
+                reposdir.split.each do |dir|
+                    if File::directory?(dir) && File::writable?(dir)
+                        @defaultrepodir = dir
+                        break
+                    end
                 end
             end
+            return @inifile
+        end
+
+        # Parse the yum config files. Only exposed for the tests
+        # Non-test code should use self.inifile to get at the
+        # underlying file
+        def self.read
+            result = Puppet::IniConfig::File.new()
+            result.read(yumconf)
+            main = result['main']
+            if main.nil?
+                raise Puppet::Error, "File #{yumconf} does not contain a main section" 
+            end
+            reposdir = main['reposdir']
+            reposdir ||= "/etc/yum.repos.d, /etc/yum/repos.d"
+            reposdir.gsub!(/[\n,]/, " ")
+            reposdir.split.each do |dir|
+                Dir::glob("#{dir}/*.repo").each do |file|
+                    if File.file?(file)
+                        result.read(file)
+                    end
+                end
+            end
+            if @defaultrepodir.nil?
+                reposdir.split.each do |dir|
+                    if File::directory?(dir) && File::writable?(dir)
+                        @defaultrepodir = dir
+                        break
+                    end
+                end
+            end
+            return result
+        end
+
+        # Return the Puppet::IniConfig::Section with name NAME
+        # from the yum config
+        def self.section(name)
+            result = inifile[name]
+            if result.nil?
+                # Brand new section
+                path = yumconf
+                unless @defaultrepodir.nil?
+                    path = File::join(@defaultrepodir, "#{name}.repo")
+                end
+                Puppet::info "create new repo #{name} in file #{path}"
+                result = inifile.add_section(name, path)
+            end
+            return result
+        end
+
+        # Store all modifications back to disk
+        def self.store
+            inifile.store
+        end
+
+        def self.clear
+            @inifile = nil
+            @yumconf = "/etc/yum.conf"
+            @defaultrepodir = nil
+        end
+
+        # Return the Puppet::IniConfig::Section for this yumrepo element
+        def section
+            self.class.section(self[:name])
         end
 
         def evaluate
@@ -110,53 +194,22 @@ module Puppet
             return changes
         end
 
+        # Store modifications to this yumrepo element back to disk
         def store
-            text = ""
-            @lines.each do |l|
-                if l.is_a?(String)
-                    text << l
-                else
-                    text << state(l).emit
-                end
-            end
-            self.each do |state|
-                if state.is.nil? || state.is == :absent
-                    # State was not in the parsed config file
-                    text << state.emit
-                end
-            end
-            Puppet.debug "Writing yum config %s" % path
-            self.class.filetype().new(path).write(text)
+            self.class.store
         end
 
         newparam(:name) do
-            desc "The name of the repository. This is used to find the config
-                  file as $repodir/$name.repo. The 'name' parameter in the yum
-                  config file has to be set through **descr**"
+            desc "The name of the repository."
             isnamevar
         end
 
-        newparam(:repodir) do
-            desc "The directory in which repo config files are to be found. 
-                  Defaults to /etc/yum.repos.d"
-            defaultto("/etc/yum.repos.d")
-        end
-
-        newstate(:repoid, Puppet::IniSectionState) do
-            desc "The id that yum uses internally to keep track of 
-                  the repository"
-            newvalue(/.*/) { }
-        end
-
         newstate(:descr, Puppet::IniState) do
-            desc "A human readable description of the repository. Corresponds
-                  to the 'name' parameter in the yum config file.
+            desc "A human readable description of the repository. 
                   #{ABSENT_DOC}"
-            newvalue(:absent) { self.should = nil }
+            newvalue(:absent) { self.should = :absent }
             newvalue(/.*/) { }
-            def inikey
-                :name
-            end
+            inikey "name"
         end
         
         newstate(:mirrorlist, Puppet::IniState) do

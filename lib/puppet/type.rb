@@ -2246,7 +2246,5 @@ require 'puppet/type/symlink'
 require 'puppet/type/user'
 require 'puppet/type/tidy'
 require 'puppet/type/parsedtype'
-#This needs some more work before it is ready for primetime
-#require 'puppet/type/yumrepo'
 
 # $Id$
