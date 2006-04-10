@@ -19,6 +19,8 @@ class Puppet::Parser::AST
 
             default = nil
 
+            @values = [@values] unless @values.instance_of? AST::ASTArray
+
             # Then look for a match in the options.
             @values.each { |obj|
                 param = obj.param.safeevaluate(:scope => scope)

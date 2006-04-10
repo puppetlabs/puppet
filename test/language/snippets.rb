@@ -345,6 +345,20 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
+    def snippet_singleselector(trans)
+        nums = %w{1 2 3}
+        files = nums.collect { |n|
+            "/tmp/singleselector%s" % n
+        }
+
+        files.each { |f|
+            @@tmpfiles << f
+            assert(FileTest.exists?(f), "File %s does not exist" % f)
+            assert(File.stat(f).mode & 007777 == 0755,
+                "File %s is not 755" % f)
+        }
+    end
+
     def snippet_falsevalues(trans)
         file = "/tmp/falsevaluesfalse"
         @@tmpfiles << file
