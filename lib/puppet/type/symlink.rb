@@ -102,8 +102,6 @@ module Puppet
         copyparam(Puppet.type(:file), :path)
 
         newparam(:recurse) do
-            attr_reader :setparent
-
             desc "If target is a directory, recursively create
                 directories (using `file`'s `source` parameter) and link all
                 contained files.  For instance::

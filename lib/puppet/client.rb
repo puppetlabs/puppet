@@ -11,12 +11,15 @@ module Puppet
         include Puppet
         include SignalObserver
 
+        include Puppet::Util
+
+
         # FIXME The cert stuff should only come up with networking, so it
         # should be in the network client, not the normal client.  But if i do
         # that, it's hard to tell whether the certs have been initialized.
         include Puppet::Daemon
         attr_reader :secureinit
-        attr_accessor :schedule, :lastrun, :local
+        attr_accessor :schedule, :lastrun, :local, :stopping
 
         class << self
             attr_reader :drivername
@@ -85,6 +88,10 @@ module Puppet
 
         # A wrapper method to run and then store the last run time
         def runnow
+            if self.stopping
+                Puppet.notice "In shutdown progress; skipping run"
+                return
+            end
             begin
                 self.run
                 self.lastrun = Time.now.to_i
@@ -112,9 +119,15 @@ module Puppet
             @driver.ca_file = @cacertfile
         end
 
+        # FIXME this should probably not store every single time.
         def shutdown
-            Puppet::Storage.store
-            exit
+            if self.stopping
+                Puppet.notice "Already in shutdown"
+            else
+                self.stopping = true
+                Puppet::Storage.store
+                exit
+            end
         end
 
         # Start listening for events.  We're pretty much just listening for

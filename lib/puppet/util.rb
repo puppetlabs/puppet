@@ -5,6 +5,8 @@ require 'puppet/lock'
 
 module Puppet
 module Util
+    require 'benchmark'
+
     # Create a sync point for any threads
     @@sync = Sync.new
     # Execute a block as a given user or group
@@ -301,6 +303,41 @@ module Util
             File.umask(cur)
         end
     end
+
+    def benchmark(*args)
+        msg = args.pop
+        level = args.pop
+        object = nil
+
+        if args.empty?
+            object = Puppet
+        else
+            object = args.pop
+        end
+
+        unless level
+            puts caller.join("\n")
+            raise Puppet::DevError, "Failed to provide level"
+        end
+
+        unless object.respond_to? level
+            raise Puppet::DevError, "Benchmarked object does not respond to %s" % level
+        end
+
+        # Only benchmark if our log level is high enough
+        if Puppet::Log.sendlevel?(level)
+            result = nil
+            seconds = Benchmark.realtime {
+                result = yield
+            }
+            object.send(level, msg + (" in %0.2f seconds" % seconds))
+            result
+        else
+            yield
+        end
+    end
+
+    module_function :benchmark
 end
 end
 

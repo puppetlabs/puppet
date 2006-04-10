@@ -9,6 +9,8 @@ module Puppet
 class Server
     class MasterError < Puppet::Error; end
     class Master < Handler
+        include Puppet::Util
+
         attr_accessor :ast, :local
         attr_reader :ca
 
@@ -66,8 +68,8 @@ class Server
                 args[:UseNodes] = false
             end
 
-            # This is only used by the cfengine module, or if --loadclasses was specified
-            # in +puppet+.
+            # This is only used by the cfengine module, or if --loadclasses was
+            # specified in +puppet+.
             if hash.include?(:Classes)
                 args[:Classes] = hash[:Classes]
             end
@@ -113,19 +115,36 @@ class Server
                 clientip = facts["ipaddress"]
             end
 
-            unless @local
-                Puppet.notice("Compiling configuration for %s" % client)
-            end
-            begin
-                retobjects = @interpreter.run(client, facts)
-            rescue Puppet::Error => detail
-                Puppet.err detail
-                raise XMLRPC::FaultException.new(
-                    1, detail.to_s
-                )
-            rescue => detail
-                Puppet.err detail.to_s
-                return ""
+            retobjects = nil
+
+            # This is hackish, but there's no "silence" option for benchmarks
+            # right now
+            if @local
+                begin
+                    retobjects = @interpreter.run(client, facts)
+                rescue Puppet::Error => detail
+                    Puppet.err detail
+                    raise XMLRPC::FaultException.new(
+                        1, detail.to_s
+                    )
+                rescue => detail
+                    Puppet.err detail.to_s
+                    return ""
+                end
+            else
+                benchmark(:notice, "Compiled configuration for %s" % client) do
+                    begin
+                        retobjects = @interpreter.run(client, facts)
+                    rescue Puppet::Error => detail
+                        Puppet.err detail
+                        raise XMLRPC::FaultException.new(
+                            1, detail.to_s
+                        )
+                    rescue => detail
+                        Puppet.err detail.to_s
+                        return ""
+                    end
+                end
             end
 
             if @local

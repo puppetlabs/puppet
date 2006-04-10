@@ -73,6 +73,7 @@ class TestPackages < Test::Unit::TestCase
                 hash[:type] = "darwinport"
             end
             obj = Puppet.type(:package).create(hash)
+            assert(pkg, "Could not create package")
             modpkg(obj)
 
             yield obj
@@ -150,6 +151,8 @@ class TestPackages < Test::Unit::TestCase
                 :name => "thispackagedoesnotexist"
             )
         }
+
+        assert(obj, "Failed to create fake package")
 
         assert_nothing_raised {
             obj.retrieve
@@ -253,6 +256,8 @@ class TestPackages < Test::Unit::TestCase
                     :source => first
                 )
             }
+
+            assert(pkg, "Failed to create package %s" % name)
 
             modpkg(pkg)
 

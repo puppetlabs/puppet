@@ -26,9 +26,6 @@ class Puppet::Client::MasterClient < Puppet::Client
     # objects.  For now, just descend into the tree and perform and
     # necessary manipulations.
     def apply
-        unless @local
-            Puppet.notice "Beginning configuration run"
-        end
         dostorage()
         unless defined? @objects
             raise Puppet::Error, "Cannot apply; objects not defined"
@@ -66,9 +63,6 @@ class Puppet::Client::MasterClient < Puppet::Client
         if Puppet[:rrdgraph] == true
             Metric.store
             Metric.graph
-        end
-        unless @local
-            Puppet.notice "Finished configuration run"
         end
 
         return transaction
@@ -181,16 +175,18 @@ class Puppet::Client::MasterClient < Puppet::Client
 
             textfacts = CGI.escape(YAML.dump(facts))
 
-            # error handling for this is done in the network client
-            begin
-                textobjects = @driver.getconfig(textfacts, "yaml")
-            rescue => detail
-                Puppet.err "Could not retrieve configuration: %s" % detail
+            benchmark(:debug, "Retrieved configuration") do
+                # error handling for this is done in the network client
+                begin
+                    textobjects = @driver.getconfig(textfacts, "yaml")
+                rescue => detail
+                    Puppet.err "Could not retrieve configuration: %s" % detail
 
-                unless Puppet[:usecacheonfailure]
-                    @objects = nil
-                    Puppet.warning "Not using cache on failed configuration"
-                    return
+                    unless Puppet[:usecacheonfailure]
+                        @objects = nil
+                        Puppet.warning "Not using cache on failed configuration"
+                        return
+                    end
                 end
             end
 
@@ -275,7 +271,12 @@ class Puppet::Client::MasterClient < Puppet::Client
             self.getconfig
 
             if defined? @objects and @objects
-                self.apply
+                unless @local
+                    Puppet.notice "Starting configuration run"
+                end
+                benchmark(:notice, "Finished configuration run") do
+                    self.apply
+                end
             end
         end
     end

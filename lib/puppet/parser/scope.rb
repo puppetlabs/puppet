@@ -297,12 +297,17 @@ module Puppet::Parser
                 raise Puppet::DevError, "Node names must be provided to gennode"
             facts = hash[:facts]
             classes = hash[:classes]
-            parent = hash[:parent]
+            parent = hash[:parentnode]
             name = names.shift
             arghash = {
                 :type => name,
                 :code => AST::ASTArray.new(:pin => "[]")
             }
+
+            #Puppet.notice "hash is %s" %
+            #    hash.inspect
+            Puppet.notice "Classes are %s, parent is %s" %
+                [classes.inspect, parent.inspect]
 
             if parent
                 arghash[:parentclass] = parent

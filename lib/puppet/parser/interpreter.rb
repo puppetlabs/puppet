@@ -10,6 +10,8 @@ require 'puppet/parser/scope'
 module Puppet
     module Parser
         class Interpreter
+            include Puppet::Util
+
             Puppet.setdefaults("ldap",
                 :ldapnodes => [false,
                     "Whether to search for node configurations in LDAP."],
@@ -107,7 +109,7 @@ module Puppet
                     end
 
                     if nodeclasses
-                        Puppet.info "Found %s in %s" % [client, source]
+                        Puppet.info "Found %s in %s" % [node, source]
                         return parent, nodeclasses
                     end
                 end
@@ -206,12 +208,11 @@ module Puppet
                             "Cannot evaluate nodes with a nil client"
                     end
 
-                    Puppet.debug "Nodes defined"
                     args[:names] = names
 
                     parent, nodeclasses = nodesearch(client)
 
-                    classes += nodeclasses if nodeclasses
+                    args[:classes] += nodeclasses if nodeclasses
 
                     args[:parentnode] = parent if parent
                 end
@@ -290,7 +291,10 @@ module Puppet
                 else
                     @parser.file = @file
                 end
-                @ast = @parser.parse
+
+                @ast = benchmark(:info, "Parsed manifest") do
+                    @parser.parse
+                end
 
                 # Mark when we parsed, so we can check freshness
                 @parsedate = Time.now.to_i

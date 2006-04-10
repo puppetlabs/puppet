@@ -157,6 +157,30 @@ class TestPuppetUtil < Test::Unit::TestCase
         assert_equal(oldmask, File.umask, "Umask was not reset")
     end
 
+    def test_benchmark
+        path = tempfile()
+        str = "yayness"
+        File.open(path, "w") do |f| f.print "yayness" end
+
+        # First test it with the normal args
+        assert_nothing_raised do
+            val = Puppet::Util.benchmark(:notice, "Read file") do
+                File.read(path)
+            end
+
+            assert_equal(str, val)
+        end
+
+        # Now test it with a passed object
+        assert_nothing_raised do
+            val = Puppet::Util.benchmark(Puppet, :notice, "Read file") do
+                File.read(path)
+            end
+
+            assert_equal(str, val)
+        end
+    end
+
     unless Process.uid == 0
         $stderr.puts "Run as root to perform Utility tests"
         def test_nothing

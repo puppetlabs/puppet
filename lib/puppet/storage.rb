@@ -6,6 +6,7 @@ module Puppet
     # a class for storing state
     class Storage
         include Singleton
+        include Puppet::Util
 
         def initialize
             self.class.load
@@ -47,19 +48,21 @@ module Puppet
                 end
                 return
             end
-            Puppet::Util.readlock(Puppet[:statefile]) do |file|
-                begin
-                    @@state = YAML.load(file)
-                rescue => detail
-                    Puppet.err "Checksumfile %s is corrupt (%s); replacing" %
-                        [Puppet[:statefile], detail]
+            Puppet::Util.benchmark(:debug, "Loaded state") do
+                Puppet::Util.readlock(Puppet[:statefile]) do |file|
                     begin
-                        File.rename(Puppet[:statefile],
-                            Puppet[:statefile] + ".bad")
-                    rescue
-                        raise Puppet::Error,
-                            "Could not rename corrupt %s; remove manually" %
-                            Puppet[:statefile]
+                        @@state = YAML.load(file)
+                    rescue => detail
+                        Puppet.err "Checksumfile %s is corrupt (%s); replacing" %
+                            [Puppet[:statefile], detail]
+                        begin
+                            File.rename(Puppet[:statefile],
+                                Puppet[:statefile] + ".bad")
+                        rescue
+                            raise Puppet::Error,
+                                "Could not rename corrupt %s; remove manually" %
+                                Puppet[:statefile]
+                        end
                     end
                 end
             end
@@ -84,10 +87,11 @@ module Puppet
                 Puppet.info "Creating state file %s" % Puppet[:statefile]
             end
 
-            Puppet::Util.writelock(Puppet[:statefile], 0660) do |file|
-                file.print YAML.dump(@@state)
+            Puppet::Util.benchmark(:debug, "Stored state") do
+                Puppet::Util.writelock(Puppet[:statefile], 0660) do |file|
+                    file.print YAML.dump(@@state)
+                end
             end
-            Puppet.debug "Stored state"
         end
     end
 end
