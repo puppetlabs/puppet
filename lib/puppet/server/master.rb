@@ -19,6 +19,16 @@ class Server
                 iface.add_method("int freshness()")
         }
 
+        # FIXME At some point, this should be autodocumenting.
+        def addfacts(facts)
+            # Add our server version to the fact list
+            facts["serverversion"] = Puppet.version.to_s
+
+            # And then add the server name and IP
+            facts["servername"] = Facter["hostname"].value
+            facts["serverip"] = Facter["ipaddress"].value
+        end
+
         def filetimeout
             @interpreter.filetimeout
         end
@@ -51,6 +61,8 @@ class Server
             else
                 @local = false
             end
+
+            args[:Local] = @local
 
             if hash.include?(:CA) and hash[:CA]
                 @ca = Puppet::SSLCertificates::CA.new()
@@ -115,8 +127,8 @@ class Server
                 clientip = facts["ipaddress"]
             end
 
-            # Add our server version to the fact list
-            facts["serverversion"] = Puppet.version.to_s
+            # Add any server-side facts to our server.
+            addfacts(facts)
 
             retobjects = nil
 

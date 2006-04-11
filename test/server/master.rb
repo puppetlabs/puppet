@@ -173,6 +173,29 @@ class TestMaster < Test::Unit::TestCase
         assert(FileTest.exists?(file2), "Second file %s does not exist" % file2)
     end
 
+    def test_addfacts
+        master = nil
+        file = mktestmanifest()
+        # create our master
+        assert_nothing_raised() {
+            # this is the default server setup
+            master = Puppet::Server::Master.new(
+                :Manifest => file,
+                :UseNodes => false,
+                :Local => true
+            )
+        }
+
+        facts = {}
+
+        assert_nothing_raised {
+            master.addfacts(facts)
+        }
+
+        %w{serverversion servername serverip}.each do |fact|
+            assert(facts.include?(fact), "Fact %s was not set" % fact)
+        end
+    end
 end
 
 # $Id$

@@ -77,6 +77,8 @@ module Puppet
                 # by the cfengine module.
                 @classes = hash[:Classes] || []
 
+                @local = hash[:Local] || false
+
                 # Create our parser object
                 parsefiles
             end
@@ -292,8 +294,12 @@ module Puppet
                     @parser.file = @file
                 end
 
-                @ast = benchmark(:info, "Parsed manifest") do
+                if @local
                     @parser.parse
+                else
+                    @ast = benchmark(:info, "Parsed manifest") do
+                        @parser.parse
+                    end
                 end
 
                 # Mark when we parsed, so we can check freshness
