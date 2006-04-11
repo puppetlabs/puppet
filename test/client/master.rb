@@ -15,8 +15,10 @@ require 'puppettest.rb'
 class TestMasterClient < Test::Unit::TestCase
 	include ServerTest
 
-    def mkmaster(file)
+    def mkmaster(file = nil)
         master = nil
+
+        file ||= mktestmanifest()
         # create our master
         assert_nothing_raised() {
             # this is the default server setup
@@ -29,7 +31,8 @@ class TestMasterClient < Test::Unit::TestCase
         return master
     end
 
-    def mkclient(master)
+    def mkclient(master = nil)
+        master ||= mkmaster()
         client = nil
         assert_nothing_raised() {
             client = Puppet::Client::MasterClient.new(
@@ -68,5 +71,16 @@ class TestMasterClient < Test::Unit::TestCase
         }
 
         assert(FileTest.exists?(@createdfile), "Enabled client did not run")
+    end
+
+    # Make sure we're getting the client version in our list of facts
+    def test_clientversionfact
+        facts = nil
+        assert_nothing_raised {
+            facts = Puppet::Client::MasterClient.facts
+        }
+
+        assert_equal(Puppet.version.to_s, facts["clientversion"])
+        
     end
 end

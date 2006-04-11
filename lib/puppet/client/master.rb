@@ -9,6 +9,8 @@ class Puppet::Client::MasterClient < Puppet::Client
             new configurations, where you want to fix the broken configuration
             rather than reverting to a known-good one."
         ]
+
+
     )
 
     @drivername = :Master
@@ -18,6 +20,10 @@ class Puppet::Client::MasterClient < Puppet::Client
         Facter.each { |name,fact|
             facts[name] = fact.downcase
         }
+
+        # Add our client version to the list of facts, so people can use it
+        # in their manifests
+        facts["clientversion"] = Puppet.version.to_s
 
         facts
     end
