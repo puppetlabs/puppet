@@ -10,7 +10,8 @@
 #
 #   puppetd  [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
 #               [-l|--logdest <syslog|<file>|console>] [--fqdn <host name>]
-#               [-o|--onetime] [-w|--waitforcert <seconds>] [--centrallogging]
+#               [-o|--onetime] [-w|--waitforcert <seconds>] [-t|--test]
+#               [--disable] [--enable]
 #
 # = Description
 #
@@ -25,6 +26,10 @@
 # Once the client has a signed certificate, it will retrieve its configuration
 # and apply it.
 #
+# The vast majority of options are shared between all Puppet executables and
+# are documented completely at
+# http://reductivelabs.com/projects/puppet/documentation.
+#
 # = Options
 #
 # Note that any configuration parameter that's valid in the configuration file
@@ -33,16 +38,15 @@
 #
 # See the configuration file for the full list of acceptable parameters.
 #
-# centrallogging::
-#   Send all produced logs to the central puppetmasterd system.  This currently
-#   results in a significant slowdown, so it is not recommended.
-#
 # disable::
 #   Disable working on the local system.  This puts a lock file in place,
 #   causing +puppetd+ not to work on the system until the lock file is removed.
 #   This is useful if you are testing a configuration and do not want the central
 #   configuration to override the local state until everything is tested and
 #   committed.
+#
+#   +puppetd+ uses the same lock file while it is running, so no more than one
+#   +puppetd+ process is working at a time.
 #
 #   +puppetd+ exits after executing this.
 #
@@ -51,7 +55,8 @@
 #
 # enable::
 #   Enable working on the local system.  This removes any lock file, causing
-#   +puppetd+ to start managing the local system again.
+#   +puppetd+ to start managing the local system again (although it will continue
+#   to use its normal scheduling, so it might not start for another half hour).
 #
 #   +puppetd+ exits after executing this.
 #
@@ -71,6 +76,10 @@
 # onetime::
 #   Run the configuration once, rather than as a long-running daemon.  This is
 #   useful for interactively running puppetd.
+#
+# test::
+#   Enable the most common options used for testing.  These are +onetime+,
+#   +verbose+, and +no-usecacheonfailure+.
 #
 # verbose::
 #   Turn on verbose reporting.
@@ -117,6 +126,7 @@ options = [
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--onetime",  "-o",			GetoptLong::NO_ARGUMENT ],
+	[ "--test",	    "-t",			GetoptLong::NO_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
 	[ "--version",	"-V",			GetoptLong::NO_ARGUMENT ],
 	[ "--waitforcert",	"-w",		GetoptLong::REQUIRED_ARGUMENT ]
@@ -151,6 +161,14 @@ begin
                 disable = true
             when "--enable"
                 enable = true
+            when "--test"
+                # Enable all of the most common test options.
+                Puppet.config.handlearg("--no-usecacheonfailure")
+                onetime = true
+                unless Puppet::Log.level == :debug
+                    Puppet::Log.level = :info
+                end
+                Puppet::Log.newdestination(:console)
             when "--centrallogging"
                 centrallogs = true
             when "--help"
