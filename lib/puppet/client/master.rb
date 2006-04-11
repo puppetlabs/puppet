@@ -315,7 +315,7 @@ class Puppet::Client::MasterClient < Puppet::Client
         if pid = locked?
             t = ""
             if pid == true
-                PUppet.notice "Locked by process %s" % pid
+                Puppet.notice "Locked by process %s" % pid
             end
             Puppet.notice "Lock file %s exists; skipping configuration run" %
                 Puppet[:puppetdlockfile]
