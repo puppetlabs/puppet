@@ -115,6 +115,9 @@ class Server
                 clientip = facts["ipaddress"]
             end
 
+            # Add our server version to the fact list
+            facts["serverversion"] = Puppet.version.to_s
+
             retobjects = nil
 
             # This is hackish, but there's no "silence" option for benchmarks
