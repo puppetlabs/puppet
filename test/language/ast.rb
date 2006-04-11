@@ -644,4 +644,35 @@ class TestAST < Test::Unit::TestCase
             objects = top.evaluate(:scope => scope)
         }
     end
+
+    def test_setclass
+        type = "yay"
+        classes = [type]
+        children = []
+        # Create child class one
+        children << varobj("variable", "aclass")
+        children << setobj(type, varref("variable"))
+        children << setobj(type)
+
+        classes << "aclass"
+
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        scope = nil
+        assert_nothing_raised("Could not evaluate") {
+            scope = Puppet::Parser::Scope.new()
+            objects = top.evaluate(:scope => scope)
+        }
+
+
+        classes.each do |tag|
+            assert(scope.classlist.include?(tag), "Did not set class %s" % tag)
+        end
+
+    end
 end

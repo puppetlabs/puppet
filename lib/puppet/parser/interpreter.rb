@@ -295,7 +295,7 @@ module Puppet
                 end
 
                 if @local
-                    @parser.parse
+                    @ast = @parser.parse
                 else
                     @ast = benchmark(:info, "Parsed manifest") do
                         @parser.parse

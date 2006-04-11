@@ -7,7 +7,7 @@ class Puppet::Parser::Parser
 token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE FALSE EQUALS
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL NOTEQUAL
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN DOT COLON TYPE
-token NAME SEMIC CASE DEFAULT INCLUDE
+token NAME SEMIC CASE DEFAULT INCLUDE SET
 
 # We have 2 shift/reduce conflicts
 expect 2
@@ -59,6 +59,7 @@ statement:    object
             | casestatement
             | import
             | include
+            | set
             | definition
             | hostclass
             | nodedef
@@ -87,6 +88,16 @@ include:    INCLUDE classnames {
         :line => @lexer.line,
         :file => @lexer.file,
         :children => klasses
+    )
+}
+
+set:        SET classnames {
+    classnames = aryfy(val[1])
+
+    result = AST::Set.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :type => val[1]
     )
 }
 

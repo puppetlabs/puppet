@@ -427,6 +427,12 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
+    # There's no way to actually retrieve the list of classes from the
+    # transaction.
+    def snippet_set(trans)
+        @@tmpfiles << "/tmp/settestingness"
+    end
+
     def snippet_emptyclass(trans)
         # There's nothing to check other than that it works
     end

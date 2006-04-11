@@ -69,15 +69,16 @@ module Puppet
                     except.file ||= @file
                     raise
                 rescue => detail
-                    if Puppet[:debug]
-                        puts detail.backtrace
-                    end
+                    #if Puppet[:debug]
+                    #    puts detail.backtrace
+                    #end
                     error = Puppet::DevError.new(
                         "Child of type %s failed with error %s: %s" %
                             [self.class, detail.class, detail.to_s]
                     )
                     error.line ||= @line
                     error.file ||= @file
+                    error.backtrace = detail.backtrace
                     raise error
                 end
             end
@@ -145,5 +146,6 @@ require 'puppet/parser/ast/objectref'
 require 'puppet/parser/ast/selector'
 require 'puppet/parser/ast/typedefaults'
 require 'puppet/parser/ast/vardef'
+require 'puppet/parser/ast/set'
 
 # $Id$

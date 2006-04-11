@@ -738,6 +738,21 @@ module ParserTesting
         }
     end
 
+    def setobj(*names)
+        args = {}
+        newnames = names.collect do |name|
+            if name.is_a? AST
+                name
+            else
+                nameobj(name)
+            end
+        end
+        args[:type] = astarray(*newnames)
+        assert_nothing_raised("Could not create class %s" % names.inspect) {
+            return AST::Set.new(args)
+        }
+    end
+
     def compobj(name, args = {})
         args[:file] ||= tempfile()
         args[:line] ||= rand(100)
@@ -847,6 +862,16 @@ module ParserTesting
                 :line => rand(100),
                 :name => nameobj(name),
                 :value => stringobj(value)
+            )
+        }
+    end
+
+    def varref(name)
+        assert_nothing_raised("Could not create %s variable" % name) {
+            return AST::Variable.new(
+                :file => __FILE__,
+                :line => __LINE__,
+                :value => name
             )
         }
     end

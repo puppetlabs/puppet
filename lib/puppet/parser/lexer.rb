@@ -54,6 +54,7 @@ module Puppet
                 "include" => :INCLUDE,
                 "inherits" => :INHERITS,
                 "node" => :NODE,
+                "set" => :SET,
                 "true" => :BOOLEAN
             }
 
