@@ -807,7 +807,7 @@ module ParserTesting
         }
     end
 
-    def nodeobj(name)
+    def nodedef(name)
         assert_nothing_raised("Could not create node %s" % name) {
             return AST::NodeDef.new(
                 :file => tempfile(),

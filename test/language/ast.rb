@@ -351,11 +351,11 @@ class TestAST < Test::Unit::TestCase
 
         # create a short-name node
         shortname = "mynodename"
-        children << nodeobj(shortname)
+        children << nodedef(shortname)
 
         # And a long-name node
         longname = "node.domain.com"
-        children << nodeobj(longname)
+        children << nodedef(longname)
 
         # Create the wrapper object
         top = nil
@@ -399,7 +399,7 @@ class TestAST < Test::Unit::TestCase
 
         # create a short-name node
         name = "mynodename"
-        children << nodeobj(name)
+        children << nodedef(name)
 
         # Create the wrapper object
         top = nil
@@ -480,7 +480,7 @@ class TestAST < Test::Unit::TestCase
 
         # create the base node
         name = "basenode"
-        children << nodeobj(name)
+        children << nodedef(name)
 
         # and the sub node
         name = "subnode"
@@ -494,7 +494,7 @@ class TestAST < Test::Unit::TestCase
                 ]
             )
         )
-        #subnode = nodeobj(name)
+        #subnode = nodedef(name)
         #subnode.parentclass = "basenode"
 
         #children << subnode
@@ -674,5 +674,31 @@ class TestAST < Test::Unit::TestCase
             assert(scope.classlist.include?(tag), "Did not set class %s" % tag)
         end
 
+    end
+
+    # Test that we strip the domain off of host names before they are set as classes
+    def test_nodenamestrip
+        children = []
+
+        longname = "node.domain.com"
+        children << nodedef(longname)
+
+        # Create the wrapper object
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        scope = Puppet::Parser::Scope.new()
+
+        assert_nothing_raised("Could not evaluate node") {
+            objects = scope.evaluate(:names => [longname], :facts => {}, :ast => top)
+        }
+
+        assert(!scope.classlist.include?("node.domain.com"),
+            "Node's long name got set")
+        assert(scope.classlist.include?("node"), "Node's name did not get set")
     end
 end

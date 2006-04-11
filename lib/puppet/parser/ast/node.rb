@@ -39,6 +39,10 @@ class Puppet::Parser::AST
             # And then evaluate our code.
             @code.safeevaluate(:scope => scope)
 
+            # Mark our node name as a class, too, but strip it of the domain
+            # name.
+            scope.setclass(self.object_id, @type.sub(/\..+/, ''))
+
             return scope
         end
 
