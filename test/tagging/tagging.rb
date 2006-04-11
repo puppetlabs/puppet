@@ -141,6 +141,39 @@ class TestTagging < Test::Unit::TestCase
         File.unlink(a)
 
     end
+
+    def test_metaparamtag
+        path = tempfile()
+
+        start = %w{some tags}
+        tags = %w{a list of tags}
+
+        obj = nil
+        assert_nothing_raised do
+            obj = Puppet.type(:file).create(
+                :path => path,
+                :ensure => "file",
+                :tag => start
+            )
+        end
+
+
+        assert(obj, "Did not make object")
+
+        start.each do |tag|
+            assert(obj.tagged?(tag), "Object was not tagged with %s" % tag)
+        end
+
+        tags.each do |tag|
+            assert_nothing_raised {
+                obj[:tag] = tag
+            }
+        end
+
+        tags.each do |tag|
+            assert(obj.tagged?(tag), "Object was not tagged with %s" % tag)
+        end
+    end
 end
 
 # $Id$

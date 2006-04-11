@@ -2229,6 +2229,29 @@ class Type < Puppet::Element
             end
         end
     end
+
+    newmetaparam(:tag) do
+        desc "Add the specified tags to the associated element.  While all elements
+            are automatically tagged with as much information as possible
+            (e.g., each class and component containing the element), it can
+            be useful to add your own tags to a given element.
+
+            Tags are currently useful for things like applying a subset of a
+            host's configuration:
+                
+                puppetd -v --tag mytag --onetime
+
+            This way, when you're testing a configuration you can run just the
+            portion you're testing."
+
+        munge do |tags|
+            tags = [tags] unless tags.is_a? Array
+
+            tags.each do |tag|
+                @parent.tag(tag)
+            end
+        end
+    end
 end # Puppet::Type
 end
 
