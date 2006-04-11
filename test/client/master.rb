@@ -83,4 +83,36 @@ class TestMasterClient < Test::Unit::TestCase
         assert_equal(Puppet.version.to_s, facts["clientversion"])
         
     end
+
+    # Make sure the client correctly locks itself
+    def test_locking
+        manifest = mktestmanifest
+
+        master = nil
+
+        # First test with a networked master
+        client = Puppet::Client::MasterClient.new(
+            :Server => "localhost"
+        )
+
+        assert_nothing_raised do
+            client.lock do
+                pid = nil
+                assert(pid = client.locked?, "Client is not locked")
+                assert(pid =~ /^\d+$/, "PID is, um, not a pid")
+            end
+        end
+        assert(! client.locked?)
+
+        # Now test with a local client
+        client = mkclient
+
+        assert_nothing_raised do
+            client.lock do
+                pid = nil
+                assert(! client.locked?, "Local client is locked")
+            end
+        end
+        assert(! client.locked?)
+    end
 end

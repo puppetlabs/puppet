@@ -1,5 +1,9 @@
 # The client for interacting with the puppetmaster config server.
+require 'sync'
+
 class Puppet::Client::MasterClient < Puppet::Client
+    @@sync = Sync.new
+
     Puppet.setdefaults("puppetd",
         :puppetdlockfile => [ "$statedir/puppetdlock",
             "A lock file to temporarily stop puppetd from doing anything."],
@@ -95,15 +99,19 @@ class Puppet::Client::MasterClient < Puppet::Client
         @cachefile
     end
 
-    # Disable running the configuration.
-    def disable
-        Puppet.notice "Disabling puppetd"
+    # Disable running the configuration.  This can be used from the command line, but
+    # is also used to make sure only one client is running at a time.
+    def disable(running = false)
+        text = nil
+        if running
+            text = Process.pid
+        else
+            text = ""
+            Puppet.notice "Disabling puppetd"
+        end
         Puppet.config.use(:puppet)
-        #unless FileTest.exists? File.dirname(Puppet[:puppetdlockfile])
-        #    Puppet.recmkdir(File.dirname(Puppet[:puppetdlockfile]))
-        #end
         begin
-            File.open(Puppet[:puppetdlockfile], "w") { |f| f.puts ""; f.flush }
+            File.open(Puppet[:puppetdlockfile], "w") { |f| f.puts text }
         rescue => detail
             raise Puppet::Error, "Could not lock puppetd: %s" % detail
         end
@@ -126,9 +134,12 @@ class Puppet::Client::MasterClient < Puppet::Client
         end
     end
 
-    # Enable running again.
-    def enable
-        Puppet.notice "Enabling puppetd"
+    # Enable running again.  This can be used from the command line, but
+    # is also used to make sure only one client is running at a time.
+    def enable(running = false)
+        unless running
+            Puppet.notice "Enabling puppetd"
+        end
         if FileTest.exists? Puppet[:puppetdlockfile]
             File.unlink(Puppet[:puppetdlockfile])
         end
@@ -259,6 +270,37 @@ class Puppet::Client::MasterClient < Puppet::Client
         return @objects
     end
 
+    # Make sure only one client runs at a time, and make sure only one thread
+    # runs at a time.  However, this does not lock local clients -- you could have
+    # as many separate puppet scripts running as you want.
+    def lock
+        if @local
+            yield
+        else
+            @@sync.synchronize(Sync::EX) do
+                disable(true)
+                begin
+                    yield
+                ensure
+                    enable(true)
+                end
+            end
+        end
+    end
+
+    def locked?
+        if FileTest.exists? Puppet[:puppetdlockfile]
+            text = File.read(Puppet[:puppetdlockfile]).chomp
+            if text =~ /\d+/
+                return text
+            else
+                return true
+            end
+        else
+            return false
+        end
+    end
+
     # Retrieve the cached config
     def retrievecache
         if FileTest.exists?(self.cachefile)
@@ -270,18 +312,24 @@ class Puppet::Client::MasterClient < Puppet::Client
 
     # The code that actually runs the configuration.  
     def run
-        if FileTest.exists? Puppet[:puppetdlockfile]
-            Puppet.notice "%s exists; skipping configuration run" %
+        if pid = locked?
+            t = ""
+            if pid == true
+                PUppet.notice "Locked by process %s" % pid
+            end
+            Puppet.notice "Lock file %s exists; skipping configuration run" %
                 Puppet[:puppetdlockfile]
         else
-            self.getconfig
+            lock do
+                self.getconfig
 
-            if defined? @objects and @objects
-                unless @local
-                    Puppet.notice "Starting configuration run"
-                end
-                benchmark(:notice, "Finished configuration run") do
-                    self.apply
+                if defined? @objects and @objects
+                    unless @local
+                        Puppet.notice "Starting configuration run"
+                    end
+                    benchmark(:notice, "Finished configuration run") do
+                        self.apply
+                    end
                 end
             end
         end
