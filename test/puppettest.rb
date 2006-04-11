@@ -738,7 +738,7 @@ module ParserTesting
         }
     end
 
-    def setobj(*names)
+    def tagobj(*names)
         args = {}
         newnames = names.collect do |name|
             if name.is_a? AST
@@ -748,8 +748,8 @@ module ParserTesting
             end
         end
         args[:type] = astarray(*newnames)
-        assert_nothing_raised("Could not create class %s" % names.inspect) {
-            return AST::Set.new(args)
+        assert_nothing_raised("Could not create tag %s" % names.inspect) {
+            return AST::Tag.new(args)
         }
     end
 

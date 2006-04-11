@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..idaa75576a17', 'grammar.ra', 745
+module_eval <<'..end grammar.ra modeval..idb478f6db18', 'grammar.ra', 745
 attr_reader :file
 attr_accessor :files
 
@@ -150,7 +150,7 @@ end
 
 # $Id$
 
-..end grammar.ra modeval..idaa75576a17
+..end grammar.ra modeval..idb478f6db18
 
 ##### racc 1.4.4 generates ###
 
@@ -483,7 +483,7 @@ racc_token_table = {
  :CASE => 38,
  :DEFAULT => 39,
  :INCLUDE => 40,
- :SET => 41 }
+ :TAG => 41 }
 
 racc_use_result_var = true
 
@@ -547,7 +547,7 @@ Racc_token_to_s_table = [
 'CASE',
 'DEFAULT',
 'INCLUDE',
-'SET',
+'TAG',
 '$start',
 'program',
 'statements',
@@ -557,7 +557,7 @@ Racc_token_to_s_table = [
 'casestatement',
 'import',
 'include',
-'set',
+'tag',
 'definition',
 'hostclass',
 'nodedef',
@@ -699,7 +699,7 @@ module_eval <<'.,.,', 'grammar.ra', 102
   def _reduce_14( val, _values, result )
     classnames = aryfy(val[1])
 
-    result = AST::Set.new(
+    result = AST::Tag.new(
         :line => @lexer.line,
         :file => @lexer.file,
         :type => val[1]

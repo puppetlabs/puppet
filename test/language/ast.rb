@@ -65,9 +65,9 @@ class TestAST < Test::Unit::TestCase
         assert_equal(classes.sort, scope.classlist.sort)
     end
 
-    # Test that 'setobject' collects all of an object's parameters and stores
+    # Test that 'tagobject' collects all of an object's parameters and stores
     # them in one TransObject, rather than many.  This is probably a bad idea.
-    def test_setobject
+    def test_tagobject
         top = nil
         children = [
             fileobj("/etc", "owner" => "root"),
@@ -651,8 +651,8 @@ class TestAST < Test::Unit::TestCase
         children = []
         # Create child class one
         children << varobj("variable", "aclass")
-        children << setobj(type, varref("variable"))
-        children << setobj(type)
+        children << tagobj(type, varref("variable"))
+        children << tagobj(type)
 
         classes << "aclass"
 
