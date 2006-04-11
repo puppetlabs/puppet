@@ -631,6 +631,10 @@ module Puppet::Parser
         # hash.  We store the object ID, not class name, so that we
         # can support multiple unrelated classes with the same name.
         def setclass(id, name)
+            unless name =~ /^[a-z]\w*$/
+                raise Puppet::ParseError, "Invalid class name '%s'" % name
+            end
+
             if self.topscope?
                 @classtable[id] = name
             else

@@ -546,4 +546,21 @@ class TestScope < Test::Unit::TestCase
         assert_equal("root", obj["owner"], "Owner did not take")
         assert_equal("755", obj["mode"], "Mode did not take")
     end
+
+    def test_validclassnames
+        scope = Puppet::Parser::Scope.new()
+
+        ["a-class", "a class", "Class", "a.class"].each do |bad|
+            assert_raise(Puppet::ParseError, "Incorrectly allowed %s" % bad.inspect) do
+                scope.setclass(object_id, bad)
+            end
+        end
+
+        ["a_class", "class", "yayNess"].each do |good|
+            assert_nothing_raised("Incorrectly banned %s" % good.inspect) do
+                scope.setclass(object_id, good)
+            end
+        end
+
+    end
 end
