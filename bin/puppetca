@@ -138,8 +138,6 @@ end
 Puppet.genconfig
 Puppet.genmanifest
 
-Puppet::Util.chuser
-
 begin
     ca = Puppet::SSLCertificates::CA.new()
 rescue => detail

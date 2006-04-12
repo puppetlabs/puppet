@@ -566,6 +566,42 @@ Generated on #{Time.now}.
         end
     end
 
+    # Open a non-default file under a default dir with the appropriate user,
+    # group, and mode
+    def writesub(default, file, *args)
+        obj = nil
+        unless obj = @config[default]
+            raise ArgumentError, "Unknown default %s" % default
+        end
+
+        unless obj.is_a? CFile
+            raise ArgumentError, "Default %s is not a file" % default
+        end
+
+        chown = nil
+        if Process.uid == 0
+            chown = [obj.owner, obj.group]
+        else
+            chown = [nil, nil]
+        end
+
+        Puppet::Util.asuser(*chown) do
+            mode = obj.mode || 0640
+            if args.empty?
+                args << "w"
+            end
+
+            args << mode
+
+            # Update the umask to make non-executable files
+            Puppet::Util.withumask(File.umask ^ 0111) do
+                File.open(file, *args) do |file|
+                    yield file
+                end
+            end
+        end
+    end
+
     # The base element type.
     class CElement
         attr_accessor :name, :section, :default, :parent, :setbycli

@@ -66,10 +66,6 @@ class Puppet::SSLCertificates::CA
         :keylength => [1024, "The bit length of keys."]
     )
 
-    #@@params.each { |param|
-    #    Puppet.setdefault(param,@@defaults[param])
-    #}
-
     def certfile
         @config[:cacert]
     end
@@ -84,6 +80,7 @@ class Puppet::SSLCertificates::CA
         File.join(Puppet[:signeddir], [hostname, "pem"].join("."))
     end
 
+    # Turn our hostname into a Name object
     def thing2name(thing)
         thing.subject.to_a.find { |ary|
             ary[0] == "CN"
@@ -116,14 +113,10 @@ class Puppet::SSLCertificates::CA
         end
     end
 
+    # Generate a new password for the CA.
     def genpass
         pass = ""
         20.times { pass += (rand(74) + 48).chr }
-
-        # FIXME It's a hack that this still needs to be here :/
-        #unless FileTest.exists?(File.dirname(@config[:capass]))
-        #    Puppet::Util.recmkdir(File.dirname(@config[:capass]), 0770)
-        #end
 
         begin
             Puppet.config.write(:capass) { |f| f.print pass }
@@ -133,6 +126,7 @@ class Puppet::SSLCertificates::CA
         return pass
     end
 
+    # Get the CA password.
     def getpass
         if @config[:capass] and File.readable?(@config[:capass])
             return File.read(@config[:capass])
@@ -141,6 +135,7 @@ class Puppet::SSLCertificates::CA
         end
     end
 
+    # Get the CA cert.
     def getcert
         if FileTest.exists?(@config[:cacert])
             @cert = OpenSSL::X509::Certificate.new(
@@ -151,6 +146,7 @@ class Puppet::SSLCertificates::CA
         end
     end
 
+    # Retrieve a client's CSR.
     def getclientcsr(host)
         csrfile = host2csrfile(host)
         unless File.exists?(csrfile)
@@ -160,6 +156,7 @@ class Puppet::SSLCertificates::CA
         return OpenSSL::X509::Request.new(File.read(csrfile))
     end
 
+    # Retrieve a client's certificate.
     def getclientcert(host)
         certfile = host2certfile(host)
         unless File.exists?(certfile)
@@ -169,6 +166,7 @@ class Puppet::SSLCertificates::CA
         return [OpenSSL::X509::Certificate.new(File.read(certfile)), @cert]
     end
 
+    # List certificates waiting to be signed.
     def list
         return Dir.entries(Puppet[:csrdir]).reject { |file|
             file =~ /^\.+$/
@@ -177,6 +175,7 @@ class Puppet::SSLCertificates::CA
         }
     end
 
+    # Create the root certificate.
     def mkrootcert
         cert = Certificate.new(
             :name => "CAcert",
@@ -208,6 +207,7 @@ class Puppet::SSLCertificates::CA
         File.unlink(csrfile)
     end
 
+    # Take the Puppet config and store it locally.
     def setconfig(hash)
         @config = {}
         Puppet.config.params("ca").each { |param|
@@ -234,12 +234,10 @@ class Puppet::SSLCertificates::CA
             unless @config[dir]
                 raise Puppet::DevError, "%s is undefined" % dir
             end
-            unless FileTest.exists?(@config[dir])
-                Puppet.recmkdir(@config[dir])
-            end
         }
     end
 
+    # Sign a given certificate request.
     def sign(csr)
         unless csr.is_a?(OpenSSL::X509::Request)
             raise Puppet::Error,
@@ -295,6 +293,9 @@ class Puppet::SSLCertificates::CA
         return [newcert, cacert]
     end
 
+    # Store the client's CSR for later signing.  This is called from
+    # server/ca.rb, and the CSRs are deleted once the certificate is actually
+    # signed.
     def storeclientcsr(csr)
         host = thing2name(csr)
 
@@ -303,11 +304,12 @@ class Puppet::SSLCertificates::CA
             raise Puppet::Error, "Certificate request for %s already exists" % host
         end
 
-        File.open(csrfile, "w", 0660) { |f|
+        Puppet.config.writesub(:csrdir, csrfile) do |f|
             f.print csr.to_pem
-        }
+        end
     end
 
+    # Store the certificate that we generate.
     def storeclientcert(cert)
         host = thing2name(cert)
 
@@ -317,9 +319,9 @@ class Puppet::SSLCertificates::CA
                 [certfile, host]
         end
 
-        File.open(certfile, "w", 0660) { |f|
+        Puppet.config.writesub(:signeddir, certfile) do |f|
             f.print cert.to_pem
-        }
+        end
     end
 end
 
