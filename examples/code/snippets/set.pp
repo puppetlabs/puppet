@@ -2,8 +2,8 @@
 
 $variable = value
 
-set yayness, rahness
+tag yayness, rahness
 
-set booness, $variable
+tag booness, $variable
 
 file { "/tmp/settestingness": ensure => file }
