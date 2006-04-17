@@ -37,7 +37,7 @@ start() {
 
 	# Confirm the manifest exists
 	if [ -r $PUPPETMASTER_MANIFEST ]; then
-		$PUPPETMASTER $PUPPETMASTER_OPTS
+		daemon $PUPPETMASTER $PUPPETMASTER_OPTS
 		RETVAL=$?
 	else
 		failure $"Manifest does not exist: $PUPPETMASTER_MANIFEST"
@@ -45,8 +45,6 @@ start() {
 		return 1
 	fi
 	[ $RETVAL -eq 0 ] && touch "$lockfile"
-	[ $RETVAL -eq 0 ] && echo_success
-	[ $RETVAL -ne 0 ] && echo_failure
 	echo
 	return $RETVAL
 }
