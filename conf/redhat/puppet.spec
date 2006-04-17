@@ -5,12 +5,13 @@
 Summary: A network tool for managing many disparate systems
 Name: puppet
 Version: 0.15.3
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPL
 Group: System Environment/Base
 
 URL: http://reductivelabs.com/projects/puppet/
 Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
+Patch0: no-chuser-0.15.1.patch
 
 Requires: ruby >= 1.8.1
 Requires: facter >= 1.1
@@ -37,6 +38,7 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
+%patch0 -p1
 
 %install
 %{__rm} -rf %{buildroot}
@@ -93,13 +95,10 @@ find %{buildroot}%{rubylibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__ch
     -s /sbin/nologin -r -d /var/puppet puppet 2> /dev/null || :
 
 %post
-touch %{_localstatedir}/log/puppet.log
 /sbin/chkconfig --add puppet
 exit 0
 
 %post server
-touch %{_localstatedir}/log/puppetmaster.log
-touch %{_localstatedir}/log/puppetmaster-http.log
 /sbin/chkconfig --add puppetmaster
 
 %preun
@@ -123,6 +122,12 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Mon Apr 17 2006 David Lutterkort <dlutter@redhat.com> - 0.15.3-2
+- Don't create empty log files in post-install scriptlet
+
+* Fri Apr  7 2006 David Lutterkort <dlutter@redhat.com> - 0.15.3-1
+- Rebuilt for new version
+
 * Wed Mar 22 2006 David Lutterkort <dlutter@redhat.com> - 0.15.1-1
 - Patch0: Run puppetmaster as root; running as puppet is not ready for primetime
 
