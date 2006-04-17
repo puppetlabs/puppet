@@ -41,7 +41,7 @@ class TestBasic < Test::Unit::TestCase
                 :type => "init",
                 :path => File.join($puppetbase,"examples/root/etc/init.d"),
                 :hasstatus => true,
-                :running => 1
+                :ensure => :running
             )
         }
         assert_nothing_raised() {
@@ -95,7 +95,7 @@ class TestBasic < Test::Unit::TestCase
             transaction.evaluate
         }
         assert_nothing_raised() {
-            @sleeper[:running] = 0
+            @sleeper[:ensure] = :running
         }
         assert_nothing_raised() {
             transaction = @component.evaluate

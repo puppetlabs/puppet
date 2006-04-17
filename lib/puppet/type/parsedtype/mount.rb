@@ -5,7 +5,6 @@ require 'puppet/type/state'
 
 module Puppet
     newtype(:mount, Puppet::Type::ParsedType) do
-
         ensurable do
             desc "Create, remove, or mount a filesystem mount."
 
@@ -218,7 +217,12 @@ module Puppet
         # Is the mount currently mounted?
         def mounted?
             platform = Facter["operatingsystem"].value
-            %x{df}.split("\n").find do |line|
+            df = "df"
+            case Facter["operatingsystem"].value
+            # Solaris's df prints in a very weird format
+            when "Solaris": df = "df -k"
+            end
+            %x{#{df}}.split("\n").find do |line|
                 fs = line.split(/\s+/)[-1]
                 if platform == "Darwin"
                     fs == "/private/var/automount" + self[:path] or

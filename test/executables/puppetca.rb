@@ -25,7 +25,11 @@ class TestPuppetCA < Test::Unit::TestCase
     end
     
     def runca(args)
-        return %x{puppetca --confdir=#{Puppet[:confdir]} #{args} 2>&1}
+        debug = ""
+        if Puppet[:debug]
+            debug = "-d "
+        end
+        return %x{puppetca --user=#{Puppet[:user]} #{debug} --group=#{Puppet[:group]} --confdir=#{Puppet[:confdir]} #{args} 2>&1}
 
     end
 
@@ -68,6 +72,9 @@ class TestPuppetCA < Test::Unit::TestCase
         signedfile = File.join(Puppet[:signeddir], "host.test.com.pem")
         assert(FileTest.exists?(signedfile), "cert does not exist")
         assert(! FileTest.executable?(signedfile), "cert is executable")
+
+        uid = Puppet::Util.uid(Puppet[:user])
+
         if Process.uid == 0
             assert(! FileTest.owned?(signedfile), "cert is owned by root")
         end

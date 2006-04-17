@@ -6,6 +6,7 @@ module Puppet
             
             attr_accessor :name
 
+            # Create our bucket client
             def initialize(hash = {})
                 if hash.include?(:Path)
                     bucket = Puppet::Server::FileBucket.new(
@@ -18,26 +19,25 @@ module Puppet
                 super(hash)
             end
 
+            # Back up a file to our bucket
             def backup(file)
                 unless FileTest.exists?(file)
-                    raise(BucketError, "File %s does not exist" % file, caller)
+                    raise(BucketError, "File %s does not exist" % file)
                 end
-                contents = File.open(file) { |of| of.read }
-
+                contents = File.read(file)
                 string = Base64.encode64(contents)
-                #puts "string is created"
 
                 sum = @driver.addfile(string,file)
-                #puts "file %s is added" % file
+                string = ""
+                contents = ""
                 return sum
             end
 
+            # Restore the file
             def restore(file,sum)
                 restore = true
                 if FileTest.exists?(file)
-                    contents = File.open(file) { |of| of.read }
-
-                    cursum = Digest::MD5.hexdigest(contents)
+                    cursum = Digest::MD5.hexdigest(File.read(file))
 
                     # if the checksum has changed...
                     # this might be extra effort
@@ -50,6 +50,7 @@ module Puppet
                     #puts "Restoring %s" % file
                     if tmp = @driver.getfile(sum)
                         newcontents = Base64.decode64(tmp)
+                        tmp = ""
                         newsum = Digest::MD5.hexdigest(newcontents)
                         changed = nil
                         unless FileTest.writable?(file)
@@ -71,7 +72,6 @@ module Puppet
                 else
                     return nil
                 end
-
             end
         end
     end

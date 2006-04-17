@@ -24,6 +24,7 @@ module TestPuppet
     end
 
     def setup
+        @memoryatstart = Puppet::Util.memory
         if defined? @@testcount
             @@testcount += 1
         else
@@ -99,7 +100,7 @@ module TestPuppet
     def stopservices
         if stype = Puppet::Type.type(:service)
             stype.each { |service|
-                service[:running] = false
+                service[:ensure] = :stopped
                 service.evaluate
             }
         end
@@ -131,6 +132,14 @@ module TestPuppet
         Puppet::Storage.clear
         Puppet.clear
 
+        @memoryatend = Puppet::Util.memory
+        diff = @memoryatend - @memoryatstart
+
+        if diff > 1000
+            Puppet.info "%s#%s memory growth (%s to %s): %s" %
+                [self.class, @method_name, @memoryatstart, @memoryatend, diff]
+        end
+
         # reset all of the logs
         Puppet::Log.close
 
@@ -145,23 +154,24 @@ module TestPuppet
     end
 
     def tempfile
-        if defined? @tmpfilenum
-            @tmpfilenum += 1
+        if defined? @@tmpfilenum
+            @@tmpfilenum += 1
         else
-            @tmpfilenum = 1
+            @@tmpfilenum = 1
         end
-        f = File.join(self.tmpdir(), self.class.to_s + "testfile" + @tmpfilenum.to_s)
+
+        f = File.join(self.tmpdir(), self.class.to_s + "testfile" + @@tmpfilenum.to_s)
         @@tmpfiles << f
         return f
     end
 
     def tstdir
-        if defined? @testdirnum
-            @testdirnum += 1
+        if defined? @@testdirnum
+            @@testdirnum += 1
         else
-            @testdirnum = 1
+            @@testdirnum = 1
         end
-        d = File.join(self.tmpdir(), self.class.to_s + "testdir" + @testdirnum.to_s)
+        d = File.join(self.tmpdir(), self.class.to_s + "testdir" + @@testdirnum.to_s)
         @@tmpfiles << d
         return d
     end
@@ -305,6 +315,10 @@ module TestPuppet
     # wrap how to retrieve the masked mode
     def filemode(file)
         File.stat(file).mode & 007777
+    end
+
+    def memory
+        Puppet::Util.memory
     end
 end
 

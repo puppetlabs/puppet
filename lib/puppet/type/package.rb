@@ -11,7 +11,7 @@ module Puppet
         @doc = "Manage packages.  There is a basic dichotomy in package
             support right now:  Some package types (e.g., yum and apt) can
             retrieve their own package files, while others (e.g., rpm and
-            sunpkg) cannot.  For those package formats that cannot retrieve
+            sun) cannot.  For those package formats that cannot retrieve
             their own files, you can use the ``source`` parameter to point to
             the correct file.
 
@@ -388,7 +388,7 @@ module Puppet
                 )
             end
             case @platform
-            when "solaris": @default = :sunpkg
+            when "solaris": @default = :sun
             when "gentoo":
                 Puppet.notice "No support for gentoo yet"
                 @default = nil

@@ -234,18 +234,6 @@ class TestGroup < Test::Unit::TestCase
         assert_equal(Process.gid, user.is(:gid), "Retrieved UID does not match")
     end
 
-    def test_ensurevals
-        gobj = nil
-        assert_nothing_raised {
-            gobj = Puppet.type(:group).create(
-                :name => name,
-                :ensure => :exists
-            )
-        }
-
-        assert_equal(false, gobj.state(:ensure))
-    end
-
     if Process.uid == 0
         def test_mkgroup
             gobj = nil

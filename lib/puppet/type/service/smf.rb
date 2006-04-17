@@ -60,8 +60,9 @@ Puppet.type(:service).newsvctype(:smf) do
         }
 
         if $? != 0
-            raise Puppet::Error,
-                "Could not get status on service %s" % self.name
+            #raise Puppet::Error,
+            warning "Could not get status on service %s" % self.name
+            return :stopped
         end
     end
 

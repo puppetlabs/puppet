@@ -168,8 +168,8 @@ class Puppet::SSLCertificates::CA
 
     # List certificates waiting to be signed.
     def list
-        return Dir.entries(Puppet[:csrdir]).reject { |file|
-            file =~ /^\.+$/
+        return Dir.entries(Puppet[:csrdir]).find_all { |file|
+            file =~ /\.pem$/
         }.collect { |file|
             file.sub(/\.pem$/, '')
         }

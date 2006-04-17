@@ -14,25 +14,36 @@ require 'base64'
 
 class TestBucket < Test::Unit::TestCase
 	include ServerTest
+
+    def out
+        if defined? @num
+            @num += 1
+        else
+            @num = 1
+        end
+
+        Puppet.err "#{Process.pid}: %s: %s" % [@num, memory()]
+        GC.start
+    end
     # run through all of the files and exercise the filebucket methods
     def checkfiles(client)
         files = filelist()
+        #files = %w{/usr/local/bin/vim /etc/motd /etc/motd /etc/motd /etc/motd}
+        #files = %w{/usr/local/bin/vim}
 
         # iterate across all of the files
         files.each { |file|
-            spin
+            Puppet.warning file
+            out
             tempdir = tempfile()
             Dir.mkdir(tempdir)
             name = File.basename(file)
             tmppath = File.join(tempdir,name)
             @@tmpfiles << tmppath
 
+            out
             # copy the files to our tmp directory so we can modify them...
-            File.open(tmppath,File::WRONLY|File::TRUNC|File::CREAT) { |wf|
-                File.open(file) { |rf|
-                    wf.print(rf.read)
-                }
-            }
+            FileUtils.cp(file, tmppath)
 
             # make sure the copy worked
             assert(FileTest.exists?(tmppath))
@@ -41,14 +52,15 @@ class TestBucket < Test::Unit::TestCase
             osum = nil
             tsum = nil
             nsum = nil
-            spin
+            out
             assert_nothing_raised {
                 osum = client.backup(file)
             }
-            spin
+            out
             assert_nothing_raised {
                 tsum = client.backup(tmppath)
             }
+            out
 
             # verify you got the same sum back for both
             assert(tsum == osum)
@@ -57,30 +69,32 @@ class TestBucket < Test::Unit::TestCase
             File.open(tmppath,File::WRONLY|File::TRUNC) { |wf|
                 wf.print "This is some test text\n"
             }
+            out
 
             # back it up
-            spin
             assert_nothing_raised {
                 #STDERR.puts("backing up %s" % tmppath) if $debug
                 nsum = client.backup(tmppath)
             }
+            out
 
             # and verify the sum changed
             assert(tsum != nsum)
 
             # restore the orig
-            spin
             assert_nothing_raised {
                 nsum = client.restore(tmppath,tsum)
             }
+            out
 
             # and verify it actually got restored
-            spin
             contents = File.open(tmppath) { |rf|
                 #STDERR.puts("reading %s" % tmppath) if $debug
                 rf.read
             }
+            out
             csum = Digest::MD5.hexdigest(contents)
+            out
             assert(tsum == csum)
         }
     end
@@ -94,8 +108,9 @@ class TestBucket < Test::Unit::TestCase
             @files = []
         end
 
+            #who bash vim sh uname /etc/passwd /etc/syslog.conf /etc/hosts 
         %w{
-            who bash vim sh uname /etc/passwd /etc/syslog.conf /etc/hosts 
+            vim.ruby
         }.each { |file|
             # if it's fully qualified, just add it
             if file =~ /^\//
@@ -127,6 +142,11 @@ class TestBucket < Test::Unit::TestCase
         @@tmpfiles << @bucket
     end
 
+    #def teardown
+    #    system("lsof -p %s" % Process.pid)
+    #    super
+    #end
+
     # test operating against the local filebucket object
     # this calls the direct server methods, which are different than the
     # Dipper methods
@@ -141,7 +161,6 @@ class TestBucket < Test::Unit::TestCase
 
         # iterate across them...
         files.each { |file|
-            spin
             contents = File.open(file) { |of| of.read }
 
             md5 = nil
@@ -170,10 +189,6 @@ class TestBucket < Test::Unit::TestCase
     def test_localboth
         files = filelist()
 
-        tmpdir = File.join(tmpdir(),"tmpfiledir")
-        @@tmpfiles << tmpdir
-        FileUtils.mkdir_p(tmpdir)
-
         bucket = nil
         client = nil
         threads = []
@@ -190,8 +205,8 @@ class TestBucket < Test::Unit::TestCase
             )
         }
 
+        #4.times { checkfiles(client) }
         checkfiles(client)
-
     end
 
     # test that things work over the wire

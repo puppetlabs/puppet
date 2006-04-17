@@ -429,7 +429,7 @@ class TestSnippets < Test::Unit::TestCase
 
     # There's no way to actually retrieve the list of classes from the
     # transaction.
-    def snippet_set(trans)
+    def snippet_tag(trans)
         @@tmpfiles << "/tmp/settestingness"
     end
 

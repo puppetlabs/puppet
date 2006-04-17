@@ -1,5 +1,5 @@
 module Puppet
-    Puppet.type(:package).newpkgtype(:sunpkg) do
+    Puppet.type(:package).newpkgtype(:sun) do
         # Get info on a package, optionally specifying a device.
         def info2hash(device = nil)
             names = {

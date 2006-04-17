@@ -36,13 +36,17 @@ module Util
                     gid = self.gid(group)
                 end
 
-                if Process.gid != gid
-                    oldgid = Process.gid
-                    begin
-                        Process.egid = gid
-                    rescue => detail
-                        raise Puppet::Error, "Could not change GID: %s" % detail
+                if gid
+                    if Process.gid != gid
+                        oldgid = Process.gid
+                        begin
+                            Process.egid = gid
+                        rescue => detail
+                            raise Puppet::Error, "Could not change GID: %s" % detail
+                        end
                     end
+                else
+                    Puppet.warning "Could not retrieve GID for %s" % group
                 end
             end
 
@@ -53,14 +57,19 @@ module Util
                     uid = self.uid(user)
                 end
                 uid = self.uid(user)
-                # Now change the uid
-                if Process.uid != uid
-                    olduid = Process.uid
-                    begin
-                        Process.euid = uid
-                    rescue => detail
-                        raise Puppet::Error, "Could not change UID: %s" % detail
+
+                if uid
+                    # Now change the uid
+                    if Process.uid != uid
+                        olduid = Process.uid
+                        begin
+                            Process.euid = uid
+                        rescue => detail
+                            raise Puppet::Error, "Could not change UID: %s" % detail
+                        end
                     end
+                else
+                    Puppet.warning "Could not retrieve UID for %s" % user
                 end
             end
 
@@ -338,6 +347,23 @@ module Util
     end
 
     module_function :benchmark
+
+    def memory
+        unless defined? @pmap
+            pmap = %x{which pmap 2>/dev/null}.chomp
+            if pmap == ""
+                @pmap = nil
+            else
+                @pmap = pmap
+            end
+        end
+        if @pmap
+            return %x{pmap #{Process.pid}| grep total}.chomp.sub(/^\s*total\s+/, '').sub(/K$/, '').to_i
+        else
+            0
+        end
+    end
+    module_function :memory
 end
 end
 

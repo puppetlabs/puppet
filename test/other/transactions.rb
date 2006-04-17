@@ -33,12 +33,6 @@ class TestTransactions < Test::Unit::TestCase
         end
     end
 
-    def teardown
-        stopservices
-        #print "\n\n" if Puppet[:debug]
-        super
-    end
-
     def newfile(hash = {})
         tmpfile = tempfile()
         File.open(tmpfile, "w") { |f| f.puts rand(100) }
@@ -60,7 +54,6 @@ class TestTransactions < Test::Unit::TestCase
             File.chown(nil, firstgr, tmpfile)
         end
 
-        @@tmpfiles.push tmpfile
         hash[:name] = tmpfile
         assert_nothing_raised() {
             return Puppet.type(:file).create(hash)
@@ -74,7 +67,7 @@ class TestTransactions < Test::Unit::TestCase
                 :type => "init",
                 :path => File.join($puppetbase,"examples/root/etc/init.d"),
                 :hasstatus => true,
-                :check => [:running]
+                :check => [:ensure]
             )
         }
     end
@@ -147,7 +140,7 @@ class TestTransactions < Test::Unit::TestCase
         component = newcomp("service",service)
 
         assert_nothing_raised() {
-            service[:running] = 1
+            service[:ensure] = 1
         }
         service.retrieve
         assert(service.insync?, "Service did not start")
@@ -281,6 +274,7 @@ class TestTransactions < Test::Unit::TestCase
         )
 
         assert_apply(file, svc, exec)
-        assert(FileTest.exists?(newfile), "File did not get created")
+        assert(FileTest.exists?(path), "File did not get created")
+        assert(FileTest.exists?(newfile), "Refresh file did not get created")
     end
 end

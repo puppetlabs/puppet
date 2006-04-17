@@ -40,8 +40,6 @@ class Server
         end
 
         def initialize(hash)
-            # build our AST
-
             if hash.include?(:ConflictCheck)
                 @conflictchk = hash[:ConflictCheck]
                 hash.delete(:ConflictCheck)
@@ -67,12 +65,8 @@ class Server
 
         # accept a file from a client
         def addfile(string,path, client = nil, clientip = nil)
-            #puts "entering addfile"
             contents = Base64.decode64(string)
-            #puts "string is decoded"
-
             md5 = Digest::MD5.hexdigest(contents)
-            #puts "md5 is made"
 
             bpath, bfile, pathpath = FileBucket.paths(@bucket,md5)
 
@@ -82,11 +76,9 @@ class Server
                 msg += " from #{client}" if client
                 self.info msg
                 # ...then just create the file
-                #puts "creating file"
                 File.open(bfile, File::WRONLY|File::CREAT, 0440) { |of|
                     of.print contents
                 }
-                #puts "File is created"
             else # if the dir already existed...
                 # ...we need to verify that the contents match the existing file
                 if @conflictchk
@@ -95,13 +87,10 @@ class Server
                             "No file at %s for sum %s" % [bfile,md5], caller)
                     end
 
-                    curfile = ""
-                    File.open(bfile) { |of|
-                        curfile = of.read
-                    }
+                    curfile = File.read(bfile)
 
-                    # if the contents don't match, then we've found a conflict
-                    # unlikely, but quite bad
+                    # If the contents don't match, then we've found a conflict.
+                    # Unlikely, but quite bad.
                     if curfile != contents
                         raise(BucketError,
                             "Got passed new contents for sum %s" % md5, caller)
@@ -111,8 +100,9 @@ class Server
                         self.info msg
                     end
                 end
-                #puts "Conflict check is done"
             end
+
+            contents = ""
 
             # in either case, add the passed path to the list of paths
             paths = nil
@@ -129,14 +119,12 @@ class Server
             else
                 addpath = true
             end
-            #puts "Path is checked"
 
             # if it's a new file, or if our path isn't in the file yet, add it
             if addpath
                 File.open(pathpath, File::WRONLY|File::CREAT|File::APPEND) { |of|
                     of.puts path
                 }
-                #puts "Path is added"
             end
 
             return md5

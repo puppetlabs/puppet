@@ -2,7 +2,7 @@ class Puppet::Parser::AST
     # The code associated with a class.  This is different from components
     # in that each class is a singleton -- only one will exist for a given
     # node.
-    class Set < AST::Branch
+    class Tag < AST::Branch
         @name = :class
         attr_accessor :type
 
