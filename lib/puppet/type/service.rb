@@ -487,7 +487,7 @@ module Puppet
                     self.info "%s is not running" % self.name
                     return false
                 end
-                output = %x("kill #{pid} 2>&1")
+                output = %x(kill #{pid} 2>&1)
                 if $? != 0
                     self.fail "Could not kill %s, PID %s: %s" %
                             [self.name, pid, output]
