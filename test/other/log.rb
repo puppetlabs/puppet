@@ -67,7 +67,7 @@ class TestLog < Test::Unit::TestCase
                 count = of.readlines.length
             }
         }
-        assert(count == levels.length)
+        assert(count == levels.length - 1) # skip alert
     end
 
     def test_syslog
