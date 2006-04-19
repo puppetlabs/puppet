@@ -37,6 +37,7 @@ class TestLog < Test::Unit::TestCase
 
     def mkmsgs(levels)
         levels.collect { |level|
+            next if level == :alert
             assert_nothing_raised() {
                 Puppet::Log.new(
                     :level => level,

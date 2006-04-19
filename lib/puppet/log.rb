@@ -120,7 +120,9 @@ module Puppet
                 if Syslog.opened?
                     Syslog.close
                 end
-                @destinations[:syslog] = Syslog.open("puppet")
+                name = Puppet.name
+                name = "puppet-#{name}" unless name =~ /puppet/
+                @destinations[:syslog] = Syslog.open(name)
             when /^\// # files
                 Puppet.info "opening %s as a log" % dest
                 # first make sure the directory exists
