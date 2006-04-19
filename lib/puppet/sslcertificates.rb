@@ -124,7 +124,8 @@ module Puppet::SSLCertificates
     end
 
     def self.mkhash(dir, cert, certfile)
-        hash = "%x" % cert.issuer.hash
+        # Make sure the hash is zero-padded to 8 chars
+        hash = "%08x" % cert.issuer.hash
         hashpath = nil
         10.times { |i|
             path = File.join(dir, "%s.%s" % [hash, i])
@@ -148,6 +149,7 @@ module Puppet::SSLCertificates
             hashpath = path
             break
         }
+
 
         return hashpath
     end

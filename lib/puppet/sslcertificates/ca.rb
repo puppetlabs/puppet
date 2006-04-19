@@ -177,8 +177,13 @@ class Puppet::SSLCertificates::CA
 
     # Create the root certificate.
     def mkrootcert
+        # Make the root cert's name the FQDN of the host running the CA.
+        name = Facter["hostname"].value
+        if domain = Facter["domain"].value
+            name += "." + domain
+        end
         cert = Certificate.new(
-            :name => "CAcert",
+            :name => name,
             :cert => @config[:cacert],
             :encrypt => @config[:capass],
             :key => @config[:cakey],
