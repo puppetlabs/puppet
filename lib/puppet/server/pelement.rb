@@ -76,7 +76,22 @@ class Server::PElementServer
         end
     end
 
-    def list(type, name, client = nil, clientip = nil)
+    def list(type, ignore = [], base = nil, client = nil, clientip = nil)
+        @local = true unless client
+        typeklass = nil
+        unless typeklass = Puppet.type(type)
+            raise Puppet::Error, "Puppet type %s is unsupported" % type
+        end
+
+        bucket = TransBucket.new
+        bucket.type = typeklass.name
+
+        typeklass.list.each do |obj|
+            object = TransObject.new(obj.name, typeklass.name)
+            bucket << object
+        end
+
+        bucket
     end
 
     private

@@ -14,6 +14,29 @@ require 'cgi'
 class TestPElementServer < Test::Unit::TestCase
 	include ServerTest
 
+    def verify_described(type, described)
+        type.clear
+        described.each do |name, trans|
+            obj = nil
+            assert_nothing_raised do
+                obj = trans.to_type
+            end
+
+            assert(obj, "Could not create object")
+            assert_nothing_raised do
+                obj.retrieve
+            end
+
+            assert(obj.insync?, "Described %s[%s] is not in sync" %
+                [trans.type, name])
+
+            if trans.type == :package
+                assert_equal(Puppet::Type.type(:package).default, obj[:type])
+            end
+        end
+        type.clear
+    end
+
     def test_describe_file
         # Make a file to describe
         file = tempfile()
@@ -168,9 +191,27 @@ class TestPElementServer < Test::Unit::TestCase
                 Puppet.warning "%s does not respond to :list" % type.name
                 next
             end
-            #next unless type.name == :file
+            #next unless type.name == :port
             Puppet.info "Describing each %s" % type.name
 
+            # First do a listing from the server
+            bucket = nil
+            assert_nothing_raised {
+                bucket = server.list(type.name)
+            }
+
+            #type.clear
+
+            count = 0
+            described = {}
+            bucket.each do |obj|
+                assert_instance_of(Puppet::TransObject, obj)
+                break if count > 5
+                described[obj.name] = server.describe(obj.type, obj.name)
+                count += 1
+            end
+
+            verify_described(type, described)
 
             count = 0
             described = {}
@@ -186,34 +227,12 @@ class TestPElementServer < Test::Unit::TestCase
                 count += 1
             end
 
-            # We have to clear, because the server has its own object
-            type.clear
-
             if described.empty?
                 Puppet.notice "Got no example objects for %s" % type.name
             end
 
             # We separate these, in case the list operation creates objects
-            described.each do |name, trans|
-                obj = nil
-                assert_nothing_raised do
-                    obj = trans.to_type
-                end
-
-                assert(obj, "Could not create object")
-                assert_nothing_raised do
-                    obj.retrieve
-                end
-
-                assert(obj.insync?, "Described %s[%s] is not in sync" %
-                    [type.name, name])
-
-                if type.name == :package
-                    assert_equal(Puppet::Type.type(:package).default, obj[:type])
-                end
-            end
-
-            type.clear
+            verify_described(type, described)
         end
     end
 end

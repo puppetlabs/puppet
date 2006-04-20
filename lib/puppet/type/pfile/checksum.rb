@@ -288,8 +288,7 @@ module Puppet
                 #@parent.debug "@is: %s; @should: %s" % [@is,@should]
                 result = true
             else
-                @parent.debug "Creating checksum %s of type %s" %
-                    [@is,@checktypes[0]]
+                @parent.debug "Creating checksum %s" % @is
                 result = false
             end
             state[@checktypes[0]] = @is
