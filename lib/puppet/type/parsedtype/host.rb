@@ -35,7 +35,11 @@ module Puppet
             # value.
             def should
                 if defined? @should
-                    return @should
+                    if @should == [:absent]
+                        return :absent
+                    else
+                        return @should
+                    end
                 else
                     return []
                 end
@@ -52,9 +56,13 @@ module Puppet
             end
 
             munge do |value|
-                # Add the :alias metaparam in addition to the state
-                @parent.newmetaparam(@parent.class.metaparamclass(:alias), value)
-                value
+                if value == :absent or value == "absent"
+                    :absent
+                else
+                    # Add the :alias metaparam in addition to the state
+                    @parent.newmetaparam(@parent.class.metaparamclass(:alias), value)
+                    value
+                end
             end
         end
 

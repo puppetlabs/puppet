@@ -207,6 +207,14 @@ module Puppet
                 @instances << obj
             end
 
+            def self.list
+                retrieve
+
+                self.collect do |obj|
+                    obj.name
+                end
+            end
+
             # Retrieve the text for the file. Returns nil in the unlikely
             # event that it doesn't exist.
             def self.retrieve

@@ -171,6 +171,17 @@ module Puppet
             isnamevar
         end
 
+        # List all groups
+        def self.list
+            groups = []
+            while ent = Etc.getgrent
+                groups << ent.name
+            end
+            Etc.endgrent
+
+            return groups
+        end
+
         def exists?
             self.class.parentmodule.exists?(self)
         end

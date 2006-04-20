@@ -237,6 +237,12 @@ module Puppet
             # We need to override this because the groups need to
             # be joined with commas
             def should
+                unless defined? @is
+                    retrieve
+                end
+
+                @should ||= []
+
                 if @parent[:membership] == :inclusive
                     @should.sort.join(",")
                 else
@@ -380,6 +386,16 @@ module Puppet
             else
                 nil
             end
+        end
+
+        def self.list
+            users = []
+            while ent = Etc.getpwent
+                users << ent.name
+            end
+            Etc.endpwent
+
+            return users
         end
 
         def exists?

@@ -141,8 +141,8 @@ class State < Puppet::Parameter
 
     def inspect
         str = "State('%s', " % self.name
-        if defined? @is and @is
-            str += "@is = '%s', " % @is
+        if self.is
+            str += "@is = '%s', " % [self.is]
         else
             str += "@is = nil, "
         end

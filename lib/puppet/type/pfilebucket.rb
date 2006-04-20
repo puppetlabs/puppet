@@ -53,6 +53,10 @@ module Puppet
             end
         end
 
+        def self.list
+            self.collect do |obj| obj.name end
+        end
+
         def initialize(hash)
             super
 

@@ -76,6 +76,61 @@ class TestPElementServer < Test::Unit::TestCase
             end
         end
     end
+
+    def test_describe_alltypes
+        server = nil
+        assert_nothing_raised do
+            server = Puppet::Server::PElementServer.new()
+        end
+
+        require 'etc'
+
+        Puppet::Type.eachtype do |type|
+            unless type.respond_to? :list
+                Puppet.warning "%s does not respond to :list" % type.name
+                next
+            end
+            Puppet.info "Describing each %s" % type.name
+
+            count = 0
+            described = {}
+            type.list.each do |name|
+                break if count > 5
+                trans = nil
+                assert_nothing_raised do
+                    described[name] = server.describe(type.name, name)
+                end
+
+                count += 1
+            end
+
+            # We have to clear, because the server has its own object
+            type.clear
+
+            if described.empty?
+                Puppet.notice "Got no example objects for %s" % type.name
+            end
+
+            # We separate these, in case the list operation creates objects
+            described.each do |name, trans|
+                obj = nil
+                assert_nothing_raised do
+                    obj = trans.to_type
+                end
+
+                assert_nothing_raised do
+                    obj.retrieve
+                end
+
+                assert(obj.insync?, "Described %s[%s] is not in sync" %
+                    [type.name, name])
+
+                if type.name == :package
+                    assert_equal(Puppet::Type.type(:package).default, obj[:type])
+                end
+            end
+        end
+    end
 end
 
 # $Id$

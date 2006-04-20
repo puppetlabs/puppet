@@ -60,7 +60,21 @@ module Puppet
 
             mod.module_eval(&block)
 
+            mod.send(:module_function, :list)
+
+            # Add it to our list
             @pkgtypes[name] = mod
+
+            # And mark it as a valid type
+            unless defined? @typeparam
+                @typeparam = @parameters.find { |p| p.name == :type }
+
+                unless @typeparam
+                    Puppet.warning @parameters.inspect
+                    raise Puppet::DevError, "Could not package type parameter"
+                end
+            end
+            @typeparam.newvalues(name)
         end
 
         # Autoload the package types, if they're not already defined.
@@ -262,14 +276,15 @@ module Puppet
 
             defaultto { @parent.class.default }
 
-            # We cannot log in this routine, because this gets called before
-            # there's a name for the package.
+
             munge do |type|
                 if type.is_a? String
                     type = type.intern
                 end
                 @parent.type2module(type)
+                type
             end
+
         end
 
         newparam(:source) do
@@ -414,6 +429,7 @@ module Puppet
             end
         end
 
+        # Return a list of valid package types
         def self.getpkglist
             if @types.nil?
                 if @default.nil?
@@ -434,7 +450,11 @@ module Puppet
             return list
         end
 
+        # Create a new package object from listed information
         def self.installedpkg(hash)
+            unless hash.include? :type
+                raise Puppet::DevError, "Got installed package with no type"
+            end
             # this is from code, so we don't have to do as much checking
             name = hash[:name]
             hash.delete(:name)
@@ -443,6 +463,26 @@ module Puppet
             object.setparams(hash)
 
             return object
+        end
+
+        def self.list
+            pkgtype(default).list()
+
+            self.collect do |pkg|
+                pkg.name
+            end
+        end
+
+        # Iterate across all packages of a given type and mark them absent
+        # if they are not in the list
+        def self.markabsent(pkgtype, packages)
+            # Mark any packages we didn't find as absent
+            self.each do |pkg|
+                next unless packages[:type] == pkgtype
+                unless packages.include? pkg
+                    pkg.is = [:ensure, :absent] 
+                end
+            end
         end
 
         # This only exists for testing.

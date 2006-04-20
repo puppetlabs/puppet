@@ -1696,6 +1696,16 @@ class Type < Puppet::Element
             trans[state.name] = state.is
         end
 
+        @parameters.each do |name, param|
+            # Avoid adding each instance name as both the name and the namevar
+            next if param.class.isnamevar? and param.value == self.name
+            trans[name] = param.value
+        end
+
+        @metaparams.each do |name, param|
+            trans[name] = param.value
+        end
+
         trans.tags = self.tags
 
         # FIXME I'm currently ignoring 'parent' and 'path'
@@ -2181,23 +2191,15 @@ class Type < Puppet::Element
              currently the default)."
         defaultto :notice
 
-        validate do |loglevel|
-            if loglevel.is_a?(String)
-                loglevel = loglevel.intern
-            end
-            unless Puppet::Log.validlevel?(loglevel)
-                self.fail "Invalid log level %s" % loglevel
-            end
-        end
+        newvalues(*Puppet::Log.levels)
+        newvalues(:verbose)
 
         munge do |loglevel|
-            if loglevel.is_a?(String)
-                loglevel = loglevel.intern
-            end
-            if loglevel == :verbose
-                loglevel = :info 
+            val = super
+            if val == :verbose
+                val = :info 
             end        
-            loglevel
+            val
         end
     end
 
@@ -2249,7 +2251,7 @@ class Type < Puppet::Element
                 if obj = @parent.class[other]
                     unless obj == @parent
                         self.fail(
-                            "%s an not create alias %s: object already exists" %
+                            "%s can not create alias %s: object already exists" %
                             [@parent.name, other]
                         )
                     end

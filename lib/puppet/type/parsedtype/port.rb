@@ -223,7 +223,6 @@ module Puppet
             end
 
             if hash.include?(:description) and ! @states.include?(:description)
-                Puppet.info "Adding description to %s" % hash[:name]
                 self.is = [:description, hash[:description]]
             end
 

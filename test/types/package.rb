@@ -182,6 +182,18 @@ class TestPackages < Test::Unit::TestCase
         }
     end
 
+    # Make sure our package type supports listing.
+    def test_listing
+        pkgtype = Puppet::Type.type(:package)
+
+        # Heh
+        defaulttype = pkgtype.pkgtype(pkgtype.default)
+
+        assert_nothing_raised("Could not list packages") do
+            defaulttype.list
+        end
+    end
+
     unless Process.uid == 0
         $stderr.puts "Run as root to perform package installation tests"
     else

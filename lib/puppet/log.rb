@@ -108,6 +108,10 @@ module Puppet
             @loglevel = @levels.index(level)
         end
 
+        def Log.levels
+            @levels.dup
+        end
+
         # Create a new log destination.
         def Log.newdestination(dest)
             # Each destination can only occur once.

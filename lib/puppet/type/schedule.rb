@@ -295,6 +295,10 @@ module Puppet
             end
         end
 
+        def self.list
+            self.collect do |obj| obj.name end
+        end
+
         def self.mkdefaultschedules
             Puppet.debug "Creating default schedules"
             # Create our default schedule
