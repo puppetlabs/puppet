@@ -18,6 +18,22 @@ class State < Puppet::Parameter
     class << self
         attr_accessor :unmanaged
         attr_reader :name
+
+        def checkable
+            @checkable = true
+        end
+
+        def uncheckable
+            @checkable = false
+        end
+
+        def checkable?
+            if defined? @checkable
+                return @checkable
+            else
+                return true
+            end
+        end
     end
 
     # Create the value management variables.
@@ -82,13 +98,18 @@ class State < Puppet::Parameter
         end
 
         if event and event.is_a?(Symbol)
-            return event
+            if event == :nochange
+                return nil
+            else
+                return event
+            end
         else
             # Return the appropriate event.
             event = case self.should
             when :present: (@parent.class.name.to_s + "_created").intern
             when :absent: (@parent.class.name.to_s + "_removed").intern
             else
+                warning self.should.inspect
                 (@parent.class.name.to_s + "_changed").intern
             end
 

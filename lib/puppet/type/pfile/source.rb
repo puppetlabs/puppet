@@ -28,6 +28,8 @@ module Puppet
 
             "
 
+        uncheckable
+
         # Ask the file server to describe our file.
         def describe(source)
             sourceobj, path = @parent.uri2obj(source)

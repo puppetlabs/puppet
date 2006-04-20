@@ -80,8 +80,9 @@ module Puppet
 
                 if state.linkmaker
                     self.set_directory
+                    return :directory_created
                 else
-                    state.sync
+                    return state.sync
                 end
             else
                 self.fail "Cannot create a symlink without a target"
@@ -120,7 +121,6 @@ module Puppet
         end
 
         def retrieve
-
             if stat = @parent.stat(false)
                 @is = stat.ftype.intern
             else

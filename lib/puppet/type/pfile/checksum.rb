@@ -16,6 +16,44 @@ module Puppet
             @validtypes.include?(type)
         end
 
+        @validtypes.each do |ctype|
+            newvalue(ctype) do
+                handlesum()
+            end
+        end
+
+        str = @validtypes.join("|")
+
+        newvalue(/^\{#{str}\}/) do
+            handlesum()
+        end
+
+        newvalue(:nosum) do
+            # nothing
+            :nochange
+        end
+
+        # Convert from the sum type to the stored checksum.
+        munge do |value|
+            unless defined? @checktypes
+                @checktypes = []
+            end
+
+            if FileTest.directory?(@parent[:path])
+                value = "time"
+            end
+
+
+            if value =~ /^\{(\w+)\}(.+)$/
+                @checktypes << $1
+                return $2
+            else
+                value = super
+                @checktypes << value
+                return getcachedsum()
+            end
+        end
+
         def checktype
             @checktypes[0]
         end
@@ -80,15 +118,17 @@ module Puppet
         # Calculate the sum from disk.
         def getsum(checktype)
             sum = ""
+
+            checktype = checktype.intern if checktype.is_a? String
             case checktype
-            when "md5", "md5lite":
+            when :md5, :md5lite:
                 unless FileTest.file?(@parent[:path])
                     @parent.info "Cannot MD5 sum directory %s" %
                         @parent[:path]
 
-                    # because we cannot sum directories, just delete ourselves
-                    # from the file so we won't sync
-                    @parent.delete(self[:path])
+                    @should = [nil]
+                    @is = nil
+                    #@parent.delete(self[:path])
                     return
                 else
                     begin
@@ -117,35 +157,59 @@ module Puppet
                         @parent.delete(self.class.name)
                     end
                 end
-            when "timestamp","mtime":
+            when :timestamp, :mtime:
                 sum = @parent.stat.mtime.to_s
                 #sum = File.stat(@parent[:path]).mtime.to_s
-            when "time":
+            when :time:
                 sum = @parent.stat.ctime.to_s
                 #sum = File.stat(@parent[:path]).ctime.to_s
             else
                 raise Puppet::Error, "Invalid sum type %s" % checktype
             end
 
-            return sum
+            return "{#{checktype}}" + sum.to_s
         end
 
-        # Convert from the sum type to the stored checksum.
-        munge do |value|
-            unless defined? @checktypes
-                @checktypes = []
-            end
-            unless self.class.validtype?(value)
-                self.fail "Invalid checksum type '%s'" % value
-            end
-
-            if FileTest.directory?(@parent[:path])
-                value = "time"
+        # At this point, we don't actually modify the system, we modify
+        # the stored state to reflect the current state, and then kick
+        # off an event to mark any changes.
+        def handlesum
+            if @is.nil?
+                raise Puppet::Error, "Checksum state for %s is somehow nil" %
+                    @parent.name
             end
 
-            @checktypes << value
+            if @is == :absent
+                self.retrieve
 
-            return getcachedsum()
+                if self.insync?
+                    self.debug "Checksum is already in sync"
+                    return nil
+                end
+                #@parent.debug "%s(%s): after refresh, is '%s'" %
+                #    [self.class.name,@parent.name,@is]
+
+                # If we still can't retrieve a checksum, it means that
+                # the file still doesn't exist
+                if @is == :absent
+                    # if they're copying, then we won't worry about the file
+                    # not existing yet
+                    unless @parent.state(:source)
+                        self.warning(
+                            "File %s does not exist -- cannot checksum" %
+                            @parent[:path]
+                        )
+                    end
+                    return nil
+                end
+            end
+
+            # If the sums are different, then return an event.
+            if self.updatesum
+                return :file_changed
+            else
+                return nil
+            end
         end
 
         # Even though they can specify multiple checksums, the insync?
@@ -192,49 +256,6 @@ module Puppet
             end
 
             #@parent.debug "checksum state is %s" % self.is
-        end
-
-
-        # At this point, we don't actually modify the system, we modify
-        # the stored state to reflect the current state, and then kick
-        # off an event to mark any changes.
-        def sync
-            if @is.nil?
-                raise Puppet::Error, "Checksum state for %s is somehow nil" %
-                    @parent.name
-            end
-
-            if @is == :absent
-                self.retrieve
-
-                if self.insync?
-                    self.debug "Checksum is already in sync"
-                    return nil
-                end
-                #@parent.debug "%s(%s): after refresh, is '%s'" %
-                #    [self.class.name,@parent.name,@is]
-
-                # If we still can't retrieve a checksum, it means that
-                # the file still doesn't exist
-                if @is == :absent
-                    # if they're copying, then we won't worry about the file
-                    # not existing yet
-                    unless @parent.state(:source)
-                        self.warning(
-                            "File %s does not exist -- cannot checksum" %
-                            @parent[:path]
-                        )
-                    end
-                    return nil
-                end
-            end
-
-            # If the sums are different, then return an event.
-            if self.updatesum
-                return :file_changed
-            else
-                return nil
-            end
         end
 
         # Store the new sum to the state db.

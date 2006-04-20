@@ -9,7 +9,10 @@ require 'puppet/util'
 # see the bottom of the file for the rest of the inclusions
 
 module Puppet
+# The type is unknown
+class UnknownTypeError < Puppet::Error; end
 class Type < Puppet::Element
+
     # Types (which map to elements in the languages) are entirely composed of
     # attribute value pairs.  Generally, Puppet calls any of these things an
     # 'attribute', but these attributes always take one of three specific
@@ -1682,6 +1685,24 @@ class Type < Puppet::Element
         self.name
     end
 
+    # Convert to a transportable object
+    def to_trans
+        # Collect all of the "is" values
+        retrieve()
+
+        trans = TransObject.new(self.name, self.class.name)
+
+        states().each do |state|
+            trans[state.name] = state.is
+        end
+
+        trans.tags = self.tags
+
+        # FIXME I'm currently ignoring 'parent' and 'path'
+
+        return trans
+    end
+
     # instance methods dealing with actually doing work
 
     public
@@ -2039,6 +2060,13 @@ class Type < Puppet::Element
             on all packages."
 
         munge do |args|
+            # If they've specified all, collect all known states
+            if args == :all
+                args = @parent.class.states.collect do |state|
+                    state.name
+                end
+            end
+
             unless args.is_a?(Array)
                 args = [args]
             end
@@ -2053,6 +2081,8 @@ class Type < Puppet::Element
                     state = state.intern
                 end
                 next if @parent.statedefined?(state)
+
+                next unless @parent.class.validstate?(state).checkable?
 
                 @parent.newstate(state)
             }
