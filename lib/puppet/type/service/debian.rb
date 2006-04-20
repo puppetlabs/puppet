@@ -17,7 +17,7 @@ Puppet.type(:service).newsvctype(:debian, :init) do
 
     def enabled?
         cmd = %{update-rc.d -n -f #{self[:name]} remove 2>&1}
-        self.debug "Executing '%s'" % cmd
+        self.debug "Executing 'enabled' test: '%s'" % cmd
         output = %x{#{cmd}}
         unless $? == 0
             raise Puppet::Error, "Could not check %s: %s" %

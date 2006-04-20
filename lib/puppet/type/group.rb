@@ -172,7 +172,7 @@ module Puppet
         end
 
         # List all groups
-        def self.list
+        def self.listbyname
             groups = []
             while ent = Etc.getgrent
                 groups << ent.name

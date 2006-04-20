@@ -60,7 +60,12 @@ module Puppet
 
             mod.module_eval(&block)
 
-            mod.send(:module_function, :list)
+            # It's at least conceivable that a module would not define this method
+            # "module_function" makes the :list method private, so if the parent
+            # method also called module_function, then it's already private
+            if mod.public_method_defined? :list or mod.private_method_defined? :list
+                mod.send(:module_function, :list)
+            end
 
             # Add it to our list
             @pkgtypes[name] = mod
@@ -465,11 +470,12 @@ module Puppet
             return object
         end
 
+        # List all package instances
         def self.list
             pkgtype(default).list()
 
             self.collect do |pkg|
-                pkg.name
+                pkg
             end
         end
 

@@ -157,6 +157,10 @@ module Puppet
         validate do
         end
 
+        def self.list
+            self.collect { |t| t }
+        end
+
         @depthfirst = true
 
         def initialize(hash)

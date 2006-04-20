@@ -211,7 +211,7 @@ module Puppet
                 retrieve
 
                 self.collect do |obj|
-                    obj.name
+                    obj
                 end
             end
 

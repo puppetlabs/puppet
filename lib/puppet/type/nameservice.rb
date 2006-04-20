@@ -11,6 +11,27 @@ class Type
             # netinfo types if that were the case.
             attr_accessor :netinfodir
 
+            # Create an instance for every object that exists on the machine
+            def list
+                listbyname.collect do |name|
+                    obj = nil
+                    check = @states.collect { |st| st.name }
+                    if obj = self[name]
+                        obj[:check] = check
+                    else
+                        # unless it exists, create it as an unmanaged object
+                        obj = self.create(:name => name, :check => check)
+                    end
+
+                    next unless obj # In case there was an error somewhere
+                    
+                    obj.retrieve
+
+
+                    obj
+                end
+            end
+
             def newstate(*args, &block)
                 s = super(*args, &block)
 

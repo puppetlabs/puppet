@@ -34,8 +34,13 @@ module Puppet
             end
 
             if stat.ftype == "link" and @parent[:links] == :ignore
-                self.info "Not changing the content of symlink"
                 self.is = self.should
+                return
+            end
+
+            # Don't even try to manage the content on directories
+            if stat.ftype == "directory" and @parent[:links] == :ignore
+                @parent.delete(:content)
                 return
             end
 

@@ -296,7 +296,7 @@ module Puppet
         end
 
         def self.list
-            self.collect do |obj| obj.name end
+            self.collect do |obj| obj end
         end
 
         def self.mkdefaultschedules

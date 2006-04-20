@@ -418,10 +418,11 @@ module Puppet
                 tmp = [tmp] unless tmp.is_a? Array
 
                 tmp.each do |line|
-                    # And search the command line for files, adding any we find.  This
-                    # will also catch the command itself if it's fully qualified.  It might
-                    # not be a bad idea to add unqualified files, but, well, that's a
-                    # bit more annoying to do.
+                    # And search the command line for files, adding any we
+                    # find.  This will also catch the command itself if it's
+                    # fully qualified.  It might not be a bad idea to add
+                    # unqualified files, but, well, that's a bit more annoying
+                    # to do.
                     reqs += line.scan(%r{(#{File::SEPARATOR}\S+)})
                 end
             }
@@ -430,6 +431,10 @@ module Puppet
             reqs.flatten!
 
             reqs
+        end
+
+        def self.list
+            self.collect { |i| i }
         end
 
         # Verify that we pass all of the checks.

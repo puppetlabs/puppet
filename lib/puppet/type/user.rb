@@ -388,8 +388,10 @@ module Puppet
             end
         end
 
-        def self.list
+        # List all found users
+        def self.listbyname
             users = []
+            Etc.setpwent
             while ent = Etc.getpwent
                 users << ent.name
             end

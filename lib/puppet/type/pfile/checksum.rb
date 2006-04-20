@@ -39,16 +39,15 @@ module Puppet
                 @checktypes = []
             end
 
-            if FileTest.directory?(@parent[:path])
-                value = "time"
-            end
-
-
             if value =~ /^\{(\w+)\}(.+)$/
                 @checktypes << $1
-                return $2
+                #return $2
+                return value
             else
-                value = super
+                if FileTest.directory?(@parent[:path])
+                    value = "time"
+                end
+                value = super(value)
                 @checktypes << value
                 return getcachedsum()
             end
@@ -168,6 +167,7 @@ module Puppet
             end
 
             return "{#{checktype}}" + sum.to_s
+            #return sum.to_s
         end
 
         # At this point, we don't actually modify the system, we modify
@@ -228,6 +228,7 @@ module Puppet
 
             if stat.ftype == "link" and @parent[:links] != :follow
                 self.debug "Not checksumming symlink"
+                #@parent.delete(:checksum)
                 self.is = self.should
                 return
             end

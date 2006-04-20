@@ -119,19 +119,19 @@ module Puppet
 
             # Read the file.
             def read
-                Puppet.info "Reading %s" % @path
+                Puppet.info "Reading %s from RAM" % @path
                 @text
             end
 
             # Remove the file.
             def remove
-                Puppet.info "Removing %s" % @path
+                Puppet.info "Removing %s from RAM" % @path
                 @text = ""
             end
 
             # Overwrite the file.
             def write(text)
-                Puppet.info "Writing %s" % @path
+                Puppet.info "Writing %s to RAM" % @path
                 @text = text
             end
         end
@@ -156,7 +156,9 @@ module Puppet
                     raise Puppet::Error, "Could not retrieve user %s" % user
                 end
 
-                @path = uid
+                # We have to have the user name, not the uid, because some
+                # systems *cough*linux*cough* require it that way
+                @path = user
             end
 
             # Read a specific @path's cron tab.

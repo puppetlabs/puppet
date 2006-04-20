@@ -1,15 +1,61 @@
 # The standard init-based service type.  Many other service types are
 # customizations of this module.
 Puppet.type(:service).newsvctype(:init) do
-
-    # Set the default init directory.
-    Puppet.type(:service).attrclass(:path).defaultto do
+    def self.defpath
         case Facter["operatingsystem"].value
         when "FreeBSD":
             "/etc/rc.d"
         else
-            #@defaultrc = "/etc/rc%s.d"
             "/etc/init.d"
+        end
+    end
+
+    Puppet.type(:service).newpath(:init, defpath())
+
+    # Set the default init directory.
+    Puppet.type(:service).attrclass(:path).defaultto defpath()
+
+    # List all services of this type.  This has to be an instance method
+    # so that it's inherited by submodules.
+    def list(name)
+        # We need to find all paths specified for our type or any parent types
+        paths = Puppet.type(:service).paths(name)
+
+        # Now see if there are any included modules
+        included_modules.each do |mod|
+            next unless mod.respond_to? :name
+
+            mname = mod.name
+
+            if mpaths = Puppet.type(:service).paths(mname) and ! mpaths.empty?
+                 paths += mpaths
+            end
+        end
+
+        paths.each do |path|
+            unless FileTest.directory?(path)
+                Puppet.notice "Service path %s does not exist" % path
+                next
+            end
+
+            check = [:ensure]
+
+            if public_method_defined? :enabled?
+                check << :enable
+            end
+
+            Dir.entries(path).reject { |e|
+                fullpath = File.join(path, e)
+                e =~ /^\./ or ! FileTest.executable?(fullpath)
+            }.each do |name|
+                if obj = Puppet::Type.type(:service)[name]
+                    obj[:check] = check
+                else
+                    Puppet::Type.type(:service).create(
+                        :name => name, :check => check, :path => path
+                    )
+                end
+            end
         end
     end
 

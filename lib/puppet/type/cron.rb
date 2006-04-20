@@ -90,7 +90,7 @@ module Puppet
             end
 
             def should_to_s
-                if @should.empty?
+                if ! defined? @should or @should.empty?
                     return "*"
                 else
                     return @should.join(",")
@@ -204,20 +204,20 @@ module Puppet
                 
                 The user defaults to whomever Puppet is running as."
 
-            defaultto Process.uid
+            defaultto { ENV["USER"] }
 
-            validate do |user|
-                require 'etc'
-
-                begin
-                    parent.uid = Puppet::Util.uid(user)
-                    #obj = Etc.getpwnam(user)
-                rescue ArgumentError
-                    self.fail "User %s not found" % user
-                end
-
-                user
-            end
+#            validate do |user|
+#                require 'etc'
+#
+#                begin
+#                    parent.uid = Puppet::Util.uid(user)
+#                    #obj = Etc.getpwnam(user)
+#                rescue ArgumentError
+#                    self.fail "User %s not found" % user
+#                end
+#
+#                user
+#            end
         end
 
         @doc = "Installs and manages cron jobs.  All fields except the command 
@@ -314,6 +314,15 @@ module Puppet
             end
         end
 
+        def self.list
+            # Look for cron jobs for each user
+            Puppet::Type.type(:user).list.each { |user|
+                self.retrieve(user.name)
+            }
+
+            self.collect { |c| c }
+        end
+
         # Parse a user's cron job into individual cron objects.
         #
         # Autogenerates names for any jobs that don't already have one; these
@@ -400,6 +409,13 @@ module Puppet
         # method.  Returns nil if there was no cron job; else, returns the
         # number of cron instances found.
         def self.retrieve(user)
+            # First make sure the user exists
+            begin
+                Puppet::Util.uid(user)
+            rescue ArgumentError
+                raise Puppet::Error,  "User %s not found" % user
+            end
+
             @tabs[user] ||= @filetype.new(user)
             text = @tabs[user].read
             if $? != 0

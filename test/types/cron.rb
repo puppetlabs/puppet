@@ -382,6 +382,29 @@ class TestCron < Test::Unit::TestCase
         }
         assert_equal(:absent, cron.is(:minute))
     end
+
+    def test_listing
+        @crontype.filetype = @oldfiletype
+
+        crons = []
+        assert_nothing_raised {
+            Puppet::Type.type(:cron).list.each do |cron|
+                crons << cron
+            end
+        }
+
+        crons.each do |cron|
+            assert(cron, "Did not receive a real cron object")
+            assert_instance_of(String, cron[:user],
+                "Cron user is not a string")
+        end
+    end
+
+    def verify_failonnouser
+        assert_raise(Puppet::Error) do
+            @crontype.retrieve("nosuchuser")
+        end
+    end
 end
 
 # $Id$

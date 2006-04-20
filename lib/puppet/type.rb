@@ -1837,9 +1837,11 @@ class Type < Puppet::Element
 
         states.each { |state|
             unless state.insync?
-                self.debug("%s is not in sync: %s vs %s" %
-                    [state, state.is.inspect, state.should.inspect])
+                #state.debug("Not in sync: %s vs %s" %
+                #    [state.is.inspect, state.should.inspect])
                 insync = false
+            #else
+            #    state.debug("In sync")
             end
         }
 

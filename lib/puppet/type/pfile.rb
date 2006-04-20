@@ -70,7 +70,7 @@ module Puppet
                 case value
                 when false, "false":
                     false
-                when true, "true":
+                when true, "true", ".puppet-bak":
                     ".puppet-bak"
                 when String:
                     # We can't depend on looking this up right now,
@@ -155,6 +155,29 @@ module Puppet
             if self[:content] and self[:source]
                 self.fail "You cannot specify both content and a source"
             end
+        end
+
+        # List files, but only one level deep.
+        def self.list(base = "/")
+            unless FileTest.directory?(base)
+                return []
+            end
+
+            files = []
+            Dir.entries(base).reject { |e|
+                e == "." or e == ".."
+            }.each do |name|
+                path = File.join(base, name)
+                if obj = self[path]
+                    obj[:check] = :all
+                    files << obj
+                else
+                    files << self.create(
+                        :name => path, :check => :all
+                    )
+                end
+            end
+            files
         end
 
         @depthfirst = false
@@ -682,6 +705,7 @@ module Puppet
         # stat object accordingly (mostly by testing the 'ftype' value).
         def stat(refresh = false)
             method = :stat
+
             # Files are the only types that support links
             if self.class.name == :file and self[:links] != :follow
                 method = :lstat
@@ -826,11 +850,11 @@ module Puppet
     require 'puppet/type/pfile/checksum'
     require 'puppet/type/pfile/content'     # can create the file
     require 'puppet/type/pfile/source'      # can create the file
+    require 'puppet/type/pfile/target'
     require 'puppet/type/pfile/ensure'      # can create the file
     require 'puppet/type/pfile/uid'
     require 'puppet/type/pfile/group'
     require 'puppet/type/pfile/mode'
-    require 'puppet/type/pfile/target'
     require 'puppet/type/pfile/type'
 end
 # $Id$

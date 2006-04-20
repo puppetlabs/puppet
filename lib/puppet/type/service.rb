@@ -109,7 +109,6 @@ module Puppet
 
             def retrieve
                 self.is = @parent.status
-                self.debug "Current status is '%s'" % self.is
             end
 
             def sync
@@ -168,11 +167,14 @@ module Puppet
             # representing the module.
             munge do |type|
                 if type.is_a?(String)
-                    type = @parent.class.svctype(type.intern)
+                    type = type.intern
                 end
-                Puppet.debug "Service type is %s" % type.name
-                @parent.extend(type)
+                if type.is_a?(Symbol)
+                    typeklass = @parent.class.svctype(type)
+                end
+                @parent.extend(typeklass)
 
+                # Return the name, not the object
                 return type
             end
         end
@@ -254,12 +256,85 @@ module Puppet
         newparam(:status) do
             desc "Specify a *status* command manually.  If left
                 unspecified, the status method will be determined
-                automatically, usually by looking for the service int he
+                automatically, usually by looking for the service in the
                 process table."
         end
 
         newparam(:stop) do
             desc "Specify a *stop* command manually."
+        end
+
+        # Retrieve the default type for the current platform.
+        def self.defaulttype
+            unless defined? @defsvctype
+                @defsvctype = nil
+                os = Facter["operatingsystem"].value
+                case os
+                when "Debian":
+                    @defsvctype = self.svctype(:debian)
+                when "Solaris":
+                    release = Facter["operatingsystemrelease"].value
+                    if release.sub(/5\./,'').to_i < 10
+                        @defsvctype = self.svctype(:init)
+                    else
+                        @defsvctype = self.svctype(:smf)
+                    end
+                when "CentOS", "RedHat", "Fedora":
+                    @defsvctype = self.svctype(:redhat)
+                else
+                    if Facter["kernel"] == "Linux"
+                        Puppet.notice "Using service type %s for %s" %
+                            ["init", Facter["operatingsystem"].value]
+                        @defsvctype = self.svctype(:init)
+                    end
+                end
+
+                unless @defsvctype
+                    Puppet.info "Defaulting to base service type"
+                    @defsvctype = self.svctype(:base)
+                end
+            end
+
+            unless defined? @notifieddefault
+                Puppet.debug "Default service type is %s" % @defsvctype.name
+                @notifieddefault = true
+            end
+
+            return @defsvctype.name
+        end
+
+        # List all available services
+        def self.list
+            # First see if the default service type can list services for us
+            deftype = svctype(defaulttype())
+
+            names = []
+            if deftype.respond_to? :list
+                deftype.list(deftype.name)
+            else
+                Puppet.debug "Type %s does not respond to list" % deftype.name
+            end
+
+            self.collect { |s| s }
+        end
+
+        # Add a new path to our list of paths that services could be in.
+        def self.newpath(type, path)
+            type = type.intern if type.is_a? String
+            @paths ||= {}
+            @paths[type] ||= []
+
+            unless @paths[type].include? path
+                @paths[type] << path
+            end
+        end
+
+        def self.paths(type)
+            type = type.intern if type.is_a? String
+            @paths ||= {}
+            @paths[type] ||= []
+
+            @paths[type].dup
         end
 
         # Create new subtypes of service management.
@@ -299,6 +374,27 @@ module Puppet
 
             mod.module_eval(&block)
 
+            #unless mod.respond_to? :list
+            #    Puppet.debug "Service type %s has no list method" % name
+            #end
+
+            # "module_function" makes the :list method private, so if the parent
+            # method also called module_function, then it's already private
+            if mod.public_method_defined? :list or mod.private_method_defined? :list
+                mod.send(:module_function, :list)
+            end
+
+            # mark it as a valid type
+            unless defined? @typeparam
+                @typeparam = @parameters.find { |p| p.name == :type }
+
+                unless @typeparam
+                    raise Puppet::DevError, "Could not package type parameter"
+                end
+            end
+            @typeparam.newvalues(name)
+
+            # And add it to our list of types
             @modules ||= Hash.new do |hash, key|
                 if key.is_a?(String)
                     key = key.intern
@@ -332,42 +428,6 @@ module Puppet
                 end
             end
             @modules[name]
-        end
-
-        # Retrieve the default type for the current platform.
-        def self.defaulttype
-            unless defined? @defsvctype
-                @defsvctype = nil
-                os = Facter["operatingsystem"].value
-                case os
-                when "Debian":
-                    @defsvctype = self.svctype(:debian)
-                when "Solaris":
-                    release = Facter["operatingsystemrelease"].value
-                    if release.sub(/5\./,'').to_i < 10
-                        @defsvctype = self.svctype(:init)
-                    else
-                        @defsvctype = self.svctype(:smf)
-                    end
-                when "CentOS", "RedHat", "Fedora":
-                    @defsvctype = self.svctype(:redhat)
-                else
-                    if Facter["kernel"] == "Linux"
-                        Puppet.notice "Using service type %s for %s" %
-                            ["init", Facter["operatingsystem"].value]
-                        @defsvctype = self.svctype(:init)
-                    end
-                end
-
-                unless @defsvctype
-                    Puppet.info "Defaulting to base service type"
-                    @defsvctype = self.svctype(:base)
-                end
-            end
-
-            Puppet.debug "Default service type is %s" % @defsvctype.name
-
-            return @defsvctype
         end
 
         # Execute a command.  Basically just makes sure it exits with a 0

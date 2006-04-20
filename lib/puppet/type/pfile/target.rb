@@ -48,12 +48,17 @@ module Puppet
             else
                 if stat = @parent.stat
                     # If we're just checking the value
-                    if should = self.should and
-                            should != :notlink
+                    if (should = self.should) and
+                            (should != :notlink) and
                             File.exists?(should) and
-                            tstat = File.lstat(should) and
-                            tstat.ftype == "directory" and
+                            (tstat = File.lstat(should)) and
+                            (tstat.ftype == "directory") and
                             @parent.recurse?
+                        unless @parent.recurse?
+                            raise "wtf?"
+                        end
+                        warning "Changing ensure to directory; recurse is %s but %s" %
+                            [@parent[:recurse].inspect, @parent.recurse?]
                         @parent[:ensure] = :directory
                         @is = should
                         @linkmaker = true

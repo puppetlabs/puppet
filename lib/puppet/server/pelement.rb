@@ -44,6 +44,13 @@ class Server::PElementServer
             end
         end
 
+        # And get rid of any attributes that are nil
+        trans.each do |attr, value|
+            if value.nil?
+                trans.delete(attr)
+            end
+        end
+
         if @local
             return trans
         else
