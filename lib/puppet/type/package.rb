@@ -104,9 +104,6 @@ module Puppet
 
             # Alias the 'present' value.
             aliasvalue(:installed, :present)
-            #newvalue(:installed) do
-            #    self.set(:present)
-            #end
 
             newvalue(:latest) do
                 unless @parent.respond_to?(:latest)
@@ -144,6 +141,11 @@ module Puppet
                             return true
                         end
                     when :latest
+                        # Short-circuit packages that are not present
+                        if @is == :absent
+                            return false
+                        end
+
                         unless @parent.respond_to?(:latest)
                             self.fail(
                                 "Package type %s does not support specifying 'latest'" %
@@ -396,7 +398,7 @@ module Puppet
             when "centos": @default = :rpm
             when "fedora": @default = :yum
             when "redhat": @default = :rpm
-            when "freebsd": @default = :freebsd
+            when "freebsd": @default = :ports
             when "openbsd": @default = :openbsd
             when "darwin": @default = :apple
             else

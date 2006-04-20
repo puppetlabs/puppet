@@ -46,6 +46,7 @@ module Puppet
         def list
             packages = []
 
+            debug "Executing %s" % listcmd().inspect
             # list out all of the packages
             open("| #{listcmd()}") { |process|
                 # our regex for matching dpkg output
@@ -71,6 +72,13 @@ module Puppet
                     end
                 }
             }
+
+            # Mark any packages we didn't find as absent
+            Puppet.type(:package).each do |pkg|
+                unless packages.include? pkg
+                    pkg.is = [:ensure, :absent] 
+                end
+            end
 
             return packages
         end

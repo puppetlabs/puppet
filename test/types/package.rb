@@ -110,6 +110,8 @@ class TestPackages < Test::Unit::TestCase
             ]}
         when "Darwin":
             retval = {"aop" => nil}
+        when "FreeBSD":
+            retval = {"yahtzee" => nil}
         else
             Puppet.notice "No test packages for %s" % $platform
         end
@@ -199,6 +201,10 @@ class TestPackages < Test::Unit::TestCase
             comp = newcomp("package", pkg)
 
             assert_events([:package_created], comp, "package")
+
+            pkg.retrieve
+
+            assert(pkg.insync?, "Package is not in sync")
 
             # then uninstall it
             assert_nothing_raised {
