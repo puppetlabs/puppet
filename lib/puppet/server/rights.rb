@@ -4,11 +4,13 @@ require 'puppet/server/authstore'
 module Puppet
 class Server
     # Define a set of rights and who has access to them.
-    class Rights
+    class Rights < Hash
         # We basically just proxy directly to our rights.  Each Right stores
         # its own auth abilities.
         [:allow, :allowed?, :deny].each do |method|
             define_method(method) do |name, *args|
+                name = name.intern if name.is_a? String
+
                 if obj = right(name)
                     obj.send(method, *args)
                 else
@@ -17,18 +19,19 @@ class Server
             end
         end
 
-        def initialize
-            @rights = {}
+        def [](name)
+            name = name.intern if name.is_a? String
+            super(name)
         end
 
         # Define a new right to which access can be provided.
         def newright(name)
             name = name.intern if name.is_a? String
             shortname = Right.shortname(name)
-            if @rights.include? shortname
+            if self.include? name
                 raise ArgumentError, "Right '%s' is already defined" % name
             else
-                @rights[shortname] = Right.new(name, shortname)
+                self[name] = Right.new(name, shortname)
             end
         end
 
@@ -36,12 +39,15 @@ class Server
 
         # Retrieve a right by name.
         def right(name)
-            @rights[Right.shortname(name)]
+            name = name.intern if name.is_a? String
+            self[name]
         end
 
         # A right.
         class Right < AuthStore
             attr_accessor :name, :shortname
+
+            Puppet::Util.logmethods(self, true)
 
             def self.shortname(name)
                 name.to_s[0..0]
@@ -54,6 +60,15 @@ class Server
                     @shortname = Right.shortname(name)
                 end
                 super()
+            end
+
+            def to_s
+                "access[%s]" % @name
+            end
+
+            # There's no real check to do at this point
+            def valid?
+                true
             end
         end
     end

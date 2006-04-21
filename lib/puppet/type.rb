@@ -1837,8 +1837,8 @@ class Type < Puppet::Element
 
         states.each { |state|
             unless state.insync?
-                #state.debug("Not in sync: %s vs %s" %
-                #    [state.is.inspect, state.should.inspect])
+                state.debug("Not in sync: %s vs %s" %
+                    [state.is.inspect, state.should.inspect])
                 insync = false
             #else
             #    state.debug("In sync")
@@ -2197,7 +2197,7 @@ class Type < Puppet::Element
         newvalues(:verbose)
 
         munge do |loglevel|
-            val = super
+            val = super(loglevel)
             if val == :verbose
                 val = :info 
             end        

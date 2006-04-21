@@ -1,3 +1,11 @@
+0.16.0
+    Added 'tag' keyword/function.
+
+    Added FreeBSD Ports support
+
+    Added 'pelement' server for sending or receiving Puppet objects, although
+    none of the executables use it yet.
+
 0.15.3
     Fixed many bugs in :exec, including adding support for arrays of checks
 

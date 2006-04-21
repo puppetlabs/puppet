@@ -15,7 +15,7 @@ class Server
             [:name, [:hostname, :domain]]
         ]
 
-        Puppet::Util.logmethods(self, false)
+        Puppet::Util.logmethods(self, true)
 
         def allow(pattern)
             # a simple way to allow anyone at all to connect

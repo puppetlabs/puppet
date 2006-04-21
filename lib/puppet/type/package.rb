@@ -84,6 +84,7 @@ module Puppet
 
         # Autoload the package types, if they're not already defined.
         def self.pkgtype(name)
+            #name = name[0] if name.is_a? Array
             name = name.intern if name.is_a? String
             @pkgtypes ||= {}
             unless @pkgtypes.include? name
@@ -91,8 +92,9 @@ module Puppet
                     require "puppet/type/package/#{name}"
 
                     unless @pkgtypes.include? name
+                        Puppet.warning @pkgtypes.keys
                         raise Puppet::DevError,
-                            "Loaded %s but pkgtype was not created" % name
+                            "Loaded %s but pkgtype was not created" % name.inspect
                     end
                 rescue LoadError
                     raise Puppet::Error, "Could not load package type %s" % name
@@ -284,6 +286,7 @@ module Puppet
 
 
             validate do |value|
+                value = value[0] if value.is_a? Array
                 unless @parent.class.pkgtype(value)
                     raise ArgumentError, "Invalid package type '%s'" % value
                 end
@@ -291,6 +294,7 @@ module Puppet
 
 
             munge do |type|
+                type = type[0] if type.is_a? Array
                 if type.is_a? String
                     type = type.intern
                 end

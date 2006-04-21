@@ -19,6 +19,8 @@ class Puppet::Client::MasterClient < Puppet::Client
 
     @drivername = :Master
 
+    attr_accessor :objects
+
     def self.facts
         facts = {}
         Facter.each { |name,fact|
@@ -32,29 +34,20 @@ class Puppet::Client::MasterClient < Puppet::Client
         facts
     end
 
-    # This method is how the client receives the tree of Transportable
-    # objects.  For now, just descend into the tree and perform and
-    # necessary manipulations.
+    # This method actually applies the configuration.
     def apply
         dostorage()
         unless defined? @objects
             raise Puppet::Error, "Cannot apply; objects not defined"
         end
 
-        #Puppet.err :yay
-        #p @objects
-        #Puppet.err :mark
-        #@objects = @objects.to_type
         # this is a gross hack... but i don't see a good way around it
         # set all of the variables to empty
         Puppet::Transaction.init
 
-        # For now we just evaluate the top-level object, but eventually
-        # there will be schedules and such associated with each object,
-        # and probably with the container itself.
         transaction = @objects.evaluate
-        #transaction = Puppet::Transaction.new(objects)
         transaction.toplevel = true
+
         begin
             transaction.evaluate
         rescue Puppet::Error => detail

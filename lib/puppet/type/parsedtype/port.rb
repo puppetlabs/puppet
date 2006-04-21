@@ -131,13 +131,14 @@ module Puppet
 
         # Parse a services file
         #
-        # This method also stores existing comments, and it stores all host
-        # jobs in order, mostly so that comments are retained in the order
-        # they were written and in proximity to the same jobs.
+        # This method also stores existing comments, and it stores all port
+        # info in order, mostly so that comments are retained in the order
+        # they were written and in proximity to the same ports.
         def self.parse(text)
             count = 0
             hash = {}
             text.chomp.split("\n").each { |line|
+                hash.clear
                 case line
                 when /^#/, /^\s*$/:
                     # add comments and blank lines to the list as they are
@@ -185,7 +186,6 @@ module Puppet
 
                     hash2obj(hash)
 
-                    hash.clear
                     count += 1
                 end
             }

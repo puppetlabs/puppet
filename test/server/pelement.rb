@@ -15,8 +15,8 @@ class TestPElementServer < Test::Unit::TestCase
 	include ServerTest
 
     def verify_described(type, described)
-        type.clear
         described.each do |name, trans|
+            type.clear
             obj = nil
             assert_nothing_raised do
                 obj = trans.to_type
@@ -176,6 +176,11 @@ class TestPElementServer < Test::Unit::TestCase
     end
 
     def test_describe_alltypes
+        # Systems get pretty retarded, so I'm going to set the path to some fake
+        # data for ports
+        #Puppet::Type::ParsedType::Port.path = File.join($puppetbase,
+        #    "test/data/types/ports/1")
+        #Puppet.err Puppet::Type::ParsedType::Port.path
         server = nil
         assert_nothing_raised do
             server = Puppet::Server::PElement.new()
@@ -191,7 +196,7 @@ class TestPElementServer < Test::Unit::TestCase
                 Puppet.warning "%s does not respond to :list" % type.name
                 next
             end
-            #next unless type.name == :cron
+            #next unless type.name == :port
             Puppet.info "Describing each %s" % type.name
 
             # First do a listing from the server
@@ -234,6 +239,59 @@ class TestPElementServer < Test::Unit::TestCase
             # We separate these, in case the list operation creates objects
             verify_described(type, described)
         end
+    end
+
+    def test_apply
+        server = nil
+        assert_nothing_raised do
+            server = Puppet::Server::PElement.new()
+        end
+
+        file = tempfile()
+        str = "yayness\n"
+
+        File.open(file, "w") { |f| f.print str }
+
+        filetrans = nil
+        assert_nothing_raised {
+            filetrans = server.describe("file", file)
+        }
+
+        Puppet::Type.type(:file).clear
+
+        bucket = Puppet::TransBucket.new
+        bucket.type = "file"
+        bucket.push filetrans
+
+        File.unlink(file)
+        assert_nothing_raised {
+            server.apply(bucket)
+        }
+
+        assert(FileTest.exists?(file), "File did not get recreated")
+
+        # Now try it as a "nonlocal" server
+        server.local = false
+        yaml = nil
+        assert_nothing_raised {
+            yaml = CGI.escape(YAML::dump(bucket))
+        }
+
+        Puppet::Type.type(:file).clear
+        File.unlink(file)
+
+        if yaml =~ /(.{20}Loglevel.{20})/
+            Puppet.warning "YAML is broken on this machine"
+            return
+        end
+        assert_nothing_raised("Could not reload yaml") {
+            YAML::load(CGI.unescape(yaml))
+        }
+
+        assert_nothing_raised {
+            server.apply(yaml)
+        }
+        assert(FileTest.exists?(file), "File did not get recreated from YAML")
     end
 end
 

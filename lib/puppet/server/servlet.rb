@@ -34,15 +34,29 @@ class Server
         end
 
         # Verify that our client has access.  We allow untrusted access to
-        # puppetca methods but none others.
+        # puppetca methods but no others.
         def authorize(request, method)
             namespace = method.sub(/\..+/, '')
             client = request.peeraddr[2]
             ip = request.peeraddr[3]
             if request.client_cert
-                Servlet.log "Allowing %s(%s) trusted access to %s" %
-                    [client, ip, method]
-                return true
+                if @puppetserver.authconfig.exists?
+                    return @puppetserver.authconfig.allowed?(method, client, ip)
+                else
+                    # This is pretty hackish, but...
+                    # This means we can't actually test this method at this point.
+                    # The next release of Puppet will almost definitely require
+                    # this file to exist or will default to denying all access.
+                    if Puppet.name == "puppetmasterd" or defined? Test::Unit::TestCase
+                        Servlet.log "Allowing %s(%s) trusted access to %s" %
+                            [client, ip, method]
+                        return true
+                    else
+                        Servlet.log "Denying %s(%s) trusted access to %s on %s" %
+                            [client, ip, method, Puppet.name]
+                        return false
+                    end
+                end
             else
                 if method =~ /^puppetca\./
                     Puppet.notice "Allowing %s(%s) untrusted access to CA methods" %
@@ -69,8 +83,7 @@ class Server
         end
 
         def initialize(server, handlers)
-            #Puppet.info server.inspect
-            
+            @puppetserver = server
             # the servlet base class does not consume any arguments
             # and its BasicServer base class only accepts a 'class_delim'
             # option which won't change in Puppet at all

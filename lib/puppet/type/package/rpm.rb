@@ -72,6 +72,13 @@ module Puppet
                         fields.zip(match.captures) { |field,value|
                             hash[field] = value
                         }
+                        if self.is_a? Puppet::Type and type = self[:type]
+                            hash[:type] = type
+                        elsif self.is_a? Module and self.respond_to? :name
+                            hash[:type] = self.name
+                        else
+                            raise Puppet::DevError, "Cannot determine package type"
+                        end
                         packages.push Puppet.type(:package).installedpkg(hash)
                     else
                         raise "failed to match rpm line %s" % line

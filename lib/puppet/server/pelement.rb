@@ -8,9 +8,44 @@ class Server::PElement < Server::Handler
     attr_accessor :local
 
     @interface = XMLRPC::Service::Interface.new("pelementserver") { |iface|
+        iface.add_method("string apply(string, string)")
         iface.add_method("string describe(string, string, array, array)")
         iface.add_method("string list(string, array, string)")
     }
+
+    # Apply a TransBucket as a transaction.
+    def apply(bucket, format = "yaml", client = nil, clientip = nil)
+        unless @local
+            begin
+                case format
+                when "yaml":
+                    tmp = YAML::load(CGI.unescape(bucket))
+                    bucket = tmp
+                else
+                    raise Puppet::Error, "Unsupported format '%s'" % format
+                end
+            rescue => detail
+                raise Puppet::Error, "Could not load YAML TransBucket: %s" % detail
+            end
+        end
+
+        component = bucket.to_type
+
+        # Create a client, but specify the remote machine as the server
+        # because the class requires it, even though it's unused
+        client = Puppet::Client::MasterClient.new(:Server => client||"localhost")
+
+        # Set the objects
+        client.objects = component
+
+        # And then apply the configuration.  This way we're reusing all
+        # the code in there.  It should probably just be separated out, though.
+        transaction = client.apply
+
+        # It'd be nice to return some kind of report, but... at this point
+        # we have no such facility.
+        return "success"
+    end
 
     # Describe a given object.  This returns the 'is' values for every state
     # available on the object type.
@@ -58,7 +93,7 @@ class Server::PElement < Server::Handler
             str = nil
             case format
             when "yaml":
-                str = YAML.dump(trans)
+                str = CGI.escape(YAML::dump(trans))
             else
                 raise XMLRPC::FaultException.new(
                     1, "Unavailable config format %s" % format

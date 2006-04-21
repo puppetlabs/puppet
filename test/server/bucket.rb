@@ -108,9 +108,8 @@ class TestBucket < Test::Unit::TestCase
             @files = []
         end
 
-            #who bash vim sh uname /etc/passwd /etc/syslog.conf /etc/hosts 
         %w{
-            vim.ruby
+            who bash vim sh uname /etc/passwd /etc/syslog.conf /etc/hosts 
         }.each { |file|
             # if it's fully qualified, just add it
             if file =~ /^\//

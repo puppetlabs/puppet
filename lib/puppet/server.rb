@@ -27,6 +27,16 @@ module Puppet
         class Server < WEBrick::HTTPServer
             include Puppet::Daemon
 
+            # Create our config object if necessary.  This works even if
+            # there's no configuration file.
+            def authconfig
+                unless defined? @authconfig
+                    @authconfig = Puppet::Server::AuthConfig.new()
+                end
+
+                @authconfig
+            end
+
             def initialize(hash = {})
                 Puppet.info "Starting server for Puppet version %s" % Puppet.version
                 daemonize = nil
@@ -158,6 +168,7 @@ module Puppet
 end
 
 require 'puppet/server/authstore'
+require 'puppet/server/authconfig'
 require 'puppet/server/servlet'
 require 'puppet/server/master'
 require 'puppet/server/ca'
