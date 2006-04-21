@@ -45,7 +45,7 @@ class TestPElementServer < Test::Unit::TestCase
         server = nil
 
         assert_nothing_raised do
-            server = Puppet::Server::PElementServer.new()
+            server = Puppet::Server::PElement.new()
         end
 
         # The first run we create the file on the copy, the second run
@@ -125,7 +125,7 @@ class TestPElementServer < Test::Unit::TestCase
         server = nil
 
         assert_nothing_raised do
-            server = Puppet::Server::PElementServer.new()
+            server = Puppet::Server::PElement.new()
         end
 
         [   [nil],
@@ -178,7 +178,7 @@ class TestPElementServer < Test::Unit::TestCase
     def test_describe_alltypes
         server = nil
         assert_nothing_raised do
-            server = Puppet::Server::PElementServer.new()
+            server = Puppet::Server::PElement.new()
         end
 
         require 'etc'
@@ -191,7 +191,7 @@ class TestPElementServer < Test::Unit::TestCase
                 Puppet.warning "%s does not respond to :list" % type.name
                 next
             end
-            #next unless type.name == :port
+            #next unless type.name == :cron
             Puppet.info "Describing each %s" % type.name
 
             # First do a listing from the server

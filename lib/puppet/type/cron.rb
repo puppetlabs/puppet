@@ -27,7 +27,11 @@ module Puppet
                 if self.class.name == :command
                     return super
                 else
-                    return @is == @should
+                    if @is.is_a? Array
+                        return @is == @should
+                    else
+                        return @is == @should[0]
+                    end
                 end
             end
 
@@ -206,18 +210,14 @@ module Puppet
 
             defaultto { ENV["USER"] }
 
-#            validate do |user|
-#                require 'etc'
-#
-#                begin
-#                    parent.uid = Puppet::Util.uid(user)
-#                    #obj = Etc.getpwnam(user)
-#                rescue ArgumentError
-#                    self.fail "User %s not found" % user
-#                end
-#
-#                user
-#            end
+            def value=(value)
+                super
+
+                # Make sure the user is not an array
+                if @value.is_a? Array
+                    @value = @value[0]
+                end
+            end
         end
 
         @doc = "Installs and manages cron jobs.  All fields except the command 
@@ -496,7 +496,6 @@ module Puppet
 
         def create
             # nothing
-            self.info "creating"
             self.store
         end
 

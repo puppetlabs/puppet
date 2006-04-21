@@ -3,12 +3,13 @@ require 'puppet/server'
 
 module Puppet
 
-class Server::PElementServer
+# Serve Puppet elements.  Useful for querying, copying, and, um, other stuff.
+class Server::PElement < Server::Handler
     attr_accessor :local
 
-    @interface = XMLRPC::Service::Interface.new("fileserver") { |iface|
+    @interface = XMLRPC::Service::Interface.new("pelementserver") { |iface|
         iface.add_method("string describe(string, string, array, array)")
-        iface.add_method("string list(string, string, boolean, array)")
+        iface.add_method("string list(string, array, string)")
     }
 
     # Describe a given object.  This returns the 'is' values for every state
@@ -76,6 +77,7 @@ class Server::PElementServer
         end
     end
 
+    # List all of the elements of a given type.
     def list(type, ignore = [], base = nil, client = nil, clientip = nil)
         @local = true unless client
         typeklass = nil
@@ -83,15 +85,31 @@ class Server::PElementServer
             raise Puppet::Error, "Puppet type %s is unsupported" % type
         end
 
+        ignore = [ignore] unless ignore.is_a? Array
         bucket = TransBucket.new
         bucket.type = typeklass.name
 
         typeklass.list.each do |obj|
+            next if ignore.include? obj.name
+
             object = TransObject.new(obj.name, typeklass.name)
             bucket << object
         end
 
-        bucket
+        if @local
+            return bucket
+        else
+            str = nil
+            case format
+            when "yaml":
+                str = YAML.dump(bucket)
+            else
+                raise XMLRPC::FaultException.new(
+                    1, "Unavailable config format %s" % format
+                )
+            end
+            return CGI.escape(str)
+        end
     end
 
     private
