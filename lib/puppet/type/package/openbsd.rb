@@ -4,6 +4,8 @@ module Puppet
             "pkg_info -a"
         end
 
+        module_function :listcmd
+
         def install
             should = self.should(:ensure)
 
@@ -46,7 +48,11 @@ module Puppet
         def list
             packages = []
 
-            debug "Executing %s" % listcmd().inspect
+            if self.is_a? Puppet::Type
+                debug "Executing %s" % listcmd().inspect
+            else
+                Puppet.debug "Executing %s" % listcmd().inspect
+            end
             # list out all of the packages
             open("| #{listcmd()}") { |process|
                 # our regex for matching dpkg output
@@ -64,6 +70,15 @@ module Puppet
                         yup = nil
                         name = hash[:name]
                         hash[:ensure] = :present
+
+                        if self.is_a? Puppet::Type and type = self[:type]
+                            hash[:type] = type
+                        elsif self.is_a? Module and self.respond_to? :name
+                            hash[:type] = self.name
+                        else
+                            raise Puppet::DevError, "Cannot determine package type"
+                        end
+
                         pkg = Puppet.type(:package).installedpkg(hash)
                         packages << pkg
                     else

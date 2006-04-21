@@ -84,14 +84,15 @@ module Puppet
 
         # Autoload the package types, if they're not already defined.
         def self.pkgtype(name)
+            name = name.intern if name.is_a? String
             @pkgtypes ||= {}
             unless @pkgtypes.include? name
                 begin
                     require "puppet/type/package/#{name}"
 
                     unless @pkgtypes.include? name
-                        raise Puppet::DevError, "Loaded %s but pkgtype was not created" %
-                            name
+                        raise Puppet::DevError,
+                            "Loaded %s but pkgtype was not created" % name
                     end
                 rescue LoadError
                     raise Puppet::Error, "Could not load package type %s" % name
@@ -282,6 +283,13 @@ module Puppet
             defaultto { @parent.class.default }
 
 
+            validate do |value|
+                unless @parent.class.pkgtype(value)
+                    raise ArgumentError, "Invalid package type '%s'" % value
+                end
+            end
+
+
             munge do |type|
                 if type.is_a? String
                     type = type.intern
@@ -435,25 +443,25 @@ module Puppet
         end
 
         # Return a list of valid package types
-        def self.getpkglist
-            if @types.nil?
-                if @default.nil?
-                    self.init
-                end
-                @types = [@default]
-            end
-
-            list = @types.collect { |type|
-                if typeobj = Puppet::PackagingType[type]
-                    # pull all of the objects
-                    typeobj.list
-                else
-                    raise Puppet::Error, "Could not find package type '%s'" % type
-                end
-            }.flatten
-            @listed = true
-            return list
-        end
+#        def self.getpkglist
+#            if @types.nil?
+#                if @default.nil?
+#                    self.init
+#                end
+#                @types = [@default]
+#            end
+#
+#            list = @types.collect { |type|
+#                if typeobj = Puppet::PackagingType[type]
+#                    # pull all of the objects
+#                    typeobj.list
+#                else
+#                    raise Puppet::Error, "Could not find package type '%s'" % type
+#                end
+#            }.flatten
+#            @listed = true
+#            return list
+#        end
 
         # Create a new package object from listed information
         def self.installedpkg(hash)

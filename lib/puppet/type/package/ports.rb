@@ -66,6 +66,8 @@ module Puppet
             "pkg_info"
         end
 
+        module_function :listcmd
+
         def query
             list
 

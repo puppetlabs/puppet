@@ -1,6 +1,5 @@
 module Puppet
     Puppet.type(:package).newpkgtype(:yum, :rpm) do
-
         # Install a package using 'yum'.
         def install
             cmd = "yum -y install %s" % self[:name]

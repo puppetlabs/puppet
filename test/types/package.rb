@@ -165,12 +165,15 @@ class TestPackages < Test::Unit::TestCase
     end
 
     def test_specifypkgtype
+        pkg = nil
         assert_nothing_raised {
             pkg = Puppet.type(:package).create(
                 :name => "mypkg",
                 :type => "yum"
             )
         }
+        assert(pkg, "Did not create package")
+        assert_equal(:yum, pkg[:type])
     end
 
     def test_latestpkg
