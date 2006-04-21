@@ -4,14 +4,13 @@
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 0.15.3
-Release: 2%{?dist}
+Version: 0.16.0
+Release: 1%{?dist}
 License: GPL
 Group: System Environment/Base
 
 URL: http://reductivelabs.com/projects/puppet/
 Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
-Patch0: no-chuser-0.15.1.patch
 
 Requires: ruby >= 1.8.1
 Requires: facter >= 1.1
@@ -38,7 +37,6 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
-%patch0 -p1
 
 %install
 %{__rm} -rf %{buildroot}
