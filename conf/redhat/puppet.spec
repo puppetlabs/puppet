@@ -67,7 +67,6 @@ find %{buildroot}%{rubylibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__ch
 %{_bindir}/puppet
 %{_sbindir}/puppetd
 %{rubylibdir}/*
-%{_localstatedir}/puppet
 %{_initrddir}/puppet
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppetd.conf
@@ -78,8 +77,10 @@ find %{buildroot}%{rubylibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__ch
 # write to them
 %attr(-, puppet, puppet) %{_localstatedir}/run/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/log/puppet
+%attr(-, puppet, puppet) %{_localstatedir}/puppet
 
 %files server
+%defattr(-, root, root, 0755)
 %{_sbindir}/puppetmasterd
 %{_initrddir}/puppetmaster
 %config(noreplace) %{_sysconfdir}/puppet/*
@@ -120,6 +121,11 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Fri Apr 21 2006 David Lutterkort <dlutter@redhat.com> - 0.16.0-1
+- Fix default file permissions in server subpackage
+- Run puppetmaster as user puppet
+- rebuilt for 0.16.0
+
 * Mon Apr 17 2006 David Lutterkort <dlutter@redhat.com> - 0.15.3-2
 - Don't create empty log files in post-install scriptlet
 
@@ -127,7 +133,8 @@ fi
 - Rebuilt for new version
 
 * Wed Mar 22 2006 David Lutterkort <dlutter@redhat.com> - 0.15.1-1
-- Patch0: Run puppetmaster as root; running as puppet is not ready for primetime
+- Patch0: Run puppetmaster as root; running as puppet is not ready 
+  for primetime
 
 * Mon Mar 13 2006 David Lutterkort <dlutter@redhat.com> - 0.15.0-1
 - Commented out noarch; requires fix for bz184199
