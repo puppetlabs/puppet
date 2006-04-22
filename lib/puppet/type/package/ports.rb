@@ -13,7 +13,12 @@ module Puppet
             cmd = "/usr/local/sbin/portupgrade -p -N -P #{self[:name]}"
 
             self.debug "Executing %s" % cmd.inspect
-            output = %x{#{cmd} 2>&1}
+            output = %x{#{cmd} 2>&1 1>/dev/null}
+
+            if output =~ /\*\* No such /
+                raise Puppet::PackageError, "Could not find package %s" % self[:name]
+            end
+            #output = %x{#{cmd} 2>&1}
 
             unless $? == 0
                 raise Puppet::PackageError.new(output)

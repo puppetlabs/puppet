@@ -150,7 +150,8 @@ class TestPackages < Test::Unit::TestCase
         obj = nil
         assert_nothing_raised {
             obj = Puppet.type(:package).create(
-                :name => "thispackagedoesnotexist"
+                :name => "thispackagedoesnotexist",
+                :ensure => :installed
             )
         }
 
@@ -162,6 +163,13 @@ class TestPackages < Test::Unit::TestCase
 
         assert_equal(:absent, obj.is(:ensure),
             "Somehow retrieved unknown pkg's version")
+
+        state = obj.state(:ensure)
+        assert(state, "Could not retrieve ensure state")
+        assert_raise(Puppet::PackageError,
+            "Successfully installed nonexistent package") {
+            state.sync
+        }
     end
 
     def test_specifypkgtype
