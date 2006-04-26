@@ -97,6 +97,20 @@ module Functions
             return true
         end
     end
+
+    # Test whether a given class or definition is defined
+    newfunction(:defined, :rvalue) do |vals|
+        retval = true
+
+        vals.each do |val|
+            unless builtintype?(val) or lookuptype(val)
+                retval = false
+                break
+            end
+        end
+
+        return retval
+    end
 end
 end
 

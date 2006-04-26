@@ -622,4 +622,41 @@ class TestScope < Test::Unit::TestCase
         assert(scope.function_tagged("two"),
             "tagged function incorrectly returned false")
     end
+
+    def test_definedfunction
+        scope = Puppet::Parser::Scope.new()
+
+        one = tempfile()
+        two = tempfile()
+
+        children = []
+
+        children << classobj("one", :code => AST::ASTArray.new(
+            :children => [
+                fileobj(one, "owner" => "root")
+            ]
+        ))
+
+        children << classobj("two", :code => AST::ASTArray.new(
+            :children => [
+                fileobj(two, "owner" => "root")
+            ]
+        ))
+
+        top = AST::ASTArray.new(:children => children)
+
+        top.evaluate(:scope => scope)
+
+        assert_nothing_raised {
+            %w{one two file user}.each do |type|
+                assert(scope.function_defined([type]),
+                    "Class #{type} was not considered defined")
+            end
+
+            assert(!scope.function_defined(["nopeness"]),
+                "Class 'nopeness' was incorrectly considered defined")
+        }
+
+
+    end
 end
