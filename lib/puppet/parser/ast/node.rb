@@ -36,12 +36,13 @@ class Puppet::Parser::AST
             # already been defined at this top-level scope.
             #super(scope, facts, @name, @name)
 
+            # Mark our node name as a class, too, but strip it of the domain
+            # name.  Make the mark before we evaluate the code, so that it is
+            # marked within the code itself.
+            scope.setclass(self.object_id, @type.sub(/\..+/, ''))
+
             # And then evaluate our code.
             @code.safeevaluate(:scope => scope)
-
-            # Mark our node name as a class, too, but strip it of the domain
-            # name.
-            scope.setclass(self.object_id, @type.sub(/\..+/, ''))
 
             return scope
         end

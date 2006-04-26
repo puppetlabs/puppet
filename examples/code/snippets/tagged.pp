@@ -3,6 +3,16 @@
 tag testing
 tag(funtest)
 
+define tagdefine {
+    $path = tagged(tagdefine) ? {
+        true => "true", false => "false"
+    }
+
+    file { "/tmp/taggeddefine$path": ensure => file }
+}
+
+tagdefine {}
+
 $yayness = tagged(yayness) ? {
     true => "true", false => "false"
 }

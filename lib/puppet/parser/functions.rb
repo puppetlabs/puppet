@@ -91,11 +91,15 @@ module Functions
     newfunction(:tagged, :rvalue) do |vals|
         classlist = self.classlist
 
-        if vals.find do |val| ! classlist.include?(val) end
-            return false
-        else
-            return true
+        retval = true
+        vals.each do |val|
+            unless classlist.include?(val) or self.tags.include?(val)
+                retval = false
+                break
+            end
         end
+
+        return retval
     end
 
     # Test whether a given class or definition is defined

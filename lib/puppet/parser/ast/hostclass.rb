@@ -20,6 +20,10 @@ class Puppet::Parser::AST
                 return nil
             end
 
+            # Set the class before we do anything else, so that it's set
+            # during the evaluation and can be inspected.
+            scope.setclass(self.object_id, @type)
+
             # Default to creating a new context
             newcontext = true
             if parentscope = self.evalparent(
@@ -45,10 +49,6 @@ class Puppet::Parser::AST
                 :name => objname,
                 :newcontext => newcontext
             )
-
-            # Set the mark after we evaluate, so we don't record it but
-            # then encounter an error
-            scope.setclass(self.object_id, @type)
             return retval
         end
 

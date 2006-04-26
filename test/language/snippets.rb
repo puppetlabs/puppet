@@ -436,7 +436,7 @@ class TestSnippets < Test::Unit::TestCase
     # Make sure that set tags are correctly in place, yo.
     def snippet_tagged(trans)
         tags = {"testing" => true, "yayness" => false,
-            "both" => false, "bothtrue" => true}
+            "both" => false, "bothtrue" => true, "define" => true}
 
         tags.each do |tag, retval|
             @@tmpfiles << "/tmp/tagged#{tag}true"
