@@ -109,7 +109,6 @@ class State < Puppet::Parameter
             when :present: (@parent.class.name.to_s + "_created").intern
             when :absent: (@parent.class.name.to_s + "_removed").intern
             else
-                warning self.should.inspect
                 (@parent.class.name.to_s + "_changed").intern
             end
 
