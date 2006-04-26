@@ -103,7 +103,12 @@ module Puppet
             if hash.include?(sumtype)
                 #self.notice "Found checksum %s for %s" %
                 #    [hash[sumtype] ,@parent[:path]]
-                return hash[sumtype]
+                sum = hash[sumtype]
+
+                unless sum =~ /^\{\w+\}/
+                    sum = "{%s}%s" % [sumtype, sum]
+                end
+                return sum
             elsif hash.empty?
                 #self.notice "Could not find sum of type %s" % sumtype
                 return :nosum
