@@ -147,6 +147,13 @@ class TestCA < Test::Unit::TestCase
         assert_nothing_raised {
             OpenSSL::X509::Certificate.new(newtext)
         }
+
+        # Now verify that we can clean a given host's certs
+        assert_nothing_raised {
+            ca.clean("anothertest.domain.com")
+        }
+
+        assert(!File.exists?(cert.certfile), "Cert still exists after clean")
     end
 
     # and now test the autosign file

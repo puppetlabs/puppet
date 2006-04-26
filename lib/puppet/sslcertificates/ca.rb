@@ -70,6 +70,26 @@ class Puppet::SSLCertificates::CA
         @config[:cacert]
     end
 
+    # Remove all traces of a given host.  This is kind of hackish, but, eh.
+    def clean(host)
+        [:csrdir, :signeddir, :publickeydir, :privatekeydir, :certdir].each do |name|
+            dir = Puppet[name]
+
+            file = File.join(dir, host + ".pem")
+
+            if FileTest.exists?(file)
+                begin
+                    puts "Removing %s" % file
+                    File.unlink(file)
+                rescue => detail
+                    raise Puppet::Error, "Could not delete %s: %s" %
+                        [file, detail]
+                end
+            end
+            
+        end
+    end
+
     def host2csrfile(hostname)
         File.join(Puppet[:csrdir], [hostname, "pem"].join("."))
     end

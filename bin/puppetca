@@ -10,6 +10,7 @@
 #
 #   puppetca [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
 #               [-g|--generate] [-l|--list] [-s|--sign]
+#               [-c|--clean] [host]
 #
 # = Description
 #
@@ -28,6 +29,9 @@
 #
 # all::
 #   Operate on all outstanding requests.  Only makes sense with '--sign'.
+#
+# clean::
+#    Remove all traces of a host.  This is useful when rebuilding hosts.
 #
 # debug::
 #   Enable full debugging.
@@ -78,6 +82,7 @@ end
 
 options = [
 	[ "--all",	    "-a",			GetoptLong::NO_ARGUMENT ],
+	[ "--clean",    "-c",			GetoptLong::NO_ARGUMENT ],
 	[ "--debug",    "-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--generate", "-g",  			GetoptLong::NO_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
@@ -100,6 +105,8 @@ begin
         case opt
             when "--all"
                 all = true
+            when "--clean"
+                mode = :clean
             when "--debug"
                 Puppet::Log.level = :debug
             when "--generate"
@@ -150,15 +157,23 @@ unless mode
     exit(12)
 end
 
-hosts = ca.list
-unless hosts.length > 0 or mode == :generate
-    Puppet.info "No waiting requests"
-    exit(0)
+if mode == :generate or mode == :clean
+    hosts = ARGV
+else
+    hosts = ca.list
+    unless hosts.length > 0
+        puts "No certificates to sign"
+        exit(0)
+    end
 end
 
 case mode
 when :list
     puts hosts.join("\n")
+when :clean
+    hosts.each do |host|
+        ca.clean(host)
+    end
 when :sign
     unless ARGV.length > 0 or all
         $stderr.puts(
@@ -200,11 +215,7 @@ when :sign
     }
 when :generate
     # we need to generate a certificate for a host
-    unless ARGV.length > 0
-        $stderr.puts "You must specify hosts to generate certs for"
-        exit(84)
-    end
-    ARGV.each { |host|
+    hosts.each { |host|
         puts "Generating certificate for %s" % host
         cert = Puppet::SSLCertificates::Certificate.new(
             :name => host
