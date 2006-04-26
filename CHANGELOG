@@ -1,3 +1,17 @@
+0.16.2
+    Modified some of the AST classes so that class names, definition names, and
+    node names are all set within the code being evaluated, so 'tagged(name)' returns
+    true while evaluating 'name', for instance.
+
+    Added '--clean' argument to puppetca to remove all traces of a given
+    client.
+
+0.16.1
+    Added 'tagged' and 'defined' functions.
+
+    Moved all functions to a general framework that makes it very easy to add new
+    functions.
+
 0.16.0
     Added 'tag' keyword/function.
 

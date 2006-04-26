@@ -82,7 +82,7 @@ class TestPuppetCA < Test::Unit::TestCase
             output = runca("--list").chomp.split("\n")
         }
         assert_equal($?,0)
-        assert_equal([], output)
+        assert_equal(["No certificates to sign"], output)
     end
 end
 
