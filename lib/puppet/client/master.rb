@@ -2,7 +2,9 @@
 require 'sync'
 
 class Puppet::Client::MasterClient < Puppet::Client
-    @@sync = Sync.new
+    unless defined? @@sync
+        @@sync = Sync.new
+    end
 
     Puppet.setdefaults("puppetd",
         :puppetdlockfile => [ "$statedir/puppetdlock",

@@ -563,4 +563,63 @@ class TestScope < Test::Unit::TestCase
         end
 
     end
+
+    def test_tagfunction
+        scope = Puppet::Parser::Scope.new()
+        
+        assert_nothing_raised {
+            scope.function_tag(["yayness", "booness"])
+        }
+
+        assert(scope.classlist.include?("yayness"), "tag 'yayness' did not get set")
+        assert(scope.classlist.include?("booness"), "tag 'booness' did not get set")
+
+        # Now verify that the 'tagged' function works correctly
+        assert(scope.function_tagged("yayness"),
+            "tagged function incorrectly returned false")
+        assert(scope.function_tagged("booness"),
+            "tagged function incorrectly returned false")
+
+        assert(! scope.function_tagged("funtest"),
+            "tagged function incorrectly returned true")
+    end
+
+    def test_includefunction
+        scope = Puppet::Parser::Scope.new()
+
+        one = tempfile()
+        two = tempfile()
+
+        children = []
+
+        children << classobj("one", :code => AST::ASTArray.new(
+            :children => [
+                fileobj(one, "owner" => "root")
+            ]
+        ))
+
+        children << classobj("two", :code => AST::ASTArray.new(
+            :children => [
+                fileobj(two, "owner" => "root")
+            ]
+        ))
+
+        top = AST::ASTArray.new(:children => children)
+
+        top.evaluate(:scope => scope)
+
+        assert_nothing_raised {
+            scope.function_include(["one", "two"])
+        }
+
+
+        assert(scope.classlist.include?("one"), "tag 'one' did not get set")
+        assert(scope.classlist.include?("two"), "tag 'two' did not get set")
+
+        # Now verify that the 'tagged' function works correctly
+        assert(scope.function_tagged("one"),
+            "tagged function incorrectly returned false")
+        assert(scope.function_tagged("two"),
+            "tagged function incorrectly returned false")
+    end
 end

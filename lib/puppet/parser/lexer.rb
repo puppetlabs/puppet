@@ -51,10 +51,8 @@ module Puppet
                 "define" => :DEFINE,
                 "false" => :BOOLEAN,
                 "import" => :IMPORT,
-                "include" => :INCLUDE,
                 "inherits" => :INHERITS,
                 "node" => :NODE,
-                "tag" => :TAG,
                 "true" => :BOOLEAN
             }
 
@@ -167,6 +165,9 @@ module Puppet
                         if @@keywords.include?(value)
                             wtoken = @@keywords[value]
                             #Puppet.debug("token '%s'" % wtoken)
+                        elsif Puppet::Parser::Functions.function(value)
+                            # We consider all of the function names to be keywords.
+                            wtoken = :FUNCTION
                         end
                         yield [wtoken,value]
                         @last = value

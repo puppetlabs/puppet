@@ -433,6 +433,20 @@ class TestSnippets < Test::Unit::TestCase
         @@tmpfiles << "/tmp/settestingness"
     end
 
+    # Make sure that set tags are correctly in place, yo.
+    def snippet_tagged(trans)
+        tags = {"testing" => true, "yayness" => false,
+            "both" => false, "bothtrue" => true}
+
+        tags.each do |tag, retval|
+            @@tmpfiles << "/tmp/tagged#{tag}true"
+            @@tmpfiles << "/tmp/tagged#{tag}false"
+
+            assert(FileTest.exists?("/tmp/tagged#{tag}#{retval.to_s}"),
+                "'tagged' did not return %s with %s" % [retval, tag])
+        end
+    end
+
     def snippet_emptyclass(trans)
         # There's nothing to check other than that it works
     end

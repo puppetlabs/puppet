@@ -147,5 +147,6 @@ require 'puppet/parser/ast/selector'
 require 'puppet/parser/ast/typedefaults'
 require 'puppet/parser/ast/vardef'
 require 'puppet/parser/ast/tag'
+require 'puppet/parser/ast/function'
 
 # $Id$

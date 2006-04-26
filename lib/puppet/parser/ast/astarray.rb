@@ -22,20 +22,29 @@ class Puppet::Parser::AST
             # do we need to evaluate the settor-like statements first.  This
             # is basically variable and type-default declarations.
             if scope.declarative?
-                test = [
-                    AST::VarDef, AST::TypeDefaults
+                # This is such a stupid hack.  I've no real idea how to make a
+                # "real" declarative language, so I hack it so it looks like
+                # one, yay.
+                definelist = [
+                    AST::CompDef, AST::NodeDef, AST::ClassDef
+                ]
+                setlist = [
+                    AST::VarDef, AST::TypeDefaults, AST::Function
                 ]
 
+                definers = []
                 settors = []
                 others = []
                 @children.each { |child|
-                    if test.include?(child.class)
-                        settors.push child
+                    if definelist.include?(child.class)
+                        definers << child
+                    elsif setlist.include?(child.class)
+                        settors << child
                     else
-                        others.push child
+                        others << child
                     end
                 }
-                rets = [settors,others].flatten.collect { |child|
+                rets = [definers, settors, others].flatten.collect { |child|
                     child.safeevaluate(:scope => scope)
                 }
             else

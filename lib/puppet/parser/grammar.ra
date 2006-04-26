@@ -7,7 +7,7 @@ class Puppet::Parser::Parser
 token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE FALSE EQUALS
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL NOTEQUAL
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN DOT COLON TYPE
-token NAME SEMIC CASE DEFAULT INCLUDE TAG
+token NAME SEMIC CASE DEFAULT INCLUDE TAG FUNCTION
 
 # We have 2 shift/reduce conflicts
 expect 2
@@ -22,21 +22,6 @@ program:    statements {
             :children => [val[0]]
         )
     end
-
-    # this is mainly so we can test the parser separately from the
-    # interpreter
-#    if Puppet[:parseonly]
-#        begin
-#            if Puppet[:debug]
-#                puts result.tree(0)
-#            end
-#        rescue NoMethodError => detail
-#            Puppet.err detail
-#            #exit(78)
-#        end
-#        #require 'puppet/parser/interpreter'
-#        #result = Puppet::Server.new(result)
-#    end
 }
 
 statements: statement
@@ -53,53 +38,48 @@ statements: statement
     end
 }
 
-#| selector
+# The main list of valid statements
 statement:    object
             | assignment
             | casestatement
             | import
-            | include
-            | tag
+            | fstatement
             | definition
             | hostclass
             | nodedef
 
+fstatement:   FUNCTION LPAREN classnames RPAREN {
+    args = aryfy(val[2])
+    result = AST::Function.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :name => val[0],
+        :arguments => args,
+        :ftype => :statement
+    )
+}
+            | FUNCTION classnames {
+    args = aryfy(val[1])
+    result = AST::Function.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :name => val[0],
+        :arguments => args,
+        :ftype => :statement
+    )
+}
+
 # Includes are just syntactic sugar for classes with no names and
-# no 
-include:    INCLUDE classnames {
-    classnames = aryfy(val[1])
+# no arguments.
+#include:    INCLUDE classnames {
+#    result = function_include(val[1])
+#}
 
-    klasses = []
-    
-    # Now just iterate over each of the class names and create a new
-    # object instance.  FIXME This should probably eventually include
-    # some kind of checking that the asked-for class is a defined class.
-    classnames.each { |classname|
-        emptyary = AST::ASTArray.new(:children => [])
-        klasses << AST::ObjectDef.new(
-            :pin => "{}",
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :type => classname,
-            :params => emptyary
-        )
-    }
-    result = AST::ASTArray.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :children => klasses
-    )
-}
-
-tag:        TAG classnames {
-    classnames = aryfy(val[1])
-
-    result = AST::Tag.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :type => val[1]
-    )
-}
+# Define a new tag.  Both of these functions should really be done generically,
+# but I'm not in a position to do that just yet. :/
+#tag:        TAG classnames {
+#    result = function_tag(val[1])
+#}
 
 classnames:       classname
                 | classnames COMMA classname {
@@ -291,6 +271,19 @@ rvalue:       quotedtext
             | variable
             | array
             | objectref
+            | funcrvalue
+
+# We currently require arguments in these functions.
+funcrvalue:   FUNCTION LPAREN classnames RPAREN {
+    args = aryfy(val[2])
+    result = AST::Function.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :name => val[0],
+        :arguments => args,
+        :ftype => :rvalue
+    )
+}
 
 quotedtext: DQTEXT {
     result = AST::String.new(
@@ -428,22 +421,12 @@ selectval:        selectlhand FARROW rvalue {
     )
 }
 
-selectlhand:  NAME {
-    result = AST::String.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
-}
-            | TYPE {
-    result = AST::String.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
-}
+selectlhand:  name
+            | type
             | quotedtext
             | variable
+            | funcrvalue
+            | boolean
             | DEFAULT {
     result = AST::Default.new(
         :line => @lexer.line,
@@ -451,7 +434,6 @@ selectlhand:  NAME {
         :value => val[0]
     )
 }
-            | boolean
 
 import: IMPORT quotedtext {
     # importing files
@@ -742,6 +724,8 @@ Puppet[:typecheck] = true
 Puppet[:paramcheck] = true
 
 ---- inner ----
+require 'puppet/parser/functions'
+
 attr_reader :file
 attr_accessor :files
 
