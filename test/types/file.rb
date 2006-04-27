@@ -1077,6 +1077,45 @@ class TestFile < Test::Unit::TestCase
         assert(FileTest.symlink?(link), "Did not make link")
         assert_equal(File.join(source, "file"), File.readlink(link))
     end
+
+    def test_backupmodes
+        file = tempfile()
+        newfile = tempfile()
+
+        File.open(file, "w", 0411) { |f| f.puts "yayness" }
+
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet::Type.type(:file).create(
+                :path => file, :content => "rahness\n"
+            )
+        }
+
+        assert_apply(obj)
+
+        backupfile = file + obj[:backup]
+        @@tmpfiles << backupfile
+        assert(FileTest.exists?(backupfile),
+            "Backup file %s does not exist" % backupfile)
+
+        assert_equal(0411, filemode(backupfile),
+            "File mode is wrong for backupfile")
+
+        bucket = "bucket"
+        bpath = tempfile()
+        Dir.mkdir(bpath)
+        Puppet::Type.type(:filebucket).create(
+            :name => bucket, :path => bpath
+        )
+
+        obj[:backup] = bucket
+        obj[:content] = "New content"
+        assert_apply(obj)
+
+        bucketedpath = File.join(bpath, "18cc17fa3047fcc691fdf49c0a7f539a", "contents")
+
+        assert_equal(0440, filemode(bucketedpath))
+    end
 end
 
 # $Id$

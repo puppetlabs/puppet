@@ -263,91 +263,6 @@ class TestFileSources < Test::Unit::TestCase
         return file
     end
 
-    # test raw xmlrpc calls
-    # this test is disabled because it requires way too much setup to get
-    # the certificates correct
-    def disabled_test_SimpleNetworkSources
-        server = nil
-        basedir = tempfile()
-        @@tmpfiles << basedir
-
-        mounts = {
-            "/" => "root"
-        }
-
-        fileserverconf = mkfileserverconf(mounts)
-
-        if File.exists?(basedir)
-            system("rm -rf %s" % basedir)
-        end
-        Dir.mkdir(basedir)
-
-        Puppet[:confdir] = basedir
-        Puppet[:vardir] = basedir
-        Puppet[:autosign] = true
-
-        tmpname = "yaytesting"
-        tmpfile = File.join(basedir, tmpname)
-        File.open(tmpfile, "w") { |f| f.print rand(100) }
-
-        port = 8765
-        serverpid = nil
-        assert_nothing_raised() {
-            server = Puppet::Server.new(
-                :Port => port,
-                :Handlers => {
-                    :CA => {}, # so that certs autogenerate
-                    :FileServer => {
-                        :Config => fileserverconf
-                    }
-                }
-            )
-
-        }
-        serverpid = fork {
-            assert_nothing_raised() {
-                #trap(:INT) { server.shutdown; Kernel.exit! }
-                trap(:INT) { server.shutdown }
-                server.start
-            }
-        }
-        @@tmppids << serverpid
-
-        client = nil
-        assert_nothing_raised() {
-            client = XMLRPC::Client.new("localhost", "/RPC2", port, nil, nil,
-                nil, nil, true, 3)
-        }
-        retval = nil
-
-        sleep(1)
-
-        list = nil
-        rpath = "/root%s" % tmpfile
-        assert_nothing_raised {
-            list = client.call("fileserver.list", rpath, :skip, false, false)
-        }
-
-        assert_equal("/\tfile", list)
-
-        assert_nothing_raised {
-            list = client.call("fileserver.describe", rpath, :skip)
-        }
-
-        assert_match(/^\d+\tfile\t\d+\t\d+\t.+$/, list)
-
-        assert_nothing_raised {
-            list = client.call("fileserver.retrieve", rpath, :skip)
-        }
-
-        contents = File.read(tmpfile)
-        assert_equal(contents, CGI.unescape(list))
-
-        assert_nothing_raised {
-            system("kill -INT %s" % serverpid)
-        }
-    end
-
     def test_NetworkSources
         server = nil
         basedir = tempfile()
@@ -632,9 +547,39 @@ class TestFileSources < Test::Unit::TestCase
             trans = comp.evaluate
             trans.evaluate
         }
-        #assert(FileTest.symlink?(dest), "Destination is not a symlink")
-        #assert_equal(File.readlink(link), File.readlink(dest),
-        #    "Link did not copy correctly")
+    end
+
+    def test_changes
+        source = tempfile()
+        dest = tempfile()
+
+        File.open(source, "w") { |f| f.puts "yay" }
+
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet.type(:file).create(
+                :name => dest,
+                :source => source
+            )
+        }
+
+        assert_events([:file_created], obj)
+        assert_equal(File.read(source), File.read(dest), "Files are not equal")
+        assert_events([], obj)
+
+        File.open(source, "w") { |f| f.puts "boo" }
+
+        assert_events([:file_changed], obj)
+        assert_equal(File.read(source), File.read(dest), "Files are not equal")
+        assert_events([], obj)
+
+        File.open(dest, "w") { |f| f.puts "kaboom" }
+
+        # There are two changes, because first the checksum is noticed, and
+        # then the source causes a change
+        assert_events([:file_changed, :file_changed], obj)
+        assert_equal(File.read(source), File.read(dest), "Files are not equal")
+        assert_events([], obj)
     end
 end
 

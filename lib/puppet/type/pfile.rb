@@ -271,8 +271,7 @@ module Puppet
                         end
                     end
                     begin
-                        FileUtils.cp(file,
-                            file + backup)
+                        FileUtils.cp(file, file + backup)
                         return true
                     rescue => detail
                         # since they said they want a backup, let's error out

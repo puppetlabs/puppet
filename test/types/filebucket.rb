@@ -68,7 +68,8 @@ class TestFileBucket < Test::Unit::TestCase
 
     def test_simplebucket
         name = "yayness"
-        mkbucket(name, tempfile())
+        bucketpath = tempfile()
+        mkbucket(name, bucketpath)
 
         bucket = nil
         assert_nothing_raised {
@@ -86,6 +87,9 @@ class TestFileBucket < Test::Unit::TestCase
         }
 
         assert(md5)
+
+        assert(FileTest.directory?(File.join(bucketpath, md5)),
+            "MD5 directory does not exist")
 
         newmd5 = nil
 

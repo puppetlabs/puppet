@@ -16,7 +16,7 @@ class Server
         Puppet.config.setdefaults("filebucket",
             :bucketdir => {
                 :default => "$vardir/bucket",
-                :mode => 0770,
+                :mode => 0750,
                 :owner => "$user",
                 :group => "$group",
                 :desc => "Where FileBucket files are stored."
@@ -28,7 +28,7 @@ class Server
         }
 
         Puppet::Util.logmethods(self, true)
-        attr_reader :name
+        attr_reader :name, :path
 
         # this doesn't work for relative paths
         def FileBucket.paths(base,md5)
@@ -48,19 +48,19 @@ class Server
             end
 
             if hash.include?(:Path)
-                @bucket = hash[:Path]
+                @path = hash[:Path]
                 hash.delete(:Path)
             else
                 if defined? Puppet
-                    @bucket = Puppet[:bucketdir]
+                    @path = Puppet[:bucketdir]
                 else
-                    @bucket = File.expand_path("~/.filebucket")
+                    @path = File.expand_path("~/.filebucket")
                 end
             end
 
             Puppet.config.use(:filebucket)
 
-            @name = "filebucket[#{Puppet[:bucketdir]}]"
+            @name = "filebucket[#{@path}]"
         end
 
         # accept a file from a client
@@ -68,7 +68,7 @@ class Server
             contents = Base64.decode64(string)
             md5 = Digest::MD5.hexdigest(contents)
 
-            bpath, bfile, pathpath = FileBucket.paths(@bucket,md5)
+            bpath, bfile, pathpath = FileBucket.paths(@path,md5)
 
             # if it's a new directory...
             if Puppet.recmkdir(bpath)
@@ -131,7 +131,7 @@ class Server
         end
 
         def getfile(md5, client = nil, clientip = nil)
-            bpath, bfile, bpaths = FileBucket.paths(@bucket,md5)
+            bpath, bfile, bpaths = FileBucket.paths(@path,md5)
 
             unless FileTest.exists?(bfile)
                 return false

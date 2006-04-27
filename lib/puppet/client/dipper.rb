@@ -10,7 +10,7 @@ module Puppet
             def initialize(hash = {})
                 if hash.include?(:Path)
                     bucket = Puppet::Server::FileBucket.new(
-                        :Bucket => hash[:Path]
+                        :Path => hash[:Path]
                     )
                     hash.delete(:Path)
                     hash[:Bucket] = bucket

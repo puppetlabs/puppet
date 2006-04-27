@@ -2,8 +2,6 @@ require 'puppet/server/filebucket'
 
 module Puppet
     newtype(:filebucket) do
-        attr_reader :bucket
-
         @doc = "A repository for backing up files.  If no filebucket is
             defined, then files will be backed up in their current directory,
             but the filebucket can be either a host- or site-global repository
@@ -42,6 +40,8 @@ module Puppet
             desc "The path to the local filebucket.  If this is
                 not specified, then the bucket is remote and *server* must be
                 specified."
+
+            defaultto { Puppet[:bucketdir] }
         end
 
         # get the actual filebucket object
@@ -57,9 +57,15 @@ module Puppet
             self.collect do |obj| obj.name end
         end
 
-        def initialize(hash)
-            super
+        def bucket
+            unless defined? @bucket
+                mkbucket()
+            end
 
+            @bucket
+        end
+
+        def mkbucket
             if self[:server]
                 begin
                     @bucket = Puppet::Client::Dipper.new( 
