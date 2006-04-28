@@ -11,7 +11,7 @@
 #   puppetd  [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
 #               [-l|--logdest <syslog|<file>|console>] [--fqdn <host name>]
 #               [-o|--onetime] [-w|--waitforcert <seconds>] [-t|--test]
-#               [--disable] [--enable]
+#               [--disable] [--enable] [--listen]
 #
 # = Description
 #
@@ -64,6 +64,12 @@
 #   Set the fully-qualified domain name of the client.  This is only used for
 #   certificate purposes, but can be used to override the discovered hostname.
 #   If you need to use this flag, it is generally an indication of a setup problem.
+#
+# listen::
+#   Start a local listening server.  This allows you to remotely manage
+#   puppet nodes over XMLRPC.  The client will fail to start if the
+#   authorization config file (defaults to /etc/puppetd/namespaceauth.conf)
+#   does not exist.
 #
 # help::
 #   Print this help message
@@ -127,6 +133,8 @@ options = [
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--onetime",  "-o",			GetoptLong::NO_ARGUMENT ],
 	[ "--test",	    "-t",			GetoptLong::NO_ARGUMENT ],
+	[ "--no-client",       			GetoptLong::NO_ARGUMENT ],
+	[ "--listen",       			GetoptLong::NO_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
 	[ "--version",	"-V",			GetoptLong::NO_ARGUMENT ],
 	[ "--waitforcert",	"-w",		GetoptLong::REQUIRED_ARGUMENT ]
@@ -137,20 +145,19 @@ Puppet.config.addargs(options)
 
 result = GetoptLong.new(*options)
 
-server = "puppet"
-fqdn = nil
 args = {}
 
-waitforcert = false
-
-onetime = false
-
-centrallogs = false
-
-setdest = false
-
-enable = false
-disable = false
+options = {
+    :waitforcert => 300,  # Default to checking for certs every 5 minutes
+    :onetime => false,
+    :centrallogs => false,
+    :setdest => false,
+    :enable => false,
+    :disable => false,
+    :listen => false,
+    :client => true,
+    :fqdn => nil
+}
 
 begin
     result.each { |opt,arg|
@@ -158,19 +165,21 @@ begin
             # First check to see if the argument is a valid configuration parameter;
             # if so, set it.
             when "--disable"
-                disable = true
+                options[:disable] = true
             when "--enable"
-                enable = true
+                options[:enable] = true
             when "--test"
                 # Enable all of the most common test options.
                 Puppet.config.handlearg("--no-usecacheonfailure")
-                onetime = true
+                options[:onetime] = true
                 unless Puppet::Log.level == :debug
                     Puppet::Log.level = :info
                 end
                 Puppet::Log.newdestination(:console)
             when "--centrallogging"
-                centrallogs = true
+                options[:centrallogs] = true
+            when "--listen"
+                options[:listen] = true
             when "--help"
                 if $haveusage
                     RDoc::usage && exit
@@ -188,20 +197,22 @@ begin
                 Puppet::Log.level = :debug
                 Puppet::Log.newdestination(:console)
             when "--fqdn"
-                fqdn = arg
+                options[:fqdn] = arg
+            when "--no-client"
+                options[:client] = false
             when "--onetime"
-                onetime = true
+                options[:onetime] = true
             when "--port"
                 args[:Port] = arg
             when "--logdest"
                 begin
                     Puppet::Log.newdestination(arg)
-                    setdest = true
+                    options[:setdest] = true
                 rescue => detail
                     $stderr.puts detail.to_s
                 end
             when "--waitforcert"
-                waitforcert = arg.to_i
+                options[:waitforcert] = arg.to_i
             else
                 Puppet.config.handlearg(opt, arg)
         end
@@ -230,16 +241,16 @@ else
     args[:Daemonize] = true
 end
 
-unless setdest
+unless options[:setdest]
     Puppet::Log.newdestination(:syslog)
 end
 
 args[:Server] = Puppet[:server]
-if fqdn
+if options[:fqdn]
     args[:FQDN] = fqdn
 end
 
-if centrallogs
+if options[:centrallogs]
     logdest = args[:Server]
 
     if args.include?(:Port)
@@ -248,18 +259,20 @@ if centrallogs
     Puppet::Log.newdestination(logdest)
 end
 
-Puppet.notice "Starting Puppet client version %s" % [Puppet.version]
+# We need tomake the client either way, we just don't start it
+# if --no-client is set.
 client = Puppet::Client::MasterClient.new(args)
-
-if enable
+if options[:enable]
     client.enable
-elsif disable
+elsif options[:disable]
     client.disable
 end
 
-if enable or disable
+if options[:enable] or options[:disable]
     exit(0)
 end
+
+server = nil
 
 unless client.readcert
     if waitforcert
@@ -288,22 +301,63 @@ unless client.readcert
     end
 end
 
+objects = []
+# This has to go after the certs are dealt with.
+if options[:listen]
+    unless FileTest.exists?(Puppet[:authconfig])
+        $stderr.puts "Will not start with authorization file %s" % Puppet[:authconfig]
+        exit(14)
+    end
+    handlers = {
+        :PElement => {}
+    }
+
+    args[:Handlers] = handlers
+    args[:Port] = Puppet[:puppetport]
+
+    begin
+        server = Puppet::Server.new(args)
+    rescue => detail
+        $stderr.puts detail
+        puts detail.backtrace
+        exit(1)
+    end
+
+    objects << server
+end
+
 if args[:Daemonize]
-    #exit(13)
     client.daemonize
 end
 
 # now set up the network client with the certs, now that we have them
 client.setcerts
 
+if options[:client]
+    objects << client
+end
+
+
 [:INT, :TERM].each do |signal|
     trap(signal) do
         Puppet.notice "Caught #{signal}; shutting down"
-        client.shutdown
+        objects.each do |obj|
+            obj.shutdown
+        end
+        exit(0)
     end
 end
 
-if onetime
+if options[:onetime]
+    unless options[:client]
+        $stderr.puts "onetime is specified but there is no client"
+        exit(43)
+    end
+
+    if server
+        Puppet.notice "Ignoring --listen on onetime run"
+    end
+
     begin
         client.run
     rescue => detail
@@ -312,11 +366,32 @@ if onetime
             puts detail.backtrace
         end
     end
+    exit(0)
 else
-    client.start
+    threads = []
+    if server
+        Puppet.notice "Starting Puppet server version %s" % [Puppet.version]
+        threads << Thread.new do
+            begin
+                server.start
+            rescue => detail
+                Puppet.err "Could not start puppetmaster: %s" % detail
+                exit(1)
+            end
+        end
+    end
 
-    # Mmm, hackish
-    Puppet.start
+    if options[:client]
+        Puppet.notice "Starting Puppet client version %s" % [Puppet.version]
+        client.start
+    end
+
+    threads << Thread.new do
+        # Mmm, hackish
+        Puppet.start
+    end
+
+    threads.each do |th| th.join end
 end
 
 # $Id$

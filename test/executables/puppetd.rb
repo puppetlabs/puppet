@@ -18,7 +18,7 @@ class TestPuppetDExe < Test::Unit::TestCase
         file = startmasterd
 
         # create the client
-        client = Puppet::Client.new(:Server => "localhost", :Port => @@port)
+        client = Puppet::Client::MasterClient.new(:Server => "localhost", :Port => @@port)
 
         # make a new fqdn
         fqdn = client.fqdn.sub(/^\w+\./, "testing.")

@@ -48,7 +48,6 @@ module Puppet
 
                     interface.methods.each { |ary|
                         method = ary[0]
-                        Puppet.info "Defining %s.%s" % [namespace, method]
                         if public_method_defined?(method)
                             raise Puppet::DevError, "Method %s is already defined" %
                                 method

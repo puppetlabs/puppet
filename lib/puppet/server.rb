@@ -110,9 +110,7 @@ module Puppet
                 # mount has to be called after the server is initialized
                 self.mount("/RPC2", Puppet::Server::Servlet, @handlers)
             end
-        end
 
-        class Server
             # the base class for the different handlers
             class Handler
                 attr_accessor :server

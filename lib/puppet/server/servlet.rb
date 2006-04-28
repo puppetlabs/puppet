@@ -104,6 +104,7 @@ class Server
 
         def initialize(server, handlers)
             @puppetserver = server
+            @notified = {}
             # the servlet base class does not consume any arguments
             # and its BasicServer base class only accepts a 'class_delim'
             # option which won't change in Puppet at all

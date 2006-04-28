@@ -34,6 +34,8 @@ class AuthConfig < Puppet::ParsedFile
         namespace   = namespace.intern
         method      = method.intern
 
+        read()
+
         if @rights.include?(name)
             return @rights[name].allowed?(host, ip)
         elsif @rights.include?(namespace)
@@ -58,7 +60,8 @@ class AuthConfig < Puppet::ParsedFile
         return unless self.exists?
         super(@file)
         @rights = Rights.new
-        @configstamp = @configtimeout = @configstatted = nil
+        @configstamp = @configstatted = nil
+        @configtimeout = 60
 
         if parsenow
             read()
@@ -77,10 +80,14 @@ class AuthConfig < Puppet::ParsedFile
 
                     if tmp == @configstamp
                         return
+                    else
+                        Puppet.notice "%s vs %s" % [tmp, @configstamp]
                     end
                 else
                     return
                 end
+            else    
+                Puppet.notice "%s and %s" % [@configtimeout, @configstatted]
             end
         end
 
