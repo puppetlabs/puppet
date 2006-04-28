@@ -61,10 +61,17 @@ module Puppet
         def to_type(parent = nil)
             retobj = nil
             if type = Puppet::Type.type(self.type)
-                unless retobj = type.create(self)
-                    #Puppet.notice "Could not create %s[%s]" %
-                    #    [self.type, self.name]
-                    return nil
+                # FIXME This should really be done differently, but...
+                if retobj = type[self.name]
+                    self.each do |param, val|
+                        retobj[param] = val
+                    end
+                else
+                    unless retobj = type.create(self)
+                        #Puppet.notice "Could not create %s[%s]" %
+                        #    [self.type, self.name]
+                        return nil
+                    end
                 end
                 #retobj.file = @file
                 #retobj.line = @line

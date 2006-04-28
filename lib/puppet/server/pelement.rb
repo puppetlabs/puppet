@@ -19,8 +19,7 @@ class Server::PElement < Server::Handler
             begin
                 case format
                 when "yaml":
-                    tmp = YAML::load(CGI.unescape(bucket))
-                    bucket = tmp
+                    bucket = YAML::load(Base64.decode64(bucket))
                 else
                     raise Puppet::Error, "Unsupported format '%s'" % format
                 end
@@ -50,6 +49,7 @@ class Server::PElement < Server::Handler
     # Describe a given object.  This returns the 'is' values for every state
     # available on the object type.
     def describe(type, name, retrieve = nil, ignore = [], format = "yaml", client = nil, clientip = nil)
+        Puppet.info "Describing %s[%s]" % [type, name]
         @local = true unless client
         typeklass = nil
         unless typeklass = Puppet.type(type)
@@ -59,6 +59,7 @@ class Server::PElement < Server::Handler
         obj = nil
 
         retrieve ||= :all
+        ignore ||= []
 
         if obj = typeklass[name]
             obj[:check] = retrieve
@@ -69,6 +70,12 @@ class Server::PElement < Server::Handler
                 raise Puppet::Error, "%s[%s] could not be created: %s" %
                     [type, name, detail]
             end
+        end
+
+        unless obj
+            raise XMLRPC::FaultException.new(
+                1, "Could not create %s[%s]" % [type, name]
+            )
         end
 
         trans = obj.to_trans
@@ -87,20 +94,18 @@ class Server::PElement < Server::Handler
             end
         end
 
-        if @local
-            return trans
-        else
-            str = nil
+        unless @local
             case format
             when "yaml":
-                str = CGI.escape(YAML::dump(trans))
+                trans = Base64.encode64(YAML::dump(trans))
             else
                 raise XMLRPC::FaultException.new(
                     1, "Unavailable config format %s" % format
                 )
             end
-            return CGI.escape(str)
         end
+
+        return trans
     end
 
     # Create a new fileserving module.
@@ -113,13 +118,15 @@ class Server::PElement < Server::Handler
     end
 
     # List all of the elements of a given type.
-    def list(type, ignore = [], base = nil, client = nil, clientip = nil)
+    def list(type, ignore = [], base = nil, format = "yaml", client = nil, clientip = nil)
         @local = true unless client
         typeklass = nil
         unless typeklass = Puppet.type(type)
             raise Puppet::Error, "Puppet type %s is unsupported" % type
         end
 
+        # They can pass in false
+        ignore ||= []
         ignore = [ignore] unless ignore.is_a? Array
         bucket = TransBucket.new
         bucket.type = typeklass.name
@@ -131,20 +138,25 @@ class Server::PElement < Server::Handler
             bucket << object
         end
 
-        if @local
-            return bucket
-        else
-            str = nil
+        unless @local
             case format
             when "yaml":
-                str = YAML.dump(bucket)
+                begin
+                bucket = Base64.encode64(YAML::dump(bucket))
+                rescue => detail
+                    Puppet.err detail
+                    raise XMLRPC::FaultException.new(
+                        1, detail.to_s
+                    )
+                end
             else
                 raise XMLRPC::FaultException.new(
                     1, "Unavailable config format %s" % format
                 )
             end
-            return CGI.escape(str)
         end
+
+        return bucket
     end
 
     private

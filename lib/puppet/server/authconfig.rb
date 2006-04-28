@@ -51,8 +51,12 @@ class AuthConfig < Puppet::ParsedFile
 
     def initialize(file = nil, parsenow = true)
         @file ||= Puppet[:authconfig]
+
+        unless @file
+            raise Puppet::DevError, "No authconfig file defined"
+        end
         return unless self.exists?
-        super(file)
+        super(@file)
         @rights = Rights.new
         @configstamp = @configtimeout = @configstatted = nil
 

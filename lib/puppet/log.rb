@@ -138,7 +138,7 @@ module Puppet
                         Puppet.info "Creating log directory %s" %
                             File.dirname(dest)
                     rescue => detail
-                        Log.destination = :console
+                        Log.newdestination(:console)
                         Puppet.err "Could not create log directory: %s" %
                             detail
                         return
@@ -149,7 +149,7 @@ module Puppet
                     # create the log file, if it doesn't already exist
                     file = File.open(dest,File::WRONLY|File::CREAT|File::APPEND)
                 rescue => detail
-                    Log.destination = :console
+                    Log.newdestination(:console)
                     Puppet.err "Could not create log file: %s" %
                         detail
                     return

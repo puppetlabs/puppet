@@ -3,6 +3,8 @@ module Puppet
         # The client class for filebuckets.
         class Dipper < Puppet::Client
             @drivername = :Bucket
+
+            @handler = Puppet::Server::FileBucket
             
             attr_accessor :name
 

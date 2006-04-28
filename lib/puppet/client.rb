@@ -22,7 +22,8 @@ module Puppet
         attr_accessor :schedule, :lastrun, :local, :stopping
 
         class << self
-            attr_reader :drivername
+            attr_reader :drivername, :handler
+            attr_accessor :netclient
         end
 
         def initcerts
@@ -75,7 +76,17 @@ module Puppet
                     args[:CAFile] = @cacertfile
                 end
 
-                @driver = Puppet::NetworkClient.new(args)
+                netclient = nil
+                unless netclient = self.class.netclient
+                    unless handler = self.class.handler
+                        raise Puppet::DevError,
+                            "Class %s has no handler defined" % self.class
+                    end
+                    namespace = self.class.handler.interface.prefix
+                    netclient = Puppet::NetworkClient.netclient(namespace)
+                    self.class.netclient = netclient
+                end
+                @driver = netclient.new(args)
                 @local = false
             elsif hash.include?(driverparam)
                 @driver = hash[driverparam]
@@ -161,6 +172,7 @@ module Puppet
         require 'puppet/client/log'
         require 'puppet/client/master'
         require 'puppet/client/status'
+        require 'puppet/client/pelement'
     end
 end
 

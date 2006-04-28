@@ -75,6 +75,12 @@ module Puppet
                     @driver = ca
                     @secureinit = true
                     self.fqdn
+                else
+                    if hash.include?(:NoSecureInit)
+                        @secureinit = false
+                    else
+                        @secureinit = true
+                    end
                 end
 
                 unless self.readcert
@@ -174,6 +180,7 @@ require 'puppet/server/master'
 require 'puppet/server/ca'
 require 'puppet/server/fileserver'
 require 'puppet/server/filebucket'
+require 'puppet/server/pelement'
 require 'puppet/server/logger'
 require 'puppet/client'
 

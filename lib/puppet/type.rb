@@ -2094,7 +2094,13 @@ class Type < Puppet::Element
                 end
                 next if @parent.statedefined?(state)
 
-                next unless @parent.class.validstate?(state).checkable?
+                stateklass = @parent.class.validstate?(state)
+
+                unless stateklass
+                    raise Puppet::Error, "%s is not a valid attribute for %s" %
+                        [state, self.class.name]
+                end
+                next unless stateklass.checkable?
 
                 @parent.newstate(state)
             }

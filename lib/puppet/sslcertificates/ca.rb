@@ -79,7 +79,11 @@ class Puppet::SSLCertificates::CA
 
             if FileTest.exists?(file)
                 begin
-                    puts "Removing %s" % file
+                    if Puppet.name == "puppetca"
+                        puts "Removing %s" % file
+                    else
+                        Puppet.info "Removing %s" % file
+                    end
                     File.unlink(file)
                 rescue => detail
                     raise Puppet::Error, "Could not delete %s: %s" %

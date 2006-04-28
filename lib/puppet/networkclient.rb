@@ -30,52 +30,72 @@ module Puppet
         Puppet.err "Could not load client network libs: %s" % $noclientnetworking
     else
         class NetworkClient < XMLRPC::Client
-            #include Puppet::Daemon
+            @clients = {}
 
-            # add the methods associated with each namespace
-            Puppet::Server::Handler.each { |handler|
-                interface = handler.interface
-                namespace = interface.prefix
+            # Create a netclient for each handler
+            def self.mkclients
+                # add the methods associated with each namespace
+                Puppet::Server::Handler.each { |handler|
+                    interface = handler.interface
+                    namespace = interface.prefix
 
-                interface.methods.each { |ary|
-                    method = ary[0]
-                    Puppet.info "Defining %s.%s" % [namespace, method]
-                    self.send(:define_method,method) { |*args|
-                        #Puppet.info "Calling %s" % method
-                        #Puppet.info "peer cert is %s" % @http.peer_cert
-                        #Puppet.info "cert is %s" % @http.cert
-                        begin
-                            call("%s.%s" % [namespace, method.to_s],*args)
-                        rescue OpenSSL::SSL::SSLError => detail
-                            #Puppet.err "Could not call %s.%s: Untrusted certificates" %
-                            #    [namespace, method]
-                            raise NetworkClientError,
-                                "Certificates were not trusted"
-                        rescue XMLRPC::FaultException => detail
-                            #Puppet.err "Could not call %s.%s: %s" %
-                            #    [namespace, method, detail.faultString]
-                            #raise NetworkClientError,
-                            #    "XMLRPC Error: %s" % detail.faultString
-                            raise NetworkClientError, detail.faultString
-                        rescue Errno::ECONNREFUSED => detail
-                            msg = "Could not connect to %s on port %s" % [@host, @port]
-                            #Puppet.err msg
-                            raise NetworkClientError, msg
-                        rescue SocketError => detail
-                            Puppet.err "Could not find server %s" % @puppetserver
-                            exit(12)
-                        rescue => detail
-                            Puppet.err "Could not call %s.%s: %s" %
-                                [namespace, method, detail.inspect]
-                            #raise NetworkClientError.new(detail.to_s)
-                            if Puppet[:debug]
-                                puts detail.backtrace
-                            end
-                            raise
+                    # Create a subclass for every client type.  This is
+                    # so that all of the methods are on their own class,
+                    # so that they namespaces can define the same methods if
+                    # they want.
+                    newclient = Class.new(self)
+                    @clients[namespace] = newclient
+
+                    interface.methods.each { |ary|
+                        method = ary[0]
+                        Puppet.info "Defining %s.%s" % [namespace, method]
+                        if public_method_defined?(method)
+                            raise Puppet::DevError, "Method %s is already defined" %
+                                method
                         end
+                        newclient.send(:define_method,method) { |*args|
+                            #Puppet.info "Calling %s" % method
+                            #Puppet.info "peer cert is %s" % @http.peer_cert
+                            #Puppet.info "cert is %s" % @http.cert
+                            begin
+                                call("%s.%s" % [namespace, method.to_s],*args)
+                            rescue OpenSSL::SSL::SSLError => detail
+                                raise NetworkClientError,
+                                    "Certificates were not trusted"
+                            rescue XMLRPC::FaultException => detail
+                                #Puppet.err "Could not call %s.%s: %s" %
+                                #    [namespace, method, detail.faultString]
+                                #raise NetworkClientError,
+                                #    "XMLRPC Error: %s" % detail.faultString
+                                raise NetworkClientError, detail.faultString
+                            rescue Errno::ECONNREFUSED => detail
+                                msg = "Could not connect to %s on port %s" %
+                                    [@host, @port]
+                                raise NetworkClientError, msg
+                            rescue SocketError => detail
+                                Puppet.err "Could not find server %s" % @puppetserver
+                                exit(12)
+                            rescue => detail
+                                Puppet.err "Could not call %s.%s: %s" %
+                                    [namespace, method, detail.inspect]
+                                #raise NetworkClientError.new(detail.to_s)
+                                if Puppet[:debug]
+                                    puts detail.backtrace
+                                end
+                                raise
+                            end
+                        }
                     }
                 }
-            }
+            end
+
+            def self.netclient(namespace)
+                if @clients.empty?
+                    self.mkclients()
+                end
+
+                @clients[namespace]
+            end
 
             def ca_file=(cafile)
                 @http.ca_file = cafile

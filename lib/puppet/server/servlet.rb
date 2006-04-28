@@ -38,24 +38,44 @@ class Server
         def authorize(request, method)
             namespace = method.sub(/\..+/, '')
             client = request.peeraddr[2]
+            if defined? @client and @client
+                client = @client
+            end
             ip = request.peeraddr[3]
             if request.client_cert
+                begin
                 if @puppetserver.authconfig.exists?
-                    return @puppetserver.authconfig.allowed?(method, client, ip)
+                    allowed = @puppetserver.authconfig.allowed?(method, client, ip)
+
+                    if allowed
+                        Puppet.info "Allowing %s(%s) trusted access to %s" %
+                            [client, ip, method]
+                        return true
+                    else
+                        Puppet.info "Denying %s(%s) trusted access to %s" %
+                            [client, ip, method]
+                        return false
+                    end
                 else
+                    Puppet.info "No #{@puppetserver.authconfig.file}"
                     # This is pretty hackish, but...
                     # This means we can't actually test this method at this point.
                     # The next release of Puppet will almost definitely require
                     # this file to exist or will default to denying all access.
                     if Puppet.name == "puppetmasterd" or defined? Test::Unit::TestCase
-                        Servlet.log "Allowing %s(%s) trusted access to %s" %
+                        Puppet.info "Allowing %s(%s) trusted access to %s" %
                             [client, ip, method]
                         return true
                     else
-                        Servlet.log "Denying %s(%s) trusted access to %s on %s" %
+                        Puppet.info "Denying %s(%s) trusted access to %s on %s" %
                             [client, ip, method, Puppet.name]
                         return false
                     end
+                end
+                rescue => detail
+                    puts detail
+                    puts detail.backtrace
+                    raise
                 end
             else
                 if method =~ /^puppetca\./
@@ -106,10 +126,8 @@ class Server
             @clientip = nil
 
             self.set_service_hook { |obj, *args|
-                #raise "crap!"
                 if @client and @clientip
                     args.push(@client, @clientip)
-                    #obj.call(args, @request)
                 end
                 begin
                     obj.call(*args)
@@ -173,10 +191,6 @@ class Server
                     end
                 end
             end
-            #if request.server_cert
-            #    Puppet.info "server cert is %s" % @request.server_cert
-            #end
-            #p @request
             begin
                 super
             rescue => detail

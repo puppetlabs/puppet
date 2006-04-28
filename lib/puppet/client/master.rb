@@ -6,6 +6,8 @@ class Puppet::Client::MasterClient < Puppet::Client
         @@sync = Sync.new
     end
 
+    @handler = Puppet::Server::Master
+
     Puppet.setdefaults("puppetd",
         :puppetdlockfile => [ "$statedir/puppetdlock",
             "A lock file to temporarily stop puppetd from doing anything."],

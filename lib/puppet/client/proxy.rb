@@ -6,10 +6,11 @@ class Puppet::Client::ProxyClient < Puppet::Client
         interface = @handler.interface
         namespace = interface.prefix
 
+
         interface.methods.each { |ary|
             method = ary[0]
             Puppet.debug "%s: defining %s.%s" % [self, namespace, method]
-            self.send(:define_method,method) { |*args|
+            define_method(method) { |*args|
                 begin
                     @driver.send(method, *args)
                 rescue XMLRPC::FaultException => detail

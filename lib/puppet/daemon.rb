@@ -89,6 +89,10 @@ module Puppet
                 return true
             end
 
+            unless defined? @fqdn
+                self.fqdn
+            end
+
             # we are not going to encrypt our key, but we need at a minimum
             # a keyfile and a certfile
             @certfile = File.join(Puppet[:certdir], [@fqdn, "pem"].join("."))
@@ -120,6 +124,10 @@ module Puppet
         # of creating the cert request, contacting the remote system, and
         # storing the cert locally.
         def requestcert
+            unless @secureinit
+                raise Puppet::DevError,
+                    "Tried to request cert without initialized security"
+            end
             retrieved = false
             Puppet.config.use(:puppet, :certificates)
             # create the directories involved
