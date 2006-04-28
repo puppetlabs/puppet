@@ -274,7 +274,7 @@ class TestPElementServer < Test::Unit::TestCase
         server.local = false
         yaml = nil
         assert_nothing_raised {
-            yaml = CGI.escape(YAML::dump(bucket))
+            yaml = Base64.encode64(YAML::dump(bucket))
         }
 
         Puppet::Type.type(:file).clear
@@ -285,7 +285,7 @@ class TestPElementServer < Test::Unit::TestCase
             return
         end
         assert_nothing_raised("Could not reload yaml") {
-            YAML::load(CGI.unescape(yaml))
+            YAML::load(Base64.decode64(yaml))
         }
 
         assert_nothing_raised {
