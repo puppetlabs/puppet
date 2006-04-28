@@ -141,11 +141,7 @@ module Puppet
                             case checktype
                             when :md5
                                 text = file.read
-                                Puppet.info "Reading all of %s with %s" %
-                                    [@parent.name, checktype.inspect]
                             when :md5lite
-                                Puppet.info "Reading a small part of %s with %s" %
-                                    [@parent.name, checktype.inspect]
                                 text = file.read(512)
                             end
 
@@ -226,7 +222,13 @@ module Puppet
         # Even though they can specify multiple checksums, the insync?
         # mechanism can really only test against one, so we'll just retrieve
         # the first specified sum type.
-        def retrieve
+        def retrieve(usecache = false)
+            # When the 'source' is retrieving, it passes "true" here so
+            # that we aren't reading the file twice in quick succession, yo.
+            if usecache and @is
+                return @is
+            end
+
             unless defined? @checktypes
                 @checktypes = ["md5"]
             end

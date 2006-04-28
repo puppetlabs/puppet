@@ -661,6 +661,9 @@ module Puppet
                 unless @states.include?(:checksum)
                     self[:checksum] = "md5"
                 end
+
+                # We have to retrieve the source info before the recursion happens,
+                # although I'm not exactly clear on why.
                 @states[:source].retrieve
             end
 
@@ -677,10 +680,19 @@ module Puppet
                     next if name == :source
                     state.is = :absent
                 }
+
                 return
             end
 
-            super
+            states().each { |state|
+                # We don't want to call 'describe()' twice, so only do a local
+                # retrieve on the source.
+                if state.name == :source
+                    state.retrieve(false)
+                else
+                    state.retrieve
+                end
+            }
         end
 
         # Set the checksum, from another state.  There are multiple states that
@@ -726,6 +738,9 @@ module Puppet
         def uri2obj(source)
             sourceobj = FileSource.new
             path = nil
+            unless source
+                devfail "Got a nil source"
+            end
             if source =~ /^\//
                 source = "file://localhost/%s" % source
                 sourceobj.mount = "localhost"

@@ -1,7 +1,9 @@
+require 'puppet/server/fileserver'
+
 module Puppet
     # Copy files from a local or remote source.
     Puppet.type(:file).newstate(:source) do
-        PINPARAMS = [:mode, :type, :owner, :group, :checksum]
+        PINPARAMS = Puppet::Server::FileServer::CHECKPARAMS
 
         attr_accessor :source, :local
         desc "Copy a file over the current file.  Uses ``checksum`` to
@@ -71,7 +73,7 @@ module Puppet
         # of the local states appropriately.  If the remote file is a normal
         # file then we set it to copy; if it's a directory, then we just mark
         # that the local directory should be created.
-        def retrieve
+        def retrieve(remote = true)
             sum = nil
 
             unless defined? @shouldorig
@@ -79,16 +81,21 @@ module Puppet
                     @parent.name
             end
 
-            @source = nil
-            
-            # Find the first source that exists.  @shouldorig contains
-            # the sources as specified by the user.
-            @shouldorig.each { |source|
-                if @stats = self.describe(source)
-                    @source = source
-                    break
-                end
-            }
+            @source = nil unless defined? @source
+
+            # This is set to false by the File#retrieve function on the second
+            # retrieve, so that we do not do two describes.
+            if remote
+                @source = nil
+                # Find the first source that exists.  @shouldorig contains
+                # the sources as specified by the user.
+                @shouldorig.each { |source|
+                    if @stats = self.describe(source)
+                        @source = source
+                        break
+                    end
+                }
+            end
 
             if @stats.nil? or @stats[:type].nil?
                 @is = :notdescribed
@@ -102,7 +109,7 @@ module Puppet
                 if sum = @parent.state(:checksum)
                     if sum.is
                         if sum.is == :absent
-                            sum.retrieve
+                            sum.retrieve(true)
                         end
                         @is = sum.is
                     else

@@ -85,7 +85,7 @@ class TestFileSources < Test::Unit::TestCase
 
         assert_apply(tofile)
 
-        assert(FileTest.exists?(topath))
+        assert(FileTest.exists?(topath), "File #{topath} is missing")
         from = File.open(frompath) { |o| o.read }
         to = File.open(topath) { |o| o.read }
         assert_equal(from,to)
