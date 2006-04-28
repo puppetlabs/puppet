@@ -833,6 +833,8 @@ module Puppet
             end
 
             # And then update our checksum, so the next run doesn't find it.
+            # FIXME This is extra work, because it's going to read the whole
+            # file back in again.
             self.setchecksum
         end
     end # Puppet.type(:pfile)

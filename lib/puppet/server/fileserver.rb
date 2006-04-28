@@ -60,11 +60,6 @@ class Server
                 return ""
             end
 
-            #if links == :ignore and obj[:type] == "link"
-            #    mount.info "Ignoring link %s" % obj.name
-            #    return ""
-            #end
-
             desc = []
             CHECKPARAMS.each { |check|
                 if state = obj.state(check)

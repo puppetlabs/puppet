@@ -138,11 +138,17 @@ module Puppet
                     begin
                         File.open(@parent[:path]) { |file|
                             text = nil
-                            if checktype == "md5"
+                            case checktype
+                            when :md5
                                 text = file.read
-                            else
+                                Puppet.info "Reading all of %s with %s" %
+                                    [@parent.name, checktype.inspect]
+                            when :md5lite
+                                Puppet.info "Reading a small part of %s with %s" %
+                                    [@parent.name, checktype.inspect]
                                 text = file.read(512)
                             end
+
                             if text.nil?
                                 self.debug "Not checksumming empty file %s" %
                                     @parent[:path]

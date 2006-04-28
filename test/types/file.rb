@@ -1116,6 +1116,32 @@ class TestFile < Test::Unit::TestCase
 
         assert_equal(0440, filemode(bucketedpath))
     end
+
+    def test_largefilechanges
+        source = tempfile()
+        dest = tempfile()
+
+        # Now make a large file
+        File.open(source, "w") { |f|
+            500.times { |i| f.puts "line %s" % i }
+        }
+
+        obj = Puppet::Type.type(:file).create(
+            :name => dest, :source => source
+        )
+
+        assert_events([:file_created], obj)
+
+        File.open(source, File::APPEND|File::WRONLY) { |f| f.puts "another line" }
+
+        assert_events([:file_changed], obj)
+
+        # Now modify the dest file
+        File.open(dest, File::APPEND|File::WRONLY) { |f| f.puts "one more line" }
+
+        assert_events([:file_changed, :file_changed], obj)
+
+    end
 end
 
 # $Id$
