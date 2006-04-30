@@ -8,10 +8,10 @@
 #
 # = Usage
 #
-#   puppetd  [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
-#               [-l|--logdest <syslog|<file>|console>] [--fqdn <host name>]
-#               [-o|--onetime] [-w|--waitforcert <seconds>] [-t|--test]
-#               [--disable] [--enable] [--listen]
+#   puppetd  [-D|--daemonize] [-d|--debug] [--disable] [--enable]
+#       [-h|--help] [--fqdn <host name>] [--listen]
+#       [-l|--logdest syslog|<file>|console] [-o|--onetime] [-t|--test]
+#       [-V|--version] [-v|--verbose] [-w|--waitforcert <seconds>]
 #
 # = Description
 #
@@ -26,9 +26,29 @@
 # Once the client has a signed certificate, it will retrieve its configuration
 # and apply it.
 #
-# The vast majority of options are shared between all Puppet executables and
-# are documented completely at
-# http://reductivelabs.com/projects/puppet/documentation.
+# = Usage Notes
+#
+# +puppetd+ does its best to find a compromise between interactive use and
+# daemon use.  Run with no arguments and no configuration, it will go into the
+# backgroun, attempt to get a signed certificate, and retrieve and apply its
+# configuration every 30 minutes.
+#
+# Some flags are meant specifically for interactive use -- in particular,
+# +test+ and +tag+ are useful.  +test+ enables verobse logging, causes
+# the daemon to stay in the foreground, exits if the server's configuration is
+# invalid (this happens if, for instance, you've left a syntax error on the
+# server), and exits after running the configuration once (rather than hanging
+# around as a long-running process).
+#
+# +tag+ allows you to specify what portions of a configuration you want to apply.
+# Puppet elements are tagged with all of the class or definition names that
+# contain them, and you can use the +tag+ flag to specify one of these names,
+# causing only configuration elements contained within that class or definition
+# to be applied.  This is very useful when you are testing new configurations --
+# for instance, if you are just starting to manage +ntpd+, you would put all of
+# the new elements into an +ntpd+ class, and call puppet with +--tag ntpd+,
+# which would only apply that small portion of the configuration during your
+# testing, rather than applying the whole thing.
 #
 # = Options
 #
@@ -36,7 +56,16 @@
 # is also a valid long argument.  For example, 'server' is a valid configuration
 # parameter, so you can specify '--server <servername>' as an argument.
 #
-# See the configuration file for the full list of acceptable parameters.
+# See the configuration file documentation at
+# http://reductivelabs.com/projects/puppet/documentation/puppet-executable-reference
+# for the full list of acceptable parameters.
+#
+# daemonize::
+#   Send the process into the background.  This is the default unless
+#   +verbose+ or +debug+ is enabled.
+#
+# debug::
+#   Enable full debugging.
 #
 # disable::
 #   Disable working on the local system.  This puts a lock file in place,
@@ -50,9 +79,6 @@
 #
 #   +puppetd+ exits after executing this.
 #
-# debug::
-#   Enable full debugging.
-#
 # enable::
 #   Enable working on the local system.  This removes any lock file, causing
 #   +puppetd+ to start managing the local system again (although it will continue
@@ -65,14 +91,14 @@
 #   certificate purposes, but can be used to override the discovered hostname.
 #   If you need to use this flag, it is generally an indication of a setup problem.
 #
+# help::
+#   Print this help message
+#
 # listen::
 #   Start a local listening server.  This allows you to remotely manage
 #   puppet nodes over XMLRPC.  The client will fail to start if the
 #   authorization config file (defaults to /etc/puppetd/namespaceauth.conf)
 #   does not exist.
-#
-# help::
-#   Print this help message
 #
 # logdest::
 #   Where to send messages.  Choose between syslog, the console, and a log file.
@@ -94,8 +120,11 @@
 #   Print the puppet version number and exit.
 #
 # waitforcert::
-#   Have the process wait around, continuously retrying for the certificate
-#   each <argument> seconds.
+#   This option only matters for daemons that do not yet have certificates
+#   and it is enabled by default, with a value of 60 (seconds).  This causes
+#   +puppetd+ to connect to the server every 60 seconds and ask it to sign a
+#   certificate request.  This is useful for the initial setup of a puppet
+#   client.
 #
 # = Example
 #
@@ -125,6 +154,7 @@ end
 
 options = [
 	[ "--centrallogging",			GetoptLong::NO_ARGUMENT ],
+	[ "--daemonize", "-D",			GetoptLong::NO_ARGUMENT ],
 	[ "--disable",	    			GetoptLong::NO_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--enable",	    			GetoptLong::NO_ARGUMENT ],
@@ -164,6 +194,8 @@ begin
         case opt
             # First check to see if the argument is a valid configuration parameter;
             # if so, set it.
+            when "--daemonize"
+                options[:daemonize] = true
             when "--disable"
                 options[:disable] = true
             when "--enable"
@@ -235,10 +267,14 @@ if Puppet[:config] and File.exists? Puppet[:config]
     Puppet.config.parse(Puppet[:config])
 end
 
-if Puppet::Log.level == :debug or Puppet::Log.level == :info
-    args[:Daemonize] = false
-else
-    args[:Daemonize] = true
+# Default to daemonizing, but if verbose or debug is specified,
+# default to staying in the foreground.
+unless options.include?(:daemonize)
+    if Puppet::Log.level == :debug or Puppet::Log.level == :info
+        options[:daemonize] = false
+    else
+        options[:daemonize] = true
+    end
 end
 
 unless options[:setdest]
@@ -257,6 +293,10 @@ if options[:centrallogs]
         logdest += ":" + args[:Port]
     end
     Puppet::Log.newdestination(logdest)
+end
+
+if options[:onetime]
+    Puppet[:setpidfile] = false
 end
 
 # We need tomake the client either way, we just don't start it
@@ -326,7 +366,7 @@ if options[:listen]
     objects << server
 end
 
-if args[:Daemonize]
+if options[:daemonize]
     client.daemonize
 end
 
@@ -375,7 +415,7 @@ else
             begin
                 server.start
             rescue => detail
-                Puppet.err "Could not start puppetmaster: %s" % detail
+                Puppet.err "Could not start server: %s" % [detail]
                 exit(1)
             end
         end
@@ -383,7 +423,12 @@ else
 
     if options[:client]
         Puppet.notice "Starting Puppet client version %s" % [Puppet.version]
-        client.start
+            begin
+                client.start
+            rescue => detail
+                Puppet.err "Could not start client: %s" % [detail]
+                exit(1)
+            end
     end
 
     threads << Thread.new do

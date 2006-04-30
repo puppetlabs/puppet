@@ -6,8 +6,11 @@ module Puppet
     # A module that handles operations common to all daemons.  This is included
     # into the Server and Client base classes.
     module Daemon
+        Puppet.config.setdefaults(:puppet, :setpidfile => [true,
+            "Whether to store a PID file for the daemon."])
         def daemonname
-            $0.sub(/.+#{File::SEPARATOR}/,'')
+            #$0.sub(/.+#{File::SEPARATOR}/,'')
+            Puppet.name
         end
 
         # The path to the pid file for this server
@@ -22,7 +25,7 @@ module Puppet
                 exit(0)
             end
 
-            setpidfile()
+            #setpidfile()
 
             # Get rid of console logging
             Puppet::Log.close(:console)
@@ -36,9 +39,9 @@ module Puppet
                 Puppet::Log.reopen
             rescue => detail
                 File.open("/tmp/daemonout", "w") { |f|
-                    f.puts "Could not start %s: %s" % [$0, detail]
+                    f.puts "Could not start %s: %s" % [Puppet.name, detail]
                 }
-                Puppet.err "Could not start %s: %s" % [$0, detail]
+                Puppet.err "Could not start %s: %s" % [Puppet.name, detail]
                 exit(12)
             end
         end
@@ -205,14 +208,16 @@ module Puppet
         def setpidfile
             Puppet.config.use(:puppet)
             @pidfile = self.pidfile
-            if FileTest.exists?(@pidfile)
-                Puppet.info "Deleting old pid file"
-                begin
-                    File.unlink(@pidfile)
-                rescue Errno::EACCES
-                    Puppet.err "Could not delete old PID file; cannot create new one"
-                    return
-                end
+            if FileTest.exists?(@pidfile) and not defined? $setpidfile
+                raise Puppet::Error, "A PID file already exists for #{Puppet.name}
+at #{@pidfile}.  Not starting."
+                #Puppet.info "Deleting old pid file"
+                #begin
+                #    File.unlink(@pidfile)
+                #rescue Errno::EACCES
+                #    Puppet.err "Could not delete old PID file; cannot create new one"
+                #    return
+                #end
             end
 
             #unless FileTest.exists?(Puppet[:rundir])
@@ -220,14 +225,14 @@ module Puppet
             #    File.chmod(01777, Puppet[:rundir])
             #end
 
-            Puppet.info "Setting pidfile to %s" % @pidfile
+            Puppet.info "Creating PID file to %s" % @pidfile
             begin
                 File.open(@pidfile, "w") { |f| f.puts $$ }
             rescue => detail
                 Puppet.err "Could not create PID file: %s" % detail
                 exit(74)
             end
-            Puppet.info "pid file is %s" % @pidfile
+            $setpidfile = true
         end
 
         # Shut down our server
@@ -245,6 +250,11 @@ module Puppet
             # And close all logs
             Puppet::Log.close
 
+            super
+        end
+
+        def start
+            setpidfile()
             super
         end
     end

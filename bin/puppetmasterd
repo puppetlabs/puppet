@@ -7,8 +7,9 @@
 #
 # = Usage
 #
-#   puppetmasterd [-h|--help] [-d|--debug] [-v|--verbose] [-V|--version]
-#               [--noca] [--nobucket]
+#   puppetmasterd [-D|--daemonize] [-d|--debug] [-h|--help]
+#       [-l|--logdest <file>|console|syslog] [--noca] [--nobucket] [--nonodes]
+#       [-v|--verbose] [-V|--version]
 #
 # = Description
 #
@@ -20,7 +21,13 @@
 # is also a valid long argument.  For example, 'ssldir' is a valid configuration
 # parameter, so you can specify '--ssldir <directory>' as an argument.
 #
-# See the configuration file for the full list of acceptable parameters.
+# See the configuration file documentation at
+# http://reductivelabs.com/projects/puppet/documentation/puppet-executable-reference
+# for the full list of acceptable parameters.
+#
+# daemonize::
+#   Send the process into the background.  This is the default unless
+#   +verbose+ or +debug+ is enabled.
 #
 # debug::
 #   Enable full debugging.  Causes the daemon not to go into the background.
@@ -42,6 +49,7 @@
 # nonodes::
 #   Do not use individual node designations; each node will receive the result
 #   of evaluating the entire configuration.
+#
 # verbose::
 #   Enable verbosity.  Causes the daemon not to go into the background.
 #
@@ -66,6 +74,7 @@ require 'puppet'
 require 'puppet/server'
 
 options = [
+	[ "--daemonize", "-D",			GetoptLong::NO_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
@@ -90,26 +99,23 @@ rescue LoadError
     $haveusage = false
 end
 
-haveca = true
 master = {}
 ca = {}
 fs = {}
 bucket = {}
 args = {}
-#user = Puppet[:user]
-#group = Puppet[:group]
-user = nil
-group = nil
 
-havebucket = true
-
-parseonly = false
-
-setdest = false
+options = {
+    :haveca => true,
+    :havebucket => true,
+    :setdest => false
+}
 
 begin
     result.each { |opt,arg|
         case opt
+            when "--daemonize"
+                options[:daemonize] = true
             when "--debug"
                 Puppet::Log.level = :debug
                 Puppet::Log.newdestination(:console)
@@ -121,15 +127,15 @@ begin
                     exit
                 end
             when "--noca"
-                haveca = false
+                options[:haveca] = false
             when "--nobucket"
-                havebucket = false
+                options[:havebucket] = false
             when "--nonodes"
                 master[:UseNodes] = false
             when "--logdest"
                 begin
                     Puppet::Log.newdestination(arg)
-                    setdest = true
+                    options[:setdest] = true
                 rescue => detail
                     $stderr.puts detail.to_s
                 end
@@ -164,10 +170,14 @@ Puppet.genmanifest
 
 require 'etc'
 
-if Puppet::Log.level == :debug or Puppet::Log.level == :info or parseonly
-    args[:Daemonize] = false
-else
-    args[:Daemonize] = true
+# Default to daemonizing, but if verbose or debug is specified,
+# default to staying in the foreground.
+unless options.include?(:daemonize)
+    if Puppet::Log.level == :debug or Puppet::Log.level == :info
+        options[:daemonize] = false
+    else
+        options[:daemonize] = true
+    end
 end
 
 handlers = {
@@ -176,15 +186,15 @@ handlers = {
     :Logger => {}
 }
 
-unless setdest
+unless options[:setdest]
     Puppet::Log.newdestination(:syslog)
 end
 
-if haveca
+if options[:haveca]
     handlers[:CA] = ca
 end
 
-if havebucket
+if options[:havebucket]
     handlers[:FileBucket] = bucket
 end
 
@@ -224,7 +234,7 @@ if Puppet[:parseonly]
     exit(0)
 end
 
-if args[:Daemonize]
+if options[:daemonize]
     server.daemonize
 end
 

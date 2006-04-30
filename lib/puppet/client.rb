@@ -144,6 +144,7 @@ module Puppet
         # Start listening for events.  We're pretty much just listening for
         # timer events here.
         def start
+            super
             # Create our timer
             timer = EventLoop::Timer.new(
                 :interval => Puppet[:runinterval],
