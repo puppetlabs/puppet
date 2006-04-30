@@ -259,14 +259,22 @@ class TestPElementServer < Test::Unit::TestCase
 
         Puppet::Type.type(:file).clear
 
+        Puppet.err filetrans[:parent].inspect
+
+        #p filetrans
+
         bucket = Puppet::TransBucket.new
         bucket.type = "file"
         bucket.push filetrans
 
+        #p bucket
+
+        oldbucket = bucket.dup
         File.unlink(file)
         assert_nothing_raised {
             server.apply(bucket)
         }
+
 
         assert(FileTest.exists?(file), "File did not get recreated")
 
@@ -280,10 +288,11 @@ class TestPElementServer < Test::Unit::TestCase
         Puppet::Type.type(:file).clear
         File.unlink(file)
 
-        if yaml =~ /(.{20}Loglevel.{20})/
+        if Base64.decode64(yaml) =~ /(.{20}Loglevel.{20})/
             Puppet.warning "YAML is broken on this machine"
             return
         end
+        #puts Base64.decode64(yaml)
         assert_nothing_raised("Could not reload yaml") {
             YAML::load(Base64.decode64(yaml))
         }

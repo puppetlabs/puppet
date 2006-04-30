@@ -278,7 +278,7 @@ module Puppet
 
                         unless File.stat(file).mode == File.stat(bfile).mode
                             mode = File.stat(file).mode & 007777
-                            File.chown(mode, bfile)
+                            File.chmod(mode, bfile)
                         end
                         return true
                     rescue => detail

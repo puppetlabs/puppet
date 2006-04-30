@@ -166,6 +166,11 @@ class TestPackages < Test::Unit::TestCase
 
         state = obj.state(:ensure)
         assert(state, "Could not retrieve ensure state")
+
+        # Add a fake state, for those that need it
+        file = tempfile()
+        File.open(file, "w") { |f| f.puts :yayness }
+        obj[:source] = file
         assert_raise(Puppet::PackageError,
             "Successfully installed nonexistent package") {
             state.sync
