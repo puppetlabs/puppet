@@ -271,7 +271,15 @@ module Puppet
                         end
                     end
                     begin
-                        FileUtils.cp(file, file + backup)
+                        # Shouldn't this just use a Puppet object with 'source'
+                        # specified?
+                        bfile = file + backup
+                        FileUtils.cp(file, bfile)
+
+                        unless File.stat(file).mode == File.stat(bfile).mode
+                            mode = File.stat(file).mode & 007777
+                            File.chown(mode, bfile)
+                        end
                         return true
                     rescue => detail
                         # since they said they want a backup, let's error out
