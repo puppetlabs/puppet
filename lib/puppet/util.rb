@@ -351,7 +351,7 @@ module Util
     def memory
         unless defined? @pmap
             pmap = %x{which pmap 2>/dev/null}.chomp
-            if pmap == ""
+            if $? != 0 or pmap =~ /^no/
                 @pmap = nil
             else
                 @pmap = pmap
