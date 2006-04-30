@@ -219,11 +219,13 @@ module Puppet
                     if FileTest.directory?(path)
                         next
                     end
-                    unless FileTest.directory?(path)
-                        @parent.info("Search path %s is not a directory" % [path])
-                    end
-                    unless FileTest.exists?(path)
-                        @parent.info("Search path %s does not exist" % [path])
+                    if FileTest.exists?(path)
+                        unless FileTest.directory?(path)
+                            @parent.debug "Search path %s is not a directory" %
+                                [path]
+                        end
+                    else
+                        @parent.debug("Search path %s does not exist" % [path])
                     end
                     paths.delete(path)
                 end
