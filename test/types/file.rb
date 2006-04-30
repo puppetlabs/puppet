@@ -1091,6 +1091,15 @@ class TestFile < Test::Unit::TestCase
             )
         }
 
+#        user = group = nil
+#        if Process.uid == 0
+#            user = nonrootuser
+#            group = nonrootgroup
+#            obj[:owner] = user.name
+#            obj[:group] = group.name
+#            File.chown(user.uid, group.gid, file)
+#        end
+
         assert_apply(obj)
 
         backupfile = file + obj[:backup]
@@ -1100,6 +1109,11 @@ class TestFile < Test::Unit::TestCase
 
         assert_equal(0411, filemode(backupfile),
             "File mode is wrong for backupfile")
+
+#        if Process.uid == 0
+#            assert_equal(user.uid, File.stat(backupfile).uid)
+#            assert_equal(group.gid, File.stat(backupfile).gid)
+#        end
 
         bucket = "bucket"
         bpath = tempfile()

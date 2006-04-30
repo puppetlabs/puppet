@@ -271,8 +271,8 @@ module Puppet
                         end
                     end
                     begin
-                        # Shouldn't this just use a Puppet object with 'source'
-                        # specified?
+                        # FIXME Shouldn't this just use a Puppet object with
+                        # 'source' specified?
                         bfile = file + backup
                         FileUtils.cp(file, bfile)
 
