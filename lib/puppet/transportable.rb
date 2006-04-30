@@ -60,14 +60,14 @@ module Puppet
 
         def to_type(parent = nil)
             retobj = nil
-            if type = Puppet::Type.type(self.type)
+            if typeklass = Puppet::Type.type(self.type)
                 # FIXME This should really be done differently, but...
-                if retobj = type[self.name]
+                if retobj = typeklass[self.name]
                     self.each do |param, val|
                         retobj[param] = val
                     end
                 else
-                    unless retobj = type.create(self)
+                    unless retobj = typeklass.create(self)
                         #Puppet.notice "Could not create %s[%s]" %
                         #    [self.type, self.name]
                         return nil
@@ -79,13 +79,7 @@ module Puppet
                 raise Puppet::Error.new("Could not find object type %s" % self.type)
             end
 
-            #if defined? @tags and @tags
-            #    #Puppet.debug "%s(%s) tags: %s" % [@type, @name, @tags.join(" ")]
-            #    retobj.tags = @tags
-            #end
-
             if parent
-                self[:parent] = parent
                 parent.push retobj
             end
 
@@ -117,7 +111,6 @@ module Puppet
         end
 
         def push(*args)
-            #Puppet.warning "calling push"
             args.each { |arg|
                 case arg
                 when Puppet::TransBucket, Puppet::TransObject
@@ -129,7 +122,6 @@ module Puppet
                 end
             }
             @children += args
-            #Puppet.warning @children.inspect
         end
 
         # Convert to a parseable manifest
@@ -174,15 +166,15 @@ module Puppet
             usetrans = true
 
             if usetrans
-                name = nil
+                tmpname = nil
 
                 # Nodes have the same name and type
                 if self.name
-                    name = "%s[%s]" % [@type, self.name]
+                    tmpname = "%s[%s]" % [@type, self.name]
                 else
-                    name = @type
+                    tmpname = @type
                 end
-                trans = TransObject.new(name, :component)
+                trans = TransObject.new(tmpname, :component)
                 if defined? @parameters
                     @parameters.each { |param,value|
                         Puppet.debug "Defining %s on %s of type %s" %
