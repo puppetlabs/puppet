@@ -172,6 +172,12 @@ module Puppet
                             end
                         end
                     else
+                        if line =~ /^\s+\d+/ and
+                            Facter["operatingsystem"].value == "Darwin"
+                                #Puppet.notice "Skipping wonky OS X port entry %s" %
+                                #    line.inspect
+                                next
+                        end
                         raise Puppet::Error, "Could not match '%s'" % line
                     end
 

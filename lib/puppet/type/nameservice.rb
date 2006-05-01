@@ -25,9 +25,7 @@ class Type
 
                     next unless obj # In case there was an error somewhere
                     
-                    obj.retrieve
-
-
+                    #obj.retrieve
                     obj
                 end
             end
@@ -120,7 +118,6 @@ class State
         # cases.
         def retrieve
             if obj = @parent.getinfo(true)
-
                 if method = self.class.posixmethod || self.class.name
                     @is = obj.send(method)
                 else

@@ -220,6 +220,7 @@ class TestPElementServer < Test::Unit::TestCase
 
             count = 0
             described = {}
+            Puppet.info "listing again"
             type.list.each do |obj|
                 assert_instance_of(type, obj)
 

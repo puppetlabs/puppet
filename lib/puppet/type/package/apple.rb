@@ -21,6 +21,20 @@ module Puppet
                 raise Puppet::PackageError.new(output)
             end
         end
+
+        def list
+            packages = []
+
+            Dir.entries("/Library/Receipts").find { |f|
+                f =~ /\.pkg$/
+            }.collect { |f|
+                Puppet.type(:package).installedpkg(
+                    :name => f.sub(/\.pkg/, ''),
+                    :type => :apple,
+                    :ensure => :installed
+                )
+            }
+        end
     end
 end
 

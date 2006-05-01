@@ -195,7 +195,7 @@ class TestFileSources < Test::Unit::TestCase
         fromtree = file_list(fromdir)
         totree = file_list(todir)
 
-        assert(fromtree != totree)
+        assert(fromtree != totree, "Trees are incorrectly equal")
 
         # then remove our new files
         FileUtils.cd(todir) {

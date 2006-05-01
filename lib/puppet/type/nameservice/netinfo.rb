@@ -82,6 +82,8 @@ module Puppet
                 end
 
                 # Retrieve the data, yo.
+                # FIXME This should retrieve as much information as possible,
+                # rather than retrieving it one at a time.
                 def retrieve
                     NetInfo.flush
                     dir = @parent.class.netinfodir

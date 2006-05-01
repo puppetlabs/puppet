@@ -305,7 +305,9 @@ module Puppet
             def retrieve
                 self.class.retrieve()
 
-                self.eachstate { |st| st.retrieve }
+                self.eachstate { |st|
+                    st.retrieve
+                }
             end
 
             # Write the entire host file out.
