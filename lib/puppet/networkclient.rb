@@ -44,6 +44,10 @@ module Puppet
                     # so that they namespaces can define the same methods if
                     # they want.
                     newclient = Class.new(self)
+
+                    #name = "Puppet::NetworkClient::" + handler.to_s.sub(/^.+::/, '')
+                    name = handler.to_s.sub(/^.+::/, '')
+                    const_set(name, newclient)
                     @clients[namespace] = newclient
 
                     interface.methods.each { |ary|
@@ -138,7 +142,10 @@ module Puppet
                 if hash[:Certificate]
                     self.cert = hash[:Certificate]
                 else
-                    Puppet.err "No certificate; running with reduced functionality."
+                    unless defined? $nocertwarned
+                        Puppet.err "No certificate; running with reduced functionality."
+                        $nocertwarned = true
+                    end
                 end
 
                 if hash[:Key]

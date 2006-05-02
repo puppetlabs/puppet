@@ -204,26 +204,30 @@ module Puppet
             return retrieved
         end
 
+        # Remove the pid file
+        def rmpidfile
+            if defined? @pidfile and @pidfile and FileTest.exists?(@pidfile)
+                begin
+                    File.unlink(@pidfile)
+                rescue => detail
+                    Puppet.err "Could not remove PID file %s: %s" %
+                        [@pidfile, detail]
+                end
+            end
+        end
+
         # Create the pid file.
         def setpidfile
             Puppet.config.use(:puppet)
             @pidfile = self.pidfile
-            if FileTest.exists?(@pidfile) and not defined? $setpidfile
-                raise Puppet::Error, "A PID file already exists for #{Puppet.name}
+            if FileTest.exists?(@pidfile)
+                if defined? $setpidfile
+                    return
+                else
+                    raise Puppet::Error, "A PID file already exists for #{Puppet.name}
 at #{@pidfile}.  Not starting."
-                #Puppet.info "Deleting old pid file"
-                #begin
-                #    File.unlink(@pidfile)
-                #rescue Errno::EACCES
-                #    Puppet.err "Could not delete old PID file; cannot create new one"
-                #    return
-                #end
+                end
             end
-
-            #unless FileTest.exists?(Puppet[:rundir])
-            #    Puppet.recmkdir(Puppet[:rundir])
-            #    File.chmod(01777, Puppet[:rundir])
-            #end
 
             Puppet.info "Creating PID file to %s" % @pidfile
             begin
@@ -238,14 +242,7 @@ at #{@pidfile}.  Not starting."
         # Shut down our server
         def shutdown
             # Remove our pid file
-            if defined? @pidfile and @pidfile and FileTest.exists?(@pidfile)
-                begin
-                    File.unlink(@pidfile)
-                rescue => detail
-                    Puppet.err "Could not remove PID file %s: %s" %
-                        [@pidfile, detail]
-                end
-            end
+            rmpidfile()
 
             # And close all logs
             Puppet::Log.close

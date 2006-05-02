@@ -1,4 +1,4 @@
-class Puppet::Client::CAClient < Puppet::Client::ProxyClient
+class Puppet::Client::CA < Puppet::Client::ProxyClient
     @drivername = :CA
 
     # set up the appropriate interface methods

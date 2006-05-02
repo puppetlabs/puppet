@@ -315,28 +315,29 @@ end
 server = nil
 
 unless client.readcert
-    if waitforcert
+    # If we don't already have the certificate, then create a client to
+    # request one.
+    caclient = Puppet::Client::CA.new(args)
+    if options[:waitforcert]
         begin
-            while ! client.requestcert do
+            while ! caclient.requestcert do
                 Puppet.notice "Did not receive certificate"
-                sleep waitforcert
+                sleep options[:waitforcert]
             end
         rescue => detail
             Puppet.err "Could not request certificate: %s" % detail.to_s
             exit(23)
         end
     else
-        unless client.requestcert
+        unless caclient.requestcert
             Puppet.notice "No certificates; exiting"
             exit(1)
         end
     end
 
-    # Now, because the Net::HTTP object cannot be modified once we've connected,
-    # we need to recreate the client with the certs intact
-    client = Puppet::Client::MasterClient.new(args)
+    # Now read the new cert in.
     unless client.readcert
-        PUppet.err "Could not read certificates after retrieving them"
+        Puppet.err "Could not read certificates after retrieving them"
         exit(34)
     end
 end
@@ -410,12 +411,12 @@ if options[:onetime]
 else
     threads = []
     if server
-        Puppet.notice "Starting Puppet server version %s" % [Puppet.version]
         threads << Thread.new do
             begin
                 server.start
             rescue => detail
                 Puppet.err "Could not start server: %s" % [detail]
+                server.shutdown
                 exit(1)
             end
         end
@@ -423,12 +424,14 @@ else
 
     if options[:client]
         Puppet.notice "Starting Puppet client version %s" % [Puppet.version]
-            begin
-                client.start
-            rescue => detail
-                Puppet.err "Could not start client: %s" % [detail]
-                exit(1)
-            end
+        begin
+            client.start
+        rescue => detail
+            puts detail.backtrace
+            Puppet.err "Could not start client: %s" % [detail]
+            client.shutdown
+            exit(1)
+        end
     end
 
     threads << Thread.new do

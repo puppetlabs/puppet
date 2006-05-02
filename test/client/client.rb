@@ -86,7 +86,7 @@ class TestClient < Test::Unit::TestCase
         # make a new ssldir for it
         ca = nil
         assert_nothing_raised {
-            ca = Puppet::Client::CAClient.new(
+            ca = Puppet::Client::CA.new(
                 :CA => true, :Local => true
             )
             ca.requestcert

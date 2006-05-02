@@ -136,6 +136,7 @@ module Puppet
                 Puppet.notice "Already in shutdown"
             else
                 self.stopping = true
+                rmpidfile()
                 Puppet::Storage.store
                 exit
             end
@@ -144,7 +145,6 @@ module Puppet
         # Start listening for events.  We're pretty much just listening for
         # timer events here.
         def start
-            super
             # Create our timer
             timer = EventLoop::Timer.new(
                 :interval => Puppet[:runinterval],
