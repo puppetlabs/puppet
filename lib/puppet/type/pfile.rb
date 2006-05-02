@@ -274,12 +274,10 @@ module Puppet
                         # FIXME Shouldn't this just use a Puppet object with
                         # 'source' specified?
                         bfile = file + backup
-                        FileUtils.cp(file, bfile)
 
-                        unless File.stat(file).mode == File.stat(bfile).mode
-                            mode = File.stat(file).mode & 007777
-                            File.chmod(mode, bfile)
-                        end
+                        # Ruby 1.8.1 requires the 'preserve' addition, but
+                        # later versions do not appear to require it.
+                        FileUtils.cp(file, bfile, :preserve => true)
                         return true
                     rescue => detail
                         # since they said they want a backup, let's error out
