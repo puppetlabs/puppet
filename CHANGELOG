@@ -1,3 +1,7 @@
+0.16.4
+    Fixing a critical bug in puppetd when acquiring a certificate for the first
+    time
+
 0.16.3
     Some significant bug fixes
 
