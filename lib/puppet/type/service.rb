@@ -29,7 +29,7 @@ module Puppet
             newvalue(:true) do
                 unless @parent.respond_to?(:enable)
                     raise Puppet::Error, "Service %s does not support enabling" %
-                        self.name
+                        @parent.name
                 end
                 @parent.enable
             end
@@ -37,7 +37,7 @@ module Puppet
             newvalue(:false) do
                 unless @parent.respond_to?(:disable)
                     raise Puppet::Error, "Service %s does not support enabling" %
-                        self.name
+                        @parent.name
                 end
                 @parent.disable
             end
@@ -45,7 +45,7 @@ module Puppet
             def retrieve
                 unless @parent.respond_to?(:enabled?)
                     raise Puppet::Error, "Service %s does not support enabling" %
-                        self.name
+                        @parent.name
                 end
                 @is = @parent.enabled?
             end
