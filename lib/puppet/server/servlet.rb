@@ -57,7 +57,6 @@ class Server
                         return false
                     end
                 else
-                    Puppet.info "No #{@puppetserver.authconfig.file}"
                     # This is pretty hackish, but...
                     # This means we can't actually test this method at this point.
                     # The next release of Puppet will almost definitely require
