@@ -1,3 +1,8 @@
+0.16.5
+    Fixing a critical bug in importing classes from other files
+
+    Fixing nodename handling to actually allow dashes
+
 0.16.4
     Fixing a critical bug in puppetd when acquiring a certificate for the first
     time
