@@ -253,17 +253,18 @@ class TestCron < Test::Unit::TestCase
         tab = @fakefiletype.new(@me)
         tab.remove
 
-        name = "storeandretrieve"
-        cron = mkcron(name)
-        comp = newcomp(name, cron)
-        trans = assert_events([:cron_created], comp, name)
-        
-        cron = nil
+        %w{storeandretrieve a-name another-name more_naming SomeName}.each do |name|
+            cron = mkcron(name)
+            comp = newcomp(name, cron)
+            trans = assert_events([:cron_created], comp, name)
+            
+            cron = nil
 
-        Puppet.type(:cron).retrieve(@me)
+            Puppet.type(:cron).retrieve(@me)
 
-        assert(cron = Puppet.type(:cron)[name], "Could not retrieve named cron")
-        assert_instance_of(Puppet.type(:cron), cron)
+            assert(cron = Puppet.type(:cron)[name], "Could not retrieve named cron")
+            assert_instance_of(Puppet.type(:cron), cron)
+        end
     end
 
     # Do input validation testing on all of the parameters.
@@ -403,6 +404,22 @@ class TestCron < Test::Unit::TestCase
     def verify_failonnouser
         assert_raise(Puppet::Error) do
             @crontype.retrieve("nosuchuser")
+        end
+    end
+
+    def test_names
+        cron = mkcron("nametest")
+
+        ["bad name", "bad.name"].each do |name|
+            assert_raise(ArgumentError) do
+                cron[:name] = name
+            end
+        end
+
+        ["good-name", "good-name", "AGoodName"].each do |name|
+            assert_nothing_raised do
+                cron[:name] = name
+            end
         end
     end
 end

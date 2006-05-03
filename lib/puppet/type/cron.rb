@@ -193,12 +193,21 @@ module Puppet
                 is used for human reference only and is generated automatically
                 for cron jobs found on the system.  This generally won't
                 matter, as Puppet will do its best to match existing cron jobs
-                against specified jobs (and Puppet adds a tag to cron jobs it
+                against specified jobs (and Puppet adds a comment to cron jobs it
                 adds), but it is at least possible that converting from
                 unmanaged jobs to managed jobs might require manual
-                intervention."
+                intervention.
+                
+                The names can only have alphanumeric characters plus the '-'
+                character."
 
             isnamevar
+
+            validate do |value|
+                unless value =~ /^[-\w]+$/
+                    raise ArgumentError, "Invalid name format '%s'" % value
+                end
+            end
         end
 
         newparam(:user) do
@@ -340,7 +349,7 @@ module Puppet
             end
             text.chomp.split("\n").each { |line|
                 case line
-                when /^# Puppet Name: (\w+)$/: name = $1
+                when /^# Puppet Name: (.+)$/: name = $1
                 when /^#/:
                     # add other comments to the list as they are
                     @instances[user] << line 
@@ -502,10 +511,6 @@ module Puppet
         def destroy
             # nothing, since the 'Cron.tab' method just doesn't write out
             # crons whose 'ensure' states are set to 'absent'.
-            #@states.each { |n, state|
-            #    next if n == :ensure
-            #    state.should == :absent
-            #}
             self.store
         end
 
