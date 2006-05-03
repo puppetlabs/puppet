@@ -458,31 +458,41 @@ import: IMPORT quotedtext {
                  " variables are not interpolated for imports " +
                  "in file #{@lexer.file} at line #{@lexer.line}"
              )
-        end         
+        end
         files = Dir.glob(pat)
         if files.size == 0
-            raise Puppet::ImportError.new("No file(s) found for import " + 
-                                          "of '#{pat}'")
+            files = Dir.glob(pat + ".pp")
+            if files.size == 0
+                raise Puppet::ImportError.new("No file(s) found for import " + 
+                                              "of '#{pat}'")
+            end
         end
         files.each { |file|
             parser = Puppet::Parser::Parser.new()
             parser.files = self.files
             Puppet.debug("importing '%s'" % file)
+
+            unless file =~ /^#{File::SEPARATOR}/
+                file = File.join(dir, file)
+            end
             begin
-                parser.file = File.join(dir, file)
+                parser.file = file
             rescue Puppet::ImportError
                 Puppet.warning(
                     "Importing %s would result in an import loop" %
                         File.join(dir, file)
                 )
-                result = AST::ASTArray.new(
-                    :file => @lexer.file,
-                    :line => @lexer.line
-                )
+#                result = AST::ASTArray.new(
+#                    :file => @lexer.file,
+#                    :line => @lexer.line
+#                )
                 next
             end
             # push the results into the main result array
-            result.push parser.parse
+            #result.push parser.parse
+            parser.parse.each do |child|
+                result.push child
+            end
         }
     }
 }
@@ -747,7 +757,10 @@ end
 
 def file=(file)
     unless FileTest.exists?(file)
-        raise Puppet::Error, "Could not find file %s" % file
+        file = file + ".pp"
+        unless FileTest.exists?(file)
+            raise Puppet::Error, "Could not find file %s" % file
+        end
     end
     if @files.detect { |f| f.file == file }
         raise Puppet::ImportError.new("Import loop detected")

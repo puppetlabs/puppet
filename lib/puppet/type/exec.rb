@@ -278,10 +278,12 @@ module Puppet
                     # Rebuild the database, but only when the file changes
                     exec { newaliases:
                         path => [\"/usr/bin\", \"/usr/sbin\"],
-                        require => file[\"/etc/aliases\"],
+                        subscribe => file[\"/etc/aliases\"],
                         refreshonly => true
                     }
                 
+                Note that only ``subscribe`` can trigger actions, not ``require``,
+                so it only makes sense to use ``refreshonly`` with ``subscribe``.
                 "
 
             newvalues(:true, :false)

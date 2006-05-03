@@ -207,6 +207,100 @@ class TestParser < Test::Unit::TestCase
             parser.parse
         }
     end
+
+    def test_importedclasses
+        imported = tempfile()
+        importer = tempfile()
+
+        made = tempfile()
+
+        File.open(imported, "w") do |f|
+            f.puts %{class foo { file { "#{made}": ensure => file }}}
+        end
+
+        File.open(importer, "w") do |f|
+            f.puts %{import "#{imported}"\ninclude foo}
+        end
+
+        parser = Puppet::Parser::Parser.new
+        parser.file = importer
+
+        # Make sure it parses fine
+        assert_nothing_raised {
+            parser.parse
+        }
+
+        # Now make sure it actually does the work
+        assert_creates(importer, made)
+    end
+
+    # Make sure fully qualified and unqualified files can be imported
+    def test_fqfilesandlocalfiles
+        dir = tempfile()
+        Dir.mkdir(dir)
+        importer = File.join(dir, "site.pp")
+        fullfile = File.join(dir, "full.pp")
+        localfile = File.join(dir, "local.pp")
+
+        files = []
+
+        File.open(importer, "w") do |f|
+            f.puts %{import "#{fullfile}"\ninclude full\nimport "local.pp"\ninclude local}
+        end
+
+        file = tempfile()
+        files << file
+
+        File.open(fullfile, "w") do |f|
+            f.puts %{class full { file { "#{file}": ensure => file }}}
+        end
+
+        file = tempfile()
+        files << file
+
+        File.open(localfile, "w") do |f|
+            f.puts %{class local { file { "#{file}": ensure => file }}}
+        end
+
+        parser = Puppet::Parser::Parser.new
+        parser.file = importer
+
+        # Make sure it parses
+        assert_nothing_raised {
+            parser.parse
+        }
+
+        # Now make sure it actually does the work
+        assert_creates(importer, *files)
+    end
+
+    # Make sure the parser adds '.pp' when necessary
+    def test_addingpp
+        dir = tempfile()
+        Dir.mkdir(dir)
+        importer = File.join(dir, "site.pp")
+        localfile = File.join(dir, "local.pp")
+
+        files = []
+
+        File.open(importer, "w") do |f|
+            f.puts %{import "local"\ninclude local}
+        end
+
+        file = tempfile()
+        files << file
+
+        File.open(localfile, "w") do |f|
+            f.puts %{class local { file { "#{file}": ensure => file }}}
+        end
+
+        parser = Puppet::Parser::Parser.new
+        parser.file = importer
+
+        assert_nothing_raised {
+            parser.parse
+        }
+    end
 end
 
 # $Id$

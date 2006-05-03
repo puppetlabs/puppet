@@ -659,4 +659,7 @@ class TestScope < Test::Unit::TestCase
 
 
     end
+
+    def test_defineandinclude
+    end
 end

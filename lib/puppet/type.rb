@@ -2177,7 +2177,7 @@ class Type < Puppet::Element
 
                     service { nagios:
                         running => true,
-                        require => file[nagconf]
+                        subscribe => file[nagconf]
                     }
                 }
             "

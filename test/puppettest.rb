@@ -938,6 +938,29 @@ module ParserTesting
 
         return func
     end
+
+    # This assumes no nodes
+    def assert_creates(manifest, *files)
+        interp = nil
+        assert_nothing_raised {
+            interp = Puppet::Parser::Interpreter.new(
+                :Manifest => manifest,
+                :UseNodes => false
+            )
+        }
+
+        config = nil
+        assert_nothing_raised {
+            config = interp.run(Facter["hostname"].value, {})
+        }
+
+        comp = nil
+        assert_nothing_raised {
+            comp = config.to_type
+        }
+
+        assert_apply(comp)
+    end
 end
 
 class PuppetTestSuite

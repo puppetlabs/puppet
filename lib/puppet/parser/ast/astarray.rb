@@ -35,7 +35,24 @@ class Puppet::Parser::AST
                 definers = []
                 settors = []
                 others = []
+
+                # Make a new array, so we don't have to deal with the details of
+                # flattening and such
+                items = []
+                
+                # First clean out any AST::ASTArrays
                 @children.each { |child|
+                    if child.instance_of?(AST::ASTArray)
+                        child.each do |ac|
+                            items << ac
+                        end
+                    else
+                        items << child
+                    end
+                }
+
+                # Now sort them all according to the type of action
+                items.each { |child|
                     if definelist.include?(child.class)
                         definers << child
                     elsif setlist.include?(child.class)
