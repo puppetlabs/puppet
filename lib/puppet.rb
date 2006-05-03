@@ -14,7 +14,7 @@ require 'puppet/util'
 #
 # it's also a place to find top-level commands like 'debug'
 module Puppet
-    PUPPETVERSION = '0.16.4'
+    PUPPETVERSION = '0.16.5'
 
     def Puppet.version
         return PUPPETVERSION
