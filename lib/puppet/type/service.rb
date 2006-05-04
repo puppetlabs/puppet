@@ -244,7 +244,10 @@ module Puppet
                 of a service, then the service name will be used instead.
                 
                 The pattern can be a simple string or any legal Ruby pattern."
-            defaultto { @parent[:name] }
+
+            defaultto {
+                @parent[:binary] || @parent[:name]
+            }
         end
         newparam(:restart) do
             desc "Specify a *restart* command manually.  If left
@@ -522,6 +525,7 @@ module Puppet
                     return :stopped
                 end
             elsif pid = self.getpid
+                self.debug "PID is %s" % pid
                 return :running
             else
                 return :stopped
