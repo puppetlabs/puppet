@@ -13,7 +13,7 @@ URL: http://reductivelabs.com/projects/puppet/
 Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
 
 Requires: ruby >= 1.8.1
-Requires: facter >= 1.1
+Requires: facter >= 1.1.4
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # It's not possible to build ruby noarch packages currently
 # See bz184199
@@ -121,6 +121,9 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Wed May  3 2006 David Lutterkort <dlutter@redhat.com> - 0.16.4-1
+- Rebuilt
+
 * Fri Apr 21 2006 David Lutterkort <dlutter@redhat.com> - 0.16.0-1
 - Fix default file permissions in server subpackage
 - Run puppetmaster as user puppet
