@@ -25,8 +25,15 @@ class Server
             facts["serverversion"] = Puppet.version.to_s
 
             # And then add the server name and IP
-            facts["servername"] = Facter["hostname"].value
-            facts["serverip"] = Facter["ipaddress"].value
+            {"servername" => "hostname",
+                "serverip" => "ipaddress"
+            }.each do |var, fact|
+                if obj = Facter[fact]
+                    facts[var] = obj.value
+                else
+                    Puppet.warning "Could not retrieve fact %s" % fact
+                end
+            end
         end
 
         def filetimeout
