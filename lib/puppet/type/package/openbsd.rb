@@ -56,7 +56,7 @@ module Puppet
             # list out all of the packages
             open("| #{listcmd()}") { |process|
                 # our regex for matching dpkg output
-                regex = %r{^(\S+)-(\d\S+)\s+(.+)}
+                regex = %r{^(\S+)-(\d\S*)\s+(.+)}
                 fields = [:name, :version, :description]
                 hash = {}
 
@@ -83,7 +83,7 @@ module Puppet
                         packages << pkg
                     else
                         raise Puppet::DevError,
-                            "Failed to match dpkg line %s" % line
+                            "Failed to match line %s" % line
                     end
                 }
             }

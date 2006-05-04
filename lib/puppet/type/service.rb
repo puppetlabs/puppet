@@ -456,6 +456,7 @@ module Puppet
                 )
             end
             regex = Regexp.new(self[:pattern])
+            self.debug "Executing '#{ps}'"
             IO.popen(ps) { |table|
                 table.each { |line|
                     if regex.match(line)
