@@ -127,4 +127,33 @@ class TestEvents < Test::Unit::TestCase
         assert_apply(comp)
         assert(FileTest.exists?(fname), "Exec file did not get created")
     end
+
+    def test_refreshordering
+        file = tempfile()
+
+        exec1 = Puppet.type(:exec).create(
+            :name => "echo one >> %s" % file,
+            :path => "/usr/bin:/bin"
+        )
+
+        exec2 = Puppet.type(:exec).create(
+            :name => "echo two >> %s" % file,
+            :path => "/usr/bin:/bin",
+            :refreshonly => true,
+            :subscribe => ["exec", exec1.name]
+        )
+
+        exec3 = Puppet.type(:exec).create(
+            :name => "echo three >> %s" % file,
+            :path => "/usr/bin:/bin"
+        )
+
+        comp = newcomp(exec1,exec2,exec3)
+
+        assert_apply(comp)
+
+        assert(FileTest.exists?(file), "File does not exist")
+
+        assert_equal("one\ntwo\nthree\n", File.read(file))
+    end
 end
