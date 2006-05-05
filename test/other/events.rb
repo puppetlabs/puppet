@@ -66,6 +66,8 @@ class TestEvents < Test::Unit::TestCase
         assert_equal(0, trans.triggered?(exec, :refresh))
     end
 
+    # Verify that one component can subscribe to another component and the "right"
+    # thing happens
     def test_ladderrequire
         comps = {}
         objects = {}
@@ -81,21 +83,21 @@ class TestEvents < Test::Unit::TestCase
             :refreshonly => true
         )
 
-        comps[:f] = newcomp(file)
-        comps[:e] = newcomp(exec)
+        fcomp = newcomp(file)
+        ecomp = newcomp(exec)
+        comp = newcomp("laddercomp", fcomp, ecomp)
 
-        comps[:e][:subscribe] = [[comps[:f].class.name, comps[:f].name]]
-        comps.each { |l, c|
-            c.finalize
-        }
+        ecomp[:subscribe] = [[fcomp.class.name, fcomp.name]]
 
-        trans = comps[:f].evaluate
+        comp.finalize
+
+        trans = comp.evaluate
         events = nil
         assert_nothing_raised {
             events = trans.evaluate
         }
 
-        assert(FileTest.exists?(fname))
+        assert(FileTest.exists?(fname), "#{fname} does not exist")
         #assert_equal(events.length, trans.triggered?(objects[:b], :refresh))
     end
 end

@@ -182,7 +182,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:mode] = "755"
         }
 
-        trans = assert_events( [:file_changed], component)
+        trans = assert_events([:file_changed], component)
 
         assert(FileTest.exists?(execfile), "Execfile does not exist")
         File.unlink(execfile)
@@ -276,5 +276,58 @@ class TestTransactions < Test::Unit::TestCase
         assert_apply(file, svc, exec)
         assert(FileTest.exists?(path), "File did not get created")
         assert(FileTest.exists?(newfile), "Refresh file did not get created")
+    end
+
+    # Make sure that unscheduled and untagged objects still respond to events
+    def test_unscheduledanduntaggedresponse
+        Puppet::Type.type(:schedule).mkdefaultschedules
+        Puppet[:ignoreschedules] = false
+        file = Puppet.type(:file).create(
+            :name => tempfile(),
+            :ensure => "file"
+        )
+
+        fname = tempfile()
+        exec = Puppet.type(:exec).create(
+            :name => "touch %s" % fname,
+            :path => "/usr/bin:/bin",
+            :schedule => "monthly",
+            :subscribe => ["file", file.name]
+        )
+
+        comp = newcomp(file,exec)
+        comp.finalize
+
+        # Run it once
+        assert_apply(comp)
+        assert(FileTest.exists?(fname), "File did not get created")
+
+        assert(!exec.scheduled?, "Exec is somehow scheduled")
+
+        # Now remove it, so it can get created again
+        File.unlink(fname)
+
+        file[:content] = "some content"
+
+        assert_events([:file_changed], comp)
+        assert(FileTest.exists?(fname), "File did not get recreated")
+
+        # Now remove it, so it can get created again
+        File.unlink(fname)
+
+        # And tag our exec
+        exec.tag("testrun")
+
+        # And our file, so it runs
+        file.tag("norun")
+
+        Puppet[:tags] = "norun"
+
+        file[:content] = "totally different content"
+
+        assert(! file.insync?, "Uh, file is in sync?")
+
+        assert_events([:file_changed], comp)
+        assert(FileTest.exists?(fname), "File did not get recreated")
     end
 end

@@ -11,8 +11,8 @@ class Transaction
 
     Puppet.config.setdefaults(:transaction,
         :tags => ["", "Tags to use to find objects.  If this is set, then
-            only objects tagged with the specified tags will be applied.  Values must
-            be comma-separated."]
+            only objects tagged with the specified tags will be applied.
+            Values must be comma-separated."]
     )
 
     # a bit of a gross hack; a global list of objects that have failed to sync,
@@ -23,89 +23,119 @@ class Transaction
         Puppet::Metric.init
     end
 
+    # Apply all changes for a child, returning a list of the events
+    # generated.
+    def apply(child)
+        changes = child.evaluate
+        unless changes.is_a? Array
+            changes = [changes]
+        end
+
+        childevents = changes.collect { |change|
+            @changes << change
+            @count += 1
+            change.transaction = self
+            events = nil
+            begin
+                # use an array, so that changes can return more than one
+                # event if they want
+                events = [change.forward].flatten.reject { |e| e.nil? }
+            rescue => detail
+                change.state.err "change from %s to %s failed: %s" %
+                    [change.state.is_to_s, change.state.should_to_s, detail]
+                #Puppet.err("%s failed: %s" % [change.to_s,detail])
+                if Puppet[:debug]
+                    puts detail.backtrace
+                end
+                next
+                # FIXME this should support using onerror to determine
+                # behaviour; or more likely, the client calling us
+                # should do so
+            end
+
+            # Mark that our change happened, so it can be reversed
+            # if we ever get to that point
+            unless events.nil? or (events.is_a?(Array) and events.empty?)
+                change.changed = true
+            end
+
+            events
+        }.flatten.reject { |e| e.nil? }
+
+        unless changes.empty?
+            # Record when we last synced
+            child.cache(:synced, Time.now)
+        end
+
+        childevents
+    end
+
     # for now, just store the changes for executing linearly
     # later, we might execute them as we receive them
     def change(change)
         @changes.push change
     end
 
-    # okay, here's the deal:
-    # a given transaction maps directly to a component, and each transaction
-    # will only ever receive changes from its respective component
-    # so, when looking for subscribers, we need to first see if the object
-    # that actually changed had any direct subscribers
-    # then, we need to pass the event to the object's containing component,
-    # to see if it or any of its parents have subscriptions on the event
+    # Collect all of the targets for the list of events.  This is an unintuitive
+    # method because it recurses up through the source the event.
+    def collecttargets(events)
+        events.each do |event|
+            source = event.source
+
+            while source
+                Puppet::Event::Subscription.targets_of(event, source) do |sub|
+                    @targets[sub.target] << sub
+                end
+
+                source = source.parent
+            end
+        end
+    end
+
+    # This method does all the actual work of running a transaction.  It
+    # collects all of the changes, executes them, and responds to any
+    # necessary events.
     def evaluate
         #Puppet.debug "Beginning transaction %s with %s changes" %
         #    [self.object_id, @changes.length]
 
-        count = 0
-        now = Time.now
+        @count = 0
         tags = Puppet[:tags]
         if tags == ""
             tags = nil
         else
             tags = tags.split(/\s*,\s*/)
         end
-        events = @objects.find_all { |child|
-            if tags
-                child.tagged?(tags)
+
+        allevents = @objects.collect { |child|
+            events = nil
+            if (tags.nil? or child.tagged?(tags))
+                if child.scheduled?
+                    # Perform the actual changes
+                    events = apply(child)
+
+                    # Collect the targets any subscriptions to those events
+                    collecttargets(events)
+                else
+                    child.debug "Not scheduled"
+                end
             else
-                true # match everything when there are no tags
+                child.debug "Not tagged with %s" % tags.join(", ")
             end
-        }.find_all { |child|
-            child.scheduled?
-        }.collect { |child|
-            # these children are all Puppet::Type instances
-            # not all of the children will return a change, and Containers
-            # return transactions
-            #ary = child.evaluate
-            #ary
-            changes = child.evaluate
-            unless changes.is_a? Array
-                changes = [changes]
-            end
-            changes.collect { |change|
-                @changes << change
-                count += 1
-                change.transaction = self
-                events = nil
-                begin
-                    # use an array, so that changes can return more than one
-                    # event if they want
-                    events = [change.forward].flatten.reject { |e| e.nil? }
-                rescue => detail
-                    change.state.err "change from %s to %s failed: %s" %
-                        [change.state.is_to_s, change.state.should_to_s, detail]
-                    #Puppet.err("%s failed: %s" % [change.to_s,detail])
-                    if Puppet[:debug]
-                        puts detail.backtrace
-                    end
-                    next
-                    # FIXME this should support using onerror to determine
-                    # behaviour; or more likely, the client calling us
-                    # should do so
-                end
 
-                # This is kinda lame, because it can result in the same
-                # object being modified multiple times, but that's difficult
-                # to avoid as long as we're syncing each state individually.
-                change.state.parent.cache(:synced, now)
+            # Now check to see if there are any events for this child
+            trigger(child)
 
-                unless events.nil? or (events.is_a?(Array) and events.empty?)
-                    change.changed = true
-                end
-                events
-            }
-        }.flatten.reject { |child|
-            child.nil? # remove empties
-        }
+            # And return the events for collection
+            events
+        }.flatten.reject { |e| e.nil? }
 
         Puppet.debug "Finishing transaction %s with %s changes" %
-            [self.object_id, count]
+            [self.object_id, @count]
 
-        self.propagate(events)
+        # Currently, we return the list of events, but really, this
+        # should be some kind of report
+        allevents
     end
 
     # this should only be called by a Puppet::Container object now
@@ -118,6 +148,10 @@ class Transaction
             hash[key] = Hash.new(0)
         }
 
+        @targets = Hash.new do |hash, key|
+            hash[key] = []
+        end
+
         # of course, this won't work on the second run
         unless defined? @@failures
             @toplevel = true
@@ -127,74 +161,72 @@ class Transaction
         @changes = []
     end
 
-    # Respond to each of the events.  This method walks up the parent tree,
-    # triggering each parent in turn.  It's important that the transaction
-    # itself know whether a given subscription fails, so that it can respond
-    # appropriately (when we get to the point where we're responding to events).
-    def propagate(events)
-        events.each do |event|
-            source = event.source
+    # Roll all completed changes back.
+    def rollback
+        @targets.clear
+        @triggered.clear
+        allevents = @changes.reverse.collect { |change|
+            # skip changes that were never actually run
+            unless change.changed
+                Puppet.debug "%s was not changed" % change.to_s
+                next
+            end
+            begin
+                events = change.backward
+            rescue => detail
+                Puppet.err("%s rollback failed: %s" % [change,detail])
+                if Puppet[:debug]
+                    puts detail.backtrace
+                end
+                next
+                # at this point, we would normally do error handling
+                # but i haven't decided what to do for that yet
+                # so just record that a sync failed for a given object
+                #@@failures[change.state.parent] += 1
+                # this still could get hairy; what if file contents changed,
+                # but a chmod failed?  how would i handle that error? dern
+            end
 
-            while source
-                Puppet::Event::Subscription.trigger(source, event) do |sub|
+            collecttargets(events)
+
+            # Now check to see if there are any events for this child.
+            # Kind of hackish, since going backwards goes a change at a
+            # time, not a child at a time.
+            trigger(change.state.parent)
+
+            # And return the events for collection
+            events
+        }.flatten.reject { |e| e.nil? }
+    end
+
+    # Trigger any subscriptions to a child
+    def trigger(child)
+        obj = child
+
+        while obj
+            if @targets.include?(obj)
+                @targets[obj].uniq.each do |sub|
+                    # At this point, just log failures, don't try to react
+                    # to them in any way.
                     begin
                         sub.trigger(self)
                     rescue => detail
-                        sub.target.err "Failed to respond to %s: %s" % [event, detail]
+                        sub.target.err "Failed to call %s on %s: %s" %
+                            [sub.callback, sub.target, detail]
+
                         if Puppet[:debug]
                             puts detail.backtrace
                         end
                     end
                 end
-
-                # Reset the source if there's a parent obj
-                source = source.parent
             end
-            #Puppet::Event::Subscriptions.propagate(object, event, self)
+
+            obj = obj.parent
         end
-    end
-
-    # Roll all completed changes back.
-    def rollback
-        events = @changes.reverse.collect { |change|
-            if change.is_a?(Puppet::StateChange)
-                # skip changes that were never actually run
-                unless change.changed
-                    Puppet.debug "%s was not changed" % change.to_s
-                    next
-                end
-                #change.transaction = self
-                begin
-                    change.backward
-                rescue => detail
-                    Puppet.err("%s rollback failed: %s" % [change,detail])
-                    if Puppet[:debug]
-                        puts detail.backtrace
-                    end
-                    next
-                    # at this point, we would normally do error handling
-                    # but i haven't decided what to do for that yet
-                    # so just record that a sync failed for a given object
-                    #@@failures[change.state.parent] += 1
-                    # this still could get hairy; what if file contents changed,
-                    # but a chmod failed?  how would i handle that error? dern
-                end
-            elsif change.is_a?(Puppet::Transaction)
-                raise Puppet::DevError, "Got a sub-transaction"
-                # yay, recursion
-                change.rollback
-            else
-                raise Puppe::DevError,
-                    "Transactions cannot handle objects of type %s" % child.class
-            end
-        }.flatten.reject { |e| e.nil? }
-
-        self.propagate(events)
     end
 
     def triggered(object, method)
         @triggered[object][method] += 1
-        #@triggerevents << ("%s_%sed" % [object.class.name.to_s, method.to_s]).intern
     end
 
     def triggered?(object, method)

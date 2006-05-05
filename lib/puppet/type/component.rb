@@ -77,10 +77,18 @@ module Puppet
         # dependencies.  This will get run once on the top-level component,
         # and it will do everything necessary.
         def finalize
+            started = {}
             finished = {}
             
             # First do all of the finish work, which mostly involves
             self.delve do |object|
+                # Make sure we don't get into loops
+                if started.has_key?(object)
+                    debug "Already finished %s" % object.name
+                    next
+                else
+                    started[object] = true
+                end
                 unless finished.has_key?(object)
                     object.finish
                     object.builddepends
@@ -155,12 +163,6 @@ module Puppet
                 end
             }
         end
-
-        #def retrieve
-        #    self.collect { |child|
-        #        child.retrieve
-        #    }
-        #end
 
         def to_s
             return "component(%s)" % self.name

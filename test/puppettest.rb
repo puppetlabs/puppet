@@ -18,7 +18,9 @@ module TestPuppet
         comp = Puppet.type(:component).create(
             :name => name
         )
-        ary.each { |item| comp.push item }
+        ary.each { |item|
+            comp.push item
+        }
 
         return comp
     end

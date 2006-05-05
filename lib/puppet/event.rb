@@ -75,6 +75,17 @@ module Puppet
                 @subscriptions[stype][sname] << sub
             end
 
+            # Collect all of the subscriptions that target a specific event.
+            def self.targets_of(event, source)
+                type, name = self.split(source)
+
+                @subscriptions[type][name].each { |sub|
+                    if sub.match?(event)
+                        yield sub
+                    end
+                }
+            end
+
             # Trigger the subscriptions related to an event, and then pass it up
             # as appropriate
             def self.trigger(source, event)
@@ -245,7 +256,7 @@ module Puppet
 		end
 
         def to_s
-            self.event.to_s
+            @source.to_s + " -> " + self.event.to_s
         end
 	end
 end
