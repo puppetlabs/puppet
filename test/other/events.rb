@@ -100,4 +100,31 @@ class TestEvents < Test::Unit::TestCase
         assert(FileTest.exists?(fname), "#{fname} does not exist")
         #assert_equal(events.length, trans.triggered?(objects[:b], :refresh))
     end
+
+    def test_multiplerefreshes
+        files = []
+
+        4.times { |i|
+            files << Puppet.type(:file).create(
+                :name => tempfile(),
+                :ensure => "file"
+            )
+        }
+
+        fname = tempfile()
+        exec = Puppet.type(:exec).create(
+            :name => "touch %s" % fname,
+            :path => "/usr/bin:/bin",
+            :refreshonly => true
+        )
+
+        exec[:subscribe] = files.collect { |f|
+            ["file", f.name]
+        }
+
+        comp = newcomp(exec, *files)
+
+        assert_apply(comp)
+        assert(FileTest.exists?(fname), "Exec file did not get created")
+    end
 end

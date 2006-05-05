@@ -206,7 +206,7 @@ module Puppet
             end
 
             # Trigger a subscription, which basically calls the associated method
-            # on the target object.
+            # on the target object. XXX This is currently unused.
             def trigger(transaction)
                 event = nil
 

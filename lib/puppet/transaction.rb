@@ -81,10 +81,13 @@ class Transaction
     def collecttargets(events)
         events.each do |event|
             source = event.source
+            start = source
 
             while source
                 Puppet::Event::Subscription.targets_of(event, source) do |sub|
-                    @targets[sub.target] << sub
+                    start.info "Scheduling %s of %s[%s]" %
+                        [sub.callback, sub.target.class.name, sub.target.name]
+                    @targets[sub.target][event] = sub
                 end
 
                 source = source.parent
@@ -149,7 +152,7 @@ class Transaction
         }
 
         @targets = Hash.new do |hash, key|
-            hash[key] = []
+            hash[key] = {}
         end
 
         # of course, this won't work on the second run
@@ -199,25 +202,48 @@ class Transaction
         }.flatten.reject { |e| e.nil? }
     end
 
-    # Trigger any subscriptions to a child
+    # Trigger any subscriptions to a child.  This does an upwardly recursive
+    # search -- it triggers the passed object, but also the object's parent
+    # and so on up the tree.
     def trigger(child)
         obj = child
+        callbacks = Hash.new { |hash, key| hash[key] = [] }
+        sources = Hash.new { |hash, key| hash[key] = [] }
 
         while obj
             if @targets.include?(obj)
-                @targets[obj].uniq.each do |sub|
+                callbacks.clear
+                sources.clear
+                @targets[obj].each do |event, sub|
+                    # Collect all of the subs for each callback
+                    callbacks[sub.callback] << sub
+
+                    # And collect the sources for logging
+                    sources[event.source] << sub.callback
+                end
+
+                sources.each do |source, callbacklist|
+                    obj.debug "%s[%s] results in triggering %s" %
+                        [source.class.name, source.name, callbacklist.join(", ")]
+                end
+
+                callbacks.each do |callback, subs|
+                    obj.info "Triggering '%s' from %s dependencies" %
+                        [callback, subs.length]
                     # At this point, just log failures, don't try to react
                     # to them in any way.
                     begin
-                        sub.trigger(self)
+                        obj.send(callback)
                     rescue => detail
-                        sub.target.err "Failed to call %s on %s: %s" %
-                            [sub.callback, sub.target, detail]
+                        obj.err "Failed to call %s on %s: %s" %
+                            [callback, obj, detail]
 
                         if Puppet[:debug]
                             puts detail.backtrace
                         end
                     end
+
+                    triggered(obj, callback)
                 end
             end
 
