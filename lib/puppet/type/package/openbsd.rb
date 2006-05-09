@@ -55,8 +55,8 @@ module Puppet
             end
             # list out all of the packages
             open("| #{listcmd()}") { |process|
-                # our regex for matching dpkg output
-                regex = %r{^(\S+)-(\d\S*)\s+(.+)}
+                # our regex for matching pkg_info output
+                regex = %r{^(\S+)-([^-\s]+)\s+(.+)}
                 fields = [:name, :version, :description]
                 hash = {}
 
@@ -82,13 +82,14 @@ module Puppet
                         pkg = Puppet.type(:package).installedpkg(hash)
                         packages << pkg
                     else
-                        raise Puppet::DevError,
-                            "Failed to match line %s" % line
+                        # Print a warning on lines we can't match, but move
+                        # on, since it should be non-fatal
+                        warning("Failed to match line %s" % line)
                     end
                 }
             }
 
-            # Mark any packages we didn't find as absent
+            # Mark as absent any packages we didn't find
             Puppet.type(:package).each do |pkg|
                 unless packages.include? pkg
                     pkg.is = [:ensure, :absent] 
