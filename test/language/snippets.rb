@@ -447,6 +447,12 @@ class TestSnippets < Test::Unit::TestCase
         end
     end
 
+    def snippet_defineoverrides(trans)
+        file = "/tmp/defineoverrides1"
+        assert(FileTest.exists?(file), "File does not exist")
+        assert_equal(0755, filemode(file))
+    end
+
     def snippet_emptyclass(trans)
         # There's nothing to check other than that it works
     end
