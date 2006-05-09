@@ -14,12 +14,12 @@ class Puppet::Parser::AST
 
         #def evaluate(scope,hash,objtype,objname)
         def evaluate(hash)
-            scope = hash[:scope]
+            origscope = hash[:scope]
             objtype = hash[:type]
             objname = hash[:name]
             arguments = hash[:arguments] || {}
 
-            scope = scope.newscope(
+            scope = origscope.newscope(
                 :type => @type,
                 :name => objname,
                 :keyword => self.keyword
@@ -95,9 +95,14 @@ class Puppet::Parser::AST
             # Now just evaluate the code with our new bindings.
             self.code.safeevaluate(:scope => scope)
 
-            # We return the scope, so that our children can make their scopes
-            # under ours.  This allows them to find our definitions.
-            return scope
+            # If we're being evaluated as a parent class, we want to return the
+            # scope, so it can be overridden and such, but if not, we want to 
+            # return a TransBucket of our objects.
+            if hash.include?(:asparent)
+                return scope
+            else
+                return scope.to_trans
+            end
         end
 
         # Check whether a given argument is valid.  Searches up through

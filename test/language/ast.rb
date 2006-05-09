@@ -53,13 +53,20 @@ class TestAST < Test::Unit::TestCase
         }
 
         scope = nil
+        objects = nil
         assert_nothing_raised("Could not evaluate") {
             scope = Puppet::Parser::Scope.new()
-            objects = top.evaluate(:scope => scope)
+            objects = scope.evaluate(:ast => top)
         }
 
+        assert_instance_of(Puppet::TransBucket, objects)
+
         assert_equal(1, scope.find_all { |child|
-            child.lookupobject(:name => "/parent", :type => "file")
+            if child.is_a? Puppet::Parser::Scope
+                child.lookupobject(:name => "/parent", :type => "file")
+            else
+                nil
+            end
         }.length, "Found incorrect number of '/parent' objects")
 
         assert_equal(classes.sort, scope.classlist.sort)
@@ -127,7 +134,7 @@ class TestAST < Test::Unit::TestCase
         scope = nil
         assert_raise(Puppet::ParseError, "Invalid parent type was allowed") {
             scope = Puppet::Parser::Scope.new()
-            objects = top.evaluate(:scope => scope)
+            objects = scope.evaluate(:ast => top)
         }
     end
 
@@ -417,13 +424,16 @@ class TestAST < Test::Unit::TestCase
             objects = scope.evaluate(:names => [name], :facts => {}, :ast => top)
         }
         assert(objects, "Could not retrieve short node definition")
+        assert_instance_of(Puppet::TransBucket, objects)
 
         # And now verify that we got both the top and node objects
         assert_nothing_raised("Could not find top-declared object") {
             assert_equal("/testing", objects[0].name)
         }
 
-        assert_nothing_raised("Could not find node-declared object") {
+        assert_nothing_raised("Could not find node-declared object %s" %
+            "/%s" % name
+        ) {
             assert_equal("/%s" % name, objects[1][0].name)
         }
     end
@@ -454,19 +464,19 @@ class TestAST < Test::Unit::TestCase
 
         # Evaluate the parse tree
         scope = nil
+        objects = nil
         assert_nothing_raised("Could not evaluate node") {
             scope = Puppet::Parser::Scope.new()
-            top.evaluate(:scope => scope)
+            objects = scope.evaluate(:ast => top)
         }
 
         # Verify we get the right classlist back
         assert_equal(classes.sort, scope.classlist.sort)
 
         # Verify we can find the node via a search list
-        objects = nil
-        assert_nothing_raised("Could not retrieve objects") {
-            objects = scope.to_trans
-        }
+        #assert_nothing_raised("Could not retrieve objects") {
+        #    objects = scope.to_trans
+        #}
         assert(objects, "Could not retrieve objects")
 
         assert_nothing_raised("Could not find top-declared object") {

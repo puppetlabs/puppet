@@ -430,18 +430,17 @@ class TestScope < Test::Unit::TestCase
         scope = nil
         assert_nothing_raised("Could not evaluate") {
             scope = Puppet::Parser::Scope.new()
-            #scope.name =  "topscope"
-            #scope.type =  "topscope"
             objects = scope.evaluate(:ast => top)
         }
 
         assert_equal(1, objects.length, "Returned too many objects: %s" %
             objects.inspect)
+
         assert_equal(1, objects[0].length, "Returned too many objects: %s" %
             objects[0].inspect)
+
         assert_nothing_raised {
             file = objects[0][0]
-
             assert_equal("bin", file["owner"], "Value did not override correctly")
         }
     end
@@ -530,13 +529,9 @@ class TestScope < Test::Unit::TestCase
             :children => stats
         )
         scope = Puppet::Parser::Scope.new()
-        assert_nothing_raised {
-            scope.evaluate(:ast => top)
-        }
-
         trans = nil
         assert_nothing_raised {
-            trans = scope.to_trans
+            trans = scope.evaluate(:ast => top)
         }
 
         obj = trans.find do |obj| obj.is_a? Puppet::TransObject end
@@ -604,12 +599,22 @@ class TestScope < Test::Unit::TestCase
             ]
         ))
 
+        children << Puppet::Parser::AST::Function.new(
+            :name => "include",
+            :ftype => :statement,
+            :arguments => AST::ASTArray.new(
+                :children => [nameobj("one"), nameobj("two")]
+            )
+        )
+
         top = AST::ASTArray.new(:children => children)
 
-        top.evaluate(:scope => scope)
+        #assert_nothing_raised {
+        #    scope.function_include(["one", "two"])
+        #}
 
         assert_nothing_raised {
-            scope.function_include(["one", "two"])
+            scope.evaluate(:ast => top)
         }
 
 
@@ -658,8 +663,5 @@ class TestScope < Test::Unit::TestCase
         }
 
 
-    end
-
-    def test_defineandinclude
     end
 end

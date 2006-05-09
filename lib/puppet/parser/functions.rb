@@ -27,7 +27,6 @@ module Functions
 
         fname = "function_" + name.to_s
         Puppet::Parser::Scope.send(:define_method, fname, &block)
-        #FCollection.send(:module_function,name)
 
         # Someday we'll support specifying an arity, but for now, nope
         #@functions[name] = {:arity => arity, :type => ftype}
@@ -63,10 +62,11 @@ module Functions
     newfunction(:include) do |vals|
         vals.each do |val|
             if objecttype = lookuptype(val)
-                # It's a defined type
-                objecttype.safeevaluate(
+                # It's a defined type, so set it into the scope so it can
+                # be evaluated.
+                setobject(
                     :type => val,
-                    :scope => self
+                    :arguments => {}
                 )
             else
                 raise Puppet::ParseError, "Unknown class %s" % val

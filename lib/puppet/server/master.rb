@@ -142,17 +142,17 @@ class Server
             # This is hackish, but there's no "silence" option for benchmarks
             # right now
             if @local
-                begin
+                #begin
                     retobjects = @interpreter.run(client, facts)
-                rescue Puppet::Error => detail
-                    Puppet.err detail
-                    raise XMLRPC::FaultException.new(
-                        1, detail.to_s
-                    )
-                rescue => detail
-                    Puppet.err detail.to_s
-                    return ""
-                end
+                #rescue Puppet::Error => detail
+                #    Puppet.err detail
+                #    raise XMLRPC::FaultException.new(
+                #        1, detail.to_s
+                #    )
+                #rescue => detail
+                #    Puppet.err detail.to_s
+                #    return ""
+                #end
             else
                 benchmark(:notice, "Compiled configuration for %s" % client) do
                     begin

@@ -179,7 +179,7 @@ module Puppet::Parser
 
         # Yield each child scope in turn
         def each
-            @children.reject { |child|
+            @children.each { |child|
                 yield child
             }
         end
@@ -189,11 +189,9 @@ module Puppet::Parser
             return unless classes
             classes.each do |klass|
                 if code = lookuptype(klass)
-                    code.safeevaluate(
-                        :scope => self,
-                        :facts => {},
-                        :type => klass
-                    )
+                    # Just reuse the 'include' function, since that's the equivalent
+                    # of what we're doing here.
+                    function_include(klass)
                 end
             end
         end
@@ -201,7 +199,6 @@ module Puppet::Parser
         # Evaluate a specific node's code.  This method will normally be called
         # on the top-level scope, but it actually evaluates the node at the
         # appropriate scope.
-        #def evalnode(names, facts, classes = nil, parent = nil)
         def evalnode(hash)
             objects = hash[:ast]
             names = hash[:names]  or
@@ -240,17 +237,19 @@ module Puppet::Parser
             scope.evalclasses(classes)
         end
 
-        # Evaluate normally, with no node definitions.  This is a bit of a
-        # silly method, in that it just calls evaluate on the passed-in
-        # objects, and then calls to_trans on itself.  It just conceals
-        # a paltry amount of info from whomever's using the scope object.
+        # The top-level evaluate, used to evaluate a whole AST tree.  This is
+        # a strange method, in that it turns around and calls evaluate() on its
+        # :ast argument.
         def evaluate(hash)
             objects = hash[:ast]
             facts = hash[:facts] || {}
 
+            @@done = []
+
             unless objects
                 raise Puppet::DevError, "Evaluation requires an AST tree"
             end
+
             # Set all of our facts in the top-level scope.
             facts.each { |var, value|
                 self.setvar(var, value)
@@ -258,9 +257,10 @@ module Puppet::Parser
 
             # Evaluate all of our configuration.  This does not evaluate any
             # node definitions.
-            objects.safeevaluate(:scope => self)
+            result = objects.safeevaluate(:scope => self)
 
-            # If they've provided a name or a parent, we assume they're looking for nodes.
+            # If they've provided a name or a parent, we assume they're looking
+            # for nodes.
             if hash.include? :parentnode
                 # Specifying a parent node takes precedence, because it is assumed
                 # that this node was found in a remote repository like ldap.
@@ -277,15 +277,14 @@ module Puppet::Parser
                 # a cfengine module
             end
 
-            objects = self.to_trans
-            objects.top = true
+            bucket = self.to_trans
 
             # Add our class list
             unless self.classlist.empty?
-                objects.classes = self.classlist
+                bucket.classes = self.classlist
             end
 
-            return objects
+            return bucket
         end
 
         # Pull in all of the appropriate classes and evaluate them.  It'd
@@ -306,8 +305,8 @@ module Puppet::Parser
 
             #Puppet.notice "hash is %s" %
             #    hash.inspect
-            Puppet.notice "Classes are %s, parent is %s" %
-                [classes.inspect, parent.inspect]
+            #Puppet.notice "Classes are %s, parent is %s" %
+            #    [classes.inspect, parent.inspect]
 
             if parent
                 arghash[:parentclass] = parent
@@ -324,52 +323,6 @@ module Puppet::Parser
             # Finally evaluate our list of classes in this new scope.
             scope.evalclasses(classes)
         end
-
-        # Take all of our objects and evaluate them.
-#        def finish
-#            self.info "finishing"
-#            @objectlist.each { |object|
-#                if object.is_a? ScopeObj
-#                    self.info "finishing %s" % object.name
-#                    if obj = finishobject(object)
-#                        @children << obj
-#                    end
-#                end
-#            }
-#
-#            @finished = true
-#
-#            self.info "finished"
-#        end
-#
-#        # If the object is defined in an upper scope, then add our
-#        # params to that upper scope; else, create a transobject
-#        # or evaluate the definition.
-#        def finishobject(object)
-#            type = object.type
-#            name = object.name
-#
-#            # It should be a defined type.
-#            definedtype = lookuptype(type)
-#
-#            unless definedtype
-#                error = Puppet::ParseError.new("No such type %s" % type)
-#                error.line = object.line
-#                error.file = object.file
-#                raise error
-#            end
-#
-#            return definedtype.safeevaluate(
-#                :scope => self,
-#                :arguments => object,
-#                :type => type,
-#                :name => name
-#            )
-#        end
-#
-#        def finished?
-#            @finished
-#        end
 
         # Initialize our new scope.  Defaults to having no parent and to
         # being declarative.
@@ -395,7 +348,10 @@ module Puppet::Parser
                 end
                 self.istop(hash[:declarative])
             else
+                # This is here, rather than in newchild(), so that all
+                # of the later variable initialization works.
                 @parent.child = self
+
                 @level = @parent.level + 1
                 @interp = @parent.interp
                 @topscope = @parent.topscope
@@ -424,9 +380,6 @@ module Puppet::Parser
                 # See #newobject for how to create the actual objects
                 typehash[typekey] = Hash.new(nil)
             }
-
-            # The list of simpler hash objects.
-            @objectlist = []
 
             # This is just for collecting statements locally, so we can
             # verify that there is no overlap within this specific scope
@@ -591,24 +544,13 @@ module Puppet::Parser
 
             obj = nil
 
-            # If it's a builtin type, then use a transobject, else use
-            # a ScopeObj, which will get replaced later.
-            if self.builtintype?(hash[:type])
-                obj = Puppet::TransObject.new(hash[:name], hash[:type])
+            obj = Puppet::TransObject.new(hash[:name], hash[:type])
 
-                @children << obj
-            else
-                obj = ScopeObj.new(nil)
-                obj.name = hash[:name]
-                obj.type = hash[:type]
-            end
+            @children << obj
 
             @objectable[hash[:type]][hash[:name]] = obj
 
             @definedtable[hash[:type]][hash[:name]] = obj
-
-            # Keep them in order, just for kicks
-            @objectlist << obj
 
             return obj
         end
@@ -737,48 +679,43 @@ module Puppet::Parser
                 }
             end
 
-            if objecttype = lookuptype(type)
-                # It's a defined type
-                objecttype.safeevaluate(
-                    :name => name,
-                    :type => type,
-                    :arguments => params,
-                    :scope => self
-                )
-            else
-                # First look for it in a parent scope
-                obj = lookupobject(:name => name, :type => type)
+            # First look for it in a parent scope
+            obj = lookupobject(:name => name, :type => type)
 
-                unless obj and obj != :undefined
-                    unless obj = @objectable[type][name]
-                        obj = self.newobject(
-                            :type => type,
-                            :name => name,
-                            :line => line,
-                            :file => file
-                        )
+            unless obj and obj != :undefined
+                unless obj = @objectable[type][name]
+                    obj = self.newobject(
+                        :type => type,
+                        :name => name,
+                        :line => line,
+                        :file => file
+                    )
 
-                        # only set these if we've created the object,
-                        # which is the most common case
-                        # FIXME we eventually need to store the file
-                        # and line with each param, not the object
-                        # itself.
-                        obj.file = file
-                        obj.line = line
-                    end
+                    # only set these if we've created the object,
+                    # which is the most common case
+                    # FIXME we eventually need to store the file
+                    # and line with each param, not the object
+                    # itself.
+                    obj.file = file
+                    obj.line = line
                 end
-
-                # Now add our parameters.  This has the function of overriding
-                # existing values, which might have been defined in a higher
-                # scope.
-                params.each { |var,value|
-                    # Add it to our found object
-                    obj[var] = value
-                }
             end
 
-            @localobjectable[type][name] ||= {}
+            # Now add our parameters.  This has the function of overriding
+            # existing values, which might have been defined in a higher
+            # scope.
+            params.each { |var,value|
+                # Add it to our found object
+                obj[var] = value
+            }
 
+            # This is only used for override verification -- the local object
+            # table does not have transobjects or whatever in it, it just has
+            # simple hashes.  This is necessary because setobject can modify
+            # our object table or a parent class's object table, and we
+            # still need to make sure param settings cannot be duplicated
+            # within our scope.
+            @localobjectable[type][name] ||= {}
             params.each { |var,value|
                 # And add it to the local table; mmm, hack
                 @localobjectable[type][name][var] = value
@@ -867,9 +804,121 @@ module Puppet::Parser
             end
         end
 
-        # Convert our scope to a list of Transportable objects.
+        # Convert our scope to a TransBucket.  Everything in our @localobjecttable
+        # gets converted to either an evaluated definition, or a TransObject
         def to_trans
+            results = []
 
+            @children.dup.each do |child|
+
+                if @@done.include?(child)
+                    raise Puppet::DevError, "Already translated %s" % child.object_id
+                else
+                    info "Translating %s" % child.object_id
+                    @@done << child
+                end
+                #warning "Working on %s of type %s with id %s" %
+                #    [child.type, child.class, child.object_id]
+
+                # If it's a scope, then it can only be a subclass's scope, so
+                # convert it to a transbucket and store it in our results list
+                result = nil
+                case child
+                when Scope
+                    #raise Puppet::DevError, "got a child scope"
+                    result = child.to_trans
+                when Puppet::TransObject
+                    # These objects can map to defined types or builtin types.
+                    # Builtin types should be passed out as they are, but defined
+                    # types need to be evaluated.  We have to wait until this
+                    # point so that subclass overrides can happen.
+                    # Wait until the last minute to set tags, although this
+                    # probably should not matter
+                    child.tags = self.tags
+
+                    # Add any defaults.
+                    self.adddefaults(child)
+
+                    # Then make sure this child's tags are stored in the
+                    # central table.  This should maybe be in the evaluate
+                    # methods, but, eh.
+                    @topscope.addtags(child)
+
+                    # Now that all that is done, check to see what kind of object
+                    # it is.
+                    if objecttype = lookuptype(child.type)
+                        # It's a defined type, so evaluate it
+                        result = objecttype.safeevaluate(
+                            :name => child.name,
+                            :type => child.type,
+                            :arguments => child.to_hash,
+                            :scope => self
+                        )
+                    else
+                        # It's a builtin type, so just chunk it on in
+                        result = child
+                    end
+                else
+                    raise Puppet::DevError,
+                        "Puppet::Parse::Scope cannot handle objects of type %s" %
+                            child.class
+                end
+
+                # Skip empty builtin types or defined types
+                if result and ! result.empty?
+                    results << result
+                end
+            end
+
+            # Get rid of any nil objects.
+            results.reject! { |child|
+                child.nil?
+            }
+
+            # If we have a name and type, then make a TransBucket, which
+            # becomes a component.
+            # Else, just stack all of the objects into the current bucket.
+            if @type
+                bucket = Puppet::TransBucket.new
+
+                if defined? @name and @name
+                    bucket.name = @name
+                end
+                # it'd be nice not to have to do this...
+                results.each { |result|
+                    #Puppet.warning "Result type is %s" % result.class
+                    bucket.push(result)
+                }
+                bucket.type = @type
+
+                if defined? @keyword
+                    bucket.keyword = @keyword
+                end
+                #Puppet.debug(
+                #    "TransBucket with name %s and type %s in scope %s" %
+                #    [@name,@type,self.object_id]
+                #)
+
+                # now find metaparams
+                @symtable.each { |var,value|
+                    if Puppet::Type.metaparam?(var.intern)
+                        #Puppet.debug("Adding metaparam %s" % var)
+                        bucket.param(var,value)
+                    else
+                        #Puppet.debug("%s is not a metaparam" % var)
+                    end
+                }
+                #Puppet.debug "Returning bucket %s from scope %s" %
+                #    [bucket.name,self.object_id]
+                return bucket
+            else
+                Puppet.debug "typeless scope; just returning a list"
+                return results
+            end
+        end
+
+        # Convert our scope to a list of Transportable objects.
+        def oldto_trans
             results = []
             
             # Iterate across our child scopes and call to_trans on them

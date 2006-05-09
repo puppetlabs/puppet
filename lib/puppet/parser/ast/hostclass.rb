@@ -11,7 +11,7 @@ class Puppet::Parser::AST
             scope = hash[:scope]
             objtype = hash[:type]
             objname = hash[:name]
-            hash = hash[:arguments]
+            args = hash[:arguments]
             # Verify that we haven't already been evaluated
             # FIXME The second subclass won't evaluate the parent class
             # code at all, and any overrides will throw an error.
@@ -26,30 +26,51 @@ class Puppet::Parser::AST
 
             # Default to creating a new context
             newcontext = true
+            transscope = nil
             if parentscope = self.evalparent(
-                :scope => scope, :arguments => hash, :name => objname
+                :scope => scope, :arguments => args, :name => objname
             )
                 # Override our scope binding with the parent scope
                 # binding. This is quite hackish, but I can't think
                 # of another way to make sure our scopes end up under
                 # our parent scopes.
+                if parentscope.is_a? Puppet::TransBucket
+                    raise Puppet::DevError, "Got a bucket instead of a scope"
+                end
+
                 scope = parentscope
+                transscope = parentscope
 
                 # But don't create a new context if our parent created one
                 newcontext = false
             end
 
-            # just use the Component evaluate method, but change the type
-            # to our own type
-            #retval = super(scope,hash,@name,objname)
-            retval = super(
+            # Just use the Component evaluate method, but change the type
+            # to our own type.
+            result = super(
                 :scope => scope,
-                :arguments => hash,
+                :arguments => args,
                 :type => @type,
-                :name => objname,
-                :newcontext => newcontext
+                :name => objname,               # might be nil
+                :newcontext => newcontext,
+                :asparent => hash[:asparent]    # might be nil
             )
-            return retval
+
+            # This is important but painfully difficult.  If we're the top-level
+            # class, that is, we have no parent classes, then the transscope
+            # is our own scope, but if there are parent classes, then the topmost
+            # parent's scope is the transscope, since it contains its code and
+            # all of the subclass's code.
+            transscope ||= result
+
+            if hash[:asparent]
+                # If we're a parent class, then return the scope object itself.
+                return result
+            else
+                # But if we're the final subclass, translate the whole scope tree
+                # into TransObjects and TransBuckets.
+                return transscope.to_trans
+            end
         end
 
         # Evaluate our parent class.  Parent classes are evaluated in the
@@ -97,11 +118,13 @@ class Puppet::Parser::AST
                     raise error
                 end
                 # We don't need to pass the type, because the parent will just
-                # use its own type
+                # use its own type.  Specify that it's being evaluated as a parent,
+                # so that it returns the scope, not a transbucket.
                 return parentobj.safeevaluate(
                     :scope => scope,
                     :arguments => args,
-                    :name => name
+                    :name => name,
+                    :asparent => true
                 )
             else
                 return false
