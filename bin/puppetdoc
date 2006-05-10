@@ -99,7 +99,12 @@ def scrub(text)
     # indent from every line.
     if text =~ /^(\s+)/
         indent = $1
-        return text.gsub(/^#{indent}/,'')
+        begin
+            return text.gsub(/^#{indent}/,'')
+        rescue => detail
+            puts detail.backtrace
+            puts detail
+        end
     else
         return text
     end
@@ -141,7 +146,12 @@ argument is approprite or not.
     }.each do |name, object|
         puts "* **#{name.to_s}** (*#{object.section.to_s}*)"
         puts ""
-        puts "  " + object.desc.gsub(/\n/, " ")
+        begin
+            puts "  " + object.desc.gsub(/\n/, " ")
+        rescue => detail
+            puts detail.backtrace
+            puts detail
+        end
         puts ""
     end
 
@@ -185,6 +195,7 @@ in your manifest, including defined components.
             puts indent(scrub(Puppet::Type.metaparamdoc(param)), $tab)
         }
     rescue => detail
+        puts detail.backtrace
         puts "incorrect metaparams: %s" % detail
         exit(1)
     end

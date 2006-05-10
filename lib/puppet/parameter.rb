@@ -19,6 +19,48 @@ module Puppet
                 end
             end
 
+            # Return a documentation string.  If there are valid values,
+            # then tack them onto the string.
+            def doc
+                @doc ||= ""
+
+                unless defined? @addeddocvals
+                    unless values.empty?
+                        if @aliasvalues.empty?
+                            @doc += "  Valid values are ``" +
+                                values.join("``, ``") + "``."
+                        else
+                            @doc += "  Valid values are "
+
+                            @doc += values.collect do |value|
+                                ary = @aliasvalues.find do |name, val|
+                                    val == value
+                                end
+                                if ary
+                                    "``%s`` (also called ``%s``)" % [value, ary[0]]
+                                else
+                                    "``#{value}``"
+                                end
+                            end.join(", ") + "."
+                        end
+                    end
+
+                    if defined? @parameterregexes and ! @parameterregexes.empty?
+                        regs = @parameterregexes
+                        if @parameterregexes.is_a? Hash
+                            regs = @parameterregexes.keys
+                        end
+                        unless regs.empty?
+                            @doc += "  Values can also match ``" +
+                                regs.join("``, ``") + "``."
+                        end
+                    end
+                    @addeddocvals = true
+                end
+
+                @doc
+            end
+
             def nodefault
                 if public_method_defined? :default
                     undef_method :default

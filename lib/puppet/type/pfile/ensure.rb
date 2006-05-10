@@ -14,7 +14,7 @@ module Puppet
                     ensure => \"/etc/inet/inetd.conf\"
                 }
             
-            You can make relative links:
+            You can make relative links::
                 
                 # Useful on solaris
                 file { \"/etc/inetd.conf\":

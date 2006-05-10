@@ -108,11 +108,10 @@ module Puppet
         end
 
         ensurable do
-            desc "What state the package should be in.  The primary options
-                are *installed* (also called *present*), *uninstalled* (also
-                called *absent*), and *latest*.  *latest* only makes sense for
-                those packaging formats that can retrieve new packages on
-                their own."
+            desc "What state the package should be in.
+                *latest* only makes sense for those packaging formats that can
+                retrieve new packages on their own and will throw an error on
+                those that cannot."
 
             attr_accessor :latest
 

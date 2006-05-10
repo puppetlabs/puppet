@@ -2192,11 +2192,9 @@ class Type < Puppet::Element
     end
 
     newmetaparam(:loglevel) do
-        desc "Sets the level that information will be logged:
-             ``debug``, ``info``, ``verbose``, ``notice``, ``warning``,
-             ``err``, ``alert``, ``emerg`` or ``crit``.  The log levels have
-             the biggest impact when logs are sent to syslog (which is
-             currently the default)."
+        desc "Sets the level that information will be logged.
+             The log levels have the biggest impact when logs are sent to
+             syslog (which is currently the default)."
         defaultto :notice
 
         newvalues(*Puppet::Log.levels)
@@ -2277,9 +2275,9 @@ class Type < Puppet::Element
             be useful to add your own tags to a given element.
 
             Tags are currently useful for things like applying a subset of a
-            host's configuration:
+            host's configuration::
                 
-                puppetd -v --tag mytag --onetime
+                puppetd --test --tag mytag
 
             This way, when you're testing a configuration you can run just the
             portion you're testing."

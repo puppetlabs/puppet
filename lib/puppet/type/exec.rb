@@ -283,8 +283,7 @@ module Puppet
                     }
                 
                 Note that only ``subscribe`` can trigger actions, not ``require``,
-                so it only makes sense to use ``refreshonly`` with ``subscribe``.
-                "
+                so it only makes sense to use ``refreshonly`` with ``subscribe``."
 
             newvalues(:true, :false)
 

@@ -97,10 +97,16 @@ module Puppet
 
         newparam(:recurse) do
             desc "Whether and how deeply to do recursive
-                management.  **false**/*true*/*inf*/*number*"
+                management."
 
+            newvalues(:true, :false, :inf, /^[0-9]+$/)
             munge do |value|
-                value
+                case value
+                when :true: true
+                when :false: false
+                else
+                    value
+                end
             end
         end
 
