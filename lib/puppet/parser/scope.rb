@@ -814,7 +814,6 @@ module Puppet::Parser
                 if @@done.include?(child)
                     raise Puppet::DevError, "Already translated %s" % child.object_id
                 else
-                    info "Translating %s" % child.object_id
                     @@done << child
                 end
                 #warning "Working on %s of type %s with id %s" %
