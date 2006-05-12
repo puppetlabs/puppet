@@ -453,6 +453,14 @@ class TestSnippets < Test::Unit::TestCase
         assert_equal(0755, filemode(file))
     end
 
+    def snippet_deepclassheirarchy(trans)
+        5.times { |i|
+            i += 1
+            file = "/tmp/deepclassheir%s" % i
+            assert(FileTest.exists?(file), "File %s does not exist" % file)
+        }
+    end
+
     def snippet_emptyclass(trans)
         # There's nothing to check other than that it works
     end

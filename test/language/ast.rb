@@ -712,57 +712,46 @@ class TestAST < Test::Unit::TestCase
         assert(scope.classlist.include?("node"), "Node's name did not get set")
     end
 
-    def test_functions
-        assert_raise(Puppet::ParseError) do
-            Puppet::Parser::AST::Function.new(
-                :name => "fakefunction",
-                :arguments => AST::ASTArray.new(
-                    :children => [nameobj("avalue")]
-                )
+    # Make sure that deep class parentage works
+    def test_classparentage
+        children = []
+        files = []
+        base = classobj("base")
+        files << "/base"
+
+        children << base
+
+        parent = "base"
+        5.times { |i|
+            name = "child%s" % i
+            files << "/%s" % name
+            children << classobj(name, :parentclass => nameobj(parent))
+
+            parent = name
+        }
+
+        children << functionobj("include", parent)
+
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
             )
-        end
+        }
 
-        assert_nothing_raised do
-            Puppet::Parser::Functions.newfunction(:fakefunction, :rvalue) do |input|
-                return "output %s" % input[0]
-            end
-        end
+        objects = nil
+        assert_nothing_raised("Could not evaluate") {
+            scope = Puppet::Parser::Scope.new()
+            objects = scope.evaluate(:ast => top)
+        }
 
-        func = nil
-        assert_nothing_raised do
-            func = Puppet::Parser::AST::Function.new(
-                :name => "fakefunction",
-                :ftype => :rvalue,
-                :arguments => AST::ASTArray.new(
-                    :children => [nameobj("avalue")]
-                )
-            )
-        end
+        objects = objects.flatten
 
-        scope = Puppet::Parser::Scope.new()
-        val = nil
-        assert_nothing_raised do
-            val = func.evaluate(:scope => scope)
-        end
-
-        assert_equal("output avalue", val)
-    end
-
-    def test_taggedfunction
-        scope = Puppet::Parser::Scope.new()
-
-        tag = "yayness"
-        scope.setclass(tag.object_id, tag)
-
-        {"yayness" => true, "booness" => false}.each do |tag, retval|
-            func = taggedobj(tag, :rvalue)
-
-            val = nil
-            assert_nothing_raised do
-                val = func.evaluate(:scope => scope)
-            end
-
-            assert_equal(retval, val, "'tagged' returned %s for %s" % [val, tag])
+        files.each do |file|
+            assert(objects.find { |o| o.name == file },
+                "Could not find file %s" % file)
         end
     end
 end
+
+# $Id$

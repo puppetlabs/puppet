@@ -9,7 +9,6 @@ class Puppet::Parser::AST
         #def evaluate(scope,hash,objtype,objname)
         def evaluate(hash)
             scope = hash[:scope]
-            objtype = hash[:type]
             objname = hash[:name]
             args = hash[:arguments]
             # Verify that we haven't already been evaluated
@@ -24,22 +23,25 @@ class Puppet::Parser::AST
             # during the evaluation and can be inspected.
             scope.setclass(self.object_id, @type)
 
+            origscope = scope
+
             # Default to creating a new context
             newcontext = true
-            transscope = nil
-            if parentscope = self.evalparent(
+
+            # If we've got a parent, then we pass it the original scope we
+            # received.  It will get passed all the way up to the top class,
+            # which will create a subscope and pass that subscope to its
+            # subclass.
+            if @parentscope = self.evalparent(
                 :scope => scope, :arguments => args, :name => objname
             )
-                # Override our scope binding with the parent scope
-                # binding. This is quite hackish, but I can't think
-                # of another way to make sure our scopes end up under
-                # our parent scopes.
-                if parentscope.is_a? Puppet::TransBucket
+                if @parentscope.is_a? Puppet::TransBucket
                     raise Puppet::DevError, "Got a bucket instead of a scope"
                 end
 
-                scope = parentscope
-                transscope = parentscope
+                # Override our scope binding with the parent scope
+                # binding.
+                scope = @parentscope
 
                 # But don't create a new context if our parent created one
                 newcontext = false
@@ -67,6 +69,16 @@ class Puppet::Parser::AST
                 # If we're a parent class, then return the scope object itself.
                 return result
             else
+                transscope = nil
+                if @parentscope
+                    transscope = @parentscope
+                    until transscope.parent.object_id == origscope.object_id
+                        transscope = transscope.parent
+                    end
+                else
+                    transscope = result
+                end
+
                 # But if we're the final subclass, translate the whole scope tree
                 # into TransObjects and TransBuckets.
                 return transscope.to_trans

@@ -927,10 +927,14 @@ module ParserTesting
     end
 
     def taggedobj(name, ftype = :statement)
+        functionobj("tagged", name, ftype)
+    end
+
+    def functionobj(function, name, ftype = :statement)
         func = nil
         assert_nothing_raised do
             func = Puppet::Parser::AST::Function.new(
-                :name => "tagged",
+                :name => function,
                 :ftype => ftype,
                 :arguments => AST::ASTArray.new(
                     :children => [nameobj(name)]

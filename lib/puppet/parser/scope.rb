@@ -810,7 +810,6 @@ module Puppet::Parser
             results = []
 
             @children.dup.each do |child|
-
                 if @@done.include?(child)
                     raise Puppet::DevError, "Already translated %s" % child.object_id
                 else
