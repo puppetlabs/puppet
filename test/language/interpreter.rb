@@ -71,6 +71,36 @@ class TestInterpreter < Test::Unit::TestCase
         assert(config != newconfig, "Configs are somehow the same")
     end
 
+    def test_hoststorage
+        assert_nothing_raised {
+            Puppet[:storeconfigs] = true
+        }
+
+        file = tempfile()
+        File.open(file, "w") { |f|
+            f.puts "file { \"/etc\": owner => root }"
+        }
+
+        interp = nil
+        assert_nothing_raised {
+            interp = Puppet::Parser::Interpreter.new(
+                :Manifest => file,
+                :UseNodes => false
+                )
+        }
+
+        facts = {}
+        Facter.each { |fact, val| facts[fact] = val }
+
+        objects = nil
+        assert_nothing_raised {
+            objects = interp.run(facts["hostname"], facts)
+        }
+
+        obj = Puppet::Rails::Host.find_by_name(facts["hostname"])
+        assert(obj, "Could not find host object")
+    end
+
     if Facter["domain"].value == "madstop.com"
     begin
         require 'ldap'

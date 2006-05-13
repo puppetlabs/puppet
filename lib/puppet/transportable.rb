@@ -106,6 +106,17 @@ module Puppet
             @children.each { |c| yield c }
         end
 
+        # Turn our heirarchy into a flat list
+        def flatten
+            @children.collect do |obj|
+                if obj.is_a? Puppet::TransBucket
+                    obj.flatten
+                else
+                    obj
+                end
+            end.flatten
+        end
+
         def initialize
             @children = []
         end

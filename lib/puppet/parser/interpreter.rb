@@ -38,6 +38,12 @@ module Puppet
                     branch under your main directory."]
             )
 
+            Puppet.setdefaults(:puppetmaster,
+                :storeconfigs => [false,
+                    "Whether to store each client's configuration.  This
+                     requires ActiveRecord from Ruby on Rails."]
+            )
+
             attr_accessor :ast, :filetimeout
             # just shorten the constant path a bit, using what amounts to an alias
             AST = Puppet::Parser::AST
@@ -220,7 +226,7 @@ module Puppet
                 end
 
                 begin
-                    return scope.evaluate(args)
+                    objects = scope.evaluate(args)
                 rescue Puppet::DevError, Puppet::Error, Puppet::ParseError => except
                     raise
                 rescue => except
@@ -232,6 +238,24 @@ module Puppet
                     #end
                     raise error
                 end
+
+                if Puppet[:storeconfigs]
+                    unless defined? ActiveRecord
+                        require 'puppet/rails'
+                        unless defined? ActiveRecord
+                            raise LoadError,
+                                "storeconfigs is enabled but rails is unavailable"
+                        end
+                        Puppet::Rails.init
+                    end
+                    Puppet::Rails::Host.store(
+                        :objects => objects,
+                        :host => client,
+                        :facts => facts
+                    )
+                end
+
+                return objects
             end
 
             def scope
@@ -239,25 +263,6 @@ module Puppet
             end
 
             private
-
-            # Evaluate the configuration.  If there aren't any nodes defined, then
-            # this doesn't actually do anything, because we have to evaluate the
-            # entire configuration each time we get a connect.
-            def evaluate
-                # FIXME When this produces errors, it should specify which
-                # node caused those errors.
-                if @usenodes
-                    @scope = Puppet::Parser::Scope.new() # no parent scope
-                    @scope.name = "top"
-                    @scope.type = "puppet"
-                    @scope.interp = self
-                    Puppet.debug "Nodes defined"
-                    @ast.safeevaluate(:scope => @scope)
-                else
-                    Puppet.debug "No nodes defined"
-                    return
-                end
-            end
 
             def parsefiles
                 if @file
@@ -305,10 +310,6 @@ module Puppet
                 # Mark when we parsed, so we can check freshness
                 @parsedate = Time.now.to_i
                 @lastchecked = Time.now
-
-                # Reevaluate the config.  This is what actually replaces the
-                # existing scope.
-                evaluate
             end
         end
     end

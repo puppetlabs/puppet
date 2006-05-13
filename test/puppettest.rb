@@ -59,7 +59,7 @@ module TestPuppet
         if $0 =~ /.+\.rb/ or Puppet[:debug]
             Puppet::Log.newdestination :console
             Puppet::Log.level = :debug
-            $VERBOSE = 1
+            #$VERBOSE = 1
         else
             Puppet::Log.close
             Puppet::Log.newdestination tempfile()
