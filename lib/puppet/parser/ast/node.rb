@@ -7,13 +7,21 @@ class Puppet::Parser::AST
 
         #def evaluate(scope, facts = {})
         def evaluate(hash)
-            scope = hash[:scope]
+            origscope = hash[:scope]
             facts = hash[:facts] || {}
-            #scope.info "name is %s, type is %s" % [self.name, self.type]
+
             # nodes are never instantiated like a normal object,
             # but we need the type to be the name users would use for
             # instantiation, otherwise tags don't work out
-            scope = scope.newscope(
+
+            pscope = origscope
+            #pscope = if ! Puppet[:lexical] or hash[:asparent]
+            #    @scope
+            #else
+            #    origscope
+            #end
+
+            scope = pscope.newscope(
                 :type => self.type,
                 :keyword => @keyword
             )
@@ -78,7 +86,7 @@ class Puppet::Parser::AST
 
                 begin
                     code = node.code
-                    code.safeevaluate(:scope => scope)
+                    code.safeevaluate(:scope => scope, :asparent => true)
                 rescue Puppet::ParseError => except
                     except.line = self.line
                     except.file = self.file

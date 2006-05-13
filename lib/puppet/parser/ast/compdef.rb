@@ -9,7 +9,7 @@ class Puppet::Parser::AST
     # encounter an error if the component is instantiated more than
     # once.
     class CompDef < AST::Branch
-        attr_accessor :type, :args, :code, :keyword
+        attr_accessor :type, :args, :code, :keyword, :scope
 
         def each
             [@type,@args,@code].each { |child| yield child }

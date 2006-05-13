@@ -3,7 +3,7 @@ class Puppet::Parser::AST
     # specified node, and this parse tree is only ever looked up when
     # a client connects.
     class NodeDef < AST::Branch
-        attr_accessor :names, :code, :parentclass, :keyword
+        attr_accessor :names, :code, :parentclass, :keyword, :scope
 
         def each
             [@names,@code].each { |child| yield child }

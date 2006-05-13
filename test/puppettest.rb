@@ -791,15 +791,28 @@ module ParserTesting
         }
     end
 
+    def objectdef(type, name, params)
+        assert_nothing_raised("Could not create %s %s" % [type, name]) {
+            return AST::ObjectDef.new(
+                :file => __FILE__,
+                :line => __LINE__,
+                :name => stringobj(name),
+                :type => nameobj(type),
+                :params => objectinst(params)
+            )
+        }
+    end
+
     def fileobj(path, hash = {"owner" => "root"})
         assert_nothing_raised("Could not create file %s" % path) {
-            return AST::ObjectDef.new(
-                :file => tempfile(),
-                :line => rand(100),
-                :name => stringobj(path),
-                :type => nameobj("file"),
-                :params => objectinst(hash)
-            )
+            return objectdef("file", path, hash)
+#            return AST::ObjectDef.new(
+#                :file => tempfile(),
+#                :line => rand(100),
+#                :name => stringobj(path),
+#                :type => nameobj("file"),
+#                :params => objectinst(hash)
+#            )
         }
     end
 

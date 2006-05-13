@@ -14,8 +14,15 @@ class Puppet::Parser::AST
             # Verify that we haven't already been evaluated
             # FIXME The second subclass won't evaluate the parent class
             # code at all, and any overrides will throw an error.
-            if scope.lookupclass(self.object_id)
+            if myscope = scope.lookupclass(self.object_id)
                 Puppet.debug "%s class already evaluated" % @type
+
+                # Not used, but will eventually be used to fix #140.
+                if myscope.is_a? Puppet::Parser::Scope
+                    unless scope.object_id == myscope.object_id
+                        #scope.parent = myscope
+                    end
+                end
                 return nil
             end
 
@@ -55,8 +62,13 @@ class Puppet::Parser::AST
                 :type => @type,
                 :name => objname,               # might be nil
                 :newcontext => newcontext,
-                :asparent => hash[:asparent]    # might be nil
+                :asparent => hash[:asparent] || false    # might be nil
             )
+
+            # Now set the class again, this time using the scope.  This way
+            # we can look up the parent scope of this class later, so we
+            # can hook the children together.
+            scope.setscope(self.object_id, result)
 
             # This is important but painfully difficult.  If we're the top-level
             # class, that is, we have no parent classes, then the transscope

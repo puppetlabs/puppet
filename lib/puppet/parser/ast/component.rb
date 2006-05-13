@@ -19,7 +19,13 @@ class Puppet::Parser::AST
             objname = hash[:name]
             arguments = hash[:arguments] || {}
 
-            scope = origscope.newscope(
+            pscope = origscope
+            #pscope = if ! Puppet[:lexical] or hash[:asparent] == false
+            #    origscope
+            #else
+            #    @scope
+            #end
+            scope = pscope.newscope(
                 :type => @type,
                 :name => objname,
                 :keyword => self.keyword
@@ -32,17 +38,13 @@ class Puppet::Parser::AST
             end
             @scope = scope
 
-
             # Additionally, add a tag for whatever kind of class
             # we are
             scope.tag(@type)
 
             unless objname.nil?
-                #Puppet.info "tagging with %s" % objname.inspect
                 scope.tag(objname)
             end
-            #scope.base = self.class.name
-
 
             # define all of the arguments in our local scope
             if self.args

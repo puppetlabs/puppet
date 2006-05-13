@@ -752,6 +752,59 @@ class TestAST < Test::Unit::TestCase
                 "Could not find file %s" % file)
         end
     end
+
+    # To fix #140.  Currently non-functional.
+    def disabled_test_classreuse
+        children = []
+
+        # Create the parent class, with a definition in it.
+        children << classobj("parent", :code => AST::ASTArray.new(
+            :file => __FILE__,
+            :line => __LINE__,
+            :children => [
+                compobj("foo", :args => AST::ASTArray.new(
+                        :children => [nameobj("arg")]
+                    ),
+                    :code => AST::ASTArray.new(
+                        :file => __FILE__,
+                        :line => __LINE__,
+                        :children => [fileobj("/$arg")]
+                    )
+                ),
+                objectdef("foo", "ptest", {"arg" => "parentfoo"})
+            ]
+        ))
+
+        # Create child class, also trying to use that definition
+        children << classobj("child1", :parentclass => nameobj("parent"),
+            :code => AST::ASTArray.new(
+                :file => __FILE__,
+                :line => __LINE__,
+                :children => [
+                    objectdef("foo", "ctest", {"arg" => "childfoo"})
+                ]
+            )
+        )
+
+        # Call the parent first
+        children << functionobj("include", "parent")
+
+        # Then call the child, and make sure it can look up the definition
+        children << functionobj("include", "child1")
+
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        objects = nil
+        assert_nothing_raised("Could not evaluate") {
+            scope = Puppet::Parser::Scope.new()
+            objects = scope.evaluate(:ast => top)
+        }
+    end
 end
 
 # $Id$

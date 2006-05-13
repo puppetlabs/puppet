@@ -10,13 +10,17 @@ module Puppet::Parser
             attr_accessor :file, :line, :type, :name
         end
 
+        # This doesn't actually work right now.
+        Puppet.config.setdefaults(:puppet,
+            :lexical => [false, "Whether to use lexical scoping (vs. dynamic)."])
+
         Puppet::Util.logmethods(self)
 
         include Enumerable
         attr_accessor :parent, :level, :interp
         attr_accessor :name, :type, :topscope, :base, :keyword
 
-        attr_accessor :top, :context
+        attr_accessor :top, :context, :translated
 
         # This is probably not all that good of an idea, but...
         # This way a parent can share its tables with all of its children.
@@ -174,7 +178,15 @@ module Puppet::Parser
             unless defined? @classtable
                 raise Puppet::DevError, "Scope did not receive class table"
             end
-            return @classtable.values
+            return @classtable.collect { |id, klass|
+                # The class table can contain scopes or strings as its values
+                # so support them accordingly.
+                if klass.is_a? Scope
+                    klass.type
+                else
+                    klass
+                end
+            }
         end
 
         # Yield each child scope in turn
@@ -282,6 +294,11 @@ module Puppet::Parser
             # Add our class list
             unless self.classlist.empty?
                 bucket.classes = self.classlist
+            end
+
+            # Now clean up after ourselves
+            [@@done].each do |table|
+                table.clear
             end
 
             return bucket
@@ -577,11 +594,13 @@ module Puppet::Parser
                 raise Puppet::ParseError, "Invalid class name '%s'" % name
             end
 
-            if self.topscope?
-                @classtable[id] = name
-            else
-                @parent.setclass(id, name)
-            end
+            @classtable[id] = name
+        end
+
+        # Store the scope for each class, so that other subclasses can look
+        # them up.
+        def setscope(id, scope)
+            @classtable[id] = scope
         end
 
         # Set defaults for a type.  The typename should already be downcased,
@@ -629,6 +648,7 @@ module Puppet::Parser
                 # We have to store both the scope that's setting the node and
                 # the node itself, so that the node gets evaluated in the correct
                 # scope.
+                code.scope = self
                 @nodetable[name] = {
                     :scope => self,
                     :node => code
@@ -643,6 +663,7 @@ module Puppet::Parser
                 raise Puppet::ParseError,
                     "%s is already defined" % name
             else
+                ltype.scope = self
                 @typetable[name] = ltype
             end
         end
@@ -782,6 +803,7 @@ module Puppet::Parser
                 tmp << @type.to_s
             end
             if @parent
+                #info "Looking for tags in %s" % @parent.type
                 @parent.tags.each { |tag|
                     if tag.nil? or tag == ""
                         Puppet.debug "parent returned tag %s" % tag.inspect
@@ -808,6 +830,9 @@ module Puppet::Parser
         # gets converted to either an evaluated definition, or a TransObject
         def to_trans
             results = []
+
+            # Set this on entry, just in case someone tries to get all weird
+            @translated = true
 
             @children.dup.each do |child|
                 if @@done.include?(child)
@@ -1033,12 +1058,15 @@ module Puppet::Parser
             elsif table.include?(sub)
                 return table[sub]
             elsif ! @parent.nil?
-                #self.notice "Context is %s, parent %s is %s" %
-                #    [self.context, @parent.type, @parent.context]
+                # Context is used for retricting overrides.
                 if usecontext and self.context != @parent.context
                     return :undefined
                 else
-                    return @parent.lookup(type,sub, usecontext)
+                    #if defined? @superscope and val = @superscope.lookup(type,sub, usecontext) and val != :undefined
+                    #    return val
+                    #else
+                        return @parent.lookup(type,sub, usecontext)
+                    #end
                 end
             else
                 return :undefined
