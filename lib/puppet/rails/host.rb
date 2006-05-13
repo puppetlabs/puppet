@@ -63,7 +63,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
             tobj.each do |p,v| params[p] = v end
 
             args = {:ptype => tobj.type, :name => tobj.name}
-            [:tags, :file, :line].each do |param|
+            [:tags, :file, :line, :collectable].each do |param|
                 if val = tobj.send(param)
                     args[param] = val
                 end

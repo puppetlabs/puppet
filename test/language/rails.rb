@@ -7,6 +7,7 @@ if __FILE__ == $0
 end
 
 require 'puppet'
+require 'puppet/rails'
 require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppet/client'
@@ -26,13 +27,12 @@ class TestRails < Test::Unit::TestCase
     if defined? ActiveRecord::Base
     def test_hostcache
         # First make some objects
-        object = Puppet::TransObject.new("/tmp", "file")
-        object.tags = %w{testing puppet}
-        object[:mode] = "1777"
-        object[:owner] = "root"
-
-        bucket = Puppet::TransBucket.new
-        bucket.push object
+        bucket = mk_transtree do |object, depth, width|
+            # and mark some of them collectable
+            if width % 2 == 1
+                object.collectable = true
+            end
+        end
 
         # Now collect our facts
         facts = {}
@@ -54,15 +54,29 @@ class TestRails < Test::Unit::TestCase
 
         assert(host, "Did not create host")
 
-        obj = nil
+        host = nil
         assert_nothing_raised {
-            obj = Puppet::Rails::Host.find_by_name(facts["hostname"])
+            host = Puppet::Rails::Host.find_by_name(facts["hostname"])
         }
-        assert(obj, "Could not find host object")
+        assert(host, "Could not find host object")
 
-        assert(obj.rails_objects, "No objects on host")
+        assert(host.rails_objects, "No objects on host")
 
-        assert_equal(facts["hostname"], obj.facts["hostname"],
+        collectable = host.rails_objects.find_all do |obj| obj.collectable end
+
+        assert(collectable.length > 0, "Found no collectable objects")
+
+        collectable.each do |obj|
+            trans = nil
+            assert_nothing_raised {
+                trans = obj.to_trans
+            }
+            # Make sure that the objects do not retain their collectable
+            # nature.
+            assert(!trans.collectable, "Object from db was collectable")
+        end
+
+        assert_equal(facts["hostname"], host.facts["hostname"],
             "Did not retrieve facts")
     end
 

@@ -8,7 +8,7 @@ module Puppet
     # YAML.
     class TransObject
         include Enumerable
-        attr_accessor :type, :name, :file, :line
+        attr_accessor :type, :name, :file, :line, :collectable
 
         attr_writer :tags
 
@@ -25,8 +25,8 @@ module Puppet
         def initialize(name,type)
             @type = type
             @name = name
+            @collectable = false
             @params = {}
-            #self.class.add(self)
             @tags = []
         end
 
@@ -101,6 +101,32 @@ module Puppet
                 #Puppet.warning @params.inspect
             end
         }
+
+        # Remove all collectable objects from our tree, since the client
+        # should not see them.
+        def collectstrip!
+            @children.dup.each do |child|
+                if child.is_a? self.class
+                    child.collectstrip!
+                else
+                    if child.collectable
+                        @children.delete(child)
+                    end
+                end
+            end
+        end
+
+        # Recursively yield everything.
+        def delve(&block)
+            @children.each do |obj|
+                block.call(obj)
+                if obj.is_a? self.class
+                    obj.delve(&block)
+                else
+                    obj
+                end
+            end
+        end
 
         def each
             @children.each { |c| yield c }

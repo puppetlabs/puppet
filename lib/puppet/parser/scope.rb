@@ -855,6 +855,7 @@ module Puppet::Parser
                     # Builtin types should be passed out as they are, but defined
                     # types need to be evaluated.  We have to wait until this
                     # point so that subclass overrides can happen.
+
                     # Wait until the last minute to set tags, although this
                     # probably should not matter
                     child.tags = self.tags
@@ -870,15 +871,30 @@ module Puppet::Parser
                     # Now that all that is done, check to see what kind of object
                     # it is.
                     if objecttype = lookuptype(child.type)
-                        # It's a defined type, so evaluate it
+                        # It's a defined type, so evaluate it.  Retain whether
+                        # the object is collectable.
                         result = objecttype.safeevaluate(
                             :name => child.name,
                             :type => child.type,
                             :arguments => child.to_hash,
-                            :scope => self
+                            :scope => self,
+                            :collectable => child.collectable
                         )
+
+                        # If the child is collectable, then mark all of the
+                        # results as collectable.  This is how we retain
+                        # collectability through components and such.
+                        if child.collectable
+                            result.delve do |object|
+                                if object.is_a? Puppet::TransObject
+                                    debug "Collecting %s[%s]" %
+                                        [object.type, object.name]
+                                    object.collectable = true
+                                end
+                            end
+                        end
                     else
-                        # It's a builtin type, so just chunk it on in
+                        # It's a builtin type, so just return it directly
                         result = child
                     end
                 else
@@ -936,104 +952,6 @@ module Puppet::Parser
                 return bucket
             else
                 Puppet.debug "typeless scope; just returning a list"
-                return results
-            end
-        end
-
-        # Convert our scope to a list of Transportable objects.
-        def oldto_trans
-            results = []
-            
-            # Iterate across our child scopes and call to_trans on them
-            @children.each { |child|
-                if child.is_a?(Scope)
-                    cresult = child.to_trans
-
-                    # Scopes normally result in a TransBucket, but they could
-                    # also result in a normal array; if that happens, get rid
-                    # of the array.
-                    unless cresult.is_a?(Puppet::TransBucket)
-                        cresult.each { |result|
-                            results.push(result)
-                        }
-                    else
-                        unless cresult.empty?
-                            # Otherwise, just add it to our list of results.
-                            results.push(cresult)
-                        end
-                    end
-                elsif child.is_a?(Puppet::TransObject)
-                    if child.empty?
-                        next
-                    end
-                    # Wait until the last minute to set tags, although this
-                    # probably should not matter
-                    child.tags = self.tags
-
-                    # Add any defaults.
-                    self.adddefaults(child)
-
-                    # Then make sure this child's tags are stored in the
-                    # central table.  This should maybe be in the evaluate
-                    # methods, but, eh.
-                    @topscope.addtags(child)
-                    results.push(child)
-                else
-                    raise Puppet::DevError,
-                        "Puppet::Parse::Scope cannot handle objects of type %s" %
-                            child.class
-                end
-            }
-
-            # Get rid of any nil objects.
-            results = results.reject { |child|
-                child.nil?
-            }
-
-            # If we have a name and type, then make a TransBucket, which
-            # becomes a component.
-            # Else, just stack all of the objects into the current bucket.
-            if @type
-                bucket = Puppet::TransBucket.new
-
-                if defined? @name and @name
-                    bucket.name = @name
-                end
-
-                # it'd be nice not to have to do this...
-                results.each { |result|
-                    #Puppet.warning "Result type is %s" % result.class
-                    bucket.push(result)
-                }
-                if defined? @type
-                    bucket.type = @type
-                else
-                    raise Puppet::ParseError,
-                        "No type for scope %s" % @name
-                end
-
-                if defined? @keyword
-                    bucket.keyword = @keyword
-                end
-                #Puppet.debug(
-                #    "TransBucket with name %s and type %s in scope %s" %
-                #    [@name,@type,self.object_id]
-                #)
-
-                # now find metaparams
-                @symtable.each { |var,value|
-                    if Puppet::Type.metaparam?(var.intern)
-                        #Puppet.debug("Adding metaparam %s" % var)
-                        bucket.param(var,value)
-                    else
-                        #Puppet.debug("%s is not a metaparam" % var)
-                    end
-                }
-                #Puppet.debug "Returning bucket %s from scope %s" %
-                #    [bucket.name,self.object_id]
-                return bucket
-            else
-                Puppet.debug "nameless scope; just returning a list"
                 return results
             end
         end

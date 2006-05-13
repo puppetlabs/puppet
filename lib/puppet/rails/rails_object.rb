@@ -20,7 +20,9 @@ class Puppet::Rails::RailsObject < ActiveRecord::Base
         end
     end
 
-    # Convert our object to a trans_object
+    # Convert our object to a trans_object.  Do not retain whether the object
+    # is collectable, though, since that would cause it to get stripped
+    # from the configuration.
     def to_trans
         obj = Puppet::TransObject.new(name(), ptype())
 
@@ -29,8 +31,8 @@ class Puppet::Rails::RailsObject < ActiveRecord::Base
                 obj.send(method.to_s + "=", val)
             end
         end
-        params.each do |name, value|
-            obj[name] = value
+        rails_parameters.each do |param|
+            obj[param.name] = param.value
         end
 
         return obj

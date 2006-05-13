@@ -12,6 +12,7 @@ require 'puppet'
 require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppet/client'
+require 'puppet/rails'
 require 'test/unit'
 require 'puppettest'
 
@@ -99,6 +100,13 @@ class TestInterpreter < Test::Unit::TestCase
 
         obj = Puppet::Rails::Host.find_by_name(facts["hostname"])
         assert(obj, "Could not find host object")
+    end
+
+    if defined? ActiveRecord
+    def test_collectstorage
+    end
+    else
+        $stderr.puts "Install Rails for configuration storage testing"
     end
 
     if Facter["domain"].value == "madstop.com"

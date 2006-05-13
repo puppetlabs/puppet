@@ -664,4 +664,59 @@ class TestScope < Test::Unit::TestCase
 
 
     end
+
+    # Verify that we recursively mark as collectable the results of collectable
+    # components.
+    def test_collectablecomponents
+        children = []
+
+        args = AST::ASTArray.new(
+            :file => tempfile(),
+            :line => rand(100),
+            :children => [nameobj("arg")]
+        )
+        # Create a top-level component
+        children << compobj("one", :args => args)
+
+        # And a component that calls it
+        children << compobj("two", :args => args, :code => AST::ASTArray.new(
+            :children => [
+                objectdef("one", "ptest", {"arg" => "parentfoo"})
+            ]
+        ))
+
+        # And then a third component that calls the second
+        children << compobj("three", :args => args, :code => AST::ASTArray.new(
+            :children => [
+                objectdef("two", "yay", {"arg" => "parentfoo"})
+            ]
+        ))
+
+        # lastly, create an object that calls our third component
+        obj = objectdef("three", "boo", {"arg" => "parentfoo"})
+
+        # And mark it as collectable
+        obj.collectable = true
+
+        children << obj
+
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        trans = nil
+        scope = nil
+        assert_nothing_raised {
+            scope = Puppet::Parser::Scope.new()
+            trans = scope.evaluate(:ast => top)
+        }
+
+        trans.flatten.each do |obj|
+            assert(obj.collectable, "Object %s[%s] is not collectable" %
+                [obj.type, obj.name])
+        end
+    end
 end

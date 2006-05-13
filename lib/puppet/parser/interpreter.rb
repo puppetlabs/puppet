@@ -246,13 +246,21 @@ module Puppet
                             raise LoadError,
                                 "storeconfigs is enabled but rails is unavailable"
                         end
-                        Puppet::Rails.init
                     end
+
+                    Puppet::Rails.init
+
+                    # We store all of the objects, even the collectable ones
                     Puppet::Rails::Host.store(
                         :objects => objects,
                         :host => client,
                         :facts => facts
                     )
+
+                    # Now that we've stored everything, we need to strip out
+                    # the collectable objects so that they are not sent on
+                    # to the host
+                    objects.collectstrip!
                 end
 
                 return objects

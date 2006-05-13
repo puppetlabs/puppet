@@ -43,32 +43,34 @@ module Puppet::Rails
         }
     )
 
-    def self.setupdb
-        
-    end
-
+    # Set up our database connection.  It'd be nice to have a "use" system
+    # that could make callbacks.
     def self.init
-        Puppet.config.use(:puppet)
-        Puppet.config.use(:puppetmaster)
+        unless defined? @inited and @inited
+            Puppet.config.use(:puppet)
+            Puppet.config.use(:puppetmaster)
 
-        ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
-        args = {:adapter => Puppet[:dbadapter]}
+            ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
+            args = {:adapter => Puppet[:dbadapter]}
 
-        case Puppet[:dbadapter]
-        when "sqlite3":
-            args[:database] = Puppet[:dblocation]
-        when "mysql":
-            args[:host]     = Puppet[:dbserver]
-            args[:username] = Puppet[:dbuser]
-            args[:password] = Puppet[:dbpassword]
-            args[:database] = Puppet[:dbname]
-        end
+            case Puppet[:dbadapter]
+            when "sqlite3":
+                args[:database] = Puppet[:dblocation]
+            when "mysql":
+                args[:host]     = Puppet[:dbserver]
+                args[:username] = Puppet[:dbuser]
+                args[:password] = Puppet[:dbpassword]
+                args[:database] = Puppet[:dbname]
+            end
 
-        ActiveRecord::Base.establish_connection(args)
+            ActiveRecord::Base.establish_connection(args)
 
-        unless FileTest.exists?(args[:database])
-            require 'puppet/rails/database'
-            Puppet::Rails::Database.up
+            unless FileTest.exists?(args[:database])
+                require 'puppet/rails/database'
+                Puppet::Rails::Database.up
+            end
+
+            @inited = true
         end
     end
 end

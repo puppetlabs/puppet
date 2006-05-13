@@ -2,7 +2,7 @@ class Puppet::Parser::AST
     # Any normal puppet object declaration.  Can result in a class or a 
     # component, in addition to builtin types.
     class ObjectDef < AST::Branch
-        attr_accessor :name, :type
+        attr_accessor :name, :type, :collectable
         attr_reader :params
 
         # probably not used at all
@@ -93,6 +93,11 @@ class Puppet::Parser::AST
                         :file => @file,
                         :line => @line
                     )
+
+                    # Retain our collectable marking
+                    if self.collectable
+                        obj.collectable = true
+                    end
                 rescue Puppet::ParseError => except
                     except.line = self.line
                     except.file = self.file

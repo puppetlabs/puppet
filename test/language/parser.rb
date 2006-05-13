@@ -301,6 +301,40 @@ class TestParser < Test::Unit::TestCase
             parser.parse
         }
     end
+
+    # Verify that collectable objects are marked that way.
+    def test_collectable
+        ["@port { ssh: protocols => tcp, number => 22 }",
+         "@port { ssh: protocols => tcp, number => 22;
+            smtp: protocols => tcp, number => 25 }"].each do |text|
+            parser = Puppet::Parser::Parser.new
+            parser.string = text
+
+            ret = nil
+            assert_nothing_raised {
+                ret = parser.parse
+            }
+
+            assert_instance_of(AST::ASTArray, ret)
+
+            ret.each do |obj|
+                assert_instance_of(AST::ObjectDef, obj)
+                assert(obj.collectable, "Object was not marked collectable")
+            end
+        end
+    end
+
+    # Defaults are purely syntactical, so it doesn't make sense to be able to
+    # collect them.
+    def test_uncollectabledefaults
+        string = "@Port { protocols => tcp }"
+        parser = Puppet::Parser::Parser.new
+        parser.string = string
+
+        assert_raise(Puppet::ParseError) {
+            parser.parse
+        }
+    end
 end
 
 # $Id$

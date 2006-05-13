@@ -980,6 +980,67 @@ module ParserTesting
 
         assert_apply(comp)
     end
+
+    def mk_transobject(file = "/etc/passwd")
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet::TransObject.new("file", file)
+            obj["owner"] = "root"
+            obj["mode"] = "644"
+        }
+
+        return obj
+    end
+
+    def mk_transbucket(*objects)
+        bucket = nil
+        assert_nothing_raised {
+            bucket = Puppet::TransBucket.new
+            bucket.name = "yayname"
+            bucket.type = "yaytype"
+        }
+
+        objects.each { |o| bucket << o }
+
+        return bucket
+    end
+
+    # Make a tree of objects, yielding if desired
+    def mk_transtree(depth = 4, width = 2)
+        top = nil
+        assert_nothing_raised {
+            top = Puppet::TransBucket.new
+            top.name = "top"
+            top.type = "bucket"
+        }
+
+        bucket = top
+
+        file = tempfile()
+        depth.times do |i|
+            objects = []
+            width.times do |j|
+                path = tempfile + i.to_s
+                obj = Puppet::TransObject.new("file", file)
+                obj["owner"] = "root"
+                obj["mode"] = "644"
+
+                # Yield, if they want
+                if block_given?
+                    yield(obj, i, j)
+                end
+
+                objects << obj
+            end
+
+            newbucket = mk_transbucket(*objects)
+
+            bucket.push newbucket
+            bucket = newbucket
+        end
+
+        return top
+    end
 end
 
 class PuppetTestSuite

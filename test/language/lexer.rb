@@ -69,7 +69,6 @@ class TestLexer < Test::Unit::TestCase
     def test_errors
         strings = %w{
             ^
-            @
         }
         strings.each { |str|
             @lexer.string = str
@@ -122,6 +121,40 @@ class TestLexer < Test::Unit::TestCase
         assert_nothing_raised {
             @lexer.string = bit
         }
+
+        assert_nothing_raised {
+            @lexer.fullscan
+        }
+    end
+
+    def test_collectlexing
+        {"@" => :AT, "<|" => :LCOLLECT, "|>" => :RCOLLECT}.each do |string, token|
+            assert_nothing_raised {
+                @lexer.string = string
+            }
+
+            ret = nil
+            assert_nothing_raised {
+                ret = @lexer.fullscan
+            }
+
+            assert_equal([[token, string],[false, false]], ret)
+        end
+    end
+
+    def test_collectabletype
+        string = "@type {"
+
+        assert_nothing_raised {
+            @lexer.string = string
+        }
+
+        ret = nil
+        assert_nothing_raised {
+            ret = @lexer.fullscan
+        }
+
+        assert_equal([[:AT, "@"], [:NAME, "type"], [:LBRACE, "{"], [false,false]],ret)
     end
 end
 

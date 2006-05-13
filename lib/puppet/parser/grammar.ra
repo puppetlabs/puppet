@@ -7,7 +7,7 @@ class Puppet::Parser::Parser
 token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE FALSE EQUALS
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL NOTEQUAL
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN DOT COLON TYPE
-token NAME SEMIC CASE DEFAULT INCLUDE TAG FUNCTION
+token NAME SEMIC CASE DEFAULT FUNCTION AT
 
 # We have 2 shift/reduce conflicts
 expect 2
@@ -40,6 +40,7 @@ statements: statement
 
 # The main list of valid statements
 statement:    object
+            | collectable
             | assignment
             | casestatement
             | import
@@ -146,6 +147,25 @@ object:       name LBRACE objectinstances endsemi RBRACE {
         :type => val[0],
         :params => val[2]
     )
+}
+
+# Collectable objects; these get stored in the database, instead of
+# being passed to the client.
+collectable:    AT object {
+    if val[1].is_a? AST::TypeDefaults
+        raise Puppet::ParseError, "Defaults are not collectable"
+    end
+
+    # Just mark our objects as collectable and pass them through.
+    if val[1].instance_of?(AST::ASTArray)
+        val[1].each do |obj|
+            obj.collectable = true
+        end
+    else
+        val[1].collectable = true
+    end
+
+    result = val[1]
 }
 
 objectinst:   objectname COLON params endcomma {
