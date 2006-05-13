@@ -1,6 +1,6 @@
 require 'puppet/rails/rails_object'
 
-RailsObject = Puppet::Rails::RailsObject
+#RailsObject = Puppet::Rails::RailsObject
 class Puppet::Rails::Host < ActiveRecord::Base
     Host = self
     serialize :facts, Hash
@@ -45,11 +45,13 @@ class Puppet::Rails::Host < ActiveRecord::Base
                     host[param] = hostargs[param]
                 end
             end
+            host.addobjects(objects)
         else
-            host = Host.new(hostargs)
+            host = Host.new(hostargs) do |hostobj|
+                hostobj.addobjects(objects)
+            end
         end
 
-        host.addobjects(objects)
 
         host.save
 
@@ -69,15 +71,12 @@ class Puppet::Rails::Host < ActiveRecord::Base
                 end
             end
 
-            robj = RailsObject.new(args)
+            robj = rails_objects.build(args)
 
+            robj.addparams(params)
             if tobj.collectable
                 robj.toggle(:collectable)
             end
-
-            self.rails_objects << robj
-
-            robj.addparams(params)
         end
     end
 end

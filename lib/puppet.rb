@@ -100,10 +100,28 @@ module Puppet
         conf = "/etc/puppet"
         var = "/var/puppet"
     end
+
     self.setdefaults(:puppet,
         :confdir => [conf, "The main Puppet configuration directory."],
-        :vardir => [var, "Where Puppet stores dynamic and growing data."],
-        :logdir => ["$vardir/log", "The Puppet log directory."],
+        :vardir => [var, "Where Puppet stores dynamic and growing data."]
+    )
+
+    if self.name == "puppetmasterd"
+        self.setdefaults(:puppetmasterd,
+            :logdir => {:default => "$vardir/log",
+                :mode => 0750,
+                :owner => "$user",
+                :group => "$group",
+                :desc => "The Puppet log directory."
+            }
+        )
+    else
+        self.setdefaults(:puppet,
+            :logdir => ["$vardir/log", "The Puppet log directory."]
+        )
+    end
+
+    self.setdefaults(:puppet,
         :statedir => { :default => "$vardir/state",
             :mode => 01777,
             :desc => "The directory where Puppet state is stored.  Generally,

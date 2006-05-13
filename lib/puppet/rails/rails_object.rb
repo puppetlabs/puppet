@@ -1,7 +1,7 @@
 require 'puppet'
 require 'puppet/rails/rails_parameter'
 
-RailsParameter = Puppet::Rails::RailsParameter
+#RailsParameter = Puppet::Rails::RailsParameter
 class Puppet::Rails::RailsObject < ActiveRecord::Base
     has_many :rails_parameters, :dependent => :delete_all
     serialize :tags, Array
@@ -11,12 +11,12 @@ class Puppet::Rails::RailsObject < ActiveRecord::Base
     # Add a set of parameters.
     def addparams(params)
         params.each do |pname, pvalue|
-            pobj = RailsParameter.new(
+            rails_parameters.build(
                 :name => pname,
                 :value => pvalue
             )
 
-            self.rails_parameters << pobj
+            #self.rails_parameters << pobj
         end
     end
 

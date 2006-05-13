@@ -68,9 +68,9 @@ module Puppet
 
             munge do |value|
                 case value
-                when false, "false":
+                when false, "false", :false:
                     false
-                when true, "true", ".puppet-bak":
+                when true, "true", ".puppet-bak", :true:
                     ".puppet-bak"
                 when String:
                     # We can't depend on looking this up right now,
