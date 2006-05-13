@@ -24,6 +24,8 @@ class Puppet::Rails::Database < ActiveRecord::Migration
             table.column :name, :string, :null => false
             table.column :ip, :string
             table.column :facts, :string
+            table.column :connect, :date
+            table.column :success, :date
             table.column :classes, :string
         end
     end
