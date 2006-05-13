@@ -197,9 +197,9 @@ module Puppet
                         #stoken = :DQTEXT
                         #Puppet.debug("got string '%s' => '%s'" % [:DQTEXT,value])
                     else
+                        #Puppet.debug("got token '%s' => '%s'" % [stoken,value])
                         yield [stoken,value]
                         @last = value
-                        #Puppet.debug("got token '%s' => '%s'" % [stoken,value])
                     end
                     @scanner.skip(@skip)
                 end

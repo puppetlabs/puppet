@@ -63,13 +63,18 @@ class Puppet::Rails::Host < ActiveRecord::Base
             tobj.each do |p,v| params[p] = v end
 
             args = {:ptype => tobj.type, :name => tobj.name}
-            [:tags, :file, :line, :collectable].each do |param|
+            [:tags, :file, :line].each do |param|
                 if val = tobj.send(param)
                     args[param] = val
                 end
             end
 
             robj = RailsObject.new(args)
+
+            if tobj.collectable
+                robj.toggle(:collectable)
+            end
+
             self.rails_objects << robj
 
             robj.addparams(params)

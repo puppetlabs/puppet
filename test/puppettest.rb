@@ -1021,7 +1021,7 @@ module ParserTesting
             objects = []
             width.times do |j|
                 path = tempfile + i.to_s
-                obj = Puppet::TransObject.new("file", file)
+                obj = Puppet::TransObject.new("file", path)
                 obj["owner"] = "root"
                 obj["mode"] = "644"
 

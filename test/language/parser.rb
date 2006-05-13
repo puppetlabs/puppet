@@ -335,6 +335,25 @@ class TestParser < Test::Unit::TestCase
             parser.parse
         }
     end
+
+    # Verify that we can parse collections
+    def test_collecting
+        Puppet[:storeconfigs] = true
+        text = "port <| |>"
+        parser = Puppet::Parser::Parser.new
+        parser.string = text
+
+        ret = nil
+        assert_nothing_raised {
+            ret = parser.parse
+        }
+
+        assert_instance_of(AST::ASTArray, ret)
+
+        ret.each do |obj|
+            assert_instance_of(AST::Collection, obj)
+        end
+    end
 end
 
 # $Id$

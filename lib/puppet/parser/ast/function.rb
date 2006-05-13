@@ -1,7 +1,5 @@
 class Puppet::Parser::AST
-    # The code associated with a class.  This is different from components
-    # in that each class is a singleton -- only one will exist for a given
-    # node.
+    # An AST object to call a function.
     class Function < AST::Branch
         attr_accessor :name, :arguments
 
@@ -36,7 +34,8 @@ class Puppet::Parser::AST
                 end
             when :statement:
                 if Puppet::Parser::Functions.rvalue?(@name)
-                    raise Puppet::ParseError, "Function '%s' must be the value of a statement" %
+                    raise Puppet::ParseError,
+                        "Function '%s' must be the value of a statement" %
                         @name
                 end
             else

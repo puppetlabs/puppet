@@ -62,7 +62,21 @@ class TestRails < Test::Unit::TestCase
 
         assert(host.rails_objects, "No objects on host")
 
-        collectable = host.rails_objects.find_all do |obj| obj.collectable end
+        assert_equal(facts["hostname"], host.facts["hostname"],
+            "Did not retrieve facts")
+
+        inline_test_objectcollection(host)
+    end
+
+    # This is called from another test, it just makes sense to split it out some
+    def inline_test_objectcollection(host)
+        # XXX For some reason, find_all doesn't work here at all.
+        collectable = []
+        host.rails_objects.each do |obj|
+            if obj.collectable?
+                collectable << obj
+            end
+        end
 
         assert(collectable.length > 0, "Found no collectable objects")
 
@@ -76,8 +90,12 @@ class TestRails < Test::Unit::TestCase
             assert(!trans.collectable, "Object from db was collectable")
         end
 
-        assert_equal(facts["hostname"], host.facts["hostname"],
-            "Did not retrieve facts")
+        # Now find all collectable objects directly through database APIs
+
+        list = Puppet::Rails::RailsObject.find_all_by_collectable(true)
+
+        assert_equal(collectable.length, list.length,
+            "Did not get the right number of objects")
     end
 
     def test_railsinit

@@ -753,6 +753,62 @@ class TestAST < Test::Unit::TestCase
         end
     end
 
+    # Verify that our collection stuff works.
+    def test_collection
+        collectable = []
+        non = []
+        # First put some objects into the database.
+        bucket = mk_transtree do |object, depth, width|
+            # and mark some of them collectable
+            if width % 2 == 1
+                object.collectable = true
+                collectable << object
+            else
+                non << object
+            end
+        end
+
+        # Now collect our facts
+        facts = {}
+        Facter.each do |fact, value| facts[fact] = value end
+
+        assert_nothing_raised {
+            Puppet::Rails.init
+        }
+
+        # Now try storing our crap
+        assert_nothing_raised {
+            host = Puppet::Rails::Host.store(
+                :objects => bucket,
+                :facts => facts,
+                :host => facts["hostname"]
+            )
+        }
+
+        # Now create an ast tree that collects that.  They should all be files.
+        coll = nil
+        assert_nothing_raised {
+            coll = AST::Collection.new(
+                :type => nameobj("file")
+            )
+        }
+
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => [coll]
+            )
+        }
+
+        objects = nil
+        assert_nothing_raised("Could not evaluate") {
+            scope = Puppet::Parser::Scope.new()
+            objects = scope.evaluate(:ast => top).flatten
+        }
+
+        assert(objects.length > 0, "Did not receive any collected objects")
+    end
+
     # To fix #140.  Currently non-functional.
     def disabled_test_classreuse
         children = []

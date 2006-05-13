@@ -7,7 +7,7 @@ class Puppet::Parser::Parser
 token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE FALSE EQUALS
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL NOTEQUAL
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN DOT COLON TYPE
-token NAME SEMIC CASE DEFAULT FUNCTION AT
+token NAME SEMIC CASE DEFAULT FUNCTION AT LCOLLECT RCOLLECT
 
 # We have 2 shift/reduce conflicts
 expect 2
@@ -41,6 +41,7 @@ statements: statement
 # The main list of valid statements
 statement:    object
             | collectable
+            | collection
             | assignment
             | casestatement
             | import
@@ -152,6 +153,10 @@ object:       name LBRACE objectinstances endsemi RBRACE {
 # Collectable objects; these get stored in the database, instead of
 # being passed to the client.
 collectable:    AT object {
+    unless Puppet[:storeconfigs]
+        raise Puppet::ParseError, "You cannot collect without storeconfigs being set"
+    end
+
     if val[1].is_a? AST::TypeDefaults
         raise Puppet::ParseError, "Defaults are not collectable"
     end
@@ -166,6 +171,19 @@ collectable:    AT object {
     end
 
     result = val[1]
+}
+
+# A collection statement.  Currently supports no arguments at all, but eventually
+# will, I assume.
+collection:     name LCOLLECT RCOLLECT {
+    unless Puppet[:storeconfigs]
+        raise Puppet::ParseError, "You cannot collect without storeconfigs being set"
+    end
+    result = AST::Collection.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :type => val[0]
+    )
 }
 
 objectinst:   objectname COLON params endcomma {

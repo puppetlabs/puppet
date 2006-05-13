@@ -131,6 +131,7 @@ end
 
 require 'puppet/parser/ast/astarray'
 require 'puppet/parser/ast/branch'
+require 'puppet/parser/ast/collection'
 require 'puppet/parser/ast/caseopt'
 require 'puppet/parser/ast/casestatement'
 require 'puppet/parser/ast/classdef'
