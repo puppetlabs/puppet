@@ -85,6 +85,18 @@ module Puppet
 
                 @local = hash[:Local] || false
 
+                if hash.include?(:ForkSave)
+                    @forksave = hash[:ForkSave]
+                else
+                    # This is just too dangerous right now.  Sorry, it's going
+                    # to have to be slow.
+                    @forksave = false
+                end
+
+                if Puppet[:storeconfigs]
+                    Puppet::Rails.init
+                end
+
                 # Create our parser object
                 parsefiles
             end
@@ -250,13 +262,28 @@ module Puppet
 
                     Puppet::Rails.init
 
-                    # We store all of the objects, even the collectable ones
-                    benchmark(:info, "Stored configuration for #{client}") do
-                        Puppet::Rails::Host.store(
-                            :objects => objects,
-                            :host => client,
-                            :facts => facts
-                        )
+                    # Fork the storage, since we don't need the client waiting
+                    # on that.  How do I avoid this duplication?
+                    if @forksave
+                        fork {
+                            # We store all of the objects, even the collectable ones
+                            benchmark(:info, "Stored configuration for #{client}") do
+                                Puppet::Rails::Host.store(
+                                    :objects => objects,
+                                    :host => client,
+                                    :facts => facts
+                                )
+                            end
+                        }
+                    else
+                        # We store all of the objects, even the collectable ones
+                        benchmark(:info, "Stored configuration for #{client}") do
+                            Puppet::Rails::Host.store(
+                                :objects => objects,
+                                :host => client,
+                                :facts => facts
+                            )
+                        end
                     end
 
                     # Now that we've stored everything, we need to strip out

@@ -91,13 +91,9 @@ class Puppet::Parser::AST
                         :name => objname,
                         :arguments => hash,
                         :file => @file,
-                        :line => @line
+                        :line => @line,
+                        :collectable => self.collectable
                     )
-
-                    # Retain our collectable marking
-                    if self.collectable
-                        obj.collectable = true
-                    end
                 rescue Puppet::ParseError => except
                     except.line = self.line
                     except.file = self.file

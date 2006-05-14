@@ -304,6 +304,7 @@ class TestParser < Test::Unit::TestCase
 
     # Verify that collectable objects are marked that way.
     def test_collectable
+        Puppet[:storeconfigs] = true
         ["@port { ssh: protocols => tcp, number => 22 }",
          "@port { ssh: protocols => tcp, number => 22;
             smtp: protocols => tcp, number => 25 }"].each do |text|

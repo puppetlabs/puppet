@@ -132,6 +132,7 @@ module TestPuppet
         @@tmppids.clear
         Puppet::Type.allclear
         Puppet::Storage.clear
+        Puppet::Rails.clear
         Puppet.clear
 
         @memoryatend = Puppet::Util.memory

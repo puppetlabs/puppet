@@ -10,7 +10,7 @@ class Puppet::Parser::AST
         # The class name
         @name = :component
 
-        attr_accessor :type, :args, :code, :scope, :keyword
+        attr_accessor :type, :args, :code, :scope, :keyword, :collectable
 
         #def evaluate(scope,hash,objtype,objname)
         def evaluate(hash)
@@ -18,6 +18,8 @@ class Puppet::Parser::AST
             objtype = hash[:type]
             objname = hash[:name]
             arguments = hash[:arguments] || {}
+
+            @collectable = hash[:collectable]
 
             pscope = origscope
             #pscope = if ! Puppet[:lexical] or hash[:asparent] == false
@@ -31,6 +33,10 @@ class Puppet::Parser::AST
                 :keyword => self.keyword
             )
             newcontext = hash[:newcontext]
+
+            if @collectable or origscope.collectable
+                scope.collectable = true
+            end
 
             unless self.is_a? AST::HostClass and ! newcontext
                 #scope.warning "Setting context to %s" % self.object_id

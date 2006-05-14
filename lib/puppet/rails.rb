@@ -26,6 +26,8 @@ module Puppet::Rails
     Puppet.config.setdefaults(:puppetmaster,
         :dblocation => { :default => "$statedir/clientconfigs.sqlite3",
             :mode => 0600,
+            :owner => "$user",
+            :group => "$group",
             :desc => "The database cache for client configurations.  Used for
                 querying within the language."
         },
@@ -39,16 +41,24 @@ module Puppet::Rails
             used when networked databases are used."],
         :railslog => {:default => "$logdir/puppetrails.log",
             :mode => 0600,
+            :owner => "$user",
+            :group => "$group",
             :desc => "Where Rails-specific logs are sent"
         }
     )
 
+    def self.clear
+        @inited = false
+    end
+
     # Set up our database connection.  It'd be nice to have a "use" system
     # that could make callbacks.
     def self.init
-        unless defined? @inited and @inited
+        # This global init does not work for testing, because we remove
+        # the state dir on every test.
+        #unless (defined? @inited and @inited) or defined? Test::Unit::TestCase
+        unless (defined? @inited and @inited)
             Puppet.config.use(:puppet)
-            Puppet.config.use(:puppetmaster)
 
             ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
             args = {:adapter => Puppet[:dbadapter]}
@@ -65,13 +75,14 @@ module Puppet::Rails
 
             ActiveRecord::Base.establish_connection(args)
 
-            unless FileTest.exists?(args[:database])
-                require 'puppet/rails/database'
-                Puppet::Rails::Database.up
-            end
-
             @inited = true
         end
+
+        if Puppet[:dbadapter] == "sqlite3" and ! FileTest.exists?(Puppet[:dblocation])
+            require 'puppet/rails/database'
+            Puppet::Rails::Database.up
+        end
+            Puppet.config.use(:puppetmaster)
     end
 end
 

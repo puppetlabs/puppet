@@ -13,7 +13,20 @@ class Puppet::Parser::AST
 
             count = 0
             # Now perform the actual collection, yo.
+
+            # First get everything from the export table.
+            
+            # FIXME This will only find objects that are before us in the tree,
+            # which is a problem.
+            objects = scope.exported(type)
+
+            array = objects.values
+
             Puppet::Rails::RailsObject.find_all_by_collectable(true).each do |obj|
+                if objects.include?(obj.name)
+                    debug("%s[%s] is already exported" % [type, obj.name])
+                    next
+                end
                 count += 1
                 trans = obj.to_trans
 
@@ -30,12 +43,14 @@ class Puppet::Parser::AST
 
                 args[:arguments] = {}
                 trans.each do |p,v|  args[:arguments][p] = v end
-
+                
                 # XXX Because the scopes don't expect objects to return values,
                 # we have to manually add our objects to the scope.  This is
                 # uber-lame.
                 scope.setobject(args)
             end
+
+
 
             scope.debug("Collected %s objects of type %s" %
                 [count, type])

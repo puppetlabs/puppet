@@ -97,14 +97,6 @@ class TestRails < Test::Unit::TestCase
         assert_equal(collectable.length, list.length,
             "Did not get the right number of objects")
     end
-
-    def test_railsinit
-        assert_nothing_raised {
-            Puppet::Rails.init
-        }
-
-        assert(FileTest.exists?(Puppet[:dblocation]), "Database does not exist")
-    end
     else
         $stderr.puts "Install Rails for Rails and Caching tests"
     end

@@ -714,9 +714,91 @@ class TestScope < Test::Unit::TestCase
             trans = scope.evaluate(:ast => top)
         }
 
-        trans.flatten.each do |obj|
-            assert(obj.collectable, "Object %s[%s] is not collectable" %
-                [obj.type, obj.name])
+        %w{file}.each do |type|
+            objects = scope.exported(type)
+
+            assert(!objects.empty?, "Did not get an exported %s" % type)
         end
+    end
+
+    # Verify that we can both store and collect an object in the same
+    # run.
+    def test_storeandcollect
+        Puppet[:storeconfigs] = true
+        Puppet::Rails.clear
+        Puppet::Rails.init
+        sleep 1
+        children = []
+        file = tempfile()
+        File.open(file, "w") { |f|
+            #f.puts "@file { \"#{file}\": mode => 644 }
+#file <||>"
+            f.puts "
+@host { puppet: ip => \"192.168.0.3\" }
+
+host <||>"
+        }
+
+        interp = nil
+        assert_nothing_raised {
+            interp = Puppet::Parser::Interpreter.new(
+                :Manifest => file,
+                :UseNodes => false,
+                :ForkSave => false
+            )
+        }
+
+        2.times { |i|
+            objects = nil
+            assert_nothing_raised {
+                objects = interp.run("localhost", {})
+            }
+        }
+    end
+
+    # Verify that we cannot override differently exported objects
+    def test_exportedoverrides
+        filename = tempfile()
+        children = []
+
+        obj = fileobj(filename, "owner" => "root")
+        obj.collectable = true
+        # create the parent class
+        children << classobj("parent", :code => AST::ASTArray.new(
+            :children => [
+                obj
+            ]
+        ))
+
+        # now create a child class with differ values
+        children << classobj("child", :parentclass => nameobj("parent"),
+            :code => AST::ASTArray.new(
+                :children => [
+                    fileobj(filename, "owner" => "bin")
+                ]
+        ))
+
+        # Now call the child class
+        assert_nothing_raised("Could not add AST nodes for calling") {
+            children << AST::ObjectDef.new(
+                :type => nameobj("child"),
+                :name => nameobj("yayness"),
+                :params => astarray()
+            )
+        }
+
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        objects = nil
+        scope = nil
+        assert_raise(Puppet::ParseError, "Incorrectly allowed override") {
+            scope = Puppet::Parser::Scope.new()
+            objects = scope.evaluate(:ast => top)
+        }
     end
 end

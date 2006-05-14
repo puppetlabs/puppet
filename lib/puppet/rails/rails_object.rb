@@ -24,7 +24,7 @@ class Puppet::Rails::RailsObject < ActiveRecord::Base
     # is collectable, though, since that would cause it to get stripped
     # from the configuration.
     def to_trans
-        obj = Puppet::TransObject.new(ptype(), name())
+        obj = Puppet::TransObject.new(name(), ptype())
 
         [:file, :line, :tags].each do |method|
             if val = send(method)

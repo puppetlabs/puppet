@@ -148,7 +148,8 @@ class Puppet::Parser::AST
                     :scope => scope,
                     :arguments => args,
                     :name => name,
-                    :asparent => true
+                    :asparent => true,
+                    :collectable => self.collectable
                 )
             else
                 return false

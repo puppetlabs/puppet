@@ -20,11 +20,11 @@ module Puppet::Parser
         attr_accessor :parent, :level, :interp
         attr_accessor :name, :type, :topscope, :base, :keyword
 
-        attr_accessor :top, :context, :translated
+        attr_accessor :top, :context, :translated, :collectable
 
         # This is probably not all that good of an idea, but...
         # This way a parent can share its tables with all of its children.
-        attr_writer :nodetable, :classtable, :definedtable
+        attr_writer :nodetable, :classtable, :definedtable, :exportable
 
         # Whether we behave declaratively.  Note that it's a class variable,
         # so all scopes behave the same.
@@ -148,6 +148,12 @@ module Puppet::Parser
                 scope.classtable = @classtable
             else
                 raise Puppet::DevError, "No classtable has been defined"
+            end
+
+            if defined? @exportable
+                scope.exportable = @exportable
+            else
+                raise Puppet::DevError, "No exportable has been defined"
             end
 
             if defined? @definedtable
@@ -304,6 +310,31 @@ module Puppet::Parser
             return bucket
         end
 
+        # Return the hash of objects that we specifically exported.  We return
+        # a hash to make it easy for the caller to deduplicate based on name.
+        def exported(type)
+            if @exportable.include?(type)
+                return @exportable[type].dup
+            else
+                return {}
+            end
+        end
+
+        # Store our object in the central export table.
+        def exportobject(obj)
+            if @exportable.include?(obj.type) and
+                @exportable[obj.type].include?(obj.name)
+                    raise Puppet::ParseError, "Object %s[%s] is already exported" %
+                        [obj.type, obj.name]
+            end
+
+            debug "Exporting %s[%s]" % [obj.type, obj.name]
+
+            @exportable[obj.type][obj.name] = obj
+
+            return obj
+        end
+
         # Pull in all of the appropriate classes and evaluate them.  It'd
         # be nice if this didn't know quite so much about how AST::Node
         # operated internally.  This is used when a list of classes is passed in,
@@ -432,6 +463,11 @@ module Puppet::Parser
 
             # A table for storing nodes.
             @nodetable = Hash.new(nil)
+
+            # The list of objects that will available for export.
+            @exportable = Hash.new { |types, type|
+                types[type] = {}
+            }
 
             # Eventually, if we support sites, this will allow definitions
             # of nodes with the same name in different sites.  For now
@@ -685,6 +721,8 @@ module Puppet::Parser
             file = hash[:file]
             line = hash[:line]
 
+            collectable = hash[:collectable] || self.collectable
+
             # Verify that we're not overriding any already-set parameters.
             if localobj = @localobjectable[type][name]
                 params.each { |var, value|
@@ -703,6 +741,24 @@ module Puppet::Parser
             # First look for it in a parent scope
             obj = lookupobject(:name => name, :type => type)
 
+            if obj
+                unless collectable == obj.collectable
+                    msg = nil
+                    if collectable
+                        msg = "Exported %s[%s] cannot override local objects"
+                            [type, name]
+                    else
+                        msg = "Local %s[%s] cannot override exported objects"
+                            [type, name]
+                    end
+
+                    error = Puppet::ParseError.new(msg)
+                    error.line = line
+                    error.file = file
+                    raise error
+                end
+            end
+
             unless obj and obj != :undefined
                 unless obj = @objectable[type][name]
                     obj = self.newobject(
@@ -711,6 +767,8 @@ module Puppet::Parser
                         :line => line,
                         :file => file
                     )
+
+                    obj.collectable = collectable
 
                     # only set these if we've created the object,
                     # which is the most common case
@@ -872,7 +930,9 @@ module Puppet::Parser
                     # it is.
                     if objecttype = lookuptype(child.type)
                         # It's a defined type, so evaluate it.  Retain whether
-                        # the object is collectable.
+                        # the object is collectable.  If the object is collectable,
+                        # then it will store all of its contents into the
+                        # @exportable table, rather than returning them.
                         result = objecttype.safeevaluate(
                             :name => child.name,
                             :type => child.type,
@@ -880,22 +940,15 @@ module Puppet::Parser
                             :scope => self,
                             :collectable => child.collectable
                         )
-
-                        # If the child is collectable, then mark all of the
-                        # results as collectable.  This is how we retain
-                        # collectability through components and such.
-                        if child.collectable
-                            result.delve do |object|
-                                if object.is_a? Puppet::TransObject
-                                    debug "Collecting %s[%s]" %
-                                        [object.type, object.name]
-                                    object.collectable = true
-                                end
-                            end
-                        end
                     else
-                        # It's a builtin type, so just return it directly
-                        result = child
+                        # If it's collectable, then store it.
+                        if child.collectable
+                            exportobject(child)
+                            result = nil
+                        else
+                            # It's a builtin type, so just return it directly
+                            result = child
+                        end
                     end
                 else
                     raise Puppet::DevError,
