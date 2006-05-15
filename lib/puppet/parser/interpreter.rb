@@ -268,21 +268,27 @@ module Puppet
                         fork {
                             # We store all of the objects, even the collectable ones
                             benchmark(:info, "Stored configuration for #{client}") do
+                                # Try to batch things a bit, by putting them into
+                                # a transaction
+                                Puppet::Rails::Host.transaction do
+                                    Puppet::Rails::Host.store(
+                                        :objects => objects,
+                                        :host => client,
+                                        :facts => facts
+                                    )
+                                end
+                            end
+                        }
+                    else
+                        # We store all of the objects, even the collectable ones
+                        benchmark(:info, "Stored configuration for #{client}") do
+                            Puppet::Rails::Host.transaction do
                                 Puppet::Rails::Host.store(
                                     :objects => objects,
                                     :host => client,
                                     :facts => facts
                                 )
                             end
-                        }
-                    else
-                        # We store all of the objects, even the collectable ones
-                        benchmark(:info, "Stored configuration for #{client}") do
-                            Puppet::Rails::Host.store(
-                                :objects => objects,
-                                :host => client,
-                                :facts => facts
-                            )
                         end
                     end
 
