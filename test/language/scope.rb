@@ -665,6 +665,38 @@ class TestScope < Test::Unit::TestCase
 
     end
 
+    # Make sure components acquire defaults.
+    def test_defaultswithcomponents
+        children = []
+
+        # Create a component
+        filename = tempfile()
+        args = AST::ASTArray.new(
+            :file => tempfile(),
+            :line => rand(100),
+            :children => [nameobj("argument")]
+        )
+        children << compobj("comp", :args => args, :code => AST::ASTArray.new(
+            :children => [
+                fileobj(filename, "owner" => varref("argument") )
+            ]
+        ))
+
+        # Create a default
+        children << defaultobj("comp", "argument" => "yayness")
+
+        # lastly, create an object that calls our third component
+        children << objectdef("comp", "boo", {"argument" => "parentfoo"})
+
+        trans = assert_evaluate(children)
+
+        flat = trans.flatten
+
+        assert(!flat.empty?, "Got no objects back")
+
+        assert_equal("parentfoo", flat[0]["owner"], "default did not take")
+    end
+
     if defined? ActiveRecord
     # Verify that we recursively mark as collectable the results of collectable
     # components.

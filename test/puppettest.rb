@@ -867,12 +867,16 @@ module ParserTesting
     end
 
     def objectparam(param, value)
+        # Allow them to pass non-strings in
+        if value.is_a?(String)
+            value = stringobj(value)
+        end
         assert_nothing_raised("Could not create param %s" % param) {
             return AST::ObjectParam.new(
                 :file => tempfile(),
                 :line => rand(100),
                 :param => nameobj(param),
-                :value => stringobj(value)
+                :value => value
             )
         }
     end
@@ -1041,6 +1045,25 @@ module ParserTesting
         end
 
         return top
+    end
+
+    # Take a list of AST objects, evaluate them, and return the results
+    def assert_evaluate(children)
+        top = nil
+        assert_nothing_raised("Could not create top object") {
+            top = AST::ASTArray.new(
+                :children => children
+            )
+        }
+
+        trans = nil
+        scope = nil
+        assert_nothing_raised {
+            scope = Puppet::Parser::Scope.new()
+            trans = scope.evaluate(:ast => top)
+        }
+
+        return trans
     end
 end
 
