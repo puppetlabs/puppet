@@ -2,7 +2,9 @@ class Puppet::Rails::Database < ActiveRecord::Migration
     require 'sqlite3'
 
     def self.up
-        ActiveRecord::Migration.verbose = false
+        if ActiveRecord::Migration.respond_to?(:verbose)
+            ActiveRecord::Migration.verbose = false
+        end
 
         create_table :rails_objects do |table|
             table.column :name, :string, :null => false

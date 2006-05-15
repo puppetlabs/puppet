@@ -2,7 +2,6 @@ require 'puppet/rails/rails_object'
 
 #RailsObject = Puppet::Rails::RailsObject
 class Puppet::Rails::Host < ActiveRecord::Base
-    Host = self
     serialize :facts, Hash
     serialize :classes, Array
 
@@ -10,7 +9,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     # If the host already exists, get rid of its objects
     def self.clean(host)
-        if obj = Host.find_by_name(host)
+        if obj = self.find_by_name(host)
             obj.rails_objects.clear
             return obj
         else
@@ -47,7 +46,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
             end
             host.addobjects(objects)
         else
-            host = Host.new(hostargs) do |hostobj|
+            host = self.new(hostargs) do |hostobj|
                 hostobj.addobjects(objects)
             end
         end

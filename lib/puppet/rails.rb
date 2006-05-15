@@ -22,6 +22,16 @@ rescue LoadError => detail
     end
 end
 
+# If we couldn't find it the normal way, try using a Gem.
+unless defined? ActiveRecord
+    begin
+        require 'rubygems'
+        require_gem 'rails'
+    rescue LoadError
+        # Nothing
+    end
+end
+
 module Puppet::Rails
     Puppet.config.setdefaults(:puppetmaster,
         :dblocation => { :default => "$statedir/clientconfigs.sqlite3",
@@ -84,9 +94,16 @@ module Puppet::Rails
 
         if Puppet[:dbadapter] == "sqlite3" and ! FileTest.exists?(Puppet[:dblocation])
             require 'puppet/rails/database'
-            Puppet::Rails::Database.up
+            begin
+                Puppet::Rails::Database.up
+            rescue => detail
+                if Puppet[:debug]
+                    puts detail.backtrace
+                end
+                raise Puppet::Error, "Could not initialize database: %s" % detail
+            end
         end
-            Puppet.config.use(:puppetmaster)
+        Puppet.config.use(:puppetmaster)
     end
 end
 
