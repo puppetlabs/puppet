@@ -753,6 +753,7 @@ class TestAST < Test::Unit::TestCase
         end
     end
 
+    if defined? ActiveRecord
     # Verify that our collection stuff works.
     def test_collection
         collectable = []
@@ -807,6 +808,9 @@ class TestAST < Test::Unit::TestCase
         }
 
         assert(objects.length > 0, "Did not receive any collected objects")
+    end
+    else
+        $stderr.puts "No ActiveRecord -- skipping collection tests"
     end
 
     # To fix #140.  Currently non-functional.

@@ -665,6 +665,7 @@ class TestScope < Test::Unit::TestCase
 
     end
 
+    if defined? ActiveRecord
     # Verify that we recursively mark as collectable the results of collectable
     # components.
     def test_collectablecomponents
@@ -810,5 +811,8 @@ host <||>"
             scope = Puppet::Parser::Scope.new()
             objects = scope.evaluate(:ast => top)
         }
+    end
+    else
+        $stderr.puts "No ActiveRecord -- skipping collection tests"
     end
 end

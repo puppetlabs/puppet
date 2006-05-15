@@ -72,6 +72,7 @@ class TestInterpreter < Test::Unit::TestCase
         assert(config != newconfig, "Configs are somehow the same")
     end
 
+    if defined? ActiveRecord
     def test_hoststorage
         assert_nothing_raised {
             Puppet[:storeconfigs] = true
@@ -101,6 +102,9 @@ class TestInterpreter < Test::Unit::TestCase
 
         obj = Puppet::Rails::Host.find_by_name(facts["hostname"])
         assert(obj, "Could not find host object")
+    end
+    else
+        $stderr.puts "No ActiveRecord -- skipping collection tests"
     end
 
     if Facter["domain"].value == "madstop.com"
