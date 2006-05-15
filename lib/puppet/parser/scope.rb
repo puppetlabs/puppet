@@ -523,6 +523,30 @@ module Puppet::Parser
             return values
         end
 
+        # Look up all of the exported objects of a given type.  Just like
+        # lookupobject, this only searches up through parent classes, not
+        # the whole scope tree.
+        def lookupexported(type)
+            found = []
+            sub = proc { |table|
+                # We always return nil so that it will search all the way
+                # up the scope tree.
+                if table.has_key?(type)
+                    table[type].each do |name, obj|
+                        found << obj
+                    end
+                    nil
+                else
+                    info table.keys.inspect
+                    nil
+                end
+            }
+
+            value = lookup("object",sub, false)
+
+            return found
+        end
+
         # Look up a node by name
         def lookupnode(name)
             #Puppet.debug "Looking up type %s" % name
@@ -573,17 +597,16 @@ module Puppet::Parser
 
         # Look up a variable.  The simplest value search we do.
         def lookupvar(name)
-            #Puppet.debug "Looking up variable %s" % name
             value = lookup("variable", name)
             if value == :undefined
                 return ""
-                #error = Puppet::ParseError.new(
-                #    "Undefined variable '%s'" % name
-                #)
-                #raise error
             else
                 return value
             end
+        end
+
+        def newcollection(coll)
+            @children << coll
         end
 
         # Add a new object to our object table.
@@ -894,7 +917,8 @@ module Puppet::Parser
 
             @children.dup.each do |child|
                 if @@done.include?(child)
-                    raise Puppet::DevError, "Already translated %s" % child.object_id
+                    raise Puppet::DevError, "Already translated %s" %
+                        child.object_id
                 else
                     @@done << child
                 end
@@ -906,7 +930,6 @@ module Puppet::Parser
                 result = nil
                 case child
                 when Scope
-                    #raise Puppet::DevError, "got a child scope"
                     result = child.to_trans
                 when Puppet::TransObject
                     # These objects can map to defined types or builtin types.
@@ -941,14 +964,24 @@ module Puppet::Parser
                             :collectable => child.collectable
                         )
                     else
-                        # If it's collectable, then store it.
+                        # If it's collectable, then store it.  It will be
+                        # stripped out in the interpreter using the collectstrip
+                        # method.  If we don't do this, then these objects
+                        # don't get stored in the DB.
                         if child.collectable
                             exportobject(child)
-                            result = nil
-                        else
-                            # It's a builtin type, so just return it directly
-                            result = child
                         end
+                        result = child
+                    end
+                # This is pretty hackish, but the collection has to actually
+                # be performed after all of the classes and definitions are
+                # evaluated, otherwise we won't catch objects that are exported
+                # in them.  I think this will still be pretty limited in some
+                # cases, especially those where you are both exporting and
+                # collecting, but it's the best I can do for now.
+                when Puppet::Parser::AST::Collection
+                    child.perform(self).each do |obj|
+                        results << obj
                     end
                 else
                     raise Puppet::DevError,
@@ -1033,11 +1066,7 @@ module Puppet::Parser
                 if usecontext and self.context != @parent.context
                     return :undefined
                 else
-                    #if defined? @superscope and val = @superscope.lookup(type,sub, usecontext) and val != :undefined
-                    #    return val
-                    #else
-                        return @parent.lookup(type,sub, usecontext)
-                    #end
+                    return @parent.lookup(type,sub, usecontext)
                 end
             else
                 return :undefined

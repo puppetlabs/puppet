@@ -8,7 +8,7 @@ module Puppet
     # YAML.
     class TransObject
         include Enumerable
-        attr_accessor :type, :name, :file, :line, :collectable
+        attr_accessor :type, :name, :file, :line, :collectable, :collected
 
         attr_writer :tags
 
@@ -109,7 +109,7 @@ module Puppet
                 if child.is_a? self.class
                     child.collectstrip!
                 else
-                    if child.collectable
+                    if child.collectable and ! child.collected
                         @children.delete(child)
                     end
                 end

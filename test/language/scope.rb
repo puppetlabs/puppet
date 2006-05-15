@@ -722,7 +722,8 @@ class TestScope < Test::Unit::TestCase
     end
 
     # Verify that we can both store and collect an object in the same
-    # run.
+    # run, whether it's in the same scope as a collection or a different
+    # scope.
     def test_storeandcollect
         Puppet[:storeconfigs] = true
         Puppet::Rails.clear
@@ -731,11 +732,12 @@ class TestScope < Test::Unit::TestCase
         children = []
         file = tempfile()
         File.open(file, "w") { |f|
-            #f.puts "@file { \"#{file}\": mode => 644 }
-#file <||>"
             f.puts "
+class yay {
+    @host { myhost: ip => \"192.168.0.2\" }
+}
+include yay
 @host { puppet: ip => \"192.168.0.3\" }
-
 host <||>"
         }
 
@@ -748,11 +750,19 @@ host <||>"
             )
         }
 
+        objects = nil
+        # We run it twice because we want to make sure there's no conflict
+        # if we pull it up from the database.
         2.times { |i|
-            objects = nil
             assert_nothing_raised {
                 objects = interp.run("localhost", {})
             }
+
+            flat = objects.flatten
+
+            %w{puppet myhost}.each do |name|
+                assert(flat.find{|o| o.name == name }, "Did not find #{name}")
+            end
         }
     end
 
