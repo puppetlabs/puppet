@@ -54,6 +54,10 @@ module Puppet::Rails
     # Set up our database connection.  It'd be nice to have a "use" system
     # that could make callbacks.
     def self.init
+        unless defined? ActiveRecord::Base
+            raise Puppet::DevError, "No activerecord, cannot init Puppet::Rails"
+        end
+
         # This global init does not work for testing, because we remove
         # the state dir on every test.
         #unless (defined? @inited and @inited) or defined? Test::Unit::TestCase
