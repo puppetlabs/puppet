@@ -101,7 +101,7 @@ class Server
                     # the csr and return the results
                     Puppet.info "Signing certificate for %s" % hostname
                     cert, cacert = @ca.sign(csr)
-                    Puppet.info "Cert: %s; Cacert: %s" % [cert.class, cacert.class]
+                    #Puppet.info "Cert: %s; Cacert: %s" % [cert.class, cacert.class]
                     return [cert.to_pem, cacert.to_pem]
                 else # just write out the csr for later signing
                     if @ca.getclientcsr(hostname)
