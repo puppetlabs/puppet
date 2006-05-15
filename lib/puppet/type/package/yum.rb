@@ -9,6 +9,13 @@ module Puppet
 
             unless $? == 0
                 raise Puppet::PackageError.new(output)
+            else
+                @states[:ensure].retrieve
+                if @states[:ensure].is == :absent
+                    raise Puppet::PackageError.new(
+                        "Could not find package %s" % self.name
+                    )
+                end
             end
         end
 
