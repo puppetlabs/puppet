@@ -101,8 +101,9 @@ module Puppet
 
             newvalues(:true, :false, :inf, /^[0-9]+$/)
             munge do |value|
+                value = super
                 case value
-                when :true: true
+                when :true, :inf: true
                 when :false: false
                 else
                     value

@@ -489,36 +489,39 @@ class TestFile < Test::Unit::TestCase
         FileUtils.mkdir_p(subdir)
 
         dir = nil
-        assert_nothing_raised {
-            dir = Puppet.type(:file).create(
-                :path => basedir,
-                :recurse => true,
-                :check => %w{owner mode group}
-            )
-        }
+        [true, "true", "inf", 50].each do |value|
+            assert_nothing_raised {
+                dir = Puppet.type(:file).create(
+                    :path => basedir,
+                    :recurse => value,
+                    :check => %w{owner mode group}
+                )
+            }
 
-        assert_nothing_raised {
+            assert_nothing_raised {
+                dir.evaluate
+            }
+
+            subobj = nil
+            assert_nothing_raised {
+                subobj = Puppet.type(:file)[subdir]
+            }
+
+            assert(subobj, "Could not retrieve %s object" % subdir)
+
+            File.open(tmpfile, "w") { |f| f.puts "yayness" }
+
             dir.evaluate
-        }
 
-        subobj = nil
-        assert_nothing_raised {
-            subobj = Puppet.type(:file)[subdir]
-        }
+            file = nil
+            assert_nothing_raised {
+                file = Puppet.type(:file)[tmpfile]
+            }
 
-        assert(subobj, "Could not retrieve %s object" % subdir)
-
-        File.open(tmpfile, "w") { |f| f.puts "yayness" }
-
-        dir.evaluate
-
-        file = nil
-        assert_nothing_raised {
-            file = Puppet.type(:file)[tmpfile]
-        }
-
-        assert(file, "Could not retrieve %s object" % tmpfile)
-
+            assert(file, "Could not retrieve %s object" % tmpfile)
+            #system("rm -rf %s" % basedir)
+            Puppet.type(:file).clear
+        end
     end
 
 =begin
