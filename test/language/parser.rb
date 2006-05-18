@@ -392,6 +392,20 @@ class TestParser < Test::Unit::TestCase
             assert_instance_of(AST::Collection, obj)
         end
     end
+
+    def test_emptyfile
+        file = tempfile()
+        File.open(file, "w") do |f|
+            f.puts %{}
+        end
+        parser = Puppet::Parser::Parser.new
+        parser.file = file
+        assert_nothing_raised {
+            parser.parse
+        }
+
+
+    end
 end
 
 # $Id$
