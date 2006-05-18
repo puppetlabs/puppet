@@ -34,7 +34,8 @@ module Puppet
             desc "Whether files should be backed up before
                 being replaced.  If a filebucket_ is specified, files will be
                 backed up there; else, they will be backed up in the same directory
-                with a ``.puppet-bak`` extension.
+                with a ``.puppet-bak`` extension,, and no backups
+                will be made if backup is ``false``.
                 
                 To use filebuckets, you must first create a filebucket in your
                 configuration::

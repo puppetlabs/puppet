@@ -6,7 +6,7 @@ require 'puppet/statechange'
 
 module Puppet
 class Transaction
-    attr_accessor :toplevel, :component, :objects
+    attr_accessor :toplevel, :component, :objects, :tags, :ignoreschedules
 
 
     Puppet.config.setdefaults(:transaction,
@@ -103,8 +103,9 @@ class Transaction
         #    [self.object_id, @changes.length]
 
         @count = 0
-        tags = Puppet[:tags]
-        if tags == ""
+        # Allow the tags to be overriden
+        tags = self.tags || Puppet[:tags]
+        if tags.nil? or tags == ""
             tags = nil
         else
             tags = tags.split(/\s*,\s*/)
@@ -113,7 +114,7 @@ class Transaction
         allevents = @objects.collect { |child|
             events = nil
             if (tags.nil? or child.tagged?(tags))
-                if child.scheduled?
+                if self.ignoreschedules or child.scheduled?
                     # Perform the actual changes
                     events = apply(child)
 

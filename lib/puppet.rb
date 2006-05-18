@@ -20,6 +20,11 @@ module Puppet
         return PUPPETVERSION
     end
 
+    # So we can monitor signals and such.
+    class << self
+        include SignalObserver
+    end
+
     class Error < RuntimeError
         attr_accessor :stack, :line, :file
         attr_writer :backtrace
@@ -282,11 +287,114 @@ module Puppet
         end
     end
 
-    # Start our event loop.  This blocks, waiting for someone, somewhere,
-    # to generate events of some kind.
-    def self.start
+    # Run all threads to their ends
+    def self.join
+        defined? @threads and @threads.each do |t| t.join end
+    end
+
+    # Create a new service that we're supposed to run
+    def self.newservice(service)
+        @services ||= []
+
+        @services << service
+    end
+
+    def self.newthread(&block)
+        @threads ||= []
+
+        @threads << Thread.new do
+            yield
+        end
+    end
+
+    def self.newtimer(hash, &block)
+        @timers ||= []
+        timer = EventLoop::Timer.new(hash)
+        @timers << timer
+
+        if block_given?
+            observe_signal(timer, :alarm, &block)
+        end
+
+        # In case they need it for something else.
+        timer
+    end
+
+    # Trap a couple of the main signals.  This should probably be handled
+    # in a way that anyone else can register callbacks for traps, but, eh.
+    def self.settraps
+        [:INT, :TERM].each do |signal|
+            trap(signal) do
+                Puppet.notice "Caught #{signal}; shutting down"
+                Puppet.shutdown
+            end
+        end
+    end
+
+    # Shutdown our server process, meaning stop all services and all threads.
+    # Optionally, exit.
+    def self.shutdown(leave = true)
+        # Unmonitor our timers
+        defined? @timers and @timers.each do |timer|
+            EventLoop.current.ignore_timer timer
+        end
+
+        if EventLoop.current.running?
+            EventLoop.current.quit
+        end
+
+        # Stop our services
+        defined? @services and @services.each do |svc|
+            begin
+                timeout(20) do
+                    svc.shutdown
+                end
+            rescue TimeoutError
+                Puppet.err "%s could not shut down within 20 seconds" % svc.class
+            end
+        end
+
+        # And wait for them all to die, giving a decent amount of time
+        defined? @threads and @threads.each do |thr|
+            begin
+                timeout(20) do
+                    thr.join
+                end
+            rescue TimeoutError
+                # Just ignore this, since we can't intelligently provide a warning
+            end
+        end
+
+        if leave
+            exit(0)
+        end
+    end
+
+    # Start all of our services and optionally our event loop, which blocks,
+    # waiting for someone, somewhere, to generate events of some kind.
+    def self.start(block = true)
         #Puppet.info "Starting loop"
-        EventLoop.current.run
+        # Starting everything in its own thread, fwiw
+        defined? @timers and @timers.each do |timer|
+            EventLoop.current.monitor_timer timer
+        end
+
+        defined? @services and @services.each do |svc|
+            newthread do
+                begin
+                    svc.start
+                rescue => detail
+                    if Puppet[:debug]
+                        puts detail.backtrace
+                    end
+                    Puppet.err "Could not start %s: %s" % [svc.class, detail]
+                end
+            end
+        end
+
+        if block
+            EventLoop.current.run
+        end
     end
 
     # Create the timer that our different objects (uh, mostly the client)

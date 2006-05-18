@@ -139,6 +139,11 @@
 # Copyright (c) 2005, 2006 Reductive Labs, LLC
 # Licensed under the GNU Public License
 
+# Do an initial trap, so that cancels don't get a stack trace.
+trap(:INT) do
+    $stderr.puts "Cancelling startup"
+    exit(0)
+end
 
 require 'puppet'
 require 'puppet/server'
@@ -367,10 +372,6 @@ if options[:listen]
     objects << server
 end
 
-if options[:daemonize]
-    client.daemonize
-end
-
 # now set up the network client with the certs, now that we have them
 client.setcerts
 
@@ -378,16 +379,8 @@ if options[:client]
     objects << client
 end
 
-
-[:INT, :TERM].each do |signal|
-    trap(signal) do
-        Puppet.notice "Caught #{signal}; shutting down"
-        objects.each do |obj|
-            obj.shutdown
-        end
-        exit(0)
-    end
-end
+# Set traps for INT and TERM
+Puppet.settraps
 
 if options[:onetime]
     unless options[:client]
@@ -399,6 +392,9 @@ if options[:onetime]
         Puppet.notice "Ignoring --listen on onetime run"
     end
 
+    # Add the service, so the traps work correctly.
+    Puppet.newservice(client)
+
     begin
         client.run
     rescue => detail
@@ -409,37 +405,24 @@ if options[:onetime]
     end
     exit(0)
 else
-    threads = []
     if server
-        threads << Thread.new do
-            begin
-                server.start
-            rescue => detail
-                Puppet.err "Could not start server: %s" % [detail]
-                server.shutdown
-                exit(1)
-            end
-        end
+        Puppet.newservice(server)
     end
 
     if options[:client]
         Puppet.notice "Starting Puppet client version %s" % [Puppet.version]
-        begin
-            client.start
-        rescue => detail
-            puts detail.backtrace
-            Puppet.err "Could not start client: %s" % [detail]
-            client.shutdown
-            exit(1)
-        end
+        Puppet.newservice(client)
     end
 
-    threads << Thread.new do
-        # Mmm, hackish
-        Puppet.start
+    Puppet.settraps
+
+    # Daemonize as late as possible.
+    if options[:daemonize]
+        client.daemonize
     end
 
-    threads.each do |th| th.join end
+    Puppet.start
 end
+
 
 # $Id$

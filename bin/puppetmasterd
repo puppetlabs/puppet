@@ -69,6 +69,12 @@
 # Copyright (c) 2005 Reductive Labs, LLC
 # Licensed under the GNU Public License
 
+# Do an initial trap, so that cancels don't get a stack trace.
+trap(:INT) do
+    $stderr.puts "Cancelling startup"
+    exit(0)
+end
+
 require 'getoptlong'
 require 'puppet'
 require 'puppet/server'
@@ -234,25 +240,14 @@ if Puppet[:parseonly]
     exit(0)
 end
 
+Puppet.newservice(server)
+Puppet.settraps
+
 if options[:daemonize]
     server.daemonize
 end
 
-
-[:INT, :TERM].each do |signal|
-    trap(signal) do
-        Puppet.notice "Caught #{signal}; shutting down"
-        server.shutdown
-    end
-end
-
 Puppet.notice "Starting Puppet server version %s" % [Puppet.version]
-
-begin
-    server.start
-rescue => detail
-    Puppet.err "Could not start puppetmaster: %s" % detail
-    exit(1)
-end
+Puppet.start
 
 # $Id$

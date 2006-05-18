@@ -25,6 +25,12 @@ class Puppet::Client::MasterClient < Puppet::Client
 
     attr_accessor :objects
 
+    class << self
+        # Puppetd should only have one instance running, and we need a way
+        # to retrieve it.
+        attr_accessor :instance
+    end
+
     def self.facts
         facts = {}
         Facter.each { |name,fact|
@@ -39,7 +45,7 @@ class Puppet::Client::MasterClient < Puppet::Client
     end
 
     # This method actually applies the configuration.
-    def apply
+    def apply(tags = nil, ignoreschedules = false)
         dostorage()
         unless defined? @objects
             raise Puppet::Error, "Cannot apply; objects not defined"
@@ -51,6 +57,14 @@ class Puppet::Client::MasterClient < Puppet::Client
 
         transaction = @objects.evaluate
         transaction.toplevel = true
+
+        if tags
+            transaction.tags = tags
+        end
+
+        if ignoreschedules
+            transaction.ignoreschedules = true
+        end
 
         begin
             transaction.evaluate
@@ -267,6 +281,13 @@ class Puppet::Client::MasterClient < Puppet::Client
         return @objects
     end
 
+    # Just so we can specify that we are "the" instance.
+    def initialize(*args)
+        super
+
+        self.class.instance = self
+    end
+
     # Make sure only one client runs at a time, and make sure only one thread
     # runs at a time.  However, this does not lock local clients -- you could have
     # as many separate puppet scripts running as you want.
@@ -308,7 +329,7 @@ class Puppet::Client::MasterClient < Puppet::Client
     end
 
     # The code that actually runs the configuration.  
-    def run
+    def run(tags = nil, ignoreschedules = false)
         if pid = locked?
             t = ""
             if pid == true
@@ -325,7 +346,7 @@ class Puppet::Client::MasterClient < Puppet::Client
                         Puppet.notice "Starting configuration run"
                     end
                     benchmark(:notice, "Finished configuration run") do
-                        self.apply
+                        self.apply(tags, ignoreschedules)
                     end
                 end
             end

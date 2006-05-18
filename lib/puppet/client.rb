@@ -145,25 +145,19 @@ module Puppet
         # Start listening for events.  We're pretty much just listening for
         # timer events here.
         def start
-            # Create our timer
-            timer = EventLoop::Timer.new(
+            # Create our timer.  Puppet will handle observing it and such.
+            timer = Puppet.newtimer(
                 :interval => Puppet[:runinterval],
                 :tolerance => 1,
                 :start? => true
-            )
-
-            # Stick it in the loop
-            EventLoop.current.monitor_timer timer
-
-            # Run once before we start following the timer
-            self.runnow
-
-            # And run indefinitely
-            observe_signal timer, :alarm do
+            ) do
                 if self.scheduled?
                     self.runnow
                 end
             end
+
+            # Run once before we start following the timer
+            self.runnow
         end
 
         require 'puppet/client/proxy'
