@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..idfb63328341', 'grammar.ra', 775
+module_eval <<'..end grammar.ra modeval..idbeb2462db7', 'grammar.ra', 772
 require 'puppet/parser/functions'
 
 attr_reader :file
@@ -53,7 +53,9 @@ end
 
 def file=(file)
     unless FileTest.exists?(file)
-        file = file + ".pp"
+        unless file =~ /\.pp$/
+            file = file + ".pp"
+        end
         unless FileTest.exists?(file)
             raise Puppet::Error, "Could not find file %s" % file
         end
@@ -155,7 +157,7 @@ end
 
 # $Id$
 
-..end grammar.ra modeval..idfb63328341
+..end grammar.ra modeval..idbeb2462db7
 
 ##### racc 1.4.4 generates ###
 
@@ -1234,7 +1236,7 @@ module_eval <<'.,.,', 'grammar.ra', 474
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 536
+module_eval <<'.,.,', 'grammar.ra', 533
   def _reduce_80( val, _values, result )
     # importing files
     # yuk, i hate keywords
@@ -1248,6 +1250,7 @@ module_eval <<'.,.,', 'grammar.ra', 536
         :file => @lexer.file,
         :line => @lexer.line
     )
+
     Dir.chdir(dir) {
         # We can't interpolate at this point since we don't have any 
         # scopes set up. Warn the user if they use a variable reference
@@ -1267,6 +1270,7 @@ module_eval <<'.,.,', 'grammar.ra', 536
                                               "of '#{pat}'")
             end
         end
+
         files.each { |file|
             parser = Puppet::Parser::Parser.new()
             parser.files = self.files
@@ -1282,14 +1286,9 @@ module_eval <<'.,.,', 'grammar.ra', 536
                     "Importing %s would result in an import loop" %
                         File.join(dir, file)
                 )
-#                result = AST::ASTArray.new(
-#                    :file => @lexer.file,
-#                    :line => @lexer.line
-#                )
                 next
             end
             # push the results into the main result array
-            #result.push parser.parse
             parser.parse.each do |child|
                 result.push child
             end
@@ -1299,7 +1298,7 @@ module_eval <<'.,.,', 'grammar.ra', 536
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 547
+module_eval <<'.,.,', 'grammar.ra', 544
   def _reduce_81( val, _values, result )
     result = AST::CompDef.new(
         :type => AST::Name.new(:value => val[1], :line => @lexer.line),
@@ -1313,7 +1312,7 @@ module_eval <<'.,.,', 'grammar.ra', 547
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 560
+module_eval <<'.,.,', 'grammar.ra', 557
   def _reduce_82( val, _values, result )
     result = AST::CompDef.new(
         :type => AST::Name.new(:value => val[1], :line => @lexer.line),
@@ -1331,7 +1330,7 @@ module_eval <<'.,.,', 'grammar.ra', 560
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 577
+module_eval <<'.,.,', 'grammar.ra', 574
   def _reduce_83( val, _values, result )
         #:args => val[2],
     args = {
@@ -1350,7 +1349,7 @@ module_eval <<'.,.,', 'grammar.ra', 577
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 594
+module_eval <<'.,.,', 'grammar.ra', 591
   def _reduce_84( val, _values, result )
     args = {
         :type => AST::Name.new(:value => val[1], :line => @lexer.line),
@@ -1372,7 +1371,7 @@ module_eval <<'.,.,', 'grammar.ra', 594
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 615
+module_eval <<'.,.,', 'grammar.ra', 612
   def _reduce_85( val, _values, result )
     unless val[1].instance_of?(AST::ASTArray)
         val[1] = AST::ASTArray.new(
@@ -1396,7 +1395,7 @@ module_eval <<'.,.,', 'grammar.ra', 615
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 638
+module_eval <<'.,.,', 'grammar.ra', 635
   def _reduce_86( val, _values, result )
     unless val[1].instance_of?(AST::ASTArray)
         val[1] = AST::ASTArray.new(
@@ -1426,7 +1425,7 @@ module_eval <<'.,.,', 'grammar.ra', 638
 
  # reduce 87 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 652
+module_eval <<'.,.,', 'grammar.ra', 649
   def _reduce_88( val, _values, result )
     if val[0].instance_of?(AST::ASTArray)
         result = val[0]
@@ -1442,7 +1441,7 @@ module_eval <<'.,.,', 'grammar.ra', 652
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 660
+module_eval <<'.,.,', 'grammar.ra', 657
   def _reduce_89( val, _values, result )
    result = AST::HostName.new(
         :line => @lexer.line,
@@ -1453,7 +1452,7 @@ module_eval <<'.,.,', 'grammar.ra', 660
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 666
+module_eval <<'.,.,', 'grammar.ra', 663
   def _reduce_90( val, _values, result )
    result = AST::HostName.new(
         :line => @lexer.line,
@@ -1464,7 +1463,7 @@ module_eval <<'.,.,', 'grammar.ra', 666
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 674
+module_eval <<'.,.,', 'grammar.ra', 671
   def _reduce_91( val, _values, result )
     result = AST::ASTArray.new(
         :line => @lexer.line,
@@ -1477,14 +1476,14 @@ module_eval <<'.,.,', 'grammar.ra', 674
 
  # reduce 92 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 679
+module_eval <<'.,.,', 'grammar.ra', 676
   def _reduce_93( val, _values, result )
     result = val[1]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 690
+module_eval <<'.,.,', 'grammar.ra', 687
   def _reduce_94( val, _values, result )
     if val[1].instance_of?(AST::ASTArray)
         result = val[1]
@@ -1501,7 +1500,7 @@ module_eval <<'.,.,', 'grammar.ra', 690
 
  # reduce 95 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 704
+module_eval <<'.,.,', 'grammar.ra', 701
   def _reduce_96( val, _values, result )
     if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
@@ -1517,7 +1516,7 @@ module_eval <<'.,.,', 'grammar.ra', 704
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 712
+module_eval <<'.,.,', 'grammar.ra', 709
   def _reduce_97( val, _values, result )
     result = AST::CompArgument.new(
         :line => @lexer.line,
@@ -1528,7 +1527,7 @@ module_eval <<'.,.,', 'grammar.ra', 712
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 719
+module_eval <<'.,.,', 'grammar.ra', 716
   def _reduce_98( val, _values, result )
     result = AST::CompArgument.new(
         :line => @lexer.line,
@@ -1541,7 +1540,7 @@ module_eval <<'.,.,', 'grammar.ra', 719
 
  # reduce 99 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 728
+module_eval <<'.,.,', 'grammar.ra', 725
   def _reduce_100( val, _values, result )
     result = AST::Name.new(
         :value => val[1],
@@ -1552,7 +1551,7 @@ module_eval <<'.,.,', 'grammar.ra', 728
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 737
+module_eval <<'.,.,', 'grammar.ra', 734
   def _reduce_101( val, _values, result )
     name = val[0].sub(/^\$/,'')
     result = AST::Variable.new(
@@ -1564,7 +1563,7 @@ module_eval <<'.,.,', 'grammar.ra', 737
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 749
+module_eval <<'.,.,', 'grammar.ra', 746
   def _reduce_102( val, _values, result )
     if val[1].instance_of?(AST::ASTArray)
         result = val[1]
@@ -1585,7 +1584,7 @@ module_eval <<'.,.,', 'grammar.ra', 749
 
  # reduce 105 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 754
+module_eval <<'.,.,', 'grammar.ra', 751
   def _reduce_106( val, _values, result )
  result = nil
    result

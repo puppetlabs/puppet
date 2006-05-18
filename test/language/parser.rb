@@ -302,6 +302,43 @@ class TestParser < Test::Unit::TestCase
         }
     end
 
+    # Make sure that file importing changes file relative names.
+    def test_changingrelativenames
+        dir = tempfile()
+        Dir.mkdir(dir)
+        Dir.mkdir(File.join(dir, "subdir"))
+        top = File.join(dir, "site.pp")
+        subone = File.join(dir, "subdir/subone")
+        subtwo = File.join(dir, "subdir/subtwo")
+
+        files = []
+        file = tempfile()
+        files << file
+
+        File.open(subone + ".pp", "w") do |f|
+            f.puts %{class one { file { "#{file}": ensure => file }}}
+        end
+
+        otherfile = tempfile()
+        files << otherfile
+        File.open(subtwo + ".pp", "w") do |f|
+            f.puts %{import "subone"\n class two inherits one {
+                file { "#{otherfile}": ensure => file }
+            }}
+        end
+
+        File.open(top, "w") do |f|
+            f.puts %{import "subdir/subtwo"}
+        end
+
+        parser = Puppet::Parser::Parser.new
+        parser.file = top
+
+        assert_nothing_raised {
+            parser.parse
+        }
+    end
+
     # Verify that collectable objects are marked that way.
     def test_collectable
         Puppet[:storeconfigs] = true
