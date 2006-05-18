@@ -1,3 +1,15 @@
+0.17.1
+    Fixing a bug requiring rails on all Debian boxes
+
+    Fixing a couple of other small bugs
+
+0.17.0
+    Adding ActiveRecord integration on the server
+
+    Adding export/collect functionality
+
+    Fixing many bugs
+
 0.16.5
     Fixing a critical bug in importing classes from other files
 
