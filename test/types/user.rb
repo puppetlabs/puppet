@@ -340,15 +340,22 @@ class TestUser < Test::Unit::TestCase
             user.retrieve
         }
 
-        assert(user.state(:groups).is, "Did not retrieve group list")
+        # Some tests to verify that groups work correctly startig from nothing
+        # Remove our user
+        user[:ensure] = :absent
+        assert_apply(user)
 
-        assert(!user.insync?, "User is incorrectly in sync")
-
-        assert_events([:user_modified], user)
-
-        assert_nothing_raised {
+        assert_nothing_raised do
             user.retrieve
-        }
+        end
+
+        # And add it again
+        user[:ensure] = :present
+        assert_apply(user)
+
+        user.retrieve
+
+        assert(user.state(:groups).is, "Did not retrieve group list")
 
         list = user.state(:groups).is
         assert_equal(extra.sort, list.sort, "Group list is not equal")

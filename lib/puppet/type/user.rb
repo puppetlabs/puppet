@@ -246,7 +246,12 @@ module Puppet
                 if @parent[:membership] == :inclusive
                     @should.sort.join(",")
                 else
-                    (@is + @should).uniq.sort.join(",")
+                    members = @should
+                    if @is.is_a?(Array)
+                        members += @is
+                    end
+                    members.uniq.sort.join(",")
+                    #(@is + @should).uniq.sort.join(",")
                 end
             end
 
@@ -261,6 +266,9 @@ module Puppet
                 unless defined? @is and @is
                     return false
                 end
+                unless @is.class == @should.class
+                    return false
+                end
                 return @is.sort == @should.sort
             end
 
@@ -272,16 +280,9 @@ module Puppet
 
             def sync
                 if respond_to? :setgrouplist
-                    groups = nil
-                    if @parent[:membership] == :inclusive
-                        groups = @should
-                    else
-                        groups = (@is + @should).uniq
-                    end
-
                     # Pass them the group list, so that the :membership logic
                     # is all in this class, not in parent classes.
-                    setgrouplist(groups)
+                    setgrouplist(self.should)
                     return :user_modified
                 else
                     super
