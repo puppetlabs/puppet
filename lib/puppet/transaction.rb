@@ -108,7 +108,10 @@ class Transaction
         if tags.nil? or tags == ""
             tags = nil
         else
-            tags = tags.split(/\s*,\s*/)
+            tags = [tags] unless tags.is_a? Array
+            tags = tags.collect do |tag|
+                tag.split(/\s*,\s*/)
+            end.flatten
         end
 
         allevents = @objects.collect { |child|
@@ -118,7 +121,7 @@ class Transaction
                     # Perform the actual changes
                     events = apply(child)
 
-                    # Collect the targets any subscriptions to those events
+                    # Collect the targets of any subscriptions to those events
                     collecttargets(events)
                 else
                     child.debug "Not scheduled"

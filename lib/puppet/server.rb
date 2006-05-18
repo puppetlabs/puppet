@@ -27,6 +27,14 @@ module Puppet
         class Server < WEBrick::HTTPServer
             include Puppet::Daemon
 
+            Puppet.config.setdefaults(:puppetd,
+                :listen => [false, "Whether puppetd should listen for
+                    connections.  If this is true, then by default only the
+                    ``runner`` server is started, which allows remote authorized
+                    and authenticated nodes to connect and trigger ``puppetd``
+                    runs."]
+            )
+
             # Create our config object if necessary.  This works even if
             # there's no configuration file.
             def authconfig
@@ -121,8 +129,9 @@ module Puppet
                 end
 
                 def self.handler(name)
+                    name = name.to_s.downcase
                     @subclasses.find { |h|
-                        h.name == name
+                        h.name.to_s.downcase == name
                     }
                 end
 
@@ -179,6 +188,7 @@ require 'puppet/server/ca'
 require 'puppet/server/fileserver'
 require 'puppet/server/filebucket'
 require 'puppet/server/pelement'
+require 'puppet/server/runner'
 require 'puppet/server/logger'
 require 'puppet/client'
 

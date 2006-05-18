@@ -9,10 +9,8 @@ module Puppet
     # but at least it's better organized for now
     class Client
         include Puppet
-        include SignalObserver
 
         include Puppet::Util
-
 
         # FIXME The cert stuff should only come up with networking, so it
         # should be in the network client, not the normal client.  But if i do

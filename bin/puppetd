@@ -9,8 +9,8 @@
 # = Usage
 #
 #   puppetd  [-D|--daemonize] [-d|--debug] [--disable] [--enable]
-#       [-h|--help] [--fqdn <host name>] [--listen]
-#       [-l|--logdest syslog|<file>|console] [-o|--onetime] [-t|--test]
+#       [-h|--help] [--fqdn <host name>] [-l|--logdest syslog|<file>|console]
+#       [-o|--onetime] [--serve <handler>] [-t|--test]
 #       [-V|--version] [-v|--verbose] [-w|--waitforcert <seconds>]
 #
 # = Description
@@ -94,12 +94,6 @@
 # help::
 #   Print this help message
 #
-# listen::
-#   Start a local listening server.  This allows you to remotely manage
-#   puppet nodes over XMLRPC.  The client will fail to start if the
-#   authorization config file (defaults to /etc/puppetd/namespaceauth.conf)
-#   does not exist.
-#
 # logdest::
 #   Where to send messages.  Choose between syslog, the console, and a log file.
 #   Defaults to sending messages to syslog, or the console if debugging or
@@ -108,6 +102,13 @@
 # onetime::
 #   Run the configuration once, rather than as a long-running daemon.  This is
 #   useful for interactively running puppetd.
+#
+# serve::
+#   Start another type of server.  By default default, +puppetd+ will start
+#   a server that allows authenticated and authorized remote nodes to trigger
+#   the configuration to be pulled down and applied.  You can specify
+#   any other type of service here that does not require configuration,
+#   e.g., filebucket, ca, or pelement.
 #
 # test::
 #   Enable the most common options used for testing.  These are +onetime+,
@@ -169,7 +170,6 @@ options = [
 	[ "--onetime",  "-o",			GetoptLong::NO_ARGUMENT ],
 	[ "--test",	    "-t",			GetoptLong::NO_ARGUMENT ],
 	[ "--no-client",       			GetoptLong::NO_ARGUMENT ],
-	[ "--listen",       			GetoptLong::NO_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
 	[ "--version",	"-V",			GetoptLong::NO_ARGUMENT ],
 	[ "--waitforcert",	"-w",		GetoptLong::REQUIRED_ARGUMENT ]
@@ -189,9 +189,9 @@ options = {
     :setdest => false,
     :enable => false,
     :disable => false,
-    :listen => false,
     :client => true,
-    :fqdn => nil
+    :fqdn => nil,
+    :serve => {}
 }
 
 begin
@@ -203,6 +203,10 @@ begin
                 options[:daemonize] = true
             when "--disable"
                 options[:disable] = true
+            when "--serve"
+                if klass = Puppet::Server::Handler.handler(arg)
+                    options[:serve][klass.name] = klass
+                end
             when "--enable"
                 options[:enable] = true
             when "--test"
@@ -215,8 +219,6 @@ begin
                 Puppet::Log.newdestination(:console)
             when "--centrallogging"
                 options[:centrallogs] = true
-            when "--listen"
-                options[:listen] = true
             when "--help"
                 if $haveusage
                     RDoc::usage && exit
@@ -348,15 +350,28 @@ unless client.readcert
 end
 
 objects = []
+
 # This has to go after the certs are dealt with.
-if options[:listen]
+if Puppet[:listen]
     unless FileTest.exists?(Puppet[:authconfig])
-        $stderr.puts "Will not start with authorization file %s" % Puppet[:authconfig]
+        $stderr.puts "Will not start without authorization file %s" %
+            Puppet[:authconfig]
         exit(14)
     end
-    handlers = {
-        :PElement => {}
-    }
+
+    handlers = nil
+
+    if options[:serve].empty?
+        handlers = {:Runner => {}}
+    else
+        handlers = options[:serve].inject({}) do |hash, name, klass|
+            hash[name] = {}
+        end
+    end
+
+    handlers.each do |name, hash|
+        Puppet.info "Starting handler for %s" % name
+    end
 
     args[:Handlers] = handlers
     args[:Port] = Puppet[:puppetport]
