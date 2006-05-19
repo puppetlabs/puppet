@@ -449,6 +449,45 @@ class TestCron < Test::Unit::TestCase
 
         assert(obj.read =~ /SHELL/, "lost env setting")
 
+        env1 = "TEST = /bin/true"
+        env2 = "YAY = fooness"
+        assert_nothing_raised {
+            cron[:environment] = [env1, env2]
+        }
+
+        assert_apply(cron)
+        cron.retrieve
+
+        vals = cron.is(:environment)
+        assert(vals, "Did not get environment settings")
+        assert(vals != :absent, "Env is incorrectly absent")
+        assert_instance_of(Array, vals)
+
+        assert(vals.include?(env1), "Missing first env setting")
+        assert(vals.include?(env2), "Missing second env setting")
+
+    end
+
+    def test_divisionnumbers
+        cron = mkcron("divtest")
+        cron[:minute] = "*/5"
+
+        assert_apply(cron)
+
+        cron.retrieve
+
+        assert_equal(["*/5"], cron.is(:minute))
+    end
+
+    def test_ranges
+        cron = mkcron("rangetest")
+        cron[:minute] = "2-4"
+
+        assert_apply(cron)
+
+        cron.retrieve
+
+        assert_equal(["2-4"], cron.is(:minute))
     end
 end
 

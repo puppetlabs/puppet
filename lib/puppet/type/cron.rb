@@ -112,6 +112,17 @@ module Puppet
                 if value == "absent" or value == :absent
                     return :absent
                 end
+
+                # Allow the */2 syntax
+                if value =~ /^\*\/[0-9]+$/
+                    return value
+                end
+
+                # Allow ranges
+                if value =~ /^[0-9]+-[0-9]+$/
+                    return value
+                end
+
                 return value unless self.class.boundaries
                 lower, upper = self.class.boundaries
                 retval = nil
@@ -154,6 +165,8 @@ module Puppet
             self.boundaries = [0, 59]
             desc "The minute at which to run the cron job.
                 Optional; if specified, must be between 0 and 59, inclusive."
+
+            defaultto 0
         end
 
         newstate(:hour, CronParam) do
@@ -186,6 +199,38 @@ module Puppet
             self.boundaries = [1, 31]
             desc "The day of the month on which to run the
                 command.  Optional; if specified, must be between 1 and 31."
+        end
+
+        newstate(:environment, Puppet::State::ParsedParam) do
+            desc "Any environment settings associated with this cron job.  They
+                will be stored between the header and the job in the crontab.  There
+                can be no guarantees that other, earlier settings will not also
+                affect a given cron job.
+
+                Also, Puppet cannot automatically determine whether an existing,
+                unmanaged environment setting is associated with a given cron
+                job.  If you already have cron jobs with environment settings,
+                then Puppet will keep those settings in the same place in the file,
+                but will not associate them with a specific job."
+
+            validate do |value|
+                unless value =~ /^\s*(\w+)\s*=\s*(.+)\s*$/
+                    raise ArgumentError, "Invalid environment setting %s" %
+                        value.inspect
+                end
+            end
+
+            def insync?
+                if @is.is_a? Array
+                    return @is.sort == @should.sort
+                else
+                    return @is == @should[0]
+                end
+            end
+
+            def should
+                @should
+            end
         end
 
         newparam(:name) do
@@ -355,6 +400,8 @@ module Puppet
             unless @instances.include?(user)
                 @instances[user] = []
             end
+
+            envs = []
             text.chomp.split("\n").each { |line|
                 case line
                 when /^# Puppet Name: (.+)$/: name = $1
@@ -362,9 +409,12 @@ module Puppet
                     # add other comments to the list as they are
                     @instances[user] << line 
                 when /^\s*(\w+)\s*=\s*(.+)\s*$/:
-                    # Match env settings.  For now, just chunk them in there,
-                    # but eventually we'll want to manage them in the model somehow.
-                    @instances[user] << line 
+                    # Match env settings.
+                    if name
+                        envs << line
+                    else
+                        @instances[user] << line 
+                    end
                 else
                     if match = /^(\S+) (\S+) (\S+) (\S+) (\S+) (.+)$/.match(line)
                         fields().zip(match.captures).each { |param, value|
@@ -419,6 +469,11 @@ module Puppet
                     hash.each { |param, value|
                         cron.is = [param, value]
                     }
+
+                    unless envs.empty?
+                        cron.is = [:environment, envs]
+                        envs.clear
+                    end
                     hash.clear
                     name = nil
                     count += 1
@@ -564,14 +619,25 @@ module Puppet
                 end
             }
 
-            return "# Puppet Name: %s\n" % self.name +
-                self.class.fields.collect { |f|
-                    if hash[f] and hash[f] != :absent
-                        hash[f]
-                    else
-                        "*"
-                    end
-                }.join(" ")
+            str = "# Puppet Name: %s\n" % self.name
+
+            if @states.include?(:environment) and @states[:environment].should != :absent
+                envs = @states[:environment].should
+                unless envs.is_a? Array
+                    envs = [envs]
+                end
+
+                envs.each do |line| str += (line + "\n") end
+            end
+
+
+            return str + self.class.fields.collect { |f|
+                if hash[f] and hash[f] != :absent
+                    hash[f]
+                else
+                    "*"
+                end
+            }.join(" ")
         end
     end
 end
