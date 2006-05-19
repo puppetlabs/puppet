@@ -256,6 +256,14 @@ module Puppet
 
         class << self
             attr_accessor :filetype
+
+            def cronobj(name)
+                if defined? @tabs
+                    return @tabs[name]
+                else
+                    return nil
+                end
+            end
         end
 
         attr_accessor :uid
@@ -352,6 +360,10 @@ module Puppet
                 when /^# Puppet Name: (.+)$/: name = $1
                 when /^#/:
                     # add other comments to the list as they are
+                    @instances[user] << line 
+                when /^\s*(\w+)\s*=\s*(.+)\s*$/:
+                    # Match env settings.  For now, just chunk them in there,
+                    # but eventually we'll want to manage them in the model somehow.
                     @instances[user] << line 
                 else
                     if match = /^(\S+) (\S+) (\S+) (\S+) (\S+) (.+)$/.match(line)

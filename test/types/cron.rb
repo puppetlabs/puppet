@@ -422,6 +422,34 @@ class TestCron < Test::Unit::TestCase
             end
         end
     end
+
+    # Make sure we don't puke on env settings
+    def test_envsettings
+        cron = mkcron("envtst")
+
+        assert_apply(cron)
+
+        obj = Puppet::Type::Cron.cronobj(@me)
+
+        assert(obj)
+
+        text = obj.read
+
+        text = "SHELL = /path/to/some/thing\n" + text
+
+        obj.write(text)
+
+        assert_nothing_raised {
+            cron.retrieve
+        }
+
+        cron[:command] = "/some/other/command"
+
+        assert_apply(cron)
+
+        assert(obj.read =~ /SHELL/, "lost env setting")
+
+    end
 end
 
 # $Id$
