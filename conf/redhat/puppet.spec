@@ -4,7 +4,7 @@
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 0.17.1
+Version: 0.17.2
 Release: 1%{?dist}
 License: GPL
 Group: System Environment/Base
@@ -82,6 +82,7 @@ find %{buildroot}%{rubylibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__ch
 %files server
 %defattr(-, root, root, 0755)
 %{_sbindir}/puppetmasterd
+%{_bindir}/puppetrun
 %{_initrddir}/puppetmaster
 %config(noreplace) %{_sysconfdir}/puppet/*
 %config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
