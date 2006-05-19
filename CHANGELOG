@@ -1,3 +1,8 @@
+0.17.2
+    Added "puppetrun" application and associated runner server and client classes.
+
+    Fixed cron support so it better supports valid values and environment settings.
+
 0.17.1
     Fixing a bug requiring rails on all Debian boxes
 
