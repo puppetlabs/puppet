@@ -80,6 +80,7 @@
         exit(1)
     end
 end
+require 'ldap'
 require 'puppet'
 require 'puppet/server'
 require 'puppet/client'
@@ -210,7 +211,7 @@ if Puppet[:ldapnodes]
         list = ldapnodes(klass)
         puts "%s: %s" % [klass, list.join(", ")]
 
-        hosts += []
+        hosts += list
     end
 elsif ! classes.empty?
     $stderr.puts "You must be using LDAP to specify host classes"
@@ -260,6 +261,8 @@ while go
                 :Server => host,
                 :Port => Puppet[:puppetport]
             )
+
+            puts "Triggering %s" % host
             begin
                 client.run(tags, options[:ignoreschedules], options[:foreground])
             rescue => detail
