@@ -50,6 +50,7 @@ The server can also function as a certificate authority and file server.
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/log/puppet
 %{__install} -Dp -m0755 %{_pbuild}/bin/* %{buildroot}%{_sbindir}
 %{__mv} %{buildroot}%{_sbindir}/puppet %{buildroot}%{_bindir}/puppet
+%{__mv} %{buildroot}%{_sbindir}/puppetrun %{buildroot}%{_bindir}/puppetrun
 %{__install} -Dp -m0644 %{_pbuild}/lib/puppet.rb %{buildroot}%{rubylibdir}/puppet.rb
 %{__cp} -a %{_pbuild}/lib/puppet %{buildroot}%{rubylibdir}
 find %{buildroot}%{rubylibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__chmod} a-x
@@ -122,6 +123,9 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Fri May 19 2006 David Lutterkort <dlutter@redhat.com> - 0.17.2-1
+- Added /usr/bin/puppetrun to server subpackage
+
 * Wed May  3 2006 David Lutterkort <dlutter@redhat.com> - 0.16.4-1
 - Rebuilt
 
