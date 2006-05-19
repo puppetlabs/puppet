@@ -164,6 +164,7 @@ module Puppet
         require 'puppet/client/file'
         require 'puppet/client/log'
         require 'puppet/client/master'
+        require 'puppet/client/runner'
         require 'puppet/client/status'
         require 'puppet/client/pelement'
     end

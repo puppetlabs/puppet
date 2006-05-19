@@ -1,0 +1,298 @@
+#!/usr/bin/ruby
+
+#
+# = Synopsis
+#
+# Trigger a puppetd run on a set of hosts.
+#
+# = Usage
+#
+#   puppet [-c|--class <class>] [-d|--debug] [-h|--help] [-h|--host <host>]
+#
+# = Description
+#
+# This script can be used to connect to a set of machines running +puppetd+
+# and trigger them to run their configurations.  The most common usage would
+# be to specify a class of hosts and a set of tags, and +puppetrun+ would
+# look up in LDAP all of the hosts matching that class, then connect to
+# each host and trigger a run of all of the objects with the specified tags.
+#
+# If you are not storing your host configurations in LDAP, you can specify
+# hosts manually.
+#
+# You will most likely have to run +puppetrun+ as root to get access to
+# the SSL certificates.
+#
+# +puppetrun+ reads +puppetmaster+'s configuration file, so that it can copy
+# things like LDAP settings.
+#
+# = Options
+#
+# Note that any configuration parameter that's valid in the configuration file
+# is also a valid long argument.  For example, 'ssldir' is a valid configuration
+# parameter, so you can specify '--ssldir <directory>' as an argument.
+#
+# See the configuration file for the full list of acceptable parameters.
+#
+# class::
+#   Specify a class of machines to which to connect.  This only works if you
+#   have LDAP configured, at the moment.
+#
+# debug::
+#   Enable full debugging.
+#
+# foreground::
+#   Run each configuration in the foreground; that is, when connecting to a host,
+#   do not return until the host has finished its run.  The default is false.
+#
+# help::
+#   Print this help message
+#
+# host::
+#   A specific host to which to connect.  This flag can be specified more
+#   than once.
+#
+# ignoreschedules::
+#   Whether the client should ignore schedules when running its configuration.
+#   This can be used to force the client to perform work it would not normally
+#   perform so soon.  The default is false.
+#
+# parallel::
+#   How parallel to make the connections.  Parallelization is provided by forking
+#   for each client to which to connect.  The default is 1, meaning serial execution.
+#
+# = Example
+#
+#   sudo puppetrun -p 10 -h host1 -h host2 -t remotefile -t webserver
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005 Reductive Labs, LLC
+# Licensed under the GNU Public License
+
+[:INT, :TERM].each do |signal|
+    trap(signal) do
+        $stderr.puts "Cancelling"
+        exit(1)
+    end
+end
+require 'puppet'
+require 'puppet/server'
+require 'puppet/client'
+require 'getoptlong'
+
+
+# Look up all nodes matching a given class in LDAP.
+def ldapnodes(klass)
+    unless defined? @ldap
+        setupldap()
+    end
+
+    hosts = []
+
+    @ldap.search(Puppet[:ldapbase], 2, "puppetclass=#{klass}", "cn") do |entry|
+        hosts << entry.get_values("cn")[0]
+    end
+
+    return hosts
+end
+
+def setupldap
+    begin
+        @ldap = LDAP::Conn.new(Puppet[:ldapserver], Puppet[:ldapport])
+        @ldap.set_option(LDAP::LDAP_OPT_PROTOCOL_VERSION, 3)
+        @ldap.simple_bind(Puppet[:ldapuser], Puppet[:ldappassword])
+    rescue => detail
+        $stderr.puts "Could not connect to LDAP: %s" % detail
+        exit(34)
+    end
+end
+
+$haveusage = true
+
+begin
+    require 'rdoc/usage'
+rescue LoadError
+    $haveusage = false
+end
+
+flags = [
+    [ "--class",	"-c",			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--foreground", "-f",	        GetoptLong::NO_ARGUMENT ],
+    [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+    [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
+    [ "--host",         			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--parallel", "-p",			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
+]
+
+# Add all of the config parameters as valid options.
+Puppet.config.addargs(flags)
+
+result = GetoptLong.new(*flags)
+
+options = {
+    :ignoreschedules => false,
+    :foreground => false,
+    :parallel => 10,
+    :debug => false,
+    :verbose => true
+}
+
+hosts = []
+classes = []
+tags = []
+
+Puppet::Log.newdestination(:console)
+
+begin
+    result.each { |opt,arg|
+        case opt
+            when "--version"
+                puts "%s" % Puppet.version
+                exit
+            when "--ignoreschedules"
+                options[:ignoreschedules] = true
+            when "--tag"
+                tags << arg
+            when "--class"
+                classes << arg
+            when "--host"
+                hosts << arg
+            when "--help"
+                if $haveusage
+                    RDoc::usage && exit
+                else
+                    puts "No help available unless you have RDoc::usage installed"
+                    exit
+                end
+            when "--parallel"
+                begin
+                    options[:parallel] = Integer(arg)
+                rescue
+                    $stderr.puts "Could not convert %s to an integer" % arg.inspect
+                    exit(23)
+                end
+            when "--foreground"
+                options[:foreground] = true
+            when "--debug"
+                options[:debug] = true
+            else
+                Puppet.config.handlearg(opt, arg)
+        end
+    }
+rescue GetoptLong::InvalidOption => detail
+    $stderr.puts "Try '#{$0} --help'"
+    #if $haveusage
+    #    RDoc::usage(1,'usage')
+    #end
+    exit(1)
+end
+
+if options[:debug]
+    Puppet::Log.level = :debug
+else
+    Puppet::Log.level = :info
+end
+
+# Now parse the config
+config = File.join(Puppet[:confdir], "puppetmasterd.conf")
+if File.exists? config
+    Puppet.config.parse(config)
+end
+
+if Puppet[:ldapnodes]
+    classes.each do |klass|
+        list = ldapnodes(klass)
+        puts "%s: %s" % [klass, list.join(", ")]
+
+        hosts += []
+    end
+elsif ! classes.empty?
+    $stderr.puts "You must be using LDAP to specify host classes"
+    exit(24)
+end
+
+if tags.empty?
+    tags = ""
+else
+    tags = tags.join(",")
+end
+
+children = {}
+
+# If we get a signal, then kill all of our children and get out.
+[:INT, :TERM].each do |signal|
+    trap(signal) do
+        Puppet.notice "Caught #{signal}; shutting down"
+        children.each do |pid, host|
+            Process.kill("INT", pid)
+        end
+
+        waitall
+
+        exit(1)
+    end
+end
+
+todo = hosts.dup
+
+failures = []
+
+# Now do the actual work
+go = true
+while go
+    if children.length < options[:parallel] and ! todo.empty?
+        host = todo.shift
+        pid = fork do
+            # First make sure the client is up
+            out = %x{ping -c 1 #{host}}
+
+            unless $? == 0
+                $stderr.puts "Could not contact %s" % host
+                exit(1)
+            end
+            client = Puppet::Client::Runner.new(
+                :Server => host,
+                :Port => Puppet[:puppetport]
+            )
+            begin
+                client.run(tags, options[:ignoreschedules], options[:foreground])
+            rescue => detail
+                $stderr.puts "Host %s failed: %s" % [host, detail]
+                exit(2)
+            end
+        end
+        children[pid] = host
+    else
+        begin
+            pid = Process.wait
+
+            if host = children[pid]
+                if $?.exitstatus != 0
+                    failures << host
+                end
+                puts "%s finished with exit code %s" % [host, $?.exitstatus]
+            else
+                $stderr.puts "Could not find host for PID %s with status %s" %
+                    [pid, $?.exitstatus]
+            end
+        rescue Errno::ECHILD
+            # There are no children left, so just exit.
+            if failures.empty?
+                puts "Finished"
+                exit(0)
+            else
+                puts "Failed: %s" % failures.join(", ")
+                exit(2)
+            end
+        end
+    end
+end
+
+
+# $Id$
