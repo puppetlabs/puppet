@@ -22,9 +22,11 @@ class TestBucket < Test::Unit::TestCase
             @num = 1
         end
 
-        Puppet.err "#{Process.pid}: %s: %s" % [@num, memory()]
+        #Puppet.err "#{Process.pid}: %s: %s" % [@num, memory()]
         GC.start
+        #gcdebug(String)
     end
+
     # run through all of the files and exercise the filebucket methods
     def checkfiles(client)
         files = filelist()
@@ -66,6 +68,9 @@ class TestBucket < Test::Unit::TestCase
             assert(tsum == osum)
 
             # modify our tmp file
+            unless FileTest.writable?(tmppath)
+                File.chmod(0644, tmppath)
+            end
             File.open(tmppath,File::WRONLY|File::TRUNC) { |wf|
                 wf.print "This is some test text\n"
             }
@@ -109,7 +114,7 @@ class TestBucket < Test::Unit::TestCase
         end
 
         %w{
-            who bash vim sh uname /etc/passwd /etc/syslog.conf /etc/hosts 
+            who bash sh uname /etc/passwd /etc/syslog.conf /etc/hosts 
         }.each { |file|
             # if it's fully qualified, just add it
             if file =~ /^\//
@@ -234,7 +239,7 @@ class TestBucket < Test::Unit::TestCase
         unless pid
             raise "Uh, we don't have a child pid"
         end
-        system("kill %s" % pid)
+        Process.kill("TERM", pid)
     end
 end
 

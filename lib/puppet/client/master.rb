@@ -110,6 +110,12 @@ class Puppet::Client::MasterClient < Puppet::Client
         @cachefile
     end
 
+    def clear
+        #@objects = nil
+        @objects.remove(true)
+        Puppet::Type.allclear
+    end
+
     # Disable running the configuration.  This can be used from the command line, but
     # is also used to make sure only one client is running at a time.
     def disable(running = false)
@@ -261,6 +267,9 @@ class Puppet::Client::MasterClient < Puppet::Client
         # Clear all existing objects, so we can recreate our stack.
         if defined? @objects
             Puppet::Type.allclear
+
+            # Make sure all of the objects are really gone.
+            @objects.remove(true)
         end
         @objects = nil
 
@@ -273,7 +282,6 @@ class Puppet::Client::MasterClient < Puppet::Client
         if @objects.nil?
             raise Puppet::Error, "Configuration could not be processed"
         end
-        #@objects = objects
 
         # and perform any necessary final actions before we evaluate.
         @objects.finalize

@@ -196,7 +196,7 @@ class TestPElementServer < Test::Unit::TestCase
                 Puppet.warning "%s does not respond to :list" % type.name
                 next
             end
-            #next unless type.name == :port
+            next unless type.name == :package
             Puppet.info "Describing each %s" % type.name
 
             # First do a listing from the server

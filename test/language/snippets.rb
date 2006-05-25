@@ -25,6 +25,7 @@ require 'puppettest'
 
 class TestSnippets < Test::Unit::TestCase
 	include TestPuppet
+    include ObjectSpace
     $snippetbase = File.join($puppetbase, "examples", "code", "snippets")
     
     def file2ast(file)
@@ -186,7 +187,7 @@ class TestSnippets < Test::Unit::TestCase
         assert_nothing_raised {
             trans.rollback
         }
-        assert(! FileTest.exists?(file))
+        assert(! FileTest.exists?(file), "%s still exists" % file)
     end
 
     def snippet_simpleselector(trans)
@@ -206,7 +207,7 @@ class TestSnippets < Test::Unit::TestCase
             trans.rollback
         }
         files.each { |file|
-            assert(! FileTest.exists?(file))
+            assert(! FileTest.exists?(file), "%s still exists" % file)
         }
     end
 
@@ -231,7 +232,7 @@ class TestSnippets < Test::Unit::TestCase
         assert_nothing_raised {
             trans.rollback
         }
-        assert(! FileTest.exists?(file))
+        assert(! FileTest.exists?(file), "%s still exists" % file)
     end
 
     def snippet_argumentdefaults(trans)
@@ -523,16 +524,17 @@ class TestSnippets < Test::Unit::TestCase
                         assert(obj.name)
 
                         if obj.is_a?(Puppet.type(:file))
-                            @@tmpfiles << obj.name
+                            @@tmpfiles << obj[:path]
                         end
                     }
                 }
                 assert_nothing_raised {
                     self.send(mname, trans)
                 }
+
+                client.clear
             }
             mname = mname.intern
-            #eval("alias %s %s" % [testname, mname])
         end
     }
 end

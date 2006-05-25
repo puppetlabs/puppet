@@ -26,13 +26,7 @@ module Puppet
                 unless FileTest.exists?(file)
                     raise(BucketError, "File %s does not exist" % file)
                 end
-                contents = File.read(file)
-                string = Base64.encode64(contents)
-
-                sum = @driver.addfile(string,file)
-                string = ""
-                contents = ""
-                return sum
+                return @driver.addfile(Base64.encode64(File.read(file)),file)
             end
 
             # Restore the file

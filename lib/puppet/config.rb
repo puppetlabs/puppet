@@ -523,7 +523,9 @@ Generated on #{Time.now}.
 
             # Remove is a recursive process, so it's sufficient to just call
             # it on the component.
-            objects.remove
+            objects.remove(true)
+
+            objects = nil
 
             runners.each { |s| @used << s }
         end

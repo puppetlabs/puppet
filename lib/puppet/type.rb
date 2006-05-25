@@ -36,13 +36,6 @@ class Type < Puppet::Element
 
     include Enumerable
 
-    # this is currently unused, but I expect to use it for metrics eventually
-    @@retrieved = Hash.new(0)
-
-    # an array to contain all instances of Type
-    # also currently unused
-    @@allobjects = Array.new
-
     # a little fakery, since Puppet itself isn't a type
     # I don't think this is used any more, now that the language can't
     # call methods
@@ -64,9 +57,9 @@ class Type < Puppet::Element
 
         include Enumerable
 
-        def inspect
-            "Type(%s)" % self.name
-        end
+        #def inspect
+        #    "Type(%s)" % self.name
+        #end
 
         # This class is aggregatable, meaning that instances are defined on
         # one system but instantiated on another
@@ -84,7 +77,7 @@ class Type < Puppet::Element
         end
     end
 
-    def inspect
+    def disabled_inspect
         str = "Type(%s)" % self.name
         if defined? @states
             str += " States(" + @states.inspect + ")"
@@ -121,19 +114,6 @@ class Type < Puppet::Element
 
         return ens
     end
-
-    # The work that gets done for every subclass of Type
-    # this is an implicit method called by Ruby for us
-    #def self.inherited(sub)
-    #    sub.initvars
-
-        #debug("subtype %s(%s) just created" % [sub,sub.superclass])
-        # add it to the master list
-        # unfortunately we can't yet call sub.name, because the #inherited
-        # method gets called before any commands in the class definition
-        # get executed, which, um, sucks
-        #@@typeary.push(sub)
-    #end
 
     # all of the variables that must be initialized for each subclass
     def self.initvars
@@ -291,14 +271,10 @@ class Type < Puppet::Element
             #    [name,object.class])
             @objects[name] = newobj
         end
-
-        # and then add it to the master list
-        Puppet::Type.push(object)
     end
 
     # remove all type instances; this is mostly only useful for testing
     def self.allclear
-        @@allobjects.clear
         Puppet::Event::Subscription.clear
         @types.each { |name, type|
             type.clear
@@ -308,6 +284,9 @@ class Type < Puppet::Element
     # remove all of the instances of a single type
     def self.clear
         if defined? @objects
+            @objects.each do |name, obj|
+                obj.remove(true)
+            end
             @objects.clear
         end
         if defined? @aliases
@@ -317,9 +296,6 @@ class Type < Puppet::Element
 
     # remove a specified object
     def self.delete(object)
-        if @@allobjects.include?(object)
-            @@allobjects.delete(object)
-        end
         return unless defined? @objects
         if @objects.include?(object.name)
             @objects.delete(object.name)
@@ -355,14 +331,6 @@ class Type < Puppet::Element
         else
             self[param] = value
         end
-    end
-
-    # add an object to the master list of Type instances
-    # I'm pretty sure this is currently basically unused
-    def self.push(object)
-        @@allobjects.push object
-        #debug("adding %s of type %s to master list" %
-        #    [object.name,object.class])
     end
 
     # class and instance methods dealing with parameters and states
@@ -1032,6 +1000,18 @@ class Type < Puppet::Element
             child.remove(rmdeps)
         }
 
+        @children.clear
+
+        # This is hackish (mmm, cut and paste), but it works for now, and it's
+        # better than warnings.
+        [@states, @parameters, @metaparams].each do |hash|
+            hash.each do |name, obj|
+                obj.remove
+            end
+
+            hash.clear
+        end
+
         if rmdeps
             Puppet::Event::Subscription.dependencies(self).each { |dep|
                 #begin
@@ -1053,6 +1033,7 @@ class Type < Puppet::Element
 
         if defined? @parent and @parent
             @parent.delete(self)
+            @parent = nil
         end
     end
 
@@ -1779,7 +1760,6 @@ class Type < Puppet::Element
                 [self.name,self.class]
             @evalcount = 0
         end
-        @@retrieved[self] += 1
         @evalcount += 1
 
         changes = []

@@ -7,7 +7,7 @@ module Puppet
                 "NAME" => nil,
                 "CATEGORY" => :category,
                 "ARCH" => :platform,
-                "VERSION" => :ensure,
+                "VERSION" => :version,
                 "BASEDIR" => :root,
                 "HOTLINE" => nil,
                 "EMAIL" => nil,
@@ -98,7 +98,7 @@ module Puppet
                 "NAME" => nil,
                 "CATEGORY" => :category,
                 "ARCH" => :platform,
-                "VERSION" => :ensure,
+                "VERSION" => :version,
                 "BASEDIR" => :root,
                 "HOTLINE" => nil,
                 "EMAIL" => nil,
@@ -117,6 +117,16 @@ module Puppet
                 process.each { |line|
                     case line
                     when /^$/:
+                        if self.is_a? Puppet::Type and type = self[:type]
+                            hash[:type] = type
+                        elsif self.is_a? Module and self.respond_to? :name
+                            hash[:type] = self.name
+                        else
+                            raise Puppet::DevError, "Cannot determine package type"
+                        end
+
+                        hash[:ensure] = :present
+
                         packages.push Puppet.type(:package).installedpkg(hash)
                         hash.clear
                     when /\s*(\w+):\s+(.+)/:

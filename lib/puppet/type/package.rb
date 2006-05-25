@@ -445,27 +445,6 @@ module Puppet
             end
         end
 
-        # Return a list of valid package types
-#        def self.getpkglist
-#            if @types.nil?
-#                if @default.nil?
-#                    self.init
-#                end
-#                @types = [@default]
-#            end
-#
-#            list = @types.collect { |type|
-#                if typeobj = Puppet::PackagingType[type]
-#                    # pull all of the objects
-#                    typeobj.list
-#                else
-#                    raise Puppet::Error, "Could not find package type '%s'" % type
-#                end
-#            }.flatten
-#            @listed = true
-#            return list
-#        end
-
         # Create a new package object from listed information
         def self.installedpkg(hash)
             unless hash.include? :type

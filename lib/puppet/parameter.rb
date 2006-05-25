@@ -366,6 +366,10 @@ module Puppet
             end
         end
 
+        def remove
+            @parent = nil
+        end
+
         # This should only be called for parameters, but go ahead and make
         # it possible to call for states, too.
         def value

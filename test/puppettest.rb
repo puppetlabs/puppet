@@ -7,6 +7,12 @@ require 'puppet'
 require 'test/unit'
 
 module TestPuppet
+    include ObjectSpace
+
+    def gcdebug(type)
+        Puppet.warning "%s: %s" % [type, ObjectSpace.each_object(type) { |o| }]
+    end
+
     def newcomp(*ary)
         name = nil
         if ary[0].is_a?(String)
@@ -300,7 +306,6 @@ module TestPuppet
 
     # If there are any fake data files, retrieve them
     def fakedata(dir)
-
         ary = [$puppetbase, "test"]
         ary += dir.split("/")
         dir = File.join(ary)
