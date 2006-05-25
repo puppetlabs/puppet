@@ -2,8 +2,8 @@
 
 if __FILE__ == $0
     $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk"
+    $:.unshift '../lib'
+    $puppetbase = "../.."
 end
 
 require 'puppettest'
@@ -91,15 +91,24 @@ class TestCron < Test::Unit::TestCase
 
     # Run the cron through its paces -- install it then remove it.
     def cyclecron(cron)
+        obj = Puppet::Type::Cron.cronobj(@me)
+
+        text = obj.read
         name = cron.name
         comp = newcomp(name, cron)
 
         assert_events([:cron_created], comp)
         cron.retrieve
 
-        assert(cron.insync?)
+        assert(cron.insync?, "Cron is not in sync")
 
         assert_events([], comp)
+
+        curtext = obj.read
+        text.split("\n").each do |line|
+            assert(curtext.include?(line), "Missing '%s'" % line)
+        end
+        obj = Puppet::Type::Cron.cronobj(@me)
 
         cron[:ensure] = :absent
 
@@ -107,7 +116,7 @@ class TestCron < Test::Unit::TestCase
 
         cron.retrieve
 
-        assert(cron.insync?)
+        assert(cron.insync?, "Cron is not in sync")
         assert_events([], comp)
     end
 
@@ -139,6 +148,29 @@ class TestCron < Test::Unit::TestCase
 
         assert_equal(str, "# Puppet Name: #{name}\n* * * * * date > /dev/null",
             "Cron did not generate correctly")
+    end
+
+    def test_simpleparsing
+        @fakefiletype = Puppet::FileType.filetype(:ram)
+        @crontype.filetype = @fakefiletype
+
+        @crontype.retrieve(@me)
+        obj = Puppet::Type::Cron.cronobj(@me)
+
+        text = "5 1,2 * 1 0 /bin/echo funtest"
+
+        assert_nothing_raised {
+            @crontype.parse(@me, text)
+        }
+
+        @crontype.each do |obj|
+            assert_equal(["5"], obj.is(:minute), "Minute was not parsed correctly")
+            assert_equal(["1", "2"], obj.is(:hour), "Hour was not parsed correctly")
+            assert_equal([:absent], obj.is(:monthday), "Monthday was not parsed correctly")
+            assert_equal(["1"], obj.is(:month), "Month was not parsed correctly")
+            assert_equal(["0"], obj.is(:weekday), "Weekday was not parsed correctly")
+            assert_equal(["/bin/echo funtest"], obj.is(:command), "Command was not parsed correctly")
+        end
     end
 
     # Test that changing any field results in the cron tab being rewritten.
@@ -192,12 +224,13 @@ class TestCron < Test::Unit::TestCase
     def test_retain_comments
         str = "# this is a comment\n#and another comment\n"
         user = "fakeuser"
+        @crontype.retrieve(@me)
         assert_nothing_raised {
-            @crontype.parse(user, str)
+            @crontype.parse(@me, str)
         }
 
         assert_nothing_raised {
-            newstr = @crontype.tab(user)
+            newstr = @crontype.tab(@me)
             assert(newstr.include?(str), "Comments were lost")
         }
     end
@@ -208,10 +241,6 @@ class TestCron < Test::Unit::TestCase
         str = "0,30 * * * * date\n"
 
         assert_nothing_raised {
-            @crontype.parse(@me, str)
-        }
-
-        assert_nothing_raised {
             cron = @crontype.create(
                 :name => "yaycron",
                 :minute => [0, 30],
@@ -219,6 +248,16 @@ class TestCron < Test::Unit::TestCase
                 :user => @me
             )
         }
+
+        assert_nothing_raised {
+            @crontype.parse(@me, str)
+        }
+
+        count = @crontype.inject(0) do |c, obj|
+            c + 1
+        end
+
+        assert_equal(1, count, "Did not match cron job")
 
         modstr = "# Puppet Name: yaycron\n%s" % str
 
@@ -234,14 +273,15 @@ class TestCron < Test::Unit::TestCase
         tab = @fakefiletype.new(@me)
         tab.remove
 
+        @crontype.retrieve(@me)
         cron = mkcron("testwithnotab")
         cyclecron(cron)
     end
 
     def test_mkcronwithtab
-        tab = @fakefiletype.new(@me)
-        tab.remove
-        tab.write(
+        @crontype.retrieve(@me)
+        obj = Puppet::Type::Cron.cronobj(@me)
+        obj.write(
 "1 1 1 1 * date > %s/crontesting\n" % tstdir()
         )
 
@@ -488,6 +528,126 @@ class TestCron < Test::Unit::TestCase
         cron.retrieve
 
         assert_equal(["2-4"], cron.is(:minute))
+    end
+
+    def test_data
+        @fakefiletype = Puppet::FileType.filetype(:ram)
+        @crontype.filetype = @fakefiletype
+
+        @crontype.retrieve(@me)
+        obj = Puppet::Type::Cron.cronobj(@me)
+
+        fakedata("data/types/cron").each do |file|
+            names = []
+            obj.write(File.read(file))
+
+            @crontype.retrieve(@me)
+
+            @crontype.each do |cron|
+                names << cron.name
+            end
+
+            cron = mkcron("filetest")
+
+            assert_apply(cron)
+
+            @crontype.retrieve(@me)
+
+            names.each do |name|
+                assert(@crontype[name], "Could not retrieve %s" % name)
+            end
+            @crontype.each do |name, cron|
+                names << name
+            end
+        end
+    end
+
+    def test_value
+        cron = mkcron("valuetesting")
+
+        # First, test the normal states
+        [:minute, :hour, :month].each do |param|
+            state = cron.state(param)
+
+            assert(state, "Did not get %s state" % param)
+
+            assert_nothing_raised {
+                state.should = :absent
+                state.is = :absent
+            }
+
+            # Make sure our minute default is 0, not *
+            val = if param == :minute
+                "*" # the "0" thing is disabled for now
+            else
+                "*"
+            end
+            assert_equal(val, cron.value(param))
+
+            # Make sure we correctly get the "is" value if that's all there is
+            cron.is = [param, "1"]
+            assert_equal("1", cron.value(param))
+
+            # Make sure arrays work, too
+            cron.is = [param, ["1"]]
+            assert_equal("1", cron.value(param))
+
+            # Make sure values get comma-joined
+            cron.is = [param, ["2", "3"]]
+            assert_equal("2,3", cron.value(param))
+
+            # Make sure "should" values work, too
+            cron[param] = "4"
+            assert_equal("4", cron.value(param))
+
+            cron[param] = ["4"]
+            assert_equal("4", cron.value(param))
+
+            cron[param] = ["4", "5"]
+            assert_equal("4,5", cron.value(param))
+
+            cron.is = [param, :absent]
+            assert_equal("4,5", cron.value(param))
+        end
+
+        # Now make sure that :command works correctly
+        state = cron.state(:command)
+
+        assert_nothing_raised {
+            state.should = :absent
+            state.is = :absent
+        }
+
+        assert(state, "Did not get command state")
+        assert_raise(Puppet::DevError) do
+            cron.value(:command)
+        end
+
+        param = :command
+        # Make sure we correctly get the "is" value if that's all there is
+        cron.is = [param, "1"]
+        assert_equal("1", cron.value(param))
+
+        # Make sure arrays work, too
+        cron.is = [param, ["1"]]
+        assert_equal("1", cron.value(param))
+
+        # Make sure values are not comma-joined
+        cron.is = [param, ["2", "3"]]
+        assert_equal("2", cron.value(param))
+
+        # Make sure "should" values work, too
+        cron[param] = "4"
+        assert_equal("4", cron.value(param))
+
+        cron[param] = ["4"]
+        assert_equal("4", cron.value(param))
+
+        cron[param] = ["4", "5"]
+        assert_equal("4", cron.value(param))
+
+        cron.is = [param, :absent]
+        assert_equal("4", cron.value(param))
     end
 end
 

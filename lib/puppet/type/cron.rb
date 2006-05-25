@@ -10,7 +10,6 @@ module Puppet
     # completely symbolic 'name' paremeter, which gets written to the file
     # and is used to manage the job.
     newtype(:cron) do
-        ensurable
 
         # A base class for all of the Cron parameters, since they all have
         # similar argument checking going on.  We're stealing the base class
@@ -18,20 +17,16 @@ module Puppet
         # but it was just too annoying to do.
         class CronParam < Puppet::State::ParsedParam
             class << self
-                attr_accessor :boundaries
+                attr_accessor :boundaries, :default
             end
 
             # We have to override the parent method, because we consume the entire
             # "should" array
             def insync?
-                if self.class.name == :command
-                    return super
+                if defined? @should and @should
+                    self.is_to_s == self.should_to_s
                 else
-                    if @is.is_a? Array
-                        return @is == @should
-                    else
-                        return @is == @should[0]
-                    end
+                    true
                 end
             end
 
@@ -81,23 +76,35 @@ module Puppet
                 return false
             end
 
-            def is_to_s
-                if @is.empty?
-                    return "*"
-                else
-                    if @is.is_a? Array
-                        return @is.join(",")
-                    else
-                        return @is.to_s
+            def should_to_s
+                if @should
+                    unless @should.is_a?(Array)
+                        fail "wtf?"
                     end
+
+                    if self.name == :command or @should[0].is_a? Symbol
+                        @should[0]
+                    else
+                        @should.join(",")
+                    end
+                else
+                    nil
                 end
             end
 
-            def should_to_s
-                if ! defined? @should or @should.empty?
-                    return "*"
+            def is_to_s
+                if @is
+                    unless @is.is_a?(Array)
+                        return @is
+                    end
+
+                    if self.name == :command or @is[0].is_a? Symbol
+                        @is[0]
+                    else
+                        @is.join(",")
+                    end
                 else
-                    return @should.join(",")
+                    nil
                 end
             end
 
@@ -123,6 +130,10 @@ module Puppet
                     return value
                 end
 
+                if value == "*"
+                    return value
+                end
+
                 return value unless self.class.boundaries
                 lower, upper = self.class.boundaries
                 retval = nil
@@ -143,6 +154,15 @@ module Puppet
                 end
             end
         end
+
+
+        # Override 'newstate' so that all states default to having the
+        # correct parent type
+        def self.newstate(name, parent = nil, &block)
+            parent ||= Puppet::State::CronParam
+            super(name, parent, &block)
+        end
+
         # Somewhat uniquely, this state does not actually change anything -- it
         # just calls +@parent.sync+, which writes out the whole cron tab for
         # the user in question.  There is no real way to change individual cron
@@ -159,14 +179,24 @@ module Puppet
                 
                 All cron parameters support ``absent`` as a value; this will
                 remove any existing values for that field."
+
+            def should
+                if @should
+                    if @should.is_a? Array
+                        @should[0]
+                    else
+                        devfail "command is not an array"
+                    end
+                else
+                    nil
+                end
+            end
         end
 
         newstate(:minute, CronParam) do
             self.boundaries = [0, 59]
             desc "The minute at which to run the cron job.
                 Optional; if specified, must be between 0 and 59, inclusive."
-
-            defaultto 0
         end
 
         newstate(:hour, CronParam) do
@@ -313,13 +343,6 @@ module Puppet
 
         attr_accessor :uid
 
-        # Override the Puppet::Type#[]= method so that we can store the instances
-        # in per-user arrays.  Then just call +super+.
-        def self.[]=(name, object)
-            self.instance(object)
-            super
-        end
-
         # In addition to removing the instances in @objects, Cron has to remove
         # per-user cron tab information.
         def self.clear
@@ -355,6 +378,55 @@ module Puppet
             return [:minute, :hour, :monthday, :month, :weekday, :command]
         end
 
+        # Convert our hash to an object
+        def self.hash2obj(hash)
+            obj = nil
+            namevar = self.namevar
+            unless hash.include?(namevar) and hash[namevar]
+                Puppet.info "Autogenerating name for %s" % hash[:command]
+                hash[:name] = "autocron-%s" % hash.object_id
+            end
+
+            unless hash.include?(:command)
+                raise Puppet::DevError, "No command for %s" % name
+            end
+            # if the cron already exists with that name...
+            if obj = (self[hash[:name]] || match(hash))
+                # Mark the cron job as present
+                obj.is = [:ensure, :present]
+
+                # Mark all of the values appropriately
+                hash.each { |param, value|
+                    if state = obj.state(param)
+                        state.is = value
+                    elsif val = obj[param]
+                        obj[param] = val
+                    else    
+                        # There is a value on disk, but it should go away
+                        obj.is = [param, value]
+                        obj[param] = :absent
+                    end
+                }
+            else
+                # create a new cron job, since no existing one
+                # seems to match
+                obj = self.create(
+                    :name => hash[namevar]
+                )
+
+                obj.is = [:ensure, :present]
+
+                obj.notice "created"
+
+                hash.delete(namevar)
+                hash.each { |param, value|
+                    obj.is = [param, value]
+                }
+            end
+
+            instance(obj)
+        end
+
         # Return the header placed at the top of each generated file, warning
         # users that modifying this file manually is probably a bad idea.
         def self.header
@@ -364,16 +436,13 @@ module Puppet
 # HEADER not be deleted, as doing so could cause duplicate cron jobs.\n}
         end
 
-        # Store a new instance of a cron job.  Called from Cron#initialize.
         def self.instance(obj)
             user = obj[:user]
-            if @instances.include?(user)
-                unless @instances[obj[:user]].include?(obj)
-                    @instances[obj[:user]] << obj
-                end
-            else
-                @instances[obj[:user]] = [obj]
+            unless @instances.include?(user)
+                @instances[user] = []
             end
+
+            @instances[user] << obj
         end
 
         def self.list
@@ -383,6 +452,24 @@ module Puppet
             }
 
             self.collect { |c| c }
+        end
+
+        # See if we can match the hash against an existing cron job.
+        def self.match(hash)
+            tmp = nil
+            return nil unless tmp = self.find { |obj|
+                obj[:user] == hash[:user] and obj.value(:command) == hash[:command][0]
+            }
+
+            # we now have a cron job whose command exactly matches
+            # let's see if the other fields match
+
+            fields().each do |field|
+                next if field == :command
+
+                return false unless tmp[:user] == hash[:user]
+            end
+            return tmp
         end
 
         # Parse a user's cron job into individual cron objects.
@@ -396,21 +483,17 @@ module Puppet
         def self.parse(user, text)
             count = 0
             hash = {}
-            name = nil
-            unless @instances.include?(user)
-                @instances[user] = []
-            end
 
             envs = []
             text.chomp.split("\n").each { |line|
                 case line
-                when /^# Puppet Name: (.+)$/: name = $1
+                when /^# Puppet Name: (.+)$/: hash[:name] = $1
                 when /^#/:
                     # add other comments to the list as they are
                     @instances[user] << line 
                 when /^\s*(\w+)\s*=\s*(.+)\s*$/:
                     # Match env settings.
-                    if name
+                    if hash[:name]
                         envs << line
                     else
                         @instances[user] << line 
@@ -418,64 +501,33 @@ module Puppet
                 else
                     if match = /^(\S+) (\S+) (\S+) (\S+) (\S+) (.+)$/.match(line)
                         fields().zip(match.captures).each { |param, value|
-                            unless value == "*"
-                                unless param == :command
+                            if value == "*"
+                                hash[param] = [:absent]
+                            else
+                                if param == :command
+                                    hash[param] = [value]
+                                else
                                     # We always want the 'is' value to be an
                                     # array
-                                    value = value.split(",")
+                                    hash[param] = value.split(",")
                                 end
-                                hash[param] = value
                             end
                         }
                     else
                         raise Puppet::Error, "Could not match '%s'" % line
                     end
 
-                    cron = nil
-                    unless name
-                        Puppet.info "Autogenerating name for %s" % hash[:command]
-                        name = "cron-%s" % hash.object_id
-                    end
-
-                    unless hash.include?(:command)
-                        raise Puppet::DevError, "No command for %s" % name
-                    end
-                    # if the cron already exists with that name...
-                    if cron = Puppet.type(:cron)[name]
-                        # Mark the cron job as present
-                        cron.is = [:ensure, :present]
-                    elsif tmp = @instances[user].reject { |obj|
-                                ! obj.is_a?(self)
-                            }.find { |obj|
-                                obj.should(:command) == hash[:command]
-                            }
-                        # if we can find a cron whose spec exactly matches
-
-                        # we now have a cron job whose command exactly matches
-                        # let's see if the other fields match
-                        txt = tmp.to_record.sub(/#.+\n/,'')
-
-                        if txt == line
-                            cron = tmp
-                        end
-                    else
-                        # create a new cron job, since no existing one
-                        # seems to match
-                        cron = self.create(
-                            :name => name
-                        )
-                    end
-
-                    hash.each { |param, value|
-                        cron.is = [param, value]
-                    }
-
                     unless envs.empty?
-                        cron.is = [:environment, envs]
-                        envs.clear
+                        hash[:environment] = envs
                     end
-                    hash.clear
-                    name = nil
+
+                    hash[:user] = user
+
+                    # Now convert our hash to an object.
+                    hash2obj(hash)
+
+                    hash = {}
+                    envs.clear
                     count += 1
                 end
             }
@@ -503,10 +555,16 @@ module Puppet
                 self.find_all { |obj|
                     obj[:user] == user
                 }.each { |obj|
-                    obj.each { |state|
-                        state.is = :absent
-                    }
+                    obj.is = [:ensure, :absent]
                 }
+
+                # Get rid of the old instances, so we don't get duplicates
+                if @instances.include?(user)
+                    @instances[user].clear
+                else
+                    @instances[user] = []
+                end
+
                 self.parse(user, text)
             end
         end
@@ -521,12 +579,17 @@ module Puppet
         # sends it to the +@filetype+ module's +write+ function.  Also adds
         # header warning users not to modify the file directly.
         def self.store(user)
-            @tabs[user] ||= @filetype.new(user)
-            if @instances.include?(user)
-                @tabs[user].write(self.tab(user))
-            else
+            unless @instances.include?(user)
                 Puppet.notice "No cron instances for %s" % user
+                return
             end
+
+            @tabs[user] ||= @filetype.new(user)
+
+            self.each do |inst|
+                @instances[user] << inst unless @instances[user].include? inst
+            end
+            @tabs[user].write(self.tab(user))
         end
 
         # Collect all Cron instances for a given user and convert them
@@ -536,8 +599,6 @@ module Puppet
             if @instances.include?(user)
                 return self.header() + @instances[user].reject { |obj|
                     if obj.is_a?(self) and obj.should(:ensure) == :absent
-                        #obj.log "now absent"
-                        #obj.is = [:ensure, :absent]
                         true
                     else
                         false
@@ -582,13 +643,7 @@ module Puppet
         end
 
         def exists?
-            val = false
-            if @states.include?(:command) and
-                @states[:command].is != :absent and
-                ! @states[:command].is.nil?
-                val = true
-            end
-            return val
+            @states.include?(:ensure) and @states[:ensure].is == :present
         end
 
         # Override the default Puppet::Type method because we need to call
@@ -599,7 +654,15 @@ module Puppet
             end
 
             self.class.retrieve(self[:user])
-            self.eachstate { |st| st.retrieve }
+            if withtab = self.class["testwithtab"]
+                Puppet.info withtab.is(:ensure).inspect
+            end
+            self.eachstate { |st|
+                st.retrieve
+            }
+            if withtab = self.class["testwithtab"]
+                Puppet.info withtab.is(:ensure).inspect
+            end
         end
 
         # Write the entire user's cron tab out.
@@ -610,16 +673,23 @@ module Puppet
         # Convert the current object a cron-style string.  Adds the cron name
         # as a comment above the cron job, in the form '# Puppet Name: <name>'.
         def to_record
-            hash = {:command => @states[:command].should || @states[:command].is }
+            hash = {}
 
             # Collect all of the values that we have
-            self.class.fields().reject { |f| f == :command }.each { |param|
-                if @states.include?(param)
-                    hash[param] = @states[param].should_to_s
+            self.class.fields().each { |param|
+                hash[param] = self.value(param)
+
+                unless hash[param]
+                    devfail "Got no value for %s" % param
                 end
             }
 
-            str = "# Puppet Name: %s\n" % self.name
+            str = ""
+
+            # Don't store autogenerated names
+            #unless self.name =~ /^autocron/
+                str = "# Puppet Name: %s\n" % self.name
+            #end
 
             if @states.include?(:environment) and @states[:environment].should != :absent
                 envs = @states[:environment].should
@@ -631,13 +701,42 @@ module Puppet
             end
 
 
-            return str + self.class.fields.collect { |f|
+            line = str + self.class.fields.collect { |f|
                 if hash[f] and hash[f] != :absent
                     hash[f]
                 else
                     "*"
                 end
             }.join(" ")
+
+            return line
+        end
+
+        def value(name)
+            name = name.intern if name.is_a? String
+            ret = nil
+            if @states.include?(name)
+                ret = @states[name].should_to_s
+
+                if ret == :absent or ret.nil?
+                    ret = @states[name].is_to_s
+                end
+
+                if ret == :absent
+                    ret = nil
+                end
+            end
+
+            unless ret
+                if name == :command
+                    devfail "No command, somehow"
+                else
+                    #ret = (self.class.validstate?(name).default || "*").to_s
+                    ret = "*"
+                end
+            end
+
+            ret
         end
     end
 end

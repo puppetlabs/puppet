@@ -221,7 +221,7 @@ module Puppet
                 @fileobj ||= @filetype.new(@path)
                 text = @fileobj.read
                 if text.nil? or text == ""
-                    # there is no host file
+                    # there is no file
                     return nil
                 else
                     # First we mark all of our objects absent; any objects
@@ -278,7 +278,7 @@ module Puppet
                 end
             end
 
-            # Return the last time the hosts file was loaded.  Could
+            # Return the last time the file was loaded.  Could
             # be used for reducing writes, but currently is not.
             def self.loaded?(user)
                 @fileobj ||= @filetype.new(@path)
@@ -310,7 +310,7 @@ module Puppet
                 }
             end
 
-            # Write the entire host file out.
+            # Write the entire file out.
             def store
                 self.class.store()
             end
