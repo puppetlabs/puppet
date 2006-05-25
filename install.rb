@@ -299,5 +299,5 @@ prepare_installation
 run_tests(tests) if InstallOptions.tests
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
-do_bins(bins, Config::CONFIG['bindir'])
+do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)
