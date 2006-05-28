@@ -4,6 +4,9 @@ require 'sync'
 require 'puppet/lock'
 
 module Puppet
+    # A command failed to execute.
+    class ExecutionFailure < RuntimeError
+    end
 module Util
     require 'benchmark'
 
@@ -344,6 +347,19 @@ module Util
         else
             yield
         end
+    end
+
+    # Execute the desired command, and return the status and output.
+    def execute(command, failonfail = true)
+        output = %x{#{command}}
+
+        if failonfail
+            unless $? == 0
+                raise ExecutionFailure, output
+            end
+        end
+
+        return output
     end
 
     module_function :benchmark

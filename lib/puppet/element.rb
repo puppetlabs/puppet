@@ -6,6 +6,7 @@ require 'puppet'
 # and provides a few simple across-the-board functions like 'noop'
 class Puppet::Element
     include Puppet
+    include Puppet::Util
     attr_writer :noop
 
     class << self
