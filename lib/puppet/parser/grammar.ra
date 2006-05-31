@@ -636,16 +636,17 @@ nodedef: NODE hostnames parent LBRACE statements RBRACE {
     result = AST::NodeDef.new(args)
 }
 
+# Multiple hostnames, as used for node names.
 hostnames:    hostname 
-  | hostnames hostname {
+  | hostnames COMMA hostname {
     if val[0].instance_of?(AST::ASTArray)
         result = val[0]
-        result.push val[1]
+        result.push val[2]
     else
         result = AST::ASTArray.new(
             :line => @lexer.line,
             :file => @lexer.file,
-            :children => [val[0], val[1]]
+            :children => [val[0], val[2]]
         )
     end
 }

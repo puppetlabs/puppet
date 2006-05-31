@@ -403,8 +403,27 @@ class TestParser < Test::Unit::TestCase
         assert_nothing_raised {
             parser.parse
         }
+    end
 
+    def test_multiple_nodes_named
+        file = tempfile()
+        other = tempfile()
 
+        File.open(file, "w") do |f|
+            f.puts %{
+node nodeA, nodeB {
+    file { "#{other}": ensure => file }
+    
+}
+}
+        end
+
+        parser = Puppet::Parser::Parser.new
+        parser.file = file
+        ast = nil
+        assert_nothing_raised {
+            ast = parser.parse
+        }
     end
 end
 
