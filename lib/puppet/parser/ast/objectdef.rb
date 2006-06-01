@@ -55,23 +55,40 @@ class Puppet::Parser::AST
                 raise error
             end
 
+            hash = {}
+            # Evaluate all of the specified params.
+            @params.each { |param|
+                ary = param.safeevaluate(:scope => scope)
+                hash[ary[0]] = ary[1]
+            }
+
             objnames = [nil]
-            # Autogenerate the name if one was not passed.
+            # Determine our name if we have one.
             if self.name
                 objnames = @name.safeevaluate(:scope => scope)
                 # it's easier to always use an array, even for only one name
                 unless objnames.is_a?(Array)
                     objnames = [objnames]
                 end
+            else
+                # See if they specified the name as a parameter instead of as a
+                # normal name (i.e., before the colon).
+                unless object # we're a builtin
+                    if objclass = Puppet::Type.type(objtype)
+                        namevar = objclass.namevar
+
+                        tmp = hash["name"] || hash[namevar.to_s] 
+
+                        if tmp
+                            objnames = [tmp]
+                        end
+                    else
+                        # this should never happen, because we've already
+                        # typechecked, but it's no real problem if it does happen.
+                        # We just end up with an object with no name.
+                    end
+                end
             end
-
-            hash = {}
-
-            # then set all of the specified params
-            @params.each { |param|
-                ary = param.safeevaluate(:scope => scope)
-                hash[ary[0]] = ary[1]
-            }
 
             # this is where our implicit iteration takes place;
             # if someone passed an array as the name, then we act

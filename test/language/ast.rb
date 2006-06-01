@@ -753,6 +753,30 @@ class TestAST < Test::Unit::TestCase
         end
     end
 
+    # Make sure we catch names that are specified like parameters.
+    def test_name_or_param
+        obj = nil
+        assert_nothing_raised {
+            obj = AST::ObjectDef.new(
+                :type => nameobj("file"),
+                :params => astarray(AST::ObjectParam.new(
+                    :param => stringobj("name"),
+                    :value => stringobj("yayness")
+                ))
+            )
+        }
+
+        scope = Puppet::Parser::Scope.new
+
+        trans = nil
+        assert_nothing_raised {
+            trans = scope.evaluate(:ast => obj, :facts => {})
+        }
+
+        transobj = trans.shift
+        assert(transobj.name, "Name did not convert from param to name")
+    end
+
     if defined? ActiveRecord
     # Verify that our collection stuff works.
     def test_collection
