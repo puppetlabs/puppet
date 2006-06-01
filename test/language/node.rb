@@ -49,7 +49,7 @@ class TestParser < Test::Unit::TestCase
             hostnames = [ hostnames ]
         end
         assert_nothing_raised {
-            @parser.string = "node #{hostnames.join(" ")} { }"
+            @parser.string = "node #{hostnames.join(", ")} { }"
         }
         # Strip quotes
         hostnames.map! { |s| s.sub(/^'(.*)'$/, "\\1") }
