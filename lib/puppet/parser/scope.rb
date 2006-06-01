@@ -94,17 +94,23 @@ module Puppet::Parser
                 if typeklass and ! typeklass.isomorphic?
                     Puppet.info "Allowing duplicate %s" % type
                 else
+                    exobj = @definedtable[type][name]
+
                     # Either it's a defined type, which are never
                     # isomorphic, or it's a non-isomorphic type.
                     msg = "Duplicate definition: %s[%s] is already defined" %
                         [type, name]
+
+                    if exobj.file and exobj.line
+                        msg << " in file %s at line %s" %
+                            [exobj.file, exobj.line]
+                    end
+
+                    if hash[:line] or hash[:file]
+                        msg << "; cannot redefine"
+                    end
+
                     error = Puppet::ParseError.new(msg)
-                    if hash[:line]
-                        error.line = hash[:line]
-                    end
-                    if hash[:file]
-                        error.file = hash[:file]
-                    end
                     raise error
                 end
             end

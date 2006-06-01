@@ -260,12 +260,19 @@ class Type < Puppet::Element
             raise Puppet::DevError, "must pass a Puppet::Type object"
         end
 
-        if @objects.has_key?(name) and self.isomorphic?
-            raise Puppet::Error.new(
-                "Object '%s' of type '%s' already exists with id '%s' vs. '%s'" %
-                [name, newobj.class.name,
-                    @objects[name].object_id,newobj.object_id]
-            )
+        if exobj = @objects.has_key?(name) and self.isomorphic?
+            msg = "Object '%s[%s]' already exists" %
+                [name, newobj.class.name]
+
+            if exobj.file and exobj.line
+                msg += ("in file %s at line %s" %
+                    [object.file, object.line])
+            end
+            if object.file and object.line
+                msg += ("and cannot be redefined in file %s at line %s" %
+                    [object.file, object.line])
+            end
+            error = Puppet::Error.new(msg)
         else
             #Puppet.info("adding %s of type %s to class list" %
             #    [name,object.class])
