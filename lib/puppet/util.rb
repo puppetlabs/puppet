@@ -351,7 +351,12 @@ module Util
 
     # Execute the desired command, and return the status and output.
     def execute(command, failonfail = true)
-        output = %x{#{command}}
+        if respond_to? :debug
+            debug "Executing '%s'" % command
+        else
+            Puppet.debug "Executing '%s'" % command
+        end
+        output = %x{#{command} 2>&1}
 
         if failonfail
             unless $? == 0

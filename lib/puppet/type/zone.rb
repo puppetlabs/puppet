@@ -1,24 +1,35 @@
 Puppet::Type.newtype(:zone) do
     @doc = "Solaris zones."
 
-    # We should have a special state type for those states that modify
-    # the zone's configuration.
-    def self.newstate(name, &block) do
-        super
+    class Puppet::State::ZoneState < Puppet::State
+        def self.cfgstate
+            @cfgstate = true
+        end
 
-        @states[name].class_eval do
-            def cfgstate
-                @cfgstate = true
-            end
-
-            def cfgstate?
-                if defined? @cfgstate
-                    @cfgstate
-                else
-                    false
-                end
+        def self.cfgstate?
+            if defined? @cfgstate
+                @cfgstate
+            else
+                false
             end
         end
+
+        def cfgstate?
+            self.class.cfgstate?
+        end
+
+        def sync
+            if self.class.cfgstate
+                @parent.cfg self.configtext
+            else
+                super
+            end
+        end
+    end
+
+    # Use our state type as the parent type.
+    def self.newstate(name, parent = nil, &block)
+        state = super(name, Puppet::State::ZoneState, &block)
     end
 
     ensurable do
@@ -28,35 +39,71 @@ Puppet::Type.newtype(:zone) do
             only then can be ``running``.  Note also that ``halt`` is currently
             used to stop zones."
 
-        @@list = [:absent, :configured, :installed, :running]
+        @states = {}
 
-        newvalue(:absent) do
-        end
-
-        newvalue(:configured) do
-            @parent.configure
-            # Um, don't do anything for now...
-        end
-
-        newvalue(:installed) do
-            begin
-                execute("/usr/sbin/zlogin #{@parent[:name]} shutdown")
-            rescue ExecutionFailure
-                self.fail "Could not stop zone: %s" % output
-            end
-        end
-
-        newvalue(:running) do
-            begin
-                execute("/usr/sbin/zoneadm #{@parent[:name]} boot")
-            rescue ExecutionFailure
-                self.fail "Could not stop zone: %s" % output
+        def self.newvalue(name, hash)
+            if @parametervalues.is_a? Hash
+                @parametervalues = []
             end
 
-            return :zone_booted
+            @parametervalues << name
+
+            @states[name] = hash
+            hash[:name] = name
         end
 
-        def perform(value)
+        newvalue :absent, :down => :uninstall
+        newvalue :configured, :up => :configure, :down => :uninstall
+        newvalue :installed, :up => :install, :down => :stop
+        newvalue :running, :up => :start
+
+        def self.valueindex(value)
+            @parametervalues.index(value)
+        end
+
+        # Return all of the states between two listed values, inclusively.
+        def self.valueslice(first, second)
+            list = @parametervalues[
+                @parametervalues.index(first)..@parametervalues.index(second)
+            ].collect do |name|
+                @states[name]
+            end
+
+            list[1..-1]
+        end
+
+        def is=(value)
+            value = value.intern if value.is_a? String
+            @is = value
+        end
+
+        def sync
+            method = nil
+            if up?
+                dir = :up
+            else
+                dir = :down
+            end
+
+            # We need to get the state we're currently in and just call
+            # everything between it and us.
+            states = self.class.valueslice(self.is, self.should)
+
+            states.each do |st|
+                if method = st[dir]
+                    @parent.send(method)
+                else
+                    raise Puppet::DevError, "Cannot move %s from %s" %
+                        [dir, st[:name]]
+                end
+            end
+
+            return ("zone_" + self.should.to_s).intern
+        end
+
+        # Are we moving up the state tree?
+        def up?
+            self.class.valueindex(self.is) < self.class.valueindex(self.should)
         end
     end
 
@@ -80,6 +127,14 @@ Puppet::Type.newtype(:zone) do
         cfgstate
     end
 
+    newstate(:autoboot) do
+        desc "Whether the zone should automatically boot."
+
+        cfgstate
+
+        defaultto :true
+    end
+
     newstate(:pool) do
         desc "The resource pool for this zone." 
 
@@ -101,9 +156,37 @@ Puppet::Type.newtype(:zone) do
 
         # Add a directory to our list of inherited directories.
         def adddir(dir)
-            @parent.cfg "add inherit-pkg-dir
-                set dir=#{dir}
-                end"
+            "add inherit-pkg-dir\nset dir=#{dir}\nend"
+        end
+
+        def configtext
+            list = @should
+
+            unless @is.is_a? Symbol
+                if @is.is_a? Array
+                    list += @is
+                else
+                    list << @is
+                end
+            end
+
+            # Some hackery so we can test whether @is is an array or a symbol
+            if @is.is_a? Array
+                tmpis = @is
+            else
+                tmpis = [@is]
+            end
+
+            list.sort.uniq.collect do |dir|
+                # Skip directories that are configured and should be
+                next if tmpis.include?(dir) and @should.include?(dir)
+
+                if tmpis.include?(dir)
+                    rmdir(dir)
+                else
+                    adddir(dir)
+                end
+            end.join("\n")
         end
 
         # We want all specified directories to be included.
@@ -112,24 +195,14 @@ Puppet::Type.newtype(:zone) do
         end
 
         def rmdir(dir)
-            @parent.cfg "remove inherit-pkg-dir{dir=#{dir}}"
+            "remove inherit-pkg-dir{dir=#{dir}}"
         end
 
         def sync
-            [@is, @should].sort.uniq.each do |dir|
-                # Skip directories that are configured and should be
-                next if @is.include?(dir) and @should.include?(dir)
-
-                if @is.include?(dir)
-                    rmdir(dir)
-                else
-                    adddir(dir)
-                end
-            end
         end
     end
 
-    newparam(:base) do
+    newparam(:path) do
         desc "The root of the zone's filesystem.  Must be a fully qualified
             file name.  If you include '%s' in the path, then it will be
             replaced with the zone's name.  At this point, you cannot use
@@ -153,8 +226,8 @@ Puppet::Type.newtype(:zone) do
     # If Puppet is also managing the base dir or its parent dir, list them
     # both as prerequisites.
     autorequire(:file) do
-        if @parameters.include? :base
-            return [@parameters[:base], File.dirname(@parameters[:base])]
+        if @parameters.include? :path
+            [@parameters[:path].value, File.dirname(@parameters[:path].value)]
         else
             nil
         end
@@ -162,7 +235,7 @@ Puppet::Type.newtype(:zone) do
 
     # Convert the output of a list into a hash
     def self.line2hash(line)
-        fields = [:id, :name, :status, :base]
+        fields = [:id, :name, :ensure, :path]
 
         hash = {}
         line.split(":").each_with_index { |value, index|
@@ -194,7 +267,8 @@ Puppet::Type.newtype(:zone) do
 
     # Execute a configuration string.
     def cfg(str)
-        IO.popen("/usr/sbin/zonecfg -z %s" % @parent[:name], "w") do |pipe|
+        info "Executing '%s'" % [str]
+        IO.popen("/usr/sbin/zonecfg -z %s -f -" % self[:name], "w") do |pipe|
             pipe.puts str
         end
 
@@ -203,66 +277,76 @@ Puppet::Type.newtype(:zone) do
         end
     end
 
-    # Perform all of our configuration steps.
-    def configure
-        # If the thing is entirely absent, then we need to create the config.
-        if @states[:status].is == :absent
-            cfg("create; set zonepath=%s" % self[:base])
-        end
+    # Turn the results of getconfig into status information.
+    def config2status(config)
+        config.each do |name, value|
+            case name
+            when :autoboot:
+                self.is = [:autoboot, value]
+            when :zonepath:
+                # Nothing; this is set in the zoneadm list command
+            when :pool:
+                self.is = [:pool, value]
+            when "inherit-pkg-dir":
+                dirs = value.collect do |hash|
+                    hash[:dir]
+                end
 
-        # Then perform all of our configuration steps.
-        @states.each do |name, state|
-            if state.class.cfgstate? and ! state.insync?
-                state.sync
+                self.is = [:inherits, dirs]
+            when "net":
+                vals = value.collect do |hash|
+                    "%s:%s" % [hash[:physical], hash[:address]]
+                end
+                self.is = [:ip, vals]
             end
         end
     end
 
-    def create
-        # First we must perform all of the configuration steps
-        
-        unless @parameters[:base]
-            raise ArgumentError, "You must provide a zone root directory."
+    # Perform all of our configuration steps.
+    def configure
+        # If the thing is entirely absent, then we need to create the config.
+        str = %{create -b
+        set zonepath=%s
+        set autoboot=true
+        } % self[:path]
+
+        # Then perform all of our configuration steps.
+        @states.each do |name, state|
+            if state.class.cfgstate? and ! state.insync?
+                str += state.configtext + "\n"
+            end
         end
 
-        # Now do the rest of the steps.
-        self.configure()
-
-        # Then we must actually install the zone
-        self.install()
-
-        # And finally, boot it, if we're marked to do so.
-    end
-
-    def destroy
-        if @states[:status].is == :running
-            @states[:status].should = :stopped
-            @states[:status].sync
-        end
-
-        begin
-            execute("/usr/sbin/zoneadm #{@parent[:name]} uninstall")
-        rescue ExecutionFailure
-            self.fail "Could not stop zone: %s" % output
-        end
+        str += "commit\n"
+        cfg(str)
     end
 
     # Collect the configuration of the zone.
-    def info
+    def getconfig
         output = execute("/usr/sbin/zonecfg -z %s info" % self[:name])
 
         name = nil
+        current = nil
         hash = {}
         output.split("\n").each do |line|
             case line
-            when /^(\S+):\s*$/: name = $1
-            when /^(\S+):\s*(.+)$/: hash[$1] = $2
+            when /^(\S+):\s*$/:
+                name = $1
+                current = nil # reset it
+            when /^(\S+):\s*(.+)$/:
+                hash[$1.intern] = $2
+                #self.is = [$1.intern, $2]
             when /^\s+(\S+):\s*(.+)$/:
                 if name
-                    unless hash[name].is_a? Hash
-                        hash[name] = {}
+                    unless hash.include? name
+                        hash[name] = []
                     end
-                    hash[name][$1] = $2
+
+                    unless current
+                        current = {}
+                        hash[name] << current
+                    end
+                    current[$1.intern] = $2
                 else
                     err "Ignoring '%s'" % line
                 end
@@ -270,21 +354,33 @@ Puppet::Type.newtype(:zone) do
                 debug "Ignoring zone output '%s'" % line
             end
         end
+        config2status(hash)
     end
 
     def install
+        begin
+            execute("/usr/sbin/zoneadm -z #{self[:name]} install")
+        rescue Puppet::ExecutionFailure => detail
+            self.fail "Could not install zone: %s" % detail
+        end
     end
 
     def retrieve
         begin
-            output = execute("/usr/sbin/zoneadm -z #{self[:name]} list -p")
-        rescue ExecutionFailure
-            @states[:ensure] = :absent
+            output = execute("/usr/sbin/zoneadm -z #{self[:name]} list -p 2>/dev/null")
+        rescue Puppet::ExecutionFailure => detail
+            @states.each do |name, state|
+                state.is = :absent
+            end
             return
         end
 
+        p output
+
         hash = self.class.line2hash(output.chomp)
         setstatus(hash)
+
+        # Now retrieve the configuration itself and set appropriately.
     end
 
     # Take the results of a listing and set everything appropriately.
@@ -297,6 +393,47 @@ Puppet::Type.newtype(:zone) do
             else
                 self[param] = value
             end
+        end
+
+        # For any configured items that aren't found, mark absent.
+        @states.each do |name, st|
+            next unless st.cfgstate?
+
+            unless hash.has_key? st.name
+                st.is = :absent
+            end
+        end
+    end
+
+    def start
+        begin
+            execute("/usr/sbin/zoneadm -z #{self[:name]} boot")
+        rescue Puppet::ExecutionFailure => detail
+            self.fail "Could not start zone: %s" % detail
+        end
+    end
+
+    def stop
+        begin
+            execute("/usr/sbin/zoneadm -z #{self[:name]} halt")
+        rescue Puppet::ExecutionFailure => detail
+            self.fail "Could not halt zone: %s" % detail
+        end
+    end
+
+    def unconfigure
+        begin
+            execute("/usr/sbin/zonecfg -z #{self[:name]} delete -F")
+        rescue Puppet::ExecutionFailure => detail
+            self.fail "Could not unconfigure zone: %s" % detail
+        end
+    end
+
+    def uninstall
+        begin
+            execute("/usr/sbin/zoneadm -z #{self[:name]} uninstall")
+        rescue Puppet::ExecutionFailure => detail
+            self.fail "Could not halt zone: %s" % detail
         end
     end
 end
