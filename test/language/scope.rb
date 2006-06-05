@@ -259,6 +259,16 @@ class TestScope < Test::Unit::TestCase
             val = scope.strinterp("string $test ${test} $test")
         }
         assert_equal("string value value value", val)
+
+        assert_nothing_raised {
+            val = scope.strinterp("string \\$test")
+        }
+        assert_equal("string $test", val)
+
+        assert_nothing_raised {
+            val = scope.strinterp("\\$test string")
+        }
+        assert_equal("$test string", val)
     end
 
     # Test some of the host manipulations

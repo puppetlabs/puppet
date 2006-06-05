@@ -850,20 +850,16 @@ module Puppet::Parser
 
         # Return an interpolated string.
         def strinterp(string)
-            newstring = string.dup
-            regex = Regexp.new('\$\{(\w+)\}|\$(\w+)')
-            #Puppet.debug("interpreting '%s'" % string)
-            while match = regex.match(newstring) do
-                if match[1]
-                    newstring.sub!(regex,lookupvar(match[1]).to_s)
-                elsif match[2]
-                    newstring.sub!(regex,lookupvar(match[2]).to_s)
-                else
-                    raise Puppet::DevError, "Could not match variable in %s" %
-                        newstring
+            newstring = string.gsub(/\\\$|\$\{(\w+)\}|\$(\w+)/) do |value|
+                # If it matches the backslash, then just retun the dollar sign.
+                if value == '\\$'
+                    '$'
+                else # look the variable up
+                    var = $1 || $2
+                    lookupvar($1 || $2)
                 end
             end
-            #Puppet.debug("result is '%s'" % newstring)
+
             return newstring.gsub(/\\t/, "\t").gsub(/\\n/, "\n").gsub(/\\s/, "\s")
         end
 
