@@ -41,64 +41,42 @@ module Puppet
             #@state.info "Is: %s, Should: %s" %
             #    [@state.is.inspect, @state.should.inspect]
 
-            begin
-                events = @state.sync
-                if events.nil?
+            # The transaction catches any exceptions here.
+            events = @state.sync
+            if events.nil?
+                return nil
+            end
+
+            if events.is_a?(Array)
+                if events.empty?
                     return nil
                 end
-
-                if events.is_a?(Array)
-                    if events.empty?
-                        return nil
-                    end
-                else
-                    events = [events]
-                end
-                
-                return events.collect { |event|
-                    # default to a simple event type
-                    if ! event.is_a?(Symbol)
-                        @state.warning("State '%s' returned invalid event '%s'; resetting to default" %
-                            [@state.class,event])
-
-                        event = @state.parent.class.name.id2name + "_changed"
-                    end
-
-                    # i should maybe include object type, but the event type
-                    # should basically point to that, right?
-                        #:state => @state,
-                        #:object => @state.parent,
-                    @state.log @state.change_to_s
-                    Puppet::Event.new(
-                        :event => event,
-                        :change => self,
-                        :transaction => @transaction,
-                        :source => @state.parent,
-                        :message => self.to_s
-                    )
-                }
-            rescue => detail
-                #@state.err "%s failed: %s" % [self.to_s,detail]
-                if Puppet[:debug]
-                    puts detail.backtrace
-                end
-                raise
-                # there should be a way to ask the state what type of event
-                # it would have generated, but...
-                pname = @state.parent.class.name.id2name
-                #if pname.is_a?(Symbol)
-                #    pname = pname.id2name
-                #end
-                    #:state => @state,
-                @state.log "Failed: " + @state.change_to_s
-                return Puppet::Event.new(
-                    :event => pname + "_failed",
-                    :change => self,
-                    :source => @state.parent,
-                    :transaction => @transaction,
-                    :message => "Failed: " + self.to_s
-                )
+            else
+                events = [events]
             end
+            
+            return events.collect { |event|
+                # default to a simple event type
+                if ! event.is_a?(Symbol)
+                    @state.warning("State '%s' returned invalid event '%s'; resetting to default" %
+                        [@state.class,event])
+
+                    event = @state.parent.class.name.id2name + "_changed"
+                end
+
+                # i should maybe include object type, but the event type
+                # should basically point to that, right?
+                    #:state => @state,
+                    #:object => @state.parent,
+                @state.log @state.change_to_s
+                Puppet::Event.new(
+                    :event => event,
+                    :change => self,
+                    :transaction => @transaction,
+                    :source => @state.parent,
+                    :message => self.to_s
+                )
+            }
         end
 
         def forward
