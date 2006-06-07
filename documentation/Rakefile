@@ -1,0 +1,26 @@
+htmlfiles = []
+
+CLEAN = []
+
+FileList['*.rst'].each do |src|
+    name = src.sub(".rst", ".html")
+    htmlfiles << name
+    CLEAN << name
+    file name => src do
+        sh %{rst2html #{src} > #{name}}
+    end
+end
+
+task :clean do
+    CLEAN.each do |file|
+        if FileTest.directory?(file)
+            sh %{rm -rf #{file}}
+        elsif FileTest.exists?(file)
+            File.unlink(file)
+        end
+    end
+end
+
+task :html => htmlfiles
+
+task :default => :html
