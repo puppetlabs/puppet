@@ -1,0 +1,381 @@
+Organizational Principles
+=========================
+I won't claim that the terminology currently in place is great, but it's
+what's there, so bear with me.
+
+Puppet types are basically container classes; they do not directly do any work
+themselves, usually, but rather serve to collect other classes that can work.
+The three types of classes that a type can contain are Parameters_,
+MetaParameters_, and States_.
+
+Types are created by calling the ``newtype`` method on ``Puppet::Type``, with
+the name of the type as the only required argument (you can optionally specify
+a parent class; otherwise, Puppet::Type is used as the parent class), and you
+must also provide a block of code used to define the type::
+
+    Puppet::Type.newtype(:database) do
+        ... the code ...
+    end
+
+A normal type would define multiple states_ and zero or more parameters_.
+Once these are defined, you just put the type into ``lib/puppet/type``
+anywhere in Ruby's search path, and Puppet will autoload the type when you use
+it in the language.
+
+All types should also provide inline documention in the ``@doc`` class
+instance variable.  The text format is in `Restructured Text`_.
+
+Parameters
+----------
+These are usually simple attributes that can be used to modify function, but
+they don't directly do any work themselves.  Parameters are defined inside the
+block passed to ``newtype``, using the ``newparam`` method::
+
+    
+    Puppet::Type.newtype(:database) do
+        newparam(:color) do
+            desc "Specify the color you want your database to be."
+
+            newvalues(:red, :green, :blue, :purple)
+        end
+    end
+
+The ``desc`` method provides documentation for your parameter.  This
+documentation is used by ``puppetdoc`` to create the `Type Reference`_.
+
+The ``newvalues`` method is optional; if you use it, then only those values
+(in string or symbol form) will be considered valid values, and they will
+always be converted to symbols for easier testing.
+
+At least one of your parameters must be the **namevar**, specified using the
+``isnamevar`` method.  This is a too-magical parameter in Puppet; this is the
+attribute that is considered to uniquely identify a given instance, such as a
+file's path or a user's name.  If a separate name is not provided, then this
+value is returned by the ``name`` method on a type instance, but you can
+specify both a name and the namevar, although it can be confusing internally::
+
+    file { sshconfig:
+        path => "/etc/ssh/ssh_config",
+        source => "/nfs/path/to/my/ssh/config"
+    }
+
+This would have ``file.name`` returning ``sshconfig`` and ``file[:path]``
+returning ``/etc/ssh/ssh_config``.  This is confusing enough that it's best to
+always use the namevar and not the ``name`` method.
+
+You can specify regexes in addition to literal values; matches against regexes
+always happen after equality comparisons against literal values, and those
+matches are not converted to symbols.  For instance, given the following
+definition::
+
+    newparam(:color) do
+        desc "Your color, and stuff."
+
+        newvalues(:blue, :red, /.+/)
+    end
+
+If you provide "blue" as the value, then your parameter will get set to
+``:blue``, but if you provide "green", then it will get set to "green".
+
+Currently, you set parameters by treating the containing object as a hash::
+
+    db[:color] = :blue
+
+If the parameter already exists, then 'value=' is called on the object, with
+the value you provide.  If it does not exist, then the object is created and
+put into the type instance's ``@parameters`` hash, indexed by parameter name.
+The parameter object gets its ``@parent`` instance variable set so that it
+points back to the containing type instance.
+
+You can similarly retrieve the parameter::
+
+    puts db[:color]
+
+Within the type instance itself (i.e., in instance methods), you can use these
+same methods to set and retrieve the values, or you can call the ``value``
+methods directly, once the object exists::
+
+    # Create the param
+    self[:color] = :blue
+    color = @parameters[:color].value
+    @parameters[:color].value = :red
+
+Validation and Munging
+++++++++++++++++++++++
+If your parameter does not have a defined list of values, or you need to
+convert the values in some way, you can use the ``validate`` and ``munge``
+hooks::
+
+    newparam(:color) do
+        desc "Your color, and stuff."
+
+        newvalues(:blue, :red, /.+/)
+
+        validate do |value|
+            if value == "green"
+                raise ArgumentError,
+                    "Everyone knows green databases don't have enough RAM"
+            else
+                super
+            end
+        end
+
+        munge do |value|
+            case value
+            when :mauve, :violet # are these colors really any different?
+                :purple
+            else
+                super
+            end
+        end
+    end
+
+These should probably not be methods you call on the type and should just be
+instance methods you define, but it's not a big deal either way.  The default
+``validate`` method looks for values defined using ``newvalues`` and if there
+are any values defined it accepts only those values (this is exactly how
+allowed values are validated).  The default ``munge`` method converts any
+values that are specifically allowed into symbols.  If you override either of
+these methods, note that you lose this value handling and symbol conversion,
+which you'll have to call ``super`` for.
+
+Values are always validated before they're munged.
+
+Lastly, validation and munging *only* happen when a value is assigned.  They
+have no role to play at all during use of a given value, only during
+assignment.
+
+MetaParameters
+--------------
+These are just like parameters in all but two ways.  First, they are defined
+using the ``newmetaparam`` method, and second, when defined they are valid for
+all types, not just a single type.  See the end of type.rb for examples.
+
+You should never define any of these in an average custom type; if you need a
+new MetaParameter, contact the main developers about getting it added to the
+core.
+
+States
+------
+States are what usually do the actual work on the system.  These are actually
+a subclass of parameters, but with much more functionality.  Without
+exception, every state needs to define at least two methods:  ``retrieve`` and
+``sync``.
+
+The Variables
++++++++++++++
+The ``retrieve`` and ``sync`` methods work in tandem with two important
+instance variables, ``@is`` and ``@should``.  The first should reflect the
+current state of the, um, state (I already admitted the nomenclature is bad),
+and it should be in whatever form your class expects -- symbol, array,
+whatever.  The second reflects what the current state, um, should be, and it
+is *always* an array.
+
+Because there are two variables that contain values, assignment to states is a
+bit odd.  By default, ``@should`` is used when you use the indexing methods::
+
+    file[:owner] = "root"
+
+This sets ``@should`` to be ``["owner"]``.  You would not normally set the
+``@is`` variable from outside the instance, but sometimes it's necessary::
+
+    file.is = [:owner, "root"]
+
+Because ``@should`` is always an array but most states can't actually use
+an array, the ``should`` accessor method only returns the first value in the
+array.  If you do want to use the whole array (i.e., you consume all of the
+values, not just the first), then you have to override the ``should`` method
+to return the whole array.  You'll see why in a minute.
+
+I should probably explain why ``@should`` is always an array:  You can always
+specify multiple values for any state, and by default, if the current state is
+in that list of values, then no work is done.  That is, given the following
+definition::
+
+    file { "/etc/sudoers":
+        owner => root, group => [wheel, root], mode => 440
+    }
+
+If the group is currently ``wheel`` or ``root``, then the file is considered
+in sync.
+
+The Methods
++++++++++++
+
+``retrieve`` is used to get the current value of the state on the machine.
+For instance, here is a trivialized version of how to retrieve a File's
+owner::
+
+    newstate(:owner) do
+        def retrieve
+            @is = File.stat(@parent[:path]).mode
+        end
+    end
+
+It's critical that you set the ``@is`` instance variable on the state.
+Puppet should really just set the variable for you based on the return value,
+but, well, it doesn't do that right.  One important aspect of ``retrieve`` is
+that it should not modify the system in any way; if someone runs their
+configuration in ``noop`` mode, then ``retrieve`` is still called, so it's
+important that it not modify the state of the system.
+
+The other critical method is ``sync``, which actually modifies the machine::
+
+    newstate(:owner) do
+        def retrieve
+            @is = File.stat(@parent[:path]).uid
+        end
+
+        def sync
+            File.chown(self.should, nil, @parent[:path])
+
+            return :file_changed
+        end
+    end
+
+Note this ``return`` here; sync operations are expected to return an event if
+they do any work, and this event is used to trigger subscribing objects.  If
+you return nil, then Puppet will assume you didn't do any work.  At this point
+the events themselves are meaningless, but at some point users will be able to
+subscribe to specific events, rather than all events from a given object.
+
+There's a third method, ``insync?``, which you will not normally override but
+is important to understand.  This method is used to determine if your state is
+in sync, and thus if any work needs to be done.  The default method looks a
+lot like this::
+
+    def insync?
+        @should.include?(@is)
+    end
+
+Notice that we're checking to see if our current value is anywhere in the
+``@should`` list.
+
+State Values
+++++++++++++
+Just like parameters, you can define allowed values for states, but there's
+one significant change:  With state values, you have to specify the code that
+will achieve that state.  Here is a trivialized version of ``ensure`` state on
+files::
+
+    newstate(:ensure) do
+        newvalue(:file) do
+            @parent.write { |f| f.puts "" } # make an empty file
+            return :file_created
+        end
+
+        newvalue(:directory) do
+            Dir.mkdir(@parent[:path])
+            return :directory_created
+        end
+
+        newvalue(:absent) do
+            File.unlink(@parent)
+            return :file_deleted
+        end
+
+        # Allow users to treat these equivalently.
+        aliasvalue(:present, :file)
+    end
+
+You similarly must provide code when you specify a regular expression.  This
+value specification mechanism gives you the same validation and munging that
+parameters have while allowing you to cleanly separate your code for each
+allowed value.  See the existing types for examples of this, although not all
+states have a defined value list, and this mechanism was created long after
+most of the types were created and they have not all been updated to use it.
+
+Behind the scenese, puppet creates a ``set_<value>`` method, named for each
+allowed value, and the default ``sync`` method just looks at the ``should``
+value here, tries to find an appropriate method, and calls it if it finds
+one.  In this example, files have ``set_file``, ``set_directory``, and
+``set_absent`` methods, and ``sync`` calls them according to the output of
+``should``.
+
+All of these are convenience methods, of course; you can have a single opaque
+all-powerful ``sync`` method, you don't have to split it up using values.
+
+Process
+=======
+Now that you have an idea of how types are constructed, let's look at the
+process of applying one or more type instances.
+
+Dependency Sorting
+------------------
+I'll ignore the process of turning Puppet manifests into types; that's handled
+in the `How It Works`_ document.  The collection of objects are always
+contained in a top-level instance of the ``component`` type (this is an
+unfortunate hold-over from some flawed design ideas in the early development
+of Puppet -- expect it to change internally at some point).
+
+When work is begun, ``evaluate`` is called on the component (usually by
+client/master.rb); this method does a topological sort based on dependency
+information on all contained objects (components can contain other components,
+so it's a recursive sort), creates a new transaction, and adds the now-sorted
+flat list of objects to the transaction.
+
+Transactions
+------------
+Once the transaction has all of the objects, ``evaluate`` is called on it.
+This method is the heart of action in Puppet; it's relatively short, but
+determines all of the actual function in a given run.
+
+It iterates across the sorted list of objects, finding all objects that are
+scheduled to run (which, by default, is all of them) and that match the tag
+list if there are any tags specified (you can specify tags to ``puppetd``
+which will cause it to only run objects that have those tags).  For each of
+those found objects, the transaction calls ``evaluate`` on the object, which
+in turn calls ``statechanges`` on the object.
+
+``statechanges`` iterates across each instantiated state (i.e., file objects
+have many states, but only those states for which you've provided a value have
+instances in a given file object's ``@states`` variables), looking for
+out-of-sync states.  The states are checked in the order they're defined; this
+often does not matter, but for classes like ``file`` it matters a lot.  For
+each state that's out of sync, a ``StateChange`` object is created; it's
+basically an organizational class that knows how to sync a state and log the
+work it's doing.
+
+There's one exception to this "all states are checked" rule:  If the instance
+has an ``ensure`` state and that state is out of sync, then Puppet assumes
+that the object is entirely missing or will be entirely removed and that the
+``ensure`` state knows how to do that.  This allows Puppet to create just one
+log message when creating a new object (as opposed to, say, one each for the
+file contents, the mode, the owner, and the group) and provides better
+modeling for object creation and destruction.  However, it does mean that if
+you provide this state it needs to be able to completely create the object on
+its own; this often just means syncing all of the other out-of-sync states
+once the object exists.
+
+The type instance's ``evaluate`` method returns to the transaction the list of
+collected state change objects.  Once the transaction has all of the changes,
+it iterates across each one, calling ``forward`` on them (yes, there's a
+``backward`` that can revert the change) and collecting events from each
+change.  
+
+Until recently, Puppet collected all of the events (which contain references
+to the object that generated them) and triggered any subscriptions at the end
+of the run, but now events are managed so that they're triggered inline.
+
+Once all of an object's states are in sync, the transaction looks for events
+that the object is subscribed to and triggers any found subscriptions.
+
+That's pretty much it.  The ``transaction`` class is pretty short, but it's
+also pretty complicated.  Fortunately, you should be able to ignore it just
+about entirely; define your states in the order you want them applied, make
+sure your ``ensure`` state can completely create or destroy the object, and
+return events if you made a change.  Other than that, you should not have to
+think about transactions or how they work.
+
+Conclusion
+==========
+That's all you need for your type.  See the existing types for different ways
+to treat this.  You can create methods on your type and call those methods
+from the state (like packages do), or put enough complexity into each state
+that they end up in their own file (like files do).
+
+Comments on this document are appreciated.
+
+.. _type reference: typedocs
+.. _restructured text: http://docutils.sourceforge.net/rst.html
+.. _how it works:  howitworks

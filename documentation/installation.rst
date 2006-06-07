@@ -1,0 +1,304 @@
+Getting the Files
+=================
+
+You will need to install Puppet on all machines that will use it, including
+both clients and servers.
+
+There are packages_ available for some platforms, but for the rest
+you will have to install using the tarball_ or GEMs_.
+
+Prerequisites
+-------------
+The only prerequisite for Puppet that doesn't come as part of the Ruby
+standard library is facter_, which is also developed_ by Reductive Labs.  
+
+All other prerequisites for Puppet are Ruby libraries, and they should all
+come with any standard Ruby 1.8.2 install.  The other prerequisites, should
+your OS not come with the complete standard library, are:
+
+* ``base64``
+* ``cgi``
+* ``digest/md5``
+* ``etc``
+* ``fileutils``
+* ``ipaddr``
+* ``openssl``
+* ``strscan``
+* ``syslog``
+* ``uri``
+* ``webrick``
+* ``webrick/https``
+* ``xmlrpc``
+
+Ruby
+''''
+I recommend using whatever Ruby comes with your system, since that's what I've
+tested against in most cases and it's most likely to work correctly.  If you
+feel the particular need to build it manually, you can get the source from
+`the Ruby site`_.  
+
+
+Red Hat
++++++++
+If you are building on Red Hat (at least on version 3), you
+apparently must build it with ``CPPFLAGS=-I/usr/kerberos/include/``, else you
+will have all kinds of unreasonable problems (thanks to Mario Martelli for
+tracking that one down).
+
+Solaris
++++++++
+I have had mixed results with the Ruby packages from both Sunfreeware_ and
+BlastWave_.  It might almost be easier to compile it manually for Solaris, but
+Ruby 1.8.3 from Sunfreeware seems to be working right now.
+
+If you get segfaults, core dumps, or 'library missing ciphers' errors, that is
+almost definitely a problem with that specific ruby package, not Puppet or
+Ruby itself.
+
+Debian and Ubuntu
++++++++++++++++++
+The package maintainer for Ruby on these platforms has decided to split
+the Ruby standard library into many packages.  According to Eric Hollensbe,
+this is the package dependency list for Puppet on Debian:
+
+* ruby
+* irb
+* ri
+* rdoc
+* libxmlrpc-ruby
+* libopenssl-ruby
+* libstrscan-ruby
+* libsyslog-ruby
+* libwebrick-ruby
+
+.. _sunfreeware: http://sunfreeware.com
+.. _blastwave: http://blastwave.org
+
+.. _the ruby site: http://ruby-lang.org/
+
+Facter
+''''''
+
+First install facter.  Like Puppet, there are packages_ available for
+some platforms, but you might have to use the tarball::
+
+    # get the latest tarball
+    wget http://reductivelabs.com/downloads/facter/facter-latest.tgz
+
+    # untar and install it
+    gzip -d -c facter-latest.tgz | tar xf -
+    cd facter-*
+    sudo ruby install.rb # or become root and run install.rb
+
+There are also gems available in the download_ directory.
+
+Install Puppet
+--------------
+
+Using the same mechanism, install the puppet libraries and executables::
+
+    # get the latest tarball
+    wget http://reductivelabs.com/downloads/puppet/puppet-latest.tgz
+
+    # untar and install it
+    gzip -d -c puppet-latest.tgz | tar xf -
+    cd puppet-*
+    sudo ruby install.rb # or become root and run install.rb
+
+Alternative: Using RubyGems
+-----------------------------
+You can also use Reductive Labs' Gems server to install Facter and Puppet::
+
+    gem install --remote --source http://reductivelabs.com/downloads facter
+    gem install --remote --source http://reductivelabs.com/downloads puppet
+
+For more information on RubyGems, see the `Gems User Guide`_.
+
+Alternative alternative:  Native Packages
+-----------------------------------------
+It is our goal to provide as many native packages as possible, but it's been
+slow going.  Until I have official native packages, David Lutterkort used spec
+and init files from Duane Griffin to create native RPMs that should work on
+Red Hat Enterprise 4 and Fedora Core 4.  You can get them from his
+`yum repository`_.
+
+There are also `Debian packages`_, although they are not quite as well
+maintained as the RPMs.
+
+.. _yum repository: http://people.redhat.com/~dlutter/yum/
+.. _debian packages: /downloads/packages/Debian
+
+Building the Server
+===================
+
+Create Your Site Manifest
+-------------------------
+
+Because the Puppet language is declarative, it does not make as much sense to
+speak of "executing" Puppet programs, or to describe them as "scripts".  We
+choose to use the word *manifest* to describe Puppet programs, and we speak of
+*applying* those manifests to the local system.  Thus, a *manifest* is a text
+document written in the Puppet language and meant to result in a desired
+configuration.
+
+Puppet is written with the assumption that you will have one central manifest
+capable of configuring your entire network, which we call the *site manifest*.
+You could have multiple, separate site manifests if you wanted, but at this
+point each of them would need their own servers.
+
+For more information on how to create the site manifest, see the
+`Language Reference`_ and the `Library Reference`_.
+
+Puppet will look for your site manifest in ``/etc/puppet/manifests/site.pp``,
+so create ``/etc/puppet/manifests`` and add your manifest, along with any
+files it includes, to that directory.  It is highly recommended that you use
+some kind of `version control`_ on your manifests.
+
+Example Manifests
+'''''''''''''''''''
+The site manifest can be as simple or as complicated as you want.  A good
+starting point is to make sure that your sudoers file has the appropriate
+permissions::
+
+    # site.pp
+    file { "/etc/sudoers":
+        owner => root, group => root, mode => 440
+    }
+
+If you want to get more complicated, it's a good idea to split your
+manifest into multiple files.  For instance, you could split it based on
+operating systems (e.g., Solaris and Red Hat) and server classes (e.g.,
+'webserver' and 'logserver').  I also find it useful to have a set of
+functions, in an external file included first::
+
+    # site.pp
+
+    # import the functions
+    import "functions.pp"
+
+    # import all of the os classes, like redhat.pp and solaris.pp
+    import "os/*"
+
+    # import all of the server classes, like webserver.pp
+    import "classes/*"
+
+Here's an example of a generically useful function I use; it encapsulates the
+source of files that I copy from a central server, and just saves a little
+typing::
+
+    # functions.pp
+    
+    define remotefile(owner = root, group = root, mode, source, backup = false, recurse = false) {
+        file {
+            $name:
+                mode => $mode,
+                owner => $owner,
+                group => $group,
+                backup => $backup,
+                source => "puppet://$server/dist/$source"
+        }
+    }
+
+You would use the function like this::
+
+    remotefile { "/etc/sudoers":
+        mode => 440, source => "apps/sudo/sudoers"
+    }
+
+Start the Central Daemon
+------------------------
+Most sites should only need a single central server.  Reductive Labs will
+soon publish a document describing how to build puppet architectures with
+failover capabilities and achitectures that are capable of handling large
+loads, but for now only a single server is supported.
+
+Decide which machine you want to be your central server; this is where you
+will be starting ``puppetmasterd``.
+
+The best way to start any daemon is using your local server's service
+management system, often in the form of ``init`` scripts.  Eventually Puppet
+will ship with an appropriate script for each platform, but in the meantime
+you can either create your own, using an existing script as an example, or
+simply run without one (not recommended for production environments).
+
+The daemon should start just fine with no arguments::
+
+    /usr/bin/puppetmasterd
+
+It will automatically create all necessary certificates, directories, and
+files.  If you want the daemon to also function as a file server, so your
+clients can copy files from it, you will need to create a
+`fileserver configuration file`_.
+
+If you are still only testing, and do not have node definitions in your
+site manifest (such as with the above example manifest) , tell
+``puppetmasterd`` not to look for them::
+
+    /usr/bin/puppetmasterd --nonodes
+
+Verifying Installation
+======================
+To verify that your daemon is working as expected, pick a single client to use
+as a testbed.  Once Puppet is installed on that machine, run a single client
+against the central server to verify that everything is working appropriately.
+You should start the first client in verbose mode, with the ``--waitforcert``
+flag enabled::
+
+    puppetd --server myserver.domain.com --waitforcert 60 --test
+
+The default server for ``puppetd`` is ``puppet``, so you could just create a
+CNAME of that to whatever server is running ``puppetmasterd``.
+
+Adding the ``--test`` flag here is equivalent to adding ``--verbose --onetime
+--no-usecacheonfailure``.  This causes ``puppetd`` to stay in the foreground,
+print extra output, only run once and then exit, and to just exit if the
+remote configuration fails to compile (by default, ``puppetd`` will use a
+cached configuration if there is a problem with the remote manifests).
+
+In running the client, you should see a message that the client did not
+receive a certificate (this message will repeat every 60 seconds with the
+above command).  This is normal, since your server is not autosigning
+certificates as a security precaution.  On your server, list the waiting
+certificates::
+
+    puppetca --list
+
+You should see the name of the test client.  Now go ahead and sign the
+certificate::
+
+    puppetca --sign mytestclient.domain.com
+
+Within 60 seconds, your test client should receive its certificate from the
+server, receive its configuration, apply it locally, and exit normally.
+
+Finishing Installation
+======================
+There are already init scripts available for some platforms (notably, Red Hat
+versions, thanks to David Lutterkort's work on the RPMs_), but for
+not-yet-supported platforms, you will need to create an init script that can
+start and stop ``puppetd``.  The process creates a PID file in its run
+directory (``/var/puppet/run``, by default), so you can use that to stop it.
+
+The process will log to syslog by default.
+
+Beta Notes
+==========
+There are some important notes to keep in mind about using the beta of
+Puppet:
+
+* Files are currently automatically reread when they are changed, within a
+  timeout of 60 seconds.
+* Patches are not only welcome, they're encouraged.
+
+.. _developed: /projects/facter
+.. _download: /downloads
+.. _version control: http://svnbook.red-bean.com/
+.. _fileserver configuration file: fsconfigref
+.. _Gems User Guide: http://docs.rubygems.org/read/book/1
+.. _Language Reference: structures
+.. _Library Reference: typedocs
+
+.. _packages: /downloads/packages
+.. _tarball: /downloads/puppet
+.. _gems: /downloads/gems
+.. _rpms: /downloads/rpm
