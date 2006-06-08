@@ -122,10 +122,11 @@
 #
 # waitforcert::
 #   This option only matters for daemons that do not yet have certificates
-#   and it is enabled by default, with a value of 60 (seconds).  This causes
-#   +puppetd+ to connect to the server every 60 seconds and ask it to sign a
+#   and it is enabled by default, with a value of 300 (seconds).  This causes
+#   +puppetd+ to connect to the server every 5 minutes and ask it to sign a
 #   certificate request.  This is useful for the initial setup of a puppet
-#   client.
+#   client.  You can turn off waiting for certificates by specifying a time
+#   of 0.
 #
 # = Example
 #
@@ -325,7 +326,7 @@ unless client.readcert
     # If we don't already have the certificate, then create a client to
     # request one.
     caclient = Puppet::Client::CA.new(args)
-    if options[:waitforcert]
+    if options[:waitforcert] > 0
         begin
             while ! caclient.requestcert do
                 Puppet.notice "Did not receive certificate"
