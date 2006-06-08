@@ -222,12 +222,6 @@ module Puppet
                     #Puppet.debug "%s[%s] has no parameters" % [@type, @name]
                 end
                 container = Puppet.type(:component).create(trans)
-
-                if parent
-                    container.parent = parent
-                    #Puppet.warning "parent is of type %s" % parent.class
-                    #trans[:parent] = parent
-                end
             else
                 hash = {
                     :name => self.name,
@@ -243,9 +237,9 @@ module Puppet
                     #Puppet.debug "%s[%s] has no parameters" % [@type, @name]
                 end
 
-                if parent
-                    hash[:parent] = parent
-                end
+                #if parent
+                #    hash[:parent] = parent
+                #end
                 container = Puppet.type(:component).create(hash)
             end
             #Puppet.info container.inspect

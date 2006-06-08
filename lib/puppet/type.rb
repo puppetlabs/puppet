@@ -21,9 +21,9 @@ class Type < Puppet::Element
     # In naming methods, I have tried to consistently name the method so
     # that it is clear whether it operates on all attributes (thus has 'attr' in
     # the method name, or whether it operates on a specific type of attributes.
-    attr_accessor :children, :parent
+    attr_accessor :children
     attr_accessor :file, :line
-    attr_reader :tags
+    attr_reader :tags, :parent
 
     attr_writer :implicit
     def implicit?
@@ -986,11 +986,40 @@ class Type < Puppet::Element
         return @parameters[name].value
     end
 
+    def parent=(parent)
+        if self.parentof?(parent)
+            raise Puppet::DevError, "Objects can not be their own parents"
+        end
+        @parent = parent
+    end
+
+    # Add a hook for testing for recursion.
+    def parentof?(child)
+        if (self == child) or
+            (defined? @parent and @parent.parentof?(child)) or
+            @children.include?(child)
+                return true
+        else
+            return false
+        end
+    end
+
     def push(*childs)
         unless defined? @children
             @children = []
         end
         childs.each { |child|
+            # Make sure we don't have any loops here.
+            if parentof?(child)
+                raise Puppet::DevError, "Objects can not be their own parents"
+            end
+            unless child.is_a?(Puppet::Element)
+                self.debug "Got object of type %s" % child.class
+                self.devfail(
+                    "Containers can only contain Puppet::Elements, not %s" %
+                    child.class
+                )
+            end
             @children.push(child)
             child.parent = self
         }

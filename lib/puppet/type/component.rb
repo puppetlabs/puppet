@@ -141,20 +141,6 @@ module Puppet
             return @name
         end
 
-        def push(*ary)
-            ary.each { |child|
-                unless child.is_a?(Puppet::Element)
-                    self.debug "Got object of type %s" % child.class
-                    self.devfail(
-                        "Containers can only contain Puppet::Elements, not %s" %
-                        child.class
-                    )
-                end
-                @children.push child
-                child.parent = self
-            }
-        end
-
         def refresh
             @children.collect { |child|
                 if child.respond_to?(:refresh)

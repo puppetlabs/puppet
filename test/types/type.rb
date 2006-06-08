@@ -285,6 +285,41 @@ class TestType < Test::Unit::TestCase
             assert_nil(klass[obj.name], "object %s was not removed" % obj.name)
         end
     end
+
+    # Verify that objects can't be their own children.
+    def test_object_recursion
+        comp = Puppet.type(:component).create(:name => "top")
+
+        file = Puppet.type(:file).create(:path => tempfile, :ensure => :file)
+
+        assert_raise(Puppet::DevError) do
+            comp.push(comp)
+        end
+
+        assert_raise(Puppet::DevError) do
+            file.push(file)
+        end
+
+        assert_raise(Puppet::DevError) do
+            comp.parent = comp
+        end
+
+        assert_raise(Puppet::DevError) do
+            file.parent = file
+        end
+
+        assert_nothing_raised {
+            comp.push(file)
+        }
+
+        assert_raise(Puppet::DevError) do
+            file.push(comp)
+        end
+
+        assert_raise(Puppet::DevError) do
+            comp.parent = file
+        end
+    end
 end
 
 # $Id$
