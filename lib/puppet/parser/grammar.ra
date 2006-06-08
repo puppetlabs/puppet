@@ -8,7 +8,7 @@ token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE
 token FALSE EQUALS LESSEQUAL NOTEQUAL DOT COLON TYPE
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
-token NAME SEMIC CASE DEFAULT FUNCTION AT LCOLLECT RCOLLECT
+token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT
 
 # We have 2 shift/reduce conflicts
 expect 2
@@ -52,7 +52,7 @@ statement:    object
             | hostclass
             | nodedef
 
-fstatement:   FUNCTION LPAREN classnames RPAREN {
+fstatement:   NAME LPAREN classnames RPAREN {
     args = aryfy(val[2])
     result = AST::Function.new(
         :line => @lexer.line,
@@ -62,7 +62,7 @@ fstatement:   FUNCTION LPAREN classnames RPAREN {
         :ftype => :statement
     )
 }
-            | FUNCTION classnames {
+            | NAME classnames {
     args = aryfy(val[1])
     result = AST::Function.new(
         :line => @lexer.line,
@@ -94,6 +94,7 @@ classnames:       classname
 
 classname:        name
                 | variable
+                | quotedtext
 
 #object:       name LBRACE objectname COLON params endcomma RBRACE {
 object:       name LBRACE objectinstances endsemi RBRACE {
@@ -314,7 +315,7 @@ rvalue:       quotedtext
             | funcrvalue
 
 # We currently require arguments in these functions.
-funcrvalue:   FUNCTION LPAREN classnames RPAREN {
+funcrvalue:   NAME LPAREN classnames RPAREN {
     args = aryfy(val[2])
     result = AST::Function.new(
         :line => @lexer.line,

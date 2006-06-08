@@ -168,9 +168,6 @@ module Puppet
                         if @@keywords.include?(value)
                             wtoken = @@keywords[value]
                             #Puppet.debug("token '%s'" % wtoken)
-                        elsif Puppet::Parser::Functions.function(value)
-                            # We consider all of the function names to be keywords.
-                            wtoken = :FUNCTION
                         end
                         yield [wtoken,value]
                         @last = value

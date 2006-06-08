@@ -427,12 +427,27 @@ node nodeA, nodeB {
     end
 
     def test_emptyarrays
-        manifest = tempfile()
-
-        made = tempfile()
-
         str = %{$var = []\n}
 
+        parser = Puppet::Parser::Parser.new
+        parser.string = str
+
+        # Make sure it parses fine
+        assert_nothing_raised {
+            parser.parse
+        }
+    end
+
+    # Make sure function names aren't reserved words.
+    def test_functionnamecollision
+        str = %{tag yayness
+tag(rahness)
+
+file { "/tmp/yayness":
+    tag => "rahness",
+    ensure => exists
+}
+}
         parser = Puppet::Parser::Parser.new
         parser.string = str
 
