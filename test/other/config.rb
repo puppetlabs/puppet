@@ -594,6 +594,37 @@ yay = /a/path
             end
         end
     end
+
+    def test_booleans_and_integers
+        config = mkconfig
+        config.setdefaults(:mysection,
+            :booltest => [false, "yay"],
+            :inttest => [14, "yay"]
+        )
+
+        file = tempfile()
+
+        File.open(file, "w") do |f|
+            f.puts %{
+[mysection]
+booltest = true
+inttest = 27
+}
+        end
+
+        assert_nothing_raised {
+            config.parse(file)
+        }
+
+        assert_equal(true, config[:booltest], "Boolean was not converted")
+        assert_equal(27, config[:inttest], "Integer was not converted")
+
+        # Now make sure that they get converted through handlearg
+        config.handlearg("--inttest", "true")
+        assert_equal(true, config[:inttest], "Boolean was not converted")
+        config.handlearg("--no-booltest", "false")
+        assert_equal(false, config[:booltest], "Boolean was not converted")
+    end
 end
 
 # $Id$

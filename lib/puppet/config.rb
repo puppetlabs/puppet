@@ -143,12 +143,7 @@ class Config
 
     # Handle a command-line argument.
     def handlearg(opt, value = nil)
-        if value == "true"
-            value = true
-        end
-        if value == "false"
-            value = false
-        end
+        value = mungearg(value)
         str = opt.sub(/^--/,'')
         bool = true
         newstr = str.sub(/^no-/, '')
@@ -196,6 +191,18 @@ class Config
         end
     end
 
+    # Convert arguments appropriately.
+    def mungearg(value)
+        # Handle different data types correctly
+        return case value
+            when /^false$/i: false
+            when /^true$/i: true
+            when /^\d+$/i: Integer(value)
+            else
+                value
+        end
+    end
+
     # Return all of the parameters associated with a given section.
     def params(section)
         section = section.intern if section.is_a? String
@@ -236,7 +243,7 @@ class Config
             when /^\s*$/: next # Skip blanks
             when /^\s*(\w+)\s*=\s*(.+)$/: # settings
                 var = $1.intern
-                value = $2
+                value = mungearg($2)
 
                 # Mmm, "special" attributes
                 if metas.include?(var.to_s)
