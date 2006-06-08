@@ -12,13 +12,26 @@ module Puppet
 
         # Anything else, basically
         newvalue(/./) do
+            # Do nothing here, because sync is always called from the ensure state.
+        end
+
+        # Create our link.
+        def mklink
             target = self.should
 
             if stat = @parent.stat
-                unless stat.ftype == "link"
-                    self.fail "Not replacing non-symlink"
+                unless @parent.handlebackup
+                    self.fail "Could not back up; will not replace with link"
                 end
-                File.unlink(@parent[:path])
+
+                case stat.ftype
+                when "directory":
+                    # uh, bad stuff
+                    #self.fail "Not replacing directory"
+                    FileUtils.rmtree(@parent[:path])
+                else
+                    File.unlink(@parent[:path])
+                end
             end
             Dir.chdir(File.dirname(@parent[:path])) do
                 unless FileTest.exists?(target)

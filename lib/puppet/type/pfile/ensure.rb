@@ -82,7 +82,8 @@ module Puppet
                     self.set_directory
                     return :directory_created
                 else
-                    return state.sync
+                    state.mklink
+                    return :link_created
                 end
             else
                 self.fail "Cannot create a symlink without a target"

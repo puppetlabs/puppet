@@ -256,9 +256,57 @@ module Puppet
 
             case File.stat(file).ftype
             when "directory":
-                self.info :bc
-                # we don't need to backup directories
-                return true
+                if self[:recurse]
+                    # we don't need to backup directories when recurse is on
+                    return true
+                else
+                    backup = self[:backup]
+                    case backup
+                    when Puppet::Client::Dipper:
+                        notice "Recursively backing up to filebucket"
+                        require 'find'
+                        Find.find(self[:path]) do |f|
+                            if File.file?(f)
+                                sum = backup.backup(f)
+                                self.info "Filebucketed %s to %s with sum %s" %
+                                    [f, backup.name, sum]
+                            end
+                        end
+
+                        require 'fileutils'
+                        FileUtils.rmtree(self[:path])
+                        return true
+                    when String:
+                        newfile = file + backup
+                        # Just move it, since it's a directory.
+                        if FileTest.exists?(newfile)
+                            begin
+                                File.unlink(newfile)
+                            rescue => detail
+                                puts detail.backtrace
+                                self.err "Could not remove old backup: %s" %
+                                    detail
+                                return false
+                            end
+                        end
+                        begin
+                            bfile = file + backup
+
+                            # Ruby 1.8.1 requires the 'preserve' addition, but
+                            # later versions do not appear to require it.
+                            FileUtils.cp_r(file, bfile, :preserve => true)
+                            return true
+                        rescue => detail
+                            # since they said they want a backup, let's error out
+                            # if we couldn't make one
+                            self.fail "Could not back %s up: %s" %
+                                [file, detail.message]
+                        end
+                    else
+                        self.err "Invalid backup type %s" % backup
+                        return false
+                    end
+                end
             when "file":
                 backup = self[:backup]
                 case backup
@@ -273,6 +321,7 @@ module Puppet
                         begin
                             File.unlink(newfile)
                         rescue => detail
+                            self.err "wtf?"
                             self.err "Could not remove old backup: %s" %
                                 detail
                             return false

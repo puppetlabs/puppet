@@ -1159,6 +1159,51 @@ class TestFile < Test::Unit::TestCase
         assert_events([:file_changed, :file_changed], obj)
 
     end
+
+    def test_replacefilewithlink
+        path = tempfile()
+        link = tempfile()
+
+        File.open(path, "w") { |f| f.puts "yay" }
+        File.open(link, "w") { |f| f.puts "a file" }
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :ensure => path,
+                :path => link
+            )
+        }
+
+        assert_events([:link_created], file)
+
+        assert(FileTest.symlink?(link), "Link was not created")
+
+        assert_equal(path, File.readlink(link), "Link was created incorrectly")
+    end
+
+    def test_replacedirwithlink
+        path = tempfile()
+        link = tempfile()
+
+        File.open(path, "w") { |f| f.puts "yay" }
+        Dir.mkdir(link)
+        File.open(File.join(link, "yay"), "w") do |f| f.puts "boo" end
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :ensure => path,
+                :path => link
+            )
+        }
+
+        assert_events([:link_created], file)
+
+        assert(FileTest.symlink?(link), "Link was not created")
+
+        assert_equal(path, File.readlink(link), "Link was created incorrectly")
+    end
 end
 
 # $Id$
