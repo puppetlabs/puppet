@@ -210,7 +210,7 @@ class Server
             when /^([a-zA-Z][-\w]*\.)+[-\w]+$/: # a full hostname
                 type = :hostname
                 value = pattern.split(".").reverse
-            when /^\*\.([a-zA-Z][-\w]*\.)+[-\w]+$/: # this doesn't match TLDs
+            when /^\*(\.([a-zA-Z][-\w]*)){1,}$/:
                 type = :domain
                 value = pattern.split(".").reverse
             else

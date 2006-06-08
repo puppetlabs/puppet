@@ -203,6 +203,15 @@ class TestAuthStore < Test::Unit::TestCase
             assert(store.allowed?(*ary), "Failed to allow %s" % [ary.join(",")])
         }
     end
+
+    # Make sure people can specify TLDs
+    def test_match_tlds
+        store = mkstore
+
+        assert_nothing_raised {
+            store.allow("*.tld")
+        }
+    end
 end
 
 # $Id$
