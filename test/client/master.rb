@@ -115,4 +115,22 @@ class TestMasterClient < Test::Unit::TestCase
         end
         assert(! client.locked?)
     end
+
+    # Make sure non-string facts don't make things go kablooie
+    def test_nonstring_facts
+        # Add a nonstring fact
+        Facter.add(:nonstring) do
+            setcode { 1 }
+        end
+
+        assert_equal(1, Facter.nonstring, "Fact was a string from facter")
+
+        client = mkclient()
+
+        assert(! FileTest.exists?(@createdfile))
+
+        assert_nothing_raised {
+            client.run
+        }
+    end
 end

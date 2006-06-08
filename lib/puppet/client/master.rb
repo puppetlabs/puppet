@@ -34,7 +34,7 @@ class Puppet::Client::MasterClient < Puppet::Client
     def self.facts
         facts = {}
         Facter.each { |name,fact|
-            facts[name] = fact.downcase
+            facts[name] = fact.to_s.downcase
         }
 
         # Add our client version to the list of facts, so people can use it
