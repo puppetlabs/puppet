@@ -746,6 +746,12 @@ array:        LBRACK rvalues RBRACK {
             :children => [val[1]]
         )
     end
+}           | LBRACK RBRACK {
+    result = AST::ASTArray.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :children => []
+    )
 }
 
 comma:        FARROW
