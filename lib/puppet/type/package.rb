@@ -146,6 +146,8 @@ module Puppet
                 end
             end
 
+            defaultto :installed
+
             # Override the parent method, because we've got all kinds of
             # funky definitions of 'in sync'.
             def insync?
@@ -213,9 +215,7 @@ module Puppet
 
             # This retrieves the current state
             def retrieve
-                #unless defined? @is
                 @parent.retrieve
-                #end
             end
 
             def sync

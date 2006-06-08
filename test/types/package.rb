@@ -61,10 +61,13 @@ class TestPackages < Test::Unit::TestCase
         end
     end
 
-    def mkpkgs(list = nil)
+    def mkpkgs(list = nil, useensure = true)
         list ||= tstpkgs()
         list.each { |pkg, source|
-            hash = {:name => pkg, :ensure => "latest"}
+            hash = {:name => pkg}
+            if useensure
+                hash[:ensure] = "latest"
+            end
             if source
                 source = source[0] if source.is_a? Array
                 hash[:source] = source
@@ -266,6 +269,22 @@ class TestPackages < Test::Unit::TestCase
 
                 assert_events([:package_removed], comp, "package")
             end
+        }
+    end
+
+    # Make sure that a default is used for 'ensure'
+    def test_ensuredefault
+        # Tell mkpkgs not to set 'ensure'.
+        mkpkgs(nil, false) { |pkg|
+            assert_nothing_raised {
+                pkg.retrieve
+            }
+
+            assert(!pkg.insync?, "Package thinks it's in sync")
+
+            assert_apply(pkg)
+            pkg.retrieve
+            assert(pkg.insync?, "Package does not think it's in sync")
         }
     end
 
