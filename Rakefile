@@ -27,6 +27,10 @@ project = Rake::RedLabProject.new("puppet") do |p|
     ]
 
     p.add_dependency('facter', '1.1.0')
+
+    p.epmhosts = %w{culain}
+    p.sunpkghost = "sol10b"
+    p.rpmhost = "fedora1"
 end
 
 if project.has?(:gem)
