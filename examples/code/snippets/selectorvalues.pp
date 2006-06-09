@@ -30,8 +30,13 @@ $mode5 = yay ? {
     default => 644
 }
 
+$mode6 = $mode5 ? {
+    755 => 755
+}
+
 file { "/tmp/selectorvalues1": ensure => file, mode => $mode1 }
 file { "/tmp/selectorvalues2": ensure => file, mode => $mode2 }
 file { "/tmp/selectorvalues3": ensure => file, mode => $mode3 }
 file { "/tmp/selectorvalues4": ensure => file, mode => $mode4 }
-file { "/tmp/selectorvalues5": ensure => file, mode => $mode4 }
+file { "/tmp/selectorvalues5": ensure => file, mode => $mode5 }
+file { "/tmp/selectorvalues6": ensure => file, mode => $mode6 }

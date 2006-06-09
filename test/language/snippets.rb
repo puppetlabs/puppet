@@ -509,6 +509,18 @@ class TestSnippets < Test::Unit::TestCase
                 assert_nothing_raised {
                     client.getconfig()
                 }
+
+                client = Puppet::Client::MasterClient.new(
+                    :Master => server,
+                    :Cache => false
+                )
+
+                assert(client.local)
+                # Now do it again
+                Puppet::Type.allclear
+                assert_nothing_raised {
+                    client.getconfig()
+                }
                 trans = nil
                 assert_nothing_raised {
                     trans = client.apply()
