@@ -157,6 +157,9 @@ module Puppet
                 @destinations[dest] = file
             when "console", :console
                 @destinations[:console] = :console
+
+                # Flush output immediately.
+                $stdout.sync = true
             when Puppet::Server::Logger
                 @destinations[dest] = dest
             else
