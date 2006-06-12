@@ -65,7 +65,7 @@ module Puppet
                 "
 
             attr_reader :bucket
-            defaultto true
+            defaultto ".puppet-bak"
 
             munge do |value|
                 case value
@@ -78,6 +78,7 @@ module Puppet
                     # we have to do it after all of the objects
                     # have been instantiated.
                     @bucket = value
+                    value
                 else
                     self.fail "Invalid backup type %s" %
                         value.inspect
@@ -224,7 +225,8 @@ module Puppet
             if @parameters.include?(:backup) and bucket = @parameters[:backup].bucket
                 case bucket
                 when String:
-                    if obj = @@filebuckets.include?(bucket)
+                    if obj = @@filebuckets[bucket]
+                        # This sets the @value on :backup, too
                         @parameters[:backup].bucket = obj
                     elsif obj = Puppet.type(:filebucket).bucket(bucket)
                         @@filebuckets[bucket] = obj
@@ -303,7 +305,7 @@ module Puppet
                                 [file, detail.message]
                         end
                     else
-                        self.err "Invalid backup type %s" % backup
+                        self.err "Invalid backup type %s" % backup.inspect
                         return false
                     end
                 end
@@ -321,7 +323,6 @@ module Puppet
                         begin
                             File.unlink(newfile)
                         rescue => detail
-                            self.err "wtf?"
                             self.err "Could not remove old backup: %s" %
                                 detail
                             return false
@@ -343,7 +344,7 @@ module Puppet
                             [file, detail.message]
                     end
                 else
-                    self.err "Invalid backup type %s" % backup
+                    self.err "Invalid backup type %s" % backup.inspect
                     return false
                 end
             else
