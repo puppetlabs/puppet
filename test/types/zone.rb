@@ -15,6 +15,12 @@ require 'facter'
 class TestZone < Test::Unit::TestCase
 	include TestPuppet
 
+    def test_nothing
+    end
+
+    # Zones can only be tested on solaris.
+    if Facter["operatingsystem"].value == "Solaris"
+
     def setup
         super
         @@zones = []
@@ -41,9 +47,6 @@ class TestZone < Test::Unit::TestCase
         # We can't delete the temp files until the zones are stopped and removed.
         super
     end
-
-    # Zones can only be tested on solaris.
-    if Facter["operatingsystem"].value == "Solaris"
 
     def mkzone(name)
         zone = nil
