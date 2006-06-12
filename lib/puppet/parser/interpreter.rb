@@ -112,6 +112,7 @@ module Puppet
                 begin
                     @ldap = LDAP::Conn.new(Puppet[:ldapserver], Puppet[:ldapport])
                     @ldap.set_option(LDAP::LDAP_OPT_PROTOCOL_VERSION, 3)
+                    @ldap.set_option(LDAP::LDAP_OPT_REFERRALS, LDAP::LDAP_OPT_ON)
                     @ldap.simple_bind(Puppet[:ldapuser], Puppet[:ldappassword])
                 rescue => detail
                     raise Puppet::Error, "Could not connect to LDAP: %s" % detail
