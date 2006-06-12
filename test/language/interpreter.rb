@@ -143,6 +143,7 @@ class TestInterpreter < Test::Unit::TestCase
 
     def test_ldapnodes
         Puppet[:ldapbase] = "ou=hosts, dc=madstop, dc=com"
+        Puppet[:ldapnodes] = true
 
         ldapconnect()
         file = tempfile()
@@ -166,13 +167,8 @@ class TestInterpreter < Test::Unit::TestCase
         interp = nil
         assert_nothing_raised {
             interp = Puppet::Parser::Interpreter.new(
-                :Manifest => file,
-                :NodeSources => [:ldap]
+                :Manifest => file
             )
-        }
-
-        assert_nothing_raised {
-            interp.setup_ldap
         }
 
         parent = nil

@@ -65,7 +65,11 @@ module Puppet
                     @usenodes = true
                 end
 
-                @nodesources = hash[:NodeSources] || [:file]
+                @nodesources = [:file]
+
+                if Puppet[:ldapnodes]
+                    @nodesources << :ldap
+                end
 
                 @nodesources.each { |source|
                     method = "setup_%s" % source.to_s
@@ -129,7 +133,7 @@ module Puppet
                         parent, nodeclasses = self.send(method, node)
                     end
 
-                    if nodeclasses
+                    if nodeclasses and !nodeclasses.empty?
                         Puppet.info "Found %s in %s" % [node, source]
                         return parent, nodeclasses
                     end
@@ -143,6 +147,10 @@ module Puppet
             def nodesearch_ldap(node)
                 unless defined? @ldap
                     ldapconnect()
+                end
+
+                if node =~ /\./
+                    node = node.sub(/\..+/, '')
                 end
 
                 filter = Puppet[:ldapstring]
@@ -183,7 +191,7 @@ module Puppet
 
                     attrs.each { |attr|
                         if values = entry.vals(attr)
-                            classes += values
+                            values.each do |v| classes << v end
                         end
                     }
                 end
