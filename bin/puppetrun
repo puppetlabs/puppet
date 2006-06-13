@@ -139,7 +139,7 @@ result = GetoptLong.new(*flags)
 options = {
     :ignoreschedules => false,
     :foreground => false,
-    :parallel => 10,
+    :parallel => 1,
     :debug => false,
     :verbose => true
 }
