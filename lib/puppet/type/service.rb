@@ -379,6 +379,9 @@ module Puppet
 
             mod.module_eval(&block)
 
+            # Extend the service type with the util stuff
+            mod.send(:include, Puppet::Util)
+
             #unless mod.respond_to? :list
             #    Puppet.debug "Service type %s has no list method" % name
             #end

@@ -367,6 +367,9 @@ module Util
         return output
     end
 
+    # Because some modules provide their own version of this method.
+    alias util_execute execute
+
     module_function :benchmark
 
     def memory

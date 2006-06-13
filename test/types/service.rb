@@ -37,6 +37,8 @@ class TestInitService
         case Facter["operatingsystem"].value.downcase
         when "solaris":
             return ["smtp", "xf"]
+        when "redhat":
+            return ["sshd"]
         end
     end
 
@@ -134,6 +136,8 @@ class TestLocalService < Test::Unit::TestCase
             return {"hddtemp" => {}}
         when "centos":
             return {"cups" => {:hasstatus => true}}
+        when "redhat":
+            return {"saslauthd" => {:hasstatus => true}}
         end
 
         Puppet.notice "No test services for %s-%s" %

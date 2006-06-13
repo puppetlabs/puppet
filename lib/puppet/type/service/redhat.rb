@@ -5,29 +5,32 @@ require 'puppet/type/service/init'
 Puppet.type(:service).newsvctype(:redhat, :init) do
     # Remove the symlinks
     def disable
-        output = %x{chkconfig #{self[:name]} off 2>&1}
-
-        unless $? == 0
+        begin
+            output = util_execute("/sbin/chkconfig #{self[:name]} off 2>&1")
+            output += util_execute("/sbin/chkconfig --del #{self[:name]} 2>&1")
+        rescue Puppet::ExecutionFailure
             raise Puppet::Error, "Could not disable %s: %s" %
                 [self.name, output]
         end
     end
 
     def enabled?
-        output = %x{chkconfig #{self[:name]} 2>&1}.chomp
-        if $? == 0
-            return :true
-        else
+        begin
+            output = util_execute("/sbin/chkconfig #{self[:name]} 2>&1").chomp
+        rescue Puppet::ExecutionFailure
             return :false
         end
+
+        return :true
     end
 
     # Don't support them specifying runlevels; always use the runlevels
     # in the init scripts.
     def enable
-        output = %x{chkconfig #{self[:name]} on 2>&1}
-
-        unless $? == 0
+        begin
+            output = util_execute("/sbin/chkconfig --add #{self[:name]} 2>&1")
+            output += util_execute("/sbin/chkconfig #{self[:name]} on 2>&1")
+        rescue Puppet::ExecutionFailure
             raise Puppet::Error, "Could not enable %s: %s" %
                 [self.name, output]
         end
