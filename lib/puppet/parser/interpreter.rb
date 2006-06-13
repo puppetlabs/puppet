@@ -119,6 +119,9 @@ module Puppet
                 begin
                     require 'ldap'
                 rescue LoadError
+                    Puppet.notice(
+                        "Could not set up LDAP Connection: Missing ruby/ldap libraries"
+                    )
                     @ldap = nil
                     return
                 end
@@ -174,8 +177,9 @@ module Puppet
             # Find the ldap node and extra the info, returning just
             # the critical data.
             def nodesearch_ldap(node)
-                unless defined? @ldap
-                    ldapconnect()
+                unless defined? @ldap and @ldap
+                    Puppet.info "Skipping ldap source; no ldap connection"
+                    return nil, []
                 end
 
                 if node =~ /\./
@@ -202,27 +206,31 @@ module Puppet
                 classes = []
 
                 found = false
-                # We're always doing a sub here; oh well.
-                @ldap.search(Puppet[:ldapbase], 2, filter, sattrs) do |entry|
-                    found = true
-                    if pattr
-                        if values = entry.vals(pattr)
-                            if values.length > 1
-                                raise Puppet::Error,
-                                    "Node %s has more than one parent: %s" %
-                                    [node, values.inspect]
-                            end
-                            unless values.empty?
-                                parent = values.shift
+                begin
+                    # We're always doing a sub here; oh well.
+                    @ldap.search(Puppet[:ldapbase], 2, filter, sattrs) do |entry|
+                        found = true
+                        if pattr
+                            if values = entry.vals(pattr)
+                                if values.length > 1
+                                    raise Puppet::Error,
+                                        "Node %s has more than one parent: %s" %
+                                        [node, values.inspect]
+                                end
+                                unless values.empty?
+                                    parent = values.shift
+                                end
                             end
                         end
-                    end
 
-                    attrs.each { |attr|
-                        if values = entry.vals(attr)
-                            values.each do |v| classes << v end
-                        end
-                    }
+                        attrs.each { |attr|
+                            if values = entry.vals(attr)
+                                values.each do |v| classes << v end
+                            end
+                        }
+                    end
+                rescue => detail
+                    raise Puppet::Error, "LDAP Search failed: %s" % detail
                 end
 
                 classes.flatten!
