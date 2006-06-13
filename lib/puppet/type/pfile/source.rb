@@ -183,6 +183,10 @@ module Puppet
         # here doesn't really matter, because the @should values will be
         # overridden when we 'retrieve'.
         munge do |source|
+            if source.is_a? Symbol
+                return source
+            end
+
             # Remove any trailing slashes
             source.sub!(/\/$/, '')
             unless @parent.uri2obj(source)

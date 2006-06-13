@@ -1204,6 +1204,69 @@ class TestFile < Test::Unit::TestCase
 
         assert_equal(path, File.readlink(link), "Link was created incorrectly")
     end
+
+    def test_replace_links_with_files
+        base = tempfile()
+
+        Dir.mkdir(base)
+
+        file = File.join(base, "file")
+        link = File.join(base, "link")
+        File.open(file, "w") { |f| f.puts "yayness" }
+        File.symlink(file, link)
+
+        obj = Puppet::Type.type(:file).create(
+            :path => link,
+            :ensure => "file"
+        )
+
+        assert_apply(obj)
+
+        assert_equal("yayness\n", File.read(file),
+            "Original file got changed")
+        assert_equal("file", File.lstat(link).ftype, "File is still a link")
+    end
+
+    def test_no_erase_linkedto_files
+        base = tempfile()
+
+        Dir.mkdir(base)
+
+        dirs = {}
+        %w{other source target}.each do |d|
+            dirs[d] = File.join(base, d)
+            Dir.mkdir(dirs[d])
+        end
+
+        file = File.join(dirs["other"], "file")
+        sourcefile = File.join(dirs["source"], "sourcefile")
+        link = File.join(dirs["target"], "link")
+
+        File.open(file, "w") { |f| f.puts "other" }
+        File.open(sourcefile, "w") { |f| f.puts "source" }
+        File.symlink(file, link)
+
+        obj = Puppet::Type.type(:file).create(
+            :path => dirs["target"],
+            :ensure => "file",
+            :source => dirs["source"],
+            :recurse => true
+        )
+
+
+        trans = assert_events([:file_created, :file_created], obj)
+
+        newfile = File.join(dirs["target"], "sourcefile")
+
+        assert(File.exists?(newfile), "File did not get copied")
+
+        assert_equal(File.read(sourcefile), File.read(newfile),
+            "File did not get copied correctly.")
+
+        assert_equal("other\n", File.read(file),
+            "Original file got changed")
+        assert_equal("file", File.lstat(link).ftype, "File is still a link")
+    end
 end
 
 # $Id$

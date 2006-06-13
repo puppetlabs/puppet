@@ -103,12 +103,12 @@ module Puppet
 
             newvalues(:true, :false, :inf, /^[0-9]+$/)
             munge do |value|
-                value = super
-                case value
+                newval = super(value)
+                case newval
                 when :true, :inf: true
                 when :false: false
                 else
-                    value
+                    newval
                 end
             end
         end
@@ -863,9 +863,15 @@ module Puppet
         def write(usetmp = true)
             mode = self.should(:mode)
 
-            if FileTest.exists?(self[:path])
+            #if FileTest.exists?(self[:path])
+            if s = stat(false)
                 # this makes sure we have a copy for posterity
                 @backed = self.handlebackup
+
+                if s.ftype == "link" and self[:links] != :follow
+                    # Remove existing links, since we're writing out a file
+                    File.unlink(self[:path])
+                end
             end
 
             # The temporary file
