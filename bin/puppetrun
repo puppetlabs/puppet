@@ -104,15 +104,7 @@ end
 
 def setupldap
     begin
-        if Puppet[:ldapssl]
-            @ldap = LDAP::SSLConn.new(Puppet[:ldapserver], Puppet[:ldapport])
-        elsif Puppet[:ldaptls]
-            @ldap = LDAP::SSLConn.new(Puppet[:ldapserver], Puppet[:ldapport], true)
-        else
-            @ldap = LDAP::Conn.new(Puppet[:ldapserver], Puppet[:ldapport])
-        end
-        @ldap.set_option(LDAP::LDAP_OPT_PROTOCOL_VERSION, 3)
-        @ldap.simple_bind(Puppet[:ldapuser], Puppet[:ldappassword])
+        @ldap = Puppet::Parser::Interpreter.ldap()
     rescue => detail
         $stderr.puts "Could not connect to LDAP: %s" % detail
         exit(34)

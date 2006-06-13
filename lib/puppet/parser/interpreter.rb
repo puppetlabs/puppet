@@ -56,6 +56,27 @@ module Puppet
             # just shorten the constant path a bit, using what amounts to an alias
             AST = Puppet::Parser::AST
 
+            # Create an ldap connection.  This is a class method so others can call
+            # it and use the same variables and such.
+            def self.ldap
+                unless defined? @ldap and @ldap
+                    if Puppet[:ldapssl]
+                        @ldap = LDAP::SSLConn.new(Puppet[:ldapserver], Puppet[:ldapport])
+                    elsif Puppet[:ldaptls]
+                        @ldap = LDAP::SSLConn.new(
+                            Puppet[:ldapserver], Puppet[:ldapport], true
+                        )
+                    else
+                        @ldap = LDAP::Conn.new(Puppet[:ldapserver], Puppet[:ldapport])
+                    end
+                    @ldap.set_option(LDAP::LDAP_OPT_PROTOCOL_VERSION, 3)
+                    @ldap.set_option(LDAP::LDAP_OPT_REFERRALS, LDAP::LDAP_OPT_ON)
+                    @ldap.simple_bind(Puppet[:ldapuser], Puppet[:ldappassword])
+                end
+
+                return @ldap
+            end
+
             # create our interpreter
             def initialize(hash)
                 if @code = hash[:Code]
@@ -126,18 +147,7 @@ module Puppet
                     return
                 end
                 begin
-                    if Puppet[:ldapssl]
-                        @ldap = LDAP::SSLConn.new(Puppet[:ldapserver], Puppet[:ldapport])
-                    elsif Puppet[:ldaptls]
-                        @ldap = LDAP::SSLConn.new(
-                            Puppet[:ldapserver], Puppet[:ldapport], true
-                        )
-                    else
-                        @ldap = LDAP::Conn.new(Puppet[:ldapserver], Puppet[:ldapport])
-                    end
-                    @ldap.set_option(LDAP::LDAP_OPT_PROTOCOL_VERSION, 3)
-                    @ldap.set_option(LDAP::LDAP_OPT_REFERRALS, LDAP::LDAP_OPT_ON)
-                    @ldap.simple_bind(Puppet[:ldapuser], Puppet[:ldappassword])
+                    @ldap = self.class.ldap()
                 rescue => detail
                     raise Puppet::Error, "Could not connect to LDAP: %s" % detail
                 end
