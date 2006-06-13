@@ -167,6 +167,7 @@ def prepare_installation
     FileUtils.makedirs(bd)
     FileUtils.makedirs(sd)
   else
+    bd = Config::CONFIG['bindir']
     bds << Config::CONFIG['bindir']
   end
 
@@ -278,6 +279,7 @@ def install_binfile(from, op_file, target)
       installed_wrapper = true
     end
   end
+  p target
   FileUtils.install(tmp_file, File.join(target, op_file), :mode => 0755, :verbose => true)
   File.unlink(tmp_file)
 end
