@@ -152,15 +152,15 @@ class TestZone < Test::Unit::TestCase
     end
 
     # Make sure our state generates the correct text.
-    def test_inherits_state
+    def test_inherit_state
         zone = mkzone("configtesting")
         zone[:ensure] = :configured
 
         assert_nothing_raised {
-            zone[:inherits] = "/usr"
+            zone[:inherit] = "/usr"
         }
-        state = zone.state(:inherits)
-        assert(zone, "Did not get 'inherits' state")
+        state = zone.state(:inherit)
+        assert(zone, "Did not get 'inherit' state")
 
         assert_equal("add inherit-pkg-dir\nset dir=/usr\nend", state.configtext,
             "Got incorrect config text")
@@ -254,7 +254,7 @@ end
 
         # Now, make sure everything is right.
         assert_equal(%w{/sbin /usr /opt/csw /lib /platform}.sort,
-            zone.is(:inherits).sort, "Inherited dirs did not get collected correctly."
+            zone.is(:inherit).sort, "Inherited dirs did not get collected correctly."
         )
 
         assert_equal(["#{interface}:#{ip}"], zone.is(:ip),
@@ -269,7 +269,7 @@ end
         zone = mkzone("configtesting")
 
         assert_nothing_raised {
-            zone[:inherits] = "/usr"
+            zone[:inherit] = "/usr"
         }
 
         zone[:ensure] = :configured
@@ -283,7 +283,7 @@ end
 
         # Now add a new directory to inherit
         assert_nothing_raised {
-            zone[:inherits] = ["/sbin", "/usr"]
+            zone[:inherit] = ["/sbin", "/usr"]
         }
         assert_apply(zone)
 
@@ -296,7 +296,7 @@ end
 
         # And then remove it.
         assert_nothing_raised {
-            zone[:inherits] = "/usr"
+            zone[:inherit] = "/usr"
         }
         assert_apply(zone)
 
@@ -342,7 +342,7 @@ end
         %w{/opt/csw /usr/local}.each do |dir|
             dirs << dir if FileTest.exists? dir
         end
-        zone[:inherits] = dirs
+        zone[:inherit] = dirs
 
         assert(zone, "Did not make zone")
 
@@ -374,7 +374,7 @@ end
         %w{/opt/csw /usr/local}.each do |dir|
             dirs << dir if FileTest.exists? dir
         end
-        zone[:inherits] = dirs
+        zone[:inherit] = dirs
 
         [[:configure, :configured],
             [:install, :installed],
@@ -406,7 +406,7 @@ end
         %w{/opt/csw /usr/local}.each do |dir|
             dirs << dir if FileTest.exists? dir
         end
-        zone[:inherits] = dirs
+        zone[:inherit] = dirs
 
         assert(zone, "Did not make zone")
 

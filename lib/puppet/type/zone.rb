@@ -37,16 +37,22 @@ Puppet::Type.newtype(:zone) do
                 end
             end
 
+            rms = []
+            adds = []
+            # Collect the modifications to make
             list.sort.uniq.collect do |obj|
                 # Skip objectories that are configured and should be
                 next if tmpis.include?(obj) and @should.include?(obj)
 
                 if tmpis.include?(obj)
-                    rm(obj)
+                    rms << obj
                 else
-                    add(obj)
+                    adds << obj
                 end
-            end.reject { |t| t.nil? }.join("\n")
+            end
+
+            # And then perform all of the removals before any of the adds.
+            (rms.collect { |o| rm(o) } + adds.collect { |o| add(o) }).join("\n")
         end
 
         # We want all specified directories to be included.
@@ -83,6 +89,8 @@ Puppet::Type.newtype(:zone) do
         newvalue :configured, :up => :configure, :down => :uninstall
         newvalue :installed, :up => :install, :down => :stop
         newvalue :running, :up => :start
+
+        defaultto :running
 
         def self.valueindex(value)
             @parametervalues.index(value)
@@ -233,9 +241,13 @@ end
 
     newstate(:pool, ZoneConfigState) do
         desc "The resource pool for this zone." 
+
+        def configtext
+            "set pool=#{self.should}"
+        end
     end
 
-    newstate(:inherits, ZoneMultiConfigState) do
+    newstate(:inherit, ZoneMultiConfigState) do
         desc "The list of directories that the zone inherits from the global
             zone.  All directories must be fully qualified."
 
@@ -329,7 +341,7 @@ end
     # by the states.
     def cfg(str)
         debug "Executing '%s' in zone %s" % [str, self[:name]]
-        IO.popen("/usr/sbin/zonecfg -z %s -f -" % self[:name], "w") do |pipe|
+        IO.popen("/usr/sbin/zonecfg -z %s -f - 2>&1" % self[:name], "w") do |pipe|
             pipe.puts str
         end
 
@@ -471,7 +483,7 @@ set zonepath=%s
                     hash[:dir]
                 end
 
-                self.is = [:inherits, dirs]
+                self.is = [:inherit, dirs]
             when "net":
                 vals = value.collect do |hash|
                     "%s:%s" % [hash[:physical], hash[:address]]
