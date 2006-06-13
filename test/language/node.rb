@@ -81,4 +81,51 @@ class TestParser < Test::Unit::TestCase
             @parser.parse
         }
     end
+
+    # Make sure we can find default nodes if there's no other entry
+    def test_default_node
+        Puppet[:parseonly] = false
+        @parser = Puppet::Parser::Parser.new()
+
+        fileA = tempfile()
+        fileB = tempfile()
+        @parser.string = %{
+node mynode {
+    file { "#{fileA}": ensure => file }
+}
+
+node default {
+    file { "#{fileB}": ensure => file }
+}
+}
+
+        # First make sure it parses
+        ast = nil
+        assert_nothing_raised {
+            ast = @parser.parse
+        }
+
+        args = {
+            :ast => ast,
+            :facts => {},
+            :names => ["mynode"]
+        }
+        # Make sure we get a config for "mynode"
+
+        trans = nil
+        assert_nothing_raised {
+            trans = Puppet::Parser::Scope.new.evaluate(args)
+        }
+
+        assert(trans, "Did not get config for mynode")
+
+        args[:names] = ["othernode"]
+        # Now make sure the default node is used
+        trans = nil
+        assert_nothing_raised {
+            trans = Puppet::Parser::Scope.new.evaluate(args)
+        }
+
+        assert(trans, "Did not get config for default node")
+    end
 end

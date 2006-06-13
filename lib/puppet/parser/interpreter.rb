@@ -73,7 +73,8 @@ module Puppet
                     @usenodes = true
                 end
 
-                @nodesources = [:file]
+                # By default, we only search the parse tree.
+                @nodesources = []
 
                 if Puppet[:ldapnodes]
                     @nodesources << :ldap
@@ -139,19 +140,33 @@ module Puppet
                 end
             end
 
-            # Search for our node in the various locations.
+            # Search for our node in the various locations.  This only searches
+            # locations external to the files; the scope is responsible for
+            # searching the parse tree.
             def nodesearch(node)
                 # At this point, stop at the first source that defines
                 # the node
                 @nodesources.each do |source|
                     method = "nodesearch_%s" % source
+                    parent = nil
+                    nodeclasses = nil
                     if self.respond_to? method
                         parent, nodeclasses = self.send(method, node)
-                    end
 
-                    if nodeclasses and !nodeclasses.empty?
-                        Puppet.info "Found %s in %s" % [node, source]
-                        return parent, nodeclasses
+                        Puppet.info "Yo?"
+                        if parent or (nodeclasses and !nodeclasses.empty?)
+                            Puppet.info "Found %s in %s" % [node, source]
+                            return parent, nodeclasses
+                        else
+                            # Look for a default node.
+                            Puppet.info "looking for default node"
+                            parent, nodeclasses = self.send(method, "default")
+                            if parent or (nodeclasses and !nodeclasses.empty?)
+                                Puppet.info "Found default node for %s in %s" %
+                                    [node, source]
+                                return parent, nodeclasses
+                            end
+                        end
                     end
                 end
 

@@ -135,7 +135,7 @@ class TestInterpreter < Test::Unit::TestCase
             "(&(objectclass=puppetclient)(cn=%s))" % node
         ) do |entry|
             parent = entry.vals("parentnode").shift
-            classes = entry.vals("puppetclass")
+            classes = entry.vals("puppetclass") || []
         end
 
         return parent, classes
@@ -173,6 +173,17 @@ class TestInterpreter < Test::Unit::TestCase
 
         parent = nil
         classes = nil
+        # First make sure we get the default node for unknown hosts
+        dparent, dclasses = ldaphost("default")
+
+        assert_nothing_raised {
+            parent, classes = interp.nodesearch("nosuchhostokay")
+        }
+
+        assert_equal(dparent, parent, "Default parent node did not match")
+        assert_equal(dclasses, classes, "Default parent class list did not match")
+
+        # Now look for our normal host
         assert_nothing_raised {
             parent, classes = interp.nodesearch_ldap(hostname)
         }

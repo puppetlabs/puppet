@@ -664,6 +664,12 @@ hostname: NAME {
         :file => @lexer.file,
         :value => val[0]
     )
+}        | DEFAULT {
+    result = AST::Default.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
 }
 
 nothing:    {

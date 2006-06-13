@@ -231,12 +231,20 @@ module Puppet::Parser
             classes = hash[:classes]
             parent = hash[:parent]
 
+            # Always add "default" to our name list, so we're always searching
+            # for a default node.
+            names << "default"
+
             scope = code = nil
             # Find a node that matches one of our names
             names.each { |node|
                 if nodehash = @nodetable[node]
                     code = nodehash[:node]
                     scope = nodehash[:scope]
+
+                    if node == "default"
+                        Puppet.info "Using default node"
+                    end
                     break
                 end
             }
