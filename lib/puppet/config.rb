@@ -525,8 +525,16 @@ Generated on #{Time.now}.
             objects = bucket.to_type
 
             objects.finalize
+            tags = nil
+            if Puppet[:tags]
+                tags = Puppet[:tags]
+                Puppet[:tags] = ""
+            end
             trans = objects.evaluate
             trans.evaluate
+            if tags
+                Puppet[:tags] = tags
+            end
 
             # Remove is a recursive process, so it's sufficient to just call
             # it on the component.

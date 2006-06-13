@@ -625,6 +625,27 @@ inttest = 27
         config.handlearg("--no-booltest", "false")
         assert_equal(false, config[:booltest], "Boolean was not converted")
     end
+
+    # Make sure that tags are ignored when configuring
+    def test_configs_ignore_tags
+        config = mkconfig
+        file = tempfile()
+
+        config.setdefaults(:mysection,
+            :mydir => [file, "a file"]
+        )
+
+        Puppet[:tags] = "yayness"
+
+        assert_nothing_raised {
+            config.use(:mysection)
+        }
+
+        assert(FileTest.directory?(file), "Directory did not get created")
+
+        assert_equal("yayness", Puppet[:tags],
+            "Tags got changed during config")
+    end
 end
 
 # $Id$
