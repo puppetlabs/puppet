@@ -153,13 +153,11 @@ module Puppet
                     if self.respond_to? method
                         parent, nodeclasses = self.send(method, node)
 
-                        Puppet.info "Yo?"
                         if parent or (nodeclasses and !nodeclasses.empty?)
                             Puppet.info "Found %s in %s" % [node, source]
                             return parent, nodeclasses
                         else
                             # Look for a default node.
-                            Puppet.info "looking for default node"
                             parent, nodeclasses = self.send(method, "default")
                             if parent or (nodeclasses and !nodeclasses.empty?)
                                 Puppet.info "Found default node for %s in %s" %
