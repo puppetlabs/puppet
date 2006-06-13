@@ -627,7 +627,7 @@ Generated on #{Time.now}.
             if value =~ /\$(\w+)/
                 parent = $1
                 if pval = @parent[parent]
-                    newval = value.sub(/\$#{parent}/, pval)
+                    newval = value.to_s.sub(/\$#{parent.to_s}/, pval.to_s)
                     return File.join(newval.split("/"))
                 else
                     raise Puppet::DevError, "Could not find value for %s" % parent

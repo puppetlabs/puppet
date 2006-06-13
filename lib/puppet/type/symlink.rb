@@ -170,7 +170,6 @@ module Puppet
                 }
 
                 dir = Puppet.type(:file).implicitcreate(args)
-                dir.parent = @parent
                 @parent.push dir
                 @setparent = true
             end

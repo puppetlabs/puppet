@@ -148,6 +148,9 @@ Puppet.genmanifest
 begin
     ca = Puppet::SSLCertificates::CA.new()
 rescue => detail
+    if Puppet[:debug]
+        puts detail.backtrace
+    end
     puts detail.to_s
     exit(23)
 end

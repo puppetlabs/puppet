@@ -44,7 +44,7 @@ class TestPuppetModule < Test::Unit::TestCase
         ENV["CFALLCLASSES"] = "yaytest:all"
 
         assert_nothing_raised {
-            system(cmd + " " + file)
+            %x{#{cmd + " " + file} 2>&1}
         }
         assert($? == 0, "Puppet module exited with code %s" % $?.to_i)
 

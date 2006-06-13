@@ -17,7 +17,7 @@ module Puppet
                 # Add the package version
                 str += "=%s" % should
             end
-            cmd = "apt-get -q -y install %s" % str
+            cmd = "/usr/bin/apt-get -q -y install %s" % str
 
             self.info "Executing %s" % cmd.inspect
             output = %x{#{cmd} 2>&1}
@@ -29,7 +29,7 @@ module Puppet
 
         # What's the latest package version available?
         def latest
-            cmd = "apt-cache showpkg %s" % self[:name] 
+            cmd = "/usr/bin/apt-cache showpkg %s" % self[:name] 
             self.info "Executing %s" % cmd.inspect
             output = %x{#{cmd} 2>&1}
 
@@ -63,6 +63,14 @@ module Puppet
 
         def update
             self.install
+        end
+
+        def uninstall
+            cmd = "/usr/bin/apt-get -y -q remove %s" % self[:name]
+            output = %x{#{cmd} 2>&1}
+            if $? != 0
+                raise Puppet::PackageError.new(output)
+            end
         end
 
         def versionable?

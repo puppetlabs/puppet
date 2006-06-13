@@ -176,6 +176,8 @@ class Type < Puppet::Element
 
         # And add it to our bucket.
         @types[name] = t
+
+        t
     end
 
     # Create the 'ensure' class.  This is a separate method so other types
@@ -988,17 +990,23 @@ class Type < Puppet::Element
 
     def parent=(parent)
         if self.parentof?(parent)
-            raise Puppet::DevError, "Objects can not be their own parents"
+            devfail "%s[%s] is already the parent of %s[%s]" %
+                [self.class.name, self.name, parent.class.name, parent.name]
         end
         @parent = parent
     end
 
     # Add a hook for testing for recursion.
     def parentof?(child)
-        if (self == child) or
-            (defined? @parent and @parent.parentof?(child)) or
-            @children.include?(child)
-                return true
+        if (self == child)
+            debug "parent is equal to child"
+            return true
+        elsif defined? @parent and @parent.parentof?(child)
+            debug "My parent is parent of child"
+            return true
+        elsif @children.include?(child)
+            debug "child is already in children array"
+            return true
         else
             return false
         end
@@ -1011,7 +1019,7 @@ class Type < Puppet::Element
         childs.each { |child|
             # Make sure we don't have any loops here.
             if parentof?(child)
-                raise Puppet::DevError, "Objects can not be their own parents"
+                devfail "Already the parent of %s[%s]" % [child.class.name, child.name]
             end
             unless child.is_a?(Puppet::Element)
                 self.debug "Got object of type %s" % child.class

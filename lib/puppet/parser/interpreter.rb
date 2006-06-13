@@ -15,6 +15,14 @@ module Puppet
             Puppet.setdefaults("ldap",
                 :ldapnodes => [false,
                     "Whether to search for node configurations in LDAP."],
+                :ldapssl => [false,
+                    "Whether SSL should be used when searching for nodes.
+                    Defaults to false because SSL usually requires certificates
+                    to be set up on the client side."],
+                :ldaptls => [false,
+                    "Whether TLS should be used when searching for nodes.
+                    Defaults to false because TLS usually requires certificates
+                    to be set up on the client side."],
                 :ldapserver => ["ldap",
                     "The LDAP server.  Only used if ``ldapnodes`` is enabled."],
                 :ldapport => [389,
@@ -114,7 +122,15 @@ module Puppet
                     return
                 end
                 begin
-                    @ldap = LDAP::Conn.new(Puppet[:ldapserver], Puppet[:ldapport])
+                    if Puppet[:ldapssl]
+                        @ldap = LDAP::SSLConn.new(Puppet[:ldapserver], Puppet[:ldapport])
+                    elsif Puppet[:ldaptls]
+                        @ldap = LDAP::SSLConn.new(
+                            Puppet[:ldapserver], Puppet[:ldapport], true
+                        )
+                    else
+                        @ldap = LDAP::Conn.new(Puppet[:ldapserver], Puppet[:ldapport])
+                    end
                     @ldap.set_option(LDAP::LDAP_OPT_PROTOCOL_VERSION, 3)
                     @ldap.set_option(LDAP::LDAP_OPT_REFERRALS, LDAP::LDAP_OPT_ON)
                     @ldap.simple_bind(Puppet[:ldapuser], Puppet[:ldappassword])

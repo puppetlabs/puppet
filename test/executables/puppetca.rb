@@ -29,7 +29,7 @@ class TestPuppetCA < Test::Unit::TestCase
         if Puppet[:debug]
             debug = "-d "
         end
-        return %x{puppetca --user=#{Puppet[:user]} #{debug} --group=#{Puppet[:group]} --confdir=#{Puppet[:confdir]} #{args} 2>&1}
+        return %x{puppetca --user=#{Puppet[:user]} #{debug} --group=#{Puppet[:group]} --confdir=#{Puppet[:confdir]} --vardir=#{Puppet[:vardir]} #{args} 2>&1}
 
     end
 

@@ -285,6 +285,9 @@ class TestPackages < Test::Unit::TestCase
             assert_apply(pkg)
             pkg.retrieve
             assert(pkg.insync?, "Package does not think it's in sync")
+
+            pkg[:ensure] = :absent
+            assert_apply(pkg)
         }
     end
 

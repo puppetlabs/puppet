@@ -26,6 +26,21 @@ class Transaction
     # Apply all changes for a child, returning a list of the events
     # generated.
     def apply(child)
+        # First make sure there are no failed dependencies
+        child.eachdependency do |dep|
+            skip = false
+            if @failures[dep] > 0
+                child.notice "Dependency %s[%s] has %s failures" %
+                    [dep.class.name, dep.name, @failures[dep]]
+                skip = true
+            end
+
+            if skip
+                child.warning "Skipping because of failed dependencies"
+                return []
+            end
+        end
+
         changes = child.evaluate
         unless changes.is_a? Array
             changes = [changes]
@@ -44,9 +59,7 @@ class Transaction
                 change.state.err "change from %s to %s failed: %s" %
                     [change.state.is_to_s, change.state.should_to_s, detail]
                 #Puppet.err("%s failed: %s" % [change.to_s,detail])
-                if Puppet[:debug]
-                    puts detail.backtrace
-                end
+                @failures[child] += 1
                 next
                 # FIXME this should support using onerror to determine
                 # behaviour; or more likely, the client calling us
@@ -166,6 +179,10 @@ class Transaction
         end
 
         @changes = []
+
+        @failures = Hash.new do |h, key|
+            h[key] = 0
+        end
     end
 
     # Roll all completed changes back.

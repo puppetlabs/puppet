@@ -12,7 +12,7 @@ module Puppet
 
             hash = {}
             # list out our specific package
-            open("| dpkg -l %s 2>/dev/null" % self[:name]) { |process|
+            open("| /usr/bin/dpkg -l %s 2>/dev/null" % self[:name]) { |process|
                 # our regex for matching dpkg output
                 regex = %r{^(.)(.)(.)\s(\S+)\s+(\S+)\s+(.+)$}
 
@@ -64,7 +64,7 @@ module Puppet
             ENV["COLUMNS"] = "500"
 
             # list out all of the packages
-            open("| dpkg -l") { |process|
+            open("| /usr/bin/dpkg -l") { |process|
                 # our regex for matching dpkg output
                 regex = %r{^(\S+)\s+(\S+)\s+(\S+)\s+(.+)$}
                 fields = [:status, :name, :version, :description]
@@ -101,7 +101,7 @@ module Puppet
         end
 
         def uninstall
-            cmd = "dpkg -r %s" % self[:name]
+            cmd = "/usr/bin/dpkg -r %s" % self[:name]
             output = %x{#{cmd} 2>&1}
             if $? != 0
                 raise Puppet::PackageError.new(output)

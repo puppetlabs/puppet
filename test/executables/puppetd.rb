@@ -34,7 +34,7 @@ class TestPuppetDExe < Test::Unit::TestCase
 
         # and verify our daemon runs
         assert_nothing_raised {
-            system(cmd)
+            %x{#{cmd} 2>&1}
         }
         sleep 1
         assert($? == 0, "Puppetd exited with code %s" % $?)

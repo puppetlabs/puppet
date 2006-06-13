@@ -41,6 +41,7 @@ class TestSymlink < Test::Unit::TestCase
         unless hash.include?(:ensure)
             hash[:ensure] = mktmpfile()
         end
+
         link = Puppet.type(:symlink).create(hash)
         return link
     end
@@ -73,7 +74,7 @@ class TestSymlink < Test::Unit::TestCase
         assert_nothing_raised {
             link = newlink(:ensure => source, :recurse => true)
         }
-        comp = newcomp("linktest",link)
+        comp = newcomp(link)
         cycle(comp)
 
         path = link.name

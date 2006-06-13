@@ -28,7 +28,6 @@ class TestPuppetBin < Test::Unit::TestCase
         if Puppet[:debug]
             cmd += " --debug"
         end
-        #cmd += " --fqdn %s" % fqdn
         cmd += " --confdir %s" % Puppet[:confdir]
         cmd += " --vardir %s" % Puppet[:vardir]
         unless Puppet[:debug]
@@ -36,7 +35,7 @@ class TestPuppetBin < Test::Unit::TestCase
         end
 
         assert_nothing_raised {
-            system(cmd + " " + file)
+            output = %x{#{cmd + " " + file} 2>&1}
         }
         assert($? == 0, "Puppet exited with code %s" % $?.to_i)
 
@@ -62,7 +61,7 @@ class TestPuppetBin < Test::Unit::TestCase
         cmd += " -e \"#{code}\""
 
         assert_nothing_raised {
-            system(cmd)
+            out = %x{#{cmd} 2>&1}
         }
         assert($? == 0, "Puppet exited with code %s" % $?.to_i)
 

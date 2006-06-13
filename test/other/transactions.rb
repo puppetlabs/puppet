@@ -330,4 +330,26 @@ class TestTransactions < Test::Unit::TestCase
         assert_events([:file_changed], comp)
         assert(FileTest.exists?(fname), "File did not get recreated")
     end
+
+    def test_failed_reqs_mean_no_run
+        exec = Puppet::Type.type(:exec).create(
+            :command => "/bin/mkdir /this/path/cannot/possibly/exit",
+            :name => "mkdir"
+        )
+
+        file = Puppet::Type.type(:file).create(
+            :path => tempfile(),
+            :require => ["exec", "mkdir"],
+            :ensure => :file
+        )
+
+        comp = newcomp(exec, file)
+
+        comp.finalize
+
+        assert_apply(comp)
+
+        assert(! FileTest.exists?(file[:path]),
+            "File got created even tho its dependency failed")
+    end
 end

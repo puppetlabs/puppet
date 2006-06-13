@@ -247,8 +247,7 @@ class TestAST < Test::Unit::TestCase
                 end
                 assert(Puppet::Type.type(:file)["/#{name}"], "Could not find '#{name}'")
             end
-
-            Puppet::Type.type(:file).clear
+            Puppet::Type.allclear
         end
     end
 

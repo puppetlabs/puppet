@@ -54,8 +54,6 @@ module Puppet
 
         def to_yaml_properties
             instance_variables
-            #%w{ @type @name @file @line @tags }.find_all { |v|
-            #}
         end
 
         def to_type(parent = nil)
@@ -68,13 +66,9 @@ module Puppet
                     end
                 else
                     unless retobj = typeklass.create(self)
-                        #Puppet.notice "Could not create %s[%s]" %
-                        #    [self.type, self.name]
                         return nil
                     end
                 end
-                #retobj.file = @file
-                #retobj.line = @line
             else
                 raise Puppet::Error.new("Could not find object type %s" % self.type)
             end
