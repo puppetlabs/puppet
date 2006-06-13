@@ -133,13 +133,18 @@ module Puppet
                         @parent[:type]
                     )
                 end
+
+                # Because yum always exits with a 0 exit code, there's a retrieve
+                # in the "install" method.  So, check the current state now,
+                # to compare against later.
+                current = self.is
                 begin
                     @parent.update
                 rescue => detail
                     self.fail "Could not update: %s" % detail
                 end
 
-                if self.is == :absent
+                if current == :absent
                     return :package_created
                 else
                     return :package_changed

@@ -196,7 +196,8 @@ class TestPackages < Test::Unit::TestCase
         mkpkgs { |pkg|
             next unless pkg.respond_to? :latest
             assert_nothing_raised {
-                assert(pkg.latest, "Package did not return value for 'latest'")
+                assert(pkg.latest,
+                    "Package %s did not return value for 'latest'" % pkg.name)
             }
         }
     end
@@ -224,7 +225,7 @@ class TestPackages < Test::Unit::TestCase
                 pkg.retrieve
             }
 
-            if pkg.insync?
+            if pkg.insync? or pkg.is(:ensure) != :absent
                 Puppet.notice "Test package %s is already installed; please choose a different package for testing" % pkg
                 next
             end
