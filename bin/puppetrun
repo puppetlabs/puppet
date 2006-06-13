@@ -7,7 +7,7 @@
 #
 # = Usage
 #
-#   puppet [-c|--class <class>] [-d|--debug] [-h|--help] [-h|--host <host>]
+#   puppet [-c|--class <class>] [-d|--debug] [-h|--help] [--host <host>]
 #
 # = Description
 #
@@ -63,7 +63,7 @@
 #
 # = Example
 #
-#   sudo puppetrun -p 10 -h host1 -h host2 -t remotefile -t webserver
+#   sudo puppetrun -p 10 --host host1 --host host2 -t remotefile -t webserver
 #
 # = Author
 #

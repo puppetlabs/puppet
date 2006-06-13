@@ -119,7 +119,7 @@ class TestMasterClient < Test::Unit::TestCase
     # Make sure non-string facts don't make things go kablooie
     def test_nonstring_facts
         # Add a nonstring fact
-        Facter.add(:nonstring) do
+        Facter.add("nonstring") do
             setcode { 1 }
         end
 
