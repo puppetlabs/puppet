@@ -1,0 +1,45 @@
+#!/usr/bin/ruby -w
+
+#--------------------
+# Convert a passwd-format file to Puppet users
+#
+
+require 'getoptlong'
+
+result = GetoptLong.new(
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+)
+
+result.each { |opt,arg|
+	case opt
+		when "--help"
+			puts "There is no help yet"
+			exit
+		else
+			raise "Invalid option '#{opt}'"
+	end
+}
+
+fields = %w{uid gid comment home shell}
+
+puts "user {"
+ARGV.each do |file|
+    File.open(file) do |of|
+        of.sort.each do |line|
+            next if line =~ /^\s*#/
+            next if line =~ /^\s*$/
+
+            ary = line.chomp.split(":")
+            puts "    " + ary.shift + ":"
+            ary.shift # get rid of that password field
+
+            puts fields.zip(ary).collect { |field, val|
+                "        %s => \"%s\"" % [field, val]
+            }.join(",\n") + ";"
+
+        end
+    end
+end
+puts "}"
+
+# $Id$

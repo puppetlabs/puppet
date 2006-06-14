@@ -1,0 +1,15 @@
+# $Id$
+
+file { "/tmp/dirtest/b/a":
+    mode => 755,
+}
+
+file { "/tmp/dirtest":
+    mode => 755,
+    recurse => true,
+}
+
+file { "/tmp/dirtest/b/b":
+    mode => 644,
+}
+

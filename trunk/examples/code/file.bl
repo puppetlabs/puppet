@@ -1,0 +1,11 @@
+# $Id$
+
+file {
+    "/tmp/atest": ensure => file, mode => 755;
+    "/tmp/btest": ensure => file, mode => 755
+}
+
+file {
+    "/tmp/ctest": ensure => file;
+    "/tmp/dtest": ensure => file;
+}

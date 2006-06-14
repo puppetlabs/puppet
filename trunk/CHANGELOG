@@ -1,0 +1,206 @@
+0.18.0
+    Added support for a "default" node.
+
+    When multiple nodes are specified, they must now be comma-separated (this
+    introduces a language incompatibility).
+
+    Failed dependencies cause dependent objects within the same transaction
+    not to run.
+
+    Many updates to puppetrun
+
+    Many bug fixes
+
+    Function names are no longer reserved words.
+
+    Links can now replace files.
+
+0.17.2
+    Added "puppetrun" application and associated runner server and client classes.
+
+    Fixed cron support so it better supports valid values and environment settings.
+
+0.17.1
+    Fixing a bug requiring rails on all Debian boxes
+
+    Fixing a couple of other small bugs
+
+0.17.0
+    Adding ActiveRecord integration on the server
+
+    Adding export/collect functionality
+
+    Fixing many bugs
+
+0.16.5
+    Fixing a critical bug in importing classes from other files
+
+    Fixing nodename handling to actually allow dashes
+
+0.16.4
+    Fixing a critical bug in puppetd when acquiring a certificate for the first
+    time
+
+0.16.3
+    Some significant bug fixes
+
+    Modified puppetd so that it can now function as an agent independent
+    of a puppetmasterd process, e.g., using the PuppetShow web application.
+
+0.16.2
+    Modified some of the AST classes so that class names, definition names, and
+    node names are all set within the code being evaluated, so 'tagged(name)' returns
+    true while evaluating 'name', for instance.
+
+    Added '--clean' argument to puppetca to remove all traces of a given
+    client.
+
+0.16.1
+    Added 'tagged' and 'defined' functions.
+
+    Moved all functions to a general framework that makes it very easy to add new
+    functions.
+
+0.16.0
+    Added 'tag' keyword/function.
+
+    Added FreeBSD Ports support
+
+    Added 'pelement' server for sending or receiving Puppet objects, although
+    none of the executables use it yet.
+
+0.15.3
+    Fixed many bugs in :exec, including adding support for arrays of checks
+
+    Added autoloading for types and service variants (e.g., you can now
+    just create a new type in the appropriate location and use it in Puppet,
+    without modifying the core Puppet libs).
+
+0.15.2
+    Added darwinport, Apple .pkg, and freebsd package types
+    Added 'mount type
+    Host facts are now set at the top scope (Bug #103)
+    Added -e (inline exection) flag to 'puppet' executable
+    Many small bug fixes
+
+0.15.1
+    Fixed 'yum' installs so that they successfully upgrade packages.
+    Fixed puppetmasterd.conf file so group settings take.
+
+0.15.0
+    Upped the minor release because the File server is incompatible with 0.14,
+        because it now handles links.
+
+    The 'symlink' type is deprecated (but still present), in favor of using
+        files with the 'target' parameter.
+
+    Unset variables no longer throw an error, they just return an empty string
+
+    You can now specify tags to restrict which objects run during a given run.
+
+    You can also specify to skip running against the cached copy when there's
+    a failure, which is useful for testing new configurations.
+
+    RPMs and Sun packages can now install, as long as they specify a package
+        location, and they'll automatically upgrade if you point them to a new
+        file with an upgrade.
+    Multiple bug fixes.
+
+
+0.14.1
+    Fixed a couple of small logging bugs
+    Fixed a bug with handling group ownership of links
+
+0.14.0
+    Added some ability to selectively manage symlinks when doing file management
+    Many bug fixes
+    Variables can now be used as the test values in case statements and selectors
+    Bumping a minor release number because 0.13.4 introduced a protocol
+        incompatibility and should have had a minor rev bump
+
+0.13.6
+    Many, many small bug fixes
+    FreeBSD user/group support has been added
+    The configuration system has been rewritten so that daemons can now generate
+        and repair the files and directories they need. (Fixed bug #68.)
+    Fixed the element override issues; now only subclasses can override values.
+
+0.13.5
+    Fixed packages so types can be specified
+    Added 'enable' state to services, although it does not work everywhere yet
+
+0.13.4
+    A few important bug fixes, mostly in the parser.
+
+0.13.3
+    Changed transactions to be one-stage instead of two
+    Changed all types to use self[:name] instead of self.name, to support
+        the symbolic naming implemented in 0.13.1
+
+0.13.2
+    Changed package[answerfile] to package[adminfile], and added package[responsefile]
+    Fixed a bunch of internal functions to behave more consistently and usefully
+
+0.13.1
+    Fixed RPM spec files to create puppet user and group (lutter)
+    Fixed crontab reading and writing (luke)
+    Added symbolic naming in the language (luke)
+
+0.13.0
+    Added support for configuration files.
+    Even more bug fixes, including the infamous 'frozen object' bug, which was a
+        problem with 'waitforcert'.
+    David Lutterkort got RPM into good shape.
+
+0.12.0
+    Added Scheduling, and many bug fixes, of course.
+
+0.11.2
+    Fixed bugs related to specifying arrays of requirements
+    Fixed a key bug in retrieving checksums
+    Fixed lots of usability bugs
+    Added 'fail' methods that automatically add file and line info when possible,
+    and converted many errors to use that method
+
+0.11.1
+    Fixed bug with recursive copying with 'ignore' set.
+    Added OpenBSD package support.
+
+0.11.0
+    Added 'ensure' state to many elements.
+    Modified puppetdoc to correctly handle indentation and such.
+    Significantly rewrote much of the builtin documentation to take advantage
+        of the new features in puppetdoc, including many examples.
+
+0.10.2
+    Added SMF support
+    Added autorequire functionality, with specific support for exec and file
+        Exec elements autorequire any mentioned files, including the scripts,
+        along with their CWDs.
+        Files autorequire any parent directories.
+    Added 'alias' metaparam.
+    Fixed dependencies so they don't depend on file order.
+
+0.10.1
+    Added Solaris package support and changed puppetmasterd to run as
+    a non-root user.
+
+0.10.0
+    Significant refactoring of how types, states, and parameters work, including
+    breaking out parameters into a separate class.  This refactoring did not
+    introduce much new functionality, but made extension of Puppet significantly
+    easier
+
+    Also, fixed the bug with 'waitforcert' in puppetd.
+
+0.9.4
+    Small fix to wrap the StatusServer class in the checks for required classes.
+    
+0.9.3
+    Fixed some significant bugs in cron job management.
+
+0.9.2
+    Second Public Beta
+
+0.9.0
+    First Public Beta

@@ -1,0 +1,444 @@
+#!/usr/bin/ruby
+# == Synopsis 
+#
+# Retrieve the client configuration from the central puppet server and apply
+# it to the local host.
+#
+# Currently must be run out periodically, using cron or something similar.
+#
+# = Usage
+#
+#   puppetd  [-D|--daemonize] [-d|--debug] [--disable] [--enable]
+#       [-h|--help] [--fqdn <host name>] [-l|--logdest syslog|<file>|console]
+#       [-o|--onetime] [--serve <handler>] [-t|--test]
+#       [-V|--version] [-v|--verbose] [-w|--waitforcert <seconds>]
+#
+# = Description
+#
+# This is the main puppet client.  Its job is to retrieve the local machine's
+# configuration from a remote server and apply it.  In order to successfully
+# communicate with the remote server, the client must have a certificate signed
+# by a certificate authority that the server trusts; the recommended method
+# for this, at the moment, is to run a certificate authority as part of the
+# puppet server (which is the default).  The client will connect and request
+# a signed certificate, and will continue connecting until it receives one.
+#
+# Once the client has a signed certificate, it will retrieve its configuration
+# and apply it.
+#
+# = Usage Notes
+#
+# +puppetd+ does its best to find a compromise between interactive use and
+# daemon use.  Run with no arguments and no configuration, it will go into the
+# backgroun, attempt to get a signed certificate, and retrieve and apply its
+# configuration every 30 minutes.
+#
+# Some flags are meant specifically for interactive use -- in particular,
+# +test+ and +tag+ are useful.  +test+ enables verobse logging, causes
+# the daemon to stay in the foreground, exits if the server's configuration is
+# invalid (this happens if, for instance, you've left a syntax error on the
+# server), and exits after running the configuration once (rather than hanging
+# around as a long-running process).
+#
+# +tag+ allows you to specify what portions of a configuration you want to apply.
+# Puppet elements are tagged with all of the class or definition names that
+# contain them, and you can use the +tag+ flag to specify one of these names,
+# causing only configuration elements contained within that class or definition
+# to be applied.  This is very useful when you are testing new configurations --
+# for instance, if you are just starting to manage +ntpd+, you would put all of
+# the new elements into an +ntpd+ class, and call puppet with +--tag ntpd+,
+# which would only apply that small portion of the configuration during your
+# testing, rather than applying the whole thing.
+#
+# = Options
+#
+# Note that any configuration parameter that's valid in the configuration file
+# is also a valid long argument.  For example, 'server' is a valid configuration
+# parameter, so you can specify '--server <servername>' as an argument.
+#
+# See the configuration file documentation at
+# http://reductivelabs.com/projects/puppet/documentation/puppet-executable-reference
+# for the full list of acceptable parameters.
+#
+# daemonize::
+#   Send the process into the background.  This is the default unless
+#   +verbose+ or +debug+ is enabled.
+#
+# debug::
+#   Enable full debugging.
+#
+# disable::
+#   Disable working on the local system.  This puts a lock file in place,
+#   causing +puppetd+ not to work on the system until the lock file is removed.
+#   This is useful if you are testing a configuration and do not want the central
+#   configuration to override the local state until everything is tested and
+#   committed.
+#
+#   +puppetd+ uses the same lock file while it is running, so no more than one
+#   +puppetd+ process is working at a time.
+#
+#   +puppetd+ exits after executing this.
+#
+# enable::
+#   Enable working on the local system.  This removes any lock file, causing
+#   +puppetd+ to start managing the local system again (although it will continue
+#   to use its normal scheduling, so it might not start for another half hour).
+#
+#   +puppetd+ exits after executing this.
+#
+# fqdn::
+#   Set the fully-qualified domain name of the client.  This is only used for
+#   certificate purposes, but can be used to override the discovered hostname.
+#   If you need to use this flag, it is generally an indication of a setup problem.
+#
+# help::
+#   Print this help message
+#
+# logdest::
+#   Where to send messages.  Choose between syslog, the console, and a log file.
+#   Defaults to sending messages to syslog, or the console if debugging or
+#   verbosity is enabled.
+#
+# onetime::
+#   Run the configuration once, rather than as a long-running daemon.  This is
+#   useful for interactively running puppetd.
+#
+# serve::
+#   Start another type of server.  By default default, +puppetd+ will start
+#   a server that allows authenticated and authorized remote nodes to trigger
+#   the configuration to be pulled down and applied.  You can specify
+#   any other type of service here that does not require configuration,
+#   e.g., filebucket, ca, or pelement.
+#
+# test::
+#   Enable the most common options used for testing.  These are +onetime+,
+#   +verbose+, and +no-usecacheonfailure+.
+#
+# verbose::
+#   Turn on verbose reporting.
+#
+# version::
+#   Print the puppet version number and exit.
+#
+# waitforcert::
+#   This option only matters for daemons that do not yet have certificates
+#   and it is enabled by default, with a value of 300 (seconds).  This causes
+#   +puppetd+ to connect to the server every 5 minutes and ask it to sign a
+#   certificate request.  This is useful for the initial setup of a puppet
+#   client.  You can turn off waiting for certificates by specifying a time
+#   of 0.
+#
+# = Example
+#
+#   puppetd --server puppet.domain.com
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005, 2006 Reductive Labs, LLC
+# Licensed under the GNU Public License
+
+# Do an initial trap, so that cancels don't get a stack trace.
+trap(:INT) do
+    $stderr.puts "Cancelling startup"
+    exit(0)
+end
+
+require 'puppet'
+require 'puppet/server'
+require 'puppet/client'
+require 'getoptlong'
+
+$haveusage = true
+begin
+    require 'rdoc/usage'
+rescue LoadError
+    $haveusage = false
+end
+
+options = [
+	[ "--centrallogging",			GetoptLong::NO_ARGUMENT ],
+	[ "--daemonize", "-D",			GetoptLong::NO_ARGUMENT ],
+	[ "--disable",	    			GetoptLong::NO_ARGUMENT ],
+	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+	[ "--enable",	    			GetoptLong::NO_ARGUMENT ],
+	[ "--fqdn",     "-f",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
+	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--onetime",  "-o",			GetoptLong::NO_ARGUMENT ],
+	[ "--test",	    "-t",			GetoptLong::NO_ARGUMENT ],
+	[ "--no-client",       			GetoptLong::NO_ARGUMENT ],
+	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
+	[ "--version",	"-V",			GetoptLong::NO_ARGUMENT ],
+	[ "--waitforcert",	"-w",		GetoptLong::REQUIRED_ARGUMENT ]
+]
+
+# Add all of the config parameters as valid options.
+Puppet.config.addargs(options)
+
+result = GetoptLong.new(*options)
+
+args = {}
+
+options = {
+    :waitforcert => 300,  # Default to checking for certs every 5 minutes
+    :onetime => false,
+    :centrallogs => false,
+    :setdest => false,
+    :enable => false,
+    :disable => false,
+    :client => true,
+    :fqdn => nil,
+    :serve => {}
+}
+
+begin
+    result.each { |opt,arg|
+        case opt
+            # First check to see if the argument is a valid configuration parameter;
+            # if so, set it.
+            when "--daemonize"
+                options[:daemonize] = true
+            when "--disable"
+                options[:disable] = true
+            when "--serve"
+                if klass = Puppet::Server::Handler.handler(arg)
+                    options[:serve][klass.name] = klass
+                end
+            when "--enable"
+                options[:enable] = true
+            when "--test"
+                # Enable all of the most common test options.
+                Puppet.config.handlearg("--no-usecacheonfailure")
+                options[:onetime] = true
+                unless Puppet::Log.level == :debug
+                    Puppet::Log.level = :info
+                end
+                Puppet::Log.newdestination(:console)
+            when "--centrallogging"
+                options[:centrallogs] = true
+            when "--help"
+                if $haveusage
+                    RDoc::usage && exit
+                else
+                    puts "No help available unless you have RDoc::usage installed"
+                    exit
+                end
+            when "--version"
+                puts "%s" % Puppet.version
+                exit
+            when "--verbose"
+                Puppet::Log.level = :info
+                Puppet::Log.newdestination(:console)
+            when "--debug"
+                Puppet::Log.level = :debug
+                Puppet::Log.newdestination(:console)
+            when "--fqdn"
+                options[:fqdn] = arg
+            when "--no-client"
+                options[:client] = false
+            when "--onetime"
+                options[:onetime] = true
+            when "--port"
+                args[:Port] = arg
+            when "--logdest"
+                begin
+                    Puppet::Log.newdestination(arg)
+                    options[:setdest] = true
+                rescue => detail
+                    $stderr.puts detail.to_s
+                end
+            when "--waitforcert"
+                options[:waitforcert] = arg.to_i
+            else
+                Puppet.config.handlearg(opt, arg)
+        end
+    }
+rescue GetoptLong::InvalidOption => detail
+    $stderr.puts detail
+    $stderr.puts "Try '#{$0} --help'"
+    # FIXME RDoc::usage doesn't seem to work
+    #if $haveusage
+    #    RDoc::usage(1,'usage')
+    #end
+    exit(1)
+end
+
+Puppet.genconfig
+Puppet.genmanifest
+
+# Now parse the config
+if Puppet[:config] and File.exists? Puppet[:config]
+    Puppet.config.parse(Puppet[:config])
+end
+
+# Default to daemonizing, but if verbose or debug is specified,
+# default to staying in the foreground.
+unless options.include?(:daemonize)
+    if Puppet::Log.level == :debug or Puppet::Log.level == :info
+        options[:daemonize] = false
+    else
+        options[:daemonize] = true
+    end
+end
+
+unless options[:setdest]
+    Puppet::Log.newdestination(:syslog)
+end
+
+args[:Server] = Puppet[:server]
+if options[:fqdn]
+    args[:FQDN] = fqdn
+end
+
+if options[:centrallogs]
+    logdest = args[:Server]
+
+    if args.include?(:Port)
+        logdest += ":" + args[:Port]
+    end
+    Puppet::Log.newdestination(logdest)
+end
+
+if options[:onetime]
+    Puppet[:setpidfile] = false
+end
+
+# We need tomake the client either way, we just don't start it
+# if --no-client is set.
+client = Puppet::Client::MasterClient.new(args)
+if options[:enable]
+    client.enable
+elsif options[:disable]
+    client.disable
+end
+
+if options[:enable] or options[:disable]
+    exit(0)
+end
+
+server = nil
+
+unless client.readcert
+    # If we don't already have the certificate, then create a client to
+    # request one.
+    caclient = Puppet::Client::CA.new(args)
+    if options[:waitforcert] > 0
+        begin
+            while ! caclient.requestcert do
+                Puppet.notice "Did not receive certificate"
+                sleep options[:waitforcert]
+            end
+        rescue => detail
+            Puppet.err "Could not request certificate: %s" % detail.to_s
+            exit(23)
+        end
+    else
+        unless caclient.requestcert
+            Puppet.notice "No certificates; exiting"
+            exit(1)
+        end
+    end
+
+    # Now read the new cert in.
+    unless client.readcert
+        Puppet.err "Could not read certificates after retrieving them"
+        exit(34)
+    end
+end
+
+objects = []
+
+# This has to go after the certs are dealt with.
+if Puppet[:listen]
+    unless FileTest.exists?(Puppet[:authconfig])
+        $stderr.puts "Will not start without authorization file %s" %
+            Puppet[:authconfig]
+        exit(14)
+    end
+
+    handlers = nil
+
+    if options[:serve].empty?
+        handlers = {:Runner => {}}
+    else
+        handlers = options[:serve].inject({}) do |hash, name, klass|
+            hash[name] = {}
+        end
+    end
+
+    handlers.each do |name, hash|
+        Puppet.info "Starting handler for %s" % name
+    end
+
+    args[:Handlers] = handlers
+    args[:Port] = Puppet[:puppetport]
+
+    begin
+        server = Puppet::Server.new(args)
+    rescue => detail
+        $stderr.puts detail
+        puts detail.backtrace
+        exit(1)
+    end
+
+    objects << server
+end
+
+# now set up the network client with the certs, now that we have them
+client.setcerts
+
+if options[:client]
+    objects << client
+end
+
+# Set traps for INT and TERM
+Puppet.settraps
+
+if options[:onetime]
+    unless options[:client]
+        $stderr.puts "onetime is specified but there is no client"
+        exit(43)
+    end
+
+    if server
+        Puppet.notice "Ignoring --listen on onetime run"
+    end
+
+    # Add the service, so the traps work correctly.
+    Puppet.newservice(client)
+
+    begin
+        client.run
+    rescue => detail
+        Puppet.err detail.to_s
+        if Puppet[:debug]
+            puts detail.backtrace
+        end
+    end
+    exit(0)
+else
+    if server
+        Puppet.newservice(server)
+    end
+
+    if options[:client]
+        Puppet.notice "Starting Puppet client version %s" % [Puppet.version]
+        Puppet.newservice(client)
+    end
+
+    Puppet.settraps
+
+    # Daemonize as late as possible.
+    if options[:daemonize]
+        client.daemonize
+    end
+
+    Puppet.start
+end
+
+
+# $Id$

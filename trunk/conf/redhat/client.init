@@ -1,0 +1,85 @@
+#!/bin/bash
+# puppet        Init script for running the puppet client daemon
+#
+# Author:       Duane Griffin <d.griffin@psenterprise.com>
+#               David Lutterkort <dlutter@redhat.com>
+#
+# chkconfig: - 98 02
+#
+# description: Enables periodic system configuration checks through puppet.
+# processname: puppet
+# config: /etc/sysconfig/puppet
+
+PATH=/usr/bin:/sbin:/bin:/usr/sbin
+export PATH
+
+[ -f /etc/sysconfig/puppet ] && . /etc/sysconfig/puppet
+lockfile=${LOCKFILE-/var/lock/subsys/puppet}
+pidfile=${PIDFILE-/var/run/puppet.pid}
+puppetd=${PUPPETD-/usr/sbin/puppetd}
+RETVAL=0
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+PUPPET_OPTS=""
+[ -n "${PUPPET_SERVER}" ] && PUPPET_OPTS="--server=${PUPPET_SERVER}"
+[ -n "$PUPPET_LOG" ] && PUPPET_OPTS="${PUPPET_OPTS} --logdest=${PUPPET_LOG}"
+[ -n "$PUPPET_PORT" ] && PUPPET_OPTS="${PUPPET_OPTS} --port=${PUPPET_PORT}"
+
+# Figure out if the system just booted. Let's assume
+# boot doesn't take longer than 5 minutes
+## Not used for now
+##[ -n "$INIT_VERSION" ] && PUPPET_OPTS="${PUPPET_OPTS} --fullrun"
+
+start() {
+	echo -n $"Starting puppet: "
+        daemon $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS}
+	RETVAL=$?
+	echo
+        [ $RETVAL = 0 ] && touch ${lockfile}
+        return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping puppet: "
+        killproc $puppetd
+	RETVAL=$?
+	echo
+	[ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop) 
+	stop
+	;;
+  restart|force-reload)
+	restart
+	;;
+  reload)
+        restart
+	;;
+  condrestart)
+	[ -f "$pidfile" ] && restart
+	;;
+  status)
+        status $puppetd
+	;;
+  once)
+        shift
+        $puppetd -o ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} $@
+        ;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|once}"
+	exit 1
+esac
+
+exit $RETVAL

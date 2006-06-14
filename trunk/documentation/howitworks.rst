@@ -1,0 +1,277 @@
+Introduction
+============
+The goal of this document is to describe how a manifest you write in Puppet
+gets converted to work being done on the system.  This process is relatively
+complex, but you seldom need to know many of the details; this document only
+exists for those who are pushing the boundaries of what Puppet can do or who
+don't understand why they are seeing a particular error.  It can also help
+those who are hoping to extend Puppet beyond its current abilities.
+
+High Level
+==========
+When looked at coarsely, Puppet has three main phases of execution --
+compiling, instantiation, and configuration.
+
+Compiling
+---------
+Here is where we convert from a text-based manifest into the actual code we'll
+be executing.  Any code not meant for the host in question is ignored, and any
+code that is meant for that host is fully interpolated, meaning that variables
+are expanded and all of the results are literal strings.
+
+The only connection between the compiling phase and the library of Puppet
+elements is that all resulting elements are verified that the referenced type
+is valid and that all specified attributes are valid for that type.  There is
+no value validation at this point.
+
+In a networked setup, this phase happens entirely on the server.  The output
+of this phase is a collection of very simplistic elements that closely
+resemble basic hashes and arrays.
+
+Instantiation
+-------------
+This phase converts the simple hashes and arrays into Puppet library objects.
+Because this phase requires so much information about the client in order to
+work correctly (e.g., what type of packaging is used, what type of services,
+etc.), this phase happens entirely on the client.
+
+The conversion from the simpler format into literal Puppet objects allows
+those objects to do greater validation on the inputs, and this is where most
+of the input validation takes place.  If you specified a valid attribute but
+an invalid value, this is where you will find it out, meaning that you will
+find it out when the config is instantiated on the client, not (unfortunately)
+on the server.
+
+The output of this phase is the machine's entire configuration in memory and
+in a form capable of modifying the local system.
+
+Configuration
+-------------
+This is where the Puppet library elements actually modify the system.  Each of
+them compares their specified state to the state on the machine and make any
+modifications that are necessary.  If the machine exactly matches the
+specified configuration, then no work is done.
+
+The output of this phase is a correctly configured machine, in one pass.
+
+Lower Level
+===========
+These three high level phases can each be broken down into more steps.
+
+Compile Phase 1: Parsing
+------------------------
+:Inputs: Manifests written in the Puppet language
+:Outputs: Parse trees (instances of AST_ objects)
+:Entry: `Puppet::Parser::Parser#parse`_
+
+At this point, all Puppet manifests start out as text documents, and it's the
+parser's job to understand those documents.  The parser (defined in
+``parser/grammar.ra`` and ``parser/lexer.rb``) does very little work -- it
+converts from text to a format that maps directly back to the text, building
+parse trees that are essentially equivalent to the text itself.  The only
+validation that takes place here is syntactic.
+
+This phase takes place immediately for all uses of Puppet.  Whether you are
+using nodes or no nodes, whether you are using the standalone puppet
+interpreter or the client/server system, parsing happens as soon as Puppet
+starts.
+
+Compile Phase 2: Interpreting
+-----------------------------
+:Inputs: Parse trees (instances of AST_ objects) and client information
+    (collection of facts output by Facter_)
+:Outputs: Trees of TransObject_ and TransBucket_ instances (from
+    transportable.rb)
+:Entry: `Puppet::Parser::AST#evaluate`_
+:Exit: `Puppet::Parser::Scope#to_trans`_
+
+Most configurations will rely on client information to make decisions.  When
+the Puppet client starts, it loads the Facter_ library, collects all of the
+facts that it can, and passes those facts to the interpreter.  When you use
+Puppet over a network, these facts are passed over the network to the server
+and the server uses them to compile the client's configuration.
+
+This step of passing information to the server enables the server to make
+decisions about the client based on things like operating system and hardware
+architecture, and it also enables the server to insert information about the
+client into the configuration, information like IP address and MAC address.
+
+The interpreter_ combines the parse trees and the client information into a
+tree of simple transportable_ objects which maps roughly to the configuration
+as defined in the manifests -- it is still a tree, but it is a tree of classes
+and the elements contained in those classes.
+
+Nodes vs. No Nodes
+''''''''''''''''''
+When you use Puppet, you have the option of using `node elements`_ or not.  If
+you do not use node elements, then the entire configuration is interpreted
+every time a client connects, from the top of the parse tree down.  In this
+case, you must have some kind of explicit selection mechanism for specifying
+which code goes with which node.
+
+If you do use nodes, though, the interpreter precompiles everything except the
+node-specific code.  When a node connects, the interpreter looks for the code
+associated with that node name (retrieved from the Facter facts) and compiles
+just that bit on demand.
+
+Configuration Transport
+-----------------------
+:Inputs: Transportable_ objects
+:Outputs: Transportable_ objects
+:Entry: `Puppet::Server::Master#getconfig`_
+:Exit: `Puppet::Client::MasterClient#getconfig`_
+
+If you are using the stand-alone puppet executable, there is no configuration
+transport because the client and server are in the same process.  If you are
+using the networked puppetd client and puppetmasterd server, though, the
+configuration must be sent to the client once it is entirely compiled.
+
+Puppet currently converts the Transportable objects to YAML_, which it then
+CGI-escapes and sends over the wire using XMLRPC over HTTPS.  The client
+receives the configuration, unescapes it, caches it to disk in case the server
+is not available on the next run, and then uses YAML to convert it back to
+normal Ruby Transportable objects.
+
+Instantiation Phase
+-------------------
+:Inputs: Transportable_ objects
+:Outputs: `Puppet::Type`_ instances
+:Entry: `Puppet::Client::MasterClient#getconfig`_
+:Exit: `Puppet::Type#finalize`_
+
+To create Puppet library objects (all of which are instances of `Puppet::Type`_
+subclasses), ``to_trans`` is called on the top-level transportable object.
+All container objects get converted to `Puppet::Type::Component`_ instances,
+and all normal objects get converted into the appropriate Puppet type
+instance.
+
+This is where all input validation takes place and often where values get
+converted into more usable forms.  For instance, filesystems always return
+user IDs, not user names, so Puppet objects convert them appropriately.
+(Incidentally, sometimes Puppet is creating the user that it's chowning a file
+to, so whenever possible it ignores validation errors until the last minute.)
+
+The last phase of instantiation is the *finalization* phase.  One of the goals
+of the Puppet language is to make file order matter as little as possible;
+this means that a Puppet object needs to be able to require other objects
+listed later in the manifest, which means that the required object will be
+instantiated after the requiring object.  So, the finalization phase is used
+to actually handle all of these requirements -- Puppet objects use their
+references to objects and verify that the objects actually exist.
+
+Configuration Phase 1: Comparison
+---------------------------------
+:Inputs: `Puppet::Type`_ instances
+:Outputs: `Puppet::StateChange`_ objects collected in a `Puppet::Transaction`_
+    instance
+:Entry: `Puppet::Client::MasterClient#apply`_
+:Exit: `Puppet::Type::Component#evaluate`_
+
+Before Puppet does any work at all, it compares its entire configuration to
+the state on disk (or in memory, or whatever).  To do this, it recursively
+iterates across the tree of `Puppet::Type`_ instances (which, again, still
+roughly maps to the class structure defined in the manifest) and calls
+``evaluate``.
+
+Things are a bit messier than this in real life, but the summary is that
+``evaluate`` retrieves the state of each object, compares that state to the
+desired state, and creates a Puppet::StateChange object for every individual
+bit that's out of sync (e.g., if a file has the wrong owner and wrong mode,
+then each of those are in separate StateChange instances).  The end result of
+evaluating the whole tree is a collection of StateChange objects for every bit
+that's out of sync, all sorted in order of dependencies so that objects are
+always fixed before the objects that depend on them.
+
+The top-level component (which is also responsible for this sorting) creates a
+Puppet::Transaction instance and inserts these changes into it.
+
+Notes About Recursion
+'''''''''''''''''''''
+Recursion muddies this phase considerably.  While it's tempting to merely
+handle recursion in the instantiation phase, the state on disk can (and will)
+change between runs, so the configured state and the on-disk state must be
+compared on every run (and it is assumed that ``puppetd`` will be a
+long-running process that only does instantiation once but does configuration
+many times).
+
+This means that there might still be objects that don't exist at the end of
+instantiation but do exist at the end of comparison.  In particular, when
+doing recursive file copies from a remote machine, Puppet creates an object in
+memory to map to every remote file, and that recursive object creation would
+not make sense at instantiation time, only at comparison time.
+
+This might introduce some strangenesses, though, and it is expected that this
+could cause interesting-in-a-not-particularly-good-way edge cases.
+
+Configuration Phase 2: Syncing
+------------------------------
+:Inputs: `Puppet::Transaction`_ instance containing `Puppet::StateChange`_
+    instances
+:Outputs: Completely configured operating system
+:Entry: `Puppet::Type::Component#evaluate`_
+:Exit: `Puppet::Transaction#evaluate`_
+
+The transaction's job is just to execute each change.  The changes themselves
+are responsible for logging everything that happens (one of the reasons that
+all work is done by StateChange objects rather than just letting the objects
+do it is to guarantee that every modification is logged).  This execution is
+done by calling ``go`` on each change in turn, and if the change does any work
+then it produces an event of some kind.  These events are collected until all
+changes have been executed.
+
+Once the transaction is complete, all of the events are checked to see if
+there are any callbacks associated with them.  Puppet currently only supports
+one type of callback and one way of specifying them:  Calling ``refresh`` on
+objects based on that object subscribing to another object.  For instance,
+take the following snippet::
+
+    file { "/etc/ssh/sshd.conf":
+        source => "puppet://puppet/config/sshd.conf"
+    }
+
+    service { sshd:
+        running => true,
+        subscribe => file["/etc/ssh/sshd.conf"]
+    }
+
+If the local file is out of sync with the remote file, then a StateChange
+instance is created reflecting this.  When that change is executed, it creates
+a ``file_changed`` event.  Because of the above subscription, the callback
+associated with this event is to call ``refresh`` on the ``sshd`` service; for
+services, ``refresh`` is equivalent to restarting, to sshd is restarted.  In
+this way, Puppet elements can react to changes that it makes to the system.
+
+While transactions are fully capable of moving both forward and backward
+(e.g., if a transaction encountered an error, it could back out all of its
+changes), there are currently no hooks within Puppet itself to specify when
+and why that would happen.  If this is a critical feature for you or you have
+a brilliant way to go about creating it, I would love to hear it, but it is
+currently a back-burner goal.
+
+Conclusion
+==========
+That's the entire flow of how a Puppet manifest becomes a complete
+configuration.  There is more to the Puppet system, such as FileBuckets, but
+those are more support staff rather than the main attraction.
+
+.. _facter: /projects/facter
+.. _node elements: /projects/puppet/documentation/structures#nodes
+.. _yaml: http://www.yaml.org/
+.. _Puppet::Parser::Parser#parse: /downloads/puppet/apidocs/classes/Puppet/Parser/Parser.html
+.. _Puppet::Parser::AST#evaluate: /downloads/puppet/apidocs/classes/Puppet/Parser/AST.html
+.. _Puppet::Parser::Scope#to_trans: /downloads/puppet/apidocs/classes/Puppet/Parser/Scope.html
+.. _AST: /downloads/puppet/apidocs/classes/Puppet/Parser/AST.html
+.. _TransObject: /downloads/puppet/apidocs/classes/Puppet/TransObject.html
+.. _TransBucket: /downloads/puppet/apidocs/classes/Puppet/TransBucket.html
+.. _Puppet::Server::Master#getconfig: /downloads/puppet/apidocs/classes/Puppet/Server/Master.html
+.. _Puppet::Client::MasterClient#getconfig: /downloads/puppet/apidocs/classes/Puppet/Client/MasterClient.html
+.. _Transportable: /downloads/puppet/apidocs/classes/Puppet/TransBucket.html
+.. _Puppet::StateChange: /downloads/puppet/apidocs/classes/Puppet/StateChange.html
+.. _Puppet::Transaction: /downloads/puppet/apidocs/classes/Puppet/Transaction.html
+.. _Puppet::Client::MasterClient#apply: /downloads/puppet/apidocs/classes/Puppet/Client/MasterClient.html
+.. _Puppet::Type::Component#evaluate: /downloads/puppet/apidocs/classes/Puppet/Type/Component.html
+.. _Puppet::Type::Component: /downloads/puppet/apidocs/classes/Puppet/Type/Component.html
+.. _Puppet::Transaction#evaluate: /downloads/puppet/apidocs/classes/Puppet/Transaction.html
+.. _interpreter: /downloads/puppet/apidocs/classes/Puppet/Parser/Interpreter.html
+.. _Puppet::Type: /downloads/puppet/apidocs/classes/Puppet/Type.html
+.. _Puppet::Type#finalize: /downloads/puppet/apidocs/classes/Puppet/Type.html

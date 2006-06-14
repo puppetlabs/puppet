@@ -1,0 +1,38 @@
+--- puppet-0.15.1/bin/puppetmasterd.orig	2006-03-15 08:33:45.000000000 -0800
++++ puppet-0.15.1/bin/puppetmasterd	2006-03-22 13:07:54.000000000 -0800
+@@ -210,14 +210,15 @@
+     exit(1)
+ end
+ 
+-if Process.uid == 0
+-    begin
+-        Puppet::Util.chuser
+-    rescue => detail
+-        $stderr.puts "Could not change user to %s: %s" % [Puppet[:user], detail]
+-        exit(39)
+-    end
+-end
++# FIXME: Running as non-root is not ready for primetime
++# if Process.uid == 0
++#     begin
++#         Puppet::Util.chuser
++#     rescue => detail
++#         $stderr.puts "Could not change user to %s: %s" % [Puppet[:user], detail]
++#         exit(39)
++#     end
++# end
+ 
+ if Puppet[:parseonly]
+     # we would have already exited if the file weren't syntactically correct
+--- puppet-0.15.1/bin/puppetca.orig	2006-02-07 15:12:39.000000000 -0800
++++ puppet-0.15.1/bin/puppetca	2006-03-22 13:07:56.000000000 -0800
+@@ -138,7 +138,8 @@
+ Puppet.genconfig
+ Puppet.genmanifest
+ 
+-Puppet::Util.chuser
++# FIXME: Running as non-root is not ready for primetime
++# Puppet::Util.chuser
+ 
+ begin
+     ca = Puppet::SSLCertificates::CA.new()

@@ -1,0 +1,238 @@
+#!/usr/bin/ruby
+
+#
+# = Synopsis
+#
+# Stand-alone certificate authority.  Capable of generating certificates
+# but mostly meant for signing certificate requests from puppet clients.
+#
+# = Usage
+#
+#   puppetca [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
+#               [-g|--generate] [-l|--list] [-s|--sign]
+#               [-c|--clean] [host]
+#
+# = Description
+#
+# Because the puppetmasterd daemon defaults to not signing client certificate
+# requests, this script is available for signing outstanding requests.  It
+# can be used to list outstanding requests and then either sign them individually
+# or sign all of them.
+#
+# = Options
+#
+# Note that any configuration parameter that's valid in the configuration file
+# is also a valid long argument.  For example, 'ssldir' is a valid configuration
+# parameter, so you can specify '--ssldir <directory>' as an argument.
+#
+# See the configuration file for the full list of acceptable parameters.
+#
+# all::
+#   Operate on all outstanding requests.  Only makes sense with '--sign'.
+#
+# clean::
+#    Remove all traces of a host.  This is useful when rebuilding hosts.
+#
+# debug::
+#   Enable full debugging.
+#
+# generate::
+#   Generate a certificate for a named client.  A certificate/keypair will be
+#   generated for each client named on the command line.
+#
+# help::
+#   Print this help message
+#
+# list::
+#   List outstanding certificate requests.
+#
+# sign::
+#   Sign an outstanding certificate request.  Unless '--all' is specified,
+#   hosts must be listed after all flags.
+#
+# verbose::
+#   Enable verbosity.
+#
+# = Example
+#
+#   $ puppetca -l
+#   culain.madstop.com
+#   $ puppetca -s culain.madstop.com
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005 Reductive Labs, LLC
+# Licensed under the GNU Public License
+
+require 'puppet'
+require 'puppet/sslcertificates'
+require 'getoptlong'
+
+$haveusage = true
+
+begin
+    require 'rdoc/usage'
+rescue LoadError
+    $haveusage = false
+end
+
+options = [
+	[ "--all",	    "-a",			GetoptLong::NO_ARGUMENT ],
+	[ "--clean",    "-c",			GetoptLong::NO_ARGUMENT ],
+	[ "--debug",    "-d",			GetoptLong::NO_ARGUMENT ],
+	[ "--generate", "-g",  			GetoptLong::NO_ARGUMENT ],
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
+	[ "--list",	    "-l",			GetoptLong::NO_ARGUMENT ],
+	[ "--sign",	    "-s",			GetoptLong::NO_ARGUMENT ],
+	[ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ]
+]
+
+# Add all of the config parameters as valid options.
+Puppet.config.addargs(options)
+
+result = GetoptLong.new(*options)
+
+mode = nil
+all = false
+generate = nil
+
+begin
+    result.each { |opt,arg|
+        case opt
+            when "--all"
+                all = true
+            when "--clean"
+                mode = :clean
+            when "--debug"
+                Puppet::Log.level = :debug
+            when "--generate"
+                generate = arg
+                mode = :generate
+            when "--help"
+                if $haveusage
+                    RDoc::usage && exit
+                else
+                    puts "No help available unless you have RDoc::usage installed"
+                    exit
+                end
+            when "--list"
+                mode = :list
+            when "--sign"
+                mode = :sign
+            when "--verbose"
+                Puppet::Log.level = :info
+            else
+                Puppet.config.handlearg(opt, arg)
+        end
+    }
+rescue GetoptLong::InvalidOption => detail
+    $stderr.puts "Try '#{$0} --help'"
+    #if $haveusage
+    #    RDoc::usage_no_exit('usage')
+    #end
+    exit(1)
+end
+
+# Now parse the config
+if Puppet[:config] and File.exists? Puppet[:config]
+    Puppet.config.parse(Puppet[:config])
+end
+
+Puppet.genconfig
+Puppet.genmanifest
+
+begin
+    ca = Puppet::SSLCertificates::CA.new()
+rescue => detail
+    if Puppet[:debug]
+        puts detail.backtrace
+    end
+    puts detail.to_s
+    exit(23)
+end
+
+unless mode
+    $stderr.puts "You must specify --list or --sign"
+    exit(12)
+end
+
+if mode == :generate or mode == :clean
+    hosts = ARGV
+else
+    hosts = ca.list
+    unless hosts.length > 0
+        puts "No certificates to sign"
+        exit(0)
+    end
+end
+
+case mode
+when :list
+    puts hosts.join("\n")
+when :clean
+    hosts.each do |host|
+        ca.clean(host)
+    end
+when :sign
+    unless ARGV.length > 0 or all
+        $stderr.puts(
+            "You must specify to sign all certificates or you must specify hostnames"
+        )
+        exit(24)
+    end
+
+    unless all
+        ARGV.each { |host|
+            unless hosts.include?(host)
+                $stderr.puts "No waiting request for %s" % host
+            end
+        }
+        hosts = hosts.find_all { |host|
+            ARGV.include?(host)
+        }
+    end
+
+    hosts.each { |host|
+        begin
+            csr = ca.getclientcsr(host)
+        rescue => detail
+            $stderr.puts "Could not retrieve request for %s: %s" % [host, detail]
+        end
+
+        begin
+            ca.sign(csr)
+            $stderr.puts "Signed %s" % host
+        rescue => detail
+            $stderr.puts "Could not sign request for %s: %s" % [host, detail]
+        end
+
+        begin
+            ca.removeclientcsr(host)
+        rescue => detail
+            $stderr.puts "Could not remove request for %s: %s" % [host, detail]
+        end
+    }
+when :generate
+    # we need to generate a certificate for a host
+    hosts.each { |host|
+        puts "Generating certificate for %s" % host
+        cert = Puppet::SSLCertificates::Certificate.new(
+            :name => host
+        )
+        cert.mkcsr
+        signedcert, cacert = ca.sign(cert.csr)
+
+        cert.cert = signedcert
+        cert.cacert = cacert
+        cert.write
+    }
+else
+    $stderr.puts "Invalid mode %s" % mode
+    exit(42)
+end
+
+# $Id$

@@ -1,0 +1,328 @@
+#!/usr/bin/ruby
+
+#
+# = Synopsis
+#
+# Generate a reference for all Puppet types.  Largely meant for internal Reductive
+# Labs use.
+#
+# = Usage
+#
+#   puppetdoc [-h|--help] [-a|--arguments] [-t|--types]
+#
+# = Description
+#
+# This command generates a restructured-text document describing all installed
+# Puppet types or all allowable arguments to puppet executables.  It is largely
+# meant for internal use and is used to generate the reference document
+# available on the Reductive Labs web site.
+#
+# = Options
+#
+# arguments::
+#   Print the documentation for arguments.
+#
+# help::
+#   Print this help message
+#
+# types::
+#   Print the argumenst for Puppet types.  This is the default.
+#
+# = Example
+#
+#   $ puppetdoc > /tmp/reference.rst
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005 Reductive Labs, LLC
+# Licensed under the GNU Public License
+
+require 'puppet'
+require 'getoptlong'
+
+$haveusage = true
+
+begin
+    require 'rdoc/usage'
+rescue LoadError
+    $haveusage = false
+end
+
+result = GetoptLong.new(
+	[ "--arguments",	"-a",			GetoptLong::NO_ARGUMENT ],
+	[ "--types",	"-t",			GetoptLong::NO_ARGUMENT ],
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+)
+
+debug = false
+
+$tab = "    "
+
+mode = :types
+
+begin
+    result.each { |opt,arg|
+        case opt
+            when "--arguments"
+                mode = :arguments
+            when "--types"
+                mode = :types
+            when "--help"
+                if $haveusage
+                    RDoc::usage && exit
+                else
+                    puts "No help available unless you have RDoc::usage installed"
+                    exit
+                end
+        end
+    }
+rescue GetoptLong::InvalidOption => detail
+    $stderr.puts "Try '#{$0} --help'"
+    #if $haveusage
+    #    RDoc::usage_no_exit('usage')
+    #end
+    exit(1)
+end
+
+def scrub(text)
+    # For text with no carriage returns, there's nothing to do.
+    if text !~ /\n/
+        return text
+    end
+    indent = nil
+
+    # If we can match an indentation, then just remove that same level of
+    # indent from every line.
+    if text =~ /^(\s+)/
+        indent = $1
+        begin
+            return text.gsub(/^#{indent}/,'')
+        rescue => detail
+            puts detail.backtrace
+            puts detail
+        end
+    else
+        return text
+    end
+
+end
+
+# Indent every line in the chunk except those which begin with '..'.
+def indent(text, tab)
+    return text.gsub(/(^|\A)/, tab).gsub(/^ +\.\./, "..")
+end
+
+# Print the docs for arguments
+def self.arguments
+    puts %{
+===========================
+Puppet Executable Reference
+===========================
+
+Every Puppet executable (with the exception of ``puppetdoc``) accepts all of
+these arguments, but not all of the arguments make sense for every executable.
+Each argument has a section listed with it in parentheses; often, that section
+will map to an executable (e.g., ``puppetd``), in which case it probably only
+makes sense for that one executable.  If ``puppet`` is listed as the section,
+it is most likely an option that is valid for everyone.
+
+This will not always be the case.  I have tried to be as thorough as possible
+in the descriptions of the arguments, so it should be obvious whether an
+argument is approprite or not.
+
+}
+
+    docs = {}
+    Puppet.config.each do |name, object|
+        docs[name] = object
+    end
+
+    docs.sort { |a, b|
+        a[0].to_s <=> b[0].to_s
+    }.each do |name, object|
+        puts "* **#{name.to_s}** (*#{object.section.to_s}*)"
+        puts ""
+        begin
+            puts "  " + object.desc.gsub(/\n/, " ")
+        rescue => detail
+            puts detail.backtrace
+            puts detail
+        end
+        puts ""
+    end
+
+end
+
+# Print the docs for types
+def self.types
+    puts %{
+==============
+Type Reference
+==============
+
+    }
+
+    types = {}
+    Puppet::Type.eachtype { |type|
+        types[type.name] = type
+    }
+    puts %{
+---------------
+Meta-Parameters
+---------------
+
+Metaparameters are parameters that work with any element; they are part of the
+Puppet framework itself rather than being part of the implementation of any
+given instance.  Thus, any defined metaparameter can be used with any instance
+in your manifest, including defined components.
+
+    }
+    begin
+        params = []
+        Puppet::Type.eachmetaparam { |param|
+            params << param
+        }
+
+        params.sort { |a,b|
+            a.to_s <=> b.to_s
+        }.each { |param|
+            puts "- **" + param.to_s + "**"
+            #puts tab(1) + Puppet::Type.metaparamdoc(param).scrub.indent($tab)gsub(/\n\s*/,' ')
+            puts indent(scrub(Puppet::Type.metaparamdoc(param)), $tab)
+        }
+    rescue => detail
+        puts detail.backtrace
+        puts "incorrect metaparams: %s" % detail
+        exit(1)
+    end
+
+    puts %{
+-----
+Types
+-----
+
+- *namevar* is the parameter used to uniquely identify a type instance.
+  This is the parameter that gets assigned when a string is provided before
+  the colon in a type declaration.  In general, only developers will need to
+  worry about which parameter is the ``namevar``.
+  
+  In the following code::
+
+    file { "/etc/passwd":
+        owner => root,
+        group => root,
+        mode => 644
+    }
+
+  "/etc/passwd" is considered the name of the file object (used for things like
+  dependency handling), and because ``path`` is the namevar for ``file``, that
+  string is assigned to the ``path`` parameter.
+
+- *parameters* determine the specific configuration of the instance.  They either
+  directly modify the system (internally, these are called states) or they affect
+  how the instance behaves (e.g., adding a search path for ``exec`` instances
+  or determining recursion on ``file`` instances).
+
+    }
+
+    types.sort { |a,b|
+        a.to_s <=> b.to_s
+    }.each { |name,type|
+        next if name == :puppet
+        next if name == :component
+
+        puts "
+
+----------------
+
+"
+
+        puts "
+%s
+%s" % [name, "=" * (name.to_s.length + 4)]
+        #String.new('n%s\n') % name.to_s
+        #puts "**" + type.doc.gsub(/\n\s*/, ' ') + "**\n\n"
+        puts scrub(type.doc) + "\n\n"
+
+        #puts tab(1) + "* namevar: %s" % type.namevar
+        docs = {}
+        #puts "%s States\n'''''''''''''''''''''''''''''''" % name.to_s.capitalize
+        type.validstates.sort { |a,b|
+            a.to_s <=> b.to_s
+        }.reject { |sname|
+            state = type.statebyname(sname)
+            state.nodoc
+        }.each { |sname|
+            state = type.statebyname(sname)
+
+            unless state
+                raise "Could not retrieve state %s on type %s" % [sname, type.name]
+            end
+
+            doc = nil
+            str = nil
+            unless doc = state.doc
+                $stderr.puts "No docs for %s[%s]" % [type, sname]
+                next
+            end
+            doc = doc.dup
+            str = doc
+            #puts "A---" + str + "---"
+            str = scrub(str)
+            #puts "B---" + str + "---"
+            #str = indent(str, $tab)
+            #puts "C---" + str + "---"
+            #str = indent($tab, scrub(doc))
+
+            # If the state has values, then add them: 
+
+            #if values = state.values
+            #    unless values.empty?
+            #        extra = "Acceptable values are %s." % values.join(", ")
+            #        str += "\n\n#{extra}"
+            #    end
+            #end
+
+            str = indent(str, $tab)
+            #puts "---" + str + "---"
+            docs[sname]  = str
+            #puts "- **%s**" % sname
+            #puts tab(1) + state.doc.gsub(/\n\s*/,' ')
+        }
+
+        puts "\n%s Parameters\n''''''''''''''''''''''''''''''" % name.to_s.capitalize
+        type.parameters.sort { |a,b|
+            a.to_s <=> b.to_s
+        }.each { |name,param|
+            docs[name] = indent(scrub(type.paramdoc(name)), $tab)
+        }
+
+        docs.sort { |a, b|
+            a[0].to_s <=> b[0].to_s
+        }.each { |name, doc|
+            print "- **%s**" % name
+            if type.namevar == name and name != :name
+                puts " (*namevar*)"
+            else
+                puts ""
+            end
+            puts doc
+        }
+        puts "\n"
+    }
+end
+
+send(mode)
+
+puts "
+
+----------------
+
+"
+puts "\n*This page autogenerated on %s*" % Time.now
+
+# $Id$

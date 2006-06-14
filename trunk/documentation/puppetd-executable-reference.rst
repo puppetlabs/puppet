@@ -1,0 +1,289 @@
+===========================
+Puppet Executable Reference
+===========================
+
+Every Puppet executable (with the exception of ``puppetdoc``) accepts all of
+these arguments, but not all of the arguments make sense for every executable.
+Each argument has a section listed with it in parentheses; often, that section
+will map to an executable (e.g., ``puppetd``), in which case it probably only
+makes sense for that one executable.  If ``puppet`` is listed as the section,
+it is most likely an option that is valid for everyone.
+
+This will not always be the case.  I have tried to be as thorough as possible
+in the descriptions of the arguments, so it should be obvious whether an
+argument is approprite or not.
+
+* **autosign** (*ca*)
+
+  Whether to enable autosign.  Valid values are true (which autosigns any key request, and is a very bad idea), false (which never autosigns any key request), and the path to a file, which uses that configuration file to determine which keys to sign.
+
+* **bucketdir** (*filebucket*)
+
+  Where FileBucket files are stored.
+
+* **ca_days** (*ca*)
+
+  How long a certificate should be valid.
+
+* **ca_md** (*ca*)
+
+  The type of hash used in certificates.
+
+* **cacert** (*ca*)
+
+  The CA certificate.
+
+* **cadir** (*ca*)
+
+  The root directory for the certificate authority.
+
+* **cakey** (*ca*)
+
+  The CA private key.
+
+* **capass** (*ca*)
+
+  Where the CA stores the password for the private key
+
+* **caprivatedir** (*ca*)
+
+  Where the CA stores private certificate information.
+
+* **capub** (*ca*)
+
+  The CA public key.
+
+* **certdir** (*certificates*)
+
+  The certificate directory.
+
+* **classfile** (*puppetd*)
+
+  The file in which puppetd stores a list of the classes associated with the retrieved configuratiion.  Can be loaded in the separate ``puppet`` executable using the ``--loadclasses`` option.
+
+* **color** (*puppet*)
+
+  Whether to use ANSI colors when logging to the console.
+
+* **confdir** (*puppet*)
+
+  The main Puppet configuration directory.
+
+* **config** (*puppetdoc*)
+
+  The configuration file for puppetdoc.
+
+* **csrdir** (*ca*)
+
+  Where the CA stores certificate requests
+
+* **fileserverconfig** (*fileserver*)
+
+  Where the fileserver configuration is stored.
+
+* **genconfig** (*puppet*)
+
+  Whether to just print a configuration to stdout and exit.  Only makes sense when used interactively.  Takes into account arguments specified on the CLI.
+
+* **genmanifest** (*puppet*)
+
+  Whether to just print a manifest to stdout and exit.  Only makes sense when used interactively.  Takes into account arguments specified on the CLI.
+
+* **group** (*puppetmasterd*)
+
+  The group puppetmasterd should run as.
+
+* **httplog** (*puppetd*)
+
+  Where the puppetd web server logs.
+
+* **ignoreschedules** (*puppetd*)
+
+  Boolean; whether puppetd should ignore schedules.  This is useful for initial puppetd runs.
+
+* **keylength** (*ca*)
+
+  The bit length of keys.
+
+* **ldapattrs** (*ldap*)
+
+  The LDAP attributes to use to define Puppet classes.  Values should be comma-separated.
+
+* **ldapbase** (*ldap*)
+
+  The search base for LDAP searches.  It's impossible to provide a meaningful default here, although the LDAP libraries might have one already set.  Generally, it should be the 'ou=Hosts' branch under your main directory.
+
+* **ldapnodes** (*ldap*)
+
+  Whether to search for node configurations in LDAP.
+
+* **ldapparentattr** (*ldap*)
+
+  The attribute to use to define the parent node.
+
+* **ldappassword** (*ldap*)
+
+  The password to use to connect to LDAP.
+
+* **ldapport** (*ldap*)
+
+  The LDAP port.  Only used if ``ldapnodes`` is enabled.
+
+* **ldapserver** (*ldap*)
+
+  The LDAP server.  Only used if ``ldapnodes`` is enabled.
+
+* **ldapstring** (*ldap*)
+
+  The search string used to find an LDAP node.
+
+* **ldapuser** (*ldap*)
+
+  The user to use to connect to LDAP.  Must be specified as a full DN.
+
+* **localconfig** (*puppetd*)
+
+  Where puppetd caches the local configuration.  An extension indicating the cache format is added automatically.
+
+* **lockdir** (*puppet*)
+
+  Where lock files are kept.
+
+* **logdir** (*puppet*)
+
+  The Puppet log directory.
+
+* **manifest** (*puppetmasterd*)
+
+  The entry-point manifest for puppetmasterd.
+
+* **manifestdir** (*puppetmasterd*)
+
+  Where puppetmasterd looks for its manifests.
+
+* **masterhttplog** (*puppetmasterd*)
+
+  Where the puppetmasterd web server logs.
+
+* **masterlog** (*puppetmasterd*)
+
+  Where puppetmasterd logs.  This is generally not used, since syslog is the default log destination.
+
+* **masterport** (*puppetmasterd*)
+
+  Which port puppetmasterd listens on.
+
+* **mkusers** (*puppet*)
+
+  Whether to create the necessary user and group that puppetd will run as.
+
+* **noop** (*puppetd*)
+
+  Whether puppetd should be run in noop mode.
+
+* **paramcheck** (*ast*)
+
+  Whether to validate parameters during parsing.
+
+* **parseonly** (*puppetmasterd*)
+
+  Just check the syntax of the manifests.
+
+* **passfile** (*certificates*)
+
+  Where puppetd stores the password for its private key. Generally unused.
+
+* **privatedir** (*certificates*)
+
+  Where the client stores private certificate information.
+
+* **privatekeydir** (*certificates*)
+
+  The private key directory.
+
+* **publickeydir** (*certificates*)
+
+  The public key directory.
+
+* **puppetdlockfile** (*puppetd*)
+
+  A lock file to temporarily stop puppetd from doing anything.
+
+* **puppetdlog** (*puppetd*)
+
+  The log file for puppetd.  This is generally not used.
+
+* **puppetport** (*puppetd*)
+
+  Which port puppetd listens on.
+
+* **req_bits** (*ca*)
+
+  The bit length of the certificates.
+
+* **rrddir** (*metrics*)
+
+  The directory where RRD database files are stored.
+
+* **rrdgraph** (*metrics*)
+
+  Whether RRD information should be graphed.
+
+* **rundir** (*puppet*)
+
+  Where Puppet PID files are kept.
+
+* **runinterval** (*puppetd*)
+
+  How often puppetd applies the client configuration; in seconds
+
+* **serial** (*ca*)
+
+  Where the serial number for certificates is stored.
+
+* **server** (*puppetd*)
+
+  The server to which server puppetd should connect
+
+* **signeddir** (*ca*)
+
+  Where the CA stores signed certificates.
+
+* **ssldir** (*puppet*)
+
+  Where SSL certificates are kept.
+
+* **statedir** (*puppet*)
+
+  The directory where Puppet state is stored.  Generally, this directory can be removed without causing harm (although it might result in spurious service restarts).
+
+* **statefile** (*puppet*)
+
+  Where puppetd and puppetmasterd store state associated with the running configuration.  In the case of puppetmasterd, this file reflects the state discovered through interacting with clients.
+
+* **tags** (*transaction*)
+
+  Tags to use to find objects.  If this is set, then only objects tagged with the specified tags will be applied.  Values must be comma-separated.
+
+* **typecheck** (*ast*)
+
+  Whether to validate types during parsing.
+
+* **usecacheonfailure** (*puppetd*)
+
+  Whether to use the cached configuration when the remote configuration will not compile.  This option is useful for testing new configurations, where you want to fix the broken configuration rather than reverting to a known-good one.
+
+* **user** (*puppetmasterd*)
+
+  The user puppetmasterd should run as.
+
+* **vardir** (*puppet*)
+
+  Where Puppet stores dynamic and growing data.
+
+
+
+----------------
+
+
+*This page autogenerated on Tue Apr 11 18:37:26 CDT 2006*

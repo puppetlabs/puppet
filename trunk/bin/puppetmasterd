@@ -1,0 +1,268 @@
+#!/usr/bin/ruby
+
+#
+# = Synopsis
+#
+# The central puppet server.  Can also function as a certificate authority.
+#
+# = Usage
+#
+#   puppetmasterd [-D|--daemonize] [-d|--debug] [-h|--help]
+#       [-l|--logdest <file>|console|syslog] [--noca] [--nobucket] [--nonodes]
+#       [-v|--verbose] [-V|--version]
+#
+# = Description
+#
+# This is the puppet central daemon.
+#
+# = Options
+#
+# Note that any configuration parameter that's valid in the configuration file
+# is also a valid long argument.  For example, 'ssldir' is a valid configuration
+# parameter, so you can specify '--ssldir <directory>' as an argument.
+#
+# See the configuration file documentation at
+# http://reductivelabs.com/projects/puppet/documentation/puppet-executable-reference
+# for the full list of acceptable parameters.
+#
+# daemonize::
+#   Send the process into the background.  This is the default unless
+#   +verbose+ or +debug+ is enabled.
+#
+# debug::
+#   Enable full debugging.  Causes the daemon not to go into the background.
+#
+# help::
+#   Print this help message.
+#
+# logdest::
+#   Where to send messages.  Choose between syslog, the console, and a log file.
+#   Defaults to sending messages to /var/puppet/log/puppet.log, or the console
+#   if debugging or verbosity is enabled.
+#
+# nobucket::
+#   Do not function as a file bucket.
+#
+# noca::
+#   Do not function as a certificate authority.
+#
+# nonodes::
+#   Do not use individual node designations; each node will receive the result
+#   of evaluating the entire configuration.
+#
+# verbose::
+#   Enable verbosity.  Causes the daemon not to go into the background.
+#
+# version::
+#   Print the puppet version number and exit.
+#
+# = Example
+#
+#   puppetmasterd
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005 Reductive Labs, LLC
+# Licensed under the GNU Public License
+
+# Do an initial trap, so that cancels don't get a stack trace.
+trap(:INT) do
+    $stderr.puts "Cancelling startup"
+    exit(0)
+end
+
+require 'getoptlong'
+require 'puppet'
+require 'puppet/server'
+
+options = [
+	[ "--daemonize", "-D",			GetoptLong::NO_ARGUMENT ],
+	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
+	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--noca",         			GetoptLong::NO_ARGUMENT ],
+	[ "--nobucket",        			GetoptLong::NO_ARGUMENT ],
+	[ "--nonodes",         			GetoptLong::NO_ARGUMENT ],
+	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
+    [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
+]
+#Puppet::Log.newdestination(:syslog)
+
+# Add all of the config parameters as valid options.
+Puppet.config.addargs(options)
+
+result = GetoptLong.new(*options)
+
+$haveusage = true
+
+begin
+    require 'rdoc/usage'
+rescue LoadError
+    $haveusage = false
+end
+
+master = {}
+ca = {}
+fs = {}
+bucket = {}
+args = {}
+
+options = {
+    :haveca => true,
+    :havebucket => true,
+    :setdest => false,
+    :verbose => false,
+    :debug => false
+}
+
+begin
+    result.each { |opt,arg|
+        case opt
+            when "--daemonize"
+                options[:daemonize] = true
+            when "--debug"
+                options[:debug] = true
+            when "--help"
+                if $haveusage
+                    RDoc::usage && exit
+                else
+                    puts "No help available unless you have RDoc::usage installed"
+                    exit
+                end
+            when "--noca"
+                options[:haveca] = false
+            when "--nobucket"
+                options[:havebucket] = false
+            when "--nonodes"
+                master[:UseNodes] = false
+            when "--logdest"
+                begin
+                    Puppet::Log.newdestination(arg)
+                    options[:setdest] = true
+                rescue => detail
+                    $stderr.puts detail.to_s
+                end
+            when "--version"
+                puts "%s" % Puppet.version
+                exit
+            when "--verbose"
+                options[:verbose] = true
+            else
+                Puppet.config.handlearg(opt, arg)
+        end
+    }
+rescue GetoptLong::InvalidOption => detail
+    $stderr.puts "Try '#{$0} --help'"
+    #$stderr.puts detail
+    # FIXME RDoc::usage doesn't seem to work
+    #if $haveusage
+    #    RDoc::usage(1,'usage')
+    #end
+    exit(1)
+end
+ca[:autosign] = Puppet[:autosign]
+
+
+# Handle the logging settings.
+if options[:debug] or options[:verbose]
+    if options[:debug]
+        Puppet::Log.level = :debug
+    else
+        Puppet::Log.level = :info
+    end
+
+    unless options[:daemonize]
+        Puppet::Log.newdestination(:console)
+        options[:setdest] = true
+    end
+end
+
+unless options[:setdest]
+    Puppet::Log.newdestination(:syslog)
+end
+
+# Now parse the config
+if Puppet[:config] and File.exists? Puppet[:config]
+    Puppet.config.parse(Puppet[:config])
+end
+
+Puppet.genconfig
+Puppet.genmanifest
+
+require 'etc'
+
+# Default to daemonizing, but if verbose or debug is specified,
+# default to staying in the foreground.
+unless options.include?(:daemonize)
+    if Puppet::Log.level == :debug or Puppet::Log.level == :info
+        options[:daemonize] = false
+    else
+        options[:daemonize] = true
+    end
+end
+
+handlers = {
+    :Master => master,
+    :Status => {},
+    :Logger => {}
+}
+
+if options[:haveca]
+    handlers[:CA] = ca
+end
+
+if options[:havebucket]
+    handlers[:FileBucket] = bucket
+end
+
+if File.exists?(Puppet[:fileserverconfig])
+    fs[:Config] = Puppet[:fileserverconfig]
+#else
+#    Puppet.notice "File server config %s does not exist; skipping file serving" %
+#        Puppet[:fileserverconfig]
+end
+
+if fs.include?(:Config)
+    handlers[:FileServer] = fs
+end
+
+args[:Handlers] = handlers
+
+begin
+    # use the default, um, everything
+    #server = Puppet::Server.new(:CA => ca)
+    server = Puppet::Server.new(args)
+rescue => detail
+    $stderr.puts detail
+    exit(1)
+end
+
+if Process.uid == 0
+    begin
+        Puppet::Util.chuser
+    rescue => detail
+        $stderr.puts "Could not change user to %s: %s" % [Puppet[:user], detail]
+        exit(39)
+    end
+end
+
+if Puppet[:parseonly]
+    # we would have already exited if the file weren't syntactically correct
+    exit(0)
+end
+
+Puppet.newservice(server)
+Puppet.settraps
+
+if options[:daemonize]
+    server.daemonize
+end
+
+Puppet.notice "Starting Puppet server version %s" % [Puppet.version]
+Puppet.start
+
+# $Id$

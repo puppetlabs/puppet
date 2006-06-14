@@ -1,0 +1,206 @@
+#!/usr/bin/ruby
+
+#
+# = Synopsis
+#
+# Run a stand-alone +puppet+ script.
+#
+# = Usage
+#
+#   puppet [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
+#               [-l|--logfile <file>] <file>
+#
+# = Description
+#
+# This is the standalone puppet execution script; use it to execute
+# individual scripts that you write.  If you need to execute site-wide
+# scripts, use +puppetd+ and +puppetmasterd+.
+#
+# = Options
+#
+# Note that any configuration parameter that's valid in the configuration file
+# is also a valid long argument.  For example, 'ssldir' is a valid configuration
+# parameter, so you can specify '--ssldir <directory>' as an argument.
+#
+# See the configuration file for the full list of acceptable parameters.
+#
+# debug::
+#   Enable full debugging.
+#
+# help::
+#   Print this help message
+#
+# loadclasses::
+#   Load any stored classes.  +puppetd+ caches configured classes (usually at
+#   /etc/puppet/classes.txt), and setting this option causes all of those classes
+#   to be set in your +puppet+ manifest.
+#
+# logfile::
+#   Where to send messages.  Choose between syslog, the console, and a log file.
+#   Defaults to sending messages to the console.
+#
+# verbose::
+#   Print extra information.
+#
+# = Example
+#
+#   puppet -l /tmp/script.log script.pp
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005 Reductive Labs, LLC
+# Licensed under the GNU Public License
+
+require 'puppet'
+require 'puppet/server'
+require 'puppet/client'
+require 'getoptlong'
+
+$haveusage = true
+
+begin
+    require 'rdoc/usage'
+rescue LoadError
+    $haveusage = false
+end
+
+options = [
+    [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+    [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
+    [ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--execute",	"-e",			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--loadclasses", "-L",		GetoptLong::NO_ARGUMENT ],
+    [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
+    [ "--use-nodes",    			GetoptLong::NO_ARGUMENT ],
+    [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
+]
+
+# Add all of the config parameters as valid options.
+Puppet.config.addargs(options)
+
+result = GetoptLong.new(*options)
+
+debug = false
+verbose = false
+noop = false
+logfile = false
+loadclasses = false
+
+code = nil
+
+master = {
+    :Local => true
+}
+
+Puppet::Log.newdestination(:console)
+
+begin
+    result.each { |opt,arg|
+        case opt
+            when "--version"
+                puts "%s" % Puppet.version
+                exit
+            when "--help"
+                if $haveusage
+                    RDoc::usage && exit
+                else
+                    puts "No help available unless you have RDoc::usage installed"
+                    exit
+                end
+            when "--use-nodes"
+                master[:UseNodes] = true
+            when "--verbose"
+                verbose = true
+            when "--debug"
+                debug = true
+            when "--execute"
+                code = arg
+            when "--loadclasses"
+                loadclasses = true
+            when "--logdest"
+                begin
+                    Puppet::Log.newdestination(arg)
+                rescue => detail
+                    $stderr.puts detail.to_s
+                end
+            else
+                Puppet.config.handlearg(opt, arg)
+        end
+    }
+rescue GetoptLong::InvalidOption => detail
+    $stderr.puts "Try '#{$0} --help'"
+    #if $haveusage
+    #    RDoc::usage(1,'usage')
+    #end
+    exit(1)
+end
+
+client = nil
+server = nil
+
+[:INT, :TERM].each do |signal|
+    trap(signal) do
+        Puppet.notice "Caught #{signal}; shutting down"
+        [client, server].each { |obj|
+            if obj
+                obj.shutdown
+            end
+        }
+    end
+end
+
+if debug
+    Puppet::Log.level = :debug
+elsif verbose
+    Puppet::Log.level = :info
+end
+
+# Now parse the config
+if Puppet[:config] and File.exists? Puppet[:config]
+    Puppet.config.parse(Puppet[:config])
+end
+
+Puppet.genconfig
+Puppet.genmanifest
+
+if code
+    master[:Code] = code
+else
+    master[:Manifest] = ARGV.shift
+end
+
+# Allow users to load the classes that puppetd creates.
+if loadclasses
+    file = Puppet[:classfile]
+    if FileTest.exists?(file)
+        unless FileTest.readable?(file)
+            $stderr.puts "%s is not readable" % file
+            exit(63)
+        end
+
+        master[:Classes] = File.read(file).split(/[\s\n]+/)
+    end
+end
+
+begin
+    server = Puppet::Server::Master.new(master)
+    client = Puppet::Client::MasterClient.new(
+        :Master => server,
+        :Cache => false
+    )
+    if Puppet[:parseonly]
+        exit(0)
+    end
+    client.getconfig
+    client.apply
+rescue => detail
+    $stderr.puts detail
+    if Puppet[:debug]
+        puts detail.backtrace
+    end
+    exit(1)
+end

@@ -1,0 +1,914 @@
+# vim: syntax=ruby
+
+# the parser
+
+class Puppet::Parser::Parser
+
+token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE
+token FALSE EQUALS LESSEQUAL NOTEQUAL DOT COLON TYPE
+token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
+token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
+token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT
+
+# We have 2 shift/reduce conflicts
+expect 2
+
+rule
+program:    statements {
+    if val[0].is_a?(AST::ASTArray)
+        result = val[0]
+    else
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :children => [val[0]]
+        )
+    end
+}
+            | nothing
+
+statements: statement
+            | statements statement {
+    if val[0].instance_of?(AST::ASTArray)
+        val[0].push(val[1])
+        result = val[0]
+    else
+        result = AST::ASTArray.new(
+            :file => @lexer.file,
+            :line => @lexer.line,
+            :children => [val[0],val[1]]
+        )
+    end
+}
+
+# The main list of valid statements
+statement:    object
+            | collectable
+            | collection
+            | assignment
+            | casestatement
+            | import
+            | fstatement
+            | definition
+            | hostclass
+            | nodedef
+
+fstatement:   NAME LPAREN classnames RPAREN {
+    args = aryfy(val[2])
+    result = AST::Function.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :name => val[0],
+        :arguments => args,
+        :ftype => :statement
+    )
+}
+            | NAME classnames {
+    args = aryfy(val[1])
+    result = AST::Function.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :name => val[0],
+        :arguments => args,
+        :ftype => :statement
+    )
+}
+
+# Includes are just syntactic sugar for classes with no names and
+# no arguments.
+#include:    INCLUDE classnames {
+#    result = function_include(val[1])
+#}
+
+# Define a new tag.  Both of these functions should really be done generically,
+# but I'm not in a position to do that just yet. :/
+#tag:        TAG classnames {
+#    result = function_tag(val[1])
+#}
+
+classnames:       classname
+                | classnames COMMA classname {
+    result = aryfy(val[0], val[2])
+    result.line = @lexer.line
+    result.file = @lexer.file
+}
+
+classname:        name
+                | variable
+                | quotedtext
+
+#object:       name LBRACE objectname COLON params endcomma RBRACE {
+object:       name LBRACE objectinstances endsemi RBRACE {
+    if val[0].instance_of?(AST::ASTArray)
+        raise Puppet::ParseError, "Invalid name"
+    end
+    array = val[2]
+    if array.instance_of?(AST::ObjectInst)
+        array = [array]
+    end
+    result = AST::ASTArray.new(
+        :line => @lexer.line,
+        :file => @lexer.file
+    )
+    # this iterates across each specified objectinstance
+    array.each { |instance|
+        unless instance.instance_of?(AST::ObjectInst)
+            raise Puppet::Dev, "Got something that isn't an instance"
+        end
+        # now, i need to somehow differentiate between those things with
+        # arrays in their names, and normal things
+        result.push AST::ObjectDef.new(
+            :pin => "{}",
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :type => val[0],
+            :name => instance[0],
+            :params => instance[1]
+        )
+    }
+}           | name LBRACE params endcomma RBRACE {
+    if val[0].instance_of?(AST::ASTArray)
+        Puppet.notice "invalid name"
+        raise Puppet::ParseError, "Invalid name"
+    end
+    # an object but without a name
+    # this cannot be an instance of a library type
+    result = AST::ObjectDef.new(
+        :pin => "{}",
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :type => val[0],
+        :params => val[2]
+    )
+}           | type LBRACE params endcomma RBRACE {
+    # a template setting for a type
+    if val[0].instance_of?(AST::ASTArray)
+        raise Puppet::ParseError, "Invalid type"
+    end
+    result = AST::TypeDefaults.new(
+        :pin => "{}",
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :type => val[0],
+        :params => val[2]
+    )
+}
+
+# Collectable objects; these get stored in the database, instead of
+# being passed to the client.
+collectable:    AT object {
+    unless Puppet[:storeconfigs]
+        raise Puppet::ParseError, "You cannot collect without storeconfigs being set"
+    end
+
+    if val[1].is_a? AST::TypeDefaults
+        raise Puppet::ParseError, "Defaults are not collectable"
+    end
+
+    # Just mark our objects as collectable and pass them through.
+    if val[1].instance_of?(AST::ASTArray)
+        val[1].each do |obj|
+            obj.collectable = true
+        end
+    else
+        val[1].collectable = true
+    end
+
+    result = val[1]
+}
+
+# A collection statement.  Currently supports no arguments at all, but eventually
+# will, I assume.
+collection:     name LCOLLECT RCOLLECT {
+    unless Puppet[:storeconfigs]
+        raise Puppet::ParseError, "You cannot collect without storeconfigs being set"
+    end
+    result = AST::Collection.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :type => val[0]
+    )
+}
+
+objectinst:   objectname COLON params endcomma {
+    result = AST::ObjectInst.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :children => [val[0],val[2]]
+    )
+}
+
+objectinstances:   objectinst
+                 | objectinstances SEMIC objectinst {
+    if val[0].instance_of?(AST::ObjectInst)
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[0],val[2]]
+        )
+    else
+        val[0].push val[2]
+        result = val[0]
+    end
+}
+
+endsemi:      # nothing
+            | SEMIC
+
+name:         NAME {
+    result = AST::Name.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+}
+
+type:         TYPE {
+    result = AST::Type.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+}
+
+objectname:   quotedtext
+            | name
+            | type
+            | selector
+            | variable
+            | array
+
+assignment:     VARIABLE EQUALS rvalue {
+    # this is distinct from referencing a variable
+    variable = AST::Name.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0].sub(/^\$/,'')
+    )
+    result = AST::VarDef.new(
+        :pin => "=",
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :name => variable,
+        :value => val[2]
+    )
+}
+
+params:   # nothing
+{
+    result = AST::ASTArray.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :children => []
+    )
+}
+        | param { result = val[0] }
+        | params COMMA param {
+    if val[0].instance_of?(AST::ASTArray)
+        val[0].push(val[2])
+        result = val[0]
+    else
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[0],val[2]]
+        )
+    end
+}
+
+param:        NAME FARROW rvalue {
+    leaf = AST::String.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+    result = AST::ObjectParam.new(
+        :pin => "=>",
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :param => leaf,
+        :value => val[2]
+    )
+}
+
+rvalues:      rvalue
+            | rvalues comma rvalue {
+    if val[0].instance_of?(AST::ASTArray)
+        result = val[0].push(val[2])
+    else
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[0],val[2]]
+        )
+    end
+}
+
+rvalue:       quotedtext
+            | name
+            | type
+            | boolean
+            | selector
+            | object
+            | variable
+            | array
+            | objectref
+            | funcrvalue
+
+# We currently require arguments in these functions.
+funcrvalue:   NAME LPAREN classnames RPAREN {
+    args = aryfy(val[2])
+    result = AST::Function.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :name => val[0],
+        :arguments => args,
+        :ftype => :rvalue
+    )
+}
+
+quotedtext: DQTEXT {
+    result = AST::String.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+}           | SQTEXT {
+    result = AST::FlatString.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+}
+
+boolean:    BOOLEAN {
+    result = AST::Boolean.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+}
+
+objectref: name LBRACK rvalue RBRACK {
+    result = AST::ObjectRef.new(
+        :pin => '[]',
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :type => val[0],
+        :name => val[2]
+    )
+}
+
+casestatement:  CASE rvalue LBRACE caseopts RBRACE {
+    options = val[3]
+    unless options.instance_of?(AST::ASTArray)
+        options = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[3]]
+        )
+    end
+    result = AST::CaseStatement.new(
+        :test => val[1],
+        :options => options,
+        :file => @lexer.file,
+        :line => @lexer.line
+    )
+}
+
+caseopts:     caseopt
+            | caseopts caseopt {
+    if val[0].instance_of?(AST::ASTArray)
+        val[0].push val[1]
+        result = val[0]
+    else
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[0], val[1]]
+        )
+    end
+}
+
+caseopt:        casevalues COLON LBRACE statements RBRACE {
+    result = AST::CaseOpt.new(
+        :pin => ":",
+        :value => val[0],
+        :file => @lexer.file,
+        :line => @lexer.line,
+        :statements => val[3]
+    )
+}               | casevalues COLON LBRACE RBRACE {
+    result = AST::CaseOpt.new(
+        :pin => ":",
+        :value => val[0],
+        :file => @lexer.file,
+        :line => @lexer.line,
+        :statements => AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => []
+        )
+    )
+}
+
+casevalues:       selectlhand
+                | casevalues COMMA selectlhand {
+    if val[0].instance_of?(AST::ASTArray)
+        val[0].push(val[2])
+        result = val[0]
+    else
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[0],val[2]]
+        )
+    end
+}
+
+selector:     selectlhand QMARK svalues {
+    result = AST::Selector.new(
+        :pin => "?",
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :param => val[0],
+        :values => val[2]
+    )
+}
+
+svalues:      selectval
+            | LBRACE sintvalues RBRACE { result = val[1] }
+
+sintvalues:   selectval
+            | sintvalues comma selectval {
+    if val[0].instance_of?(AST::ASTArray)
+        val[0].push(val[2])
+        result = val[0]
+    else
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[0],val[2]]
+        )
+    end
+}
+
+selectval:        selectlhand FARROW rvalue {
+    result = AST::ObjectParam.new(
+        :pin => "=>",
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :param => val[0],
+        :value => val[2]
+    )
+}
+
+selectlhand:  name
+            | type
+            | quotedtext
+            | variable
+            | funcrvalue
+            | boolean
+            | DEFAULT {
+    result = AST::Default.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+}
+
+import: IMPORT quotedtext {
+    # importing files
+    # yuk, i hate keywords
+    # we'll probably have to have some kind of search path eventually
+    # but for now, just use a path relative to the file doing the importing
+    dir = @lexer.file.sub(%r{[^/]+$},'').sub(/\/$/, '')
+    if dir == ""
+        dir = "."
+    end
+    result = AST::ASTArray.new(
+        :file => @lexer.file,
+        :line => @lexer.line
+    )
+
+    Dir.chdir(dir) {
+        # We can't interpolate at this point since we don't have any 
+        # scopes set up. Warn the user if they use a variable reference
+        pat = val[1].value
+        if pat.index("$")
+             Puppet.warning(
+                 "The import of #{pat} contains a variable reference;" +
+                 " variables are not interpolated for imports " +
+                 "in file #{@lexer.file} at line #{@lexer.line}"
+             )
+        end
+        files = Dir.glob(pat)
+        if files.size == 0
+            files = Dir.glob(pat + ".pp")
+            if files.size == 0
+                raise Puppet::ImportError.new("No file(s) found for import " + 
+                                              "of '#{pat}'")
+            end
+        end
+
+        files.each { |file|
+            parser = Puppet::Parser::Parser.new()
+            parser.files = self.files
+            Puppet.debug("importing '%s'" % file)
+
+            unless file =~ /^#{File::SEPARATOR}/
+                file = File.join(dir, file)
+            end
+            begin
+                parser.file = file
+            rescue Puppet::ImportError
+                Puppet.warning(
+                    "Importing %s would result in an import loop" %
+                        File.join(dir, file)
+                )
+                next
+            end
+            # push the results into the main result array
+            parser.parse.each do |child|
+                result.push child
+            end
+        }
+    }
+}
+
+definition: DEFINE NAME argumentlist LBRACE statements RBRACE {
+    result = AST::CompDef.new(
+        :type => AST::Name.new(:value => val[1], :line => @lexer.line),
+        :args => val[2],
+        :file => @lexer.file,
+        :line => @lexer.line,
+        :keyword => val[0],
+        :code => val[4]
+    )
+}           | DEFINE NAME argumentlist LBRACE RBRACE {
+    result = AST::CompDef.new(
+        :type => AST::Name.new(:value => val[1], :line => @lexer.line),
+        :args => val[2],
+        :file => @lexer.file,
+        :line => @lexer.line,
+        :keyword => val[0],
+        :code => AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => []
+        )
+    )
+}
+
+#hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
+hostclass: CLASS NAME parent LBRACE statements RBRACE {
+        #:args => val[2],
+    args = {
+        :type => AST::Name.new(:value => val[1], :line => @lexer.line),
+        :file => @lexer.file,
+        :line => @lexer.line,
+        :keyword => val[0],
+        :code => val[4]
+    }
+    # It'll be an ASTArray if we didn't get a parent
+    if val[2].instance_of?(AST::Name)
+        args[:parentclass] = val[2]
+    end
+    result = AST::ClassDef.new(args)
+}           | CLASS NAME parent LBRACE RBRACE {
+    args = {
+        :type => AST::Name.new(:value => val[1], :line => @lexer.line),
+        :file => @lexer.file,
+        :line => @lexer.line,
+        :keyword => val[0],
+        :code => AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => []
+        )
+    }
+    # It'll be an ASTArray if we didn't get a parent
+    if val[2].instance_of?(AST::Name)
+        args[:parentclass] = val[2]
+    end
+    result = AST::ClassDef.new(args)
+}
+
+nodedef: NODE hostnames parent LBRACE statements RBRACE {
+    unless val[1].instance_of?(AST::ASTArray)
+        val[1] = AST::ASTArray.new(
+            :line => val[1].line,
+            :file => val[1].file,
+            :children => [val[1]]
+        )
+    end
+    args = {
+        :file => @lexer.file,
+        :line => @lexer.line,
+        :names => val[1],
+        :keyword => val[0],
+        :code => val[4]
+    }
+    if val[2].instance_of?(AST::Name)
+        args[:parentclass] = val[2]
+    end
+    result = AST::NodeDef.new(args)
+}       |  NODE hostnames parent LBRACE RBRACE {
+    unless val[1].instance_of?(AST::ASTArray)
+        val[1] = AST::ASTArray.new(
+            :line => val[1].line,
+            :file => val[1].file,
+            :children => [val[1]]
+        )
+    end
+    args = {
+        :file => @lexer.file,
+        :line => @lexer.line,
+        :keyword => val[0],
+        :names => val[1],
+        :code => AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => []
+        )
+    }
+    if val[2].instance_of?(AST::Name)
+        args[:parentclass] = val[2]
+    end
+    result = AST::NodeDef.new(args)
+}
+
+# Multiple hostnames, as used for node names.
+hostnames:    hostname 
+  | hostnames COMMA hostname {
+    if val[0].instance_of?(AST::ASTArray)
+        result = val[0]
+        result.push val[2]
+    else
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[0], val[2]]
+        )
+    end
+}
+
+hostname: NAME {
+   result = AST::HostName.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+}        | SQTEXT {
+   result = AST::HostName.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+}        | DEFAULT {
+    result = AST::Default.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0]
+    )
+}
+
+nothing:    {
+    result = AST::ASTArray.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :children => []
+    )
+}
+
+argumentlist: nothing
+            | LPAREN nothing RPAREN {
+    result = val[1]
+}
+            | LPAREN arguments RPAREN {
+    if val[1].instance_of?(AST::ASTArray)
+        result = val[1]
+    else
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[1]]
+        )
+    end
+}
+
+arguments:    argument
+            | arguments COMMA argument {
+    if val[0].instance_of?(AST::ASTArray)
+        val[0].push(val[2])
+        result = val[0]
+    else
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[0],val[2]]
+        )
+    end
+}
+
+argument:     name EQUALS rvalue {
+    result = AST::CompArgument.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :children => [val[0],val[2]]
+    )
+}
+            | name {
+    result = AST::CompArgument.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :children => [val[0]]
+    )
+}
+
+parent:       nothing
+            | INHERITS NAME {
+    result = AST::Name.new(
+        :value => val[1],
+        :file => @lexer.file,
+        :line => @lexer.line
+    )
+}
+
+variable:     VARIABLE {
+    name = val[0].sub(/^\$/,'')
+    result = AST::Variable.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => name
+    )
+}
+
+array:        LBRACK rvalues RBRACK {
+    if val[1].instance_of?(AST::ASTArray)
+        result = val[1]
+    else
+        result = AST::ASTArray.new(
+            :line => @lexer.line,
+            :file => @lexer.file,
+            :children => [val[1]]
+        )
+    end
+}           | LBRACK RBRACK {
+    result = AST::ASTArray.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :children => []
+    )
+}
+
+comma:        FARROW
+            | COMMA
+
+endcomma:     # nothing
+            | COMMA { result = nil }
+
+end
+---- header ----
+require 'puppet'
+require 'puppet/parsedfile'
+require 'puppet/parser/lexer'
+require 'puppet/parser/ast'
+#require 'puppet/parser/interpreter'
+
+module Puppet
+    class ParseError < Puppet::Error; end
+
+    class ImportError < Racc::ParseError; end
+end
+
+Puppet[:typecheck] = true
+Puppet[:paramcheck] = true
+
+---- inner ----
+require 'puppet/parser/functions'
+
+attr_reader :file
+attr_accessor :files
+
+# Create an AST array out of all of the args
+def aryfy(*args)
+    if args[0].instance_of?(AST::ASTArray)
+        result = args.shift
+        args.each { |arg|
+            result.push arg
+        }
+    else
+        result = AST::ASTArray.new(
+            :children => args
+        )
+    end
+
+    return result
+end
+
+def file=(file)
+    unless FileTest.exists?(file)
+        unless file =~ /\.pp$/
+            file = file + ".pp"
+        end
+        unless FileTest.exists?(file)
+            raise Puppet::Error, "Could not find file %s" % file
+        end
+    end
+    if @files.detect { |f| f.file == file }
+        raise Puppet::ImportError.new("Import loop detected")
+    else
+        @files << Puppet::ParsedFile.new(file)
+        @lexer.file = file
+    end
+end
+
+def initialize
+    @lexer = Puppet::Parser::Lexer.new()
+    @files = []
+    #if Puppet[:debug]
+    #    @yydebug = true
+    #end
+end
+
+def on_error(token,value,stack)
+    #on '%s' at '%s' in\n'%s'" % [token,value,stack]
+    #error = "line %s: parse error after '%s'" %
+    #    [@lexer.line,@lexer.last]
+    error = "Syntax error at '%s'" % [value]
+
+    #if Puppet[:debug]
+        #puts stack.inspect
+        #puts stack.class
+    #end
+    #if @lexer.file
+    #    error += (" in '%s'" % @lexer.file)
+    #end
+
+    except = Puppet::ParseError.new(error)
+    except.line = @lexer.line
+    if @lexer.file
+        except.file = @lexer.file
+    end
+
+    raise except
+end
+
+# how should I do error handling here?
+def parse
+    begin
+        yyparse(@lexer,:scan)
+    rescue Racc::ParseError => except
+        error = Puppet::ParseError.new(except)
+        error.line = @lexer.line
+        error.file = @lexer.file
+        error.backtrace = except.backtrace
+        raise error
+    rescue Puppet::ParseError => except
+        except.line ||= @lexer.line
+        except.file ||= @lexer.file
+        raise except
+    rescue Puppet::Error => except
+        # and this is a framework error
+        except.line ||= @lexer.line
+        except.file ||= @lexer.file
+        #if Puppet[:debug]
+        #    puts except.stack
+        #end
+        raise except
+    rescue Puppet::DevError => except
+        except.line ||= @lexer.line
+        except.file ||= @lexer.file
+        #if Puppet[:debug]
+        #    puts except.stack
+        #end
+        raise except
+    rescue => except
+        error = Puppet::DevError.new(except.message)
+        error.line = @lexer.line
+        error.file = @lexer.file
+        error.backtrace = except.backtrace
+        #if Puppet[:debug]
+        #    puts caller
+        #end
+        raise error
+    end
+end
+
+def reparse?
+    @files.detect { |file|
+        file.changed?
+    }
+end
+
+def string=(string)
+    @lexer.string = string
+end
+
+# Make emacs happy
+# Local Variables:
+# mode: ruby
+# End:
+
+# $Id$
+

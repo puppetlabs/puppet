@@ -1,0 +1,11 @@
+# $Id$
+
+file {
+    "/tmp/atest": ensure => file;
+    "/tmp/btest": ensure => file
+}
+
+file {
+    "/tmp/ctest": ensure => file;
+    "/tmp/dtest": ensure => file;
+}

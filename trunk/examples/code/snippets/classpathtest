@@ -1,0 +1,11 @@
+# $Id$
+
+define component {
+    file { "/tmp/classtest": ensure => file, mode => 755 }
+}
+
+class testing {
+    component { "componentname": }
+}
+
+include testing

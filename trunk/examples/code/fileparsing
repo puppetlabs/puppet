@@ -1,0 +1,116 @@
+# $Id$
+
+# this will eventually parse different config files
+
+# this creates the 'passwd' type, but it does not create any instances
+filetype { "passwd":
+    linesplit => "\n",
+    escapednewlines => false
+}
+
+
+# this creates the 'PasswdUser' type, but again, no instances
+filerecord { "user":
+    filetype => passwd,
+    fields => [name, password, uid, gid, gcos, home, shell],
+    namevar => name,
+    splitchar => ":"
+
+}
+
+filetype { ini:
+    linesplit => "\n\n"
+}
+
+# ini files are different because we don't really care about validating fields
+# or at least, we can't do it for most files...
+filerecord { "initrecord":
+    filetype => ini,
+    fields => [name, password, uid, gid, gcos, home, shell],
+    namevar => name,
+    splitchar => ":"
+
+}
+
+# this won't work for multiple record types, will it?
+# or at least, it requires that we specify multiple times
+# ah, and it doesn't specify which of the available record types
+# it works for...
+passwd { user:
+    complete => true, # manage the whole file
+    path => "/etc/passwd"
+}
+
+user { yaytest:
+    password => x,
+    uid => 10000,
+    gid => 10000,
+    home => "/home/yaytest",
+    gcos => "The Yaytest",
+    shell => "/bin/sh"
+}
+    # there seems to be an intrinsic problem here -- i've got subtypes that only
+    # make sense when an instance of the super type already exists, and i need
+    # to associate the instances of the subtype with the instances of the supertype
+    # even if i created the parsers manually, I'd have the same problem
+
+# this is the crux of it -- i want to be able to say 'user' here without having
+# to specify the file, which leaves two options:
+#   1) associate the record type with a filetype instance (BAD)
+#   2) once the filetype and record type are created, have another command
+#       that specifically creates a filetype instance and gives names for instances
+#       of its record types
+
+define syslog {
+
+    # create a new type, with all defaults
+    filetype { "syslog":
+        escapednewlines => true
+    }
+
+    filerecord { "log":
+        filetype => syslog,
+        regex => "^([^#\s]+)\s+(\S+)$",
+        joinchar => "\t",
+        fields => [logs, dest]
+    }
+
+    # these two should just be supported within the filetypes
+    filerecord { "comment":
+        filetype => syslog,
+        regex => "^(#.*)$",
+        joinchar => "s",
+        fields => [comment]
+    }
+
+    filerecord { "blank":
+        filetype => syslog,
+        regex => "^(\s*)$",
+        joinchar => "s",
+        fields => blank
+    }
+}
+
+define cron {
+    filetype { "usercrontab":
+    }
+
+    # this won't actually work, of course
+    filerecord { "cronjob":
+        filetype => crontab,
+        regex => "^([^#\s]+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.+)$",
+        joinchar => " ",
+        fields => [minute, hour, day, month, weekday, command],
+        defaults => ["*", "*", "*", "*", "*", nil],
+        optional => [minute, hour, day, month, weekday]
+    }
+
+    crontab { "luke":
+    }
+}
+
+# XXX this doesn't work in the slightest
+define crontab(name,path) {
+    usercrontab { "${path}/${name}":
+    }
+}

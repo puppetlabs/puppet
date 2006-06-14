@@ -1,0 +1,10 @@
+# $Id$
+
+File {
+    mode => 755,
+    recurse => true
+}
+
+file { "/tmp/filedefaultstest":
+    ensure => file
+}
