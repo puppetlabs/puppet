@@ -338,7 +338,7 @@ while go
                 client.run(tags, options[:ignoreschedules], options[:foreground])
             rescue => detail
                 $stderr.puts "Host %s failed: %s" % [host, detail]
-                exit(2)
+                next
             end
         end
         children[pid] = host
