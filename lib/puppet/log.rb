@@ -126,7 +126,13 @@ module Puppet
                 end
                 name = Puppet.name
                 name = "puppet-#{name}" unless name =~ /puppet/
-                @destinations[:syslog] = Syslog.open(name)
+
+                options = Syslog::LOG_PID | Syslog::LOG_NDELAY
+
+                # XXX This should really be configurable.
+                facility = Syslog::LOG_DAEMON
+
+                @destinations[:syslog] = Syslog.open(name, options, facility)
             when /^\// # files
                 Puppet.info "opening %s as a log" % dest
                 # first make sure the directory exists
