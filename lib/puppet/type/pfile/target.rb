@@ -26,31 +26,24 @@ module Puppet
 
                 case stat.ftype
                 when "directory":
-                    # uh, bad stuff
-                    #self.fail "Not replacing directory"
                     FileUtils.rmtree(@parent[:path])
                 else
                     File.unlink(@parent[:path])
                 end
             end
             Dir.chdir(File.dirname(@parent[:path])) do
-                unless FileTest.exists?(target)
-                    self.debug "Not linking to non-existent '%s'" % target
-                    :nochange # Grrr, can't return
-                else
-                    Puppet::Util.asuser(@parent.asuser()) do
-                        mode = @parent.should(:mode)
-                        if mode
-                            Puppet::Util.withumask(000) do
-                                File.symlink(target, @parent[:path])
-                            end
-                        else
+                Puppet::Util.asuser(@parent.asuser()) do
+                    mode = @parent.should(:mode)
+                    if mode
+                        Puppet::Util.withumask(000) do
                             File.symlink(target, @parent[:path])
                         end
+                    else
+                        File.symlink(target, @parent[:path])
                     end
-
-                    :link_created
                 end
+
+                :link_created
             end
         end
 
