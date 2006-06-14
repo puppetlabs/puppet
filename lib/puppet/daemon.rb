@@ -25,8 +25,6 @@ module Puppet
                 exit(0)
             end
 
-            #setpidfile()
-
             # Get rid of console logging
             Puppet::Log.close(:console)
 

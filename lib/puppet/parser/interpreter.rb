@@ -53,6 +53,10 @@ module Puppet
             )
 
             attr_accessor :ast, :filetimeout
+
+            class << self
+                attr_writer :ldap
+            end
             # just shorten the constant path a bit, using what amounts to an alias
             AST = Puppet::Parser::AST
 
@@ -101,17 +105,7 @@ module Puppet
                     @nodesources << :ldap
                 end
 
-                @nodesources.each { |source|
-                    method = "setup_%s" % source.to_s
-                    if respond_to? method
-                        begin
-                            self.send(method)
-                        rescue => detail
-                            raise Puppet::Error,
-                                "Could not set up node source %s" % source
-                        end
-                    end
-                }
+                @setup = false
 
                 # Set it to either the value or nil.  This is currently only used
                 # by the cfengine module.
@@ -137,6 +131,7 @@ module Puppet
 
             # Connect to the LDAP Server
             def setup_ldap
+                self.class.ldap = nil
                 begin
                     require 'ldap'
                 rescue LoadError
@@ -255,6 +250,22 @@ module Puppet
 
             # evaluate our whole tree
             def run(client, facts)
+
+                # We have to leave this for after initialization because there
+                # seems to be a problem keeping ldap open after a fork.
+                unless @setup
+                    @nodesources.each { |source|
+                        method = "setup_%s" % source.to_s
+                        if respond_to? method
+                            begin
+                                self.send(method)
+                            rescue => detail
+                                raise Puppet::Error,
+                                    "Could not set up node source %s" % source
+                            end
+                        end
+                    }
+                end
                 parsefiles()
 
                 # Really, we should stick multiple names in here
