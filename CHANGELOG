@@ -1,3 +1,20 @@
+0.18.0
+    Added support for a "default" node.
+
+    When multiple nodes are specified, they must now be comma-separated (this
+    introduces a language incompatibility).
+
+    Failed dependencies cause dependent objects within the same transaction
+    not to run.
+
+    Many updates to puppetrun
+
+    Many bug fixes
+
+    Function names are no longer reserved words.
+
+    Links can now replace files.
+
 0.17.2
     Added "puppetrun" application and associated runner server and client classes.
 
