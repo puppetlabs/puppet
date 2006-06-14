@@ -32,7 +32,7 @@ module Puppet
             end
 
             if @state.noop
-                @state.log "(noop) is %s, should be %s" %
+                @state.log "is %s, should be %s (noop)" %
                     [state.is_to_s, state.should_to_s]
                 #@state.debug "%s is noop" % @state
                 return nil
