@@ -7,7 +7,8 @@
 #
 # = Usage
 #
-#   puppetrun [-c|--class <class>] [-d|--debug] [-h|--help] [--host <host>]
+#   puppetrun [-a|--all] [-c|--class <class>] [-d|--debug] [-h|--help]
+#       [--host <host>] [--no-fqdn]
 #
 # = Description
 #
@@ -62,6 +63,9 @@
 #
 # See the configuration file for the full list of acceptable parameters.
 #
+# all::
+#   Connect to all available hosts.  Requires LDAP support at this point.
+#
 # class::
 #   Specify a class of machines to which to connect.  This only works if you
 #   have LDAP configured, at the moment.
@@ -88,6 +92,9 @@
 # parallel::
 #   How parallel to make the connections.  Parallelization is provided by forking
 #   for each client to which to connect.  The default is 1, meaning serial execution.
+#
+# test::
+#   Print the hosts you would connect to but do not actually connect.
 #
 # = Example
 #
@@ -116,15 +123,31 @@ require 'getoptlong'
 
 
 # Look up all nodes matching a given class in LDAP.
-def ldapnodes(klass)
+def ldapnodes(klass, fqdn = true)
     unless defined? @ldap
         setupldap()
     end
 
     hosts = []
 
-    @ldap.search(Puppet[:ldapbase], 2, "puppetclass=#{klass}", "cn") do |entry|
-        hosts << entry.get_values("cn")[0]
+    filter = nil
+    if klass == :all
+        filter = "objectclass=puppetclient"
+    else
+        filter = "puppetclass=#{klass}"
+    end
+    @ldap.search(Puppet[:ldapbase], 2, filter, "cn") do |entry|
+        # Skip the default host entry
+        if entry.dn =~ /cn=default,/
+            $stderr.puts "Skipping default host entry"
+            next
+        end
+
+        if fqdn
+            hosts << entry.dn.sub("cn=",'').sub(/ou=hosts,/i, '').gsub(",dc=",".")
+        else
+            hosts << entry.get_values("cn")[0]
+        end
     end
 
     return hosts
@@ -148,12 +171,15 @@ rescue LoadError
 end
 
 flags = [
+    [ "--all",      "-a",	        GetoptLong::NO_ARGUMENT ],
     [ "--class",	"-c",			GetoptLong::REQUIRED_ARGUMENT ],
     [ "--foreground", "-f",	        GetoptLong::NO_ARGUMENT ],
     [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
     [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
     [ "--host",         			GetoptLong::REQUIRED_ARGUMENT ],
     [ "--parallel", "-p",			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--no-fqdn",  "-n",			GetoptLong::NO_ARGUMENT ],
+    [ "--test",                     GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
 ]
 
@@ -167,7 +193,10 @@ options = {
     :foreground => false,
     :parallel => 1,
     :debug => false,
-    :verbose => true
+    :test => false,
+    :all => false,
+    :verbose => true,
+    :fqdn => true
 }
 
 hosts = []
@@ -184,6 +213,12 @@ begin
                 exit
             when "--ignoreschedules"
                 options[:ignoreschedules] = true
+            when "--no-fqdn"
+                options[:fqdn] = false
+            when "--all"
+                options[:all] = true
+            when "--test"
+                options[:test] = true
             when "--tag"
                 tags << arg
             when "--class"
@@ -233,11 +268,16 @@ if File.exists? config
 end
 
 if Puppet[:ldapnodes]
-    classes.each do |klass|
-        list = ldapnodes(klass)
-        puts "%s: %s" % [klass, list.join(", ")]
+    if options[:all]
+        hosts = ldapnodes(:all, options[:fqdn])
+        puts "all: %s" % hosts.join(", ")
+    else
+        classes.each do |klass|
+            list = ldapnodes(klass, options[:fqdn])
+            puts "%s: %s" % [klass, list.join(", ")]
 
-        hosts += list
+            hosts += list
+        end
     end
 elsif ! classes.empty?
     $stderr.puts "You must be using LDAP to specify host classes"
@@ -264,6 +304,11 @@ children = {}
 
         exit(1)
     end
+end
+
+if options[:test]
+    puts "Skipping execution in test mode"
+    exit(0)
 end
 
 todo = hosts.dup
