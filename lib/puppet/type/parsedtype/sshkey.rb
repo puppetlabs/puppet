@@ -5,8 +5,6 @@ require 'puppet/type/state'
 
 module Puppet
     newtype(:sshkey, Puppet::Type::ParsedType) do
-        isaggregatable
-
         newstate(:type) do
             desc "The encryption type used.  Probably ssh-dss or ssh-rsa."
         end
@@ -21,8 +19,7 @@ module Puppet
             desc "Any alias the host might have.  Multiple values must be
                 specified as an array.  Note that this state has the same name
                 as one of the metaparams; using this state to set aliases will
-                make those aliases available in your Puppet scripts and also on
-                disk."
+                make those aliases available in your Puppet scripts."
 
             # We actually want to return the whole array here, not just the first
             # value.
@@ -57,12 +54,13 @@ module Puppet
             isnamevar
         end
 
-        @doc = "Installs and manages host entries.  For most systems, these
-            entries will just be in /etc/hosts, but some systems (notably OS X)
-            will have different solutions."
+        @doc = "Installs and manages ssh host keys.  At this point, this type
+            only knows how to install keys into /etc/ssh/ssh_known_hosts, and
+            it cannot manage user authorized keys yet."
 
         @instances = []
 
+        # FIXME This should be configurable.
         @path = "/etc/ssh/ssh_known_hosts"
         @fields = [:name, :type, :key]
 
@@ -98,14 +96,6 @@ module Puppet
                         hash[:name] = names.shift
                         hash[:alias] = names
                     end
-
-                    #if match = /^(\S+)\s+(\S+)\s*(\S*)$/.match(line)
-                    #    fields().zip(match.captures).each { |param, value|
-                    #        hash[param] = value
-                    #    }
-                    #else
-                    #    raise Puppet::Error, "Could not match '%s'" % line
-                    #end
 
                     if hash[:alias] == ""
                         hash.delete(:alias)
