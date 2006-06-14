@@ -12,6 +12,14 @@ require 'test/unit'
 
 class TestTransactions < Test::Unit::TestCase
 	include FileTesting
+
+    # In case they're not in more than one group
+    def test_nothing
+    end
+
+    unless %x{groups}.chomp.split(/ /).length > 1
+        $stderr.puts "You must be a member of more than one group to test transactions"
+    else
     def ingroup(gid)
         require 'etc'
         begin
@@ -351,5 +359,6 @@ class TestTransactions < Test::Unit::TestCase
 
         assert(! FileTest.exists?(file[:path]),
             "File got created even tho its dependency failed")
+    end
     end
 end
