@@ -1428,9 +1428,9 @@ class Type < Puppet::Element
             # Collect the current prereqs
             list.each { |dep|
                 obj = nil
+                type = nil
                 # Support them passing objects directly, to save some effort.
                 if dep.is_a? Puppet::Type
-                    self.info "requiring %s" % dep.name
                     type = dep.class.name
                     obj = dep
 
@@ -1445,7 +1445,7 @@ class Type < Puppet::Element
                 end
                 # Skip autorequires that we already require
                 next if self.requires?(obj)
-                #self.info "Auto-requiring %s %s" % [obj.class.name, obj.name]
+                info "Auto-requiring %s %s" % [obj.class.name, obj.name]
 
                 self[:require] = [type, dep]
             }
