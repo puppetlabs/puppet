@@ -22,7 +22,11 @@ module Puppet
                 result = nil
             else
                 result = set
-                parent.section[inikey] = should
+                if should == :absent
+                    parent.section[inikey] = nil
+                else
+                    parent.section[inikey] = should
+                end
             end
             return result
         end
@@ -163,6 +167,7 @@ module Puppet
             @inifile = nil
             @yumconf = "/etc/yum.conf"
             @defaultrepodir = nil
+            super
         end
 
         # Return the Puppet::IniConfig::Section for this yumrepo element
