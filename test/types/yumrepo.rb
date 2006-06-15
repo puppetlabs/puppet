@@ -63,6 +63,21 @@ class TestYumRepo < Test::Unit::TestCase
         assert_equal(CREATE_EXP, text)
     end
 
+    # Delete mirrorlist by setting it to :absent and enable baseurl
+    def test_absent
+        copy_datafiles
+        baseurl = 'http://example.com/'
+        devel = make_repo("development", 
+                          { :mirrorlist => 'absent',
+                            :baseurl => baseurl })
+        devel.retrieve
+        assert_apply(devel)
+        inifile = Puppet.type(:yumrepo).read()
+        sec = inifile["development"]
+        assert_nil(sec["mirrorlist"])
+        assert_equal(baseurl, sec["baseurl"])
+    end
+
     def make_repo(name, hash={})
         hash[:name] = name
         Puppet.type(:yumrepo).create(hash)
