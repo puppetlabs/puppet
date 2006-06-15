@@ -999,9 +999,11 @@ module Puppet::Parser
                             child.class
                 end
 
-                # Skip empty builtin types or defined types
-                if result and ! result.empty?
-                    results << result
+                # Skip nil objects or empty transbuckets
+                if result
+                    unless result.is_a? Puppet::TransBucket and result.empty?
+                        results << result
+                    end
                 end
             end
 

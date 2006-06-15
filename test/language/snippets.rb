@@ -469,6 +469,8 @@ class TestSnippets < Test::Unit::TestCase
     def snippet_emptyexec(trans)
         assert(FileTest.exists?("/tmp/emptyexectest"),
             "Empty exec was ignored")
+
+        @@tmpfiles << "/tmp/emptyexextest"
     end
 
     def disabled_snippet_dirchmod(trans)
