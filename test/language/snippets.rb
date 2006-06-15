@@ -466,6 +466,11 @@ class TestSnippets < Test::Unit::TestCase
         # There's nothing to check other than that it works
     end
 
+    def snippet_emptyexec(trans)
+        assert(FileTest.exists?("/tmp/emptyexectest"),
+            "Empty exec was ignored")
+    end
+
     def disabled_snippet_dirchmod(trans)
         dirs = %w{a b}.collect { |letter|
             "/tmp/dirchmodtest%s" % letter

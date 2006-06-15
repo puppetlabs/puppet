@@ -183,8 +183,11 @@ module Puppet
             # the critical data.
             def nodesearch_ldap(node)
                 unless defined? @ldap and @ldap
-                    Puppet.info "Skipping ldap source; no ldap connection"
-                    return nil, []
+                    setup_ldap()
+                    unless @ldap
+                        Puppet.info "Skipping ldap source; no ldap connection"
+                        return nil, []
+                    end
                 end
 
                 if node =~ /\./
@@ -250,7 +253,6 @@ module Puppet
 
             # evaluate our whole tree
             def run(client, facts)
-
                 # We have to leave this for after initialization because there
                 # seems to be a problem keeping ldap open after a fork.
                 unless @setup
