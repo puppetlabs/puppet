@@ -118,10 +118,11 @@ end
 
 # Print the docs for arguments
 def self.arguments
-    puts %{
-===========================
-Puppet Executable Reference
-===========================
+    puts %{---
+inMenu: true
+title: Executable Reference
+---
+# Puppet Executable Reference
 
 Every Puppet executable (with the exception of ``puppetdoc``) accepts all of
 these arguments, but not all of the arguments make sense for every executable.
@@ -159,10 +160,12 @@ end
 
 # Print the docs for types
 def self.types
-    puts %{
-==============
-Type Reference
-==============
+    puts %{---
+inMenu: true
+title: Type Reference
+---
+# Type Reference
+
 
     }
 
@@ -171,9 +174,7 @@ Type Reference
         types[type.name] = type
     }
     puts %{
----------------
-Meta-Parameters
----------------
+## Meta-Parameters
 
 Metaparameters are parameters that work with any element; they are part of the
 Puppet framework itself rather than being part of the implementation of any
@@ -201,9 +202,7 @@ in your manifest, including defined components.
     end
 
     puts %{
------
-Types
------
+## Types
 
 - *namevar* is the parameter used to uniquely identify a type instance.
   This is the parameter that gets assigned when a string is provided before
@@ -242,8 +241,7 @@ Types
 "
 
         puts "
-%s
-%s" % [name, "=" * (name.to_s.length + 4)]
+## %s" % name
         #String.new('n%s\n') % name.to_s
         #puts "**" + type.doc.gsub(/\n\s*/, ' ') + "**\n\n"
         puts scrub(type.doc) + "\n\n"
@@ -294,7 +292,7 @@ Types
             #puts tab(1) + state.doc.gsub(/\n\s*/,' ')
         }
 
-        puts "\n%s Parameters\n''''''''''''''''''''''''''''''" % name.to_s.capitalize
+        puts "\n### %s Parameters\n" % name.to_s.capitalize
         type.parameters.sort { |a,b|
             a.to_s <=> b.to_s
         }.each { |name,param|

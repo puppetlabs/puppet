@@ -44,10 +44,10 @@ module Puppet
                         server => puppet
                     }
 
-                ``puppetmasterd`` creates a filebucket by default, so you can
-                usually back up to your main server with this configuration.  Once
-                you've described the bucket in your configuration, you can use
-                it in any file::
+                The ``puppetmasterd`` daemon creates a filebucket by default,
+                so you can usually back up to your main server with this
+                configuration.  Once you've described the bucket in your
+                configuration, you can use it in any file::
 
                     file { \"/my/file\":
                         source => \"/path/in/nfs/or/something\",
