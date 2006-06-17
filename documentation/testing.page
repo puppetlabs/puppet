@@ -1,3 +1,8 @@
+---
+inMenu: true
+title: Testing
+---
+
 If you want to just test-drive Puppet, making the least commitment possible,
 you can run it directly from the checked-out source_, against a configuration
 in a temporary directory.
@@ -58,9 +63,9 @@ output of ``puppetmasterd`` for details.
 Configuration Testing
 ---------------------
 Once you're successfully running the daemons, there are other useful flags you
-can use to make your life easier.  First is the '--test' flag for ``puppetd`,
-which is the equivalent of running with
-``--onetime --verbose --no-usecacheonfailure``, which means the puppet client
+can use to make your life easier.  First is the '--test' flag for ``puppetd``,
+which is the equivalent of running with ``--onetime --verbose --no-usecacheonfailure``,
+which means the puppet client
 will exit after the first run and will not use the cached configuration if the
 central one is broken somehow (this is useful for those cases where you
 accidentally cause a parsing error in the config).

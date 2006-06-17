@@ -1,5 +1,10 @@
-Organizational Principles
-=========================
+---
+inMenu: true
+title: Custom Types
+---
+
+# Organizational Principles
+
 I won't claim that the terminology currently in place is great, but it's
 what's there, so bear with me.
 
@@ -11,27 +16,26 @@ MetaParameters_, and States_.
 Types are created by calling the ``newtype`` method on ``Puppet::Type``, with
 the name of the type as the only required argument (you can optionally specify
 a parent class; otherwise, Puppet::Type is used as the parent class), and you
-must also provide a block of code used to define the type::
+must also provide a block of code used to define the type:
 
     Puppet::Type.newtype(:database) do
         ... the code ...
     end
 
-A normal type would define multiple states_ and zero or more parameters_.
+A normal type would define multiple states and zero or more parameters.
 Once these are defined, you just put the type into ``lib/puppet/type``
 anywhere in Ruby's search path, and Puppet will autoload the type when you use
 it in the language.
 
 All types should also provide inline documention in the ``@doc`` class
-instance variable.  The text format is in `Restructured Text`_.
+instance variable.  The text format is in Restructured Text.
 
-Parameters
-----------
+## Parameters
+
 These are usually simple attributes that can be used to modify function, but
 they don't directly do any work themselves.  Parameters are defined inside the
-block passed to ``newtype``, using the ``newparam`` method::
+block passed to ``newtype``, using the ``newparam`` method:
 
-    
     Puppet::Type.newtype(:database) do
         newparam(:color) do
             desc "Specify the color you want your database to be."
@@ -41,7 +45,8 @@ block passed to ``newtype``, using the ``newparam`` method::
     end
 
 The ``desc`` method provides documentation for your parameter.  This
-documentation is used by ``puppetdoc`` to create the `Type Reference`_.
+documentation is used by ``puppetdoc`` to create the
+[Type Reference](typedocs.html).
 
 The ``newvalues`` method is optional; if you use it, then only those values
 (in string or symbol form) will be considered valid values, and they will
@@ -52,7 +57,7 @@ At least one of your parameters must be the **namevar**, specified using the
 attribute that is considered to uniquely identify a given instance, such as a
 file's path or a user's name.  If a separate name is not provided, then this
 value is returned by the ``name`` method on a type instance, but you can
-specify both a name and the namevar, although it can be confusing internally::
+specify both a name and the namevar, although it can be confusing internally:
 
     file { sshconfig:
         path => "/etc/ssh/ssh_config",
@@ -66,7 +71,7 @@ always use the namevar and not the ``name`` method.
 You can specify regexes in addition to literal values; matches against regexes
 always happen after equality comparisons against literal values, and those
 matches are not converted to symbols.  For instance, given the following
-definition::
+definition:
 
     newparam(:color) do
         desc "Your color, and stuff."
@@ -77,7 +82,7 @@ definition::
 If you provide "blue" as the value, then your parameter will get set to
 ``:blue``, but if you provide "green", then it will get set to "green".
 
-Currently, you set parameters by treating the containing object as a hash::
+Currently, you set parameters by treating the containing object as a hash:
 
     db[:color] = :blue
 
@@ -87,24 +92,24 @@ put into the type instance's ``@parameters`` hash, indexed by parameter name.
 The parameter object gets its ``@parent`` instance variable set so that it
 points back to the containing type instance.
 
-You can similarly retrieve the parameter::
+You can similarly retrieve the parameter:
 
     puts db[:color]
 
 Within the type instance itself (i.e., in instance methods), you can use these
 same methods to set and retrieve the values, or you can call the ``value``
-methods directly, once the object exists::
+methods directly, once the object exists:
 
     # Create the param
     self[:color] = :blue
     color = @parameters[:color].value
     @parameters[:color].value = :red
 
-Validation and Munging
-++++++++++++++++++++++
+### Validation and Munging
+
 If your parameter does not have a defined list of values, or you need to
 convert the values in some way, you can use the ``validate`` and ``munge``
-hooks::
+hooks:
 
     newparam(:color) do
         desc "Your color, and stuff."
@@ -145,8 +150,8 @@ Lastly, validation and munging *only* happen when a value is assigned.  They
 have no role to play at all during use of a given value, only during
 assignment.
 
-MetaParameters
---------------
+## MetaParameters
+
 These are just like parameters in all but two ways.  First, they are defined
 using the ``newmetaparam`` method, and second, when defined they are valid for
 all types, not just a single type.  See the end of type.rb for examples.
@@ -155,15 +160,15 @@ You should never define any of these in an average custom type; if you need a
 new MetaParameter, contact the main developers about getting it added to the
 core.
 
-States
-------
+## States
+
 States are what usually do the actual work on the system.  These are actually
 a subclass of parameters, but with much more functionality.  Without
 exception, every state needs to define at least two methods:  ``retrieve`` and
 ``sync``.
 
-The Variables
-+++++++++++++
+### The Variables
+
 The ``retrieve`` and ``sync`` methods work in tandem with two important
 instance variables, ``@is`` and ``@should``.  The first should reflect the
 current state of the, um, state (I already admitted the nomenclature is bad),
@@ -172,12 +177,12 @@ whatever.  The second reflects what the current state, um, should be, and it
 is *always* an array.
 
 Because there are two variables that contain values, assignment to states is a
-bit odd.  By default, ``@should`` is used when you use the indexing methods::
+bit odd.  By default, ``@should`` is used when you use the indexing methods:
 
     file[:owner] = "root"
 
 This sets ``@should`` to be ``["owner"]``.  You would not normally set the
-``@is`` variable from outside the instance, but sometimes it's necessary::
+``@is`` variable from outside the instance, but sometimes it's necessary:
 
     file.is = [:owner, "root"]
 
@@ -190,7 +195,7 @@ to return the whole array.  You'll see why in a minute.
 I should probably explain why ``@should`` is always an array:  You can always
 specify multiple values for any state, and by default, if the current state is
 in that list of values, then no work is done.  That is, given the following
-definition::
+definition:
 
     file { "/etc/sudoers":
         owner => root, group => [wheel, root], mode => 440
@@ -199,12 +204,11 @@ definition::
 If the group is currently ``wheel`` or ``root``, then the file is considered
 in sync.
 
-The Methods
-+++++++++++
+### The Methods
 
-``retrieve`` is used to get the current value of the state on the machine.
-For instance, here is a trivialized version of how to retrieve a File's
-owner::
+The ``retrieve`` method is used to get the current value of the state on the
+machine.  For instance, here is a trivialized version of how to retrieve a
+File's owner:
 
     newstate(:owner) do
         def retrieve
@@ -219,7 +223,7 @@ that it should not modify the system in any way; if someone runs their
 configuration in ``noop`` mode, then ``retrieve`` is still called, so it's
 important that it not modify the state of the system.
 
-The other critical method is ``sync``, which actually modifies the machine::
+The other critical method is ``sync``, which actually modifies the machine:
 
     newstate(:owner) do
         def retrieve
@@ -242,7 +246,7 @@ subscribe to specific events, rather than all events from a given object.
 There's a third method, ``insync?``, which you will not normally override but
 is important to understand.  This method is used to determine if your state is
 in sync, and thus if any work needs to be done.  The default method looks a
-lot like this::
+lot like this:
 
     def insync?
         @should.include?(@is)
@@ -251,12 +255,12 @@ lot like this::
 Notice that we're checking to see if our current value is anywhere in the
 ``@should`` list.
 
-State Values
-++++++++++++
+### State Values
+
 Just like parameters, you can define allowed values for states, but there's
 one significant change:  With state values, you have to specify the code that
 will achieve that state.  Here is a trivialized version of ``ensure`` state on
-files::
+files:
 
     newstate(:ensure) do
         newvalue(:file) do
@@ -295,18 +299,18 @@ one.  In this example, files have ``set_file``, ``set_directory``, and
 All of these are convenience methods, of course; you can have a single opaque
 all-powerful ``sync`` method, you don't have to split it up using values.
 
-Process
-=======
+# Process
+
 Now that you have an idea of how types are constructed, let's look at the
 process of applying one or more type instances.
 
-Dependency Sorting
-------------------
+## Dependency Sorting
+
 I'll ignore the process of turning Puppet manifests into types; that's handled
-in the `How It Works`_ document.  The collection of objects are always
-contained in a top-level instance of the ``component`` type (this is an
-unfortunate hold-over from some flawed design ideas in the early development
-of Puppet -- expect it to change internally at some point).
+in the [How It Works](howitworks.html) document.  The collection of objects
+are always contained in a top-level instance of the ``component`` type (this
+is an unfortunate hold-over from some flawed design ideas in the early
+development of Puppet -- expect it to change internally at some point).
 
 When work is begun, ``evaluate`` is called on the component (usually by
 client/master.rb); this method does a topological sort based on dependency
@@ -314,8 +318,8 @@ information on all contained objects (components can contain other components,
 so it's a recursive sort), creates a new transaction, and adds the now-sorted
 flat list of objects to the transaction.
 
-Transactions
-------------
+## Transactions
+
 Once the transaction has all of the objects, ``evaluate`` is called on it.
 This method is the heart of action in Puppet; it's relatively short, but
 determines all of the actual function in a given run.
@@ -327,14 +331,14 @@ which will cause it to only run objects that have those tags).  For each of
 those found objects, the transaction calls ``evaluate`` on the object, which
 in turn calls ``statechanges`` on the object.
 
-``statechanges`` iterates across each instantiated state (i.e., file objects
-have many states, but only those states for which you've provided a value have
-instances in a given file object's ``@states`` variables), looking for
-out-of-sync states.  The states are checked in the order they're defined; this
-often does not matter, but for classes like ``file`` it matters a lot.  For
-each state that's out of sync, a ``StateChange`` object is created; it's
-basically an organizational class that knows how to sync a state and log the
-work it's doing.
+The ``statechanges`` method iterates across each instantiated state (i.e.,
+file objects have many states, but only those states for which you've provided
+a value have instances in a given file object's ``@states`` variables),
+looking for out-of-sync states.  The states are checked in the order they're
+defined; this often does not matter, but for classes like ``file`` it matters
+a lot.  For each state that's out of sync, a ``StateChange`` object is
+created; it's basically an organizational class that knows how to sync a state
+and log the work it's doing.
 
 There's one exception to this "all states are checked" rule:  If the instance
 has an ``ensure`` state and that state is out of sync, then Puppet assumes
@@ -367,8 +371,8 @@ sure your ``ensure`` state can completely create or destroy the object, and
 return events if you made a change.  Other than that, you should not have to
 think about transactions or how they work.
 
-Conclusion
-==========
+# Conclusion
+
 That's all you need for your type.  See the existing types for different ways
 to treat this.  You can create methods on your type and call those methods
 from the state (like packages do), or put enough complexity into each state
@@ -376,6 +380,3 @@ that they end up in their own file (like files do).
 
 Comments on this document are appreciated.
 
-.. _type reference: typedocs
-.. _restructured text: http://docutils.sourceforge.net/rst.html
-.. _how it works:  howitworks

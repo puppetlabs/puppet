@@ -1,3 +1,5 @@
+# vim: syntax=ruby
+
 htmlfiles = []
 
 CLEAN = []

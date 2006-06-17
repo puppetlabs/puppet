@@ -1,5 +1,9 @@
-Introduction
-============
+---
+inMenu: true
+title: How It Works
+---
+# Introduction
+
 The goal of this document is to describe how a manifest you write in Puppet
 gets converted to work being done on the system.  This process is relatively
 complex, but you seldom need to know many of the details; this document only
@@ -7,13 +11,13 @@ exists for those who are pushing the boundaries of what Puppet can do or who
 don't understand why they are seeing a particular error.  It can also help
 those who are hoping to extend Puppet beyond its current abilities.
 
-High Level
-==========
+# High Level
+
 When looked at coarsely, Puppet has three main phases of execution --
 compiling, instantiation, and configuration.
 
-Compiling
----------
+## Compiling
+
 Here is where we convert from a text-based manifest into the actual code we'll
 be executing.  Any code not meant for the host in question is ignored, and any
 code that is meant for that host is fully interpolated, meaning that variables
@@ -28,8 +32,8 @@ In a networked setup, this phase happens entirely on the server.  The output
 of this phase is a collection of very simplistic elements that closely
 resemble basic hashes and arrays.
 
-Instantiation
--------------
+## Instantiation
+
 This phase converts the simple hashes and arrays into Puppet library objects.
 Because this phase requires so much information about the client in order to
 work correctly (e.g., what type of packaging is used, what type of services,
@@ -45,8 +49,8 @@ on the server.
 The output of this phase is the machine's entire configuration in memory and
 in a form capable of modifying the local system.
 
-Configuration
--------------
+## Configuration
+
 This is where the Puppet library elements actually modify the system.  Each of
 them compares their specified state to the state on the machine and make any
 modifications that are necessary.  If the machine exactly matches the
@@ -54,12 +58,12 @@ specified configuration, then no work is done.
 
 The output of this phase is a correctly configured machine, in one pass.
 
-Lower Level
-===========
+# Lower Level
+
 These three high level phases can each be broken down into more steps.
 
-Compile Phase 1: Parsing
-------------------------
+## Compile Phase 1: Parsing
+
 :Inputs: Manifests written in the Puppet language
 :Outputs: Parse trees (instances of AST_ objects)
 :Entry: `Puppet::Parser::Parser#parse`_
@@ -76,10 +80,10 @@ using nodes or no nodes, whether you are using the standalone puppet
 interpreter or the client/server system, parsing happens as soon as Puppet
 starts.
 
-Compile Phase 2: Interpreting
------------------------------
+## Compile Phase 2: Interpreting
+
 :Inputs: Parse trees (instances of AST_ objects) and client information
-    (collection of facts output by Facter_)
+    (collection of facts output by [Facter][])
 :Outputs: Trees of TransObject_ and TransBucket_ instances (from
     transportable.rb)
 :Entry: `Puppet::Parser::AST#evaluate`_
@@ -101,8 +105,8 @@ tree of simple transportable_ objects which maps roughly to the configuration
 as defined in the manifests -- it is still a tree, but it is a tree of classes
 and the elements contained in those classes.
 
-Nodes vs. No Nodes
-''''''''''''''''''
+### Nodes vs. No Nodes
+
 When you use Puppet, you have the option of using `node elements`_ or not.  If
 you do not use node elements, then the entire configuration is interpreted
 every time a client connects, from the top of the parse tree down.  In this
@@ -114,8 +118,8 @@ node-specific code.  When a node connects, the interpreter looks for the code
 associated with that node name (retrieved from the Facter facts) and compiles
 just that bit on demand.
 
-Configuration Transport
------------------------
+## Configuration Transport
+
 :Inputs: Transportable_ objects
 :Outputs: Transportable_ objects
 :Entry: `Puppet::Server::Master#getconfig`_
@@ -132,8 +136,8 @@ receives the configuration, unescapes it, caches it to disk in case the server
 is not available on the next run, and then uses YAML to convert it back to
 normal Ruby Transportable objects.
 
-Instantiation Phase
--------------------
+## Instantiation Phase
+
 :Inputs: Transportable_ objects
 :Outputs: `Puppet::Type`_ instances
 :Entry: `Puppet::Client::MasterClient#getconfig`_
@@ -159,8 +163,8 @@ instantiated after the requiring object.  So, the finalization phase is used
 to actually handle all of these requirements -- Puppet objects use their
 references to objects and verify that the objects actually exist.
 
-Configuration Phase 1: Comparison
----------------------------------
+## Configuration Phase 1: Comparison
+
 :Inputs: `Puppet::Type`_ instances
 :Outputs: `Puppet::StateChange`_ objects collected in a `Puppet::Transaction`_
     instance
@@ -185,8 +189,8 @@ always fixed before the objects that depend on them.
 The top-level component (which is also responsible for this sorting) creates a
 Puppet::Transaction instance and inserts these changes into it.
 
-Notes About Recursion
-'''''''''''''''''''''
+### Notes About Recursion
+
 Recursion muddies this phase considerably.  While it's tempting to merely
 handle recursion in the instantiation phase, the state on disk can (and will)
 change between runs, so the configured state and the on-disk state must be
@@ -203,8 +207,8 @@ not make sense at instantiation time, only at comparison time.
 This might introduce some strangenesses, though, and it is expected that this
 could cause interesting-in-a-not-particularly-good-way edge cases.
 
-Configuration Phase 2: Syncing
-------------------------------
+## Configuration Phase 2: Syncing
+
 :Inputs: `Puppet::Transaction`_ instance containing `Puppet::StateChange`_
     instances
 :Outputs: Completely configured operating system
@@ -248,13 +252,13 @@ and why that would happen.  If this is a critical feature for you or you have
 a brilliant way to go about creating it, I would love to hear it, but it is
 currently a back-burner goal.
 
-Conclusion
-==========
+# Conclusion
+
 That's the entire flow of how a Puppet manifest becomes a complete
 configuration.  There is more to the Puppet system, such as FileBuckets, but
 those are more support staff rather than the main attraction.
 
-.. _facter: /projects/facter
+[facter] /projects/facter
 .. _node elements: /projects/puppet/documentation/structures#nodes
 .. _yaml: http://www.yaml.org/
 .. _Puppet::Parser::Parser#parse: /downloads/puppet/apidocs/classes/Puppet/Parser/Parser.html

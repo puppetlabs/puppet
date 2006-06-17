@@ -1,5 +1,8 @@
-Overview
-========
+---
+inMenu: true
+---
+# Overview
+
 Puppet relies on standards wherever possible.  In the case of security, it uses 
 standard SSL certificates for client and server verification.  Because of the
 cost of buying signed certificates for every client and the complexity of
@@ -9,17 +12,17 @@ generate certificates for other purposes.  The primary goal in certificate
 management within Puppet has been to keep it simple, and wherever possible to
 not make it even noticeable.
 
-Certificates
-============
+# Certificates
 
-Authentication
---------------
+
+## Authentication
+
 Certificates are the only method of authentication -- if a client's
 certificate can be verified using standard SSL verification mechanisms, then
 it is considered authenticated.
 
-Client Certificate Generation
------------------------------
+## Client Certificate Generation
+
 The Puppet server, ``puppetmasterd``, is normally also the CA.  Clients who
 do not yet have signed certificates will automatically generate a key pair and
 a certificate request, and then will connect to the server and provide it
@@ -38,8 +41,8 @@ This configuration would autosign certificate requests for
 This configuration file is read each time a signature is asked for, so changes
 to it can be short-lived and will be immediately noticed.
 
-Server-Side Certificate Management
-----------------------------------
+# Server-Side Certificate Management
+
 In the normal case, certificate auto-signing will be disabled.  In these
 cases, certificates will have to be signed using the ``puppetca`` utility.
 Prior to the 1.0 release it is expected that there will be email notification
@@ -49,8 +52,8 @@ must be watched or ``puppetca --list`` can be used list waiting requests.
 Once a request arrives, ``puppetca --sign <hostname>`` can be used to sign the
 request.  Adding the ``--all`` flag will sign all outstanding requests.
 
-Access and Authorization
-========================
+# Access and Authorization
+
 Puppet currently has few network functions, so security has so far been
 treated by them individually.  It is expected that there will be some
 system-wide security hooks prior to the 1.0 release, but the certificate

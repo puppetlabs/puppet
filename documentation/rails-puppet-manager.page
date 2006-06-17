@@ -1,9 +1,16 @@
-I have begun work on a simplistic web-based Puppet manager based on Rails_,
-called PuppetShow.  It's in a very primitive state -- including having no
-authentication, so use at your own risk -- but it's a good proof of concept.
+---
+inMenu: true
+title: PuppetShow
+---
 
-To get it working, first check out the code_.  Then set up your apache config
-to serve it.  This is what mine looks like::
+I have begun work on a simplistic web-based Puppet manager based on
+[Rails](http://rubyonrails.org), called PuppetShow.  It's in a very primitive
+state -- including having no authentication, so use at your own risk -- but
+it's a good proof of concept.
+
+To get it working, first check out the
+[code](https://reductivelabs.com/svn/puppetshow).  Then set up your apache
+config to serve it.  This is what mine looks like:
 
     <VirtualHost 192.168.0.101:80 192.168.0.102:80 192.168.0.3:80>
         ServerAdmin luke@madstop.com
@@ -26,7 +33,7 @@ Now we just need to get the puppet internal stuff working.  We could use
 either ``rake`` or Puppet to do this, but for whatever reason I decided to use
 Puppet.  I've created a ``setup.pp`` file in the root of the tree, so you just
 need to modify that as appropriate (in particular, I have a Facter lib that
-sets ``$home`` for me, so you'll probably need to set that), then run::
+sets ``$home`` for me, so you'll probably need to set that), then run:
 
     sudo puppet -v setup.pp
 
@@ -34,7 +41,7 @@ At that point you should have a functional app.  Like I said, there's no
 navigation at all, so you need to know what's out there.  The first thing you
 need to do is start a daemon that this app can connect to.  Pick your victim,
 create a namespace auth file (defaults to
-``/etc/puppet/namespaceauth.conf``)::
+``/etc/puppet/namespaceauth.conf``):
     
     [fileserver]
         allow *.madstop.com
@@ -45,7 +52,7 @@ create a namespace auth file (defaults to
     [pelementserver]
         allow puppet.madstop.com
 
-Then start your client::
+Then start your client:
 
     puppetd -v --listen --no-client
 
@@ -59,6 +66,3 @@ want to look at users; this would be your URL:
 http://puppet.domain.com/remote/culain/user/list
 
 Replace as appropriate for your site.
-
-.. _rails: http://rubyonrails.org
-.. _code: https://reductivelabs.com/svn/puppetshow

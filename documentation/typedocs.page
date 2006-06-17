@@ -1,12 +1,13 @@
-==============
-Type Reference
-==============
+---
+inMenu: true
+title: Type Reference
+---
+# Type Reference
+
 
     
 
----------------
-Meta-Parameters
----------------
+## Meta-Parameters
 
 Metaparameters are parameters that work with any element; they are part of the
 Puppet framework itself rather than being part of the implementation of any
@@ -144,9 +145,7 @@ in your manifest, including defined components.
     This way, when you're testing a configuration you can run just the
     portion you're testing.
 
------
-Types
------
+## Types
 
 - *namevar* is the parameter used to uniquely identify a type instance.
   This is the parameter that gets assigned when a string is provided before
@@ -176,8 +175,7 @@ Types
 ----------------
 
 
-cron
-========
+## cron
 Installs and manages cron jobs.  All fields except the command 
 and the user are optional, although specifying no periodic
 fields would result in the command being executed every
@@ -201,8 +199,7 @@ Example::
 
 
 
-Cron Parameters
-''''''''''''''''''''''''''''''
+### Cron Parameters
 - **command**
     The command to execute in the cron job.  The environment
     provided to the command varies by local system rules, and it is
@@ -213,7 +210,18 @@ Cron Parameters
     All cron parameters support ``absent`` as a value; this will
     remove any existing values for that field.
 - **ensure**
-    The basic state that the object should be in.  Valid values are ``absent``, ``present``.
+    The basic state that the object should be in.  Valid values are ``present``, ``absent``.
+- **environment**
+    Any environment settings associated with this cron job.  They
+    will be stored between the header and the job in the crontab.  There
+    can be no guarantees that other, earlier settings will not also
+    affect a given cron job.
+    
+    Also, Puppet cannot automatically determine whether an existing,
+    unmanaged environment setting is associated with a given cron
+    job.  If you already have cron jobs with environment settings,
+    then Puppet will keep those settings in the same place in the file,
+    but will not associate them with a specific job.
 - **hour**
     The hour at which to run the cron job. Optional;
     if specified, must be between 0 and 23, inclusive.
@@ -254,8 +262,7 @@ Cron Parameters
 ----------------
 
 
-exec
-========
+## exec
 Executes external commands.  It is critical that all commands
 executed using this mechanism can be run multiple times without
 harm, i.e., they are *idempotent*.  One useful way to create idempotent
@@ -301,8 +308,7 @@ you to get a native element type for the work you are doing.  In general,
 it is a Puppet bug if you need ``exec`` to do your work.
 
 
-Exec Parameters
-''''''''''''''''''''''''''''''
+### Exec Parameters
 - **command** (*namevar*)
     The actual command to execute.  Must either be fully qualified
     or a search path for the command must be provided.  If the command
@@ -399,8 +405,7 @@ Exec Parameters
 ----------------
 
 
-file
-========
+## file
 Manages local files, including setting ownership and
 permissions, creation of both files and directories, and
 retrieving entire files from remote servers.  As Puppet matures, it
@@ -413,13 +418,13 @@ Reductive Labs and we can hopefully work with you to develop a
 native element to support what you are doing.
 
 
-File Parameters
-''''''''''''''''''''''''''''''
+### File Parameters
 - **backup**
     Whether files should be backed up before
     being replaced.  If a filebucket_ is specified, files will be
     backed up there; else, they will be backed up in the same directory
-    with a ``.puppet-bak`` extension.
+    with a ``.puppet-bak`` extension,, and no backups
+    will be made if backup is ``false``.
     
     To use filebuckets, you must first create a filebucket in your
     configuration::
@@ -428,10 +433,10 @@ File Parameters
             server => puppet
         }
     
-    ``puppetmasterd`` creates a filebucket by default, so you can
-    usually back up to your main server with this configuration.  Once
-    you've described the bucket in your configuration, you can use
-    it in any file::
+    The ``puppetmasterd`` daemon creates a filebucket by default,
+    so you can usually back up to your main server with this
+    configuration.  Once you've described the bucket in your
+    configuration, you can use it in any file::
     
         file { "/my/file":
             source => "/path/in/nfs/or/something",
@@ -448,7 +453,7 @@ File Parameters
     filebucketed files.
 - **checksum**
     How to check whether a file has changed.  **md5**/*lite-md5*/
-    *time*/*mtime*  Valid values are ``md5lite``, ``time``, ``timestamp``, ``mtime``, ``nosum``, ``md5``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
+    *time*/*mtime*  Valid values are ``timestamp``, ``md5``, ``mtime``, ``nosum``, ``time``, ``md5lite``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
 - **content**
     Specify the contents of a file as a string.  Newlines, tabs, and spaces
     can be specified using the escaped syntax (e.g., \n for a newline).  The
@@ -497,7 +502,7 @@ File Parameters
     You can also make recursive symlinks, which will create a
     directory structure that maps to the target directory,
     with directories corresponding to each directory
-    and links corresponding to each file.  Valid values are ``link``, ``absent`` (also called ``false``), ``directory``, ``file`` (also called ``present``).  Values can also match ``(?-mix:.)``.
+    and links corresponding to each file.  Valid values are ``directory``, ``absent`` (also called ``false``), ``link``, ``file`` (also called ``present``).  Values can also match ``(?-mix:.)``.
 - **group**
     Which group should own the file.  Argument can be either group
     name or group ID.
@@ -563,8 +568,7 @@ File Parameters
 ----------------
 
 
-filebucket
-==============
+## filebucket
 A repository for backing up files.  If no filebucket is
 defined, then files will be backed up in their current directory,
 but the filebucket can be either a host- or site-global repository
@@ -580,8 +584,7 @@ when transactions are fully supported filebuckets will be used to
 undo transactions.
 
 
-Filebucket Parameters
-''''''''''''''''''''''''''''''
+### Filebucket Parameters
 - **name**
     The name of the filebucket.
 - **path**
@@ -601,8 +604,7 @@ Filebucket Parameters
 ----------------
 
 
-group
-=========
+## group
 Manage groups.  This type can only create groups.  Group
 membership must be managed on individual users.  This element type
 uses the prescribed native tools for creating groups and generally
@@ -614,10 +616,9 @@ for Mac OS X, NetInfo is used.  This is currently unconfigurable,
 but if you desperately need it to be so, please contact us.
 
 
-Group Parameters
-''''''''''''''''''''''''''''''
+### Group Parameters
 - **ensure**
-    The basic state that the object should be in.  Valid values are ``absent``, ``present``.
+    The basic state that the object should be in.  Valid values are ``present``, ``absent``.
 - **gid**
     The group ID.  Must be specified numerically.  If not
     specified, a number will be picked, which can result in ID
@@ -634,15 +635,13 @@ Group Parameters
 ----------------
 
 
-host
-========
+## host
 Installs and manages host entries.  For most systems, these
 entries will just be in /etc/hosts, but some systems (notably OS X)
 will have different solutions.
 
 
-Host Parameters
-''''''''''''''''''''''''''''''
+### Host Parameters
 - **alias**
     Any alias the host might have.  Multiple values must be
     specified as an array.  Note that this state has the same name
@@ -650,7 +649,7 @@ Host Parameters
     make those aliases available in your Puppet scripts and also on
     disk.
 - **ensure**
-    The basic state that the object should be in.  Valid values are ``absent``, ``present``.
+    The basic state that the object should be in.  Valid values are ``present``, ``absent``.
 - **ip**
     The host's IP address.
 - **name**
@@ -661,14 +660,12 @@ Host Parameters
 ----------------
 
 
-mount
-=========
+## mount
 Manages mounted mounts, including putting mount
 information into the mount table.
 
 
-Mount Parameters
-''''''''''''''''''''''''''''''
+### Mount Parameters
 - **atboot**
     Whether to mount the mount at boot.  Not all platforms
     support this.
@@ -685,7 +682,7 @@ Mount Parameters
     Whether to dump the mount.  Not all platforms
     support this.
 - **ensure**
-    Create, remove, or mount a filesystem mount.  Valid values are ``mounted``, ``absent``, ``present``.
+    Create, remove, or mount a filesystem mount.  Valid values are ``present``, ``mounted``, ``absent``.
 - **fstype**
     The mount type.  Valid values depend on the
     operating system.
@@ -702,8 +699,7 @@ Mount Parameters
 ----------------
 
 
-package
-===========
+## package
 Manage packages.  There is a basic dichotomy in package
 support right now:  Some package types (e.g., yum and apt) can
 retrieve their own package files, while others (e.g., rpm and
@@ -717,8 +713,7 @@ using the ``type`` parameter; obviously, if you specify that you
 want to use ``rpm`` then the ``rpm`` tools must be available.
 
 
-Package Parameters
-''''''''''''''''''''''''''''''
+### Package Parameters
 - **adminfile**
     A file containing package defaults for installing packages.
     This is currently only used on Solaris.  The value will be
@@ -733,7 +728,7 @@ Package Parameters
     What state the package should be in.
     *latest* only makes sense for those packaging formats that can
     retrieve new packages on their own and will throw an error on
-    those that cannot.  Valid values are ``absent``, ``latest``, ``present`` (also called ``installed``).
+    those that cannot.  Valid values are ``latest``, ``present`` (also called ``installed``), ``absent``.
 - **instance**
     A read-only parameter set by the package.
 - **name**
@@ -800,15 +795,13 @@ Package Parameters
 ----------------
 
 
-port
-========
+## port
 Installs and manages port entries.  For most systems, these
 entries will just be in /etc/services, but some systems (notably OS X)
 will have different solutions.
 
 
-Port Parameters
-''''''''''''''''''''''''''''''
+### Port Parameters
 - **alias**
     Any aliases the port might have.  Multiple values must be
     specified as an array.  Note that this state has the same name as
@@ -817,7 +810,7 @@ Port Parameters
 - **description**
     The port description.
 - **ensure**
-    The basic state that the object should be in.  Valid values are ``absent``, ``present``.
+    The basic state that the object should be in.  Valid values are ``present``, ``absent``.
 - **name**
     The port name.
 - **number**
@@ -834,8 +827,7 @@ Port Parameters
 ----------------
 
 
-schedule
-============
+## schedule
 Defined schedules for Puppet.  The important thing to understand
 about how schedules are currently implemented in Puppet is that they
 can only be used to stop an element from being applied, they never
@@ -880,8 +872,7 @@ This will cause elements to be applied every 30 minutes by default.
 
 
 
-Schedule Parameters
-''''''''''''''''''''''''''''''
+### Schedule Parameters
 - **name**
     The name of the schedule.  This name is used to retrieve the
     schedule when assigning it to an object::
@@ -952,8 +943,7 @@ Schedule Parameters
 ----------------
 
 
-service
-===========
+## service
 Manage running services.  Service support unfortunately varies
 widely by platform -- some platforms have very little if any
 concept of a running service, and some have a very codified and
@@ -965,8 +955,7 @@ can provide the better behaviour you will get.  Or, you can just
 use a platform that has very good service support.
 
 
-Service Parameters
-''''''''''''''''''''''''''''''
+### Service Parameters
 - **binary**
     The path to the daemon.  This is only used for
     systems that do not support init scripts.  This binary will be
@@ -1031,11 +1020,11 @@ Service Parameters
     sense to set this parameter, as the default is based on
     the builtin service facilities.  The service types available are:
     
-    * ``base``: You must specify everything.
-    * ``init``: Assumes ``start`` and ``stop`` commands exist, but you
+    * **base**: You must specify everything.
+    * **init**: Assumes ``start`` and ``stop`` commands exist, but you
       must specify everything else.
-    * ``debian``: Debian's own specific version of ``init``.
-    * ``smf``: Solaris 10's new Service Management Facility.
+    * **debian**: Debian's own specific version of ``init``.
+    * **smf**: Solaris 10's new Service Management Facility.
       Valid values are ``base``, ``init``, ``debian``, ``redhat``, ``smf``.
 
 
@@ -1043,23 +1032,20 @@ Service Parameters
 ----------------
 
 
-sshkey
-==========
-Installs and manages host entries.  For most systems, these
-entries will just be in /etc/hosts, but some systems (notably OS X)
-will have different solutions.
+## sshkey
+Installs and manages ssh host keys.  At this point, this type
+only knows how to install keys into /etc/ssh/ssh_known_hosts, and
+it cannot manage user authorized keys yet.
 
 
-Sshkey Parameters
-''''''''''''''''''''''''''''''
+### Sshkey Parameters
 - **alias**
     Any alias the host might have.  Multiple values must be
     specified as an array.  Note that this state has the same name
     as one of the metaparams; using this state to set aliases will
-    make those aliases available in your Puppet scripts and also on
-    disk.
+    make those aliases available in your Puppet scripts.
 - **ensure**
-    The basic state that the object should be in.  Valid values are ``absent``, ``present``.
+    The basic state that the object should be in.  Valid values are ``present``, ``absent``.
 - **key**
     The key itself; generally a long string of hex digits.
 - **name**
@@ -1072,14 +1058,12 @@ Sshkey Parameters
 ----------------
 
 
-symlink
-===========
+## symlink
 Create symbolic links to existing files.  **This type is deprecated;
 use file_ instead.**
 
 
-Symlink Parameters
-''''''''''''''''''''''''''''''
+### Symlink Parameters
 - **ensure**
     Create a link to another file.  Currently only symlinks
     are supported, and attempts to replace normal files with
@@ -1108,13 +1092,11 @@ Symlink Parameters
 ----------------
 
 
-tidy
-========
+## tidy
 Remove unwanted files based on specific criteria.
 
 
-Tidy Parameters
-''''''''''''''''''''''''''''''
+### Tidy Parameters
 - **age**
     Tidy files whose age is equal to or greater than
     the specified number of days.
@@ -1122,7 +1104,8 @@ Tidy Parameters
     Whether files should be backed up before
     being replaced.  If a filebucket_ is specified, files will be
     backed up there; else, they will be backed up in the same directory
-    with a ``.puppet-bak`` extension.
+    with a ``.puppet-bak`` extension,, and no backups
+    will be made if backup is ``false``.
     
     To use filebuckets, you must first create a filebucket in your
     configuration::
@@ -1131,10 +1114,10 @@ Tidy Parameters
             server => puppet
         }
     
-    ``puppetmasterd`` creates a filebucket by default, so you can
-    usually back up to your main server with this configuration.  Once
-    you've described the bucket in your configuration, you can use
-    it in any file::
+    The ``puppetmasterd`` daemon creates a filebucket by default,
+    so you can usually back up to your main server with this
+    configuration.  Once you've described the bucket in your
+    configuration, you can use it in any file::
     
         file { "/my/file":
             source => "/path/in/nfs/or/something",
@@ -1173,8 +1156,7 @@ Tidy Parameters
 ----------------
 
 
-user
-========
+## user
 Manage users.  Currently can create and modify users, but
 cannot delete them.  Theoretically all of the parameters are
 optional, but if no parameters are specified the comment will
@@ -1190,12 +1172,11 @@ for Mac OS X, NetInfo is used.  This is currently unconfigurable,
 but if you desperately need it to be so, please contact us.
 
 
-User Parameters
-''''''''''''''''''''''''''''''
+### User Parameters
 - **comment**
     A description of the user.  Generally is a user's full name.
 - **ensure**
-    The basic state that the object should be in.  Valid values are ``absent``, ``present``.
+    The basic state that the object should be in.  Valid values are ``present``, ``absent``.
 - **gid**
     The user's primary group.  Can be specified numerically or
     by name.
@@ -1229,4 +1210,4 @@ User Parameters
 ----------------
 
 
-*This page autogenerated on Wed May 10 11:09:04 CDT 2006*
+*This page autogenerated on Fri Jun 16 14:45:03 PDT 2006*

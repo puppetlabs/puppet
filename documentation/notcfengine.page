@@ -1,14 +1,19 @@
-Cfengine_ is currently the most widely deployed configuration management tool.
-In many ways, Puppet_ can be thought of as a next-generation version of
-cfengine, in that many of puppet's design goals are specifically derived from
-experience with cfengine and are meant to overcome many of cfengine's
-weaknesses.
+---
+inMenu: true
+title: Puppet vs. Cfengine
+---
+
+[Cfengine](http://www.cfengine.org) is currently the most widely deployed
+configuration management tool.  In many ways, [Puppet](/projects/puppet) can
+be thought of as a next-generation version of cfengine, in that many of
+puppet's design goals are specifically derived from experience with cfengine
+and are meant to overcome many of cfengine's weaknesses.
 
 This document summarizes the primary advances that Puppet makes over
 cfengine's current state.
 
-Abstraction
------------
+# Abstraction
+
 Cfengine is a great way to scale common administrative practices -- you can
 move from using SSH and a for loop to using Cfengine pretty smoothly.
 However, there is just as much complexity present in either form.  You still
@@ -24,8 +29,8 @@ each system.  Puppet administrators are free to focus on the complexity of
 their networks, rather than being forced to also handle that complexity plus
 the complexity of the differences between the operating systems.
 
-Dedication
-----------
+# Dedication
+
 Puppet will be supported by an organization dedicated to creating
 the best system automation software, and I expect to have a staff of at
 least a few people dedicated to development, support, consulting, and custom
@@ -46,8 +51,8 @@ goal is also to have multiple developers dedicated full time to Puppet
 development, which should significantly accelerate feature development
 compared to cfengine.
 
-Language Power
---------------
+# Language Power
+
 While the two languages are superficially similar, the puppet language already
 supports two critical features that cfengine forces you to hack around.
 Puppet supports building higher level objects out of a set of low-level
@@ -55,37 +60,37 @@ objects including the ability to parameterize, and has a built-in ability to
 express relationships between objects.  For instance, here is how you might
 define an 'apache' component::
 
-  define apache(docroot,htmlsource,configfile) {
-    # make sure the package is installed
-    package { apache: version => "2.0.51", installed => true }
+    define apache(docroot,htmlsource,configfile) {
+        # make sure the package is installed
+        package { apache: version => "2.0.51", installed => true }
 
-    # pull down the data to serve
-    file { $docroot: source => $htmlsource }
+        # pull down the data to serve
+        file { $docroot: source => $htmlsource }
 
-    # and the config file
-    file { "/etc/apache/httpd.conf": source => $configfile }
+        # and the config file
+        file { "/etc/apache/httpd.conf": source => $configfile }
 
-    # restart the apache service if the package is reinstalled or if
-    # the config file changes; notice no need for 'define' statements
-    # or AddInstallable calls
-    service { apache: running => true,
-      requires => [ package[apache], file["/etc/apache/httpd.conf"] ]
+        # restart the apache service if the package is reinstalled or if
+        # the config file changes; notice no need for 'define' statements
+        # or AddInstallable calls
+        service { apache: running => true,
+            requires => [ package[apache], file["/etc/apache/httpd.conf"] ]
+        }
     }
-  }
 
-  # You could now have different versions of this:
+    # You could now have different versions of this:
 
-  apache {
-    docroot => "/var/wwwprod",
-    htmlsource => "nfs://fileserver/web/wwwprod",
-    configfile => "https://webserver/web/prod.conf"
-  }
+    apache {
+        docroot => "/var/wwwprod",
+        htmlsource => "nfs://fileserver/web/wwwprod",
+        configfile => "https://webserver/web/prod.conf"
+    }
 
-  apache {
-    docroot => "/var/wwwdev",
-    htmlsource => "http://tmpserver/web/wwwdev",
-    configfile => "https://webserver/web/dev.conf"
-  }
+    apache {
+        docroot => "/var/wwwdev",
+        htmlsource => "http://tmpserver/web/wwwdev",
+        configfile => "https://webserver/web/dev.conf"
+    }
 
 This simple level of abstraction already puts you far beyond what cfengine
 can do.  The initial goal is to provide ample power to express the true
@@ -95,8 +100,8 @@ configurations within the cfengine community because of how difficult basic
 abstraction is with cfengine, so one of my primary goals with the language was
 to make abstraction, within a network or across one, downright easy.
 
-Decoupling
-----------
+# Decoupling
+
 Puppet is being written with all components decoupled from each other, using
 clean and preferably industry-standard interfaces between them.  Adding a new
 action to cfengine requires modification of the entire functional stack
@@ -108,8 +113,8 @@ Puppet also uses the industry-standard XMLRPC protocol for communication
 between Puppet clients and servers, so the protocol is easy to study and
 either end could be replaced by another service if desired.
 
-Interactivity
--------------
+# Interactivity
+
 Puppet is being designed to make it easy to get information back
 out of it.  For instance, it will be easy to figure out how many changes
 happened on a given node, even in a given time frame and of a given type,
@@ -118,8 +123,8 @@ ships, it will ship with a small add-on that will automatically graph all
 of this info in RRD files so that you can just enable this and
 automatically get graphs of change rates on your network.
 
-Development Methodology
------------------------
+# Development Methodology
+
 Reductive Labs is a big believer in enhancing developer productivity.  Puppet
 is being written in Ruby because it is a high-level language that is easy to
 use yet provides significant productivity enhancements over low-level
@@ -129,8 +134,8 @@ found a bug.  Lastly, we assiduosly unit test our code.  We're always looking
 for more ways to test our code, and every bug we quash gets turned into a unit
 test so we know we'll never release that bug again.
 
-Examples
---------
+# Examples
+
 I've got some small configurations that exemplify some of the differences.
 Here's how a simple centralized Apache configuration would look in the two
 languages, for instance.  The two manifests just download Apache's
@@ -215,6 +220,3 @@ There are a few specific items worth noting in this comparison:
   anywhere, and the 'apacheserver' class must be set before any code is
   associated with it.  Neither of these is a big deal in small doses, but it
   can get quite complicated as the configuration matures.
-
-.. _cfengine: http://www.cfengine.org
-.. _puppet: /projects/puppet

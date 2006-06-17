@@ -1,5 +1,8 @@
-FileServer
-==========
+---
+inMenu: true
+title: Fileserver Configuration Reference
+---
+# FileServer
 
 Puppet comes with both a client and server for copying files around.  The file
 serving function is provided as part of the central Puppet daemon,
@@ -20,11 +23,12 @@ to serve and a name for the path, and clients request it by name instead of by
 path.  This provides the ability to conceal from the client unnecessary
 details like the local filesystem configuration.
 
-File Format
-=============
+# File Format
+
 The default location for the file service is ``/etc/puppet/fileserver.conf``;
 this can be changed using the ``--fsconfig`` flag to ``puppetmasterd``.
-The format of the file is almost exactly like that of rsync_, although it does
+The format of the file is almost exactly like that of
+[rsync](http://samba.anu.edu.au/rsync/), although it does
 not yet support nearly the functionality of rsync.  The configuration file
 resembles INI-style files, but it is not exactly the same::
 
@@ -39,21 +43,21 @@ While the path is the only required option, the default security configuration
 is to deny all access, so if no ``allow`` lines are specified, the module will
 be configured but available to no one.
 
-Security
-========
+# Security
+
 There are two aspects to securing the Puppet file server: Allowing specific
 access, and denying specific access.  By default no access is allowed.  There
 are three ways to specify a class of clients who are allowed or denied access:
 By IP address, by name, or a global allow using ``*``.
 
-Priority
---------
+## Priority
+
 All ``deny`` statements are parsed before all ``allow`` statements, so if any
 ``deny`` statements match a host, then that host will be denied, and if no
 ``allow`` statements match a host, it will be denied.
 
-Host Names
-----------
+## Host Names
+
 Host names can be specified using either a complete hostname, or specifying an
 entire domain using  the ``*`` wildcard::
 
@@ -63,8 +67,8 @@ entire domain using  the ``*`` wildcard::
         allow *.domain2.com
         deny badhost.domain2.com
 
-IP Addresses
-------------
+## IP Addresses
+
 IP address can be specified similarly to host names, using either complete IP
 addresses or wildcarded addresses, but you can also use CIDR-style notation::
 
@@ -74,12 +78,10 @@ addresses or wildcarded addresses, but you can also use CIDR-style notation::
         allow 192.168.0.*
         allow 192.168.1.0/24
 
-Global allow
-------------
+## Global allow
+
 Specifying a single wildcard will let anyone into a module::
 
     [export]
         path /export
         allow *
-
-.. _rsync: http://samba.anu.edu.au/rsync/

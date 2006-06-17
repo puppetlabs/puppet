@@ -1,11 +1,13 @@
+---
+inMenu: true
+---
+
 This is a brief overview of the language structures 
 available for making site configurations in Puppet.
-For futher documentation, visit the `Puppet homepage`_.
+For futher documentation, visit the [Puppet homepage](/projects/puppet).
 
-.. _puppet homepage: /projects/puppet
+# Types
 
-Types
------
 The basic unit of configuration in Puppet are ``types``.  Types model objects
 on the computer being managed, and each builtin type has attributes that
 determine the final type configuration::
@@ -19,13 +21,13 @@ between using builtin types like ``file`` and ``package`` and using defined
 types.  Any operation or syntax that succeeds for builtin types should also
 work for defined types.
 
-See the `Type Reference`_ for the documentation for the
+See the [Type Reference](typedocs.html) for the documentation for the
 Puppet Library's primitive types.
 
-Assignment
------------
+# Assignment
 
-``$variable = value``
+
+    $variable = value
 
 Variables available in the current scope are referenced
 by preceding them with the ``$`` character. 
@@ -35,14 +37,11 @@ within a sub-scope a new assignment can be made for a
 variable name for that sub-scope and any further 
 sub-scopes created within it::
   
-  $x = foo
-  $y = bar
-  $z = "$x$y"
+    $x = foo
+    $y = bar
+    $z = "$x$y"
 
-Bringing Config files together
-------------------------------
-
-::
+# Bringing Config files together
 
     import "filename"
 
@@ -50,14 +49,13 @@ Starts the parsing of the file specified and creates any specified definitions
 and classes at the current scope.  Currently files are only searched for
 within the same directory as the file doing the importing.
 
-Files can also be imported using globbing, as implemented by Ruby's
-``Dir.glob`` method::
+Files can also be imported using globbing, as implemented by
+Ruby's ``Dir.glob`` method::
 
     import "classes/*"
     import "packages/[a-z]*"
 
-Scope
------
+# Scope
 
 Generally speaking, any language structure that involves curly braces creates
 a new scope inside those braces.  This currently includes server and class
@@ -107,10 +105,9 @@ of ``/file_repository/test-httpd.conf`` to ``/etc/httpd/conf/httpd.conf``::
 
     webserver {}
 
-Components
-----------
+# Components
 
-``define <name>(<param1>,<param2>,...) {...}``
+    define <name>(<param1>,<param2>,...) {...}
 
 Definition of fuctions allows the composition of lower level types into higher
 level types.
@@ -150,8 +147,8 @@ similarly to variables, by preceding their names with the ``$`` character::
     }
 
 Note that calling components results in a unique instance of all contained
-objects.  In the above case, each of the calls to ``svnserver`` results in an
-``exec`` and a ``file`` instance.  So, it's important that all of your
+objects.  In the above case, each of the calls to ``svnserver`` results in
+an ``exec`` and a ``file`` instance.  So, it's important that all of your
 components are written that they support this.
 
 A good rule of thumb is that you should only include statements in your
@@ -160,10 +157,9 @@ have a variable in the name, then you are likely to result in a situation
 where multiple components will try to manage the same instance, which will
 result in an error at run time.
 
-Server Classes
---------------
+# Server Classes
 
-``class <class_name> [inherits <super_class_name>] { ... }``
+    class <class_name> [inherits <super_class_name>] { ... }
 
 Class definitions allow the specification of a hierarchy of server classes; a
 host that is a member of a subclass will apply the configuration from the
@@ -173,8 +169,6 @@ instance of a given class on a given server.  Thus, if you have a server which
 is a member of three different classes, each of which share the same parent
 class, then you will get one instance of the parent class and one instance of
 each of the subclasses.
-
-::
 
     # really simple example
     class solaris {
@@ -193,13 +187,15 @@ each of the subclasses.
 
     include solworkstation
 
-The ``include`` syntax is syntactically equivalent to specifying a class
-with no arguments.  The above statement is equivalent to this statement::
+Because ``include`` is a function, any normal value can be used, including
+variables and selectors:
 
-    solworkstation {}
+    include $operatingsystem, $hostname ? {
+        myhost => classA, default classB
+    }
 
-Subclassing
-+++++++++++
+## Subclassing
+
 The primary benefit of using subclasses instead of just including the parent
 class is that the subclass can override elements in the parent class::
 
@@ -220,8 +216,8 @@ class is that the subclass can override elements in the parent class::
 Including the ``unix`` class sets the group to ``root``, but including the
 ``bsd`` class overrides the vale to ``wheel``.
 
-Using Classes Outside of Puppet
-+++++++++++++++++++++++++++++++
+## Using Classes Outside of Puppet
+
 This isn't really a "language" thing, but it seemed the best place to document
 this.
 
@@ -247,10 +243,9 @@ even though there is no code associated with them.  The syntax is just like
 
     tag $operatingsystem
 
-Nodes
------
+# Nodes
 
-``node <hostname> { ... }``
+    node <hostname> { ... }
 
 Node definitions specify the configuration to apply to a specific node.  By
 default they are looked for by ``puppetmasterd`` but not by ``puppet``.  See
@@ -281,8 +276,8 @@ Nodes can also inherit from other nodes, so it's easy to apply defaults::
         include webserver
     }
 
-Conditionals
-------------
+# Conditionals
+
 Puppet currently supports two types of conditionals: in-statement and around
 statements.  We call the in-statement conditionals ``selectors``, as they are
 essentially a select-style operator, which support the use of ``default`` to
@@ -299,7 +294,7 @@ specify a default value::
 
 
 
-``case`` provides the ability to conditionally apply
+The ``case`` statement provides the ability to conditionally apply
 types::
 
     case $operatingsystem {
@@ -308,15 +303,13 @@ types::
         default:    { generic {} } # apply the generic class
     }
 
-Reserved words
---------------
+# Reserved words
+
 Generally, any word that the syntax uses for special meaning is probably also
 a reserved word, meaning you cannot use it for variable or type names.  Thus,
 words like ``true``, ``define``, ``inherits``, and ``class`` are all reserved.
 
-Comments
---------
+# Comments
+
 Puppet supports sh-style comments; they can either be on their own line or at
 the end of a line (see the Conditionals_ example above).
-
-.. _type reference: /projects/puppet/documentation/typedocs
