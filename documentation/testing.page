@@ -4,7 +4,7 @@ title: Testing
 ---
 
 If you want to just test-drive Puppet, making the least commitment possible,
-you can run it directly from the checked-out source_, against a configuration
+you can run it directly from the checked-out [source][], against a configuration
 in a temporary directory.
 
 The default Puppet configuration directory (where it looks for its manifests,
@@ -55,7 +55,7 @@ and run it.  In noop mode, this should work for any user, but if you run it as
 a normal user you might get some errors if you are not in noop mode (e.g.,
 normal users cannot use 'chown').
 
-Note that your ``site.pp`` file should have a node_ definition for the host
+Note that your ``site.pp`` file should have a [node][] definition for the host
 connecting; otherwise you will get an error complaining of no configuration for
 that host.  It is possible to skip this requirement -- see the ``--help``
 output of ``puppetmasterd`` for details.
@@ -83,5 +83,5 @@ element, all the way up to the base of the configuration, and it is also
 tagged with the host name.  So if 'classA' includes 'classB' which creates
 'fileC', then 'fileC' will be tagged with both classes.
 
-.. _node: structures#nodes
-.. _source: fromsvn
+[node]: structures#nodes
+[source]: fromsvn

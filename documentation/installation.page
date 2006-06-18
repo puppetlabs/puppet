@@ -6,13 +6,13 @@ inMenu: true
 You will need to install Puppet on all machines that will use it, including
 both clients and servers.
 
-There are packages_ available for some platforms, but for the rest
-you will have to install using the tarball_ or GEMs_.
+There are [packages][] available for some platforms, but for the rest
+you will have to install using the [tarball][] or [GEMs][].
 
 ## Prerequisites
 
 The only prerequisite for Puppet that doesn't come as part of the Ruby
-standard library is facter_, which is also developed by Reductive Labs.  
+standard library is [facter][], which is also developed by Reductive Labs.  
 
 All other prerequisites for Puppet are Ruby libraries, and they should all
 come with any standard Ruby 1.8.2 install.  The other prerequisites, should
@@ -76,7 +76,7 @@ this is the package dependency list for Puppet on Debian:
 
 ### Facter
 
-First install facter.  Like Puppet, there are packages_ available for
+First install facter.  Like Puppet, there are [packages][] available for
 some platforms, but you might have to use the tarball:
 
     # get the latest tarball
@@ -87,7 +87,7 @@ some platforms, but you might have to use the tarball:
     cd facter-*
     sudo ruby install.rb # or become root and run install.rb
 
-There are also gems available in the download_ directory.
+There are also gems available in the [download][] directory.
 
 ## Install Puppet
 
@@ -108,7 +108,7 @@ You can also use Reductive Labs' Gems server to install Facter and Puppet:
     gem install --remote --source http://reductivelabs.com/downloads facter
     gem install --remote --source http://reductivelabs.com/downloads puppet
 
-For more information on RubyGems, see the `Gems User Guide`_.
+For more information on RubyGems, see the [Gems User Guide][].
 
 ## Alternative alternative:  Native Packages
 
@@ -116,13 +116,10 @@ It is our goal to provide as many native packages as possible, but it's been
 slow going.  Until I have official native packages, David Lutterkort used spec
 and init files from Duane Griffin to create native RPMs that should work on
 Red Hat Enterprise 4 and Fedora Core 4.  You can get them from his
-`yum repository`_.
+[yum repository][].
 
-There are also `Debian packages`_, although they are not quite as well
+There are also [Debian packages][], although they are not quite as well
 maintained as the RPMs.
-
-.. _yum repository: http://people.redhat.com/~dlutter/yum/
-.. _debian packages: /downloads/packages/Debian
 
 # Building the Server
 
@@ -141,12 +138,12 @@ You could have multiple, separate site manifests if you wanted, but at this
 point each of them would need their own servers.
 
 For more information on how to create the site manifest, see the
-`Language Reference`_ and the `Library Reference`_.
+[Language Reference][] and the [Library Reference][].
 
 Puppet will look for your site manifest in ``/etc/puppet/manifests/site.pp``,
 so create ``/etc/puppet/manifests`` and add your manifest, along with any
 files it includes, to that directory.  It is highly recommended that you use
-some kind of `version control`_ on your manifests.
+some kind of [version control][] on your manifests.
 
 ### Example Manifests
 
@@ -222,7 +219,7 @@ The daemon should start just fine with no arguments:
 It will automatically create all necessary certificates, directories, and
 files.  If you want the daemon to also function as a file server, so your
 clients can copy files from it, you will need to create a
-`fileserver configuration file`_.
+[fileserver configuration file][].
 
 If you are still only testing, and do not have node definitions in your
 site manifest (such as with the above example manifest) , tell
@@ -278,7 +275,7 @@ value to 0 to disable it entirely.
 # Finishing Installation
 
 There are already init scripts available for some platforms (notably, Red Hat
-versions, thanks to David Lutterkort's work on the RPMs_), but for
+versions, thanks to David Lutterkort's work on the [RPMs][]), but for
 not-yet-supported platforms, you will need to create an init script that can
 start and stop ``puppetd``.  The process creates a PID file in its run
 directory (``/var/puppet/run``, by default), so you can use that to stop it.
@@ -294,15 +291,18 @@ Puppet:
   timeout of 60 seconds.
 * Patches are not only welcome, they're encouraged.
 
-.. _developed: /projects/facter
-.. _download: /downloads
-.. _version control: http://svnbook.red-bean.com/
-.. _fileserver configuration file: fsconfigref
-.. _Gems User Guide: http://docs.rubygems.org/read/book/1
-.. _Language Reference: structures
-.. _Library Reference: typedocs
+[developed]: /projects/facter
+[download]: /downloads
+[version control]: http://svnbook.red-bean.com/
+[fileserver configuration file]: fsconfigref
+[Gems User Guide]: http://docs.rubygems.org/read/book/1
+[Language Reference]: structures
+[Library Reference]: typedocs
 
-.. _packages: /downloads/packages
-.. _tarball: /downloads/puppet
-.. _gems: /downloads/gems
-.. _rpms: /downloads/rpm
+[packages]: /downloads/packages
+[tarball]: /downloads/puppet
+[gems]: /downloads/gems
+[rpms]: /downloads/rpm
+
+[yum repository]: http://people.redhat.com/~dlutter/yum/
+[debian packages]: /downloads/packages/Debian

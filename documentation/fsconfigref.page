@@ -2,12 +2,13 @@
 inMenu: true
 title: Fileserver Configuration Reference
 ---
+
 # FileServer
 
 Puppet comes with both a client and server for copying files around.  The file
 serving function is provided as part of the central Puppet daemon,
 ``puppetmasterd``, and the client function is used through the ``source``
-attribute of ``file`` objects::
+attribute of ``file`` objects:
 
     # copy a remove file to /etc/sudoers
     file { "/etc/sudoers":
@@ -30,7 +31,7 @@ this can be changed using the ``--fsconfig`` flag to ``puppetmasterd``.
 The format of the file is almost exactly like that of
 [rsync](http://samba.anu.edu.au/rsync/), although it does
 not yet support nearly the functionality of rsync.  The configuration file
-resembles INI-style files, but it is not exactly the same::
+resembles INI-style files, but it is not exactly the same:
 
     [module]
         path /path/to/files
@@ -59,7 +60,7 @@ All ``deny`` statements are parsed before all ``allow`` statements, so if any
 ## Host Names
 
 Host names can be specified using either a complete hostname, or specifying an
-entire domain using  the ``*`` wildcard::
+entire domain using  the ``*`` wildcard:
 
     [export]
         path /export
@@ -70,7 +71,7 @@ entire domain using  the ``*`` wildcard::
 ## IP Addresses
 
 IP address can be specified similarly to host names, using either complete IP
-addresses or wildcarded addresses, but you can also use CIDR-style notation::
+addresses or wildcarded addresses, but you can also use CIDR-style notation:
 
     [export]
         path /export
@@ -80,7 +81,7 @@ addresses or wildcarded addresses, but you can also use CIDR-style notation::
 
 ## Global allow
 
-Specifying a single wildcard will let anyone into a module::
+Specifying a single wildcard will let anyone into a module:
 
     [export]
         path /export

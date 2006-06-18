@@ -64,9 +64,9 @@ These three high level phases can each be broken down into more steps.
 
 ## Compile Phase 1: Parsing
 
-:Inputs: Manifests written in the Puppet language
-:Outputs: Parse trees (instances of AST_ objects)
-:Entry: `Puppet::Parser::Parser#parse`_
+* *Inputs* Manifests written in the Puppet language
+* *Outputs* Parse trees (instances of [AST][ast] objects)
+* *Entry* [Puppet::Parser::Parser#parse][parse]
 
 At this point, all Puppet manifests start out as text documents, and it's the
 parser's job to understand those documents.  The parser (defined in
@@ -82,15 +82,15 @@ starts.
 
 ## Compile Phase 2: Interpreting
 
-:Inputs: Parse trees (instances of AST_ objects) and client information
+* *Inputs* Parse trees (instances of [AST][] objects) and client information
     (collection of facts output by [Facter][])
-:Outputs: Trees of TransObject_ and TransBucket_ instances (from
+* *Outputs* Trees of [TransObject][] and [TransBucket][] instances (from
     transportable.rb)
-:Entry: `Puppet::Parser::AST#evaluate`_
-:Exit: `Puppet::Parser::Scope#to_trans`_
+* *Entry* [Puppet::Parser::AST#evaluate][ast_evaluate]
+* *Exit* [Puppet::Parser::Scope#to_trans][]
 
 Most configurations will rely on client information to make decisions.  When
-the Puppet client starts, it loads the Facter_ library, collects all of the
+the Puppet client starts, it loads the [Facter][] library, collects all of the
 facts that it can, and passes those facts to the interpreter.  When you use
 Puppet over a network, these facts are passed over the network to the server
 and the server uses them to compile the client's configuration.
@@ -100,14 +100,14 @@ decisions about the client based on things like operating system and hardware
 architecture, and it also enables the server to insert information about the
 client into the configuration, information like IP address and MAC address.
 
-The interpreter_ combines the parse trees and the client information into a
-tree of simple transportable_ objects which maps roughly to the configuration
+The [interpreter][] combines the parse trees and the client information into a
+tree of simple [transportable][] objects which maps roughly to the configuration
 as defined in the manifests -- it is still a tree, but it is a tree of classes
 and the elements contained in those classes.
 
 ### Nodes vs. No Nodes
 
-When you use Puppet, you have the option of using `node elements`_ or not.  If
+When you use Puppet, you have the option of using [node elements][] or not.  If
 you do not use node elements, then the entire configuration is interpreted
 every time a client connects, from the top of the parse tree down.  In this
 case, you must have some kind of explicit selection mechanism for specifying
@@ -120,17 +120,17 @@ just that bit on demand.
 
 ## Configuration Transport
 
-:Inputs: Transportable_ objects
-:Outputs: Transportable_ objects
-:Entry: `Puppet::Server::Master#getconfig`_
-:Exit: `Puppet::Client::MasterClient#getconfig`_
+* *Inputs* [Transportable][] objects
+* *Outputs* [Transportable][] objects
+* *Entry* [Puppet::Server::Master#getconfig][]
+* *Exit* [Puppet::Client::MasterClient#getconfig][]
 
 If you are using the stand-alone puppet executable, there is no configuration
 transport because the client and server are in the same process.  If you are
 using the networked puppetd client and puppetmasterd server, though, the
 configuration must be sent to the client once it is entirely compiled.
 
-Puppet currently converts the Transportable objects to YAML_, which it then
+Puppet currently converts the Transportable objects to [YAML][], which it then
 CGI-escapes and sends over the wire using XMLRPC over HTTPS.  The client
 receives the configuration, unescapes it, caches it to disk in case the server
 is not available on the next run, and then uses YAML to convert it back to
@@ -138,14 +138,14 @@ normal Ruby Transportable objects.
 
 ## Instantiation Phase
 
-:Inputs: Transportable_ objects
-:Outputs: `Puppet::Type`_ instances
-:Entry: `Puppet::Client::MasterClient#getconfig`_
-:Exit: `Puppet::Type#finalize`_
+* *Inputs* [Transportable][] objects
+* *Outputs* [Puppet::Type][] instances
+* *Entry* [Puppet::Client::MasterClient#getconfig][]
+* *Exit* [Puppet::Type#finalize][]
 
-To create Puppet library objects (all of which are instances of `Puppet::Type`_
+To create Puppet library objects (all of which are instances of [Puppet::Type][]
 subclasses), ``to_trans`` is called on the top-level transportable object.
-All container objects get converted to `Puppet::Type::Component`_ instances,
+All container objects get converted to [Puppet::Type::Component][] instances,
 and all normal objects get converted into the appropriate Puppet type
 instance.
 
@@ -165,15 +165,15 @@ references to objects and verify that the objects actually exist.
 
 ## Configuration Phase 1: Comparison
 
-:Inputs: `Puppet::Type`_ instances
-:Outputs: `Puppet::StateChange`_ objects collected in a `Puppet::Transaction`_
+* *Inputs* [Puppet::Type][] instances
+* *Outputs* [Puppet::StateChange][] objects collected in a [Puppet::Transaction][]
     instance
-:Entry: `Puppet::Client::MasterClient#apply`_
-:Exit: `Puppet::Type::Component#evaluate`_
+* *Entry* [Puppet::Client::MasterClient#apply][]
+* *Exit* [Puppet::Type::Component#evaluate][component_evaluate]
 
 Before Puppet does any work at all, it compares its entire configuration to
 the state on disk (or in memory, or whatever).  To do this, it recursively
-iterates across the tree of `Puppet::Type`_ instances (which, again, still
+iterates across the tree of [Puppet::Type][] instances (which, again, still
 roughly maps to the class structure defined in the manifest) and calls
 ``evaluate``.
 
@@ -209,11 +209,11 @@ could cause interesting-in-a-not-particularly-good-way edge cases.
 
 ## Configuration Phase 2: Syncing
 
-:Inputs: `Puppet::Transaction`_ instance containing `Puppet::StateChange`_
+* *Inputs* [Puppet::Transaction][] instance containing [Puppet::StateChange][]
     instances
-:Outputs: Completely configured operating system
-:Entry: `Puppet::Type::Component#evaluate`_
-:Exit: `Puppet::Transaction#evaluate`_
+* *Outputs* Completely configured operating system
+* *Entry* [Puppet::Type::Component#evaluate][component_evaluate]
+* *Exit* [Puppet::Transaction#evaluate][]
 
 The transaction's job is just to execute each change.  The changes themselves
 are responsible for logging everything that happens (one of the reasons that
@@ -258,24 +258,25 @@ That's the entire flow of how a Puppet manifest becomes a complete
 configuration.  There is more to the Puppet system, such as FileBuckets, but
 those are more support staff rather than the main attraction.
 
-[facter] /projects/facter
-.. _node elements: /projects/puppet/documentation/structures#nodes
-.. _yaml: http://www.yaml.org/
-.. _Puppet::Parser::Parser#parse: /downloads/puppet/apidocs/classes/Puppet/Parser/Parser.html
-.. _Puppet::Parser::AST#evaluate: /downloads/puppet/apidocs/classes/Puppet/Parser/AST.html
-.. _Puppet::Parser::Scope#to_trans: /downloads/puppet/apidocs/classes/Puppet/Parser/Scope.html
-.. _AST: /downloads/puppet/apidocs/classes/Puppet/Parser/AST.html
-.. _TransObject: /downloads/puppet/apidocs/classes/Puppet/TransObject.html
-.. _TransBucket: /downloads/puppet/apidocs/classes/Puppet/TransBucket.html
-.. _Puppet::Server::Master#getconfig: /downloads/puppet/apidocs/classes/Puppet/Server/Master.html
-.. _Puppet::Client::MasterClient#getconfig: /downloads/puppet/apidocs/classes/Puppet/Client/MasterClient.html
-.. _Transportable: /downloads/puppet/apidocs/classes/Puppet/TransBucket.html
-.. _Puppet::StateChange: /downloads/puppet/apidocs/classes/Puppet/StateChange.html
-.. _Puppet::Transaction: /downloads/puppet/apidocs/classes/Puppet/Transaction.html
-.. _Puppet::Client::MasterClient#apply: /downloads/puppet/apidocs/classes/Puppet/Client/MasterClient.html
-.. _Puppet::Type::Component#evaluate: /downloads/puppet/apidocs/classes/Puppet/Type/Component.html
-.. _Puppet::Type::Component: /downloads/puppet/apidocs/classes/Puppet/Type/Component.html
-.. _Puppet::Transaction#evaluate: /downloads/puppet/apidocs/classes/Puppet/Transaction.html
-.. _interpreter: /downloads/puppet/apidocs/classes/Puppet/Parser/Interpreter.html
-.. _Puppet::Type: /downloads/puppet/apidocs/classes/Puppet/Type.html
-.. _Puppet::Type#finalize: /downloads/puppet/apidocs/classes/Puppet/Type.html
+[facter]: /projects/facter
+[parse]: /downloads/puppet/apidocs/classes/Puppet/Parser/Parser.html
+[AST]: /downloads/puppet/apidocs/classes/Puppet/Parser/AST.html
+[node elements]: /projects/puppet/documentation/structures#nodes
+[yaml]: http://www.yaml.org/
+[Puppet::Parser::Parser#parse]: /downloads/puppet/apidocs/classes/Puppet/Parser/Parser.html
+[ast_evaluate]: /downloads/puppet/apidocs/classes/Puppet/Parser/AST.html
+[Puppet::Parser::Scope#to_trans]: /downloads/puppet/apidocs/classes/Puppet/Parser/Scope.html
+[TransObject]: /downloads/puppet/apidocs/classes/Puppet/TransObject.html
+[TransBucket]: /downloads/puppet/apidocs/classes/Puppet/TransBucket.html
+[Puppet::Server::Master#getconfig]: /downloads/puppet/apidocs/classes/Puppet/Server/Master.html
+[Puppet::Client::MasterClient#getconfig]: /downloads/puppet/apidocs/classes/Puppet/Client/MasterClient.html
+[Transportable]: /downloads/puppet/apidocs/classes/Puppet/TransBucket.html
+[Puppet::StateChange]: /downloads/puppet/apidocs/classes/Puppet/StateChange.html
+[Puppet::Transaction]: /downloads/puppet/apidocs/classes/Puppet/Transaction.html
+[Puppet::Client::MasterClient#apply]: /downloads/puppet/apidocs/classes/Puppet/Client/MasterClient.html
+[component_evaluate]: /downloads/puppet/apidocs/classes/Puppet/Type/Component.html
+[Puppet::Type::Component]: /downloads/puppet/apidocs/classes/Puppet/Type/Component.html
+[Puppet::Transaction#evaluate]: /downloads/puppet/apidocs/classes/Puppet/Transaction.html
+[interpreter]: /downloads/puppet/apidocs/classes/Puppet/Parser/Interpreter.html
+[Puppet::Type]: /downloads/puppet/apidocs/classes/Puppet/Type.html
+[Puppet::Type#finalize]: /downloads/puppet/apidocs/classes/Puppet/Type.html
