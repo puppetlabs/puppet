@@ -85,3 +85,5 @@ tagged with the host name.  So if 'classA' includes 'classB' which creates
 
 [node]: structures#nodes
 [source]: fromsvn
+
+*$Id$*
