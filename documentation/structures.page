@@ -16,7 +16,7 @@ determine the final type configuration::
     package { apache: install => true }
 
 Puppet also provides facilities for defining new types as collections of
-existing types (see Components_ below), but there is no syntactic difference
+existing types (see Components below), but there is no syntactic difference
 between using builtin types like ``file`` and ``package`` and using defined
 types.  Any operation or syntax that succeeds for builtin types should also
 work for defined types.
@@ -312,4 +312,4 @@ words like ``true``, ``define``, ``inherits``, and ``class`` are all reserved.
 # Comments
 
 Puppet supports sh-style comments; they can either be on their own line or at
-the end of a line (see the Conditionals_ example above).
+the end of a line (see the Conditionals example above).
