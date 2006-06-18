@@ -313,3 +313,4 @@ words like ``true``, ``define``, ``inherits``, and ``class`` are all reserved.
 
 Puppet supports sh-style comments; they can either be on their own line or at
 the end of a line (see the Conditionals example above).
+*$Id$*

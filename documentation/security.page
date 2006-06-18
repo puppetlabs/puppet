@@ -60,3 +60,4 @@ system-wide security hooks prior to the 1.0 release, but the certificate
 authentication already provides significant security.
 
 Recommendations on approaches are heartily recommended.
+*$Id$*

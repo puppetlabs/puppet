@@ -311,3 +311,4 @@ With this declaration, ``file { "/tmp/file": }`` is basically equivalent to ``fi
 
 See [Creating a Puppet Type](creating-a-puppet-type.html) for more
 information.
+*$Id$*

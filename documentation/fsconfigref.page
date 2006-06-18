@@ -86,3 +86,4 @@ Specifying a single wildcard will let anyone into a module:
     [export]
         path /export
         allow *
+*$Id$*

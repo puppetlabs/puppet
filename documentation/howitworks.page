@@ -280,3 +280,4 @@ those are more support staff rather than the main attraction.
 [interpreter]: /downloads/puppet/apidocs/classes/Puppet/Parser/Interpreter.html
 [Puppet::Type]: /downloads/puppet/apidocs/classes/Puppet/Type.html
 [Puppet::Type#finalize]: /downloads/puppet/apidocs/classes/Puppet/Type.html
+*$Id$*

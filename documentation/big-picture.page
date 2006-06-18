@@ -168,3 +168,4 @@ component is entirely responsible for implementing its own configuration.
 Much as database applications abstract the mechanics of storing, indexing, and
 searching their data, a component ideally should abstract the specifics of how
 to store, confirm, and implement its requested configuration.
+*$Id$*

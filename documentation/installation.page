@@ -306,3 +306,4 @@ Puppet:
 
 [yum repository]: http://people.redhat.com/~dlutter/yum/
 [debian packages]: /downloads/packages/Debian
+*$Id$*
