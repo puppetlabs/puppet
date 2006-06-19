@@ -15,9 +15,9 @@ given instance.  Thus, any defined metaparameter can be used with any instance
 in your manifest, including defined components.
 
     
-- **alias**
+- **alias**:
     Creates an alias for the object.  Puppet uses this internally when you
-    provide a symbolic name::
+    provide a symbolic name:
     
         file { sshdconfig:
             path => $operatingsystem ? {
@@ -35,7 +35,7 @@ in your manifest, including defined components.
     and the library sets that as an alias for the file so the dependency
     lookup for ``sshd`` works.  You can use this parameter yourself,
     but note that only the library can use these aliases; for instance,
-    the following code will not work::
+    the following code will not work:
     
         file { "/etc/ssh/sshd_config":
             owner => root,
@@ -50,26 +50,28 @@ in your manifest, including defined components.
     There's no way here for the Puppet parser to know that these two stanzas
     should be affecting the same file.
     
-    See the `language tutorial <http://reductivelabs.com/projects/puppet/documentation/languagetutorial>`__ for more information.
+    See the [language tutorial][] for more information.
     
-- **check**
+    [language tutorial]: languagetutorial.html
+    
+- **check**:
     States which should have their values retrieved
     but which should not actually be modified.  This is currently used
     internally, but will eventually be used for querying, so that you
     could specify that you wanted to check the install state of all
     packages, and then query the Puppet client daemon to get reports
     on all packages.
-- **loglevel**
+- **loglevel**:
     Sets the level that information will be logged.
     The log levels have the biggest impact when logs are sent to
     syslog (which is currently the default).  Valid values are ``debug``, ``info``, ``notice``, ``warning``, ``err``, ``alert``, ``emerg``, ``crit``, ``verbose``.
-- **noop**
+- **noop**:
     Boolean flag indicating whether work should actually
     be done.  *true*/**false**
-- **require**
+- **require**:
     One or more objects that this object depends on.
     This is used purely for guaranteeing that changes to required objects
-    happen before the dependent object.  For instance::
+    happen before the dependent object.  For instance:
     
         # Create the destination directory before you copy things down
         file { "/usr/local/scripts":
@@ -92,17 +94,17 @@ in your manifest, including defined components.
     automatically realize that the parent directory should be created
     before the script is pulled down.
     
-    Currently, exec_ elements will autorequire their CWD (if it is
+    Currently, exec elements will autorequire their CWD (if it is
     specified) plus any fully qualified paths that appear in the
     command.   For instance, if you had an ``exec`` command that ran
     the ``myscript`` mentioned above, the above code that pulls the
     file down would be automatically listed as a requirement to the
     ``exec`` code, so that you would always be running againts the
     most recent version.
-- **schedule**
+- **schedule**:
     On what schedule the object should be managed.  You must create a
-    schedule_ object, and then reference the name of that object to use
-    that for your schedule::
+    schedule object, and then reference the name of that object to use
+    that for your schedule:
     
         schedule { daily:
             period => daily,
@@ -115,10 +117,10 @@ in your manifest, including defined components.
     
     The creation of the schedule object does not need to appear in the
     configuration before objects that use it.
-- **subscribe**
+- **subscribe**:
     One or more objects that this object depends on.  Changes in the
     subscribed to objects result in the dependent objects being
-    refreshed (e.g., a service will get restarted).  For instance::
+    refreshed (e.g., a service will get restarted).  For instance:
     
         class nagios {
             file { "/etc/nagios/nagios.conf":
@@ -131,14 +133,14 @@ in your manifest, including defined components.
                 subscribe => file[nagconf]
             }
         }
-- **tag**
+- **tag**:
     Add the specified tags to the associated element.  While all elements
     are automatically tagged with as much information as possible
     (e.g., each class and component containing the element), it can
     be useful to add your own tags to a given element.
     
     Tags are currently useful for things like applying a subset of a
-    host's configuration::
+    host's configuration:
         
         puppetd --test --tag mytag
     
@@ -152,13 +154,13 @@ in your manifest, including defined components.
   the colon in a type declaration.  In general, only developers will need to
   worry about which parameter is the ``namevar``.
   
-  In the following code::
+  In the following code:
 
-    file { "/etc/passwd":
-        owner => root,
-        group => root,
-        mode => 644
-    }
+      file { "/etc/passwd":
+          owner => root,
+          group => root,
+          mode => 644
+      }
 
   "/etc/passwd" is considered the name of the file object (used for things like
   dependency handling), and because ``path`` is the namevar for ``file``, that
@@ -188,7 +190,7 @@ new name will be permanently associated with that job.  Once this
 association is made and synced to disk, you can then manage the job
 normally (e.g., change the schedule of the job).
 
-Example::
+Example:
     
     cron { logrotate:
         command => "/usr/sbin/logrotate",
@@ -200,7 +202,7 @@ Example::
 
 
 ### Cron Parameters
-- **command**
+- **command**:
     The command to execute in the cron job.  The environment
     provided to the command varies by local system rules, and it is
     best to always provide a fully qualified command.  The user's
@@ -209,9 +211,9 @@ Example::
     
     All cron parameters support ``absent`` as a value; this will
     remove any existing values for that field.
-- **ensure**
+- **ensure**:
     The basic state that the object should be in.  Valid values are ``present``, ``absent``.
-- **environment**
+- **environment**:
     Any environment settings associated with this cron job.  They
     will be stored between the header and the job in the crontab.  There
     can be no guarantees that other, earlier settings will not also
@@ -222,19 +224,19 @@ Example::
     job.  If you already have cron jobs with environment settings,
     then Puppet will keep those settings in the same place in the file,
     but will not associate them with a specific job.
-- **hour**
+- **hour**:
     The hour at which to run the cron job. Optional;
     if specified, must be between 0 and 23, inclusive.
-- **minute**
+- **minute**:
     The minute at which to run the cron job.
     Optional; if specified, must be between 0 and 59, inclusive.
-- **month**
+- **month**:
     The month of the year.  Optional; if specified
     must be between 1 and 12 or the month name (e.g., December).
-- **monthday**
+- **monthday**:
     The day of the month on which to run the
     command.  Optional; if specified, must be between 1 and 31.
-- **name**
+- **name**:
     The symbolic name of the cron job.  This name
     is used for human reference only and is generated automatically
     for cron jobs found on the system.  This generally won't
@@ -246,13 +248,13 @@ Example::
     
     The names can only have alphanumeric characters plus the '-'
     character.
-- **user**
+- **user**:
     The user to run the command as.  This user must
     be allowed to run cron jobs, which is not currently checked by
     Puppet.
     
     The user defaults to whomever Puppet is running as.
-- **weekday**
+- **weekday**:
     The weekday on which to run the command.
     Optional; if specified, must be between 0 and 6, inclusive, with
     0 being Sunday, or must be the name of the day (e.g., Tuesday).
@@ -276,7 +278,7 @@ In particular, you will not be able to use ``exec`` instances that
 share their commands with other instances as a dependency, since
 Puppet has no way of knowing which instance you mean.
 
-For example::
+For example:
 
     # defined in the production class
     exec { "make":
@@ -309,19 +311,17 @@ it is a Puppet bug if you need ``exec`` to do your work.
 
 
 ### Exec Parameters
-- **command** (*namevar*)
+- **command**: (*namevar*)
     The actual command to execute.  Must either be fully qualified
     or a search path for the command must be provided.  If the command
     succeeds, any output produced will be logged at the instance's
     normal log level (usually ``notice``), but if the command fails
     (meaning its return code does not match the specified code) then
     any output is logged at the ``err`` log level.
-- **creates**
+- **creates**:
     A file that this command creates.  If this
     parameter is provided, then the command will only be run
     if the specified file does not exist.
-    
-    ::
     
         exec { "tar xf /my/tar/file.tar":
             cwd => "/var/tmp",
@@ -329,40 +329,40 @@ it is a Puppet bug if you need ``exec`` to do your work.
             path => ["/usr/bin", "/usr/sbin"]
         }
     
-- **cwd**
+- **cwd**:
     The directory from which to run the command.  If
     this directory does not exist, the command will fail.
-- **group**
+- **group**:
     The group to run the command as.  This seems to work quite
     haphazardly on different platforms -- it is a platform issue
     not a Ruby or Puppet one, since the same variety exists when
     running commnands as different users in the shell.
-- **logoutput**
+- **logoutput**:
     Whether to log output.  Defaults to logging output at the
     loglevel for the ``exec`` element.  Values are **true**, *false*,
     and any legal log level.  Valid values are ``true``, ``false``, ``debug``, ``info``, ``notice``, ``warning``, ``err``, ``alert``, ``emerg``, ``crit``.
-- **onlyif**
-    If this parameter is set, then this +exec+ will only run if
-    the command returns 0.  For example::
+- **onlyif**:
+    If this parameter is set, then this ``exec`` will only run if
+    the command returns 0.  For example:
         
         exec { "logrotate":
             path => "/usr/bin:/usr/sbin:/bin",
             onlyif => "test `du /var/log/messages | cut -f1` -gt 100000"
         }
     
-    This would run +logrotate+ only if that test returned true.
+    This would run ``logrotate`` only if that test returned true.
     
     Note that this command follows the same rules as the main command,
     which is to say that it must be fully qualified if the path is not set.
-- **path**
+- **path**:
     The search path used for command execution.
     Commands must be fully qualified if no path is specified.  Paths
     can be specified as an array or as a colon-separated list.
-- **refreshonly**
+- **refreshonly**:
     The command should only be run as a
     refresh mechanism for when a dependent object is changed.  It only
     makes sense to use this option when this command depends on some
-    other object; it is useful for triggering an action::
+    other object; it is useful for triggering an action:
         
         # Pull down the main aliases file
         file { "/etc/aliases":
@@ -378,24 +378,24 @@ it is a Puppet bug if you need ``exec`` to do your work.
     
     Note that only ``subscribe`` can trigger actions, not ``require``,
     so it only makes sense to use ``refreshonly`` with ``subscribe``.  Valid values are ``true``, ``false``.
-- **returns**
+- **returns**:
     The expected return code.  An error will be returned if the
     executed command returns something else.  Defaults to 0.
-- **unless**
-    If this parameter is set, then this +exec+ will run unless
-    the command returns 0.  For example::
+- **unless**:
+    If this parameter is set, then this ``exec`` will run unless
+    the command returns 0.  For example:
         
         exec { "/bin/echo root >> /usr/lib/cron/cron.allow":
             path => "/usr/bin:/usr/sbin:/bin",
             unless => "grep root /usr/lib/cron/cron.allow 2>/dev/null"
         }
     
-    This would add +root+ to the cron.allow file (on Solaris) unless
-    +grep+ determines it's already there.
+    This would add ``root`` to the cron.allow file (on Solaris) unless
+    ``grep`` determines it's already there.
     
     Note that this command follows the same rules as the main command,
     which is to say that it must be fully qualified if the path is not set.
-- **user**
+- **user**:
     The user to run the command as.  Note that if you
     use this then any error output is not currently captured.  This
     is because of a bug within Ruby.
@@ -419,15 +419,15 @@ native element to support what you are doing.
 
 
 ### File Parameters
-- **backup**
+- **backup**:
     Whether files should be backed up before
-    being replaced.  If a filebucket_ is specified, files will be
+    being replaced.  If a filebucket is specified, files will be
     backed up there; else, they will be backed up in the same directory
     with a ``.puppet-bak`` extension,, and no backups
     will be made if backup is ``false``.
     
     To use filebuckets, you must first create a filebucket in your
-    configuration::
+    configuration:
         
         filebucket { main:
             server => puppet
@@ -436,7 +436,7 @@ native element to support what you are doing.
     The ``puppetmasterd`` daemon creates a filebucket by default,
     so you can usually back up to your main server with this
     configuration.  Once you've described the bucket in your
-    configuration, you can use it in any file::
+    configuration, you can use it in any file:
     
         file { "/my/file":
             source => "/path/in/nfs/or/something",
@@ -451,14 +451,14 @@ native element to support what you are doing.
     any given file manually, no matter how old.  Eventually,
     transactional support will be able to automatically restore
     filebucketed files.
-- **checksum**
+- **checksum**:
     How to check whether a file has changed.  **md5**/*lite-md5*/
     *time*/*mtime*  Valid values are ``timestamp``, ``md5``, ``mtime``, ``nosum``, ``time``, ``md5lite``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
-- **content**
+- **content**:
     Specify the contents of a file as a string.  Newlines, tabs, and spaces
     can be specified using the escaped syntax (e.g., \n for a newline).  The
     primary purpose of this parameter is to provide a kind of limited
-    templating::
+    templating:
     
         define resolve(nameserver1, nameserver2, domain, search) {
             $str = "search $search
@@ -474,21 +474,21 @@ native element to support what you are doing.
     
     Yes, it's very primitive, and it's useless for larger files, but it
     is mostly meant as a stopgap measure for simple cases.
-- **ensure**
+- **ensure**:
     Whether to create files that don't currently exist.
     Possible values are *absent*, *present* (equivalent to *file*),
     *file*, and *directory*.  Specifying 'absent' will delete the file,
     although currently this will not recursively delete directories.
     
     Anything other than those values will be considered to be a symlink.
-    For instance, the following text creates a link::
+    For instance, the following text creates a link:
         
         # Useful on solaris
         file { "/etc/inetd.conf":
             ensure => "/etc/inet/inetd.conf"
         }
     
-    You can make relative links::
+    You can make relative links:
         
         # Useful on solaris
         file { "/etc/inetd.conf":
@@ -503,19 +503,19 @@ native element to support what you are doing.
     directory structure that maps to the target directory,
     with directories corresponding to each directory
     and links corresponding to each file.  Valid values are ``directory``, ``absent`` (also called ``false``), ``link``, ``file`` (also called ``present``).  Values can also match ``(?-mix:.)``.
-- **group**
+- **group**:
     Which group should own the file.  Argument can be either group
     name or group ID.
-- **ignore**
+- **ignore**:
     A parameter which omits action on files matching
     specified patterns during recursion.  Uses Ruby's builtin globbing
     engine, so shell metacharacters are fully supported, e.g. ``[a-z]*``.
     Matches that would descend into the directory structure are ignored,
     e.g., ``*/*``.
-- **linkmaker**
+- **linkmaker**:
     An internal parameter used by the *symlink*
     type to do recursive link creation.
-- **links**
+- **links**:
     How to handle links during file actions.  During file copying,
     ``follow`` will copy the target file instead of the link, ``manage``
     will copy the link itself, and ``ignore`` will just pass it by.
@@ -523,18 +523,18 @@ native element to support what you are doing.
     (because you cannot really ignore links entirely during local
     recursion), and ``follow`` will manage the file to which the
     link points.  Valid values are ``follow``, ``manage``, ``ignore``.
-- **mode**
+- **mode**:
     Mode the file should be.  Currently relatively limited:
     you must specify the exact mode the file should be.
-- **owner**
+- **owner**:
     To whom the file should belong.  Argument can be user name or
     user ID.
-- **path** (*namevar*)
+- **path**: (*namevar*)
     The path to the file to manage.  Must be fully qualified.
-- **recurse**
+- **recurse**:
     Whether and how deeply to do recursive
     management.  Valid values are ``true``, ``false``, ``inf``.  Values can also match ``(?-mix:^[0-9]+$)``.
-- **source**
+- **source**:
     Copy a file over the current file.  Uses ``checksum`` to
     determine when a file should be copied.  Valid values are either
     fully qualified paths to files, or URIs.  Currently supported URI
@@ -543,7 +543,7 @@ native element to support what you are doing.
     This is one of the primary mechanisms for getting content into
     applications that Puppet does not directly support and is very
     useful for those configuration files that don't change much across
-    sytems.  For instance::
+    sytems.  For instance:
     
         class sendmail {
             file { "/etc/mail/sendmail.cf":
@@ -551,16 +551,16 @@ native element to support what you are doing.
             }
         }
     
-    See the `fileserver docs`_ for information on how to configure
+    See the [fileserver docs][] for information on how to configure
     and use file services within Puppet.
     
     
-.. _fileserver docs: /projects/puppet/documentation/fsconfigref
+    [fileserver docs]: fsconfigref.html
     
-- **target**
+- **target**:
     The target for creating a link.  Currently, symlinks are the
     only type supported.  Valid values are ``notlink``.  Values can also match ``(?-mix:.)``.
-- **type**
+- **type**:
     A read-only state to check the file type.
 
 
@@ -585,16 +585,16 @@ undo transactions.
 
 
 ### Filebucket Parameters
-- **name**
+- **name**:
     The name of the filebucket.
-- **path**
+- **path**:
     The path to the local filebucket.  If this is
     not specified, then the bucket is remote and *server* must be
     specified.
-- **port**
+- **port**:
     The port on which the remote server is listening.
     Defaults to the normal Puppet port, 8140.
-- **server**
+- **server**:
     The server providing the filebucket.  If this is
     not specified, then the bucket is local and *path* must be
     specified.
@@ -617,14 +617,14 @@ but if you desperately need it to be so, please contact us.
 
 
 ### Group Parameters
-- **ensure**
+- **ensure**:
     The basic state that the object should be in.  Valid values are ``present``, ``absent``.
-- **gid**
+- **gid**:
     The group ID.  Must be specified numerically.  If not
     specified, a number will be picked, which can result in ID
     differences across systems and thus is not recommended.  The
     GID is picked according to local system standards.
-- **name**
+- **name**:
     The group name.  While naming limitations vary by
     system, it is advisable to keep the name to the degenerate
     limitations, which is a maximum of 8 characters beginning with
@@ -642,17 +642,17 @@ will have different solutions.
 
 
 ### Host Parameters
-- **alias**
+- **alias**:
     Any alias the host might have.  Multiple values must be
     specified as an array.  Note that this state has the same name
     as one of the metaparams; using this state to set aliases will
     make those aliases available in your Puppet scripts and also on
     disk.
-- **ensure**
+- **ensure**:
     The basic state that the object should be in.  Valid values are ``present``, ``absent``.
-- **ip**
+- **ip**:
     The host's IP address.
-- **name**
+- **name**:
     The host name.
 
 
@@ -666,32 +666,32 @@ information into the mount table.
 
 
 ### Mount Parameters
-- **atboot**
+- **atboot**:
     Whether to mount the mount at boot.  Not all platforms
     support this.
-- **blockdevice**
+- **blockdevice**:
     The the device to fsck.  This is state is only valid
     on Solaris, and in most cases will default to the correct
     value.
-- **device**
+- **device**:
     The device providing the mount.  This can be whatever
     device is supporting by the mount, including network
     devices or devices specified by UUID rather than device
     path, depending on the operating system.
-- **dump**
+- **dump**:
     Whether to dump the mount.  Not all platforms
     support this.
-- **ensure**
+- **ensure**:
     Create, remove, or mount a filesystem mount.  Valid values are ``present``, ``mounted``, ``absent``.
-- **fstype**
+- **fstype**:
     The mount type.  Valid values depend on the
     operating system.
-- **options**
+- **options**:
     Mount options for the mounts, as they would
     appear in the fstab.
-- **pass**
+- **pass**:
     The pass in which the mount is checked.
-- **path** (*namevar*)
+- **path**: (*namevar*)
     The mount path for the mount.
 
 
@@ -714,29 +714,29 @@ want to use ``rpm`` then the ``rpm`` tools must be available.
 
 
 ### Package Parameters
-- **adminfile**
+- **adminfile**:
     A file containing package defaults for installing packages.
     This is currently only used on Solaris.  The value will be
     validated according to system rules, which in the case of
     Solaris means that it should either be a fully qualified path
     or it should be in /var/sadm/install/admin.
-- **category**
+- **category**:
     A read-only parameter set by the package.
-- **description**
+- **description**:
     A read-only parameter set by the package.
-- **ensure**
+- **ensure**:
     What state the package should be in.
     *latest* only makes sense for those packaging formats that can
     retrieve new packages on their own and will throw an error on
     those that cannot.  Valid values are ``latest``, ``present`` (also called ``installed``), ``absent``.
-- **instance**
+- **instance**:
     A read-only parameter set by the package.
-- **name**
+- **name**:
     The package name.  This is the name that the packaging
     system uses internally, which is sometimes (especially on Solaris)
     a name that is basically useless to humans.  If you want to
     abstract package installation, then you can use aliases to provide
-    a common name to packages::
+    a common name to packages:
     
         # In the 'openssl' class
         $ssl = $operationgsystem ? {
@@ -766,25 +766,25 @@ want to use ``rpm`` then the ``rpm`` tools must be available.
             require => package[openssl]
         }
     
-- **platform**
+- **platform**:
     A read-only parameter set by the package.
-- **responsefile**
+- **responsefile**:
     A file containing any necessary answers to questions asked by
     the package.  This is currently only used on Solaris.  The
     value will be validated according to system rules, but it should
     generally be a fully qualified path.
-- **root**
+- **root**:
     A read-only parameter set by the package.
-- **source**
+- **source**:
     From where to retrieve the package.
-- **status**
+- **status**:
     A read-only parameter set by the package.
-- **type**
+- **type**:
     The package format.  You will seldom need to specify this --
     Puppet will discover the appropriate format for your platform.
-- **vendor**
+- **vendor**:
     A read-only parameter set by the package.
-- **version**
+- **version**:
     For some platforms this is a read-only parameter set by the
     package, but for others, setting this parameter will cause
     the package of that version to be installed.  It just depends
@@ -802,20 +802,20 @@ will have different solutions.
 
 
 ### Port Parameters
-- **alias**
+- **alias**:
     Any aliases the port might have.  Multiple values must be
     specified as an array.  Note that this state has the same name as
     one of the metaparams; using this state to set aliases will make
     those aliases available in your Puppet scripts and also on disk.
-- **description**
+- **description**:
     The port description.
-- **ensure**
+- **ensure**:
     The basic state that the object should be in.  Valid values are ``present``, ``absent``.
-- **name**
+- **name**:
     The port name.
-- **number**
+- **number**:
     The port number.
-- **protocols**
+- **protocols**:
     The protocols the port uses.  Valid values are *udp* and *tcp*.
     Most services have both protocols, but not all.  If you want
     both protocols, you must specify that; Puppet replaces the
@@ -844,7 +844,7 @@ otherwise, that work may never get done.
 Thus, it behooves you to use wider scheduling (e.g., over a couple of
 hours) combined with periods and repetitions.  For instance, if you
 wanted to restrict certain elements to only running once, between
-the hours of two and 4 AM, then you would use this schedule::
+the hours of two and 4 AM, then you would use this schedule:
     
     schedule { maint:
         range => "2 - 4",
@@ -861,7 +861,7 @@ because they will be outside the scheduled range.
 Puppet automatically creates a schedule for each valid period with the
 same name as that period (e.g., hourly and daily).  Additionally,
 a schedule named *puppet* is created and used as the default,
-with the following attributes::
+with the following attributes:
 
     schedule { puppet:
         period => hourly,
@@ -873,9 +873,9 @@ This will cause elements to be applied every 30 minutes by default.
 
 
 ### Schedule Parameters
-- **name**
+- **name**:
     The name of the schedule.  This name is used to retrieve the
-    schedule when assigning it to an object::
+    schedule when assigning it to an object:
         
         schedule { daily:
             period => daily,
@@ -886,7 +886,7 @@ This will cause elements to be applied every 30 minutes by default.
             schedule => daily
         }
     
-- **period**
+- **period**:
     The period of repetition for an element.  Choose from among
     a fixed list of *hourly*, *daily*, *weekly*, and *monthly*.
     The default is for an element to get applied every time that
@@ -900,7 +900,7 @@ This will cause elements to be applied every 30 minutes by default.
     If the provided periods are not sufficient, you can provide a
     value to the *repeat* attribute, which will cause Puppet to
     schedule the affected elements evenly in the period the
-    specified number of times.  Take this schedule::
+    specified number of times.  Take this schedule:
     
         schedule { veryoften:
             period => hourly,
@@ -917,16 +917,16 @@ This will cause elements to be applied every 30 minutes by default.
     
     See the ``periodmatch`` attribute for tuning whether to match
     times by their distance apart or by their specific value.  Valid values are ``hourly``, ``daily``, ``weekly``, ``monthly``.
-- **periodmatch**
+- **periodmatch**:
     Whether periods should be matched by number (e.g., the two times
     are in the same hour) or by distance (e.g., the two times are
     60 minutes apart). *number*/**distance**  Valid values are ``number``, ``distance``.
-- **range**
+- **range**:
     The earliest and latest that an element can be applied.  This
     is always a range within a 24 hour period, and hours must be
     specified in numbers between 0 and 23, inclusive.  Minutes and
     seconds can be provided, using the normal colon as a separator.
-    For instance::
+    For instance:
     
         schedule { maintenance:
             range => "1:30 - 4:30"
@@ -934,7 +934,7 @@ This will cause elements to be applied every 30 minutes by default.
     
     This is mostly useful for restricting certain elements to being
     applied in maintenance windows or during off-peak hours.
-- **repeat**
+- **repeat**:
     How often the application gets repeated in a given period.
     Defaults to 1.
 
@@ -956,19 +956,19 @@ use a platform that has very good service support.
 
 
 ### Service Parameters
-- **binary**
+- **binary**:
     The path to the daemon.  This is only used for
     systems that do not support init scripts.  This binary will be
     used to start the service if no ``start`` parameter is
     provided.
-- **enable**
+- **enable**:
     Whether a service should be enabled to start at boot.
     This state behaves quite differently depending on the platform;
     wherever possible, it relies on local tools to enable or disable
     a given service.  *true*/*false*/*runlevels*  Valid values are ``true``, ``false``.
-- **ensure**
+- **ensure**:
     Whether a service should be running.  **true**/*false*  Valid values are ``running`` (also called ``true``), ``stopped`` (also called ``false``).
-- **hasstatus**
+- **hasstatus**:
     Declare the the service's init script has a
     functional status command.  Based on testing, it was found
     that a large number of init scripts on different platforms do
@@ -979,13 +979,13 @@ use a platform that has very good service support.
     
     If you do not specify anything, then the service name will be
     looked for in the process table.
-- **name**
+- **name**:
     The name of the service to run.  This name
     is used to find the service in whatever service subsystem it
     is in.
-- **path**
+- **path**:
     The search path for finding init scripts.
-- **pattern**
+- **pattern**:
     The pattern to search for in the process table.
     This is used for stopping services on platforms that do not
     support init scripts, and is also used for determining service
@@ -996,26 +996,26 @@ use a platform that has very good service support.
     of a service, then the service name will be used instead.
     
     The pattern can be a simple string or any legal Ruby pattern.
-- **restart**
+- **restart**:
     Specify a *restart* command manually.  If left
     unspecified, the service will be stopped and then started.
-- **running**
+- **running**:
     A place-holder parameter that wraps ``ensure``, because
     ``running`` is deprecated.  You should use ``ensure`` instead
     of this, but using this will still work, albeit with a
     warning.
-- **start**
+- **start**:
     Specify a *start* command manually.  Most service subsystems
     support a ``start`` command, so this will not need to be
     specified.
-- **status**
+- **status**:
     Specify a *status* command manually.  If left
     unspecified, the status method will be determined
     automatically, usually by looking for the service in the
     process table.
-- **stop**
+- **stop**:
     Specify a *stop* command manually.
-- **type**
+- **type**:
     The service type.  For most platforms, it does not make
     sense to set this parameter, as the default is based on
     the builtin service facilities.  The service types available are:
@@ -1039,18 +1039,18 @@ it cannot manage user authorized keys yet.
 
 
 ### Sshkey Parameters
-- **alias**
+- **alias**:
     Any alias the host might have.  Multiple values must be
     specified as an array.  Note that this state has the same name
     as one of the metaparams; using this state to set aliases will
     make those aliases available in your Puppet scripts.
-- **ensure**
+- **ensure**:
     The basic state that the object should be in.  Valid values are ``present``, ``absent``.
-- **key**
+- **key**:
     The key itself; generally a long string of hex digits.
-- **name**
+- **name**:
     The host name.
-- **type**
+- **type**:
     The encryption type used.  Probably ssh-dss or ssh-rsa.
 
 
@@ -1060,21 +1060,21 @@ it cannot manage user authorized keys yet.
 
 ## symlink
 Create symbolic links to existing files.  **This type is deprecated;
-use file_ instead.**
+use file instead.**
 
 
 ### Symlink Parameters
-- **ensure**
+- **ensure**:
     Create a link to another file.  Currently only symlinks
     are supported, and attempts to replace normal files with
     links will currently fail, while existing but incorrect symlinks
     will be removed.
-- **path** (*namevar*)
+- **path**: (*namevar*)
     The path to the file to manage.  Must be fully qualified.
-- **recurse**
+- **recurse**:
     If target is a directory, recursively create
     directories (using `file`'s `source` parameter) and link all
-    contained files.  For instance::
+    contained files.  For instance:
     
         # The Solaris Blastwave repository installs everything
         # in /opt/csw; link it into /usr/local
@@ -1097,18 +1097,18 @@ Remove unwanted files based on specific criteria.
 
 
 ### Tidy Parameters
-- **age**
+- **age**:
     Tidy files whose age is equal to or greater than
     the specified number of days.
-- **backup**
+- **backup**:
     Whether files should be backed up before
-    being replaced.  If a filebucket_ is specified, files will be
+    being replaced.  If a filebucket is specified, files will be
     backed up there; else, they will be backed up in the same directory
     with a ``.puppet-bak`` extension,, and no backups
     will be made if backup is ``false``.
     
     To use filebuckets, you must first create a filebucket in your
-    configuration::
+    configuration:
         
         filebucket { main:
             server => puppet
@@ -1117,7 +1117,7 @@ Remove unwanted files based on specific criteria.
     The ``puppetmasterd`` daemon creates a filebucket by default,
     so you can usually back up to your main server with this
     configuration.  Once you've described the bucket in your
-    configuration, you can use it in any file::
+    configuration, you can use it in any file:
     
         file { "/my/file":
             source => "/path/in/nfs/or/something",
@@ -1132,22 +1132,22 @@ Remove unwanted files based on specific criteria.
     any given file manually, no matter how old.  Eventually,
     transactional support will be able to automatically restore
     filebucketed files.
-- **path** (*namevar*)
+- **path**: (*namevar*)
     The path to the file or directory to manage.  Must be fully
     qualified.
-- **recurse**
+- **recurse**:
     If target is a directory, recursively descend
     into the directory looking for files to tidy.
-- **rmdirs**
+- **rmdirs**:
     Tidy directories in addition to files; that is, remove
     directories whose age is older than the specified criteria.
-- **size**
+- **size**:
     Tidy files whose size is equal to or greater than
     the specified size.  Unqualified values are in kilobytes, but
     *b*, *k*, and *m* can be appended to specify *bytes*, *kilobytes*,
     and *megabytes*, respectively.  Only the first character is
     significant, so the full word can also be used.
-- **type**
+- **type**:
     Set the mechanism for determining age.
     **atime**/*mtime*/*ctime*.
 
@@ -1173,32 +1173,32 @@ but if you desperately need it to be so, please contact us.
 
 
 ### User Parameters
-- **comment**
+- **comment**:
     A description of the user.  Generally is a user's full name.
-- **ensure**
+- **ensure**:
     The basic state that the object should be in.  Valid values are ``present``, ``absent``.
-- **gid**
+- **gid**:
     The user's primary group.  Can be specified numerically or
     by name.
-- **groups**
+- **groups**:
     The groups of which the user is a member.  The primary
     group should not be listed.  Multiple groups should be
     specified as an array.
-- **home**
+- **home**:
     The home directory of the user.  The directory must be created
     separately and is not currently checked for existence.
-- **membership**
+- **membership**:
     Whether specified groups should be treated as the only groups
     of which the user is a member or whether they should merely
     be treated as the minimum membership list.  Valid values are ``inclusive``, ``minimum``.
-- **name**
+- **name**:
     User name.  While limitations are determined for
     each operating system, it is generally a good idea to keep to
     the degenerate 8 characters, beginning with a letter.
-- **shell**
+- **shell**:
     The user's login shell.  The shell must exist and be
     executable.
-- **uid**
+- **uid**:
     The user ID.  Must be specified numerically.  For new users
     being created, if no user ID is specified then one will be
     chosen automatically, which will likely result in the same user
@@ -1210,5 +1210,4 @@ but if you desperately need it to be so, please contact us.
 ----------------
 
 
-*This page autogenerated on Fri Jun 16 14:45:03 PDT 2006*
-*$Id$*
+*This page autogenerated on Mon Jun 19 11:58:10 PDT 2006*
