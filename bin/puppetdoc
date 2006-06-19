@@ -191,7 +191,7 @@ in your manifest, including defined components.
         params.sort { |a,b|
             a.to_s <=> b.to_s
         }.each { |param|
-            puts "- **" + param.to_s + "**"
+            puts "- **" + param.to_s + "**:"
             #puts tab(1) + Puppet::Type.metaparamdoc(param).scrub.indent($tab)gsub(/\n\s*/,' ')
             puts indent(scrub(Puppet::Type.metaparamdoc(param)), $tab)
         }
@@ -209,13 +209,13 @@ in your manifest, including defined components.
   the colon in a type declaration.  In general, only developers will need to
   worry about which parameter is the ``namevar``.
   
-  In the following code::
+  In the following code:
 
-    file { "/etc/passwd":
-        owner => root,
-        group => root,
-        mode => 644
-    }
+      file { "/etc/passwd":
+          owner => root,
+          group => root,
+          mode => 644
+      }
 
   "/etc/passwd" is considered the name of the file object (used for things like
   dependency handling), and because ``path`` is the namevar for ``file``, that
@@ -302,7 +302,7 @@ in your manifest, including defined components.
         docs.sort { |a, b|
             a[0].to_s <=> b[0].to_s
         }.each { |name, doc|
-            print "- **%s**" % name
+            print "- **%s**:" % name
             if type.namevar == name and name != :name
                 puts " (*namevar*)"
             else

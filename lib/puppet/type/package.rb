@@ -248,7 +248,7 @@ module Puppet
             system uses internally, which is sometimes (especially on Solaris)
             a name that is basically useless to humans.  If you want to
             abstract package installation, then you can use aliases to provide
-            a common name to packages::
+            a common name to packages:
 
                 # In the 'openssl' class
                 $ssl = $operationgsystem ? {

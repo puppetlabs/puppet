@@ -2063,8 +2063,8 @@ class Type < Puppet::Element
 
     newmetaparam(:schedule) do
         desc "On what schedule the object should be managed.  You must create a
-            schedule_ object, and then reference the name of that object to use
-            that for your schedule::
+            schedule object, and then reference the name of that object to use
+            that for your schedule:
 
                 schedule { daily:
                     period => daily,
@@ -2135,7 +2135,7 @@ class Type < Puppet::Element
     newmetaparam(:require) do
         desc "One or more objects that this object depends on.
             This is used purely for guaranteeing that changes to required objects
-            happen before the dependent object.  For instance::
+            happen before the dependent object.  For instance:
             
                 # Create the destination directory before you copy things down
                 file { \"/usr/local/scripts\":
@@ -2158,7 +2158,7 @@ class Type < Puppet::Element
             automatically realize that the parent directory should be created
             before the script is pulled down.
             
-            Currently, exec_ elements will autorequire their CWD (if it is
+            Currently, exec elements will autorequire their CWD (if it is
             specified) plus any fully qualified paths that appear in the
             command.   For instance, if you had an ``exec`` command that ran
             the ``myscript`` mentioned above, the above code that pulls the
@@ -2191,7 +2191,7 @@ class Type < Puppet::Element
     newmetaparam(:subscribe) do
         desc "One or more objects that this object depends on.  Changes in the
             subscribed to objects result in the dependent objects being
-            refreshed (e.g., a service will get restarted).  For instance::
+            refreshed (e.g., a service will get restarted).  For instance:
             
                 class nagios {
                     file { \"/etc/nagios/nagios.conf\":
@@ -2235,7 +2235,7 @@ class Type < Puppet::Element
 
     newmetaparam(:alias) do
         desc "Creates an alias for the object.  Puppet uses this internally when you
-            provide a symbolic name::
+            provide a symbolic name:
             
                 file { sshdconfig:
                     path => $operatingsystem ? {
@@ -2253,7 +2253,7 @@ class Type < Puppet::Element
             and the library sets that as an alias for the file so the dependency
             lookup for ``sshd`` works.  You can use this parameter yourself,
             but note that only the library can use these aliases; for instance,
-            the following code will not work::
+            the following code will not work:
 
                 file { \"/etc/ssh/sshd_config\":
                     owner => root,
@@ -2268,7 +2268,9 @@ class Type < Puppet::Element
             There's no way here for the Puppet parser to know that these two stanzas
             should be affecting the same file.
 
-            See the `language tutorial <http://reductivelabs.com/projects/puppet/documentation/languagetutorial>`__ for more information.
+            See the [language tutorial][] for more information.
+
+            [language tutorial]: languagetutorial.html
             
             "
 
@@ -2299,7 +2301,7 @@ class Type < Puppet::Element
             be useful to add your own tags to a given element.
 
             Tags are currently useful for things like applying a subset of a
-            host's configuration::
+            host's configuration:
                 
                 puppetd --test --tag mytag
 

@@ -14,7 +14,7 @@ module Puppet
             This is one of the primary mechanisms for getting content into
             applications that Puppet does not directly support and is very
             useful for those configuration files that don't change much across
-            sytems.  For instance::
+            sytems.  For instance:
 
                 class sendmail {
                     file { \"/etc/mail/sendmail.cf\":
@@ -22,11 +22,11 @@ module Puppet
                     }
                 }
             
-            See the `fileserver docs`_ for information on how to configure
+            See the [fileserver docs][] for information on how to configure
             and use file services within Puppet.
 
 
-            .. _fileserver docs: /projects/puppet/documentation/fsconfigref
+            [fileserver docs]: fsconfigref.html
 
             "
 

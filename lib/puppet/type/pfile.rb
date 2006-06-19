@@ -32,13 +32,13 @@ module Puppet
 
         newparam(:backup) do
             desc "Whether files should be backed up before
-                being replaced.  If a filebucket_ is specified, files will be
+                being replaced.  If a filebucket is specified, files will be
                 backed up there; else, they will be backed up in the same directory
                 with a ``.puppet-bak`` extension,, and no backups
                 will be made if backup is ``false``.
                 
                 To use filebuckets, you must first create a filebucket in your
-                configuration::
+                configuration:
                     
                     filebucket { main:
                         server => puppet
@@ -47,7 +47,7 @@ module Puppet
                 The ``puppetmasterd`` daemon creates a filebucket by default,
                 so you can usually back up to your main server with this
                 configuration.  Once you've described the bucket in your
-                configuration, you can use it in any file::
+                configuration, you can use it in any file:
 
                     file { \"/my/file\":
                         source => \"/path/in/nfs/or/something\",

@@ -5,7 +5,7 @@ require 'puppet/type/pfile'
 module Puppet
     newtype(:symlink) do
         @doc = "Create symbolic links to existing files.  **This type is deprecated;
-            use file_ instead.**"
+            use file instead.**"
         #newstate(:ensure) do
         ensurable do
             require 'etc'
@@ -104,7 +104,7 @@ module Puppet
         newparam(:recurse) do
             desc "If target is a directory, recursively create
                 directories (using `file`'s `source` parameter) and link all
-                contained files.  For instance::
+                contained files.  For instance:
 
                     # The Solaris Blastwave repository installs everything
                     # in /opt/csw; link it into /usr/local

@@ -316,7 +316,7 @@ module Puppet
             association is made and synced to disk, you can then manage the job
             normally (e.g., change the schedule of the job).
             
-            Example::
+            Example:
                 
                 cron { logrotate:
                     command => \"/usr/sbin/logrotate\",

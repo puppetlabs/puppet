@@ -3,7 +3,7 @@ module Puppet
         desc "Specify the contents of a file as a string.  Newlines, tabs, and spaces
             can be specified using the escaped syntax (e.g., \\n for a newline).  The
             primary purpose of this parameter is to provide a kind of limited
-            templating::
+            templating:
 
                 define resolve(nameserver1, nameserver2, domain, search) {
                     $str = \"search $search
