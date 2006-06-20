@@ -216,6 +216,7 @@ module Puppet
 
         # Create the pid file.
         def setpidfile
+            return unless Puppet[:setpidfile]
             Puppet.config.use(:puppet)
             @pidfile = self.pidfile
             if FileTest.exists?(@pidfile)

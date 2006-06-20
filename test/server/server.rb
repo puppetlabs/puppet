@@ -122,4 +122,31 @@ class TestServer < Test::Unit::TestCase
             retval = client.getconfig
         }
     end
+
+    def test_setpidfile_setting
+        Puppet[:setpidfile] = false
+        server = nil
+        assert_nothing_raised() {
+            server = Puppet::Server.new(
+                :Port => @@port,
+                :Handlers => {
+                    :CA => {}, # so that certs autogenerate
+                    :Status => nil
+                }
+            )
+
+        }
+
+        assert_nothing_raised {
+            server.setpidfile
+        }
+
+        assert(! FileTest.exists?(server.pidfile), "PID file was created")
+        Puppet[:setpidfile] = true
+
+        assert_nothing_raised {
+            server.setpidfile
+        }
+        assert(FileTest.exists?(server.pidfile), "PID file was not created")
+    end
 end
