@@ -1267,6 +1267,31 @@ class TestFile < Test::Unit::TestCase
             "Original file got changed")
         assert_equal("file", File.lstat(link).ftype, "File is still a link")
     end
+
+    def test_replace_links
+        dest = tempfile()
+        otherdest = tempfile()
+        link = tempfile()
+
+        File.open(dest, "w") { |f| f.puts "boo" }
+        File.open(otherdest, "w") { |f| f.puts "yay" }
+
+        obj = Puppet::Type.type(:file).create(
+            :path => link,
+            :ensure => otherdest
+        )
+
+
+        assert_apply(obj)
+
+        assert_equal(otherdest, File.readlink(link), "Link did not get created")
+
+        obj[:ensure] = dest
+
+        assert_apply(obj)
+
+        assert_equal(dest, File.readlink(link), "Link did not get changed")
+    end
 end
 
 # $Id$

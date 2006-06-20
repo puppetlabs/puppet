@@ -12,7 +12,9 @@ module Puppet
 
         # Anything else, basically
         newvalue(/./) do
-            # Do nothing here, because sync is always called from the ensure state.
+            if @parent.state(:ensure).insync?
+                mklink()
+            end
         end
 
         # Create our link.
