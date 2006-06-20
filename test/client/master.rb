@@ -133,4 +133,68 @@ class TestMasterClient < Test::Unit::TestCase
             client.run
         }
     end
+
+    def test_getplugins
+        Puppet[:pluginsource] = tempfile()
+        Dir.mkdir(Puppet[:pluginsource])
+
+        myplugin = File.join(Puppet[:pluginsource], "myplugin.rb")
+        File.open(myplugin, "w") do |f|
+            f.puts %{Puppet::Type.newtype(:myplugin) do
+    newparam(:argument) do
+        isnamevar
+    end
+end
+}
+        end
+
+        client = mkclient()
+
+        assert_nothing_raised {
+            client.send(:getplugins)
+        }
+
+        destfile = File.join(Puppet[:pluginpath], "myplugin.rb")
+
+        assert(File.exists?(destfile), "Did not get plugin")
+
+        obj = Puppet::Type.type(:myplugin)
+
+        assert(obj, "Did not define type")
+
+        assert(obj.validattr?(:argument),
+            "Did not get namevar")
+
+        # Now modify the file and make sure the type is replaced
+        File.open(myplugin, "w") do |f|
+            f.puts %{Puppet::Type.newtype(:myplugin) do
+    newparam(:yayness) do
+        isnamevar
+    end
+
+    newparam(:rahness) do
+    end
+end
+}
+        end
+
+        assert_nothing_raised {
+            client.send(:getplugins)
+        }
+
+        destfile = File.join(Puppet[:pluginpath], "myplugin.rb")
+
+        obj = Puppet::Type.type(:myplugin)
+
+        assert(obj, "Did not define type")
+
+        assert(obj.validattr?(:yayness),
+            "Did not get namevar")
+
+        assert(obj.validattr?(:rahness),
+            "Did not get other var")
+
+        assert(! obj.validattr?(:argument),
+            "Old namevar is still valid")
+    end
 end

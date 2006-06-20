@@ -158,6 +158,11 @@ class Type < Puppet::Element
         t = Class.new(parent) do
             @name = name
         end
+        const = name.to_s.capitalize
+        if const_defined?(const)
+            Puppet.info "Redefining %s" % name
+            remove_const(const)
+        end
         const_set(name.to_s.capitalize,t)
 
         # Initialize any necessary variables.

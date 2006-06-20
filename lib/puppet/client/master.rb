@@ -17,8 +17,18 @@ class Puppet::Client::MasterClient < Puppet::Client
             new configurations, where you want to fix the broken configuration
             rather than reverting to a known-good one."
         ]
+    )
 
-
+    Puppet.setdefaults("puppet",
+        :pluginpath => ["$vardir/plugins",
+            "Where Puppet should look for plugins.  Multiple directories should
+            be comma-separated."],
+        :pluginsource => ["puppet://puppet/plugins",
+            "From where to retrieve plugins.  The standard Puppet ``file`` type
+             is used for retrieval, so anything that is a valid file source can
+             be used here."],
+        :pluginsync => [true,
+            "Whether plugins should be synced with the central server."]
     )
 
     @drivername = :Master
@@ -192,6 +202,11 @@ class Puppet::Client::MasterClient < Puppet::Client
             raise Puppet::ClientError.new(
                 "Could not retrieve any facts"
             )
+        end
+
+        # Retrieve the plugins.
+        if Puppet[:pluginsync]
+            getplugins()
         end
 
         objects = nil
@@ -378,6 +393,48 @@ class Puppet::Client::MasterClient < Puppet::Client
             Puppet.err "Could not create class file %s: %s" %
                 [Puppet[:classfile], detail]
         end
+    end
+
+    private
+    # Retrieve the plugins from the central server.
+    def getplugins
+        plugins = Puppet::Type.type(:component).create(
+            :name => "plugin_collector"
+        )
+        plugins.push Puppet::Type.type(:file).create(
+            :path => Puppet[:pluginpath],
+            :recurse => true,
+            :source => Puppet[:pluginsource]
+        )
+
+        trans = plugins.evaluate
+
+        begin
+            trans.evaluate
+        rescue Puppet::Error => detail
+            if Puppet[:debug]
+                puts detail.backtrace
+            end
+            Puppet.err "Could not retrieve plugins: %s" % detail
+        end
+
+        # Now source all of the changed objects, but only source those
+        # that are top-level.
+        trans.changed?.find_all { |object|
+            File.dirname(object[:path]) == Puppet[:pluginpath]
+        }.each do |object|
+            begin
+                Puppet.info "Loading plugin %s" %
+                    File.basename(object[:path]).sub(".rb",'')
+                load object[:path]
+            rescue => detail
+                Puppet.warning "Could not load %s: %s" %
+                    [object[:path], detail]
+            end
+        end
+
+        # Now clean up after ourselves
+        plugins.remove
     end
 end
 

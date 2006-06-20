@@ -8,7 +8,6 @@ module Puppet
 class Transaction
     attr_accessor :toplevel, :component, :objects, :tags, :ignoreschedules
 
-
     Puppet.config.setdefaults(:transaction,
         :tags => ["", "Tags to use to find objects.  If this is set, then
             only objects tagged with the specified tags will be applied.
@@ -87,6 +86,13 @@ class Transaction
     # later, we might execute them as we receive them
     def change(change)
         @changes.push change
+    end
+
+    # Find all of the changed objects.
+    def changed?
+        @changes.find_all { |change| change.changed }.collect { |change|
+            change.state.parent
+        }.uniq
     end
 
     # Collect all of the targets for the list of events.  This is an unintuitive
