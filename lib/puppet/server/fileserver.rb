@@ -273,7 +273,7 @@ class Server
                 Puppet.err "FileServer error: Cannot read %s; cannot serve" % @config
                 #raise Puppet::Error, "Cannot read %s" % @config
             rescue Errno::ENOENT => detail
-                Puppet.err "FileServer error: '%s' does not exit; cannot serve" %
+                Puppet.err "FileServer error: '%s' does not exist; cannot serve" %
                     @config
                 #raise Puppet::Error, "%s does not exit" % @config
             #rescue FileServerError => detail
@@ -420,6 +420,8 @@ class Server
                 # Remove any double slashes that might have occurred
                 path.gsub!(/\/\//, "/")
             end
+
+            path = URI.unescape(path)
             return mount, path
         end
 

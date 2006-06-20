@@ -1292,6 +1292,23 @@ class TestFile < Test::Unit::TestCase
 
         assert_equal(dest, File.readlink(link), "Link did not get changed")
     end
+
+    def test_file_with_spaces
+        dir = tempfile()
+        Dir.mkdir(dir)
+        source = File.join(dir, "file spaces")
+        dest = File.join(dir, "another space")
+
+        File.open(source, "w") { |f| f.puts :yay }
+        obj = Puppet::Type.type(:file).create(
+            :path => dest,
+            :source => source
+        )
+
+        assert_apply(obj)
+
+        assert(FileTest.exists?(dest), "File did not get created")
+    end
 end
 
 # $Id$

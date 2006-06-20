@@ -806,7 +806,7 @@ module Puppet
                 devfail "Got a nil source"
             end
             if source =~ /^\//
-                source = "file://localhost/%s" % source
+                source = "file://localhost/%s" % URI.escape(source)
                 sourceobj.mount = "localhost"
                 sourceobj.local = true
             end
