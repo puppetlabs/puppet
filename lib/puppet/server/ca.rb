@@ -16,28 +16,36 @@ class Server
             iface.add_method("array getcert(csr)")
         }
 
+        def autosign
+            if defined? @autosign
+                @autosign
+            else
+                Puppet[:autosign]
+            end
+        end
+
         # FIXME autosign? should probably accept both hostnames and IP addresses
         def autosign?(hostname)
             # simple values are easy
-            if @autosign == true or @autosign == false
-                return @autosign
+            if autosign == true or autosign == false
+                return autosign
             end
 
             # we only otherwise know how to handle files
-            unless @autosign =~ /^\//
+            unless autosign =~ /^\//
                 raise Puppet::Error, "Invalid autosign value %s" %
-                    @autosign.inspect
+                    autosign.inspect
             end
 
-            unless FileTest.exists?(@autosign)
+            unless FileTest.exists?(autosign)
                 unless defined? @@warnedonautosign
                     @@warnedonautosign = true
-                    Puppet.info "Autosign is enabled but %s is missing" % @autosign
+                    Puppet.info "Autosign is enabled but %s is missing" % autosign
                 end
                 return false
             end
             auth = Puppet::Server::AuthStore.new
-            File.open(@autosign) { |f|
+            File.open(autosign) { |f|
                 f.each { |line|
                     auth.allow(line.chomp)
                 }
@@ -49,7 +57,10 @@ class Server
 
         def initialize(hash = {})
             Puppet.config.use(:puppet, :certificates, :ca)
-            @autosign = hash[:autosign] || Puppet[:autosign]
+            if hash.include? :autosign
+                @autosign = hash[:autosign]
+            end
+
             @ca = Puppet::SSLCertificates::CA.new(hash)
         end
 

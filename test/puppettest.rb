@@ -462,6 +462,11 @@ module ExeTest
         assert($? == 0, "Puppetmasterd exit status was %s" % $?)
         sleep(1)
 
+        cleanup do
+            stopmasterd
+            sleep(1)
+        end
+
         return manifest
     end
 
@@ -483,7 +488,7 @@ module ExeTest
                 if line =~ /ruby.+puppetmasterd/
                     next if line =~ /\.rb/ # skip the test script itself
                     ary = line.sub(/^\s+/, '').split(/\s+/)
-                    runningpid = ary[1].to_i
+                    pid = ary[1].to_i
                 end
             }
 

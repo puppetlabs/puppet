@@ -27,7 +27,7 @@ class Puppet::Client::MasterClient < Puppet::Client
             "From where to retrieve plugins.  The standard Puppet ``file`` type
              is used for retrieval, so anything that is a valid file source can
              be used here."],
-        :pluginsync => [true,
+        :pluginsync => [false,
             "Whether plugins should be synced with the central server."]
     )
 

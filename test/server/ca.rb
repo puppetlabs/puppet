@@ -21,11 +21,6 @@ end
 
 class TestCA < Test::Unit::TestCase
 	include ServerTest
-    def teardown
-        super
-        #print "\n\n" if Puppet[:debug]
-    end
-
     # Verify that we're autosigning.  We have to autosign a "different" machine,
     # since we always autosign the CA server's certificate.
     def test_autocertgeneration
@@ -204,5 +199,41 @@ class TestCA < Test::Unit::TestCase
                 }
             )
         }
+    end
+
+    # Make sure true/false causes the file to be ignored.
+    def test_autosign_true_beats_file
+        caserv = nil
+        assert_nothing_raised {
+            caserv = Puppet::Server::CA.new()
+        }
+
+        host = "hostname.domain.com"
+
+        # Create an autosign file
+        file = tempfile()
+        Puppet[:autosign] = file
+
+        File.open(file, "w") { |f|
+            f.puts host
+        }
+
+        # Start with "false"
+        Puppet[:autosign] = false
+
+        assert(! caserv.autosign?(host), "Host was incorrectly autosigned")
+
+        # Then set it to true
+        Puppet[:autosign] = true
+        assert(caserv.autosign?(host), "Host was not autosigned")
+        # And try a different host
+        assert(caserv.autosign?("other.yay.com"), "Host was not autosigned")
+
+        # And lastly the file
+        Puppet[:autosign] = file
+        assert(caserv.autosign?(host), "Host was not autosigned")
+
+        # And try a different host
+        assert(! caserv.autosign?("other.yay.com"), "Host was autosigned")
     end
 end

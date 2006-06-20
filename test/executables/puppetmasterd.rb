@@ -74,14 +74,10 @@ class TestPuppetMasterD < Test::Unit::TestCase
             )
         }
         assert_nothing_raised() {
-            #Puppet.notice "calling status"
-            #retval = client.call("status.status", "")
             retval = client.getconfig
         }
 
         objects = nil
-        stopmasterd
-        sleep(1)
     end
 
     # verify that we can run puppetmasterd in parse-only mode
