@@ -214,6 +214,7 @@ module Puppet
                 classes = []
 
                 found = false
+                count = 0
                 begin
                     # We're always doing a sub here; oh well.
                     @ldap.search(Puppet[:ldapbase], 2, filter, sattrs) do |entry|
@@ -238,7 +239,14 @@ module Puppet
                         }
                     end
                 rescue => detail
-                    raise Puppet::Error, "LDAP Search failed: %s" % detail
+                    if count == 0
+                        # Try reconnecting to ldap
+                        @ldap = nil
+                        setup_ldap()
+                        retry
+                    else
+                        raise Puppet::Error, "LDAP Search failed: %s" % detail
+                    end
                 end
 
                 classes.flatten!

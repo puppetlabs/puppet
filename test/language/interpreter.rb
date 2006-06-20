@@ -18,6 +18,7 @@ require 'puppettest'
 
 class TestInterpreter < Test::Unit::TestCase
 	include TestPuppet
+	include ServerTest
     AST = Puppet::Parser::AST
 
     # create a simple manifest that uses nodes to create a file
@@ -206,6 +207,48 @@ class TestInterpreter < Test::Unit::TestCase
             @@tmpfiles << cfile
             assert(FileTest.exists?(cfile), "Did not make %s" % cfile)
         }
+    end
+
+    if Process.uid == 0 and Facter["hostname"].value == "culain"
+    def test_ldapreconnect
+        Puppet[:ldapbase] = "ou=hosts, dc=madstop, dc=com"
+        Puppet[:ldapnodes] = true
+
+        interp = nil
+        assert_nothing_raised {
+            interp = Puppet::Parser::Interpreter.new(
+                :Manifest => mktestmanifest()
+            )
+        }
+        hostname = "culain.madstop.com"
+
+        # look for our host
+        assert_nothing_raised {
+            parent, classes = interp.nodesearch_ldap(hostname)
+        }
+
+        # Now restart ldap
+        system("/etc/init.d/slapd restart 2>/dev/null >/dev/null")
+        sleep(1)
+
+        # and look again
+        assert_nothing_raised {
+            parent, classes = interp.nodesearch_ldap(hostname)
+        }
+
+        # Now stop ldap
+        system("/etc/init.d/slapd stop 2>/dev/null >/dev/null")
+        cleanup do
+            system("/etc/init.d/slapd start 2>/dev/null >/dev/null")
+        end
+
+        # And make sure we actually fail here
+        assert_raise(Puppet::Error) {
+            parent, classes = interp.nodesearch_ldap(hostname)
+        }
+    end
+    else
+        $stderr.puts "Run as root for ldap reconnect tests"
     end
     end
     else
