@@ -47,7 +47,7 @@ module Puppet
                 self.fail "RPMs must specify a package source"
             end
             
-            cmd = "rpm -p -q --qf '#{VERSIONSTRING}' #{self[:source]}"
+            cmd = "rpm -q --qf '#{VERSIONSTRING}' -p #{self[:source]}"
             self.debug "Executing %s" % cmd.inspect
             version = %x{#{cmd}}
 

@@ -386,6 +386,24 @@ class TestPackages < Test::Unit::TestCase
         end
     end
     end
+    if ["Fedora", "RedHat", "CentOS"].include?(Facter["operatingsystem"].value) and
+        FileTest.exists?("/home/luke/rpm/RPMS/i386/puppet-server-0.16.1-1.i386.rpm")
+
+    # We have a special test here, because we don't actually want to install the
+    # package, just make sure it's getting the "latest" value.
+    def test_rpmlatest
+        pkg = nil
+        assert_nothing_raised {
+            pkg = Puppet::Type.type(:package).create(
+                :type => :rpm,
+                :name => "puppet-server",
+                :source => "/home/luke/rpm/RPMS/i386/puppet-server-0.16.1-1.i386.rpm"
+            )
+        }
+
+        assert_equal("0.16.1-1", pkg.latest, "RPM did not provide correct value for latest")
+    end
+    end
 end
 end
 
