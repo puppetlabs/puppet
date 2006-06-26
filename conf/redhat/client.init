@@ -51,7 +51,7 @@ stop() {
 
 restart() {
 	echo -n $"Restarting puppet: "
-        killproc $puppetd HUP
+        killproc $puppetd -HUP
 	RETVAL=$?
 	echo
 	return $RETVAL

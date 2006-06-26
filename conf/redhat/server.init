@@ -60,7 +60,7 @@ stop() {
 
 restart() {
 	echo -n $"Restarting puppet: "
-        killproc $PUPPETMASTER HUP
+        killproc $PUPPETMASTER -HUP
 	RETVAL=$?
 	echo
 	return $RETVAL
