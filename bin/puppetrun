@@ -322,6 +322,8 @@ failures = []
 # Now do the actual work
 go = true
 while go
+    # If we don't have enough children in process and we still have hosts left to
+    # do, then do the next host.
     if children.length < options[:parallel] and ! todo.empty?
         host = todo.shift
         pid = fork do
@@ -330,7 +332,7 @@ while go
 
             unless $? == 0
                 $stderr.puts "Could not contact %s" % host
-                exit(1)
+                exit(4)
             end
             client = Puppet::Client::Runner.new(
                 :Server => host,
@@ -342,15 +344,19 @@ while go
                 client.run(tags, options[:ignoreschedules], options[:foreground])
             rescue => detail
                 $stderr.puts "Host %s failed: %s" % [host, detail]
-                next
+                exit(2)
             end
         end
         children[pid] = host
     else
+        # Else, see if we can reap a process.
         begin
             pid = Process.wait
 
             if host = children[pid]
+                # Remove our host from the list of children, so the parallelization
+                # continues working.
+                children.delete(pid)
                 if $?.exitstatus != 0
                     failures << host
                 end
@@ -360,7 +366,8 @@ while go
                     [pid, $?.exitstatus]
             end
         rescue Errno::ECHILD
-            # There are no children left, so just exit.
+            # There are no children left, so just exit unless there are still
+            # children left to do.
             next unless todo.empty?
 
             if failures.empty?
@@ -368,7 +375,7 @@ while go
                 exit(0)
             else
                 puts "Failed: %s" % failures.join(", ")
-                exit(2)
+                exit(3)
             end
         end
     end
