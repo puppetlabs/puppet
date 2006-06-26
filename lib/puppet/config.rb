@@ -50,6 +50,10 @@ class Config
     # understand, and add them to the passed option list.
     def addargs(options)
         require 'getoptlong'
+
+        # Hackish, but acceptable.  Copy the current ARGV for restarting.
+        Puppet.args = ARGV.dup
+
         # Add all of the config parameters as valid options.
         self.each { |param, obj|
             if self.boolean?(param)

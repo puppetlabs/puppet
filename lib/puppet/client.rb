@@ -135,8 +135,9 @@ module Puppet
             else
                 self.stopping = true
                 rmpidfile()
-                Puppet::Storage.store
-                exit
+                if self.running?
+                    Puppet::Storage.store
+                end
             end
         end
 

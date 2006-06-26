@@ -20,9 +20,13 @@ module Puppet
         return PUPPETVERSION
     end
 
-    # So we can monitor signals and such.
     class << self
+        # So we can monitor signals and such.
         include SignalObserver
+
+        # To keep a copy of arguments.  Set within Config#addargs, because I'm
+        # lazy.
+        attr_accessor :args
     end
 
     class Error < RuntimeError
@@ -320,6 +324,14 @@ module Puppet
         timer
     end
 
+    # Relaunch the executable.
+    def self.restart
+        command = $0 + " " + self.args.join(" ")
+        Puppet.notice "Restarting with '%s'" % command
+        Puppet.shutdown(false)
+        exec(command)
+    end
+
     # Trap a couple of the main signals.  This should probably be handled
     # in a way that anyone else can register callbacks for traps, but, eh.
     def self.settraps
@@ -329,19 +341,58 @@ module Puppet
                 Puppet.shutdown
             end
         end
+
+        # Handle restarting.
+        trap(:HUP) do
+            if client = @services.find { |s| s.is_a? Puppet::Client::MasterClient } and client.running?
+                client.restart
+            else
+                Puppet.restart
+            end
+        end
+
+        # Provide a hook for running clients where appropriate
+        trap(:USR1) do
+            done = 0
+            Puppet.notice "Caught USR1; triggering client run"
+            @services.find_all { |s| s.is_a? Puppet::Client }.each do |client|
+                if client.respond_to? :running?
+                    if client.running?
+                        Puppet.info "Ignoring running %s" % client.class
+                    else
+                        done += 1
+                        begin
+                            client.runnow
+                        rescue => detail
+                            Puppet.err "Could not run client: %s" % detail
+                        end
+                    end
+                else
+                    Puppet.info "Ignoring %s; cannot test whether it is running" %
+                        client.class
+                end
+            end
+
+            unless done > 0
+                Puppet.notice "No clients were run"
+            end
+        end
     end
 
     # Shutdown our server process, meaning stop all services and all threads.
     # Optionally, exit.
     def self.shutdown(leave = true)
+        Puppet.notice "Shutting down"
         # Unmonitor our timers
         defined? @timers and @timers.each do |timer|
             EventLoop.current.ignore_timer timer
         end
 
-        if EventLoop.current.running?
-            EventLoop.current.quit
-        end
+        # This seems to exit the process, although I can't find where it does
+        # so.  Leaving it out doesn't seem to hurt anything.
+        #if EventLoop.current.running?
+        #    EventLoop.current.quit
+        #end
 
         # Stop our services
         defined? @services and @services.each do |svc|
@@ -387,9 +438,15 @@ module Puppet
                     if Puppet[:debug]
                         puts detail.backtrace
                     end
+                    @services.delete svc
                     Puppet.err "Could not start %s: %s" % [svc.class, detail]
                 end
             end
+        end
+
+        unless @services.length > 0
+            Puppet.notice "No remaining services; exiting"
+            exit(1)
         end
 
         if block

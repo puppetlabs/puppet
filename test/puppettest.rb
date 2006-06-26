@@ -487,6 +487,7 @@ module ExeTest
             %x{#{ps}}.chomp.split(/\n/).each { |line|
                 if line =~ /ruby.+puppetmasterd/
                     next if line =~ /\.rb/ # skip the test script itself
+                    next if line =~ /^puppet/ # skip masters running as 'puppet'
                     ary = line.sub(/^\s+/, '').split(/\s+/)
                     pid = ary[1].to_i
                 end
@@ -501,7 +502,7 @@ module ExeTest
                 raise Puppet::Error, "Tried to kill own pid"
             end
             assert_nothing_raised {
-                Process.kill("-INT", pid)
+                Process.kill(:INT, pid)
             }
         end
     end

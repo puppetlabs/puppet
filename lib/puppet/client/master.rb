@@ -309,6 +309,7 @@ class Puppet::Client::MasterClient < Puppet::Client
         super
 
         self.class.instance = self
+        @running = false
     end
 
     # Make sure only one client runs at a time, and make sure only one thread
@@ -342,6 +343,23 @@ class Puppet::Client::MasterClient < Puppet::Client
         end
     end
 
+    # Mark that we should restart.  The Puppet module checks whether we're running,
+    # so this only gets called if we're in the middle of a run.
+    def restart
+        # If we're currently running, then just mark for later
+        Puppet.notice "Received signal to restart; waiting until run is complete"
+        @restart = true
+    end
+
+    # Should we restart?
+    def restart?
+        if defined? @restart
+            @restart
+        else
+            false
+        end
+    end
+
     # Retrieve the cached config
     def retrievecache
         if FileTest.exists?(self.cachefile)
@@ -362,6 +380,7 @@ class Puppet::Client::MasterClient < Puppet::Client
                 Puppet[:puppetdlockfile]
         else
             lock do
+                @running = true
                 self.getconfig
 
                 if defined? @objects and @objects
@@ -372,8 +391,19 @@ class Puppet::Client::MasterClient < Puppet::Client
                         self.apply(tags, ignoreschedules)
                     end
                 end
+                @running = false
+            end
+
+            # Did we get HUPped during the run?  If so, then restart now that we're
+            # done with the run.
+            if self.restart?
+                Process.kill(:HUP, $$)
             end
         end
+    end
+
+    def running?
+        @running
     end
 
     # Store the classes in the classfile, but only if we're not local.
