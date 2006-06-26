@@ -50,8 +50,11 @@ stop() {
 }
 
 restart() {
-	stop
-	start
+	echo -n $"Restarting puppet: "
+        killproc $puppetd HUP
+	RETVAL=$?
+	echo
+	return $RETVAL
 }
 
 case "$1" in
