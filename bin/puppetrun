@@ -7,8 +7,9 @@
 #
 # = Usage
 #
-#   puppetrun [-a|--all] [-c|--class <class>] [-d|--debug] [-h|--help]
-#       [--host <host>] [--no-fqdn]
+#   puppetrun [-a|--all] [-c|--class <class>] [-d|--debug] [-f|--foreground]
+#       [-h|--help] [--host <host>] [--no-fqdn] [--ignoreschedules]
+#       [-t|--tag <tag>] [--test]
 #
 # = Description
 #
@@ -92,6 +93,9 @@
 # parallel::
 #   How parallel to make the connections.  Parallelization is provided by forking
 #   for each client to which to connect.  The default is 1, meaning serial execution.
+#
+# tag::
+#   Specify a tag for selecting the objects to apply.
 #
 # test::
 #   Print the hosts you would connect to but do not actually connect.
@@ -357,6 +361,8 @@ while go
             end
         rescue Errno::ECHILD
             # There are no children left, so just exit.
+            next unless todo.empty?
+
             if failures.empty?
                 puts "Finished"
                 exit(0)
