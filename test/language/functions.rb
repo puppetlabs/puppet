@@ -68,6 +68,25 @@ class TestLangFunctions < Test::Unit::TestCase
             assert_equal(retval, val, "'tagged' returned %s for %s" % [val, tag])
         end
     end
+
+    def test_failfunction
+        func = nil
+        assert_nothing_raised do
+            func = Puppet::Parser::AST::Function.new(
+                :name => "fail",
+                :ftype => :statement,
+                :arguments => AST::ASTArray.new(
+                    :children => [stringobj("this is a failure")]
+                )
+            )
+        end
+
+        scope = Puppet::Parser::Scope.new()
+        val = nil
+        assert_raise(Puppet::ParseError) do
+            val = func.evaluate(:scope => scope)
+        end
+    end
 end
 
 # $Id$

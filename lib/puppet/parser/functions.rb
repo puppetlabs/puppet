@@ -115,6 +115,11 @@ module Functions
 
         return retval
     end
+
+    newfunction(:fail, :statement) do |vals|
+        vals = vals.join(" ") if vals.is_a? Array
+        raise Puppet::ParseError, vals
+    end
 end
 end
 
