@@ -331,19 +331,19 @@ while go
             out = %x{ping -c 1 #{host}}
 
             unless $? == 0
-                $stderr.puts "Could not contact %s" % host
-                exit(4)
+                $stderr.print "Could not contact %s\n" % host
+                next
             end
             client = Puppet::Client::Runner.new(
                 :Server => host,
                 :Port => Puppet[:puppetport]
             )
 
-            puts "Triggering %s" % host
+            print "Triggering %s\n" % host
             begin
                 client.run(tags, options[:ignoreschedules], options[:foreground])
             rescue => detail
-                $stderr.puts "Host %s failed: %s" % [host, detail]
+                $stderr.print "Host %s failed: %s\n" % [host, detail]
                 exit(2)
             end
         end
@@ -360,7 +360,7 @@ while go
                 if $?.exitstatus != 0
                     failures << host
                 end
-                puts "%s finished with exit code %s" % [host, $?.exitstatus]
+                print "%s finished with exit code %s\n" % [host, $?.exitstatus]
             else
                 $stderr.puts "Could not find host for PID %s with status %s" %
                     [pid, $?.exitstatus]
