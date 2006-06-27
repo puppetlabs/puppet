@@ -76,7 +76,8 @@ class TestLangFunctions < Test::Unit::TestCase
                 :name => "fail",
                 :ftype => :statement,
                 :arguments => AST::ASTArray.new(
-                    :children => [stringobj("this is a failure")]
+                    :children => [stringobj("this is a failure"),
+                        stringobj("and another")]
                 )
             )
         end
