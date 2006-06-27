@@ -28,7 +28,9 @@ class Puppet::Client::MasterClient < Puppet::Client
              is used for retrieval, so anything that is a valid file source can
              be used here."],
         :pluginsync => [false,
-            "Whether plugins should be synced with the central server."]
+            "Whether plugins should be synced with the central server."],
+        :pluginsignore => [".svn CVS",
+            "What files to ignore when pulling down plugins.."]
     )
 
     @drivername = :Master
@@ -439,7 +441,9 @@ class Puppet::Client::MasterClient < Puppet::Client
         plugins.push Puppet::Type.type(:file).create(
             :path => Puppet[:pluginpath],
             :recurse => true,
-            :source => Puppet[:pluginsource]
+            :source => Puppet[:pluginsource],
+            :ignore => Puppet[:pluginsignore].split(/\s+/),
+            :tag => "plugins"
         )
 
         trans = plugins.evaluate
