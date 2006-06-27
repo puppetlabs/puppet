@@ -211,7 +211,8 @@ class Type < Puppet::Element
                 unless @types.include? name
                     Puppet.warning "Loaded puppet/type/#{name} but no class was created"
                 end
-            rescue LoadError
+            rescue LoadError => detail
+                Puppet.info "Could not load %s: %s" % [name, detail]
                 # nothing
             end
         end
