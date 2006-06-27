@@ -39,6 +39,7 @@ class Puppet::Client::MasterClient < Puppet::Client
         # Puppetd should only have one instance running, and we need a way
         # to retrieve it.
         attr_accessor :instance
+        include Puppet::Util
     end
 
     def self.facts
@@ -129,18 +130,20 @@ class Puppet::Client::MasterClient < Puppet::Client
     # Disable running the configuration.  This can be used from the command line, but
     # is also used to make sure only one client is running at a time.
     def disable(running = false)
-        text = nil
-        if running
-            text = Process.pid
-        else
-            text = ""
-            Puppet.notice "Disabling puppetd"
-        end
-        Puppet.config.use(:puppet)
-        begin
-            File.open(Puppet[:puppetdlockfile], "w") { |f| f.puts text }
-        rescue => detail
-            raise Puppet::Error, "Could not lock puppetd: %s" % detail
+        threadlock(:puppetd) do
+            text = nil
+            if running
+                text = Process.pid
+            else
+                text = ""
+                Puppet.notice "Disabling puppetd"
+            end
+            Puppet.config.use(:puppet)
+            begin
+                File.open(Puppet[:puppetdlockfile], "w") { |f| f.puts text }
+            rescue => detail
+                raise Puppet::Error, "Could not lock puppetd: %s" % detail
+            end
         end
     end
 
@@ -164,11 +167,13 @@ class Puppet::Client::MasterClient < Puppet::Client
     # Enable running again.  This can be used from the command line, but
     # is also used to make sure only one client is running at a time.
     def enable(running = false)
-        unless running
-            Puppet.notice "Enabling puppetd"
-        end
-        if FileTest.exists? Puppet[:puppetdlockfile]
-            File.unlink(Puppet[:puppetdlockfile])
+        threadlock(:puppetd) do
+            unless running
+                Puppet.debug "Enabling puppetd"
+            end
+            if FileTest.exists? Puppet[:puppetdlockfile]
+                File.unlink(Puppet[:puppetdlockfile])
+            end
         end
     end
 
@@ -319,14 +324,14 @@ class Puppet::Client::MasterClient < Puppet::Client
         if @local
             yield
         else
-            @@sync.synchronize(Sync::EX) do
+            #@@sync.synchronize(Sync::EX) do
                 disable(true)
                 begin
                     yield
                 ensure
                     enable(true)
                 end
-            end
+            #end
         end
     end
 
@@ -373,7 +378,7 @@ class Puppet::Client::MasterClient < Puppet::Client
     def run(tags = nil, ignoreschedules = false)
         if pid = locked?
             t = ""
-            if pid == true
+            if pid != true
                 Puppet.notice "Locked by process %s" % pid
             end
             Puppet.notice "Lock file %s exists; skipping configuration run" %

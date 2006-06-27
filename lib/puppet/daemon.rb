@@ -6,6 +6,8 @@ module Puppet
     # A module that handles operations common to all daemons.  This is included
     # into the Server and Client base classes.
     module Daemon
+        include Puppet::Util
+
         Puppet.config.setdefaults(:puppet, :setpidfile => [true,
             "Whether to store a PID file for the daemon."])
         def daemonname
@@ -204,12 +206,14 @@ module Puppet
 
         # Remove the pid file
         def rmpidfile
-            if defined? @pidfile and @pidfile and FileTest.exists?(@pidfile)
-                begin
-                    File.unlink(@pidfile)
-                rescue => detail
-                    Puppet.err "Could not remove PID file %s: %s" %
-                        [@pidfile, detail]
+            threadlock(:pidfile) do
+                if defined? @pidfile and @pidfile and FileTest.exists?(@pidfile)
+                    begin
+                        File.unlink(@pidfile)
+                    rescue => detail
+                        Puppet.err "Could not remove PID file %s: %s" %
+                            [@pidfile, detail]
+                    end
                 end
             end
         end
@@ -217,25 +221,27 @@ module Puppet
         # Create the pid file.
         def setpidfile
             return unless Puppet[:setpidfile]
-            Puppet.config.use(:puppet)
-            @pidfile = self.pidfile
-            if FileTest.exists?(@pidfile)
-                if defined? $setpidfile
-                    return
-                else
-                    raise Puppet::Error, "A PID file already exists for #{Puppet.name}
-at #{@pidfile}.  Not starting."
+            threadlock(:pidfile) do
+                Puppet.config.use(:puppet)
+                @pidfile = self.pidfile
+                if FileTest.exists?(@pidfile)
+                    if defined? $setpidfile
+                        return
+                    else
+                        raise Puppet::Error, "A PID file already exists for #{Puppet.name}
+    at #{@pidfile}.  Not starting."
+                    end
                 end
-            end
 
-            Puppet.info "Creating PID file to %s" % @pidfile
-            begin
-                File.open(@pidfile, "w") { |f| f.puts $$ }
-            rescue => detail
-                Puppet.err "Could not create PID file: %s" % detail
-                exit(74)
+                Puppet.info "Creating PID file to %s" % @pidfile
+                begin
+                    File.open(@pidfile, "w") { |f| f.puts $$ }
+                rescue => detail
+                    Puppet.err "Could not create PID file: %s" % detail
+                    exit(74)
+                end
+                $setpidfile = true
             end
-            $setpidfile = true
         end
 
         # Shut down our server
@@ -243,8 +249,10 @@ at #{@pidfile}.  Not starting."
             # Remove our pid file
             rmpidfile()
 
-            # And close all logs
-            Puppet::Log.close
+            # And close all logs except the console.
+            Puppet::Log.destinations.reject { |d| d == :console }.each do |dest|
+                Puppet::Log.close(dest)
+            end
 
             super
         end

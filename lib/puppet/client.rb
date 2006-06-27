@@ -105,6 +105,9 @@ module Puppet
                 self.run
                 self.lastrun = Time.now.to_i
             rescue => detail
+                if Puppet[:debug]
+                    puts detail.backtrace
+                end
                 Puppet.err "Could not run %s: %s" % [self.class, detail]
             end
         end
@@ -128,16 +131,15 @@ module Puppet
             @driver.ca_file = @cacertfile
         end
 
-        # FIXME this should probably not store every single time.
         def shutdown
             if self.stopping
                 Puppet.notice "Already in shutdown"
             else
                 self.stopping = true
-                rmpidfile()
-                if self.running?
+                if self.respond_to? :running? and self.running?
                     Puppet::Storage.store
                 end
+                rmpidfile()
             end
         end
 

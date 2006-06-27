@@ -13,6 +13,18 @@ require 'test/unit'
 class TestPuppetModule < Test::Unit::TestCase
 	include TestPuppet
     include SignalObserver
+    
+    def mkfakeclient
+        Class.new(Puppet::Client) do
+            def initialize
+            end
+
+            def runnow
+                Puppet.info "fake client has run"
+            end
+        end
+    end
+
     def mktestclass
         Class.new do
             def initialize(file)
@@ -61,32 +73,6 @@ class TestPuppetModule < Test::Unit::TestCase
 
         assert(!obj.started?, "Object is still running")
 
-    end
-
-    # Make sure timers are being handled correctly
-    def test_timerhandling
-        timer = nil
-        file = tempfile()
-        assert_nothing_raised {
-            timer = Puppet.newtimer(
-                :interval => 0.1,
-                :tolerance => 1,
-                :start? => true
-            ) do
-                File.open(file, "w") do |f| f.puts "" end
-                Puppet.shutdown(false)
-            end
-        }
-
-        assert(timer, "Did not get timer back from Puppet")
-
-        assert_nothing_raised {
-            timeout(1) do
-                Puppet.start()
-            end
-        }
-
-        assert(FileTest.exists?(file), "timer never got triggered")
     end
 end
 

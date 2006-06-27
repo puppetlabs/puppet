@@ -10,8 +10,15 @@ module Puppet
 module Util
     require 'benchmark'
 
-    # Create a sync point for any threads
-    @@sync = Sync.new
+    # Create a hash to store the different sync objects.
+    @@syncresources = {}
+
+    # Return the sync object associated with a given resource.
+    def self.sync(resource)
+        @@syncresources[resource] ||= Sync.new
+        return @@syncresources[resource]
+    end
+
     # Execute a block as a given user or group
     def self.asuser(user = nil, group = nil)
         require 'etc'
@@ -127,24 +134,22 @@ module Util
 
     # Create a shared lock for reading
     def self.readlock(file)
-        @@sync.synchronize(Sync::SH) do
+        self.sync(file).synchronize(Sync::SH) do
             File.open(file) { |f|
                 f.lock_shared { |lf| yield lf }
             }
         end
     end
 
-    # Create an exclusive lock fro writing, and do the writing in a
+    # Create an exclusive lock for writing, and do the writing in a
     # tmp file.
     def self.writelock(file, mode = 0600)
         tmpfile = file + ".tmp"
-        @@sync.synchronize(Sync::EX) do
+        self.sync(file).synchronize(Sync::EX) do
             File.open(file, "w", mode) do |rf|
                 rf.lock_exclusive do |lrf|
-                    yield lrf
                     File.open(tmpfile, "w", mode) do |tf|
                         yield tf
-                        tf.flush
                     end
                     begin
                         File.rename(tmpfile, file)
@@ -365,6 +370,13 @@ module Util
         end
 
         return output
+    end
+
+    # Create an exclusive lock.
+    def threadlock(resource, type = Sync::EX)
+        Puppet::Util.sync(resource).synchronize(type) do
+            yield
+        end
     end
 
     # Because some modules provide their own version of this method.

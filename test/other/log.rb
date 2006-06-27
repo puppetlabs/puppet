@@ -4,8 +4,8 @@ if __FILE__ == $0
     $puppetbase = "../.."
 end
 
-require 'puppet/log'
 require 'puppet'
+require 'puppet/log'
 require 'puppettest'
 require 'test/unit'
 
@@ -17,12 +17,14 @@ class TestLog < Test::Unit::TestCase
     def setup
         super
         @oldloglevel = Puppet::Log.level
+        Puppet::Log.close
     end
 
     def teardown
         super
         Puppet::Log.close
         Puppet::Log.level = @oldloglevel
+        Puppet::Log.newdestination(:console)
     end
 
     def getlevels
@@ -51,10 +53,10 @@ class TestLog < Test::Unit::TestCase
     def test_logfile
         fact = nil
         levels = nil
-        oldlevel = Puppet::Log.level
         Puppet::Log.level = :debug
         levels = getlevels
         logfile = tempfile()
+        fact = nil
         assert_nothing_raised() {
             Puppet::Log.newdestination(logfile)
         }
@@ -62,6 +64,9 @@ class TestLog < Test::Unit::TestCase
         assert(msgs.length == levels.length)
         Puppet::Log.close
         count = 0
+
+        assert(FileTest.exists?(logfile), "Did not create logfile")
+
         assert_nothing_raised() {
             File.open(logfile) { |of|
                 count = of.readlines.length
@@ -108,10 +113,10 @@ class TestLog < Test::Unit::TestCase
     end
 
     def test_output
-        Puppet.debug = false
+        Puppet::Log.level = :notice
         assert(Puppet.err("This is an error").is_a?(Puppet::Log))
         assert(Puppet.debug("This is debugging").nil?)
-        Puppet.debug = true
+        Puppet::Log.level = :debug
         assert(Puppet.err("This is an error").is_a?(Puppet::Log))
         assert(Puppet.debug("This is debugging").is_a?(Puppet::Log))
     end
@@ -199,5 +204,26 @@ class TestLog < Test::Unit::TestCase
         assert_nothing_raised {
             assert_equal(:warning, file[:loglevel])
         }
+    end
+
+    def test_destination_matching
+        dest = nil
+        assert_nothing_raised {
+            dest = Puppet::Log.newdesttype("Destine") do
+                def handle(msg)
+                    puts msg
+                end
+            end
+        }
+
+        [:destine, "Destine", "destine"].each do |name|
+            assert(dest.match?(name), "Did not match %s" % name.inspect)
+        end
+
+        assert_nothing_raised {
+            dest.match(:yayness)
+        }
+        assert(dest.match("Yayness"), "Did not match yayness")
+        Puppet::Log.close(dest)
     end
 end

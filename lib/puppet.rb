@@ -1,8 +1,8 @@
 require 'singleton'
 require 'puppet/event-loop'
+require 'puppet/util'
 require 'puppet/log'
 require 'puppet/config'
-require 'puppet/util'
 
 # see the bottom of the file for further inclusions
 
@@ -23,6 +23,8 @@ module Puppet
     class << self
         # So we can monitor signals and such.
         include SignalObserver
+
+        include Puppet::Util
 
         # To keep a copy of arguments.  Set within Config#addargs, because I'm
         # lazy.
@@ -73,6 +75,9 @@ module Puppet
 
     # the hash that determines how our system behaves
     @@config = Puppet::Config.new
+
+    # The services running in this process.
+    @services ||= []
 
     # define helper messages for each of the message levels
     Puppet::Log.eachlevel { |level|

@@ -16,20 +16,79 @@ module Puppet
         @levels = [:debug,:info,:notice,:warning,:err,:alert,:emerg,:crit]
         @loglevel = 2
 
-		@colors = {
-			:debug => SLATE,
-			:info => GREEN,
-			:notice => PINK,
-			:warning => ORANGE,
-			:err => YELLOW,
-            :alert => BLUE,
-            :emerg => RESET,
-            :crit => RESET
-		}
+        @desttypes = {}
 
-        #@destinations = {:syslog => Syslog.open("puppet")}
-        #@destinations = {:console => :console}
+        # A type of log destination.
+        class Destination
+            class << self
+                attr_accessor :name
+            end
+
+            # Mark the things we're supposed to match.
+            def self.match(obj)
+                @matches ||= []
+                @matches << obj
+            end
+
+            # See whether we match a given thing.
+            def self.match?(obj)
+                if obj.is_a? String and obj =~ /^\w+$/
+                    obj = obj.downcase.intern
+                end
+                @matches.each do |thing|
+                    return true if thing === obj
+                end
+                return false
+            end
+
+            def name
+                if defined? @name
+                    return @name
+                else
+                    return self.class.name
+                end
+            end
+
+            # Set how to handle a message.
+            def self.sethandler(&block)
+                define_method(:handle, &block)
+            end
+
+            # Mark how to initialize our object.
+            def self.setinit(&block)
+                define_method(:initialize, &block)
+            end
+        end
+
+        # Create a new destination type.
+        def self.newdesttype(name, options = {}, &block)
+            dest = Class.new(Destination)
+            name = name.to_s.downcase.intern
+            dest.name = name
+            dest.match(dest.name)
+
+            const_set("Dest" + name.to_s.capitalize, dest)
+
+            @desttypes[dest.name] = dest
+
+            options.each do |option, value|
+                begin
+                    dest.send(option.to_s + "=", value)
+                rescue NoMethodError
+                    raise "%s is an invalid option for log destinations" % option
+                end
+            end
+
+            dest.class_eval(&block)
+
+            return dest
+        end
+
         @destinations = {}
+
+        class << self
+            include Puppet::Util
+        end
 
         # Reset all logs to basics.  Basically just closes all files and undefs
         # all of the other objects.
@@ -42,7 +101,7 @@ module Puppet
                     @destinations.delete(dest)
                 end
             else
-                @destinations.each { |type, dest|
+                @destinations.each { |name, dest|
                     if dest.respond_to?(:flush)
                         dest.flush
                     end
@@ -52,8 +111,6 @@ module Puppet
                 }
                 @destinations = {}
             end
-
-            Puppet.info "closed"
         end
 
         # Flush any log destinations that support such operations.
@@ -112,15 +169,12 @@ module Puppet
             @levels.dup
         end
 
-        # Create a new log destination.
-        def Log.newdestination(dest)
-            # Each destination can only occur once.
-            if @destinations.include?(dest)
-                return
+        newdesttype :syslog do
+            def close
+                Syslog.close
             end
 
-            case dest
-            when "syslog", :syslog
+            def initialize
                 if Syslog.opened?
                     Syslog.close
                 end
@@ -132,52 +186,188 @@ module Puppet
                 # XXX This should really be configurable.
                 facility = Syslog::LOG_DAEMON
 
-                @destinations[:syslog] = Syslog.open(name, options, facility)
-            when /^\// # files
-                Puppet.info "opening %s as a log" % dest
+                @syslog = Syslog.open(name, options, facility)
+            end
+
+            def handle(msg)
+                # XXX Syslog currently has a bug that makes it so you
+                # cannot log a message with a '%' in it.  So, we get rid
+                # of them.
+                if msg.source == "Puppet"
+                    @syslog.send(msg.level, msg.to_s.gsub("%", '%%'))
+                else
+                    @syslog.send(msg.level, "(%s) %s" %
+                        [msg.source.to_s.gsub("%", ""),
+                            msg.to_s.gsub("%", '%%')
+                        ]
+                    )
+                end
+            end
+        end
+
+        newdesttype :file do
+            match /^\//
+
+            def close
+                if defined? @file
+                    @file.close
+                    @file = nil
+                end
+            end
+
+            def flush
+                if defined? @file
+                    @file.flush
+                end
+            end
+
+            def initialize(path)
+                @name = path
                 # first make sure the directory exists
                 # We can't just use 'Config.use' here, because they've
                 # specified a "special" destination.
-                unless FileTest.exist?(File.dirname(dest))
-                    begin
-                        Puppet.recmkdir(File.dirname(dest))
-                        Puppet.info "Creating log directory %s" %
-                            File.dirname(dest)
-                    rescue => detail
-                        Log.newdestination(:console)
-                        Puppet.err "Could not create log directory: %s" %
-                            detail
-                        return
-                    end
+                unless FileTest.exist?(File.dirname(path))
+                    Puppet.recmkdir(File.dirname(path))
+                    Puppet.info "Creating log directory %s" % File.dirname(path)
                 end
 
-                begin
-                    # create the log file, if it doesn't already exist
-                    file = File.open(dest,File::WRONLY|File::CREAT|File::APPEND)
-                rescue => detail
-                    Log.newdestination(:console)
-                    Puppet.err "Could not create log file: %s" %
-                        detail
-                    return
-                end
-                @destinations[dest] = file
-            when "console", :console
-                @destinations[:console] = :console
+                # create the log file, if it doesn't already exist
+                file = File.open(path, File::WRONLY|File::CREAT|File::APPEND)
 
+                @file = file
+            end
+
+            def handle(msg)
+                @file.puts("%s %s (%s): %s" %
+                    [msg.time, msg.source, msg.level, msg.to_s])
+            end
+        end
+
+        newdesttype :console do
+            @@colors = {
+                :debug => SLATE,
+                :info => GREEN,
+                :notice => PINK,
+                :warning => ORANGE,
+                :err => YELLOW,
+                :alert => BLUE,
+                :emerg => RESET,
+                :crit => RESET
+            }
+
+            def initialize
                 # Flush output immediately.
                 $stdout.sync = true
-            when Puppet::Server::Logger
-                @destinations[dest] = dest
-            else
-                Puppet.info "Treating %s as a hostname" % dest
-                args = {}
-                if dest =~ /:(\d+)/
-                    args[:Port] = $1
-                    args[:Server] = dest.sub(/:\d+/, '')
-                else
-                    args[:Server] = dest
+            end
+
+            def handle(msg)
+                color = ""
+                reset = ""
+                if Puppet[:color]
+                    color = @@colors[msg.level]
+                    reset = RESET
                 end
-                @destinations[dest] = Puppet::Client::LogClient.new(args)
+                if msg.source == "Puppet"
+                    puts color + "%s: %s" % [
+                        msg.level, msg.to_s
+                    ] + reset
+                else
+                    puts color + "%s: %s: %s" % [
+                        msg.level, msg.source, msg.to_s
+                    ] + reset
+                end
+            end
+        end
+
+        newdesttype :host do
+            def initialize(host)
+                Puppet.info "Treating %s as a hostname" % host
+                args = {}
+                if host =~ /:(\d+)/
+                    args[:Port] = $1
+                    args[:Server] = host.sub(/:\d+/, '')
+                else
+                    args[:Server] = host
+                end
+
+                @name = host
+
+                @driver = Puppet::Client::LogClient.new(args)
+            end
+
+            def handle(msg)
+                unless msg.is_a?(String) or msg.remote
+                    unless defined? @hostname
+                        @hostname = Facter["hostname"].value
+                    end
+                    unless defined? @domain
+                        @domain = Facter["domain"].value
+                        if @domain
+                            @hostname += "." + @domain
+                        end
+                    end
+                    if msg.source =~ /^\//
+                        msg.source = @hostname + ":" + msg.source
+                    elsif msg.source == "Puppet"
+                        msg.source = @hostname + " " + msg.source
+                    else
+                        msg.source = @hostname + " " + msg.source
+                    end
+                    begin
+                        #puts "would have sent %s" % msg
+                        #puts "would have sent %s" %
+                        #    CGI.escape(YAML.dump(msg))
+                        begin
+                            tmp = CGI.escape(YAML.dump(msg))
+                        rescue => detail
+                            puts "Could not dump: %s" % detail.to_s
+                            return
+                        end
+                        # Add the hostname to the source
+                        @driver.addlog(tmp)
+                        sleep(0.5)
+                    rescue => detail
+                        if Puppet[:debug]
+                            puts detail.backtrace
+                        end
+                        Puppet.err detail
+                        Puppet::Log.close(self)
+                    end
+                end
+            end
+        end
+
+        # Create a new log destination.
+        def Log.newdestination(dest)
+            # Each destination can only occur once.
+            if @destinations.find { |name, obj| obj.name == dest }
+                return
+            end
+
+
+            name, type = @desttypes.find do |name, klass|
+                klass.match?(dest)
+            end
+
+            unless type
+                raise Puppet::DevError, "Unknown destination type %s" % dest
+            end
+
+            begin
+                if type.instance_method(:initialize).arity == 1
+                    @destinations[dest] = type.new(dest)
+                else
+                    @destinations[dest] = type.new()
+                end
+            rescue => detail
+                if Puppet[:debug]
+                    puts detail.backtrace
+                end
+
+                # If this was our only destination, then add the console back in.
+                if @destinations.empty? and (dest != :console and dest != "console")
+                    newdestination(:console)
+                end
             end
         end
 
@@ -190,83 +380,12 @@ module Puppet
             if @levels.index(msg.level) < @loglevel 
                 return
             end
-            @destinations.each { |type, dest|
-                case dest
-                when Module # This is the Syslog module
-                    next if msg.remote
-                    # XXX Syslog currently has a bug that makes it so you
-                    # cannot log a message with a '%' in it.  So, we get rid
-                    # of them.
-                    if msg.source == "Puppet"
-                        dest.send(msg.level, msg.to_s.gsub("%", '%%'))
-                    else
-                        dest.send(msg.level, "(%s) %s" %
-                            [msg.source.to_s.gsub("%", ""),
-                                msg.to_s.gsub("%", '%%')
-                            ]
-                        )
-                    end
-                when File:
-                    dest.puts("%s %s (%s): %s" %
-                        [msg.time, msg.source, msg.level, msg.to_s])
-                when :console
-                    color = ""
-                    reset = ""
-                    if Puppet[:color]
-                        color = @colors[msg.level]
-                        reset = RESET
-                    end
-                    if msg.source == "Puppet"
-                        puts color + "%s: %s" % [
-                            msg.level, msg.to_s
-                        ] + reset
-                    else
-                        puts color + "%s: %s: %s" % [
-                            msg.level, msg.source, msg.to_s
-                        ] + reset
-                    end
-                when Puppet::Client::LogClient
-                    unless msg.is_a?(String) or msg.remote
-                        unless defined? @hostname
-                            @hostname = Facter["hostname"].value
-                        end
-                        unless defined? @domain
-                            @domain = Facter["domain"].value
-                            if @domain
-                                @hostname += "." + @domain
-                            end
-                        end
-                        if msg.source =~ /^\//
-                            msg.source = @hostname + ":" + msg.source
-                        elsif msg.source == "Puppet"
-                            msg.source = @hostname + " " + msg.source
-                        else
-                            msg.source = @hostname + " " + msg.source
-                        end
-                        begin
-                            #puts "would have sent %s" % msg
-                            #puts "would have sent %s" %
-                            #    CGI.escape(YAML.dump(msg))
-                            begin
-                                tmp = CGI.escape(YAML.dump(msg))
-                            rescue => detail
-                                puts "Could not dump: %s" % detail.to_s
-                                return
-                            end
-                            # Add the hostname to the source
-                            dest.addlog(tmp)
-                            #dest.addlog(msg.to_s)
-                            sleep(0.5)
-                        rescue => detail
-                            Puppet.err detail
-                            @destinations.delete(type)
-                        end
-                    end
-                else
-                    raise Puppet::Error, "Invalid log destination %s" % dest
-                    #puts "Invalid log destination %s" % dest.inspect
+
+            @destinations.each do |name, dest|
+                threadlock(dest) do
+                    dest.handle(msg)
                 end
-            }
+            end
         end
 
         def Log.sendlevel?(level)

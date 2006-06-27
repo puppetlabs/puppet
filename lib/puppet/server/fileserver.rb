@@ -418,10 +418,9 @@ class Server
                 path = nil
             else
                 # Remove any double slashes that might have occurred
-                path.gsub!(/\/\//, "/")
+                path = URI.unescape(path.gsub(/\/\//, "/"))
             end
 
-            path = URI.unescape(path)
             return mount, path
         end
 
