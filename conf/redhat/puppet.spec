@@ -1,5 +1,5 @@
-%define rubylibdir %(ruby -rrbconfig -e 'puts Config::CONFIG["sitelibdir"]')
-%define _pbuild %{_builddir}/%{name}-%{version}
+%{!?ruby_sitelibdir: %define ruby_sitelibdir %(ruby -rrbconfig -e 'puts Config::CONFIG["sitelibdir"]')}
+%define pbuild %{_builddir}/%{name}-%{version}
 %define confdir conf/redhat
 
 Summary: A network tool for managing many disparate systems
@@ -11,13 +11,14 @@ Group: System Environment/Base
 
 URL: http://reductivelabs.com/projects/puppet/
 Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
+#Patch0: yumrepo.patch
+#Patch1: lsb-config.patch
 
 Requires: ruby >= 1.8.1
+Requires: ruby(abi) = 1.8
 Requires: facter >= 1.1.4
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-# It's not possible to build ruby noarch packages currently
-# See bz184199
-#BuildArchitectures: noarch
+BuildArchitectures: noarch
 BuildRequires: ruby >= 1.8.1
 
 %description
@@ -37,37 +38,40 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
+#%patch0 -p1
+#%patch1 -p1
 
 %install
 %{__rm} -rf %{buildroot}
 %{__install} -d -m0755 %{buildroot}%{_sbindir}
 %{__install} -d -m0755 %{buildroot}%{_bindir}
-%{__install} -d -m0755 %{buildroot}%{rubylibdir}
+%{__install} -d -m0755 %{buildroot}%{ruby_sitelibdir}
 %{__install} -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
 %{__install} -d -m0755 %{buildroot}%{_docdir}/%{name}-%{version}
-%{__install} -d -m0755 %{buildroot}%{_localstatedir}/puppet
+%{__install} -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/log/puppet
-%{__install} -Dp -m0755 %{_pbuild}/bin/* %{buildroot}%{_sbindir}
+%{__install} -Dp -m0755 %{pbuild}/bin/* %{buildroot}%{_sbindir}
 %{__mv} %{buildroot}%{_sbindir}/puppet %{buildroot}%{_bindir}/puppet
 %{__mv} %{buildroot}%{_sbindir}/puppetrun %{buildroot}%{_bindir}/puppetrun
-%{__install} -Dp -m0644 %{_pbuild}/lib/puppet.rb %{buildroot}%{rubylibdir}/puppet.rb
-%{__cp} -a %{_pbuild}/lib/puppet %{buildroot}%{rubylibdir}
-find %{buildroot}%{rubylibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__chmod} a-x
+%{__install} -Dp -m0644 %{pbuild}/lib/puppet.rb %{buildroot}%{ruby_sitelibdir}/puppet.rb
+%{__cp} -a %{pbuild}/lib/puppet %{buildroot}%{ruby_sitelibdir}
+find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__chmod} a-x
 %{__install} -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
 %{__install} -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
 %{__install} -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
 %{__install} -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 %{__install} -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
 %{__install} -Dp -m0644 %{confdir}/puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
-%{__install} -Dp -m0644 %{confdir}/puppetmasterd.conf %{buildroot}%{_sysconfdir}/puppet/puppetmasterd.conf
+%{__ln_s} puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetmasterd.conf
+%{__ln_s} puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetca.conf
 %{__install} -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
 
 %files
 %defattr(-, root, root, 0755)
 %{_bindir}/puppet
 %{_sbindir}/puppetd
-%{rubylibdir}/*
+%{ruby_sitelibdir}/*
 %{_initrddir}/puppet
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppetd.conf
@@ -78,7 +82,7 @@ find %{buildroot}%{rubylibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__ch
 # write to them
 %attr(-, puppet, puppet) %{_localstatedir}/run/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/log/puppet
-%attr(-, puppet, puppet) %{_localstatedir}/puppet
+%attr(-, puppet, puppet) %{_localstatedir}/lib/puppet
 
 %files server
 %defattr(-, root, root, 0755)
@@ -123,8 +127,15 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Mon Jun 19 2006 David Lutterkort <dlutter@redhat.com> - 0.18.0-1
+- Patch config for LSB compliance (lsb-config.patch)
+- Changed config moves /var/puppet to /var/lib/puppet, /etc/puppet/ssl 
+  to /var/lib/puppet, /etc/puppet/clases.txt to /var/lib/puppet/classes.txt,
+  /etc/puppet/localconfig.yaml to /var/lib/puppet/localconfig.yaml
+
 * Fri May 19 2006 David Lutterkort <dlutter@redhat.com> - 0.17.2-1
 - Added /usr/bin/puppetrun to server subpackage
+- Backported patch for yumrepo type (yumrepo.patch)
 
 * Wed May  3 2006 David Lutterkort <dlutter@redhat.com> - 0.16.4-1
 - Rebuilt
