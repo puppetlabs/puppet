@@ -229,7 +229,9 @@ module Puppet
         # Just a simple method to proxy instance methods to class methods
         def self.proxymethods(*values)
             values.each { |val|
-                eval "def #{val}; self.class.#{val}; end"
+                define_method(val) do
+                    self.class.send(val)
+                end
             }
         end
 
