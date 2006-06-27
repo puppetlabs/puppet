@@ -11,14 +11,6 @@ require 'puppet'
 require 'test/unit'
 require 'facter'
 
-
-# Here we just want to unit-test our cron type, to verify that 
-#class TestCronType < Test::Unit::TestCase
-#	include TestPuppet
-#
-#
-#end
-
 class TestCron < Test::Unit::TestCase
 	include TestPuppet
     def setup
@@ -539,6 +531,7 @@ class TestCron < Test::Unit::TestCase
 
         fakedata("data/types/cron").each do |file|
             names = []
+            text = File.read(file)
             obj.write(File.read(file))
 
             @crontype.retrieve(@me)
@@ -547,7 +540,8 @@ class TestCron < Test::Unit::TestCase
                 names << cron.name
             end
 
-            cron = mkcron("filetest")
+            name = File.basename(file)
+            cron = mkcron("filetest-#{name}")
 
             assert_apply(cron)
 
@@ -556,8 +550,12 @@ class TestCron < Test::Unit::TestCase
             names.each do |name|
                 assert(@crontype[name], "Could not retrieve %s" % name)
             end
-            @crontype.each do |name, cron|
-                names << name
+
+            tablines = @crontype.tab(@me).split("\n")
+
+            text.split("\n").each do |line|
+                assert(tablines.include?(line),
+                    "Did not get %s back out" % line.inspect)
             end
         end
     end
@@ -648,6 +646,36 @@ class TestCron < Test::Unit::TestCase
 
         cron.is = [param, :absent]
         assert_equal("4", cron.value(param))
+    end
+
+    # Make sure we can successfully list all cron jobs on all users
+    def test_cron_listing
+        crons = []
+        %w{fake1 fake2 fake3 fake4 fake5}.each do |user|
+            crons << @crontype.create(
+                :name => "#{user}-1",
+                :command => "/usr/bin/#{user}",
+                :minute => "0",
+                :user => user,
+                :hour => user.sub("fake",'')
+            )
+
+            crons << @crontype.create(
+                :name => "#{user}-2",
+                :command => "/usr/sbin/#{user}",
+                :minute => "0",
+                :user => user,
+                :weekday => user.sub("fake",'')
+            )
+
+            assert_apply(*crons)
+        end
+
+        list = @crontype.list.collect { |c| c.name }
+
+        crons.each do |cron|
+            assert(list.include?(cron.name), "Did not match cron %s" % name)
+        end
     end
 end
 

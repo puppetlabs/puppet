@@ -1,0 +1,2 @@
+@daily /path/to/some/job
+@reboot /path/to/some/job

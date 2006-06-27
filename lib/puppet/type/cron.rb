@@ -193,6 +193,21 @@ module Puppet
             end
         end
 
+        newstate(:special, Puppet::State::ParsedParam) do
+            desc "Special schedules only supported on FreeBSD."
+
+            def specials
+                %w{reboot yearly annually monthly weekly daily midnight hourly}
+            end
+
+            validate do |value|
+                unless specials().include?(value)
+                    raise ArgumentError, "Invalid special schedule %s" %
+                        value.inspect
+                end
+            end
+        end
+
         newstate(:minute, CronParam) do
             self.boundaries = [0, 59]
             desc "The minute at which to run the cron job.
@@ -456,20 +471,49 @@ module Puppet
 
         # See if we can match the hash against an existing cron job.
         def self.match(hash)
-            tmp = nil
-            return nil unless tmp = self.find { |obj|
+            self.find_all { |obj|
                 obj[:user] == hash[:user] and obj.value(:command) == hash[:command][0]
-            }
+            }.each do |obj|
+                # we now have a cron job whose command exactly matches
+                # let's see if the other fields match
 
-            # we now have a cron job whose command exactly matches
-            # let's see if the other fields match
+                # First check the @special stuff
+                if hash[:special]
+                    next unless obj.value(:special) == hash[:special]
+                end
 
-            fields().each do |field|
-                next if field == :command
+                # Then the normal fields.
+                matched = true
+                fields().each do |field|
+                    next if field == :command
+                    if hash[field] and ! obj.value(field)
+                        #Puppet.info "Cron is missing %s: %s and %s" %
+                        #    [field, hash[field].inspect, obj.value(field).inspect]
+                        matched = false
+                        break
+                    end
 
-                return false unless tmp[:user] == hash[:user]
+                    if ! hash[field] and obj.value(field)
+                        #Puppet.info "Hash is missing %s: %s and %s" %
+                        #    [field, obj.value(field).inspect, hash[field].inspect]
+                        matched = false
+                        break
+                    end
+
+                    # FIXME It'd be great if I could somehow reuse how the
+                    # fields are turned into text, but....
+                    next if (hash[field] == [:absent] and obj.value(field) == "*")
+                    next if (hash[field].join(",") == obj.value(field))
+                    #Puppet.info "Did not match %s: %s vs %s" %
+                    #    [field, obj.value(field).inspect, hash[field].inspect]
+                    matched = false 
+                    break
+                end
+                next unless matched
+                return obj
             end
-            return tmp
+
+            return false
         end
 
         # Parse a user's cron job into individual cron objects.
@@ -487,10 +531,13 @@ module Puppet
             envs = []
             text.chomp.split("\n").each { |line|
                 case line
-                when /^# Puppet Name: (.+)$/: hash[:name] = $1
+                when /^# Puppet Name: (.+)$/
+                    hash[:name] = $1
+                    next
                 when /^#/:
                     # add other comments to the list as they are
                     @instances[user] << line 
+                    next
                 when /^\s*(\w+)\s*=\s*(.+)\s*$/:
                     # Match env settings.
                     if hash[:name]
@@ -498,6 +545,14 @@ module Puppet
                     else
                         @instances[user] << line 
                     end
+                    next
+                when /^@(\w+)\s+(.+)/ # FreeBSD special cron crap
+                    fields().each do |field|
+                        next if field == :command
+                        hash[field] = :absent
+                    end
+                    hash[:special] = $1
+                    hash[:command] = $2
                 else
                     if match = /^(\S+) (\S+) (\S+) (\S+) (\S+) (.+)$/.match(line)
                         fields().zip(match.captures).each { |param, value|
@@ -514,22 +569,25 @@ module Puppet
                             end
                         }
                     else
-                        raise Puppet::Error, "Could not match '%s'" % line
+                        # Don't fail on unmatched lines, just warn on them
+                        # and skip them.
+                        Puppet.warning "Could not match '%s'" % line
+                        next
                     end
-
-                    unless envs.empty?
-                        hash[:environment] = envs
-                    end
-
-                    hash[:user] = user
-
-                    # Now convert our hash to an object.
-                    hash2obj(hash)
-
-                    hash = {}
-                    envs.clear
-                    count += 1
                 end
+
+                unless envs.empty?
+                    hash[:environment] = envs
+                end
+
+                hash[:user] = user
+
+                # Now convert our hash to an object.
+                hash2obj(hash)
+
+                hash = {}
+                envs.clear
+                count += 1
             }
         end
 
@@ -581,6 +639,7 @@ module Puppet
         def self.store(user)
             unless @instances.include?(user)
                 Puppet.notice "No cron instances for %s" % user
+                p @instances.keys
                 return
             end
 
@@ -686,28 +745,31 @@ module Puppet
 
             str = ""
 
-            # Don't store autogenerated names
-            #unless self.name =~ /^autocron/
-                str = "# Puppet Name: %s\n" % self.name
-            #end
+            str = "# Puppet Name: %s\n" % self.name
 
-            if @states.include?(:environment) and @states[:environment].should != :absent
-                envs = @states[:environment].should
-                unless envs.is_a? Array
-                    envs = [envs]
-                end
+            if @states.include?(:environment) and
+                @states[:environment].should != :absent
+                    envs = @states[:environment].should
+                    unless envs.is_a? Array
+                        envs = [envs]
+                    end
 
-                envs.each do |line| str += (line + "\n") end
+                    envs.each do |line| str += (line + "\n") end
             end
 
-
-            line = str + self.class.fields.collect { |f|
-                if hash[f] and hash[f] != :absent
-                    hash[f]
-                else
-                    "*"
-                end
-            }.join(" ")
+            line = nil
+            if special = self.value(:special)
+                line = str + "@%s %s" %
+                    [special, self.value(:command)]
+            else
+                line = str + self.class.fields.collect { |f|
+                    if hash[f] and hash[f] != :absent
+                        hash[f]
+                    else
+                        "*"
+                    end
+                }.join(" ")
+            end
 
             return line
         end
@@ -728,8 +790,11 @@ module Puppet
             end
 
             unless ret
-                if name == :command
+                case name
+                when :command
                     devfail "No command, somehow"
+                when :special
+                    # nothing
                 else
                     #ret = (self.class.validstate?(name).default || "*").to_s
                     ret = "*"
