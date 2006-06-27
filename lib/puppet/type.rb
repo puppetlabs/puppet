@@ -212,7 +212,6 @@ class Type < Puppet::Element
                     Puppet.warning "Loaded puppet/type/#{name} but no class was created"
                 end
             rescue LoadError => detail
-                Puppet.info "Could not load %s: %s" % [name, detail]
                 # nothing
             end
         end
