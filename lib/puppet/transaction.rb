@@ -40,7 +40,22 @@ class Transaction
             end
         end
 
-        changes = child.evaluate
+        begin
+            changes = child.evaluate
+        rescue => detail
+            if Puppet[:debug]
+                puts detail.backtrace
+            end
+
+            child.err "Failed to retrieve current state: %s" % detail
+
+            # Mark that it failed
+            @failures[child] += 1
+
+            # And then return
+            return []
+        end
+
         unless changes.is_a? Array
             changes = [changes]
         end

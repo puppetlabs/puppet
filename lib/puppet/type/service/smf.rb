@@ -53,7 +53,7 @@ Puppet.type(:service).newsvctype(:smf) do
                         "Cannot manage legacy services through SMF"
                 else
                     raise Puppet::Error,
-                        "Unmanageable state %s on service %s" %
+                        "Unmanageable state '%s' on service %s" %
                         [value, self.name]
                 end
             end
