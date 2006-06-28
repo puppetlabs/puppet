@@ -62,33 +62,33 @@ class TestServerRunner < Test::Unit::TestCase
         # Fourth: whether file should exist true/false
         [
             ["with no backgrounding",
-                nil, true, false, true],               # no backgrounding
+                nil, true, true, true],
             ["in the background",
-                nil, true, true, true],                # in the background
+                nil, true, false, true],
             ["with a bad tag",
-                ["coolness"], true, true, false],      # a bad tag
+                ["coolness"], true, false, false],
             ["with another bad tag",
-                "coolness", true, true, false],        # another bad tag
+                "coolness", true, false, false],
             ["with a good tag",
-                ["coolness", "yayness"], true, true, true],   # a good tag
+                ["coolness", "yayness"], true, false, true],
             ["with another good tag",
-                ["yayness"], true, true, true],        # another good tag
+                ["yayness"], true, false, true],
             ["with a third good tag",
-                "yayness", true, true, true],          # another good tag
+                "yayness", true, false, true],
             ["not ignoring schedules",
-                nil, false, true, false],              # do not ignore schedules
+                nil, false, false, false],
             ["ignoring schedules",
-                nil, true, true, true],                # ignore schedules
-        ].each do |msg, tags, ignore, bg, shouldexist|
+                nil, true, false, true],
+        ].each do |msg, tags, ignore, fg, shouldexist|
             if FileTest.exists?(created)
                 File.unlink(created)
             end
             assert_nothing_raised {
                 # Try it without backgrounding
-                runner.run(tags, ignore, bg)
+                runner.run(tags, ignore, fg)
             }
 
-            if bg
+            unless fg
                 Puppet.join
             end
 

@@ -10,7 +10,7 @@ class Server
 
         # Run the client configuration right now, optionally specifying
         # tags and whether to ignore schedules
-        def run(tags = [], ignoreschedules = false, bg = true, client = nil, clientip = nil)
+        def run(tags = [], ignoreschedules = false, fg = true, client = nil, clientip = nil)
             # We need to retrieve the client
             master = Puppet::Client::MasterClient.instance
 
@@ -45,13 +45,12 @@ class Server
             end
 
             # And then we need to tell it to run, with this extra info.
-            # By default, stick it in a thread
-            if bg
+            if fg
+                master.run(tags, ignoreschedules)
+            else
                 Puppet.newthread do
                     master.run(tags, ignoreschedules)
                 end
-            else
-                master.run(tags, ignoreschedules)
             end
 
             return "success"
