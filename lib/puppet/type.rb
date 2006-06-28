@@ -77,20 +77,6 @@ class Type < Puppet::Element
         end
     end
 
-    def disabled_inspect
-        str = "Type(%s)" % self.name
-        if defined? @states
-            str += " States(" + @states.inspect + ")"
-        end
-        if defined? @parameters
-            str += " Parameters(" + @parameters.inspect + ")"
-        end
-        if defined? @metaparams
-            str += " Metaparams(" + @metaparams.inspect + ")"
-        end
-        str
-    end
-
     # iterate across all of the subclasses of Type
     def self.eachtype
         @types.each do |name, type|
@@ -98,6 +84,18 @@ class Type < Puppet::Element
             #if ! type.parameters.empty? or ! type.validstates.empty?
                 yield type 
             #end
+        end
+    end
+
+    # Create the 'ensure' class.  This is a separate method so other types
+    # can easily call it and create their own 'ensure' values.
+    def self.ensurable(&block)
+        if block_given?
+            self.newstate(:ensure, Puppet::State::Ensure, &block)
+        else
+            self.newstate(:ensure, Puppet::State::Ensure) do
+                self.defaultvalues
+            end
         end
     end
 
@@ -148,11 +146,33 @@ class Type < Puppet::Element
 
     end
 
+    # Do an on-demand plugin load
+    def self.loadplugin(name)
+        unless Puppet[:pluginpath].split(":").include?(Puppet[:plugindest])
+            Puppet.notice "Adding plugin destination %s to plugin search path" %
+                Puppet[:plugindest]
+            Puppet[:pluginpath] += ":" + Puppet[:plugindest]
+        end
+        Puppet[:pluginpath].split(":").each do |dir|
+            file = ::File.join(dir, name.to_s + ".rb")
+            if FileTest.exists?(file)
+                begin
+                    load file
+                    Puppet.info "loaded %s" % file
+                    return true
+                rescue LoadError => detail
+                    Puppet.info "Could not load %s: %s" %
+                        [file, detail]
+                    return false
+                end
+            end
+        end
+    end
+
     # Define a new type.
     def self.newtype(name, parent = nil, &block)
         parent ||= Puppet::Type
-        Puppet::Util.symbolize(name)
-
+        name = Puppet::Util.symbolize(name)
 
         # Create the class, with the correct name.
         t = Class.new(parent) do
@@ -185,18 +205,6 @@ class Type < Puppet::Element
         t
     end
 
-    # Create the 'ensure' class.  This is a separate method so other types
-    # can easily call it and create their own 'ensure' values.
-    def self.ensurable(&block)
-        if block_given?
-            self.newstate(:ensure, Puppet::State::Ensure, &block)
-        else
-            self.newstate(:ensure, Puppet::State::Ensure) do
-                self.defaultvalues
-            end
-        end
-    end
-
     # Return a Type instance by name.
     def self.type(name)
         @types ||= {}
@@ -212,7 +220,12 @@ class Type < Puppet::Element
                     Puppet.warning "Loaded puppet/type/#{name} but no class was created"
                 end
             rescue LoadError => detail
-                # nothing
+                # If we can't load it from there, try loading it as a plugin.
+                if loadplugin(name)
+                    unless @types.include?(name)
+                        Puppet.warning "Loaded plugin %s but no type was defined" % name
+                    end
+                end
             end
         end
 
@@ -409,7 +422,7 @@ class Type < Puppet::Element
     # Create a new metaparam.  Requires a block and a name, stores it in the
     # @parameters array, and does some basic checking on it.
     def self.newmetaparam(name, &block)
-        Puppet::Util.symbolize(name)
+        name = Puppet::Util.symbolize(name)
         param = Class.new(Puppet::Parameter) do
             @name = name
         end
@@ -435,7 +448,7 @@ class Type < Puppet::Element
     # Create a new parameter.  Requires a block and a name, stores it in the
     # @parameters array, and does some basic checking on it.
     def self.newparam(name, &block)
-        Puppet::Util.symbolize(name)
+        name = Puppet::Util.symbolize(name)
         param = Class.new(Puppet::Parameter) do
             @name = name
         end

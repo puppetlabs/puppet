@@ -179,6 +179,11 @@ class Transaction
         allevents
     end
 
+    # Determine whether a given object has failed.
+    def failed?(obj)
+        @failures[obj] > 0
+    end
+
     # this should only be called by a Puppet::Container object now
     # and it should only receive an array
     def initialize(objects)

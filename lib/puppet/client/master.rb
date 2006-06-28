@@ -22,7 +22,10 @@ class Puppet::Client::MasterClient < Puppet::Client
     Puppet.setdefaults("puppet",
         :pluginpath => ["$vardir/plugins",
             "Where Puppet should look for plugins.  Multiple directories should
-            be comma-separated."],
+            be colon-separated, like normal PATH variables."],
+        :plugindest => ["$vardir/plugins",
+            "Where Puppet should store plugins that it pulls down from the central
+            server."],
         :pluginsource => ["puppet://puppet/plugins",
             "From where to retrieve plugins.  The standard Puppet ``file`` type
              is used for retrieval, so anything that is a valid file source can
@@ -439,7 +442,7 @@ class Puppet::Client::MasterClient < Puppet::Client
             :name => "plugin_collector"
         )
         plugins.push Puppet::Type.type(:file).create(
-            :path => Puppet[:pluginpath],
+            :path => Puppet[:plugindest],
             :recurse => true,
             :source => Puppet[:pluginsource],
             :ignore => Puppet[:pluginsignore].split(/\s+/),

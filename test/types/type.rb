@@ -320,6 +320,54 @@ class TestType < Test::Unit::TestCase
             comp.parent = file
         end
     end
+
+    def test_loadplugins
+        names = %w{loadedplugin1 loadplugin2 loadplugin3}
+        dirs = []
+        3.times { dirs << tempfile() }
+        # Set plugindest to something random
+        Puppet[:plugindest] = tempfile()
+
+        Puppet[:pluginpath] = dirs.join(":")
+
+        names.each do |name|
+            dir = dirs.shift
+            Dir.mkdir(dir)
+
+            # Create an extra file for later
+            [name, name + "2ness"].each do |n|
+                file = File.join(dir, n + ".rb")
+                File.open(file, "w") do |f|
+                    f.puts %{Puppet::Type.newtype('#{n}') do
+    newparam(:argument) do
+        isnamevar
+    end
+end
+}
+                end
+            end
+
+            assert(Puppet::Type.type(name),
+                "Did not get loaded plugin")
+
+            assert_nothing_raised {
+                Puppet::Type.type(name).create(
+                    :name => "myname"
+                )
+            }
+        end
+
+        # Now make sure the plugindest got added to our pluginpath
+        assert(Puppet[:pluginpath].split(":").include?(Puppet[:plugindest]),
+            "Plugin dest did not get added to plugin path")
+
+        # Now make sure it works with just a single path, using the extra files
+        # created above.
+        Puppet[:pluginpath] = Puppet[:pluginpath].split(":")[0]
+        assert(Puppet::Type.type("loadedplugin12ness"),
+            "Did not get loaded plugin")
+
+    end
 end
 
 # $Id$

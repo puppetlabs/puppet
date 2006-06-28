@@ -154,7 +154,7 @@ end
             client.send(:getplugins)
         }
 
-        destfile = File.join(Puppet[:pluginpath], "myplugin.rb")
+        destfile = File.join(Puppet[:plugindest], "myplugin.rb")
 
         assert(File.exists?(destfile), "Did not get plugin")
 
@@ -196,5 +196,12 @@ end
 
         assert(! obj.validattr?(:argument),
             "Old namevar is still valid")
+
+        # Now make sure it works with multiple paths specified.
+        newdir = tempfile()
+        Dir.mkdir(newdir)
+        Puppet[:pluginpath] = [Puppet[:pluginpath], newdir].join(":")
+
+        client.send(:getplugins)
     end
 end

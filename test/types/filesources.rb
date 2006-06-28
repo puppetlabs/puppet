@@ -541,12 +541,16 @@ class TestFileSources < Test::Unit::TestCase
         assert(FileTest.file?(dest), "Destination is not a file")
 
         # Now copy the links
-        assert_raise(Puppet::FileServerError) {
+        #assert_raise(Puppet::FileServerError) {
+        trans = nil
+        assert_nothing_raised {
             file[:links] = :manage
             comp = newcomp(file)
             trans = comp.evaluate
             trans.evaluate
         }
+
+        assert(trans.failed?(file), "Object did not fail to copy links")
     end
 
     def test_changes

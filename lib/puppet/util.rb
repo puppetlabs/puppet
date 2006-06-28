@@ -304,7 +304,7 @@ module Util
     def self.symbolize(value)
         case value
         when String: value = value.intern
-        when Symbol: # nothing
+        when Symbol: value
         else
             raise ArgumentError, "'%s' must be a string or symbol" % value
         end
