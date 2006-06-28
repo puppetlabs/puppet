@@ -339,7 +339,7 @@ end
         # Include a bunch of stuff so the zone isn't as large
         dirs = %w{/usr /sbin /lib /platform}
 
-        %w{/opt/csw /usr/local}.each do |dir|
+        %w{/opt/csw}.each do |dir|
             dirs << dir if FileTest.exists? dir
         end
         zone[:inherit] = dirs
@@ -371,7 +371,7 @@ end
         zone = mkzone("methodtesting")
         dirs = %w{/usr /sbin /lib /platform}
 
-        %w{/opt/csw /usr/local}.each do |dir|
+        %w{/opt/csw}.each do |dir|
             dirs << dir if FileTest.exists? dir
         end
         zone[:inherit] = dirs
@@ -383,6 +383,7 @@ end
             [:uninstall, :configured],
             [:unconfigure, :absent]
         ].each do |method, state|
+            Puppet.info "Testing %s" % method
             assert_nothing_raised {
                 zone.retrieve
             }
@@ -403,7 +404,7 @@ end
         # Include a bunch of stuff so the zone isn't as large
         dirs = %w{/usr /sbin /lib /platform}
 
-        %w{/opt/csw /usr/local}.each do |dir|
+        %w{/opt/csw}.each do |dir|
             dirs << dir if FileTest.exists? dir
         end
         zone[:inherit] = dirs
