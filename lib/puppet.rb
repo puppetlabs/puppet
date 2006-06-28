@@ -317,12 +317,15 @@ module Puppet
     end
 
     def self.newtimer(hash, &block)
-        @timers ||= []
-        timer = EventLoop::Timer.new(hash)
-        @timers << timer
+        timer = nil
+        threadlock(:timers) do
+            @timers ||= []
+            timer = EventLoop::Timer.new(hash)
+            @timers << timer
 
-        if block_given?
-            observe_signal(timer, :alarm, &block)
+            if block_given?
+                observe_signal(timer, :alarm, &block)
+            end
         end
 
         # In case they need it for something else.
@@ -429,12 +432,7 @@ module Puppet
     # Start all of our services and optionally our event loop, which blocks,
     # waiting for someone, somewhere, to generate events of some kind.
     def self.start(block = true)
-        #Puppet.info "Starting loop"
         # Starting everything in its own thread, fwiw
-        defined? @timers and @timers.each do |timer|
-            EventLoop.current.monitor_timer timer
-        end
-
         defined? @services and @services.each do |svc|
             newthread do
                 begin
@@ -452,6 +450,16 @@ module Puppet
         unless @services.length > 0
             Puppet.notice "No remaining services; exiting"
             exit(1)
+        end
+
+        # We need to give the services a chance to register their timers before
+        # we try to start monitoring them.
+        sleep 0.5
+
+        if defined? @timers and ! @timers.empty?
+            @timers.each do |timer|
+                EventLoop.current.monitor_timer timer
+            end
         end
 
         if block
