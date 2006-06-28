@@ -1,3 +1,23 @@
+0.18.1
+    Added signal handlers for HUP, so both client and server deal correctly with it.
+
+    Added signal handler for USR1, which triggers a run on the client.
+
+    As usual, fixed many bugs.
+
+    Significant fixes to puppetrun -- it should behave much more correctly now.
+
+    Added "fail" function which throws a syntax error if it's encountered.
+
+    Added plugin downloading from the central server to the client.  It must be
+    enabled with --pluginsync.
+
+    Added support for FreeBSD's special "@daily" cron schedules.
+
+    Correctly handling spaces in file sources.
+
+    Moved documentation into svn tree.
+    
 0.18.0
     Added support for a "default" node.
 
