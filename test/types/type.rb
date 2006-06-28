@@ -368,6 +368,53 @@ end
             "Did not get loaded plugin")
 
     end
+
+    def test_newtype_methods
+        assert_nothing_raised {
+            Puppet::Type.newtype(:mytype) do
+                newparam(:wow) do isnamevar end
+            end
+        }
+
+        assert(Puppet::Type.respond_to?(:newmytype),
+            "new<type> method did not get created")
+
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet::Type.newmytype(:wow => "yay")
+        }
+
+        assert(obj.is_a?(Puppet::Type.type(:mytype)),
+            "Obj is not the correct type")
+
+        # Now make the type again, just to make sure it works on refreshing.
+        assert_nothing_raised {
+            Puppet::Type.newtype(:mytype) do
+                newparam(:yay) do isnamevar end
+            end
+        }
+
+        obj = nil
+        # Make sure the old class was thrown away and only the new one is sitting
+        # around.
+        assert_raise(Puppet::Error) {
+            obj = Puppet::Type.newmytype(:wow => "yay")
+        }
+        assert_nothing_raised {
+            obj = Puppet::Type.newmytype(:yay => "yay")
+        }
+
+        # Now make sure that we don't replace existing, non-type methods
+        parammethod = Puppet::Type.method(:newparam)
+
+        assert_nothing_raised {
+            Puppet::Type.newtype(:param) do
+                newparam(:rah) do isnamevar end
+            end
+        }
+        assert_equal(parammethod, Puppet::Type.method(:newparam),
+            "newparam method got replaced by newtype")
+    end
 end
 
 # $Id$

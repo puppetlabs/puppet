@@ -178,10 +178,23 @@ class Type < Puppet::Element
         t = Class.new(parent) do
             @name = name
         end
+
+        # Used for method manipulation.
+        selfobj = class << self; self; end
+
         const = name.to_s.capitalize
-        if const_defined?(const)
+        newmethod = "new#{name.to_s}"
+
+        @types ||= {}
+
+        if @types.include?(name) and const_defined?(const)
             Puppet.info "Redefining %s" % name
             remove_const(const)
+
+            if self.respond_to?(newmethod)
+                # Remove the old newmethod, too
+                selfobj.send(:remove_method,newmethod)
+            end
         end
         const_set(name.to_s.capitalize,t)
 
@@ -197,10 +210,18 @@ class Type < Puppet::Element
             t.ensurable
         end
 
-        @types ||= {}
-
         # And add it to our bucket.
         @types[name] = t
+
+        # Now define a "new<type>" method for convenience.
+        if self.respond_to? newmethod
+            # Refuse to overwrite existing methods like 'newparam' or 'newtype'.
+            Puppet.warning "'new#{name.to_s}' method already exists; skipping"
+        else
+            selfobj.send(:define_method, newmethod) do |*args|
+                t.create(*args)
+            end
+        end
 
         t
     end
