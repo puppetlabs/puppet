@@ -446,6 +446,8 @@ class Puppet::Client::MasterClient < Puppet::Client
             :tag => "plugins"
         )
 
+        Puppet.info "Retrieving plugins"
+
         trans = plugins.evaluate
 
         begin
