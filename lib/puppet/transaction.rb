@@ -211,6 +211,12 @@ class Transaction
         end
     end
 
+    def report
+        @changes.collect do |change|
+            change.report
+        end
+    end
+
     # Roll all completed changes back.
     def rollback
         @targets.clear

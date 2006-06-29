@@ -1442,13 +1442,6 @@ class Type < Puppet::Element
         if self.respond_to?(:validate)
             self.validate
         end
-
-        # Ensure defaults to present for managed objects, but not otherwise.
-        # Because of this complication, we can't use normal defaulting mechanisms
-#        if ! @states.include?(:ensure) and self.managed? and
-#                    self.class.validstate?(:ensure)
-#            self[:ensure] = :present
-#        end
     end
 
     # Figure out of there are any objects we can automatically add as

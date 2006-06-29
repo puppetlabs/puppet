@@ -7,6 +7,9 @@ module Puppet
     # including calling 'sync' on the states and producing events.
 	class StateChange
         attr_accessor :is, :should, :type, :path, :state, :transaction, :changed
+        
+        # The log file generated when this object was changed.
+        attr_reader :report
 
         def initialize(state)
             @state = state
@@ -68,7 +71,7 @@ module Puppet
                 # should basically point to that, right?
                     #:state => @state,
                     #:object => @state.parent,
-                @state.log @state.change_to_s
+                @report = @state.log(@state.change_to_s)
                 Puppet::Event.new(
                     :event => event,
                     :change => self,

@@ -17,6 +17,35 @@ class TestTransactions < Test::Unit::TestCase
     def test_nothing
     end
 
+    def test_reports
+        path1 = tempfile()
+        path2 = tempfile()
+        objects = []
+        objects << Puppet::Type.newfile(
+            :path => path1,
+            :content => "yayness"
+        )
+        objects << Puppet::Type.newfile(
+            :path => path2,
+            :content => "booness"
+        )
+
+        trans = assert_events([:file_created, :file_created], *objects)
+
+        report = nil
+
+        assert_nothing_raised {
+            report = trans.report
+        }
+
+        assert_equal(2, report.length,
+            "Did not get the right number of log messages back")
+
+        report.each do |obj|
+            assert_instance_of(Puppet::Log, obj)
+        end
+    end
+
     unless %x{groups}.chomp.split(/ /).length > 1
         $stderr.puts "You must be a member of more than one group to test transactions"
     else
