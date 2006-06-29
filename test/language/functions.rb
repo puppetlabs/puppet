@@ -88,6 +88,85 @@ class TestLangFunctions < Test::Unit::TestCase
             val = func.evaluate(:scope => scope)
         end
     end
+
+    def test_multipletemplates
+        Dir.mkdir(Puppet[:templatedir])
+        onep = File.join(Puppet[:templatedir], "one")
+        twop = File.join(Puppet[:templatedir], "two")
+
+        File.open(onep, "w") do |f|
+            f.puts "template <%= one %>"
+        end
+
+        File.open(twop, "w") do |f|
+            f.puts "template <%= two %>"
+        end
+        func = nil
+        assert_nothing_raised do
+            func = Puppet::Parser::AST::Function.new(
+                :name => "template",
+                :ftype => :rvalue,
+                :arguments => AST::ASTArray.new(
+                    :children => [stringobj("one"),
+                        stringobj("two")]
+                )
+            )
+        end
+        ast = varobj("output", func)
+
+        scope = Puppet::Parser::Scope.new()
+        assert_raise(Puppet::ParseError) do
+            ast.evaluate(:scope => scope)
+        end
+
+        scope.setvar("one", "One")
+        assert_raise(Puppet::ParseError) do
+            ast.evaluate(:scope => scope)
+        end
+        scope.setvar("two", "Two")
+        assert_nothing_raised do
+            ast.evaluate(:scope => scope)
+        end
+
+        assert_equal("template One\ntemplate Two\n", scope.lookupvar("output"),
+            "Templates were not handled correctly")
+    end
+
+    # Now make sure we can fully qualify files, and specify just one
+    def test_singletemplates
+        template = tempfile()
+
+        File.open(template, "w") do |f|
+            f.puts "template <%= yayness %>"
+        end
+
+        func = nil
+        assert_nothing_raised do
+            func = Puppet::Parser::AST::Function.new(
+                :name => "template",
+                :ftype => :rvalue,
+                :arguments => AST::ASTArray.new(
+                    :children => [stringobj(template)]
+                )
+            )
+        end
+        ast = varobj("output", func)
+
+        scope = Puppet::Parser::Scope.new()
+        assert_raise(Puppet::ParseError) do
+            ast.evaluate(:scope => scope)
+        end
+
+        scope.setvar("yayness", "this is yayness")
+
+        assert_nothing_raised do
+            ast.evaluate(:scope => scope)
+        end
+
+        assert_equal("template this is yayness\n", scope.lookupvar("output"),
+            "Templates were not handled correctly")
+
+    end
 end
 
 # $Id$

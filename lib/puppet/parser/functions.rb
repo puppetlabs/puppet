@@ -142,7 +142,7 @@ module Functions
                 raise Puppet::ParseError, "Could not interpret template %s: %s" %
                     [file, detail]
             end
-        end.join("\n")
+        end.join("")
     end
 end
 end

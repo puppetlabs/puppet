@@ -901,12 +901,15 @@ module ParserTesting
     end
 
     def varobj(name, value)
+        unless value.is_a? AST
+            value = stringobj(value)
+        end
         assert_nothing_raised("Could not create %s code" % name) {
             return AST::VarDef.new(
                 :file => tempfile(),
                 :line => rand(100),
                 :name => nameobj(name),
-                :value => stringobj(value)
+                :value => value
             )
         }
     end
