@@ -12,7 +12,11 @@ module Puppet::Parser
 
         # This doesn't actually work right now.
         Puppet.config.setdefaults(:puppet,
-            :lexical => [false, "Whether to use lexical scoping (vs. dynamic)."])
+            :lexical => [false, "Whether to use lexical scoping (vs. dynamic)."],
+            :templatedir => ["$vardir/templates",
+                "Where Puppet looks for template files."
+            ]
+        )
 
         Puppet::Util.logmethods(self)
 
@@ -37,6 +41,14 @@ module Puppet::Parser
 
         def self.declarative=(val)
             @@declarative = val
+        end
+
+        def method_missing(name, *args)
+            if value = lookupvar(name.to_s) and value != :undefined and value != ""
+                return value
+            else
+                super
+            end
         end
 
         # Add all of the defaults for a given object to that object.

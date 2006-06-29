@@ -120,6 +120,30 @@ module Functions
         vals = vals.collect { |s| s.to_s }.join(" ") if vals.is_a? Array
         raise Puppet::ParseError, vals.to_s
     end
+
+    newfunction(:template, :rvalue) do |vals|
+        require 'erb'
+
+        vals.collect do |file|
+            unless file =~ /^#{File::SEPARATOR}/
+                file = File.join(Puppet[:templatedir], file)
+            end
+
+            unless File.exists?(file)
+                raise Puppet::ParseError,
+                    "Could not find template %s" % file
+            end
+
+            template = ERB.new(File.read(file))
+
+            begin
+                template.result(binding)
+            rescue => detail
+                raise Puppet::ParseError, "Could not interpret template %s: %s" %
+                    [file, detail]
+            end
+        end.join("\n")
+    end
 end
 end
 
