@@ -478,6 +478,14 @@ module Puppet
             end
         end
 
+        def tagged?(tag)
+            @tags.include?(tag)
+        end
+
+		def to_report
+            "%s %s (%s): %s" % [self.time, self.source, self.level, self.to_s]
+		end
+
 		def to_s
             return @message
 		end

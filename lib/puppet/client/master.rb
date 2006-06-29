@@ -19,6 +19,15 @@ class Puppet::Client::MasterClient < Puppet::Client
         ]
     )
 
+    Puppet.setdefaults(:puppetd,
+        :reportserver => ["puppet",
+            "The server to which to send transaction reports."
+        ],
+        :report => [false,
+            "Whether to send reports after every transaction."
+        ]
+    )
+
     Puppet.setdefaults("puppet",
         :pluginpath => ["$vardir/plugins",
             "Where Puppet should look for plugins.  Multiple directories should
@@ -100,6 +109,14 @@ class Puppet::Client::MasterClient < Puppet::Client
         if Puppet[:rrdgraph] == true
             Metric.store
             Metric.graph
+        end
+
+        if Puppet[:report]
+            begin
+                reportclient().report(transaction)
+            rescue => detail
+                Puppet.err "Reporting failed: %s" % detail
+            end
         end
 
         return transaction
@@ -479,6 +496,16 @@ class Puppet::Client::MasterClient < Puppet::Client
 
         # Now clean up after ourselves
         plugins.remove
+    end
+
+    def reportclient
+        unless defined? @reportclient
+            @reportclient = Puppet::Client::Reporter.new(
+                :Server => Puppet[:reportserver]
+            )
+        end
+
+        @reportclient
     end
 end
 

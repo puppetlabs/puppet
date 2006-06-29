@@ -190,6 +190,7 @@ require 'puppet/server/filebucket'
 require 'puppet/server/pelement'
 require 'puppet/server/runner'
 require 'puppet/server/logger'
+require 'puppet/server/report'
 require 'puppet/client'
 
 # $Id$

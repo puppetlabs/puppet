@@ -13,9 +13,13 @@ class Puppet::Client::Reporter < Puppet::Client::ProxyClient
         super(hash)
     end
 
-    def report(array)
+    # Send our report.  We get the transaction, and we convert it to a report
+    # as appropriate.
+    def report(transaction)
         # We receive an array of log events, and we need to convert them into
         # a single big YAML file.
+
+        array = transaction.report
 
         report = YAML.dump(array)
 
@@ -24,7 +28,9 @@ class Puppet::Client::Reporter < Puppet::Client::ProxyClient
         end
 
         # Now send the report
-        file = @driver.report(report)
+        benchmark(:info, "Sent transaction report") do
+            file = @driver.report(report)
+        end
     end
 end
 

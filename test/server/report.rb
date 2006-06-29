@@ -62,7 +62,7 @@ class TestServerRunner < Test::Unit::TestCase
 
         # Make sure our report is valid and stuff.
         report.zip(newreport).each do |ol,nl|
-            %w{level message time tags}.each do |method|
+            %w{level message time tags source}.each do |method|
                 assert_equal(ol.send(method), nl.send(method),
                     "%s got changed" % method)
             end

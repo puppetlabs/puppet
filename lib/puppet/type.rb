@@ -242,11 +242,7 @@ class Type < Puppet::Element
                 end
             rescue LoadError => detail
                 # If we can't load it from there, try loading it as a plugin.
-                if loadplugin(name)
-                    unless @types.include?(name)
-                        Puppet.warning "Loaded plugin %s but no type was defined" % name
-                    end
-                end
+                loadplugin(name)
             end
         end
 

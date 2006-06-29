@@ -50,6 +50,9 @@
 #   Do not use individual node designations; each node will receive the result
 #   of evaluating the entire configuration.
 #
+# noreports::
+#   Do not start the reports server.
+#
 # verbose::
 #   Enable verbosity.  Causes the daemon not to go into the background.
 #
@@ -86,6 +89,7 @@ options = [
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--noca",         			GetoptLong::NO_ARGUMENT ],
 	[ "--nobucket",        			GetoptLong::NO_ARGUMENT ],
+	[ "--noreports",       			GetoptLong::NO_ARGUMENT ],
 	[ "--nonodes",         			GetoptLong::NO_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
@@ -107,13 +111,16 @@ end
 
 master = {}
 ca = {}
+report = {}
 fs = {}
 bucket = {}
 args = {}
 
 options = {
     :haveca => true,
+    :havereport => true,
     :havebucket => true,
+    :havemaster => true,
     :setdest => false,
     :verbose => false,
     :debug => false
@@ -133,8 +140,12 @@ begin
                     puts "No help available unless you have RDoc::usage installed"
                     exit
                 end
+            when "--noreports"
+                options[:havereport] = false
             when "--noca"
                 options[:haveca] = false
+            when "--nomaster"
+                options[:havemaster] = false
             when "--nobucket"
                 options[:havebucket] = false
             when "--nonodes"
@@ -204,10 +215,16 @@ unless options.include?(:daemonize)
 end
 
 handlers = {
-    :Master => master,
     :Status => {},
-    :Logger => {}
 }
+
+if options[:havemaster]
+    handlers[:Master] = master
+end
+
+if options[:havereport]
+    handlers[:Report] = report
+end
 
 if options[:haveca]
     handlers[:CA] = ca
