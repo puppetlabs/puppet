@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 # == Synopsis 
 #
 # Retrieve the client configuration from the central puppet server and apply
