@@ -320,6 +320,16 @@ module TestPuppet
         return files
     end
 
+    def fakefile(name)
+        ary = [$puppetbase, "test"]
+        ary += name.split("/")
+        file = File.join(ary)
+        unless FileTest.exists?(file)
+            raise Puppet::DevError, "No fakedata file %s" % file
+        end
+        return file
+    end
+
     # wrap how to retrieve the masked mode
     def filemode(file)
         File.stat(file).mode & 007777

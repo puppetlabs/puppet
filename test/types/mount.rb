@@ -93,6 +93,7 @@ class TestMounts < Test::Unit::TestCase
 
     unless Facter["operatingsystem"].value == "Darwin"
         def test_mountsparse
+            use_fake_fstab
             assert_nothing_raised {
                 @mounttype.retrieve
             }
@@ -104,6 +105,7 @@ class TestMounts < Test::Unit::TestCase
 
         def test_rootfs
             fs = nil
+            use_fake_fstab
             assert_nothing_raised {
                 Puppet.type(:mount).retrieve
             }
@@ -121,6 +123,7 @@ class TestMounts < Test::Unit::TestCase
 
     # Make sure it reads and writes correctly.
     def test_readwrite
+        use_fake_fstab
         assert_nothing_raised {
             Puppet::Type.type(:mount).retrieve
         }
@@ -271,6 +274,20 @@ class TestMounts < Test::Unit::TestCase
             }
         end
     end
+    end
+
+    def use_fake_fstab
+        os = Facter['operatingsystem']
+        if os == "Solaris"
+            name = "solaris.fstab"
+        elsif os == "FreeBSD"
+            name = "freebsd.fstab"
+        else
+            # Catchall for other fstabs
+            name = "linux.fstab"
+        end
+        fstab = fakefile(File::join("data/types/mount", name))
+        Puppet::Type.type(:mount).path = fstab
     end
 end
 

@@ -103,37 +103,47 @@ module Puppet
         @doc = "Manages mounted mounts, including putting mount
             information into the mount table."
 
-        @instances = []
+        def self.init
+            @platform = Facter["operatingsystem"].value
+            case @platform
+            when "Solaris":
+                    @path = "/etc/vfstab"
+                @fields = [:device, :blockdevice, :path, :fstype, :pass, :atboot,
+                           :options]
+                @defaults = [ nil ] * @fields.size
+            when "Darwin":
+                    @filetype = Puppet::FileType.filetype(:netinfo)
+                @filetype.format = "fstab"
+                @path = "mounts"
+                @fields = [:device, :path, :fstype, :options, :dump, :pass]
+                @defaults = [ nil ] * @fields.size
 
-        @platform = Facter["operatingsystem"].value
-        case @platform
-        when "Solaris":
-            @path = "/etc/vfstab"
-            @fields = [:device, :blockdevice, :path, :fstype, :pass, :atboot,
-                :options]
-        when "Darwin":
-            @filetype = Puppet::FileType.filetype(:netinfo)
-            @filetype.format = "fstab"
-            @path = "mounts"
-            @fields = [:device, :path, :fstype, :options, :dump, :pass]
+                # How to map the dumped table to what we want
+                @fieldnames = {
+                    "name" => :device,
+                    "dir" => :path,
+                    "dump_freq" => :dump,
+                    "passno" => :pass,
+                    "vfstype" => :fstype,
+                    "opts" => :options
+                }
+            else
+                @path = "/etc/fstab"
+                @fields = [:device, :path, :fstype, :options, :dump, :pass]
+                @defaults = [ nil ] * 4 + [ "0" ] * 2
+            end
 
-            # How to map the dumped table to what we want
-            @fieldnames = {
-                "name" => :device,
-                "dir" => :path,
-                "dump_freq" => :dump,
-                "passno" => :pass,
-                "vfstype" => :fstype,
-                "opts" => :options
-            }
-        else
-            @path = "/etc/fstab"
-            @fields = [:device, :path, :fstype, :options, :dump, :pass]
+            # Allow Darwin to override the default filetype
+            unless defined? @filetype
+                @filetype = Puppet::FileType.filetype(:flat)
+            end
         end
 
-        # Allow Darwin to override the default filetype
-        unless defined? @filetype
-            @filetype = Puppet::FileType.filetype(:flat)
+        init
+
+        def self.clear
+            init
+            super
         end
 
         # Parse a mount tab.
@@ -156,10 +166,15 @@ module Puppet
                     comment(line)
                 else
                     values = line.split(/\s+/)
-                    unless @fields.length == values.length
+                    if @fields.length < values.length
                         raise Puppet::Error, "Could not parse line %s" % line
                     end
 
+                    values = @defaults.zip(values).collect { |d, v| v || d }
+                    unless @fields.length == values.length
+                        raise Puppet::Error, "Could not parse line %s" % line
+                    end
+                    
                     @fields.zip(values).each do |field, value|
                         hash[field] = value
                     end
