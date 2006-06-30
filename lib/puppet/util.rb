@@ -345,10 +345,10 @@ module Util
         if Puppet::Log.sendlevel?(level)
             result = nil
             seconds = Benchmark.realtime {
-                result = yield
+                yield
             }
             object.send(level, msg + (" in %0.2f seconds" % seconds))
-            result
+            return seconds
         else
             yield
         end
@@ -399,6 +399,16 @@ module Util
             0
         end
     end
+
+    # Just benchmark, with no logging.
+    def thinmark
+        seconds = Benchmark.realtime {
+            yield
+        }
+
+        return seconds
+    end
+
     module_function :memory
 end
 end
