@@ -32,11 +32,14 @@ module Puppet
 
             # See whether we match a given thing.
             def self.match?(obj)
+                # Convert single-word strings into symbols like :console and :syslog
                 if obj.is_a? String and obj =~ /^\w+$/
                     obj = obj.downcase.intern
                 end
+
                 @matches.each do |thing|
-                    return true if thing === obj
+                    # Search for direct matches or class matches
+                    return true if thing === obj or thing == obj.class.to_s
                 end
                 return false
             end
@@ -325,7 +328,6 @@ module Puppet
                         end
                         # Add the hostname to the source
                         @driver.addlog(tmp)
-                        sleep(0.5)
                     rescue => detail
                         if Puppet[:debug]
                             puts detail.backtrace
@@ -337,13 +339,29 @@ module Puppet
             end
         end
 
+        # Log to a transaction report.
+        newdesttype :report do
+            match "Puppet::Transaction::Report"
+
+            def initialize(report)
+                @report = report
+            end
+
+            def handle(msg)
+                # Only add messages from objects, since anything else is
+                # probably unrelated to this run.
+                if msg.objectsource?
+                    @report.newlog(msg)
+                end
+            end
+        end
+
         # Create a new log destination.
         def Log.newdestination(dest)
             # Each destination can only occur once.
             if @destinations.find { |name, obj| obj.name == dest }
                 return
             end
-
 
             name, type = @desttypes.find do |name, klass|
                 klass.match?(dest)
@@ -460,6 +478,15 @@ module Puppet
             Log.newmessage(self)
 		end
 
+        # Was the source of this log an object?
+        def objectsource?
+            if defined? @objectsource and @objectsource
+                @objectsource
+            else
+                false
+            end
+        end
+
         # If they pass a source in to us, we make sure it is a string, and
         # we retrieve any tags we can.
         def source=(source)
@@ -467,8 +494,10 @@ module Puppet
             # is a bit of a stupid hack, specifically testing for elements, but
             # eh.
             if source.is_a?(Puppet::Element) and source.respond_to?(:path)
+                @objectsource = true
                 @source = source.path
             else
+                @objectsource = false
                 @source = source.to_s
             end
             unless defined? @tags and @tags

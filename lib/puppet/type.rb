@@ -1847,12 +1847,6 @@ class Type < Puppet::Element
             changes += statechanges()
         end
 
-        if changes.length > 0
-            # add one to the number of out-of-sync instances
-            Puppet::Metric.add(self.class,self,:outofsync,1)
-        end
-        #end
-
         changes << @children.collect { |child|
             ch = child.evaluate
             child.cache(:checked, now)
@@ -1866,7 +1860,6 @@ class Type < Puppet::Element
         changes.flatten!
 
         # now record how many changes we've resulted in
-        Puppet::Metric.add(self.class,self,:changes,changes.length)
         if changes.length > 0
             self.debug "%s change(s)" %
                 [changes.length]

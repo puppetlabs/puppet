@@ -36,9 +36,9 @@ Puppet::Server::Report.newreport(:tagmail) do |report|
     tags.each do |tag, emails|
         messages = nil
         if tag == "all"
-            messages = report
+            messages = report.logs
         else
-            messages = report.find_all do |log|
+            messages = report.logs.find_all do |log|
                 log.tagged?(tag)
             end
         end

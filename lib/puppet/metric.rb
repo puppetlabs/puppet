@@ -4,7 +4,7 @@ require 'puppet'
 module Puppet
     # A class for handling metrics.  This is currently ridiculously hackish.
 	class Metric
-        def Metric.init
+        def self.init
             @@typemetrics = Hash.new { |typehash,typename|
                 typehash[typename] = Hash.new(0)
             }
@@ -14,12 +14,14 @@ module Puppet
             @@metrics = {}
         end
 
-        def Metric.clear
-            Metric.init
+        self.init
+
+        def self.clear
+            self.init
         end
 
-        def Metric.gather
-            Metric.init
+        def self.gather
+            self.init
 
             # first gather stats about all of the types
             Puppet::Type.eachtype { |type|
@@ -35,7 +37,7 @@ module Puppet
             # the rest of the metrics are injected directly by type.rb
         end
 
-        def Metric.add(type,instance,metric,count)
+        def self.add(type,instance,metric,count)
             return unless defined? @@typemetrics
             case metric
             when :outofsync:
@@ -49,7 +51,7 @@ module Puppet
         end
 
         # we're currently throwing away the type and instance information
-        def Metric.addevents(type,instance,events)
+        def self.addevents(type,instance,events)
             return unless defined? @@eventmetrics
             events.each { |event|
                 @@eventmetrics[event] += 1
@@ -57,25 +59,25 @@ module Puppet
         end
 
         # Iterate across all of the metrics
-        def Metric.each
+        def self.each
             @@metrics.each { |name,metric|
                 yield metric
             }
         end
 
         # I'm nearly positive this method is used only for testing
-        def Metric.load(ary)
+        def self.load(ary)
             @@typemetrics = ary[0]
             @@eventmetrics = ary[1]
         end
 
-        def Metric.graph(range = nil)
+        def self.graph(range = nil)
             @@metrics.each { |name,metric|
                 metric.graph(range)
             }
         end
 
-        def Metric.store(time = nil)
+        def self.store(time = nil)
             require 'RRD'
             unless time
                 time = Time.now.to_i
@@ -85,8 +87,8 @@ module Puppet
             }
         end
 
-        def Metric.tally
-            type = Metric.new("typecount","Types")
+        def self.tally
+            type = self.new("typecount","Types")
             type.newvalue("Number",@@typemetrics.length)
 
             metrics = {
@@ -99,19 +101,19 @@ module Puppet
             total = Hash.new(0)
             @@typemetrics.each { |type,instancehash|
                 name = type.name.to_s
-                instmet = Metric.new("type-" + name,name.capitalize)
+                instmet = self.new("type-" + name,name.capitalize)
                 metrics.each { |symbol,label|
                     instmet.newvalue(symbol.to_s,instancehash[symbol],label)
                     total[symbol] += instancehash[symbol]
                 }
             }
 
-            totalmet = Metric.new("typetotals","Type Totals")
+            totalmet = self.new("typetotals","Type Totals")
             metrics.each { |symbol,label|
                 totalmet.newvalue(symbol.to_s,total[symbol],label)
             }
 
-            eventmet = Metric.new("events")
+            eventmet = self.new("events")
             total = 0
             @@eventmetrics.each { |event,count|
                 event = event.to_s
@@ -158,7 +160,7 @@ module Puppet
             if label
                 @label = label
             else
-                @label = name.capitalize
+                @label = name.to_s.capitalize
             end
 
             @values = []
@@ -171,7 +173,7 @@ module Puppet
 
         def newvalue(name,value,label = nil)
             unless label
-                label = name.capitalize
+                label = name.to_s.capitalize
             end
             @values.push [name,label,value]
         end

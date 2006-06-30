@@ -6,21 +6,15 @@ require 'puppet/statechange'
 
 module Puppet
 class Transaction
-    attr_accessor :toplevel, :component, :objects, :tags, :ignoreschedules
+    attr_accessor :component, :objects, :tags, :ignoreschedules
+
+    include Puppet::Util
 
     Puppet.config.setdefaults(:transaction,
         :tags => ["", "Tags to use to find objects.  If this is set, then
             only objects tagged with the specified tags will be applied.
             Values must be comma-separated."]
     )
-
-    # a bit of a gross hack; a global list of objects that have failed to sync,
-    # so that we can verify during later syncs that our dependencies haven't
-    # failed
-    def Transaction.init
-        @@failures = Hash.new(0)
-        Puppet::Metric.init
-    end
 
     # Apply all changes for a child, returning a list of the events
     # generated.
@@ -36,6 +30,7 @@ class Transaction
 
             if skip
                 child.warning "Skipping because of failed dependencies"
+                @objectmetrics[:skipped] += 1
                 return []
             end
         end
@@ -72,7 +67,6 @@ class Transaction
             rescue => detail
                 change.state.err "change from %s to %s failed: %s" %
                     [change.state.is_to_s, change.state.should_to_s, detail]
-                #Puppet.err("%s failed: %s" % [change.to_s,detail])
                 @failures[child] += 1
                 next
                 # FIXME this should support using onerror to determine
@@ -90,17 +84,12 @@ class Transaction
         }.flatten.reject { |e| e.nil? }
 
         unless changes.empty?
+            @objectmetrics[:changed] += 1
             # Record when we last synced
             child.cache(:synced, Time.now)
         end
 
         childevents
-    end
-
-    # for now, just store the changes for executing linearly
-    # later, we might execute them as we receive them
-    def change(change)
-        @changes.push change
     end
 
     # Find all of the changed objects.
@@ -133,10 +122,8 @@ class Transaction
     # collects all of the changes, executes them, and responds to any
     # necessary events.
     def evaluate
-        #Puppet.debug "Beginning transaction %s with %s changes" %
-        #    [self.object_id, @changes.length]
-
         @count = 0
+
         # Allow the tags to be overriden
         tags = self.tags || Puppet[:tags]
         if tags.nil? or tags == ""
@@ -148,34 +135,46 @@ class Transaction
             end.flatten
         end
 
-        allevents = @objects.collect { |child|
-            events = nil
-            if (tags.nil? or child.tagged?(tags))
-                if self.ignoreschedules or child.scheduled?
-                    # Perform the actual changes
-                    events = apply(child)
+        # Start logging.
+        Puppet::Log.newdestination(@report)
 
-                    # Collect the targets of any subscriptions to those events
-                    collecttargets(events)
+        begin
+            allevents = @objects.collect { |child|
+                events = nil
+                if (tags.nil? or child.tagged?(tags))
+                    if self.ignoreschedules or child.scheduled?
+                        # Perform the actual changes
+
+                        seconds = thinmark do
+                            events = apply(child)
+                        end
+
+                        # Keep track of how long we spend in each type of object
+                        @timemetrics[child.class.name] += seconds
+
+                        # Collect the targets of any subscriptions to those events
+                        collecttargets(events)
+                    else
+                        child.debug "Not scheduled"
+                    end
                 else
-                    child.debug "Not scheduled"
+                    child.debug "Not tagged with %s" % tags.join(", ")
                 end
-            else
-                child.debug "Not tagged with %s" % tags.join(", ")
-            end
 
-            # Now check to see if there are any events for this child
-            trigger(child)
+                # Now check to see if there are any events for this child
+                trigger(child)
 
-            # And return the events for collection
-            events
-        }.flatten.reject { |e| e.nil? }
+                # And return the events for collection
+                events
+            }.flatten.reject { |e| e.nil? }
+        ensure
+            # And then close the transaction log.
+            Puppet::Log.close(@report)
+        end
 
         Puppet.debug "Finishing transaction %s with %s changes" %
             [self.object_id, @count]
 
-        # Currently, we return the list of events, but really, this
-        # should be some kind of report
         allevents
     end
 
@@ -188,33 +187,57 @@ class Transaction
     # and it should only receive an array
     def initialize(objects)
         @objects = objects
-        @toplevel = false
 
+        @objectmetrics = {
+            :total => @objects.length,
+            :outofsync => 0,    # The number of objects that had changes
+            :changed => 0,        # The number of objects fixed
+            :skipped => 0,      # The number of objects skipped
+            :restarted => 0,    # The number of objects triggered
+            :failedrestarts => 0 # The number of objects that fail a trigger
+        }
+
+        # Metrics for distributing times across the different types.
+        @timemetrics = Hash.new(0)
+
+        # The number of objects that were triggered in this run
         @triggered = Hash.new { |hash, key|
             hash[key] = Hash.new(0)
         }
 
+        # Targets of being triggered.
         @targets = Hash.new do |hash, key|
             hash[key] = {}
         end
 
-        # of course, this won't work on the second run
-        unless defined? @@failures
-            @toplevel = true
-            self.class.init
-        end
-
+        # The changes we're performing
         @changes = []
 
+        # The objects that have failed and the number of failures each.  This
+        # is used for skipping objects because of failed dependencies.
         @failures = Hash.new do |h, key|
             h[key] = 0
         end
+
+        @report = Report.new
     end
 
+    # Generate a transaction report.
     def report
-        @changes.collect do |change|
-            change.report
-        end
+        @objectmetrics[:failed] = @failures.length
+
+        # Add all of the metrics related to object count and status
+        @report.newmetric(:objects, @objectmetrics)
+
+        # Record the relative time spent in each object.
+        @report.newmetric(:percentage_time, @timemetrics)
+
+        # Then all of the change-related metrics
+        @report.newmetric(:changes,
+            :total => @changes.length
+        )
+
+        return @report
     end
 
     # Roll all completed changes back.
@@ -287,9 +310,12 @@ class Transaction
                     # to them in any way.
                     begin
                         obj.send(callback)
+                        @objectmetrics[:restarted] += 1
                     rescue => detail
                         obj.err "Failed to call %s on %s: %s" %
                             [callback, obj, detail]
+
+                        @objectmetrics[:failedrestarts] += 1
 
                         if Puppet[:debug]
                             puts detail.backtrace
@@ -313,5 +339,7 @@ class Transaction
     end
 end
 end
+
+require 'puppet/transaction/report'
 
 # $Id$

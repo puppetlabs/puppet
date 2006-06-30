@@ -76,12 +76,7 @@ class Puppet::Client::MasterClient < Puppet::Client
             raise Puppet::Error, "Cannot apply; objects not defined"
         end
 
-        # this is a gross hack... but i don't see a good way around it
-        # set all of the variables to empty
-        Puppet::Transaction.init
-
         transaction = @objects.evaluate
-        transaction.toplevel = true
 
         if tags
             transaction.tags = tags
@@ -104,16 +99,14 @@ class Puppet::Client::MasterClient < Puppet::Client
         ensure
             Puppet::Storage.store
         end
-        Puppet::Metric.gather
-        Puppet::Metric.tally
-        if Puppet[:rrdgraph] == true
-            Metric.store
-            Metric.graph
-        end
 
         if Puppet[:report]
+            report = transaction.report()
+            if Puppet[:rrdgraph] == true
+                report.graph()
+            end
             begin
-                reportclient().report(transaction)
+                reportclient().report(report)
             rescue => detail
                 Puppet.err "Reporting failed: %s" % detail
             end
