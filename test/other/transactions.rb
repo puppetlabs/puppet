@@ -38,11 +38,24 @@ class TestTransactions < Test::Unit::TestCase
             report = trans.report
         }
 
-        assert_equal(2, report.length,
-            "Did not get the right number of log messages back")
+        # First test the report logs
+        assert(report.logs.length > 0, "Did not get any report logs")
 
-        report.each do |obj|
+        report.logs.each do |obj|
             assert_instance_of(Puppet::Log, obj)
+        end
+
+        # Then test the metrics
+        metrics = report.metrics
+
+        assert(metrics, "Did not get any metrics")
+        assert(metrics.length > 0, "Did not get any metrics")
+
+        assert(metrics.include?(:objects), "Did not get object metrics")
+        assert(metrics.include?(:changes), "Did not get change metrics")
+
+        metrics.each do |name, metric|
+            assert_instance_of(Puppet::Metric, metric)
         end
     end
 

@@ -8,7 +8,7 @@ require 'puppet'
 require 'puppettest'
 require 'test/unit'
 
-class TestParsedFile < Test::Unit::TestCase
+class TestStorage < Test::Unit::TestCase
 	include TestPuppet
 
     def mkfile
