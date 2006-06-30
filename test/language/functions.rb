@@ -167,6 +167,32 @@ class TestLangFunctions < Test::Unit::TestCase
             "Templates were not handled correctly")
 
     end
+
+    def test_tempatefunction_cannot_see_scopes
+        template = tempfile()
+
+        File.open(template, "w") do |f|
+            f.puts "<%= lookupvar('myvar') %>"
+        end
+
+        func = nil
+        assert_nothing_raised do
+            func = Puppet::Parser::AST::Function.new(
+                :name => "template",
+                :ftype => :rvalue,
+                :arguments => AST::ASTArray.new(
+                    :children => [stringobj(template)]
+                )
+            )
+        end
+        ast = varobj("output", func)
+
+        scope = Puppet::Parser::Scope.new()
+        scope.setvar("myvar", "this is yayness")
+        assert_raise(Puppet::ParseError) do
+            ast.evaluate(:scope => scope)
+        end
+    end
 end
 
 # $Id$

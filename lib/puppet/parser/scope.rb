@@ -10,6 +10,39 @@ module Puppet::Parser
             attr_accessor :file, :line, :type, :name
         end
 
+        # A simple wrapper for templates, so they don't have full access to
+        # the scope objects.
+        class TemplateWrapper
+            attr_accessor :scope, :file
+
+            def initialize(scope, file)
+                @scope = scope
+                if file =~ /^#{File::SEPARATOR}/
+                    @file = file
+                else
+                    @file = File.join(Puppet[:templatedir], file)
+                end
+
+                unless FileTest.exists?(@file)
+                    raise Puppet::ParseError
+                        "Could not find template %s" % file
+                end
+            end
+
+            def method_missing(name, *args)
+                if value = @scope.lookupvar(name.to_s) and value != :undefined and value != ""
+                    return value
+                else
+                    super
+                end
+            end
+
+            def result
+                template = ERB.new(File.read(@file))
+                template.result(binding)
+            end
+        end
+
         # This doesn't actually work right now.
         Puppet.config.setdefaults(:puppet,
             :lexical => [false, "Whether to use lexical scoping (vs. dynamic)."],
@@ -41,14 +74,6 @@ module Puppet::Parser
 
         def self.declarative=(val)
             @@declarative = val
-        end
-
-        def method_missing(name, *args)
-            if value = lookupvar(name.to_s) and value != :undefined and value != ""
-                return value
-            else
-                super
-            end
         end
 
         # Add all of the defaults for a given object to that object.

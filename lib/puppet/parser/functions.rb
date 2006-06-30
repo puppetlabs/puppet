@@ -125,22 +125,16 @@ module Functions
         require 'erb'
 
         vals.collect do |file|
-            unless file =~ /^#{File::SEPARATOR}/
-                file = File.join(Puppet[:templatedir], file)
-            end
-
-            unless File.exists?(file)
-                raise Puppet::ParseError,
-                    "Could not find template %s" % file
-            end
-
-            template = ERB.new(File.read(file))
+            # Use a wrapper, so the template can't get access to the full
+            # Scope object.
+            wrapper = Puppet::Parser::Scope::TemplateWrapper.new(self, file)
 
             begin
-                template.result(binding)
+                wrapper.result()
             rescue => detail
-                raise Puppet::ParseError, "Could not interpret template %s: %s" %
-                    [file, detail]
+                raise Puppet::ParseError,
+                    "Failed to parse template %s: %s" %
+                        [file, detail]
             end
         end.join("")
     end
