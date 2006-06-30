@@ -415,6 +415,54 @@ end
         assert_equal(parammethod, Puppet::Type.method(:newparam),
             "newparam method got replaced by newtype")
     end
+
+    def test_notify_metaparam
+        file = Puppet::Type.newfile(
+            :path => tempfile(),
+            :notify => ["exec", "notifytest"],
+            :ensure => :file
+        )
+
+        path = tempfile()
+        exec = Puppet::Type.newexec(
+            :name => "notifytest",
+            :command => "/bin/touch #{path}",
+            :refreshonly => true
+        )
+
+        assert_apply(file, exec)
+
+        assert(exec.requires?(file),
+            "Notify did not correctly set up the requirement chain.")
+
+        assert(FileTest.exists?(path),
+            "Exec path did not get created.")
+    end
+
+    def test_before_metaparam
+        file = Puppet::Type.newfile(
+            :path => tempfile(),
+            :before => ["exec", "beforetest"],
+            :content => "yaytest"
+        )
+
+        path = tempfile()
+        exec = Puppet::Type.newexec(
+            :name => "beforetest",
+            :command => "/bin/cp #{file[:path]} #{path}"
+        )
+
+        assert_apply(file, exec)
+
+        assert(exec.requires?(file),
+            "Before did not correctly set up the requirement chain.")
+
+        assert(FileTest.exists?(path),
+            "Exec path did not get created.")
+
+        assert_equal("yaytest", File.read(path),
+            "Exec did not correctly copy file.")
+    end
 end
 
 # $Id$

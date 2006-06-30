@@ -1923,12 +1923,20 @@ class Type < Puppet::Element
     def builddepends
         # Handle the requires
         if self[:require]
-            self.handledepends(self[:require], :NONE, nil)
+            self.handledepends(self[:require], :NONE, nil, true)
         end
 
         # And the subscriptions
         if self[:subscribe]
-            self.handledepends(self[:subscribe], :ALL_EVENTS, :refresh)
+            self.handledepends(self[:subscribe], :ALL_EVENTS, :refresh, true)
+        end
+
+        if self[:notify]
+            self.handledepends(self[:notify], :ALL_EVENTS, :refresh, false)
+        end
+
+        if self[:before]
+            self.handledepends(self[:before], :NONE, nil, false)
         end
     end
 
@@ -1946,7 +1954,7 @@ class Type < Puppet::Element
         }
     end
 
-    def handledepends(requires, event, method)
+    def handledepends(requires, event, method, up)
         # Requires are specified in the form of [type, name], so they're always
         # an array.  But we want them to be an array of arrays.
         unless requires[0].is_a?(Array)
@@ -1968,22 +1976,26 @@ class Type < Puppet::Element
             end
             self.debug("subscribes to %s" % [object])
 
-            #unless @dependencies.include?(object)
-            #    @dependencies << object
-            #end
-
-            # pure requires don't call methods
-            #next if method.nil?
+            # Are we requiring them, or vice versa?
+            source = target = nil
+            if up
+                source = object
+                target = self
+            else
+                source = self
+                target = object
+            end
 
             # ok, both sides of the connection store some information
             # we store the method to call when a given subscription is 
             # triggered, but the source object decides whether 
             subargs = {
                 :event => event,
-                :source => object,
-                :target => self
+                :source => source,
+                :target => target
             }
-            if method and self.respond_to?(method)
+
+            if method and target.respond_to?(method)
                 subargs[:callback] = method
             end
             Puppet::Event::Subscription.new(subargs)
@@ -2209,8 +2221,6 @@ class Type < Puppet::Element
                 requires = values + requires
             end
             requires
-            #p @parent[:require]
-            #@parent.handledepends(requires, :NONE, nil)
         end
     end
 
@@ -2343,6 +2353,75 @@ class Type < Puppet::Element
                 @parent.tag(tag)
             end
         end
+    end
+
+    newmetaparam(:notify) do
+        desc %{This parameter is the opposite of **subscribe** -- it sends events
+            to the specified object:
+
+                file { "/etc/sshd_config":
+                    source => "....",
+                    notify => service[sshd]
+                }
+
+                service { sshd:
+                    ensure => running
+                }
+            
+            This will restart the sshd service if the sshd config file changes.}
+
+
+        # Take whatever dependencies currently exist and add these.
+        munge do |notifies|
+            # We need to be two arrays deep...
+            unless notifies.is_a?(Array)
+                notifies = [notifies]
+            end
+            unless notifies[0].is_a?(Array)
+                notifies = [notifies]
+            end
+            if values = @parent[:notify]
+                notifies = values + notifies
+            end
+            notifies
+        end
+        
+    end
+
+    newmetaparam(:before) do
+        desc %{This parameter is the opposite of **require** -- it guarantees
+            that the specified object is applied later than the specifying
+            object:
+
+                file { "/var/nagios/configuration":
+                    source  => "...",
+                    recurse => true,
+                    before => exec["nagios-rebuid"]
+                }
+
+                exec { "nagios-rebuild":
+                    command => "/usr/bin/make",
+                    cwd => "/var/nagios/configuration"
+                }
+            
+            This will make sure all of the files are up to date before the
+            make command is run.}
+
+        # Take whatever dependencies currently exist and add these.
+        munge do |notifies|
+            # We need to be two arrays deep...
+            unless notifies.is_a?(Array)
+                notifies = [notifies]
+            end
+            unless notifies[0].is_a?(Array)
+                notifies = [notifies]
+            end
+            if values = @parent[:notify]
+                notifies = values + notifies
+            end
+            notifies
+        end
+        
     end
 end # Puppet::Type
 end
