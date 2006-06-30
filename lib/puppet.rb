@@ -241,11 +241,6 @@ module Puppet
         :runinterval => [1800, # 30 minutes
             "How often puppetd applies the client configuration; in seconds"]
     )
-    self.setdefaults("metrics",
-        :rrddir => ["$vardir/rrd",
-            "The directory where RRD database files are stored."],
-        :rrdgraph => [false, "Whether RRD information should be graphed."]
-    )
 
 	# configuration parameter access and stuff
 	def self.[](param)

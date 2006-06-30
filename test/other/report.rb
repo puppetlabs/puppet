@@ -59,6 +59,40 @@ class TestReports < Test::Unit::TestCase
             )
         }
     end
+
+    def test_rrdgraph_report
+        Puppet.config.use(:metrics)
+        # First do some work
+        objects = []
+        25.times do |i|
+            file = tempfile()
+
+            # Make every third file
+            File.open(file, "w") { |f| f.puts "" } if i % 3 == 0
+
+            objects << Puppet::Type.newfile(
+                :path => file,
+                :ensure => "file"
+            )
+        end
+
+        comp = newcomp(*objects)
+
+        trans = nil
+        assert_nothing_raised("Failed to create transaction") {
+            trans = comp.evaluate
+        }
+
+        assert_nothing_raised("Failed to evaluate transaction") {
+            trans.evaluate
+        }
+
+        code = Puppet::Server::Report.report("rrdgraph")
+
+        assert_nothing_raised {
+            code.call(trans.report)
+        }
+    end
 end
 
 # $Id$

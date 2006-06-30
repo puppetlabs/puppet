@@ -34,11 +34,14 @@ class TestServerRunner < Test::Unit::TestCase
 
     def test_report
         # Create a bunch of log messages in an array.
-        report = []
+        report = Puppet::Transaction::Report.new
+
         10.times { |i|
-            report << info("Report test message %s" % i)
-            report[-1].tags = %w{a list of tags}
-            report[-1].tags << "tag%s" % i
+            log = info("Report test message %s" % i)
+            log.tags = %w{a list of tags}
+            log.tags << "tag%s" % i
+
+            report.newlog(log)
         }
 
         # Now make our reporting client
@@ -61,12 +64,15 @@ class TestServerRunner < Test::Unit::TestCase
         }
 
         # Make sure our report is valid and stuff.
-        report.zip(newreport).each do |ol,nl|
+        report.logs.zip(newreport.logs).each do |ol,nl|
             %w{level message time tags source}.each do |method|
                 assert_equal(ol.send(method), nl.send(method),
                     "%s got changed" % method)
             end
         end
+    end
+
+    def test_rrdgraph_report
     end
 end
 

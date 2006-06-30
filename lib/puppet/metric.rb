@@ -4,134 +4,16 @@ require 'puppet'
 module Puppet
     # A class for handling metrics.  This is currently ridiculously hackish.
 	class Metric
-        def self.init
-            @@typemetrics = Hash.new { |typehash,typename|
-                typehash[typename] = Hash.new(0)
-            }
-
-            @@eventmetrics = Hash.new(0)
-
-            @@metrics = {}
-        end
-
-        self.init
-
-        def self.clear
-            self.init
-        end
-
-        def self.gather
-            self.init
-
-            # first gather stats about all of the types
-            Puppet::Type.eachtype { |type|
-                type.each { |instance|
-                    hash = @@typemetrics[type]
-                    hash[:total] += 1
-                    if instance.managed?
-                        hash[:managed] += 1
-                    end
-                }
-            }
-
-            # the rest of the metrics are injected directly by type.rb
-        end
-
-        def self.add(type,instance,metric,count)
-            return unless defined? @@typemetrics
-            case metric
-            when :outofsync:
-                @@typemetrics[type][metric] += count
-            when :changes:
-                @@typemetrics[type][:changed] += 1
-                @@typemetrics[type][:totalchanges] += count
-            else
-                raise Puppet::DevError, "Unknown metric %s" % metric
-            end
-        end
-
-        # we're currently throwing away the type and instance information
-        def self.addevents(type,instance,events)
-            return unless defined? @@eventmetrics
-            events.each { |event|
-                @@eventmetrics[event] += 1
-            }
-        end
-
-        # Iterate across all of the metrics
-        def self.each
-            @@metrics.each { |name,metric|
-                yield metric
-            }
-        end
-
-        # I'm nearly positive this method is used only for testing
-        def self.load(ary)
-            @@typemetrics = ary[0]
-            @@eventmetrics = ary[1]
-        end
-
-        def self.graph(range = nil)
-            @@metrics.each { |name,metric|
-                metric.graph(range)
-            }
-        end
-
-        def self.store(time = nil)
-            require 'RRD'
-            unless time
-                time = Time.now.to_i
-            end
-            @@metrics.each { |name,metric|
-                metric.store(time)
-            }
-        end
-
-        def self.tally
-            type = self.new("typecount","Types")
-            type.newvalue("Number",@@typemetrics.length)
-
-            metrics = {
-                :total => "Instances",
-                :managed => "Managed Instances",
-                :outofsync => "Out of Sync Instances",
-                :changed => "Changed Instances",
-                :totalchanges => "Total Number of Changes",
-            }
-            total = Hash.new(0)
-            @@typemetrics.each { |type,instancehash|
-                name = type.name.to_s
-                instmet = self.new("type-" + name,name.capitalize)
-                metrics.each { |symbol,label|
-                    instmet.newvalue(symbol.to_s,instancehash[symbol],label)
-                    total[symbol] += instancehash[symbol]
-                }
-            }
-
-            totalmet = self.new("typetotals","Type Totals")
-            metrics.each { |symbol,label|
-                totalmet.newvalue(symbol.to_s,total[symbol],label)
-            }
-
-            eventmet = self.new("events")
-            total = 0
-            @@eventmetrics.each { |event,count|
-                event = event.to_s
-                # add the specific event as a value, with the label being a
-                # capitalized version with s/_/ /g
-                eventmet.newvalue(
-                    event,
-                    count,
-                    event.capitalize.gsub(/_/,' ')
-                )
-
-                total += count
-            }
-            eventmet.newvalue("total",total,"Event Total")
-        end
+        Puppet.config.setdefaults("metrics",
+            :rrddir => {:default => "$vardir/rrd",
+                :owner => "$user",
+                :group => "$group",
+                :desc => "The directory where RRD database files are stored."
+            },
+            :rrdgraph => [false, "Whether RRD information should be graphed."]
+        )
 
         attr_accessor :type, :name, :value, :label
-
 
         def create
             Puppet.config.use(:metrics)
@@ -156,7 +38,8 @@ module Puppet
         end
 
         def initialize(name,label = nil)
-            @name = name
+            @name = name.to_s
+
             if label
                 @label = label
             else
@@ -164,11 +47,6 @@ module Puppet
             end
 
             @values = []
-            if @@metrics.include?(self.name)
-                raise "Somehow created two metrics with name %s" % self.name
-            else
-                @@metrics[self.name] = self
-            end
         end
 
         def newvalue(name,value,label = nil)
@@ -183,7 +61,9 @@ module Puppet
         end
 
         def graph(range = nil)
+            require 'RRD'
             args = [self.path.sub(/rrd$/,"png")]
+
             args.push("--title",self.label)
             args.push("--imgformat","PNG")
             args.push("--interlace")
@@ -212,6 +92,7 @@ module Puppet
         end
 
         def store(time)
+            require 'RRD'
             unless FileTest.exists?(File.join(Puppet[:rrddir],@name + ".rrd"))
                 self.create
             end

@@ -60,6 +60,7 @@ class Server
         def initialize(*args)
             super
             Puppet.config.use(:reporting)
+            Puppet.config.use(:metrics)
         end
 
         def mkclientdir(client, dir)
