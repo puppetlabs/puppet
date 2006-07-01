@@ -5,7 +5,7 @@ require 'puppet'
 # change produces, and Metrics are all of the numerical data involved
 # in the transaction.
 class Puppet::Transaction::Report
-    attr_accessor :logs, :metrics
+    attr_accessor :logs, :metrics, :time
 
     def initialize
         @metrics = {}

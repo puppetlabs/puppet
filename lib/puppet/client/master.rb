@@ -86,6 +86,7 @@ class Puppet::Client::MasterClient < Puppet::Client
             transaction.ignoreschedules = true
         end
 
+        transaction.addtimes :config_retrieval => @configtime
         begin
             transaction.evaluate
         rescue Puppet::Error => detail
@@ -101,11 +102,11 @@ class Puppet::Client::MasterClient < Puppet::Client
         end
 
         if Puppet[:report]
-            report = transaction.report()
-            if Puppet[:rrdgraph] == true
-                report.graph()
-            end
             begin
+                report = transaction.report()
+                if Puppet[:rrdgraph] == true
+                    report.graph()
+                end
                 reportclient().report(report)
             rescue => detail
                 Puppet.err "Reporting failed: %s" % detail
@@ -401,7 +402,9 @@ class Puppet::Client::MasterClient < Puppet::Client
         else
             lock do
                 @running = true
-                self.getconfig
+                @configtime = thinmark do
+                    self.getconfig
+                end
 
                 if defined? @objects and @objects
                     unless @local

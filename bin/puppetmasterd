@@ -155,6 +155,9 @@ begin
                     Puppet::Log.newdestination(arg)
                     options[:setdest] = true
                 rescue => detail
+                    if Puppet[:debug]
+                        puts detail.backtrace
+                    end
                     $stderr.puts detail.to_s
                 end
             when "--version"
@@ -252,6 +255,9 @@ begin
     #server = Puppet::Server.new(:CA => ca)
     server = Puppet::Server.new(args)
 rescue => detail
+    if Puppet[:debug]
+        puts detail.backtrace
+    end
     $stderr.puts detail
     exit(1)
 end
@@ -260,6 +266,9 @@ if Process.uid == 0
     begin
         Puppet::Util.chuser
     rescue => detail
+        if Puppet[:debug]
+            puts detail.backtrace
+        end
         $stderr.puts "Could not change user to %s: %s" % [Puppet[:user], detail]
         exit(39)
     end

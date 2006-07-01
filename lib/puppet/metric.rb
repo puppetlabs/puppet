@@ -43,7 +43,7 @@ module Puppet
             if label
                 @label = label
             else
-                @label = name.to_s.capitalize
+                @label = name.to_s.capitalize.gsub("_", " ")
             end
 
             @values = []
@@ -51,7 +51,7 @@ module Puppet
 
         def newvalue(name,value,label = nil)
             unless label
-                label = name.to_s.capitalize
+                label = name.to_s.capitalize.gsub("_", " ")
             end
             @values.push [name,label,value]
         end
@@ -67,7 +67,7 @@ module Puppet
             args.push("--title",self.label)
             args.push("--imgformat","PNG")
             args.push("--interlace")
-            colorstack = %w{#ff0000 #00ff00 #0000ff #099000 #000990 #f00990}
+            colorstack = %w{#ff0000 #00ff00 #0000ff #099000 #000990 #f00990 #0f0f0f}
             i = 0
             defs = []
             lines = []
@@ -93,7 +93,7 @@ module Puppet
 
         def store(time)
             require 'RRD'
-            unless FileTest.exists?(File.join(Puppet[:rrddir],@name + ".rrd"))
+            unless FileTest.exists?(self.path)
                 self.create
             end
 

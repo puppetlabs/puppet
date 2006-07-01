@@ -16,6 +16,13 @@ class Transaction
             Values must be comma-separated."]
     )
 
+    # Add some additional times for reporting
+    def addtimes(hash)
+        hash.each do |name, num|
+            @timemetrics[name] = num
+        end
+    end
+
     # Apply all changes for a child, returning a list of the events
     # generated.
     def apply(child)
@@ -55,6 +62,10 @@ class Transaction
             changes = [changes]
         end
 
+        if changes.length > 0
+            @objectmetrics[:out_of_sync] += 1
+        end
+
         childevents = changes.collect { |change|
             @changes << change
             @count += 1
@@ -78,13 +89,13 @@ class Transaction
             # if we ever get to that point
             unless events.nil? or (events.is_a?(Array) and events.empty?)
                 change.changed = true
+                @objectmetrics[:applied] += 1
             end
 
             events
         }.flatten.reject { |e| e.nil? }
 
         unless changes.empty?
-            @objectmetrics[:changed] += 1
             # Record when we last synced
             child.cache(:synced, Time.now)
         end
@@ -143,6 +154,7 @@ class Transaction
                 events = nil
                 if (tags.nil? or child.tagged?(tags))
                     if self.ignoreschedules or child.scheduled?
+                        @objectmetrics[:scheduled] += 1
                         # Perform the actual changes
 
                         seconds = thinmark do
@@ -190,11 +202,12 @@ class Transaction
 
         @objectmetrics = {
             :total => @objects.length,
-            :outofsync => 0,    # The number of objects that had changes
-            :changed => 0,        # The number of objects fixed
+            :out_of_sync => 0,    # The number of objects that had changes
+            :applied => 0,        # The number of objects fixed
             :skipped => 0,      # The number of objects skipped
             :restarted => 0,    # The number of objects triggered
-            :failedrestarts => 0 # The number of objects that fail a trigger
+            :failed_restarts => 0, # The number of objects that fail a trigger
+            :scheduled => 0     # The number of objects scheduled
         }
 
         # Metrics for distributing times across the different types.
@@ -224,18 +237,38 @@ class Transaction
 
     # Generate a transaction report.
     def report
-        @objectmetrics[:failed] = @failures.length
+        @objectmetrics[:failed] = @failures.find_all do |name, num|
+            num > 0
+        end.length
+
+        # Get the total time spent
+        @timemetrics[:total] = @timemetrics.inject(0) do |total, vals|
+            total += vals[1]
+            total
+        end
+
+        # Unfortunately, RRD does not deal well with changing lists of values,
+        # so we have to pick a list of values and stick with it.  In this case,
+        # that means we record the total time, the config time, and that's about
+        # it.  We should probably send each type's time as a separate metric.
+        @timemetrics.dup.each do |name, value|
+            if Puppet::Type.type(name)
+                @timemetrics.delete(name)
+            end
+        end
 
         # Add all of the metrics related to object count and status
         @report.newmetric(:objects, @objectmetrics)
 
         # Record the relative time spent in each object.
-        @report.newmetric(:percentage_time, @timemetrics)
+        @report.newmetric(:time, @timemetrics)
 
         # Then all of the change-related metrics
         @report.newmetric(:changes,
             :total => @changes.length
         )
+
+        @report.time = Time.now
 
         return @report
     end
@@ -315,7 +348,7 @@ class Transaction
                         obj.err "Failed to call %s on %s: %s" %
                             [callback, obj, detail]
 
-                        @objectmetrics[:failedrestarts] += 1
+                        @objectmetrics[:failed_restarts] += 1
 
                         if Puppet[:debug]
                             puts detail.backtrace
