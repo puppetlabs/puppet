@@ -103,7 +103,7 @@ user from platform details.
 
 ### Language Example: Class Hierarchy Using Inherit
 
-Inheritance can be used to override default values defined in base classes::
+Inheritance can be used to override default values defined in base classes:
 
     class base {
         file { "/etc/sudoers":

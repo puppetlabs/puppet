@@ -231,3 +231,5 @@ openssl:
 [reference]: typedocs.html
 [download]: /downloads
 [thread]: http://mail.madstop.com/pipermail/puppet-dev/2006-April/000393.html
+
+*$Id$*

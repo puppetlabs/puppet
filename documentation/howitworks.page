@@ -227,7 +227,7 @@ Once the transaction is complete, all of the events are checked to see if
 there are any callbacks associated with them.  Puppet currently only supports
 one type of callback and one way of specifying them:  Calling ``refresh`` on
 objects based on that object subscribing to another object.  For instance,
-take the following snippet::
+take the following snippet:
 
     file { "/etc/ssh/sshd.conf":
         source => "puppet://puppet/config/sshd.conf"

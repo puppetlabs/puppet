@@ -30,7 +30,7 @@ with the certificate request.  If the server has ``autosign`` turned on (which
 is not necessarily recommended), then the autosign configuration file (which
 defaults to ``/etc/puppet/autosign.conf``) is checked for whether the client's
 name matches any contents.  For instance, take the following configuration
-file::
+file:
     
     hostname.domain.com
     *.secure.domain.com
@@ -60,4 +60,5 @@ system-wide security hooks prior to the 1.0 release, but the certificate
 authentication already provides significant security.
 
 Recommendations on approaches are heartily recommended.
+
 *$Id$*

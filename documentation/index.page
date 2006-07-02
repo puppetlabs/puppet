@@ -90,17 +90,17 @@ The Puppet reference is split into two pieces:
 API Documentation
 =================
 Until I have time to write tutorials on how to extend Puppet, you might find
-some benefit in perusing the [API docs](/downloads/puppet/apidocs).  They're woefully incomplete as of
-the middle of 2006, but I'll be updating them over time.
+some benefit in perusing the [API docs](/downloads/puppet/apidocs).
+They're woefully incomplete as of the middle of 2006, but I'll be
+updating them over time.
 
 Configuration
 ================
-Most Puppet configuration is currently done directly through the executables
-through the use of command-line flags, although this should largely migrate to
-configuration files before 1.0.  As such, the man pages for the respective
-executables is the appropriate place to look for documentation on
-configuration (e.g., ``puppetmasterd`` for serving and ``puppetd`` for the
-client).
+Puppet configuration can be done through per-process configuration
+files (e.g., ``puppetd.conf``) or on the command-line via switches.
+Much of the documentation is available via ``--help`` switches on each
+executable, but most of the useful switches are common to all
+executables and are thus documented in the [executable reference](puppetd-executable-reference.html).
 
 There are some guides already, though:
 
@@ -116,4 +116,5 @@ is additional information available for those who are interested:
 * [Puppet Internals](howitworks.html)
 
 * [How Cfengine compares to Puppet](notcfengine.html)
+
 *$Id$*

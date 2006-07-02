@@ -66,4 +66,5 @@ want to look at users; this would be your URL:
 http://puppet.domain.com/remote/culain/user/list
 
 Replace as appropriate for your site.
+
 *$Id$*

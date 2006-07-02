@@ -10,7 +10,7 @@ For futher documentation, visit the [Puppet homepage](/projects/puppet).
 
 The basic unit of configuration in Puppet are ``types``.  Types model objects
 on the computer being managed, and each builtin type has attributes that
-determine the final type configuration::
+determine the final type configuration:
 
     file { "/etc/passwd": owner => root, mode => 644 } 
     package { apache: install => true }
@@ -35,7 +35,7 @@ by preceding them with the ``$`` character.
 Once assigned, variables cannot be reassigned. However,
 within a sub-scope a new assignment can be made for a
 variable name for that sub-scope and any further 
-sub-scopes created within it::
+sub-scopes created within it:
   
     $x = foo
     $y = bar
@@ -50,7 +50,7 @@ and classes at the current scope.  Currently files are only searched for
 within the same directory as the file doing the importing.
 
 Files can also be imported using globbing, as implemented by
-Ruby's ``Dir.glob`` method::
+Ruby's ``Dir.glob`` method:
 
     import "classes/*"
     import "packages/[a-z]*"
@@ -64,7 +64,7 @@ own scope but currently does not.
 
 Once assigned, variables cannot be reassigned within the same scope. However,
 within a sub-scope a new assignment can be made for a variable name for that
-sub-scope and any further scopes created within it::
+sub-scope and any further scopes created within it:
 
     $var = value
 
@@ -75,7 +75,7 @@ sub-scope and any further scopes created within it::
 
 Service and class definitions are scoped just as variable assignments are.
 Functions defined and Classes created within a scope will not be available
-outside the scope in which they are created::
+outside the scope in which they are created:
 
     define testing {
         file { "/etc/passwd": owner => root }
@@ -89,7 +89,7 @@ outside the scope in which they are created::
     }
 
 The evaluation by Puppet of following example would be result in the copying
-of ``/file_repository/test-httpd.conf`` to ``/etc/httpd/conf/httpd.conf``::
+of ``/file_repository/test-httpd.conf`` to ``/etc/httpd/conf/httpd.conf``:
  
     $filename = "/etc/apache/httpd.conf"
 
@@ -113,7 +113,7 @@ Definition of fuctions allows the composition of lower level types into higher
 level types.
 
 Parameters of defined functions can be referenced within the definition scope,
-similarly to variables, by preceding their names with the ``$`` character::
+similarly to variables, by preceding their names with the ``$`` character:
 
     define svnserve(source, path, user = false, password = false) {
         file { $path:
@@ -197,7 +197,7 @@ variables and selectors:
 ## Subclassing
 
 The primary benefit of using subclasses instead of just including the parent
-class is that the subclass can override elements in the parent class::
+class is that the subclass can override elements in the parent class:
 
     class unix {
         file { "/etc/sudoers":
@@ -227,7 +227,7 @@ argument or setting).  This means other tools can easily read in the classes
 that Puppet sets and use them for their own logic.
 
 There is also (as of 0.15.4) a new command to set arbitrary classes that do
-not have any code associated with them::
+not have any code associated with them:
 
     class freebsd {
         tag unix, bsd
@@ -239,7 +239,7 @@ not have any code associated with them::
 
 These classes will then be written to the classes.txt file like all others,
 even though there is no code associated with them.  The syntax is just like
-``include``, so you can use variables, also::
+``include``, so you can use variables, also:
 
     tag $operatingsystem
 
@@ -252,7 +252,7 @@ default they are looked for by ``puppetmasterd`` but not by ``puppet``.  See
 the documentation for each to enable or disable them.
 
 Any code outside of a node definition will be applied to all nodes, while any
-code inside will only apply to the specified node or nodes::
+code inside will only apply to the specified node or nodes:
 
     class webserver { ... }
     class dbserver { ... }
@@ -266,7 +266,7 @@ code inside will only apply to the specified node or nodes::
         include dbserver
     }
 
-Nodes can also inherit from other nodes, so it's easy to apply defaults::
+Nodes can also inherit from other nodes, so it's easy to apply defaults:
 
     node base {
         include $operatingsystem
@@ -281,7 +281,7 @@ Nodes can also inherit from other nodes, so it's easy to apply defaults::
 Puppet currently supports two types of conditionals: in-statement and around
 statements.  We call the in-statement conditionals ``selectors``, as they are
 essentially a select-style operator, which support the use of ``default`` to
-specify a default value::
+specify a default value:
 
     define testing(os) {
         owner = $os ? {
@@ -295,7 +295,7 @@ specify a default value::
 
 
 The ``case`` statement provides the ability to conditionally apply
-types::
+types:
 
     case $operatingsystem {
         sunos:      { solaris {} } # apply the solaris class
@@ -313,4 +313,5 @@ words like ``true``, ``define``, ``inherits``, and ``class`` are all reserved.
 
 Puppet supports sh-style comments; they can either be on their own line or at
 the end of a line (see the Conditionals example above).
+
 *$Id$*

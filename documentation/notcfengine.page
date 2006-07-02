@@ -58,7 +58,7 @@ supports two critical features that cfengine forces you to hack around.
 Puppet supports building higher level objects out of a set of low-level
 objects including the ability to parameterize, and has a built-in ability to
 express relationships between objects.  For instance, here is how you might
-define an 'apache' component::
+define an 'apache' component:
 
     define apache(docroot,htmlsource,configfile) {
         # make sure the package is installed
@@ -142,7 +142,7 @@ languages, for instance.  The two manifests just download Apache's
 configuration from a central server, restarting Apache if the files change at
 all, and also making sure that Apache is always running.
 
-Here's how it looks in puppet::
+Here's how it looks in puppet:
 
     # This would normally be in a separate file, e.g., classes/apache.pp
     class apacheserver {
@@ -167,7 +167,7 @@ Here's how it looks in puppet::
         include apacheserver
     }
 
-And here's how the same configuration looks in cfengine::
+And here's how the same configuration looks in cfengine:
 
     control:
         # this class is necessary later
@@ -220,4 +220,5 @@ There are a few specific items worth noting in this comparison:
   anywhere, and the 'apacheserver' class must be set before any code is
   associated with it.  Neither of these is a big deal in small doses, but it
   can get quite complicated as the configuration matures.
+
 *$Id$*

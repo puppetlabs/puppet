@@ -16,22 +16,22 @@ I often use my local Subversion sandbox for testing (i.e., I have my Puppet
 configuration stored in Subversion and checked out in my home directory, and I
 just test Puppet directly against this configuration).  Normally Puppet would
 make the configuration directory for you, but the server needs the ``site.pp``
-to exist, so you need to create the ``manifests`` subdirectory::
+to exist, so you need to create the ``manifests`` subdirectory:
 
     $ mkdir -p /var/tmp/puppet/manifests
     $ vi /var/tmp/puppet/manifests/site.pp
     <create file>
 
-Alternatively, you can just specify the manifest itself::
+Alternatively, you can just specify the manifest itself:
 
     $ sudo puppetmasterd --verbose --manifest ~/svn/puppet/manifests/site.pp
     
 I also always at least run the daemons in verbose mode while testing.  First
-start the central daemon::
+start the central daemon:
 
     $ sudo puppetmasterd --verbose --confdir /var/tmp/puppet
 
-By default, ``puppetmasterd`` looks for node definitions along these lines::
+By default, ``puppetmasterd`` looks for node definitions along these lines:
 
     node mymachine {
         include $operatingsystem
@@ -46,7 +46,7 @@ then you should create the config without nodes and use the ``--nonodes``
 argument.
 
 Once you have the manifest, start the client, pointing it at the local server,
-running in noop mode the first time::
+running in noop mode the first time:
 
     $ sudo puppetd --verbose --confdir /var/tmp/puppet --server localhost --noop --onetime
 
@@ -74,7 +74,7 @@ Also, you can narrow down what portion of the configuration you are testing by
 using '--tag'.  For instance, say you are running this on a machine that is an
 ldapserver, namedserver, and webserver, and you're adding ntpserver to the
 list of classes being evaluated.  Rather than sitting through the entire
-config every run, just apply the ntpserver elements::
+config every run, just apply the ntpserver elements:
 
     $ sudo puppet --server localhost --test --tag ntpserver
 
