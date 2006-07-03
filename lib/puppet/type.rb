@@ -790,8 +790,9 @@ class Type < Puppet::Element
         when :meta
             self.newmetaparam(self.class.metaparamclass(name), value)
         when :param
+            klass = self.class.attrclass(name)
             # if they've got a method to handle the parameter, then do it that way
-            self.newparam(self.class.attrclass(name), value)
+            self.newparam(klass, value)
         else
             raise Puppet::Error, "Invalid parameter %s" % [name]
         end
@@ -1093,6 +1094,7 @@ class Type < Puppet::Element
 
         if rmdeps
             Puppet::Event::Subscription.dependencies(self).each { |dep|
+                #info "Deleting dependency %s" % dep
                 #begin
                 #    self.unsubscribe(dep)
                 #rescue
@@ -1101,6 +1103,7 @@ class Type < Puppet::Element
                 dep.delete
             }
             Puppet::Event::Subscription.subscribers(self).each { |dep|
+                #info "Unsubscribing from %s" % dep
                 begin
                     dep.unsubscribe(self)
                 rescue
@@ -1161,7 +1164,6 @@ class Type < Puppet::Element
     # necessary.  FIXME This method should be responsible for most of the
     # error handling.
     def self.create(hash)
-        #Puppet.warning "Creating %s" % hash.inspect
         # Handle this new object being implicit
         implicit = hash[:implicit] || false
         if hash.include?(:implicit)
@@ -1175,6 +1177,8 @@ class Type < Puppet::Element
             hash = self.hash2trans(hash)
         end
         name = hash.name
+
+        #Puppet.debug "Creating %s[%s]" % [self.name, name]
 
         # if the object already exists
         if self.isomorphic? and retobj = self[name]

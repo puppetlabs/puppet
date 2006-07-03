@@ -57,14 +57,14 @@ module Puppet
                                 method
                         end
                         newclient.send(:define_method,method) { |*args|
-                            #Puppet.info "Calling %s" % method
+                            Puppet.debug "Calling %s.%s" % [namespace, method]
                             #Puppet.info "peer cert is %s" % @http.peer_cert
                             #Puppet.info "cert is %s" % @http.cert
                             begin
                                 call("%s.%s" % [namespace, method.to_s],*args)
                             rescue OpenSSL::SSL::SSLError => detail
                                 raise NetworkClientError,
-                                    "Certificates were not trusted"
+                                    "Certificates were not trusted: %s" % detail
                             rescue XMLRPC::FaultException => detail
                                 #Puppet.err "Could not call %s.%s: %s" %
                                 #    [namespace, method, detail.faultString]

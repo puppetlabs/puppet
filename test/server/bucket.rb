@@ -23,7 +23,6 @@ class TestBucket < Test::Unit::TestCase
         end
 
         #Puppet.err "#{Process.pid}: %s: %s" % [@num, memory()]
-        GC.start
         #gcdebug(String)
     end
 

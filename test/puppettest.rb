@@ -66,6 +66,7 @@ module TestPuppet
             Puppet::Log.newdestination :console
             Puppet::Log.level = :debug
             #$VERBOSE = 1
+            Puppet.info @method_name
         else
             Puppet::Log.close
             Puppet::Log.newdestination tempfile()
@@ -169,7 +170,8 @@ module TestPuppet
             @@tmpfilenum = 1
         end
 
-        f = File.join(self.tmpdir(), self.class.to_s + "testfile" + @@tmpfilenum.to_s)
+        f = File.join(self.tmpdir(), self.class.to_s + "_" + @method_name +
+            @@tmpfilenum.to_s)
         @@tmpfiles << f
         return f
     end
@@ -180,7 +182,7 @@ module TestPuppet
         else
             @@testdirnum = 1
         end
-        d = File.join(self.tmpdir(), self.class.to_s + "testdir" + @@testdirnum.to_s)
+        d = File.join(self.tmpdir(), self.class.to_s + "_" + @method_name + @@testdirnum.to_s)
         @@tmpfiles << d
         return d
     end
@@ -349,14 +351,16 @@ module ServerTest
         if defined? @@port
             @@port += 1
         else
-            @@port = 8085
+            @@port = 20000
         end
     end
 
     # create a simple manifest that just creates a file
     def mktestmanifest
         file = File.join(Puppet[:confdir], "%ssite.pp" % (self.class.to_s + "test"))
-        @createdfile = File.join(tmpdir(), self.class.to_s + "servermanifesttesting")
+        #@createdfile = File.join(tmpdir(), self.class.to_s + "manifesttesting" +
+        #    "_" + @method_name)
+        @createdfile = tempfile()
 
         File.open(file, "w") { |f|
             f.puts "file { \"%s\": ensure => file, mode => 755 }\n" % @createdfile

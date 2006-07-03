@@ -118,20 +118,24 @@ class TestMasterClient < Test::Unit::TestCase
 
     # Make sure non-string facts don't make things go kablooie
     def test_nonstring_facts
+        Puppet.err :a
         # Add a nonstring fact
         Facter.add("nonstring") do
             setcode { 1 }
         end
+        Puppet.err :b
 
         assert_equal(1, Facter.nonstring, "Fact was a string from facter")
 
         client = mkclient()
 
         assert(! FileTest.exists?(@createdfile))
+        Puppet.err :c
 
         assert_nothing_raised {
             client.run
         }
+        Puppet.err :d
     end
 
     def test_getplugins
