@@ -385,6 +385,86 @@ class TestPackages < Test::Unit::TestCase
             assert(FileTest.exists?("/tmp/pkgtesting/file"), "File did not get created")
         end
     end
+
+    # Yay, gems.  They're special because any OS can test them.
+    if %x{which gem 2>/dev/null}.chomp != ""
+    def test_list_gems
+        gems = nil
+        assert_nothing_raised {
+            gems = Puppet::Type.type(:package).pkgtype(:gem).list
+        }
+
+        gems.each do |gem|
+            assert_equal(:gem, gem[:type],
+                "Type was not set correctly")
+        end
+    end
+
+    def test_install_gems
+        gem = nil
+        name = "wxrubylayouts"
+        assert_nothing_raised {
+            gem = Puppet::Type.newpackage(
+                :name => name,
+                :version => "0.0.2",
+                :ensure => "installed",
+                :type => :gem
+            )
+        }
+
+        assert_nothing_raised {
+            gem.retrieve
+        }
+
+        if gem.is(:ensure) == :installed
+            $stderr.puts "Cannot test gem installation; %s is already installed" %
+                name
+        end
+
+        assert_events([:package_created], gem)
+
+        assert_nothing_raised {
+            gem.retrieve
+        }
+
+        assert_equal("0.0.2", gem.is(:ensure),
+            "Incorrect version was installed")
+
+        latest = nil
+        assert_nothing_raised {
+            latest = gem.latest
+        }
+
+        assert(latest != gem[:version], "Did not correctly find latest value")
+
+        gem[:ensure] = :latest
+        assert_events([:package_changed], gem)
+
+        gem.retrieve
+
+        assert("0.0.2" != gem.is(:ensure),
+            "Package was not updated.")
+
+        gem[:ensure] = :absent
+
+        assert_events([:package_removed], gem)
+    end
+
+    else
+    def test_nogems_nofailures
+        obj = nil
+        assert_nothing_raised do
+            Puppet::Type.newpackage(
+                :name => "yayness",
+                :type => "gem",
+                :ensure => "installed"
+            )
+        end
+
+        assert_nil(Puppet::Type.type(:package)["yayness"],
+            "Invalid gem package got created")
+    end
+    end
     end
     if ["Fedora", "RedHat", "CentOS"].include?(Facter["operatingsystem"].value) and
         FileTest.exists?("/home/luke/rpm/RPMS/i386/puppet-server-0.16.1-1.i386.rpm")

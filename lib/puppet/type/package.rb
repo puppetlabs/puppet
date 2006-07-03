@@ -60,6 +60,10 @@ module Puppet
 
             mod.module_eval(&block)
 
+            class << mod
+                include Puppet::Util
+            end
+
             # It's at least conceivable that a module would not define this method
             # "module_function" makes the :list method private, so if the parent
             # method also called module_function, then it's already private
@@ -575,50 +579,6 @@ module Puppet
             end
         end
     end # Puppet.type(:package)
-
-    # this is how we retrieve packages
-    class PackageSource
-        attr_accessor :uri
-        attr_writer :retrieve
-
-        @@sources = Hash.new(false)
-
-        def PackageSource.get(file)
-            type = file.sub(%r{:.+},'')
-            source = nil
-            if source = @@sources[type]
-                return source.retrieve(file)
-            else
-                raise Puppet::Error, "Unknown package source: %s" % type
-            end
-        end
-
-        def initialize(name)
-            if block_given?
-                yield self
-            end
-
-            @@sources[name] = self
-        end
-
-        def retrieve(path)
-            @retrieve.call(path)
-        end
-
-    end
-
-    PackageSource.new("file") { |obj|
-        obj.retrieve = proc { |path|
-            # this might not work for windows...
-            file = path.sub(%r{^file://},'')
-
-            if FileTest.exists?(file)
-                return file
-            else
-                raise Puppet::Error, "File %s does not exist" % file
-            end
-        }
-    }
 end
 
 # $Id$
