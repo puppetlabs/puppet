@@ -27,6 +27,11 @@ module Puppet::Parser
                     raise Puppet::ParseError
                         "Could not find template %s" % file
                 end
+
+                # We'll only ever not have an interpreter in testing, but, eh.
+                if @scope.interp
+                    @scope.interp.newfile(@file)
+                end
             end
 
             def method_missing(name, *args)

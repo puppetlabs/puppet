@@ -193,6 +193,52 @@ class TestLangFunctions < Test::Unit::TestCase
             ast.evaluate(:scope => scope)
         end
     end
+
+    def test_template_reparses
+        template = tempfile()
+
+        File.open(template, "w") do |f|
+            f.puts "original text"
+        end
+
+        manifest = tempfile()
+        file = tempfile()
+        File.open(manifest, "w") do |f|
+            f.puts %{file { "#{file}": content => template("#{template}") }}
+        end
+
+        interpreter = Puppet::Parser::Interpreter.new(
+            :Manifest => manifest,
+            :UseNodes => false
+        )
+
+        parsedate = interpreter.parsedate()
+
+        objects = nil
+        assert_nothing_raised {
+            objects = interpreter.run("myhost", {})
+        }
+
+        fileobj = objects[0]
+
+        assert_equal("original text\n", fileobj["content"],
+            "Template did not work")
+
+        # Have to sleep because one second is the fs's time granularity.
+        sleep(1)
+
+        # Now modify the template
+        File.open(template, "w") do |f|
+            f.puts "new text"
+        end
+
+        assert_nothing_raised {
+            objects = interpreter.run("myhost", {})
+        }
+        newdate = interpreter.parsedate()
+
+        assert(parsedate != newdate, "Parse date did not change")
+    end
 end
 
 # $Id$

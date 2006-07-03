@@ -125,27 +125,10 @@ module Puppet
                     Puppet::Rails.init
                 end
 
+                @files = []
+
                 # Create our parser object
                 parsefiles
-            end
-
-            # Connect to the LDAP Server
-            def setup_ldap
-                self.class.ldap = nil
-                begin
-                    require 'ldap'
-                rescue LoadError
-                    Puppet.notice(
-                        "Could not set up LDAP Connection: Missing ruby/ldap libraries"
-                    )
-                    @ldap = nil
-                    return
-                end
-                begin
-                    @ldap = self.class.ldap()
-                rescue => detail
-                    raise Puppet::Error, "Could not connect to LDAP: %s" % detail
-                end
             end
 
             # Search for our node in the various locations.  This only searches
@@ -259,6 +242,13 @@ module Puppet
                 @parsedate
             end
 
+            # Add a new file to check for updateness.
+            def newfile(file)
+                unless @files.find { |f| f.file == file }
+                    @files << Puppet::ParsedFile.new(file)
+                end
+            end
+
             # evaluate our whole tree
             def run(client, facts)
                 # We have to leave this for after initialization because there
@@ -329,53 +319,33 @@ module Puppet
                 end
 
                 if Puppet[:storeconfigs]
-                    unless defined? ActiveRecord
-                        require 'puppet/rails'
-                        unless defined? ActiveRecord
-                            raise LoadError,
-                                "storeconfigs is enabled but rails is unavailable"
-                        end
-                    end
-
-                    Puppet::Rails.init
-
-                    # Fork the storage, since we don't need the client waiting
-                    # on that.  How do I avoid this duplication?
-                    if @forksave
-                        fork {
-                            # We store all of the objects, even the collectable ones
-                            benchmark(:info, "Stored configuration for #{client}") do
-                                # Try to batch things a bit, by putting them into
-                                # a transaction
-                                Puppet::Rails::Host.transaction do
-                                    Puppet::Rails::Host.store(
-                                        :objects => objects,
-                                        :host => client,
-                                        :facts => facts
-                                    )
-                                end
-                            end
-                        }
-                    else
-                        # We store all of the objects, even the collectable ones
-                        benchmark(:info, "Stored configuration for #{client}") do
-                            Puppet::Rails::Host.transaction do
-                                Puppet::Rails::Host.store(
-                                    :objects => objects,
-                                    :host => client,
-                                    :facts => facts
-                                )
-                            end
-                        end
-                    end
-
-                    # Now that we've stored everything, we need to strip out
-                    # the collectable objects so that they are not sent on
-                    # to the host
-                    objects.collectstrip!
+                    storeconfigs(
+                        :objects => objects,
+                        :host => client,
+                        :facts => facts
+                    )
                 end
 
                 return objects
+            end
+
+            # Connect to the LDAP Server
+            def setup_ldap
+                self.class.ldap = nil
+                begin
+                    require 'ldap'
+                rescue LoadError
+                    Puppet.notice(
+                        "Could not set up LDAP Connection: Missing ruby/ldap libraries"
+                    )
+                    @ldap = nil
+                    return
+                end
+                begin
+                    @ldap = self.class.ldap()
+                rescue => detail
+                    raise Puppet::Error, "Could not connect to LDAP: %s" % detail
+                end
             end
 
             def scope
@@ -384,7 +354,24 @@ module Puppet
 
             private
 
+            # Check whether any of our files have changed.
+            def checkfiles
+                if @files.find { |f| f.changed?  }
+                    @parsedate = Time.now.to_i
+                end
+            end
+
+            # Parse the files, generating our parse tree.  This automatically
+            # reparses only if files are updated, so it's safe to call multiple
+            # times.
             def parsefiles
+                # First check whether there are updates to any non-puppet files
+                # like templates.  If we need to reparse, this will get quashed,
+                # but it needs to be done first in case there's no reparse
+                # but there are other file changes.
+                checkfiles()
+
+                # Check if the parser should reparse.
                 if @file
                     if defined? @parser
                         # Only check the files every 15 seconds or so, not on
@@ -409,6 +396,8 @@ module Puppet
                 end
 
                 if defined? @parser
+                    # If this isn't our first time parsing in this process,
+                    # note that we're reparsing.
                     Puppet.info "Reloading files"
                 end
                 # should i be creating a new parser each time...?
@@ -430,6 +419,46 @@ module Puppet
                 # Mark when we parsed, so we can check freshness
                 @parsedate = Time.now.to_i
                 @lastchecked = Time.now
+            end
+
+            # Store the configs into the database.
+            def storeconfigs(hash)
+                unless defined? ActiveRecord
+                    require 'puppet/rails'
+                    unless defined? ActiveRecord
+                        raise LoadError,
+                            "storeconfigs is enabled but rails is unavailable"
+                    end
+                end
+
+                Puppet::Rails.init
+
+                # Fork the storage, since we don't need the client waiting
+                # on that.  How do I avoid this duplication?
+                if @forksave
+                    fork {
+                        # We store all of the objects, even the collectable ones
+                        benchmark(:info, "Stored configuration for #{hash[:client]}") do
+                            # Try to batch things a bit, by putting them into
+                            # a transaction
+                            Puppet::Rails::Host.transaction do
+                                Puppet::Rails::Host.store(hash)
+                            end
+                        end
+                    }
+                else
+                    # We store all of the objects, even the collectable ones
+                    benchmark(:info, "Stored configuration for #{hash[:client]}") do
+                        Puppet::Rails::Host.transaction do
+                            Puppet::Rails::Host.store(hash)
+                        end
+                    end
+                end
+
+                # Now that we've stored everything, we need to strip out
+                # the collectable objects so that they are not sent on
+                # to the host
+                hash[:objects].collectstrip!
             end
         end
     end
