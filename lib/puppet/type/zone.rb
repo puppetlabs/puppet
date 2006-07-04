@@ -187,7 +187,6 @@ Puppet::Type.newtype(:zone) do
 
         validate do |value|
             unless value =~ /:/
-                p value
                 raise ArgumentError,
                     "IP addresses must specify the interface and the address, separated by a colon."
             end

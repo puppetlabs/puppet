@@ -45,44 +45,50 @@ Puppet::Server::Report.newreport(:tagmail) do |report|
 
         if messages and ! messages.empty?
             reports[emails] = messages.collect { |m| m.to_report }.join("\n")
+        else
+            Puppet.info "No messages to report"
         end
     end
 
-    if Puppet[:smtpserver] != "none"
-        begin
-            Net::SMTP.start(Puppet[:smtpserver]) do |smtp|
+    # Let's fork for the sending of the email, since you never know what might
+    # happen.
+    fork do
+        if Puppet[:smtpserver] != "none"
+            begin
+                Net::SMTP.start(Puppet[:smtpserver]) do |smtp|
+                    reports.each do |emails, messages|
+                        Puppet.info "Sending report to %s" % emails.join(", ")
+                        smtp.send_message(messages, Puppet[:reportfrom], *emails)
+                    end
+                end
+            rescue => detail
+                if Puppet[:debug]
+                    puts detail.backtrace
+                end
+                raise Puppet::Error,
+                    "Could not send report emails through smtp: %s" % detail
+            end
+        elsif Puppet[:sendmail] != ""
+            begin
                 reports.each do |emails, messages|
                     Puppet.info "Sending report to %s" % emails.join(", ")
-                    smtp.send_message(messages, Puppet[:reportfrom], *emails)
-                end
-            end
-        rescue => detail
-            if Puppet[:debug]
-                puts detail.backtrace
-            end
-            raise Puppet::Error,
-                "Could not send report emails through smtp: %s" % detail
-        end
-    elsif Puppet[:sendmail] != ""
-        begin
-            reports.each do |emails, messages|
-                Puppet.info "Sending report to %s" % emails.join(", ")
-                # We need to open a separate process for every set of email addresses
-                IO.popen(Puppet[:sendmail] + " " + emails.join(" "), "w") do |p|
-                    p.puts "From: #{Puppet[:reportfrom]}"
-                    p.puts "Subject: Puppet Report for %s" % report.host
+                    # We need to open a separate process for every set of email addresses
+                    IO.popen(Puppet[:sendmail] + " " + emails.join(" "), "w") do |p|
+                        p.puts "From: #{Puppet[:reportfrom]}"
+                        p.puts "Subject: Puppet Report for %s" % report.host
 
-                    p.puts messages
+                        p.puts messages
+                    end
                 end
+            rescue => detail
+                if Puppet[:debug]
+                    puts detail.backtrace
+                end
+                raise Puppet::Error,
+                    "Could not send report emails via sendmail: %s" % detail
             end
-        rescue => detail
-            if Puppet[:debug]
-                puts detail.backtrace
-            end
-            raise Puppet::Error,
-                "Could not send report emails via sendmail: %s" % detail
+        else
+            raise Puppet::Error, "SMTP server is unset and could not find sendmail"
         end
-    else
-        raise Puppet::Error, "SMTP server is unset and could not find sendmail"
     end
 end
