@@ -1,7 +1,7 @@
 require 'puppet'
 
 Puppet.config.setdefaults(:reporting,
-    :tagmap => ["$confdir/tagmap.conf",
+    :tagmap => ["$confdir/tagmail.conf",
         "The mapping between reporting tags and email addresses."],
     :sendmail => [%x{which sendmail 2>/dev/null}.chomp,
         "Where to find the sendmail binary with which to send email."],
