@@ -5,10 +5,10 @@ module Puppet
         else
             @@gem = nil
         end
-
         def self.extended(mod)
-            unless @@gem
-                raise Puppet::Error, "The gem command is missing; gems unavailable"
+            unless @@pkgget
+                raise Puppet::Error,
+                    "The gem command is missing; gems unavailable"
             end
         end
 

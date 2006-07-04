@@ -7,7 +7,7 @@ module Puppet
                 "NAME" => nil,
                 "CATEGORY" => :category,
                 "ARCH" => :platform,
-                "VERSION" => :version,
+                "VERSION" => :ensure,
                 "BASEDIR" => :root,
                 "HOTLINE" => nil,
                 "EMAIL" => nil,
@@ -62,13 +62,13 @@ module Puppet
                 raise Puppet::Error, "Sun packages must specify a package source"
             end
             cmd = ["pkgadd"]
-
+            
             if self[:adminfile]
-                cmd += ["-a", self[:adminfile]]
+                cmd << " -a " + self[:adminfile]
             end
 
             if self[:responsefile]
-                cmd += ["-r", self[:responsefile]]
+                cmd << " -r " + self[:responsefile]
             end
 
             cmd += ["-d", self[:source]]
@@ -76,7 +76,7 @@ module Puppet
             cmd << "2>&1"
             cmd = cmd.join(" ")
 
-            self.info "Executing %s" % cmd.inspect
+            self.debug "Executing %s" % cmd.inspect
             output = %x{#{cmd} 2>&1}
 
             unless $? == 0
@@ -98,7 +98,7 @@ module Puppet
                 "NAME" => nil,
                 "CATEGORY" => :category,
                 "ARCH" => :platform,
-                "VERSION" => :version,
+                "VERSION" => :ensure,
                 "BASEDIR" => :root,
                 "HOTLINE" => nil,
                 "EMAIL" => nil,
@@ -117,15 +117,7 @@ module Puppet
                 process.each { |line|
                     case line
                     when /^$/:
-                        if self.is_a? Puppet::Type and type = self[:type]
-                            hash[:type] = type
-                        elsif self.is_a? Module and self.respond_to? :name
-                            hash[:type] = self.name
-                        else
-                            raise Puppet::DevError, "Cannot determine package type"
-                        end
-
-                        hash[:ensure] = :present
+                        hash[:type] = :sun
 
                         packages.push Puppet.type(:package).installedpkg(hash)
                         hash.clear
@@ -152,14 +144,24 @@ module Puppet
         end
 
         def uninstall
-            cmd = "pkgrm -n %s 2>&1" % self[:name]
-            output = %x{#{cmd}}
-            if $? != 0
-                raise Puppet::Error, "Removal of %s failed: %s" % [self.name, output]
+            command  = "/usr/sbin/pkgrm -n "
+
+            if self[:adminfile]
+                command += " -a " + self[:adminfile]
+            end
+
+            command += " " + self[:name]
+            begin
+                execute(command)
+            rescue ExecutionFailure => detail
+                raise Puppet::Error,
+                    "Could not uninstall %s: %s" %
+                    [self[:name], detail]
             end
         end
 
-        # Remove the old package, and install the new one
+        # Remove the old package, and install the new one.  This will probably
+        # often fail.
         def update
             if @states[:ensure].is != :absent
                 self.uninstall
@@ -168,3 +170,5 @@ module Puppet
         end
     end
 end
+
+# $Id$

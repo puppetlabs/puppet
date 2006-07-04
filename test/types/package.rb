@@ -15,18 +15,6 @@ unless Puppet.type(:package).default
     puts "No default package type for %s; skipping package tests" % $platform
 else
 
-class TestPackageSource < Test::Unit::TestCase
-	include TestPuppet
-    def test_filesource
-        path = tempfile()
-        system("touch %s" % path)
-        assert_equal(
-            path,
-            Puppet::PackageSource.get("file://#{path}")
-        )
-    end
-end
-
 class TestPackages < Test::Unit::TestCase
 	include FileTesting
     def setup
@@ -416,9 +404,10 @@ class TestPackages < Test::Unit::TestCase
             gem.retrieve
         }
 
-        if gem.is(:ensure) == :installed
+        if gem.is(:ensure) != :absent
             $stderr.puts "Cannot test gem installation; %s is already installed" %
                 name
+            return
         end
 
         assert_events([:package_created], gem)
@@ -482,6 +471,65 @@ class TestPackages < Test::Unit::TestCase
         }
 
         assert_equal("0.16.1-1", pkg.latest, "RPM did not provide correct value for latest")
+    end
+    end
+
+    if Facter["operatingsystem"].value == "Solaris"
+    if pkgget = %x{which pkg-get 2>/dev/null}.chomp and pkgget != ""
+    # FIXME The packaging crap needs to be rewritten to support testing
+    # multiple package types on the same platform.
+    def test_list_blastwave
+        pkgs = nil
+        assert_nothing_raised {
+            pkgs = Puppet::Type.type(:package).pkgtype(:blastwave).list
+        }
+
+        pkgs.each do |pkg|
+            if pkg[:name] =~ /^CSW/
+                assert_equal(:blastwave, pkg[:type],
+                    "Type was not set correctly")
+            end
+        end
+    end
+
+    def test_install_blastwave
+        pkg = nil
+        name = "cabextract"
+        assert_nothing_raised {
+            pkg = Puppet::Type.newpackage(
+                :name => name,
+                :ensure => "installed",
+                :type => :blastwave
+            )
+        }
+
+        assert_nothing_raised {
+            pkg.retrieve
+        }
+
+        if pkg.is(:ensure) != :absent
+            p pkg.is(:ensure)
+            $stderr.puts "Cannot test pkg installation; %s is already installed" %
+                name
+            return
+        end
+
+        assert_events([:package_created], pkg)
+
+        assert_nothing_raised {
+            pkg.retrieve
+        }
+
+        latest = nil
+        assert_nothing_raised {
+            latest = pkg.latest
+        }
+        pkg[:ensure] = :absent
+
+        assert_events([:package_removed], pkg)
+    end
+    else
+        $stderr.puts "No pkg-get scripting; skipping blastwave tests"
     end
     end
 end
