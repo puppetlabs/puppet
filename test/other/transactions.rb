@@ -51,8 +51,8 @@ class TestTransactions < Test::Unit::TestCase
         assert(metrics, "Did not get any metrics")
         assert(metrics.length > 0, "Did not get any metrics")
 
-        assert(metrics.include?(:objects), "Did not get object metrics")
-        assert(metrics.include?(:changes), "Did not get change metrics")
+        assert(metrics.has_key?("objects"), "Did not get object metrics")
+        assert(metrics.has_key?("changes"), "Did not get change metrics")
 
         metrics.each do |name, metric|
             assert_instance_of(Puppet::Metric, metric)

@@ -164,17 +164,22 @@ class TestPuppetUtil < Test::Unit::TestCase
 
         # First test it with the normal args
         assert_nothing_raised do
-            val = Puppet::Util.benchmark(:notice, "Read file") do
-                File.read(path)
+            val = nil
+            result = Puppet::Util.benchmark(:notice, "Read file") do
+                val = File.read(path)
             end
 
             assert_equal(str, val)
+
+            assert_instance_of(Float, result)
+
         end
 
         # Now test it with a passed object
         assert_nothing_raised do
-            val = Puppet::Util.benchmark(Puppet, :notice, "Read file") do
-                File.read(path)
+            val = nil
+            Puppet::Util.benchmark(Puppet, :notice, "Read file") do
+                val = File.read(path)
             end
 
             assert_equal(str, val)

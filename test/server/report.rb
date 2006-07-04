@@ -10,7 +10,7 @@ require 'puppet/client/reporter'
 require 'test/unit'
 require 'puppettest.rb'
 
-class TestServerRunner < Test::Unit::TestCase
+class TestReportServer < Test::Unit::TestCase
 	include TestPuppet
 	Puppet::Util.logmethods(self)
 
@@ -37,7 +37,7 @@ class TestServerRunner < Test::Unit::TestCase
         report = Puppet::Transaction::Report.new
 
         10.times { |i|
-            log = info("Report test message %s" % i)
+            log = warning("Report test message %s" % i)
             log.tags = %w{a list of tags}
             log.tags << "tag%s" % i
 

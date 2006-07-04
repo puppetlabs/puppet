@@ -60,6 +60,7 @@ class TestReports < Test::Unit::TestCase
         }
     end
 
+    if Puppet::Metric.haverrd?
     def test_rrdgraph_report
         Puppet.config.use(:metrics)
         # First do some work
@@ -92,6 +93,9 @@ class TestReports < Test::Unit::TestCase
         assert_nothing_raised {
             code.call(trans.report)
         }
+    end
+    else
+    $stderr.puts "Install RRD for metric graphing tests"
     end
 end
 

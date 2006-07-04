@@ -13,6 +13,17 @@ module Puppet
             :rrdgraph => [false, "Whether RRD information should be graphed."]
         )
 
+        @@haverrd = false
+        begin
+            require 'RRD'
+            @@haverrd = true
+        rescue LoadError
+        end
+
+        def self.haverrd?
+            @@haverrd
+        end
+
         attr_accessor :type, :name, :value, :label
 
         def create
@@ -61,7 +72,10 @@ module Puppet
         end
 
         def graph(range = nil)
-            require 'RRD'
+            unless @@haverrd
+                Puppet.warning "RRD library is missing; cannot graph metrics"
+                return
+            end
             args = [self.path.sub(/rrd$/,"png")]
 
             args.push("--title",self.label)
@@ -92,7 +106,10 @@ module Puppet
         end
 
         def store(time)
-            require 'RRD'
+            unless @@haverrd
+                Puppet.warning "RRD library is missing; cannot store metrics"
+                return
+            end
             unless FileTest.exists?(self.path)
                 self.create
             end
