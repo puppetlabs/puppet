@@ -20,24 +20,35 @@ class Server
             ]
         )
 
-        @hooks = {}
+        @reports = {}
 
         class << self
             attr_reader :hooks
         end
 
+        def self.reportmethod(report)
+            "report_" + report.to_s
+        end
+
         # Add a hook for processing reports.
         def self.newreport(name, &block)
             name = name.intern if name.is_a? String
-            @hooks[name] = block
+            method = reportmethod(name)
+
+            # We want to define a method so that reports can use 'return'.
+            define_method(method, &block)
+
+            @reports[name] = method
         end
 
+        # Load a report.
         def self.report(name)
             name = name.intern if name.is_a? String
-            unless @hooks.include? name
+            unless @reports.include? reportmethod(name)
                 begin
                     require "puppet/reports/#{name}"
-                    unless @hooks.include? name
+                    unless @reports.include? name
+                        p @reports
                         Puppet.warning(
                             "Loaded report file for %s but report was not defined" %
                             name
@@ -54,13 +65,26 @@ class Server
                 end
             end
 
-            @hooks[name]
+            @reports[name]
         end
 
         def initialize(*args)
             super
             Puppet.config.use(:reporting)
             Puppet.config.use(:metrics)
+        end
+
+        # Dynamically create the report methods as necessary.
+        def method_missing(name, *args)
+            if name.to_s =~ /^report_(.+)$/
+                if self.class.report($2)
+                    send(name, *args)
+                else
+                    super
+                end
+            else
+                super
+            end
         end
 
         def mkclientdir(client, dir)
@@ -138,12 +162,13 @@ class Server
             end
 
             Puppet[:reports].split(/\s*,\s*/).each do |name|
-                next unless hook = self.class.report(name)
+                method = self.class.reportmethod(name)
 
                 Puppet.info "Processing report %s" % name
-
                 begin
-                    hook.call(report)
+                    send(method, report)
+                rescue NoMethodError => detail
+                    Puppet.warning "No report named '%s'" % name
                 rescue => detail
                     if Puppet[:debug]
                         puts detail.backtrace

@@ -71,9 +71,6 @@ class TestReportServer < Test::Unit::TestCase
             end
         end
     end
-
-    def test_rrdgraph_report
-    end
 end
 
 # $Id$

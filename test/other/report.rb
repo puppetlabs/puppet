@@ -88,14 +88,18 @@ class TestReports < Test::Unit::TestCase
             trans.evaluate
         }
 
-        code = Puppet::Server::Report.report("rrdgraph")
+        method = Puppet::Server::Report.report("rrdgraph")
+        server = nil
+        assert_nothing_raised {
+            server = Puppet::Server::Report.new()
+        }
 
         assert_nothing_raised {
-            code.call(trans.report)
+            server.report_rrdgraph(trans.report)
         }
     end
     else
-    $stderr.puts "Install RRD for metric graphing tests"
+    $stderr.puts "Install RRD for metric reporting tests"
     end
 end
 

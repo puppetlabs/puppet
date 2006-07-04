@@ -15,7 +15,7 @@ require 'net/smtp'
 
 Puppet::Server::Report.newreport(:tagmail) do |report|
     unless FileTest.exists?(Puppet[:tagmap])
-        Puppet.notice "Cannot send tagmail report; not tagmap file %s" %
+        Puppet.notice "Cannot send tagmail report; no tagmap file %s" %
             Puppet[:tagmap]
         return
     end
