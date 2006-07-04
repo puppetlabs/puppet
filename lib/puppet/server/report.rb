@@ -46,9 +46,8 @@ class Server
             name = name.intern if name.is_a? String
             unless @reports.include? reportmethod(name)
                 begin
-                    require "puppet/reports/#{name}"
+                    require "puppet/reports/#{name.to_s}"
                     unless @reports.include? name
-                        p @reports
                         Puppet.warning(
                             "Loaded report file for %s but report was not defined" %
                             name
@@ -61,7 +60,7 @@ class Server
                     end
                     Puppet.warning "Could not load report %s: %s" %
                         [name, detail]
-                    next
+                    return nil
                 end
             end
 
@@ -77,7 +76,7 @@ class Server
         # Dynamically create the report methods as necessary.
         def method_missing(name, *args)
             if name.to_s =~ /^report_(.+)$/
-                if self.class.report($2)
+                if self.class.report($1)
                     send(name, *args)
                 else
                     super

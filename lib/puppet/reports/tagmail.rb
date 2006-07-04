@@ -69,7 +69,9 @@ Puppet::Server::Report.newreport(:tagmail) do |report|
                 Puppet.info "Sending report to %s" % emails.join(", ")
                 # We need to open a separate process for every set of email addresses
                 IO.popen(Puppet[:sendmail] + " " + emails.join(" "), "w") do |p|
-                    p.puts "From: #{Puppet[:reportfrom]}\nSubject: Puppet Report"
+                    p.puts "From: #{Puppet[:reportfrom]}"
+                    p.puts "Subject: Puppet Report for %s" % report.host
+
                     p.puts messages
                 end
             end

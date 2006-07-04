@@ -5,7 +5,7 @@ require 'puppet'
 # change produces, and Metrics are all of the numerical data involved
 # in the transaction.
 class Puppet::Transaction::Report
-    attr_accessor :logs, :metrics, :time
+    attr_accessor :logs, :metrics, :time, :host
 
     def initialize
         @metrics = {}
@@ -14,6 +14,8 @@ class Puppet::Transaction::Report
         @records = Hash.new do |hash, key|
             hash[key] = []
         end
+
+        @host = [Facter.value("hostname"), Facter.value("domain")].join(".")
     end
 
     # Create a new metric.
