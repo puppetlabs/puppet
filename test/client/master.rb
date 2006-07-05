@@ -98,8 +98,8 @@ class TestMasterClient < Test::Unit::TestCase
         assert_nothing_raised do
             client.lock do
                 pid = nil
-                assert(pid = client.locked?, "Client is not locked")
-                assert(pid =~ /^\d+$/, "PID is, um, not a pid")
+                assert(client.locked?, "Client is not locked")
+                assert(client.lockpid.is_a?(Integer), "PID #{client.lockpid} is, um, not a pid")
             end
         end
         assert(! client.locked?)
@@ -118,24 +118,20 @@ class TestMasterClient < Test::Unit::TestCase
 
     # Make sure non-string facts don't make things go kablooie
     def test_nonstring_facts
-        Puppet.err :a
         # Add a nonstring fact
         Facter.add("nonstring") do
             setcode { 1 }
         end
-        Puppet.err :b
 
         assert_equal(1, Facter.nonstring, "Fact was a string from facter")
 
         client = mkclient()
 
         assert(! FileTest.exists?(@createdfile))
-        Puppet.err :c
 
         assert_nothing_raised {
             client.run
         }
-        Puppet.err :d
     end
 
     def test_getplugins

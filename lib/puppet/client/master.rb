@@ -352,15 +352,19 @@ class Puppet::Client::MasterClient < Puppet::Client
     end
 
     def locked?
+        return(FileTest.exists? Puppet[:puppetdlockfile])
+    end
+
+    def lockpid
         if FileTest.exists? Puppet[:puppetdlockfile]
             text = File.read(Puppet[:puppetdlockfile]).chomp
             if text =~ /\d+/
-                return text
+                return text.to_i
             else
-                return true
+                return 0
             end
         else
-            return false
+            return 0
         end
     end
 
@@ -392,11 +396,26 @@ class Puppet::Client::MasterClient < Puppet::Client
 
     # The code that actually runs the configuration.  
     def run(tags = nil, ignoreschedules = false)
-        if pid = locked?
-            t = ""
-            if pid != true
-                Puppet.notice "Locked by process %s" % pid
+        # Check if the lock is stale, so we can clear it
+        if locked?
+            pid = lockpid
+
+            if pid != 0
+                begin
+                    Process.kill(0, pid)
+                rescue Errno::ESRCH
+                    # No process with the given PID exists; stale lockfile
+                    File.unlink(Puppet[:puppetdlockfile])
+                    Puppet.notice("Stale lockfile %s left by process %i; removing" %
+                        [Puppet[:puppetdlockfile], pid])
+                    lockpid = false
+                else
+                    Puppet.notice "Locked by process %s" % pid
+                end
             end
+        end
+
+        if locked?
             Puppet.notice "Lock file %s exists; skipping configuration run" %
                 Puppet[:puppetdlockfile]
         else
