@@ -1,3 +1,10 @@
+0.18.2
+    Added templating support.
+
+    Added reporting.
+
+    Added gem and blastwave packaging support.
+
 0.18.1
     Added signal handlers for HUP, so both client and server deal correctly with it.
 
