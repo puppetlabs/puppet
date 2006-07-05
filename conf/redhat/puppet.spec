@@ -91,7 +91,6 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %
 %{_initrddir}/puppetmaster
 %config(noreplace) %{_sysconfdir}/puppet/*
 %config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
-%{_sbindir}/cf2puppet
 %{_sbindir}/puppetca
 
 %pre
