@@ -14,7 +14,20 @@ module Puppet
             accidentally removed files (e.g., you look in the log for the md5
             sum and retrieve the file with that sum from the filebucket), but
             when transactions are fully supported filebuckets will be used to
-            undo transactions."
+            undo transactions.
+            
+            You will normally want to define a single filebucket for your
+            whole network and then use that as the default backup location:
+            
+                # Define the bucket
+                filebucket { main: server => puppet }
+
+                # Specify it as the default target
+                File { backup => main }
+
+            Puppetmaster servers create a filebucket by default, so this will
+            work in a default configuration.
+            "
 
         @states = []
 

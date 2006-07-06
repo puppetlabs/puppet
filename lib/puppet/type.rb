@@ -2233,7 +2233,6 @@ class Type < Puppet::Element
                         source => \"puppet://server/module/nagios.conf\",
                         alias => nagconf # just to make things easier for me
                     }
-
                     service { nagios:
                         running => true,
                         subscribe => file[nagconf]

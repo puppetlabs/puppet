@@ -116,6 +116,17 @@ def indent(text, tab)
     return text.gsub(/(^|\A)/, tab).gsub(/^ +\.\./, "..")
 end
 
+def paramwrap(name, text, namevar = false)
+    if namevar
+        name = name.to_s + " (*namevar*)"
+    end
+
+    puts "#### %s" % name
+    puts text
+
+    puts ""
+end
+
 # Print the docs for arguments
 def self.arguments
     puts %{---
@@ -135,6 +146,8 @@ This will not always be the case.  I have tried to be as thorough as possible
 in the descriptions of the arguments, so it should be obvious whether an
 argument is approprite or not.
 
+Any default values are in ``block type`` at the end of the description.
+
 }
 
     docs = {}
@@ -145,10 +158,15 @@ argument is approprite or not.
     docs.sort { |a, b|
         a[0].to_s <=> b[0].to_s
     }.each do |name, object|
-        puts "* **#{name.to_s}** (*#{object.section.to_s}*)"
+        puts "#### #{name.to_s} (<em>#{object.section.to_s}</em>)"
+
         puts ""
+        default = ""
+        if val = object.value and val != ""
+            default = "  ``%s``" % val
+        end
         begin
-            puts "  " + object.desc.gsub(/\n/, " ")
+            puts object.desc.gsub(/\n/, " ") + default
         rescue => detail
             puts detail.backtrace
             puts detail
@@ -171,10 +189,20 @@ title: Type Reference
 
     types = {}
     Puppet::Type.eachtype { |type|
+        next if type.name == :puppet
+        next if type.name == :component
         types[type.name] = type
     }
+
+    # Build a simple TOC
+    puts "## Table of Contents"
+    puts "1. <a href='#meta-parameters'>Meta-Parameters</a>"
+    types.sort { |a, b| a[0].to_s <=> b[0].to_s }.each do |name, type|
+        puts "1. <a href='#%s'>%s</a>" % [type.name, type.name.to_s.capitalize]
+    end
+
     puts %{
-## Meta-Parameters
+<h2><a name="meta-parameters">Meta-Parameters</a></h2>
 
 Metaparameters are parameters that work with any element; they are part of the
 Puppet framework itself rather than being part of the implementation of any
@@ -191,9 +219,15 @@ in your manifest, including defined components.
         params.sort { |a,b|
             a.to_s <=> b.to_s
         }.each { |param|
-            puts "- **" + param.to_s + "**:"
+            paramwrap(param.to_s, scrub(Puppet::Type.metaparamdoc(param)))
+            #puts "<dt>" + param.to_s + "</dt>"
             #puts tab(1) + Puppet::Type.metaparamdoc(param).scrub.indent($tab)gsub(/\n\s*/,' ')
-            puts indent(scrub(Puppet::Type.metaparamdoc(param)), $tab)
+            #puts "<dd>"
+            #puts indent(scrub(Puppet::Type.metaparamdoc(param)), $tab)
+            #puts scrub(Puppet::Type.metaparamdoc(param))
+            #puts "</dd>"
+
+            #puts ""
         }
     rescue => detail
         puts detail.backtrace
@@ -231,8 +265,6 @@ in your manifest, including defined components.
     types.sort { |a,b|
         a.to_s <=> b.to_s
     }.each { |name,type|
-        next if name == :puppet
-        next if name == :component
 
         puts "
 
@@ -241,14 +273,10 @@ in your manifest, including defined components.
 "
 
         puts "
-## %s" % name
-        #String.new('n%s\n') % name.to_s
-        #puts "**" + type.doc.gsub(/\n\s*/, ' ') + "**\n\n"
+<h2><a name='%s'>%s</a></h2>" % [name, name]
         puts scrub(type.doc) + "\n\n"
 
-        #puts tab(1) + "* namevar: %s" % type.namevar
         docs = {}
-        #puts "%s States\n'''''''''''''''''''''''''''''''" % name.to_s.capitalize
         type.validstates.sort { |a,b|
             a.to_s <=> b.to_s
         }.reject { |sname|
@@ -269,46 +297,25 @@ in your manifest, including defined components.
             end
             doc = doc.dup
             str = doc
-            #puts "A---" + str + "---"
             str = scrub(str)
-            #puts "B---" + str + "---"
+
             #str = indent(str, $tab)
-            #puts "C---" + str + "---"
-            #str = indent($tab, scrub(doc))
-
-            # If the state has values, then add them: 
-
-            #if values = state.values
-            #    unless values.empty?
-            #        extra = "Acceptable values are %s." % values.join(", ")
-            #        str += "\n\n#{extra}"
-            #    end
-            #end
-
-            str = indent(str, $tab)
-            #puts "---" + str + "---"
             docs[sname]  = str
-            #puts "- **%s**" % sname
-            #puts tab(1) + state.doc.gsub(/\n\s*/,' ')
         }
 
         puts "\n### %s Parameters\n" % name.to_s.capitalize
         type.parameters.sort { |a,b|
             a.to_s <=> b.to_s
         }.each { |name,param|
-            docs[name] = indent(scrub(type.paramdoc(name)), $tab)
+            #docs[name] = indent(scrub(type.paramdoc(name)), $tab)
+            docs[name] = scrub(type.paramdoc(name))
         }
 
         docs.sort { |a, b|
             a[0].to_s <=> b[0].to_s
         }.each { |name, doc|
-            print "- **%s**:" % name
-            if type.namevar == name and name != :name
-                puts " (*namevar*)"
-            else
-                puts ""
-            end
-            puts doc
+            namevar = type.namevar == name and name != :name
+            paramwrap(name, doc, namevar)
         }
         puts "\n"
     }
