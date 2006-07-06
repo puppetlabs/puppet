@@ -11,8 +11,6 @@ Group: System Environment/Base
 
 URL: http://reductivelabs.com/projects/puppet/
 Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
-#Patch0: yumrepo.patch
-#Patch1: lsb-config.patch
 
 Requires: ruby >= 1.8.1
 Requires: ruby(abi) = 1.8
@@ -38,8 +36,6 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
-#%patch0 -p1
-#%patch1 -p1
 
 %install
 %{__rm} -rf %{buildroot}
@@ -126,6 +122,12 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Wed Jul  5 2006 David Lutterkort <dlutter@redhat.com> - 0.18.2-1
+- New version
+
+* Wed Jun 28 2006 David Lutterkort <dlutter@redhat.com> - 0.18.1-1
+- Removed lsb-config.patch and yumrepo.patch since they are upstream now
+
 * Mon Jun 19 2006 David Lutterkort <dlutter@redhat.com> - 0.18.0-1
 - Patch config for LSB compliance (lsb-config.patch)
 - Changed config moves /var/puppet to /var/lib/puppet, /etc/puppet/ssl 
