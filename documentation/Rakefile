@@ -1,15 +1,20 @@
 # vim: syntax=ruby
 
+require 'bluecloth'
+
 htmlfiles = []
 
 CLEAN = []
 
-FileList['*.rst'].each do |src|
-    name = src.sub(".rst", ".html")
+FileList['*.page'].each do |src|
+    name = src.sub(".page", ".html")
     htmlfiles << name
     CLEAN << name
-    file name => src do
-        sh %{rst2html #{src} > #{name}}
+    file name => [src, "Rakefile"] do
+        File.open(name, "w") do |f|
+            text = File.read(src).sub(/\A^---[^-]+^---$/, '')
+            f.puts BlueCloth.new( text ).to_html
+        end
     end
 end
 
