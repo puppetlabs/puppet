@@ -45,7 +45,7 @@ Puppet.type(:service).newsvctype(:smf) do
                 when "online":
                     #self.warning "matched running %s" % line.inspect
                     return :running
-                when "offline", "disabled":
+                when "offline", "disabled", "uninitialized"
                     #self.warning "matched stopped %s" % line.inspect
                     return :stopped
                 when "legacy_run":
