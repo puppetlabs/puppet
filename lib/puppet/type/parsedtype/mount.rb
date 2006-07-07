@@ -6,7 +6,12 @@ require 'puppet/type/state'
 module Puppet
     newtype(:mount, Puppet::Type::ParsedType) do
         ensurable do
-            desc "Create, remove, or mount a filesystem mount."
+            desc "Control what to do with this mount. If the value is 
+                  ``present``, the mount is entered into the mount table, 
+                  but not mounted, if it is ``absent``, the entry is removed 
+                  from the mount table and the filesystem is unmounted if 
+                  currently mounted, if it is ``mounted``, the filesystem 
+                  is entered into the mount table and mounted."
 
             newvalue(:present) do
                 @parent.create()
@@ -101,7 +106,8 @@ module Puppet
         end
 
         @doc = "Manages mounted mounts, including putting mount
-            information into the mount table."
+            information into the mount table. The actual behavior depends 
+            on the value of the 'ensure' parameter."
 
         def self.init
             @platform = Facter["operatingsystem"].value
