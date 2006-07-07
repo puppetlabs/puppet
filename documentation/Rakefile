@@ -31,3 +31,8 @@ end
 task :html => htmlfiles
 
 task :default => :html
+
+task :docs do
+    sh %{puppetdoc --arguments > puppetd-executable-reference.page}
+    sh %{puppetdoc --types > typedocs.page}
+end
