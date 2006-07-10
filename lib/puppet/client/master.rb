@@ -35,7 +35,7 @@ class Puppet::Client::MasterClient < Puppet::Client
         :plugindest => ["$vardir/plugins",
             "Where Puppet should store plugins that it pulls down from the central
             server."],
-        :pluginsource => ["puppet://puppet/plugins",
+        :pluginsource => ["puppet://$server/plugins",
             "From where to retrieve plugins.  The standard Puppet ``file`` type
              is used for retrieval, so anything that is a valid file source can
              be used here."],
