@@ -478,7 +478,8 @@ class Puppet::Client::MasterClient < Puppet::Client
             :recurse => true,
             :source => Puppet[:pluginsource],
             :ignore => Puppet[:pluginsignore].split(/\s+/),
-            :tag => "plugins"
+            :tag => "plugins",
+            :owner => "root"
         )
 
         Puppet.info "Retrieving plugins"
