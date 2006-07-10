@@ -136,7 +136,7 @@ module Puppet
             else
                 @path = "/etc/fstab"
                 @fields = [:device, :path, :fstype, :options, :dump, :pass]
-                @defaults = [ nil ] * 4 + [ "0" ] * 2
+                @defaults = [ nil ] * 4 + [ "0", "2" ]
             end
 
             # Allow Darwin to override the default filetype
