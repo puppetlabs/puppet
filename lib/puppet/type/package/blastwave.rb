@@ -31,7 +31,7 @@ module Puppet
 
             begin
                 output = execute(command)
-            rescue ExecutionError => detail
+            rescue ExecutionFailure => detail
                 raise Puppet::Error, "Could not get package listing: %s" %
                     detail
             end
