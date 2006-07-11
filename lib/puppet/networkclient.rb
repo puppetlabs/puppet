@@ -136,7 +136,8 @@ module Puppet
                     nil, # proxy_port
                     nil, # user
                     nil, # password
-                    true # use_ssl
+                    true, # use_ssl
+                    120 # a two minute timeout, instead of 30 seconds
                 )
 
                 if hash[:Certificate]

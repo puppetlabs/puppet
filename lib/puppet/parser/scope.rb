@@ -14,6 +14,7 @@ module Puppet::Parser
         # the scope objects.
         class TemplateWrapper
             attr_accessor :scope, :file
+            Puppet::Util.logmethods(self)
 
             def initialize(scope, file)
                 @scope = scope
@@ -38,13 +39,18 @@ module Puppet::Parser
                 if value = @scope.lookupvar(name.to_s) and value != :undefined and value != ""
                     return value
                 else
-                    super
+                    info "Could not find value for %s" % name
+                    return ""
                 end
             end
 
             def result
                 template = ERB.new(File.read(@file))
                 template.result(binding)
+            end
+
+            def to_s
+                "template[%s]" % @file
             end
         end
 
