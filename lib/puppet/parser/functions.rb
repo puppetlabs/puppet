@@ -127,6 +127,7 @@ module Functions
         vals.collect do |file|
             # Use a wrapper, so the template can't get access to the full
             # Scope object.
+            debug "Retrieving template %s" % file
             wrapper = Puppet::Parser::Scope::TemplateWrapper.new(self, file)
 
             begin

@@ -24,7 +24,7 @@ module Puppet::Parser
                 end
 
                 unless FileTest.exists?(@file)
-                    raise Puppet::ParseError
+                    raise Puppet::ParseError,
                         "Could not find template %s" % file
                 end
 
