@@ -646,6 +646,54 @@ inttest = 27
         assert_equal("yayness", Puppet[:tags],
             "Tags got changed during config")
     end
+
+    def test_configs_replace_in_url
+        config = mkconfig
+        
+        config.setdefaults(:mysection, :name => ["yayness", "yay"])
+        config.setdefaults(:mysection, :url => ["http://$name/rahness", "yay"])
+
+        val = nil
+        assert_nothing_raised {
+            val = config[:url]
+        }
+
+        assert_equal("http://yayness/rahness", val,
+            "Config got messed up")
+    end
+
+    def test_correct_type_assumptions
+        config = mkconfig
+
+        file = Puppet::Config::CFile
+        element = Puppet::Config::CElement
+        bool = Puppet::Config::CBoolean
+
+        # We have to keep these ordered, unfortunately.
+        [
+            ["/this/is/a/file", file],
+            ["true", bool],
+            [true, bool],
+            ["false", bool],
+            ["server", element],
+            ["http://$server/yay", element],
+            ["$server/yayness", file],
+            ["$server/yayness.conf", file]
+        ].each do |ary|
+            value, type = ary
+            elem = nil
+            assert_nothing_raised {
+                elem = config.newelement(
+                    :name => value,
+                    :default => value,
+                    :section => :yayness
+                )
+            }
+
+            assert_instance_of(type, elem,
+                "%s got created as wrong type" % value.inspect)
+        end
+    end
 end
 
 # $Id$

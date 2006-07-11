@@ -1,3 +1,7 @@
+0.18.3
+    Mostly a bug-fix release; fixed small bugs in the functionality added in
+    0.18.2.
+
 0.18.2
     Added templating support.
 

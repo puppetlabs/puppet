@@ -19,7 +19,7 @@ class Config
                 return val
             end
         else
-            raise ArgumentError, "Invalid argument %s" % param
+            raise ArgumentError, "Undefined configuration parameter '%s'" % param
         end
     end
 
@@ -104,15 +104,6 @@ class Config
         @used = []
     end
 
-    def symbolize(param)
-        case param
-        when String: return param.intern
-        when Symbol: return param
-        else
-            raise ArgumentError, "Invalid param type %s" % param.class
-        end
-    end
-
     def each
         @order.each { |name|
             if @config.include?(name)
@@ -168,6 +159,11 @@ class Config
         else
             raise ArgumentError, "Invalid argument %s" % opt
         end
+    end
+
+    def include?(name)
+        name = name.intern if name.is_a? String
+        @config.include?(name)
     end
 
     # Create a new config object
@@ -306,8 +302,8 @@ class Config
         else
             raise Puppet::Error, "Invalid value '%s' for %s" % [value.inspect, hash[:name]]
         end
+        hash[:parent] = self
         element = klass.new(hash)
-        element.parent = self
 
         @order << element.name
 
@@ -419,6 +415,15 @@ class Config
             end
             @config[name] = newelement(hash)
         }
+    end
+
+    def symbolize(param)
+        case param
+        when String: return param.intern
+        when Symbol: return param
+        else
+            raise ArgumentError, "Invalid param type %s" % param.class
+        end
     end
 
     # Convert our list of objects into a component that can be applied.
@@ -656,6 +661,10 @@ Generated on #{Time.now}.
 
         # Create the new element.  Pretty much just sets the name.
         def initialize(args = {})
+            if args.include?(:parent)
+                self.parent = args[:parent]
+                args.delete(:parent)
+            end
             args.each do |param, value|
                 method = param.to_s + "="
                 unless self.respond_to? method
@@ -834,9 +843,11 @@ Generated on #{Time.now}.
         def validate(value)
             return true unless value.is_a? String
             value.scan(/\$(\w+)/) { |name|
-                name = name[0]
-                unless @parent[name]
-                    raise Puppet::Error, "'%s' is unset" % name
+                name = $1
+                unless @parent.include?(name)
+                    raise ArgumentError,
+                        "Configuration parameter '%s' is undefined" %
+                        name
                 end
             }
         end
