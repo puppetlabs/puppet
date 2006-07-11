@@ -14,6 +14,7 @@ module Puppet::Parser
         # the scope objects.
         class TemplateWrapper
             attr_accessor :scope, :file
+            include Puppet::Util
             Puppet::Util.logmethods(self)
 
             def initialize(scope, file)
@@ -39,14 +40,21 @@ module Puppet::Parser
                 if value = @scope.lookupvar(name.to_s) and value != :undefined and value != ""
                     return value
                 else
-                    info "Could not find value for %s" % name
-                    return ""
+                    # Just throw an error immediately, instead of searching for
+                    # other missingmethod things or whatever.
+                    raise Puppet::ParseError,
+                        "Could not find value for '%s'" % name
                 end
             end
 
             def result
-                template = ERB.new(File.read(@file))
-                template.result(binding)
+                result = nil
+                benchmark(:info, "Interpolated template #{@file}") do
+                    template = ERB.new(File.read(@file))
+                    result = template.result(binding)
+                end
+
+                result
             end
 
             def to_s
@@ -1099,6 +1107,13 @@ module Puppet::Parser
             else
                 Puppet.debug "typeless scope; just returning a list"
                 return results
+            end
+        end
+
+        # Undefine a variable; only used for testing.
+        def unsetvar(var)
+            if @symtable.include?(var)
+                @symtable.delete(var)
             end
         end
 
