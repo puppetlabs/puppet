@@ -140,9 +140,7 @@ class TestBucket < Test::Unit::TestCase
 
     def setup
         super
-        @bucket = File.join(Puppet[:confdir], "buckettesting")
-
-        @@tmpfiles << @bucket
+        @bucket = tempfile()
     end
 
     #def teardown
@@ -239,6 +237,29 @@ class TestBucket < Test::Unit::TestCase
             raise "Uh, we don't have a child pid"
         end
         Process.kill("TERM", pid)
+    end
+
+    def test_no_path_duplicates
+        bucket = nil
+        assert_nothing_raised {
+            bucket = Puppet::Server::FileBucket.new(
+                :Bucket => @bucket
+            )
+        }
+
+        sum = nil
+        assert_nothing_raised {
+            sum = bucket.addfile("yayness", "/my/file")
+        }
+        assert_nothing_raised {
+            bucket.addfile("yayness", "/my/file")
+        }
+
+        pathfile = File.join(bucket.path, sum, "paths")
+
+        assert(FileTest.exists?(pathfile), "No path file at %s" % pathfile)
+
+        assert_equal("/my/file\n", File.read(pathfile))
     end
 end
 

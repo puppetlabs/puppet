@@ -109,7 +109,7 @@ class Server
             addpath = false
             if FileTest.exists?(pathpath)
                 File.open(pathpath) { |of|
-                    paths = of.readlines
+                    paths = of.readlines.collect { |l| l.chomp }
                 }
 
                 # unless our path is already there...
