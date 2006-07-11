@@ -299,7 +299,7 @@ class Config
         case value
         when true, false, "true", "false":
             klass = CBoolean
-        when /^\$/, /^\//:
+        when /^\$\w+\//, /^\//:
             klass = CFile
         when String, Integer, Float: # nothing
             klass = CElement
@@ -823,7 +823,7 @@ Generated on #{Time.now}.
             obj[:loglevel] = "debug"
 
             if self.section
-                obj.tags = ["puppet", "configuration", self.section]
+                obj.tags += ["puppet", "configuration", self.section, self.name]
             end
             objects << obj
             objects
