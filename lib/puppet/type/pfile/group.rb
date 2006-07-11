@@ -88,7 +88,7 @@ module Puppet
                 self.retrieve
 
                 if @is == :absent
-                    self.info "File '%s' does not exist; cannot chgrp" %
+                    self.debug "File '%s' does not exist; cannot chgrp" %
                         @parent[:path]
                     return nil
                 end
