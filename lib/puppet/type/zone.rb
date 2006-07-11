@@ -273,6 +273,41 @@ end
         end
     end
 
+    # Specify the sysidcfg file.  This is pretty hackish, because it's
+    # only used to boot the zone the very first time.
+    newparam(:sysidcfg) do
+        desc %{The text to go into the sysidcfg file when the zone is first
+            booted.  The best way is to use a template:
+                
+                # $templatedir/sysidcfg
+                system_locale=en_US
+                timezone=GMT
+                terminal=xterms
+                security_policy=NONE
+                root_password=<%= password %>
+                timeserver=localhost
+                name_service=DNS {domain_name=<%= domain %>
+                        name_server=<%= nameserver %>}
+                network_interface=primary {hostname=<%= name %>
+                        ip_address=<%= ip %>
+                        netmask=<%= netmask %>
+                        protocol_ipv6=no
+                        default_route=<%= defaultroute %>}
+                nfs4_domain=dynamic
+
+            And then call that:
+
+                zone { myzone:
+                    ip => "bge0:192.168.0.23",
+                    sysidcfg => template(sysidcfg),
+                    path => "/opt/zones/myzone"
+                }
+
+            The sysidcfg only matters on the first booting of the zone,
+            so Puppet only checks for it at that time.
+        }
+    end
+
     newparam(:path) do
         desc "The root of the zone's filesystem.  Must be a fully qualified
             file name.  If you include '%s' in the path, then it will be
@@ -434,6 +469,24 @@ set zonepath=%s
     end
 
     def start
+        # Check the sysidcfg stuff
+        if cfg = self[:sysidcfg]
+            path = File.join(self[:path], "root", "etc", "sysidcfg")
+
+            unless File.exists?(path)
+                begin
+                    File.open(path, "w", 0600) do |f|
+                        f.puts cfg
+                    end
+                rescue => detail
+                    if Puppet[:debug]
+                        puts detail.stacktrace
+                    end
+                    raise Puppet::Error, "Could not create sysidcfg: %s" % detail
+                end
+            end
+        end
+
         begin
             execute("/usr/sbin/zoneadm -z #{self[:name]} boot")
         rescue Puppet::ExecutionFailure => detail
