@@ -86,18 +86,6 @@ class Server
             end
         end
 
-        def mkclientdir(client, dir)
-            Puppet.config.setdefaults("reportclient-#{client}",
-                :clientdir => { :default => dir,
-                    :mode => 0750,
-                    :owner => "$user",
-                    :group => "$group"
-                }
-            )
-
-            Puppet.config.use("reportclient-#{client}")
-        end
-
         # Accept a report from a client.
         def report(report, client = nil, clientip = nil)
             # We need the client name for storing files.
@@ -147,6 +135,18 @@ class Server
         end
 
         private
+
+        def mkclientdir(client, dir)
+            Puppet.config.setdefaults("reportclient-#{client}",
+                "clientdir-#{client}" => { :default => dir,
+                    :mode => 0750,
+                    :owner => "$user",
+                    :group => "$group"
+                }
+            )
+
+            Puppet.config.use("reportclient-#{client}")
+        end
 
         # Process the report using all of the existing hooks.
         def process(report)

@@ -71,6 +71,22 @@ class TestReportServer < Test::Unit::TestCase
             end
         end
     end
+
+    # Make sure we don't have problems with calling mkclientdir multiple
+    # times.
+    def test_multiple_clients
+        server ||= mkserver()
+
+        %w{hostA hostB hostC}.each do |host|
+            dir = tempfile()
+            assert_nothing_raised("Could not create multiple host report dirs") {
+                server.send(:mkclientdir, host, dir)
+            }
+
+            assert(FileTest.directory?(dir),
+                "Directory was not created")
+        end
+    end
 end
 
 # $Id$
