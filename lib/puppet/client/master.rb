@@ -20,7 +20,7 @@ class Puppet::Client::MasterClient < Puppet::Client
     )
 
     Puppet.setdefaults(:puppetd,
-        :reportserver => ["puppet",
+        :reportserver => ["$server",
             "The server to which to send transaction reports."
         ],
         :report => [false,
