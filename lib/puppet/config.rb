@@ -640,7 +640,8 @@ Generated on #{Time.now}.
                 parent = $1
                 if pval = @parent[parent]
                     newval = value.to_s.sub(/\$#{parent.to_s}/, pval.to_s)
-                    return File.join(newval.split("/"))
+                    #return File.join(newval.split("/"))
+                    return newval
                 else
                     raise Puppet::DevError, "Could not find value for %s" % parent
                 end
