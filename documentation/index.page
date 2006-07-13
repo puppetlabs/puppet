@@ -42,27 +42,32 @@ written to accept any of these configuration parameters, and they
 are all defined in the
 [Puppet Executable Reference](puppet-executable-reference.html).
 
-puppet
+* **puppet**
+
     Stand alone Puppet Site Manifest Script evaluator. Parses, evaluates,
     and implements a Site Manifest locally.
 
-puppetmasterd
+* **puppetmasterd**
+
     Puppet Site Manifest Server Daemon. Runs on each host
     serving/providing configurations to Puppet client hosts.
 
-puppetd
+* **puppetd**
+
     Puppet Client Host Configuration Daemon. Runs on each host whose
     configuration is managed by Puppet. Requests a Host Specific Manifest
     from a Puppet Manifest Server and implements it locally.
 
-puppetca
+* **puppetca**
+
     SSL Certificate Authority Server used for receiving cerification
     requests from puppet clients. Puppet Client Hosts are required to have
     their SSL certs signed by their Puppet Manifest Server's Authority
     before they can be authenticated and authorized to recieve
     configurations.
 
-puppetdoc
+* **puppetdoc**
+
     Command line tool for printing Puppet Default and Local Type Library
     reference documentation.  This is really only used internally.
 
