@@ -12,8 +12,8 @@ The basic unit of configuration in Puppet are ``types``.  Types model objects
 on the computer being managed, and each builtin type has attributes that
 determine the final type configuration:
 
-    file { "/etc/passwd": owner =&gt; root, mode =&gt; 644 } 
-    package { apache: install =&gt; true }
+    file { "/etc/passwd": owner => root, mode => 644 } 
+    package { apache: install => true }
 
 Puppet also provides facilities for defining new types as collections of
 existing types (see Components below), but there is no syntactic difference
@@ -78,13 +78,13 @@ Functions defined and Classes created within a scope will not be available
 outside the scope in which they are created:
 
     define testing {
-        file { "/etc/passwd": owner =&gt; root }
+        file { "/etc/passwd": owner => root }
     }
 
     class osx {
         # override the existing testing definition
         define testing {
-            file { "/etc/other": owner =&gt; root }
+            file { "/etc/other": owner => root }
         }
     }
 
@@ -96,10 +96,10 @@ of ``/file_repository/test-httpd.conf`` to ``/etc/httpd/conf/httpd.conf``:
     class webserver {
         $filename = "/etc/httpd/conf/httpd.conf"
         define httpd_service (config_file) {
-            file { $filename : source =&gt; $config_file }
+            file { $filename : source => $config_file }
         }
         httpd_service { "test_httpd" : 
-            config_file =&gt; "/file_repository/test-httpd.conf"
+            config_file => "/file_repository/test-httpd.conf"
         }
     }
 
@@ -117,33 +117,33 @@ similarly to variables, by preceding their names with the ``$`` character:
 
     define svnserve(source, path, user = false, password = false) {
         file { $path:
-            create =&gt; directory,
-            owner =&gt; root,
-            group =&gt; root
+            create => directory,
+            owner => root,
+            group => root
         }
         $svncmd = $user ? {
-            false =&gt; "/usr/bin/svn co --non-interactive $source/$name .",
-            default =&gt; "/usr/bin/svn co --non-interactive --username $user --password '$password' $source/$name ."
+            false => "/usr/bin/svn co --non-interactive $source/$name .",
+            default => "/usr/bin/svn co --non-interactive --username $user --password '$password' $source/$name ."
         }   
         exec { $svncmd: 
-            cwd =&gt; $path,
-            require =&gt; file[$path],
-            creates =&gt; "$path/.svn"
+            cwd => $path,
+            require => file[$path],
+            creates => "$path/.svn"
         }   
     }
 
     svnserve { dist:
-        source =&gt; "https://reductivelabs.com/svn",
-        path =&gt; "/dist",
-        user =&gt; "puppet",
-        password =&gt; "password"
+        source => "https://reductivelabs.com/svn",
+        path => "/dist",
+        user => "puppet",
+        password => "password"
     }
 
     svnserve { "dist/config/apps/puppet":
-        source =&gt; "https://reductivelabs.com/svn",
-        path =&gt; "/etc/puppet",
-        user =&gt; "puppet",
-        password =&gt; "password"
+        source => "https://reductivelabs.com/svn",
+        path => "/etc/puppet",
+        user => "puppet",
+        password => "password"
     }
 
 Note that calling components results in a unique instance of all contained
@@ -173,15 +173,15 @@ each of the subclasses.
     # really simple example
     class solaris {
         file {
-            "/etc/passwd": owner =&gt; root, group =&gt; root, mode =&gt; 644;
-            "/etc/shadow": owner =&gt; root, group =&gt; root, mode =&gt; 440
+            "/etc/passwd": owner => root, group => root, mode => 644;
+            "/etc/shadow": owner => root, group => root, mode => 440
         }
     }
 
     class solworkstation inherits solaris {
         file {
-            "/etc/sudoers": owner =&gt; root, group =&gt; root, mode =&gt; 440;
-            "/bin/sudo": owner =&gt; root, group =&gt; root, mode =&gt; 4111
+            "/etc/sudoers": owner => root, group => root, mode => 440;
+            "/bin/sudo": owner => root, group => root, mode => 4111
         }
     }
 
@@ -191,7 +191,7 @@ Because ``include`` is a function, any normal value can be used, including
 variables and selectors:
 
     include $operatingsystem, $hostname ? {
-        myhost =&gt; classA, default classB
+        myhost => classA, default classB
     }
 
 ## Subclassing
@@ -201,15 +201,15 @@ class is that the subclass can override elements in the parent class:
 
     class unix {
         file { "/etc/sudoers":
-            owner =&gt; root,
-            group =&gt; root,
-            mode =&gt; 440
+            owner => root,
+            group => root,
+            mode => 440
         }
     }
 
     class bsd inherits unix {
         file { "/etc/sudoers":
-            group =&gt; wheel
+            group => wheel
         }
     }
 
@@ -257,7 +257,7 @@ code inside will only apply to the specified node or nodes:
     class webserver { ... }
     class dbserver { ... }
 
-    file { "/etc/sudoers": mode =&gt; 440 } # apply to everyone
+    file { "/etc/sudoers": mode => 440 } # apply to everyone
 
     node host1, host2 {
         include webserver
@@ -285,11 +285,11 @@ specify a default value:
 
     define testing(os) {
         owner = $os ? {
-            sunos =&gt; adm,
-            redhat =&gt; bin,
-            default =&gt; root
+            sunos => adm,
+            redhat => bin,
+            default => root
         }
-        file { "/some/file": owner =&gt; $owner }
+        file { "/some/file": owner => $owner }
     }
 
 
