@@ -23,16 +23,16 @@ contains the configuration for all of your nodes, needs to be on the central
 server, most likely at `/etc/puppet/manifests/site.pp`.
 
 Start the `puppetmasterd` daemon, and then tell your clients to contact that
-server by specifying `-s <servername>` as arguments to `puppetd`, replacing
-"<servername>" with the name of the server.  Alternatively, `puppetd` defaults
-to looking for a server named "puppet", so you can just create a CNAME for
-your server, so that it answers to "puppet".
+server by specifying `-s &lt;servername&gt;` as arguments to `puppetd`,
+replacing "&lt;servername&gt;" with the name of the server.  Alternatively,
+`puppetd` defaults to looking for a server named "puppet", so you can just
+create a CNAME for your server, so that it answers to "puppet".
 
 It is a good idea to run both the server and client in verbose mode, enabled
 with the `-v` flag, until you are sure everything is working.  As each new
 client connects, you will need to run `puppetca --list` to list the
-certificates waiting to be signed, and then `puppetca --sign <name>`,
-replacing "<name>" with the name of the client whose certificate you want to
+certificates waiting to be signed, and then `puppetca --sign &lt;name&gt;`,
+replacing "&lt;name&gt;" with the name of the client whose certificate you want to
 sign.  You can turn on autosigning by creating `/etc/puppet/autosign.conf` and
 put the hosts, domains, or IP addresses or ranges that you want to sign in
 there.
@@ -44,9 +44,9 @@ of actions, action instances, and instance parameters.  Here is how a file
 element would look in puppet:
 
     file { "/etc/passwd":
-        owner => root,
-        group => root,
-        mode => 644
+        owner =&gt; root,
+        group =&gt; root,
+        mode =&gt; 644
     }
 
 Each instance of a low-level element like ``file`` must have a name parameter
@@ -69,16 +69,16 @@ fundamental unit of association is a 'definition':
     # this might change
     define sudo(source,group) {
         package { sudo:
-            version => "1.6.7"
+            version =&gt; "1.6.7"
         }
         file { "/etc/sudoers":
-            source => $source, # parameterization; copy the file from where?
-            mode => 440 # the 'file' type converts this appropriately to
+            source =&gt; $source, # parameterization; copy the file from where?
+            mode =&gt; 440 # the 'file' type converts this appropriately to
                         # octal
         }
         file { "/usr/sbin/sudo":
-            owner => root,
-            group => $group
+            owner =&gt; root,
+            group =&gt; $group
         }
     }
 
@@ -88,8 +88,8 @@ available within the definition itself.
 This definition can now be treated as a type:
 
     sudo {
-        group => root,
-        source => "http://fileserver/files/sudoers?v=production"
+        group =&gt; root,
+        source =&gt; "http://fileserver/files/sudoers?v=production"
     }
 
 One significant difference between definitions and types is that types
@@ -142,7 +142,7 @@ strings don't have be quoted or otherwise marked, but variables must have the
     $group = "root"
 
     file { "/etc/sudoers":
-        group => $group
+        group =&gt; $group
     }
 
 Strings and booleans (``true`` and ``false``) are the only data types; even
@@ -153,8 +153,8 @@ arrays is for implicit iteration:
     $files = ["/etc/passwd","/etc/group","/etc/fstab"]
 
     file { $files:
-        owner => root,
-        group => root
+        owner =&gt; root,
+        group =&gt; root
     }
 
 This implicitly iterates across the file list and performs all of the
@@ -203,9 +203,9 @@ mechanism for this is currently called a 'selector'; it is similar to the
 trinary operator ``:?``:
 
     $value = $variable ? {
-        value1 => setvalue1,
-        value2 => setvalue2,
-        default => other
+        value1 =&gt; setvalue1,
+        value2 =&gt; setvalue2,
+        default =&gt; other
     }
 
 This sets the variable ``$value`` depending on the value of ``$variable``.  If
@@ -214,18 +214,18 @@ gets set to ``other``.
 
 The brackets can be in either part of the expression, or not at all:
 
-    $value = $variable ? "value1" => "setvalue1"
+    $value = $variable ? "value1" =&gt; "setvalue1"
 
 A selector that doesn't match a value is a compile error.
 
 These structures are useful for simplistic abstraction across platforms:
 
     file { "/etc/sudoers":
-        owner => root,
-        group => $operatingsystem ? {
-            SunOS => root,
-            Linux => root,
-            FreeBSD => wheel
+        owner =&gt; root,
+        group =&gt; $operatingsystem ? {
+            SunOS =&gt; root,
+            Linux =&gt; root,
+            FreeBSD =&gt; wheel
         }
     }
 
@@ -265,8 +265,8 @@ types can also have non-state parameters which modify how that type instance
 behaves:
 
     file { "/bin":
-        owner => bin,
-        recurse => true
+        owner =&gt; bin,
+        recurse =&gt; true
     }
 
 The ``recurse`` parameter to ``file`` does not modify the system itself, it
@@ -307,7 +307,7 @@ considered the name:
         isnamevar
     end
 
-With this declaration, ``file { "/tmp/file": }`` is basically equivalent to ``file { path => "/tmp/file" }``.
+With this declaration, ``file { "/tmp/file": }`` is basically equivalent to ``file { path =&gt; "/tmp/file" }``.
 
 See [Creating a Puppet Type](creating-a-puppet-type.html) for more
 information.

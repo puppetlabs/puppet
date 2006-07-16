@@ -16,9 +16,9 @@ abstraction, selection, and overriding capabilities.
 For simple elements, we just specify the element type, name, and parameters:
 
     file { "/etc/passwd":
-        owner => root,
-        group => root,
-        mode => 644
+        owner =&gt; root,
+        group =&gt; root,
+        mode =&gt; 644
     }
 
 Any machine on which this snippet is executed will use it to verify that the
@@ -31,20 +31,20 @@ For files that vary across systems, it makes sense to create a *symbolic name*
 for your element:
 
     file { sshdconfig:
-        path => $operatingsystem ? {
-            solaris => "/usr/local/etc/ssh/sshd_config",
-            default => "/etc/ssh/sshd_config"
+        path =&gt; $operatingsystem ? {
+            solaris =&gt; "/usr/local/etc/ssh/sshd_config",
+            default =&gt; "/etc/ssh/sshd_config"
         },
-        owner => root,
-        group => root,
-        mode => 644
+        owner =&gt; root,
+        group =&gt; root,
+        mode =&gt; 644
     }
 
 Here we create a symbolic name instead of using the path as the name, and now
 we can refer to that element by name elsewhere in the manifest:
 
     service { sshd:
-        subscribe => file[sshdconfig]
+        subscribe =&gt; file[sshdconfig]
     }
 
 This will cause the ``sshd`` service to get restarted when the ``sshdconfig``
@@ -58,12 +58,12 @@ name, because otherwise the language will assume you are managing separate
 elements, which might result in an error in the library:
 
     file { sshdconfig:
-        path => "/usr/local/etc/ssh/sshd_config",
-        owner => root
+        path =&gt; "/usr/local/etc/ssh/sshd_config",
+        owner =&gt; root
     }
 
     file { "/usr/local/etc/ssh/sshd_config":
-        owner => sshd
+        owner =&gt; sshd
     }
 
 The Puppet parser does not know that these element specifications will attempt
@@ -81,20 +81,20 @@ variable.  This will result in an error:
 
     $user = root
     file { "/etc/passwd":
-        owner => $user
+        owner =&gt; $user
     }
     $user = bin
     file { "/bin":
-        owner => $user,
-        recurse => true
+        owner =&gt; $user,
+        recurse =&gt; true
     }
 
 You will almost always find that you can avoid resetting variable values using
 the builtin [conditionals](structures.html#conditionals):
 
     $group = $operatingsystem ? {
-        solaris => sysadmin,
-        default => wheel
+        solaris =&gt; sysadmin,
+        default =&gt; wheel
     }
 
 This is only one assignment, so no errors.
@@ -106,13 +106,13 @@ trees are created as a manifest is parsed.  Take the following configuration:
 
     class base {
         file { "/etc/issue":
-            source => "puppet://server/module/common/issue"
+            source =&gt; "puppet://server/module/common/issue"
         }
     }
 
     class sub inherits base {
         file { "/etc/issue":
-            source => "puppet://server/module/mysite/issue"
+            source =&gt; "puppet://server/module/mysite/issue"
         }
     }
 
@@ -128,7 +128,7 @@ Puppet elements are normally specified using a lower-case element type.  You
 can specify default values for a given type using the capitalized form of the
 element type, though:
 
-    Exec { path => "/usr/bin:/bin:/usr/sbin:/sbin" }
+    Exec { path =&gt; "/usr/bin:/bin:/usr/sbin:/sbin" }
 
     import "classes/*.pp"
 
@@ -146,7 +146,7 @@ This can be used for any element type.  For instance, CentOS defaults to using
 
     case $operatingsystem {
         centos: {
-            Package { type => yum }
+            Package { type =&gt; yum }
         }
     }
 

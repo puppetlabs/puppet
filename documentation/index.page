@@ -15,8 +15,9 @@ Puppet is a declarative *language* for expressing system configuration, a
 *client and server* for distributing it, and a *library* for realizing the
 configuration.
 
-The Puppet [Introduction](intro.html) covers the basic architecture and design goals,
-including whether and why you should be using Puppet on your network.
+The Puppet [Introduction](introduction.html) covers the basic architecture and
+design goals, including whether and why you should be using Puppet on your
+network.
 
 
 Installation
