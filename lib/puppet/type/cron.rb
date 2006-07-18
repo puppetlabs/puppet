@@ -635,18 +635,22 @@ module Puppet
 
         # Store the user's cron tab.  Collects the text of the new tab and
         # sends it to the +@filetype+ module's +write+ function.  Also adds
-        # header warning users not to modify the file directly.
+        # header, warning users not to modify the file directly.
         def self.store(user)
-            unless @instances.include?(user)
+            unless @instances.include?(user) or @objects.find do |n,o|
+                o[:user] == user
+            end
                 Puppet.notice "No cron instances for %s" % user
-                p @instances.keys
                 return
             end
 
             @tabs[user] ||= @filetype.new(user)
 
             self.each do |inst|
-                @instances[user] << inst unless @instances[user].include? inst
+                unless (@instances[user] and @instances[user].include? inst)
+                    @instances[user] ||= []
+                    @instances[user] << inst
+                end
             end
             @tabs[user].write(self.tab(user))
         end

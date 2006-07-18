@@ -35,6 +35,7 @@ class TestCron < Test::Unit::TestCase
 
     def teardown
         @crontype.filetype = @oldfiletype
+        Puppet::FileType.filetype(:ram).clear
         super
     end
 
@@ -676,6 +677,41 @@ class TestCron < Test::Unit::TestCase
         crons.each do |cron|
             assert(list.include?(cron.name), "Did not match cron %s" % name)
         end
+    end
+
+    # Make sure we can create a cron in an empty tab
+    def test_mkcron_if_empty
+        @crontype.filetype = @oldfiletype
+
+        @crontype.retrieve(@me)
+
+        # Backup our tab
+        text = @crontype.tabobj(@me).read
+
+        cleanup do
+            if text == ""
+                @crontype.tabobj(@me).remove
+            else
+                @crontype.tabobj(@me).write(text)
+            end
+        end
+
+        # Now get rid of it
+        @crontype.tabobj(@me).remove
+        @crontype.clear
+
+        cron = mkcron("emptycron")
+
+        assert_apply(cron)
+
+        # Clear the type, but don't clear the filetype
+        @crontype.clear
+
+        # Get the stuff again
+        @crontype.retrieve(@me)
+
+        assert(@crontype["emptycron"],
+            "Did not retrieve cron")
     end
 end
 

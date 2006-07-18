@@ -112,43 +112,38 @@ module Puppet
 
         # Operate on plain files.
         newfiletype(:ram) do
+            @@tabs = {}
+
+            def self.clear
+                @@tabs.clear
+            end
+
             def initialize(path)
                 super
-                @text = ""
+                @@tabs[@path] ||= ""
             end
 
             # Read the file.
             def read
                 Puppet.info "Reading %s from RAM" % @path
-                @text
+                @@tabs[@path]
             end
 
             # Remove the file.
             def remove
                 Puppet.info "Removing %s from RAM" % @path
-                @text = ""
+                @@tabs[@path] = ""
             end
 
             # Overwrite the file.
             def write(text)
                 Puppet.info "Writing %s to RAM" % @path
-                @text = text
+                @@tabs[@path] = text
             end
         end
 
         # Handle Linux-style cron tabs.
         newfiletype(:crontab) do
-            # Only add the -u flag when the @path is different.  Fedora apparently
-            # does not think I should be allowed to set the @path to my
-            def cmdbase
-                cmd = nil
-                if @path == Process.uid
-                    return "crontab"
-                else
-                    return "crontab -u #{@path}"
-                end
-            end
-
             def initialize(user)
                 begin
                     uid = Puppet::Util.uid(user)
@@ -177,6 +172,19 @@ module Puppet
                 IO.popen("#{cmdbase()} -", "w") { |p|
                     p.print text
                 }
+            end
+
+            private
+
+            # Only add the -u flag when the @path is different.  Fedora apparently
+            # does not think I should be allowed to set the @path to my
+            def cmdbase
+                cmd = nil
+                if @path == Process.uid
+                    return "crontab"
+                else
+                    return "crontab -u #{@path}"
+                end
             end
         end
 
@@ -208,7 +216,8 @@ module Puppet
             end
         end
 
-        # Treat netinfo tables as a single file, just for simplicity of certain types
+        # Treat netinfo tables as a single file, just for simplicity of certain
+        # types
         newfiletype(:netinfo) do
             class << self
                 attr_accessor :format
@@ -230,8 +239,8 @@ module Puppet
                 end
             end
 
-            # Convert our table to an array of hashes.  This only works for handling one
-            # table at a time.
+            # Convert our table to an array of hashes.  This only works for
+            # handling one table at a time.
             def to_array(text = nil)
                 unless text
                     text = read
