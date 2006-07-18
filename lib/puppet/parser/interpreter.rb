@@ -105,6 +105,16 @@ module Puppet
                     @nodesources << :ldap
                 end
 
+                if hash[:NodeSources]
+                    hash[:NodeSources].each do |src|
+                        if respond_to? "nodesearch_#{src.to_s}"
+                            @nodesources << src.to_s.intern
+                        else
+                            Puppet.warning "Node source '#{src}' not supported"
+                        end
+                    end
+                end
+
                 @setup = false
 
                 # Set it to either the value or nil.  This is currently only used

@@ -254,4 +254,41 @@ class TestInterpreter < Test::Unit::TestCase
     else
         $stderr.puts "Not in madstop.com; skipping ldap tests"
     end
+
+    # Make sure searchnode behaves as we expect.
+    def test_nodesearch
+        # First create a fake nodesearch algorithm
+        i = 0
+        Puppet::Parser::Interpreter.send(:define_method, "nodesearch_fake") do |node|
+            return nil, nil if node == "default"
+            i += 1
+            case i
+            when 1: return nil, nil
+            when 2: return "#{node}parent", nil
+            when 3: return nil, ["#{node}class"]
+            when 4: return nil, ["#{node}class", "nother#{node}"]
+            when 5: return "other#{node}parent", ["#{node}class", "nother#{node}"]
+            else
+                puts "huh: %s" % i
+            end
+        end
+        interp = nil
+        assert_nothing_raised {
+            interp = Puppet::Parser::Interpreter.new(
+                :Manifest => mktestmanifest(),
+                :NodeSources => [:fake]
+            )
+        }
+        # Make sure it behaves correctly for all forms
+        5.times do |j|
+            parent, classes = interp.nodesearch("mynode")
+
+            # Basically, just make sure that if we have either or both,
+            # we get a result back.
+            unless i == 1
+                assert(parent || classes,
+                    "Did not get node info on pass #{i}")
+            end
+        end
+    end
 end
