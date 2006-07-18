@@ -349,7 +349,7 @@ module Puppet::Parser
 
             # If they've provided a name or a parent, we assume they're looking
             # for nodes.
-            if hash.include? :parentnode
+            if hash[:searched]
                 # Specifying a parent node takes precedence, because it is assumed
                 # that this node was found in a remote repository like ldap.
                 gennode(hash)

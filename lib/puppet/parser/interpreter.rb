@@ -312,6 +312,10 @@ module Puppet
                     args[:classes] += nodeclasses if nodeclasses
 
                     args[:parentnode] = parent if parent
+
+                    if nodeclasses or parent
+                        args[:searched] = true
+                    end
                 end
 
                 begin

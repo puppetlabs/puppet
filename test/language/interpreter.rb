@@ -184,6 +184,16 @@ class TestInterpreter < Test::Unit::TestCase
         assert_equal(dparent, parent, "Default parent node did not match")
         assert_equal(dclasses, classes, "Default parent class list did not match")
 
+        # Look for a host we know doesn't have a parent
+        npparent, npclasses = ldaphost("noparent")
+        assert_nothing_raised {
+            #parent, classes = interp.nodesearch_ldap("noparent")
+            parent, classes = interp.nodesearch("noparent")
+        }
+
+        assert_equal(npparent, parent, "Parent node did not match")
+        assert_equal(npclasses, classes, "Class list did not match")
+
         # Now look for our normal host
         assert_nothing_raised {
             parent, classes = interp.nodesearch_ldap(hostname)
@@ -259,35 +269,51 @@ class TestInterpreter < Test::Unit::TestCase
     def test_nodesearch
         # First create a fake nodesearch algorithm
         i = 0
+        bucket = []
         Puppet::Parser::Interpreter.send(:define_method, "nodesearch_fake") do |node|
             return nil, nil if node == "default"
-            i += 1
-            case i
-            when 1: return nil, nil
-            when 2: return "#{node}parent", nil
-            when 3: return nil, ["#{node}class"]
-            when 4: return nil, ["#{node}class", "nother#{node}"]
-            when 5: return "other#{node}parent", ["#{node}class", "nother#{node}"]
-            else
-                puts "huh: %s" % i
-            end
+
+            return bucket[0], bucket[1]
         end
+        text = %{
+node nodeparent {}
+node othernodeparent {}
+class nodeclass {}
+class nothernode {}
+}
+        manifest = tempfile()
+        File.open(manifest, "w") do |f| f.puts text end
         interp = nil
         assert_nothing_raised {
             interp = Puppet::Parser::Interpreter.new(
-                :Manifest => mktestmanifest(),
+                :Manifest => manifest,
                 :NodeSources => [:fake]
             )
         }
         # Make sure it behaves correctly for all forms
-        5.times do |j|
+        [[nil, nil],
+        ["nodeparent", nil],
+        [nil, ["nodeclass"]],
+        [nil, ["nodeclass", "nothernode"]],
+        ["othernodeparent", ["nodeclass", "nothernode"]],].each do |ary|
+            # Set the return values
+            bucket = ary
+
+            # Look them back up
             parent, classes = interp.nodesearch("mynode")
 
             # Basically, just make sure that if we have either or both,
             # we get a result back.
-            unless i == 1
-                assert(parent || classes,
-                    "Did not get node info on pass #{i}")
+            assert_equal(ary[0], parent,
+                "Parent is not %s" % parent)
+            assert_equal(ary[1], classes,
+                "Parent is not %s" % parent)
+
+            next if ary == [nil, nil]
+            # Now make sure we actually get the configuration.  This will throw
+            # an exception if we don't.
+            assert_nothing_raised do
+                interp.run("mynode", {})
             end
         end
     end
