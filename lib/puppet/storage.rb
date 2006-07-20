@@ -42,7 +42,6 @@ module Puppet
             end
 
             unless File.exists?(Puppet[:statefile])
-                Puppet.info "Statefile %s does not exist" % Puppet[:statefile]
                 unless defined? @@state and ! @@state.nil?
                     self.init
                 end
