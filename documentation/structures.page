@@ -107,7 +107,7 @@ of ``/file_repository/test-httpd.conf`` to ``/etc/httpd/conf/httpd.conf``:
 
 # Components
 
-    define <name&gt;(<param1&gt;,<param2&gt;,...) {...}
+    define <name>(<param1>,<param2>,...) {...}
 
 Definition of fuctions allows the composition of lower level types into higher
 level types.
@@ -157,9 +157,16 @@ have a variable in the name, then you are likely to result in a situation
 where multiple components will try to manage the same instance, which will
 result in an error at run time.
 
+## $name
+
+Within a component, the name used in the component is available via the
+``$name`` variable.  This is very similar to the concept of ``self`` in
+many OO languages, but it's just a simple text string, not a reference
+to an object or something.
+
 # Server Classes
 
-    class <class_name&gt; [inherits <super_class_name&gt;] { ... }
+    class <class_name> [inherits <super_class_name>] { ... }
 
 Class definitions allow the specification of a hierarchy of server classes; a
 host that is a member of a subclass will apply the configuration from the
@@ -192,6 +199,36 @@ variables and selectors:
 
     include $operatingsystem, $hostname ? {
         myhost => classA, default classB
+    }
+
+## <a name="classes-vs-components">Classes vs. Components</a>
+
+Classes and components are defined similarly (although classes currently
+do not accept parameters), but they are meant to be used very
+differently.  Components are used to define reusable objects which will
+have multiple instances on a given host, so they cannot include any
+elements that will only have one instance, such as a package or a
+root-level service.  Classes, on the other hand, are guaranteed to be
+singletons -- you can include them as many times as you want and you'll
+only ever get one copy of the elements -- so they are exactly meant to
+include these singleton objects.
+
+Most often, services will be defined in a class, where the service's
+package, configuration files, and running service will all be defined
+in the class, because there will normally be one copy of each on a given
+host.  Components would be used to manage elements like virtual hosts,
+of which you can have many, or to encode some simple information in a
+reusable wrapper to save typing.  Every installation I've done of Puppet
+so far has a ``remotefile`` component that encodes where Puppet clients
+should get their configuration files from:
+
+    define remotefile(source, owner = root, group = root, recurse = true) {
+        file { $name:
+            source => "http://puppet.$domain/dist/$source",
+            owner => $owner,
+            group => $group,
+            recurse => $recurse
+        }
     }
 
 ## Subclassing
@@ -245,7 +282,7 @@ even though there is no code associated with them.  The syntax is just like
 
 # Nodes
 
-    node <hostname&gt; { ... }
+    node <hostname> { ... }
 
 Node definitions specify the configuration to apply to a specific node.  By
 default they are looked for by ``puppetmasterd`` but not by ``puppet``.  See

@@ -1,6 +1,12 @@
 ---
 inMenu: true
 ---
+# Comments
+
+If there is anything about this introduction that is unclear or not correct,
+please email luke at madstop.com about it or file a bug at
+[the bug tracker](/cgi-bin/puppet.cgi).
+
 # Getting the Files
 
 You will need to install Puppet on all machines that will use it, including
@@ -208,11 +214,13 @@ will be starting ``puppetmasterd``.
 
 The best way to start any daemon is using your local server's service
 management system, often in the form of ``init`` scripts.  Eventually Puppet
-will ship with an appropriate script for each platform, but in the meantime
-you can either create your own, using an existing script as an example, or
-simply run without one (not recommended for production environments).
+will ship with an appropriate script for each platform (it already has
+appropriate scripts for Red Hat, Debian, and Solaris), but in the meantime you
+can either create your own, using an existing script as an example, or simply
+run without one (not recommended for production environments).
 
-The daemon should start just fine with no arguments:
+Once you've created your system manifest at ``/etc/puppet/manifests/site.pp``,
+the daemon should start just fine with no arguments:
 
     /usr/bin/puppetmasterd
 
@@ -232,6 +240,9 @@ Otherwise, you will need to define each of your nodes in your site manifest:
     node culain {
         include workstation
     }
+
+Alternatively, you can tell ``puppetmasterd`` to use
+[LDAP for node storage](ldapnodes.html).
 
 # Verifying Installation
 
@@ -289,7 +300,7 @@ Puppet:
 
 * Files are currently automatically reread when they are changed, within a
   timeout of 60 seconds.
-* Patches are not only welcome, they're encouraged.
+* Patches are welcome and encouraged.
 
 [developed]: /projects/facter
 [download]: /downloads
