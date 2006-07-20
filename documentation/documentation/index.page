@@ -1,6 +1,7 @@
 ---
-inMenu: false
+inMenu: true
 directoryName: Documentation
+subtreeLevel: 5
 ---
 
 How to Use This Guide

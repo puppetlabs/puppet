@@ -68,6 +68,7 @@ express relationships between objects.  For instance, here is how you might
 define a reusable component for creating virtual hosts for apache, as you
 might deploy them on Debian:
 
+<pre><code>
     define vhost(ip = "*:80", docroot = false, htmlsource, order = 500, ensure = "enabled") {
         # Set the docroot, if necessary
         $realdocroot = $docroot ? {
@@ -109,6 +110,7 @@ might deploy them on Debian:
             }
         }
     }
+</code></pre>
 
 Note that you could pull that virtual host configuration into an external
 template if you wanted:
