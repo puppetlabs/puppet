@@ -6,7 +6,7 @@ htmlfiles = []
 
 CLEAN = []
 
-FileList['*.page'].each do |src|
+FileList['**/*.page'].each do |src|
     name = src.sub(".page", ".html")
     htmlfiles << name
     CLEAN << name
@@ -33,6 +33,6 @@ task :html => htmlfiles
 task :default => :html
 
 task :docs do
-    sh %{puppetdoc --arguments > puppetd-executable-reference.page}
-    sh %{puppetdoc --types > typedocs.page}
+    sh %{puppetdoc --arguments > documentation/puppetd-executable-reference.page}
+    sh %{puppetdoc --types > documentation/typedocs.page}
 end

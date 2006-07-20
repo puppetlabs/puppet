@@ -18,27 +18,33 @@ Many general questions about Puppet and Reductive are answered in the
 [FAQ](faq.html), such as "How to get started quickly", "How to contribute",
 and "What is Puppet's License? (GPL)")
 
-## Using Puppet
+## Relevant Links
 
-Documentation
+* [Documentation](documentation/)
+
     Available documentation on puppet. Including an Introduction, and Language & Type Library References.
 
-Downloads
+* [Downloads](/downloads)
+
     Puppet source code, Packages (RPMs, debs, etc.), and Ruby GEM packages.
 
-Source
+* [Source Code](/svn/puppet)
+
     Puppet Subversion Repository
 
-Trac
+* [Bug Tracker](/cgi-bin/puppet.cgi)
+
     Bug tickets, feature enhancements, and source browsing
 
-Puppet Developer Mailing List
+* [Puppet Developer Mailing List](http://mail.madstop.com/mailman/listinfo/puppet-dev)
+
     The Puppet-dev mailing list, for all public discussions related to the
     development of puppet. Given the early stage of Puppet's development,
     there is not yet a Puppet Users list, so all interested parties should
     join this list.
 
-Configuration Management Blog
+* [Configuration Management Blog](http://madstop.com)
+
     A blog Luke Kanies is maintaining about the development process of Puppet.
 
 
