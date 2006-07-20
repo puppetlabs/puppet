@@ -10,7 +10,9 @@ puppet's design goals are specifically derived from experience with cfengine
 and are meant to overcome many of cfengine's weaknesses.
 
 This document summarizes the primary advances that Puppet makes over
-cfengine's current state.
+cfengine's current state.  Left out of this document are any process decisions
+that also led to Puppet's creation (e.g., the difficulty in getting changes
+accepted to cfengine).
 
 # Abstraction
 
@@ -29,10 +31,15 @@ each system.  Puppet administrators are free to focus on the complexity of
 their networks, rather than being forced to also handle that complexity plus
 the complexity of the differences between the operating systems.
 
+Puppet's development was heavily influenced by the many external modules that
+its author wrote for cfengine, each module managing a separate element like
+users, packages, or cron jobs, and one of Puppet's primary goals was to be
+able to make it easy to expand the number of element types it can manage.
+
 # Dedication
 
-Puppet will be supported by an organization dedicated to creating
-the best system automation software, and I expect to have a staff of at
+Puppet is supported by an organization dedicated to creating
+the best system automation software, and we expect to have a staff of at
 least a few people dedicated to development, support, consulting, and custom
 development.  Constrast this with cfengine, which is supported by a professor
 whose primary use for the software is in research into anomalies.
@@ -40,7 +47,7 @@ whose primary use for the software is in research into anomalies.
 Cfengine's author is only now starting to invest on community involvement in
 its development; while its author has always accepted patches from the
 community, he has been hesitant to provide standard project features like a
-version repository and a bug database and as a result cfengine's large user
+version repository and a bug database, and as a result cfengine's large user
 base has not resulted in a large development community.
 
 Because Reductive Labs is a commercial enterprise dependent on customer
@@ -58,42 +65,88 @@ supports two critical features that cfengine forces you to hack around.
 Puppet supports building higher level objects out of a set of low-level
 objects including the ability to parameterize, and has a built-in ability to
 express relationships between objects.  For instance, here is how you might
-define an 'apache' component:
+define a reusable component for creating virtual hosts for apache, as you
+might deploy them on Debian:
 
-    define apache(docroot,htmlsource,configfile) {
-        # make sure the package is installed
-        package { apache: version => "2.0.51", installed => true }
+    define vhost(ip = "*:80", docroot = false, htmlsource, order = 500, ensure = "enabled") {
+        # Set the docroot, if necessary
+        $realdocroot = $docroot ? {
+            false => "/export/docroots/$name/htdocs",
+            default => $docroot
+        }
 
         # pull down the data to serve
-        file { $docroot: source => $htmlsource }
+        file { $docroot: source => $htmlsource, recurse => true }
 
-        # and the config file
-        file { "/etc/apache/httpd.conf": source => $configfile }
+        # Create the vhost config file
+        file { "/etc/apache2/sites-available/$name":
+            content => "
+<VirtualHost $ip
+    ServerAdmin luke at madstop.com
+    DocumentRoot $realdocroot
+    ServerName $name
+    ErrorLog /var/log/apache2/$name/logs/error_log
+    CustomLog /var/log/apache2/$name/logs/access_log common
+</VirtualHost>
+",
+            notify => service[apache] # restart apache if this changes
+        }
 
-        # restart the apache service if the package is reinstalled or if
-        # the config file changes; notice no need for 'define' statements
-        # or AddInstallable calls
-        service { apache: running => true,
-            requires => [ package[apache], file["/etc/apache/httpd.conf"] ]
+        case $ensure {
+            enabled: {
+                # Create the link
+                file { "/etc/apache2/sites-enabled/$order-$name":
+                    ensure => "/etc/apache2/sites-available/$name",
+                    notify => service[apache]
+                }
+            }
+            default: {
+                # Make sure the link is missing
+                file { "/etc/apache2/sites-enabled/$order-$name":
+                    ensure => absent,
+                    notify => service[apache]
+                }
+            }
         }
     }
 
-    # You could now have different versions of this:
+Note that you could pull that virtual host configuration into an external
+template if you wanted:
 
-    apache {
-        docroot => "/var/wwwprod",
-        htmlsource => "nfs://fileserver/web/wwwprod",
-        configfile => "https://webserver/web/prod.conf"
+    # Create the vhost config file
+    file { "/etc/apache/sites-available/$name":
+        content => template("vhost.erb")
+        notify => service[apache] # restart apache if this changes
     }
 
-    apache {
-        docroot => "/var/wwwdev",
-        htmlsource => "http://tmpserver/web/wwwdev",
-        configfile => "https://webserver/web/dev.conf"
+Now that you have the definition, you can reuse it as many times as you want:
+
+    vhost { "reductivelabs.com":
+        htmlsource => "/nfs/html/reductivelabs.com"
+    }
+
+    vhost { "madstop.com":
+        htmlsource => "/nfs/html/madstop.com"
+    }
+
+Or you can make a bunch at once:
+
+    vhost {
+        "reductivelabs.com": htmlsource => "/nfs/html/reductivelabs.com";
+        "madstop.com": htmlsource => "/nfs/html/madstop.com";
+        "kanies.com":
+            htmlsource => "/nfs/html/kanies.com",
+            ip => "192.168.0.3:80";
+        "nosite.com":
+            ensure => disabled,
+            htmlsource => "/nfs/html/nosite.com"
     }
 
 This simple level of abstraction already puts you far beyond what cfengine
-can do.  The initial goal is to provide ample power to express the true
+can do.  Any function-like abstraction in cfengine must be done with
+templating tools like m4.
+
+The initial goal is to provide ample power to express the true
 complexity of a network configuration, but just as importantly we want to
 support code sharing.  There has been essentially zero success in sharing
 configurations within the cfengine community because of how difficult basic
@@ -102,26 +155,20 @@ to make abstraction, within a network or across one, downright easy.
 
 # Decoupling
 
-Puppet is being written with all components decoupled from each other, using
-clean and preferably industry-standard interfaces between them.  Adding a new
-action to cfengine requires modification of the entire functional stack
-from the lexer and parser through to the backing library, while adding a new
-type to Puppet can be as simple as dropping a ruby script into the right
-directory.
+Puppet's parser knows how to interact with the list of available element
+types, but it never knows anything about specific types.  Thus, adding a new
+type only requires creating the type, you will never have to modify the parser
+or anything else in the stack.  In contract, new types in cfengine require
+modifications all the way through the stack, including the lexer.  Puppet will
+even automatically load any new types you create -- just drop them into your
+search path and you can start using them (or, even better, drop them into the
+[plugins directory](configref.html) and the client will automatically
+retrieve and load them).
 
 Puppet also uses the industry-standard XMLRPC protocol for communication
 between Puppet clients and servers, so the protocol is easy to study and
-either end could be replaced by another service if desired.
-
-# Interactivity
-
-Puppet is being designed to make it easy to get information back
-out of it.  For instance, it will be easy to figure out how many changes
-happened on a given node, even in a given time frame and of a given type,
-without having to parse log files or something.  When puppet 
-ships, it will ship with a small add-on that will automatically graph all
-of this info in RRD files so that you can just enable this and
-automatically get graphs of change rates on your network.
+either end could be replaced by another service if desired.  You can write
+your own tools to interact with Puppet clients, if you want.
 
 # Development Methodology
 
@@ -133,92 +180,5 @@ is bad code; if you can't easily follow a code path in Puppet, then you've
 found a bug.  Lastly, we assiduosly unit test our code.  We're always looking
 for more ways to test our code, and every bug we quash gets turned into a unit
 test so we know we'll never release that bug again.
-
-# Examples
-
-I've got some small configurations that exemplify some of the differences.
-Here's how a simple centralized Apache configuration would look in the two
-languages, for instance.  The two manifests just download Apache's
-configuration from a central server, restarting Apache if the files change at
-all, and also making sure that Apache is always running.
-
-Here's how it looks in puppet:
-
-    # This would normally be in a separate file, e.g., classes/apache.pp
-    class apacheserver {
-        # Download the config from a central $server
-        file { "/etc/apache":
-            source => "puppet://server.domain.com/source/apache",
-            recurse => true,
-            owner => root,
-            group => root
-        }
-
-        # Check that apache is running, and mark it to restart if
-        # the config files change
-        service { apache:
-            running => true,
-            subscribe => file["/etc/apache"]
-        }
-    }
-
-    # Node "nodename" is an apache server
-    node nodename {
-        include apacheserver
-    }
-
-And here's how the same configuration looks in cfengine:
-
-    control:
-        # this class is necessary later
-        AddInstallable = ( restart_apache )
-
-    groups:
-        # Mark which nodes are apache servers
-        apacheserver = ( nodename )
-
-    # copy the files down from the central server, setting 'restart_apache'
-    # if any files changed
-    copy:
-        apacheserver::
-            /source/apache
-                dest=/etc/apache server=$(server) owner=root group=root
-                define=restart_apache
-
-    # Make sure the process is running
-    processes:
-        apacheserver::
-            "apache" restart "/etc/init.d/apache startssl"
-
-    # restart apache if the appropriate class is set 
-    shellcommands:
-        apacheserver.restart_apache::
-            "/etc/init.d/apache restart"
-
-There are a few specific items worth noting in this comparison:
-
-* The cfengine configuration is a bit inside out, in that each
-  statement has to mention the class associated with the work in question
-  (assuming you have multiple classes in your configuration).  This encourages
-  you to organize your configuration based on the type of work being done
-  (e.g., copying or shellcommands), rather than the reason you're doing the
-  work (i.e., it's all for the Apache server).
-
-* The cfengine configuration uses the dynamically defined class
-  'restart_Apache' to mark the relationship between the Apache configuration
-  files and the running Apache process, rather than allowing you to just
-  directly specify a relationship.
-
-* The cfengine configuration also separates the management of the Apache
-  process into two statements, one for starting if it happens to not be
-  running and one for restarting if the files change, whereas Puppet is able
-  to handle both functions in one statement.
-
-* The cfengine configuration requires at least two forward references (that
-  is, references to portions of the configuration that are further on).  The
-  'restart_apache' class must be set as 'AddInstallable' before it is used
-  anywhere, and the 'apacheserver' class must be set before any code is
-  associated with it.  Neither of these is a big deal in small doses, but it
-  can get quite complicated as the configuration matures.
 
 *$Id$*

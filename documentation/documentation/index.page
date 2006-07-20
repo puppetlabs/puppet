@@ -106,7 +106,7 @@ Puppet configuration can be done through per-process configuration
 files (e.g., ``puppetd.conf``) or on the command-line via switches.
 Much of the documentation is available via ``--help`` switches on each
 executable, but most of the useful switches are common to all
-executables and are thus documented in the [executable reference](puppetd-executable-reference.html).
+executables and are thus documented in the [executable reference](configref.html).
 
 There are some guides already, though:
 
