@@ -251,7 +251,6 @@ module Puppet
                         members += @is
                     end
                     members.uniq.sort.join(",")
-                    #(@is + @should).uniq.sort.join(",")
                 end
             end
 
@@ -375,6 +374,10 @@ module Puppet
                         autos << group
                     end
                 }
+            end
+
+            if @states.include?(:groups) and groups = @states[:groups].should.split(",")
+                autos += groups
             end
 
             autos

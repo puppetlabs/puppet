@@ -451,6 +451,33 @@ class TestUser < Test::Unit::TestCase
         assert_equal(Process.uid, user.is(:uid), "Retrieved UID does not match")
     end
 
+    def test_autorequire
+        file = tempfile()
+        user = Puppet.type(:user).create(
+            :name => "pptestu",
+            :home => file,
+            :gid => "pptestg",
+            :groups => "yayness"
+        )
+        home = Puppet.type(:file).create(
+            :path => file,
+            :ensure => "directory"
+        )
+        group = Puppet.type(:group).create(
+            :name => "pptestg"
+        )
+        ogroup = Puppet.type(:group).create(
+            :name => "yayness"
+        )
+        comp = newcomp(user, group, home, ogroup)
+        comp.finalize
+        comp.retrieve
+
+        assert(user.requires?(group), "User did not require group")
+        assert(user.requires?(home), "User did not require home dir")
+        assert(user.requires?(ogroup), "User did not require other groups")
+    end
+
     if Process.uid == 0
         def test_simpleuser
             name = "pptest"
@@ -503,28 +530,6 @@ class TestUser < Test::Unit::TestCase
 
             user[:ensure] = :absent
             assert_apply(user)
-        end
-
-        def test_autorequire
-            file = tempfile()
-            user = Puppet.type(:user).create(
-                :name => "pptestu",
-                :home => file,
-                :gid => "pptestg"
-            )
-            home = Puppet.type(:file).create(
-                :path => file,
-                :ensure => "directory"
-            )
-            group = Puppet.type(:group).create(
-                :name => "pptestg"
-            )
-            comp = newcomp(user, group)
-            comp.finalize
-            comp.retrieve
-
-            assert(user.requires?(group), "User did not require group")
-            assert(user.requires?(home), "User did not require home dir")
         end
     else
         $stderr.puts "Not root; skipping user creation/modification tests"
