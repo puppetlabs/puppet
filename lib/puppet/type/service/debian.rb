@@ -26,7 +26,7 @@ Puppet.type(:service).newsvctype(:debian, :init) do
 
         # If it's enabled, then it will print output showing removal of
         # links.
-        if output =~ /etc\/rc\d.d/
+        if output =~ /etc\/rc[\dS].d|Nothing to do\./
             return :true
         else
             return :false
