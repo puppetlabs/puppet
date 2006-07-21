@@ -102,6 +102,8 @@ class TestMaster < Test::Unit::TestCase
     end
 
     def test_filereread
+        # Start with a normal setting
+        Puppet[:filetimeout] = 15
         manifest = mktestmanifest()
 
         file2 = @createdfile + "2"
@@ -113,8 +115,7 @@ class TestMaster < Test::Unit::TestCase
             master = Puppet::Server::Master.new(
                 :Manifest => manifest,
                 :UseNodes => false,
-                :Local => true,
-                :FileTimeout => 15
+                :Local => true
             )
         }
         assert_nothing_raised() {
@@ -153,10 +154,8 @@ class TestMaster < Test::Unit::TestCase
         assert_equal(parse1, master.freshness, "Master did not wait through timeout")
         assert(client.fresh?, "Client is not up to date")
 
-        assert_nothing_raised("Could not resent the file timeout") {
-            master.filetimeout = 0
-        }
-        assert_equal(0, master.filetimeout)
+        # Then eliminate it
+        Puppet[:filetimeout] = 0
 
         # Now make sure the master does reparse
         #Puppet.notice "%s vs %s" % [parse1, master.freshness]

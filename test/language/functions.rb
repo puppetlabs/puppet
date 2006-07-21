@@ -224,6 +224,7 @@ class TestLangFunctions < Test::Unit::TestCase
         assert_equal("original text\n", fileobj["content"],
             "Template did not work")
 
+        Puppet[:filetimeout] = 0
         # Have to sleep because one second is the fs's time granularity.
         sleep(1)
 

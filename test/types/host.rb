@@ -21,6 +21,7 @@ class TestHost < Test::Unit::TestCase
     end
 
     def teardown
+        Puppet::FileType.filetype(:ram).clear
         @hosttype.filetype = @oldhosttype
         Puppet.type(:file).clear
         super

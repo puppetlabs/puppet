@@ -348,7 +348,9 @@ class Config
     def reparse
         if defined? @file and @file.changed?
             Puppet.notice "Reparsing %s" % @file.file
-            parse(@file)
+            @@sync.synchronize do
+                parse(@file)
+            end
             reuse()
         end
     end

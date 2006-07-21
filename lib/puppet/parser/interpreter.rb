@@ -52,7 +52,7 @@ module Puppet
                      requires ActiveRecord from Ruby on Rails."]
             )
 
-            attr_accessor :ast, :filetimeout
+            attr_accessor :ast
 
             class << self
                 attr_writer :ldap
@@ -88,7 +88,6 @@ module Puppet
                 elsif ! @file = hash[:Manifest]
                     raise Puppet::DevError, "You must provide code or a manifest"
                 end
-                @filetimeout = hash[:ParseCheck] || 15
 
                 @lastchecked = 0
 
@@ -388,15 +387,9 @@ module Puppet
                 # Check if the parser should reparse.
                 if @file
                     if defined? @parser
-                        # Only check the files every 15 seconds or so, not on
-                        # every single connection
-                        if (Time.now - @lastchecked).to_i >= @filetimeout.to_i
-                            unless @parser.reparse?
-                                @lastchecked = Time.now
-                                return false
-                            end
-                        else
-                            return
+                        unless @parser.reparse?
+                            @lastchecked = Time.now
+                            return false
                         end
                     end
 

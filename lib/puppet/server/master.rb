@@ -36,14 +36,6 @@ class Server
             end
         end
 
-        def filetimeout
-            @interpreter.filetimeout
-        end
-
-        def filetimeout=(int)
-            @interpreter.filetimeout = int
-        end
-
         # Tell a client whether there's a fresh config for it
         def freshness(client = nil, clientip = nil)
             if defined? @interpreter
@@ -76,8 +68,6 @@ class Server
             else
                 @ca = nil
             end
-
-            args[:ParseCheck] = hash[:FileTimeout] || 15
 
             Puppet.debug("Creating interpreter")
 

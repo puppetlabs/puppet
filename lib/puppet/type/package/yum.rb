@@ -1,32 +1,32 @@
 module Puppet
     Puppet.type(:package).newpkgtype(:yum, :rpm) do
+        include Puppet::Util
         # Install a package using 'yum'.
         def install
             cmd = "yum -y install %s" % self[:name]
 
-            self.info "Executing %s" % cmd.inspect
-            output = %x{#{cmd} 2>&1}
+            begin
+                output = execute(cmd)
+            rescue Puppet::ExecutionFailure => detail
+                raise Puppet::PackageError.new(detail)
+            end
 
-            unless $? == 0
-                raise Puppet::PackageError.new(output)
-            else
-                @states[:ensure].retrieve
-                if @states[:ensure].is == :absent
-                    raise Puppet::PackageError.new(
-                        "Could not find package %s" % self.name
-                    )
-                end
+            @states[:ensure].retrieve
+            if @states[:ensure].is == :absent
+                raise Puppet::PackageError.new(
+                    "Could not find package %s" % self.name
+                )
             end
         end
 
         # What's the latest package version available?
         def latest
             cmd = "yum list available %s" % self[:name] 
-            self.info "Executing %s" % cmd.inspect
-            output = %x{#{cmd} 2>&1}
 
-            unless $? == 0
-                raise Puppet::PackageError.new(output)
+            begin
+                output = execute(cmd)
+            rescue Puppet::ExecutionFailure => detail
+                raise Puppet::PackageError.new(detail)
             end
 
             if output =~ /#{self[:name]}\S+\s+(\S+)\s/

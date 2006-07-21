@@ -22,6 +22,7 @@ class TestSSHKey < Test::Unit::TestCase
     end
 
     def teardown
+        Puppet::FileType.filetype(:ram).clear
         @sshtype.filetype = @oldfiletype
         Puppet.type(:file).clear
         super
