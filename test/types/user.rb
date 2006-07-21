@@ -531,6 +531,31 @@ class TestUser < Test::Unit::TestCase
             user[:ensure] = :absent
             assert_apply(user)
         end
+
+        def test_duplicateIDs
+            user1 = mkuser("user1")
+            user1[:uid] = 125
+            user2 = mkuser("user2")
+            user2[:uid] = 125
+
+            cleanup do
+                user1[:ensure] = :absent
+                user2[:ensure] = :absent
+                assert_apply(user1, user2)
+            end
+
+            assert_apply(user1)
+
+            # Not all OSes fail here, so we can't test that it doesn't work with
+            # it off, only that it does work with it on.
+            assert_nothing_raised {
+                user2[:allowdupe] = true
+            }
+            assert_apply(user2)
+            user2.retrieve
+            assert_equal(:present, user2.state(:ensure).is,
+                         "User did not get created")
+        end
     else
         $stderr.puts "Not root; skipping user creation/modification tests"
     end

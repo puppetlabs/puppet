@@ -171,6 +171,14 @@ module Puppet
             isnamevar
         end
 
+        newparam(:allowdupe) do
+            desc "Whether to allow duplicate GIDs."
+                
+            newvalues(:true, :false)
+
+            defaultto false
+        end
+
         # List all groups
         def self.listbyname
             groups = []

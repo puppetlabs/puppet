@@ -331,6 +331,14 @@ module Puppet
             defaultto :minimum
         end
 
+        newparam(:allowdupe) do
+            desc "Whether to allow duplicate UIDs."
+                
+            newvalues(:true, :false)
+
+            defaultto false
+        end
+
         @doc = "Manage users.  Currently can create and modify users, but
             cannot delete them.  Theoretically all of the parameters are
             optional, but if no parameters are specified the comment will

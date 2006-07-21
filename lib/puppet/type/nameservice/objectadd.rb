@@ -65,6 +65,9 @@ module Puppet
                             cmd << @parent.state(:gid).class.objectaddflag << gid 
                         end
                     end
+                    if @parent[:allowdupe] == :true
+                        cmd << "-o"
+                    end
                     cmd << @parent[:name]
 
                     return cmd.join(" ")
@@ -75,12 +78,15 @@ module Puppet
                 end
 
                 def modifycmd
-                    [
-                        "groupmod",
+                    cmd = ["groupmod",
                         self.class.objectaddflag,
-                        "'%s'" % self.should,
-                        @parent[:name]
-                    ].join(" ")
+                        "'%s'" % self.should]
+                    if @parent[:allowdupe]  == :true
+                        cmd << "-o"
+                    end
+                    cmd << @parent[:name]
+
+                    return cmd.join(" ")
                 end
             end
 
@@ -110,6 +116,10 @@ module Puppet
                         cmd << "-M"
                     else
                     end
+                    if @parent[:allowdupe]  == :true
+                        cmd << "-o"
+                    end
+
                     cmd << @parent[:name]
 
                     cmd.join(" ")
@@ -120,12 +130,15 @@ module Puppet
                 end
 
                 def modifycmd
-                    cmd = [
-                        "usermod",
+                    cmd = ["usermod",
                         self.class.objectaddflag,
-                        "'%s'" % self.should,
-                        @parent[:name]
-                    ].join(" ")
+                        "'%s'" % self.should]
+                    if @parent[:allowdupe]  == :true
+                        cmd << "-o"
+                    end
+                    cmd << @parent[:name]
+
+                    return cmd.join(" ")
                 end
             end
         end

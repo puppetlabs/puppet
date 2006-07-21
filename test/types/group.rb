@@ -28,6 +28,16 @@ class TestGroup < Test::Unit::TestCase
         super
     end
 
+    def mkgroup(name, hash = {})
+        group = nil
+        hash[:name] = name
+        assert_nothing_raised {
+            group = Puppet.type(:group).create(hash)
+        }
+
+        return group
+    end
+
     case Facter["operatingsystem"].value
     when "Darwin":
         def missing?(group)
@@ -286,6 +296,26 @@ class TestGroup < Test::Unit::TestCase
             assert_rollback_events(trans, [:group_removed], "group")
 
             assert(missing?(name), "Group %s is still present" % name)
+        end
+
+        # groupadd -o is broken in FreeBSD.
+        unless Facter["operatingsystem"].value == "FreeBSD"
+        def test_duplicateIDs
+            group1 = mkgroup("group1", :gid => 125)
+            group2 = mkgroup("group2", :gid => 125)
+
+            assert_apply(group1)
+
+            # Not all OSes fail here, so we can't test that it doesn't work with
+            # it off, only that it does work with it on.
+            assert_nothing_raised {
+                group2[:allowdupe] = true
+            }
+            assert_apply(group2)
+            group2.retrieve
+            assert_equal(:present, group2.state(:ensure).is,
+                         "Group did not get created")
+        end
         end
     else
         $stderr.puts "Not running as root; skipping group creation tests."

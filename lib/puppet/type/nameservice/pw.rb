@@ -37,6 +37,12 @@ module Puppet
                         end
                     end
 
+                    # Apparently, contrary to the man page, groupadd does
+                    # not accept -o.
+                    #if @parent[:allowdupe] == :true
+                    #    cmd << "-o"
+                    #end
+
                     return cmd.join(" ")
                 end
 
@@ -45,13 +51,14 @@ module Puppet
                 end
 
                 def modifycmd
-                    [
+                    cmd = [
                         "pw",
                         "groupmod",
                         @parent[:name],
                         self.class.objectaddflag,
                         "'%s'" % self.should
-                    ].join(" ")
+                    ]
+                    return cmd.join(" ")
                 end
             end
 
@@ -71,6 +78,10 @@ module Puppet
                         cmd << "-M"
                     end
 
+                    if @parent[:allowdupe] == :true
+                        cmd << "-o"
+                    end
+
                     cmd.join(" ")
                 end
                 
@@ -86,7 +97,9 @@ module Puppet
                         "-w", "no",
                         self.class.objectaddflag,
                         "'%s'" % self.should
-                    ].join(" ")
+                    ]
+
+                    return cmd.join(" ")
                 end
             end
         end
