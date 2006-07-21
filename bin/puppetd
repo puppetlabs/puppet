@@ -122,8 +122,8 @@
 #
 # waitforcert::
 #   This option only matters for daemons that do not yet have certificates
-#   and it is enabled by default, with a value of 300 (seconds).  This causes
-#   +puppetd+ to connect to the server every 5 minutes and ask it to sign a
+#   and it is enabled by default, with a value of 120 (seconds).  This causes
+#   +puppetd+ to connect to the server every 2 minutes and ask it to sign a
 #   certificate request.  This is useful for the initial setup of a puppet
 #   client.  You can turn off waiting for certificates by specifying a time
 #   of 0.
@@ -184,7 +184,7 @@ result = GetoptLong.new(*options)
 args = {}
 
 options = {
-    :waitforcert => 300,  # Default to checking for certs every 5 minutes
+    :waitforcert => 120,  # Default to checking for certs every 5 minutes
     :onetime => false,
     :centrallogs => false,
     :setdest => false,
@@ -322,6 +322,12 @@ end
 
 server = nil
 
+# It'd be nice to daemonize later, but we have to daemonize before the
+# waitforcert happens.
+if options[:daemonize]
+    client.daemonize
+end
+
 unless client.readcert
     # If we don't already have the certificate, then create a client to
     # request one.
@@ -431,11 +437,6 @@ else
     end
 
     Puppet.settraps
-
-    # Daemonize as late as possible.
-    if options[:daemonize]
-        client.daemonize
-    end
 
     Puppet.start
 end
