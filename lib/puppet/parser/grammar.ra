@@ -308,7 +308,6 @@ rvalue:       quotedtext
             | type
             | boolean
             | selector
-            | object
             | variable
             | array
             | objectref
