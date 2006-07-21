@@ -484,9 +484,9 @@ class Puppet::Client::MasterClient < Puppet::Client
 
         Puppet.info "Retrieving plugins"
 
-        trans = plugins.evaluate
 
         begin
+            trans = plugins.evaluate
             trans.evaluate
         rescue Puppet::Error => detail
             if Puppet[:debug]
