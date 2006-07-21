@@ -118,7 +118,8 @@ class Server
                     if @ca.getclientcsr(hostname)
                         Puppet.info "Not replacing existing request from %s" % hostname
                     else
-                        Puppet.info "Storing certificate request for %s" % hostname
+                        Puppet.notice "Host %s has a waiting certificate request" %
+                            hostname
                         @ca.storeclientcsr(csr)
                     end
                     return ["", ""]
