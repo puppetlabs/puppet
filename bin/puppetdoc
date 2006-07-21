@@ -131,9 +131,9 @@ end
 def self.arguments
     puts %{---
 inMenu: true
-title: Executable Reference
+title: Configuration Reference
 ---
-# Puppet Executable Reference
+# Puppet Configuration Reference
 
 Every Puppet executable (with the exception of ``puppetdoc``) accepts all of
 these arguments, but not all of the arguments make sense for every executable.
@@ -158,7 +158,8 @@ Any default values are in ``block type`` at the end of the description.
     docs.sort { |a, b|
         a[0].to_s <=> b[0].to_s
     }.each do |name, object|
-        puts "#### #{name.to_s} (<em>#{object.section.to_s}</em>)"
+        # Make each name an anchor
+        puts %{#### <a name="#{name.to_s}">#{name.to_s}</a> (<em>#{object.section.to_s}</em>)}
 
         puts ""
         default = ""
