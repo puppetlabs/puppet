@@ -379,6 +379,13 @@ module Puppet
             desc "A read-only parameter set by the package."
         end
 
+        newparam(:allowcdrom) do
+            desc "Tells apt to allow cdrom sources in the sources.list file.
+                Normally apt will bail if you try this."
+
+            newvalues(:true, :false)
+        end
+
         autorequire(:file) do
             autos = []
             [:responsefile, :adminfile].each { |param|

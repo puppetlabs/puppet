@@ -2,14 +2,39 @@ module Puppet
     Puppet.type(:package).newpkgtype(:apt, :dpkg) do
         ENV['DEBIAN_FRONTEND'] = "noninteractive"
 
+
+
         # A derivative of DPKG; this is how most people actually manage
         # Debian boxes, and the only thing that differs is that it can
         # install packages from remote sites.
+
+        def checkforcdrom
+            unless defined? @@checkedforcdrom
+                if FileTest.exists? "/etc/apt/sources.list"
+                    if File.read("/etc/apt/sources.list") =~ /^[^#]*cdrom:/
+                        @@checkedforcdrom = true
+                    else
+                        @@checkedforcdrom = false
+                    end
+                else
+                    # This is basically a pathalogical case, but we'll just
+                    # ignore it
+                    @@checkedforcdrom = false
+                end
+            end
+
+            if @@checkedforcdrom and self[:allowcdrom] != :true
+                raise Puppet::Error,
+                    "/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure."
+            end
+        end
 
         # Install a package using 'apt-get'.  This function needs to support
         # installing a specific version.
         def install
             should = self.should(:ensure)
+
+            checkforcdrom()
 
             str = self[:name]
             case should
