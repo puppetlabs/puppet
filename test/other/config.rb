@@ -694,6 +694,9 @@ inttest = 27
                 "%s got created as wrong type" % value.inspect)
         end
     end
+
+    def test_reparse
+    end
 end
 
 # $Id$

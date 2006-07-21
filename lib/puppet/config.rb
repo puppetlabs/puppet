@@ -92,9 +92,11 @@ class Config
     end
 
     # Remove all set values.
-    def clear
+    def clear(exceptcli = false)
         @config.each { |name, obj|
-            obj.clear
+            unless exceptcli and obj.setbycli
+                obj.clear
+            end
         }
         @used = []
     end
@@ -216,7 +218,6 @@ class Config
     # Parse a configuration file.
     def parse(file)
         text = nil
-        @file = file
 
         begin
             text = File.read(file)
@@ -468,8 +469,8 @@ Generated on #{Time.now}.
         }
 
         topbucket = Puppet::TransBucket.new
-        if defined? @file and @file
-            topbucket.name = @file
+        if defined? @file.file and @file.file
+            topbucket.name = @file.file
         else
             topbucket.name = "configtop"
         end
