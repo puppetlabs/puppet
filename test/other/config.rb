@@ -695,7 +695,117 @@ inttest = 27
         end
     end
 
+    # Make sure we correctly reparse our config files but don't lose CLI values.
     def test_reparse
+        Puppet[:filetimeout] = 0
+
+        config = mkconfig()
+        config.setdefaults(:mysection, :default => ["default", "yay"])
+        config.setdefaults(:mysection, :clichange => ["clichange", "yay"])
+        config.setdefaults(:mysection, :filechange => ["filechange", "yay"])
+
+        file = tempfile()
+        # Set one parameter in the file
+        File.open(file, "w") { |f|
+            f.puts %{[mysection]\nfilechange = filevalue}
+        }
+        assert_nothing_raised {
+            config.parse(file)
+        }
+
+        # Set another "from the cli"
+        assert_nothing_raised {
+            config.handlearg("clichange", "clivalue")
+        }
+
+        # And leave the other unset
+        assert_equal("default", config[:default])
+        assert_equal("filevalue", config[:filechange])
+        assert_equal("clivalue", config[:clichange])
+
+        # Now rewrite the file
+        File.open(file, "w") { |f|
+            f.puts %{[mysection]\nfilechange = newvalue}
+        }
+
+        cfile = config.file
+        cfile.send("tstamp=".intern, Time.now - 50)
+
+        # And check all of the values
+        assert_equal("default", config[:default])
+        assert_equal("clivalue", config[:clichange])
+        assert_equal("newvalue", config[:filechange])
+    end
+
+    def test_parse_removes_quotes
+        config = mkconfig()
+        config.setdefaults(:mysection, :singleq => ["single", "yay"])
+        config.setdefaults(:mysection, :doubleq => ["double", "yay"])
+        config.setdefaults(:mysection, :none => ["noquote", "yay"])
+        config.setdefaults(:mysection, :middle => ["midquote", "yay"])
+
+        file = tempfile()
+        # Set one parameter in the file
+        File.open(file, "w") { |f|
+            f.puts %{[mysection]\n
+    singleq = 'one'
+    doubleq = "one"
+    none = one
+    middle = mid"quote
+}
+        }
+
+        assert_nothing_raised {
+            config.parse(file)
+        }
+
+        %w{singleq doubleq none}.each do |p|
+            assert_equal("one", config[p], "%s did not match" % p)
+        end
+        assert_equal('mid"quote', config["middle"], "middle did not match")
+    end
+
+    def test_timer
+        Puppet[:filetimeout] = 0.1
+        origpath = tempfile()
+        config = mkconfig()
+        config.setdefaults(:mysection, :paramdir => [tempfile(), "yay"])
+
+        file = tempfile()
+        # Set one parameter in the file
+        File.open(file, "w") { |f|
+            f.puts %{[mysection]\n
+    paramdir = #{origpath}
+}
+        }
+
+        assert_nothing_raised {
+            config.parse(file)
+            config.use(:mysection)
+        }
+
+        assert(FileTest.directory?(origpath), "dir did not get created")
+
+        # Now start the timer
+        assert_nothing_raised {
+            EventLoop.current.monitor_timer config.timer
+        }
+
+        newpath = tempfile()
+
+        File.open(file, "w") { |f|
+            f.puts %{[mysection]\n
+    paramdir = #{newpath}
+}
+        }
+        config.file.send("tstamp=".intern, Time.now - 50)
+        sleep 1
+
+        assert_equal(newpath, config["paramdir"],
+                    "File did not get reparsed from timer")
+        assert(FileTest.directory?(newpath), "new dir did not get created")
+
+
     end
 end
 

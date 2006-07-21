@@ -19,7 +19,7 @@ module Puppet
         # be reparsed
         def changed?
             # Don't actually stat the file more often than filetimeout.
-            if Time.now - @statted > Puppet[:filetimeout]
+            if Time.now - @statted >= Puppet[:filetimeout]
                 tmp = stamp()
 
                 if tmp == @tstamp

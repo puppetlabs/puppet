@@ -9,10 +9,14 @@ class Config
 
     @@sync = Sync.new
 
+    attr_reader :file, :timer
 
     # Retrieve a config value
     def [](param)
         param = symbolize(param)
+
+        # Yay, recursion.
+        self.reparse() unless param == :filetimeout
         if @config.include?(param)
             if @config[param]
                 val = @config[param].value
@@ -25,14 +29,19 @@ class Config
 
     # Set a config value.  This doesn't set the defaults, it sets the value itself.
     def []=(param, value)
-        param = symbolize(param)
-        unless @config.include?(param)
-            raise Puppet::Error, "Unknown configuration parameter %s" % param.inspect
+        @@sync.synchronize do # yay, thread-safe
+            param = symbolize(param)
+            unless @config.include?(param)
+                raise Puppet::Error,
+                    "Unknown configuration parameter %s" % param.inspect
+            end
+            unless @order.include?(param)
+                @order << param
+            end
+            @config[param].value = value
         end
-        unless @order.include?(param)
-            @order << param
-        end
-        @config[param].value = value
+
+        return value
     end
 
     # A simplified equality operator.
@@ -91,14 +100,19 @@ class Config
         end
     end
 
-    # Remove all set values.
+    # Remove all set values, potentially skipping cli values.
     def clear(exceptcli = false)
         @config.each { |name, obj|
             unless exceptcli and obj.setbycli
                 obj.clear
             end
         }
-        @used = []
+
+        # Don't clear the 'used' in this case, since it's a config file reparse,
+        # and we want to retain this info.
+        unless exceptcli
+            @used = []
+        end
     end
 
     # This is mostly just used for testing.
@@ -140,7 +154,7 @@ class Config
 
     # Handle a command-line argument.
     def handlearg(opt, value = nil)
-        value = mungearg(value)
+        value = mungearg(value) if value
         str = opt.sub(/^--/,'')
         bool = true
         newstr = str.sub(/^no-/, '')
@@ -201,7 +215,7 @@ class Config
             when /^true$/i: true
             when /^\d+$/i: Integer(value)
             else
-                value
+                value.gsub(/^["']|["']$/,'')
         end
     end
 
@@ -219,20 +233,29 @@ class Config
     def parse(file)
         text = nil
 
+        if file.is_a? Puppet::ParsedFile
+            @file = file
+        else
+            @file = Puppet::ParsedFile.new(file)
+        end
+
+        # Create a timer so that this.
+        settimer()
+
         begin
-            text = File.read(file)
+            text = File.read(@file.file)
         rescue Errno::ENOENT
             raise Puppet::Error, "No such file %s" % file
         rescue Errno::EACCES
             raise Puppet::Error, "Permission denied to file %s" % file
         end
 
-        # Store it for later, in a way that we can test and such.
-        @file = Puppet::ParsedFile.new(file)
-
         @values = Hash.new { |names, name|
             names[name] = {}
         }
+
+        # Get rid of the values set by the file, keeping cli values.
+        self.clear(true)
 
         section = "puppet"
         metas = %w{owner group mode}
@@ -319,6 +342,25 @@ class Config
                 yield obj
             end
         }
+    end
+
+    # Reparse our config file, if necessary.
+    def reparse
+        if defined? @file and @file.changed?
+            Puppet.notice "Reparsing %s" % @file.file
+            parse(@file)
+            reuse()
+        end
+    end
+
+    def reuse
+        return unless defined? @used
+        @@sync.synchronize do # yay, thread-safe
+            @used.each do |section|
+                @used.delete(section)
+                self.use(section)
+            end
+        end
     end
 
     # Get a list of objects per section
@@ -418,6 +460,19 @@ class Config
         }
     end
 
+    # Create a timer to check whether the file should be reparsed.
+    def settimer
+        if Puppet[:filetimeout] > 0
+            @timer = Puppet.newtimer(
+                :interval => Puppet[:filetimeout],
+                :tolerance => 1,
+                :start? => true
+            ) do
+                self.reparse()
+            end
+        end
+    end
+
     def symbolize(param)
         case param
         when String: return param.intern
@@ -495,16 +550,6 @@ Generated on #{Time.now}.
         }
 
         return manifest
-    end
-
-    def reuse
-        return unless defined? @used
-        @@sync.synchronize do # yay, thread-safe
-            @used.each do |section|
-                @used.delete(section)
-                self.use(section)
-            end
-        end
     end
 
     # Create the necessary objects to use a section.  This is idempotent;
