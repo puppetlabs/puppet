@@ -1,3 +1,7 @@
+0.18.4
+    Another bug-fix release.  The most import bug fixed is that
+    cronjobs again work even with initially empty crontabs.
+
 0.18.3
     Mostly a bug-fix release; fixed small bugs in the functionality added in
     0.18.2.
