@@ -1,2 +1,3 @@
-exec { "/bin/touch /tmp/emptyexectest":
+exec { "touch /tmp/emptyexectest":
+    path => "/usr/bin:/bin"
 }

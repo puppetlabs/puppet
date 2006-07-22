@@ -1,9 +1,8 @@
-class Puppet::Client::Reporter < Puppet::Client::ProxyClient
+class Puppet::Client::Reporter < Puppet::Client
     @drivername = :Report
 
     # set up the appropriate interface methods
     @handler = Puppet::Server::Report
-    self.mkmethods
 
     def initialize(hash = {})
         if hash.include?(:Report)

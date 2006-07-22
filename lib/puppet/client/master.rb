@@ -87,6 +87,7 @@ class Puppet::Client::MasterClient < Puppet::Client
         end
 
         transaction.addtimes :config_retrieval => @configtime
+
         begin
             transaction.evaluate
         rescue Puppet::Error => detail
@@ -328,6 +329,8 @@ class Puppet::Client::MasterClient < Puppet::Client
     # Just so we can specify that we are "the" instance.
     def initialize(*args)
         super
+
+        @configtime = Time.now
 
         self.class.instance = self
         @running = false

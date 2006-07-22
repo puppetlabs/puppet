@@ -8,6 +8,10 @@ module Puppet
     class ParsedFile
         attr_reader :file
 
+        # Provide a hook for setting the timestamp during testing, so we don't
+        # have to depend on the granularity of the filesystem.
+        attr_writer :tstamp
+
         Puppet.config.setdefaults(:puppet,
             :filetimeout => [ 15,
                 "The minimum time to wait between checking for updates in
@@ -43,10 +47,6 @@ module Puppet
         end
 
         private
-
-        # Provide a hook for setting the timestamp during testing, so we don't
-        # have to depend on the granularity of the filesystem.
-        attr_writer :tstamp
 
         def stamp
             @statted = Time.now

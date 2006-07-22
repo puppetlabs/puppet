@@ -515,9 +515,11 @@ module ExeTest
             if pid == $$
                 raise Puppet::Error, "Tried to kill own pid"
             end
-            assert_nothing_raised {
+            begin
                 Process.kill(:INT, pid)
-            }
+            rescue
+                # ignore it
+            end
         end
     end
 

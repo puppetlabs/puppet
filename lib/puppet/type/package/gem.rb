@@ -1,6 +1,6 @@
 module Puppet
     Puppet.type(:package).newpkgtype(:gem) do
-        if gem = %x{which gem 2>/dev/null}.chomp and gem != ""
+        if gem = %x{which gem 2>/dev/null}.chomp and gem != "" and gem !~ /^no /
             @@gem = gem
         else
             @@gem = nil

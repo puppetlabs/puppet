@@ -209,7 +209,7 @@ module Puppet
         end
 
         newdesttype :file do
-            match /^\//
+            match(/^\//)
 
             def close
                 if defined? @file

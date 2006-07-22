@@ -426,7 +426,8 @@ end
         path = tempfile()
         exec = Puppet::Type.newexec(
             :name => "notifytest",
-            :command => "/bin/touch #{path}",
+            :path => "/usr/bin:/bin",
+            :command => "touch #{path}",
             :refreshonly => true
         )
 

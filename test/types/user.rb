@@ -373,7 +373,7 @@ class TestUser < Test::Unit::TestCase
 
         assert(!user.insync?, "User is incorrectly in sync")
 
-        assert_events([:user_modified], user)
+        assert_apply(user)
 
         assert_nothing_raised {
             user.retrieve
@@ -521,6 +521,7 @@ class TestUser < Test::Unit::TestCase
             tests = Puppet.type(:user).validstates
 
             tests.each { |test|
+                next unless test.to_s =~ /groups/
                 if self.respond_to?("attrtest_%s" % test)
                     self.send("attrtest_%s" % test, user)
                 else

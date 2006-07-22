@@ -146,6 +146,7 @@ module Puppet
                 # This is really lame.  We have to iterate over each
                 # of the groups and add us to them.
                 def setgrouplist(groups)
+                    groups = groups.split(/\s*,\s*/)
                     # Get just the groups we need to modify
                     diff = groups - @is
 

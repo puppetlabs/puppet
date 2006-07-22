@@ -47,8 +47,8 @@ module Puppet
         require 'open3'
         require 'puppet/type/state'
 
-        # Create a new check mechanism.  It's basically just a parameter that provides
-        # one extra 'check' method.
+        # Create a new check mechanism.  It's basically just a parameter that
+        # provides one extra 'check' method.
         def self.newcheck(name, &block)
             @checks ||= {}
 
