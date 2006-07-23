@@ -198,7 +198,7 @@ Because ``include`` is a function, any normal value can be used, including
 variables and selectors:
 
     include $operatingsystem, $hostname ? {
-        myhost => classA, default classB
+        myhost => classA, default => classB
     }
 
 ## <a name="classes-vs-components">Classes vs. Components</a>

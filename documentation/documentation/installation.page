@@ -219,15 +219,20 @@ appropriate scripts for Red Hat, Debian, and Solaris), but in the meantime you
 can either create your own, using an existing script as an example, or simply
 run without one (not recommended for production environments).
 
-Once you've created your system manifest at ``/etc/puppet/manifests/site.pp``,
-the daemon should start just fine with no arguments:
+Other than the system manifest at ``/etc/puppet/manifests/site.pp``,
+the last thing you'll need is to create the puppet user and group that the 
+daemon runs as.  You can create these manually, or you can just start the
+daemon with the ``--mkusers`` flag, and it should create both of them for you
+(of course, this flag is only necessary the first time the daemon is run):
 
-    /usr/bin/puppetmasterd
+    /usr/bin/puppetmasterd --mkusers
 
-It will automatically create all necessary certificates, directories, and
-files.  If you want the daemon to also function as a file server, so your
-clients can copy files from it, you will need to create a
-[fileserver configuration file][].
+Even without the ``mkusers`` flag, it will automatically create all necessary
+certificates, directories, and files.  If you want the daemon to also function
+as a file server, so your clients can copy files from it, you will need to
+create a [fileserver configuration file][]; the daemon checks for the
+existence of this file at startup and automatically enables or disables file
+serving functionality.
 
 If you are still only testing, and do not have node definitions in your
 site manifest (such as with the above example manifest) , tell
