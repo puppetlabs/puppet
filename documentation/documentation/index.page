@@ -42,7 +42,7 @@ However, most arguments for the executables are in the form of configuration
 parameters used internally in the library.  All of the executables are
 written to accept any of these configuration parameters, and they
 are all defined in the
-[Puppet Executable Reference](puppet-executable-reference.html).
+[Puppet Executable Reference](configref.html).
 
 * **puppet**
 
