@@ -221,14 +221,14 @@ openssl:
 
 [Mailing List]: http://mail.madstop.com/mailman/listinfo/puppet-dev
 [Projects]: /projects/
-[Documentation]: index.html
-[Installation Guide]: installation.html
-[How Puppet Compares to Cfengine]: notcfengine.html
+[Documentation]: documentation/index.html
+[Installation Guide]: documentation/installation.html
+[How Puppet Compares to Cfengine]: documentation/notcfengine.html
 [GNU Public License]: http://www.gnu.org/copyleft/gpl.html
 [examples]: /cgi-bin/puppet.cgi/browser/trunk/examples/code/
 [unit testing]: http://www.pragmaticprogrammer.com/starter_kit/ut/
 [bug database]: /cgi-bin/puppet.cgi/report
-[reference]: typedocs.html
+[reference]: documentation/typedocs.html
 [download]: /downloads
 [thread]: http://mail.madstop.com/pipermail/puppet-dev/2006-April/000393.html
 
