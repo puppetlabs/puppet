@@ -24,11 +24,11 @@ and "What is Puppet's License? (GPL)")
 
     Available documentation on puppet. Including an Introduction, and Language & Type Library References.
 
-* [Downloads](/downloads)
+* [Downloads](/downloads/)
 
     Puppet source code, Packages (RPMs, debs, etc.), and Ruby GEM packages.
 
-* [Source Code](/svn/puppet)
+* [Source Code](/svn/puppet/)
 
     Puppet Subversion Repository
 

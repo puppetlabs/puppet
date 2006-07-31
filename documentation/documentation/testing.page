@@ -83,7 +83,7 @@ element, all the way up to the base of the configuration, and it is also
 tagged with the host name.  So if 'classA' includes 'classB' which creates
 'fileC', then 'fileC' will be tagged with both classes.
 
-[node]: structures#nodes
-[source]: fromsvn
+[node]: structures.html#nodes
+[source]: fromsvn.html
 
 *$Id$*

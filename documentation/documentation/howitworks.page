@@ -261,7 +261,7 @@ those are more support staff rather than the main attraction.
 [facter]: /projects/facter
 [parse]: /downloads/puppet/apidocs/classes/Puppet/Parser/Parser.html
 [AST]: /downloads/puppet/apidocs/classes/Puppet/Parser/AST.html
-[node elements]: /projects/puppet/documentation/structures#nodes
+[node elements]: /projects/puppet/documentation/structures.html#nodes
 [yaml]: http://www.yaml.org/
 [Puppet::Parser::Parser#parse]: /downloads/puppet/apidocs/classes/Puppet/Parser/Parser.html
 [ast_evaluate]: /downloads/puppet/apidocs/classes/Puppet/Parser/AST.html
@@ -280,4 +280,5 @@ those are more support staff rather than the main attraction.
 [interpreter]: /downloads/puppet/apidocs/classes/Puppet/Parser/Interpreter.html
 [Puppet::Type]: /downloads/puppet/apidocs/classes/Puppet/Type.html
 [Puppet::Type#finalize]: /downloads/puppet/apidocs/classes/Puppet/Type.html
+
 *$Id$*

@@ -4,7 +4,7 @@ title: Puppet vs. Cfengine
 ---
 
 [Cfengine](http://www.cfengine.org) is currently the most widely deployed
-configuration management tool.  In many ways, [Puppet](/projects/puppet) can
+configuration management tool.  In many ways, [Puppet](/projects/puppet/) can
 be thought of as a next-generation version of cfengine, in that many of
 puppet's design goals are specifically derived from experience with cfengine
 and are meant to overcome many of cfengine's weaknesses.

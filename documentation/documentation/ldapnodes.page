@@ -45,7 +45,7 @@ Restart your server, making sure it comes back up, and you're all set.
 ## Loading Nodes Into LDAP
 
 In my opinion, the LDAP tool space is still depressingly spare.  I generally
-use my own [ldapsh](/projects/ldapsh) tool to manage LDAP, but that does not
+use my own [ldapsh](/projects/ldapsh/) tool to manage LDAP, but that does not
 work well for data loading.  However you decide to load the data, you need to
 create host entries (usually ``device`` entries, probably with ``ipHost`` as
 an auxiliary class) and then add the Puppet data.  This is what my workstation

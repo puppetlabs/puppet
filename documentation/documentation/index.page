@@ -97,7 +97,7 @@ The Puppet reference is split into two pieces:
 API Documentation
 =================
 Until I have time to write tutorials on how to extend Puppet, you might find
-some benefit in perusing the [API docs](/downloads/puppet/apidocs).
+some benefit in perusing the [API docs](/downloads/puppet/apidocs/).
 They're woefully incomplete as of the middle of 2006, but I'll be
 updating them over time.
 

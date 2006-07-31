@@ -56,7 +56,7 @@ tracking that one down).
 #### Solaris
 
 I have had mixed results with the Ruby packages from both
-[Sunfreeware](http://sunfreeware.com) and [BlastWave](http://blastwave.org).
+[Sunfreeware](http://sunfreeware.com) and [BlastWave](http://www.blastwave.org).
 It might almost be easier to compile it manually for Solaris, but Ruby 1.8.3
 from Sunfreeware seems to be working right now.
 
@@ -307,20 +307,20 @@ Puppet:
   timeout of 60 seconds.
 * Patches are welcome and encouraged.
 
-[developed]: /projects/facter
-[download]: /downloads
+[developed]: /projects/facter/
+[download]: /downloads/
 [version control]: http://svnbook.red-bean.com/
 [fileserver configuration file]: fsconfigref
 [Gems User Guide]: http://docs.rubygems.org/read/book/1
-[Language Reference]: structures
-[Library Reference]: typedocs
+[Language Reference]: structures.html
+[Library Reference]: typedocs.html
 
-[packages]: /downloads/packages
-[tarball]: /downloads/puppet
-[gems]: /downloads/gems
-[rpms]: /downloads/rpm
+[packages]: /downloads/packages/
+[tarball]: /downloads/puppet/
+[gems]: /downloads/gems/
+[rpms]: /downloads/rpm/
 
 [yum repository]: http://people.redhat.com/~dlutter/yum/
-[debian packages]: /downloads/packages/Debian
+[debian packages]: /downloads/packages/Debian/
 
 *$Id$*
