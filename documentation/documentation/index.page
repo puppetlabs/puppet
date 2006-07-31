@@ -1,6 +1,7 @@
 ---
 inMenu: false
 directoryName: Documentation
+title: Puppet Documentation
 orderInfo: 1
 subtreeLevel: 5
 ---
