@@ -342,7 +342,7 @@ module Util
         end
 
         # Only benchmark if our log level is high enough
-        if Puppet::Log.sendlevel?(level)
+        if level != :none and Puppet::Log.sendlevel?(level)
             result = nil
             seconds = Benchmark.realtime {
                 yield

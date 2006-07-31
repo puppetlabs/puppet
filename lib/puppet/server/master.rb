@@ -97,6 +97,7 @@ class Server
                 # XXX this should definitely be done in the protocol, somehow
                 case format
                 when "marshal":
+                    Puppet.warning "You should upgrade your client.  'Marshal' will not be supported much longer."
                     begin
                         facts = Marshal::load(CGI.unescape(facts))
                     rescue => detail
@@ -119,10 +120,9 @@ class Server
                 end
             end
 
-            unless client
-                client = facts["hostname"]
-                clientip = facts["ipaddress"]
-            end
+            # Always use the hostname from Facter.
+            client = facts["hostname"]
+            clientip = facts["ipaddress"]
 
             # Add any server-side facts to our server.
             addfacts(facts)

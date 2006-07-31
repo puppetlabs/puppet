@@ -195,6 +195,45 @@ class TestMaster < Test::Unit::TestCase
             assert(facts.include?(fact), "Fact %s was not set" % fact)
         end
     end
+
+    # Make sure we're using the facter hostname
+    def test_facterhostname_in_getconfig
+        master = nil
+        file = tempfile()
+        #@createdfile = File.join(tmpdir(), self.class.to_s + "manifesttesting" +
+        #    "_" + @method_name)
+        nope = tempfile()
+        yep = tempfile()
+
+        fakename = "y4yn3ss"
+        realname = Facter["hostname"].value
+
+        File.open(file, "w") { |f|
+            f.puts %{
+    node #{fakename} { file { "#{nope}": ensure => file, mode => 755 } }
+    node #{realname} { file { "#{yep}": ensure => file, mode => 755 } }
+}
+        }
+        # create our master
+        assert_nothing_raised() {
+            # this is the default server setup
+            master = Puppet::Server::Master.new(
+                :Manifest => file,
+                :UseNodes => true,
+                :Local => true
+            )
+        }
+
+        result = nil
+        assert_nothing_raised {
+            result = master.getconfig({"hostname" => realname}, "yaml", fakename, "127.0.0.1")
+        }
+
+        result = result.flatten
+
+        assert(result.find { |obj| obj.name == yep },
+            "Could not find correct file")
+    end
 end
 
 # $Id$
