@@ -1,6 +1,7 @@
 ---
 inMenu: true
 title: PuppetShow
+orderInfo: 10
 ---
 
 I have begun work on a simplistic web-based Puppet manager based on

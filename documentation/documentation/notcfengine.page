@@ -1,6 +1,7 @@
 ---
 inMenu: true
 title: Puppet vs. Cfengine
+orderInfo: 10
 ---
 
 [Cfengine](http://www.cfengine.org) is currently the most widely deployed

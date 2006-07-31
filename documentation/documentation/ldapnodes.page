@@ -1,6 +1,7 @@
 ---
 inMenu: true
 title: LDAP Node Storage
+orderInfo: 10
 ---
 
 # Storing Node Information in LDAP

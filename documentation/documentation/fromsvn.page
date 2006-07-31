@@ -1,6 +1,7 @@
 ---
 inMenu: true
 title: Using Source
+orderInfo: 10
 ---
 Puppet is currently implemented in Ruby and uses standard Ruby libraries. You
 should be able to run Puppet on any Unix-style host with Ruby.  Windows

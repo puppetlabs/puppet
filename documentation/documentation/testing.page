@@ -1,6 +1,7 @@
 ---
 inMenu: true
 title: Testing
+orderInfo: 10
 ---
 
 If you want to just test-drive Puppet, making the least commitment possible,
