@@ -5,7 +5,7 @@
 Summary: A network tool for managing many disparate systems
 Name: puppet
 Version: 0.18.4
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPL
 Group: System Environment/Base
 
@@ -36,6 +36,11 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
+
+%build
+for f in bin/* ; do 
+  sed -i -e '1c#!/usr/bin/ruby' $f
+done
 
 %install
 %{__rm} -rf %{buildroot}
@@ -122,6 +127,11 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Tue Aug  1 2006 David Lutterkort <dlutter@redhat.com> - 0.18.4-2
+- Use /usr/bin/ruby directly instead of /usr/bin/env ruby in
+  executables. Otherwise, initscripts break since pidof can't find the
+  right process
+
 * Tue Aug  1 2006 David Lutterkort <dlutter@redhat.com> - 0.18.4-1
 - New version
 
