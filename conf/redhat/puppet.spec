@@ -122,6 +122,12 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Tue Aug  1 2006 David Lutterkort <dlutter@redhat.com> - 0.18.4-1
+- New version
+
+* Fri Jul 14 2006 David Lutterkort <dlutter@redhat.com> - 0.18.3-1
+- New version
+
 * Wed Jul  5 2006 David Lutterkort <dlutter@redhat.com> - 0.18.2-1
 - New version
 
