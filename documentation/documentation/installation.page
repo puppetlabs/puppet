@@ -14,7 +14,9 @@ You will need to install Puppet on all machines that will use it, including
 both clients and servers.
 
 There are [packages][] available for some platforms, but for the rest
-you will have to install using the [tarball][] or [GEMs][].
+you will have to install using the [tarball][] or [GEMs][].  Install
+instructions do not cover installing packages, since it is assumed you know
+how to retrieve and install packages for your specific platform.
 
 ## Prerequisites
 
@@ -46,26 +48,37 @@ tested against in most cases and it's most likely to work correctly.  If you
 feel the particular need to build it manually, you can get the source from
 [the Ruby site](http://ruby-lang.org/).
 
-
 #### Red Hat
 
-If you are building on Red Hat (at least on version 3), you
+Puppet and Facter are now available in Fedora Extras, thanks to David
+Lutterkort at Red Hat.  Fedora users should be able to retrieve them via yum.
+
+If you are building ruby on Red Hat (at least on version 3), you
 apparently must build it with ``CPPFLAGS=-I/usr/kerberos/include/``, else you
 will have all kinds of unreasonable problems (thanks to Mario Martelli for
 tracking that one down).
 
 #### Solaris
 
+There are Solaris packages for Puppet and Facter in the
+[downloads](http://reductivelabs.com/downloads/packages/SunOS.  These packages
+suffice for both sparc and x86 (even though they're marked x86), but they
+don't specify dependencies.  They're automatically built during new releases,
+so they should always be the latest.
+
 I have had mixed results with the Ruby packages from both
 [Sunfreeware](http://sunfreeware.com) and [BlastWave](http://www.blastwave.org).
-It might almost be easier to compile it manually for Solaris, but Ruby 1.8.3
-from Sunfreeware seems to be working right now.
+It might almost be easier to compile it manually for Solaris, but Ruby 1.8.4
+from BlastWave seems to be working right now.
 
 If you get segfaults, core dumps, or 'library missing ciphers' errors, that is
 almost definitely a problem with that specific ruby package, not Puppet or
 Ruby itself.
 
 #### Debian and Ubuntu
+
+Facter and Puppet are now available in Debian, thanks to Matthew Palmer and
+Jamie Wilkinson.  
 
 The package maintainer for Ruby on these platforms has decided to split
 the Ruby standard library into many packages.  According to Eric Hollensbe,
@@ -80,6 +93,12 @@ this is the package dependency list for Puppet on Debian:
 * libstrscan-ruby
 * libsyslog-ruby
 * libwebrick-ruby
+
+#### SuSE
+
+Martin Vuk is maintaining a SuSE
+[yum repository](http://lmmri.fri.uni-lj.si/suse/)
+with Puppet and Facter packages.
 
 ### Facter
 
