@@ -291,7 +291,7 @@ end
 
 args[:Server] = Puppet[:server]
 if options[:fqdn]
-    args[:FQDN] = fqdn
+    args[:FQDN] = options[:fqdn]
 end
 
 if options[:centrallogs]
