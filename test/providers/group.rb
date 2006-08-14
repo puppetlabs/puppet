@@ -1,0 +1,246 @@
+if __FILE__ == $0
+    $:.unshift '..'
+    $:.unshift '../../lib'
+    $puppetbase = "../.."
+end
+
+require 'etc'
+require 'puppet/type'
+require 'puppettest'
+require 'test/unit'
+
+class TestGroupProvider < Test::Unit::TestCase
+	include TestPuppet
+    def setup
+        super
+        @@tmpgroups = []
+        @provider = nil
+        assert_nothing_raised {
+            @provider = Puppet::Type.type(:group).defaultprovider
+        }
+
+        assert(@provider, "Could not find default group provider")
+        assert(@provider.name != :fake, "Got a fake provider")
+    end
+
+    def teardown
+        super
+        Puppet.type(:group).clear
+        @@tmpgroups.each { |group|
+            unless missing?(group)
+                remove(group)
+            end
+        }
+    end
+
+    def mkgroup(name, hash = {})
+        fakemodel = fakemodel(:group, name)
+        group = nil
+        assert_nothing_raised {
+            group = @provider.new(fakemodel)
+        }
+        hash.each do |name, val|
+            fakemodel[name] = val
+        end
+        assert(group, "Could not create provider group")
+
+        return group
+    end
+
+    case Facter["operatingsystem"].value
+    when "Darwin":
+        def missing?(group)
+            output = %x{nidump -r /groups/#{group} / 2>/dev/null}.chomp
+
+            if output == ""
+                return true
+            else
+                return false
+            end
+
+            assert_equal("", output, "Group %s is present:\n%s" % [group, output])
+        end
+
+        def gid(name)
+            %x{nireport / /groups name gid}.split("\n").each { |line|
+                group, id = line.chomp.split(/\s+/)
+                assert(id =~ /^-?\d+$/, "Group id %s for %s is not a number" %
+                    [id, group])
+                if group == name
+                    return Integer(id)
+                end
+            }
+
+            return nil
+        end
+
+        def remove(group)
+            system("niutil -destroy / /groups/%s" % group)
+        end
+    else
+        def missing?(group)
+            begin
+                obj = Etc.getgrnam(group)
+                return false
+            rescue ArgumentError
+                return true
+            end
+        end
+
+        def gid(name)
+            assert_nothing_raised {
+                obj = Etc.getgrnam(name)
+                return obj.gid
+            }
+
+            return nil
+        end
+
+        def remove(group)
+            system("groupdel %s" % group)
+        end
+    end
+
+    def groupnames
+        %x{groups}.chomp.split(/ /)
+    end
+
+    def groupids
+        Process.groups
+    end
+
+    def attrtest_ensure(group)
+        old = group.ensure
+        assert_nothing_raised {
+            group.ensure = :absent
+        }
+
+        assert(!group.exists?, "Group was not deleted")
+
+        assert_nothing_raised {
+            group.ensure = :present
+        }
+        assert(group.exists?, "Group was not created")
+
+        unless old == :present
+            assert_nothing_raised {
+                group.ensure = old
+            }
+        end
+    end
+
+    def attrtest_gid(group)
+        old = gid(group.name)
+
+        newgid = old
+        while true
+            newgid += 1
+
+            if newgid - old > 1000
+                $stderr.puts "Could not find extra test UID"
+                return
+            end
+            begin
+                Etc.getgrgid(newgid)
+            rescue ArgumentError => detail
+                break
+            end
+        end
+
+        assert_nothing_raised("Failed to change group id") {
+            group.gid = newgid
+        }
+
+        curgid = nil
+        assert_nothing_raised {
+            curgid = gid(group.name)
+        }
+
+        assert_equal(newgid, curgid, "GID was not changed")
+        # Refresh
+        group.getinfo(true)
+        assert_equal(newgid, group.gid, "Object got wrong gid")
+
+        assert_nothing_raised("Failed to change group id") {
+            group.gid = old
+        }
+    end
+
+    # Iterate over each of our groups and try to grab the gid.
+    def test_ownprovidergroups
+        groupnames().each { |group|
+            gobj = nil
+            comp = nil
+            fakemodel = fakemodel(:group, group)
+            assert_nothing_raised {
+                gobj = @provider.new(fakemodel)
+            }
+
+            assert(gobj.gid, "Failed to retrieve gid")
+        }
+    end
+
+    if Process.uid == 0
+        def test_mkgroup
+            gobj = nil
+            comp = nil
+            name = "pptestgr"
+            assert(missing?(name), "Group %s is still present" % name)
+            group = mkgroup(name)
+
+            @@tmpgroups << name
+
+            assert(group.respond_to?(:addcmd), "no respondo?")
+            assert_nothing_raised {
+                group.create
+            }
+            assert(!missing?(name), "Group %s is missing" % name)
+
+            tests = Puppet.type(:group).validstates
+
+            tests.each { |test|
+                if self.respond_to?("attrtest_%s" % test)
+                    self.send("attrtest_%s" % test, group)
+                else
+                    $stderr.puts "Not testing attr %s of group" % test
+                end
+            }
+
+            assert_nothing_raised {
+                group.delete
+            }
+        end
+
+        # groupadd -o is broken in FreeBSD.
+        unless Facter["operatingsystem"].value == "FreeBSD"
+        def test_duplicateIDs
+            group1 = mkgroup("group1", :gid => 125)
+            group2 = mkgroup("group2", :gid => 125)
+
+            @@tmpgroups << "group1"
+            @@tmpgroups << "group2"
+            # Create the first group
+            assert_nothing_raised {
+                group1.create
+            }
+
+            # Not all OSes fail here, so we can't test that it doesn't work with
+            # it off, only that it does work with it on.
+            assert_nothing_raised {
+                group2.model[:allowdupe] = :true
+            }
+
+            # Now create the second group
+            assert_nothing_raised {
+                group2.create
+            }
+            assert_equal(:present, group2.ensure,
+                         "Group did not get created")
+        end
+        end
+    else
+        $stderr.puts "Not running as root; skipping group creation tests."
+    end
+end
+
+# $Id$

@@ -145,6 +145,10 @@ module Puppet
         # Handle Linux-style cron tabs.
         newfiletype(:crontab) do
             def initialize(user)
+                self.path = user
+            end
+
+            def path=(user)
                 begin
                     uid = Puppet::Util.uid(user)
                 rescue Puppet::Error => detail
@@ -153,7 +157,7 @@ module Puppet
 
                 # We have to have the user name, not the uid, because some
                 # systems *cough*linux*cough* require it that way
-                @path = user
+                @path = uid
             end
 
             # Read a specific @path's cron tab.
@@ -177,7 +181,7 @@ module Puppet
             private
 
             # Only add the -u flag when the @path is different.  Fedora apparently
-            # does not think I should be allowed to set the @path to my
+            # does not think I should be allowed to set the @path to my own user name
             def cmdbase
                 cmd = nil
                 if @path == Process.uid

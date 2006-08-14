@@ -1,23 +1,34 @@
 # The standard init-based service type.  Many other service types are
 # customizations of this module.
-Puppet.type(:service).newsvctype(:init) do
-    def self.defpath
-        case Facter["operatingsystem"].value
-        when "FreeBSD":
-            "/etc/rc.d"
-        else
-            "/etc/init.d"
-        end
+Puppet::Type.type(:service).provide :init, :parent => :base do
+    desc "Standard init service management.  This provider assumes that the
+        init script has not ``status`` command, because so few scripts do,
+        so you need to either provide a status command or specify via ``hasstatus``
+        that one already exists in the init script."
+
+    class << self
+        attr_accessor :defpath
     end
 
-    Puppet.type(:service).newpath(:init, defpath())
+    case Facter["operatingsystem"].value
+    when "FreeBSD":
+        @defpath = "/etc/rc.d"
+    else
+        @defpath = "/etc/init.d"
+    end
 
-    # Set the default init directory.
-    Puppet.type(:service).attrclass(:path).defaultto defpath()
+    #confine :exists => @defpath
 
-    # List all services of this type.  This has to be an instance method
-    # so that it's inherited by submodules.
-    def list(name)
+    if self.suitable?
+        # Add it to the search paths
+        Puppet.type(:service).newpath(:init, defpath())
+
+        # Set the default init directory.
+        Puppet.type(:service).attrclass(:path).defaultto defpath()
+    end
+
+    # List all services of this type.
+    def self.list(name)
         # We need to find all paths specified for our type or any parent types
         paths = Puppet.type(:service).paths(name)
 
@@ -94,12 +105,12 @@ Puppet.type(:service).newsvctype(:init) do
         if defined? @initscript
             return @initscript
         else
-            @initscript = self.search(self[:name])
+            @initscript = self.search(@model[:name])
         end
     end
 
     def search(name)
-        self[:path].each { |path|
+        @model[:path].each { |path|
             fqname = File.join(path,name)
             begin
                 stat = File.stat(fqname)
@@ -124,7 +135,7 @@ Puppet.type(:service).newsvctype(:init) do
     # we just return that; otherwise, we return false, which causes it to
     # fallback to other mechanisms.
     def statuscmd
-        if self[:hasstatus]
+        if @model[:hasstatus]
             return self.initscript + " status"
         else
             return false

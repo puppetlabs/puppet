@@ -30,6 +30,7 @@ module Puppet
         Puppet.err "Could not load client network libs: %s" % $noclientnetworking
     else
         class NetworkClient < XMLRPC::Client
+            attr_accessor :puppet_server, :puppet_port
             @clients = {}
 
             # Create a netclient for each handler
@@ -125,6 +126,9 @@ module Puppet
                 hash[:Path] ||= "/RPC2"
                 hash[:Server] ||= "localhost"
                 hash[:Port] ||= Puppet[:masterport]
+
+                @puppet_server = hash[:Server]
+                @puppet_port = hash[:Port]
 
                 @puppetserver = hash[:Server]
 

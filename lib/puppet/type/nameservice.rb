@@ -128,33 +128,6 @@ class State
             end
         end
 
-        # The list of all groups the user is a member of.  Different
-        # user mgmt systems will need to override this method.
-        def grouplist
-            groups = []
-
-            # Reset our group list
-            Etc.setgrent
-
-            user = @parent[:name]
-
-            # Now iterate across all of the groups, adding each one our
-            # user is a member of
-            while group = Etc.getgrent
-                members = group.mem
-
-                if members.include? user
-                    groups << group.name
-                end
-            end
-
-            # We have to close the file, so each listing is a separate
-            # reading of the file.
-            Etc.endgrent
-
-            groups
-        end
-
         # Sync the information.
         def sync
             event = nil
@@ -193,57 +166,6 @@ class State
                 return event
             else
                 return "#{@parent.class.name}_modified".intern
-            end
-        end
-
-        # This is only used when creating or destroying the object.
-        def syncname(value)
-            cmd = nil
-            event = nil
-            case value
-            when :absent
-                # we need to remove the object...
-                unless @parent.exists?
-                    self.info "already absent"
-                    # the object already doesn't exist
-                    return nil
-                end
-
-                # again, needs to be set by the ind. state or its
-                # parent
-                cmd = self.deletecmd
-                type = "delete"
-            when :present
-                if @parent.exists?
-                    self.info "already exists"
-                    # The object already exists
-                    return nil
-                end
-
-                # blah blah, define elsewhere, blah blah
-                cmd = self.addcmd
-                type = "create"
-            end
-            self.debug "Executing %s" % cmd.inspect
-
-            output = %x{#{cmd} 2>&1}
-
-            unless $? == 0
-                raise Puppet::Error, "Could not %s %s %s: %s" %
-                    [type, @parent.class.name, @parent.name, output]
-            end
-
-            # we want object creation to show up as one event, 
-            # not many
-            unless self.class.allatonce?
-                Puppet.debug "%s is not allatonce" % @parent.class.name
-                if type == "create"
-                    @parent.eachstate { |state|
-                        next if state.name == :ensure
-                        state.sync
-                        state.retrieve
-                    }
-                end
             end
         end
     end

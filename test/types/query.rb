@@ -34,7 +34,7 @@ class TestQuery < Test::Unit::TestCase
             unless Puppet.type(:service).has_key?("sleeper")
                 Puppet.type(:service).create(
                     :name => "sleeper",
-                    :type => "init",
+                    :provider => "init",
                     :path => File.join($puppetbase,"examples/root/etc/init.d"),
                     :hasstatus => true,
                     :check => [:ensure]
@@ -82,6 +82,7 @@ class TestQuery < Test::Unit::TestCase
 
     def test_service
         service = service()
+        assert(service, "Did not get service object")
         service.eachstate { |state|
             assert_nil(state.is)
         }

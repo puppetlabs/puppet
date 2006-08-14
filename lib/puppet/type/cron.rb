@@ -78,10 +78,6 @@ module Puppet
 
             def should_to_s
                 if @should
-                    unless @should.is_a?(Array)
-                        fail "wtf?"
-                    end
-
                     if self.name == :command or @should[0].is_a? Symbol
                         @should[0]
                     else
@@ -158,9 +154,9 @@ module Puppet
 
         # Override 'newstate' so that all states default to having the
         # correct parent type
-        def self.newstate(name, parent = nil, &block)
-            parent ||= Puppet::State::CronParam
-            super(name, parent, &block)
+        def self.newstate(name, options = {}, &block)
+            options[:parent] ||= Puppet::State::CronParam
+            super(name, options, &block)
         end
 
         # Somewhat uniquely, this state does not actually change anything -- it
@@ -170,7 +166,7 @@ module Puppet
         #
         # Note that this means that managing many cron jobs for a given user
         # could currently result in multiple write sessions for that user.
-        newstate(:command, CronParam) do
+        newstate(:command, :parent => CronParam) do
             desc "The command to execute in the cron job.  The environment
                 provided to the command varies by local system rules, and it is
                 best to always provide a fully qualified command.  The user's
@@ -193,7 +189,7 @@ module Puppet
             end
         end
 
-        newstate(:special, Puppet::State::ParsedParam) do
+        newstate(:special, :parent => Puppet::State::ParsedParam) do
             desc "Special schedules only supported on FreeBSD."
 
             def specials
@@ -208,19 +204,19 @@ module Puppet
             end
         end
 
-        newstate(:minute, CronParam) do
+        newstate(:minute) do
             self.boundaries = [0, 59]
             desc "The minute at which to run the cron job.
                 Optional; if specified, must be between 0 and 59, inclusive."
         end
 
-        newstate(:hour, CronParam) do
+        newstate(:hour) do
             self.boundaries = [0, 23]
             desc "The hour at which to run the cron job. Optional;
                 if specified, must be between 0 and 23, inclusive."
         end
 
-        newstate(:weekday, CronParam) do
+        newstate(:weekday) do
             def alpha
                 %w{sunday monday tuesday wednesday thursday friday saturday}
             end
@@ -230,7 +226,7 @@ module Puppet
                 0 being Sunday, or must be the name of the day (e.g., Tuesday)."
         end
 
-        newstate(:month, CronParam) do
+        newstate(:month) do
             def alpha
                 %w{january february march april may june july
                     august september october november december}
@@ -240,13 +236,13 @@ module Puppet
                 must be between 1 and 12 or the month name (e.g., December)."
         end
 
-        newstate(:monthday, CronParam) do
+        newstate(:monthday) do
             self.boundaries = [1, 31]
             desc "The day of the month on which to run the
                 command.  Optional; if specified, must be between 1 and 31."
         end
 
-        newstate(:environment, Puppet::State::ParsedParam) do
+        newstate(:environment, :parent => Puppet::State::ParsedParam) do
             desc "Any environment settings associated with this cron job.  They
                 will be stored between the header and the job in the crontab.  There
                 can be no guarantees that other, earlier settings will not also
@@ -462,8 +458,8 @@ module Puppet
 
         def self.list
             # Look for cron jobs for each user
-            Puppet::Type.type(:user).list.each { |user|
-                self.retrieve(user.name)
+            Puppet::Type.type(:user).list_by_name.each { |user|
+                self.retrieve(user, false)
             }
 
             self.collect { |c| c }
@@ -594,12 +590,14 @@ module Puppet
         # Retrieve a given user's cron job, using the @filetype's +retrieve+
         # method.  Returns nil if there was no cron job; else, returns the
         # number of cron instances found.
-        def self.retrieve(user)
-            # First make sure the user exists
-            begin
-                Puppet::Util.uid(user)
-            rescue ArgumentError
-                raise Puppet::Error,  "User %s not found" % user
+        def self.retrieve(user, checkuser = true)
+            # First make sure the user exists, unless told not to
+            if checkuser
+                begin
+                    Puppet::Util.uid(user)
+                rescue ArgumentError
+                    raise Puppet::Error,  "User %s not found" % user
+                end
             end
 
             @tabs[user] ||= @filetype.new(user)

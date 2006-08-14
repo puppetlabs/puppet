@@ -35,20 +35,22 @@ class TestType < Test::Unit::TestCase
             #    next
             #end
 
-            assert(
-                type.namevar,
-                "Failed to retrieve namevar for %s" % name
-            )
+            assert_nothing_raised {
+                assert(
+                    type.namevar,
+                    "Failed to retrieve namevar for %s" % name
+                )
 
-            assert_not_nil(
-                type.states,
-                "States for %s are nil" % name
-            )
+                assert_not_nil(
+                    type.states,
+                    "States for %s are nil" % name
+                )
 
-            assert_not_nil(
-                type.validstates,
-                "Valid states for %s are nil" % name
-            )
+                assert_not_nil(
+                    type.validstates,
+                    "Valid states for %s are nil" % name
+                )
+            }
         }
     end
 
@@ -463,6 +465,63 @@ end
 
         assert_equal("yaytest", File.read(path),
             "Exec did not correctly copy file.")
+    end
+
+    def test_newstate_options
+        # Create a type with a fake provider
+        providerclass = Class.new do
+            def method_missing(method, *args)
+                return method
+            end
+        end
+        self.class.const_set("ProviderClass", providerclass)
+
+        type = Puppet::Type.newtype(:mytype) do
+            newparam(:name) do
+                isnamevar
+            end
+            def provider
+                @provider ||= ProviderClass.new
+
+                @provider
+            end
+        end
+
+        # Now make a state with no options.
+        state = nil
+        assert_nothing_raised do
+            state = type.newstate(:noopts) do
+            end
+        end
+
+        # Now create an instance
+        obj = type.create(:name => :myobj)
+
+        inst = state.new(:parent => obj)
+
+        # And make sure it's correctly setting @is
+        ret = nil
+        assert_nothing_raised {
+            ret = inst.retrieve
+        }
+
+        assert_equal(:noopts, inst.is)
+
+        # Now create a state with a different way of doing it
+        state = nil
+        assert_nothing_raised do
+            state = type.newstate(:setretrieve, :retrieve => :yayness)
+        end
+
+        inst = state.new(:parent => obj)
+
+        # And make sure it's correctly setting @is
+        ret = nil
+        assert_nothing_raised {
+            ret = inst.retrieve
+        }
+
+        assert_equal(:yayness, inst.is)
     end
 end
 

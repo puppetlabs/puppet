@@ -11,6 +11,7 @@ class Puppet::Element
 
     class << self
         attr_accessor :doc, :nodoc
+        include Puppet::Util
     end
 
     # all of our subclasses must respond to each of these methods...
@@ -22,7 +23,7 @@ class Puppet::Element
     @@interface_methods.each { |method|
         self.send(:define_method,method) {
             raise Puppet::DevError, "%s has not overridden %s" %
-                [self.class,method]
+                [self.class.name,method]
         }
     }
 

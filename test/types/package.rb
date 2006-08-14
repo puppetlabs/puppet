@@ -11,7 +11,7 @@ require 'facter'
 
 $platform = Facter["operatingsystem"].value
 
-unless Puppet.type(:package).default
+unless Puppet.type(:package).defaultprovider
     puts "No default package type for %s; skipping package tests" % $platform
 else
 
@@ -54,14 +54,15 @@ class TestPackages < Test::Unit::TestCase
         list.each { |pkg, source|
             hash = {:name => pkg}
             if useensure
-                hash[:ensure] = "latest"
+                hash[:ensure] = "installed"
             end
             if source
                 source = source[0] if source.is_a? Array
                 hash[:source] = source
             end
+            # Override the default package type for our test packages.
             if Facter["operatingsystem"].value == "Darwin"
-                hash[:type] = "darwinport"
+                hash[:provider] = "darwinport"
             end
             obj = Puppet.type(:package).create(hash)
             assert(pkg, "Could not create package")
@@ -103,6 +104,8 @@ class TestPackages < Test::Unit::TestCase
             retval = {"aop" => nil}
         when "FreeBSD":
             retval = {"yahtzee" => nil}
+        when "RedHat":
+            retval = {"puppet" => "/home/luke/rpm/RPMS/i386/puppet-0.16.1-1.i386.rpm"}
         else
             Puppet.notice "No test packages for %s" % $platform
         end
@@ -168,18 +171,6 @@ class TestPackages < Test::Unit::TestCase
         }
     end
 
-    def test_specifypkgtype
-        pkg = nil
-        assert_nothing_raised {
-            pkg = Puppet.type(:package).create(
-                :name => "mypkg",
-                :type => "yum"
-            )
-        }
-        assert(pkg, "Did not create package")
-        assert_equal(:yum, pkg[:type])
-    end
-
     def test_latestpkg
         mkpkgs { |pkg|
             next unless pkg.respond_to? :latest
@@ -194,11 +185,8 @@ class TestPackages < Test::Unit::TestCase
     def test_listing
         pkgtype = Puppet::Type.type(:package)
 
-        # Heh
-        defaulttype = pkgtype.pkgtype(pkgtype.default)
-
         assert_nothing_raised("Could not list packages") do
-            defaulttype.list
+            pkgtype.list
         end
     end
 
@@ -213,14 +201,14 @@ class TestPackages < Test::Unit::TestCase
                 pkg.retrieve
             }
 
-            if pkg.insync? or pkg.is(:ensure) != :absent
+            if pkg.provider.query
                 Puppet.notice "Test package %s is already installed; please choose a different package for testing" % pkg
                 next
             end
 
             comp = newcomp("package", pkg)
 
-            assert_events([:package_created], comp, "package")
+            assert_events([:package_installed], comp, "package")
 
             pkg.retrieve
 
@@ -243,7 +231,7 @@ class TestPackages < Test::Unit::TestCase
                     pkg[:ensure] = "latest"
                 }
 
-                assert_events([:package_created], comp, "package")
+                assert_events([:package_installed], comp, "package")
 
                 pkg.retrieve
                 assert(pkg.insync?, "After install, package is not insync")
@@ -306,9 +294,9 @@ class TestPackages < Test::Unit::TestCase
 
             modpkg(pkg)
 
-            assert(pkg.latest, "Could not retrieve latest value")
+            assert(pkg.provider.latest, "Could not retrieve latest value")
 
-            assert_events([:package_created], pkg)
+            assert_events([:package_installed], pkg)
 
             assert_nothing_raised {
                 pkg.retrieve
@@ -345,7 +333,8 @@ class TestPackages < Test::Unit::TestCase
                 pkg = Puppet::Type.type(:package).create(
                     :name => "pkgtesting",
                     :source => "/Users/luke/Documents/Puppet/pkgtesting.pkg",
-                    :ensure => :present
+                    :ensure => :present,
+                    :provider => :apple
                 )
             }
 
@@ -362,7 +351,7 @@ class TestPackages < Test::Unit::TestCase
             @@tmpfiles << "/tmp/file"
             @@tmpfiles << "/Library/Receipts/pkgtesting.pkg"
 
-            assert_events([:package_created], pkg, "package")
+            assert_events([:package_installed], pkg, "package")
 
             assert_nothing_raised {
                 pkg.retrieve
@@ -375,15 +364,15 @@ class TestPackages < Test::Unit::TestCase
     end
 
     # Yay, gems.  They're special because any OS can test them.
-    if %x{which gem 2>/dev/null}.chomp != ""
+    if Puppet::Type.type(:package).provider(:gem).suitable?
     def test_list_gems
         gems = nil
         assert_nothing_raised {
-            gems = Puppet::Type.type(:package).pkgtype(:gem).list
+            gems = Puppet::Type.type(:package).provider(:gem).list
         }
 
         gems.each do |gem|
-            assert_equal(:gem, gem[:type],
+            assert_equal(:gem, gem[:provider],
                 "Type was not set correctly")
         end
     end
@@ -396,7 +385,7 @@ class TestPackages < Test::Unit::TestCase
                 :name => name,
                 :version => "0.0.2",
                 :ensure => "installed",
-                :type => :gem
+                :provider => :gem
             )
         }
 
@@ -410,7 +399,7 @@ class TestPackages < Test::Unit::TestCase
             return
         end
 
-        assert_events([:package_created], gem)
+        assert_events([:package_installed], gem)
 
         assert_nothing_raised {
             gem.retrieve
@@ -421,7 +410,7 @@ class TestPackages < Test::Unit::TestCase
 
         latest = nil
         assert_nothing_raised {
-            latest = gem.latest
+            latest = gem.provider.latest
         }
 
         assert(latest != gem[:version], "Did not correctly find latest value")
@@ -440,12 +429,13 @@ class TestPackages < Test::Unit::TestCase
     end
 
     else
+    $stderr.puts "Install gems for gem tests"
     def test_nogems_nofailures
         obj = nil
         assert_nothing_raised do
             Puppet::Type.newpackage(
                 :name => "yayness",
-                :type => "gem",
+                :provider => "gem",
                 :ensure => "installed"
             )
         end
@@ -455,7 +445,7 @@ class TestPackages < Test::Unit::TestCase
     end
     end
     end
-    if ["Fedora", "RedHat", "CentOS"].include?(Facter["operatingsystem"].value) and
+    if Puppet.type(:package).provider(:rpm).suitable? and
         FileTest.exists?("/home/luke/rpm/RPMS/i386/puppet-server-0.16.1-1.i386.rpm")
 
     # We have a special test here, because we don't actually want to install the
@@ -464,73 +454,36 @@ class TestPackages < Test::Unit::TestCase
         pkg = nil
         assert_nothing_raised {
             pkg = Puppet::Type.type(:package).create(
-                :type => :rpm,
+                :provider => :rpm,
                 :name => "puppet-server",
                 :source => "/home/luke/rpm/RPMS/i386/puppet-server-0.16.1-1.i386.rpm"
             )
         }
 
-        assert_equal("0.16.1-1", pkg.latest, "RPM did not provide correct value for latest")
+        assert_equal("0.16.1-1", pkg.provider.latest, "RPM did not provide correct value for latest")
     end
     end
 
-    if Facter["operatingsystem"].value == "Solaris"
-    if pkgget = %x{which pkg-get 2>/dev/null}.chomp and pkgget != ""
-    # FIXME The packaging crap needs to be rewritten to support testing
-    # multiple package types on the same platform.
-    def test_list_blastwave
-        pkgs = nil
-        assert_nothing_raised {
-            pkgs = Puppet::Type.type(:package).pkgtype(:blastwave).list
-        }
-
-        pkgs.each do |pkg|
-            if pkg[:name] =~ /^CSW/
-                assert_equal(:blastwave, pkg[:type],
-                    "Type was not set correctly")
-            end
-        end
-    end
-
-    def test_install_blastwave
-        pkg = nil
-        name = "cabextract"
-        assert_nothing_raised {
-            pkg = Puppet::Type.newpackage(
-                :name => name,
-                :ensure => "installed",
-                :type => :blastwave
-            )
-        }
-
-        assert_nothing_raised {
-            pkg.retrieve
-        }
-
-        if pkg.is(:ensure) != :absent
-            p pkg.is(:ensure)
-            $stderr.puts "Cannot test pkg installation; %s is already installed" %
-                name
-            return
+    def test_packagedefaults
+        should = case Facter["operatingsystem"].value
+        when "Debian": :apt
+        when "Darwin": :apple
+        when "RedHat": :rpm
+        when "Fedora": :yum
+        when "FreeBSD": :ports
+        when "OpenBSD": :openbsd
+        when "Solaris": :sun
         end
 
-        assert_events([:package_created], pkg)
+        default = Puppet.type(:package).defaultprovider
+        assert(default, "No default package provider for %s" %
+            Facter["operatingsystem"].value)
 
-        assert_nothing_raised {
-            pkg.retrieve
-        }
 
-        latest = nil
-        assert_nothing_raised {
-            latest = pkg.latest
-        }
-        pkg[:ensure] = :absent
-
-        assert_events([:package_removed], pkg)
-    end
-    else
-        $stderr.puts "No pkg-get scripting; skipping blastwave tests"
-    end
+        if should
+            assert_equal(should, default.name,
+                "Incorrect default package format")
+        end
     end
 end
 end

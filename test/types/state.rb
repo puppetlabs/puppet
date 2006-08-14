@@ -32,6 +32,7 @@ class TestState < Test::Unit::TestCase
     def test_newvalue
         state = newstate()
 
+        # These are bogus because they don't define events. :/
         assert_nothing_raised {
             state.newvalue(:one) do
                 @is = 1
@@ -51,6 +52,7 @@ class TestState < Test::Unit::TestCase
         }
 
         assert_equal(:one, inst.should)
+        ret = nil
         assert_nothing_raised { inst.set_one }
         assert_equal(1, inst.is)
 
@@ -86,6 +88,43 @@ class TestState < Test::Unit::TestCase
         }
 
         assert_equal("yayness".upcase, inst.is)
+    end
+
+    def test_newvalue_event_option
+        state = newstate()
+
+        assert_nothing_raised do
+            state.newvalue(:myvalue, :event => :fake_valued) do
+                @is = :valued
+            end
+            state.newvalue(:other, :event => "fake_other") do
+                @is = :valued
+            end
+        end
+        inst = newinst(state)
+
+        assert_nothing_raised {
+            inst.should = :myvalue
+        }
+
+        ret = nil
+        assert_nothing_raised {
+            ret = inst.sync
+        }
+
+        assert_equal(:fake_valued, ret,
+                     "Event did not get returned correctly")
+
+        assert_nothing_raised {
+            inst.should = :other
+        }
+
+        assert_nothing_raised {
+            ret = inst.sync
+        }
+
+        assert_equal(:fake_other, ret,
+                     "Event did not get returned correctly")
     end
 end
 

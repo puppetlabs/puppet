@@ -76,6 +76,9 @@ class Transaction
                 # event if they want
                 events = [change.forward].flatten.reject { |e| e.nil? }
             rescue => detail
+                if Puppet[:debug]
+                    puts detail.backtrace
+                end
                 change.state.err "change from %s to %s failed: %s" %
                     [change.state.is_to_s, change.state.should_to_s, detail]
                 @failures[child] += 1
@@ -299,7 +302,7 @@ class Transaction
                 # but a chmod failed?  how would i handle that error? dern
             end
 
-            collecttargets(events)
+            collecttargets(events) if events
 
             # Now check to see if there are any events for this child.
             # Kind of hackish, since going backwards goes a change at a

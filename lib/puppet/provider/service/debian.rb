@@ -1,11 +1,15 @@
-require 'puppet/type/service/init'
-
 # Manage debian services.  Start/stop is the same as InitSvc, but enable/disable
 # is special.
-Puppet.type(:service).newsvctype(:debian, :init) do
+Puppet::Type.type(:service).provide :debian, :parent => :init do
+    desc "Debian's form of ``init``-style management.  The only difference
+        is that this supports service enabling and disabling via ``update-rc.d``."
+
+    commands :update => "/usr/sbin/update-rc.d"
+    defaultfor :operatingsystem => :debian
+
     # Remove the symlinks
     def disable
-        cmd = %{update-rc.d -f #{self[:name]} remove 2>&1}
+        cmd = %{#{command(:update)} -f #{@model[:name]} remove 2>&1}
         self.debug "Executing '%s'" % cmd
         output = %x{#{cmd}}
 
@@ -16,7 +20,7 @@ Puppet.type(:service).newsvctype(:debian, :init) do
     end
 
     def enabled?
-        cmd = %{update-rc.d -n -f #{self[:name]} remove 2>&1}
+        cmd = %{#{command(:update)} -n -f #{@model[:name]} remove 2>&1}
         self.debug "Executing 'enabled' test: '%s'" % cmd
         output = %x{#{cmd}}
         unless $? == 0
@@ -34,7 +38,7 @@ Puppet.type(:service).newsvctype(:debian, :init) do
     end
 
     def enable
-        cmd = %{update-rc.d #{self[:name]} defaults 2>&1}
+        cmd = %{#{command(:update)} #{@model[:name]} defaults 2>&1}
         self.debug "Executing '%s'" % cmd
         output = %x{#{cmd}}
 
@@ -44,3 +48,5 @@ Puppet.type(:service).newsvctype(:debian, :init) do
         end
     end
 end
+
+# $Id$

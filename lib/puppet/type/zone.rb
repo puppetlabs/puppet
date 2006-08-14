@@ -178,7 +178,7 @@ Puppet::Type.newtype(:zone) do
             and cannot be changed."
     end
 
-    newstate(:ip, ZoneMultiConfigState) do
+    newstate(:ip, :parent => ZoneMultiConfigState) do
         require 'ipaddr'
 
         desc "The IP address of the zone.  IP addresses must be specified
@@ -225,7 +225,7 @@ end
         end
     end
 
-    newstate(:autoboot, ZoneConfigState) do
+    newstate(:autoboot, :parent => ZoneConfigState) do
         desc "Whether the zone should automatically boot."
 
         defaultto true
@@ -238,7 +238,7 @@ end
         end
     end
 
-    newstate(:pool, ZoneConfigState) do
+    newstate(:pool, :parent => ZoneConfigState) do
         desc "The resource pool for this zone." 
 
         def configtext
@@ -246,7 +246,7 @@ end
         end
     end
 
-    newstate(:inherit, ZoneMultiConfigState) do
+    newstate(:inherit, :parent => ZoneMultiConfigState) do
         desc "The list of directories that the zone inherits from the global
             zone.  All directories must be fully qualified."
 

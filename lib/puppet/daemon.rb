@@ -157,24 +157,45 @@ module Puppet
                 }
             end
 
+
             unless defined? @driver
                 Puppet.err "Cannot request a certificate without a defined target"
                 return false
             end
 
-            Puppet.info "Creating a new certificate request for %s" % @fqdn
-            name = OpenSSL::X509::Name.new([["CN", @fqdn]])
+            unless defined? @csr
+                Puppet.info "Creating a new certificate request for %s" % @fqdn
+                name = OpenSSL::X509::Name.new([["CN", @fqdn]])
 
-            @csr = OpenSSL::X509::Request.new
-            @csr.version = 0
-            @csr.subject = name
-            @csr.public_key = @key.public_key
-            @csr.sign(@key, OpenSSL::Digest::MD5.new)
+                @csr = OpenSSL::X509::Request.new
+                @csr.version = 0
+                @csr.subject = name
+                @csr.public_key = @key.public_key
+                @csr.sign(@key, OpenSSL::Digest::MD5.new)
+            end
 
             Puppet.info "Requesting certificate"
 
+            # We can only request a client with a CA client, so we need
+            # to create one if we don't already have one (or if we're not a CA
+            # server).
+            caclient = nil
+            if @driver.is_a? Puppet::Client::CA or @driver.is_a? Puppet::Server::CA
+                caclient = @driver
+            else
+                # Create a CA client with which to request the cert.
+                if @driver.local?
+                    raise Puppet::DevError,
+                        "Incorrect setup for a local CA request"
+                end
+                caclient = Puppet::Client::CA.new(
+                    :Port => @driver.puppet_port,
+                    :Server => @driver.puppet_server
+                )
+            end
+
             begin
-                cert, cacert = @driver.getcert(@csr.to_pem)
+                cert, cacert = caclient.getcert(@csr.to_pem)
             rescue => detail
                 if Puppet[:debug]
                     puts detail.backtrace

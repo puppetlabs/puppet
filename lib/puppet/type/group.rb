@@ -12,7 +12,7 @@ require 'puppet/type/state'
 require 'puppet/type/nameservice'
 
 module Puppet
-    newtype(:group, Puppet::Type::NSSType) do
+    newtype(:group) do
         @doc = "Manage groups.  This type can only create groups.  Group
             membership must be managed on individual users.  This element type
             uses the prescribed native tools for creating groups and generally
@@ -23,32 +23,23 @@ module Puppet
             for Mac OS X, NetInfo is used.  This is currently unconfigurable,
             but if you desperately need it to be so, please contact us."
 
-        case Facter["operatingsystem"].value
-        when "Darwin":
-            @parentstate = Puppet::NameService::NetInfo::NetInfoState
-            @parentmodule = Puppet::NameService::NetInfo
-        when "FreeBSD":
-            @parentstate = Puppet::NameService::PW::PWGroup
-            @parentmodule = Puppet::NameService::PW
-        else
-            @parentstate = Puppet::NameService::ObjectAdd::ObjectAddGroup
-            @parentmodule = Puppet::NameService::ObjectAdd
-        end
+        newstate(:ensure) do
+            desc "The basic state that the object should be in."
 
-        newstate(:ensure, @parentstate) do
             newvalue(:present) do
-                self.syncname(:present)
+                provider.create
+
+                :group_created
             end
 
             newvalue(:absent) do
-                self.syncname(:absent)
-            end
+                provider.delete
 
-            desc "The basic state that the object should be in."
+                :group_removed
+            end
 
             # If they're talking about the thing at all, they generally want to
             # say it should exist.
-            #defaultto :present
             defaultto do
                 if @parent.managed?
                     :present
@@ -77,7 +68,7 @@ module Puppet
             end
 
             def retrieve
-                if @parent.exists?
+                if provider.exists?
                     @is = :present
                 else
                     @is = :absent
@@ -104,7 +95,7 @@ module Puppet
 
         end
 
-        newstate(:gid, @parentstate) do
+        newstate(:gid) do
             desc "The group ID.  Must be specified numerically.  If not
                 specified, a number will be picked, which can result in ID
                 differences across systems and thus is not recommended.  The
@@ -131,6 +122,19 @@ module Puppet
                 return @@prevauto
             end
 
+            def retrieve
+                @is = provider.gid
+            end
+
+            def sync
+                if self.should == :absent
+                    raise Puppet::DevError, "GID cannot be deleted"
+                else
+                    provider.gid = self.should
+                    :group_modified
+                end
+            end
+
             munge do |gid|
                 case gid
                 when String
@@ -140,27 +144,14 @@ module Puppet
                         self.fail "Invalid GID %s" % gid
                     end
                 when Symbol
-                    unless gid == :auto or gid == :absent
+                    unless gid == :absent
                         self.devfail "Invalid GID %s" % gid
-                    end
-                    if gid == :auto
-                        # FIXME this should be done at sync time, not
-                        # here.
-                        unless self.class.autogen?
-                            gid = autogen()
-                        end
                     end
                 end
 
                 return gid
             end
         end
-
-        class << self
-            attr_accessor :netinfodir
-        end
-
-        @netinfodir = "groups"
 
         newparam(:name) do
             desc "The group name.  While naming limitations vary by
@@ -172,7 +163,8 @@ module Puppet
         end
 
         newparam(:allowdupe) do
-            desc "Whether to allow duplicate GIDs."
+            desc "Whether to allow duplicate GIDs.  This option does not work on
+                FreeBSD (contract to the ``pw`` man page)."
                 
             newvalues(:true, :false)
 
@@ -190,35 +182,14 @@ module Puppet
             return groups
         end
 
-        def exists?
-            self.class.parentmodule.exists?(self)
-        end
-
-        def getinfo(refresh = false)
-            if @groupinfo.nil? or refresh == true
-                begin
-                    @groupinfo = Etc.getgrnam(self[:name])
-                rescue ArgumentError => detail
-                    @groupinfo = nil
-                end
-            end
-
-            @groupinfo
-        end
-
-        def initialize(hash)
-            @groupinfo = nil
-            super
-        end
-
         def retrieve
-            if self.exists?
+            if @provider.exists?
                 super
             else
                 # the group does not exist
-                unless @states.include?(:gid)
-                    self[:gid] = :auto
-                end
+                #unless @states.include?(:gid)
+                #    self[:gid] = :auto
+                #end
 
                 @states.each { |name, state|
                     state.is = :absent

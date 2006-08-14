@@ -6,11 +6,14 @@ require 'puppet/metric'
 require 'puppet/type/state'
 require 'puppet/parameter'
 require 'puppet/util'
+require 'puppet/autoload'
+
 # see the bottom of the file for the rest of the inclusions
 
 module Puppet
 # The type is unknown
 class UnknownTypeError < Puppet::Error; end
+class UnknownProviderError < Puppet::Error; end
 class Type < Puppet::Element
 
     # Types (which map to elements in the languages) are entirely composed of
@@ -22,6 +25,7 @@ class Type < Puppet::Element
     # that it is clear whether it operates on all attributes (thus has 'attr' in
     # the method name, or whether it operates on a specific type of attributes.
     attr_accessor :children
+    attr_accessor :provider
     attr_accessor :file, :line
     attr_reader :tags, :parent
 
@@ -35,17 +39,6 @@ class Type < Puppet::Element
     end
 
     include Enumerable
-
-    # a little fakery, since Puppet itself isn't a type
-    # I don't think this is used any more, now that the language can't
-    # call methods
-    #@name = :puppet
-
-    # set it to something to silence the tests, but otherwise not used
-    #@namevar = :notused
-
-    # again, silence the tests; the :notused has to be there because it's
-    # the namevar
     
     # class methods dealing with Type management
 
@@ -54,27 +47,10 @@ class Type < Puppet::Element
     # the Type class attribute accessors
     class << self
         attr_reader :name, :states
+        attr_accessor :providerloader
+        attr_writer :defaultprovider
 
         include Enumerable
-
-        #def inspect
-        #    "Type(%s)" % self.name
-        #end
-
-        # This class is aggregatable, meaning that instances are defined on
-        # one system but instantiated on another
-        def isaggregatable
-            @aggregatable = true
-        end
-
-        # Is this one aggregatable?
-        def aggregatable?
-            if defined? @aggregatable
-                return @aggregatable
-            else
-                return false
-            end
-        end
     end
 
     # iterate across all of the subclasses of Type
@@ -91,9 +67,9 @@ class Type < Puppet::Element
     # can easily call it and create their own 'ensure' values.
     def self.ensurable(&block)
         if block_given?
-            self.newstate(:ensure, Puppet::State::Ensure, &block)
+            self.newstate(:ensure, :parent => Puppet::State::Ensure, &block)
         else
-            self.newstate(:ensure, Puppet::State::Ensure) do
+            self.newstate(:ensure, :parent => Puppet::State::Ensure) do
                 self.defaultvalues
             end
         end
@@ -119,11 +95,16 @@ class Type < Puppet::Element
         @objects = Hash.new
         @aliases = Hash.new
 
+        @providers = Hash.new
+        @defaults = {}
+
         unless defined? @parameters
             @parameters = []
         end
 
         @validstates = {}
+        @parameters = []
+        @paramhash = {}
 
         @paramdoc = Hash.new { |hash,key|
           if key.is_a?(String)
@@ -161,7 +142,7 @@ class Type < Puppet::Element
                     Puppet.info "loaded %s" % file
                     return true
                 rescue LoadError => detail
-                    Puppet.info "Could not load %s: %s" %
+                    Puppet.info "Could not load plugin %s: %s" %
                         [file, detail]
                     return false
                 end
@@ -222,6 +203,14 @@ class Type < Puppet::Element
                 t.create(*args)
             end
         end
+
+        # Now set up autoload any providers that might exist for this type.
+        t.providerloader = Puppet::Autoload.new(t,
+            "puppet/provider/#{t.name.to_s}"
+        )
+
+        # We have to load everything so that we can figure out the default type.
+        t.providerloader.loadall()
 
         t
     end
@@ -406,12 +395,15 @@ class Type < Puppet::Element
     def self.namevar
         unless defined? @namevar
             return nil unless defined? @parameters and ! @parameters.empty?
-            @namevar = @parameters.find { |name, param|
+            namevarparam = @parameters.find { |param|
                 param.isnamevar?
-                unless param
-                    raise Puppet::DevError, "huh? %s" % name
-                end
-            }[0].value
+            }
+
+            if namevarparam
+                @namevar = namevarparam.name
+            else
+                raise Puppet::DevError, "No namevar for %s" % self.name
+            end
         end
         @namevar
     end
@@ -425,10 +417,7 @@ class Type < Puppet::Element
         unless param
             raise Puppet::DevError, "Class %s has no param %s" % [klass, name]
         end
-        @parameters ||= []
         @parameters << param
-
-        @paramhash ||= {}
         @parameters.each { |p| @paramhash[name] = p }
 
         if param.isnamevar?
@@ -462,6 +451,179 @@ class Type < Puppet::Element
         @@metaparams.each { |p| yield p.name }
     end
 
+    # Find the default provider.
+    def self.defaultprovider
+        unless defined? @defaultprovider and @defaultprovider
+            suitable = suitableprovider()
+
+            max = 0
+            suitable.each do |provider|
+                if provider.defaultnum > max
+                    max = provider.defaultnum
+                end
+            end
+
+            defaults = suitable.find_all do |provider|
+                provider.defaultnum == max
+            end
+
+            retval = nil
+            if defaults.length > 1
+                Puppet.warning(
+                    "Found multiple default providers for %s: %s; using %s" %
+                    [self.name, defaults.collect { |i| i.name.to_s }.join(", "),
+                        defaults[0].name]
+                )
+                retval = defaults.shift
+            elsif defaults.length == 1
+                retval = defaults.shift
+            else
+                raise Puppet::DevError, "Could not find a default provider for %s" %
+                    self.name
+            end
+
+            @defaultprovider = retval
+        end
+
+        return @defaultprovider
+    end
+
+    # Retrieve a provider by name.
+    def self.provider(name)
+        name = Puppet::Util.symbolize(name)
+
+        # If we don't have it yet, try loading it.
+        unless @providers.has_key?(name)
+            @providerloader.load(name)
+        end
+        return @providers[name]
+    end
+
+    # Just list all of the providers.
+    def self.providers
+        @providers.keys
+    end
+
+    def self.validprovider?(name)
+        name = Puppet::Util.symbolize(name)
+
+        return (@providers.has_key?(name) && @providers[name].suitable?)
+    end
+
+    # Create a new provider of a type.  This method must be called
+    # directly on the type that it's implementing.
+    def self.provide(name, options = {}, &block)
+        name = Puppet::Util.symbolize(name)
+        model = self
+
+        parent = if pname = options[:parent]
+            if pname.is_a? Class
+                pname
+            else
+                if provider = self.provider(pname)
+                    provider
+                else
+                    raise Puppet::DevError,
+                        "Could not find parent provider %s of %s" %
+                            [pname, name]
+                end
+            end
+        else
+            Puppet::Type::Provider
+        end
+
+        self.providify
+
+        provider = Class.new(parent)
+        provider.name = name
+        provider.model = model
+        provider.initvars
+
+        const_set "Provider%s" % name.to_s.capitalize, provider
+
+        provider.class_eval(&block)
+        @providers[name] = provider
+
+        return provider
+    end
+
+    # Make sure we have a :use parameter defined.  Only gets called if there
+    # are providers.
+    def self.providify
+        return if @paramhash.has_key? :provider
+        newparam(:provider) do
+            desc "The specific backend for #{self.name.to_s} to use. You will
+                seldom need to specify this -- Puppet will usually discover the
+                appropriate provider for your platform."
+
+            # We need to add documentation for each provider.
+            def self.doc
+                @doc + "Available providers are:\n" + @model.providers.sort { |a,b|
+                    a.to_s <=> b.to_s
+                }.each { |i|
+                    "* **%s**: %s" % [i, self.provider(i).doc]
+                }
+            end
+
+            defaultto { @parent.class.defaultprovider.name }
+
+            validate do |value|
+                value = value[0] if value.is_a? Array
+                if provider = @parent.class.provider(value)
+                    unless provider.suitable?
+                        raise ArgumentError,
+                            "Provider '%s' is not functional on this platform" %
+                            [value]
+                    end
+                else
+                    raise ArgumentError, "Invalid %s provider '%s'" %
+                        [@parent.class.name, value]
+                end
+            end
+
+            munge do |provider|
+                provider = provider[0] if provider.is_a? Array
+                if provider.is_a? String
+                    provider = provider.intern
+                end
+                @parent.provider = provider
+                provider
+            end
+        end
+    end
+
+    def self.unprovide(name)
+        puts "wtf?"
+        if @providers.has_key? name
+            p "Removing provider %s" % name
+            if @defaultprovider and @defaultprovider.name == name
+                @defaultprovider = nil
+            end
+            @providers.delete(name)
+        else
+            p name
+            p @providers
+        end
+    end
+
+    # Return an array of all of the suitable providers.
+    def self.suitableprovider
+        @providers.find_all { |name, provider|
+            provider.suitable?
+        }.collect { |name, provider|
+            provider
+        }
+    end
+
+    def provider=(name)
+        if klass = self.class.provider(name)
+            @provider = klass.new(self)
+        else
+            raise UnknownProviderError, "Could not find %s provider of %s" %
+                [name, self.class.name]
+        end
+    end
+
     # Create a new parameter.  Requires a block and a name, stores it in the
     # @parameters array, and does some basic checking on it.
     def self.newparam(name, &block)
@@ -475,10 +637,7 @@ class Type < Puppet::Element
         param.element = self
         param.class_eval(&block)
         const_set("Parameter" + name.to_s.capitalize,param)
-        @parameters ||= []
         @parameters << param
-
-        @paramhash ||= {}
         @parameters.each { |p| @paramhash[name] = p }
 
         # These might be enabled later.
@@ -497,9 +656,22 @@ class Type < Puppet::Element
         return param
     end
 
-    # Create a new state.
-    def self.newstate(name, parent = nil, &block)
-        parent ||= Puppet::State
+    # Create a new state. The first parameter must be the name of the state;
+    # this is how users will refer to the state when creating new instances.
+    # The second parameter is a hash of options; the options are:
+    # * <tt>:parent</tt>: The parent class for the state.  Defaults to Puppet::State.
+    # * <tt>:retrieve</tt>: The method to call on the provider or @parent object (if
+    #   the provider is not set) to retrieve the current value.
+    def self.newstate(name, options = {}, &block)
+        name = symbolize(name)
+
+        # This is here for types that might still have the old method of defining
+        # a parent class.
+        unless options.is_a? Hash
+            raise Puppet::DevError, "Options must be a hash, not %s" % options.inspect
+        end
+
+        parent = options[:parent] || Puppet::State
         if @validstates.include?(name) 
             raise Puppet::DevError, "Class %s already has a state named %s" %
                 [self.name, name]
@@ -508,10 +680,22 @@ class Type < Puppet::Element
             @name = name
         end
 
+        # If they've passed a retrieve method, then override the retrieve method
+        # on the class.
+        if options[:retrieve]
+            s.send(:define_method, :retrieve) do
+                instance_variable_set(
+                    "@is", provider.send(options[:retrieve])
+                )
+            end
+        end
+
         s.initvars
 
         const_set("State" + name.to_s.capitalize,s)
-        s.class_eval(&block)
+        if block_given?
+            s.class_eval(&block)
+        end
         @states ||= []
 
         # If it's the 'ensure' state, always put it first.
@@ -598,6 +782,7 @@ class Type < Puppet::Element
 
     # does the name reflect a valid state?
     def self.validstate?(name)
+        name = name.intern if name.is_a? String
         unless @validstates.length == @states.length
             self.buildstatehash
         end
@@ -1710,21 +1895,6 @@ class Type < Puppet::Element
             end
         }
 
-        # if they're not using :name for the namevar but we got :name (probably
-        # from the parser)
-#        if namevar != :name and hash.include?(:name) and ! hash[:name].nil?
-#            #self[namevar] = hash[:name]
-#            hash[namevar] = hash[:name]
-#            hash.delete(:name)
-#        # else if we got the namevar
-#        elsif hash.has_key?(namevar) and ! hash[namevar].nil?
-#            #self[namevar] = hash[namevar]
-#            #hash.delete(namevar)
-#        # else something's screwy
-#        else
-#            # they didn't specify anything related to names
-#        end
-
         return hash
     end
 
@@ -2423,6 +2593,7 @@ end # Puppet::Type
 end
 
 require 'puppet/statechange'
+require 'puppet/provider'
 require 'puppet/type/component'
 require 'puppet/type/cron'
 require 'puppet/type/exec'

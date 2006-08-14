@@ -7,7 +7,7 @@ path=`echo $script | sed 's/etc..*/bin/'`
 
 PATH=$PATH:$path
 
-ps=`facter ps | cut -d ' ' -f3-`
+ps=`facter ps`
 
 if [ -z "$ps" ]; then
     ps="ps -ef"

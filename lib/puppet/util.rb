@@ -31,8 +31,8 @@ module Util
         # If they're running as a normal user, then just execute as that same
         # user.
         unless Process.uid == 0
-            yield
-            return
+            retval = yield
+            return retval
         end
 
         begin
@@ -82,7 +82,6 @@ module Util
                     Puppet.warning "Could not retrieve UID for %s" % user
                 end
             end
-
             retval = yield
         ensure
             if olduid
@@ -278,6 +277,29 @@ module Util
         }
     end
 
+    # Proxy a bunch of methods to another object.
+    def self.classproxy(klass, objmethod, *methods)
+        classobj = class << klass; self; end
+        methods.each do |method|
+            classobj.send(:define_method, method) do |*args|
+                obj = self.send(objmethod)
+
+                obj.send(method, *args)
+            end
+        end
+    end
+
+    # Proxy a bunch of methods to another object.
+    def self.proxy(klass, objmethod, *methods)
+        methods.each do |method|
+            klass.send(:define_method, method) do |*args|
+                obj = self.send(objmethod)
+
+                obj.send(method, *args)
+            end
+        end
+    end
+
     # XXX this should all be done using puppet objects, not using
     # normal mkdir
     def self.recmkdir(dir,mode = 0755)
@@ -298,15 +320,6 @@ module Util
                 end
             }
             return true
-        end
-    end
-
-    def self.symbolize(value)
-        case value
-        when String: value = value.intern
-        when Symbol: value
-        else
-            raise ArgumentError, "'%s' must be a string or symbol" % value
         end
     end
 
@@ -354,6 +367,54 @@ module Util
         end
     end
 
+    def binary(bin)
+        if bin =~ /^\//
+            if FileTest.exists? bin
+                return true
+            else
+                return nil
+            end
+        else
+            ENV['PATH'].split(":").each do |dir|
+                if FileTest.exists? File.join(dir, bin)
+                    return File.join(dir, bin)
+                end
+            end
+            return nil
+        end
+    end
+    module_function :binary
+
+    # Execute the provided command in a pipe, yielding the pipe object.
+    def execpipe(command, failonfail = true)
+        if respond_to? :debug
+            debug "Executing '%s'" % command
+        else
+            Puppet.debug "Executing '%s'" % command
+        end
+
+        output = open("| #{command} 2>&1") do |pipe|
+            yield pipe
+        end
+
+        if failonfail
+            unless $? == 0
+                raise ExecutionFailure, output
+            end
+        end
+
+        return output
+    end
+
+    def execfail(command, exception)
+        begin
+            output = execute(command)
+            return output
+        rescue ExecutionFailure
+            raise exception, output
+        end
+    end
+
     # Execute the desired command, and return the status and output.
     def execute(command, failonfail = true)
         if respond_to? :debug
@@ -371,6 +432,8 @@ module Util
 
         return output
     end
+
+    module_function :execute
 
     # Create an exclusive lock.
     def threadlock(resource, type = Sync::EX)
@@ -399,6 +462,16 @@ module Util
             0
         end
     end
+
+    def symbolize(value)
+        case value
+        when String: value = value.intern
+        when Symbol: value
+        else
+            raise ArgumentError, "'%s' must be a string or symbol" % value
+        end
+    end
+    module_function :symbolize
 
     # Just benchmark, with no logging.
     def thinmark

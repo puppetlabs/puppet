@@ -26,9 +26,15 @@ module Puppet
 
         def initcerts
             unless self.readcert
-                unless self.requestcert
-                    return nil
-                end
+                #if self.is_a? Puppet::Client::CA
+                    unless self.requestcert
+                        return nil
+                    end
+                #else
+                #    return nil
+                #end
+                #unless self.requestcert
+                #end
             end
 
             # unless we have a driver, we're a local client and we can't add
@@ -92,6 +98,15 @@ module Puppet
             else
                 raise ClientError, "%s must be passed a Server or %s" %
                     [self.class, driverparam]
+            end
+        end
+
+        # Are we a local client?
+        def local?
+            if defined? @local and @local
+                true
+            else
+                false
             end
         end
 

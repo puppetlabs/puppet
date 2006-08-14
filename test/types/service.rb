@@ -118,7 +118,7 @@ class TestLocalService < Test::Unit::TestCase
     end
 
     def mktestsvcs
-        tstsvcs.collect { |svc,svcargs|
+        list = tstsvcs.collect { |svc,svcargs|
             args = svcargs.dup
             args[:name] = svc
             Puppet.type(:service).create(args)
@@ -167,10 +167,8 @@ class TestLocalService < Test::Unit::TestCase
 
         # test refreshing it
         assert_nothing_raised() {
-            service.refresh
+            service.provider.refresh
         }
-
-        assert(service.respond_to?(:refresh))
 
         # now stop it
         assert_nothing_raised() {
@@ -229,7 +227,7 @@ class TestLocalService < Test::Unit::TestCase
         mktestsvcs.each { |svc|
             val = nil
             assert_nothing_raised("Could not get status") {
-                val = svc.status
+                val = svc.provider.status
             }
             assert_instance_of(Symbol, val)
         }
@@ -242,29 +240,28 @@ class TestLocalService < Test::Unit::TestCase
             mktestsvcs.each { |svc|
                 startstate = nil
                 assert_nothing_raised("Could not get status") {
-                    startstate = svc.status
+                    startstate = svc.provider.status
                 }
                 cycleservice(svc)
 
                 svc[:ensure] = startstate
                 assert_apply(svc)
-                Puppet.type(:service).clear
                 Puppet.type(:component).clear
             }
         end
 
         def test_serviceenabledisable
             mktestsvcs.each { |svc|
+                assert(svc[:name], "Service has no name")
                 startstate = nil
                 svc[:check] = :enable
                 assert_nothing_raised("Could not get status") {
-                    startstate = svc.enabled?
+                    startstate = svc.provider.enabled?
                 }
                 cycleenable(svc)
 
                 svc[:enable] = startstate
                 assert_apply(svc)
-                Puppet.type(:service).clear
                 Puppet.type(:component).clear
             }
         end
@@ -299,7 +296,6 @@ class TestLocalService < Test::Unit::TestCase
                 svc[:enable] = startenable
                 svc[:ensure] = startensure
                 assert_apply(svc)
-                Puppet.type(:service).clear
                 Puppet.type(:component).clear
             end
         end

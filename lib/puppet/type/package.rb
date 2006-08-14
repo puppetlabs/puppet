@@ -20,97 +20,6 @@ module Puppet
             using the ``type`` parameter; obviously, if you specify that you
             want to use ``rpm`` then the ``rpm`` tools must be available."
 
-        # Create a new packaging type
-        def self.newpkgtype(name, parent = nil, &block)
-            @pkgtypes ||= {}
-
-            if @pkgtypes.include?(name)
-                raise Puppet::DevError, "Package type %s already defined" % name
-            end
-
-            mod = Module.new
-            const_set("PkgType" + name.to_s.capitalize,mod)
-
-            # Add our parent, if it exists
-            if parent
-                unless parenttype = pkgtype(parent)
-                    raise Puppet::DevError,
-                        "No parent type %s for package type %s" %
-                        [parent, name]
-                end
-                mod.send(:include, parenttype)
-            end
-
-            # And now define the support methods
-            code = %{
-                def self.name
-                    "#{name}"
-                end
-
-                def self.to_s
-                    "PkgType(#{name})"
-                end
-
-                def pkgtype
-                    "#{name}"
-                end
-            }
-
-            mod.module_eval(code)
-
-            mod.module_eval(&block)
-
-            class << mod
-                include Puppet::Util
-            end
-
-            # It's at least conceivable that a module would not define this method
-            # "module_function" makes the :list method private, so if the parent
-            # method also called module_function, then it's already private
-            if mod.public_method_defined? :list or mod.private_method_defined? :list
-                mod.send(:module_function, :list)
-            end
-
-            # Add it to our list
-            @pkgtypes[name] = mod
-
-            # And mark it as a valid type
-            unless defined? @typeparam
-                @typeparam = @parameters.find { |p| p.name == :type }
-
-                unless @typeparam
-                    Puppet.warning @parameters.inspect
-                    raise Puppet::DevError, "Could not package type parameter"
-                end
-            end
-            @typeparam.newvalues(name)
-        end
-
-        # Autoload the package types, if they're not already defined.
-        def self.pkgtype(name)
-            #name = name[0] if name.is_a? Array
-            name = name.intern if name.is_a? String
-            @pkgtypes ||= {}
-            unless @pkgtypes.include? name
-                begin
-                    require "puppet/type/package/#{name}"
-
-                    unless @pkgtypes.include? name
-                        Puppet.warning @pkgtypes.keys
-                        raise Puppet::DevError,
-                            "Loaded %s but pkgtype was not created" % name.inspect
-                    end
-                rescue LoadError
-                    raise Puppet::Error, "Could not load package type %s" % name
-                end
-            end
-            @pkgtypes[name]
-        end
-
-        def self.pkgtypes
-            @pkgtypes.keys
-        end
-
         ensurable do
             desc "What state the package should be in.
                 *latest* only makes sense for those packaging formats that can
@@ -119,22 +28,22 @@ module Puppet
 
             attr_accessor :latest
 
-            newvalue(:present) do
-                @parent.install
+            newvalue(:present, :event => :package_installed) do
+                provider.install
             end
 
-            newvalue(:absent) do
-                @parent.uninstall
+            newvalue(:absent, :event => :package_removed) do
+                provider.uninstall
             end
 
             # Alias the 'present' value.
             aliasvalue(:installed, :present)
 
             newvalue(:latest) do
-                unless @parent.respond_to?(:latest)
+                unless provider.respond_to?(:latest)
                     self.fail(
-                        "Package type %s does not support specifying 'latest'" %
-                        @parent[:type]
+                        "Package provider %s does not support specifying 'latest'" %
+                        @parent[:provider]
                     )
                 end
 
@@ -143,13 +52,13 @@ module Puppet
                 # to compare against later.
                 current = self.is
                 begin
-                    @parent.update
+                    provider.update
                 rescue => detail
                     self.fail "Could not update: %s" % detail
                 end
 
                 if current == :absent
-                    return :package_created
+                    return :package_installed
                 else
                     return :package_changed
                 end
@@ -178,10 +87,10 @@ module Puppet
                             return false
                         end
 
-                        unless @parent.respond_to?(:latest)
+                        unless provider.respond_to?(:latest)
                             self.fail(
                                 "Package type %s does not support specifying 'latest'" %
-                                @parent[:type]
+                                @parent[:provider]
                             )
                         end
 
@@ -190,7 +99,7 @@ module Puppet
                             #self.debug "Skipping latest check"
                         else
                             begin
-                                @latest = @parent.latest
+                                @latest = provider.latest
                                 @lateststamp = Time.now.to_i
                             rescue => detail
                                 self.fail "Could not get latest version: %s" % detail
@@ -224,7 +133,7 @@ module Puppet
 
             # This retrieves the current state
             def retrieve
-                @parent.retrieve
+                @is = @parent.retrieve
             end
 
             def sync
@@ -238,14 +147,11 @@ module Puppet
                     super
                 else
                     #self.info "updating from %s" % value
-                    @parent.update
+                    provider.update
+                    :package_updated
                 end
             end
         end
-
-        # Packages are complicated because each package format has completely
-        # different commands.
-        attr_reader :pkgtype
 
         newparam(:name) do
             desc "The package name.  This is the name that the packaging
@@ -286,32 +192,6 @@ module Puppet
             isnamevar
         end
 
-        newparam(:type) do
-            desc "The package format.  You will seldom need to specify this --
-                Puppet will discover the appropriate format for your platform."
-
-            defaultto { @parent.class.default }
-
-
-            validate do |value|
-                value = value[0] if value.is_a? Array
-                unless @parent.class.pkgtype(value)
-                    raise ArgumentError, "Invalid package type '%s'" % value
-                end
-            end
-
-
-            munge do |type|
-                type = type[0] if type.is_a? Array
-                if type.is_a? String
-                    type = type.intern
-                end
-                @parent.type2module(type)
-                type
-            end
-
-        end
-
         newparam(:source) do
             desc "From where to retrieve the package."
 
@@ -328,6 +208,17 @@ module Puppet
         end
         newparam(:status) do
             desc "A read-only parameter set by the package."
+        end
+
+        newparam(:type) do
+            desc "Deprecated form of ``use``."
+
+            munge do |value|
+                warning "'type' is deprecated; use 'use' instead"
+                @parent[:provider] = value
+
+                @parent[:provider]
+            end
         end
 
         newparam(:adminfile) do
@@ -406,9 +297,6 @@ module Puppet
 
         @allowedmethods = [:types]
 
-        @default = nil
-        @platform = nil
-
         class << self
             attr_reader :listed
         end
@@ -418,53 +306,10 @@ module Puppet
             super
         end
 
-        # Cache and return the default package type for our current
-        # platform.
-        def self.default
-            if @default.nil?
-                self.init
-            end
-
-            return @default
-        end
-
-        # Figure out what the default package type is for the platform
-        # on which we're running.
-        def self.init
-            unless @platform = Facter["operatingsystem"].value.downcase
-                raise Puppet::DevError.new(
-                    "Must know platform for package management"
-                )
-            end
-            case @platform
-            when "solaris": @default = :sun
-            when "gentoo":
-                Puppet.notice "No support for gentoo yet"
-                @default = nil
-            when "debian": @default = :apt
-            when "centos": @default = :rpm
-            when "fedora": @default = :yum
-            when "redhat": @default = :rpm
-            when "freebsd": @default = :ports
-            when "openbsd": @default = :openbsd
-            when "darwin": @default = :apple
-            else
-                if Facter["kernel"] == "Linux"
-                    Puppet.warning "Defaulting to RPM for %s" %
-                        Facter["operatingsystem"].value
-                    @default = :rpm
-                else
-                    Puppet.warning "No default package system for %s" %
-                        Facter["operatingsystem"].value
-                    @default = nil
-                end
-            end
-        end
-
         # Create a new package object from listed information
         def self.installedpkg(hash)
-            unless hash.include? :type
-                raise Puppet::DevError, "Got installed package with no type"
+            unless hash.include? :provider
+                raise Puppet::DevError, "Got installed package with no provider"
             end
             # this is from code, so we don't have to do as much checking
             name = hash[:name]
@@ -478,7 +323,15 @@ module Puppet
 
         # List all package instances
         def self.list
-            pkgtype(default).list()
+            # XXX For now, just list the default provider, but we should list
+            # all suitables or something, but we need to not list a parent
+            # type if a child type gets listed.
+            #suitableprovider.each do |provider|
+            #    p provider.name
+            #    provider.list
+            #end
+
+            defaultprovider.list
 
             self.collect do |pkg|
                 pkg
@@ -490,7 +343,7 @@ module Puppet
         def self.markabsent(pkgtype, packages)
             # Mark any packages we didn't find as absent
             self.each do |pkg|
-                next unless packages[:type] == pkgtype
+                next unless packages[:provider] == pkgtype
                 unless packages.include? pkg
                     pkg.is = [:ensure, :absent] 
                 end
@@ -505,7 +358,7 @@ module Puppet
         # The 'query' method returns a hash of info if the package
         # exists and returns nil if it does not.
         def exists?
-            self.query
+            @provider.query
         end
 
         # okay, there are two ways that a package could be created...
@@ -515,16 +368,16 @@ module Puppet
         def initialize(hash)
             self.initvars
             type = nil
-            [:type, "type"].each { |label|
+            [:provider, "use"].each { |label|
                 if hash.include?(label)
                     type = hash[label]
                     hash.delete(label)
                 end
             }
             if type
-                self[:type] = type
+                self[:provider] = type
             else
-                self.setdefaults(:type)
+                self.setdefaults(:provider)
             end
 
             super
@@ -534,8 +387,8 @@ module Puppet
             #    self[:ensure] = true
             #end
 
-            unless @parameters.include?(:type)
-                self[:type] = self.class.default
+            unless @parameters.include?(:provider)
+                raise Puppet::DevError, "No package type set"
             end
         end
 
@@ -543,7 +396,7 @@ module Puppet
             # If the package is installed, then retrieve all of the information
             # about it and set it appropriately.
             #@states[:ensure].retrieve
-            if hash = self.query
+            if hash = @provider.query
                 if hash == :listed # Mmmm, hackalicious
                     return
                 end
@@ -573,17 +426,6 @@ module Puppet
                     self[param] = value
                 end
             }
-        end
-
-        # Extend the package with the appropriate package type.
-        def type2module(typename)
-            if type = self.class.pkgtype(typename)
-                self.extend(type)
-
-                return type
-            else
-                self.fail "Invalid package type %s" % typename
-            end
         end
     end # Puppet.type(:package)
 end

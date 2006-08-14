@@ -294,6 +294,48 @@ class TestPuppetUtil < Test::Unit::TestCase
         assert(Process.euid == 0, "UID did not get reset")
     end
     end
+
+    def test_proxy
+        klass = Class.new do
+            attr_accessor :hash
+            class << self
+                attr_accessor :ohash
+            end
+        end
+        klass.send(:include, Puppet::Util)
+
+        klass.ohash = {}
+
+        inst = klass.new
+        inst.hash = {}
+        assert_nothing_raised do
+            Puppet::Util.proxy klass, :hash, "[]", "[]=", :clear, :delete
+        end
+
+        assert_nothing_raised do
+            Puppet::Util.classproxy klass, :ohash, "[]", "[]=", :clear, :delete
+        end
+
+        assert_nothing_raised do
+            inst[:yay] = "boo"
+            inst["cool"] = :yayness
+        end
+
+        [:yay, "cool"].each do |var|
+            assert_equal(inst.hash[var], inst[var],
+                        "Var %s did not take" % var)
+        end
+
+        assert_nothing_raised do
+            klass[:Yay] = "boo"
+            klass["Cool"] = :yayness
+        end
+
+        [:Yay, "Cool"].each do |var|
+            assert_equal(inst.hash[var], inst[var],
+                        "Var %s did not take" % var)
+        end
+    end
 end
 
 # $Id$

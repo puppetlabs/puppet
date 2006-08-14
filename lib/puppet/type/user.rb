@@ -4,47 +4,35 @@ require 'puppet/type/state'
 require 'puppet/type/nameservice'
 
 module Puppet
-    newtype(:user, Puppet::Type::NSSType) do
-        case Facter["operatingsystem"].value
-        when "Darwin":
-            @parentstate = Puppet::NameService::NetInfo::NetInfoState
-            @parentmodule = Puppet::NameService::NetInfo
-        when "FreeBSD":
-            @parentstate = Puppet::NameService::PW::PWUser
-            @parentmodule = Puppet::NameService::PW
-        else
-            @parentstate = Puppet::NameService::ObjectAdd::ObjectAddUser
-            @parentmodule = Puppet::NameService::ObjectAdd
-        end
-
-        newstate(:ensure, @parentstate) do
-            newvalue(:present) do
+    newtype(:user) do
+        newstate(:ensure) do
+            newvalue(:present, :event => :user_created) do
                 # Verify that they have provided everything necessary, if we
                 # are trying to manage the user
-                if @parent.managed?
-                    @parent.class.states.each { |state|
-                        next if stateobj = @parent.state(state.name)
-                        next if state.name == :ensure
-
-                        unless state.autogen? or state.isoptional?
-                            if state.method_defined?(:autogen)
-                                @parent[state.name] = :auto
-                            else
-                                @parent.fail "Users require a value for %s" %
-                                    state.name
-                            end
-                        end
-                    }
-
-                    #if @states.empty?
-                    #    @parent[:comment] = @parent[:name]
-                    #end
-                end
-                self.syncname(:present)
+#                if @parent.managed?
+#                    @parent.class.states.each { |state|
+#                        next if stateobj = @parent.state(state.name)
+#                        next if state.name == :ensure
+#
+#                        unless state.autogen? or state.isoptional?
+#                            if state.method_defined?(:autogen)
+#                                @parent[state.name] = :auto
+#                            else
+#                                @parent.fail "Users require a value for %s" %
+#                                    state.name
+#                            end
+#                        end
+#                    }
+#
+#                    #if @states.empty?
+#                    #    @parent[:comment] = @parent[:name]
+#                    #end
+#                end
+                provider.create
             end
 
-            newvalue(:absent) do
-                self.syncname(:absent)
+            newvalue(:absent, :event => :user_removed) do
+                provider.delete
             end
 
             desc "The basic state that the object should be in."
@@ -80,12 +68,13 @@ module Puppet
             end
 
             def retrieve
-                if @parent.exists?
+                if provider.exists?
                     @is = :present
                 else
                     @is = :absent
                 end
             end
+
             # The default 'sync' method only selects among a list of registered
             # values.
             def sync
@@ -106,27 +95,12 @@ module Puppet
 
         end
 
-        newstate(:uid, @parentstate) do
+        newstate(:uid) do
             desc "The user ID.  Must be specified numerically.  For new users
                 being created, if no user ID is specified then one will be
                 chosen automatically, which will likely result in the same user
                 having different IDs on different systems, which is not
                 recommended."
-
-            isautogen
-
-            def autogen
-                highest = 0
-                Etc.passwd { |user|
-                    if user.uid > highest
-                        unless user.uid > 65000
-                            highest = user.uid
-                        end
-                    end
-                }
-
-                return highest + 1
-            end
 
             munge do |value|
                 case value
@@ -148,11 +122,9 @@ module Puppet
             end
         end
 
-        newstate(:gid, @parentstate) do
+        newstate(:gid) do
             desc "The user's primary group.  Can be specified numerically or
                 by name."
-
-            isautogen
 
             munge do |gid|
                 method = :getgrgid
@@ -197,37 +169,27 @@ module Puppet
 
         end
 
-        newstate(:comment, @parentstate) do
+        newstate(:comment) do
             desc "A description of the user.  Generally is a user's full name."
-
-            isoptional
-
-            @posixmethod = :gecos
         end
 
-        newstate(:home, @parentstate) do
+        newstate(:home) do
             desc "The home directory of the user.  The directory must be created
                 separately and is not currently checked for existence."
-
-            isautogen
-            @posixmethod = :dir
         end
 
-        newstate(:shell, @parentstate) do
+        newstate(:shell) do
             desc "The user's login shell.  The shell must exist and be
                 executable."
-            isautogen
         end
 
-        newstate(:groups, @parentstate) do
+        newstate(:groups) do
             desc "The groups of which the user is a member.  The primary
                 group should not be listed.  Multiple groups should be
                 specified as an array."
 
-            isoptional
-
             def should_to_s
-                self.should
+                self.should.join(",")
             end
 
             def is_to_s
@@ -244,18 +206,22 @@ module Puppet
                 @should ||= []
 
                 if @parent[:membership] == :inclusive
-                    @should.sort.join(",")
+                    @should.sort
                 else
                     members = @should
                     if @is.is_a?(Array)
                         members += @is
                     end
-                    members.uniq.sort.join(",")
+                    members.uniq.sort
                 end
             end
 
             def retrieve
-                @is = grouplist()
+                if tmp = provider.groups
+                    @is = tmp.split(",")
+                else
+                    @is = :absent
+                end
             end
 
             def insync?
@@ -278,14 +244,8 @@ module Puppet
             end
 
             def sync
-                if respond_to? :setgrouplist
-                    # Pass them the group list, so that the :membership logic
-                    # is all in this class, not in parent classes.
-                    setgrouplist(self.should)
-                    return :user_modified
-                else
-                    super
-                end
+                provider.groups = self.should.join(",")
+                :user_changed
             end
         end
 
@@ -293,25 +253,23 @@ module Puppet
         # so i'm disabling them for now
 
         # FIXME Puppet::State::UserLocked is currently non-functional
-        #newstate(:locked, @parentstate) do
+        #newstate(:locked) do
         #    desc "The expected return code.  An error will be returned if the
         #        executed command returns something else."
         #end
 
         # FIXME Puppet::State::UserExpire is currently non-functional
-        #newstate(:expire, @parentstate) do
+        #newstate(:expire) do
         #    desc "The expected return code.  An error will be returned if the
         #        executed command returns something else."
         #    @objectaddflag = "-e"
-        #    isautogen
         #end
 
         # FIXME Puppet::State::UserInactive is currently non-functional
-        #newstate(:inactive, @parentstate) do
+        #newstate(:inactive) do
         #    desc "The expected return code.  An error will be returned if the
         #        executed command returns something else."
         #    @objectaddflag = "-f"
-        #    isautogen
         #end
 
         newparam(:name) do
@@ -353,8 +311,6 @@ module Puppet
             for Mac OS X, NetInfo is used.  This is currently unconfigurable,
             but if you desperately need it to be so, please contact us."
 
-        @netinfodir = "users"
-
         # Autorequire the group, if it's around
         autorequire(:group) do
             #return nil unless @states.include?(:gid)
@@ -384,7 +340,7 @@ module Puppet
                 }
             end
 
-            if @states.include?(:groups) and groups = @states[:groups].should.split(",")
+            if @states.include?(:groups) and groups = @states[:groups].should
                 autos += groups
             end
 
@@ -400,55 +356,45 @@ module Puppet
             end
         end
 
-        # List all found users
-        def self.listbyname
+        def self.list_by_name
             users = []
-            Etc.setpwent
-            while ent = Etc.getpwent
-                users << ent.name
+            defaultprovider.listbyname do |user|
+                users << user
             end
-            Etc.endpwent
-
             return users
         end
 
-        def exists?
-            self.class.parentmodule.exists?(self)
-        end
+        def self.list
+            defaultprovider.list
 
-        def getinfo(refresh = false)
-            if @userinfo.nil? or refresh == true
-                begin
-                    @userinfo = Etc.getpwnam(self[:name])
-                rescue ArgumentError => detail
-                    @userinfo = nil
-                end
-            end
-
-            @userinfo
-        end
-
-        def initialize(hash)
-            @userinfo = nil
-            super
-
-            unless defined? @states
-                raise "wtf?"
+            self.collect do |user|
+                user
             end
         end
 
         def retrieve
-            info = self.getinfo(true)
-
-            if info.nil?
-                # the user does not exist
-                @states.each { |name, state|
+            absent = false
+            states().each { |state|
+                if absent
                     state.is = :absent
-                }
-                return
-            else
-                super
-            end
+                else
+                    state.retrieve
+                end
+
+                if state.name == :ensure and state.is == :absent
+                    absent = true
+                    next
+                end
+            }
+            #if provider.exists?
+            #    super
+            #else
+            #    # the user does not exist
+            #    @states.each { |name, state|
+            #        state.is = :absent
+            #    }
+            #    return
+            #end
         end
     end
 end

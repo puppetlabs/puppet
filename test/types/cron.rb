@@ -15,16 +15,8 @@ class TestCron < Test::Unit::TestCase
 	include TestPuppet
     def setup
         super
-        # retrieve the user name
-        id = %x{id}.chomp
-        if id =~ /uid=\d+\(([^\)]+)\)/
-            @me = $1
-        else
-            puts id
-        end
-        unless defined? @me
-            raise "Could not retrieve user name; 'id' did not work"
-        end
+
+        setme()
 
         # god i'm lazy
         @crontype = Puppet.type(:cron)

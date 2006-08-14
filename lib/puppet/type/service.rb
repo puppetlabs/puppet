@@ -26,28 +26,28 @@ module Puppet
                 wherever possible, it relies on local tools to enable or disable
                 a given service.  *true*/*false*/*runlevels*"
 
-            newvalue(:true) do
-                unless @parent.respond_to?(:enable)
+            newvalue(:true, :event => :service_enabled) do
+                unless provider.respond_to?(:enable)
                     raise Puppet::Error, "Service %s does not support enabling" %
                         @parent.name
                 end
-                @parent.enable
+                provider.enable
             end
 
-            newvalue(:false) do
-                unless @parent.respond_to?(:disable)
+            newvalue(:false, :event => :service_disabled) do
+                unless provider.respond_to?(:disable)
                     raise Puppet::Error, "Service %s does not support enabling" %
                         @parent.name
                 end
-                @parent.disable
+                provider.disable
             end
 
             def retrieve
-                unless @parent.respond_to?(:enabled?)
+                unless provider.respond_to?(:enabled?)
                     raise Puppet::Error, "Service %s does not support enabling" %
                         @parent.name
                 end
-                @is = @parent.enabled?
+                @is = provider.enabled?
             end
 
             validate do |value|
@@ -80,13 +80,13 @@ module Puppet
                 case self.should
                 when :true
                     if @runlevel
-                        @parent.enable(@runlevel)
+                        provider.enable(@runlevel)
                     else
-                        @parent.enable()
+                        provider.enable()
                     end
                     return :service_enabled
                 when :false
-                    @parent.disable
+                    provider.disable
                     return :service_disabled
                 end
             end
@@ -96,34 +96,34 @@ module Puppet
         newstate(:ensure) do
             desc "Whether a service should be running.  **true**/*false*"
 
-            newvalue(:stopped) do
-                @parent.stop
+            newvalue(:stopped, :event => :service_stopped) do
+                provider.stop
             end
 
-            newvalue(:running) do
-                @parent.start
+            newvalue(:running, :event => :service_started) do
+                provider.start
             end
 
             aliasvalue(:false, :stopped)
             aliasvalue(:true, :running)
 
             def retrieve
-                self.is = @parent.status
+                self.is = provider.status
             end
 
             def sync
-                event = nil
-                case self.should
-                when :running
-                    @parent.start
-                    event = :service_started
-                when :stopped
-                    @parent.stop
-                    event = :service_stopped
-                else
-                    self.debug "Not running '%s' and shouldn't be running" %
-                        self
-                end
+                event = super()
+#                case self.should
+#                when :running
+#                    provider.start
+#                    event = :service_started
+#                when :stopped
+#                    provider.stop
+#                    event = :service_stopped
+#                else
+#                    self.debug "Not running '%s' and shouldn't be running" %
+#                        self
+#                end
 
                 if state = @parent.state(:enable)
                     state.retrieve
@@ -149,41 +149,13 @@ module Puppet
             end
         end
 
-        newparam(:type) do
-            desc "The service type.  For most platforms, it does not make
-                sense to set this parameter, as the default is based on
-                the builtin service facilities.  The service types available are:
-                
-                * **base**: You must specify everything.
-                * **init**: Assumes ``start`` and ``stop`` commands exist, but you
-                  must specify everything else.
-                * **debian**: Debian's own specific version of ``init``.
-                * **smf**: Solaris 10's new Service Management Facility.
-                "
-
-            defaultto { @parent.class.defaulttype }
-
-            # Make sure we've got the actual module, not just a string
-            # representing the module.
-            munge do |type|
-                if type.is_a?(String)
-                    type = type.intern
-                end
-                if type.is_a?(Symbol)
-                    typeklass = @parent.class.svctype(type)
-                end
-                @parent.extend(typeklass)
-
-                # Return the name, not the object
-                return type
-            end
-        end
         newparam(:binary) do
             desc "The path to the daemon.  This is only used for
                 systems that do not support init scripts.  This binary will be
                 used to start the service if no ``start`` parameter is
                 provided."
         end
+
         newparam(:hasstatus) do
             desc "Declare the the service's init script has a
                 functional status command.  Based on testing, it was found
@@ -202,6 +174,16 @@ module Puppet
                 is in."
             isnamevar
         end
+
+        newparam(:type) do
+            desc "Deprecated form of ``provder``."
+
+            munge do |value|
+                warning "'type' is deprecated; use 'provider' instead"
+                @parent[:provider] = value
+            end
+        end
+
         newparam(:path) do
             desc "The search path for finding init scripts."
 
@@ -270,7 +252,7 @@ module Puppet
         end
 
         # Retrieve the default type for the current platform.
-        def self.defaulttype
+        def self.disableddefaulttype
             unless defined? @defsvctype
                 @defsvctype = nil
                 os = Facter["operatingsystem"].value
@@ -342,139 +324,6 @@ module Puppet
             @paths[type].dup
         end
 
-        # Create new subtypes of service management.
-        def self.newsvctype(name, parent = nil, &block)
-            if parent
-                parent = self.svctype(parent)
-            end
-            svcname = name
-            mod = Module.new
-            const_set("SvcType" + name.to_s.capitalize,mod)
-
-            # Add our parent, if it exists
-            if parent
-                mod.send(:include, parent)
-            end
-
-            # And now define the support methods
-            code = %{
-                def self.name
-                    "#{svcname}"
-                end
-
-                def self.inspect
-                    "SvcType(#{svcname})"
-                end
-
-                def self.to_s
-                    "SvcType(#{svcname})"
-                end
-
-                def svctype
-                    "#{svcname}"
-                end
-            }
-
-            mod.module_eval(code)
-
-            mod.module_eval(&block)
-
-            # Extend the service type with the util stuff
-            mod.send(:include, Puppet::Util)
-
-            #unless mod.respond_to? :list
-            #    Puppet.debug "Service type %s has no list method" % name
-            #end
-
-            # "module_function" makes the :list method private, so if the parent
-            # method also called module_function, then it's already private
-            if mod.public_method_defined? :list or mod.private_method_defined? :list
-                mod.send(:module_function, :list)
-            end
-
-            # mark it as a valid type
-            unless defined? @typeparam
-                @typeparam = @parameters.find { |p| p.name == :type }
-
-                unless @typeparam
-                    raise Puppet::DevError, "Could not package type parameter"
-                end
-            end
-            @typeparam.newvalues(name)
-
-            # And add it to our list of types
-            @modules ||= Hash.new do |hash, key|
-                if key.is_a?(String)
-                    key = key.intern
-                end
-
-                if hash.include?(key)
-                    hash[key]
-                else
-                    nil
-                end
-            end
-            @modules[name] = mod
-        end
-
-        # Retrieve a service type.
-        def self.svctype(name)
-            name = name.intern if name.is_a? String
-
-            # Try autoloading lacking service types.
-            unless @modules.include? name
-                begin
-                    require "puppet/type/service/#{name}"
-                    unless @modules.include? name
-                        Puppet.warning(
-                            "Loaded puppet/type/service/#{name} but " +
-                            "service type was not created"
-                        )
-                    end
-                rescue LoadError
-                    # nothing
-                end
-            end
-            @modules[name]
-        end
-
-        # Execute a command.  Basically just makes sure it exits with a 0
-        # code.
-        def execute(type, cmd)
-            self.debug "Executing %s" % cmd.inspect
-            output = %x(#{cmd} 2>&1)
-            unless $? == 0
-                self.fail "Could not %s %s: %s" %
-                    [type, self.name, output.chomp]
-            end
-        end
-
-        # Get the process ID for a running process. Requires the 'pattern'
-        # parameter.
-        def getpid
-            unless self[:pattern]
-                self.fail "Either a stop command or a pattern must be specified"
-            end
-            ps = Facter["ps"].value
-            unless ps and ps != ""
-                self.fail(
-                    "You must upgrade Facter to a version that includes 'ps'"
-                )
-            end
-            regex = Regexp.new(self[:pattern])
-            self.debug "Executing '#{ps}'"
-            IO.popen(ps) { |table|
-                table.each { |line|
-                    if regex.match(line)
-                        ary = line.sub(/^\s+/, '').split(/\s+/)
-                        return ary[1]
-                    end
-                }
-            }
-
-            return nil
-        end
-
         # Initialize the service.  This is basically responsible for merging
         # in the right module.
         def initialize(hash)
@@ -485,95 +334,7 @@ module Puppet
                 self.configchk
             end
         end
-
-        # Retrieve the service type.
-        def type2module(type)
-            self.class.svctype(type)
-        end
-
-        # Basically just a synonym for restarting.  Used to respond
-        # to events.
-        def refresh
-            self.restart
-        end
-
-        # How to restart the process.
-        def restart
-            if self[:restart] or self.respond_to?(:restartcmd)
-                cmd = self[:restart] || self.restartcmd
-                self.execute("restart", cmd)
-            else
-                self.stop
-                self.start
-            end
-        end
-
-        # Check if the process is running.  Prefer the 'status' parameter,
-        # then 'statuscmd' method, then look in the process table.  We give
-        # the object the option to not return a status command, which might
-        # happen if, for instance, it has an init script (and thus responds to
-        # 'statuscmd') but does not have 'hasstatus' enabled.
-        def status
-            if self[:status] or (
-                self.respond_to?(:statuscmd) and self.statuscmd
-            )
-                cmd = self[:status] || self.statuscmd
-                self.debug "Executing %s" % cmd.inspect
-                output = %x(#{cmd} 2>&1)
-                self.debug "%s status returned %s" %
-                    [self.name, output.inspect]
-                if $? == 0
-                    return :running
-                else
-                    return :stopped
-                end
-            elsif pid = self.getpid
-                self.debug "PID is %s" % pid
-                return :running
-            else
-                return :stopped
-            end
-        end
-
-        # Run the 'start' parameter command, or the specified 'startcmd'.
-        def start
-            cmd = self[:start] || self.startcmd
-            self.execute("start", cmd)
-        end
-
-        # Stop the service.  If a 'stop' parameter is specified, it
-        # takes precedence; otherwise checks if the object responds to
-        # a 'stopcmd' method, and if so runs that; otherwise, looks
-        # for the process in the process table.
-        # This method will generally not be overridden by submodules.
-        def stop
-            if self[:stop]
-                return self[:stop]
-            elsif self.respond_to?(:stopcmd)
-                self.execute("stop", self.stopcmd)
-            else
-                pid = getpid
-                unless pid
-                    self.info "%s is not running" % self.name
-                    return false
-                end
-                output = %x(kill #{pid} 2>&1)
-                if $? != 0
-                    self.fail "Could not kill %s, PID %s: %s" %
-                            [self.name, pid, output]
-                end
-                return true
-            end
-        end
     end
 end
-
-# Load all of the different service types.  We could probably get away with
-# loading less here, but it's not a big deal to do so.
-require 'puppet/type/service/base'
-require 'puppet/type/service/init'
-require 'puppet/type/service/debian'
-require 'puppet/type/service/redhat'
-require 'puppet/type/service/smf'
 
 # $Id$

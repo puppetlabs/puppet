@@ -9,6 +9,100 @@ require 'test/unit'
 module TestPuppet
     include ObjectSpace
 
+    # A baseclass for the faketypes.
+    class FakeModel < Hash
+        class << self
+            attr_accessor :name
+            @name = :fakemodel
+        end
+
+        def self.validstates
+            Puppet::Type.type(@name).validstates
+        end
+
+        def self.validstate?(name)
+            Puppet::Type.type(@name).validstate?(name)
+        end
+
+        def initialize(name)
+            self[:name] = name
+        end
+
+        def inspect
+            "%s(%s)" % [self.class.to_s.sub(/.+::/, ''), super()]
+        end
+
+        def name
+            self[:name]
+        end
+    end
+
+    class FakeProvider
+        attr_accessor :model
+        class << self
+            attr_accessor :name, :model, :methods
+        end
+
+        # A very low number, so these never show up as defaults via the standard
+        # algorithms.
+        def self.defaultnum
+            -50
+        end
+
+        # Set up methods to fake things
+        def self.apimethods(*ary)
+            @model.validstates.each do |state|
+                ary << state unless ary.include? state
+            end
+            attr_accessor *ary
+
+            @methods = ary
+        end
+
+        def self.initvars
+            @calls = Hash.new do |hash, key|
+                hash[key] = 0
+            end
+        end
+
+        def self.suitable?
+            true
+        end
+
+        def initialize(model)
+            @model = model
+        end
+    end
+
+    @@fakemodels = {}
+    @@fakeproviders = {}
+
+    def fakemodel(type, name, options = {})
+        type = type.intern if type.is_a? String
+        unless @@fakemodels.include? type
+            @@fakemodels[type] = Class.new(FakeModel)
+            @@fakemodels[type].name = type
+        end
+
+        obj = @@fakemodels[type].new(name)
+        obj[:name] = name
+        options.each do |name, val|
+            obj[name] = val
+        end
+        obj
+    end
+
+    def fakeprovider(type, model)
+        type = type.intern if type.is_a? String
+        unless @@fakeproviders.include? type
+            @@fakeproviders[type] = Class.new(FakeModel) do
+                @name = type
+            end
+        end
+
+        @@fakeproviders[type].new(model)
+    end
+
     def gcdebug(type)
         Puppet.warning "%s: %s" % [type, ObjectSpace.each_object(type) { |o| }]
     end
@@ -117,6 +211,19 @@ module TestPuppet
 
     def cleanup(&block)
         @@cleaners << block
+    end
+
+    def setme
+        # retrieve the user name
+        id = %x{id}.chomp
+        if id =~ /uid=\d+\(([^\)]+)\)/
+            @me = $1
+        else
+            puts id
+        end
+        unless defined? @me
+            raise "Could not retrieve user name; 'id' did not work"
+        end
     end
 
     def teardown

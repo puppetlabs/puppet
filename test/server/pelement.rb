@@ -27,11 +27,8 @@ class TestPElementServer < Test::Unit::TestCase
                 obj.retrieve
             end
 
-            assert(obj.insync?, "Described %s[%s] is not in sync" %
-                [trans.type, name])
-
             if trans.type == :package
-                assert_equal(Puppet::Type.type(:package).default, obj[:type])
+                assert_equal(Puppet::Type.type(:package).defaultprovider.name, obj[:provider])
             end
         end
         type.clear

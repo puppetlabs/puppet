@@ -1,10 +1,8 @@
 if __FILE__ == $0
     $:.unshift '..'
     $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk"
+    $puppetbase = "../.."
 end
-
-# $Id$
 
 require 'etc'
 require 'puppet/type'
@@ -13,90 +11,37 @@ require 'test/unit'
 
 class TestUser < Test::Unit::TestCase
 	include TestPuppet
-    def setup
-        super
-        @@tmpusers = []
-    end
 
-    def teardown
-        @@tmpusers.each { |user|
-            unless missing?(user)
-                remove(user)
+    p = Puppet::Type.type(:user).provide :fake, :parent => TestPuppet::FakeProvider do
+        @name = :fake
+        apimethods
+        def create
+            @ensure = :present
+            @model.eachstate do |state|
+                next if state.name == :ensure
+                state.sync
             end
-        }
-        super
-        #Puppet.type(:user).clear
-    end
+        end
 
-    case Facter["operatingsystem"].value
-    when "Darwin":
-        def missing?(user)
-            output = %x{nidump -r /users/#{user} / 2>/dev/null}.chomp
+        def delete
+            @ensure = :absent
+            @model.eachstate do |state|
+                send(state.name.to_s + "=", :absent)
+            end
+        end
 
-            if output == ""
-                return true
+        def exists?
+            if defined? @ensure and @ensure == :present
+                true
             else
-                return false
+                false
             end
-
-            assert_equal("", output, "User %s is present:\n%s" % [user, output])
-        end
-
-        def current?(param, name)
-            state = Puppet.type(:user).states.find { |st|
-                st.name == param
-            }
-
-            output = %x{nireport / /users name #{state.netinfokey}}
-            output.split("\n").each { |line|
-                if line =~ /^(\w+)\s+(.+)$/
-                    user = $1
-                    id = $2.sub(/\s+$/, '')
-                    if user == name
-                        if id =~ /^[-0-9]+$/
-                            return Integer(id)
-                        else
-                            return id
-                        end
-                    end
-                else
-                    raise "Could not match %s" % line
-                end
-            }
-
-            return nil
-        end
-
-        def remove(user)
-            system("niutil -destroy / /users/%s" % user)
-        end
-    else
-        def missing?(user)
-            begin
-                obj = Etc.getpwnam(user)
-                return false
-            rescue ArgumentError
-                return true
-            end
-        end
-
-        def current?(param, name)
-            state = Puppet.type(:user).states.find { |st|
-                st.name == param
-            }
-
-            assert_nothing_raised {
-                obj = Etc.getpwnam(name)
-                return obj.send(state.posixmethod)
-            }
-
-            return nil
-        end
-
-        def remove(user)
-            system("userdel %s" % user)
         end
     end
+
+    FakeUserProvider = p
+
+    @@fakeproviders[:group] = p
 
     def findshell(old = nil)
         %w{/bin/sh /bin/bash /sbin/sh /bin/ksh /bin/zsh /bin/csh /bin/tcsh
@@ -108,6 +53,16 @@ class TestUser < Test::Unit::TestCase
                     FileTest.exists?(shell)
                 end
         }
+    end
+
+    def setup
+        super
+        Puppet::Type.type(:user).defaultprovider = FakeUserProvider
+    end
+
+    def teardown
+        Puppet::Type.type(:user).defaultprovider = nil
+        super
     end
 
     def mkuser(name)
@@ -122,19 +77,21 @@ class TestUser < Test::Unit::TestCase
             )
         }
 
+        assert(user, "Did not create user")
+
         return user
     end
 
     def attrtest_ensure(user)
-        old = user.is(:ensure)
+        old = user.provider.ensure
         user[:ensure] = :absent
 
         comp = newcomp("ensuretest", user)
         assert_apply(user)
-        assert(missing?(user.name), "User is still present")
+        assert(!user.provider.exists?, "User is still present")
         user[:ensure] = :present
         assert_events([:user_created], comp)
-        assert(!missing?(user.name), "User is absent")
+        assert(user.provider.exists?, "User is absent")
         user[:ensure] = :absent
         trans = assert_events([:user_removed], comp)
 
@@ -146,19 +103,19 @@ class TestUser < Test::Unit::TestCase
 
     def attrtest_comment(user)
         user.retrieve
-        old = user.is(:comment)
+        old = user.provider.comment
         user[:comment] = "A different comment"
 
         comp = newcomp("commenttest", user)
 
-        trans = assert_events([:user_modified], comp, "user")
+        trans = assert_events([:user_changed], comp, "user")
 
-        assert_equal("A different comment", current?(:comment, user[:name]),
+        assert_equal("A different comment", user.provider.comment,
             "Comment was not changed")
 
-        assert_rollback_events(trans, [:user_modified], "user")
+        assert_rollback_events(trans, [:user_changed], "user")
 
-        assert_equal(old, current?(:comment, user[:name]),
+        assert_equal(old, user.provider.comment,
             "Comment was not reverted")
     end
 
@@ -166,24 +123,24 @@ class TestUser < Test::Unit::TestCase
         obj = nil
         comp = newcomp("hometest", user)
 
-        old = current?(:home, user[:name])
+        old = user.provider.home
         user[:home] = old
 
         trans = assert_events([], comp, "user")
 
         user[:home] = "/tmp"
 
-        trans = assert_events([:user_modified], comp, "user")
+        trans = assert_events([:user_changed], comp, "user")
 
-        assert_equal("/tmp", current?(:home, user[:name]), "Home was not changed")
+        assert_equal("/tmp", user.provider.home, "Home was not changed")
 
-        assert_rollback_events(trans, [:user_modified], "user")
+        assert_rollback_events(trans, [:user_changed], "user")
 
-        assert_equal(old, current?(:home, user[:name]), "Home was not reverted")
+        assert_equal(old, user.provider.home, "Home was not reverted")
     end
 
     def attrtest_shell(user)
-        old = current?(:shell, user[:name])
+        old = user.provider.shell
         comp = newcomp("shelltest", user)
 
         user[:shell] = old
@@ -199,19 +156,21 @@ class TestUser < Test::Unit::TestCase
 
         user[:shell] = newshell
 
-        trans = assert_events([:user_modified], comp, "user")
+        trans = assert_events([:user_changed], comp, "user")
 
-        assert_equal(newshell, current?(:shell, user[:name]),
+        user.retrieve
+        assert_equal(newshell, user.provider.shell,
             "Shell was not changed")
 
-        assert_rollback_events(trans, [:user_modified], "user")
+        assert_rollback_events(trans, [:user_changed], "user")
+        user.retrieve
 
-        assert_equal(old, current?(:shell, user[:name]), "Shell was not reverted")
+        assert_equal(old, user.provider.shell, "Shell was not reverted")
     end
 
     def attrtest_gid(user)
         obj = nil
-        old = current?(:gid,user.name)
+        old = user.provider.gid
         comp = newcomp("gidtest", user)
 
         user.retrieve
@@ -239,7 +198,7 @@ class TestUser < Test::Unit::TestCase
             user[:gid] = newgid
         }
 
-        trans = assert_events([:user_modified], comp, "user")
+        trans = assert_events([:user_changed], comp, "user")
 
         # then by id
         newgid = Etc.getgrnam(newgid).gid
@@ -252,23 +211,21 @@ class TestUser < Test::Unit::TestCase
 
         assert_events([], comp, "user")
 
-        assert_equal(newgid, current?(:gid,user[:name]), "GID was not changed")
+        assert_equal(newgid, user.provider.gid, "GID was not changed")
 
-        assert_rollback_events(trans, [:user_modified], "user")
+        assert_rollback_events(trans, [:user_changed], "user")
 
-        assert_equal(old, current?(:gid,user[:name]), "GID was not reverted")
+        assert_equal(old, user.provider.gid, "GID was not reverted")
     end
 
     def attrtest_uid(user)
         obj = nil
         comp = newcomp("uidtest", user)
 
-        old = current?(:uid, user[:name])
-        user[:uid] = old
+        user.provider.uid = 1
 
-        trans = assert_events([], comp, "user")
-
-        newuid = old
+        old = 1
+        newuid = 1
         while true
             newuid += 1
 
@@ -287,13 +244,13 @@ class TestUser < Test::Unit::TestCase
             user[:uid] = newuid
         }
 
-        trans = assert_events([:user_modified], comp, "user")
+        trans = assert_events([:user_changed], comp, "user")
 
-        assert_equal(newuid, current?(:uid, user[:name]), "UID was not changed")
+        assert_equal(newuid, user.provider.uid, "UID was not changed")
 
-        assert_rollback_events(trans, [:user_modified], "user")
+        assert_rollback_events(trans, [:user_changed], "user")
 
-        assert_equal(old, current?(:uid, user[:name]), "UID was not reverted")
+        assert_equal(old, user.provider.uid, "UID was not reverted")
     end
 
     def attrtest_groups(user)
@@ -311,20 +268,13 @@ class TestUser < Test::Unit::TestCase
         5.times do |i|
             i += 1
             name = "pptstgr%s" % i
-            groups << Puppet.type(:group).create(
-                :name => name,
-                :gid => max + i
-            )
-
+            groups << name
             if i < 3
                 main << name
             else
                 extra << name
             end
         end
-
-        # Create our test groups
-        assert_apply(*groups)
 
         assert(user[:membership] == :minimum, "Membership did not default correctly")
 
@@ -353,6 +303,10 @@ class TestUser < Test::Unit::TestCase
         user[:ensure] = :present
         assert_apply(user)
 
+        # Make sure that the groups are a string, not an array
+        assert(user.provider.groups.is_a?(String),
+            "Incorrectly passed an array to groups")
+
         user.retrieve
 
         assert(user.state(:groups).is, "Did not retrieve group list")
@@ -365,7 +319,7 @@ class TestUser < Test::Unit::TestCase
             user[:groups] = main
         }
 
-        assert_equal((main + extra).sort.join(","), user.state(:groups).should)
+        assert_equal((main + extra).sort, user.state(:groups).should.sort)
 
         assert_nothing_raised {
             user.retrieve
@@ -393,7 +347,7 @@ class TestUser < Test::Unit::TestCase
 
         assert(!user.insync?, "User is incorrectly in sync")
 
-        assert_events([:user_modified], user)
+        assert_events([:user_changed], user)
         assert_nothing_raised {
             user.retrieve
         }
@@ -401,75 +355,35 @@ class TestUser < Test::Unit::TestCase
         list = user.state(:groups).is
         assert_equal(main.sort, list.sort, "Group list is not equal")
 
-        # Now delete our groups
-        groups.each do |group|
-            group[:ensure] = :absent
-        end
-
         user.delete(:groups)
-
-        assert_apply(*groups)
-    end
-
-    # Disabled, because this is testing too much internal implementation
-    def disabled_test_eachmethod
-        obj = Etc.getpwuid(Process.uid)
-
-        assert(obj, "Could not retrieve test group object")
-
-        Puppet.type(:user).validstates.each { |name|
-            assert_nothing_raised {
-                method = state.posixmethod
-                assert(method, "State %s has no infomethod" % name)
-                assert(obj.respond_to?(method),
-                    "State %s has an invalid method %s" %
-                    [name, method])
-            }
-        }
-    end
-
-    def test_checking
-        require 'etc'
-
-        name = nil
-        assert_nothing_raised {
-            name = Etc.getpwuid(Process.uid).name
-        }
-        user = nil
-        assert_nothing_raised {
-            checks = Puppet.type(:user).validstates
-            user = Puppet.type(:user).create(
-                :name => name,
-                :check => checks
-            )
-        }
-
-        assert_nothing_raised {
-            user.retrieve
-        }
-
-        assert_equal(Process.uid, user.is(:uid), "Retrieved UID does not match")
     end
 
     def test_autorequire
         file = tempfile()
-        user = Puppet.type(:user).create(
-            :name => "pptestu",
-            :home => file,
-            :gid => "pptestg",
-            :groups => "yayness"
-        )
-        home = Puppet.type(:file).create(
-            :path => file,
-            :ensure => "directory"
-        )
-        group = Puppet.type(:group).create(
-            :name => "pptestg"
-        )
-        ogroup = Puppet.type(:group).create(
-            :name => "yayness"
-        )
-        comp = newcomp(user, group, home, ogroup)
+        comp = nil
+        user = nil
+        group =nil
+        home = nil
+        ogroup = nil
+        assert_nothing_raised {
+            user = Puppet.type(:user).create(
+                :name => "pptestu",
+                :home => file,
+                :gid => "pptestg",
+                :groups => "yayness"
+            )
+            home = Puppet.type(:file).create(
+                :path => file,
+                :ensure => "directory"
+            )
+            group = Puppet.type(:group).create(
+                :name => "pptestg"
+            )
+            ogroup = Puppet.type(:group).create(
+                :name => "yayness"
+            )
+            comp = newcomp(user, group, home, ogroup)
+        }
         comp.finalize
         comp.retrieve
 
@@ -478,86 +392,52 @@ class TestUser < Test::Unit::TestCase
         assert(user.requires?(ogroup), "User did not require other groups")
     end
 
-    if Process.uid == 0
-        def test_simpleuser
-            name = "pptest"
+    def test_simpleuser
+        name = "pptest"
 
-            assert(missing?(name), "User %s is present" % name)
+        user = mkuser(name)
 
-            user = mkuser(name)
+        comp = newcomp("usercomp", user)
 
-            @@tmpusers << name
+        trans = assert_events([:user_created], comp, "user")
 
-            comp = newcomp("usercomp", user)
+        assert_equal(user.should(:comment), user.provider.comment,
+            "Comment was not set correctly")
 
-            trans = assert_events([:user_created], comp, "user")
+        assert_rollback_events(trans, [:user_removed], "user")
 
-            assert_equal("Puppet Testing User", current?(:comment, user[:name]),
-                "Comment was not set")
+        assert(! user.provider.exists?, "User did not get deleted")
+    end
 
-            assert_rollback_events(trans, [:user_removed], "user")
+    def test_allusermodelstates
+        user = nil
+        name = "pptest"
 
-            assert(missing?(user[:name]))
-        end
+        user = mkuser(name)
 
-        def test_allstates
-            user = nil
-            name = "pptest"
+        assert(! user.provider.exists?, "User %s is present" % name)
 
-            assert(missing?(name), "User %s is present" % name)
+        comp = newcomp("usercomp", user)
 
-            user = mkuser(name)
+        trans = assert_events([:user_created], comp, "user")
 
-            @@tmpusers << name
+        user.retrieve
+        assert_equal("Puppet Testing User", user.provider.comment,
+            "Comment was not set")
 
-            comp = newcomp("usercomp", user)
+        tests = Puppet.type(:user).validstates
 
-            trans = assert_events([:user_created], comp, "user")
-
-            user.retrieve
-            assert_equal("Puppet Testing User", current?(:comment, user[:name]),
-                "Comment was not set")
-
-            tests = Puppet.type(:user).validstates
-
-            tests.each { |test|
-                next unless test.to_s =~ /groups/
-                if self.respond_to?("attrtest_%s" % test)
-                    self.send("attrtest_%s" % test, user)
-                else
-                    Puppet.err "Not testing attr %s of user" % test
-                end
-            }
-
-            user[:ensure] = :absent
-            assert_apply(user)
-        end
-
-        def test_duplicateIDs
-            user1 = mkuser("user1")
-            user1[:uid] = 125
-            user2 = mkuser("user2")
-            user2[:uid] = 125
-
-            cleanup do
-                user1[:ensure] = :absent
-                user2[:ensure] = :absent
-                assert_apply(user1, user2)
+        tests.each { |test|
+            if self.respond_to?("attrtest_%s" % test)
+                self.send("attrtest_%s" % test, user)
+            else
+                Puppet.err "Not testing attr %s of user" % test
             end
+        }
 
-            assert_apply(user1)
-
-            # Not all OSes fail here, so we can't test that it doesn't work with
-            # it off, only that it does work with it on.
-            assert_nothing_raised {
-                user2[:allowdupe] = true
-            }
-            assert_apply(user2)
-            user2.retrieve
-            assert_equal(:present, user2.state(:ensure).is,
-                         "User did not get created")
-        end
-    else
-        $stderr.puts "Not root; skipping user creation/modification tests"
+        user[:ensure] = :absent
+        assert_apply(user)
     end
 end
+
+# $Id$

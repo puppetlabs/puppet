@@ -112,9 +112,9 @@ module Puppet
 
             # Override 'newstate' so that all states default to having the
             # correct parent type
-            def self.newstate(name, parent = nil, &block)
-                parent ||= Puppet::State::ParsedParam
-                super(name, parent, &block)
+            def self.newstate(name, options = {}, &block)
+                options[:parent] ||= Puppet::State::ParsedParam
+                super(name, options, &block)
             end
 
             # Add another type var.

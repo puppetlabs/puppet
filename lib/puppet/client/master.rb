@@ -508,7 +508,7 @@ class Puppet::Client::MasterClient < Puppet::Client
                     File.basename(object[:path]).sub(".rb",'')
                 load object[:path]
             rescue => detail
-                Puppet.warning "Could not load %s: %s" %
+                Puppet.warning "Could not reload plugin %s: %s" %
                     [object[:path], detail]
             end
         end

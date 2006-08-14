@@ -209,7 +209,7 @@ module Puppet
             isnamevar
         end
 
-        newstate(:descr, Puppet::IniState) do
+        newstate(:descr, :parent => Puppet::IniState) do
             desc "A human readable description of the repository. 
                   #{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
@@ -217,7 +217,7 @@ module Puppet
             inikey "name"
         end
         
-        newstate(:mirrorlist, Puppet::IniState) do
+        newstate(:mirrorlist, :parent => Puppet::IniState) do
             desc "The URL that holds the list of mirrors for this repository.
                   #{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
@@ -225,21 +225,21 @@ module Puppet
             newvalue(/.*/) { }
         end
 
-        newstate(:baseurl, Puppet::IniState) do
+        newstate(:baseurl, :parent => Puppet::IniState) do
             desc "The URL for this repository.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
             # Should really check that it's a valid URL
             newvalue(/.*/) { }
         end
         
-        newstate(:enabled, Puppet::IniState) do
+        newstate(:enabled, :parent => Puppet::IniState) do
             desc "Whether this repository is enabled or disabled. Possible 
                   values are '0', and '1'.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
             newvalue(%r{(0|1)}) { }
         end
 
-        newstate(:gpgcheck, Puppet::IniState) do
+        newstate(:gpgcheck, :parent => Puppet::IniState) do
             desc "Whether to check the GPG signature on packages installed
                   from this repository. Possible values are '0', and '1'.
                   \n#{ABSENT_DOC}"
@@ -247,7 +247,7 @@ module Puppet
             newvalue(%r{(0|1)}) { }
         end
 
-        newstate(:gpgkey, Puppet::IniState) do
+        newstate(:gpgkey, :parent => Puppet::IniState) do
             desc "The URL for the GPG key with which packages from this
                   repository are signed.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
@@ -255,14 +255,14 @@ module Puppet
             newvalue(/.*/) { }
         end
 
-        newstate(:include, Puppet::IniState) do
+        newstate(:include, :parent => Puppet::IniState) do
             desc "A URL from which to include the config.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
             # Should really check that it's a valid URL
             newvalue(/.*/) { }
         end
 
-        newstate(:exclude, Puppet::IniState) do
+        newstate(:exclude, :parent => Puppet::IniState) do
             desc "List of shell globs. Matching packages will never be
                   considered in updates or installs for this repo.
                   #{ABSENT_DOC}"
@@ -270,7 +270,7 @@ module Puppet
             newvalue(/.*/) { }
         end
 
-        newstate(:includepkgs, Puppet::IniState) do
+        newstate(:includepkgs, :parent => Puppet::IniState) do
             desc "List of shell globs. If this is set, only packages
                   matching one of the globs will be considered for
                   update or install.\n#{ABSENT_DOC}"
@@ -278,7 +278,7 @@ module Puppet
             newvalue(/.*/) { }
         end
 
-        newstate(:enablegroups, Puppet::IniState) do
+        newstate(:enablegroups, :parent => Puppet::IniState) do
             desc "Determines whether yum will allow the use of
               package groups for this  repository. Possible 
               values are '0', and '1'.\n#{ABSENT_DOC}"
@@ -286,27 +286,27 @@ module Puppet
             newvalue(%r{(0|1)}) { }
         end
 
-        newstate(:failovermethod, Puppet::IniState) do
+        newstate(:failovermethod, :parent => Puppet::IniState) do
             desc "Either 'roundrobin' or 'priority'.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
             newvalue(%r(roundrobin|priority)) { }
         end
 
-        newstate(:keepalive, Puppet::IniState) do
+        newstate(:keepalive, :parent => Puppet::IniState) do
             desc "Either '1' or '0'. This tells yum whether or not HTTP/1.1 
               keepalive  should  be  used with this repository.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
             newvalue(%r{(0|1)}) { }
         end
 
-        newstate(:timeout, Puppet::IniState) do
+        newstate(:timeout, :parent => Puppet::IniState) do
             desc "Number of seconds to wait for a connection before timing 
                   out.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
             newvalue(%r{[0-9]+}) { }
         end
 
-        newstate(:metadata_expire, Puppet::IniState) do
+        newstate(:metadata_expire, :parent => Puppet::IniState) do
             desc "Number of seconds after which the metadata will expire.
                   #{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }

@@ -1,5 +1,14 @@
 # Solaris 10 SMF-style services.
-Puppet.type(:service).newsvctype(:smf) do
+Puppet::Type.type(:service).provide :smf, :parent => :base do
+    desc "Support for Sun's new Service Management Framework.  Starting a service
+        is effectively equivalent to enabling it, so there is only support
+        for starting and stopping services, which also enables and disables them,
+        respectively."
+
+    defaultfor :operatingsystem => :solaris
+
+    commands :adm => "/usr/sbin/svcadm", :svcs => "/usr/bin/svcs"
+
     def enable
         self.start
     end
@@ -18,19 +27,26 @@ Puppet.type(:service).newsvctype(:smf) do
     end
 
     def restartcmd
-        "svcadm restart %s" % self[:name]
+        "#{command(:adm)} restart %s" % @model[:name]
     end
 
     def startcmd
-        "svcadm enable %s" % self[:name]
+        "#{command(:adm)} enable %s" % @model[:name]
     end
 
     def status
-        if self[:status]
+        if @model[:status]
             super
             return
         end
-        %x{/usr/bin/svcs -l #{self[:name]} 2>/dev/null}.split("\n").each { |line|
+        begin
+            output = Puppet::Util.execute("#{command(:svcs)} -l #{@model[:name]}")
+        rescue Puppet::ExecutionFailure
+            warning "Could not get status on service %s" % self.name
+            return :stopped
+        end
+
+        output.split("\n").each { |line|
             var = nil
             value = nil
             if line =~ /^(\w+)\s+(.+)/
@@ -58,16 +74,10 @@ Puppet.type(:service).newsvctype(:smf) do
                 end
             end
         }
-
-        if $? != 0
-            #raise Puppet::Error,
-            warning "Could not get status on service %s" % self.name
-            return :stopped
-        end
     end
 
     def stopcmd
-        "svcadm disable %s" % self[:name]
+        "#{command(:adm)} disable %s" % @model[:name]
     end
 end
 

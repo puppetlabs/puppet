@@ -36,17 +36,39 @@ class State < Puppet::Parameter
         end
     end
 
+    # Only retrieve the event, don't autogenerate one.
+    def self.event(value)
+        if hash = @parameteroptions[value]
+            hash[:event]
+        else
+            nil
+        end
+    end
+
     # Create the value management variables.
     def self.initvars
         @parametervalues = {}
         @aliasvalues = {}
         @parameterregexes = {}
+        @parameteroptions = {}
     end
 
-    # Parameters just use 'newvalues', since there's no work associated with them,
-    # but states have blocks associated with their allowed values.
-    def self.newvalue(name, &block)
+    # Define a new valid value for a state.  You must provide the value itself,
+    # usually as a symbol, or a regex to match the value.
+    #
+    # The first argument to the method is either the value itself or a regex.
+    # The second argument is an option hash; valid options are:
+    # * <tt>:event</tt>: The event that should be returned when this value is set.
+    def self.newvalue(name, options = {}, &block)
         name = name.intern if name.is_a? String
+
+        @parameteroptions[name] = {}
+        paramopts = @parameteroptions[name]
+
+        # Symbolize everything
+        options.each do |opt, val|
+            paramopts[symbolize(opt)] = symbolize(val)
+        end
 
         case name
         when Symbol
@@ -55,8 +77,11 @@ class State < Puppet::Parameter
             end
             @parametervalues[name] = block
 
-            define_method("set_" + name.to_s, &block)
+            method = "set_" + name.to_s
+            settor = paramopts[:settor] || (self.name.to_s + "=")
+            define_method(method, &block)
         when Regexp
+            # The regexes are handled in parameter.rb
             @parameterregexes[name] = block
         else
             raise ArgumentError, "Invalid value %s of type %s" %
@@ -64,58 +89,24 @@ class State < Puppet::Parameter
         end
     end
 
-    # Call the method associated with a given value.
-    def set
-        if self.insync?
-            self.log "already in sync"
-            return nil
-        end
-
-        value = self.should
-        method = "set_" + value.to_s
-        event = nil
-        if self.respond_to?(method)
-            self.debug "setting %s (currently %s)" % [value, self.is]
-
-            begin
-                event = self.send(method)
-            rescue Puppet::Error
-                raise
-            rescue => detail
-                if Puppet[:debug]
-                    puts detail.backtrace
-                end
-                self.fail "Could not set %s on %s: %s" %
-                    [value, self.class.name, detail]
-            end
-        elsif ary = self.class.match?(value)
-            # FIXME It'd be better here to define a method, so that
-            # the blocks could return values.
-            event = self.instance_eval(&ary[1])
-        else
-            self.fail "%s is not a valid value for %s" %
-                [value, self.class.name]
-        end
-
-        if event and event.is_a?(Symbol)
-            if event == :nochange
-                return nil
+    # How should a state change be printed as a string?
+    def change_to_s
+        begin
+            if @is == :absent
+                return "defined '%s' as '%s'" %
+                    [self.name, self.should_to_s]
+            elsif self.should == :absent or self.should == [:absent]
+                return "undefined %s from '%s'" %
+                    [self.name, self.is_to_s]
             else
-                return event
+                return "%s changed '%s' to '%s'" %
+                    [self.name, self.is_to_s, self.should_to_s]
             end
-        else
-            # Return the appropriate event.
-            event = case self.should
-            when :present: (@parent.class.name.to_s + "_created").intern
-            when :absent: (@parent.class.name.to_s + "_removed").intern
-            else
-                (@parent.class.name.to_s + "_changed").intern
-            end
-
-            #self.log "made event %s because 'should' is %s, 'is' is %s" %
-            #    [event, self.should.inspect, self.is.inspect]
-
-            return event
+        rescue Puppet::Error, Puppet::DevError
+            raise
+        rescue => detail
+            raise Puppet::DevError, "Could not convert change %s to string: %s" %
+                [self.name, detail]
         end
     end
     
@@ -186,9 +177,17 @@ class State < Puppet::Parameter
         return false
     end
 
+    # because the @should and @is vars might be in weird formats,
+    # we need to set up a mechanism for pretty printing of the values
+    # default to just the values, but this way individual states can
+    # override these methods
+    def is_to_s
+        @is
+    end
+
+    # Send a log message.
     def log(msg)
         unless @parent[:loglevel]
-            p @parent
             self.devfail "Parent %s has no loglevel" %
                 @parent.name
         end
@@ -227,6 +226,82 @@ class State < Puppet::Parameter
         end
     end
 
+    # Retrieve the parent's provider.  Some types don't have providers, in which
+    # case we return the parent object itself.
+    def provider
+        @parent.provider || @parent
+    end
+
+    # By default, call the method associated with the state name on our
+    # provider.  In other words, if the state name is 'gid', we'll call
+    # 'provider.gid' to retrieve the current value.
+    def retrieve
+        @is = provider.send(self.class.name)
+    end
+
+    # Call the method associated with a given value.
+    def set
+        if self.insync?
+            self.log "already in sync"
+            return nil
+        end
+
+        value = self.should
+        method = "set_" + value.to_s
+        event = nil
+        if self.respond_to?(method)
+            self.debug "setting %s (currently %s)" % [value, self.is]
+
+            begin
+                event = self.send(method)
+            rescue Puppet::Error
+                raise
+            rescue => detail
+                if Puppet[:debug]
+                    puts detail.backtrace
+                end
+                self.fail "Could not set %s on %s: %s" %
+                    [value, self.class.name, detail]
+            end
+        elsif ary = self.class.match?(value)
+            # FIXME It'd be better here to define a method, so that
+            # the blocks could return values.
+            event = self.instance_eval(&ary[1])
+        else
+            if provider.respond_to?(self.class.name.to_s + "=")
+                provider.send(self.class.name.to_s + "=", self.should)
+            else
+                self.fail "%s is not a valid value for %s" %
+                    [value, self.class.name]
+            end
+        end
+
+        if setevent = self.class.event(value)
+            return setevent
+        else
+            if event and event.is_a?(Symbol)
+                if event == :nochange
+                    return nil
+                else
+                    return event
+                end
+            else
+                # Return the appropriate event.
+                event = case self.should
+                when :present: (@parent.class.name.to_s + "_created").intern
+                when :absent: (@parent.class.name.to_s + "_removed").intern
+                else
+                    (@parent.class.name.to_s + "_changed").intern
+                end
+
+                #self.log "made event %s because 'should' is %s, 'is' is %s" %
+                #    [event, self.should.inspect, self.is.inspect]
+
+                return event
+            end
+        end
+    end
+
     # Only return the first value
     def should
         if defined? @should
@@ -262,6 +337,14 @@ class State < Puppet::Parameter
         end
     end
 
+    def should_to_s
+        if defined? @should
+            @should.join(" ")
+        else
+            return nil
+        end
+    end
+
     # The default 'sync' method only selects among a list of registered
     # values.
     def sync
@@ -278,43 +361,6 @@ class State < Puppet::Parameter
 
         # Set ourselves to whatever our should value is.
         self.set
-    end
-
-    # How should a state change be printed as a string?
-    def change_to_s
-        begin
-            if @is == :absent
-                return "defined '%s' as '%s'" %
-                    [self.name, self.should_to_s]
-            elsif self.should == :absent or self.should == [:absent]
-                return "undefined %s from '%s'" %
-                    [self.name, self.is_to_s]
-            else
-                return "%s changed '%s' to '%s'" %
-                    [self.name, self.is_to_s, self.should_to_s]
-            end
-        rescue Puppet::Error, Puppet::DevError
-            raise
-        rescue => detail
-            raise Puppet::DevError, "Could not convert change %s to string: %s" %
-                [self.name, detail]
-        end
-    end
-
-    # because the @should and @is vars might be in weird formats,
-    # we need to set up a mechanism for pretty printing of the values
-    # default to just the values, but this way individual states can
-    # override these methods
-    def is_to_s
-        @is
-    end
-
-    def should_to_s
-        if defined? @should
-            @should.join(" ")
-        else
-            return nil
-        end
     end
 
     def to_s
