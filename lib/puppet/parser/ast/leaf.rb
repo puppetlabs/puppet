@@ -104,3 +104,5 @@ class Puppet::Parser::AST
     end
 
 end
+
+# $Id$

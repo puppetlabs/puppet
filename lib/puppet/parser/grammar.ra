@@ -710,6 +710,10 @@ arguments:    argument
 }
 
 argument:     name EQUALS rvalue {
+    msg = "Deprecation notice:  Variables must now include '$' in prototypes"
+    msg += " at line %s" % @lexer.line
+    msg += " in file %s" % @lexer.file if @lexer.file
+    Puppet.warning msg
     result = AST::CompArgument.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -717,6 +721,22 @@ argument:     name EQUALS rvalue {
     )
 }
             | name {
+    msg = "Deprecation notice:  Variables must now include '$' in prototypes"
+    msg += " at line %s" % @lexer.line
+    msg += " in file %s" % @lexer.file if @lexer.file
+    Puppet.warning msg
+    result = AST::CompArgument.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :children => [val[0]]
+    )
+}           | lvariable EQUALS rvalue {
+    result = AST::CompArgument.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :children => [val[0],val[2]]
+    )
+}           | lvariable {
     result = AST::CompArgument.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -739,6 +759,15 @@ variable:     VARIABLE {
         :line => @lexer.line,
         :file => @lexer.file,
         :value => name
+    )
+}
+
+# This is variables as lvalues; we're assigning them, not deferencing them.
+lvariable:     VARIABLE {
+    result = AST::Name.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0].sub(/^\$/,'')
     )
 }
 

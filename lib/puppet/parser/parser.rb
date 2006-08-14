@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id99c9ad765d', 'grammar.ra', 787
+module_eval <<'..end grammar.ra modeval..idf44fc81fef', 'grammar.ra', 815
 require 'puppet/parser/functions'
 
 attr_reader :file
@@ -157,7 +157,7 @@ end
 
 # $Id$
 
-..end grammar.ra modeval..id99c9ad765d
+..end grammar.ra modeval..idf44fc81fef
 
 ##### racc 1.4.5 generates ###
 
@@ -263,217 +263,228 @@ racc_reduce_table = [
  3, 90, :_reduce_98,
  3, 91, :_reduce_99,
  1, 91, :_reduce_100,
+ 3, 91, :_reduce_101,
+ 1, 91, :_reduce_102,
  1, 87, :_reduce_none,
- 2, 87, :_reduce_102,
- 1, 61, :_reduce_103,
- 3, 71, :_reduce_104,
- 2, 71, :_reduce_105,
+ 2, 87, :_reduce_104,
+ 1, 61, :_reduce_105,
+ 1, 92, :_reduce_106,
+ 3, 71, :_reduce_107,
+ 2, 71, :_reduce_108,
  1, 75, :_reduce_none,
  1, 75, :_reduce_none,
  0, 66, :_reduce_none,
- 1, 66, :_reduce_109 ]
+ 1, 66, :_reduce_112 ]
 
-racc_reduce_n = 110
+racc_reduce_n = 113
 
-racc_shift_n = 181
+racc_shift_n = 185
 
 racc_action_table = [
-    47,    34,    37,   153,   149,    18,    47,    34,    37,    59,
-   152,   -76,    47,    34,    37,    77,    18,    34,    37,    70,
-    34,    37,    18,    35,   -75,    59,    34,    37,    18,    42,
-    82,   129,   -74,    48,    49,    42,    30,    54,    30,    48,
-    49,    42,    68,    54,    60,    48,    49,   -74,    42,    54,
-    47,    34,    37,    35,    42,   -77,    47,    34,    37,    35,
-   -76,   130,    47,    34,    37,    75,    18,   108,    29,   158,
-    29,    31,    18,    31,    35,    75,   110,   106,    18,    42,
-   159,   137,   138,    48,    49,    42,   145,    54,    80,    48,
-    87,    42,   -77,    54,    83,    48,    49,    34,    37,    54,
+    47,    34,    37,    59,   155,    18,    47,    34,    37,    70,
+   148,   154,    47,    34,    37,    77,    18,    34,    37,   138,
+    34,    37,    18,    35,    35,   129,    34,    37,    18,    42,
+    82,   -74,    68,    48,    49,    42,    30,    54,    60,    48,
+    49,    42,    30,    54,    75,    48,    49,   -74,    42,    54,
+    47,    34,    37,    35,    42,   147,    47,    34,    37,    35,
+   -77,   -76,    47,    34,    37,   160,    18,   130,    29,    75,
+   106,    31,    18,   108,    29,   -79,   161,    31,    18,    42,
+   110,    80,   139,    48,    49,    42,   140,    54,   -76,    48,
+    49,    42,   -77,    54,   144,    48,    87,    34,    37,    54,
     47,    34,    37,    34,    37,   111,    47,    34,    37,   112,
-   114,   142,    47,    34,    37,   168,    18,   112,   114,    72,
-    43,   108,    18,   106,   146,    42,    81,   -79,    18,    42,
-    35,    42,    80,    48,    49,    42,    35,    54,   -75,    48,
-    49,    42,    72,    54,   -78,    48,    49,   156,   157,    54,
-    47,    34,    37,    34,    37,   105,   160,   161,    75,    72,
-    34,    37,    34,    37,    67,   120,    18,    66,    18,    97,
-   170,    65,   108,    35,    68,    18,    62,    18,    99,    42,
-    32,    42,    26,    48,    49,    48,    49,    54,    42,    54,
-    42,   103,    48,    49,    48,    49,    54,   nil,    54,    34,
-    37,    34,    37,   nil,   nil,   151,   nil,   nil,    34,    37,
-   nil,   nil,   nil,   nil,    18,   nil,    18,   nil,   nil,   nil,
-   nil,   nil,   nil,    18,   nil,   nil,   nil,    42,   163,    42,
-   nil,    48,    49,    48,    49,    54,    42,    54,   nil,    18,
-    48,    49,   nil,   165,    54,   nil,   nil,   nil,   nil,    15,
-    17,   nil,    22,    24,    18,     3,   nil,     9,   180,    12,
-   nil,    19,   nil,   nil,    15,    17,   nil,    22,    24,    18,
-     3,   nil,     9,   166,    12,   nil,    19,   nil,   nil,    15,
-    17,   nil,    22,    24,    18,     3,   nil,     9,   175,    12,
-   nil,    19,   nil,   nil,    15,    17,   nil,    22,    24,    18,
-     3,   nil,     9,   140,    12,   nil,    19,   nil,   nil,    15,
+   114,    72,    47,    34,    37,    83,    18,    97,   138,   -75,
+    43,    81,    18,    35,   171,    42,   112,   114,    18,    42,
+    35,    42,   151,    48,    49,    42,    35,    54,    80,    48,
+    49,    42,    99,    54,    72,    48,    49,   -75,   158,    54,
+    47,    34,    37,   159,    59,   162,    47,    34,    37,   163,
+   164,   -78,    75,    34,    37,    72,    18,    67,    68,   173,
+    66,   108,    18,    34,    37,   108,    65,   106,    18,    42,
+    62,   105,    32,    48,    49,    42,    26,    54,    18,    48,
+    49,    42,   103,    54,   nil,    48,    49,    34,    37,    54,
+   120,    42,   nil,    34,    37,    48,    49,   nil,   nil,    54,
+   nil,   nil,    18,    34,    37,   nil,   nil,   153,    18,    34,
+    37,   nil,   nil,   nil,   nil,    42,   nil,   nil,    18,    48,
+    49,    42,   166,    54,    18,    48,    49,   nil,   nil,    54,
+   nil,    42,   nil,    18,   nil,    48,    49,    42,   nil,    54,
+   nil,    48,    49,    15,    17,    54,    22,    24,   168,     3,
+   nil,     9,   nil,    12,   nil,    19,   nil,   nil,   nil,    18,
+   nil,   nil,   nil,   169,   nil,   nil,   nil,   nil,   nil,    15,
     17,   nil,    22,    24,    18,     3,   nil,     9,   179,    12,
    nil,    19,   nil,   nil,    15,    17,   nil,    22,    24,    18,
-     3,   nil,     9,   176,    12,   nil,    19,   nil,   nil,    15,
-    17,   nil,    22,    24,    18,     3,   nil,     9,   nil,    12,
+     3,   nil,     9,   142,    12,   nil,    19,   nil,   nil,    15,
+    17,   nil,    22,    24,    18,     3,   nil,     9,   183,    12,
+   nil,    19,   nil,   nil,    15,    17,   nil,    22,    24,    18,
+     3,   nil,     9,   184,    12,   nil,    19,   nil,   nil,    15,
+    17,   nil,    22,    24,    18,     3,   nil,     9,   180,    12,
    nil,    19,   nil,   nil,    15,    17,   nil,    22,    24,    18,
      3,   nil,     9,   nil,    12,   nil,    19,   nil,   nil,    15,
     17,   nil,    22,    24,    18,     3,   nil,     9,   nil,    12,
-   nil,    19,   nil,   nil,    15,    17,   nil,    22,    24,   nil,
-     3,   nil,     9,   nil,    12,   nil,    19 ]
+   nil,    19,   nil,   nil,    15,    17,   nil,    22,    24,    18,
+     3,   nil,     9,   nil,    12,   nil,    19,   nil,   nil,    15,
+    17,   nil,    22,    24,   nil,     3,   nil,     9,   nil,    12,
+   nil,    19 ]
 
 racc_action_check = [
-    65,    65,    65,   127,   124,    19,   130,   130,   130,    13,
-   127,    57,    47,    47,    47,    47,    65,    15,    15,    27,
-    43,    43,   130,    19,    85,    64,    80,    80,    47,    65,
-    53,    88,    91,    65,    65,   130,     3,    65,    70,   130,
-   130,    47,    27,   130,    13,    47,    47,    53,    43,    47,
-   113,   113,   113,    43,    80,    92,    59,    59,    59,    80,
-    93,    94,    82,    82,    82,    76,   113,    96,     3,   133,
-    70,     3,    59,    70,    99,   115,    76,    87,    82,   113,
-   133,   100,   102,   113,   113,    59,   115,   113,    87,    59,
-    59,    82,    56,    59,    55,    82,    82,    75,    75,    82,
-    12,    12,    12,     9,     9,    79,   146,   146,   146,    79,
-    79,   107,   161,   161,   161,   148,    12,   148,   148,   108,
-     9,    74,   146,    72,   118,    75,    51,    58,   161,    12,
-    75,     9,    49,    12,    12,   146,     9,    12,    46,   146,
-   146,   161,   129,   146,    45,   161,   161,   131,   132,   161,
-   106,   106,   106,    83,    83,    71,   134,   136,    36,    32,
-   153,   153,    81,    81,    26,    81,   106,    24,    83,    60,
-   152,    22,   154,   158,    66,   153,    17,    81,    62,   106,
-     4,    83,     2,   106,   106,    83,    83,   106,   153,    83,
-    81,    68,   153,   153,    81,    81,   153,   nil,    81,   169,
-   169,   125,   125,   nil,   nil,   125,   nil,   nil,   120,   120,
-   nil,   nil,   nil,   nil,   169,   nil,   125,   nil,   nil,   nil,
-   nil,   nil,   nil,   120,   nil,   nil,   nil,   169,   137,   125,
-   nil,   169,   169,   125,   125,   169,   120,   125,   nil,   137,
-   120,   120,   nil,   138,   120,   nil,   nil,   nil,   nil,   137,
-   137,   nil,   137,   137,   138,   137,   nil,   137,   178,   137,
-   nil,   137,   nil,   nil,   138,   138,   nil,   138,   138,   178,
-   138,   nil,   138,   139,   138,   nil,   138,   nil,   nil,   178,
-   178,   nil,   178,   178,   139,   178,   nil,   178,   162,   178,
-   nil,   178,   nil,   nil,   139,   139,   nil,   139,   139,   162,
-   139,   nil,   139,   105,   139,   nil,   139,   nil,   nil,   162,
-   162,   nil,   162,   162,   105,   162,   nil,   162,   170,   162,
-   nil,   162,   nil,   nil,   105,   105,   nil,   105,   105,   170,
-   105,   nil,   105,   164,   105,   nil,   105,   nil,   nil,   170,
-   170,   nil,   170,   170,   164,   170,   nil,   170,   nil,   170,
-   nil,   170,   nil,   nil,   164,   164,   nil,   164,   164,     6,
-   164,   nil,   164,   nil,   164,   nil,   164,   nil,   nil,     6,
-     6,   nil,     6,     6,     0,     6,   nil,     6,   nil,     6,
-   nil,     6,   nil,   nil,     0,     0,   nil,     0,     0,   nil,
-     0,   nil,     0,   nil,     0,   nil,     0 ]
+   130,   130,   130,    13,   127,    19,    65,    65,    65,    27,
+   118,   127,    47,    47,    47,    47,   130,    15,    15,   160,
+    43,    43,    65,    19,   160,    88,    75,    75,    47,   130,
+    53,    91,    27,   130,   130,    65,    70,   130,    13,    65,
+    65,    47,     3,    65,   115,    47,    47,    53,    43,    47,
+   113,   113,   113,    43,    75,   115,    82,    82,    82,    75,
+    92,    93,    59,    59,    59,   133,   113,    94,    70,    76,
+    87,    70,    82,    96,     3,    58,   133,     3,    59,   113,
+    76,    87,   100,   113,   113,    82,   102,   113,    57,    82,
+    82,    59,    56,    82,   107,    59,    59,    80,    80,    59,
+    12,    12,    12,     9,     9,    79,   148,   148,   148,    79,
+    79,   108,   163,   163,   163,    55,    12,    60,    99,    85,
+     9,    51,   148,    99,   150,    80,   150,   150,   163,    12,
+    80,     9,   124,    12,    12,   148,     9,    12,    49,   148,
+   148,   163,    62,   148,   129,   163,   163,    46,   131,   163,
+   106,   106,   106,   132,    64,   134,   164,   164,   164,   136,
+   137,    45,    36,    83,    83,    32,   106,    26,    66,   154,
+    24,   156,   164,   155,   155,    74,    22,    72,    83,   106,
+    17,    71,     4,   106,   106,   164,     2,   106,   155,   164,
+   164,    83,    68,   164,   nil,    83,    83,    81,    81,    83,
+    81,   155,   nil,   172,   172,   155,   155,   nil,   nil,   155,
+   nil,   nil,    81,   125,   125,   nil,   nil,   125,   172,   120,
+   120,   nil,   nil,   nil,   nil,    81,   nil,   nil,   125,    81,
+    81,   172,   139,    81,   120,   172,   172,   nil,   nil,   172,
+   nil,   125,   nil,   139,   nil,   125,   125,   120,   nil,   125,
+   nil,   120,   120,   139,   139,   120,   139,   139,   140,   139,
+   nil,   139,   nil,   139,   nil,   139,   nil,   nil,   nil,   140,
+   nil,   nil,   nil,   141,   nil,   nil,   nil,   nil,   nil,   140,
+   140,   nil,   140,   140,   141,   140,   nil,   140,   165,   140,
+   nil,   140,   nil,   nil,   141,   141,   nil,   141,   141,   165,
+   141,   nil,   141,   105,   141,   nil,   141,   nil,   nil,   165,
+   165,   nil,   165,   165,   105,   165,   nil,   165,   173,   165,
+   nil,   165,   nil,   nil,   105,   105,   nil,   105,   105,   173,
+   105,   nil,   105,   182,   105,   nil,   105,   nil,   nil,   173,
+   173,   nil,   173,   173,   182,   173,   nil,   173,   167,   173,
+   nil,   173,   nil,   nil,   182,   182,   nil,   182,   182,   167,
+   182,   nil,   182,   nil,   182,   nil,   182,   nil,   nil,   167,
+   167,   nil,   167,   167,     6,   167,   nil,   167,   nil,   167,
+   nil,   167,   nil,   nil,     6,     6,   nil,     6,     6,     0,
+     6,   nil,     6,   nil,     6,   nil,     6,   nil,   nil,     0,
+     0,   nil,     0,     0,   nil,     0,   nil,     0,   nil,     0,
+   nil,     0 ]
 
 racc_action_pointer = [
-   356,   nil,   182,    32,   174,   nil,   341,   nil,   nil,   100,
-   nil,   nil,    98,     3,   nil,    14,   nil,   140,   nil,   -13,
-   nil,   nil,   158,   nil,   131,   nil,   164,     9,   nil,   nil,
-   nil,   nil,   123,   nil,   nil,   nil,   148,   nil,   nil,   nil,
-   nil,   nil,   nil,    17,   nil,   125,   119,    10,   nil,   112,
-   nil,   107,   nil,    28,   nil,    88,    73,    -8,   108,    54,
-   127,   nil,   158,   nil,    19,    -2,   141,   nil,   155,   nil,
-    34,   149,   114,   nil,   111,    94,    55,   nil,   nil,   100,
-    23,   159,    60,   150,   nil,     5,   nil,    68,    14,   nil,
-   nil,    13,    36,    41,    24,   nil,    57,   nil,   nil,    38,
-    75,   nil,    76,   nil,   nil,   296,   148,   104,    83,   nil,
-   nil,   nil,   nil,    48,   nil,    65,   nil,   nil,   115,   nil,
-   205,   nil,   nil,   nil,    -1,   198,   nil,    -7,   nil,   106,
-     4,   140,   141,    59,   135,   nil,   144,   221,   236,   266,
-   nil,   nil,   nil,   nil,   nil,   nil,   104,   nil,   108,   nil,
-   nil,   nil,   164,   157,   162,   nil,   nil,   nil,   137,   nil,
-   nil,   110,   281,   nil,   326,   nil,   nil,   nil,   nil,   196,
-   311,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   251,   nil,
-   nil ]
+   371,   nil,   186,    38,   176,   nil,   356,   nil,   nil,   100,
+   nil,   nil,    98,    -3,   nil,    14,   nil,   144,   nil,   -13,
+   nil,   nil,   163,   nil,   134,   nil,   167,    -1,   nil,   nil,
+   nil,   nil,   129,   nil,   nil,   nil,   152,   nil,   nil,   nil,
+   nil,   nil,   nil,    17,   nil,   142,   128,    10,   nil,   118,
+   nil,   102,   nil,    28,   nil,   109,    73,    69,    56,    60,
+    75,   nil,   122,   nil,   148,     4,   135,   nil,   156,   nil,
+    32,   175,   168,   nil,   165,    23,    59,   nil,   nil,   100,
+    94,   194,    54,   160,   nil,   100,   nil,    61,     8,   nil,
+   nil,    12,    41,    42,    30,   nil,    63,   nil,   nil,    87,
+    76,   nil,    80,   nil,   nil,   296,   148,    87,    75,   nil,
+   nil,   nil,   nil,    48,   nil,    34,   nil,   nil,     1,   nil,
+   216,   nil,   nil,   nil,   127,   210,   nil,    -6,   nil,   108,
+    -2,   141,   146,    55,   134,   nil,   146,   147,   nil,   225,
+   251,   266,   nil,   nil,   nil,   nil,   nil,   nil,   104,   nil,
+   117,   nil,   nil,   nil,   163,   170,   161,   nil,   nil,   nil,
+   -12,   nil,   nil,   110,   154,   281,   nil,   341,   nil,   nil,
+   nil,   nil,   200,   311,   nil,   nil,   nil,   nil,   nil,   nil,
+   nil,   nil,   326,   nil,   nil ]
 
 racc_action_default = [
-   -93,   -12,  -110,  -110,  -110,   -13,    -1,   -14,    -2,   -32,
-    -3,    -5,  -110,  -110,    -6,  -110,    -7,  -110,   -33,  -110,
-    -8,    -9,  -110,   -10,  -110,   -11,  -110,   -93,   -88,   -90,
+   -93,   -12,  -113,  -113,  -113,   -13,    -1,   -14,    -2,   -32,
+    -3,    -5,  -113,  -113,    -6,  -113,    -7,  -113,   -33,  -113,
+    -8,    -9,  -113,   -10,  -113,   -11,  -113,   -93,   -88,   -90,
    -91,   -92,   -41,    -4,   -57,   -32,   -16,   -58,   -17,   -19,
-   -20,   -21,  -103,  -110,   -54,   -55,   -49,  -110,   -59,   -32,
-   -51,  -110,   -53,   -48,   -80,  -110,   -52,   -47,   -50,   -41,
-  -110,   -81,   -93,   -25,  -110,  -110,   -93,   181,  -110,  -101,
-  -110,  -110,  -110,   -42,  -108,  -110,  -110,  -105,   -45,  -110,
-  -110,  -110,  -110,  -110,   -78,   -36,   -28,   -32,  -110,   -37,
-   -39,   -35,   -38,   -34,   -30,   -79,  -108,   -26,   -94,   -93,
-  -110,   -40,  -110,  -102,   -89,  -110,  -110,  -110,  -109,   -18,
-   -15,  -104,  -106,  -110,  -107,  -110,   -75,   -74,  -110,   -77,
-  -110,   -68,   -76,   -69,  -110,  -110,   -62,  -110,   -66,   -41,
-   -31,  -110,  -110,  -110,  -110,   -97,  -100,  -110,  -110,  -110,
-   -87,   -44,   -24,   -43,   -46,   -56,  -110,   -71,  -110,   -60,
-   -63,   -61,  -110,  -110,  -108,   -29,   -22,   -23,  -110,   -96,
-   -95,  -110,  -110,   -83,  -110,   -85,   -86,   -73,   -70,  -110,
-  -110,   -67,   -27,   -98,   -99,   -82,   -84,   -72,  -110,   -65,
-   -64 ]
+   -20,   -21,  -105,  -113,   -54,   -55,   -49,  -113,   -59,   -32,
+   -51,  -113,   -53,   -48,   -80,  -113,   -52,   -47,   -50,   -41,
+  -113,   -81,   -93,   -25,  -113,  -113,   -93,   185,  -113,  -103,
+  -113,  -113,  -113,   -42,  -111,  -113,  -113,  -108,   -45,  -113,
+  -113,  -113,  -113,  -113,   -78,   -36,   -28,   -32,  -113,   -37,
+   -39,   -35,   -38,   -34,   -30,   -79,  -111,   -26,   -94,   -93,
+  -113,   -40,  -113,  -104,   -89,  -113,  -113,  -113,  -112,   -18,
+   -15,  -107,  -109,  -113,  -110,  -113,   -75,   -74,  -113,   -77,
+  -113,   -68,   -76,   -69,  -113,  -113,   -62,  -113,   -66,   -41,
+   -31,  -113,  -113,  -113,  -113,   -97,  -102,  -100,  -106,  -113,
+  -113,  -113,   -87,   -44,   -24,   -43,   -46,   -56,  -113,   -71,
+  -113,   -60,   -63,   -61,  -113,  -113,  -111,   -29,   -22,   -23,
+  -113,   -96,   -95,  -113,  -113,  -113,   -83,  -113,   -85,   -86,
+   -73,   -70,  -113,  -113,   -67,   -27,   -98,  -101,   -99,   -82,
+   -84,   -72,  -113,   -65,   -64 ]
 
 racc_goto_table = [
-    33,     6,    74,    39,     8,   107,    53,    89,   135,   123,
-   126,    86,    36,    64,   109,    40,    71,    90,   125,    79,
-    94,   121,   113,   131,   148,    28,   100,   132,   143,    96,
-    41,    27,    63,   133,     2,   nil,    61,    39,   nil,   nil,
-   118,    53,   128,   nil,   nil,   nil,    76,   nil,   147,    40,
-   nil,   nil,   150,    91,   nil,   102,   nil,   nil,   nil,    53,
-   nil,   nil,   nil,   nil,    41,    92,    98,   173,   nil,    39,
-   nil,   nil,   nil,   nil,    39,   117,    53,   117,    89,   118,
-    93,    40,   155,   115,   128,   172,    40,   119,    90,   119,
-    55,   169,   104,   136,   nil,    46,    41,   177,   nil,   154,
-    53,    41,   122,   134,   122,   nil,   139,    53,   nil,   nil,
-   nil,   nil,   171,   nil,   117,   nil,   nil,   nil,   nil,   117,
-   nil,   nil,   nil,   nil,    91,    78,   119,   nil,   118,   nil,
-    46,   119,   nil,    33,   nil,   nil,    92,   nil,   162,   164,
-    53,   122,    85,   101,   nil,   nil,   122,   117,    46,   nil,
-   nil,    93,   136,   nil,    84,    53,    33,    95,    33,   119,
-   124,   nil,   nil,   117,   116,    46,   116,   nil,   nil,   nil,
-   nil,   178,    33,   nil,   122,   119,    84,   nil,    84,    95,
-   nil,    95,   nil,   nil,   141,   nil,   nil,   nil,   nil,    46,
-   122,   144,   nil,   nil,   nil,   nil,    46,   nil,   nil,   nil,
-   nil,   nil,   nil,   116,   nil,   nil,   nil,   nil,   116,   nil,
-   nil,   nil,   nil,    85,   nil,    84,   nil,   nil,    95,   nil,
-    84,   nil,   nil,    95,   167,    84,   nil,   nil,    95,    46,
-   nil,   nil,   nil,   nil,   nil,   nil,   116,   nil,   nil,   174,
-   nil,   nil,   nil,   nil,    46,   nil,   nil,   nil,    84,   nil,
-   nil,    95,   116,   nil,   nil,   nil,   nil,   nil,   nil,   nil,
-   nil,   nil,   nil,   nil,    84,   nil,   nil,    95 ]
+    33,     6,     8,    39,    28,   109,    53,    74,    89,    86,
+    36,   135,   123,    64,   126,    71,    40,   107,   125,    79,
+    94,   113,   121,    41,   118,    84,   128,   131,   150,    61,
+   100,   145,    55,    27,    96,    63,   133,    39,    90,   132,
+     2,    53,   nil,   nil,    76,   nil,   nil,    84,   nil,    84,
+    40,   149,   nil,    91,   102,   nil,   152,    41,   nil,    53,
+   nil,   nil,   nil,   118,    98,   nil,    92,    78,   128,    39,
+   nil,   104,   176,    93,    39,   117,    53,   117,   nil,    89,
+   157,   115,    40,   nil,   nil,   101,    84,    40,   119,    41,
+   119,    84,   172,   137,    41,   122,    84,   122,   174,   175,
+    53,   134,   124,   181,   156,   nil,   141,    53,   nil,    90,
+   nil,   nil,   nil,   nil,   117,   118,   nil,   nil,    46,   117,
+   nil,    84,   nil,   nil,    91,   nil,   143,   119,   nil,   nil,
+   nil,   nil,   119,   146,   122,    33,   nil,    92,    84,   122,
+   165,   167,    53,   nil,    93,   nil,   nil,   nil,   nil,   117,
+   nil,   nil,   nil,    46,   137,   nil,   nil,    53,    53,    33,
+   nil,    33,   119,   nil,   nil,    85,   117,   nil,   170,   122,
+   nil,    46,    95,   nil,   182,   nil,    33,   nil,   nil,   119,
+   nil,   nil,   nil,   177,   178,   nil,   122,   116,    46,   116,
+   nil,   nil,   nil,   nil,    95,   nil,    95,   nil,   nil,   nil,
+   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,
+   nil,   nil,    46,   nil,   nil,   nil,   nil,   nil,   nil,    46,
+   nil,   nil,   nil,   nil,   nil,   nil,   116,   nil,   nil,   nil,
+   nil,   116,   nil,    95,   nil,   nil,    85,   nil,    95,   nil,
+   nil,   nil,   nil,    95,   nil,   nil,   nil,   nil,   nil,   nil,
+   nil,   nil,   nil,   nil,    46,   nil,   nil,   nil,   nil,   nil,
+   nil,   116,   nil,   nil,   nil,   nil,   nil,   nil,    95,    46,
+    46,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   116,   nil,
+   nil,   nil,   nil,   nil,   nil,    95 ]
 
 racc_goto_check = [
-     4,     2,    22,    17,     3,    23,    17,    27,    48,    41,
-    37,    25,    15,    17,    16,    18,    44,    28,    36,    31,
-    20,    40,    32,    21,    42,    46,    43,    23,    30,    22,
-    19,    45,     5,    47,     1,   nil,    19,    17,   nil,   nil,
-    39,    17,    39,   nil,   nil,   nil,    15,   nil,    41,    18,
-   nil,   nil,    37,    17,   nil,    44,   nil,   nil,   nil,    17,
-   nil,   nil,   nil,   nil,    19,    18,     3,    48,   nil,    17,
-   nil,   nil,   nil,   nil,    17,    17,    17,    17,    27,    39,
-    19,    18,    25,    15,    39,    23,    18,    18,    28,    18,
-    29,    32,    46,    17,   nil,    24,    19,    41,   nil,    22,
-    17,    19,    19,     3,    19,   nil,     2,    17,   nil,   nil,
-   nil,   nil,    39,   nil,    17,   nil,   nil,   nil,   nil,    17,
-   nil,   nil,   nil,   nil,    17,    29,    18,   nil,    39,   nil,
-    24,    18,   nil,     4,   nil,   nil,    18,   nil,     2,     2,
-    17,    19,    24,    29,   nil,   nil,    19,    17,    24,   nil,
-   nil,    19,    17,   nil,    35,    17,     4,    33,     4,    18,
-    29,   nil,   nil,    17,    24,    24,    24,   nil,   nil,   nil,
-   nil,     2,     4,   nil,    19,    18,    35,   nil,    35,    33,
-   nil,    33,   nil,   nil,    29,   nil,   nil,   nil,   nil,    24,
-    19,    29,   nil,   nil,   nil,   nil,    24,   nil,   nil,   nil,
-   nil,   nil,   nil,    24,   nil,   nil,   nil,   nil,    24,   nil,
-   nil,   nil,   nil,    24,   nil,    35,   nil,   nil,    33,   nil,
-    35,   nil,   nil,    33,    29,    35,   nil,   nil,    33,    24,
-   nil,   nil,   nil,   nil,   nil,   nil,    24,   nil,   nil,    29,
-   nil,   nil,   nil,   nil,    24,   nil,   nil,   nil,    35,   nil,
-   nil,    33,    24,   nil,   nil,   nil,   nil,   nil,   nil,   nil,
-   nil,   nil,   nil,   nil,    35,   nil,   nil,    33 ]
+     4,     2,     3,    17,    46,    16,    17,    22,    27,    25,
+    15,    48,    41,    17,    37,    44,    18,    23,    36,    31,
+    20,    32,    40,    19,    39,    35,    39,    21,    42,    19,
+    43,    30,    29,    45,    22,     5,    47,    17,    28,    23,
+     1,    17,   nil,   nil,    15,   nil,   nil,    35,   nil,    35,
+    18,    41,   nil,    17,    44,   nil,    37,    19,   nil,    17,
+   nil,   nil,   nil,    39,     3,   nil,    18,    29,    39,    17,
+   nil,    46,    48,    19,    17,    17,    17,    17,   nil,    27,
+    25,    15,    18,   nil,   nil,    29,    35,    18,    18,    19,
+    18,    35,    32,    17,    19,    19,    35,    19,    39,    23,
+    17,     3,    29,    41,    22,   nil,     2,    17,   nil,    28,
+   nil,   nil,   nil,   nil,    17,    39,   nil,   nil,    24,    17,
+   nil,    35,   nil,   nil,    17,   nil,    29,    18,   nil,   nil,
+   nil,   nil,    18,    29,    19,     4,   nil,    18,    35,    19,
+     2,     2,    17,   nil,    19,   nil,   nil,   nil,   nil,    17,
+   nil,   nil,   nil,    24,    17,   nil,   nil,    17,    17,     4,
+   nil,     4,    18,   nil,   nil,    24,    17,   nil,    29,    19,
+   nil,    24,    33,   nil,     2,   nil,     4,   nil,   nil,    18,
+   nil,   nil,   nil,    29,    29,   nil,    19,    24,    24,    24,
+   nil,   nil,   nil,   nil,    33,   nil,    33,   nil,   nil,   nil,
+   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,
+   nil,   nil,    24,   nil,   nil,   nil,   nil,   nil,   nil,    24,
+   nil,   nil,   nil,   nil,   nil,   nil,    24,   nil,   nil,   nil,
+   nil,    24,   nil,    33,   nil,   nil,    24,   nil,    33,   nil,
+   nil,   nil,   nil,    33,   nil,   nil,   nil,   nil,   nil,   nil,
+   nil,   nil,   nil,   nil,    24,   nil,   nil,   nil,   nil,   nil,
+   nil,    24,   nil,   nil,   nil,   nil,   nil,   nil,    33,    24,
+    24,   nil,   nil,   nil,   nil,   nil,   nil,   nil,    24,   nil,
+   nil,   nil,   nil,   nil,   nil,    33 ]
 
 racc_goto_pointer = [
-   nil,    34,     1,     4,    -6,    13,   nil,   nil,   nil,   nil,
-   nil,   nil,   nil,   nil,   nil,     3,   -61,    -6,     6,    21,
-   -39,   -71,   -30,   -69,    83,   -48,   nil,   -52,   -42,    78,
-   -80,   -28,   -57,    98,   nil,    95,   -65,   -73,   nil,   -41,
-   -60,   -72,   -96,   -36,   -11,    28,    22,   -66,   -91 ]
+   nil,    40,     1,     2,    -6,    16,   nil,   nil,   nil,   nil,
+   nil,   nil,   nil,   nil,   nil,     1,   -70,    -6,     7,    14,
+   -39,   -67,   -25,   -57,   106,   -50,   nil,   -51,   -21,    20,
+   -77,   -28,   -58,   113,   nil,   -34,   -65,   -69,   nil,   -57,
+   -59,   -69,   -92,   -32,   -12,    30,     1,   -63,   -88,   nil ]
 
 racc_goto_default = [
    nil,   nil,   nil,    69,    10,    11,    14,    16,    20,    21,
     23,    25,     1,     5,     7,   nil,    38,    13,    56,    57,
    nil,   nil,   nil,   nil,     4,   nil,    88,    50,    52,   nil,
     73,   nil,   nil,    58,    44,    45,   nil,   nil,   127,    51,
-   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil ]
+   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   nil,   136 ]
 
 racc_token_table = {
  false => 0,
@@ -632,7 +643,8 @@ Racc_token_to_s_table = [
 'hostnames',
 'hostname',
 'arguments',
-'argument']
+'argument',
+'lvariable']
 
 Racc_debug_parser = false
 
@@ -1532,8 +1544,12 @@ module_eval <<'.,.,', 'grammar.ra', 710
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 718
+module_eval <<'.,.,', 'grammar.ra', 722
   def _reduce_99( val, _values, result )
+    msg = "Deprecation notice:  Variables must now include '$' in prototypes"
+    msg += " at line %s" % @lexer.line
+    msg += " in file %s" % @lexer.file if @lexer.file
+    Puppet.warning msg
     result = AST::CompArgument.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -1543,8 +1559,12 @@ module_eval <<'.,.,', 'grammar.ra', 718
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 725
+module_eval <<'.,.,', 'grammar.ra', 733
   def _reduce_100( val, _values, result )
+    msg = "Deprecation notice:  Variables must now include '$' in prototypes"
+    msg += " at line %s" % @lexer.line
+    msg += " in file %s" % @lexer.file if @lexer.file
+    Puppet.warning msg
     result = AST::CompArgument.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -1554,10 +1574,32 @@ module_eval <<'.,.,', 'grammar.ra', 725
   end
 .,.,
 
- # reduce 101 omitted
+module_eval <<'.,.,', 'grammar.ra', 739
+  def _reduce_101( val, _values, result )
+    result = AST::CompArgument.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :children => [val[0],val[2]]
+    )
+   result
+  end
+.,.,
 
-module_eval <<'.,.,', 'grammar.ra', 734
+module_eval <<'.,.,', 'grammar.ra', 745
   def _reduce_102( val, _values, result )
+    result = AST::CompArgument.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :children => [val[0]]
+    )
+   result
+  end
+.,.,
+
+ # reduce 103 omitted
+
+module_eval <<'.,.,', 'grammar.ra', 754
+  def _reduce_104( val, _values, result )
     result = AST::Name.new(
         :value => val[1],
         :file => @lexer.file,
@@ -1567,8 +1609,8 @@ module_eval <<'.,.,', 'grammar.ra', 734
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 743
-  def _reduce_103( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 763
+  def _reduce_105( val, _values, result )
     name = val[0].sub(/^\$/,'')
     result = AST::Variable.new(
         :line => @lexer.line,
@@ -1579,8 +1621,19 @@ module_eval <<'.,.,', 'grammar.ra', 743
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 755
-  def _reduce_104( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 771
+  def _reduce_106( val, _values, result )
+    result = AST::Name.new(
+        :line => @lexer.line,
+        :file => @lexer.file,
+        :value => val[0].sub(/^\$/,'')
+    )
+   result
+  end
+.,.,
+
+module_eval <<'.,.,', 'grammar.ra', 783
+  def _reduce_107( val, _values, result )
     if val[1].instance_of?(AST::ASTArray)
         result = val[1]
     else
@@ -1594,8 +1647,8 @@ module_eval <<'.,.,', 'grammar.ra', 755
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 761
-  def _reduce_105( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 789
+  def _reduce_108( val, _values, result )
     result = AST::ASTArray.new(
         :line => @lexer.line,
         :file => @lexer.file,
@@ -1605,14 +1658,14 @@ module_eval <<'.,.,', 'grammar.ra', 761
   end
 .,.,
 
- # reduce 106 omitted
+ # reduce 109 omitted
 
- # reduce 107 omitted
+ # reduce 110 omitted
 
- # reduce 108 omitted
+ # reduce 111 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 766
-  def _reduce_109( val, _values, result )
+module_eval <<'.,.,', 'grammar.ra', 794
+  def _reduce_112( val, _values, result )
  result = nil
    result
   end

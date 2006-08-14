@@ -162,6 +162,7 @@ class Puppet::Parser::AST
             rescue => detail
                 raise Puppet::DevError, detail.to_s
             end
+
             return if pname == "name" # always allow these
             unless type.validattr?(pname)
                 error = Puppet::ParseError.new(
