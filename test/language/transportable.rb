@@ -107,3 +107,5 @@ class TestTransportable < Test::Unit::TestCase
             "Found incorrect number of collectable objects")
     end
 end
+
+# $Id$

@@ -336,6 +336,33 @@ class TestPuppetUtil < Test::Unit::TestCase
                         "Var %s did not take" % var)
         end
     end
+
+    def test_symbolize
+        ret = nil
+        assert_nothing_raised {
+            ret = Puppet::Util.symbolize("yayness")
+        }
+
+        assert_equal(:yayness, ret)
+
+        assert_nothing_raised {
+            ret = Puppet::Util.symbolize(:yayness)
+        }
+
+        assert_equal(:yayness, ret)
+
+        assert_nothing_raised {
+            ret = Puppet::Util.symbolize(43)
+        }
+
+        assert_equal(43, ret)
+
+        assert_nothing_raised {
+            ret = Puppet::Util.symbolize(nil)
+        }
+
+        assert_equal(nil, ret)
+    end
 end
 
 # $Id$

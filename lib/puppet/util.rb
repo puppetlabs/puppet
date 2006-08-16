@@ -464,14 +464,35 @@ module Util
     end
 
     def symbolize(value)
-        case value
-        when String: value = value.intern
-        when Symbol: value
+        if value.respond_to? :intern
+            return value.intern
         else
-            raise ArgumentError, "'%s' must be a string or symbol" % value
+            value
         end
     end
-    module_function :symbolize
+
+    def symbolizehash(hash)
+        newhash = {}
+        hash.each do |name, val|
+            if name.is_a? String
+                newhash[name.intern] = val
+            else
+                newhash[name] = val
+            end
+        end
+    end
+
+    def symbolizehash!(hash)
+        hash.each do |name, val|
+            if name.is_a? String
+                hash[name.intern] = val
+                hash.delete(name)
+            end
+        end
+
+        return hash
+    end
+    module_function :symbolize, :symbolizehash, :symbolizehash!
 
     # Just benchmark, with no logging.
     def thinmark

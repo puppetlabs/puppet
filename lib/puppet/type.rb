@@ -29,7 +29,7 @@ class Type < Puppet::Element
     attr_accessor :file, :line
     attr_reader :tags, :parent
 
-    attr_writer :implicit
+    attr_writer :implicit, :title
     def implicit?
         if defined? @implicit and @implicit
             return true
@@ -103,6 +103,7 @@ class Type < Puppet::Element
         end
 
         @validstates = {}
+        @states = []
         @parameters = []
         @paramhash = {}
 
@@ -370,27 +371,6 @@ class Type < Puppet::Element
 
     public
 
-    # build a per-Type hash, mapping the states to their names
-    def self.buildstatehash
-        unless defined? @validstates
-            @validstates = Hash.new(false)
-        end
-        return unless defined? @states
-        @states.each { |stateklass|
-            name = stateklass.name
-            if @validstates.include?(name) 
-                if @validstates[name] != stateklass
-                    raise Puppet::Error.new("Redefining state %s(%s) in %s" %
-                        [name,stateklass,self])
-                else
-                    # it's already there, so don't bother
-                end
-            else
-                @validstates[name] = stateklass
-            end
-        }
-    end
-
     # Find the namevar
     def self.namevar
         unless defined? @namevar
@@ -593,16 +573,11 @@ class Type < Puppet::Element
     end
 
     def self.unprovide(name)
-        puts "wtf?"
         if @providers.has_key? name
-            p "Removing provider %s" % name
             if @defaultprovider and @defaultprovider.name == name
                 @defaultprovider = nil
             end
             @providers.delete(name)
-        else
-            p name
-            p @providers
         end
     end
 
@@ -696,7 +671,6 @@ class Type < Puppet::Element
         if block_given?
             s.class_eval(&block)
         end
-        @states ||= []
 
         # If it's the 'ensure' state, always put it first.
         if name == :ensure
@@ -783,9 +757,6 @@ class Type < Puppet::Element
     # does the name reflect a valid state?
     def self.validstate?(name)
         name = name.intern if name.is_a? String
-        unless @validstates.length == @states.length
-            self.buildstatehash
-        end
         if @validstates.include?(name)
             return @validstates[name]
         else
@@ -796,18 +767,12 @@ class Type < Puppet::Element
     # Return the list of validstates
     def self.validstates
         return {} unless defined? @states
-        unless @validstates.length == @states.length
-            self.buildstatehash
-        end
 
         return @validstates.keys
     end
 
     # Return the state class associated with a name
     def self.statebyname(name)
-        unless @validstates.length == @states.length
-            self.buildstatehash
-        end
         @validstates[name]
     end
 
@@ -1348,7 +1313,36 @@ class Type < Puppet::Element
     # Force users to call this, so that we can merge objects if
     # necessary.  FIXME This method should be responsible for most of the
     # error handling.
-    def self.create(hash)
+    def self.create(args)
+        # Don't modify the original hash; instead, create a duplicate and modify it.
+        # We have to dup and use the ! so that it stays a TransObject if it is
+        # one.
+        hash = args.dup
+        symbolizehash!(hash)
+
+        # If we're the base class, then pass the info on appropriately
+        if self == Puppet::Type
+            type = nil
+            if hash.is_a? TransObject
+                type = hash.type
+            else
+                # If we're using the type to determine object type, then delete it
+                if type = hash[:type]
+                    hash.delete(:type)
+                end
+            end
+
+            if type
+                if typeklass = self.type(type)
+                    return typeklass.create(hash)
+                else
+                    raise Puppet::Error, "Unknown type %s" % type
+                end
+            else
+                raise Puppet::Error, "No type found for %s" % hash.inspect
+            end
+        end
+
         # Handle this new object being implicit
         implicit = hash[:implicit] || false
         if hash.include?(:implicit)
@@ -1361,29 +1355,31 @@ class Type < Puppet::Element
             # lives easier
             hash = self.hash2trans(hash)
         end
-        name = hash.name
 
-        #Puppet.debug "Creating %s[%s]" % [self.name, name]
+        # XXX This will have to change when transobjects change to using titles
+        title = hash.name
+
+        #Puppet.debug "Creating %s[%s]" % [self.name, title]
 
         # if the object already exists
-        if self.isomorphic? and retobj = self[name]
+        if self.isomorphic? and retobj = self[title]
             # if only one of our objects is implicit, then it's easy to see
             # who wins -- the non-implicit one.
             if retobj.implicit? and ! implicit
-                Puppet.notice "Removing implicit %s" % retobj.name
+                Puppet.notice "Removing implicit %s" % retobj.title
                 # Remove all of the objects, but do not remove their subscriptions.
                 retobj.remove(false)
 
                 # now pass through and create the new object
             elsif implicit
-                Puppet.notice "Ignoring implicit %s" % name
+                Puppet.notice "Ignoring implicit %s" % title
 
                 return retobj
             else
                 # If only one of the objects is being managed, then merge them
                 if retobj.managed?
                     raise Puppet::Error, "%s '%s' is already being managed" %
-                        [self.name, name]
+                        [self.name, title]
                 else
                     retobj.merge(hash)
                     return retobj
@@ -1404,10 +1400,10 @@ class Type < Puppet::Element
             if Puppet[:debug]
                 puts detail.backtrace
             end
-            Puppet.err "Could not create %s: %s" % [name, detail.to_s]
+            Puppet.err "Could not create %s: %s" % [title, detail.to_s]
             if obj
                 obj.remove(true)
-            elsif obj = self[name]
+            elsif obj = self[title]
                 obj.remove(true)
             end
             return nil
@@ -1417,41 +1413,35 @@ class Type < Puppet::Element
             obj.implicit = true
         end
 
-        # Store the object by name
-        self[obj.name] = obj
-
-        if name != obj[self.namevar] and obj.class.isomorphic?
-            self.alias(obj[self.namevar], obj)
-        end
+        # Store the object by title
+        self[obj.title] = obj
 
         return obj
     end
 
     # Convert a hash to a TransObject.
     def self.hash2trans(hash)
-        name = nil
-        ["name", :name, self.namevar, self.namevar.to_s].each { |param|
+        title = nil
+        [:title, self.namevar, :name].each { |param|
             if hash.include? param
-                name = hash[param]
+                title = hash[param]
                 hash.delete(param)
                 break
             end
         }
-        unless name
+        unless title
             raise Puppet::Error,
-                "You must specify a name for objects of type %s" % self.to_s
+                "You must specify a title for objects of type %s" % self.to_s
         end
 
-        [:type, "type"].each do |type|
-            if hash.include? type
-                unless self.validattr? :type
-                    hash.delete type
-                end
+        if hash.include? :type
+            unless self.validattr? :type
+                hash.delete :type
             end
         end
         # okay, now make a transobject out of hash
         begin
-            trans = TransObject.new(name, self.name.to_s)
+            trans = TransObject.new(title, self.name.to_s)
             hash.each { |param, value|
                 trans[param] = value
             }
@@ -1540,6 +1530,7 @@ class Type < Puppet::Element
         end
         namevar = self.class.namevar
 
+        orighash = hash
         # If we got passed a transportable object, we just pull a bunch of info
         # directly from it.  This is the main object instantiation mechanism.
         if hash.is_a?(Puppet::TransObject)
@@ -1553,15 +1544,13 @@ class Type < Puppet::Element
                 end
             }
 
-            @name = hash.name
-
-            # If they did not provide a namevar,
-            if hash.include? namevar
-                self[:alias] = hash.name
-            else
-                hash[namevar] = hash.name
-            end
+            # XXX This will need to change when transobjects change to titles.
+            @title = hash.name
             hash = hash.to_hash
+        elsif hash[:title]
+            # XXX This should never happen
+            @title = hash[:title]
+            hash.delete(:title)
         end
 
         # Before anything else, set our parent if it was included
@@ -1570,8 +1559,19 @@ class Type < Puppet::Element
             hash.delete(:parent)
         end
 
-        # Convert all args to symbols
+        # Munge up the namevar stuff so we only have one value.
         hash = self.argclean(hash)
+
+        # If we've got a title via some other mechanism, set it as an alias.
+        if defined? @title and @title
+            if aliases = hash[:alias]
+                aliases = [aliases] unless aliases.is_a? Array
+                aliases << @title
+                hash[:alias] = aliases
+            else
+                hash[:alias] = @title
+            end
+        end
 
         # Let's do the name first, because some things need to happen once
         # we have the name but before anything else
@@ -1597,20 +1597,21 @@ class Type < Puppet::Element
         # retrieve their stored info.
         #@cache = Puppet::Storage.cache(self)
 
+
         # This is all of our attributes except the namevar.
-        attrs.each { |name|
-            if hash.include?(name)
+        attrs.each { |attr|
+            if hash.include?(attr)
                 begin
-                    self[name] = hash[name]
+                    self[attr] = hash[attr]
                 rescue ArgumentError, Puppet::Error, TypeError
                     raise
                 rescue => detail
                     self.devfail(
                         "Could not set %s on %s: %s" %
-                            [name, self.class.name, detail]
+                            [attr, self.class.name, detail]
                     )
                 end
-                hash.delete name
+                hash.delete attr
             end
         }
 
@@ -1853,47 +1854,74 @@ class Type < Puppet::Element
         self.setdefaults
     end
 
-    # derive the instance name based on class.namevar
+    # For now, leave the 'name' method functioning like it used to.  Once 'title'
+    # works everywhere, I'll switch it.
     def name
-        unless defined? @name and @name
+        return self[:name]
+#        unless defined? @name and @name
+#            namevar = self.class.namevar
+#            if self.class.validparameter?(namevar)
+#                @name = self[:name]
+#            elsif self.class.validstate?(namevar)
+#                @name = self.should(namevar)
+#            else
+#                self.devfail "Could not find namevar %s for %s" %
+#                    [namevar, self.class.name]
+#            end
+#        end
+#
+#        unless @name
+#            self.devfail "Could not find namevar '%s' for %s" %
+#                [self.class.namevar, self.class.name]
+#        end
+#
+#        return @name
+    end
+
+    # Retrieve the title of an object.  If no title was set separately,
+    # then use the object's name.
+    def title
+        unless defined? @title and @title
             namevar = self.class.namevar
             if self.class.validparameter?(namevar)
-                @name = self[:name]
+                @title = self[:name]
             elsif self.class.validstate?(namevar)
-                @name = self.should(namevar)
+                @title = self.should(namevar)
             else
                 self.devfail "Could not find namevar %s for %s" %
                     [namevar, self.class.name]
             end
         end
 
-        unless @name
-            self.devfail "Could not find namevar '%s' for %s" %
-                [self.class.namevar, self.class.name]
-        end
-
-        return @name
+        return @title
     end
 
     # fix any namevar => param translations
-    def argclean(hash)
-        # We have to set the name of our object before anything else,
-        # because it might be used in creating the other states.  We dup and
-        # then convert to a hash here because TransObjects behave strangely
-        # here.
-        hash = hash.dup.to_hash
+    def argclean(oldhash)
+        # This duplication is here because it might be a transobject.
+        hash = oldhash.dup.to_hash
 
         if hash.include?(:parent)
             hash.delete(:parent)
         end
         namevar = self.class.namevar
 
-        hash.each { |var,value|
-            unless var.is_a? Symbol
-                hash[var.intern] = value
-                hash.delete(var)
+        # Do a simple translation for those cases where they've passed :name
+        # but that's not our namevar
+        if hash.include? :name and namevar != :name
+            hash[namevar] = hash[:name]
+            hash.delete(:name)
+        end
+
+        # Make sure we have a name, one way or another
+        unless hash.include? namevar
+            if defined? @title and @title
+                hash[namevar] = @title
+            else
+                raise Puppet::Error,
+                    "Was not passed a namevar or title"
             end
-        }
+        end
 
         return hash
     end

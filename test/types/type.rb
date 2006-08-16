@@ -11,10 +11,6 @@ require 'test/unit'
 class TestType < Test::Unit::TestCase
 	include TestPuppet
     def test_typemethods
-        assert_nothing_raised() {
-            Puppet::Type.buildstatehash
-        }
-
         Puppet::Type.eachtype { |type|
             name = nil
             assert_nothing_raised("Searching for name for %s caused failure" %
@@ -151,7 +147,7 @@ class TestType < Test::Unit::TestCase
             )
         }
 
-        # Verify we adding ourselves as an alias isn't an error.
+        # Verify our adding ourselves as an alias isn't an error.
         assert_nothing_raised {
             baseobj[:alias] = file
         }
@@ -427,7 +423,7 @@ end
 
         path = tempfile()
         exec = Puppet::Type.newexec(
-            :name => "notifytest",
+            :title => "notifytest",
             :path => "/usr/bin:/bin",
             :command => "touch #{path}",
             :refreshonly => true
@@ -451,7 +447,7 @@ end
 
         path = tempfile()
         exec = Puppet::Type.newexec(
-            :name => "beforetest",
+            :title => "beforetest",
             :command => "/bin/cp #{file[:path]} #{path}"
         )
 
@@ -522,6 +518,142 @@ end
         }
 
         assert_equal(:yayness, inst.is)
+    end
+
+    def test_name_vs_title
+        path = tempfile()
+
+        trans = nil
+
+        assert_nothing_raised {
+            trans = Puppet::TransObject.new(path, :file)
+        }
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet::Type.newfile(trans)
+        }
+
+        assert(file.respond_to?(:title),
+            "No 'title' method")
+
+        assert(file.respond_to?(:name),
+            "No 'name' method")
+
+        assert_equal(file.title, file.name,
+            "Name and title were not marked equal")
+
+        assert_nothing_raised {
+            file.title = "My file"
+        }
+
+        assert_equal("My file", file.title)
+        assert_equal(path, file.name)
+    end
+
+    # Make sure the title is sufficiently differentiated from the namevar.
+    def test_title_at_creation_with_hash
+        file = nil
+        fileclass = Puppet::Type.type(:file) 
+
+        path = tempfile()
+        assert_nothing_raised do
+            file = fileclass.create(
+                :title => "Myfile",
+                :path => path
+            )
+        end
+
+        assert_equal("Myfile", file.title, "Did not get correct title")
+        assert_equal(path, file[:name], "Did not get correct name")
+
+        file = nil
+        Puppet::Type.type(:file).clear
+
+        # Now make sure we can specify both and still get the right answers
+        assert_nothing_raised do
+            file = fileclass.create(
+                :title => "Myfile",
+                :name => path
+            )
+        end
+
+        assert_instance_of(fileclass, file)
+
+        assert_equal("Myfile", file.title, "Did not get correct title")
+        assert_equal(path, file[:name], "Did not get correct name")
+    end
+
+    # Make sure the "create" class method behaves appropriately.
+    def test_class_create
+        title = "Myfile"
+        validate = proc do |element|
+            assert(element, "Did not create file")
+            assert_instance_of(Puppet::Type.type(:file), element)
+            assert_equal(title, element.title, "Title is not correct")
+        end
+        type = :file
+        args = {:path => tempfile(), :owner => "root"}
+
+        trans = Puppet::TransObject.new(title, type)
+        args.each do |name, val| trans[name] = val end
+
+        # First call it on the appropriate typeclass
+        obj = nil
+        assert_nothing_raised do
+            obj = Puppet::Type.type(:file).create(trans)
+        end
+
+        validate.call(obj)
+
+        # Now try it using the class method on Type
+        oldid = obj.object_id
+        obj = nil
+        Puppet::Type.type(:file).clear
+
+        assert_nothing_raised {
+            obj = Puppet::Type.create(trans)
+        }
+
+        validate.call(obj)
+        assert(oldid != obj.object_id, "Got same object back")
+
+        # Now try the same things with hashes instead of a transobject
+        oldid = obj.object_id
+        obj = nil
+        Puppet::Type.type(:file).clear
+        hash = {
+            :type => :file,
+            :title => "Myfile",
+            :path => tempfile(),
+            :owner => "root"
+        }
+
+        # First call it on the appropriate typeclass
+        obj = nil
+        assert_nothing_raised do
+            obj = Puppet::Type.type(:file).create(hash)
+        end
+
+        validate.call(obj)
+        assert_equal(:file, obj.should(:type),
+            "Type param did not pass through")
+
+        assert(oldid != obj.object_id, "Got same object back")
+
+        # Now try it using the class method on Type
+        oldid = obj.object_id
+        obj = nil
+        Puppet::Type.type(:file).clear
+
+        assert_nothing_raised {
+            obj = Puppet::Type.create(hash)
+        }
+
+        validate.call(obj)
+        assert(oldid != obj.object_id, "Got same object back")
+        assert_nil(obj.should(:type),
+            "Type param passed through")
     end
 end
 

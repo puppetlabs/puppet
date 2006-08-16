@@ -122,9 +122,14 @@ class Transaction
 
             while source
                 Puppet::Event::Subscription.targets_of(event, source) do |sub|
-                    start.info "Scheduling %s of %s[%s]" %
-                        [sub.callback, sub.target.class.name, sub.target.name]
-                    @targets[sub.target][event] = sub
+                    if target = sub.target
+                        start.info "Scheduling %s of %s[%s]" %
+                            [sub.callback, sub.target.class.name, sub.target.title]
+                        @targets[sub.target][event] = sub
+                    else
+                        raise Puppet::DevError,
+                            "Failed to find a target for %s" % sub.inspect
+                    end
                 end
 
                 source = source.parent

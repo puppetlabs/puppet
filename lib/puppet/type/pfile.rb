@@ -367,9 +367,12 @@ module Puppet
         end
           
         def initialize(hash)
-            # clean out as many references to any file paths as possible
-            # this was the source of many, many bugs
-            @arghash = self.argclean(hash)
+            # Store a copy of the arguments for later.
+            tmphash = hash.to_hash
+            super
+            # Clean out as many references to any file paths as possible.
+            # This was the source of many, many bugs.
+            @arghash = tmphash
             @arghash.delete(self.class.namevar)
 
             if @arghash.include?(:source)
@@ -380,8 +383,6 @@ module Puppet
 
             # Used for caching clients
             @clients = {}
-
-            super
         end
         
         # Create a new file or directory object as a child to the current

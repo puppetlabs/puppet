@@ -116,7 +116,7 @@ module Puppet
 
             # Split an object into its type and name
             def self.split(object)
-                return [object.class.name, object.name]
+                return [object.class.name, object.title]
             end
 
             # Retrieve all of the subscriptions that result in a dependency.
