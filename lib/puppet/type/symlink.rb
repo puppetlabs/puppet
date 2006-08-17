@@ -176,9 +176,12 @@ module Puppet
         end
 
         def initialize(hash)
-            @arghash = self.argclean(hash.dup)
-            @arghash.delete(self.class.namevar)
+            tmphash = hash.to_hash
             super
+            @arghash = tmphash
+            @arghash.delete(self.class.namevar)
+            #@arghash = self.argclean(hash.dup)
+            #@arghash.delete(self.class.namevar)
         end
     end # Puppet.type(:symlink)
 end

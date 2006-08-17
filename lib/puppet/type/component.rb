@@ -73,6 +73,16 @@ module Puppet
             @children.each { |child| yield child }
         end
 
+        # flatten all children, sort them, and evaluate them in order
+        # this is only called on one component over the whole system
+        # this also won't work with scheduling, but eh
+        def evaluate
+            self.finalize unless self.finalized?
+            transaction = Puppet::Transaction.new(self.flatten)
+            transaction.component = self
+            return transaction
+        end
+
         # Do all of the polishing off, mostly doing autorequires and making
         # dependencies.  This will get run once on the top-level component,
         # and it will do everything necessary.
@@ -84,7 +94,7 @@ module Puppet
             self.delve do |object|
                 # Make sure we don't get into loops
                 if started.has_key?(object)
-                    debug "Already finished %s" % object.name
+                    debug "Already finished %s" % object.title
                     next
                 else
                     started[object] = true
@@ -119,26 +129,16 @@ module Puppet
             super(args)
         end
 
-        # flatten all children, sort them, and evaluate them in order
-        # this is only called on one component over the whole system
-        # this also won't work with scheduling, but eh
-        def evaluate
-            self.finalize unless self.finalized?
-            transaction = Puppet::Transaction.new(self.flatten)
-            transaction.component = self
-            return transaction
-        end
-
-        def name
-            #return self[:name]
-            unless defined? @name
+        # We have a different way of setting the title
+        def title
+            unless defined? @title
                 if self[:type] == self[:name] or self[:name] =~ /--\d+$/
-                    @name = self[:type]
+                    @title = self[:type]
                 else
-                    @name = "%s[%s]" % [self[:type],self[:name]]
+                    @title = "%s[%s]" % [self[:type],self[:name]]
                 end
             end
-            return @name
+            return @title
         end
 
         def refresh
@@ -151,7 +151,7 @@ module Puppet
         end
 
         def to_s
-            return "component(%s)" % self.name
+            return "component(%s)" % self.title
         end
 	end
 end

@@ -112,11 +112,11 @@ module Puppet
             if ! FileTest.exists?(basedir)
                 raise Puppet::Error,
                     "Can not create %s; parent directory does not exist" %
-                    @parent.name
+                    @parent.title
             elsif ! FileTest.directory?(basedir)
                 raise Puppet::Error,
                     "Can not create %s; %s is not a directory" %
-                    [@parent.name, dirname]
+                    [@parent.title, dirname]
             end
         end
 

@@ -112,7 +112,7 @@ module TestPuppet
         if ary[0].is_a?(String)
             name = ary.shift
         else
-            name = ary[0].name
+            name = ary[0].title
         end
 
         comp = Puppet.type(:component).create(
@@ -335,10 +335,10 @@ module TestPuppet
         if items[0].is_a? Puppet.type(:component)
             comp = items.shift
         else
-            comp = newcomp(items[0].name, *items)
+            comp = newcomp(items[0].title, *items)
             remove_comp = true
         end
-        msg ||= comp.name
+        msg ||= comp.title
         assert_nothing_raised("Component %s failed" % [msg]) {
             trans = comp.evaluate
         }

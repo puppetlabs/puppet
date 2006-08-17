@@ -100,10 +100,10 @@ class TestFileSources < Test::Unit::TestCase
 
         assert_nothing_raised {
             tofile = Puppet.type(:file).create(
-                :name => todir,
-                "recurse" => true,
-                "backup" => false,
-                "source" => fromdir
+                :path => todir,
+                :recurse => true,
+                :backup => false,
+                :source => fromdir
             )
         }
         assert_apply(tofile)

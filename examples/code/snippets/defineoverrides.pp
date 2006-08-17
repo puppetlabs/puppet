@@ -2,7 +2,7 @@
 
 $file = "/tmp/defineoverrides1"
 
-define myfile(mode) {
+define myfile($mode) {
     file { $name: ensure => file, mode => $mode }
 }
 

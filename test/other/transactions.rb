@@ -384,7 +384,7 @@ class TestTransactions < Test::Unit::TestCase
     def test_failed_reqs_mean_no_run
         exec = Puppet::Type.type(:exec).create(
             :command => "/bin/mkdir /this/path/cannot/possibly/exit",
-            :name => "mkdir"
+            :title => "mkdir"
         )
 
         file = Puppet::Type.type(:file).create(

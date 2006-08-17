@@ -369,6 +369,10 @@ module Puppet
         def initialize(hash)
             # Store a copy of the arguments for later.
             tmphash = hash.to_hash
+
+            # Used for caching clients
+            @clients = {}
+
             super
             # Clean out as many references to any file paths as possible.
             # This was the source of many, many bugs.
@@ -379,10 +383,11 @@ module Puppet
                 @arghash.delete(:source)
             end
 
-            @stat = nil
+            if @arghash.include?(:parent)
+                @arghash.delete(:parent)
+            end
 
-            # Used for caching clients
-            @clients = {}
+            @stat = nil
         end
         
         # Create a new file or directory object as a child to the current

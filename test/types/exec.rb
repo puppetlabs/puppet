@@ -200,13 +200,13 @@ class TestExec < Test::Unit::TestCase
         File.open(exe, "w") { |f| f.puts "#!#{sh}\necho yup" }
 
         file = Puppet.type(:file).create(
-            :name => oexe,
+            :path => oexe,
             :source => exe,
             :mode => 0755
         )
 
         exec = Puppet.type(:exec).create(
-            :name => oexe,
+            :command => oexe,
             :require => [:file, oexe]
         )
 
@@ -223,31 +223,31 @@ class TestExec < Test::Unit::TestCase
         File.open(exe, "w") { |f| f.puts "#!#{sh}\necho yup" }
 
         file = Puppet.type(:file).create(
-            :name => oexe,
+            :path => oexe,
             :source => exe,
             :mode => 755
         )
 
         basedir = File.dirname(oexe)
         baseobj = Puppet.type(:file).create(
-            :name => basedir,
+            :path => basedir,
             :source => exe,
             :mode => 755
         )
 
         ofile = Puppet.type(:file).create(
-            :name => exe,
+            :path => exe,
             :mode => 755
         )
 
         exec = Puppet.type(:exec).create(
-            :name => oexe,
+            :command => oexe,
             :path => ENV["PATH"],
             :cwd => basedir
         )
 
         cat = Puppet.type(:exec).create(
-            :name => "cat %s %s" % [exe, oexe],
+            :command => "cat %s %s" % [exe, oexe],
             :path => ENV["PATH"]
         )
 
@@ -302,15 +302,16 @@ class TestExec < Test::Unit::TestCase
                 :path => ENV['PATH']
             )
         }
+        comp = newcomp(exec)
 
-        assert_events([:executed_command], exec)
-        assert_events([:executed_command], exec)
+        assert_events([:executed_command], comp)
+        assert_events([:executed_command], comp)
         system("touch %s" % afile)
-        assert_events([], exec)
-        assert_events([], exec)
+        assert_events([], comp)
+        assert_events([], comp)
         system("rm %s" % afile)
-        assert_events([:executed_command], exec)
-        assert_events([:executed_command], exec)
+        assert_events([:executed_command], comp)
+        assert_events([:executed_command], comp)
     end
 
     if Process.uid == 0
@@ -377,7 +378,7 @@ class TestExec < Test::Unit::TestCase
         exec = nil
         assert_nothing_raised {
             exec = Puppet.type(:exec).create(
-                :name => "logoutputesting",
+                :title => "logoutputesting",
                 :path => "/usr/bin:/bin",
                 :command => "echo logoutput is false",
                 :logoutput => false
@@ -408,7 +409,7 @@ class TestExec < Test::Unit::TestCase
         path = File.join(basedir, "subfile")
         assert_nothing_raised {
             exec = Puppet.type(:exec).create(
-                :name => "mkdir",
+                :title => "mkdir",
                 :path => "/usr/bin:/bin",
                 :creates => basedir,
                 :command => "mkdir %s; touch %s" % [basedir, path]

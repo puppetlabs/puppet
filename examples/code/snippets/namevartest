@@ -1,4 +1,4 @@
-define filetest(mode, ensure = file) {
+define filetest($mode, $ensure = file) {
     file { $name:
         mode => $mode,
         ensure => $ensure

@@ -207,7 +207,7 @@ class TestType < Test::Unit::TestCase
         }
 
         assert_equal(path, file[:path])
-        assert_equal([name], file[:alias])
+        assert_equal(name, file.title)
 
         assert_nothing_raised {
             file.retrieve
@@ -654,6 +654,36 @@ end
         assert(oldid != obj.object_id, "Got same object back")
         assert_nil(obj.should(:type),
             "Type param passed through")
+    end
+
+    def test_multiplenames
+        obj = nil
+        path = tempfile()
+        assert_raise ArgumentError do
+            obj = Puppet::Type.type(:file).create(
+                :name => path,
+                :path => path
+            )
+        end
+    end
+
+    def test_title_and_name
+        obj = nil
+        path = tempfile()
+        fileobj = Puppet::Type.type(:file)
+
+        assert_nothing_raised do
+            obj = fileobj.create(
+                :title => "myfile",
+                :path => path
+            )
+        end
+
+        assert_equal(obj, fileobj["myfile"],
+            "Could not retrieve obj by title")
+
+        assert_equal(obj, fileobj[path],
+            "Could not retrieve obj by name")
     end
 end
 

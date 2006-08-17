@@ -49,7 +49,7 @@ module Puppet
             rescue => detail
                 @is = nil
                 raise Puppet::Error, "Could not read %s: %s" %
-                    [@parent.name, detail]
+                    [@parent.title, detail]
             end
         end
 

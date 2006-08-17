@@ -151,7 +151,7 @@ class TestFile < Test::Unit::TestCase
             obj = nil
             assert_nothing_raised {
                 obj = Puppet.type(:file).create(
-                    :name => link,
+                    :title => link,
                     :owner => user.name
                 )
             }
@@ -327,7 +327,7 @@ class TestFile < Test::Unit::TestCase
     def test_modes
         file = mktestfile
         # Set it to something else initially
-        File.chmod(0775, file.name)
+        File.chmod(0775, file.title)
         [0644,0755,0777,0641].each { |mode|
             assert_nothing_raised() {
                 file[:mode] = mode
@@ -380,7 +380,7 @@ class TestFile < Test::Unit::TestCase
 
                 file.retrieve
 
-                if file.name !~ /nonexists/
+                if file.title !~ /nonexists/
                     sum = file.state(:checksum)
                     assert_equal(sum.is, sum.should)
                     assert(sum.insync?)
@@ -664,7 +664,7 @@ class TestFile < Test::Unit::TestCase
 
         assert(file, "Could not retrieve file object")
 
-        assert_equal("file=%s" % file.name, file.path)
+        assert_equal("file=%s" % file.title, file.path)
     end
 
     def test_autorequire
@@ -817,7 +817,7 @@ class TestFile < Test::Unit::TestCase
         file = nil
         assert_nothing_raised {
             file = Puppet.type(:file).create(
-                :name => "fileness",
+                :title => "fileness",
                 :path => path,
                 :content => "this is some content"
             )
@@ -868,7 +868,7 @@ class TestFile < Test::Unit::TestCase
         obj = nil
         assert_nothing_raised {
             obj = Puppet.type(:file).create(
-                :name => link,
+                :path => link,
                 :mode => "755"
             )
         }
@@ -1122,7 +1122,7 @@ class TestFile < Test::Unit::TestCase
         bpath = tempfile()
         Dir.mkdir(bpath)
         Puppet::Type.type(:filebucket).create(
-            :name => bucket, :path => bpath
+            :title => bucket, :path => bpath
         )
 
         obj[:backup] = bucket
@@ -1144,7 +1144,7 @@ class TestFile < Test::Unit::TestCase
         }
 
         obj = Puppet::Type.type(:file).create(
-            :name => dest, :source => source
+            :title => dest, :source => source
         )
 
         assert_events([:file_created], obj)
@@ -1304,6 +1304,7 @@ class TestFile < Test::Unit::TestCase
             :path => dest,
             :source => source
         )
+        assert(obj, "Did not create file")
 
         assert_apply(obj)
 

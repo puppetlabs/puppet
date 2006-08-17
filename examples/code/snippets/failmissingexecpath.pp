@@ -1,4 +1,4 @@
-define distloc(path) {
+define distloc($path) {
     file { "/tmp/exectesting1":
         ensure => file
     }

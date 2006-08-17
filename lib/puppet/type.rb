@@ -331,8 +331,11 @@ class Type < Puppet::Element
     # remove a specified object
     def self.delete(object)
         return unless defined? @objects
-        if @objects.include?(object.name)
-            @objects.delete(object.name)
+        if @objects.include?(object.title)
+            @objects.delete(object.title)
+        end
+        if @aliases.include?(object.title)
+            @aliases.delete(object.title)
         end
     end
 
@@ -790,20 +793,22 @@ class Type < Puppet::Element
 
     # What type of parameter are we dealing with? Cache the results, because
     # this method gets called so many times.
-    def self.attrtype(name)
+    def self.attrtype(attr)
         @attrtypes ||= {}
-        unless @attrtypes.include?(name)
-            @attrtypes[name] = case
-                when @validstates.include?(name): :state
-                when @@metaparamhash.include?(name): :meta
-                when @paramhash.include?(name): :param
+        unless @attrtypes.include?(attr)
+            @attrtypes[attr] = case
+                when @validstates.include?(attr): :state
+                when @@metaparamhash.include?(attr): :meta
+                when @paramhash.include?(attr): :param
                 else
-                    raise Puppet::DevError, "Invalid attribute '%s' for class '%s'" %
-                        [name, self.name]
+                    Puppet.err "raising a warning, yo: %s" % attr
+                    raise Puppet::DevError,
+                        "Invalid attribute '%s' for class '%s'" %
+                        [attr, self.name]
                 end
         end
 
-        @attrtypes[name]
+        @attrtypes[attr]
     end
 
     # All parameters, in the appropriate order.  The namevar comes first,
@@ -1177,7 +1182,7 @@ class Type < Puppet::Element
     def parent=(parent)
         if self.parentof?(parent)
             devfail "%s[%s] is already the parent of %s[%s]" %
-                [self.class.name, self.name, parent.class.name, parent.name]
+                [self.class.name, self.title, parent.class.name, parent.title]
         end
         @parent = parent
     end
@@ -1205,7 +1210,7 @@ class Type < Puppet::Element
         childs.each { |child|
             # Make sure we don't have any loops here.
             if parentof?(child)
-                devfail "Already the parent of %s[%s]" % [child.class.name, child.name]
+                devfail "Already the parent of %s[%s]" % [child.class.name, child.title]
             end
             unless child.is_a?(Puppet::Element)
                 self.debug "Got object of type %s" % child.class
@@ -1351,8 +1356,6 @@ class Type < Puppet::Element
 
         name = nil
         unless hash.is_a? TransObject
-            # if it's not a transobject, then make it one, just to make people's
-            # lives easier
             hash = self.hash2trans(hash)
         end
 
@@ -1422,13 +1425,22 @@ class Type < Puppet::Element
     # Convert a hash to a TransObject.
     def self.hash2trans(hash)
         title = nil
-        [:title, self.namevar, :name].each { |param|
-            if hash.include? param
-                title = hash[param]
-                hash.delete(param)
-                break
+        if hash.include? :title
+            title = hash[:title]
+            hash.delete(:title)
+        elsif hash.include? self.namevar
+            title = hash[self.namevar]
+            hash.delete(self.namevar)
+
+            if hash.include? :name
+                raise ArgumentError, "Cannot provide both name and %s to %s" %
+                    [self.namevar, self.name]
             end
-        }
+        elsif hash[:name]
+            title = hash[:name]
+            hash.delete :name
+        end
+
         unless title
             raise Puppet::Error,
                 "You must specify a title for objects of type %s" % self.to_s
@@ -1531,6 +1543,7 @@ class Type < Puppet::Element
         namevar = self.class.namevar
 
         orighash = hash
+
         # If we got passed a transportable object, we just pull a bunch of info
         # directly from it.  This is the main object instantiation mechanism.
         if hash.is_a?(Puppet::TransObject)
@@ -1562,16 +1575,16 @@ class Type < Puppet::Element
         # Munge up the namevar stuff so we only have one value.
         hash = self.argclean(hash)
 
-        # If we've got a title via some other mechanism, set it as an alias.
-        if defined? @title and @title
-            if aliases = hash[:alias]
-                aliases = [aliases] unless aliases.is_a? Array
-                aliases << @title
-                hash[:alias] = aliases
-            else
-                hash[:alias] = @title
-            end
-        end
+        # If we've got both a title via some other mechanism, set it as an alias.
+#        if defined? @title and @title and ! hash[:name]
+#            if aliases = hash[:alias]
+#                aliases = [aliases] unless aliases.is_a? Array
+#                aliases << @title
+#                hash[:alias] = aliases
+#            else
+#                hash[:alias] = @title
+#            end
+#        end
 
         # Let's do the name first, because some things need to happen once
         # we have the name but before anything else
@@ -1589,6 +1602,10 @@ class Type < Puppet::Element
             end
         else
             self.devfail "I was not passed a namevar"
+        end
+
+        if self.name != self.title
+            self.class.alias(self.name, self)
         end
 
         # The information to cache to disk.  We have to do this after
@@ -1653,7 +1670,7 @@ class Type < Puppet::Element
 
                     # Now change our dependency to just the string, instead of
                     # the object itself.
-                    dep = dep.name
+                    dep = dep.title
                 else
                     # Skip autorequires that we aren't managing
                     unless obj = typeobj[dep]
@@ -1664,7 +1681,7 @@ class Type < Puppet::Element
                 # Skip autorequires that we already require
                 next if self.requires?(obj)
 
-                debug "Autorequiring %s %s" % [obj.class.name, obj.name]
+                debug "Autorequiring %s %s" % [obj.class.name, obj.title]
                 self[:require] = [type, dep]
             }
 
@@ -1797,6 +1814,7 @@ class Type < Puppet::Element
                 obj.value = value
             else
                 #self.debug "No default for %s" % obj.name
+                # "obj" is a Parameter.
                 self.delete(obj.name)
             end
         }
@@ -1834,10 +1852,10 @@ class Type < Puppet::Element
                 newvals = oldvals & value
                 if newvals.empty?
                     self.fail "No common values for %s on %s(%s)" %
-                        [param, self.class.name, self.name]
+                        [param, self.class.name, self.title]
                 elsif newvals.length > 1
                     self.fail "Too many values for %s on %s(%s)" %
-                        [param, self.class.name, self.name]
+                        [param, self.class.name, self.title]
                 else
                     self.debug "Reduced old values %s and new values %s to %s" %
                         [oldvals.inspect, value.inspect, newvals.inspect]
@@ -1909,6 +1927,9 @@ class Type < Puppet::Element
         # Do a simple translation for those cases where they've passed :name
         # but that's not our namevar
         if hash.include? :name and namevar != :name
+            if hash.include? namevar
+                raise ArgumentError, "Cannot provide both name and %s" % namevar
+            end
             hash[namevar] = hash[:name]
             hash.delete(:name)
         end
@@ -1937,7 +1958,7 @@ class Type < Puppet::Element
 
     # convert to a string
     def to_s
-        self.name
+        self.title
     end
 
     # Convert to a transportable object
@@ -1945,7 +1966,7 @@ class Type < Puppet::Element
         # Collect all of the "is" values
         retrieve()
 
-        trans = TransObject.new(self.name, self.class.name)
+        trans = TransObject.new(self.title, self.class.name)
 
         states().each do |state|
             trans[state.name] = state.is
@@ -1953,7 +1974,7 @@ class Type < Puppet::Element
 
         @parameters.each do |name, param|
             # Avoid adding each instance name as both the name and the namevar
-            next if param.class.isnamevar? and param.value == self.name
+            next if param.class.isnamevar? and param.value == self.title
             trans[name] = param.value
         end
 
@@ -2031,7 +2052,7 @@ class Type < Puppet::Element
         #Puppet.err "Evaluating %s" % self.path.join(":")
         unless defined? @evalcount
             self.err "No evalcount defined on '%s' of type '%s'" %
-                [self.name,self.class]
+                [self.title,self.class]
             @evalcount = 0
         end
         @evalcount += 1
@@ -2516,7 +2537,7 @@ class Type < Puppet::Element
                     unless obj == @parent
                         self.fail(
                             "%s can not create alias %s: object already exists" %
-                            [@parent.name, other]
+                            [@parent.title, other]
                         )
                     end
                     next

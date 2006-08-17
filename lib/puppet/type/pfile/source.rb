@@ -78,7 +78,7 @@ module Puppet
 
             unless defined? @shouldorig
                 raise Puppet::DevError, "No sources defined for %s" %
-                    @parent.name
+                    @parent.title
             end
 
             @source = nil unless defined? @source
@@ -211,7 +211,7 @@ module Puppet
                 self.retrieve # try again
                 if @is == :notdescribed
                     @parent.log "Could not retreive information on %s" %
-                        @parent.name
+                        @parent.title
                     return nil
                 end
                 if @is == @should

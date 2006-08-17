@@ -1,6 +1,6 @@
 # $Id$
 
-define testargs(file, mode = 755) {
+define testargs($file, $mode = 755) {
     file { $file: ensure => file, mode => $mode }
 }
 

@@ -41,7 +41,7 @@ class TestSymlink < Test::Unit::TestCase
         unless hash.include?(:ensure)
             hash[:ensure] = mktmpfile()
         end
-
+        
         link = Puppet.type(:symlink).create(hash)
         return link
     end

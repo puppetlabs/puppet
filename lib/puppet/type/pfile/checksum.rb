@@ -183,7 +183,7 @@ module Puppet
         def handlesum
             if @is.nil?
                 raise Puppet::Error, "Checksum state for %s is somehow nil" %
-                    @parent.name
+                    @parent.title
             end
 
             if @is == :absent
@@ -277,14 +277,14 @@ module Puppet
             result = false
             state = nil
             unless state = @parent.cached(:checksums) 
-                self.debug "Initializing checksum hash for %s" % @parent.name
+                self.debug "Initializing checksum hash for %s" % @parent.title
                 state = {}
                 @parent.cache(:checksums, state)
             end
 
             if @is.is_a?(Symbol)
                 error = Puppet::Error.new("%s has invalid checksum" %
-                    @parent.name)
+                    @parent.title)
                 raise error
             end
 
@@ -297,7 +297,7 @@ module Puppet
                     )
                 end
                 self.debug "Replacing %s checksum %s with %s" %
-                    [@parent.name, state[@checktypes[0]],@is]
+                    [@parent.title, state[@checktypes[0]],@is]
                 #@parent.debug "@is: %s; @should: %s" % [@is,@should]
                 result = true
             else
