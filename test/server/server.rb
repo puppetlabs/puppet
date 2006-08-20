@@ -5,11 +5,7 @@ if __FILE__ == $0
 end
 
 require 'puppet'
-require 'cgi'
-#require 'puppet/server'
-require 'facter'
-require 'puppet/client'
-require 'xmlrpc/client'
+require 'puppet/server'
 require 'test/unit'
 require 'puppettest.rb'
 

@@ -1,10 +1,10 @@
+# see the bottom of the file for further inclusions
 require 'singleton'
+require 'puppet/error'
 require 'puppet/event-loop'
 require 'puppet/util'
 require 'puppet/log'
 require 'puppet/config'
-
-# see the bottom of the file for further inclusions
 
 #------------------------------------------------------------
 # the top-level module
@@ -13,6 +13,7 @@ require 'puppet/config'
 # preferences for things like debugging
 #
 # it's also a place to find top-level commands like 'debug'
+
 module Puppet
     PUPPETVERSION = '0.18.4'
 
@@ -31,39 +32,6 @@ module Puppet
         attr_accessor :args
     end
 
-    class Error < RuntimeError
-        attr_accessor :stack, :line, :file
-        attr_writer :backtrace
-
-        def backtrace
-            if defined? @backtrace
-                return @backtrace
-            else
-                return super
-            end
-        end
-
-        def initialize(message)
-            @message = message
-        end
-
-        def to_s
-            str = nil
-            if defined? @file and defined? @line and @file and @line
-                str = "%s in file %s at line %s" %
-                    [@message.to_s, @file, @line]
-            elsif defined? @line and @line
-                str = "%s at line %s" %
-                    [@message.to_s, @line]
-            else
-                str = @message.to_s
-            end
-
-            return str
-        end
-    end
-
-    class DevError < Error; end
 
     def self.name
         unless defined? @name

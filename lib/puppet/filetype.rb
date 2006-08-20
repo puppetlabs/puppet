@@ -6,30 +6,18 @@ module Puppet
 
         class << self
             attr_accessor :name
+            include Puppet::Util::ClassGen
         end
 
-        def self.inspect
-            "SvcType(#{self.name})"
-        end
-
-        def self.to_s
-            "SvcType(#{self.name})"
-        end
-
-        def svctype
-            self.class.name
-        end
-
+        # Create a new filetype.
         def self.newfiletype(name, &block)
             @filetypes ||= {}
 
-            klass = Class.new(self)
-
-            klass.name = name
-
-            klass.class_eval(&block)
-
-            const_set(name.to_s.capitalize, klass)
+            klass = genclass(name,
+                :block => block,
+                :prefix => "FileType",
+                :hash => @filetypes
+            )
 
             # Rename the read and write methods, so that we're sure they
             # maintain the stats.
@@ -74,8 +62,6 @@ module Puppet
                     end
                 end
             end
-
-            @filetypes[name] = klass
         end
 
         def self.filetype(type)

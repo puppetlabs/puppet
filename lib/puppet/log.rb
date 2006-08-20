@@ -24,6 +24,10 @@ module Puppet
                 attr_accessor :name
             end
 
+            def self.initvars
+                @matches = []
+            end
+
             # Mark the things we're supposed to match.
             def self.match(obj)
                 @matches ||= []
@@ -65,24 +69,12 @@ module Puppet
 
         # Create a new destination type.
         def self.newdesttype(name, options = {}, &block)
-            dest = Class.new(Destination)
-            name = name.to_s.downcase.intern
-            dest.name = name
+            dest = genclass(name, :parent => Destination, :prefix => "Dest",
+                :block => block,
+                :hash => @desttypes,
+                :attributes => options
+            )
             dest.match(dest.name)
-
-            const_set("Dest" + name.to_s.capitalize, dest)
-
-            @desttypes[dest.name] = dest
-
-            options.each do |option, value|
-                begin
-                    dest.send(option.to_s + "=", value)
-                rescue NoMethodError
-                    raise "%s is an invalid option for log destinations" % option
-                end
-            end
-
-            dest.class_eval(&block)
 
             return dest
         end
@@ -91,6 +83,7 @@ module Puppet
 
         class << self
             include Puppet::Util
+            include Puppet::Util::ClassGen
         end
 
         # Reset all logs to basics.  Basically just closes all files and undefs

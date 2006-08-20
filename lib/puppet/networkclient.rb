@@ -33,6 +33,11 @@ module Puppet
             attr_accessor :puppet_server, :puppet_port
             @clients = {}
 
+            class << self
+                include Puppet::Util
+                include Puppet::Util::ClassGen
+            end
+
             # Create a netclient for each handler
             def self.mkclients
                 # add the methods associated with each namespace
@@ -44,12 +49,10 @@ module Puppet
                     # so that all of the methods are on their own class,
                     # so that they namespaces can define the same methods if
                     # they want.
-                    newclient = Class.new(self)
-
-                    #name = "Puppet::NetworkClient::" + handler.to_s.sub(/^.+::/, '')
-                    name = handler.to_s.sub(/^.+::/, '')
-                    const_set(name, newclient)
-                    @clients[namespace] = newclient
+                    constant = handler.to_s.sub(/^.+::/, '')
+                    name = namespace.downcase
+                    newclient = genclass(name, :hash => @clients,
+                        :constant => constant)
 
                     interface.methods.each { |ary|
                         method = ary[0]
@@ -97,6 +100,8 @@ module Puppet
                 if @clients.empty?
                     self.mkclients()
                 end
+
+                namespace = symbolize(namespace)
 
                 @clients[namespace]
             end

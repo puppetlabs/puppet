@@ -10,8 +10,6 @@ require 'puppet/server'
 require 'test/unit'
 require 'puppettest.rb'
 
-# $Id$
-
 class TestMasterClient < Test::Unit::TestCase
 	include ServerTest
 
@@ -205,3 +203,5 @@ end
         client.send(:getplugins)
     end
 end
+
+# $Id$

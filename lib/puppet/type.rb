@@ -50,7 +50,7 @@ class Type < Puppet::Element
         attr_accessor :providerloader
         attr_writer :defaultprovider
 
-        include Enumerable
+        include Enumerable, Puppet::Util::ClassGen
     end
 
     # iterate across all of the subclasses of Type
@@ -153,47 +153,29 @@ class Type < Puppet::Element
 
     # Define a new type.
     def self.newtype(name, parent = nil, &block)
-        parent ||= Puppet::Type
-        name = Puppet::Util.symbolize(name)
-
-        # Create the class, with the correct name.
-        t = Class.new(parent) do
-            @name = name
-        end
+        # First make sure we don't have a method sitting around
+        name = symbolize(name)
+        newmethod = "new#{name.to_s}"
 
         # Used for method manipulation.
-        selfobj = class << self; self; end
-
-        const = name.to_s.capitalize
-        newmethod = "new#{name.to_s}"
+        selfobj = metaclass()
 
         @types ||= {}
 
-        if @types.include?(name) and const_defined?(const)
-            Puppet.info "Redefining %s" % name
-            remove_const(const)
-
+        if @types.include?(name)
             if self.respond_to?(newmethod)
-                # Remove the old newmethod, too
+                # Remove the old newmethod
                 selfobj.send(:remove_method,newmethod)
             end
         end
-        const_set(name.to_s.capitalize,t)
 
-        # Initialize any necessary variables.
-        t.initvars
-
-        # Evaluate the passed block.  This should usually define all of the work.
-        t.class_eval(&block)
-
-        # If they've got all the necessary methods defined and they haven't
-        # already added the state, then do so now.
-        if t.ensurable? and ! t.validstate?(:ensure)
-            t.ensurable
-        end
-
-        # And add it to our bucket.
-        @types[name] = t
+        # Then create the class.
+        klass = genclass(name,
+            :parent => (parent || Puppet::Type),
+            :overwrite => true,
+            :hash => @types,
+            &block
+        )
 
         # Now define a "new<type>" method for convenience.
         if self.respond_to? newmethod
@@ -201,19 +183,25 @@ class Type < Puppet::Element
             Puppet.warning "'new#{name.to_s}' method already exists; skipping"
         else
             selfobj.send(:define_method, newmethod) do |*args|
-                t.create(*args)
+                klass.create(*args)
             end
         end
 
+        # If they've got all the necessary methods defined and they haven't
+        # already added the state, then do so now.
+        if klass.ensurable? and ! klass.validstate?(:ensure)
+            klass.ensurable
+        end
+
         # Now set up autoload any providers that might exist for this type.
-        t.providerloader = Puppet::Autoload.new(t,
-            "puppet/provider/#{t.name.to_s}"
+        klass.providerloader = Puppet::Autoload.new(klass,
+            "puppet/provider/#{klass.name.to_s}"
         )
 
         # We have to load everything so that we can figure out the default type.
-        t.providerloader.loadall()
+        klass.providerloader.loadall()
 
-        t
+        klass
     end
 
     # Return a Type instance by name.
@@ -411,21 +399,19 @@ class Type < Puppet::Element
     # Create a new metaparam.  Requires a block and a name, stores it in the
     # @parameters array, and does some basic checking on it.
     def self.newmetaparam(name, &block)
-        name = Puppet::Util.symbolize(name)
-        param = Class.new(Puppet::Parameter) do
-            @name = name
-        end
+        @@metaparams ||= []
+        @@metaparamhash ||= {}
+        name = symbolize(name)
 
-        param.initvars
+        param = genclass(name,
+            :parent => Puppet::Parameter,
+            :prefix => "MetaParam",
+            :hash => @@metaparamhash,
+            :array => @@metaparams,
+            &block
+        )
 
         param.ismetaparameter
-        param.class_eval(&block)
-        const_set("MetaParam" + name.to_s.capitalize,param)
-        @@metaparams ||= []
-        @@metaparams << param
-
-        @@metaparamhash ||= {}
-        @@metaparams.each { |p| @@metaparamhash[name] = p }
 
         return param
     end
@@ -517,15 +503,15 @@ class Type < Puppet::Element
 
         self.providify
 
-        provider = Class.new(parent)
-        provider.name = name
-        provider.model = model
-        provider.initvars
-
-        const_set "Provider%s" % name.to_s.capitalize, provider
-
-        provider.class_eval(&block)
-        @providers[name] = provider
+        provider = genclass(name,
+            :parent => parent,
+            :hash => @providers,
+            :prefix => "Provider",
+            :block => block,
+            :attributes => {
+                :model => model
+            }
+        )
 
         return provider
     end
@@ -605,18 +591,14 @@ class Type < Puppet::Element
     # Create a new parameter.  Requires a block and a name, stores it in the
     # @parameters array, and does some basic checking on it.
     def self.newparam(name, &block)
-        name = Puppet::Util.symbolize(name)
-        param = Class.new(Puppet::Parameter) do
-            @name = name
-        end
-
-        param.initvars
-
-        param.element = self
-        param.class_eval(&block)
-        const_set("Parameter" + name.to_s.capitalize,param)
-        @parameters << param
-        @parameters.each { |p| @paramhash[name] = p }
+        param = genclass(name,
+            :parent => Puppet::Parameter,
+            :attributes => { :element => self },
+            :block => block,
+            :prefix => "Parameter",
+            :array => @parameters,
+            :hash => @paramhash
+        )
 
         # These might be enabled later.
 #        define_method(name) do
@@ -646,33 +628,35 @@ class Type < Puppet::Element
         # This is here for types that might still have the old method of defining
         # a parent class.
         unless options.is_a? Hash
-            raise Puppet::DevError, "Options must be a hash, not %s" % options.inspect
+            raise Puppet::DevError,
+                "Options must be a hash, not %s" % options.inspect
         end
 
-        parent = options[:parent] || Puppet::State
         if @validstates.include?(name) 
             raise Puppet::DevError, "Class %s already has a state named %s" %
                 [self.name, name]
         end
-        s = Class.new(parent) do
-            @name = name
-        end
 
-        # If they've passed a retrieve method, then override the retrieve method
-        # on the class.
-        if options[:retrieve]
-            s.send(:define_method, :retrieve) do
-                instance_variable_set(
-                    "@is", provider.send(options[:retrieve])
-                )
+        # We have to create our own, new block here because we want to define
+        # an initial :retrieve method, if told to, and then eval the passed
+        # block if available.
+        s = genclass(name,
+            :parent => options[:parent] || Puppet::State,
+            :hash => @validstates
+        ) do
+            # If they've passed a retrieve method, then override the retrieve
+            # method on the class.
+            if options[:retrieve]
+                define_method(:retrieve) do
+                    instance_variable_set(
+                        "@is", provider.send(options[:retrieve])
+                    )
+                end
             end
-        end
 
-        s.initvars
-
-        const_set("State" + name.to_s.capitalize,s)
-        if block_given?
-            s.class_eval(&block)
+            if block
+                class_eval(&block)
+            end
         end
 
         # If it's the 'ensure' state, always put it first.
@@ -681,7 +665,6 @@ class Type < Puppet::Element
         else
             @states << s
         end
-        @validstates[name] = s
 
 #        define_method(name) do
 #            @states[name].should

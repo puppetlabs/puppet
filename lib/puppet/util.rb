@@ -507,4 +507,8 @@ module Util
 end
 end
 
+require 'puppet/util/methodhelper'
+require 'puppet/util/metaid'
+require 'puppet/util/classgen'
+
 # $Id$
