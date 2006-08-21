@@ -22,6 +22,12 @@ The Puppet [Introduction](introduction.html) covers the basic architecture and
 design goals, including whether and why you should be using Puppet on your
 network.
 
+Cookbook
+========
+This documentation collection is somewhat more of a reference than a how-to,
+so we have developed a [Cookbook](/cookbook/) wiki for writing recipes and
+how-tos for solving specific problems with Puppet.  Because the cookbook is a
+wiki, you can edit and create recipes yourself.
 
 Installation
 ===============
