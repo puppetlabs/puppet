@@ -343,7 +343,7 @@ class Server
             # Note that the user could have passed a path with multiple /'s
             # in it, and we are likely to result in multiples, so we have to
             # get rid of all of them.
-            name.sub(/\/#{mount.name}/, mount.path).gsub(%r{/+}, '/').sub(
+            CGI.unescape name.sub(/\/#{mount.name}/, mount.path).gsub(%r{/+}, '/').sub(
                 %r{/$}, ''
             )
         end

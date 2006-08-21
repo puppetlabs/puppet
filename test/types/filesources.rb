@@ -585,6 +585,28 @@ class TestFileSources < Test::Unit::TestCase
         assert_equal(File.read(source), File.read(dest), "Files are not equal")
         assert_events([], obj)
     end
+
+    def test_file_source_with_space
+        dir = tempfile()
+        source = File.join(dir, "file with spaces")
+        Dir.mkdir(dir)
+        File.open(source, "w") { |f| f.puts "yayness" }
+
+        newdir = tempfile()
+        newpath = File.join(newdir, "file with spaces")
+
+        file = Puppet::Type.newfile(
+            :path => newdir,
+            :source => dir,
+            :recurse => true
+        )
+
+
+        assert_apply(file)
+
+        assert(FileTest.exists?(newpath), "Did not create file")
+        assert_equal("yayness\n", File.read(newpath))
+    end
 end
 
 # $Id$
