@@ -91,6 +91,7 @@ def check_prereqs
             require pre
         rescue LoadError
             puts "Could not load %s; cannot install" % pre
+            exit -1
         end
     }
 end
