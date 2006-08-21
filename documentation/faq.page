@@ -233,4 +233,11 @@ openssl:
 [download]: /downloads
 [thread]: http://mail.madstop.com/pipermail/puppet-dev/2006-April/000393.html
 
+I'm getting IPv6 errors; what's wrong?
+--------------------------------------
+This can apparently happen if Ruby is not compiled with IPv6 support; see the
+[mail thread](http://mail.madstop.com/pipermail/puppet-dev/2006-August/001410.html)
+for more details.  The only known solution is to make sure you're running a
+version of Ruby compiled with IPv6 support.
+
 *$Id$*
