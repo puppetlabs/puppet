@@ -22,7 +22,13 @@ and "What is Puppet's License? (GPL)")
 
 * [Documentation](documentation/)
 
-    Available documentation on puppet. Including an Introduction, and Language & Type Library References.
+    Available documentation on puppet. Including an Introduction, and Language
+    & Type Library References.
+
+* [Cookbook](/cookbook/)
+
+    A Cookbook wiki containing [recipes](/cookbook/PuppetRecipes) for Puppet
+    and Facter.
 
 * [Downloads](/downloads/)
 
