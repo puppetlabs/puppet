@@ -701,7 +701,7 @@ class Type < Puppet::Element
 
     # Find the metaparameter class associated with a given metaparameter name.
     def self.metaparamclass(name)
-        @@metaparamhash[name]
+        @@metaparamhash[symbolize(name)]
     end
 
     # Find the parameter class associated with a given parameter name.

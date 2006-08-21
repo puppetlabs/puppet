@@ -111,5 +111,33 @@ class Puppet::Parser::AST
 
     # Another simple container class to make sure we can correctly arrayfy
     # things.
-    class CompArgument < ASTArray; end
+    class CompArgument < ASTArray
+        @@warnings = {}
+        def initialize(hash)
+            super
+            name = @children[0].value
+
+            # If it's not a metaparamer, we're fine.
+            return unless Puppet::Type.metaparamclass(name)
+
+            if @children[1]
+                if @children[1].value == false
+                    raise Puppet::ParseError,
+                        "%s is a metaparameter; please choose another name" %
+                        name
+                else
+                    unless @@warnings[name]
+                        @@warnings[name] = true
+                        Puppet.warning "%s is a metaparam; this value will inherit to all contained elements" % name
+                    end
+                end
+            else
+                raise Puppet::ParseError,
+                    "%s is a metaparameter; please choose another name" %
+                    name
+            end
+        end
+    end
 end
+
+# $Id$

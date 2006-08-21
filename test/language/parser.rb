@@ -456,6 +456,31 @@ file { "/tmp/yayness":
             parser.parse
         }
     end
+
+    def test_metaparams_in_definition_prototypes
+        parser = Puppet::Parser::Parser.new
+
+        str1 = %{define mydef($schedule) {}}
+        parser.string = str1
+
+        assert_raise(Puppet::ParseError) {
+            parser.parse
+        }
+
+        str2 = %{define mydef($schedule = false) {}}
+        parser.string = str2
+
+        assert_raise(Puppet::ParseError) {
+            parser.parse
+        }
+
+        str3 = %{define mydef($schedule = daily) {}}
+        parser.string = str3
+
+        assert_nothing_raised {
+            parser.parse
+        }
+    end
 end
 
 # $Id$
