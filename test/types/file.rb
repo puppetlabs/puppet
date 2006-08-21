@@ -1310,6 +1310,47 @@ class TestFile < Test::Unit::TestCase
 
         assert(FileTest.exists?(dest), "File did not get created")
     end
+
+    def test_present_matches_anything
+        path = tempfile()
+
+        file = Puppet::Type.newfile(:path => path, :ensure => :present)
+
+        file.retrieve
+        assert(! file.insync?, "File incorrectly in sync")
+
+        # Now make a file
+        File.open(path, "w") { |f| f.puts "yay" }
+
+        file.retrieve
+        assert(file.insync?, "File not in sync")
+
+        # Now make a directory
+        File.unlink(path)
+        Dir.mkdir(path)
+
+        file.retrieve
+        assert(file.insync?, "Directory not considered 'present'")
+
+        Dir.rmdir(path)
+
+        # Now make a link
+        file[:links] = :manage
+
+        otherfile = tempfile()
+        File.symlink(otherfile, path)
+
+        file.retrieve
+        assert(file.insync?, "Symlink not considered 'present'")
+        File.unlink(path)
+
+        # Now set some content, and make sure it works
+        file[:content] = "yayness"
+
+        assert_apply(file)
+
+        assert_equal("yayness", File.read(path), "Content did not get set correctly")
+    end
 end
 
 # $Id$

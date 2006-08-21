@@ -2,9 +2,11 @@ module Puppet
     Puppet.type(:file).ensurable do
         require 'etc'
         desc "Whether to create files that don't currently exist.
-            Possible values are *absent*, *present* (equivalent to *file*),
-            *file*, and *directory*.  Specifying 'absent' will delete the file,
-            although currently this will not recursively delete directories.
+            Possible values are *absent*, *present* (equivalent to ``exists`` in
+            most file tests -- will match any form of file existence, and if the
+            file is missing will create an empty file), *file*, and
+            *directory*.  Specifying ``absent`` will delete the file, although
+            currently this will not recursively delete directories.
 
             Anything other than those values will be considered to be a symlink.
             For instance, the following text creates a link:
@@ -50,7 +52,12 @@ module Puppet
             return :file_created
         end
 
-        aliasvalue(:present, :file)
+        #aliasvalue(:present, :file)
+        newvalue(:present) do
+            # Make a file if they want something, but this will match almost
+            # anything.
+            set_file
+        end
 
         newvalue(:directory) do
             mode = @parent.should(:mode)
@@ -117,6 +124,20 @@ module Puppet
                 raise Puppet::Error,
                     "Can not create %s; %s is not a directory" %
                     [@parent.title, dirname]
+            end
+        end
+
+        # We have to treat :present specially, because it works with any
+        # type of file.
+        def insync?
+            if self.should == :present
+                if @is.nil? or @is == :absent
+                    return false
+                else
+                    return true
+                end
+            else
+                return super
             end
         end
 
