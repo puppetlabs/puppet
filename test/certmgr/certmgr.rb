@@ -261,4 +261,59 @@ class TestCertMgr < Test::Unit::TestCase
         }
         assert_nil(cert)
     end
+
+    def test_crl
+        ca = mkCA()
+        h1 = mkSignedCert(ca, "host1.example.com")
+        h2 = mkSignedCert(ca, "host2.example.com")
+        
+        assert(ca.cert.verify(ca.cert.public_key))
+        assert(h1.verify(ca.cert.public_key))
+        assert(h2.verify(ca.cert.public_key))
+
+        crl = ca.crl
+        assert_not_nil(crl)
+        
+        store = mkStore(ca)
+        assert( store.verify(ca.cert))
+        assert( store.verify(h1, [ca.cert]))
+        assert( store.verify(h2, [ca.cert]))
+
+        ca.revoke(h1.serial)
+
+        # Recreate the CA from disk
+        ca = mkCA()
+        store = mkStore(ca)
+        assert( store.verify(ca.cert))
+        assert(!store.verify(h1, [ca.cert]))
+        assert( store.verify(h2, [ca.cert]))
+        
+        ca.revoke(h2.serial)
+        assert_equal(1, ca.crl.extensions.size)
+
+        File::open("/tmp/crl.pem", "w") { |f| f.write(ca.crl.to_pem) }
+        # Recreate the CA from disk
+        ca = mkCA()
+        store = mkStore(ca)
+        assert( store.verify(ca.cert))
+        assert(!store.verify(h1, [ca.cert]))
+        assert(!store.verify(h2, [ca.cert]))
+    end
+
+    def mkSignedCert(ca, host)
+        cert = mkcert(host)
+        assert_nothing_raised {
+            signedcert, cacert = ca.sign(cert.mkcsr)
+            return signedcert
+        }
+    end
+
+    def mkStore(ca)
+        store = OpenSSL::X509::Store.new
+        store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
+        store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK
+        store.add_cert(ca.cert)
+        store.add_crl(ca.crl)
+        store
+    end
 end

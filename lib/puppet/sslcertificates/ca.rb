@@ -1,6 +1,6 @@
 class Puppet::SSLCertificates::CA
     Certificate = Puppet::SSLCertificates::Certificate
-    attr_accessor :keyfile, :file, :config, :dir, :cert
+    attr_accessor :keyfile, :file, :config, :dir, :cert, :crl
 
     Puppet.setdefaults(:ca,
         :cadir => {  :default => "$ssldir/ca",
@@ -25,6 +25,12 @@ class Puppet::SSLCertificates::CA
             :owner => "$user",
             :group => "$group",
             :desc => "The CA public key."
+        },
+        :cacrl => { :default => "$cadir/ca_crl.pem",
+            :owner => "$user",
+            :group => "$group",
+            :mode => 0664,
+            :desc => "The certificate revocation list (CRL) for the CA."
         },
         :caprivatedir => { :default => "$cadir/private",
             :owner => "$user",
@@ -130,6 +136,7 @@ class Puppet::SSLCertificates::CA
         end
 
         self.getcert
+        init_crl
         unless FileTest.exists?(@config[:serial])
             Puppet.config.write(:serial) do |f|
                 f << "%04X" % 1
@@ -223,7 +230,6 @@ class Puppet::SSLCertificates::CA
         Puppet.config.write(:cacert) do |f|
             f.puts @cert.to_pem
         end
-        @key = cert.key
         return cert
     end
 
@@ -278,34 +284,12 @@ class Puppet::SSLCertificates::CA
             raise Puppet::Error, "CSR sign verification failed"
         end
 
-        # i should probably check key length...
-
-        # read the ca cert in
-        cacert = OpenSSL::X509::Certificate.new(
-            File.read(@config[:cacert])
-        )
-
-        cakey = nil
-        if @config[:password]
-            cakey = OpenSSL::PKey::RSA.new(
-                File.read(@config[:cakey]), @config[:password]
-            )
-        else
-            cakey = OpenSSL::PKey::RSA.new(
-                File.read(@config[:cakey])
-            )
-        end
-
-        unless cacert.check_private_key(cakey)
-            raise Puppet::Error, "CA Certificate is invalid"
-        end
-
         serial = File.read(@config[:serial]).chomp.hex
         newcert = Puppet::SSLCertificates.mkcert(
             :type => :server,
             :name => csr.subject,
             :days => @config[:ca_days],
-            :issuer => cacert,
+            :issuer => @cert,
             :serial => serial,
             :publickey => csr.public_key
         )
@@ -315,11 +299,11 @@ class Puppet::SSLCertificates::CA
             f << "%04X" % (serial + 1)
         end
 
-        newcert.sign(cakey, OpenSSL::Digest::SHA1.new)
+        sign_with_key(newcert)
 
         self.storeclientcert(newcert)
 
-        return [newcert, cacert]
+        return [newcert, @cert]
     end
 
     # Store the client's CSR for later signing.  This is called from
@@ -338,6 +322,20 @@ class Puppet::SSLCertificates::CA
         end
     end
 
+    # Revoke the certificate with serial number SERIAL issued by this
+    # CA. The REASON must be one of the OpenSSL::OCSP::REVOKED_* reasons
+    def revoke(serial, reason = OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
+        time = Time.now
+        revoked = OpenSSL::X509::Revoked.new
+        revoked.serial = serial
+        revoked.time = time
+        enum = OpenSSL::ASN1::Enumerated(reason)
+        ext = OpenSSL::X509::Extension.new("CRLReason", enum)
+        revoked.add_extension(ext)
+        @crl.add_revoked(revoked)
+        store_crl
+    end
+
     # Store the certificate that we generate.
     def storeclientcert(cert)
         host = thing2name(cert)
@@ -351,6 +349,61 @@ class Puppet::SSLCertificates::CA
         Puppet.config.writesub(:signeddir, certfile) do |f|
             f.print cert.to_pem
         end
+    end
+
+    private
+    def init_crl
+        if FileTest.exists?(@config[:cacrl])
+            @crl = OpenSSL::X509::CRL.new(
+                File.read(@config[:cacrl])
+            )
+        else
+            # Create new CRL
+            @crl = OpenSSL::X509::CRL.new
+            @crl.issuer = @cert.subject
+            @crl.version = 1
+            store_crl
+            @crl
+        end
+    end
+        
+    def store_crl
+        # Increment the crlNumber
+        e = @crl.extensions.find { |e| e.oid == 'crlNumber' }
+        ext = @crl.extensions.reject { |e| e.oid == 'crlNumber' }
+        crlNum = OpenSSL::ASN1::Integer(e ? e.value.to_i + 1 : 0)
+        ext << OpenSSL::X509::Extension.new("crlNumber", crlNum)
+        @crl.extensions = ext
+
+        # Set last/next update
+        now = Time.now
+        @crl.last_update = now
+        # Keep CRL valid for 5 years
+        @crl.next_update = now + 5 * 365*24*60*60
+
+        sign_with_key(@crl)
+        Puppet.config.write(:cacrl) do |f|
+            f.puts @crl.to_pem
+        end
+    end
+
+    def sign_with_key(signable, digest = OpenSSL::Digest::SHA1.new)
+        cakey = nil
+        if @config[:password]
+            cakey = OpenSSL::PKey::RSA.new(
+                File.read(@config[:cakey]), @config[:password]
+            )
+        else
+            cakey = OpenSSL::PKey::RSA.new(
+                File.read(@config[:cakey])
+            )
+        end
+
+        unless @cert.check_private_key(cakey)
+            raise Puppet::Error, "CA Certificate is invalid"
+        end
+
+        signable.sign(cakey, digest)
     end
 end
 

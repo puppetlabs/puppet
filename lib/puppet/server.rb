@@ -44,6 +44,22 @@ module Puppet
 
                 @authconfig
             end
+            
+            # Read the CA cert and CRL and populate an OpenSSL::X509::Store
+            # with them, with flags appropriate for checking client 
+            # certificates for revocation
+            def x509store
+                unless File.exist?(Puppet[:cacrl])
+                    raise Puppet::Error, "Could not find CRL"
+                end
+                crl = OpenSSL::X509::CRL.new(File.read(Puppet[:cacrl]))
+                store = OpenSSL::X509::Store.new
+                store.purpose = OpenSSL::X509::PURPOSE_ANY
+                store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+                store.add_cert(@cacert)
+                store.add_crl(crl)
+                return store
+            end
 
             def initialize(hash = {})
                 Puppet.info "Starting server for Puppet version %s" % Puppet.version
@@ -97,6 +113,7 @@ module Puppet
                     end
                 end
 
+                hash[:SSLCertificateStore] = x509store
                 hash[:SSLCertificate] = @cert
                 hash[:SSLPrivateKey] = @key
                 hash[:SSLStartImmediately] = true
