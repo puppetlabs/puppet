@@ -95,6 +95,16 @@ module Puppet::Parser
             @@declarative = val
         end
 
+        # Is the value true?  This allows us to control the definition of truth
+        # in one place.
+        def self.true?(value)
+            if value == false or value == ""
+                return false
+            else
+                return true
+            end
+        end
+
         # Add all of the defaults for a given object to that object.
         def adddefaults(obj)
             defaults = lookupdefaults(obj.type)

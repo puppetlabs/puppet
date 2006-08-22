@@ -481,6 +481,25 @@ file { "/tmp/yayness":
             parser.parse
         }
     end
+
+    def test_parsingif
+        parser = Puppet::Parser::Parser.new()
+        exec = proc do |val|
+            %{exec { "/bin/echo #{val}": logoutput => true }}
+        end
+        str1 = %{if true { #{exec.call("true")} }}
+        ret = nil
+        assert_nothing_raised {
+            ret = parser.parse(str1)
+        }
+        assert_instance_of(Puppet::Parser::AST::IfStatement, ret)
+        str2 = %{if true { #{exec.call("true")} } else { #{exec.call("false")} }}
+        assert_nothing_raised {
+            ret = parser.parse(str2)
+        }
+        assert_instance_of(Puppet::Parser::AST::IfStatement, ret)
+        assert_instance_of(Puppet::Parser::AST::Else, ret.else)
+    end
 end
 
 # $Id$

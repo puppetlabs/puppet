@@ -16,6 +16,25 @@ require 'puppettest'
 class TestAST < Test::Unit::TestCase
 	include ParserTesting
 
+    # A fake class that we can use for testing evaluation.
+    class FakeAST
+        attr_writer :evaluate
+
+        def evaluate(*args)
+            return @evaluate
+        end
+
+        def initialize(val = nil)
+            if val
+                @evaluate = val
+            end
+        end
+
+        def safeevaluate(*args)
+            evaluate()
+        end
+    end
+
     # Test that classes behave like singletons
     def test_classsingleton
         parent = child1 = child2 = nil
@@ -887,6 +906,39 @@ class TestAST < Test::Unit::TestCase
             scope = Puppet::Parser::Scope.new()
             objects = scope.evaluate(:ast => top)
         }
+    end
+
+    def test_if
+        astif = nil
+        astelse = nil
+        fakeelse = FakeAST.new(:else)
+        faketest = FakeAST.new(true)
+        fakeif = FakeAST.new(:if)
+
+        assert_nothing_raised {
+            astelse = AST::Else.new(:statements => fakeelse)
+        }
+        assert_nothing_raised {
+            astif = AST::IfStatement.new(
+                :test => faketest,
+                :statements => fakeif,
+                :else => astelse
+            )
+        }
+
+        # We initialized it to true, so we should get that first
+        ret = nil
+        assert_nothing_raised {
+            ret = astif.evaluate(:scope => "yay")
+        }
+        assert_equal(:if, ret)
+
+        # Now set it to false and check that
+        faketest.evaluate = false
+        assert_nothing_raised {
+            ret = astif.evaluate(:scope => "yay")
+        }
+        assert_equal(:else, ret)
     end
 end
 

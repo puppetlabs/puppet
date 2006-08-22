@@ -11,17 +11,13 @@ token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT
 
 # We have 2 shift/reduce conflicts
-expect 2
+#expect 2
 
 rule
 program:    statements {
     if val[0].is_a?(AST::ASTArray)
         result = val[0]
     else
-        result = AST::ASTArray.new(
-            :line => @lexer.line,
-            :children => [val[0]]
-        )
     end
 }
             | nothing
@@ -32,11 +28,7 @@ statements: statement
         val[0].push(val[1])
         result = val[0]
     else
-        result = AST::ASTArray.new(
-            :file => @lexer.file,
-            :line => @lexer.line,
-            :children => [val[0],val[1]]
-        )
+        result = ast AST::ASTArray, :children => [val[0],val[1]]
     end
 }
 
@@ -46,6 +38,7 @@ statement:    object
             | collection
             | assignment
             | casestatement
+            | ifstatement
             | import
             | fstatement
             | definition
@@ -54,23 +47,17 @@ statement:    object
 
 fstatement:   NAME LPAREN classnames RPAREN {
     args = aryfy(val[2])
-    result = AST::Function.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
+    result = ast AST::Function,
         :name => val[0],
         :arguments => args,
         :ftype => :statement
-    )
 }
             | NAME classnames {
     args = aryfy(val[1])
-    result = AST::Function.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
+    result = ast AST::Function,
         :name => val[0],
         :arguments => args,
         :ftype => :statement
-    )
 }
 
 # Includes are just syntactic sugar for classes with no names and
@@ -105,10 +92,8 @@ object:       name LBRACE objectinstances endsemi RBRACE {
     if array.instance_of?(AST::ObjectInst)
         array = [array]
     end
-    result = AST::ASTArray.new(
-        :line => @lexer.line,
-        :file => @lexer.file
-    )
+    result = ast AST::ASTArray
+
     # this iterates across each specified objectinstance
     array.each { |instance|
         unless instance.instance_of?(AST::ObjectInst)
@@ -116,14 +101,10 @@ object:       name LBRACE objectinstances endsemi RBRACE {
         end
         # now, i need to somehow differentiate between those things with
         # arrays in their names, and normal things
-        result.push AST::ObjectDef.new(
-            :pin => "{}",
-            :line => @lexer.line,
-            :file => @lexer.file,
+        result.push ast(AST::ObjectDef,
             :type => val[0],
             :name => instance[0],
-            :params => instance[1]
-        )
+            :params => instance[1])
     }
 }           | name LBRACE params endcomma RBRACE {
     if val[0].instance_of?(AST::ASTArray)
@@ -132,25 +113,14 @@ object:       name LBRACE objectinstances endsemi RBRACE {
     end
     # an object but without a name
     # this cannot be an instance of a library type
-    result = AST::ObjectDef.new(
-        :pin => "{}",
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :type => val[0],
-        :params => val[2]
-    )
+    result = ast AST::ObjectDef, :type => val[0], :params => val[2]
+
 }           | type LBRACE params endcomma RBRACE {
     # a template setting for a type
     if val[0].instance_of?(AST::ASTArray)
         raise Puppet::ParseError, "Invalid type"
     end
-    result = AST::TypeDefaults.new(
-        :pin => "{}",
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :type => val[0],
-        :params => val[2]
-    )
+    result = ast(AST::TypeDefaults, :type => val[0], :params => val[2])
 }
 
 # Collectable objects; these get stored in the database, instead of
@@ -182,29 +152,17 @@ collection:     name LCOLLECT RCOLLECT {
     unless Puppet[:storeconfigs]
         raise Puppet::ParseError, "You cannot collect without storeconfigs being set"
     end
-    result = AST::Collection.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :type => val[0]
-    )
+    result = ast AST::Collection, :type => val[0]
 }
 
 objectinst:   objectname COLON params endcomma {
-    result = AST::ObjectInst.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :children => [val[0],val[2]]
-    )
+    result = ast AST::ObjectInst, :children => [val[0],val[2]]
 }
 
 objectinstances:   objectinst
                  | objectinstances SEMIC objectinst {
     if val[0].instance_of?(AST::ObjectInst)
-        result = AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => [val[0],val[2]]
-        )
+        result = ast AST::ASTArray, :children => [val[0],val[2]]
     else
         val[0].push val[2]
         result = val[0]
@@ -215,19 +173,11 @@ endsemi:      # nothing
             | SEMIC
 
 name:         NAME {
-    result = AST::Name.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
+    result = ast AST::Name, :value => val[0]
 }
 
 type:         TYPE {
-    result = AST::Type.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
+    result = ast AST::Type, :value => val[0]
 }
 
 objectname:   quotedtext
@@ -239,27 +189,13 @@ objectname:   quotedtext
 
 assignment:     VARIABLE EQUALS rvalue {
     # this is distinct from referencing a variable
-    variable = AST::Name.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0].sub(/^\$/,'')
-    )
-    result = AST::VarDef.new(
-        :pin => "=",
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :name => variable,
-        :value => val[2]
-    )
+    variable = ast AST::Name, :value => val[0].sub(/^\$/,'')
+    result = ast AST::VarDef, :name => variable, :value => val[2]
 }
 
 params:   # nothing
 {
-    result = AST::ASTArray.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :children => []
-    )
+    result = ast AST::ASTArray
 }
         | param { result = val[0] }
         | params COMMA param {
@@ -267,27 +203,13 @@ params:   # nothing
         val[0].push(val[2])
         result = val[0]
     else
-        result = AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => [val[0],val[2]]
-        )
+        result = ast AST::ASTArray, :children => [val[0],val[2]]
     end
 }
 
 param:        NAME FARROW rvalue {
-    leaf = AST::String.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
-    result = AST::ObjectParam.new(
-        :pin => "=>",
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :param => leaf,
-        :value => val[2]
-    )
+    leaf = ast AST::String, :value => val[0]
+    result = ast AST::ObjectParam, :param => leaf, :value => val[2]
 }
 
 rvalues:      rvalue
@@ -295,11 +217,7 @@ rvalues:      rvalue
     if val[0].instance_of?(AST::ASTArray)
         result = val[0].push(val[2])
     else
-        result = AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => [val[0],val[2]]
-        )
+        result = ast AST::ASTArray, :children => [val[0],val[2]]
     end
 }
 
@@ -316,62 +234,54 @@ rvalue:       quotedtext
 # We currently require arguments in these functions.
 funcrvalue:   NAME LPAREN classnames RPAREN {
     args = aryfy(val[2])
-    result = AST::Function.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
+    result = ast AST::Function,
         :name => val[0],
         :arguments => args,
         :ftype => :rvalue
-    )
 }
 
 quotedtext: DQTEXT {
-    result = AST::String.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
+    result = ast AST::String, :value => val[0]
 }           | SQTEXT {
-    result = AST::FlatString.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
+    result = ast AST::FlatString, :value => val[0]
 }
 
 boolean:    BOOLEAN {
-    result = AST::Boolean.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
+    result = ast AST::Boolean, :value => val[0]
 }
 
 objectref: name LBRACK rvalue RBRACK {
-    result = AST::ObjectRef.new(
-        :pin => '[]',
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :type => val[0],
-        :name => val[2]
-    )
+    result = ast AST::ObjectRef, :type => val[0], :name => val[2]
 }
+
+ifstatement:      IF iftest LBRACE statements RBRACE else {
+    args = {
+        :test => val[1],
+        :statements => val[3]
+    }
+
+    if val[5]
+        args[:else] = val[5]
+    end
+
+    result = ast AST::IfStatement, args
+}
+
+else:             # nothing
+                | ELSE LBRACE statements RBRACE {
+    result = ast AST::Else, :statements => val[2]
+}
+
+# Currently we only support a single value, but eventually one assumes
+# we'll support operators and such.
+iftest:         rvalue
 
 casestatement:  CASE rvalue LBRACE caseopts RBRACE {
     options = val[3]
     unless options.instance_of?(AST::ASTArray)
-        options = AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => [val[3]]
-        )
+        options = ast AST::ASTArray, :children => [val[3]]
     end
-    result = AST::CaseStatement.new(
-        :test => val[1],
-        :options => options,
-        :file => @lexer.file,
-        :line => @lexer.line
-    )
+    result = ast AST::CaseStatement, :test => val[1], :options => options
 }
 
 caseopts:     caseopt
@@ -380,33 +290,16 @@ caseopts:     caseopt
         val[0].push val[1]
         result = val[0]
     else
-        result = AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => [val[0], val[1]]
-        )
+        result = ast AST::ASTArray, :children => [val[0], val[1]]
     end
 }
 
 caseopt:        casevalues COLON LBRACE statements RBRACE {
-    result = AST::CaseOpt.new(
-        :pin => ":",
-        :value => val[0],
-        :file => @lexer.file,
-        :line => @lexer.line,
-        :statements => val[3]
-    )
+    result = ast AST::CaseOpt, :value => val[0], :statements => val[3]
 }               | casevalues COLON LBRACE RBRACE {
-    result = AST::CaseOpt.new(
-        :pin => ":",
+    result = ast(AST::CaseOpt,
         :value => val[0],
-        :file => @lexer.file,
-        :line => @lexer.line,
-        :statements => AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => []
-        )
+        :statements => ast(AST::ASTArray)
     )
 }
 
@@ -416,22 +309,12 @@ casevalues:       selectlhand
         val[0].push(val[2])
         result = val[0]
     else
-        result = AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => [val[0],val[2]]
-        )
+        result = ast AST::ASTArray, :children => [val[0],val[2]]
     end
 }
 
 selector:     selectlhand QMARK svalues {
-    result = AST::Selector.new(
-        :pin => "?",
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :param => val[0],
-        :values => val[2]
-    )
+    result = ast AST::Selector, :param => val[0], :values => val[2]
 }
 
 svalues:      selectval
@@ -443,22 +326,12 @@ sintvalues:   selectval
         val[0].push(val[2])
         result = val[0]
     else
-        result = AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => [val[0],val[2]]
-        )
+        result = ast AST::ASTArray, :children => [val[0],val[2]]
     end
 }
 
 selectval:        selectlhand FARROW rvalue {
-    result = AST::ObjectParam.new(
-        :pin => "=>",
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :param => val[0],
-        :value => val[2]
-    )
+    result = ast AST::ObjectParam, :param => val[0], :value => val[2]
 }
 
 selectlhand:  name
@@ -468,11 +341,7 @@ selectlhand:  name
             | funcrvalue
             | boolean
             | DEFAULT {
-    result = AST::Default.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
+    result = ast AST::Default, :value => val[0]
 }
 
 import: IMPORT quotedtext {
@@ -484,10 +353,7 @@ import: IMPORT quotedtext {
     if dir == ""
         dir = "."
     end
-    result = AST::ASTArray.new(
-        :file => @lexer.file,
-        :line => @lexer.line
-    )
+    result = ast AST::ASTArray
 
     Dir.chdir(dir) {
         # We can't interpolate at this point since we don't have any 
@@ -535,36 +401,21 @@ import: IMPORT quotedtext {
 }
 
 definition: DEFINE NAME argumentlist LBRACE statements RBRACE {
-    result = AST::CompDef.new(
-        :type => AST::Name.new(:value => val[1], :line => @lexer.line),
+    result = ast AST::CompDef,
         :args => val[2],
-        :file => @lexer.file,
-        :line => @lexer.line,
         :keyword => val[0],
         :code => val[4]
-    )
 }           | DEFINE NAME argumentlist LBRACE RBRACE {
-    result = AST::CompDef.new(
-        :type => AST::Name.new(:value => val[1], :line => @lexer.line),
+    result = ast AST::CompDef,
         :args => val[2],
-        :file => @lexer.file,
-        :line => @lexer.line,
         :keyword => val[0],
-        :code => AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => []
-        )
-    )
+        :code => ast(AST::ASTArray, :children => [])
 }
 
 #hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
 hostclass: CLASS NAME parent LBRACE statements RBRACE {
         #:args => val[2],
     args = {
-        :type => AST::Name.new(:value => val[1], :line => @lexer.line),
-        :file => @lexer.file,
-        :line => @lexer.line,
         :keyword => val[0],
         :code => val[4]
     }
@@ -572,37 +423,27 @@ hostclass: CLASS NAME parent LBRACE statements RBRACE {
     if val[2].instance_of?(AST::Name)
         args[:parentclass] = val[2]
     end
-    result = AST::ClassDef.new(args)
+    result = ast AST::ClassDef, args
 }           | CLASS NAME parent LBRACE RBRACE {
     args = {
-        :type => AST::Name.new(:value => val[1], :line => @lexer.line),
-        :file => @lexer.file,
-        :line => @lexer.line,
         :keyword => val[0],
-        :code => AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => []
-        )
+        :code => ast(AST::ASTArray, :children => [])
     }
     # It'll be an ASTArray if we didn't get a parent
     if val[2].instance_of?(AST::Name)
         args[:parentclass] = val[2]
     end
-    result = AST::ClassDef.new(args)
+    result = ast AST::ClassDef, args
 }
 
 nodedef: NODE hostnames parent LBRACE statements RBRACE {
     unless val[1].instance_of?(AST::ASTArray)
-        val[1] = AST::ASTArray.new(
+        val[1] = ast AST::ASTArray,
             :line => val[1].line,
             :file => val[1].file,
             :children => [val[1]]
-        )
     end
     args = {
-        :file => @lexer.file,
-        :line => @lexer.line,
         :names => val[1],
         :keyword => val[0],
         :code => val[4]
@@ -610,30 +451,23 @@ nodedef: NODE hostnames parent LBRACE statements RBRACE {
     if val[2].instance_of?(AST::Name)
         args[:parentclass] = val[2]
     end
-    result = AST::NodeDef.new(args)
+    result = ast AST::NodeDef, args
 }       |  NODE hostnames parent LBRACE RBRACE {
     unless val[1].instance_of?(AST::ASTArray)
-        val[1] = AST::ASTArray.new(
+        val[1] = ast AST::ASTArray,
             :line => val[1].line,
             :file => val[1].file,
             :children => [val[1]]
-        )
     end
     args = {
-        :file => @lexer.file,
-        :line => @lexer.line,
         :keyword => val[0],
         :names => val[1],
-        :code => AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => []
-        )
+        :code => ast(AST::ASTArray, :children => [])
     }
     if val[2].instance_of?(AST::Name)
         args[:parentclass] = val[2]
     end
-    result = AST::NodeDef.new(args)
+    result = ast AST::NodeDef,args
 }
 
 # Multiple hostnames, as used for node names.
@@ -643,40 +477,20 @@ hostnames:    hostname
         result = val[0]
         result.push val[2]
     else
-        result = AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => [val[0], val[2]]
-        )
+        result = ast AST::ASTArray, :children => [val[0], val[2]]
     end
 }
 
 hostname: NAME {
-   result = AST::HostName.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
+   result = ast AST::HostName, :value => val[0]
 }        | SQTEXT {
-   result = AST::HostName.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
+   result = ast AST::HostName, :value => val[0]
 }        | DEFAULT {
-    result = AST::Default.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0]
-    )
+   result = ast AST::Default, :value => val[0]
 }
 
 nothing:    {
-    result = AST::ASTArray.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :children => []
-    )
+    result = ast AST::ASTArray, :children => []
 }
 
 argumentlist: nothing
@@ -687,11 +501,7 @@ argumentlist: nothing
     if val[1].instance_of?(AST::ASTArray)
         result = val[1]
     else
-        result = AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => [val[1]]
-        )
+        result = ast AST::ASTArray, :children => [val[1]]
     end
 }
 
@@ -701,11 +511,7 @@ arguments:    argument
         val[0].push(val[2])
         result = val[0]
     else
-        result = AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => [val[0],val[2]]
-        )
+        result = ast AST::ASTArray, :children => [val[0],val[2]]
     end
 }
 
@@ -714,79 +520,43 @@ argument:     name EQUALS rvalue {
     msg += " at line %s" % @lexer.line
     msg += " in file %s" % @lexer.file if @lexer.file
     Puppet.warning msg
-    result = AST::CompArgument.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :children => [val[0],val[2]]
-    )
+    result = ast AST::CompArgument, :children => [val[0],val[2]]
 }
             | name {
     msg = "Deprecation notice:  Variables must now include '$' in prototypes"
     msg += " at line %s" % @lexer.line
     msg += " in file %s" % @lexer.file if @lexer.file
     Puppet.warning msg
-    result = AST::CompArgument.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :children => [val[0]]
-    )
+    result = ast AST::CompArgument, :children => [val[0]]
 }           | lvariable EQUALS rvalue {
-    result = AST::CompArgument.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :children => [val[0],val[2]]
-    )
+    result = ast AST::CompArgument, :children => [val[0],val[2]]
 }           | lvariable {
-    result = AST::CompArgument.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :children => [val[0]]
-    )
+    result = ast AST::CompArgument, :children => [val[0]]
 }
 
 parent:       nothing
             | INHERITS NAME {
-    result = AST::Name.new(
-        :value => val[1],
-        :file => @lexer.file,
-        :line => @lexer.line
-    )
+    result = ast AST::Name, :value => val[1]
 }
 
 variable:     VARIABLE {
     name = val[0].sub(/^\$/,'')
-    result = AST::Variable.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => name
-    )
+    result = ast AST::Variable, :value => name
 }
 
 # This is variables as lvalues; we're assigning them, not deferencing them.
 lvariable:     VARIABLE {
-    result = AST::Name.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :value => val[0].sub(/^\$/,'')
-    )
+    result = ast AST::Name, :value => val[0].sub(/^\$/,'')
 }
 
 array:        LBRACK rvalues RBRACK {
     if val[1].instance_of?(AST::ASTArray)
         result = val[1]
     else
-        result = AST::ASTArray.new(
-            :line => @lexer.line,
-            :file => @lexer.file,
-            :children => [val[1]]
-        )
+        result = ast AST::ASTArray, :children => [val[1]]
     end
 }           | LBRACK RBRACK {
-    result = AST::ASTArray.new(
-        :line => @lexer.line,
-        :file => @lexer.file,
-        :children => []
-    )
+    result = ast AST::ASTArray
 }
 
 comma:        FARROW
@@ -826,12 +596,26 @@ def aryfy(*args)
             result.push arg
         }
     else
-        result = AST::ASTArray.new(
-            :children => args
-        )
+        result = ast AST::ASTArray, :children => args
     end
 
     return result
+end
+
+# Create an AST object, and automatically add the file and line information if
+# available.
+def ast(klass, hash = {})
+    unless hash[:line]
+        hash[:line] = @lexer.line
+    end
+
+    unless hash[:file]
+        if file = @lexer.file
+            hash[:file] = file
+        end
+    end
+
+    return klass.new(hash)
 end
 
 def file=(file)
@@ -883,7 +667,10 @@ def on_error(token,value,stack)
 end
 
 # how should I do error handling here?
-def parse
+def parse(string = nil)
+    if string
+        self.string = string
+    end
     begin
         yyparse(@lexer,:scan)
     rescue Racc::ParseError => except

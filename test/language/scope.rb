@@ -707,6 +707,18 @@ class TestScope < Test::Unit::TestCase
         assert_equal("parentfoo", flat[0]["owner"], "default did not take")
     end
 
+    # Make sure we know what we consider to be truth.
+    def test_truth
+        assert_equal(true, Puppet::Parser::Scope.true?("a string"),
+            "Strings not considered true")
+        assert_equal(true, Puppet::Parser::Scope.true?(true),
+            "True considered true")
+        assert_equal(false, Puppet::Parser::Scope.true?(""),
+            "Empty strings considered true")
+        assert_equal(false, Puppet::Parser::Scope.true?(false),
+            "false considered true")
+    end
+
     if defined? ActiveRecord
     # Verify that we recursively mark as collectable the results of collectable
     # components.

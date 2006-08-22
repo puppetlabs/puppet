@@ -54,6 +54,9 @@ module Puppet
                 "define" => :DEFINE,
                 "false" => :BOOLEAN,
                 "import" => :IMPORT,
+                "if" => :IF,
+                "elsif" => :ELSIF,
+                "else" => :ELSE,
                 "inherits" => :INHERITS,
                 "node" => :NODE,
                 "true" => :BOOLEAN
