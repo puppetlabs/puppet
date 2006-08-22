@@ -240,6 +240,33 @@ class TestLangFunctions < Test::Unit::TestCase
 
         assert(parsedate != newdate, "Parse date did not change")
     end
+
+    def test_autoloading_functions
+        assert_equal(false, Puppet::Parser::Functions.function(:autofunc),
+            "Got told autofunc already exists")
+
+        dir = tempfile()
+        $: << dir
+        newpath = File.join(dir, "puppet", "parser", "functions")
+        FileUtils.mkdir_p(newpath)
+
+        File.open(File.join(newpath, "autofunc.rb"), "w") { |f|
+            f.puts %{
+                Puppet::Parser::Functions.newfunction(:autofunc, :rvalue) do |vals|
+                    Puppet.wanring vals.inspect
+                end
+            }
+        }
+
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet::Parser::Functions.function(:autofunc)
+        }
+
+        assert(obj, "Did not autoload function")
+        assert(Puppet::Parser::Scope.method_defined?(:function_autofunc),
+            "Did not set function correctly")
+    end
 end
 
 # $Id$

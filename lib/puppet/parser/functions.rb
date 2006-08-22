@@ -1,4 +1,5 @@
 # Grr
+require 'puppet/autoload'
 require 'puppet/parser/scope'
 
 module Puppet::Parser
@@ -6,10 +7,14 @@ module Functions
     # A module for managing parser functions.  Each specified function
     # becomes an instance method on the Scope class.
 
+    class << self
+        include Puppet::Util
+    end
+
     # Create a new function type.
     def self.newfunction(name, ftype = :statement, &block)
         @functions ||= {}
-        name = name.intern if name.is_a? String
+        name = symbolize(name)
 
         if @functions.include? name
             raise Puppet::DevError, "Function %s already defined" % name
@@ -35,7 +40,18 @@ module Functions
 
     # Determine if a given name is a function
     def self.function(name)
-        name = name.intern if name.is_a? String
+        name = symbolize(name)
+
+        unless defined? @autoloader
+            @autoloader = Puppet::Autoload.new(self,
+                "puppet/parser/functions",
+                :wrap => false
+            )
+        end
+
+        unless @functions.include? name
+            @autoloader.load(name)
+        end
 
         if @functions.include? name
             return @functions[name][:name]
@@ -46,7 +62,7 @@ module Functions
 
     # Determine if a given function returns a value or not.
     def self.rvalue?(name)
-        name = name.intern if name.is_a? String
+        name = symbolize(name)
 
         if @functions.include? name
             case @functions[name][:type]
