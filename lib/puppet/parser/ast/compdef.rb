@@ -9,7 +9,11 @@ class Puppet::Parser::AST
     # encounter an error if the component is instantiated more than
     # once.
     class CompDef < AST::Branch
-        attr_accessor :type, :args, :code, :keyword, :scope
+        attr_accessor :type, :args, :code, :keyword, :scope, :parentclass
+
+        def self.genclass
+            AST::Component
+        end
 
         def each
             [@type,@args,@code].each { |child| yield child }
@@ -18,17 +22,21 @@ class Puppet::Parser::AST
         # Store the parse tree.
         def evaluate(hash)
             scope = hash[:scope]
-            type = @type.safeevaluate(:scope => scope)
-            args = @args.safeevaluate(:scope => scope)
+            arghash = {:code => @code}
+            arghash[:type] = @type.safeevaluate(:scope => scope)
+
+            if @args
+                arghash[:args] = @args.safeevaluate(:scope => scope)
+            end
+
+            if @parentclass
+                arghash[:parentclass] = @parentclass.safeevaluate(:scope => scope)
+            end
 
             begin
-                comp = AST::Component.new(
-                    :type => type,
-                    :args => args,
-                    :code => @code
-                )
+                comp = self.class.genclass.new(arghash)
                 comp.keyword = self.keyword
-                scope.settype(type, comp)
+                scope.settype(arghash[:type], comp)
             rescue Puppet::ParseError => except
                 except.line = self.line
                 except.file = self.file
@@ -44,6 +52,7 @@ class Puppet::Parser::AST
 
         def initialize(hash)
             @parentclass = nil
+            @args = nil
 
             # Set a default keyword
             @keyword = "define"

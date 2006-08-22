@@ -10,14 +10,18 @@ class Puppet::Parser::AST
         # The class name
         @name = :component
 
-        attr_accessor :type, :args, :code, :scope, :keyword, :collectable
+        attr_accessor :type, :args, :code, :scope, :keyword
+        attr_accessor :collectable, :parentclass
+
+        # These are retrieved when looking up the superclass
+        attr_accessor :name, :arguments
 
         #def evaluate(scope,hash,objtype,objname)
         def evaluate(hash)
             origscope = hash[:scope]
             objtype = hash[:type]
-            objname = hash[:name]
-            arguments = hash[:arguments] || {}
+            @name = hash[:name]
+            @arguments = hash[:arguments] || {}
 
             @collectable = hash[:collectable]
 
@@ -29,7 +33,7 @@ class Puppet::Parser::AST
             #end
             scope = pscope.newscope(
                 :type => @type,
-                :name => objname,
+                :name => @name,
                 :keyword => self.keyword
             )
             newcontext = hash[:newcontext]
@@ -48,8 +52,8 @@ class Puppet::Parser::AST
             # we are
             scope.tag(@type)
 
-            unless objname.nil?
-                scope.tag(objname)
+            unless @name.nil?
+                scope.tag(@name)
             end
 
             # define all of the arguments in our local scope
@@ -59,15 +63,15 @@ class Puppet::Parser::AST
                 # FIXME This should probably also require each parent
                 # class's arguments...
                 self.args.each { |arg, default|
-                    unless arguments.include?(arg)
+                    unless @arguments.include?(arg)
                         if defined? default and ! default.nil?
-                            arguments[arg] = default
+                            @arguments[arg] = default
                             #Puppet.debug "Got default %s for %s in %s" %
-                            #    [default.inspect, arg.inspect, objname.inspect]
+                            #    [default.inspect, arg.inspect, @name.inspect]
                         else
                             error = Puppet::ParseError.new(
                                 "Must pass %s to %s of type %s" %
-                                    [arg.inspect,objname,@type]
+                                    [arg.inspect,@name,@type]
                             )
                             error.line = self.line
                             error.file = self.file
@@ -79,10 +83,9 @@ class Puppet::Parser::AST
 
             # Set each of the provided arguments as variables in the
             # component's scope.
-            arguments["name"] = objname
-            arguments.each { |arg,value|
+            @arguments.each { |arg,value|
                 begin
-                    scope.setvar(arg,arguments[arg])
+                    scope.setvar(arg,@arguments[arg])
                 rescue Puppet::ParseError => except
                     except.line = self.line
                     except.file = self.file
@@ -100,8 +103,14 @@ class Puppet::Parser::AST
                 end
             }
 
+            unless @arguments.include? "name"
+                scope.setvar("name",@name)
+            end
+
             # Now just evaluate the code with our new bindings.
-            self.code.safeevaluate(:scope => scope)
+            scope.inside(self) do
+                self.code.safeevaluate(:scope => scope)
+            end
 
             # If we're being evaluated as a parent class, we want to return the
             # scope, so it can be overridden and such, but if not, we want to 
@@ -134,9 +143,10 @@ class Puppet::Parser::AST
                 return true
             elsif defined? @parentclass and @parentclass
                 # Else, check any existing parent
-                parent = @scope.lookuptype(@parentclass)
-                if parent and parent != []
+                if parent = @scope.lookuptype(@parentclass) and parent != []
                     return parent.validarg?(param)
+                elsif builtin = Puppet::Type.type(@parentclass)
+                    return builtin.validattr?(param)
                 else
                     raise Puppet::Error, "Could not find parent class %s" %
                         @parentclass

@@ -400,22 +400,38 @@ import: IMPORT quotedtext {
     }
 }
 
-definition: DEFINE NAME argumentlist LBRACE statements RBRACE {
-    result = ast AST::CompDef,
+definition: DEFINE NAME argumentlist parent LBRACE statements RBRACE {
+    args = {
+        :type => ast(AST::Name, :value => val[1]),
         :args => val[2],
         :keyword => val[0],
-        :code => val[4]
-}           | DEFINE NAME argumentlist LBRACE RBRACE {
-    result = ast AST::CompDef,
+        :code => val[5]
+    }
+
+    if val[3].instance_of?(AST::Name)
+        args[:parentclass] = val[3]
+    end
+    result = ast AST::CompDef, args
+}           | DEFINE NAME argumentlist parent LBRACE RBRACE {
+    args = {
+        :type => ast(AST::Name, :value => val[1]),
         :args => val[2],
         :keyword => val[0],
-        :code => ast(AST::ASTArray, :children => [])
+        :code => ast(AST::ASTArray)
+    }
+
+    if val[3].instance_of?(AST::Name)
+        args[:parentclass] = val[3]
+    end
+
+    result = ast AST::CompDef,args
 }
 
 #hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
 hostclass: CLASS NAME parent LBRACE statements RBRACE {
         #:args => val[2],
     args = {
+        :type => ast(AST::Name, :value => val[1]),
         :keyword => val[0],
         :code => val[4]
     }
@@ -426,6 +442,7 @@ hostclass: CLASS NAME parent LBRACE statements RBRACE {
     result = ast AST::ClassDef, args
 }           | CLASS NAME parent LBRACE RBRACE {
     args = {
+        :type => ast(AST::Name, :value => val[1]),
         :keyword => val[0],
         :code => ast(AST::ASTArray, :children => [])
     }

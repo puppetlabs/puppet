@@ -54,7 +54,7 @@ module TestPuppet
             @model.validstates.each do |state|
                 ary << state unless ary.include? state
             end
-            attr_accessor *ary
+            attr_accessor(*ary)
 
             @methods = ary
         end

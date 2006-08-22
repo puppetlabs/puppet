@@ -719,6 +719,56 @@ class TestScope < Test::Unit::TestCase
             "false considered true")
     end
 
+    # Verify scope context is handled correctly.
+    def test_scopeinside
+        scope = Puppet::Parser::Scope.new()
+
+        one = :one
+        two = :two
+
+        # First just test the basic functionality.
+        assert_nothing_raised {
+            scope.inside :one do
+                assert_equal(:one, scope.inside, "Context did not get set")
+            end
+            assert_nil(scope.inside, "Context did not revert")
+        }
+
+        # Now make sure error settings work.
+        assert_raise(RuntimeError) {
+            scope.inside :one do
+                raise RuntimeError, "This is a failure, yo"
+            end
+        }
+        assert_nil(scope.inside, "Context did not revert")
+
+        # Now test it a bit deeper in.
+        assert_nothing_raised {
+            scope.inside :one do
+                scope.inside :two do
+                    assert_equal(:two, scope.inside, "Context did not get set")
+                end
+                assert_equal(:one, scope.inside, "Context did not get set")
+            end
+            assert_nil(scope.inside, "Context did not revert")
+        }
+
+        # And lastly, check errors deeper in
+        assert_nothing_raised {
+            scope.inside :one do
+                begin
+                    scope.inside :two do
+                        raise "a failure"
+                    end
+                rescue
+                end
+                assert_equal(:one, scope.inside, "Context did not get set")
+            end
+            assert_nil(scope.inside, "Context did not revert")
+        }
+
+    end
+
     if defined? ActiveRecord
     # Verify that we recursively mark as collectable the results of collectable
     # components.

@@ -25,7 +25,7 @@ class Type < Puppet::Element
     # that it is clear whether it operates on all attributes (thus has 'attr' in
     # the method name, or whether it operates on a specific type of attributes.
     attr_accessor :children
-    attr_accessor :provider
+    attr_reader :provider
     attr_accessor :file, :line
     attr_reader :tags, :parent
 

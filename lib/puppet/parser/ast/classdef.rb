@@ -5,7 +5,9 @@ class Puppet::Parser::AST
     # but classes are always singletons -- only one can exist on a given
     # host.
     class ClassDef < AST::CompDef
-        attr_accessor :parentclass
+        def self.genclass
+            AST::HostClass
+        end
 
         def each
             if @parentclass
@@ -18,7 +20,7 @@ class Puppet::Parser::AST
         end
 
         # Store our parse tree according to type.
-        def evaluate(hash)
+        def disabled_evaluate(hash)
             scope = hash[:scope]
             type = @type.safeevaluate(:scope => scope)
             #args = @args.safeevaluate(:scope => scope)

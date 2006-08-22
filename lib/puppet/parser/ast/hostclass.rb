@@ -4,9 +4,7 @@ class Puppet::Parser::AST
     # node.
     class HostClass < AST::Component
         @name = :class
-        attr_accessor :parentclass
 
-        #def evaluate(scope,hash,objtype,objname)
         def evaluate(hash)
             scope = hash[:scope]
             objname = hash[:name]

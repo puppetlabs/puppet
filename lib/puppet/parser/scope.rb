@@ -475,6 +475,7 @@ module Puppet::Parser
                     hash[:declarative] = true
                 end
                 self.istop(hash[:declarative])
+                @inside = nil
             else
                 # This is here, rather than in newchild(), so that all
                 # of the later variable initialization works.
@@ -484,6 +485,7 @@ module Puppet::Parser
                 @interp = @parent.interp
                 @topscope = @parent.topscope
                 @context = @parent.context
+                @inside = @parent.inside
             end
 
             # Our child scopes and objects
@@ -523,6 +525,19 @@ module Puppet::Parser
                 "object" => @objectable,
                 "defaults" => @defaultstable
             }
+        end
+
+        # Associate the object directly with the scope, so that contained objects
+        # can look up what container they're running within.
+        def inside(arg = nil)
+            return @inside unless arg
+
+            old = @inside
+            @inside = arg
+            yield
+        ensure
+            #Puppet.warning "exiting %s" % @inside.name
+            @inside = old
         end
 
         # Mark that we're the top scope, and set some hard-coded info.
@@ -797,6 +812,12 @@ module Puppet::Parser
 
         # Define our type.
         def settype(name,ltype)
+            unless name
+                raise Puppet::DevError, "Got told to set type with a nil type"
+            end
+            unless ltype
+                raise Puppet::DevError, "Got told to set type with a nil object"
+            end
             # Don't let them redefine the class in this scope.
             if @typetable.include?(name)
                 raise Puppet::ParseError,

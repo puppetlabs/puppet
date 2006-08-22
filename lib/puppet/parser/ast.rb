@@ -130,34 +130,37 @@ module Puppet
             end
             #---------------------------------------------------------------
             # Now autoload everything.
-            @autoloader = Puppet::Autoload.new(self,
-                "puppet/parser/ast"
-            )
-            @autoloader.loadall
+            # XXX We can't do this, because it causes multiple loads of some
+            # things.
+            #@autoloader = Puppet::Autoload.new(self,
+            #    "puppet/parser/ast"
+            #)
+            #@autoloader.loadall
         end
     end
 end
 
-#require 'puppet/parser/ast/astarray'
-#require 'puppet/parser/ast/branch'
-#require 'puppet/parser/ast/collection'
-#require 'puppet/parser/ast/caseopt'
-#require 'puppet/parser/ast/casestatement'
-#require 'puppet/parser/ast/classdef'
-#require 'puppet/parser/ast/compdef'
-#require 'puppet/parser/ast/component'
-#require 'puppet/parser/ast/else'
-#require 'puppet/parser/ast/hostclass'
-#require 'puppet/parser/ast/leaf'
-#require 'puppet/parser/ast/node'
-#require 'puppet/parser/ast/nodedef'
-#require 'puppet/parser/ast/objectdef'
-#require 'puppet/parser/ast/objectparam'
-#require 'puppet/parser/ast/objectref'
-#require 'puppet/parser/ast/selector'
-#require 'puppet/parser/ast/typedefaults'
-#require 'puppet/parser/ast/vardef'
-#require 'puppet/parser/ast/tag'
-#require 'puppet/parser/ast/function'
+require 'puppet/parser/ast/astarray'
+require 'puppet/parser/ast/branch'
+require 'puppet/parser/ast/collection'
+require 'puppet/parser/ast/caseopt'
+require 'puppet/parser/ast/casestatement'
+require 'puppet/parser/ast/classdef'
+require 'puppet/parser/ast/compdef'
+require 'puppet/parser/ast/component'
+require 'puppet/parser/ast/else'
+require 'puppet/parser/ast/hostclass'
+require 'puppet/parser/ast/ifstatement'
+require 'puppet/parser/ast/leaf'
+require 'puppet/parser/ast/node'
+require 'puppet/parser/ast/nodedef'
+require 'puppet/parser/ast/objectdef'
+require 'puppet/parser/ast/objectparam'
+require 'puppet/parser/ast/objectref'
+require 'puppet/parser/ast/selector'
+require 'puppet/parser/ast/typedefaults'
+require 'puppet/parser/ast/vardef'
+require 'puppet/parser/ast/tag'
+require 'puppet/parser/ast/function'
 
 # $Id$

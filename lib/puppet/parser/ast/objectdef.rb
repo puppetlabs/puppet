@@ -33,6 +33,13 @@ class Puppet::Parser::AST
             # Get our type and name.
             objtype = @type.safeevaluate(:scope => scope)
 
+            if objtype == "super"
+                objtype = supertype()
+                @subtype = true
+            else
+                @subtype = false
+            end
+
             # If the type was a variable, we wouldn't have typechecked yet.
             # Do it now, if so.
             unless @checked
@@ -62,6 +69,11 @@ class Puppet::Parser::AST
                 hash[ary[0]] = ary[1]
             }
 
+            # Now collect info from our parent.
+            if @subtype
+                parentname = supersetup(hash)
+            end
+
             objnames = [nil]
             # Determine our name if we have one.
             if self.name
@@ -71,21 +83,26 @@ class Puppet::Parser::AST
                     objnames = [objnames]
                 end
             else
-                # See if they specified the name as a parameter instead of as a
-                # normal name (i.e., before the colon).
-                unless object # we're a builtin
-                    if objclass = Puppet::Type.type(objtype)
-                        namevar = objclass.namevar
+                if parentname
+                    objnames = [parentname]
+                else
+                    # See if they specified the name as a parameter instead of
+                    # as a normal name (i.e., before the colon).
+                    unless object # we're a builtin
+                        if objclass = Puppet::Type.type(objtype)
+                            namevar = objclass.namevar
 
-                        tmp = hash["name"] || hash[namevar.to_s] 
+                            tmp = hash["name"] || hash[namevar.to_s] 
 
-                        if tmp
-                            objnames = [tmp]
+                            if tmp
+                                objnames = [tmp]
+                            end
+                        else
+                            # this should never happen, because we've already
+                            # typechecked, but it's no real problem if it does
+                            # happen.  We just end up with an object with no
+                            # name.
                         end
-                    else
-                        # this should never happen, because we've already
-                        # typechecked, but it's no real problem if it does happen.
-                        # We just end up with an object with no name.
                     end
                 end
             end
@@ -130,7 +147,7 @@ class Puppet::Parser::AST
             @checked = false
             super
 
-            self.typecheck(@type.value)
+            #self.typecheck(@type.value)
         end
 
         # Verify that all passed parameters are valid
@@ -210,6 +227,55 @@ class Puppet::Parser::AST
                     :children => [params]
                 )
             end
+        end
+
+        def supercomp
+            unless defined? @supercomp
+                if @scope and comp = @scope.inside
+                    @supercomp = comp
+                else
+                    error = Puppet::ParseError.new(
+                        "'super' is only valid within definitions"
+                    )
+                    error.line = self.line
+                    error.file = self.file
+                    raise error
+                end
+            end
+            @supercomp
+        end
+
+        # Take all of the arguments of our parent and add them into our own,
+        # without overriding anything.
+        def supersetup(hash)
+            comp = supercomp()
+
+            # Now check each of the arguments from the parent.
+            comp.arguments.each do |name, value|
+                unless hash.has_key? name
+                    hash[name] = value
+                end
+            end
+
+            # Return the parent name, so it can be used if appropriate.
+            return comp.name
+        end
+
+        # Retrieve our supertype.
+        def supertype
+            unless defined? @supertype
+                if parent = supercomp.parentclass
+                    @supertype = parent
+                else
+                    error = Puppet::ParseError.new(
+                        "%s does not have a parent class" % comp.type
+                    )
+                    error.line = self.line
+                    error.file = self.file
+                    raise error
+                end
+            end
+            @supertype
         end
 
         # Print this object out.
