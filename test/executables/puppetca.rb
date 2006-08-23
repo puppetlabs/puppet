@@ -84,6 +84,29 @@ class TestPuppetCA < Test::Unit::TestCase
         assert_equal($?,0)
         assert_equal(["No certificates to sign"], output)
     end
+    
+    def test_revocation
+        ca = Puppet::SSLCertificates::CA.new()
+        host1 = gen_cert(ca, "host1.example.com")
+        host2 = gen_cert(ca, "host2.example.com")
+        host3 = gen_cert(ca, "host3.example.com")
+        runca("-r host1.example.com")
+        runca("-r #{host2.serial}")
+        runca("-r 0x#{host3.serial.to_s(16)}")
+        runca("-r 0xff")
+
+        # Recreate CA to force reading of CRL
+        ca = Puppet::SSLCertificates::CA.new()
+        crl = ca.crl
+        revoked = crl.revoked.collect { |r| r.serial }
+        exp = [host1.serial, host2.serial, host3.serial, 255]
+        assert_equal(exp, revoked)
+    end
+    
+    def gen_cert(ca, host)
+        runca("-g #{host}")
+        ca.getclientcert(host)[0]
+    end
 end
 
 # $Id$

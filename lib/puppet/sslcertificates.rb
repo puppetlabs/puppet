@@ -154,6 +154,7 @@ module Puppet::SSLCertificates
         return hashpath
     end
     require 'puppet/sslcertificates/certificate'
+    require 'puppet/sslcertificates/inventory'
     require 'puppet/sslcertificates/ca'
 end
 

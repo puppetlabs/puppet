@@ -346,6 +346,7 @@ class Puppet::SSLCertificates::CA
                 [certfile, host]
         end
 
+        Puppet::SSLCertificates::Inventory::add(cert)
         Puppet.config.writesub(:signeddir, certfile) do |f|
             f.print cert.to_pem
         end

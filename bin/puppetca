@@ -46,6 +46,14 @@
 # list::
 #   List outstanding certificate requests.
 #
+# revoke::
+#   Revoke the certificate of a client. The certificate can be specified
+#   either by its serial number, given as a decimal number or a hexadecimal
+#   number prefixed by '0x', or by its hostname. The certificate is revoked
+#   by adding it to the Certificate Revocation List given by the 'cacrl'
+#   config parameter. Note that the puppetmasterd needs to be restarted
+#   after revoking certificates.
+#
 # sign::
 #   Sign an outstanding certificate request.  Unless '--all' is specified,
 #   hosts must be listed after all flags.
@@ -81,14 +89,15 @@ rescue LoadError
 end
 
 options = [
-	[ "--all",	    "-a",			GetoptLong::NO_ARGUMENT ],
-	[ "--clean",    "-c",			GetoptLong::NO_ARGUMENT ],
-	[ "--debug",    "-d",			GetoptLong::NO_ARGUMENT ],
-	[ "--generate", "-g",  			GetoptLong::NO_ARGUMENT ],
-	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
-	[ "--list",	    "-l",			GetoptLong::NO_ARGUMENT ],
-	[ "--sign",	    "-s",			GetoptLong::NO_ARGUMENT ],
-	[ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ]
+    [ "--all",      "-a",  GetoptLong::NO_ARGUMENT ],
+    [ "--clean",    "-c",  GetoptLong::NO_ARGUMENT ],
+    [ "--debug",    "-d",  GetoptLong::NO_ARGUMENT ],
+    [ "--generate", "-g",  GetoptLong::NO_ARGUMENT ],
+    [ "--help",     "-h",  GetoptLong::NO_ARGUMENT ],
+    [ "--list",     "-l",  GetoptLong::NO_ARGUMENT ],
+    [ "--revoke",   "-r",  GetoptLong::NO_ARGUMENT ],
+    [ "--sign",     "-s",  GetoptLong::NO_ARGUMENT ],
+    [ "--verbose",  "-v",  GetoptLong::NO_ARGUMENT ]
 ]
 
 # Add all of the config parameters as valid options.
@@ -121,6 +130,8 @@ begin
                 end
             when "--list"
                 mode = :list
+            when "--revoke"
+                mode = :revoke
             when "--sign"
                 mode = :sign
             when "--verbose"
@@ -160,7 +171,7 @@ unless mode
     exit(12)
 end
 
-if mode == :generate or mode == :clean
+if mode == :generate or mode == :clean or mode == :revoke
     hosts = ARGV
 else
     hosts = ca.list
@@ -229,6 +240,26 @@ when :generate
         cert.cert = signedcert
         cert.cacert = cacert
         cert.write
+    }
+when :revoke
+    hosts.each { |h|
+        serial = nil
+        if h =~ /^0x[0-9a-f]+$/
+            serial = h.to_i(16)
+        elsif h =~ /^[0-9]+$/
+            serial = h.to_i
+        else
+            cert = ca.getclientcert(h)[0]
+            if cert.nil?
+                $stderr.puts "Could not find client certificate for %s" % h
+            else
+                serial = cert.serial
+            end
+        end
+        unless serial.nil?
+            ca.revoke(serial)
+            puts "Revoked certificate with serial #{serial}"
+        end
     }
 else
     $stderr.puts "Invalid mode %s" % mode
