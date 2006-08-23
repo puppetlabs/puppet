@@ -106,9 +106,10 @@ Puppet::Type.type(:package).provide :rpm do
 
     def uninstall
         cmd = "#{command(:rpm)} -e %s" % @model[:name]
-        output = %x{#{cmd}}
-        if $? != 0
-            raise output
+        begin
+            output = execute(cmd)
+        rescue Puppet::ExecutionFailure
+            raise Puppet::PackageError.new(output)
         end
     end
 
