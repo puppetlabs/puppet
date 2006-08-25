@@ -1,8 +1,3 @@
-# I have no idea what's going on here, but...
-unless defined? MissingSourceFile
-    class MissingSourceFile < RuntimeError
-    end
-end
 # Autoload paths, either based on names or all at once.
 class Puppet::Autoload
     include Puppet::Util
@@ -54,8 +49,6 @@ class Puppet::Autoload
             Kernel.load path, @wrap
             @loaded[name] = true
             return true
-        rescue MissingSourceFile
-            return false
         rescue LoadError => detail
             # I have no idea what's going on here, but different versions
             # of ruby are raising different errors on missing files.
