@@ -48,11 +48,11 @@ class Server
                     allowed = @puppetserver.authconfig.allowed?(method, client, ip)
 
                     if allowed
-                        Puppet.info "Allowing %s(%s) trusted access to %s" %
+                        Puppet.debug "Allowing %s(%s) trusted access to %s" %
                             [client, ip, method]
                         return true
                     else
-                        Puppet.info "Denying %s(%s) trusted access to %s" %
+                        Puppet.debug "Denying %s(%s) trusted access to %s" %
                             [client, ip, method]
                         return false
                     end
@@ -62,11 +62,11 @@ class Server
                     # The next release of Puppet will almost definitely require
                     # this file to exist or will default to denying all access.
                     if Puppet.name == "puppetmasterd" or defined? Test::Unit::TestCase
-                        Puppet.info "Allowing %s(%s) trusted access to %s" %
+                        Puppet.debug "Allowing %s(%s) trusted access to %s" %
                             [client, ip, method]
                         return true
                     else
-                        Puppet.info "Denying %s(%s) trusted access to %s on %s" %
+                        Puppet.debug "Denying %s(%s) trusted access to %s on %s" %
                             [client, ip, method, Puppet.name]
                         return false
                     end
