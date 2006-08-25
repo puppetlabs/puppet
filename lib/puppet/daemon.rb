@@ -207,8 +207,8 @@ module Puppet
             if cert.nil? or cert == ""
                 return nil
             end
-            File.open(@certfile, "w", 0660) { |f| f.print cert }
-            File.open(@cacertfile, "w", 0660) { |f| f.print cacert }
+            File.open(@certfile, "w", 0644) { |f| f.print cert }
+            File.open(@cacertfile, "w", 0644) { |f| f.print cacert }
             begin
                 @cert = OpenSSL::X509::Certificate.new(cert)
                 @cacert = OpenSSL::X509::Certificate.new(cacert)
