@@ -1,6 +1,7 @@
 require 'puppet'
 require 'webrick/httpstatus'
 require 'cgi'
+require 'delegate'
 
 module Puppet
 class FileServerError < Puppet::Error; end
@@ -40,7 +41,7 @@ class Server
                 raise Puppet::FileServerError, "Cannot currently copy links"
             end
 
-            mount, path = splitpath(file)
+            mount, path = splitpath(file, client)
 
             authcheck(file, mount, client, clientip)
 
@@ -133,7 +134,7 @@ class Server
         # List a specific directory's contents.
         def list(dir, links = :ignore, recurse = false, ignore = false, client = nil, clientip = nil)
             readconfig
-            mount, path = splitpath(dir)
+            mount, path = splitpath(dir, client)
 
             authcheck(dir, mount, client, clientip)
 
@@ -297,7 +298,7 @@ class Server
         def retrieve(file, links = :ignore, client = nil, clientip = nil)
             readconfig
             links = links.intern if links.is_a? String
-            mount, path = splitpath(file)
+            mount, path = splitpath(file, client)
 
             authcheck(file, mount, client, clientip)
 
@@ -390,7 +391,7 @@ class Server
         end
 
         # Split the path into the separate mount point and path.
-        def splitpath(dir)
+        def splitpath(dir, client)
             # the dir is based on one of the mounts
             # so first retrieve the mount path
             mount = nil
@@ -410,6 +411,7 @@ class Server
 
                 # And now replace the name with the actual object.
                 mount = @mounts[mount]
+                mount = SubstMount.new(mount, client) unless client.nil?
             else
                 raise FileServerError, "Fileserver error: Invalid path '%s'" % dir
             end
@@ -529,7 +531,13 @@ class Server
             # Set the path.
             def path=(path)
                 unless FileTest.exists?(path)
-                    raise FileServerError, "%s does not exist" % path
+                    map = { "h" => "\000", "H" => "\000" }
+                    # FIXME: What should we do if there are replacement
+                    # patterns in path ? Replace with '*' and glob ?
+                    # But that could turn out to be _very_ expensive
+                    unless Mount::subst(path, map).index("\000")
+                        raise FileServerError, "%s does not exist" % path
+                    end
                 end
                 @path = path
             end
@@ -552,6 +560,38 @@ class Server
                 unless @path
                     raise FileServerError, "No path specified"
                 end
+            end
+
+            # Replace occurences of %C in PATH with entries from MAP and
+            # return a new string. Literal percent signs can be included as 
+            # '%%', and a replacement is only done when C is a key in MAP
+            def self.subst(path, map)
+                path.gsub(/%./) do |v|
+                    if v == "%%" 
+                        "%"
+                    elsif ! map.key?(v[1,1])
+                        v
+                    else
+                        map[v[1,1]]
+                    end
+                end
+            end
+            
+        end
+
+        # A mount that does substitutions in the path on the fly
+        class SubstMount < DelegateClass(Mount)
+            def initialize(mount, client)
+                @mount = mount
+                super(@mount)
+                @map = { 
+                    "h" => client.sub(/\..*$/, ""), 
+                    "H" => client 
+                }
+            end
+
+            def path
+                Mount::subst(@mount.path, @map)
             end
         end
     end

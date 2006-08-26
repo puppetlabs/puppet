@@ -45,6 +45,22 @@ While the path is the only required option, the default security configuration
 is to deny all access, so if no ``allow`` lines are specified, the module will
 be configured but available to no one.
 
+The path can contain the patterns ``%h`` and ``%H``, which are dynamically
+replaced by the client's short name and its fully qualified domain name,
+both taken from the client's SSL certificate. This is useful in creating
+modules where files for each client are kept completely separately,
+e.g. for private ssh host keys. For example, with the configuration
+
+    [private]
+        path /data/private/%h
+        allow *
+
+the request for file ``/private/file.txt`` from client
+``client1.example.com`` will look for a file
+``/data/private/client1/file.txt``, while the same request from
+``client2.example.com`` will try to retrieve the file
+``/data/private/client1/file.txt`` on the fileserver.
+
 # Security
 
 There are two aspects to securing the Puppet file server: Allowing specific

@@ -749,6 +749,121 @@ class TestFileServer < Test::Unit::TestCase
             assert(v != "", "%s has no value" % p)
         }
     end
+
+    # Test that substitution patterns in the path are exapanded
+    # properly
+    def test_host_specific
+        client1 = "client1.example.com"
+        client2 = "client2.example.com"
+        ip = "127.0.0.1"
+
+        # Setup a directory hierarchy for the tests
+        fsdir = File.join(tmpdir(), "host-specific")
+        @@tmpfiles << fsdir
+        hostdir = File.join(fsdir, "host")
+        fqdndir = File.join(fsdir, "fqdn")
+        client1_hostdir = File.join(hostdir, "client1")
+        client2_fqdndir = File.join(fqdndir, client2)
+        [fsdir, hostdir, fqdndir, 
+         client1_hostdir, client2_fqdndir].each { |d|  Dir.mkdir(d) }
+        
+        [client1_hostdir, client2_fqdndir].each do |d|
+            File.open(File.join(d, "file.txt"), "w") { |f| f.puts d }
+        end
+
+        conffile = tempfile()
+        File.open(conffile, "w") do |f|
+            f.print("
+[host]
+path #{hostdir}/%h
+allow *
+[fqdn]
+path #{fqdndir}/%H
+allow *
+")
+        end
+
+        server = nil
+        assert_nothing_raised {
+            server = Puppet::Server::FileServer.new(
+                :Local => true,
+                :Config => conffile
+            )
+        }
+
+        # check that list returns the correct thing for the two clients
+        list = nil
+        sfile = "/host/file.txt"
+        assert_nothing_raised {
+            list = server.list(sfile, :ignore, true, false, client1, ip)
+        }
+        assert_equal("/\tfile", list)
+        assert_nothing_raised {
+            list = server.list(sfile, :ignore, true, false, client2, ip)
+        }
+        assert_equal("", list)
+
+        sfile = "/fqdn/file.txt"
+        assert_nothing_raised {
+            list = server.list(sfile, :ignore, true, false, client1, ip)
+        }
+        assert_equal("", list)
+        assert_nothing_raised {
+            list = server.list(sfile, :ignore, true, false, client2, ip)
+        }
+        assert_equal("/\tfile", list)
+
+        # check describe
+        sfile = "/host/file.txt"
+        assert_nothing_raised {
+            list = server.describe(sfile, :ignore, client1, ip).split("\t")
+        }
+        assert_equal(5, list.size)
+        assert_equal("file", list[1])
+        assert_equal("{md5}95b0dea1b0c692b7563120afb4056e7f", list[4])
+
+        assert_nothing_raised {
+            list = server.describe(sfile, :ignore, client2, ip).split("\t")
+        }
+        assert_equal([], list)
+
+        sfile = "/fqdn/file.txt"
+        assert_nothing_raised {
+            list = server.describe(sfile, :ignore, client1, ip).split("\t")
+        }
+        assert_equal([], list)
+
+        assert_nothing_raised {
+            list = server.describe(sfile, :ignore, client2, ip).split("\t")
+        }
+        assert_equal(5, list.size)
+        assert_equal("file", list[1])
+        assert_equal("{md5}4dcf36004229f400c5821a3faf0f2300", list[4])
+
+        # Check retrieve
+        sfile = "/host/file.txt"
+        assert_nothing_raised {
+            list = server.retrieve(sfile, :ignore, client1, ip).chomp
+        }
+        assert_equal(client1_hostdir, list)
+
+        assert_nothing_raised {
+            list = server.retrieve(sfile, :ignore, client2, ip).chomp
+        }
+        assert_equal("", list)
+
+        sfile = "/fqdn/file.txt"
+        assert_nothing_raised {
+            list = server.retrieve(sfile, :ignore, client1, ip).chomp
+        }
+        assert_equal("", list)
+
+        assert_nothing_raised {
+            list = server.retrieve(sfile, :ignore, client2, ip).chomp
+        }
+        assert_equal(client2_fqdndir, list)
+    end
+
 end
 
 # $Id$
