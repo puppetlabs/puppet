@@ -9,6 +9,10 @@ rescue LoadError
 end
 
 module Puppet::SSLCertificates
+    hostname = Facter["hostname"].value
+    domain = Facter["domain"].value
+    fqdn = [hostname, domain].join(".")
+
     Puppet.setdefaults("certificates",
         :certdir => ["$ssldir/certs", "The certificate directory."],
         :publickeydir => ["$ssldir/public_keys", "The public key directory."],
@@ -24,6 +28,22 @@ module Puppet::SSLCertificates
             :mode => 0640,
             :desc => "Where puppetd stores the password for its private key.
                 Generally unused."
+        },
+        :hostcert => { :default => "$certdir/#{fqdn}.pem",
+            :mode => 0644,
+            :desc => "Where individual hosts store and look for their certificates."
+        },
+        :hostprivkey => { :default => "$privatekeydir/#{fqdn}.pem",
+            :mode => 0600,
+            :desc => "Where individual hosts store and look for their private key."
+        },
+        :hostpubkey => { :default => "$publickeydir/#{fqdn}.pem",
+            :mode => 0644,
+            :desc => "Where individual hosts store and look for their public key."
+        },
+        :localcacert => { :default => "$certdir/cacert.pem",
+            :mode => 0644,
+            :desc => "Where each client stores the CA certificate."
         }
     )
 
