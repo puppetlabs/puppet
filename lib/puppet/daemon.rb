@@ -98,10 +98,14 @@ module Puppet
 
             # we are not going to encrypt our key, but we need at a minimum
             # a keyfile and a certfile
-            @certfile = File.join(Puppet[:certdir], [@fqdn, "pem"].join("."))
-            @cacertfile = File.join(Puppet[:certdir], ["ca", "pem"].join("."))
-            @keyfile = File.join(Puppet[:privatekeydir], [@fqdn, "pem"].join("."))
-            @publickeyfile = File.join(Puppet[:publickeydir], [@fqdn, "pem"].join("."))
+            #@certfile = File.join(Puppet[:certdir], [@fqdn, "pem"].join("."))
+            #@cacertfile = File.join(Puppet[:certdir], ["ca", "pem"].join("."))
+            #@keyfile = File.join(Puppet[:privatekeydir], [@fqdn, "pem"].join("."))
+            #@publickeyfile = File.join(Puppet[:publickeydir], [@fqdn, "pem"].join("."))
+            @certfile = Puppet[:hostcert]
+            @cacertfile = Puppet[:localcacert]
+            @keyfile = Puppet[:hostprivkey]
+            @publickeyfile = Puppet[:hostpubkey]
 
             if File.exists?(@keyfile)
                 # load the key
@@ -151,10 +155,14 @@ module Puppet
                 # create a new one and store it
                 Puppet.info "Creating a new SSL key at %s" % @keyfile
                 @key = OpenSSL::PKey::RSA.new(Puppet[:keylength])
-                File.open(@keyfile, "w", 0660) { |f| f.print @key.to_pem }
-                File.open(@publickeyfile, "w", 0660) { |f|
+                Puppet.config.write(:hostprivkey) do |f| f.print @key.to_pem end
+                Puppet.config.write(:hostpubkey) do |f|
                     f.print @key.public_key.to_pem
-                }
+                end
+                #File.open(@keyfile, "w", 0660) { |f| f.print @key.to_pem }
+                #File.open(@publickeyfile, "w", 0660) { |f|
+                #    f.print @key.public_key.to_pem
+                #}
             end
 
 
@@ -207,8 +215,10 @@ module Puppet
             if cert.nil? or cert == ""
                 return nil
             end
-            File.open(@certfile, "w", 0644) { |f| f.print cert }
-            File.open(@cacertfile, "w", 0644) { |f| f.print cacert }
+            Puppet.config.write(:hostcert) do |f| f.print cert end
+            Puppet.config.write(:localcacert) do |f| f.print cacert end
+            #File.open(@certfile, "w", 0644) { |f| f.print cert }
+            #File.open(@cacertfile, "w", 0644) { |f| f.print cacert }
             begin
                 @cert = OpenSSL::X509::Certificate.new(cert)
                 @cacert = OpenSSL::X509::Certificate.new(cacert)
