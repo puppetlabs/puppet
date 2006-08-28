@@ -1,21 +1,18 @@
 # Packaging using Blastwave's pkg-get program.
 Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
     desc "Package management using Blastwave.org's ``pkg-get`` command on Solaris."
+    pkgget = "pkg-get"
     if FileTest.executable?("/opt/csw/bin/pkg-get")
-        PKGGET = "/opt/csw/bin/pkg-get"
-    elsif pkgget = binary("pkg-get")
-        PKGGET = pkgget
-    else
-        PKGGET = nil
+        pkgget = "/opt/csw/bin/pkg-get"
     end
 
-    confine :exists => PKGGET
+    commands :pkgget => pkgget
 
     # This is so stupid, but then, so is blastwave.
     ENV["PAGER"] = "/usr/bin/cat"
 
     def self.extended(mod)
-        unless PKGGET
+        unless command(:pkgget) != "pkg-get"
             raise Puppet::Error,
                 "The pkg-get command is missing; blastwave packaging unavailable"
         end
@@ -35,7 +32,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
 
     # Turn our blastwave listing into a bunch of hashes.
     def self.blastlist(hash)
-        command = "#{PKGGET} -c"
+        command = "#{command(:pkgget)} -c"
 
         if hash[:justme]
             command += " " + hash[:justme]
@@ -93,7 +90,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
 
     def install
         begin
-            execute("#{PKGGET} -f install #{@model[:name]}")
+            execute("#{command(:pkgget)} -f install #{@model[:name]}")
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error,
                 "Could not install %s: %s" %
@@ -116,7 +113,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
     # Remove the old package, and install the new one
     def update
         begin
-            execute("#{PKGGET} -f upgrade #{@model[:name]}")
+            execute("#{command(:pkgget)} -f upgrade #{@model[:name]}")
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error,
                 "Could not upgrade %s: %s" %
@@ -126,7 +123,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
 
     def uninstall
         begin
-            execute("#{PKGGET} -f remove #{@model[:name]}")
+            execute("#{command(:pkgget)} -f remove #{@model[:name]}")
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error,
                 "Could not remove %s: %s" %

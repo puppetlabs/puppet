@@ -2,10 +2,9 @@ Puppet::Type.type(:service).provide :base do
     desc "The simplest form of service support.  You have to specify
         enough about your service for this to work; the minimum you can specify
         is a binary for starting the process, and this same binary will be searched
-        for in the process table to stop the service.
-
-        It is preferable to specify start, stop, and status commands, akin
-        to how you would do so using ``init``."
+        for in the process table to stop the service.  It is preferable to
+        specify start, stop, and status commands, akin to how you would do
+        so using ``init``."
 
     # Execute a command.  Basically just makes sure it exits with a 0
     # code.

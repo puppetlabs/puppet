@@ -3,9 +3,7 @@ Puppet::Type.type(:package).provide :dpkg do
         and not ``apt``, you must specify the source of any packages you want
         to manage."
 
-    DPKG = "/usr/bin/dpkg"
-
-    confine :exists => DPKG
+    commands :dpkg => "/usr/bin/dpkg"
 
     def self.list
         packages = []
@@ -17,7 +15,7 @@ Puppet::Type.type(:package).provide :dpkg do
         ENV["COLUMNS"] = "500"
 
         # list out all of the packages
-        open("| #{DPKG} -l") { |process|
+        open("| #{command(:dpkg)} -l") { |process|
             # our regex for matching dpkg output
             regex = %r{^(\S+)\s+(\S+)\s+(\S+)\s+(.+)$}
             fields = [:status, :name, :version, :description]
@@ -60,7 +58,7 @@ Puppet::Type.type(:package).provide :dpkg do
 
         hash = {}
         # list out our specific package
-        open("| #{DPKG} -l %s 2>/dev/null" % @model[:name]) { |process|
+        open("| #{command(:dpkg)} -l %s 2>/dev/null" % @model[:name]) { |process|
             # our regex for matching dpkg output
             regex = %r{^(.)(.)(.)\s(\S+)\s+(\S+)\s+(.+)$}
 
@@ -103,7 +101,7 @@ Puppet::Type.type(:package).provide :dpkg do
     end
 
     def uninstall
-        cmd = "#{DPKG} -r %s" % @model[:name]
+        cmd = "#{command(:dpkg)} -r %s" % @model[:name]
         begin
             output = execute(cmd)
         rescue Puppet::ExecutionFailure

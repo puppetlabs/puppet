@@ -520,18 +520,25 @@ class Type < Puppet::Element
     # are providers.
     def self.providify
         return if @paramhash.has_key? :provider
+        model = self
         newparam(:provider) do
             desc "The specific backend for #{self.name.to_s} to use. You will
                 seldom need to specify this -- Puppet will usually discover the
                 appropriate provider for your platform."
 
+            # This is so we can refer back to the type to get a list of
+            # providers for documentation.
+            class << self
+                attr_accessor :parenttype
+            end
+
             # We need to add documentation for each provider.
             def self.doc
-                @doc + "Available providers are:\n" + @model.providers.sort { |a,b|
+                @doc + "  Available providers are:\n\n" + parenttype().providers.sort { |a,b|
                     a.to_s <=> b.to_s
-                }.each { |i|
-                    "* **%s**: %s" % [i, self.provider(i).doc]
-                }
+                }.collect { |i|
+                    "* **%s**: %s" % [i, parenttype().provider(i).doc]
+                }.join("\n")
             end
 
             defaultto { @parent.class.defaultprovider.name }
@@ -558,7 +565,7 @@ class Type < Puppet::Element
                 @parent.provider = provider
                 provider
             end
-        end
+        end.parenttype = self
     end
 
     def self.unprovide(name)

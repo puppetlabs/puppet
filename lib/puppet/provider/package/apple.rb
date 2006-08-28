@@ -5,7 +5,7 @@ Puppet::Type.type(:package).provide :apple do
         it only supports installation; no deletion or upgrades."
 
     confine :exists => "/Library/Receipts"
-    confine :exists => "/usr/sbin/installer"
+    commands :installer => "/usr/sbin/installer"
 
     defaultfor :operatingsystem => :darwin
 
@@ -45,7 +45,7 @@ Puppet::Type.type(:package).provide :apple do
         end
 
         begin
-            output = execute("/usr/sbin/installer -pkg #{source} -target / 2>&1")
+            output = execute("#{command(:installer)} -pkg #{source} -target / 2>&1")
         rescue Puppet::ExecutionFailure
             raise Puppet::PackageError.new(output)
         end

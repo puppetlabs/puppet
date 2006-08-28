@@ -4,10 +4,7 @@ require 'puppet/provider/nameservice/netinfo'
 
 Puppet::Type.type(:group).provide :netinfo, :parent => Puppet::Provider::NameService::NetInfo do
     desc "Group management using NetInfo."
-    NIREPORT = binary("nireport")
-    NIUTIL = binary("niutil")
-    confine :exists => NIREPORT
-    confine :exists => NIUTIL
+    commands :nireport => "nireport", :niutil => "niutil"
 
     defaultfor :operatingsystem => :darwin
 end

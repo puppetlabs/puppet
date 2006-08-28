@@ -1,9 +1,8 @@
 Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     desc "Package management via ``apt-get``."
 
-    APT = "/usr/bin/apt-get"
-
-    confine :exists => APT
+    commands :aptget => "/usr/bin/apt-get"
+    commands :aptcache => "/usr/bin/apt-cache"
 
     defaultfor :operatingsystem => :debian
 
@@ -49,7 +48,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
             # Add the package version
             str += "=%s" % should
         end
-        cmd = "/usr/bin/apt-get -q -y install %s" % str
+        cmd = "#{command(:aptget)} -q -y install %s" % str
 
         begin
             output = execute(cmd)
@@ -60,7 +59,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
 
     # What's the latest package version available?
     def latest
-        cmd = "/usr/bin/apt-cache showpkg %s" % @model[:name] 
+        cmd = "#{command(:aptcache)}he showpkg %s" % @model[:name] 
         begin
             output = execute(cmd)
         rescue Puppet::ExecutionFailure
@@ -96,7 +95,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     end
 
     def uninstall
-        cmd = "/usr/bin/apt-get -y -q remove %s" % @model[:name]
+        cmd = "#{command(:aptget)} -y -q remove %s" % @model[:name]
         begin
             output = execute(cmd)
         rescue Puppet::ExecutionFailure

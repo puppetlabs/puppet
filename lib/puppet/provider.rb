@@ -7,7 +7,8 @@ class Puppet::Provider
     class << self
         # Include the util module so we have access to things like 'binary'
         include Puppet::Util
-        attr_accessor :name, :model, :doc
+        attr_accessor :name, :model
+        attr_writer :doc
     end
 
     attr_accessor :model
@@ -16,12 +17,16 @@ class Puppet::Provider
         name = symbolize(name)
 
         if command = @commands[name]
-            return command
+            # nothing
         elsif superclass.respond_to? :command and command = superclass.command(name)
-            return command
+            # nothing
         else
             raise Puppet::DevError, "No command %s defined for provider %s" %
                 [name, self.name]
+        end
+
+        unless command =~ /^\//
+            raise Puppet::Error, "Command #{command} could not be found"
         end
     end
 
@@ -29,7 +34,12 @@ class Puppet::Provider
     def self.commands(hash)
         hash.each do |name, path|
             name = symbolize(name)
-            path = binary(path) unless path =~ /^\//
+            # Keep the short name if we couldn't find it.
+            unless path =~ /^\//
+                if tmp = binary(path)
+                    path = tmp
+                end
+            end
             @commands[name] = path
             confine :exists => path
         end
@@ -70,6 +80,17 @@ class Puppet::Provider
     # Specify a documentation string.
     def self.desc(str)
         @doc = str
+    end
+
+    def self.doc
+        if defined? @commands and @commands.length > 0
+            extra = "  Required binaries: " + @commands.collect do |n, c|
+                "``#{c}``"
+            end.join(", ")
+            @doc + extra
+        else
+            @doc
+        end
     end
 
     def self.initvars

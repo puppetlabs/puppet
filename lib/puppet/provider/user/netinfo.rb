@@ -4,11 +4,7 @@ require 'puppet/provider/nameservice/netinfo'
 
 Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameService::NetInfo do
     desc "User management in NetInfo."
-
-    NIREPORT = binary("nireport")
-    NIUTIL = binary("niutil")
-    confine :exists => NIREPORT
-    confine :exists => NIUTIL
+    commands :nireport => "nireport", :niutil => "niutil"
 
     options :comment, :key => "realname"
 
@@ -21,7 +17,7 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
 
         user = @model[:name]
         # Retrieve them all from netinfo
-        open("| nireport / /groups name users") do |file|
+        open("| #{command(:nireport)} / /groups name users") do |file|
             file.each do |line|
                 name, members = line.split(/\s+/)
                 next unless members
@@ -45,7 +41,7 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
         diff = groups - (@is || [])
 
         data = {}
-        open("| nireport / /groups name users") do |file|
+        open("| #{command(:nireport)} / /groups name users") do |file|
             file.each do |line|
                 name, members = line.split(/\s+/)
 
@@ -77,7 +73,7 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
     end
 
     def setuserlist(group, list)
-        cmd = "niutil -createprop / /groups/%s users %s" %
+        cmd = "#{command(:niutil)} -createprop / /groups/%s users %s" %
             [group, list.join(",")]
         begin
             output = execute(cmd)

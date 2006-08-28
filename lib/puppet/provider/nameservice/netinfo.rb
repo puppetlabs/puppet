@@ -41,7 +41,7 @@ class NetInfo < Puppet::Provider::NameService
     end
 
     def creatorcmd(arg)
-        cmd = ["niutil"]
+        cmd = [command(:niutil)]
         cmd << arg
 
         cmd << "/" << "/%s/%s" %
@@ -110,7 +110,7 @@ class NetInfo < Puppet::Provider::NameService
     end
 
     def modifycmd(param, value)
-        cmd = ["niutil"]
+        cmd = [command(:niutil)]
 
         cmd << "-createprop" << "/" << "/%s/%s" %
             [self.class.netinfodir, @model[:name]]
@@ -136,7 +136,7 @@ class NetInfo < Puppet::Provider::NameService
     # rather than retrieving it one at a time.
     def report(*params)
         dir = self.class.netinfodir()
-        cmd = ["nireport", "/", "/%s" % dir]
+        cmd = [command(:nireport), "/", "/%s" % dir]
 
         # We require the name in order to know if we match.  There's no
         # way to just report on our individual object, we have to get the
@@ -196,7 +196,7 @@ class NetInfo < Puppet::Provider::NameService
     end
 
     def setuserlist(group, list)
-        cmd = "niutil -createprop / /groups/%s users %s" %
+        cmd = "#{command(:niutil)} -createprop / /groups/%s users %s" %
             [group, list.join(",")]
         begin
             output = execute(cmd)

@@ -2,12 +2,11 @@
 Puppet::Type.type(:package).provide :gem do
     desc "Ruby Gem support.  By default uses remote gems, but you can specify
         the path to a local gem via ``source``."
-    GEM = binary("gem")
 
-    confine :exists => GEM
+    commands :gem => "gem"
 
     def self.gemlist(hash)
-        command = "#{GEM} list "
+        command = "#{command(:gem)} list "
 
         if hash[:local]
             command += "--local "
@@ -62,7 +61,7 @@ Puppet::Type.type(:package).provide :gem do
     end
 
     def install(useversion = true)
-        command = "#{GEM} install "
+        command = "#{command(:gem)} install "
         if @model[:version] and useversion
             command += "-v %s " % @model[:version]
         end
@@ -93,7 +92,7 @@ Puppet::Type.type(:package).provide :gem do
     def uninstall
         begin
             # Remove everything, including the binaries.
-            execute("#{GEM} uninstall -x -a #{@model[:name]}")
+            execute("#{command(:gem)} uninstall -x -a #{@model[:name]}")
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error, "Could not uninstall %s: %s" %
                 [@model[:name], detail]
