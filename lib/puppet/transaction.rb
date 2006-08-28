@@ -345,7 +345,7 @@ class Transaction
                 end
 
                 callbacks.each do |callback, subs|
-                    obj.info "Triggering '%s' from %s dependencies" %
+                    obj.notice "Triggering '%s' from %s dependencies" %
                         [callback, subs.length]
                     # At this point, just log failures, don't try to react
                     # to them in any way.
