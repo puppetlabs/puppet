@@ -139,6 +139,11 @@ module Puppet
             "Whether to just print a manifest to stdout and exit.  Only makes
             sense when used interactively.  Takes into account arguments specified
             on the CLI."],
+        :configprint => ["",
+            "Print the value of a specific configuration parameter.  If a
+            parameter is provided for this, then the value is printed and puppet
+            exits.  Comma-separate multiple values.  For a list of all values,
+            specify 'all'."],
         :color => [true, "Whether to use ANSI colors when logging to the console."],
         :mkusers => [false,
             "Whether to create the necessary user and group that puppetd will
@@ -246,6 +251,29 @@ module Puppet
     end
 
     def self.genconfig
+        if Puppet[:configprint] != ""
+            val = Puppet[:configprint]
+            if val == "all"
+                hash = {}
+                Puppet.config.each do |name, obj|
+                    val = obj.value
+                    case val
+                    when true, false, "": val = val.inspect
+                    end
+                    hash[name] = val
+                end
+                hash.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, val|
+                    puts "%s = %s" % [name, val]
+                end
+            elsif val =~ /,/
+                val.split(/\s*,\s*/).sort.each do |v|
+                    puts "%s = %s" % [v, Puppet[v]]
+                end
+            else
+                puts Puppet[val]
+            end
+            exit(0)
+        end
         if Puppet[:genconfig]
             puts Puppet.config.to_config
             exit(0)
