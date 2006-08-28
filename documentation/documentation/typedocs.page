@@ -537,7 +537,7 @@ filebucketed files.
 
 #### checksum
 How to check whether a file has changed.  **md5**/*lite-md5*/
-*time*/*mtime*  Valid values are ``mtime``, ``md5lite``, ``md5``, ``time``, ``timestamp``, ``nosum``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
+*time*/*mtime*  Valid values are ``nosum``, ``mtime``, ``md5``, ``time``, ``md5lite``, ``timestamp``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
 
 #### content
 Specify the contents of a file as a string.  Newlines, tabs, and
@@ -772,9 +772,9 @@ seldom need to specify this -- Puppet will usually discover the
 appropriate provider for your platform.  Available providers are:
 
 * **groupadd**: Group management via ``groupadd`` and its ilk.  The default
-        for most platforms
-* **netinfo**: Group management using NetInfo.
-* **pw**: Group management via ``pw``.  Only works on FreeBSD.
+        for most platforms  Required binaries: ``groupadd``,``groupdel``,``groupmod``
+* **netinfo**: Group management using NetInfo.  Required binaries: ``/usr/bin/nireport``,``/usr/bin/niutil``
+* **pw**: Group management via ``pw``.  Only works on FreeBSD.  Required binaries: ``/usr/sbin/pw``
 
 
 
@@ -843,7 +843,7 @@ Control what to do with this mount. If the value is
 but not mounted, if it is ``absent``, the entry is removed 
 from the mount table and the filesystem is unmounted if 
 currently mounted, if it is ``mounted``, the filesystem 
-is entered into the mount table and mounted.  Valid values are ``mounted``, ``present``, ``absent``.
+is entered into the mount table and mounted.  Valid values are ``present``, ``mounted``, ``absent``.
 
 #### fstype
 The mount type.  Valid values depend on the
@@ -952,9 +952,9 @@ appropriate provider for your platform.  Available providers are:
 
 * **apple**: Package management based on OS X's builtin packaging system.  This is
         essentially the simplest and least functional package system in existence --
-        it only supports installation; no deletion or upgrades.
+        it only supports installation; no deletion or upgrades.  Required binaries: ``/usr/sbin/installer``
 * **apt**: Package management via ``apt-get``.
-* **blastwave**: Package management using Blastwave.org's ``pkg-get`` command on Solaris.
+* **blastwave**: Package management using Blastwave.org's ``pkg-get`` command on Solaris.  Required binaries: ``pkg-get``
 * **darwinport**: Package management using DarwinPorts on OS X.
 * **dpkg**: Package management via ``dpkg``.  Because this only uses ``dpkg``
         and not ``apt``, you must specify the source of any packages you want
@@ -963,22 +963,22 @@ appropriate provider for your platform.  Available providers are:
         extremely quirky packaging system, in that it freely mixes between
         ports and packages.  Apparently all of the tools are written in Ruby,
         so there are plans to rewrite this support to directly use those
-        libraries.
+        libraries.  Required binaries: ``/usr/sbin/pkg_add``,``/usr/sbin/pkg_delete``,``/usr/sbin/pkg_info``
 * **gem**: Ruby Gem support.  By default uses remote gems, but you can specify
-        the path to a local gem via ``source``.
-* **openbsd**: OpenBSD's form of ``pkg_add`` support.
+        the path to a local gem via ``source``.  Required binaries: ``/opt/local/bin/gem``
+* **openbsd**: OpenBSD's form of ``pkg_add`` support.  Required binaries: ``pkg_add``,``pkg_delete``,``pkg_info``
 * **ports**: Support for FreeBSD's ports.  Again, this still mixes packages
-        and ports.
+        and ports.  Required binaries: ``/usr/local/sbin/portupgrade``,``/usr/local/sbin/pkg_deinstall``,``/usr/sbin/pkg_info``,``/usr/local/sbin/portversion``
 * **rpm**: RPM packaging support; should work anywhere with a working ``rpm``
-        binary.
+        binary.  Required binaries: ``rpm``
 * **sun**: Sun's packaging system.  Requires that you specify the source for
-        the packages you're managing.
+        the packages you're managing.  Required binaries: ``/usr/sbin/pkgadd``,``/usr/sbin/pkgrm``,``/usr/bin/pkginfo``
 * **sunfreeware**: Package management using sunfreeware.com's ``pkg-get`` command on Solaris.
         At this point, support is exactly the same as ``blastwave`` support and
         has not actually been tested.
 * **up2date**: Support for Red Hat's proprietary ``up2date`` package update
-        mechanism.
-* **yum**: Support via ``yum``.
+        mechanism.  Required binaries: ``/usr/sbin/up2date-nox``
+* **yum**: Support via ``yum``.  Required binaries: ``rpm``,``yum``
 
 #### responsefile
 A file containing any necessary answers to questions asked by
@@ -1195,7 +1195,7 @@ provided.
 Whether a service should be enabled to start at boot.
 This state behaves quite differently depending on the platform;
 wherever possible, it relies on local tools to enable or disable
-a given service.  *true*/*false*/*runlevels*  Valid values are ``false``, ``true``.
+a given service.  *true*/*false*/*runlevels*  Valid values are ``true``, ``false``.
 
 #### ensure
 Whether a service should be running.  **true**/*false*  Valid values are ``running`` (also called ``true``), ``stopped`` (also called ``false``).
@@ -1245,7 +1245,7 @@ appropriate provider for your platform.  Available providers are:
         It is preferable to specify start, stop, and status commands, akin
         to how you would do so using ``init``.
 * **debian**: Debian's form of ``init``-style management.  The only difference
-        is that this supports service enabling and disabling via ``update-rc.d``.
+        is that this supports service enabling and disabling via ``update-rc.d``.  Required binaries: ``/usr/sbin/update-rc.d``
 * **init**: Standard init service management.  This provider assumes that the
         init script has not ``status`` command, because so few scripts do,
         so you need to either provide a status command or specify via ``hasstatus``
@@ -1255,7 +1255,7 @@ appropriate provider for your platform.  Available providers are:
 * **smf**: Support for Sun's new Service Management Framework.  Starting a service
         is effectively equivalent to enabling it, so there is only support
         for starting and stopping services, which also enables and disables them,
-        respectively.
+        respectively.  Required binaries: ``/usr/sbin/svcadm``,``/usr/bin/svcs``
 
 #### restart
 Specify a *restart* command manually.  If left
@@ -1483,9 +1483,9 @@ The specific backend for provider to use. You will
 seldom need to specify this -- Puppet will usually discover the
 appropriate provider for your platform.  Available providers are:
 
-* **netinfo**: User management in NetInfo.
-* **pw**: User management via ``pw`` on FreeBSD.
-* **useradd**: User management via ``useradd`` and its ilk.
+* **netinfo**: User management in NetInfo.  Required binaries: ``/usr/bin/nireport``,``/usr/bin/niutil``
+* **pw**: User management via ``pw`` on FreeBSD.  Required binaries: ``pw``
+* **useradd**: User management via ``useradd`` and its ilk.  Required binaries: ``useradd``,``userdel``,``usermod``
 
 #### shell
 The user's login shell.  The shell must exist and be
@@ -1504,4 +1504,4 @@ recommended.
 ----------------
 
 
-*This page autogenerated on Sun Aug 27 23:24:27 PDT 2006*
+*This page autogenerated on Sun Aug 27 23:43:30 PDT 2006*
