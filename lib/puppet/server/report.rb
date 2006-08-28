@@ -159,8 +159,6 @@ class Server
                     Puppet.info "Processing report %s" % name
                     begin
                         send(method, report)
-                    rescue NoMethodError => detail
-                        Puppet.warning "No report named '%s'" % name
                     rescue => detail
                         if Puppet[:debug]
                             puts detail.backtrace
