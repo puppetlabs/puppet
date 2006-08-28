@@ -19,36 +19,40 @@ template that are defined within the enclosing scope.  This is especially
 useful for generating complete files; here is how I generate the Apache
 configuration for my [Trac](http://trac.edgewall.org/) sites:
 
+<pre><code>
     define tracsite($cgidir, $tracdir) {
         file { "trac-$name":
-            path => "/etc/apache2/trac/$name.conf",
-            owner => root,
-            group => root,
-            mode => 644,
-            require => file[apacheconf],
-            content => template("tracsite.erb"),
-            notify => service[apache2]
+            path =&gt; "/etc/apache2/trac/$name.conf",
+            owner =&gt; root,
+            group =&gt; root,
+            mode =&gt; 644,
+            require =&gt; file[apacheconf],
+            content =&gt; template("tracsite.erb"),
+            notify =&gt; service[apache2]
         }
 
         symlink { "tracsym-$name":
-            path => "$cgidir/$name.cgi",
-            ensure => "/usr/share/trac/cgi-bin/trac.cgi"
+            path =&gt; "$cgidir/$name.cgi",
+            ensure =&gt; "/usr/share/trac/cgi-bin/trac.cgi"
         }
     }
+</code></pre>
 
 And then here's my template:
 
-    <Location "/cgi-bin/<%= name %>.cgi">
-        SetEnv TRAC_ENV "/export/svn/trac/<%= name %>"
-    </Location> 
+<pre><code>
+    <Location "/cgi-bin/<\%= name \%&gt;.cgi"&gt;
+        SetEnv TRAC_ENV "/export/svn/trac/<\%= name \%&gt;"
+    </Location&gt; 
             
     # You need something like this to authenticate users
-    <Location "/cgi-bin/<%= name %>.cgi/login">
+    <Location "/cgi-bin/<\%= name \%&gt;.cgi/login"&gt;
         AuthType Basic 
         AuthName "Trac" 
         AuthUserFile /etc/apache2/auth/svn
         Require valid-user
-    </Location>
+    </Location&gt;
+</code></pre>
 
 You can see that I put each Trac configuration into a separate file, and then
 I just tell Apache to load all of these files:
@@ -68,9 +72,11 @@ is an array, you can iterate over it.  Given Puppet code like this:
 
 You could have a template like this:
 
-    <% values.each do |val|
-    Some stuff with <%= val %>
-    <% end%>
+<pre><code>
+    <% values.each do |val| %&gt;
+    Some stuff with <%= val %&gt;
+    <% end%&gt;
+</code></pre>
 
 This would produce:
 

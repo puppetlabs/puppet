@@ -1,9 +1,8 @@
 ---
 inMenu: true
-title: Configuration Reference
-orderInfo: 6
+title: Executable Reference
 ---
-# Puppet Configuration Reference
+# Puppet Executable Reference
 
 Every Puppet executable (with the exception of ``puppetdoc``) accepts all of
 these arguments, but not all of the arguments make sense for every executable.
@@ -16,403 +15,401 @@ This will not always be the case.  I have tried to be as thorough as possible
 in the descriptions of the arguments, so it should be obvious whether an
 argument is approprite or not.
 
-Any default values are in ``block type`` at the end of the description.
+* **authconfig** (*puppet*)
 
-#### <a name="authconfig">authconfig</a> (<em>puppet</em>)
+  The configuration file that defines the rights to the different namespaces and methods.  This can be used as a coarse-grained authorization system for both ``puppetd`` and ``puppetmasterd``.
 
-The configuration file that defines the rights to the different namespaces and methods.  This can be used as a coarse-grained authorization system for both ``puppetd`` and ``puppetmasterd``.  ``/etc/puppet/namespaceauth.conf``
+* **autosign** (*ca*)
 
-#### <a name="autosign">autosign</a> (<em>ca</em>)
+  Whether to enable autosign.  Valid values are true (which autosigns any key request, and is a very bad idea), false (which never autosigns any key request), and the path to a file, which uses that configuration file to determine which keys to sign.
 
-Whether to enable autosign.  Valid values are true (which autosigns any key request, and is a very bad idea), false (which never autosigns any key request), and the path to a file, which uses that configuration file to determine which keys to sign.  ``/etc/puppet/autosign.conf``
+* **bucketdir** (*filebucket*)
 
-#### <a name="bucketdir">bucketdir</a> (<em>filebucket</em>)
+  Where FileBucket files are stored.
 
-Where FileBucket files are stored.  ``/var/puppet/bucket``
+* **ca_days** (*ca*)
 
-#### <a name="ca_days">ca_days</a> (<em>ca</em>)
+  How long a certificate should be valid.
 
-How long a certificate should be valid.  ``1825``
+* **ca_md** (*ca*)
 
-#### <a name="ca_md">ca_md</a> (<em>ca</em>)
+  The type of hash used in certificates.
 
-The type of hash used in certificates.  ``md5``
+* **cacert** (*ca*)
 
-#### <a name="cacert">cacert</a> (<em>ca</em>)
+  The CA certificate.
 
-The CA certificate.  ``/etc/puppet/ssl/ca/ca_crt.pem``
+* **cacrl** (*ca*)
 
-#### <a name="cacrl">cacrl</a> (<em>ca</em>)
+  The certificate revocation list (CRL) for the CA.
 
-The certificate revocation list (CRL) for the CA.  ``/etc/puppet/ssl/ca/ca_crl.pem``
+* **cadir** (*ca*)
 
-#### <a name="cadir">cadir</a> (<em>ca</em>)
+  The root directory for the certificate authority.
 
-The root directory for the certificate authority.  ``/etc/puppet/ssl/ca``
+* **cakey** (*ca*)
 
-#### <a name="cakey">cakey</a> (<em>ca</em>)
+  The CA private key.
 
-The CA private key.  ``/etc/puppet/ssl/ca/ca_key.pem``
+* **capass** (*ca*)
 
-#### <a name="capass">capass</a> (<em>ca</em>)
+  Where the CA stores the password for the private key
 
-Where the CA stores the password for the private key  ``/etc/puppet/ssl/ca/private/ca.pass``
+* **caprivatedir** (*ca*)
 
-#### <a name="caprivatedir">caprivatedir</a> (<em>ca</em>)
+  Where the CA stores private certificate information.
 
-Where the CA stores private certificate information.  ``/etc/puppet/ssl/ca/private``
+* **capub** (*ca*)
 
-#### <a name="capub">capub</a> (<em>ca</em>)
+  The CA public key.
 
-The CA public key.  ``/etc/puppet/ssl/ca/ca_pub.pem``
+* **certdir** (*certificates*)
 
-#### <a name="certdir">certdir</a> (<em>certificates</em>)
+  The certificate directory.
 
-The certificate directory.  ``/etc/puppet/ssl/certs``
+* **classfile** (*puppetd*)
 
-#### <a name="classfile">classfile</a> (<em>puppetd</em>)
+  The file in which puppetd stores a list of the classes associated with the retrieved configuratiion.  Can be loaded in the separate ``puppet`` executable using the ``--loadclasses`` option.
 
-The file in which puppetd stores a list of the classes associated with the retrieved configuratiion.  Can be loaded in the separate ``puppet`` executable using the ``--loadclasses`` option.  ``/etc/puppet/classes.txt``
+* **color** (*puppet*)
 
-#### <a name="color">color</a> (<em>puppet</em>)
+  Whether to use ANSI colors when logging to the console.
 
-Whether to use ANSI colors when logging to the console.  ``true``
+* **confdir** (*puppet*)
 
-#### <a name="confdir">confdir</a> (<em>puppet</em>)
+  The main Puppet configuration directory.
 
-The main Puppet configuration directory.  ``/etc/puppet``
+* **config** (*puppetdoc*)
 
-#### <a name="config">config</a> (<em>puppetdoc</em>)
+  The configuration file for puppetdoc.
 
-The configuration file for puppetdoc.  ``/etc/puppet/puppetdoc.conf``
+* **configprint** (*puppet*)
 
-#### <a name="configprint">configprint</a> (<em>puppet</em>)
+  Print the value of a specific configuration parameter.  If a parameter is provided for this, then the value is printed and puppet exits.  Comma-separate multiple values.  For a list of all values, specify 'all'.
 
-Print the value of a specific configuration parameter.  If a parameter is provided for this, then the value is printed and puppet exits.  Comma-separate multiple values.  For a list of all values, specify 'all'.
+* **csrdir** (*ca*)
 
-#### <a name="csrdir">csrdir</a> (<em>ca</em>)
+  Where the CA stores certificate requests
 
-Where the CA stores certificate requests  ``/etc/puppet/ssl/ca/requests``
+* **dbadapter** (*puppetmaster*)
 
-#### <a name="dbadapter">dbadapter</a> (<em>puppetmaster</em>)
+  The type of database to use.
 
-The type of database to use.  ``sqlite3``
+* **dblocation** (*puppetmaster*)
 
-#### <a name="dblocation">dblocation</a> (<em>puppetmaster</em>)
+  The database cache for client configurations.  Used for querying within the language.
 
-The database cache for client configurations.  Used for querying within the language.  ``/var/puppet/state/clientconfigs.sqlite3``
+* **dbname** (*puppetmaster*)
 
-#### <a name="dbname">dbname</a> (<em>puppetmaster</em>)
+  The name of the database to use.
 
-The name of the database to use.  ``puppet``
+* **dbpassword** (*puppetmaster*)
 
-#### <a name="dbpassword">dbpassword</a> (<em>puppetmaster</em>)
+  The database password for Client caching. Only used when networked databases are used.
 
-The database password for Client caching. Only used when networked databases are used.  ``puppet``
+* **dbserver** (*puppetmaster*)
 
-#### <a name="dbserver">dbserver</a> (<em>puppetmaster</em>)
+  The database server for Client caching. Only used when networked databases are used.
 
-The database server for Client caching. Only used when networked databases are used.  ``puppet``
+* **dbuser** (*puppetmaster*)
 
-#### <a name="dbuser">dbuser</a> (<em>puppetmaster</em>)
+  The database user for Client caching. Only used when networked databases are used.
 
-The database user for Client caching. Only used when networked databases are used.  ``puppet``
+* **fileserverconfig** (*fileserver*)
 
-#### <a name="fileserverconfig">fileserverconfig</a> (<em>fileserver</em>)
+  Where the fileserver configuration is stored.
 
-Where the fileserver configuration is stored.  ``/etc/puppet/fileserver.conf``
+* **filetimeout** (*puppet*)
 
-#### <a name="filetimeout">filetimeout</a> (<em>puppet</em>)
+  The minimum time to wait between checking for updates in configuration files.
 
-The minimum time to wait between checking for updates in configuration files.  ``15``
+* **genconfig** (*puppet*)
 
-#### <a name="genconfig">genconfig</a> (<em>puppet</em>)
+  Whether to just print a configuration to stdout and exit.  Only makes sense when used interactively.  Takes into account arguments specified on the CLI.
 
-Whether to just print a configuration to stdout and exit.  Only makes sense when used interactively.  Takes into account arguments specified on the CLI.
+* **genmanifest** (*puppet*)
 
-#### <a name="genmanifest">genmanifest</a> (<em>puppet</em>)
+  Whether to just print a manifest to stdout and exit.  Only makes sense when used interactively.  Takes into account arguments specified on the CLI.
 
-Whether to just print a manifest to stdout and exit.  Only makes sense when used interactively.  Takes into account arguments specified on the CLI.
+* **group** (*puppetmasterd*)
 
-#### <a name="group">group</a> (<em>puppetmasterd</em>)
+  The group puppetmasterd should run as.
 
-The group puppetmasterd should run as.  ``puppet``
+* **hostcert** (*certificates*)
 
-#### <a name="hostcert">hostcert</a> (<em>certificates</em>)
+  Where individual hosts store and look for their certificates.
 
-Where individual hosts store and look for their certificates.  ``/etc/puppet/ssl/certs/phage.madstop.com.pem``
+* **hostprivkey** (*certificates*)
 
-#### <a name="hostprivkey">hostprivkey</a> (<em>certificates</em>)
+  Where individual hosts store and look for their private key.
 
-Where individual hosts store and look for their private key.  ``/etc/puppet/ssl/private_keys/phage.madstop.com.pem``
+* **hostpubkey** (*certificates*)
 
-#### <a name="hostpubkey">hostpubkey</a> (<em>certificates</em>)
+  Where individual hosts store and look for their public key.
 
-Where individual hosts store and look for their public key.  ``/etc/puppet/ssl/public_keys/phage.madstop.com.pem``
+* **httplog** (*puppetd*)
 
-#### <a name="httplog">httplog</a> (<em>puppetd</em>)
+  Where the puppetd web server logs.
 
-Where the puppetd web server logs.  ``/var/puppet/log/http.log``
+* **ignoreschedules** (*puppetd*)
 
-#### <a name="ignoreschedules">ignoreschedules</a> (<em>puppetd</em>)
+  Boolean; whether puppetd should ignore schedules.  This is useful for initial puppetd runs.
 
-Boolean; whether puppetd should ignore schedules.  This is useful for initial puppetd runs.
+* **keylength** (*ca*)
 
-#### <a name="keylength">keylength</a> (<em>ca</em>)
+  The bit length of keys.
 
-The bit length of keys.  ``1024``
+* **ldapattrs** (*ldap*)
 
-#### <a name="ldapattrs">ldapattrs</a> (<em>ldap</em>)
+  The LDAP attributes to use to define Puppet classes.  Values should be comma-separated.
 
-The LDAP attributes to use to define Puppet classes.  Values should be comma-separated.  ``puppetclass``
+* **ldapbase** (*ldap*)
 
-#### <a name="ldapbase">ldapbase</a> (<em>ldap</em>)
+  The search base for LDAP searches.  It's impossible to provide a meaningful default here, although the LDAP libraries might have one already set.  Generally, it should be the 'ou=Hosts' branch under your main directory.
 
-The search base for LDAP searches.  It's impossible to provide a meaningful default here, although the LDAP libraries might have one already set.  Generally, it should be the 'ou=Hosts' branch under your main directory.
+* **ldapnodes** (*ldap*)
 
-#### <a name="ldapnodes">ldapnodes</a> (<em>ldap</em>)
+  Whether to search for node configurations in LDAP.
 
-Whether to search for node configurations in LDAP.
+* **ldapparentattr** (*ldap*)
 
-#### <a name="ldapparentattr">ldapparentattr</a> (<em>ldap</em>)
+  The attribute to use to define the parent node.
 
-The attribute to use to define the parent node.  ``parentnode``
+* **ldappassword** (*ldap*)
 
-#### <a name="ldappassword">ldappassword</a> (<em>ldap</em>)
+  The password to use to connect to LDAP.
 
-The password to use to connect to LDAP.
+* **ldapport** (*ldap*)
 
-#### <a name="ldapport">ldapport</a> (<em>ldap</em>)
+  The LDAP port.  Only used if ``ldapnodes`` is enabled.
 
-The LDAP port.  Only used if ``ldapnodes`` is enabled.  ``389``
+* **ldapserver** (*ldap*)
 
-#### <a name="ldapserver">ldapserver</a> (<em>ldap</em>)
+  The LDAP server.  Only used if ``ldapnodes`` is enabled.
 
-The LDAP server.  Only used if ``ldapnodes`` is enabled.  ``ldap``
+* **ldapssl** (*ldap*)
 
-#### <a name="ldapssl">ldapssl</a> (<em>ldap</em>)
+  Whether SSL should be used when searching for nodes. Defaults to false because SSL usually requires certificates to be set up on the client side.
 
-Whether SSL should be used when searching for nodes. Defaults to false because SSL usually requires certificates to be set up on the client side.
+* **ldapstring** (*ldap*)
 
-#### <a name="ldapstring">ldapstring</a> (<em>ldap</em>)
+  The search string used to find an LDAP node.
 
-The search string used to find an LDAP node.  ``(&(objectclass=puppetClient)(cn=%s))``
+* **ldaptls** (*ldap*)
 
-#### <a name="ldaptls">ldaptls</a> (<em>ldap</em>)
+  Whether TLS should be used when searching for nodes. Defaults to false because TLS usually requires certificates to be set up on the client side.
 
-Whether TLS should be used when searching for nodes. Defaults to false because TLS usually requires certificates to be set up on the client side.
+* **ldapuser** (*ldap*)
 
-#### <a name="ldapuser">ldapuser</a> (<em>ldap</em>)
+  The user to use to connect to LDAP.  Must be specified as a full DN.
 
-The user to use to connect to LDAP.  Must be specified as a full DN.
+* **lexical** (*puppet*)
 
-#### <a name="lexical">lexical</a> (<em>puppet</em>)
+  Whether to use lexical scoping (vs. dynamic).
 
-Whether to use lexical scoping (vs. dynamic).
+* **listen** (*puppetd*)
 
-#### <a name="listen">listen</a> (<em>puppetd</em>)
+  Whether puppetd should listen for connections.  If this is true, then by default only the ``runner`` server is started, which allows remote authorized and authenticated nodes to connect and trigger ``puppetd`` runs.
 
-Whether puppetd should listen for connections.  If this is true, then by default only the ``runner`` server is started, which allows remote authorized and authenticated nodes to connect and trigger ``puppetd`` runs.
+* **localcacert** (*certificates*)
 
-#### <a name="localcacert">localcacert</a> (<em>certificates</em>)
+  Where each client stores the CA certificate.
 
-Where each client stores the CA certificate.  ``/etc/puppet/ssl/certs/cacert.pem``
+* **localconfig** (*puppetd*)
 
-#### <a name="localconfig">localconfig</a> (<em>puppetd</em>)
+  Where puppetd caches the local configuration.  An extension indicating the cache format is added automatically.
 
-Where puppetd caches the local configuration.  An extension indicating the cache format is added automatically.  ``/etc/puppet/localconfig``
+* **lockdir** (*puppet*)
 
-#### <a name="lockdir">lockdir</a> (<em>puppet</em>)
+  Where lock files are kept.
 
-Where lock files are kept.  ``/var/puppet/locks``
+* **logdir** (*puppet*)
 
-#### <a name="logdir">logdir</a> (<em>puppet</em>)
+  The Puppet log directory.
 
-The Puppet log directory.  ``/var/puppet/log``
+* **manifest** (*puppetmasterd*)
 
-#### <a name="manifest">manifest</a> (<em>puppetmasterd</em>)
+  The entry-point manifest for puppetmasterd.
 
-The entry-point manifest for puppetmasterd.  ``/etc/puppet/manifests/site.pp``
+* **manifestdir** (*puppetmasterd*)
 
-#### <a name="manifestdir">manifestdir</a> (<em>puppetmasterd</em>)
+  Where puppetmasterd looks for its manifests.
 
-Where puppetmasterd looks for its manifests.  ``/etc/puppet/manifests``
+* **masterhttplog** (*puppetmasterd*)
 
-#### <a name="masterhttplog">masterhttplog</a> (<em>puppetmasterd</em>)
+  Where the puppetmasterd web server logs.
 
-Where the puppetmasterd web server logs.  ``/var/puppet/log/masterhttp.log``
+* **masterlog** (*puppetmasterd*)
 
-#### <a name="masterlog">masterlog</a> (<em>puppetmasterd</em>)
+  Where puppetmasterd logs.  This is generally not used, since syslog is the default log destination.
 
-Where puppetmasterd logs.  This is generally not used, since syslog is the default log destination.  ``/var/puppet/log/puppetmaster.log``
+* **masterport** (*puppetmasterd*)
 
-#### <a name="masterport">masterport</a> (<em>puppetmasterd</em>)
+  Which port puppetmasterd listens on.
 
-Which port puppetmasterd listens on.  ``8140``
+* **mkusers** (*puppet*)
 
-#### <a name="mkusers">mkusers</a> (<em>puppet</em>)
+  Whether to create the necessary user and group that puppetd will run as.
 
-Whether to create the necessary user and group that puppetd will run as.
+* **noop** (*puppetd*)
 
-#### <a name="noop">noop</a> (<em>puppetd</em>)
+  Whether puppetd should be run in noop mode.
 
-Whether puppetd should be run in noop mode.
+* **paramcheck** (*ast*)
 
-#### <a name="paramcheck">paramcheck</a> (<em>ast</em>)
+  Whether to validate parameters during parsing.
 
-Whether to validate parameters during parsing.  ``true``
+* **parseonly** (*puppetmasterd*)
 
-#### <a name="parseonly">parseonly</a> (<em>puppetmasterd</em>)
+  Just check the syntax of the manifests.
 
-Just check the syntax of the manifests.
+* **passfile** (*certificates*)
 
-#### <a name="passfile">passfile</a> (<em>certificates</em>)
+  Where puppetd stores the password for its private key. Generally unused.
 
-Where puppetd stores the password for its private key. Generally unused.  ``/etc/puppet/ssl/private/password``
+* **plugindest** (*puppet*)
 
-#### <a name="plugindest">plugindest</a> (<em>puppet</em>)
+  Where Puppet should store plugins that it pulls down from the central server.
 
-Where Puppet should store plugins that it pulls down from the central server.  ``/var/puppet/plugins``
+* **pluginpath** (*puppet*)
 
-#### <a name="pluginpath">pluginpath</a> (<em>puppet</em>)
+  Where Puppet should look for plugins.  Multiple directories should be colon-separated, like normal PATH variables.
 
-Where Puppet should look for plugins.  Multiple directories should be colon-separated, like normal PATH variables.  ``/var/puppet/plugins``
+* **pluginsignore** (*puppet*)
 
-#### <a name="pluginsignore">pluginsignore</a> (<em>puppet</em>)
+  What files to ignore when pulling down plugins..
 
-What files to ignore when pulling down plugins..  ``.svn CVS``
+* **pluginsource** (*puppet*)
 
-#### <a name="pluginsource">pluginsource</a> (<em>puppet</em>)
+  From where to retrieve plugins.  The standard Puppet ``file`` type is used for retrieval, so anything that is a valid file source can be used here.
 
-From where to retrieve plugins.  The standard Puppet ``file`` type is used for retrieval, so anything that is a valid file source can be used here.  ``puppet://puppet/plugins``
+* **pluginsync** (*puppet*)
 
-#### <a name="pluginsync">pluginsync</a> (<em>puppet</em>)
+  Whether plugins should be synced with the central server.
 
-Whether plugins should be synced with the central server.
+* **privatedir** (*certificates*)
 
-#### <a name="privatedir">privatedir</a> (<em>certificates</em>)
+  Where the client stores private certificate information.
 
-Where the client stores private certificate information.  ``/etc/puppet/ssl/private``
+* **privatekeydir** (*certificates*)
 
-#### <a name="privatekeydir">privatekeydir</a> (<em>certificates</em>)
+  The private key directory.
 
-The private key directory.  ``/etc/puppet/ssl/private_keys``
+* **publickeydir** (*certificates*)
 
-#### <a name="publickeydir">publickeydir</a> (<em>certificates</em>)
+  The public key directory.
 
-The public key directory.  ``/etc/puppet/ssl/public_keys``
+* **puppetdlockfile** (*puppetd*)
 
-#### <a name="puppetdlockfile">puppetdlockfile</a> (<em>puppetd</em>)
+  A lock file to temporarily stop puppetd from doing anything.
 
-A lock file to temporarily stop puppetd from doing anything.  ``/var/puppet/state/puppetdlock``
+* **puppetdlog** (*puppetd*)
 
-#### <a name="puppetdlog">puppetdlog</a> (<em>puppetd</em>)
+  The log file for puppetd.  This is generally not used.
 
-The log file for puppetd.  This is generally not used.  ``/var/puppet/log/puppetd.log``
+* **puppetport** (*puppetd*)
 
-#### <a name="puppetport">puppetport</a> (<em>puppetd</em>)
+  Which port puppetd listens on.
 
-Which port puppetd listens on.  ``8139``
+* **railslog** (*puppetmaster*)
 
-#### <a name="railslog">railslog</a> (<em>puppetmaster</em>)
+  Where Rails-specific logs are sent
 
-Where Rails-specific logs are sent  ``/var/puppet/log/puppetrails.log``
+* **report** (*puppetd*)
 
-#### <a name="report">report</a> (<em>puppetd</em>)
+  Whether to send reports after every transaction.
 
-Whether to send reports after every transaction.
+* **reportdirectory** (*reporting*)
 
-#### <a name="reportdirectory">reportdirectory</a> (<em>reporting</em>)
+  The directory in which to store reports received from the client.  Each client gets a separate subdirectory.
 
-The directory in which to store reports received from the client.  Each client gets a separate subdirectory.  ``/var/puppet/reports``
+* **reports** (*reporting*)
 
-#### <a name="reports">reports</a> (<em>reporting</em>)
+  The list of reports to generate.  All reports are looked for in puppet/reports/<name>.rb, and multiple report names should be comma-separated (whitespace is okay).
 
-The list of reports to generate.  All reports are looked for in puppet/reports/<name>.rb, and multiple report names should be comma-separated (whitespace is okay).  ``none``
+* **reportserver** (*puppetd*)
 
-#### <a name="reportserver">reportserver</a> (<em>puppetd</em>)
+  The server to which to send transaction reports.
 
-The server to which to send transaction reports.  ``puppet``
+* **req_bits** (*ca*)
 
-#### <a name="req_bits">req_bits</a> (<em>ca</em>)
+  The bit length of the certificates.
 
-The bit length of the certificates.  ``2048``
+* **rrddir** (*metrics*)
 
-#### <a name="rrddir">rrddir</a> (<em>metrics</em>)
+  The directory where RRD database files are stored.
 
-The directory where RRD database files are stored.  ``/var/puppet/rrd``
+* **rrdgraph** (*metrics*)
 
-#### <a name="rrdgraph">rrdgraph</a> (<em>metrics</em>)
+  Whether RRD information should be graphed.
 
-Whether RRD information should be graphed.
+* **rundir** (*puppet*)
 
-#### <a name="rundir">rundir</a> (<em>puppet</em>)
+  Where Puppet PID files are kept.
 
-Where Puppet PID files are kept.  ``/var/puppet/run``
+* **runinterval** (*puppetd*)
 
-#### <a name="runinterval">runinterval</a> (<em>puppetd</em>)
+  How often puppetd applies the client configuration; in seconds
 
-How often puppetd applies the client configuration; in seconds  ``1800``
+* **serial** (*ca*)
 
-#### <a name="serial">serial</a> (<em>ca</em>)
+  Where the serial number for certificates is stored.
 
-Where the serial number for certificates is stored.  ``/etc/puppet/ssl/ca/serial``
+* **server** (*puppetd*)
 
-#### <a name="server">server</a> (<em>puppetd</em>)
+  The server to which server puppetd should connect
 
-The server to which server puppetd should connect  ``puppet``
+* **setpidfile** (*puppet*)
 
-#### <a name="setpidfile">setpidfile</a> (<em>puppet</em>)
+  Whether to store a PID file for the daemon.
 
-Whether to store a PID file for the daemon.  ``true``
+* **signeddir** (*ca*)
 
-#### <a name="signeddir">signeddir</a> (<em>ca</em>)
+  Where the CA stores signed certificates.
 
-Where the CA stores signed certificates.  ``/etc/puppet/ssl/ca/signed``
+* **ssldir** (*puppet*)
 
-#### <a name="ssldir">ssldir</a> (<em>puppet</em>)
+  Where SSL certificates are kept.
 
-Where SSL certificates are kept.  ``/etc/puppet/ssl``
+* **statedir** (*puppet*)
 
-#### <a name="statedir">statedir</a> (<em>puppet</em>)
+  The directory where Puppet state is stored.  Generally, this directory can be removed without causing harm (although it might result in spurious service restarts).
 
-The directory where Puppet state is stored.  Generally, this directory can be removed without causing harm (although it might result in spurious service restarts).  ``/var/puppet/state``
+* **statefile** (*puppet*)
 
-#### <a name="statefile">statefile</a> (<em>puppet</em>)
+  Where puppetd and puppetmasterd store state associated with the running configuration.  In the case of puppetmasterd, this file reflects the state discovered through interacting with clients.
 
-Where puppetd and puppetmasterd store state associated with the running configuration.  In the case of puppetmasterd, this file reflects the state discovered through interacting with clients.  ``/var/puppet/state/state.yaml``
+* **storeconfigs** (*puppetmaster*)
 
-#### <a name="storeconfigs">storeconfigs</a> (<em>puppetmaster</em>)
+  Whether to store each client's configuration.  This requires ActiveRecord from Ruby on Rails.
 
-Whether to store each client's configuration.  This requires ActiveRecord from Ruby on Rails.
+* **tags** (*transaction*)
 
-#### <a name="tags">tags</a> (<em>transaction</em>)
+  Tags to use to find objects.  If this is set, then only objects tagged with the specified tags will be applied. Values must be comma-separated.
 
-Tags to use to find objects.  If this is set, then only objects tagged with the specified tags will be applied. Values must be comma-separated.
+* **templatedir** (*puppet*)
 
-#### <a name="templatedir">templatedir</a> (<em>puppet</em>)
+  Where Puppet looks for template files.
 
-Where Puppet looks for template files.  ``/var/puppet/templates``
+* **typecheck** (*ast*)
 
-#### <a name="typecheck">typecheck</a> (<em>ast</em>)
+  Whether to validate types during parsing.
 
-Whether to validate types during parsing.  ``true``
+* **usecacheonfailure** (*puppetd*)
 
-#### <a name="usecacheonfailure">usecacheonfailure</a> (<em>puppetd</em>)
+  Whether to use the cached configuration when the remote configuration will not compile.  This option is useful for testing new configurations, where you want to fix the broken configuration rather than reverting to a known-good one.
 
-Whether to use the cached configuration when the remote configuration will not compile.  This option is useful for testing new configurations, where you want to fix the broken configuration rather than reverting to a known-good one.  ``true``
+* **user** (*puppetmasterd*)
 
-#### <a name="user">user</a> (<em>puppetmasterd</em>)
+  The user puppetmasterd should run as.
 
-The user puppetmasterd should run as.  ``puppet``
+* **vardir** (*puppet*)
 
-#### <a name="vardir">vardir</a> (<em>puppet</em>)
-
-Where Puppet stores dynamic and growing data.  ``/var/puppet``
+  Where Puppet stores dynamic and growing data.
 
 
 
 ----------------
 
 
-*This page autogenerated on Sun Aug 27 23:19:39 PDT 2006*
+*This page autogenerated on Mon Aug 28 02:01:32 CDT 2006*
