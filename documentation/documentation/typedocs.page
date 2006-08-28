@@ -537,13 +537,13 @@ filebucketed files.
 
 #### checksum
 How to check whether a file has changed.  **md5**/*lite-md5*/
-*time*/*mtime*  Valid values are ``md5lite``, ``mtime``, ``timestamp``, ``time``, ``nosum``, ``md5``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
+*time*/*mtime*  Valid values are ``mtime``, ``md5lite``, ``md5``, ``time``, ``timestamp``, ``nosum``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
 
 #### content
-Specify the contents of a file as a string.  Newlines, tabs, and spaces
-can be specified using the escaped syntax (e.g., \n for a newline).  The
-primary purpose of this parameter is to provide a kind of limited
-templating:
+Specify the contents of a file as a string.  Newlines, tabs, and
+spaces can be specified using the escaped syntax (e.g., \n for a
+newline).  The primary purpose of this parameter is to provide a
+kind of limited templating:
 
     define resolve(nameserver1, nameserver2, domain, search) {
         $str = "search $search
@@ -557,14 +557,16 @@ templating:
         }
     }
 
-Yes, it's very primitive, and it's useless for larger files, but it
-is mostly meant as a stopgap measure for simple cases.
+    This attribute is especially useful when used with
+    [templating](templating.html).
 
 #### ensure
 Whether to create files that don't currently exist.
-Possible values are *absent*, *present* (equivalent to *file*),
-*file*, and *directory*.  Specifying 'absent' will delete the file,
-although currently this will not recursively delete directories.
+Possible values are *absent*, *present* (equivalent to ``exists`` in
+most file tests -- will match any form of file existence, and if the
+file is missing will create an empty file), *file*, and
+*directory*.  Specifying ``absent`` will delete the file, although
+currently this will not recursively delete directories.
 
 Anything other than those values will be considered to be a symlink.
 For instance, the following text creates a link:
@@ -588,7 +590,7 @@ something similar.
 You can also make recursive symlinks, which will create a
 directory structure that maps to the target directory,
 with directories corresponding to each directory
-and links corresponding to each file.  Valid values are ``file`` (also called ``present``), ``link``, ``directory``, ``absent`` (also called ``false``).  Values can also match ``(?-mix:.)``.
+and links corresponding to each file.  Valid values are ``file``, ``link``, ``directory``, ``present``, ``absent`` (also called ``false``).  Values can also match ``(?-mix:.)``.
 
 #### group
 Which group should own the file.  Argument can be either group
@@ -649,6 +651,19 @@ sytems.  For instance:
 See the [fileserver docs][] for information on how to configure
 and use file services within Puppet.
 
+If you specify multiple file sources for a file, then the first
+source that exists will be used.  This allows you to specify
+what amount to search paths for files:
+
+    file { "/path/to/my/file":
+        source => [
+            "/nfs/files/file.$host",
+            "/nfs/files/file.$operatingsystem",
+            "/nfs/files/file"
+        ]
+    }
+
+This will use the first found file as the source.
 
 [fileserver docs]: fsconfigref.html
 
@@ -733,7 +748,8 @@ but if you desperately need it to be so, please contact us.
 
 ### Group Parameters
 #### allowdupe
-Whether to allow duplicate GIDs.  Valid values are ``true``, ``false``.
+Whether to allow duplicate GIDs.  This option does not work on
+FreeBSD (contract to the ``pw`` man page).  Valid values are ``true``, ``false``.
 
 #### ensure
 The basic state that the object should be in.  Valid values are ``present``, ``absent``.
@@ -749,6 +765,16 @@ The group name.  While naming limitations vary by
 system, it is advisable to keep the name to the degenerate
 limitations, which is a maximum of 8 characters beginning with
 a letter.
+
+#### provider
+The specific backend for provider to use. You will
+seldom need to specify this -- Puppet will usually discover the
+appropriate provider for your platform.  Available providers are:
+
+* **groupadd**: Group management via ``groupadd`` and its ilk.  The default
+        for most platforms
+* **netinfo**: Group management using NetInfo.
+* **pw**: Group management via ``pw``.  Only works on FreeBSD.
 
 
 
@@ -875,7 +901,7 @@ A read-only parameter set by the package.
 What state the package should be in.
 *latest* only makes sense for those packaging formats that can
 retrieve new packages on their own and will throw an error on
-those that cannot.  Valid values are ``latest``, ``present`` (also called ``installed``), ``absent``.
+those that cannot.  Valid values are ``present`` (also called ``installed``), ``absent``, ``latest``.
 
 #### instance
 A read-only parameter set by the package.
@@ -919,6 +945,41 @@ a common name to packages:
 #### platform
 A read-only parameter set by the package.
 
+#### provider
+The specific backend for provider to use. You will
+seldom need to specify this -- Puppet will usually discover the
+appropriate provider for your platform.  Available providers are:
+
+* **apple**: Package management based on OS X's builtin packaging system.  This is
+        essentially the simplest and least functional package system in existence --
+        it only supports installation; no deletion or upgrades.
+* **apt**: Package management via ``apt-get``.
+* **blastwave**: Package management using Blastwave.org's ``pkg-get`` command on Solaris.
+* **darwinport**: Package management using DarwinPorts on OS X.
+* **dpkg**: Package management via ``dpkg``.  Because this only uses ``dpkg``
+        and not ``apt``, you must specify the source of any packages you want
+        to manage.
+* **freebsd**: The specific form of package management on FreeBSD.  This is an
+        extremely quirky packaging system, in that it freely mixes between
+        ports and packages.  Apparently all of the tools are written in Ruby,
+        so there are plans to rewrite this support to directly use those
+        libraries.
+* **gem**: Ruby Gem support.  By default uses remote gems, but you can specify
+        the path to a local gem via ``source``.
+* **openbsd**: OpenBSD's form of ``pkg_add`` support.
+* **ports**: Support for FreeBSD's ports.  Again, this still mixes packages
+        and ports.
+* **rpm**: RPM packaging support; should work anywhere with a working ``rpm``
+        binary.
+* **sun**: Sun's packaging system.  Requires that you specify the source for
+        the packages you're managing.
+* **sunfreeware**: Package management using sunfreeware.com's ``pkg-get`` command on Solaris.
+        At this point, support is exactly the same as ``blastwave`` support and
+        has not actually been tested.
+* **up2date**: Support for Red Hat's proprietary ``up2date`` package update
+        mechanism.
+* **yum**: Support via ``yum``.
+
 #### responsefile
 A file containing any necessary answers to questions asked by
 the package.  This is currently only used on Solaris.  The
@@ -935,8 +996,7 @@ From where to retrieve the package.
 A read-only parameter set by the package.
 
 #### type
-The package format.  You will seldom need to specify this --
-Puppet will discover the appropriate format for your platform.
+Deprecated form of ``use``.
 
 #### vendor
 A read-only parameter set by the package.
@@ -1104,7 +1164,7 @@ applied in maintenance windows or during off-peak hours.
 
 #### repeat
 How often the application gets repeated in a given period.
-Defaults to 1.
+Defaults to 1. Must be an integer.
 
 
 
@@ -1135,7 +1195,7 @@ provided.
 Whether a service should be enabled to start at boot.
 This state behaves quite differently depending on the platform;
 wherever possible, it relies on local tools to enable or disable
-a given service.  *true*/*false*/*runlevels*  Valid values are ``true``, ``false``.
+a given service.  *true*/*false*/*runlevels*  Valid values are ``false``, ``true``.
 
 #### ensure
 Whether a service should be running.  **true**/*false*  Valid values are ``running`` (also called ``true``), ``stopped`` (also called ``false``).
@@ -1172,6 +1232,31 @@ of a service, then the service name will be used instead.
 
 The pattern can be a simple string or any legal Ruby pattern.
 
+#### provider
+The specific backend for provider to use. You will
+seldom need to specify this -- Puppet will usually discover the
+appropriate provider for your platform.  Available providers are:
+
+* **base**: The simplest form of service support.  You have to specify
+        enough about your service for this to work; the minimum you can specify
+        is a binary for starting the process, and this same binary will be searched
+        for in the process table to stop the service.
+
+        It is preferable to specify start, stop, and status commands, akin
+        to how you would do so using ``init``.
+* **debian**: Debian's form of ``init``-style management.  The only difference
+        is that this supports service enabling and disabling via ``update-rc.d``.
+* **init**: Standard init service management.  This provider assumes that the
+        init script has not ``status`` command, because so few scripts do,
+        so you need to either provide a status command or specify via ``hasstatus``
+        that one already exists in the init script.
+* **redhat**: Red Hat's (and probably many others) form of ``init``-style service
+        management; uses ``chkconfig`` for service enabling and disabling.
+* **smf**: Support for Sun's new Service Management Framework.  Starting a service
+        is effectively equivalent to enabling it, so there is only support
+        for starting and stopping services, which also enables and disables them,
+        respectively.
+
 #### restart
 Specify a *restart* command manually.  If left
 unspecified, the service will be stopped and then started.
@@ -1197,16 +1282,7 @@ process table.
 Specify a *stop* command manually.
 
 #### type
-The service type.  For most platforms, it does not make
-sense to set this parameter, as the default is based on
-the builtin service facilities.  The service types available are:
-
-* **base**: You must specify everything.
-* **init**: Assumes ``start`` and ``stop`` commands exist, but you
-  must specify everything else.
-* **debian**: Debian's own specific version of ``init``.
-* **smf**: Solaris 10's new Service Management Facility.
-  Valid values are ``base``, ``init``, ``debian``, ``redhat``, ``smf``.
+Deprecated form of ``provder``.
 
 
 
@@ -1402,6 +1478,15 @@ User name.  While limitations are determined for
 each operating system, it is generally a good idea to keep to
 the degenerate 8 characters, beginning with a letter.
 
+#### provider
+The specific backend for provider to use. You will
+seldom need to specify this -- Puppet will usually discover the
+appropriate provider for your platform.  Available providers are:
+
+* **netinfo**: User management in NetInfo.
+* **pw**: User management via ``pw`` on FreeBSD.
+* **useradd**: User management via ``useradd`` and its ilk.
+
 #### shell
 The user's login shell.  The shell must exist and be
 executable.
@@ -1419,4 +1504,4 @@ recommended.
 ----------------
 
 
-*This page autogenerated on Mon Aug 07 11:02:19 CDT 2006*
+*This page autogenerated on Sun Aug 27 23:24:27 PDT 2006*
