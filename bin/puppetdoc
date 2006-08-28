@@ -263,6 +263,11 @@ in your manifest, including defined components.
   how the instance behaves (e.g., adding a search path for ``exec`` instances
   or determining recursion on ``file`` instances).
 
+When required binaries are specified for providers, fully qualifed paths
+indicate that the binary must exist at that specific path and unqualified
+binaries indicate that Puppet will search for the binary using the shell
+path.
+
     }
 
     types.sort { |a,b|

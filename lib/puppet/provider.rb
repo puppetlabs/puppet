@@ -6,7 +6,7 @@ class Puppet::Provider
 
     class << self
         # Include the util module so we have access to things like 'binary'
-        include Puppet::Util
+        include Puppet::Util, Puppet::Util::Docs
         attr_accessor :name, :model
         attr_writer :doc
     end
@@ -34,6 +34,7 @@ class Puppet::Provider
     def self.commands(hash)
         hash.each do |name, path|
             name = symbolize(name)
+            @origcommands[name] = path
             # Keep the short name if we couldn't find it.
             unless path =~ /^\//
                 if tmp = binary(path)
@@ -77,25 +78,26 @@ class Puppet::Provider
         @defaults.length
     end
 
-    # Specify a documentation string.
-    def self.desc(str)
-        @doc = str
+    dochook(:defaults) do
+        if @defaults.length > 0
+            return "  Default for " + @defaults.collect do |f, v|
+                "``#{f}`` == ``#{v}``"
+            end.join(" and ") + "."
+        end
     end
 
-    def self.doc
-        if defined? @commands and @commands.length > 0
-            extra = "  Required binaries: " + @commands.collect do |n, c|
+    dochook(:commands) do
+        if @origcommands.length > 0
+            return "  Required binaries: " + @origcommands.collect do |n, c|
                 "``#{c}``"
-            end.join(", ")
-            @doc + extra
-        else
-            @doc
+            end.join(", ") + "."
         end
     end
 
     def self.initvars
         @defaults = {}
         @commands = {}
+        @origcommands = {}
         @confines = Hash.new do |hash, key|
             hash[key] = []
         end

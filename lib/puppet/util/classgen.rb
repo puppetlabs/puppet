@@ -4,7 +4,6 @@ module Puppet
 end
 
 module Puppet::Util::ClassGen
-    include Puppet::Util::MetaID
     include Puppet::Util::MethodHelper
     include Puppet::Util
 
