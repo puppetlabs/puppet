@@ -87,6 +87,48 @@ class TestReportServer < Test::Unit::TestCase
                 "Directory was not created")
         end
     end
+
+    def test_report_autoloading
+        # Create a fake report
+        fakedir = tempfile()
+        $: << fakedir
+        cleanup do $:.delete(fakedir) end
+
+        libdir = File.join(fakedir, "puppet", "reports")
+        FileUtils.mkdir_p(libdir)
+
+        $myreportrun = false
+        file = File.join(libdir, "myreport.rb")
+        File.open(file, "w") { |f| f.puts %{
+                Puppet::Server::Report.newreport(:myreport) do |report|
+                    $myreportrun = true
+                    return report
+                end
+            }
+        }
+        Puppet[:reports] = "myreport"
+
+        # Create a server
+        server = Puppet::Server::Report.new
+
+        method = nil
+        assert_nothing_raised {
+            method = Puppet::Server::Report.reportmethod(:myreport)
+        }
+        assert(method, "Did not get report method")
+
+        assert(! server.respond_to?(method),
+            "Server already responds to report method")
+
+        retval = nil
+        assert_nothing_raised {
+            retval = server.send(:process, YAML.dump("a string"))
+        }
+        assert($myreportrun, "Did not run report")
+        assert(server.respond_to?(method),
+            "Server does not respond to report method")
+
+    end
 end
 
 # $Id$

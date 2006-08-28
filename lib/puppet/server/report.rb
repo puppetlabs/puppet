@@ -21,6 +21,7 @@ class Server
         )
 
         @reports = {}
+        @reportloader = Puppet::Autoload.new(self, "puppet/reports")
 
         class << self
             attr_reader :hooks
@@ -45,21 +46,12 @@ class Server
         def self.report(name)
             name = name.intern if name.is_a? String
             unless @reports.include? reportmethod(name)
-                begin
-                    require "puppet/reports/#{name.to_s}"
-                    unless @reports.include? name
-                        Puppet.warning(
-                            "Loaded report file for %s but report was not defined" %
-                            name
-                        )
-                        return nil
-                    end
-                rescue LoadError => detail
-                    if Puppet[:debug]
-                        puts detail.backtrace
-                    end
-                    Puppet.warning "Could not load report %s: %s" %
-                        [name, detail]
+                @reportloader.load(name)
+                unless @reports.include? name
+                    Puppet.warning(
+                        "Loaded report file for %s but report was not defined" %
+                        name
+                    )
                     return nil
                 end
             end
@@ -161,19 +153,23 @@ class Server
             end
 
             Puppet[:reports].split(/\s*,\s*/).each do |name|
-                method = self.class.reportmethod(name)
+                method = self.class.report(name)
 
-                Puppet.info "Processing report %s" % name
-                begin
-                    send(method, report)
-                rescue NoMethodError => detail
-                    Puppet.warning "No report named '%s'" % name
-                rescue => detail
-                    if Puppet[:debug]
-                        puts detail.backtrace
+                if respond_to? method
+                    Puppet.info "Processing report %s" % name
+                    begin
+                        send(method, report)
+                    rescue NoMethodError => detail
+                        Puppet.warning "No report named '%s'" % name
+                    rescue => detail
+                        if Puppet[:debug]
+                            puts detail.backtrace
+                        end
+                        Puppet.err "Report %s failed: %s" %
+                            [name, detail]
                     end
-                    Puppet.err "Report %s failed: %s" %
-                        [name, detail]
+                else
+                    Puppet.warning "No report named '%s'" % name
                 end
             end
         end
