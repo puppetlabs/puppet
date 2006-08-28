@@ -9,7 +9,15 @@ class Puppet::Parser::AST
     # encounter an error if the component is instantiated more than
     # once.
     class CompDef < AST::Branch
-        attr_accessor :type, :args, :code, :keyword, :scope, :parentclass
+        attr_accessor :type, :args, :code, :scope, :parentclass
+        attr_writer :keyword
+
+        @keyword = "define"
+
+        class << self
+            attr_reader :keyword
+        end
+
 
         def self.genclass
             AST::Component
@@ -33,6 +41,7 @@ class Puppet::Parser::AST
                 arghash[:parentclass] = @parentclass.safeevaluate(:scope => scope)
             end
 
+
             begin
                 comp = self.class.genclass.new(arghash)
                 comp.keyword = self.keyword
@@ -53,9 +62,6 @@ class Puppet::Parser::AST
         def initialize(hash)
             @parentclass = nil
             @args = nil
-
-            # Set a default keyword
-            @keyword = "define"
             super
 
             #if @parentclass
@@ -64,6 +70,14 @@ class Puppet::Parser::AST
             #end
 
             #Puppet.debug "Defining type %s" % @type.value
+        end
+
+        def keyword
+            if defined? @keyword
+                @keyword
+            else
+                self.class.keyword
+            end
         end
 
         def tree(indent = 0)

@@ -131,17 +131,17 @@ class TestParser < Test::Unit::TestCase
 
         mkdef = proc { |hash|
             hash.collect { |arg, value|
-                "%s = %s" % [arg, value]
+                "$%s = %s" % [arg, value]
             }.join(", ")
         }
         manifest = File.join(basedir, "manifest")
         File.open(manifest, "w") { |f|
             f.puts "
-    define method(#{mkdef.call(defs1)}, other) {
+    define method(#{mkdef.call(defs1)}, $other) {
         $variable = $testing
     }
 
-    define othermethod(#{mkdef.call(defs2)}, goodness) {
+    define othermethod(#{mkdef.call(defs2)}, $goodness) {
         $more = less
     }
 
@@ -153,6 +153,7 @@ class TestParser < Test::Unit::TestCase
         goodness => rahness
     }
 "
+
         }
 
         ast = nil
@@ -248,18 +249,18 @@ class TestParser < Test::Unit::TestCase
             f.puts %{import "#{fullfile}"\ninclude full\nimport "local.pp"\ninclude local}
         end
 
-        file = tempfile()
-        files << file
+        fullmaker = tempfile()
+        files << fullmaker
 
         File.open(fullfile, "w") do |f|
-            f.puts %{class full { file { "#{file}": ensure => file }}}
+            f.puts %{class full { file { "#{fullmaker}": ensure => file }}}
         end
 
-        file = tempfile()
-        files << file
+        localmaker = tempfile()
+        files << localmaker
 
         File.open(localfile, "w") do |f|
-            f.puts %{class local { file { "#{file}": ensure => file }}}
+            f.puts %{class local { file { "#{localmaker}": ensure => file }}}
         end
 
         parser = Puppet::Parser::Parser.new
@@ -490,12 +491,12 @@ file { "/tmp/yayness":
         str1 = %{if true { #{exec.call("true")} }}
         ret = nil
         assert_nothing_raised {
-            ret = parser.parse(str1)
+            ret = parser.parse(str1)[0]
         }
         assert_instance_of(Puppet::Parser::AST::IfStatement, ret)
         str2 = %{if true { #{exec.call("true")} } else { #{exec.call("false")} }}
         assert_nothing_raised {
-            ret = parser.parse(str2)
+            ret = parser.parse(str2)[0]
         }
         assert_instance_of(Puppet::Parser::AST::IfStatement, ret)
         assert_instance_of(Puppet::Parser::AST::Else, ret.else)

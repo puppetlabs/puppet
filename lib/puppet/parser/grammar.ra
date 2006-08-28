@@ -15,9 +15,11 @@ token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT
 
 rule
 program:    statements {
+    # Make sure we always return an array.
     if val[0].is_a?(AST::ASTArray)
         result = val[0]
     else
+        result = aryfy(val[0])
     end
 }
             | nothing
@@ -393,6 +395,7 @@ import: IMPORT quotedtext {
                 next
             end
             # push the results into the main result array
+            # We always return an array when we parse.
             parser.parse.each do |child|
                 result.push child
             end
@@ -400,23 +403,24 @@ import: IMPORT quotedtext {
     }
 }
 
-definition: DEFINE NAME argumentlist parent LBRACE statements RBRACE {
+# Disable definition inheritance for now. 8/27/06, luke
+#definition: DEFINE NAME argumentlist parent LBRACE statements RBRACE {
+definition: DEFINE NAME argumentlist LBRACE statements RBRACE {
     args = {
         :type => ast(AST::Name, :value => val[1]),
         :args => val[2],
-        :keyword => val[0],
-        :code => val[5]
+        :code => val[4] # Switch to 5 for parents
     }
 
     if val[3].instance_of?(AST::Name)
         args[:parentclass] = val[3]
     end
     result = ast AST::CompDef, args
-}           | DEFINE NAME argumentlist parent LBRACE RBRACE {
+#}           | DEFINE NAME argumentlist parent LBRACE RBRACE {
+}           | DEFINE NAME argumentlist LBRACE RBRACE {
     args = {
         :type => ast(AST::Name, :value => val[1]),
         :args => val[2],
-        :keyword => val[0],
         :code => ast(AST::ASTArray)
     }
 
@@ -424,7 +428,7 @@ definition: DEFINE NAME argumentlist parent LBRACE statements RBRACE {
         args[:parentclass] = val[3]
     end
 
-    result = ast AST::CompDef,args
+    result = ast AST::CompDef, args
 }
 
 #hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
@@ -432,7 +436,6 @@ hostclass: CLASS NAME parent LBRACE statements RBRACE {
         #:args => val[2],
     args = {
         :type => ast(AST::Name, :value => val[1]),
-        :keyword => val[0],
         :code => val[4]
     }
     # It'll be an ASTArray if we didn't get a parent
@@ -443,7 +446,6 @@ hostclass: CLASS NAME parent LBRACE statements RBRACE {
 }           | CLASS NAME parent LBRACE RBRACE {
     args = {
         :type => ast(AST::Name, :value => val[1]),
-        :keyword => val[0],
         :code => ast(AST::ASTArray, :children => [])
     }
     # It'll be an ASTArray if we didn't get a parent
@@ -462,7 +464,6 @@ nodedef: NODE hostnames parent LBRACE statements RBRACE {
     end
     args = {
         :names => val[1],
-        :keyword => val[0],
         :code => val[4]
     }
     if val[2].instance_of?(AST::Name)
@@ -477,7 +478,6 @@ nodedef: NODE hostnames parent LBRACE statements RBRACE {
             :children => [val[1]]
     end
     args = {
-        :keyword => val[0],
         :names => val[1],
         :code => ast(AST::ASTArray, :children => [])
     }
@@ -533,14 +533,14 @@ arguments:    argument
 }
 
 argument:     name EQUALS rvalue {
-    msg = "Deprecation notice:  Variables must now include '$' in prototypes"
+    msg = "Deprecation notice:  #{val[0].value} must now include '$' in prototype"
     msg += " at line %s" % @lexer.line
     msg += " in file %s" % @lexer.file if @lexer.file
     Puppet.warning msg
     result = ast AST::CompArgument, :children => [val[0],val[2]]
 }
             | name {
-    msg = "Deprecation notice:  Variables must now include '$' in prototypes"
+    msg = "Deprecation notice:  #{val[0].value} must now include '$' in prototype"
     msg += " at line %s" % @lexer.line
     msg += " in file %s" % @lexer.file if @lexer.file
     Puppet.warning msg
@@ -621,7 +621,8 @@ end
 
 # Create an AST object, and automatically add the file and line information if
 # available.
-def ast(klass, hash = {})
+def ast(klass, hash = nil)
+    hash ||= {}
     unless hash[:line]
         hash[:line] = @lexer.line
     end

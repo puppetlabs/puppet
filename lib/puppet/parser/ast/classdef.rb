@@ -5,6 +5,8 @@ class Puppet::Parser::AST
     # but classes are always singletons -- only one can exist on a given
     # host.
     class ClassDef < AST::CompDef
+        @keyword = "class"
+
         def self.genclass
             AST::HostClass
         end
@@ -53,12 +55,6 @@ class Puppet::Parser::AST
                 error.backtrace = detail.backtrace
                 raise error
             end
-        end
-
-        def initialize(hash)
-            @parentclass = nil
-            @keyword = "class"
-            super
         end
 
         def tree(indent = 0)

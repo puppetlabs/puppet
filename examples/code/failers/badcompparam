@@ -1,4 +1,4 @@
-define comp(arg1) {
+define comp($arg1) {
     file { "/etc/passwd":
         mode => 644
     }

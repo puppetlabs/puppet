@@ -1114,6 +1114,10 @@ module ParserTesting
         }
 
         assert_apply(comp)
+
+        files.each do |file|
+            assert(FileTest.exists?(file), "Did not create %s" % file)
+        end
     end
 
     def mk_transobject(file = "/etc/passwd")

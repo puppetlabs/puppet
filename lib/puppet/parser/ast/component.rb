@@ -16,7 +16,6 @@ class Puppet::Parser::AST
         # These are retrieved when looking up the superclass
         attr_accessor :name, :arguments
 
-        #def evaluate(scope,hash,objtype,objname)
         def evaluate(hash)
             origscope = hash[:scope]
             objtype = hash[:type]
@@ -108,9 +107,9 @@ class Puppet::Parser::AST
             end
 
             # Now just evaluate the code with our new bindings.
-            scope.inside(self) do
+            #scope.inside(self) do # part of definition inheritance
                 self.code.safeevaluate(:scope => scope)
-            end
+            #end
 
             # If we're being evaluated as a parent class, we want to return the
             # scope, so it can be overridden and such, but if not, we want to 

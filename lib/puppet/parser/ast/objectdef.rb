@@ -33,12 +33,13 @@ class Puppet::Parser::AST
             # Get our type and name.
             objtype = @type.safeevaluate(:scope => scope)
 
-            if objtype == "super"
-                objtype = supertype()
-                @subtype = true
-            else
+            # Disable definition inheritance, for now.  8/27/06, luke
+            #if objtype == "super"
+            #    objtype = supertype()
+            #    @subtype = true
+            #else
                 @subtype = false
-            end
+            #end
 
             # If the type was a variable, we wouldn't have typechecked yet.
             # Do it now, if so.
@@ -70,6 +71,7 @@ class Puppet::Parser::AST
             }
 
             # Now collect info from our parent.
+            parentname = nil
             if @subtype
                 parentname = supersetup(hash)
             end
