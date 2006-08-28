@@ -13,7 +13,6 @@ class Server
             :fileserverconfig => ["$confdir/fileserver.conf",
                 "Where the fileserver configuration is stored."])
 
-        #CHECKPARAMS = %w{checksum type mode owner group}
         CHECKPARAMS = [:mode, :type, :owner, :group, :checksum]
 
         @interface = XMLRPC::Service::Interface.new("fileserver") { |iface|
@@ -50,7 +49,7 @@ class Server
             end
 
             sdir = nil
-            unless sdir = subdir(mount, path)
+            unless sdir = mount.subdir(path)
                 mount.notice "Could not find subdirectory %s" %
                     "//%s/%s" % [mount, path]
                 return ""
@@ -105,13 +104,11 @@ class Server
             if hash[:Config] == false
                 @noreadconfig = true
             else
-                @config = hash[:Config] || Puppet[:fileserverconfig]
+                @config = Puppet::ParsedFile.new(
+                    hash[:Config] || Puppet[:fileserverconfig]
+                )
                 @noreadconfig = false
             end
-
-            @configtimeout = hash[:ConfigTimeout] || 60
-            @configstamp = nil
-            @congigstatted = nil
 
             if hash.include?(:Mount)
                 @passedconfig = true
@@ -127,7 +124,7 @@ class Server
                 }
             else
                 @passedconfig = false
-                readconfig
+                readconfig(false) # don't check the file the first time.
             end
         end
 
@@ -143,7 +140,7 @@ class Server
             end
 
             subdir = nil
-            unless subdir = subdir(mount, path)
+            unless subdir = mount.subdir(path)
                 mount.notice "Could not find subdirectory %s" %
                     "%s:%s" % [mount, path]
                 return ""
@@ -180,40 +177,24 @@ class Server
                 end
             end
 
-            if FileTest.directory?(path)
-                if FileTest.readable?(path)
-                    @mounts[name] = Mount.new(name, path)
-                    @mounts[name].info "Mounted %s" % path
-                else
-                    raise FileServerError, "%s is not readable" % path
-                end
-            else
-                raise FileServerError, "%s is not a directory" % path
-            end
+            # Let the mounts do their own error-checking.
+            @mounts[name] = Mount.new(name, path)
+            @mounts[name].info "Mounted %s" % path
+
+            return @mounts[name]
         end
 
         # Read the configuration file.
-        def readconfig
+        def readconfig(check = true)
             return if @noreadconfig
 
-            if @configstamp and FileTest.exists?(@config)
-                if @configtimeout and @configstatted
-                    if Time.now - @configstatted > @configtimeout
-                        @configstatted = Time.now
-                        tmp = File.stat(@config).ctime
-
-                        if tmp == @configstamp
-                            return
-                        end
-                    else
-                        return
-                    end
-                end
+            if check and ! @config.changed?
+                return
             end
 
             newmounts = {}
             begin
-                File.open(@config) { |f|
+                File.open(@config.file) { |f|
                     mount = nil
                     count = 1
                     f.each { |line|
@@ -288,9 +269,6 @@ class Server
                 mount.valid?
             }
             @mounts = newmounts
-
-            @configstamp = File.stat(@config).ctime
-            @configstatted = Time.now
         end
 
         # Retrieve a file from the local disk and pass it to the remote
@@ -411,7 +389,6 @@ class Server
 
                 # And now replace the name with the actual object.
                 mount = @mounts[mount]
-                mount = SubstMount.new(mount, client) unless client.nil?
             else
                 raise FileServerError, "Fileserver error: Invalid path '%s'" % dir
             end
@@ -426,20 +403,6 @@ class Server
             return mount, path
         end
 
-        # Retrieve a specific directory relative to a mount point.
-        def subdir(mount, dir)
-            basedir = mount.path
-
-            dirname = nil
-            if dir
-                dirname = File.join(basedir, dir.split("/").join(File::SEPARATOR))
-            else
-                dirname = basedir
-            end
-
-            dirname
-        end
-
         def to_s
             "fileserver"
         end
@@ -448,9 +411,53 @@ class Server
         # don't know about the enclosing object; they're mainly just used for
         # authorization.
         class Mount < AuthStore
-            attr_reader :path, :name
+            attr_reader :name
 
             Puppet::Util.logmethods(self, true)
+
+            # Create a map for a specific client.
+            def self.clientmap(client)
+                {
+                    "h" => client.sub(/\..*$/, ""), 
+                    "H" => client,
+                    "d" => client.sub(/[^.]+\./, "") # domain name
+                }
+            end
+
+            # Replace % patterns as appropriate.
+            def self.expand(path, client = nil)
+                # This map should probably be moved into a method.
+                map = nil
+
+                if client
+                    map = clientmap(client)
+                else
+                    # Else, use the local information
+                    map = localmap()
+                end
+                path.gsub(/%(.)/) do |v|
+                    key = $1
+                    if key == "%" 
+                        "%"
+                    else
+                        map[key] || v
+                    end
+                end
+            end
+
+            # Cache this manufactured map, since if it's used it's likely
+            # to get used a lot.
+            def self.localmap
+                unless defined? @localmap
+                    @localmap = {
+                        "h" =>  Facter["hostname"].value,
+                        "H" => [Facter["hostname"].value,
+                                Facter["domain"].value].join("."),
+                        "d" =>  Facter["domain"].value,
+                    }
+                end
+                @localmap
+            end
 
             # Run 'retrieve' on a file.  This gets the actual parameters, so
             # we can pass them to the client.
@@ -477,7 +484,16 @@ class Server
                 return obj
             end
 
-            # Create out orbject.  It must have a name.
+            # Do we have any patterns in our path, yo?
+            def expandable?
+                if defined? @expandable
+                    @expandable
+                else
+                    false
+                end
+            end
+
+            # Create out object.  It must have a name.
             def initialize(name, path = nil)
                 unless name =~ %r{^\w+$}
                     raise FileServerError, "Invalid name format '%s'" % name
@@ -528,30 +544,53 @@ class Server
                 return obj
             end
 
+            # Return the path as appropriate, expanding as necessary.
+            def path(client = nil)
+                if expandable?
+                    return self.class.expand(@path, client)
+                else
+                    return @path
+                end
+            end
+
             # Set the path.
             def path=(path)
-                unless FileTest.exists?(path)
-                    map = { "h" => "\000", "H" => "\000" }
-                    # FIXME: What should we do if there are replacement
-                    # patterns in path ? Replace with '*' and glob ?
-                    # But that could turn out to be _very_ expensive
-                    unless Mount::subst(path, map).index("\000")
+                # FIXME: For now, just don't validate paths with replacement
+                # patterns in them.
+                if path =~ /%./
+                    # Mark that we're expandable.
+                    @expandable = true
+                else
+                    unless FileTest.exists?(path)
                         raise FileServerError, "%s does not exist" % path
                     end
+                    unless FileTest.directory?(path)
+                        raise FileServerError, "%s is not a directory" % path
+                    end
+                    unless FileTest.readable?(path)
+                        raise FileServerError, "%s is not readable" % path
+                    end
+                    @expandable = false
                 end
                 @path = path
             end
 
-            def to_s
-                #if @path
-                #    "mount[#{@name}]" + ":" + @path
-                #else
-                #    "mount[#{@name}]"
-                #end
-                "mount[#{@name}]"
+            # Retrieve a specific directory relative to a mount point.
+            # If they pass in a client, then expand as necessary.
+            def subdir(dir = nil, client = nil)
+                basedir = self.path(client)
+
+                dirname = if dir
+                    File.join(basedir, dir.split("/").join(File::SEPARATOR))
+                else
+                    basedir
+                end
+
+                dirname
             end
 
-            def type?(file)
+            def to_s
+                "mount[#{@name}]"
             end
 
             # Verify our configuration is valid.  This should really check to
@@ -560,38 +599,6 @@ class Server
                 unless @path
                     raise FileServerError, "No path specified"
                 end
-            end
-
-            # Replace occurences of %C in PATH with entries from MAP and
-            # return a new string. Literal percent signs can be included as 
-            # '%%', and a replacement is only done when C is a key in MAP
-            def self.subst(path, map)
-                path.gsub(/%./) do |v|
-                    if v == "%%" 
-                        "%"
-                    elsif ! map.key?(v[1,1])
-                        v
-                    else
-                        map[v[1,1]]
-                    end
-                end
-            end
-            
-        end
-
-        # A mount that does substitutions in the path on the fly
-        class SubstMount < DelegateClass(Mount)
-            def initialize(mount, client)
-                @mount = mount
-                super(@mount)
-                @map = { 
-                    "h" => client.sub(/\..*$/, ""), 
-                    "H" => client 
-                }
-            end
-
-            def path
-                Mount::subst(@mount.path, @map)
             end
         end
     end

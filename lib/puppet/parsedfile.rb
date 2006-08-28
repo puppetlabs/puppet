@@ -46,6 +46,10 @@ module Puppet
             @tstamp = stamp()
         end
 
+        def to_s
+            @file
+        end
+
         private
 
         def stamp

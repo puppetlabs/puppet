@@ -284,14 +284,7 @@ module TestPuppet
     end
 
     def tstdir
-        if defined? @@testdirnum
-            @@testdirnum += 1
-        else
-            @@testdirnum = 1
-        end
-        d = File.join(self.tmpdir(), self.class.to_s + "_" + @method_name + @@testdirnum.to_s)
-        @@tmpfiles << d
-        return d
+        tempfile()
     end
 
     def tmpdir

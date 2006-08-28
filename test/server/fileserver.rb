@@ -15,6 +15,22 @@ require 'puppettest.rb'
 
 class TestFileServer < Test::Unit::TestCase
 	include TestPuppet
+
+    def mkmount(path = nil)
+        mount = nil
+        name = "yaytest"
+        base = path || tempfile()
+        unless FileTest.exists?(base)
+            Dir.mkdir(base)
+        end
+        # Create a test file
+        File.open(File.join(base, "file"), "w") { |f| f.puts "bazoo" }
+        assert_nothing_raised {
+            mount = Puppet::Server::FileServer::Mount.new(name, base)
+        }
+
+        return mount
+    end
     # make a simple file source
     def mktestdir
         testdir = File.join(tmpdir(), "remotefilecopytesting")
@@ -38,7 +54,6 @@ class TestFileServer < Test::Unit::TestCase
         @@tmpfiles << testdir
         assert_nothing_raised {
             Dir.mkdir(testdir)
-            @@tmpfiles << testdir
             files = %w{a b c d e}.collect { |l|
                 name = File.join(testdir, "file%s" % l)
                 File.open(name, "w") { |f|
@@ -631,12 +646,10 @@ class TestFileServer < Test::Unit::TestCase
     def test_filereread
         server = nil
 
+        conffile = tempfile()
         dir = tstdir()
 
         files = mktestfiles(dir)
-
-        conffile = tempfile()
-
         File.open(conffile, "w") { |f|
             f.print "# a test config file
  
@@ -646,12 +659,13 @@ class TestFileServer < Test::Unit::TestCase
 "
         }
         
+        # Reset the timeout, so we reload faster
+        Puppet[:filetimeout] = 0.5
 
         # start our server with a fast timeout
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
                 :Local => true,
-                :ConfigTimeout => 0.5,
                 :Config => conffile
             )
         }
@@ -751,8 +765,11 @@ class TestFileServer < Test::Unit::TestCase
     end
 
     # Test that substitution patterns in the path are exapanded
-    # properly
-    def test_host_specific
+    # properly.  Disabled, because it was testing too much of the process
+    # and in a non-portable way.  This is a thorough enough test that it should
+    # be kept, but it should be done in a way that is clearly portable (e.g.,
+    # no md5 sums of file paths).
+    def disabled_test_host_specific
         client1 = "client1.example.com"
         client2 = "client2.example.com"
         ip = "127.0.0.1"
@@ -820,6 +837,7 @@ allow *
         }
         assert_equal(5, list.size)
         assert_equal("file", list[1])
+
         assert_equal("{md5}95b0dea1b0c692b7563120afb4056e7f", list[4])
 
         assert_nothing_raised {
@@ -864,6 +882,92 @@ allow *
         assert_equal(client2_fqdndir, list)
     end
 
+    # Make sure the 'subdir' method in Mount works.
+    def test_mount_subdir
+        mount = nil
+        base = tempfile()
+        Dir.mkdir(base)
+        subdir = File.join(base, "subdir")
+        Dir.mkdir(subdir)
+        [base, subdir].each do |d|
+            File.open(File.join(d, "file"), "w") { |f| f.puts "bazoo" }
+        end
+        mount = mkmount(base)
+
+        assert_equal(base, mount.subdir(), "Did not default to base path")
+        assert_equal(subdir, mount.subdir("subdir"), "Did not default to base path")
+    end
+
+    # Make sure mounts get correctly marked expandable or not, depending on
+    # the path.
+    def test_expandable
+        name = "yaytest"
+        dir = tempfile()
+        Dir.mkdir(dir)
+
+        mount = mkmount()
+        assert_nothing_raised {
+            mount.path = dir
+        }
+
+        assert(! mount.expandable?, "Mount incorrectly called expandable")
+
+        assert_nothing_raised {
+            mount.path = "/dir/a%a"
+        }
+        assert(mount.expandable?, "Mount not called expandable")
+
+        # This isn't a valid replacement pattern, so it should throw an error
+        # because the dir doesn't exist
+        assert_raise(Puppet::FileServerError) {
+            mount.path = "/dir/a%"
+        }
+
+        # Now send it back to a normal path
+        assert_nothing_raised {
+            mount.path = dir
+        }
+        # Make sure it got reverted
+        assert(! mount.expandable?, "Mount incorrectly called expandable")
+
+
+    end
+
+    def test_mount_expand
+        mclass = Puppet::Server::FileServer::Mount
+
+
+        check = proc do |client, pattern, repl|
+            path = "/my/#{pattern}/file"
+            assert_equal("/my/#{repl}/file", mclass.expand(path, client))
+        end
+
+        # Do a round of checks with a fake client
+        client = "host.domain.com"
+        {"%h" => "host", # Short name
+         "%H" => client, # Full name
+         "%d" => "domain.com", # domain
+         "%%" => "%", # escape
+         "%o" => "%o" # other
+         }.each do |pat, repl|
+             check.call(client, pat, repl)
+         end
+
+        # Now, check that they use Facter info 
+        client = nil
+        local = Facter["hostname"].value
+        domain = Facter["domain"].value
+        fqdn = [local, domain].join(".")
+        {"%h" => local, # Short name
+         "%H" => fqdn, # Full name
+         "%d" => domain, # domain
+         "%%" => "%", # escape
+         "%o" => "%o" # other
+         }.each do |pat, repl|
+             check.call(client, pat, repl)
+         end
+
+    end
 end
 
 # $Id$
