@@ -41,7 +41,7 @@ module Puppet::SSLCertificates
             :mode => 0644,
             :desc => "Where individual hosts store and look for their public key."
         },
-        :localcacert => { :default => "$certdir/cacert.pem",
+        :localcacert => { :default => "$certdir/ca.pem",
             :mode => 0644,
             :desc => "Where each client stores the CA certificate."
         }
