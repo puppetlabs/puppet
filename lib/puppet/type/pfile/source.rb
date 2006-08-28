@@ -25,6 +25,19 @@ module Puppet
             See the [fileserver docs][] for information on how to configure
             and use file services within Puppet.
 
+            If you specify multiple file sources for a file, then the first
+            source that exists will be used.  This allows you to specify
+            what amount to search paths for files:
+
+                file { \"/path/to/my/file\":
+                    source => [
+                        \"/nfs/files/file.$host\",
+                        \"/nfs/files/file.$operatingsystem\",
+                        \"/nfs/files/file\"
+                    ]
+                }
+            
+            This will use the first found file as the source.
 
             [fileserver docs]: fsconfigref.html
 

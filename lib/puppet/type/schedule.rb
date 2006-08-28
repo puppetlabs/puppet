@@ -104,6 +104,18 @@ module Puppet
                         self.fail "Invalid range %s" % value
                     end
 
+                    # Make sure the hours are valid
+                    [range[0][0], range[1][0]].each do |n|
+                        if n < 0 or n > 23
+                            raise ArgumentError, "Invalid hour '%s'" % n
+                        end
+                    end
+
+                    [range[0][1], range[1][1]].each do |n|
+                        if n and (n < 0 or n > 59)
+                            raise ArgumentError, "Invalid minute '%s'" % n
+                        end
+                    end
                     if range[0][0] > range[1][0]
                         self.fail(("Invalid range %s; " % value) +
                             "ranges cannot span days."
@@ -261,7 +273,7 @@ module Puppet
 
         newparam(:repeat) do
             desc "How often the application gets repeated in a given period.
-                Defaults to 1."
+                Defaults to 1. Must be an integer."
 
             defaultto 1
 
