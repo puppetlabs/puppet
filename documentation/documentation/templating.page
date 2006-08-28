@@ -1,0 +1,85 @@
+---
+inMenu: true
+orderInfo: 10
+---
+Puppet supports templating via
+[ERB](http://www.ruby-doc.org/stdlib/libdoc/erb/rdoc/), which is part of the
+Ruby standard library and is used for many other projects including Ruby on
+Rails.  Templates are evaluated via a simple function:
+
+    $value = template("mytemplate.erb")
+
+You can specify the full path to your template, or you can put all your
+templates in Puppet's ``templatedir``, which usually defaults to
+``/var/puppet/templates`` (you can find out what it is on your system by
+running ``puppet --configprint templatedir``). 
+
+Templating is pretty simple:  You can reference any variables within your
+template that are defined within the enclosing scope.  This is especially
+useful for generating complete files; here is how I generate the Apache
+configuration for my [Trac](http://trac.edgewall.org/) sites:
+
+    define tracsite($cgidir, $tracdir) {
+        file { "trac-$name":
+            path => "/etc/apache2/trac/$name.conf",
+            owner => root,
+            group => root,
+            mode => 644,
+            require => file[apacheconf],
+            content => template("tracsite.erb"),
+            notify => service[apache2]
+        }
+
+        symlink { "tracsym-$name":
+            path => "$cgidir/$name.cgi",
+            ensure => "/usr/share/trac/cgi-bin/trac.cgi"
+        }
+    }
+
+And then here's my template:
+
+    <Location "/cgi-bin/<%= name %>.cgi">
+        SetEnv TRAC_ENV "/export/svn/trac/<%= name %>"
+    </Location> 
+            
+    # You need something like this to authenticate users
+    <Location "/cgi-bin/<%= name %>.cgi/login">
+        AuthType Basic 
+        AuthName "Trac" 
+        AuthUserFile /etc/apache2/auth/svn
+        Require valid-user
+    </Location>
+
+You can see that I put each Trac configuration into a separate file, and then
+I just tell Apache to load all of these files:
+
+    Include /etc/apache2/trac/[^.#]*
+
+The above template is quite simple, in that it only uses the Puppet-defined
+``name`` variable, but it provides a clean separation between the format of
+the configuration file and how I generate it.
+
+## Iteration
+
+Puppet's templates also support iteration.  If the variable you are accessing
+is an array, you can iterate over it.  Given Puppet code like this:
+
+    $values = [val1, val2, otherval]
+
+You could have a template like this:
+
+    <% values.each do |val|
+    Some stuff with <%= val %>
+    <% end%>
+
+This would produce:
+
+    Some stuff with val1
+    Some stuff with val2
+    Some stuff with otherval
+
+Internally, Puppet's values get translated to real Ruby values, including
+``true`` and ``false``, so you can be pretty confident that variables will
+behave as you might expect.
+
+*$Id$*
