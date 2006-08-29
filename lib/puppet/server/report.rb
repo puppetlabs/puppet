@@ -45,7 +45,7 @@ class Server
         # Load a report.
         def self.report(name)
             name = name.intern if name.is_a? String
-            unless @reports.include? reportmethod(name)
+            unless @reports.include? name
                 @reportloader.load(name)
                 unless @reports.include? name
                     Puppet.warning(
