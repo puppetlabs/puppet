@@ -98,6 +98,10 @@ module Util
 
     # Change the process to a different user
     def self.chuser
+        if Facter["operatingsystem"].value == "Darwin"
+            $stderr.puts "Ruby on darwin is broken; puppetmaster must run as root"
+            return
+        end
         if group = Puppet[:group]
             group = self.gid(group)
             unless group
@@ -107,9 +111,14 @@ module Util
                 begin
                     Process.egid = group 
                     Process.gid = group 
-                rescue
-                    $stderr.puts "could not change to group %s" % group
-                    exit(74)
+                rescue => detail
+                    Puppet.warning "could not change to group %s: %s" %
+                        [group.inspect, detail]
+                    $stderr.puts "could not change to group %s" % group.inspect
+
+                    # Don't exit on failed group changes, since it's
+                    # not fatal
+                    #exit(74)
                 end
             end
         end
@@ -121,7 +130,6 @@ module Util
             end
             unless Process.uid == user
                 begin
-                    Process.euid = user 
                     Process.uid = user 
                 rescue
                     $stderr.puts "could not change to user %s" % user
