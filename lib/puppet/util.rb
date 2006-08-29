@@ -131,6 +131,7 @@ module Util
             unless Process.uid == user
                 begin
                     Process.uid = user 
+                    Process.euid = user 
                 rescue
                     $stderr.puts "could not change to user %s" % user
                     exit(74)
