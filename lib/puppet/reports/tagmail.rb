@@ -23,11 +23,19 @@ Puppet::Server::Report.newreport(:tagmail) do |report|
     # Load the config file
     tags = {}
     File.readlines(Puppet[:tagmap]).each do |line|
-        taglist, emails = line.chomp.split(/\s*:\s*/)
+        taglist = emails = nil
+        case line.chomp
+        when /^\s*#/: next
+        when /^\s*$/: next
+        when /^\s*(.+)\s*:\s*(.+)\s*$/:
+            taglist = $1
+            emails = $2
+        else
+            raise ArgumentError, "Invalid tagmail config file"
+        end
 
-        emails = emails.split(/\s*,\s*/)
         taglist.split(/\s*,\s*/).each do |tag|
-            tags[tag] = emails
+            tags[tag] = emails.split(/\s*,\s*/)
         end
     end
 
