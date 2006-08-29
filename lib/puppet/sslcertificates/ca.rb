@@ -61,7 +61,7 @@ class Puppet::SSLCertificates::CA
             :desc => "Where the serial number for certificates is stored."
         },
         :autosign => { :default => "$confdir/autosign.conf",
-            :mode => 0640,
+            :mode => 0644,
             :desc => "Whether to enable autosign.  Valid values are true (which
                 autosigns any key request, and is a very bad idea), false (which
                 never autosigns any key request), and the path to a file, which
