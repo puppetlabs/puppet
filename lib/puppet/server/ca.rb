@@ -47,6 +47,8 @@ class Server
             auth = Puppet::Server::AuthStore.new
             File.open(autosign) { |f|
                 f.each { |line|
+                    next if line =~ /^\s*#/
+                    next if line =~ /^\s*$/
                     auth.allow(line.chomp)
                 }
             }
