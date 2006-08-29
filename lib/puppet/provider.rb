@@ -28,6 +28,8 @@ class Puppet::Provider
         unless command =~ /^\//
             raise Puppet::Error, "Command #{command} could not be found"
         end
+
+        command
     end
 
     # Define one or more binaries we'll be using
