@@ -79,10 +79,7 @@ module Puppet
                     )
                     error.line ||= @line
                     error.file ||= @file
-                    error.backtrace = detail.backtrace
-                    if Puppet[:debug]
-                        puts detail.backtrace
-                    end
+                    error.set_backtrace detail.backtrace
                     raise error
                 end
             end

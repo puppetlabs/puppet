@@ -14,8 +14,11 @@ module Puppet # :nodoc:
             end
         end
 
-        def initialize(message)
+        def initialize(message, line = nil, file = nil)
             @message = message
+
+            @line = line if line
+            @file = file if file
         end
 
         def to_s
@@ -34,7 +37,17 @@ module Puppet # :nodoc:
         end
     end
 
-    class DevError < Error; end
+    # An error class for when I don't know what happened.  Automatically
+    # prints a stack trace when in debug mode.
+    class DevError < Error
+        # XXX This is probably the wrong way to do this, but...
+        def set_backtrace(trace)
+            if Puppet[:debug]
+                puts trace
+            end
+            super(trace)
+        end
+    end
 end
 
 # $Id$
