@@ -24,7 +24,6 @@ Puppet::Type.type(:service).provide :base do
             @model.fail "Either a stop command or a pattern must be specified"
         end
         ps = Facter["ps"].value
-        warning ps.inspect
         unless ps and ps != ""
             @model.fail(
                 "You must upgrade Facter to a version that includes 'ps'"
@@ -42,12 +41,6 @@ Puppet::Type.type(:service).provide :base do
         }
 
         return nil
-    end
-
-    # Basically just a synonym for restarting.  Used to respond
-    # to events.
-    def refresh
-        self.restart
     end
 
     # How to restart the process.

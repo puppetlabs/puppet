@@ -334,6 +334,12 @@ module Puppet
                 self.configchk
             end
         end
+
+        # Basically just a synonym for restarting.  Used to respond
+        # to events.
+        def refresh
+            provider.restart
+        end
     end
 end
 
