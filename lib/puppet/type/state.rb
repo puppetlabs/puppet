@@ -268,11 +268,11 @@ class State < Puppet::Parameter
             # the blocks could return values.
             event = self.instance_eval(&ary[1])
         else
-            if provider.respond_to?(self.class.name.to_s + "=")
+            begin
                 provider.send(self.class.name.to_s + "=", self.should)
-            else
-                self.fail "%s is not a valid value for %s" %
-                    [value, self.class.name]
+            rescue NoMethodError
+                self.fail "The %s provider can not handle attribute %s" %
+                    [provider.class.name, self.class.name]
             end
         end
 
