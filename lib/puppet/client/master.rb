@@ -23,7 +23,7 @@ class Puppet::Client::MasterClient < Puppet::Client
         :reportserver => ["$server",
             "The server to which to send transaction reports."
         ],
-        :report => [true,
+        :report => [false,
             "Whether to send reports after every transaction."
         ]
     )
