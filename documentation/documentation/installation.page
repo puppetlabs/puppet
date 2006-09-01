@@ -77,8 +77,8 @@ Ruby itself.
 
 #### Debian and Ubuntu
 
-Facter and Puppet are now available in Debian, thanks to Matthew Palmer and
-Jamie Wilkinson.  
+Facter and Puppet now have quality Debian packges , thanks to Matthew Palmer
+and Jamie Wilkinson.  You can download these packages from any Debian mirror.
 
 The package maintainer for Ruby on these platforms has decided to split
 the Ruby standard library into many packages.  According to Eric Hollensbe,
@@ -93,6 +93,17 @@ this is the package dependency list for Puppet on Debian:
 * libstrscan-ruby
 * libsyslog-ruby
 * libwebrick-ruby
+
+##### Note on Debian/Testing
+
+Note that **libruby1.8** versions above **1.8.4-1** on Debian/testing seem
+to be broken, resulting in segfaults.  Until an update gets released to fix
+this, you should pin library1.8, by putting something like the following into
+``/etc/apt/preferences``:
+
+    Package: libruby1.8
+    Pin: version 1.8.4-1
+    Pin-Priority: 1001
 
 #### SuSE
 
