@@ -87,6 +87,21 @@ class TestHost < Test::Unit::TestCase
                 Puppet.type(:host).retrieve
             }
 
+            text = Puppet.type(:host).fileobj.read
+
+            dest = tempfile()
+            @hosttype.path = dest
+
+            # Now write it back out
+            assert_nothing_raised {
+                Puppet.type(:host).store
+            }
+
+            newtext = Puppet.type(:host).fileobj.read
+
+            # Don't worry about difference in whitespace
+            assert_equal(text.gsub(/\s+/, ' '), newtext.gsub(/\s+/, ' '))
+
             @hosttype.clear
         }
     end

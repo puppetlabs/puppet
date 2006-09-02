@@ -41,7 +41,7 @@ module Puppet
                         return @should
                     end
                 else
-                    return []
+                    return nil
                 end
             end
 
