@@ -1264,7 +1264,7 @@ class Type < Puppet::Element
         end
 
         # Remove the reference to the provider.
-        if defined? @provider
+        if self.provider
             @provider.clear
             @provider = nil
         end

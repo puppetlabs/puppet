@@ -59,7 +59,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
 
     # What's the latest package version available?
     def latest
-        cmd = "#{command(:aptcache)}he showpkg %s" % @model[:name] 
+        cmd = "#{command(:aptcache)} showpkg %s" % @model[:name] 
         begin
             output = execute(cmd)
         rescue Puppet::ExecutionFailure

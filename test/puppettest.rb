@@ -69,6 +69,10 @@ module TestPuppet
             true
         end
 
+        def clear
+            @model = nil
+        end
+
         def initialize(model)
             @model = model
         end

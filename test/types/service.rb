@@ -167,7 +167,7 @@ class TestLocalService < Test::Unit::TestCase
 
         # test refreshing it
         assert_nothing_raised() {
-            service.provider.refresh
+            service.refresh
         }
 
         # now stop it
