@@ -139,6 +139,12 @@ class Puppet::Provider
         return true
     end
 
+    # Remove the reference to the model, so GC can clean up.
+    def clear
+        @model = nil
+    end
+
+    # Retrieve a named command.
     def command(name)
         self.class.command(name)
     end

@@ -1262,6 +1262,12 @@ class Type < Puppet::Element
             @parent.delete(self)
             @parent = nil
         end
+
+        # Remove the reference to the provider.
+        if defined? @provider
+            @provider.clear
+            @provider = nil
+        end
     end
 
     # Is the named state defined?
