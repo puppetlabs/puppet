@@ -524,8 +524,8 @@ module ExeTest
     end
 
     def setbindir
-        unless ENV["PATH"] =~ /puppet/
-            ENV["PATH"] += ":" + bindir
+        unless ENV["PATH"].split(":").include?(bindir)
+            ENV["PATH"] = [bindir, ENV["PATH"]].join(":")
         end
     end
 

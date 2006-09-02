@@ -85,6 +85,8 @@ class TestPuppetCA < Test::Unit::TestCase
         assert_equal(["No certificates to sign"], output)
     end
     
+    # This method takes a long time to run because of all of the external
+    # executable calls.
     def test_revocation
         ca = Puppet::SSLCertificates::CA.new()
         host1 = gen_cert(ca, "host1.example.com")
