@@ -1,0 +1,15 @@
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetmasterd\[[0-9]+\]: Starting Puppet server version [.0-9]+$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetmasterd\[[0-9]+\]: Compiled configuration for [._[:alnum:]-]+ in [.0-9]+ seconds$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetmasterd\[[0-9]+\]: Caught TERM; shutting down$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetmasterd\[[0-9]+\]: Shutting down$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Starting Puppet client version [.0-9]+$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: getting config$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Caching configuration at [\/._[:alnum:]-]+$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Loaded state in [.0-9]+ seconds$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Calling puppetmaster.getconfig$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Retrieved configuration in [.0-9]+ seconds$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Starting configuration run$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Finished configuration run in [.0-9]+ seconds$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Caught (TERM|INT); shutting down$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Shutting down$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Restarting with .*$
