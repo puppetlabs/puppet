@@ -135,7 +135,7 @@ module Puppet
                 # if replace => false then fake the checksum so that the file
                 # is not overwritten.
                 unless @is == :absent
-                    unless @parent[:replace]
+                    if @parent[:replace] == :false
                         info "Not replacing existing file"
                         @is = @stats[:checksum]
                     end

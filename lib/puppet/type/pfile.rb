@@ -117,7 +117,15 @@ module Puppet
             desc "Whether or not to replace a file that is
                 sourced but exists.  This is useful for using file sources
                 purely for initialization."
-            defaultto true
+            newvalues(:true, :false)
+            defaultto :true
+        end
+
+        newparam(:force) do
+            desc "Force the file operation.  Currently only used when replacing
+                directories with links."
+            newvalues(:true, :false)
+            defaultto false
         end
 
         newparam(:ignore) do
