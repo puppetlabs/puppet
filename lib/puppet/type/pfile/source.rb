@@ -132,7 +132,14 @@ module Puppet
                     self.info "File does not have checksum"
                     @is = :absent
                 end
-
+                # if replace => false then fake the checksum so that the file
+                # is not overwritten.
+                unless @is == :absent
+                    unless @parent[:replace]
+                        info "Not replacing existing file"
+                        @is = @stats[:checksum]
+                    end
+                end
                 @should = [@stats[:checksum]]
             # If we're a directory, then do not copy anything, and instead just
             # create the directory using the 'create' state.

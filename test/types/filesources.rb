@@ -607,6 +607,46 @@ class TestFileSources < Test::Unit::TestCase
         assert(FileTest.exists?(newpath), "Did not create file")
         assert_equal("yayness\n", File.read(newpath))
     end
+
+    # Make sure files aren't replaced when replace is false, but otherwise
+    # are.
+    def test_replace
+        source = tempfile()
+        File.open(source, "w") { |f| f.puts "yayness" }
+
+        dest = tempfile()
+        file = Puppet::Type.newfile(
+            :path => dest,
+            :source => source,
+            :recurse => true
+        )
+
+
+        assert_apply(file)
+
+        assert(FileTest.exists?(dest), "Did not create file")
+        assert_equal("yayness\n", File.read(dest))
+
+        # Now set :replace
+        assert_nothing_raised {
+            file[:replace] = false
+        }
+
+        File.open(source, "w") { |f| f.puts "funtest" }
+        assert_apply(file)
+
+        # Make sure it doesn't change.
+        assert_equal("yayness\n", File.read(dest))
+
+        # Now set it to true and make sure it does change.
+        assert_nothing_raised {
+            file[:replace] = true
+        }
+        assert_apply(file)
+
+        # Make sure it doesn't change.
+        assert_equal("funtest\n", File.read(dest))
+    end
 end
 
 # $Id$

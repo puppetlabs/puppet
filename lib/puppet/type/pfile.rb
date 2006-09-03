@@ -113,6 +113,13 @@ module Puppet
             end
         end
 
+        newparam(:replace) do
+            desc "Whether or not to replace a file that is
+                sourced but exists.  This is useful for using file sources
+                purely for initialization."
+            defaultto true
+        end
+
         newparam(:ignore) do
             desc "A parameter which omits action on files matching
                 specified patterns during recursion.  Uses Ruby's builtin globbing
