@@ -246,6 +246,14 @@ end
         end
     end
 
+    newstate(:shares, :parent => ZoneConfigState) do
+        desc "Number of FSS CPU shares allocated to the zone."
+
+        def configtext
+            "add rctl\nset name=zone.cpu-shares\nadd value (priv=privileged,limit=#{self.should},action=none)\nend"
+        end
+    end
+
     newstate(:inherit, :parent => ZoneMultiConfigState) do
         desc "The list of directories that the zone inherits from the global
             zone.  All directories must be fully qualified."
@@ -288,7 +296,7 @@ end
                 timeserver=localhost
                 name_service=DNS {domain_name=<%= domain %>
                         name_server=<%= nameserver %>}
-                network_interface=primary {hostname=<%= name %>
+                network_interface=primary {hostname=<%= realhostname %>
                         ip_address=<%= ip %>
                         netmask=<%= netmask %>
                         protocol_ipv6=no
@@ -300,7 +308,8 @@ end
                 zone { myzone:
                     ip => "bge0:192.168.0.23",
                     sysidcfg => template(sysidcfg),
-                    path => "/opt/zones/myzone"
+                    path => "/opt/zones/myzone",
+                    realhostname => "fully.qualified.domain.name"
                 }
 
             The sysidcfg only matters on the first booting of the zone,
@@ -327,6 +336,10 @@ end
                 value
             end
         end
+    end
+
+    newparam(:realhostname) do
+        desc "The actual hostname of the zone."
     end
 
     # If Puppet is also managing the base dir or its parent dir, list them
@@ -530,6 +543,8 @@ set zonepath=%s
                 # Nothing; this is set in the zoneadm list command
             when :pool:
                 self.is = [:pool, value]
+            when :shares:
+                self.is = [:shares, value]
             when "inherit-pkg-dir":
                 dirs = value.collect do |hash|
                     hash[:dir]
