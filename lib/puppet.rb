@@ -143,7 +143,8 @@ module Puppet
             "Print the value of a specific configuration parameter.  If a
             parameter is provided for this, then the value is printed and puppet
             exits.  Comma-separate multiple values.  For a list of all values,
-            specify 'all'."],
+            specify 'all'.  This feature is only available in Puppet versions
+            higher than 0.18.4."],
         :color => [true, "Whether to use ANSI colors when logging to the console."],
         :mkusers => [false,
             "Whether to create the necessary user and group that puppetd will
