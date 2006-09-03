@@ -194,28 +194,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
 
     # Parse our sample data and make sure we regenerate it correctly.
     def test_hostsparse
-        fakedata("data/types/hosts").each { |file|
-            @provider.path = file
-            instances = nil
-            assert_nothing_raised {
-                instances = @provider.retrieve
-            }
-
-            text = @provider.fileobj.read
-
-            dest = tempfile()
-            @provider.path = dest
-
-            # Now write it back out
-            assert_nothing_raised {
-                @provider.store(instances)
-            }
-
-            newtext = @provider.fileobj.read
-
-            # Don't worry about difference in whitespace
-            assert_equal(text.gsub(/\s+/, ' '), newtext.gsub(/\s+/, ' '))
-        }
+        fakedata("data/types/hosts").each do |file| fakedataparse(file) end
     end
 
     # Make sure we can modify the file elsewhere and those modifications will

@@ -14,23 +14,25 @@ require 'facter'
 
 class TestPort < Test::Unit::TestCase
 	include TestPuppet
+
     def setup
         super
         @porttype = Puppet.type(:port)
-        @oldfiletype = @porttype.filetype
-    end
 
-    def teardown
-        @porttype.filetype = @oldfiletype
-        Puppet.type(:file).clear
-        super
-    end
+        @provider = @porttype.defaultprovider
 
-    # Here we just create a fake host type that answers to all of the methods
-    # but does not modify our actual system.
-    def mkfaketype
-        pfile = tempfile()
-        @porttype.path = pfile
+        # Make sure they aren't using something funky like netinfo
+        unless @provider.name == :parsed
+            @porttype.defaultprovider = @porttype.provider(:parsed)
+        end
+
+        cleanup do @porttype.defaultprovider = nil end
+
+        oldpath = @provider.path
+        cleanup do
+            @provider.path = oldpath
+        end
+        @provider.path = tempfile()
     end
 
     def mkport
@@ -55,7 +57,6 @@ class TestPort < Test::Unit::TestCase
     end
 
     def test_simpleport
-        mkfaketype
         host = nil
         assert_nothing_raised {
             assert_nil(Puppet.type(:port).retrieve)
@@ -77,29 +78,7 @@ class TestPort < Test::Unit::TestCase
         }
     end
 
-    def test_portsparse
-        fakedata("data/types/ports").each { |file|
-            @porttype.path = file
-            Puppet.info "Parsing %s" % file
-            assert_nothing_raised {
-                @porttype.retrieve
-            }
-
-            # Now just make we've got some ports we know will be there
-            dns = @porttype["domain"]
-            assert(dns, "Could not retrieve DNS port")
-
-            assert_equal("53", dns.is(:number), "DNS number was wrong")
-            %w{udp tcp}.each { |v|
-                assert(dns.is(:protocols).include?(v), "DNS did not include proto %s" % v)
-            }
-
-            @porttype.clear
-        }
-    end
-
     def test_moddingport
-        mkfaketype
         port = nil
         port = mkport
 
@@ -123,7 +102,6 @@ class TestPort < Test::Unit::TestCase
     end
 
     def test_removal
-        mkfaketype
         port = mkport()
         assert_nothing_raised {
             port[:ensure] = :present
@@ -142,7 +120,6 @@ class TestPort < Test::Unit::TestCase
     end
 
     def test_modifyingfile
-        mkfaketype()
 
         ports = []
         names = []
@@ -174,8 +151,6 @@ class TestPort < Test::Unit::TestCase
     end
 
     def test_addingstates
-        mkfaketype
-
         port = mkport()
         assert_events([:port_created], port)
 
