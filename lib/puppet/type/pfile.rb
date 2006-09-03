@@ -160,6 +160,18 @@ module Puppet
             defaultto :ignore
         end
 
+        newparam(:purge) do
+            desc "Whether unmanaged files should be purged.  If you have a filebucket
+                configured the purged files will be uploaded, but if you do not,
+                this will destroy data.  Only use this option for generated
+                files unless you really know what you are doing.  This option only
+                makes sense when recursively managing directories."
+
+            defaultto :false
+
+            newvalues(:true, :false)
+        end
+
         autorequire(:file) do
             cur = []
             pary = self[:path].split(File::SEPARATOR)
@@ -675,7 +687,14 @@ module Puppet
             children.each { |file|
                 file = File.basename(file)
                 next if file =~ /^\.\.?$/ # skip . and .. 
-                if child = self.newchild(file, true, :recurse => recurse)
+                options = {:recurse => recurse}
+
+                if child = self.newchild(file, true, options)
+                    # Mark any unmanaged files for removal if purge is set.
+                    if self[:purge] == :true and child.implicit?
+                        child[:ensure] = :absent
+                    end
+
                     unless @children.include?(child)
                         self.push child
                         added.push file

@@ -1359,6 +1359,41 @@ class TestFile < Test::Unit::TestCase
 
         assert_equal("yayness", File.read(path), "Content did not get set correctly")
     end
+
+    # Make sure unmanaged files can be purged.
+    def test_purge
+        sourcedir = tempfile()
+        destdir = tempfile()
+        Dir.mkdir(sourcedir)
+        Dir.mkdir(destdir)
+        sourcefile = File.join(sourcedir, "sourcefile")
+        dsourcefile = File.join(destdir, "sourcefile")
+        localfile = File.join(destdir, "localfile")
+        randfile = File.join(destdir, "random")
+        File.open(sourcefile, "w") { |f| f.puts "funtest" }
+        # this file should get removed
+        File.open(randfile, "w") { |f| f.puts "footest" }
+
+        lfobj = Puppet::Type.newfile(:path => localfile, :content => "rahtest")
+
+        destobj = Puppet::Type.newfile(:path => destdir,
+                                    :source => sourcedir,
+                                    :recurse => true)
+
+
+        assert_apply(lfobj, destobj)
+
+        assert(FileTest.exists?(dsourcefile), "File did not get copied")
+        assert(FileTest.exists?(localfile), "File did not get created")
+        assert(FileTest.exists?(randfile), "File got prematurely purged")
+
+        assert_nothing_raised { destobj[:purge] = true }
+        assert_apply(lfobj, destobj)
+
+        assert(FileTest.exists?(dsourcefile), "File got purged")
+        assert(FileTest.exists?(localfile), "File got purged")
+        assert(! FileTest.exists?(randfile), "File did not get purged")
+    end
 end
 
 # $Id$
