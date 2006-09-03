@@ -1,4 +1,4 @@
-require 'puppet/parsedfile'
+require 'puppet/loadedfile'
 require 'puppet/server/rights'
 
 module Puppet
@@ -6,7 +6,7 @@ class Server
 
 class ConfigurationError < Puppet::Error; end
 
-class AuthConfig < Puppet::ParsedFile
+class AuthConfig < Puppet::LoadedFile
     Puppet.config.setdefaults(:puppet,
         :authconfig => [ "$confdir/namespaceauth.conf",
             "The configuration file that defines the rights to the different

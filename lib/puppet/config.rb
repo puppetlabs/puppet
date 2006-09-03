@@ -233,10 +233,10 @@ class Config
     def parse(file)
         text = nil
 
-        if file.is_a? Puppet::ParsedFile
+        if file.is_a? Puppet::LoadedFile
             @file = file
         else
-            @file = Puppet::ParsedFile.new(file)
+            @file = Puppet::LoadedFile.new(file)
         end
 
         # Create a timer so that this.

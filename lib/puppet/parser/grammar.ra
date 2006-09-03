@@ -585,7 +585,7 @@ endcomma:     # nothing
 end
 ---- header ----
 require 'puppet'
-require 'puppet/parsedfile'
+require 'puppet/loadedfile'
 require 'puppet/parser/lexer'
 require 'puppet/parser/ast'
 #require 'puppet/parser/interpreter'
@@ -648,7 +648,7 @@ def file=(file)
     if @files.detect { |f| f.file == file }
         raise Puppet::ImportError.new("Import loop detected")
     else
-        @files << Puppet::ParsedFile.new(file)
+        @files << Puppet::LoadedFile.new(file)
         @lexer.file = file
     end
 end

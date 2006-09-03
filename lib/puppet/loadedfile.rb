@@ -5,7 +5,7 @@ require 'puppet'
 
 module Puppet
     class NoSuchFile < Puppet::Error; end
-    class ParsedFile
+    class LoadedFile
         attr_reader :file
 
         # Provide a hook for setting the timestamp during testing, so we don't

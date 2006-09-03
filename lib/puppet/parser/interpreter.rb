@@ -254,7 +254,7 @@ module Puppet
             # Add a new file to check for updateness.
             def newfile(file)
                 unless @files.find { |f| f.file == file }
-                    @files << Puppet::ParsedFile.new(file)
+                    @files << Puppet::LoadedFile.new(file)
                 end
             end
 
