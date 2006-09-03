@@ -59,7 +59,7 @@ module Puppet
         # first, so I don't need to worry about that.
         def sync(value)
             # Just copy the value to our 'is' state; it'll get flushed later
-            self.is = value
+            #self.is = value
 
             return nil
         end
@@ -152,7 +152,7 @@ module Puppet
         end
 
         def exists?
-            h = provider.hash
+            h = self.retrieve
 
             if h[:ensure] == :absent
                 return false
@@ -187,6 +187,6 @@ end
 #require 'puppet/type/parsedtype/host'
 require 'puppet/type/parsedtype/port'
 require 'puppet/type/parsedtype/mount'
-require 'puppet/type/parsedtype/sshkey'
+#require 'puppet/type/parsedtype/sshkey'
 
 # $Id$

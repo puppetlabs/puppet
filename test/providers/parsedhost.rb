@@ -196,7 +196,6 @@ class TestParsedHostProvider < Test::Unit::TestCase
     def test_hostsparse
         fakedata("data/types/hosts").each { |file|
             @provider.path = file
-            Puppet.info "Parsing %s" % file
             instances = nil
             assert_nothing_raised {
                 instances = @provider.retrieve

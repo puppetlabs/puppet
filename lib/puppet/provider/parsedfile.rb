@@ -120,7 +120,6 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             o.is_a? Hash and o[:name] == @model[:name] 
         end
             @me = h
-            return h
         else
             @me = {}
             if @instances.empty?
@@ -128,8 +127,9 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             else
                 @instances << @me
             end
-            return @me
         end
+
+        return @me
     end
 
     def initialize(model)

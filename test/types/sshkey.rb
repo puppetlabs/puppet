@@ -17,21 +17,22 @@ class TestSSHKey < Test::Unit::TestCase
     def setup
         super
         # god i'm lazy
-        @sshtype = Puppet.type(:sshkey)
-        @oldfiletype = @sshtype.filetype
-    end
+        @sshkeytype = Puppet.type(:sshkey)
 
-    def teardown
-        Puppet::FileType.filetype(:ram).clear
-        @sshtype.filetype = @oldfiletype
-        Puppet.type(:file).clear
-        super
-    end
+        @provider = @sshkeytype.defaultprovider
 
-    # Here we just create a fake key type that answers to all of the methods
-    # but does not modify our actual system.
-    def mkfaketype
-        @sshtype.filetype = Puppet::FileType.filetype(:ram)
+        # Make sure they aren't using something funky like netinfo
+        unless @provider.name == :parsed
+            @sshkeytype.defaultprovider = @sshkeytype.provider(:parsed)
+        end
+
+        cleanup do @sshkeytype.defaultprovider = nil end
+
+        oldpath = @provider.path
+        cleanup do
+            @provider.path = oldpath
+        end
+        @provider.path = tempfile()
     end
 
     def mkkey
@@ -44,7 +45,7 @@ class TestSSHKey < Test::Unit::TestCase
         end
 
         assert_nothing_raised {
-            key = @sshtype.create(
+            key = @sshkeytype.create(
                 :name => "host%s.madstop.com" % @kcount,
                 :key => "%sAAAAB3NzaC1kc3MAAACBAMnhSiku76y3EGkNCDsUlvpO8tRgS9wL4Eh54WZfQ2lkxqfd2uT/RTT9igJYDtm/+UHuBRdNGpJYW1Nw2i2JUQgQEEuitx4QKALJrBotejGOAWxxVk6xsh9xA0OW8Q3ZfuX2DDitfeC8ZTCl4xodUMD8feLtP+zEf8hxaNamLlt/AAAAFQDYJyf3vMCWRLjTWnlxLtOyj/bFpwAAAIEAmRxxXb4jjbbui9GYlZAHK00689DZuX0EabHNTl2yGO5KKxGC6Esm7AtjBd+onfu4Rduxut3jdI8GyQCIW8WypwpJofCIyDbTUY4ql0AQUr3JpyVytpnMijlEyr41FfIb4tnDqnRWEsh2H7N7peW+8DWZHDFnYopYZJ9Yu4/jHRYAAACAERG50e6aRRb43biDr7Ab9NUCgM9bC0SQscI/xdlFjac0B/kSWJYTGVARWBDWug705hTnlitY9cLC5Ey/t/OYOjylTavTEfd/bh/8FkAYO+pWdW3hx6p97TBffK0b6nrc6OORT2uKySbbKOn0681nNQh4a6ueR3JRppNkRPnTk5c=" % @kcount,
                 :type => "ssh-dss",
@@ -56,41 +57,25 @@ class TestSSHKey < Test::Unit::TestCase
     end
 
     def test_simplekey
-        mkfaketype
         assert_nothing_raised {
-            assert_nil(Puppet.type(:sshkey).retrieve)
+            Puppet.type(:sshkey).defaultprovider.retrieve
+
+            count = 0
+            @sshkeytype.each do |h|
+                count += 1
+            end
+
+            assert_equal(0, count, "Found sshkeys in empty file somehow")
         }
 
         key = mkkey
 
         assert_apply(key)
 
-        assert_nothing_raised {
-            Puppet.type(:sshkey).store
-        }
-
-        assert_nothing_raised {
-            assert(
-                Puppet.type(:sshkey).to_file.include?(
-                    Puppet.type(:sshkey).fileobj.read
-                ),
-                "File does not include all of our objects"
-            )
-        }
-    end
-
-    def test_keysparse
-        fakedata("data/types/sshkey").each { |file|
-            @sshtype.path = file
-            assert_nothing_raised {
-                @sshtype.retrieve
-            }
-            @sshtype.clear
-        }
+        assert(key.exists?, "Key did not get created")
     end
 
     def test_moddingkey
-        mkfaketype
         key = mkkey()
 
         assert_events([:sshkey_created], key)
@@ -99,12 +84,11 @@ class TestSSHKey < Test::Unit::TestCase
 
         key[:alias] = %w{madstop kirby yayness}
 
-        Puppet.err :mark
         assert_events([:sshkey_changed], key)
     end
 
     def test_aliasisstate
-        assert_equal(:state, @sshtype.attrtype(:alias))
+        assert_equal(:state, @sshkeytype.attrtype(:alias))
     end
 
     def test_multivalues
@@ -126,28 +110,23 @@ class TestSSHKey < Test::Unit::TestCase
     end
 
     def test_removal
-        mkfaketype
         sshkey = mkkey()
         assert_nothing_raised {
             sshkey[:ensure] = :present
         }
         assert_events([:sshkey_created], sshkey)
 
-        sshkey.retrieve
-        assert(sshkey.insync?)
+        assert(sshkey.exists?, "key was not created")
         assert_nothing_raised {
             sshkey[:ensure] = :absent
         }
 
         assert_events([:sshkey_deleted], sshkey)
-        sshkey.retrieve
+        assert(! sshkey.exists?, "Key was not deleted")
         assert_events([], sshkey)
     end
 
     def test_modifyingfile
-        keyfile = tempfile()
-        Puppet.type(:sshkey).path = keyfile
-
         keys = []
         names = []
         3.times {
@@ -164,7 +143,7 @@ class TestSSHKey < Test::Unit::TestCase
         #newkey[:ensure] = :present
         names << newkey.name
         assert_apply(newkey)
-        Puppet.type(:sshkey).clear
+
         # Verify we can retrieve that info
         assert_nothing_raised("Could not retrieve after second write") {
             newkey.retrieve
@@ -172,9 +151,9 @@ class TestSSHKey < Test::Unit::TestCase
 
         # And verify that we have data for everything
         names.each { |name|
-            key = Puppet.type(:sshkey)[name]
+            key = Puppet.type(:sshkey)[name] || Puppet.type(:sshkey).create(:name => name)
             assert(key)
-            assert(key[:type])
+            assert(key.exists?, "key %s is missing" % name)
         }
     end
 end
