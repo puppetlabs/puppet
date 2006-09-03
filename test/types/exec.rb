@@ -531,6 +531,18 @@ class TestExec < Test::Unit::TestCase
             assert(! exec.check, "Check passed")
         }
     end
+
+    def test_missing_checks_cause_failures
+        exec = Puppet::Type.newexec(
+                                    :command => "echo true",
+                                    :path => ENV["PATH"],
+                                    :onlyif => "/bin/nosuchthingexists"
+                                   )
+
+        assert_raise(ArgumentError, "Missing command did not raise error") {
+            exec.run("/bin/nosuchthingexists")
+        } 
+    end
 end
 
 # $Id$

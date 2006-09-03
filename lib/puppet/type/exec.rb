@@ -515,6 +515,11 @@ module Puppet
                         end
                     }
                     status = $?.dup
+
+                    # The shell returns 127 if the command is missing.
+                    if $?.exitstatus == 127
+                        raise ArgumentError, output
+                    end
                 }
             rescue Errno::ENOENT => detail
                 self.fail detail.to_s
