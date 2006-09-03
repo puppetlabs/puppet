@@ -65,12 +65,20 @@ module Puppet::Util::ClassGen
             end
         end
 
+        if klass.respond_to? :preinit
+            klass.preinit
+        end
+
         block ||= options[:block]
 
         # Evaluate the passed block if there is one.  This should usually
         # define all of the work.
         if block
             klass.class_eval(&block)
+        end
+
+        if klass.respond_to? :postinit
+            klass.postinit
         end
 
         # If we were told to stick it in a hash, then do so
