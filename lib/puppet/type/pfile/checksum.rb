@@ -191,7 +191,7 @@ module Puppet
 
                 if self.insync?
                     self.debug "Checksum is already in sync"
-                    return nil
+                    return :nochange
                 end
                 #@parent.debug "%s(%s): after refresh, is '%s'" %
                 #    [self.class.name,@parent.name,@is]
@@ -207,7 +207,7 @@ module Puppet
                             @parent[:path]
                         )
                     end
-                    return nil
+                    return :nochange
                 end
             end
 
@@ -215,7 +215,7 @@ module Puppet
             if self.updatesum
                 return :file_changed
             else
-                return nil
+                return :nochange
             end
         end
 
@@ -270,6 +270,8 @@ module Puppet
             end
 
             #@parent.debug "checksum state is %s" % self.is
+
+            return @is
         end
 
         # Store the new sum to the state db.

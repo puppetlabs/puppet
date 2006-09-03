@@ -18,6 +18,9 @@ class TestGroup < Test::Unit::TestCase
 
         def create
             @ensure = :present
+
+            # Just set a fake gid
+            self.gid = 10
         end
 
         def delete
@@ -76,7 +79,7 @@ class TestGroup < Test::Unit::TestCase
         assert_events([:group_created], comp)
         assert_equal(:present, group.provider.ensure,  "Group is absent")
         group[:ensure] = :absent
-        trans = assert_events([:group_removed], comp)
+        trans = assert_events([:group_deleted], comp)
         assert_equal(:absent, group.provider.ensure,  "Group is present")
 
         assert_rollback_events(trans, [:group_created], "group")
@@ -86,7 +89,6 @@ class TestGroup < Test::Unit::TestCase
     # This is a bit odd, since we're not actually doing anything on the machine.
     # Just make sure we can set the gid and that it will work correctly.
     def attrtest_gid(group)
-
         # Check the validation.
         assert_nothing_raised {
             group[:gid] = "15"
@@ -96,7 +98,8 @@ class TestGroup < Test::Unit::TestCase
                      "Did not convert gid to number")
 
         comp = newcomp(group)
-        trans = assert_events([:group_modified], comp, "group")
+
+        trans = assert_events([:group_changed], comp, "group")
         assert_equal(15, group.provider.gid, "GID was not changed")
 
         assert_nothing_raised {
@@ -107,12 +110,12 @@ class TestGroup < Test::Unit::TestCase
                      "Did not keep gid as number")
 
         # Now switch to 16
-        trans = assert_events([:group_modified], comp, "group")
+        trans = assert_events([:group_changed], comp, "group")
         assert_equal(16, group.provider.gid, "GID was not changed")
 
         # And then rollback
-        assert_rollback_events(trans, [:group_modified], "group")
-        assert_equal(15, group.provider.gid, "GID was not changed")
+        assert_rollback_events(trans, [:group_changed], "group")
+        assert_equal(15, group.provider.gid, "GID was not reverted")
     end
 
     def test_owngroups
@@ -167,7 +170,7 @@ class TestGroup < Test::Unit::TestCase
             end
         }
 
-        assert_rollback_events(trans, [:group_removed], "group")
+        assert_rollback_events(trans, [:group_deleted], "group")
 
         assert(! gobj.provider.exists?,
                 "Did not delete group")

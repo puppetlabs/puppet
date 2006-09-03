@@ -59,7 +59,7 @@ module Puppet
 
             # If the ensure state is out of sync, it will always be called
             # first, so I don't need to worry about that.
-            def sync(nostore = false)
+            def sync(value = nil, nostore = false)
                 ebase = @parent.class.name.to_s
 
                 tail = nil

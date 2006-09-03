@@ -50,7 +50,7 @@ module Puppet
 
             def change_to_s
                 begin
-                    if @is == :absent
+                    if self.is == :absent
                         return "created"
                     elsif self.should == :absent
                         return "removed"
@@ -69,30 +69,11 @@ module Puppet
 
             def retrieve
                 if provider.exists?
-                    @is = :present
+                    return :present
                 else
-                    @is = :absent
+                    return :absent
                 end
             end
-
-            # The default 'sync' method only selects among a list of registered
-            # values.
-            def sync
-                if self.insync?
-                    self.info "already in sync"
-                    return nil
-                #else
-                    #self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
-                end
-                unless self.class.values
-                    self.devfail "No values defined for %s" %
-                        self.class.name
-                end
-
-                # Set ourselves to whatever our should value is.
-                self.set
-            end
-
         end
 
         newstate(:uid) do
@@ -193,24 +174,21 @@ module Puppet
             end
 
             def is_to_s
-                @is.join(",")
+                self.is.join(",")
             end
 
             # We need to override this because the groups need to
             # be joined with commas
             def should
-                unless defined? @is
-                    retrieve
-                end
-
                 @should ||= []
 
                 if @parent[:membership] == :inclusive
                     @should.sort
                 else
+                    current = self.is
                     members = @should
-                    if @is.is_a?(Array)
-                        members += @is
+                    if current.is_a?(Array)
+                        members += current
                     end
                     members.uniq.sort
                 end
@@ -218,9 +196,13 @@ module Puppet
 
             def retrieve
                 if tmp = provider.groups
-                    @is = tmp.split(",")
+                    if tmp == :absent
+                        return tmp
+                    else
+                        return tmp.split(",")
+                    end
                 else
-                    @is = :absent
+                    return :absent
                 end
             end
 
@@ -228,13 +210,13 @@ module Puppet
                 unless defined? @should and @should
                     return false
                 end
-                unless defined? @is and @is
+                unless defined? self.is and self.is
                     return false
                 end
-                unless @is.class == @should.class
+                unless self.is.class == @should.class
                     return false
                 end
-                return @is.sort == @should.sort
+                return self.is.sort == @should.sort
             end
 
             validate do |value|
@@ -243,8 +225,8 @@ module Puppet
                 end
             end
 
-            def sync
-                provider.groups = self.should.join(",")
+            def sync(value)
+                provider.groups = value.join(",")
                 :user_changed
             end
         end
@@ -374,27 +356,16 @@ module Puppet
 
         def retrieve
             absent = false
+            current = {}
             states().each { |state|
-                if absent
-                    state.is = :absent
+                if current[:ensure] == :absent
+                    current[state.name] = :absent
                 else
-                    state.retrieve
-                end
-
-                if state.name == :ensure and state.is == :absent
-                    absent = true
-                    next
+                    current[state.name] = state.retrieve
                 end
             }
-            #if provider.exists?
-            #    super
-            #else
-            #    # the user does not exist
-            #    @states.each { |name, state|
-            #        state.is = :absent
-            #    }
-            #    return
-            #end
+
+            return current
         end
     end
 end

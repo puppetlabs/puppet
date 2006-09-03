@@ -8,18 +8,21 @@ module Puppet
         #end
         
         def retrieve
+            retval = nil
             if stat = @parent.stat(false)
-                @is = stat.ftype
+                retval = stat.ftype
             else
-                @is = :absent
+                retval = :absent
             end
 
             # so this state is never marked out of sync
-            @should = [@is]
+            @should = [retval]
+
+            return retval
         end
 
 
-        def sync
+        def sync(value)
             raise Puppet::Error, ":type is read-only"
         end
     end

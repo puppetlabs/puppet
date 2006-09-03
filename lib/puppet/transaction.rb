@@ -90,7 +90,7 @@ class Transaction
 
             # Mark that our change happened, so it can be reversed
             # if we ever get to that point
-            unless events.nil? or (events.is_a?(Array) and events.empty?)
+            unless events.nil?
                 change.changed = true
                 @objectmetrics[:applied] += 1
             end
@@ -196,6 +196,9 @@ class Transaction
             [self.object_id, @count]
 
         allevents
+    ensure
+        # Unset 'is' everywhere.  This is relatively hackish, but, eh.
+        @objects.each do |o| o.clear end
     end
 
     # Determine whether a given object has failed.
@@ -317,6 +320,9 @@ class Transaction
             # And return the events for collection
             events
         }.flatten.reject { |e| e.nil? }
+    ensure
+        # Unset 'is' everywhere.  This is relatively hackish, but, eh.
+        @objects.each do |o| o.clear end
     end
 
     # Trigger any subscriptions to a child.  This does an upwardly recursive

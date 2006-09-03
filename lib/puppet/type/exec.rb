@@ -111,19 +111,29 @@ module Puppet
                 end
             end
 
-            # First verify that all of our checks pass.
-            def retrieve
-                # Default to somethinng
-
-                if @parent.check
-                    self.is = :notrun
+            def insync?
+                case self.is
+                when :failedchecks
+                    return true
+                when :shouldrun
+                    return false
                 else
-                    self.is = self.should
+                    raise ArgumentError, "Invalid 'is' value '%s'" % self.is.inspect
+                end
+            end
+
+            # Figure out whether we should run.
+            def retrieve
+                # First make sure all of our checks pass.
+                if @parent.check
+                    return :shouldrun
+                else
+                    return :failedchecks
                 end
             end
 
             # Actually execute the command.
-            def sync
+            def sync(value = nil)
                 olddir = nil
 
                 self.checkexe
@@ -444,6 +454,7 @@ module Puppet
                     val = [val] unless val.is_a? Array
                     val.each do |value|
                         unless @parameters[check].check(value)
+                            info "Failed '%s' check" % check
                             return false
                         end
                     end

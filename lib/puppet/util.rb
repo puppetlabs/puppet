@@ -512,6 +512,15 @@ module Util
         return seconds
     end
 
+    def warnstamp(var, msg)
+        $stampwarnings ||= {}
+        $stampwarnings[self.class] ||= {}
+        unless $stampwarnings[self.class][var]
+            warning msg
+            $stampwarnings[self.class][var] = true
+        end
+    end
+
     module_function :memory
 end
 end

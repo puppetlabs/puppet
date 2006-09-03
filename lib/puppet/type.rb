@@ -29,13 +29,10 @@ class Type < Puppet::Element
     attr_accessor :file, :line
     attr_reader :tags, :parent
 
-    attr_writer :implicit, :title
+    attr_accessor :implicit
+    attr_writer :title
     def implicit?
-        if defined? @implicit and @implicit
-            return true
-        else
-            return false
-        end
+        self.implicit
     end
 
     include Enumerable
@@ -56,10 +53,7 @@ class Type < Puppet::Element
     # iterate across all of the subclasses of Type
     def self.eachtype
         @types.each do |name, type|
-            # Only consider types that have names
-            #if ! type.parameters.empty? or ! type.validstates.empty?
-                yield type 
-            #end
+            yield type 
         end
     end
 
@@ -1707,6 +1701,15 @@ class Type < Puppet::Element
         #@cache[name] = value
     end
 
+    # Remove any vestages of the transaction we're in.  This is currently the only
+    # way to know if you're within a transaction -- if '@is' is set, yes, else,
+    # no.
+    def clear
+        @states.each do |name, state|
+            state.is = nil
+        end
+    end
+
     # Look up the schedule and set it appropriately.  This is done after
     # the instantiation phase, so that the schedule can be anywhere in the
     # file.
@@ -1947,9 +1950,12 @@ class Type < Puppet::Element
     def retrieve
         # it's important to use the method here, as it follows the order
         # in which they're defined in the object
+        is = {}
         states().each { |state|
-            state.retrieve
+            is[state.name] = state.retrieve
         }
+
+        is
     end
 
     # convert to a string
@@ -2000,30 +2006,22 @@ class Type < Puppet::Element
     end
 
     # Retrieve the changes associated with all of the states.
-    def statechanges
+    def statechanges(is)
         # If we are changing the existence of the object, then none of
         # the other states matter.
         changes = []
+
         if @states.include?(:ensure) and ! @states[:ensure].insync?
-            #self.info "ensuring %s from %s" %
-            #    [@states[:ensure].should, @states[:ensure].is]
-            changes = [Puppet::StateChange.new(@states[:ensure])]
+            changes = [Puppet::StateChange.new(@states[:ensure], is[:ensure])]
         # Else, if the 'ensure' state is correctly absent, then do
         # nothing
-        elsif @states.include?(:ensure) and @states[:ensure].is == :absent
-            #self.info "Object is correctly absent"
+        elsif @states.include?(:ensure) and is[:ensure] == :absent
             return []
         else
-            #if @states.include?(:ensure)
-            #    self.info "ensure: Is: %s, Should: %s" %
-            #        [@states[:ensure].is, @states[:ensure].should]
-            #else
-            #    self.info "no ensure state"
-            #end
             changes = states().find_all { |state|
                 ! state.insync?
             }.collect { |state|
-                Puppet::StateChange.new(state)
+                Puppet::StateChange.new(state, is[state.name])
             }
         end
 
@@ -2059,11 +2057,35 @@ class Type < Puppet::Element
         # it's important that we call retrieve() on the type instance,
         # not directly on the state, because it allows the type to override
         # the method, like pfile does
-        self.retrieve
+        is = self.retrieve
+
+        unless is.is_a? Hash
+            warnstamp :nohashreturned, "'retrieve' did not return hash"
+            is = {}
+        end
+
+        @@novalreturned ||= {}
+        states.each do |state|
+            unless is.include? state.name
+                warnstamp "no#{state.name}returned",
+                    "did not get %s from retrieve" % state.name
+                is[state.name] = state.is
+            end
+        end
+
+        # For now, set the 'is' values
+        is.each do |name, value|
+            # A special value to indicate we shouldn't do anything here; usually
+            # the result of an internal error.
+            next if value == :unmanaged
+            if @states.include? name
+                @states[name].is = value
+            end
+        end
 
         # states() is a private method, returning an ordered list
         unless self.class.depthfirst?
-            changes += statechanges()
+            changes += statechanges(is)
         end
 
         changes << @children.collect { |child|
@@ -2073,7 +2095,7 @@ class Type < Puppet::Element
         }
 
         if self.class.depthfirst?
-            changes += statechanges()
+            changes += statechanges(is)
         end
 
         changes.flatten!

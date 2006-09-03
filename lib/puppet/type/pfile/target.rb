@@ -56,8 +56,8 @@ module Puppet
 
         def retrieve
             if @parent.state(:ensure).should == :directory
-                @is = self.should
                 @linkmaker = true
+                return self.should
             else
                 if stat = @parent.stat
                     # If we're just checking the value
@@ -73,18 +73,18 @@ module Puppet
                         warning "Changing ensure to directory; recurse is %s but %s" %
                             [@parent[:recurse].inspect, @parent.recurse?]
                         @parent[:ensure] = :directory
-                        @is = should
                         @linkmaker = true
+                        return should
                     else
                         if stat.ftype == "link"
-                            @is = File.readlink(@parent[:path])
                             @linkmaker = false
+                            return File.readlink(@parent[:path])
                         else
-                            @is = :notlink
+                            return :notlink
                         end
                     end
                 else
-                    @is = :absent
+                    return :absent
                 end
             end
         end

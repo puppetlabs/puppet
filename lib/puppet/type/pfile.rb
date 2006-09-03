@@ -691,7 +691,7 @@ module Puppet
 
                 if child = self.newchild(file, true, options)
                     # Mark any unmanaged files for removal if purge is set.
-                    if self[:purge] == :true and child.implicit?
+                    if self[:purge] == :true and ! child.managed?
                         child[:ensure] = :absent
                     end
 
@@ -761,6 +761,8 @@ module Puppet
 
         # a wrapper method to make sure the file exists before doing anything
         def retrieve
+            is = {}
+
             if @states.include?(:source)
                 # This probably isn't the best place for it, but we need
                 # to make sure that we have a corresponding checksum state.
@@ -770,35 +772,35 @@ module Puppet
 
                 # We have to retrieve the source info before the recursion happens,
                 # although I'm not exactly clear on why.
-                @states[:source].retrieve
+                is[:source] = @states[:source].retrieve
             end
 
             if @parameters.include?(:recurse)
                 self.recurse
             end
 
-            unless stat = self.stat(true)
+            if stat = self.stat(true)
+                states().each { |state|
+                    # We don't want to call 'describe()' twice, so only do a local
+                    # retrieve on the source.
+                    if state.name == :source
+                        is[state.name] = state.retrieve(false)
+                    else
+                        is[state.name] = state.retrieve
+                    end
+                }
+            else
                 self.debug "File does not exist"
                 @states.each { |name,state|
                     # We've already retreived the source, and we don't
                     # want to overwrite whatever it did.  This is a bit
                     # of a hack, but oh well, source is definitely special.
                     next if name == :source
-                    state.is = :absent
+                    is[name] = :absent
                 }
-
-                return
             end
 
-            states().each { |state|
-                # We don't want to call 'describe()' twice, so only do a local
-                # retrieve on the source.
-                if state.name == :source
-                    state.retrieve(false)
-                else
-                    state.retrieve
-                end
-            }
+            return is
         end
 
         # Set the checksum, from another state.  There are multiple states that
