@@ -97,7 +97,7 @@ class TestCron < Test::Unit::TestCase
 
         cron[:ensure] = :absent
 
-        assert_events([:cron_removed], comp)
+        assert_events([:cron_deleted], comp)
 
         cron.retrieve
 

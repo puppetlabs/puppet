@@ -139,7 +139,7 @@ class TestSSHKey < Test::Unit::TestCase
             sshkey[:ensure] = :absent
         }
 
-        assert_events([:sshkey_removed], sshkey)
+        assert_events([:sshkey_deleted], sshkey)
         sshkey.retrieve
         assert_events([], sshkey)
     end

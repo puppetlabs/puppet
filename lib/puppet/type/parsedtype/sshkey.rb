@@ -65,14 +65,8 @@ module Puppet
         @fields = [:name, :type, :key]
 
         @filetype = Puppet::FileType.filetype(:flat)
-#        case Facter["operatingsystem"].value
-#        when "Solaris":
-#            @filetype = Puppet::FileType::SunOS
-#        else
-#            @filetype = Puppet::CronType::Default
-#        end
 
-        # Parse a host file
+        # Parse an sshknownhosts file
         #
         # This method also stores existing comments, and it stores all host
         # jobs in order, mostly so that comments are retained in the order

@@ -98,6 +98,15 @@ class Transaction
             events
         }.flatten.reject { |e| e.nil? }
 
+        # If our child responds to a 'flush' method, call it.
+        if child.respond_to? :flush
+            begin
+                child.flush
+            rescue => detail
+                raise Puppet::Error, "Could not flush: %s" % detail, detail.backtrace
+            end
+        end
+
         unless changes.empty?
             # Record when we last synced
             child.cache(:synced, Time.now)

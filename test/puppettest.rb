@@ -35,6 +35,10 @@ module TestPuppet
         def name
             self[:name]
         end
+
+        def to_hash
+            self
+        end
     end
 
     class FakeProvider

@@ -301,6 +301,7 @@ class Type < Puppet::Element
     def self.clear
         if defined? @objects
             @objects.each do |name, obj|
+                obj.clear
                 obj.remove(true)
             end
             @objects.clear
@@ -1259,7 +1260,7 @@ class Type < Puppet::Element
 
         # Remove the reference to the provider.
         if self.provider
-            @provider.clear
+            @provider.remove
             @provider = nil
         end
     end
@@ -1708,6 +1709,10 @@ class Type < Puppet::Element
         @states.each do |name, state|
             state.is = nil
         end
+
+        if provider and provider.respond_to? :clear
+            provider.clear
+        end
     end
 
     # Look up the schedule and set it appropriately.  This is done after
@@ -1956,6 +1961,19 @@ class Type < Puppet::Element
         }
 
         is
+    end
+
+    # Convert our object to a hash.  This just includes states.
+    def to_hash
+        rethash = {}
+
+        [@parameters, @metaparams, @states].each do |hash|
+            hash.each do |name, obj|
+                rethash[name] = obj.value
+            end
+        end
+
+        rethash
     end
 
     # convert to a string
