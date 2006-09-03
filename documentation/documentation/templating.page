@@ -14,6 +14,12 @@ templates in Puppet's ``templatedir``, which usually defaults to
 ``/var/puppet/templates`` (you can find out what it is on your system by
 running ``puppet --configprint templatedir``). 
 
+Templates are always evaluated by the parser, not by the client.  This means
+that if you are using ``puppetmasterd``, then the templates only need to be on
+the server, and you never need to download them to the client.  There's
+no difference to the client between using a template and specifying
+all of the text as a string.
+
 Templating is pretty simple:  You can reference any variables within your
 template that are defined within the enclosing scope.  This is especially
 useful for generating complete files; here is how I generate the Apache
@@ -41,17 +47,17 @@ configuration for my [Trac](http://trac.edgewall.org/) sites:
 And then here's my template:
 
 <pre><code>
-    <Location "/cgi-bin/<\%= name \%&gt;.cgi"&gt;
-        SetEnv TRAC_ENV "/export/svn/trac/<\%= name \%&gt;"
-    </Location&gt; 
+    &lt;Location "/cgi-bin/<%= name %&gt;.cgi"&gt;
+        SetEnv TRAC_ENV "/export/svn/trac/<%= name %&gt;"
+    &lt;/Location&gt; 
             
     # You need something like this to authenticate users
-    <Location "/cgi-bin/<\%= name \%&gt;.cgi/login"&gt;
+    &lt;Location "/cgi-bin/<%= name %&gt;.cgi/login"&gt;
         AuthType Basic 
         AuthName "Trac" 
         AuthUserFile /etc/apache2/auth/svn
         Require valid-user
-    </Location&gt;
+    &lt;/Location&gt;
 </code></pre>
 
 You can see that I put each Trac configuration into a separate file, and then
@@ -73,9 +79,7 @@ is an array, you can iterate over it.  Given Puppet code like this:
 You could have a template like this:
 
 <pre><code>
-    <% values.each do |val| %&gt;
-    Some stuff with <%= val %&gt;
-    <% end%&gt;
+    &lt;% values.each do |val| %&gt; Some stuff with <%= val %&gt; <% end%&gt;
 </code></pre>
 
 This would produce:
@@ -83,6 +87,10 @@ This would produce:
     Some stuff with val1
     Some stuff with val2
     Some stuff with otherval
+
+Note that ERB template lines that just have code on them get translated into
+blank lines, so if you were to split the above code into three lines, you
+would get two blank lines between each line of output.
 
 Internally, Puppet's values get translated to real Ruby values, including
 ``true`` and ``false``, so you can be pretty confident that variables will

@@ -98,12 +98,17 @@ this is the package dependency list for Puppet on Debian:
 
 Note that **libruby1.8** versions above **1.8.4-1** on Debian/testing seem
 to be broken, resulting in segfaults.  Until an update gets released to fix
-this, you should pin library1.8, by putting something like the following into
-``/etc/apt/preferences``:
+this, you should pin to library1.8, by putting something like the following
+into ``/etc/apt/preferences``:
 
     Package: libruby1.8
     Pin: version 1.8.4-1
     Pin-Priority: 1001
+
+If you have already upgraded your library1.8 package, you can downgrade it by
+adding ``deb http://snapshot.debian.net/archive pool ruby1.8`` to your
+``/etc/apt/sources.list`` and then running
+``apt-get install libruby1=1.8.4-1``.
 
 #### SuSE
 
