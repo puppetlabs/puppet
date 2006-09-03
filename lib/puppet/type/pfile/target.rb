@@ -28,7 +28,12 @@ module Puppet
 
                 case stat.ftype
                 when "directory":
-                    FileUtils.rmtree(@parent[:path])
+                    if @parent[:force] == :true
+                        FileUtils.rmtree(@parent[:path])
+                    else
+                        notice "Not replacing directory with link; use 'force' to override"
+                        return :nochange
+                    end
                 else
                     File.unlink(@parent[:path])
                 end

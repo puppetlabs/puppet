@@ -1194,9 +1194,17 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised {
             file = Puppet.type(:file).create(
                 :ensure => path,
-                :path => link
+                :path => link,
+                :backup => false
             )
         }
+
+        # First run through without :force
+        assert_events([], file)
+
+        assert(FileTest.directory?(link), "Link replaced dir without force")
+
+        assert_nothing_raised { file[:force] = true }
 
         assert_events([:link_created], file)
 

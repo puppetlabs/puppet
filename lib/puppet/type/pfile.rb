@@ -296,7 +296,9 @@ module Puppet
                     when String:
                         newfile = file + backup
                         # Just move it, since it's a directory.
-                        if FileTest.exists?(newfile)
+                        if FileTest.directory?(newfile)
+                            raise Puppet::Error, "Will not replace directory backup; use a filebucket"
+                        elsif FileTest.exists?(newfile)
                             begin
                                 File.unlink(newfile)
                             rescue => detail
