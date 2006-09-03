@@ -50,7 +50,7 @@ module Puppet::Parser
             def result
                 result = nil
                 benchmark(:debug, "Interpolated template #{@file}") do
-                    template = ERB.new(File.read(@file))
+                    template = ERB.new(File.read(@file), 0, "-")
                     result = template.result(binding)
                 end
 
