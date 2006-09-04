@@ -92,11 +92,19 @@ class State < Puppet::Parameter
     def change_to_s
         begin
             if @is == :absent
-                return "defined '%s' as '%s'" %
-                    [self.name, self.should_to_s]
+                if self.name == :ensure
+                    return "created as '%s'" % [self.should_to_s]
+                else
+                    return "defined '%s' as '%s'" %
+                        [self.name, self.should_to_s]
+                end
             elsif self.should == :absent or self.should == [:absent]
-                return "undefined %s from '%s'" %
-                    [self.name, self.is_to_s]
+                if self.name == :ensure
+                    return "deleted from '%s'" % self.is_to_s
+                else
+                    return "undefined %s from '%s'" %
+                        [self.name, self.is_to_s]
+                end
             else
                 return "%s changed '%s' to '%s'" %
                     [self.name, self.is_to_s, self.should_to_s]

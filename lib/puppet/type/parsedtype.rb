@@ -171,6 +171,21 @@ module Puppet
             h = nil
             if h = provider.hash and ! h.empty?
                 h[:ensure] ||= :present
+
+                # If they passed back info we don't have, then mark it to
+                # be deleted.
+                h.each do |name, value|
+                    next unless self.class.validstate?(name)
+                    unless @states.has_key? name
+                        self.newstate(name, :should => :absent)
+                    end
+                end
+
+                @states.each do |name, state|
+                    unless h.has_key? name
+                        h[name] = :absent
+                    end
+                end
                 return h
             else
                 h = {}
@@ -185,7 +200,7 @@ module Puppet
 end
 
 #require 'puppet/type/parsedtype/host'
-require 'puppet/type/parsedtype/port'
+#require 'puppet/type/parsedtype/port'
 require 'puppet/type/parsedtype/mount'
 #require 'puppet/type/parsedtype/sshkey'
 

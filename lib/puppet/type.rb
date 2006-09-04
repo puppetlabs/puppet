@@ -938,8 +938,10 @@ class Type < Puppet::Element
         end
     end
 
-    # remove a state from the object; useful in testing or in cleanup
-    # when an error has been encountered
+    # Remove a state from the object; useful in testing or in cleanup
+    # when an error has been encountered.  Removes all objects with a given name,
+    # not just states.  Some classes have both an alias state and an alias
+    # metaparam.
     def delete(attr)
         case attr
         when Puppet::Type
@@ -947,13 +949,20 @@ class Type < Puppet::Element
                 @children.delete(attr)
             end
         else
+            done = false
             if @states.has_key?(attr)
                 @states.delete(attr)
-            elsif @parameters.has_key?(attr)
+                done = true
+            end
+            if @parameters.has_key?(attr)
                 @parameters.delete(attr)
-            elsif @metaparams.has_key?(attr)
+                done = true
+            end
+            if @metaparams.has_key?(attr)
                 @metaparams.delete(attr)
-            else
+                done = true
+            end
+            unless done
                 raise Puppet::DevError.new("Undefined attribute '#{attr}' in #{self}")
             end
         end

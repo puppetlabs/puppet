@@ -1,11 +1,7 @@
-require 'etc'
-require 'facter'
 require 'puppet/type/parsedtype'
-require 'puppet/type/state'
 
 module Puppet
     newtype(:port, Puppet::Type::ParsedType) do
-
         @doc = "Installs and manages port entries.  For most systems, these
             entries will just be in /etc/services, but some systems (notably OS X)
             will have different solutions."
@@ -69,22 +65,6 @@ module Puppet
                 those aliases available in your Puppet scripts and also on disk."
 
             isoptional
-
-            # We have to override the feeding mechanism; it might be nil or 
-            # white-space separated
-            def is=(value)
-                # If it's just whitespace, ignore it
-                case value
-                when /^\s+$/
-                    @is = nil
-                when String
-                    @is = value.split(/\s+/)
-                when Symbol
-                    @is = value
-                else
-                    raise Puppet::DevError, "Invalid value %s" % value.inspect
-                end
-            end
 
             # We actually want to return the whole array here, not just the first
             # value.
