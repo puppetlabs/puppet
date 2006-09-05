@@ -1,15 +1,15 @@
 Puppet::Type.type(:package).provide :portage do
     desc "Provides packaging support for Gentoo's portage system."
 
-    commands :emerge => "emerge", :eix => "eix"
+    commands :emerge => "/usr/bin/emerge", :eix => "/usr/bin/eix"
 
     defaultfor :operatingsystem => :gentoo
 
     def self.list
         search_format = /(\S+) (\S+) \[(.*)\] \[(\S*)\] ([\S]*) (.*)/
-        result_fields = [:category, :name, :version, :version_available,
+        result_fields = [:category, :name, :ensure, :version_available,
                 :vendor, :description]
-        command = "#{command(:eix)} --format \"{<installedversions>}<category> <name> [<installedversions>] [<best>] <homepage> <description>{}\""
+        command = "#{command(:eix)} --format \"{installedversions}<category> <name> [<installedversions>] [<best>] <homepage> <description>{}\""
 
         begin
             search_output = execute( command )
@@ -19,8 +19,8 @@ Puppet::Type.type(:package).provide :portage do
                 match = search_format.match( search_result )
 
                 if( match )
-                    package = {:ensure => :present}
-                    result_fields.zip( match.captures ) { |field, value| package[field] = value }
+                    package = {}
+                    result_fields.zip( match.captures ) { |field, value| package[field] = value unless value.empty? }
                     if self.is_a? Puppet::Type and type = @model[:type]
                         package[:type] = type
                     elsif self.is_a? Module and self.respond_to? :name
@@ -28,9 +28,7 @@ Puppet::Type.type(:package).provide :portage do
                     else
                         raise Puppet::DevError, "Cannot determine package type"
                     end
-                    if package[:version]
-                        package[:version] = package[:version].split.last
-                    end
+                    package[:ensure] = package[:ensure].split.last
 
                     packages.push( Puppet.type(:package).installedpkg(package) )
                 end
@@ -43,11 +41,11 @@ Puppet::Type.type(:package).provide :portage do
     end
 
     def install
-        if @model[:version] && @model.should( :ensure ) != :latest
-            # We must install a specific version
-            package_name = "=#{@model[:name]}-#{@model[:version]}"
+        if @model.should( :ensure ) == :present || @model.should( :ensure ) == :latest
+            package_name = "#{@model[:category]}/#{@model[:name]}"
         else
-            package_name = @model[:name]
+            # We must install a specific version
+            package_name = "=#{@model[:category]}/#{@model[:name]}-#{@model.should( :ensure )}"
         end
         command = "EMERGE_DEFAULT_OPTS=\"\" #{command(:emerge)} #{package_name}"
         begin
@@ -58,12 +56,7 @@ Puppet::Type.type(:package).provide :portage do
     end
 
     def uninstall
-        if @model[:version]
-            # We must uninstall a specific version
-            package_name = "=#{@model[:name]}-#{@model[:version]}"
-        else
-            package_name = @model[:name]
-        end
+        package_name = "#{@model[:category]}/#{@model[:name]}"
         command ="EMERGE_DEFAULT_OPTS=\"\" #{command(:emerge)} --unmerge #{package_name}"
         begin
             output = execute( command )
@@ -78,7 +71,7 @@ Puppet::Type.type(:package).provide :portage do
 
     def query
         search_format = /(\S+) (\S+) \[(.*)\] \[(\S*)\] ([\S]*) (.*)/
-        result_fields = [:category, :name, :version, :version_available, :vendor, :description]
+        result_fields = [:category, :name, :ensure, :version_available, :vendor, :description]
 
         search_field = @model[:name].include?( '/' ) ? "--category-name" : "--name"
         command = "#{command(:eix)} --format \"<category> <name> [<installedversions>] [<best>] <homepage> <description>\" --exact #{search_field} #{@model[:name]}"
@@ -93,19 +86,22 @@ Puppet::Type.type(:package).provide :portage do
                 if( match )
                     package = {}
                     result_fields.zip( match.captures ) { |field, value| package[field] = value unless value.empty? }
-                    package[:ensure] = package[:version] ? :present : :absent
-                    package[:version] = package[:version].split.last if package[:version]
+                    if package[:ensure]
+                        package[:ensure] = package[:ensure].split.last
+                    else
+                        package[:ensure] = :absent
+                    end
                     packages << package
                 end
             end
 
             case packages.size
                 when 0
-                    return nil
+                    raise Puppet::PackageError.new( "No package found with the specified name [#{@model[:name]}]" )
                 when 1
                     return packages[0]
                 else
-                    self.fail "More than one package with the specified name [#{@model[:name]}], please use category/name to disambiguate"
+                    raise Puppet::PackageError.new( "More than one package with the specified name [#{@model[:name]}], please use category/name to disambiguate" )
             end
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::PackageError.new(detail)
