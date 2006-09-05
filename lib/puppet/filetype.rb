@@ -153,7 +153,11 @@ module Puppet
 
             # Remove a specific @path's cron tab.
             def remove
-                %x{#{cmdbase()} -r 2>/dev/null}
+                if Facter.value("operatingsystem") == "FreeBSD"
+                    %x{/bin/echo yes | #{cmdbase()} -r 2>/dev/null}
+                else
+                    %x{#{cmdbase()} -r 2>/dev/null}
+                end
             end
 
             # Overwrite a specific @path's cron tab; must be passed the @path name

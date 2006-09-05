@@ -57,18 +57,25 @@ class TestCron < Test::Unit::TestCase
     end
 
     # Create a cron job with all fields filled in.
-    def mkcron(name)
+    def mkcron(name, addargs = true)
         cron = nil
-        assert_nothing_raised {
-            cron = @crontype.create(
-                :command => "date > %s/crontest%s" % [tmpdir(), name],
+        command = "date > %s/crontest%s" % [tmpdir(), name]
+        args = nil
+        if addargs
+            args = {
+                :command => command,
                 :name => name,
                 :user => @me,
                 :minute => rand(59),
                 :month => "1",
                 :monthday => "1",
                 :hour => "1"
-            )
+            }
+        else
+            args = {:command => command, :name => name}
+        end
+        assert_nothing_raised {
+            cron = @crontype.create(args)
         }
 
         return cron
@@ -554,16 +561,16 @@ class TestCron < Test::Unit::TestCase
     end
 
     def test_value
-        cron = mkcron("valuetesting")
+        cron = mkcron("valuetesting", false)
 
         # First, test the normal states
         [:minute, :hour, :month].each do |param|
+            cron.newstate(param)
             state = cron.state(param)
 
             assert(state, "Did not get %s state" % param)
 
             assert_nothing_raised {
-                state.should = :absent
                 state.is = :absent
             }
 
@@ -602,10 +609,11 @@ class TestCron < Test::Unit::TestCase
         end
 
         # Now make sure that :command works correctly
+        cron.delete(:command)
+        cron.newstate(:command)
         state = cron.state(:command)
 
         assert_nothing_raised {
-            state.should = :absent
             state.is = :absent
         }
 

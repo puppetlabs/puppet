@@ -782,7 +782,8 @@ module Puppet
             if @states.include?(name)
                 ret = @states[name].should_to_s
 
-                if ret == :absent or ret.nil?
+                #if ret == :absent or ret.nil?
+                if ret.nil?
                     ret = @states[name].is_to_s
                 end
 
