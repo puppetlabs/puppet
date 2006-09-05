@@ -24,7 +24,8 @@ module Puppet
             desc "What state the package should be in.
                 *latest* only makes sense for those packaging formats that can
                 retrieve new packages on their own and will throw an error on
-                those that cannot."
+                those that cannot.  For those packaging systems that allow you
+                to specify package versions, specify them here."
 
             attr_accessor :latest
 
@@ -241,10 +242,9 @@ module Puppet
         # it almost seems like versions should be a read-only state,
         # supporting syncing only in certain cases.
         newparam(:version) do
-            desc "For some platforms this is a read-only parameter set by the
-                package, but for others, setting this parameter will cause
-                the package of that version to be installed.  It just depends
-                on the features of the packaging system."
+            desc "This is a read-only parameter set by the packaging system.
+                This parameter is present so that you can audit existing package
+                information."
 
 #            validate do |value|
 #                unless @parent.respond_to?(:versionable?) and @parent.versionable?
