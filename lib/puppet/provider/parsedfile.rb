@@ -107,6 +107,12 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         end
     end
 
+    # A Simple wrapper method that subclasses can override, so there's more control
+    # over how instances are retrieved.
+    def allinstances
+        self.class.retrieve
+    end
+
     def clear
         super
         @instances = nil
@@ -114,7 +120,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     # Return a hash that maps to our info, if possible.
     def hash
-        @instances = self.class.retrieve
+        @instances = allinstances()
 
         if @instances and h = @instances.find do |o|
             o.is_a? Hash and o[:name] == @model[:name] 

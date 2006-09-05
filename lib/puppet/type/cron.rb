@@ -1,7 +1,3 @@
-require 'etc'
-require 'facter'
-require 'puppet/type/state'
-require 'puppet/filetype'
 require 'puppet/type/parsedtype'
 
 module Puppet
@@ -9,7 +5,7 @@ module Puppet
     # as parameters, with the 'command' as the single state.  Also requires a
     # completely symbolic 'name' paremeter, which gets written to the file
     # and is used to manage the job.
-    newtype(:cron) do
+    newtype(:cron, Puppet::Type::ParsedType) do
 
         # A base class for all of the Cron parameters, since they all have
         # similar argument checking going on.  We're stealing the base class
@@ -336,9 +332,6 @@ module Puppet
                     minute => 0
                 }
             "
-
-        @instances = {}
-        @tabs = {}
 
         class << self
             attr_accessor :filetype
