@@ -146,10 +146,8 @@ end
 }
         end
 
-        client = mkclient()
-
         assert_nothing_raised {
-            client.send(:getplugins)
+            Puppet::Client::MasterClient.getplugins
         }
 
         destfile = File.join(Puppet[:plugindest], "myplugin.rb")
@@ -177,7 +175,7 @@ end
         end
 
         assert_nothing_raised {
-            client.send(:getplugins)
+            Puppet::Client::MasterClient.getplugins
         }
 
         destfile = File.join(Puppet[:pluginpath], "myplugin.rb")
@@ -194,13 +192,79 @@ end
 
         assert(! obj.validattr?(:argument),
             "Old namevar is still valid")
+    end
 
-        # Now make sure it works with multiple paths specified.
-        newdir = tempfile()
-        Dir.mkdir(newdir)
-        Puppet[:pluginpath] = [Puppet[:pluginpath], newdir].join(":")
+    def test_getfacts
+        Puppet[:factsource] = tempfile()
+        Dir.mkdir(Puppet[:factsource])
 
-        client.send(:getplugins)
+        myfact = File.join(Puppet[:factsource], "myfact.rb")
+        File.open(myfact, "w") do |f|
+            f.puts %{Facter.add("myfact") do
+            setcode { "yayness" }
+end
+}
+        end
+
+        assert_nothing_raised {
+            Puppet::Client::MasterClient.getfacts
+        }
+
+        destfile = File.join(Puppet[:factdest], "myfact.rb")
+
+        assert(File.exists?(destfile), "Did not get fact")
+
+        assert_equal("yayness", Facter["myfact"].value,
+            "Did not get correct fact value")
+
+        # Now modify the file and make sure the type is replaced
+        File.open(myfact, "w") do |f|
+            f.puts %{Facter.add("myfact") do
+            setcode { "funtest" }
+end
+}
+        end
+
+        assert_nothing_raised {
+            Puppet::Client::MasterClient.getfacts
+        }
+
+        assert_equal("funtest", Facter["myfact"].value,
+            "Did not reload fact")
+    end
+
+    # Make sure we load all facts on startup.
+    def test_loadfacts
+        dirs = [tempfile(), tempfile()]
+        count = 0
+        names = []
+        dirs.each do |dir|
+            Dir.mkdir(dir)
+            name = "fact%s" % count
+            names << name
+            file = File.join(dir, "%s.rb" % name)
+
+            # Write out a plugin file
+            File.open(file, "w") do |f|
+                f.puts %{Facter.add("#{name}") do setcode { "#{name}" } end }
+            end
+            count += 1
+        end
+
+        Puppet[:factpath] = dirs.join(":")
+
+        names.each do |name|
+            assert_nil(Facter.value(name), "Somehow retrieved invalid fact")
+        end
+
+        assert_nothing_raised {
+            Puppet::Client::MasterClient.loadfacts
+        }
+
+        names.each do |name|
+            assert_equal(name, Facter.value(name),
+                    "Did not retrieve facts")
+        end
     end
 end
 

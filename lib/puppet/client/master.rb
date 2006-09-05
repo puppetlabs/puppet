@@ -28,6 +28,7 @@ class Puppet::Client::MasterClient < Puppet::Client
         ]
     )
 
+    # Plugin information.
     Puppet.setdefaults("puppet",
         :pluginpath => ["$vardir/plugins",
             "Where Puppet should look for plugins.  Multiple directories should
@@ -42,7 +43,25 @@ class Puppet::Client::MasterClient < Puppet::Client
         :pluginsync => [false,
             "Whether plugins should be synced with the central server."],
         :pluginsignore => [".svn CVS",
-            "What files to ignore when pulling down plugins.."]
+            "What files to ignore when pulling down plugins."]
+    )
+
+    # Central fact information.
+    Puppet.setdefaults("puppet",
+        :factpath => ["$vardir/facts",
+            "Where Puppet should look for facts.  Multiple directories should
+            be colon-separated, like normal PATH variables."],
+        :factdest => ["$vardir/facts",
+            "Where Puppet should store facts that it pulls down from the central
+            server."],
+        :factsource => ["puppet://$server/facts",
+            "From where to retrieve facts.  The standard Puppet ``file`` type
+             is used for retrieval, so anything that is a valid file source can
+             be used here."],
+        :factsync => [false,
+            "Whether facts should be synced with the central server."],
+        :factsignore => [".svn CVS",
+            "What files to ignore when pulling down facts."]
     )
 
     @drivername = :Master
@@ -57,6 +76,11 @@ class Puppet::Client::MasterClient < Puppet::Client
     end
 
     def self.facts
+        # Retrieve the facts from the central server.
+        if Puppet[:factsync]
+            self.class.getfacts()
+        end
+
         facts = {}
         Facter.each { |name,fact|
             facts[name] = fact.to_s.downcase
@@ -218,17 +242,17 @@ class Puppet::Client::MasterClient < Puppet::Client
         Puppet.debug("getting config")
         dostorage()
 
+        # Retrieve the plugins.
+        if Puppet[:pluginsync]
+            self.class.getplugins()
+        end
+
         facts = self.class.facts
 
         unless facts.length > 0
             raise Puppet::ClientError.new(
                 "Could not retrieve any facts"
             )
-        end
-
-        # Retrieve the plugins.
-        if Puppet[:pluginsync]
-            getplugins()
         end
 
         objects = nil
@@ -471,50 +495,109 @@ class Puppet::Client::MasterClient < Puppet::Client
     end
 
     private
-    # Retrieve the plugins from the central server.
-    def getplugins
-        plugins = Puppet::Type.type(:component).create(
-            :name => "plugin_collector"
+
+    def self.download(args)
+        objects = Puppet::Type.type(:component).create(
+            :name => "#{args[:name]}_collector"
         )
-        plugins.push Puppet::Type.type(:file).create(
-            :path => Puppet[:plugindest],
+        hash = {
+            :path => args[:dest],
             :recurse => true,
-            :source => Puppet[:pluginsource],
-            :ignore => Puppet[:pluginsignore].split(/\s+/),
-            :tag => "plugins",
+            :source => args[:source],
+            :tag => "#{args[:name]}s",
             :owner => "root"
-        )
+        }
 
-        Puppet.info "Retrieving plugins"
+        if args[:ignore]
+            hash[:ignore] = args[:ignore].split(/\s+/)
+        end
+        objects.push Puppet::Type.type(:file).create(hash)
 
+        Puppet.info "Retrieving #{args[:name]}s"
 
         begin
-            trans = plugins.evaluate
+            trans = objects.evaluate
             trans.evaluate
         rescue Puppet::Error => detail
             if Puppet[:debug]
                 puts detail.backtrace
             end
-            Puppet.err "Could not retrieve plugins: %s" % detail
+            Puppet.err "Could not retrieve #{args[:name]}s: %s" % detail
         end
 
         # Now source all of the changed objects, but only source those
         # that are top-level.
-        trans.changed?.find_all { |object|
-            File.dirname(object[:path]) == Puppet[:pluginpath]
-        }.each do |object|
+        trans.changed?.find_all do |object|
+            yield object
+        end
+
+        # Now clean up after ourselves
+        objects.remove
+    end
+
+    # Retrieve facts from the central server.
+    def self.getfacts
+        # First clear all existing definitions.
+        Facter.clear
+
+        path = Puppet[:factpath].split(":")
+        download(:dest => Puppet[:factdest], :source => Puppet[:factsource],
+            :ignore => Puppet[:factsignore], :name => "fact") do |object|
+
+            next unless path.include?(File.dirname(object[:path]))
+
             begin
-                Puppet.info "Loading plugin %s" %
-                    File.basename(object[:path]).sub(".rb",'')
+                Puppet.info "Loading fact %s" %
+                    File.basename(File.basename(object[:path])).sub(".rb",'')
+                load object[:path]
+            rescue => detail
+                Puppet.warning "Could not reload fact %s: %s" %
+                    [object[:path], detail]
+            end
+        end
+    ensure
+        Facter.loadfacts
+    end
+
+    # Retrieve the plugins from the central server.  We only have to load the
+    # changed plugins, because Puppet::Type loads plugins on demand.
+    def self.getplugins
+        path = Puppet[:pluginpath].split(":")
+        download(:dest => Puppet[:plugindest], :source => Puppet[:pluginsource],
+            :ignore => Puppet[:pluginsignore], :name => "plugin") do |object|
+
+            next unless path.include?(File.dirname(object[:path]))
+
+            begin
+                Puppet.info "Reloading plugin %s" %
+                    File.basename(File.basename(object[:path])).sub(".rb",'')
                 load object[:path]
             rescue => detail
                 Puppet.warning "Could not reload plugin %s: %s" %
                     [object[:path], detail]
             end
         end
+    end
 
-        # Now clean up after ourselves
-        plugins.remove
+    def self.loaddir(dir, type)
+        return unless FileTest.directory?(dir)
+
+        Dir.entries(dir).find_all { |e| e =~ /\.rb$/ }.each do |file|
+            fqfile = File.join(dir, file)
+            begin
+                Puppet.info "Loading #{type} %s" %
+                    File.basename(file.sub(".rb",''))
+                load fqfile
+            rescue => detail
+                Puppet.warning "Could not load #{type} %s: %s" % [fqfile, detail]
+            end
+        end
+    end
+
+    def self.loadfacts
+        Puppet[:factpath].split(":").each do |dir|
+            loaddir(dir, "fact")
+        end
     end
 
     def reportclient
@@ -526,6 +609,8 @@ class Puppet::Client::MasterClient < Puppet::Client
 
         @reportclient
     end
+
+    loadfacts()
 end
 
 # $Id$
