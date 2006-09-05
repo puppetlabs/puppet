@@ -658,7 +658,7 @@ module Puppet
         def self.tab(user)
             Puppet.info "Writing cron tab for %s" % user
             if @instances.include?(user)
-                return self.header() + @instances[user].reject { |obj|
+                tab = @instances[user].reject { |obj|
                     if obj.is_a?(self) and obj.should(:ensure) == :absent
                         true
                     else
@@ -671,6 +671,16 @@ module Puppet
                         obj.to_s
                     end
                 }.join("\n") + "\n"
+
+                # Apparently Freebsd will "helpfully" add a new TZ line to every
+                # single cron line, but not in all cases (e.g., it doesn't do it
+                # on my machine.  This is my attempt to fix it so the TZ lines don't
+                # multiply.
+                if tab =~ /^TZ=.+$/
+                    return tab.sub(/\n/, "\n" + self.header)
+                else
+                    return self.header() + tab
+                end
 
             else
                 Puppet.notice "No cron instances for %s" % user
@@ -782,7 +792,6 @@ module Puppet
             if @states.include?(name)
                 ret = @states[name].should_to_s
 
-                #if ret == :absent or ret.nil?
                 if ret.nil?
                     ret = @states[name].is_to_s
                 end
