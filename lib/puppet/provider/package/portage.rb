@@ -43,7 +43,7 @@ Puppet::Type.type(:package).provide :portage do
     end
 
     def install
-        if @model[:version]
+        if @model[:version] && @model.should( :ensure ) != :latest
             # We must install a specific version
             package_name = "=#{@model[:name]}-#{@model[:version]}"
         else
