@@ -81,31 +81,21 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         end
     end
 
-    # it'd be nice if i didn't throw the output away...
-    # this command returns true if the exit code is 0, and returns
-    # false otherwise
-    def initcmd(cmd)
-        script = self.initscript
-
-        self.debug "Executing '%s %s' as initcmd for '%s'" %
-            [script,cmd,self]
-
-        rvalue = Kernel.system("%s %s" %
-                [script,cmd])
-
-        self.debug "'%s' ran with exit status '%s'" %
-            [cmd,rvalue]
-
-
-        rvalue
-    end
-
     # Where is our init script?
     def initscript
         if defined? @initscript
             return @initscript
         else
             @initscript = self.search(@model[:name])
+        end
+    end
+
+    def restart
+        if @model[:hasrestart] == :true
+            command = self.initscript + " restart"
+            self.execute("restart", command)
+        else
+            super
         end
     end
 

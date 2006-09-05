@@ -251,6 +251,12 @@ module Puppet
             desc "Specify a *stop* command manually."
         end
 
+        newparam :hasrestart do
+            desc "Specify that an init script has a ``restart`` option.  Otherwise,
+                the init script's ``stop`` and ``start`` methods are used."
+            newvalues(:true, :false)
+        end
+
         # Retrieve the default type for the current platform.
         def self.disableddefaulttype
             unless defined? @defsvctype

@@ -16,6 +16,7 @@ end
 if $skipsvcs
     puts "Skipping service testing on %s" % Facter["operatingsystem"].value
 else
+    puts "wtf?"
 #class TestInitService < Test::Unit::TestCase
 class TestInitService
 	include TestPuppet
@@ -47,6 +48,7 @@ class TestInitService
         hash[:path] = File.join($puppetbase,"examples/root/etc/init.d")
         hash[:ensure] = true
         hash[:hasstatus] = true
+        hash[:hasrestart] = true
         #hash[:type] = "init"
         assert_nothing_raised() {
             return Puppet.type(:service).create(hash)
@@ -133,7 +135,7 @@ class TestLocalService < Test::Unit::TestCase
                 return {"smtp" => {}, "xfs" => {}}
             end
         when "debian":
-            return {"hddtemp" => {}}
+            return {"hddtemp" => {:hasrestart => true}}
         when "centos":
             return {"cups" => {:hasstatus => true}}
         when "redhat":

@@ -31,6 +31,12 @@ function stop
     fi
 }
 
+function restart
+{
+    stop
+    start
+}
+
 function status
 {
     #if [ -n `which pgrep` ]; then
