@@ -13,10 +13,6 @@ require 'test/unit'
 class TestTransactions < Test::Unit::TestCase
 	include FileTesting
 
-    # In case they're not in more than one group
-    def test_nothing
-    end
-
     def test_reports
         path1 = tempfile()
         path2 = tempfile()

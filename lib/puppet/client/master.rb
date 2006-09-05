@@ -78,7 +78,7 @@ class Puppet::Client::MasterClient < Puppet::Client
     def self.facts
         # Retrieve the facts from the central server.
         if Puppet[:factsync]
-            self.class.getfacts()
+            self.getfacts()
         end
 
         facts = {}
@@ -517,6 +517,7 @@ class Puppet::Client::MasterClient < Puppet::Client
 
         begin
             trans = objects.evaluate
+            trans.ignoretags = true
             trans.evaluate
         rescue Puppet::Error => detail
             if Puppet[:debug]
@@ -541,18 +542,25 @@ class Puppet::Client::MasterClient < Puppet::Client
         Facter.clear
 
         path = Puppet[:factpath].split(":")
+        files = []
         download(:dest => Puppet[:factdest], :source => Puppet[:factsource],
             :ignore => Puppet[:factsignore], :name => "fact") do |object|
 
             next unless path.include?(File.dirname(object[:path]))
 
+            files << object[:path]
+
+        end
+
+        Facter.clear
+        files.each do |file|
             begin
                 Puppet.info "Loading fact %s" %
-                    File.basename(File.basename(object[:path])).sub(".rb",'')
-                load object[:path]
+                    File.basename(File.basename(file)).sub(".rb",'')
+                load file
             rescue => detail
                 Puppet.warning "Could not reload fact %s: %s" %
-                    [object[:path], detail]
+                    [file, detail]
             end
         end
     ensure

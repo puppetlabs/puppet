@@ -48,8 +48,8 @@ module Puppet
 
         def fqdn
             unless defined? @fqdn and @fqdn
-                hostname = Facter["hostname"].value
-                domain = Facter["domain"].value
+                hostname = Facter.value("hostname")
+                domain = Facter.value("domain")
                 @fqdn = [hostname, domain].join(".")
             end
             return @fqdn

@@ -6,7 +6,7 @@ require 'puppet/statechange'
 
 module Puppet
 class Transaction
-    attr_accessor :component, :objects, :tags, :ignoreschedules
+    attr_accessor :component, :objects, :tags, :ignoreschedules, :ignoretags
 
     include Puppet::Util
 
@@ -160,7 +160,7 @@ class Transaction
         begin
             allevents = @objects.collect { |child|
                 events = nil
-                if (tags.nil? or child.tagged?(tags))
+                if (self.ignoretags or tags.nil? or child.tagged?(tags))
                     if self.ignoreschedules or child.scheduled?
                         @objectmetrics[:scheduled] += 1
                         # Perform the actual changes

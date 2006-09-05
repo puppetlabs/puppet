@@ -588,6 +588,7 @@ Generated on #{Time.now}.
                 Puppet[:tags] = ""
             end
             trans = objects.evaluate
+            trans.ignoretags = true
             trans.evaluate
             if tags
                 Puppet[:tags] = tags
