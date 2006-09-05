@@ -9,6 +9,7 @@ module Puppet
     # but at least it's better organized for now
     class Client
         include Puppet
+        include Puppet::Daemon
 
         include Puppet::Util
 
@@ -161,6 +162,7 @@ module Puppet
         # Start listening for events.  We're pretty much just listening for
         # timer events here.
         def start
+            setpidfile()
             # Create our timer.  Puppet will handle observing it and such.
             timer = Puppet.newtimer(
                 :interval => Puppet[:runinterval],

@@ -404,6 +404,8 @@ end
 # Set traps for INT and TERM
 Puppet.settraps
 
+# If --onetime is specified, we don't run 'start', which means we don't
+# create a pidfile.
 if options[:onetime]
     unless options[:client]
         $stderr.puts "onetime is specified but there is no client"

@@ -173,4 +173,25 @@ class TestClient < Test::Unit::TestCase
 
         assert_equal(%w{bootest yaytest}, classes.sort)
     end
+
+    def test_setpidfile
+        $clientrun = false
+        newclass = Class.new(Puppet::Client) do
+            def run
+                $clientrun = true
+            end
+
+            def initialize
+            end
+        end
+
+        inst = newclass.new
+
+        assert_nothing_raised {
+            inst.start
+        }
+
+        assert(FileTest.exists?(inst.pidfile),
+               "PID file was not created")
+    end
 end
