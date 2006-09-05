@@ -16,12 +16,12 @@ class TestPuppetUtilExecution < Test::Unit::TestCase
 
         assert_nothing_raised do
             Puppet::Util::Execution.withenv :testing => "foo" do
-                $ran = true
+                $ran = ENV["testing"]
             end
         end
 
         assert_equal("yay", ENV["testing"])
-        assert_equal(true, $ran)
+        assert_equal("foo", $ran)
 
         ENV["rah"] = "yay"
         assert_raise(ArgumentError) do

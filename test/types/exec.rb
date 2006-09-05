@@ -543,6 +543,46 @@ class TestExec < Test::Unit::TestCase
             exec.run("/bin/nosuchthingexists")
         } 
     end
+
+    def test_envparam
+        exec = Puppet::Type.newexec(
+            :command => "echo $envtest",
+            :path => ENV["PATH"],
+            :env => "envtest=yayness"
+        )
+
+        assert(exec, "Could not make exec")
+
+        output = status = nil
+        assert_nothing_raised {
+            output, status = exec.run("echo $envtest")
+        }
+
+        assert_equal("yayness\n", output)
+
+        # Now check whether we can do multiline settings
+        assert_nothing_raised do
+            exec[:env] = "envtest=a list of things
+and stuff"
+        end
+
+        output = status = nil
+        assert_nothing_raised {
+            output, status = exec.run('echo "$envtest"')
+        }
+        assert_equal("a list of things\nand stuff\n", output)
+
+        # Now test arrays
+        assert_nothing_raised do
+            exec[:env] = ["funtest=A", "yaytest=B"]
+        end
+
+        output = status = nil
+        assert_nothing_raised {
+            output, status = exec.run('echo "$funtest" "$yaytest"')
+        }
+        assert_equal("A B\n", output)
+    end
 end
 
 # $Id$

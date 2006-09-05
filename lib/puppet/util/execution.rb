@@ -8,6 +8,7 @@ module Puppet::Util::Execution
         hash.each do |name, val|
             name = name.to_s
             oldvals[name] = ENV[name]
+            ENV[name] = val
         end
 
         yield

@@ -241,7 +241,9 @@ module Puppet
                 this directory does not exist, the command will fail."
 
             validate do |dir|
-                self.fail("CWD must be a fully qualified path") unless dir
+                unless dir =~ /^#{File::SEPARATOR}/
+                    self.fail("CWD must be a fully qualified path")
+                end
             end
 
             munge do |dir|
@@ -262,6 +264,22 @@ module Puppet
             # And all of the log levels
             Puppet::Log.eachlevel { |level| values << level }
             newvalues(*values)
+        end
+
+        newparam(:env) do
+            desc "Any additional environment variables you want to set for a
+                command.  Note that if you use this to set PATH, it will override
+                the ``path`` attribute.  Multiple environment variables should be
+                specified as an array."
+
+            validate do |values|
+                values = [values] unless values.is_a? Array
+                values.each do |value|
+                    unless value =~ /\w+=/
+                        raise ArgumentError, "Invalid environment setting '%s'" % value
+                    end
+                end
+            end
         end
 
         newcheck(:refreshonly) do
@@ -497,6 +515,25 @@ module Puppet
 
                     if self[:path]
                         env[:PATH] = self[:path].join(":")
+                    end
+
+                    if envlist = self[:env]
+                        envlist = [envlist] unless envlist.is_a? Array
+                        envlist.each do |setting|
+                            if setting =~ /^(\w+)=((.|\n)+)$/
+                                name = $1
+                                value = $2
+                                if env.include? name
+                                    warning(
+                                    "Overriding environment setting '%s' with '%s'" %
+                                        [name, value]
+                                    )
+                                end
+                                env[name] = value
+                            else
+                                warning "Cannot understand env setting '%s'" % setting
+                            end
+                        end
                     end
 
                     withenv env do
