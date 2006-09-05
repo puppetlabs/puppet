@@ -704,6 +704,8 @@ class TestFile < Test::Unit::TestCase
 
         assert_events([:file_created], obj)
 
+        obj.retrieve
+
         assert(obj.insync?, "Object is not in sync")
 
         text = File.read(file)
@@ -793,17 +795,18 @@ class TestFile < Test::Unit::TestCase
         dest = tempfile()
 
         file = nil
-        str = "some content, ok?"
         assert_nothing_raised {
             file = Puppet.type(:file).create(
                 :name => dest,
                 :ensure => "file",
-                :content => str
+                :content => "this is some content, yo"
             )
         }
 
+        file.retrieve
+
         assert_events([:file_created], file)
-        assert_equal(str, File.read(dest))
+        file.retrieve
         assert_events([], file)
         assert_events([], file)
     end
@@ -1197,7 +1200,7 @@ class TestFile < Test::Unit::TestCase
         }
 
         # First run through without :force
-        assert_events([], file, "Link replaced directory without force enabled")
+        assert_events([], file)
 
         assert(FileTest.directory?(link), "Link replaced dir without force")
 
@@ -1373,11 +1376,10 @@ class TestFile < Test::Unit::TestCase
 
         lfobj = Puppet::Type.newfile(:path => localfile, :content => "rahtest")
 
-        assert(! lfobj.implicit?, "object incorrectly implicit")
-
         destobj = Puppet::Type.newfile(:path => destdir,
                                     :source => sourcedir,
                                     :recurse => true)
+
 
         assert_apply(lfobj, destobj)
 

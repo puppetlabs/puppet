@@ -19,7 +19,7 @@ class TestUser < Test::Unit::TestCase
             @ensure = :present
             @model.eachstate do |state|
                 next if state.name == :ensure
-                state.commit
+                state.sync
             end
         end
 

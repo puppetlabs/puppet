@@ -116,7 +116,6 @@ module Puppet
                 return nil
             end
 
-            retval = nil
             # If we're a normal file, then set things up to copy the file down.
             case @stats[:type]
             when "file":
@@ -125,20 +124,20 @@ module Puppet
                         if sum.is == :absent
                             sum.retrieve(true)
                         end
-                        retval = sum.is
+                        @is = sum.is
                     else
-                        retval = :absent
+                        @is = :absent
                     end
                 else
                     self.info "File does not have checksum"
-                    retval = :absent
+                    @is = :absent
                 end
                 # if replace => false then fake the checksum so that the file
                 # is not overwritten.
-                unless retval == :absent
+                unless @is == :absent
                     if @parent[:replace] == :false
                         info "Not replacing existing file"
-                        retval = @stats[:checksum]
+                        @is = @stats[:checksum]
                     end
                 end
                 @should = [@stats[:checksum]]
@@ -155,11 +154,11 @@ module Puppet
                 end
                 # we'll let the :ensure state do our work
                 @should.clear
-                retval = true
+                @is = true
             when "link":
                 case @parent[:links]
                 when :ignore
-                    retval = :nocopy
+                    @is = :nocopy
                     @should = [:nocopy]
                     self.info "Ignoring link %s" % @source
                     return
@@ -176,7 +175,7 @@ module Puppet
                 self.err "Cannot use files of type %s as sources" %
                     @stats[:type]
                 @should = [:nocopy]
-                retval = :nocopy
+                @is = :nocopy
             end
 
             # Take each of the stats and set them as states on the local file
@@ -197,8 +196,6 @@ module Puppet
                 #    @parent.info "Already specified %s" % stat
                 end
             }
-
-            return retval
         end
 
         # The special thing here is that we need to make sure that 'should'
@@ -229,19 +226,22 @@ module Puppet
             end
         end
 
-        def sync(value)
+        def sync
             if @is == :notdescribed
                 self.retrieve # try again
                 if @is == :notdescribed
                     @parent.log "Could not retreive information on %s" %
                         @parent.title
-                    return :nochange
+                    return nil
                 end
                 if @is == @should
-                    return :nochange
+                    return nil
                 end
             end
 
+            case @stats[:type]
+            when "link":
+            end
             unless @stats[:type] == "file"
                 #if @stats[:type] == "directory"
                         #[@parent.name, @is.inspect, @should.inspect]

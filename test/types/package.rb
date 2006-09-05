@@ -167,7 +167,7 @@ class TestPackages < Test::Unit::TestCase
         obj[:source] = file
         assert_raise(Puppet::PackageError,
             "Successfully installed nonexistent package") {
-            state.sync(state.should)
+            state.sync
         }
     end
 

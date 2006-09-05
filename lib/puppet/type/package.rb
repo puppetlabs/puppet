@@ -136,7 +136,8 @@ module Puppet
                 @is = @parent.retrieve
             end
 
-            def sync(value)
+            def sync
+                value = self.should
                 unless value.is_a?(Symbol)
                     value = value.intern
                 end

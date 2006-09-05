@@ -81,7 +81,8 @@ module Puppet
 
         def retrieve
             unless stat = @parent.stat(false)
-                return :absent
+                @is = :absent
+                return
             end
 
             # Set our method appropriately, depending on links.
@@ -91,17 +92,15 @@ module Puppet
                 @method = :chown
             end
 
-            retval = stat.uid
+            self.is = stat.uid
 
             # On OS X, files that are owned by -2 get returned as really
             # large UIDs instead of negative ones.  This isn't a Ruby bug,
             # it's an OS X bug, since it shows up in perl, too.
-            if retval > 120000
-                self.warning "current state is silly: %s" % retval
-                retval = :absent
+            if @is > 120000
+                self.warning "current state is silly: %s" % @is
+                @is = :absent
             end
-
-            return retval
         end
 
         # If we're not root, we can check the values but we cannot change
@@ -117,19 +116,19 @@ module Puppet
             end
         end
 
-        def sync(value)
+        def sync
             unless Process.uid == 0
                 unless defined? @@notifieduid
                     self.notice "Cannot manage ownership unless running as root"
                     #@parent.delete(self.name)
                     @@notifieduid = true
                 end
-                return :nochange
+                return nil
             end
 
             user = nil
-            unless user = self.validuser?(value)
-                tmp = value
+            unless user = self.validuser?(self.should)
+                tmp = self.should
                 unless defined? @@usermissing
                     @@usermissing = {}
                 end
@@ -140,7 +139,7 @@ module Puppet
                     self.notice "user %s does not exist" % tmp
                     @@usermissing[tmp] = 1
                 end
-                return :nochange
+                return nil
             end
 
             if @is == :absent
@@ -148,10 +147,10 @@ module Puppet
                 self.retrieve
                 if @is == :absent
                     self.debug "File does not exist; cannot set owner"
-                    return :nochange
+                    return nil
                 end
                 if self.insync?
-                    return :nochange
+                    return nil
                 end
                 #self.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
             end

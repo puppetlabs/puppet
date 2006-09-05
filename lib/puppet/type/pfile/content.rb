@@ -29,36 +29,36 @@ module Puppet
         def retrieve
             stat = nil
             unless stat = @parent.stat
-                return :absent
+                @is = :absent
+                return
             end
 
             if stat.ftype == "link" and @parent[:links] == :ignore
-                return self.should
+                self.is = self.should
+                return
             end
 
             # Don't even try to manage the content on directories
             if stat.ftype == "directory" and @parent[:links] == :ignore
                 @parent.delete(:content)
-                return :notmanaged
+                return
             end
 
             begin
-                retval = File.read(@parent[:path])
+                @is = File.read(@parent[:path])
             rescue => detail
-                retval = :unknown
+                @is = nil
                 raise Puppet::Error, "Could not read %s: %s" %
                     [@parent.title, detail]
             end
-
-            return retval
         end
 
 
         # Just write our content out to disk.
-        def sync(value)
-            @parent.write { |f| f.print value }
+        def sync
+            @parent.write { |f| f.print self.should }
 
-            if self.is == :absent
+            if @is == :absent
                 return :file_created
             else
                 return :file_changed

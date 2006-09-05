@@ -8,11 +8,12 @@ require 'puppet/parameter'
 
 module Puppet
 class State < Puppet::Parameter
+    attr_accessor :is
+
     # Because 'should' uses an array, we have a special method for handling
     # it.  We also want to keep copies of the original values, so that
     # they can be retrieved and compared later when merging.
     attr_reader :shouldorig
-    attr_writer :is
 
     class << self
         attr_accessor :unmanaged
@@ -92,19 +93,11 @@ class State < Puppet::Parameter
     def change_to_s
         begin
             if @is == :absent
-                if self.name == :ensure
-                    return "created as '%s'" % [self.should_to_s]
-                else
-                    return "defined '%s' as '%s'" %
-                        [self.name, self.should_to_s]
-                end
+                return "defined '%s' as '%s'" %
+                    [self.name, self.should_to_s]
             elsif self.should == :absent or self.should == [:absent]
-                if self.name == :ensure
-                    return "deleted from '%s'" % self.is_to_s
-                else
-                    return "undefined %s from '%s'" %
-                        [self.name, self.is_to_s]
-                end
+                return "undefined %s from '%s'" %
+                    [self.name, self.is_to_s]
             else
                 return "%s changed '%s' to '%s'" %
                     [self.name, self.is_to_s, self.should_to_s]
@@ -115,11 +108,6 @@ class State < Puppet::Parameter
             raise Puppet::DevError, "Could not convert change %s to string: %s" %
                 [self.name, detail]
         end
-    end
-
-    # Just a simple wrapper method to sync our current 'should' value.
-    def commit
-        self.sync(self.should)
     end
     
     # initialize our state
@@ -179,9 +167,8 @@ class State < Puppet::Parameter
         end
 
         # Look for a matching value
-        is = self.is
         @should.each { |val|
-            if is == val
+            if @is == val
                 return true
             end
         }
@@ -190,17 +177,12 @@ class State < Puppet::Parameter
         return false
     end
 
-    # If the '@is' value is set, then return it, else retrieve it.
-    def is
-        @is || self.retrieve
-    end
-
     # because the @should and @is vars might be in weird formats,
     # we need to set up a mechanism for pretty printing of the values
     # default to just the values, but this way individual states can
     # override these methods
     def is_to_s
-        self.is
+        @is
     end
 
     # Send a log message.
@@ -254,11 +236,17 @@ class State < Puppet::Parameter
     # provider.  In other words, if the state name is 'gid', we'll call
     # 'provider.gid' to retrieve the current value.
     def retrieve
-        provider.send(self.class.name)
+        @is = provider.send(self.class.name)
     end
 
     # Call the method associated with a given value.
-    def set(value)
+    def set
+        if self.insync?
+            self.log "already in sync"
+            return nil
+        end
+
+        value = self.should
         method = "set_" + value.to_s
         event = nil
         if self.respond_to?(method)
@@ -288,18 +276,28 @@ class State < Puppet::Parameter
             end
         end
 
-        if event == :nochange
-            return :nochange
-        end
-
         if setevent = self.class.event(value)
             return setevent
         else
             if event and event.is_a?(Symbol)
-                return event
+                if event == :nochange
+                    return nil
+                else
+                    return event
+                end
             else
-                # StateChange will autogenerate an event.
-                return nil
+                # Return the appropriate event.
+                event = case self.should
+                when :present: (@parent.class.name.to_s + "_created").intern
+                when :absent: (@parent.class.name.to_s + "_removed").intern
+                else
+                    (@parent.class.name.to_s + "_changed").intern
+                end
+
+                #self.log "made event %s because 'should' is %s, 'is' is %s" %
+                #    [event, self.should.inspect, self.is.inspect]
+
+                return event
             end
         end
     end
@@ -349,20 +347,20 @@ class State < Puppet::Parameter
 
     # The default 'sync' method only selects among a list of registered
     # values.
-    def sync(value = nil)
-
-        unless value
-            warnstamp :novalsynced, "No value passed to sync"
-            value = self.should
+    def sync
+        if self.insync?
+            self.info "already in sync"
+            return nil
+        #else
+            #self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
         end
-
         unless self.class.values
             self.devfail "No values defined for %s" %
                 self.class.name
         end
 
         # Set ourselves to whatever our should value is.
-        self.set(value || self.should)
+        self.set
     end
 
     def to_s
@@ -387,9 +385,15 @@ class State < Puppet::Parameter
             @doc ||= "The basic state that the object should be in."
         end
 
+        def self.inherited(sub)
+            # Add in the two states that everyone will have.
+            sub.class_eval do
+            end
+        end
+
         def change_to_s
             begin
-                if self.is == :absent
+                if @is == :absent
                     return "created"
                 elsif self.should == :absent
                     return "removed"
@@ -412,9 +416,9 @@ class State < Puppet::Parameter
             # @is values set.  This seems to be the source of quite a few bugs,
             # although they're mostly logging bugs, not functional ones.
             if @parent.exists?
-                return :present
+                @is = :present
             else
-                return :absent
+                @is = :absent
             end
         end
 

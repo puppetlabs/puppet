@@ -41,7 +41,8 @@ module Puppet
             stat = @parent.stat(false)
 
             unless stat
-                return :absent
+                self.is = :absent
+                return
             end
 
             # Set our method appropriately, depending on links.
@@ -50,7 +51,7 @@ module Puppet
             else
                 @method = :chown
             end
-            return stat.gid
+            self.is = stat.gid
         end
 
         # Determine if the group is valid, and if so, return the UID
@@ -81,7 +82,7 @@ module Puppet
         # Normal users will only be able to manage certain groups.  Right now,
         # we'll just let it fail, but we should probably set things up so
         # that users get warned if they try to change to an unacceptable group.
-        def sync(value)
+        def sync
             if @is == :absent
                 @parent.stat(true)
                 self.retrieve
@@ -89,17 +90,17 @@ module Puppet
                 if @is == :absent
                     self.debug "File '%s' does not exist; cannot chgrp" %
                         @parent[:path]
-                    return :nochange
+                    return nil
                 end
 
                 if self.insync?
-                    return :nochange
+                    return nil
                 end
             end
 
             gid = nil
-            unless gid = Puppet::Util.gid(value)
-                raise Puppet::Error, "Could not find group %s" % value
+            unless gid = Puppet::Util.gid(self.should)
+                raise Puppet::Error, "Could not find group %s" % self.should
             end
 
             begin
@@ -107,7 +108,7 @@ module Puppet
                 File.send(@method,nil,gid,@parent[:path])
             rescue => detail
                 error = Puppet::Error.new( "failed to chgrp %s to %s: %s" %
-                    [@parent[:path], value, detail.message])
+                    [@parent[:path], self.should, detail.message])
                 raise error
             end
             return :file_changed

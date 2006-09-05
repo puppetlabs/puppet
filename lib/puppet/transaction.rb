@@ -90,22 +90,13 @@ class Transaction
 
             # Mark that our change happened, so it can be reversed
             # if we ever get to that point
-            unless events.nil?
+            unless events.nil? or (events.is_a?(Array) and events.empty?)
                 change.changed = true
                 @objectmetrics[:applied] += 1
             end
 
             events
         }.flatten.reject { |e| e.nil? }
-
-        # If our child responds to a 'flush' method, call it.
-        if childevents.length > 0 and child.respond_to? :flush
-            begin
-                child.flush
-            rescue => detail
-                raise Puppet::Error, "Could not flush: %s" % detail, detail.backtrace
-            end
-        end
 
         unless changes.empty?
             # Record when we last synced
@@ -205,9 +196,6 @@ class Transaction
             [self.object_id, @count]
 
         allevents
-    ensure
-        # Unset 'is' everywhere.  This is relatively hackish, but, eh.
-        @objects.each do |o| o.clear end
     end
 
     # Determine whether a given object has failed.
@@ -329,9 +317,6 @@ class Transaction
             # And return the events for collection
             events
         }.flatten.reject { |e| e.nil? }
-    ensure
-        # Unset 'is' everywhere.  This is relatively hackish, but, eh.
-        @objects.each do |o| o.clear end
     end
 
     # Trigger any subscriptions to a child.  This does an upwardly recursive

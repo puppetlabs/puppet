@@ -35,10 +35,6 @@ module TestPuppet
         def name
             self[:name]
         end
-
-        def to_hash
-            self
-        end
     end
 
     class FakeProvider
@@ -79,33 +75,6 @@ module TestPuppet
 
         def initialize(model)
             @model = model
-        end
-
-        # Called in Type#remove
-        def remove(var = true)
-        end
-    end
-
-    class FakeParsedProvider < FakeProvider
-        def hash
-            ret = {}
-            instance_variables.each do |v|
-                v = v.sub("@", '')
-                if val = self.send(v)
-                    ret[v.intern] = val
-                end
-            end
-
-            return ret
-        end
-
-        def store(hash)
-            hash.each do |n, v|
-                method = n.to_s + "="
-                if respond_to? method
-                    send(method, v)
-                end
-            end
         end
     end
 
@@ -465,32 +434,6 @@ module TestPuppet
             raise Puppet::DevError, "No fakedata file %s" % file
         end
         return file
-    end
-
-    # Run an isomorphism test on our parsing process.
-    def fakedataparse(file)
-        @provider.path = file
-        instances = nil
-        assert_nothing_raised {
-            instances = @provider.retrieve
-        }
-
-        text = @provider.fileobj.read
-
-        yield if block_given?
-
-        dest = tempfile()
-        @provider.path = dest
-
-        # Now write it back out
-        assert_nothing_raised {
-            @provider.store(instances)
-        }
-
-        newtext = @provider.fileobj.read
-
-        # Don't worry about difference in whitespace
-        assert_equal(text.gsub(/\s+/, ' '), newtext.gsub(/\s+/, ' '))
     end
 
     # wrap how to retrieve the masked mode

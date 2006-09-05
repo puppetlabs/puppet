@@ -139,7 +139,9 @@ class Puppet::Provider
         return true
     end
 
+    # Remove the reference to the model, so GC can clean up.
     def clear
+        @model = nil
     end
 
     # Retrieve a named command.
@@ -153,11 +155,6 @@ class Puppet::Provider
 
     def name
         @model.name
-    end
-
-    # Remove the reference to the model, so GC can clean up.
-    def remove
-        @model = nil
     end
 
     def to_s

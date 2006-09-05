@@ -26,12 +26,16 @@ module Puppet
         newstate(:ensure) do
             desc "The basic state that the object should be in."
 
-            newvalue(:present, :event => :group_created) do
+            newvalue(:present) do
                 provider.create
+
+                :group_created
             end
 
-            newvalue(:absent, :event => :group_deleted) do
+            newvalue(:absent) do
                 provider.delete
+
+                :group_removed
             end
 
             # If they're talking about the thing at all, they generally want to
@@ -46,7 +50,7 @@ module Puppet
 
             def change_to_s
                 begin
-                    if self.is == :absent
+                    if @is == :absent
                         return "created"
                     elsif self.should == :absent
                         return "removed"
@@ -65,11 +69,30 @@ module Puppet
 
             def retrieve
                 if provider.exists?
-                    return :present
+                    @is = :present
                 else
-                    return :absent
+                    @is = :absent
                 end
             end
+
+            # The default 'sync' method only selects among a list of registered
+            # values.
+            def sync
+                if self.insync?
+                    self.info "already in sync"
+                    return nil
+                #else
+                    #self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
+                end
+                unless self.class.values
+                    self.devfail "No values defined for %s" %
+                        self.class.name
+                end
+
+                # Set ourselves to whatever our should value is.
+                self.set
+            end
+
         end
 
         newstate(:gid) do
@@ -100,17 +123,16 @@ module Puppet
             end
 
             def retrieve
-                return provider.gid
+                @is = provider.gid
             end
 
-            def sync(value)
+            def sync
                 if self.should == :absent
                     raise Puppet::DevError, "GID cannot be deleted"
                 else
-                    provider.gid = value
+                    provider.gid = self.should
+                    :group_modified
                 end
-
-                return nil
             end
 
             munge do |gid|
@@ -162,19 +184,18 @@ module Puppet
 
         def retrieve
             if @provider.exists?
-                return super
+                super
             else
                 # the group does not exist
                 #unless @states.include?(:gid)
                 #    self[:gid] = :auto
                 #end
 
-                current = {}
                 @states.each { |name, state|
-                    current[state.name] = :absent
+                    state.is = :absent
                 }
 
-                return current
+                return
             end
         end
     end

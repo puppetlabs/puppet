@@ -8,30 +8,29 @@ end
 
 require 'puppettest'
 require 'puppet'
+require 'puppet/type/parsedtype/port'
 require 'test/unit'
 require 'facter'
 
 class TestPort < Test::Unit::TestCase
 	include TestPuppet
-
     def setup
         super
         @porttype = Puppet.type(:port)
+        @oldfiletype = @porttype.filetype
+    end
 
-        @provider = @porttype.defaultprovider
+    def teardown
+        @porttype.filetype = @oldfiletype
+        Puppet.type(:file).clear
+        super
+    end
 
-        # Make sure they aren't using something funky like netinfo
-        unless @provider.name == :parsed
-            @porttype.defaultprovider = @porttype.provider(:parsed)
-        end
-
-        cleanup do @porttype.defaultprovider = nil end
-
-        oldpath = @provider.path
-        cleanup do
-            @provider.path = oldpath
-        end
-        @provider.path = tempfile()
+    # Here we just create a fake host type that answers to all of the methods
+    # but does not modify our actual system.
+    def mkfaketype
+        pfile = tempfile()
+        @porttype.path = pfile
     end
 
     def mkport
@@ -56,29 +55,51 @@ class TestPort < Test::Unit::TestCase
     end
 
     def test_simpleport
+        mkfaketype
         host = nil
         assert_nothing_raised {
-            Puppet.type(:port).defaultprovider.retrieve
-
-            count = 0
-            @porttype.each do |h|
-                count += 1
-            end
-
-            assert_equal(0, count, "Found hosts in empty file somehow")
+            assert_nil(Puppet.type(:port).retrieve)
         }
 
         port = mkport
 
-        assert_apply(port)
         assert_nothing_raised {
-            port.retrieve
+            Puppet.type(:port).store
         }
 
-        assert(port.exists?, "Port did not get created")
+        assert_nothing_raised {
+            assert(
+                Puppet.type(:port).to_file.include?(
+                    Puppet.type(:port).fileobj.read
+                ),
+                "File does not include all of our objects"
+            )
+        }
+    end
+
+    def test_portsparse
+        fakedata("data/types/ports").each { |file|
+            @porttype.path = file
+            Puppet.info "Parsing %s" % file
+            assert_nothing_raised {
+                @porttype.retrieve
+            }
+
+            # Now just make we've got some ports we know will be there
+            dns = @porttype["domain"]
+            assert(dns, "Could not retrieve DNS port")
+
+            assert_equal("53", dns.is(:number), "DNS number was wrong")
+            %w{udp tcp}.each { |v|
+                assert(dns.is(:protocols).include?(v), "DNS did not include proto %s" % v)
+            }
+
+            @porttype.clear
+        }
     end
 
     def test_moddingport
+        mkfaketype
         port = nil
         port = mkport
 
@@ -102,24 +123,59 @@ class TestPort < Test::Unit::TestCase
     end
 
     def test_removal
+        mkfaketype
         port = mkport()
         assert_nothing_raised {
             port[:ensure] = :present
         }
         assert_events([:port_created], port)
-        assert_events([], port)
 
-        assert(port.exists?, "port was not created")
+        port.retrieve
+        assert(port.insync?)
         assert_nothing_raised {
             port[:ensure] = :absent
         }
 
-        assert_events([:port_deleted], port)
-        assert(! port.exists?, "port was not removed")
+        assert_events([:port_removed], port)
+        port.retrieve
         assert_events([], port)
     end
 
+    def test_modifyingfile
+        mkfaketype()
+
+        ports = []
+        names = []
+        3.times {
+            k = mkport()
+            ports << k
+            names << k.name
+        }
+        assert_apply(*ports)
+        ports.clear
+        Puppet.type(:port).clear
+        newport = mkport()
+        #newport[:ensure] = :present
+        names << newport.name
+        assert_apply(newport)
+        Puppet.type(:port).clear
+        # Verify we can retrieve that info
+        assert_nothing_raised("Could not retrieve after second write") {
+            newport.retrieve
+        }
+
+        # And verify that we have data for everything
+        names.each { |name|
+            port = Puppet.type(:port)[name]
+            assert(port)
+            port.retrieve
+            assert(port[:number], "port %s has no number" % name)
+        }
+    end
+
     def test_addingstates
+        mkfaketype
+
         port = mkport()
         assert_events([:port_created], port)
 
@@ -133,7 +189,7 @@ class TestPort < Test::Unit::TestCase
 
         assert_equal(:present, port.is(:ensure))
 
-        assert_equal(:absent, port.retrieve[:alias])
+        assert(port.state(:alias).is == :absent)
 
         port[:alias] = "yaytest"
         assert_events([:port_changed], port)

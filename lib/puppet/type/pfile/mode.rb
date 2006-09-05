@@ -89,35 +89,35 @@ module Puppet
             # off mode management entirely.
 
             if stat = @parent.stat(false)
+                self.is = stat.mode & 007777
                 unless defined? @fixed
                     if defined? @should and @should
                         @should = @should.collect { |s| self.dirmask(s) }
                     end
                 end
-                return stat.mode & 007777
             else
-                return :absent
+                self.is = :absent
             end
 
             #self.debug "chmod state is %o" % self.is
         end
 
-        def sync(value)
+        def sync
             if @is == :absent
                 @parent.stat(true)
                 self.retrieve
                 if @is == :absent
                     self.debug "File does not exist; cannot set mode"
-                    return :nochange
+                    return nil
                 end
 
                 if self.insync?
                     # we're already in sync
-                    return :nochange
+                    return nil
                 end
             end
 
-            mode = value
+            mode = self.should
 
             if mode == :absent
                 # This is really only valid for create states...

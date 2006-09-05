@@ -11,55 +11,19 @@ module Puppet
         # The log file generated when this object was changed.
         attr_reader :report
 
-        # Switch the goals of the state, thus running the change in reverse.
-        def backward
-            @state.should = @is
-            @should = @is
-            @is = @state.retrieve
-            @state.is = @is
+        def initialize(state)
+            @state = state
+            @path = [state.path,"change"].flatten
+            @is = state.is
 
-            unless defined? @transaction
-                raise Puppet::Error,
-                    "StateChange '%s' tried to be executed outside of transaction" %
-                    self
+            if state.insync?
+                raise Puppet::Error.new(
+                    "Tried to create a change for in-sync state %s" % state.name
+                )
             end
-            unless @state.insync?
-                @state.info "Backing %s" % self
-                return self.go
-            else
-                @state.debug "rollback is already in sync: %s vs. %s" %
-                    [@state.is.inspect, @state.should.inspect]
-                return nil
-            end
-        end
+            @should = state.should
 
-        def forward
-            #@state.debug "moving change forward"
-
-            unless defined? @transaction
-                raise Puppet::Error,
-                    "StateChange '%s' tried to be executed outside of transaction" %
-                    self
-            end
-
-            return self.go
-        end
-
-        # Generate an appropriate event from the is/should values.
-        def genevent
-            tail = if @state.name == :ensure
-                        if @should == :present
-                            "created"
-                        elsif @should == :absent
-                            "deleted"
-                        else
-                            @should.to_s
-                        end
-                   else
-                       "changed"
-                   end
-
-            [state.parent.class.name.to_s, tail].join("_").intern
+            @changed = false
         end
 
         # Perform the actual change.  This method can go either forward or
@@ -81,39 +45,28 @@ module Puppet
             #    [@state.is.inspect, @state.should.inspect]
 
             # The transaction catches any exceptions here.
-            if @state.method(:sync).arity == 0
-                @state.warnstamp :syncwoutvalue, "sync() should accept a value"
-                events = @state.sync
-            else
-                events = @state.sync(@should)
-            end
-
-            unless events.is_a? Array
-                events = [events]
-            end
-
-            events = events.collect do |e|
-                if e.nil?
-                    genevent()
-                else
-                    if ! e.is_a?(Symbol)
-                        @state.warning(
-                            "State '%s' returned invalid event '%s'; resetting" %
-                                [@state.class,e]
-                        )
-                        genevent()
-                    else
-                        e
-                    end
-                end
-            end.reject { |e| e == :nochange }
-
-
-            if events.empty?
+            events = @state.sync
+            if events.nil?
                 return nil
+            end
+
+            if events.is_a?(Array)
+                if events.empty?
+                    return nil
+                end
+            else
+                events = [events]
             end
             
             return events.collect { |event|
+                # default to a simple event type
+                if ! event.is_a?(Symbol)
+                    @state.warning("State '%s' returned invalid event '%s'; resetting to default" %
+                        [@state.class,event])
+
+                    event = @state.parent.class.name.id2name + "_changed"
+                end
+
                 # i should maybe include object type, but the event type
                 # should basically point to that, right?
                     #:state => @state,
@@ -129,25 +82,36 @@ module Puppet
             }
         end
 
-        def initialize(state, is = nil)
-            @state = state
-            @path = [state.path,"change"].flatten
+        def forward
+            #@state.debug "moving change forward"
 
-            if is
-                @is = is
+            unless defined? @transaction
+                raise Puppet::Error,
+                    "StateChange '%s' tried to be executed outside of transaction" %
+                    self
+            end
+
+            return self.go
+        end
+
+        # Switch the goals of the state, thus running the change in reverse.
+        def backward
+            @state.should = @is
+            @state.retrieve
+
+            unless defined? @transaction
+                raise Puppet::Error,
+                    "StateChange '%s' tried to be executed outside of transaction" %
+                    self
+            end
+            unless @state.insync?
+                @state.info "Backing %s" % self
+                return self.go
             else
-                state.warning "did not pass 'is' to statechange"
-                @is = state.is
+                @state.debug "rollback is already in sync: %s vs. %s" %
+                    [@state.is.inspect, @state.should.inspect]
+                return nil
             end
-
-            if state.insync?
-                raise Puppet::Error.new(
-                    "Tried to create a change for in-sync state %s" % state.name
-                )
-            end
-            @should = state.should
-
-            @changed = false
         end
         
         def noop

@@ -35,25 +35,19 @@ module Puppet
         # Most 'ensure' states have a default, but with files we, um, don't.
         nodefault
 
-        newvalue(:absent, :event => :file_deleted) do
+        newvalue(:absent) do
             File.unlink(@parent[:path])
         end
 
         aliasvalue(:false, :absent)
 
-        newvalue(:file, :event => :file_created) do
+        newvalue(:file) do
             # Make sure we're not managing the content some other way
-            if state = (@parent.state(:content) || @parent.state(:source))
-                # Manually sync the state, and reset its is value to it knows it's
-                # in sync.
-                should = state.should
-                state.commit
-
-                # The 'sync' method here syncs any states that might still be
-                # out of sync like 'mode', so we need to mark this in sync.
-                state.is = should
+            if state = @parent.state(:content) or state = @parent.state(:source)
+                state.sync
             else
                 @parent.write(false) { |f| f.flush }
+                mode = @parent.should(:mode)
             end
             return :file_created
         end
@@ -65,7 +59,7 @@ module Puppet
             set_file
         end
 
-        newvalue(:directory, :event => :directory_created) do
+        newvalue(:directory) do
             mode = @parent.should(:mode)
             parent = File.dirname(@parent[:path])
             unless FileTest.exists? parent
@@ -87,7 +81,7 @@ module Puppet
         end
 
 
-        newvalue(:link, :event => :link_created) do
+        newvalue(:link) do
             if state = @parent.state(:target)
                 state.retrieve
 
@@ -103,7 +97,7 @@ module Puppet
         end
 
         # Symlinks.
-        newvalue(/./, :event => :link_created) do
+        newvalue(/./) do
             # This code never gets executed.  We need the regex to support
             # specifying it, but the work is done in the 'symlink' code block.
         end
@@ -136,9 +130,8 @@ module Puppet
         # We have to treat :present specially, because it works with any
         # type of file.
         def insync?
-            is = self.is
             if self.should == :present
-                if is.nil? or is == :absent
+                if @is.nil? or @is == :absent
                     return false
                 else
                     return true
@@ -149,22 +142,19 @@ module Puppet
         end
 
         def retrieve
-            retval = nil
             if stat = @parent.stat(false)
-                retval = stat.ftype.intern
+                @is = stat.ftype.intern
             else
                 if self.should == :false
-                    retval = :false
+                    @is = :false
                 else
-                    retval = :absent
+                    @is = :absent
                 end
             end
-
-            return retval
         end
 
-        def sync(value)
-            event = super(value)
+        def sync
+            event = super
 
             # There are some cases where all of the work does not get done on
             # file creation, so we have to do some extra checking.
@@ -174,7 +164,7 @@ module Puppet
 
                 thing.retrieve
                 unless thing.insync?
-                    thing.commit
+                    thing.sync
                 end
             end
 

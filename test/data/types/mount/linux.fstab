@@ -4,7 +4,7 @@ LABEL=/boot             /boot                   ext3    defaults        1 2
 devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
 tmpfs                   /dev/shm                tmpfs   defaults        0 0
 LABEL=/home             /home                   ext3    defaults        1 2
-/home                   /homes                  auto    bind            0 2
+/home                   /homes                  auto    bind
 proc                    /proc                   proc    defaults        0 0
 /dev/vg00/lv01          /spare                  ext3    defaults        1 2
 sysfs                   /sys                    sysfs   defaults        0 0
