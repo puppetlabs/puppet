@@ -258,13 +258,7 @@ class State < Puppet::Parameter
     end
 
     # Call the method associated with a given value.
-    def set
-        if self.insync?
-            self.log "already in sync"
-            return nil
-        end
-
-        value = self.should
+    def set(value)
         method = "set_" + value.to_s
         event = nil
         if self.respond_to?(method)
@@ -362,19 +356,13 @@ class State < Puppet::Parameter
             value = self.should
         end
 
-        if self.insync?
-            self.info "already in sync"
-            return :nochange
-        #else
-            #self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
-        end
         unless self.class.values
             self.devfail "No values defined for %s" %
                 self.class.name
         end
 
         # Set ourselves to whatever our should value is.
-        self.set
+        self.set(value || self.should)
     end
 
     def to_s

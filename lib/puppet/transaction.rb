@@ -99,7 +99,7 @@ class Transaction
         }.flatten.reject { |e| e.nil? }
 
         # If our child responds to a 'flush' method, call it.
-        if child.respond_to? :flush
+        if childevents.length > 0 and child.respond_to? :flush
             begin
                 child.flush
             rescue => detail

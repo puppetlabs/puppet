@@ -56,27 +56,6 @@ class TestParsedPort < Test::Unit::TestCase
             assert_equal(text.gsub(/\s+/, ' '), newtext.gsub(/\s+/, ' '))
         end
     end
-
-    def disabled_test_portsparse
-        fakedata("data/types/ports").each { |file|
-            @porttype.path = file
-            Puppet.info "Parsing %s" % file
-            assert_nothing_raised {
-                @porttype.retrieve
-            }
-
-            # Now just make we've got some ports we know will be there
-            dns = @porttype["domain"]
-            assert(dns, "Could not retrieve DNS port")
-
-            assert_equal("53", dns.is(:number), "DNS number was wrong")
-            %w{udp tcp}.each { |v|
-                assert(dns.is(:protocols).include?(v), "DNS did not include proto %s" % v)
-            }
-
-            @porttype.clear
-        }
-    end
 end
 
 # $Id$

@@ -48,10 +48,12 @@ module Puppet
         # Generate an appropriate event from the is/should values.
         def genevent
             tail = if @state.name == :ensure
-                        if @is == :absent
-                           "created"
+                        if @should == :present
+                            "created"
+                        elsif @should == :absent
+                            "deleted"
                         else
-                           "deleted"
+                            @should.to_s
                         end
                    else
                        "changed"

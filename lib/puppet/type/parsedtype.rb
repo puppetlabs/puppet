@@ -58,9 +58,13 @@ module Puppet
         # If the ensure state is out of sync, it will always be called
         # first, so I don't need to worry about that.
         def sync(value)
-            # Just copy the value to our 'is' state; it'll get flushed later
-            #self.is = value
-
+            # We only pass through to the parent method if there are values
+            # defined.  Otherwise, there's no work to do, since all of the
+            # work is done in the flush.
+            if self.class.values and ! self.class.values.empty?
+                super(value)
+            end
+            # The value gets flushed later.
             return nil
         end
     end
@@ -132,19 +136,21 @@ module Puppet
         def self.postinit
             unless validstate? :ensure
                 newstate(:ensure) do
-                    newvalue(:present, :event => :host_created) do
-                        @parent.create
+                    newvalue(:present) do
+                        # The value will get flushed appropriately
+                        return nil
                     end
 
-                    newvalue(:absent, :event => :host_deleted) do
-                        @parent.destroy
+                    newvalue(:absent) do
+                        # The value will get flushed appropriately
+                        return nil
                     end
 
                     defaultto do
                         if @parent.managed?
                             :present
                         else
-                            :absent
+                            nil
                         end
                     end
                 end
@@ -198,10 +204,5 @@ module Puppet
         end
     end
 end
-
-#require 'puppet/type/parsedtype/host'
-#require 'puppet/type/parsedtype/port'
-require 'puppet/type/parsedtype/mount'
-#require 'puppet/type/parsedtype/sshkey'
 
 # $Id$

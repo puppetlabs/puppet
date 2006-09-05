@@ -80,6 +80,33 @@ module TestPuppet
         def initialize(model)
             @model = model
         end
+
+        # Called in Type#remove
+        def remove(var = true)
+        end
+    end
+
+    class FakeParsedProvider < FakeProvider
+        def hash
+            ret = {}
+            instance_variables.each do |v|
+                v = v.sub("@", '')
+                if val = self.send(v)
+                    ret[v.intern] = val
+                end
+            end
+
+            return ret
+        end
+
+        def store(hash)
+            hash.each do |n, v|
+                method = n.to_s + "="
+                if respond_to? method
+                    send(method, v)
+                end
+            end
+        end
     end
 
     @@fakemodels = {}
@@ -449,6 +476,8 @@ module TestPuppet
         }
 
         text = @provider.fileobj.read
+
+        yield if block_given?
 
         dest = tempfile()
         @provider.path = dest

@@ -8,38 +8,61 @@ end
 
 require 'puppettest'
 require 'puppet'
-require 'puppet/type/parsedtype/mount'
 require 'test/unit'
-require 'facter'
 
 class TestMounts < Test::Unit::TestCase
 	include TestPuppet
+
+    p = Puppet::Type.type(:mount).provide :fake, :parent => TestPuppet::FakeParsedProvider do
+        @name = :fake
+        apimethods :ensure
+
+        attr_accessor :mounted
+
+        def create
+            @ensure = :present
+        end
+
+        def delete
+            @ensure = :absent
+            @mounted = false
+        end
+
+        def exists?
+            if defined? @ensure and @ensure == :present
+                true
+            else
+                false
+            end
+        end
+
+        def mounted?
+            self.mounted
+        end
+
+        def mount
+            self.mounted = true
+        end
+
+        def unmount
+            self.mounted = false
+        end
+    end
+
+    FakeMountProvider = p
+
+    @@fakeproviders[:mount] = p
+
     def setup
         super
-        @mounttype = Puppet.type(:mount)
-        @oldfiletype = @mounttype.filetype
+        @realprovider = Puppet::Type.type(:mount).defaultprovider
+        Puppet::Type.type(:mount).defaultprovider = FakeMountProvider
     end
 
     def teardown
-        @mounttype.filetype = @oldfiletype
-        Puppet.type(:file).clear
+        Puppet.type(:mount).clear
+        Puppet::Type.type(:mount).defaultprovider = nil
         super
-    end
-
-    # Here we just create a fake host type that answers to all of the methods
-    # but does not modify our actual system.
-    def mkfaketype
-        pfile = tempfile()
-        old = @mounttype.filetype
-        @mounttype.filetype = Puppet::FileType.filetype(:ram)
-
-        cleanup do
-            @mounttype.filetype = old
-            @mounttype.fileobj = nil
-        end
-
-        # Reset this, just in case
-        @mounttype.fileobj = nil
     end
 
     def mkmount
@@ -55,7 +78,7 @@ class TestMounts < Test::Unit::TestCase
             :device => "/dev/dsk%s" % @pcount,
         }
 
-        Puppet.type(:mount).fields.each do |field|
+        @realprovider.fields.each do |field|
             unless args.include? field
                 args[field] = "fake%s" % @pcount
             end
@@ -69,178 +92,47 @@ class TestMounts < Test::Unit::TestCase
     end
 
     def test_simplemount
-        mkfaketype
-        host = nil
+        mount = nil
+        oldprv = Puppet.type(:mount).defaultprovider
+        Puppet.type(:mount).defaultprovider = nil
         assert_nothing_raised {
-            assert_nil(Puppet.type(:mount).retrieve)
+            Puppet.type(:mount).defaultprovider.retrieve
+
+            count = 0
+            Puppet.type(:mount).each do |h|
+                count += 1
+            end
+
+            assert_equal(0, count, "Found mounts in empty file somehow")
         }
+        Puppet.type(:mount).defaultprovider = oldprv
 
         mount = mkmount
 
-        assert_nothing_raised {
-            Puppet.type(:mount).store
-        }
+        assert_apply(mount)
 
-        assert_nothing_raised {
-            assert(
-                Puppet.type(:mount).to_file.include?(
-                    Puppet.type(:mount).fileobj.read
-                ),
-                "File does not include all of our objects"
-            )
-        }
+        assert_nothing_raised { mount.retrieve }
+
+        assert_equal(:mounted, mount.is(:ensure))
     end
 
-    unless Facter["operatingsystem"].value == "Darwin"
-        def test_mountsparse
-            use_fake_fstab
-            assert_nothing_raised {
-                @mounttype.retrieve
-            }
-
-            # Now just make we've got some mounts we know will be there
-            root = @mounttype["/"]
-            assert(root, "Could not retrieve root mount")
-        end
-
-        def test_rootfs
-            fs = nil
-            use_fake_fstab
-            assert_nothing_raised {
-                Puppet.type(:mount).retrieve
-            }
-
-            assert_nothing_raised {
-                fs = Puppet.type(:mount)["/"]
-            }
-            assert(fs, "Could not retrieve root fs")
-
-            assert_nothing_raised {
-                assert(fs.mounted?, "Root is considered not mounted")
-            }
-        end
-    end
-
-    # Make sure it reads and writes correctly.
-    def test_readwrite
-        use_fake_fstab
-        assert_nothing_raised {
-            Puppet::Type.type(:mount).retrieve
-        }
-
-        oldtype = Puppet::Type.type(:mount).filetype
-
-        # Now switch to storing in ram
-        mkfaketype
-
-        fs = mkmount
-
-        assert(Puppet::Type.type(:mount).filetype != oldtype)
-
-        assert_events([:mount_created], fs)
-
-        text = Puppet::Type.type(:mount).fileobj.read
-
-        assert(text =~ /#{fs[:path]}/, "Text did not include new fs")
-
-        fs[:ensure] = :absent
-
-        assert_events([:mount_removed], fs)
-        text = Puppet::Type.type(:mount).fileobj.read
-
-        assert(text !~ /#{fs[:path]}/, "Text still includes new fs")
-
-        fs[:ensure] = :present
-
-        assert_events([:mount_created], fs)
-
-        text = Puppet::Type.type(:mount).fileobj.read
-
-        assert(text =~ /#{fs[:path]}/, "Text did not include new fs")
-
-        fs[:options] = "rw,noauto"
-
-        assert_events([:mount_changed], fs)
-    end
-
-    if Process.uid == 0
+    # Make sure fs mounting behaves appropriately.  This is more a test of
+    # whether things get mounted and unmounted based on the value of 'ensure'.
     def test_mountfs
-        fs = nil
-        case Facter["hostname"].value
-        when "culain": fs = "/ubuntu"
-        when "atalanta": fs = "/mnt"
-        when "figurehead": fs = "/cg4/net/depts"
-        else
-            $stderr.puts "No mount for mount testing; skipping"
-            return
-        end
+        obj = mkmount
 
-        assert_nothing_raised {
-            Puppet.type(:mount).retrieve
-        }
-
-        oldtext = Puppet::Type.type(:mount).fileobj.read
-
-        ftype = Puppet::Type.type(:mount).filetype
-
-        # Make sure the original gets reinstalled.
-        if ftype == Puppet::FileType.filetype(:netinfo)
-            cleanup do 
-                IO.popen("niload -r /mounts .", "w") do |file|
-                    file.puts oldtext
-                end
-            end
-        else
-            cleanup do 
-                Puppet::Type.type(:mount).fileobj.write(oldtext)
-            end
-        end
-
-        obj = Puppet.type(:mount)[fs]
-
-        assert(obj, "Could not retrieve %s object" % fs)
-
-        current = nil
-
-        assert_nothing_raised {
-            current = obj.mounted?
-        }
-
-        if current
-            # Make sure the original gets reinstalled.
-            cleanup do
-                unless obj.mounted?
-                    obj.mount
-                end
-            end
-        end
-
-        unless current
-            assert_nothing_raised {
-                obj.mount
-            }
-        end
-
-        # Now copy all of the states' "is" values to the "should" values
-        obj.each do |state|
-            state.should = state.is
-        end
+        assert_apply(obj)
 
         # Verify we can remove the mount
         assert_nothing_raised {
             obj[:ensure] = :absent
         }
 
-        assert_events([:mount_removed], obj)
+        assert_events([:mount_deleted], obj)
         assert_events([], obj)
 
         # And verify it's gone
-        assert(!obj.mounted?, "Object is mounted after being removed")
-
-        text = Puppet.type(:mount).fileobj.read
-
-        assert(text !~ /#{fs}/,
-            "Fstab still contains %s" % fs)
+        assert(!obj.provider.mounted?, "Object is mounted after being removed")
 
         assert_nothing_raised {
             obj[:ensure] = :present
@@ -249,10 +141,7 @@ class TestMounts < Test::Unit::TestCase
         assert_events([:mount_created], obj)
         assert_events([], obj)
 
-        text = Puppet::Type.type(:mount).fileobj.read
-        assert(text =~ /#{fs}/, "Fstab does not contain %s" % fs)
-
-        assert(! obj.mounted?, "Object is mounted incorrectly")
+        assert(! obj.provider.mounted?, "Object is mounted incorrectly")
 
         assert_nothing_raised {
             obj[:ensure] = :mounted
@@ -261,33 +150,8 @@ class TestMounts < Test::Unit::TestCase
         assert_events([:mount_mounted], obj)
         assert_events([], obj)
 
-        text = Puppet::Type.type(:mount).fileobj.read
-        assert(text =~ /#{fs}/,
-            "Fstab does not contain %s" % fs)
-
         obj.retrieve
-        assert(obj.mounted?, "Object is not mounted")
-
-        unless current
-            assert_nothing_raised {
-                obj.unmount
-            }
-        end
-    end
-    end
-
-    def use_fake_fstab
-        os = Facter['operatingsystem']
-        if os == "Solaris"
-            name = "solaris.fstab"
-        elsif os == "FreeBSD"
-            name = "freebsd.fstab"
-        else
-            # Catchall for other fstabs
-            name = "linux.fstab"
-        end
-        fstab = fakefile(File::join("data/types/mount", name))
-        Puppet::Type.type(:mount).path = fstab
+        assert(obj.provider.mounted?, "Object is not mounted")
     end
 end
 
