@@ -1,5 +1,7 @@
 module Puppet
     newtype(:exec) do
+        include Puppet::Util::Execution
+
         @doc = "Executes external commands.  It is critical that all commands
             executed using this mechanism can be run multiple times without
             harm, i.e., they are *idempotent*.  One useful way to create idempotent
@@ -61,6 +63,7 @@ module Puppet
         end
 
         newstate(:returns) do |state|
+            include Puppet::Util::Execution
             munge do |value|
                 value.to_s
             end
@@ -93,16 +96,14 @@ module Puppet
                     end
                 elsif path = self.parent[:path]
                     exe = cmd.split(/ /)[0]
-                    tmppath = ENV["PATH"]
-                    ENV["PATH"] = self.parent[:path].join(":")
-
-                    path = %{which #{exe}}.chomp
-                    if path == ""
-                        self.fail(
-                            "Could not find command '%s'" % exe
-                        )
+                    withenv :PATH => self.parent[:path].join(":") do
+                        path = %{which #{exe}}.chomp
+                        if path == ""
+                            self.fail(
+                                "Could not find command '%s'" % exe
+                            )
+                        end
                     end
-                    ENV["PATH"] = tmppath
                 else
                     self.fail(
                         "%s is somehow not qualified with no search path" %
@@ -130,7 +131,6 @@ module Puppet
 
                 # We need a dir to change to, even if it's just the cwd
                 dir = self.parent[:cwd] || Dir.pwd
-                tmppath = ENV["PATH"]
 
                 event = :executed_command
 
@@ -470,7 +470,6 @@ module Puppet
         def run(command, check = false)
             output = nil
             status = nil
-            tmppath = ENV["PATH"]
 
             dir = nil
 
@@ -493,39 +492,40 @@ module Puppet
             end
             begin
                 # Do our chdir
-                Dir.chdir(dir) {
+                Dir.chdir(dir) do
+                    env = {}
+
                     if self[:path]
-                        ENV["PATH"] = self[:path].join(":")
+                        env[:PATH] = self[:path].join(":")
                     end
 
-                    # The user and group default to nil, which 'asuser'
-                    # handlers correctly
-                    Puppet::Util.asuser(self[:user], self[:group]) {
-                        # capture both stdout and stderr
-                        if self[:user]
-                            unless defined? @@alreadywarned
-                                Puppet.warning(
-                        "Cannot capture STDERR when running as another user"
-                                )
-                                @@alreadywarned = true
+                    withenv env do
+                        # The user and group default to nil, which 'asuser'
+                        # handlers correctly
+                        Puppet::Util.asuser(self[:user], self[:group]) {
+                            # capture both stdout and stderr
+                            if self[:user]
+                                unless defined? @@alreadywarned
+                                    Puppet.warning(
+                            "Cannot capture STDERR when running as another user"
+                                    )
+                                    @@alreadywarned = true
+                                end
+                                output = %x{#{command}}
+                            else
+                                output = %x{#{command} 2>&1}
                             end
-                            output = %x{#{command}}
-                        else
-                            output = %x{#{command} 2>&1}
-                        end
-                    }
-                    status = $?.dup
+                        }
+                        status = $?.dup
 
-                    # The shell returns 127 if the command is missing.
-                    if $?.exitstatus == 127
-                        raise ArgumentError, output
+                        # The shell returns 127 if the command is missing.
+                        if $?.exitstatus == 127
+                            raise ArgumentError, output
+                        end
                     end
-                }
+                end
             rescue Errno::ENOENT => detail
                 self.fail detail.to_s
-            ensure
-                # reset things to how we found them
-                ENV["PATH"] = tmppath
             end
 
             return output, status
