@@ -79,7 +79,7 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd do
     def query
         self.class.list
 
-        if @model[:version] and @model.is(:ensure) != :absent
+        if @model.is(:ensure) and @model.is(:ensure) != :absent
             return :listed
         else
             return nil

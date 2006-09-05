@@ -8,7 +8,7 @@ Puppet::Type.type(:package).provide :darwinport do
         # list out all of the packages
         open("| #{PORT} list installed") { |process|
             regex = %r{(\S+)\s+@(\S+)\s+(\S+)}
-            fields = [:name, :version, :location]
+            fields = [:name, :ensure, :location]
             hash = {}
 
             # now turn each returned line into a package object
@@ -21,7 +21,6 @@ Puppet::Type.type(:package).provide :darwinport do
                     }
 
                     hash.delete :location
-                    hash[:ensure] = hash[:version]
                     yield hash.dup
                 else
                     raise Puppet::DevError,

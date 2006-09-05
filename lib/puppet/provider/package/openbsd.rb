@@ -13,7 +13,7 @@ Puppet::Type.type(:package).provide :openbsd do
             execpipe(listcmd()) do |process|
                 # our regex for matching pkg_info output
                 regex = %r{^(\S+)-([^-\s]+)\s+(.+)}
-                fields = [:name, :version, :description]
+                fields = [:name, :ensure, :description]
                 hash = {}
 
                 # now turn each returned line into a package object
@@ -25,7 +25,6 @@ Puppet::Type.type(:package).provide :openbsd do
                         }
                         yup = nil
                         name = hash[:name]
-                        hash[:ensure] = :present
 
                         hash[:provider] = self.name
 
@@ -83,8 +82,7 @@ Puppet::Type.type(:package).provide :openbsd do
 
         # Search for the version info
         if info =~ /Information for #{@model[:name]}-(\S+)/
-            hash[:version] = $1
-            hash[:ensure] = :present
+            hash[:ensure] = $1
         else
             return nil
         end

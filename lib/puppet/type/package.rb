@@ -65,6 +65,26 @@ module Puppet
                 end
             end
 
+            newvalue(/./) do
+                unless provider.versionable?
+                    self.fail(
+                        "Package provider %s does not support specifying versions" %
+                        @parent[:provider]
+                     )
+                end
+                method = if self.is == :absent
+                             :install
+                         else
+                             :update
+                         end
+                begin
+                    provider.send(method)
+                rescue => detail
+                    self.fail "Could not update: %s" % detail
+                end
+            end
+
+
             defaultto :installed
 
             # Override the parent method, because we've got all kinds of
@@ -106,16 +126,14 @@ module Puppet
                                 self.fail "Could not get latest version: %s" % detail
                             end
                         end
+
                         case @is
                         when @latest:
                             return true
                         when :present:
-                            if @parent[:version] == @latest
-                                return true
-                            else
-                                self.debug "our version is %s and latest is %s" %
-                                    [@parent[:version], @latest]
-                            end
+                            # This will only happen on retarded packaging systems
+                            # that can't query versions.
+                            return true
                         else
                             self.debug "@is is %s, latest %s is %s" %
                                 [@is, @parent.name, @latest]
@@ -149,7 +167,11 @@ module Puppet
                 else
                     #self.info "updating from %s" % value
                     provider.update
-                    :package_updated
+                    if self.is == :absent
+                        return :package_installed
+                    else
+                        return :package_updated
+                    end
                 end
             end
         end
@@ -194,7 +216,9 @@ module Puppet
         end
 
         newparam(:source) do
-            desc "From where to retrieve the package."
+            desc "Where to find the actual package.  This must be a local file
+                (or on a network file system) or a URL that your specific
+                packaging type understands; Puppet will not retrieve files for you."
 
             validate do |value|
                 unless value =~ /^#{File::SEPARATOR}/ or value =~ /\w+:\/\//
@@ -212,10 +236,10 @@ module Puppet
         end
 
         newparam(:type) do
-            desc "Deprecated form of ``use``."
+            desc "Deprecated form of ``provider``."
 
             munge do |value|
-                warning "'type' is deprecated; use 'use' instead"
+                warning "'type' is deprecated; use 'provider' instead"
                 @parent[:provider] = value
 
                 @parent[:provider]
@@ -237,23 +261,6 @@ module Puppet
                 generally be a fully qualified path."
         end
 
-        # FIXME Version is screwy -- most package systems can't specify a
-        # version, but people will definitely want to query versions, so
-        # it almost seems like versions should be a read-only state,
-        # supporting syncing only in certain cases.
-        newparam(:version) do
-            desc "This is a read-only parameter set by the packaging system.
-                This parameter is present so that you can audit existing package
-                information."
-
-#            validate do |value|
-#                unless @parent.respond_to?(:versionable?) and @parent.versionable?
-#                    raise Puppet::Error,
-#                        "Package type %s does not support specifying versions." %
-#                            @parent.pkgtype
-#                end
-#            end
-        end
         newparam(:category) do
             desc "A read-only parameter set by the package."
         end

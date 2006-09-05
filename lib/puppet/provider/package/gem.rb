@@ -21,7 +21,6 @@ Puppet::Type.type(:package).provide :gem do
             list = execute(command).split("\n\n").collect do |set|
                 if gemhash = gemsplit(set)
                     gemhash[:provider] = :gem
-                    gemhash[:ensure] = gemhash[:version][0]
                     gemhash
                 else
                     nil
@@ -43,10 +42,10 @@ Puppet::Type.type(:package).provide :gem do
         when /^\*\*\*/: return nil
         when /^(\S+)\s+\((.+)\)\n/
             name = $1
-            version = $2.split(/,\s*/)
+            version = $2.split(/,\s*/)[0]
             return {
                 :name => name,
-                :version => version
+                :ensure => version
             }
         else
             Puppet.warning "Could not match %s" % desc
@@ -62,8 +61,8 @@ Puppet::Type.type(:package).provide :gem do
 
     def install(useversion = true)
         command = "#{command(:gem)} install "
-        if @model[:version] and useversion
-            command += "-v %s " % @model[:version]
+        if (! @model.should(:ensure).is_a? Symbol) and useversion
+            command += "-v %s " % @model[:ensure]
         end
         if source = @model[:source]
             command += source
@@ -82,7 +81,7 @@ Puppet::Type.type(:package).provide :gem do
         # This always gets the latest version available.
         hash = self.class.gemlist(:justme => @model[:name])
 
-        return hash[:version][0]
+        return hash[:ensure]
     end
 
     def query

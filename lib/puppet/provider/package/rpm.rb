@@ -58,7 +58,7 @@ Puppet::Type.type(:package).provide :rpm do
 
         regex = %r{^(\S+)\s+(\S+)}
         #fields = [:name, :ensure, :description]
-        fields = [:name, :version]
+        fields = [:name, :ensure]
         hash = {}
         if match = regex.match(output)
             fields.zip(match.captures) { |field,value|

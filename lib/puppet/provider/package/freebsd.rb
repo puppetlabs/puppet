@@ -32,7 +32,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     def query
         self.class.list
 
-        if @model[:version]
+        if @model.is(:ensure)
             return :listed
         else
             return nil
@@ -40,7 +40,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     end
 
     def uninstall
-        cmd = "#{command(:delete)} %s-%s" % [@model[:name], @model[:version]]
+        cmd = "#{command(:delete)} %s-%s" % [@model[:name], @model[:ensure]]
         begin
             output = execute(cmd)
         rescue Puppet::ExecutionFailure

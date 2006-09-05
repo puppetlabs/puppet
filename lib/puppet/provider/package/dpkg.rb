@@ -18,7 +18,7 @@ Puppet::Type.type(:package).provide :dpkg do
         open("| #{command(:dpkg)} -l") { |process|
             # our regex for matching dpkg output
             regex = %r{^(\S+)\s+(\S+)\s+(\S+)\s+(.+)$}
-            fields = [:status, :name, :version, :description]
+            fields = [:status, :name, :ensure, :description]
             hash = {}
 
             5.times { process.gets } # throw away the header
@@ -54,7 +54,7 @@ Puppet::Type.type(:package).provide :dpkg do
         # stupid stupid
         oldcol = ENV["COLUMNS"]
         ENV["COLUMNS"] = "500"
-        fields = [:desired, :status, :error, :name, :version, :description]
+        fields = [:desired, :status, :error, :name, :ensure, :description]
 
         hash = {}
         # list out our specific package
@@ -87,13 +87,12 @@ Puppet::Type.type(:package).provide :dpkg do
         if hash[:error] != " "
             raise Puppet::PackageError.new(
                 "Package %s, version %s is in error state: %s" %
-                    [hash[:name], hash[:version], hash[:error]]
+            [hash[:name], hash[:ensure], hash[:error]]
             )
         end
 
-        if hash[:status] == "i"
-            hash[:ensure] = :present
-        else
+        # DPKG can discuss packages that are no longer installed, so allow that.
+        if hash[:status] != "i"
             hash[:ensure] = :absent
         end
 

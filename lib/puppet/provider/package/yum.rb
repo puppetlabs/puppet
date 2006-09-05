@@ -36,7 +36,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm do
         else
             # Yum didn't find updates, pretend the current
             # version is the latest
-            return @model[:version]
+            return @model[:ensure]
         end
     end
 

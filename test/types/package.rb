@@ -135,8 +135,10 @@ class TestPackages < Test::Unit::TestCase
                 obj.retrieve
             }
 
-            # Version is a parameter, not a state.
-            assert(obj[:version], "Could not retrieve package version")
+            assert_instance_of(String, obj[:ensure],
+                "Ensure did not return a version number")
+            assert(obj[:ensure] =~ /[0-9.]/,
+                "Ensure did not return a version number")
         }
     end
 
@@ -186,7 +188,13 @@ class TestPackages < Test::Unit::TestCase
         pkgtype = Puppet::Type.type(:package)
 
         assert_nothing_raised("Could not list packages") do
-            pkgtype.list
+            count = 0
+            pkgtype.list.each do |pkg|
+                assert_instance_of(Puppet::Type.type(:package), pkg)
+                count += 1
+            end
+
+            assert(count > 1, "Did not get any packages")
         end
     end
 
@@ -383,8 +391,7 @@ class TestPackages < Test::Unit::TestCase
         assert_nothing_raised {
             gem = Puppet::Type.newpackage(
                 :name => name,
-                :version => "0.0.2",
-                :ensure => "installed",
+                :ensure => "0.0.2",
                 :provider => :gem
             )
         }
@@ -413,7 +420,7 @@ class TestPackages < Test::Unit::TestCase
             latest = gem.provider.latest
         }
 
-        assert(latest != gem[:version], "Did not correctly find latest value")
+        assert(latest != gem[:ensure], "Did not correctly find latest value")
 
         gem[:ensure] = :latest
         assert_events([:package_changed], gem)
