@@ -59,9 +59,9 @@ module Puppet
                 end
 
                 if current == :absent
-                    return :package_installed
+                    :package_installed
                 else
-                    return :package_changed
+                    :package_changed
                 end
             end
 
@@ -72,15 +72,16 @@ module Puppet
                         @parent[:provider]
                      )
                 end
-                method = if self.is == :absent
-                             :install
-                         else
-                             :update
-                         end
                 begin
-                    provider.send(method)
+                    provider.install
                 rescue => detail
                     self.fail "Could not update: %s" % detail
+                end
+
+                if self.is == :absent
+                    :package_installed
+                else
+                    :package_changed
                 end
             end
 
@@ -153,26 +154,6 @@ module Puppet
             # This retrieves the current state
             def retrieve
                 @is = @parent.retrieve
-            end
-
-            def sync
-                value = self.should
-                unless value.is_a?(Symbol)
-                    value = value.intern
-                end
-                # If we're a normal value, then just pass to the parent method
-                if self.class.values.include?(value)
-                    #self.info "setting %s" % value
-                    super
-                else
-                    #self.info "updating from %s" % value
-                    provider.update
-                    if self.is == :absent
-                        return :package_installed
-                    else
-                        return :package_updated
-                    end
-                end
             end
         end
 

@@ -209,7 +209,7 @@ class TestPackages < Test::Unit::TestCase
                 pkg.retrieve
             }
 
-            if pkg.provider.query
+            if hash = pkg.provider.query and hash[:ensure] != :absent
                 Puppet.notice "Test package %s is already installed; please choose a different package for testing" % pkg
                 next
             end

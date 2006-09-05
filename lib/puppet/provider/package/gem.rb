@@ -62,7 +62,7 @@ Puppet::Type.type(:package).provide :gem do
     def install(useversion = true)
         command = "#{command(:gem)} install "
         if (! @model.should(:ensure).is_a? Symbol) and useversion
-            command += "-v %s " % @model[:ensure]
+            command += "-v %s " % @model.should(:ensure)
         end
         if source = @model[:source]
             command += source
@@ -100,6 +100,10 @@ Puppet::Type.type(:package).provide :gem do
 
     def update
         self.install(false)
+    end
+
+    def versionable?
+        true
     end
 end
 
