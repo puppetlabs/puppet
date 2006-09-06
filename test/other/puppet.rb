@@ -5,7 +5,6 @@ if __FILE__ == $0
 end
 
 require 'puppet'
-require 'puppet/parsedfile'
 require 'puppettest'
 require 'test/unit'
 

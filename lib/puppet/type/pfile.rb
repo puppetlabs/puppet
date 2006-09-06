@@ -691,7 +691,8 @@ module Puppet
 
                 if child = self.newchild(file, true, options)
                     # Mark any unmanaged files for removal if purge is set.
-                    if self[:purge] == :true and child.implicit?
+                    # Use the array rather than [] because tidy uses this method, too.
+                    if @parameters.include?(:purge) and self[:purge] == :true and child.implicit?
                         child[:ensure] = :absent
                     end
 

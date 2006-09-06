@@ -5,11 +5,11 @@ if __FILE__ == $0
 end
 
 require 'puppet'
-require 'puppet/parsedfile'
+require 'puppet/loadedfile'
 require 'puppettest'
 require 'test/unit'
 
-class TestParsedFile < Test::Unit::TestCase
+class TestLoadedFile < Test::Unit::TestCase
 	include TestPuppet
     def test_file
         Puppet[:filetimeout] = 0
@@ -17,7 +17,7 @@ class TestParsedFile < Test::Unit::TestCase
         path = tempfile()
         File.open(path, "w") { |f| f.puts "yayness" }
         assert_nothing_raised {
-            file = Puppet::ParsedFile.new(path)
+            file = Puppet::LoadedFile.new(path)
         }
 
         assert(!file.changed?, "File incorrectly returned changed")
@@ -36,7 +36,7 @@ class TestParsedFile < Test::Unit::TestCase
         File.open(path, "w") { |f| f.puts "yay" }
         file = nil
         assert_nothing_raised {
-            file = Puppet::ParsedFile.new(path)
+            file = Puppet::LoadedFile.new(path)
         }
 
         assert_nothing_raised { file.changed? }

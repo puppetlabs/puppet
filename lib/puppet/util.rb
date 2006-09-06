@@ -521,5 +521,6 @@ require 'puppet/util/metaid'
 require 'puppet/util/classgen'
 require 'puppet/util/docs'
 require 'puppet/util/execution'
+require 'puppet/util/package'
 
 # $Id$

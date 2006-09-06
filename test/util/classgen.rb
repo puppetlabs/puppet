@@ -58,7 +58,7 @@ class TestPuppetUtilClassGen < Test::Unit::TestCase
 
         klass = nil
         assert_nothing_raised {
-            klass = GenTest.genclass(:yayness, :parent => newclass)
+            klass = GenTest.genclass(:funtest, :parent => newclass)
         }
 
         assert(klass.preinited, "prehook did not get called")

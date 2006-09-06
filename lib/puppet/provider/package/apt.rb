@@ -1,4 +1,7 @@
 Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
+    # Provide sorting functionality
+    include Puppet::Util::Package
+
     desc "Package management via ``apt-get``."
 
     commands :aptget => "/usr/bin/apt-get"
@@ -11,6 +14,10 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     # A derivative of DPKG; this is how most people actually manage
     # Debian boxes, and the only thing that differs is that it can
     # install packages from remote sites.
+
+    def apt
+        command(:aptget)
+    end
 
     def checkforcdrom
         unless defined? @@checkedforcdrom
@@ -48,7 +55,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
             # Add the package version
             str += "=%s" % should
         end
-        cmd = "#{command(:aptget)} -q -y install %s" % str
+        cmd = "#{apt()} -q -y install %s" % str
 
         begin
             output = execute(cmd)
@@ -75,7 +82,9 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
                     self.warning "Could not match version '%s'" % version
                     nil
                 end
-            }.reject { |vers| vers.nil? }.sort[-1]
+            }.reject { |vers| vers.nil? }.sort { |a,b|
+                versioncmp(a,b)
+            }
 
             unless version
                 self.debug "No latest version"
@@ -95,7 +104,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     end
 
     def uninstall
-        cmd = "#{command(:aptget)} -y -q remove %s" % @model[:name]
+        cmd = "#{apt()} -y -q remove %s" % @model[:name]
         begin
             output = execute(cmd)
         rescue Puppet::ExecutionFailure

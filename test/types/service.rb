@@ -16,7 +16,6 @@ end
 if $skipsvcs
     puts "Skipping service testing on %s" % Facter["operatingsystem"].value
 else
-    puts "wtf?"
 #class TestInitService < Test::Unit::TestCase
 class TestInitService
 	include TestPuppet

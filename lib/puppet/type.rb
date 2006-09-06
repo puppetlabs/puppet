@@ -791,7 +791,6 @@ class Type < Puppet::Element
                 when @@metaparamhash.include?(attr): :meta
                 when @paramhash.include?(attr): :param
                 else
-                    Puppet.err "raising a warning, yo: %s" % attr
                     raise Puppet::DevError,
                         "Invalid attribute '%s' for class '%s'" %
                         [attr, self.name]
