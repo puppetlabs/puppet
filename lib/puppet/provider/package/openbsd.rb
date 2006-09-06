@@ -2,7 +2,7 @@
 Puppet::Type.type(:package).provide :openbsd do
     desc "OpenBSD's form of ``pkg_add`` support."
 
-    commands :info => "pkg_info", :add => "pkg_add", :delete => "pkg_delete"
+    commands :pkginfo => "pkg_info", :pkgadd => "pkg_add", :pkgdelete => "pkg_delete"
 
     defaultfor :operatingsystem => :openbsd
 
@@ -62,23 +62,12 @@ Puppet::Type.type(:package).provide :openbsd do
                 "You must specify a package source for BSD packages"
         end
 
-        cmd = command(:add) + " " + @model[:source]
-
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
-        end
+        pkgadd @model[:source]
     end
 
     def query
         hash = {}
-        begin
-            # list out our specific package
-            info = execute("#{command(:info)} #{@model[:name]}")
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(info)
-        end
+        info = pkginfo @model[:name]
 
         # Search for the version info
         if info =~ /Information for #{@model[:name]}-(\S+)/
@@ -96,12 +85,7 @@ Puppet::Type.type(:package).provide :openbsd do
     end
 
     def uninstall
-        cmd = "#{command(:delete)} %s" % @model[:name]
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
-        end
+        pkgdelete @model[:name]
     end
 end
 

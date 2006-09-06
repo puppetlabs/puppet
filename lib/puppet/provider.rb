@@ -45,6 +45,24 @@ class Puppet::Provider
             end
             @commands[name] = path
             confine :exists => path
+
+            # Now define a method for that package
+            unless method_defined? name
+                define_method(name) do |args|
+                    cmd = command(name) + " " + args
+                    begin
+                        output = execute cmd
+                    rescue Puppet::ExecutionFailure
+                        if output
+                            raise Puppet::ExecutionFailure.new(output)
+                        else
+                            raise Puppet::ExecutionFailure, "Could not execute '#{cmd}'"
+                        end
+                    end
+
+                    return output
+                end
+            end
         end
     end
 

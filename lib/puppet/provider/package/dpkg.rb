@@ -100,12 +100,7 @@ Puppet::Type.type(:package).provide :dpkg do
     end
 
     def uninstall
-        cmd = "#{command(:dpkg)} -r %s" % @model[:name]
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
-        end
+        dpkg "-r %s" % @model[:name]
     end
 end
 

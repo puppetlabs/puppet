@@ -6,16 +6,10 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm do
 
     # Install a package using 'yum'.
     def install
-        cmd = "#{command(:yum)} -y install %s" % @model[:name]
-
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::PackageError.new(detail)
-        end
+        output = yum "-y install %s" % @model[:name]
 
         unless self.query
-            raise Puppet::PackageError.new(
+            raise Puppet::Error.new(
                 "Could not find package %s" % self.name
             )
         end
@@ -23,13 +17,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm do
 
     # What's the latest package version available?
     def latest
-        cmd = "#{command(:yum)} list available %s" % @model[:name] 
-
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::PackageError.new(detail)
-        end
+        output = yum "list available %s" % @model[:name] 
 
         if output =~ /#{@model[:name]}\S+\s+(\S+)\s/
             return $1

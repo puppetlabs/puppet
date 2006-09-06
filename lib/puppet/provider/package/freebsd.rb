@@ -5,12 +5,12 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
         so there are plans to rewrite this support to directly use those
         libraries."
 
-    commands :info => "/usr/sbin/pkg_info",
-             :add => "/usr/sbin/pkg_add",
-             :delete => "/usr/sbin/pkg_delete"
+    commands :pkginfo => "/usr/sbin/pkg_info",
+             :pkgadd => "/usr/sbin/pkg_add",
+             :pkgdelete => "/usr/sbin/pkg_delete"
 
     def self.listcmd
-        command(:info)
+        command(:pkginfo)
     end
 
     def install
@@ -20,13 +20,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
             return super
         end
 
-        cmd = command(:add) + " -r " + @model[:name]
-
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
-        end
+        pkgadd " -r " + @model[:name]
     end
 
     def query
@@ -40,12 +34,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     end
 
     def uninstall
-        cmd = "#{command(:delete)} %s-%s" % [@model[:name], @model[:ensure]]
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
-        end
+        pkgdelete "%s-%s" % [@model[:name], @model[:ensure]]
     end
 end
 

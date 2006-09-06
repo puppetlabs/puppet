@@ -32,18 +32,13 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
 
     # Turn our blastwave listing into a bunch of hashes.
     def self.blastlist(hash)
-        command = "#{command(:pkgget)} -c"
+        command = "-c"
 
         if hash[:justme]
             command += " " + hash[:justme]
         end
 
-        begin
-            output = execute(command)
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not get package listing: %s" %
-                detail
-        end
+        pkgget command
 
         list = output.split("\n").collect do |line|
             next if line =~ /^#/
@@ -89,13 +84,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
     end
 
     def install
-        begin
-            execute("#{command(:pkgget)} -f install #{@model[:name]}")
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error,
-                "Could not install %s: %s" %
-                [@model[:name], detail]
-        end
+        pkgget "-f install #{@model[:name]}"
     end
 
     # Retrieve the version from the current package file.
@@ -112,23 +101,11 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
 
     # Remove the old package, and install the new one
     def update
-        begin
-            execute("#{command(:pkgget)} -f upgrade #{@model[:name]}")
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error,
-                "Could not upgrade %s: %s" %
-                [@model[:name], detail]
-        end
+        pkgget "-f upgrade #{@model[:name]}"
     end
 
     def uninstall
-        begin
-            execute("#{command(:pkgget)} -f remove #{@model[:name]}")
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error,
-                "Could not remove %s: %s" %
-                [@model[:name], detail]
-        end
+        pkgget "-f remove #{@model[:name]}"
     end
 end
 

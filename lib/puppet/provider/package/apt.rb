@@ -15,8 +15,8 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     # Debian boxes, and the only thing that differs is that it can
     # install packages from remote sites.
 
-    def apt
-        command(:aptget)
+    def aptcmd(arg)
+        aptget(arg)
     end
 
     def checkforcdrom
@@ -55,23 +55,12 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
             # Add the package version
             str += "=%s" % should
         end
-        cmd = "#{apt()} -q -y install %s" % str
-
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
-        end
+        aptcmd("-q -y install %s" % str)
     end
 
     # What's the latest package version available?
     def latest
-        cmd = "#{command(:aptcache)} showpkg %s" % @model[:name] 
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
-        end
+        output = aptcache("showpkg %s" % @model[:name] )
 
         if output =~ /Versions:\s*\n((\n|.)+)^$/
             versions = $1
@@ -104,12 +93,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     end
 
     def uninstall
-        cmd = "#{apt()} -y -q remove %s" % @model[:name]
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
-        end
+        aptcmd("-y -q remove %s" % @model[:name])
     end
 
     def versionable?

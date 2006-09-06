@@ -6,6 +6,7 @@ Puppet::Type.type(:package).provide :rpm do
     VERSIONSTRING = "%{VERSION}-%{RELEASE}"
 
     commands :rpm => "rpm"
+    defaultfor :operatingsystem => :redhat
 
     def self.list
         packages = []
@@ -47,11 +48,10 @@ Puppet::Type.type(:package).provide :rpm do
             :description => "DESCRIPTION"
         }
 
-        cmd = "#{command(:rpm)} -q #{@model[:name]} --qf '%s\n'" %
-            "%{NAME} #{VERSIONSTRING}"
+        cmd = "-q #{@model[:name]} --qf '%{NAME} #{VERSIONSTRING}\n'"
 
         begin
-            output = execute(cmd)
+            output = rpm cmd
         rescue Puppet::ExecutionFailure
             return nil
         end
@@ -69,8 +69,6 @@ Puppet::Type.type(:package).provide :rpm do
                 "Failed to match rpm output '%s'" %
                 output
         end
-
-        hash[:ensure] = :present
 
         return hash
     end
@@ -97,20 +95,12 @@ Puppet::Type.type(:package).provide :rpm do
         if @model.is(:ensure) != :absent
             flag = "-U"
         end
-        output = %x{#{command(:rpm)} #{flag} #{source} 2>&1}
 
-        unless $? == 0
-            raise Puppet::PackageError.new(output)
-        end
+        rpm "#{flag} #{source}"
     end
 
     def uninstall
-        cmd = "#{command(:rpm)} -e %s" % @model[:name]
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
-        end
+        rpm "-e " + @model[:name]
     end
 
     def update

@@ -167,7 +167,7 @@ class TestPackages < Test::Unit::TestCase
         file = tempfile()
         File.open(file, "w") { |f| f.puts :yayness }
         obj[:source] = file
-        assert_raise(Puppet::PackageError,
+        assert_raise(Puppet::Error,
             "Successfully installed nonexistent package") {
             state.sync
         }

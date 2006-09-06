@@ -6,8 +6,8 @@ Puppet::Type.type(:package).provide :aptitude, :parent => :apt do
 
     ENV['DEBIAN_FRONTEND'] = "noninteractive"
 
-    def apt
-        command(:aptitude)
+    def aptcmd(arg)
+        aptitude(arg)
     end
 end
 

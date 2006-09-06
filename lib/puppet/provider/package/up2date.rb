@@ -6,18 +6,12 @@ Puppet.type(:package).provide :up2date, :parent => :rpm do
 
     # Install a package using 'up2date'.
     def install
-        cmd = "#{command(:up2date)} -u %s" % @model[:name]
-
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
-        end
+        up2date "-u %s" % @model[:name]
 
         #@states[:ensure].retrieve
         #if @states[:ensure].is == :absent
         unless self.query
-            raise Puppet::PackageError.new(
+            raise Puppet::ExecutionFailure.new(
                 "Could not find package %s" % self.name
             )
         end
@@ -27,12 +21,7 @@ Puppet.type(:package).provide :up2date, :parent => :rpm do
     def latest
         #up2date can only get a list of *all* available packages?
         #cmd = "/usr/sbib/up2date-nox --show-available %s" % self[:name] 
-        cmd = "#{command(:up2date)} --show-available"
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
-        end
+        output = up2date "--show-available"
 
         if output =~ /#{@model[:name]}-(\d+.*)\.\w+/
             return $1

@@ -3,9 +3,9 @@
 Puppet::Type.type(:package).provide :sun do
     desc "Sun's packaging system.  Requires that you specify the source for
         the packages you're managing."
-    commands :info => "/usr/bin/pkginfo",
-             :add => "/usr/sbin/pkgadd",
-             :rm => "/usr/sbin/pkgrm"
+    commands :pkginfo => "/usr/bin/pkginfo",
+             :pkgadd => "/usr/sbin/pkgadd",
+             :pkgrm => "/usr/sbin/pkgrm"
 
     defaultfor :operatingsystem => :solaris
 
@@ -29,7 +29,7 @@ Puppet::Type.type(:package).provide :sun do
             "FILES" => nil
         }
 
-        cmd = "#{command(:info)} -l"
+        cmd = "#{command(:pkginfo)} -l"
 
         # list out all of the packages
         execpipe(cmd) { |process|
@@ -81,7 +81,7 @@ Puppet::Type.type(:package).provide :sun do
         }
 
         hash = {}
-        cmd = "#{command(:info)} -l"
+        cmd = "#{command(:pkginfo)} -l"
         if device
             cmd += " -d #{device}"
         end
@@ -118,7 +118,7 @@ Puppet::Type.type(:package).provide :sun do
         unless @model[:source]
             raise Puppet::Error, "Sun packages must specify a package source"
         end
-        cmd = [command(:add)]
+        cmd = []
         
         if @model[:adminfile]
             cmd << " -a " + @model[:adminfile]
@@ -132,11 +132,7 @@ Puppet::Type.type(:package).provide :sun do
         cmd += ["-n", @model[:name]]
         cmd = cmd.join(" ")
 
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::PackageError.new(output)
-        end
+        pkgadd cmd
     end
 
     # Retrieve the version from the current package file.
@@ -150,20 +146,14 @@ Puppet::Type.type(:package).provide :sun do
     end
 
     def uninstall
-        command  = "#{command(:rm)} -n "
+        command  = "-n "
 
         if @model[:adminfile]
             command += " -a " + @model[:adminfile]
         end
 
         command += " " + @model[:name]
-        begin
-            execute(command)
-        rescue ExecutionFailure => detail
-            raise Puppet::Error,
-                "Could not uninstall %s: %s" %
-                [@model[:name], detail]
-        end
+        pkgrm command
     end
 
     # Remove the old package, and install the new one.  This will probably

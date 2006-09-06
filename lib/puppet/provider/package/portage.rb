@@ -48,11 +48,8 @@ Puppet::Type.type(:package).provide :portage do
             package_name = "=#{@model[:category]}/#{@model[:name]}-#{@model.should( :ensure )}"
         end
         command = "EMERGE_DEFAULT_OPTS=\"\" #{command(:emerge)} #{package_name}"
-        begin
-            output = execute( command )
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::PackageError.new(detail)
-        end
+
+        output = execute( command )
     end
 
     def uninstall

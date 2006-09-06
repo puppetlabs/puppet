@@ -431,7 +431,8 @@ module Util
         else
             Puppet.debug "Executing '%s'" % command
         end
-        output = %x{#{command} 2>&1}
+        command += " 2>&1" unless command =~ />/
+        output = %x{#{command}}
 
         if failonfail
             unless $? == 0

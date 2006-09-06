@@ -1,10 +1,10 @@
 Puppet::Type.type(:package).provide :ports, :parent => :freebsd do
     desc "Support for FreeBSD's ports.  Again, this still mixes packages
         and ports."
-    commands :upgrade => "/usr/local/sbin/portupgrade",
-             :version => "/usr/local/sbin/portversion",
-             :uninstall => "/usr/local/sbin/pkg_deinstall",
-             :info => "/usr/sbin/pkg_info"
+    commands :portupgrade => "/usr/local/sbin/portupgrade",
+             :portversion => "/usr/local/sbin/portversion",
+             :portuninstall => "/usr/local/sbin/pkg_deinstall",
+             :portinfo => "/usr/sbin/pkg_info"
 
     defaultfor :operatingsystem => :freebsd
 
@@ -19,24 +19,20 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd do
         # -p: create a package
         # -N: install if the package is missing, otherwise upgrade
         # -P: prefer binary packages
-        cmd = "#{command(:upgrade)} -p -N -P #{@model[:name]}"
+        cmd = "-p -N -P #{@model[:name]}"
 
-        begin
-            output = execute(cmd)
-            if output =~ /\*\* No such /
-                raise Puppet::PackageError, "Could not find package %s" % @model[:name]
-            end
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
+        output = portupgrade cmd
+        if output =~ /\*\* No such /
+            raise Puppet::ExecutionFailure, "Could not find package %s" % @model[:name]
         end
     end
 
     # If there are multiple packages, we only use the last one
     def latest
-        cmd = "#{command(:version)} -v #{@model[:name]}"
+        cmd = "-v #{@model[:name]}"
 
         begin
-            output = execute(cmd)
+            output = portversion(cmd)
         rescue Puppet::ExecutionFailure
             raise Puppet::PackageError.new(output)
         end
@@ -87,13 +83,7 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd do
     end
 
     def uninstall
-        cmd = "#{command(:uninstall)} #{@model[:name]}"
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
-        end
-        
+        portuninstall @model[:name]
     end
 
     def update

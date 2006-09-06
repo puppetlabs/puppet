@@ -17,6 +17,7 @@ Puppet::Type.type(:package).provide :gem do
         if name = hash[:justme]
             command += name
         end
+
         begin
             list = execute(command).split("\n\n").collect do |set|
                 if gemhash = gemsplit(set)
@@ -60,7 +61,7 @@ Puppet::Type.type(:package).provide :gem do
     end
 
     def install(useversion = true)
-        command = "#{command(:gem)} install "
+        command = "install "
         if (! @model.should(:ensure).is_a? Symbol) and useversion
             command += "-v %s " % @model.should(:ensure)
         end
@@ -69,12 +70,8 @@ Puppet::Type.type(:package).provide :gem do
         else
             command += @model[:name]
         end
-        begin
-            execute(command)
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not install %s: %s" %
-                [@model[:name], detail]
-        end
+
+        gem command
     end
 
     def latest
@@ -89,13 +86,7 @@ Puppet::Type.type(:package).provide :gem do
     end
 
     def uninstall
-        begin
-            # Remove everything, including the binaries.
-            execute("#{command(:gem)} uninstall -x -a #{@model[:name]}")
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not uninstall %s: %s" %
-                [@model[:name], detail]
-        end
+        gem "uninstall -x -a #{@model[:name]}"
     end
 
     def update

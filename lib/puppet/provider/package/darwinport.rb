@@ -1,12 +1,12 @@
 Puppet::Type.type(:package).provide :darwinport do
     desc "Package management using DarwinPorts on OS X."
 
-    PORT = "/opt/local/bin/port"
-    confine :exists => PORT, :operatingsystem => "Darwin"
+    commands :port => "/opt/local/bin/port"
+    confine :operatingsystem => "Darwin"
 
     def self.eachpkgashash
         # list out all of the packages
-        open("| #{PORT} list installed") { |process|
+        open("| #{command(:port)} list installed") { |process|
             regex = %r{(\S+)\s+@(\S+)\s+(\S+)}
             fields = [:name, :ensure, :location]
             hash = {}
@@ -45,13 +45,7 @@ Puppet::Type.type(:package).provide :darwinport do
         should = @model[:ensure]
 
         # Seems like you can always say 'upgrade'
-        cmd = "#{PORT} upgrade #{@model[:name]}"
-
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::PackageError.new(output)
-        end
+        port "upgrade #{@model[:name]}"
     end
 
     def query
@@ -66,7 +60,7 @@ Puppet::Type.type(:package).provide :darwinport do
     end
 
     def latest
-        info = %x{#{PORT} search '^#{@model[:name]}$' 2>/dev/null}
+        info = port "search '^#{@model[:name]}$' 2>/dev/null"
 
         if $? != 0 or info =~ /^Error/
             return nil
@@ -79,11 +73,7 @@ Puppet::Type.type(:package).provide :darwinport do
     end
 
     def uninstall
-        cmd = "#{PORT} uninstall #{@model[:name]}"
-        output = %x{#{cmd} 2>&1}
-        if $? != 0
-            raise Puppet::PackageError.new(output)
-        end
+        port "uninstall #{@model[:name]}"
     end
 
     def update

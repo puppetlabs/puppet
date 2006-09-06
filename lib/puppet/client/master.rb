@@ -564,7 +564,14 @@ class Puppet::Client::MasterClient < Puppet::Client
             end
         end
     ensure
-        Facter.loadfacts
+        if Facter.respond_to? :loadfacts
+            Facter.loadfacts
+        elsif Facter.respond_to? :load
+            Facter.load
+        else
+            raise Puppet::Error,
+                "You must upgrade your version of Facter to use centralized facts"
+        end
     end
 
     # Retrieve the plugins from the central server.  We only have to load the
