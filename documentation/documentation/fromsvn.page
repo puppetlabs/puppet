@@ -16,7 +16,7 @@ Make sure your host has Ruby version 1.8.2:
 While Puppet should work with 1.8.1, there have been many reports of problems
 with this version.
 
-Make sure you have Subverion:
+Make sure you have Subversion:
 
     $ svn --version -q
 
