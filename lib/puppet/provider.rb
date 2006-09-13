@@ -47,8 +47,9 @@ class Puppet::Provider
             confine :exists => path
 
             # Now define a method for that package
-            unless method_defined? name
-                define_method(name) do |args|
+            #unless method_defined? name
+            unless metaclass.method_defined? name
+                meta_def(name) do |args|
                     cmd = command(name) + " " + args
                     begin
                         output = execute cmd
@@ -61,6 +62,11 @@ class Puppet::Provider
                     end
 
                     return output
+                end
+                unless method_defined? name
+                    define_method(name) do |args|
+                        self.class.send(name, args)
+                    end
                 end
             end
         end
@@ -103,22 +109,6 @@ class Puppet::Provider
         @defaults.length
     end
 
-    dochook(:defaults) do
-        if @defaults.length > 0
-            return "  Default for " + @defaults.collect do |f, v|
-                "``#{f}`` == ``#{v}``"
-            end.join(" and ") + "."
-        end
-    end
-
-    dochook(:commands) do
-        if @origcommands.length > 0
-            return "  Required binaries: " + @origcommands.collect do |n, c|
-                "``#{c}``"
-            end.join(", ") + "."
-        end
-    end
-
     def self.initvars
         @defaults = {}
         @commands = {}
@@ -133,6 +123,8 @@ class Puppet::Provider
     # Check whether this implementation is suitable for our platform.
     def self.suitable?
         # A single false result is sufficient to turn the whole thing down.
+        # We don't return 'true' until the very end, though, so that every
+        # confine is tested.
         @confines.each do |check, values|
             case check
             when :exists:
@@ -150,16 +142,36 @@ class Puppet::Provider
                     return false if v
                 end
             else # Just delegate everything else to facter
-                result = Facter.send(check).to_s.downcase.intern
+                if result = Facter.value(check)
+                    result = result.to_s.downcase.intern
 
-                found = values.find do |v|
-                    result == v.to_s.downcase.intern
+                    found = values.find do |v|
+                        result == v.to_s.downcase.intern
+                    end
+                    return false unless found
+                else
+                    return false
                 end
-                return false unless found
             end
         end
 
         return true
+    end
+
+    dochook(:defaults) do
+        if @defaults.length > 0
+            return "  Default for " + @defaults.collect do |f, v|
+                "``#{f}`` == ``#{v}``"
+            end.join(" and ") + "."
+        end
+    end
+
+    dochook(:commands) do
+        if @origcommands.length > 0
+            return "  Required binaries: " + @origcommands.collect do |n, c|
+                "``#{c}``"
+            end.join(", ") + "."
+        end
     end
 
     # Remove the reference to the model, so GC can clean up.
