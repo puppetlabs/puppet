@@ -316,4 +316,47 @@ class TestCertMgr < Test::Unit::TestCase
         store.add_crl(ca.crl)
         store
     end
+
+    def test_ttl
+        cert = mksignedcert
+        assert_equal(5 * 365 * 24 * 60 * 60,  cert.not_after - cert.not_before)
+
+        Puppet[:ca_ttl] = 7 * 24 * 60 * 60
+        cert = mksignedcert
+        assert_equal(7 * 24 * 60 * 60,  cert.not_after - cert.not_before)
+
+        Puppet[:ca_ttl] = "2y"
+        cert = mksignedcert
+        assert_equal(2 * 365 * 24 * 60 * 60,  cert.not_after - cert.not_before)
+
+        Puppet[:ca_ttl] = "2y"
+        cert = mksignedcert
+        assert_equal(2 * 365 * 24 * 60 * 60,  cert.not_after - cert.not_before)
+
+        Puppet[:ca_ttl] = "1h"
+        cert = mksignedcert
+        assert_equal(60 * 60,  cert.not_after - cert.not_before)
+
+        Puppet[:ca_ttl] = "900s"
+        cert = mksignedcert
+        assert_equal(900,  cert.not_after - cert.not_before)
+
+        # This needs to be last, to make sure that setting ca_days
+        # overrides setting ca_ttl
+        Puppet[:ca_days] = 3
+        cert = mksignedcert
+        assert_equal(3 * 24 * 60 * 60,  cert.not_after - cert.not_before)
+
+    end
+
+    def mksignedcert
+        ca = mkCA()
+        hostname = "ttltest.example.com"
+
+        cert = nil
+        assert_nothing_raised {
+            cert, cacert = ca.sign(mkcert(hostname).mkcsr)
+        }
+        return cert
+    end
 end

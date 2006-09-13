@@ -47,9 +47,9 @@ module Puppet::SSLCertificates
         }
     )
 
-    #def self.mkcert(type, name, days, issuercert, issuername, serial, publickey)
+    #def self.mkcert(type, name, ttl, issuercert, issuername, serial, publickey)
     def self.mkcert(hash)
-        [:type, :name, :days, :issuer, :serial, :publickey].each { |param|
+        [:type, :name, :ttl, :issuer, :serial, :publickey].each { |param|
             unless hash.include?(param)
                 raise ArgumentError, "mkcert called without %s" % param
             end
@@ -66,7 +66,7 @@ module Puppet::SSLCertificates
             cert.issuer = hash[:name]
         end
         cert.not_before = from
-        cert.not_after = from + (hash[:days] * 24 * 60 * 60)
+        cert.not_after = from + hash[:ttl]
         cert.version = 2 # X509v3
 
         cert.public_key = hash[:publickey]

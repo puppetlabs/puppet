@@ -1,4 +1,6 @@
 class Puppet::SSLCertificates::CA
+    include Puppet::Util::Warnings
+
     Certificate = Puppet::SSLCertificates::Certificate
     attr_accessor :keyfile, :file, :config, :dir, :cert, :crl
 
@@ -66,7 +68,14 @@ class Puppet::SSLCertificates::CA
                 autosigns any key request, and is a very bad idea), false (which
                 never autosigns any key request), and the path to a file, which
                 uses that configuration file to determine which keys to sign."},
-        :ca_days => [1825, "How long a certificate should be valid."],
+        :ca_days => ["", "How long a certificate should be valid. 
+                 This parameter is deprecated, use ca_ttl instead"],
+        :ca_ttl => ["5y", "The default TTL for new certificates; valid values 
+                must be an integer, optionally followed by one of the units 
+                'y' (years of 365 days), 'd' (days), 'h' (hours), or 
+                's' (seconds). The unit defaults to seconds. If this parameter
+                is set, ca_days is ignored. Examples are '3600' (one hour) 
+                and '1825d', which is the same as '5y' (5 years) "],
         :ca_md => ["md5", "The type of hash used in certificates."],
         :req_bits => [2048, "The bit length of the certificates."],
         :keylength => [1024, "The bit length of keys."]
@@ -74,6 +83,38 @@ class Puppet::SSLCertificates::CA
 
     def certfile
         @config[:cacert]
+    end
+
+    # TTL for new certificates in seconds. If config param :ca_ttl is set, 
+    # use that, otherwise use :ca_days for backwards compatibility
+    def ttl
+        days = @config[:ca_days]
+        if days && days.size > 0
+            warnonce "Parameter ca_ttl is not set. Using depecated ca_days instead."
+            return @config[:ca_days] * 24 * 60 * 60
+        else
+            ttl = @config[:ca_ttl]
+            if ttl.is_a?(String)
+                unless ttl =~ /^(\d+)(y|d|h|s)$/
+                    raise ArgumentError, "Invalid ca_ttl #{ttl}"
+                end
+                case $2
+                when 'y'
+                    unit = 365 * 24 * 60 * 60
+                when 'd'
+                    unit = 24 * 60 * 60
+                when 'h'
+                    unit = 60 * 60
+                when 's'
+                    unit = 1
+                else
+                    raise ArgumentError, "Invalid unit for ca_ttl #{ttl}"
+                end
+                return $1.to_i * unit
+            else
+                return ttl
+            end
+        end
     end
 
     # Remove all traces of a given host.  This is kind of hackish, but, eh.
@@ -219,7 +260,7 @@ class Puppet::SSLCertificates::CA
             :encrypt => @config[:capass],
             :key => @config[:cakey],
             :selfsign => true,
-            :length => 1825,
+            :ttl => ttl,
             :type => :ca
         )
 
@@ -288,7 +329,7 @@ class Puppet::SSLCertificates::CA
         newcert = Puppet::SSLCertificates.mkcert(
             :type => :server,
             :name => csr.subject,
-            :days => @config[:ca_days],
+            :ttl => ttl,
             :issuer => @cert,
             :serial => serial,
             :publickey => csr.public_key

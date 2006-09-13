@@ -93,7 +93,7 @@ class Puppet::SSLCertificates::Certificate
             end
         }
 
-        @days = hash[:length] || 365
+        @ttl = hash[:ttl] || 365 * 24 * 60 * 60
         @selfsign = hash[:selfsign] || false
         @encrypt = hash[:encrypt] || false
         @replace = hash[:replace] || false
@@ -206,7 +206,7 @@ class Puppet::SSLCertificates::Certificate
 
         args = {
             :name => self.certname,
-            :days => @days,
+            :ttl => @ttl,
             :issuer => nil,
             :serial => 0x0,
             :publickey => @key.public_key
