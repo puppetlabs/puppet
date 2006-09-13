@@ -104,6 +104,7 @@ module Puppet
     end
 
     self.setdefaults(:puppet,
+        :trace => [false, "Whether to print stack traces on some errors"],
         :statedir => { :default => "$vardir/state",
             :mode => 01777,
             :desc => "The directory where Puppet state is stored.  Generally,

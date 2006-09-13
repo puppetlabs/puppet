@@ -42,7 +42,7 @@ module Puppet # :nodoc:
     class DevError < Error
         # XXX This is probably the wrong way to do this, but...
         def set_backtrace(trace)
-            if Puppet[:debug]
+            if Puppet[:trace]
                 puts trace
             end
             super(trace)
