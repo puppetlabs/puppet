@@ -317,4 +317,36 @@ class nothernode {}
             end
         end
     end
+
+    # Make sure nodesearch uses all names, not just one.
+    def test_nodesearch_multiple_names
+        bucket = {}
+        Puppet::Parser::Interpreter.send(:define_method, "nodesearch_multifake") do |node|
+            if bucket[node]
+                return *bucket[node]
+            else
+                return nil, nil
+            end
+        end
+        manifest = tempfile()
+        File.open(manifest, "w") do |f| f.puts "" end
+        interp = nil
+        assert_nothing_raised {
+            interp = Puppet::Parser::Interpreter.new(
+                :Manifest => manifest,
+                :NodeSources => [:multifake]
+            )
+        }
+
+        bucket["name.domain.com"] = [:parent, [:classes]]
+
+        ret = nil
+
+        assert_nothing_raised do
+            assert_equal bucket["name.domain.com"],
+                interp.nodesearch("name", "name.domain.com")
+        end
+
+
+    end
 end

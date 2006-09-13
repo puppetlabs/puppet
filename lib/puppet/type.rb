@@ -513,7 +513,7 @@ class Type < Puppet::Element
         return provider
     end
 
-    # Make sure we have a :use parameter defined.  Only gets called if there
+    # Make sure we have a :provider parameter defined.  Only gets called if there
     # are providers.
     def self.providify
         return if @paramhash.has_key? :provider

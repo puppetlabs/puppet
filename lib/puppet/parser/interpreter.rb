@@ -143,7 +143,7 @@ module Puppet
             # Search for our node in the various locations.  This only searches
             # locations external to the files; the scope is responsible for
             # searching the parse tree.
-            def nodesearch(node)
+            def nodesearch(*nodes)
                 # At this point, stop at the first source that defines
                 # the node
                 @nodesources.each do |source|
@@ -151,18 +151,20 @@ module Puppet
                     parent = nil
                     nodeclasses = nil
                     if self.respond_to? method
-                        parent, nodeclasses = self.send(method, node)
+                        nodes.each do |node|
+                            parent, nodeclasses = self.send(method, node)
 
-                        if parent or (nodeclasses and !nodeclasses.empty?)
-                            Puppet.info "Found %s in %s" % [node, source]
-                            return parent, nodeclasses
-                        else
-                            # Look for a default node.
-                            parent, nodeclasses = self.send(method, "default")
                             if parent or (nodeclasses and !nodeclasses.empty?)
-                                Puppet.info "Found default node for %s in %s" %
-                                    [node, source]
+                                Puppet.info "Found %s in %s" % [node, source]
                                 return parent, nodeclasses
+                            else
+                                # Look for a default node.
+                                parent, nodeclasses = self.send(method, "default")
+                                if parent or (nodeclasses and !nodeclasses.empty?)
+                                    Puppet.info "Found default node for %s in %s" %
+                                        [node, source]
+                                    return parent, nodeclasses
+                                end
                             end
                         end
                     end
@@ -306,7 +308,7 @@ module Puppet
 
                     args[:names] = names
 
-                    parent, nodeclasses = nodesearch(client)
+                    parent, nodeclasses = nodesearch(*names)
 
                     args[:classes] += nodeclasses if nodeclasses
 
