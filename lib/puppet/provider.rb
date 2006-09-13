@@ -79,7 +79,12 @@ class Puppet::Provider
     # Does this implementation match all of the default requirements?
     def self.default?
         if @defaults.find do |fact, value|
-                Facter[fact].value.to_s.downcase.intern != value.to_s.downcase.intern
+                fval = Facter.value(fact)
+                if fval
+                    fval.to_s.downcase.intern != value.to_s.downcase.intern
+                else
+                    false
+                end
             end
             return false
         else
