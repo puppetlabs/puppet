@@ -523,5 +523,6 @@ require 'puppet/util/classgen'
 require 'puppet/util/docs'
 require 'puppet/util/execution'
 require 'puppet/util/package'
+require 'puppet/util/warnings'
 
 # $Id$
