@@ -6,7 +6,7 @@ module Puppet::Util::Warnings
         $stampwarnings ||= {}
         $stampwarnings[self.class] ||= []
         unless $stampwarnings[self.class].include? msg
-            warning msg
+            Puppet.warning msg
             $stampwarnings[self.class] << msg
         end
     end
