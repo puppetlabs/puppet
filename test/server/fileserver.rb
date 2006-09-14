@@ -934,12 +934,11 @@ allow *
     end
 
     def test_mount_expand
-        mclass = Puppet::Server::FileServer::Mount
-
+        mount = mkmount()
 
         check = proc do |client, pattern, repl|
             path = "/my/#{pattern}/file"
-            assert_equal("/my/#{repl}/file", mclass.expand(path, client))
+            assert_equal("/my/#{repl}/file", mount.expand(path, client))
         end
 
         # Do a round of checks with a fake client
@@ -950,10 +949,11 @@ allow *
          "%%" => "%", # escape
          "%o" => "%o" # other
          }.each do |pat, repl|
-             check.call(client, pat, repl)
+             result = check.call(client, pat, repl)
          end
 
         # Now, check that they use Facter info 
+        Puppet.notice "The following messages are normal"
         client = nil
         local = Facter["hostname"].value
         domain = Facter["domain"].value
@@ -967,6 +967,57 @@ allow *
              check.call(client, pat, repl)
          end
 
+    end
+
+    def test_fileserver_expansion
+        server = nil
+        assert_nothing_raised {
+            server = Puppet::Server::FileServer.new(
+                :Local => true,
+                :Config => false
+            )
+        }
+
+        dir = tempfile()
+        ip = Facter.value(:ipaddress)
+
+        Dir.mkdir(dir)
+        host = "host.domain.com"
+        {
+            "%H" => "host.domain.com", "%h" => "host", "%d" => "domain.com"
+        }.each do |pattern, string|
+            file = File.join(dir, string)
+            mount = File.join(dir, pattern)
+            File.open(file, "w") do |f| f.puts "yayness: %s" % string end
+            name = "name"
+            obj = nil
+            assert_nothing_raised {
+                obj = server.mount(mount, name)
+            }
+            obj.allow "*"
+
+            ret = nil
+            assert_nothing_raised do
+                ret = server.list("/name", :ignore, false, false, host, ip)
+            end
+
+            assert_equal("/\tfile", ret)
+
+            assert_nothing_raised do
+                ret = server.describe("/name", :ignore, host, ip)
+            end
+            assert(ret =~ /\tfile\t/, "Did not get valid a description")
+
+            assert_nothing_raised do
+                ret = server.retrieve("/name", :ignore, host, ip)
+            end
+
+            assert_equal(ret, File.read(file))
+
+            server.umount(name)
+
+            File.unlink(file)
+        end
     end
 end
 

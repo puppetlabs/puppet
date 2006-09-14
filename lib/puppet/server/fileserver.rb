@@ -21,42 +21,23 @@ class Server
             iface.add_method("string retrieve(string, string)")
         }
 
-        def authcheck(file, mount, client, clientip)
-            unless mount.allowed?(client, clientip)
-                mount.warning "%s cannot access %s" %
-                    [client, file]
-                raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
-            end
-        end
-
         # Describe a given file.  This returns all of the manageable aspects
         # of that file.
-        def describe(file, links = :ignore, client = nil, clientip = nil)
-            readconfig
-
+        def describe(url, links = :ignore, client = nil, clientip = nil)
             links = links.intern if links.is_a? String
 
             if links == :manage
                 raise Puppet::FileServerError, "Cannot currently copy links"
             end
 
-            mount, path = splitpath(file, client)
-
-            authcheck(file, mount, client, clientip)
+            mount, path = convert(url, client, clientip)
 
             if client
-                mount.debug "Describing %s for %s" % [file, client]
-            end
-
-            sdir = nil
-            unless sdir = mount.subdir(path)
-                mount.notice "Could not find subdirectory %s" %
-                    "//%s/%s" % [mount, path]
-                return ""
+                mount.debug "Describing %s for %s" % [url, client]
             end
 
             obj = nil
-            unless obj = mount.check(sdir, links)
+            unless obj = mount.check(path, links)
                 return ""
             end
 
@@ -79,16 +60,6 @@ class Server
 
             return desc.join("\t")
         end
-
-        # Deal with ignore parameters.
-        def handleignore(children, path, ignore)            
-            ignore.each { |ignore|                
-                Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) { |match|
-                    children.delete(File.basename(match))
-                }                
-            }
-            return children
-        end  
 
         # Create a new fileserving module.
         def initialize(hash = {})
@@ -129,30 +100,21 @@ class Server
         end
 
         # List a specific directory's contents.
-        def list(dir, links = :ignore, recurse = false, ignore = false, client = nil, clientip = nil)
-            readconfig
-            mount, path = splitpath(dir, client)
-
-            authcheck(dir, mount, client, clientip)
+        def list(url, links = :ignore, recurse = false, ignore = false, client = nil, clientip = nil)
+            mount, path = convert(url, client, clientip)
 
             if client
-                mount.debug "Listing %s for %s" % [dir, client]
-            end
-
-            subdir = nil
-            unless subdir = mount.subdir(path)
-                mount.notice "Could not find subdirectory %s" %
-                    "%s:%s" % [mount, path]
-                return ""
+                mount.debug "Listing %s for %s" % [url, client]
             end
 
             obj = nil
-            unless FileTest.exists?(subdir)
+            unless FileTest.exists?(path)
                 return ""
             end
 
-            rmdir = expand_mount(dir, mount)
-            desc = reclist(mount, rmdir, subdir, recurse, ignore)
+            # We pass two paths here, but reclist internally changes one
+            # of the arguments when called internally.
+            desc = reclist(mount, path, path, recurse, ignore)
 
             if desc.length == 0
                 mount.notice "Got no information on //%s/%s" %
@@ -183,6 +145,82 @@ class Server
 
             return @mounts[name]
         end
+
+        # Retrieve a file from the local disk and pass it to the remote
+        # client.
+        def retrieve(url, links = :ignore, client = nil, clientip = nil)
+            links = links.intern if links.is_a? String
+
+            mount, path = convert(url, client, clientip)
+
+            if client
+                mount.info "Sending %s to %s" % [url, client]
+            end
+
+            unless FileTest.exists?(path)
+                return ""
+            end
+
+            links = links.intern if links.is_a? String
+
+            if links == :ignore and FileTest.symlink?(path)
+                return ""
+            end
+
+            str = nil
+            if links == :manage
+                raise Puppet::Error, "Cannot copy links yet."
+            else
+                str = File.read(path)
+            end
+
+            if @local
+                return str
+            else
+                return CGI.escape(str)
+            end
+        end
+
+        def umount(name)
+            @mounts.delete(name) if @mounts.include? name
+        end
+
+        private
+
+        def authcheck(file, mount, client, clientip)
+            unless mount.allowed?(client, clientip)
+                mount.warning "%s cannot access %s" %
+                    [client, file]
+                raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
+            end
+        end
+
+        def convert(url, client, clientip)
+            readconfig
+
+            mount, stub = splitpath(url, client)
+
+            authcheck(url, mount, client, clientip)
+
+            path = nil
+            unless path = mount.subdir(stub, client)
+                mount.notice "Could not find subdirectory %s" %
+                    "//%s/%s" % [mount, stub]
+                return ""
+            end
+
+            return mount, path
+        end
+
+        # Deal with ignore parameters.
+        def handleignore(children, path, ignore)            
+            ignore.each { |ignore|                
+                Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) { |match|
+                    children.delete(File.basename(match))
+                }                
+            }
+            return children
+        end  
 
         # Read the configuration file.
         def readconfig(check = true)
@@ -266,65 +304,12 @@ class Server
             # We let the check raise an error, so that it can raise an error
             # pointing to the specific problem.
             newmounts.each { |name, mount|
-                mount.valid?
+                unless mount.valid?
+                    raise FileServerError, "No path specified for mount %s" %
+                        name
+                end
             }
             @mounts = newmounts
-        end
-
-        # Retrieve a file from the local disk and pass it to the remote
-        # client.
-        def retrieve(file, links = :ignore, client = nil, clientip = nil)
-            readconfig
-            links = links.intern if links.is_a? String
-            mount, path = splitpath(file, client)
-
-            authcheck(file, mount, client, clientip)
-
-            if client
-                mount.info "Sending %s to %s" % [file, client]
-            end
-
-            fpath = nil
-            if path
-                fpath = File.join(mount.path, path)
-            else
-                fpath = mount.path
-            end
-
-            unless FileTest.exists?(fpath)
-                return ""
-            end
-
-            links = links.intern if links.is_a? String
-
-            if links == :ignore and FileTest.symlink?(fpath)
-                return ""
-            end
-
-            str = nil
-            if links == :manage
-                raise Puppet::Error, "Cannot copy links yet."
-            else
-                str = File.read(fpath)
-            end
-
-            if @local
-                return str
-            else
-                return CGI.escape(str)
-            end
-        end
-
-        private
-
-        # Convert from the '/mount/path' form to the real path on disk.
-        def expand_mount(name, mount)
-            # Note that the user could have passed a path with multiple /'s
-            # in it, and we are likely to result in multiples, so we have to
-            # get rid of all of them.
-            CGI.unescape name.sub(/\/#{mount.name}/, mount.path).gsub(%r{/+}, '/').sub(
-                %r{/$}, ''
-            )
         end
 
         # Recursively list the directory. FIXME This should be using
@@ -382,7 +367,7 @@ class Server
                     raise FileServerError, "Fileserver module '%s' not mounted" % mount
                 end
 
-                unless @mounts[mount].path
+                unless @mounts[mount].valid?
                     raise FileServerError,
                         "Fileserver error: Mount '%s' does not have a path set" % mount
                 end
@@ -415,50 +400,6 @@ class Server
 
             Puppet::Util.logmethods(self, true)
 
-            # Create a map for a specific client.
-            def self.clientmap(client)
-                {
-                    "h" => client.sub(/\..*$/, ""), 
-                    "H" => client,
-                    "d" => client.sub(/[^.]+\./, "") # domain name
-                }
-            end
-
-            # Replace % patterns as appropriate.
-            def self.expand(path, client = nil)
-                # This map should probably be moved into a method.
-                map = nil
-
-                if client
-                    map = clientmap(client)
-                else
-                    # Else, use the local information
-                    map = localmap()
-                end
-                path.gsub(/%(.)/) do |v|
-                    key = $1
-                    if key == "%" 
-                        "%"
-                    else
-                        map[key] || v
-                    end
-                end
-            end
-
-            # Cache this manufactured map, since if it's used it's likely
-            # to get used a lot.
-            def self.localmap
-                unless defined? @localmap
-                    @localmap = {
-                        "h" =>  Facter["hostname"].value,
-                        "H" => [Facter["hostname"].value,
-                                Facter["domain"].value].join("."),
-                        "d" =>  Facter["domain"].value,
-                    }
-                end
-                @localmap
-            end
-
             # Run 'retrieve' on a file.  This gets the actual parameters, so
             # we can pass them to the client.
             def check(dir, links)
@@ -482,6 +423,38 @@ class Server
                 obj.retrieve
 
                 return obj
+            end
+
+            # Create a map for a specific client.
+            def clientmap(client)
+                {
+                    "h" => client.sub(/\..*$/, ""), 
+                    "H" => client,
+                    "d" => client.sub(/[^.]+\./, "") # domain name
+                }
+            end
+
+            # Replace % patterns as appropriate.
+            def expand(path, client = nil)
+                # This map should probably be moved into a method.
+                map = nil
+
+                if client
+                    map = clientmap(client)
+                else
+                    Puppet.notice "No client; expanding '%s' with local host" %
+                        path
+                    # Else, use the local information
+                    map = localmap()
+                end
+                path.gsub(/%(.)/) do |v|
+                    key = $1
+                    if key == "%" 
+                        "%"
+                    else
+                        map[key] || v
+                    end
+                end
             end
 
             # Do we have any patterns in our path, yo?
@@ -544,10 +517,24 @@ class Server
                 return obj
             end
 
+            # Cache this manufactured map, since if it's used it's likely
+            # to get used a lot.
+            def localmap
+                unless defined? @@localmap
+                    @@localmap = {
+                        "h" =>  Facter.value("hostname"),
+                        "H" => [Facter.value("hostname"),
+                                Facter.value("domain")].join("."),
+                        "d" =>  Facter.value("domain")
+                    }
+                end
+                @@localmap
+            end
+
             # Return the path as appropriate, expanding as necessary.
             def path(client = nil)
                 if expandable?
-                    return self.class.expand(@path, client)
+                    return expand(@path, client)
                 else
                     return @path
                 end
@@ -596,9 +583,9 @@ class Server
             # Verify our configuration is valid.  This should really check to
             # make sure at least someone will be allowed, but, eh.
             def valid?
-                unless @path
-                    raise FileServerError, "No path specified"
-                end
+                return false unless @path
+
+                return true
             end
         end
     end
