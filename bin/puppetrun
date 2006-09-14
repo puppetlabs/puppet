@@ -119,7 +119,11 @@
         exit(1)
     end
 end
-require 'ldap'
+begin
+    require 'ldap'
+rescue LoadError
+    $stderr.puts "Failed to load ruby LDAP library. LDAP functionality will not be available"
+end
 require 'puppet'
 require 'puppet/server'
 require 'puppet/client'
