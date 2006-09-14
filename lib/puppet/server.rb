@@ -49,6 +49,10 @@ module Puppet
             # with them, with flags appropriate for checking client 
             # certificates for revocation
             def x509store
+                if Puppet[:cacrl] == 'none'
+                    # No CRL, no store needed
+                    return nil
+                end
                 unless File.exist?(Puppet[:cacrl])
                     raise Puppet::Error, "Could not find CRL"
                 end

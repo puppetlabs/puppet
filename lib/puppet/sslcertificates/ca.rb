@@ -32,7 +32,7 @@ class Puppet::SSLCertificates::CA
             :owner => "$user",
             :group => "$group",
             :mode => 0664,
-            :desc => "The certificate revocation list (CRL) for the CA."
+            :desc => "The certificate revocation list (CRL) for the CA. Set this to 'none' if you do not want to use a CRL."
         },
         :caprivatedir => { :default => "$cadir/private",
             :owner => "$user",
@@ -366,6 +366,9 @@ class Puppet::SSLCertificates::CA
     # Revoke the certificate with serial number SERIAL issued by this
     # CA. The REASON must be one of the OpenSSL::OCSP::REVOKED_* reasons
     def revoke(serial, reason = OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
+        if @config[:cacrl] == 'none'
+            raise Puppet::Error, "Revocation requires a CRL, but ca_crl is set to 'none'"
+        end
         time = Time.now
         revoked = OpenSSL::X509::Revoked.new
         revoked.serial = serial
@@ -399,6 +402,8 @@ class Puppet::SSLCertificates::CA
             @crl = OpenSSL::X509::CRL.new(
                 File.read(@config[:cacrl])
             )
+        elsif @config[:cacrl] == 'none'
+            @crl = nil
         else
             # Create new CRL
             @crl = OpenSSL::X509::CRL.new
