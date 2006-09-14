@@ -769,7 +769,7 @@ class TestFileServer < Test::Unit::TestCase
     # and in a non-portable way.  This is a thorough enough test that it should
     # be kept, but it should be done in a way that is clearly portable (e.g.,
     # no md5 sums of file paths).
-    def disabled_test_host_specific
+    def test_host_specific
         client1 = "client1.example.com"
         client2 = "client2.example.com"
         ip = "127.0.0.1"
@@ -781,13 +781,18 @@ class TestFileServer < Test::Unit::TestCase
         fqdndir = File.join(fsdir, "fqdn")
         client1_hostdir = File.join(hostdir, "client1")
         client2_fqdndir = File.join(fqdndir, client2)
+        contents = {
+            client1_hostdir => "client1\n",
+            client2_fqdndir => client2 + "\n"
+        }
         [fsdir, hostdir, fqdndir, 
          client1_hostdir, client2_fqdndir].each { |d|  Dir.mkdir(d) }
         
         [client1_hostdir, client2_fqdndir].each do |d|
-            File.open(File.join(d, "file.txt"), "w") { |f| f.puts d }
+            File.open(File.join(d, "file.txt"), "w") do |f| 
+                f.print contents[d] 
+            end
         end
-
         conffile = tempfile()
         File.open(conffile, "w") do |f|
             f.print("
@@ -837,8 +842,8 @@ allow *
         }
         assert_equal(5, list.size)
         assert_equal("file", list[1])
-
-        assert_equal("{md5}95b0dea1b0c692b7563120afb4056e7f", list[4])
+        md5 = Digest::MD5.hexdigest(contents[client1_hostdir])
+        assert_equal("{md5}#{md5}", list[4])
 
         assert_nothing_raised {
             list = server.describe(sfile, :ignore, client2, ip).split("\t")
@@ -856,14 +861,15 @@ allow *
         }
         assert_equal(5, list.size)
         assert_equal("file", list[1])
-        assert_equal("{md5}4dcf36004229f400c5821a3faf0f2300", list[4])
+        md5 = Digest::MD5.hexdigest(contents[client2_fqdndir])
+        assert_equal("{md5}#{md5}", list[4])
 
         # Check retrieve
         sfile = "/host/file.txt"
         assert_nothing_raised {
             list = server.retrieve(sfile, :ignore, client1, ip).chomp
         }
-        assert_equal(client1_hostdir, list)
+        assert_equal(contents[client1_hostdir].chomp, list)
 
         assert_nothing_raised {
             list = server.retrieve(sfile, :ignore, client2, ip).chomp
@@ -879,7 +885,7 @@ allow *
         assert_nothing_raised {
             list = server.retrieve(sfile, :ignore, client2, ip).chomp
         }
-        assert_equal(client2_fqdndir, list)
+        assert_equal(contents[client2_fqdndir].chomp, list)
     end
 
     # Make sure the 'subdir' method in Mount works.
