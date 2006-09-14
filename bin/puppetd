@@ -155,7 +155,7 @@ require 'getoptlong'
 $haveusage = true
 begin
     require 'rdoc/usage'
-rescue LoadError
+rescue
     $haveusage = false
 end
 

@@ -121,7 +121,7 @@
 end
 begin
     require 'ldap'
-rescue LoadError
+rescue
     $stderr.puts "Failed to load ruby LDAP library. LDAP functionality will not be available"
 end
 require 'puppet'
@@ -174,7 +174,7 @@ $haveusage = true
 
 begin
     require 'rdoc/usage'
-rescue LoadError
+rescue
     $haveusage = false
 end
 
