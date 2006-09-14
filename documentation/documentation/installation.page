@@ -51,7 +51,9 @@ feel the particular need to build it manually, you can get the source from
 #### Red Hat
 
 Puppet and Facter are now available in Fedora Extras, thanks to David
-Lutterkort at Red Hat.  Fedora users should be able to retrieve them via yum.
+Lutterkort at Red Hat.  Fedora users should be able to retrieve them via yum,
+either from the normal repository or from David's
+[repository](http://people.redhat.com/dlutter/yum/rhel4).
 
 If you are building ruby on Red Hat (at least on version 3), you
 apparently must build it with ``CPPFLAGS=-I/usr/kerberos/include/``, else you
