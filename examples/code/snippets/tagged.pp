@@ -17,7 +17,7 @@ $yayness = tagged(yayness) ? {
     true => "true", false => "false"
 }
 
-$testing = tagged(testing) ? {
+$funtest = tagged(testing) ? {
     true => "true", false => "false"
 }
 
@@ -30,6 +30,6 @@ $bothtrue = tagged(testing, testing) ? {
 }
 
 file { "/tmp/taggedyayness$yayness": ensure => file }
-file { "/tmp/taggedtesting$testing": ensure => file }
+file { "/tmp/taggedtesting$funtest": ensure => file }
 file { "/tmp/taggedboth$both": ensure => file }
 file { "/tmp/taggedbothtrue$bothtrue": ensure => file }
