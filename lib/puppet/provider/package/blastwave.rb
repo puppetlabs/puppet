@@ -38,7 +38,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
             command += " " + hash[:justme]
         end
 
-        pkgget command
+        output = pkgget command
 
         list = output.split("\n").collect do |line|
             next if line =~ /^#/
