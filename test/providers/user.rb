@@ -108,7 +108,6 @@ class TestUserProvider < Test::Unit::TestCase
 
     def eachstate
         Puppet::Type.type(:user).validstates.each do |state|
-            next if state == :ensure
             yield state
         end
     end
@@ -128,6 +127,7 @@ class TestUserProvider < Test::Unit::TestCase
     def fakedata(name, param)
         case param
         when :name: name
+        when :ensure: :present
         when :comment: "Puppet Testing User %s" % name
         when :gid: Process.gid()
         when :shell: findshell()

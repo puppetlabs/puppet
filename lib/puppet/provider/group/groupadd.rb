@@ -12,9 +12,9 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
 
     def addcmd
         cmd = [command(:add)]
-        if gid = @model[:gid]
+        if gid = @model.should(:gid)
             unless gid == :absent
-                cmd << flag(:gid) << "'%s'" % @model[:gid]
+                cmd << flag(:gid) << "'%s'" % gid
             end
         end
         if @model[:allowdupe] == :true

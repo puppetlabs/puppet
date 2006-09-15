@@ -59,9 +59,6 @@ class NetInfo < Puppet::Provider::NameService
         # Because our stupid type can't create the whole thing at once,
         # we have to do this hackishness.  Yay.
         if arg == :present
-            if @model.class.name == :user
-                notice modifycmd(:groups, @model[:groups]).inspect
-            end
             # We need to generate the id if it's missing.
             @model.class.validstates.each do |name|
                 next if name == :ensure

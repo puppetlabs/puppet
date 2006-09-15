@@ -22,11 +22,11 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     def addcmd
         cmd = [command(:pw), "useradd", @model[:name]]
         @model.class.validstates.each do |state|
-            next if name == :ensure
+            next if state == :ensure
             # the value needs to be quoted, mostly because -c might
             # have spaces in it
-            if value = @model[state] and value != ""
-                cmd << flag(state) << "'%s'" % @model[state]
+            if value = @model.should(state) and value != ""
+                cmd << flag(state) << "'%s'" % value
             end
         end
 

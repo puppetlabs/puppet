@@ -10,7 +10,7 @@ module TestPuppet
     include ObjectSpace
 
     # A baseclass for the faketypes.
-    class FakeModel < Hash
+    class FakeModel
         class << self
             attr_accessor :name
             @name = :fakemodel
@@ -24,12 +24,49 @@ module TestPuppet
             Puppet::Type.type(@name).validstate?(name)
         end
 
+        def self.to_s
+            "Fake%s" % @name.to_s.capitalize
+        end
+
+        def [](param)
+            if @realmodel.attrtype(param) == :state
+                @is[param]
+            else
+                @params[param]
+            end
+        end
+
+        def []=(param, value)
+            unless @realmodel.attrtype(param)
+                raise Puppet::DevError, "Invalid attribute %s for %s" %
+                    [param, @realmodel.name]
+            end
+            if @realmodel.attrtype(param) == :state
+                @should[param] = value
+            else
+                @params[param] = value
+            end
+        end
+
         def initialize(name)
+            @realmodel = Puppet::Type.type(self.class.name)
+            raise "Could not find type #{self.class.name}" unless @realmodel
+            @is = {}
+            @should = {}
+            @params = {}
             self[:name] = name
         end
 
         def inspect
             "%s(%s)" % [self.class.to_s.sub(/.+::/, ''), super()]
+        end
+
+        def is(param)
+            @is[param]
+        end
+
+        def should(param)
+            @should[param]
         end
 
         def name
