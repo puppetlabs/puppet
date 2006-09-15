@@ -781,7 +781,7 @@ module Puppet
             unless stat = self.stat(true)
                 self.debug "File does not exist"
                 @states.each { |name,state|
-                    # We've already retreived the source, and we don't
+                    # We've already retrieved the source, and we don't
                     # want to overwrite whatever it did.  This is a bit
                     # of a hack, but oh well, source is definitely special.
                     next if name == :source

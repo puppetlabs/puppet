@@ -230,7 +230,7 @@ module Puppet
             if @is == :notdescribed
                 self.retrieve # try again
                 if @is == :notdescribed
-                    @parent.log "Could not retreive information on %s" %
+                    @parent.log "Could not retrieve information on %s" %
                         @parent.title
                     return nil
                 end

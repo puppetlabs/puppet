@@ -180,7 +180,7 @@ module Puppet
                     return source
                 else
                     raise Puppet::Error,
-                        "Could not retreive dependency %s[%s] for %s[%s]" %
+                        "Could not retrieve dependency %s[%s] for %s[%s]" %
                         [@source[0], @source[1], @target[0], @target[1]]
                 end
             end
