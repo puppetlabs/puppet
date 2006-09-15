@@ -257,7 +257,7 @@ class State < Puppet::Parameter
             rescue Puppet::Error
                 raise
             rescue => detail
-                if Puppet[:debug]
+                if Puppet[:trace]
                     puts detail.backtrace
                 end
                 self.fail "Could not set %s on %s: %s" %

@@ -4,24 +4,17 @@ Puppet::Type.type(:package).provide :dpkg do
         to manage."
 
     commands :dpkg => "/usr/bin/dpkg"
-
+    commands :dpkgquery => "/usr/bin/dpkg-query"
+    
     def self.list
         packages = []
 
-        # dpkg only prints as many columns as you have available
-        # which means we don't get all of the info
-        # stupid stupid
-        oldcol = ENV["COLUMNS"]
-        ENV["COLUMNS"] = "500"
-
         # list out all of the packages
-        open("| #{command(:dpkg)} -l") { |process|
+        open("| #{command(:dpkgquery)} -W --showformat '${Status} ${Package} ${Version}\\n'") { |process|
             # our regex for matching dpkg output
-            regex = %r{^(\S+)\s+(\S+)\s+(\S+)\s+(.+)$}
-            fields = [:status, :name, :ensure, :description]
+            regex = %r{^(\S+ +\S+ +\S+) (\S+) (\S+)$}
+            fields = [:status, :name, :ensure]
             hash = {}
-
-            5.times { process.gets } # throw away the header
 
             # now turn each returned line into a package object
             process.each { |line|
@@ -37,11 +30,10 @@ Puppet::Type.type(:package).provide :dpkg do
                     packages.push Puppet.type(:package).installedpkg(hash)
                 else
                     raise Puppet::DevError,
-                        "Failed to match dpkg line %s" % line
+                        "Failed to match dpkg-query line %s" % line
                 end
             }
         }
-        ENV["COLUMNS"] = oldcol
 
         return packages
     end
@@ -49,42 +41,28 @@ Puppet::Type.type(:package).provide :dpkg do
     def query
         packages = []
 
-        # dpkg only prints as many columns as you have available
-        # which means we don't get all of the info
-        # stupid stupid
-        oldcol = ENV["COLUMNS"]
-        ENV["COLUMNS"] = "500"
-        fields = [:desired, :status, :error, :name, :ensure, :description]
+        fields = [:desired, :error, :status, :name, :ensure]
 
         hash = {}
         # list out our specific package
-        open("| #{command(:dpkg)} -l %s 2>/dev/null" % @model[:name]) { |process|
-            # our regex for matching dpkg output
-            regex = %r{^(.)(.)(.)\s(\S+)\s+(\S+)\s+(.+)$}
+        open("| #{command(:dpkgquery)} -W --showformat '${Status} ${Package} ${Version}\\n' %s" % @model[:name]) { |process|
+            # our regex for matching dpkg-query output
+            regex = %r{^(\S+) (\S+) (\S+) (\S+) (\S+)$}
 
-            # we only want the last line
-            lines = process.readlines
-            # we've got four header lines, so we should expect all of those
-            # plus our output
-            if lines.length < 5
-                return nil
-            end
+            lines = process.readlines.collect {|l| l.chomp }
 
-            line = lines[-1]
-
+            line = lines[0]
+            
             if match = regex.match(line)
                 fields.zip(match.captures) { |field,value|
                     hash[field] = value
                 }
-                #packages.push Puppet.type(:package).installedpkg(hash)
             else
-                raise Puppet::DevError,
-                    "failed to match dpkg line %s" % line
+                hash = {:ensure => :absent, :status => 'missing', :name => @model[:name], :error => 'ok'}
             end
         }
-        ENV["COLUMNS"] = oldcol
 
-        if hash[:error] != " "
+        if hash[:error] != "ok"
             raise Puppet::PackageError.new(
                 "Package %s, version %s is in error state: %s" %
             [hash[:name], hash[:ensure], hash[:error]]
@@ -92,7 +70,7 @@ Puppet::Type.type(:package).provide :dpkg do
         end
 
         # DPKG can discuss packages that are no longer installed, so allow that.
-        if hash[:status] != "i"
+        if hash[:status] != "installed"
             hash[:ensure] = :absent
         end
 
