@@ -121,7 +121,7 @@ module Puppet
                 self.run
                 self.lastrun = Time.now.to_i
             rescue => detail
-                if Puppet[:debug]
+                if Puppet[:trace]
                     puts detail.backtrace
                 end
                 Puppet.err "Could not run %s: %s" % [self.class, detail]

@@ -97,7 +97,7 @@ class Puppet::Parser::AST
                     error = Puppet::ParseError.new(except.message)
                     error.line = self.line
                     error.file = self.file
-                    error.backtrace = except.backtrace
+                    error.set_backtrace except.backtrace
                     raise error
                 end
             }

@@ -98,7 +98,7 @@ module Puppet::Rails
             begin
                 Puppet::Rails::Database.up
             rescue => detail
-                if Puppet[:debug]
+                if Puppet[:trace]
                     puts detail.backtrace
                 end
                 raise Puppet::Error, "Could not initialize database: %s" % detail

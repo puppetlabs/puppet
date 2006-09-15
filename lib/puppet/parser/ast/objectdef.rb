@@ -59,7 +59,7 @@ class Puppet::Parser::AST
                 error = Puppet::ParseError.new(detail)
                 error.line = self.line
                 error.file = self.file
-                error.backtrace = detail.backtrace
+                error.set_backtrace detail.backtrace
                 raise error
             end
 
@@ -138,7 +138,7 @@ class Puppet::Parser::AST
                     error = Puppet::ParseError.new(detail)
                     error.line = self.line
                     error.file = self.file
-                    error.backtrace = detail.backtrace
+                    error.set_backtrace detail.backtrace
                     raise error
                 end
             }.reject { |obj| obj.nil? }
@@ -294,7 +294,7 @@ class Puppet::Parser::AST
                         error = Puppet::DevError.new(
                             "failed to tree a %s" % self.class
                         )
-                        error.backtrace = detail.backtrace
+                        error.set_backtrace detail.backtrace
                         raise error
                     end
                 }.join("\n")

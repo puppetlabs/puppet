@@ -94,11 +94,8 @@ module Puppet
                         Puppet.debug "Reraising %s" % detail
                         raise
                     rescue => detail
-                        if Puppet[:debug]
-                            puts detail.backtrace
-                        end
                         raise Puppet::DevError, "Munging failed for class %s: %s" %
-                            [self.name, detail]
+                            [self.name, detail], detail.backtrace
                     end
                 end
                 #@munger = block
@@ -152,12 +149,9 @@ module Puppet
                     rescue ArgumentError, Puppet::Error, TypeError
                         raise
                     rescue => detail
-                        if Puppet[:debug]
-                            puts detail.backtrace
-                        end
                         raise Puppet::DevError,
                             "Validate method failed for class %s: %s" %
-                            [self.name, detail]
+                            [self.name, detail], detail.backtrace
                     end
                 end
             end

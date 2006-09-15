@@ -119,7 +119,7 @@ class Puppet::Client::MasterClient < Puppet::Client
                 detail
         rescue => detail
             Puppet.err "Found a bug: %s" % detail
-            if Puppet[:debug]
+            if Puppet[:trace]
                 puts detail.backtrace
             end
         ensure

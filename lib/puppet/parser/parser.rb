@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id7713d53378', 'grammar.ra', 603
+module_eval <<'..end grammar.ra modeval..idab2f060823', 'grammar.ra', 603
 require 'puppet/parser/functions'
 
 attr_reader :file
@@ -125,7 +125,7 @@ def parse(string = nil)
         error = Puppet::ParseError.new(except)
         error.line = @lexer.line
         error.file = @lexer.file
-        error.backtrace = except.backtrace
+        error.set_backtrace except.backtrace
         raise error
     rescue Puppet::ParseError => except
         except.line ||= @lexer.line
@@ -150,7 +150,7 @@ def parse(string = nil)
         error = Puppet::DevError.new(except.message)
         error.line = @lexer.line
         error.file = @lexer.file
-        error.backtrace = except.backtrace
+        error.set_backtrace except.backtrace
         #if Puppet[:debug]
         #    puts caller
         #end
@@ -175,7 +175,7 @@ end
 
 # $Id$
 
-..end grammar.ra modeval..id7713d53378
+..end grammar.ra modeval..idab2f060823
 
 ##### racc 1.4.5 generates ###
 

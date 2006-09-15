@@ -70,7 +70,7 @@ Puppet::Server::Report.newreport(:tagmail) do |report|
                     end
                 end
             rescue => detail
-                if Puppet[:debug]
+                if Puppet[:trace]
                     puts detail.backtrace
                 end
                 raise Puppet::Error,

@@ -695,7 +695,7 @@ def parse(string = nil)
         error = Puppet::ParseError.new(except)
         error.line = @lexer.line
         error.file = @lexer.file
-        error.backtrace = except.backtrace
+        error.set_backtrace except.backtrace
         raise error
     rescue Puppet::ParseError => except
         except.line ||= @lexer.line
@@ -720,7 +720,7 @@ def parse(string = nil)
         error = Puppet::DevError.new(except.message)
         error.line = @lexer.line
         error.file = @lexer.file
-        error.backtrace = except.backtrace
+        error.set_backtrace except.backtrace
         #if Puppet[:debug]
         #    puts caller
         #end

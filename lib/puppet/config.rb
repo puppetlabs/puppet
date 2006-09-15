@@ -85,7 +85,9 @@ class Config
             trans.evaluate
             comp.remove
         rescue => detail
+            if Puppet[:trace]
                 puts detail.backtrace
+            end
             Puppet.err "Could not configure myself: %s" % detail
         end
     end

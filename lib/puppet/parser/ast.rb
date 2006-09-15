@@ -70,9 +70,6 @@ module Puppet
                     except.file ||= @file
                     raise
                 rescue => detail
-                    #if Puppet[:debug]
-                    #    puts detail.backtrace
-                    #end
                     error = Puppet::DevError.new(
                         "Child of type %s failed with error %s: %s" %
                             [self.class, detail.class, detail.to_s]

@@ -80,9 +80,9 @@ class Puppet::Autoload
                         Kernel.load file, @wrap
                         @loaded[name] = true
                     rescue => detail
-                        #if Puppet[:debug]
-                        #    puts detail.backtrace
-                        #end
+                        if Puppet[:trace]
+                            puts detail.backtrace
+                        end
                         warn "Could not autoload %s: %s" % [file.inspect, detail]
                     end
                 end

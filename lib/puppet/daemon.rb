@@ -205,7 +205,7 @@ module Puppet
             begin
                 cert, cacert = caclient.getcert(@csr.to_pem)
             rescue => detail
-                if Puppet[:debug]
+                if Puppet[:trace]
                     puts detail.backtrace
                 end
                 raise Puppet::Error.new("Certificate retrieval failed: %s" %

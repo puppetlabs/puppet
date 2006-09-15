@@ -43,7 +43,6 @@ class Server
             end
             ip = request.peeraddr[3]
             if request.client_cert
-                begin
                 if @puppetserver.authconfig.exists?
                     allowed = @puppetserver.authconfig.allowed?(method, client, ip)
 
@@ -70,11 +69,6 @@ class Server
                             [client, ip, method, Puppet.name]
                         return false
                     end
-                end
-                rescue => detail
-                    puts detail
-                    puts detail.backtrace
-                    raise
                 end
             else
                 if method =~ /^puppetca\./

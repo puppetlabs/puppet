@@ -326,10 +326,7 @@ module Puppet
                 rescue => except
                     error = Puppet::DevError.new("%s: %s" %
                         [except.class, except.message])
-                    error.backtrace = except.backtrace
-                    #if Puppet[:debug]
-                    #    puts except.backtrace
-                    #end
+                    error.set_backtrace except.backtrace
                     raise error
                 end
 

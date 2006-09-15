@@ -314,7 +314,9 @@ module Puppet
                             begin
                                 File.unlink(newfile)
                             rescue => detail
-                                puts detail.backtrace
+                                if Puppet[:trace]
+                                    puts detail.backtrace
+                                end
                                 self.err "Could not remove old backup: %s" %
                                     detail
                                 return false

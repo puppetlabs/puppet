@@ -322,7 +322,7 @@ module Puppet
                         # Add the hostname to the source
                         @driver.addlog(tmp)
                     rescue => detail
-                        if Puppet[:debug]
+                        if Puppet[:trace]
                             puts detail.backtrace
                         end
                         Puppet.err detail

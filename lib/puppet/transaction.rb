@@ -45,7 +45,7 @@ class Transaction
         begin
             changes = child.evaluate
         rescue => detail
-            if Puppet[:debug]
+            if Puppet[:trace]
                 puts detail.backtrace
             end
 

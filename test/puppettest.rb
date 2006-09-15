@@ -1,7 +1,7 @@
-libdir = File.join(File.dirname(__FILE__), '../lib')
-unless $:.include?(libdir)
-    $:.unshift libdir
-end
+#libdir = File.join(File.dirname(__FILE__), '../lib')
+#unless $:.include?(libdir)
+#    $:.unshift libdir
+#end
 
 require 'puppet'
 require 'test/unit'
@@ -1260,7 +1260,8 @@ class PuppetTestSuite
         Dir.entries(self.basedir).find_all { |file|
             path = File.join(@basedir, file)
             # Data is for storing test data
-            FileTest.directory?(path) and file !~ /^\./ and file != "data"
+            FileTest.directory?(path) and file !~ /^\./ and file != "data" and
+                file != "lib"
         }
     end
 

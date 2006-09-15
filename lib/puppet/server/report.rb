@@ -114,7 +114,7 @@ class Server
                     f.puts report
                 end
             rescue => detail
-                if Puppet[:debug]
+                if Puppet[:trace]
                     puts detail.backtrace
                 end
                 Puppet.warning "Could not write report for %s at %s: %s" %

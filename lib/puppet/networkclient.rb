@@ -86,7 +86,7 @@ module Puppet
                                 Puppet.err "Could not call %s.%s: %s" %
                                     [namespace, method, detail.inspect]
                                 #raise NetworkClientError.new(detail.to_s)
-                                if Puppet[:debug]
+                                if Puppet[:trace]
                                     puts detail.backtrace
                                 end
                                 raise

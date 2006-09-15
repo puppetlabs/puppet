@@ -36,7 +36,7 @@ module Puppet
                     rescue Puppet::Error => detail
                         raise
                     rescue => detail
-                        if Puppet[:debug]
+                        if Puppet[:trace]
                             puts detail.backtrace
                         end
                         raise Puppet::Error, "%s could not read %s: %s" %
