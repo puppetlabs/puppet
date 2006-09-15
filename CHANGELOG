@@ -1,3 +1,15 @@
+0.19.0
+    Added provider support.
+
+    Added support for %h, %H, and %d expansion in fileserver.conf.
+
+    Added Certificate Revocation support.
+
+    Made dynamic loading pervasive -- nearly every aspect of Puppet will now
+    automatically load new instances (e.g., types, providers, and reports).
+
+    Added support for automatic distribution of facts and plugins (custom types).
+
 0.18.4
     Another bug-fix release.  The most import bug fixed is that
     cronjobs again work even with initially empty crontabs.
