@@ -2530,7 +2530,9 @@ class Type < Puppet::Element
             unless aliases.is_a?(Array)
                 aliases = [aliases]
             end
-            @parent.info "Adding aliases %s" % aliases.join(", ")
+            @parent.info "Adding aliases %s" % aliases.collect { |a|
+                    a.inspect
+            }.join(", ")
             aliases.each do |other|
                 if obj = @parent.class[other]
                     unless obj == @parent
