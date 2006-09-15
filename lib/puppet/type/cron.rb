@@ -645,6 +645,7 @@ module Puppet
             @tabs[user] ||= @filetype.new(user)
 
             self.each do |inst|
+                next unless inst[:user] == user
                 unless (@instances[user] and @instances[user].include? inst)
                     @instances[user] ||= []
                     @instances[user] << inst

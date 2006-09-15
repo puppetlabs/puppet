@@ -713,6 +713,30 @@ class TestCron < Test::Unit::TestCase
         assert(@crontype["emptycron"],
             "Did not retrieve cron")
     end
+
+    def test_multiple_users
+        crons = []
+        users = ["root", nonrootuser.name]
+        users.each do |user|
+            crons << Puppet::Type.type(:cron).create(
+                :name => "testcron-#{user}",
+                :user => user,
+                :command => "/bin/echo",
+                :minute => [0,30]
+            )
+        end
+
+        assert_apply(*crons)
+
+        users.each do |user|
+            users.each do |other|
+                next if user == other
+                assert(Puppet::Type.type(:cron).tabobj(other).read !~ /testcron-#{user}/,
+                       "%s's cron job is in %s's tab" %
+                       [user, other])
+            end
+        end
+    end
 end
 
 # $Id$

@@ -136,14 +136,14 @@ module Puppet
 
             def path=(user)
                 begin
-                    uid = Puppet::Util.uid(user)
+                    @uid = Puppet::Util.uid(user)
                 rescue Puppet::Error => detail
                     raise Puppet::Error, "Could not retrieve user %s" % user
                 end
 
-                # We have to have the user name, not the uid, because some
+                # XXX We have to have the user name, not the uid, because some
                 # systems *cough*linux*cough* require it that way
-                @path = uid
+                @path = user
             end
 
             # Read a specific @path's cron tab.
@@ -174,7 +174,7 @@ module Puppet
             # does not think I should be allowed to set the @path to my own user name
             def cmdbase
                 cmd = nil
-                if @path == Process.uid
+                if @uid == Process.uid
                     return "crontab"
                 else
                     return "crontab -u #{@path}"
