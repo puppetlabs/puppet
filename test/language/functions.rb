@@ -267,6 +267,58 @@ class TestLangFunctions < Test::Unit::TestCase
         assert(Puppet::Parser::Scope.method_defined?(:function_autofunc),
             "Did not set function correctly")
     end
+
+    def test_import
+        dir = tempfile()
+        Dir.mkdir(dir)
+        Puppet[:lib] = [dir]
+
+        # Now make our file to import
+        file = File.join(dir, "file.pp")
+        File.open(file, "w") { |f| f.puts "$variable = value" }
+
+        # Now try our import multiple ways
+        ["file", "file*", "file.pp", file].each do |path|
+            func = nil
+            assert_nothing_raised do
+                func = Puppet::Parser::AST::Function.new(
+                    :name => "import",
+                    :ftype => :statement,
+                    :arguments => AST::ASTArray.new(
+                        :children => [stringobj(path)]
+                    )
+                )
+            end
+
+            scope = Puppet::Parser::Scope.new()
+            assert_nothing_raised do
+                func.evaluate(:scope => scope)
+            end
+
+            assert_equal("value", scope.lookupvar("variable"),
+                "Import did not work")
+        end
+
+        # Now make sure we raise an ImportError if we try to import a non-existent
+        # file, again using multiple styles
+        ["nosuchfile", "nosuch*"].each do |path|
+            func = nil
+            assert_nothing_raised do
+                func = Puppet::Parser::AST::Function.new(
+                    :name => "import",
+                    :ftype => :statement,
+                    :arguments => AST::ASTArray.new(
+                        :children => [stringobj(path)]
+                    )
+                )
+            end
+
+            scope = Puppet::Parser::Scope.new()
+            assert_raise(Puppet::ImportError) do
+                func.evaluate(:scope => scope)
+            end
+        end
+    end
 end
 
 # $Id$

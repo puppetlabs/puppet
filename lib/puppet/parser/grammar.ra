@@ -41,7 +41,7 @@ statement:    object
             | assignment
             | casestatement
             | ifstatement
-            | import
+#            | import
             | fstatement
             | definition
             | hostclass
@@ -346,62 +346,9 @@ selectlhand:  name
     result = ast AST::Default, :value => val[0]
 }
 
-import: IMPORT quotedtext {
-    # importing files
-    # yuk, i hate keywords
-    # we'll probably have to have some kind of search path eventually
-    # but for now, just use a path relative to the file doing the importing
-    dir = @lexer.file.sub(%r{[^/]+$},'').sub(/\/$/, '')
-    if dir == ""
-        dir = "."
-    end
-    result = ast AST::ASTArray
-
-    Dir.chdir(dir) {
-        # We can't interpolate at this point since we don't have any 
-        # scopes set up. Warn the user if they use a variable reference
-        pat = val[1].value
-        if pat.index("$")
-             Puppet.warning(
-                 "The import of #{pat} contains a variable reference;" +
-                 " variables are not interpolated for imports " +
-                 "in file #{@lexer.file} at line #{@lexer.line}"
-             )
-        end
-        files = Dir.glob(pat)
-        if files.size == 0
-            files = Dir.glob(pat + ".pp")
-            if files.size == 0
-                raise Puppet::ImportError.new("No file(s) found for import " + 
-                                              "of '#{pat}'")
-            end
-        end
-
-        files.each { |file|
-            parser = Puppet::Parser::Parser.new()
-            parser.files = self.files
-            Puppet.debug("importing '%s'" % file)
-
-            unless file =~ /^#{File::SEPARATOR}/
-                file = File.join(dir, file)
-            end
-            begin
-                parser.file = file
-            rescue Puppet::ImportError
-                Puppet.warning(
-                    "Importing %s would result in an import loop" %
-                        File.join(dir, file)
-                )
-                next
-            end
-            # push the results into the main result array
-            # We always return an array when we parse.
-            parser.parse.each do |child|
-                result.push child
-            end
-        }
-    }
-}
+#import: IMPORT quotedtext {
+#    result = import(val[1].value)
+#}
 
 # Disable definition inheritance for now. 8/27/06, luke
 #definition: DEFINE NAME argumentlist parent LBRACE statements RBRACE {
@@ -593,8 +540,15 @@ require 'puppet/parser/ast'
 module Puppet
     class ParseError < Puppet::Error; end
 
-    class ImportError < Racc::ParseError; end
+    class ImportError < ParseError; end
 end
+
+Puppet.config.setdefaults(:puppet,
+    :lib => ["", "Puppet's search path, where Puppet will search for files to be
+        imported.  Can be expanded by setting PUPPETLIB in your environment.
+        Values should be colon-separated.  Any manifest you specify on the command
+        line has its directory automatically added to the search path."]
+)
 
 Puppet[:typecheck] = true
 Puppet[:paramcheck] = true
@@ -604,6 +558,72 @@ require 'puppet/parser/functions'
 
 attr_reader :file
 attr_accessor :files
+
+# Figure out if the file exists, and whether we need to tack a '.pp' onto it.
+def self.filecheck(path)
+    if File.exists?(path)
+        return path
+    elsif File.exists?(path + ".pp")
+        return path + ".pp"
+    else
+        return nil
+    end
+end
+
+# Find a file in our search path.
+def self.find(file)
+    if file =~ /^#{File::SEPARATOR}/
+        return filecheck(file)
+    end
+
+    libsetup unless Puppet[:lib].is_a? Array
+
+    Puppet[:lib].each do |dir|
+        if val = filecheck(File.join(dir, file))
+            return val
+        end
+    end
+
+    return nil
+end
+
+# Find all files matching a given glob, anywhere in the search path.
+def self.glob(pattern)
+    self.libsetup unless Puppet[:lib].is_a? Array
+
+    if pattern =~ /^#{File::SEPARATOR}/
+        return Dir.glob(pattern).find_all do |f|
+            File.file?(f)
+        end
+    end
+    files = []
+
+    Puppet[:lib].each do |dir|
+        if File.directory?(dir)
+            Dir.glob(File.join(dir, pattern)).find_all do |f|
+                files << f if File.file?(f)
+            end
+        end
+    end
+
+    return files
+end
+
+# Convert our external lib directories as appropriate.
+def self.libsetup
+    if Puppet[:lib].is_a? String
+        dirs = []
+        if Puppet[:lib] != ""
+            dirs += Puppet[:lib].split(":")
+        end
+        Puppet[:lib] = dirs
+    end
+
+    if ENV["PUPPETLIB"]
+        Puppet[:lib] += ENV["PUPPETLIB"].split(":")
+        ENV["PUPPETLIB"] = nil
+    end
+end
 
 # Create an AST array out of all of the args
 def aryfy(*args)
@@ -636,21 +656,75 @@ def ast(klass, hash = nil)
     return klass.new(hash)
 end
 
+# Specify the file to parse.  Basically gets passed through to the lexer.
 def file=(file)
-    unless FileTest.exists?(file)
-        unless file =~ /\.pp$/
-            file = file + ".pp"
-        end
-        unless FileTest.exists?(file)
-            raise Puppet::Error, "Could not find file %s" % file
-        end
+    path = self.class.filecheck(file)
+    unless path
+        raise Puppet::Error, "Could not find file %s" % file
     end
+
     if @files.detect { |f| f.file == file }
         raise Puppet::ImportError.new("Import loop detected")
     else
         @files << Puppet::LoadedFile.new(file)
         @lexer.file = file
     end
+end
+
+def import(string)
+    # importing files
+    # yuk, i hate keywords
+    # we'll probably have to have some kind of search path eventually
+    # but for now, just use a path relative to the file doing the importing
+    result = ast AST::ASTArray
+
+    # We can't interpolate at this point since we don't have any 
+    # scopes set up. Warn the user if they use a variable reference
+    pat = string
+    if pat.index("$")
+         Puppet.warning(
+             "The import of #{pat} contains a variable reference;" +
+             " variables are not interpolated for imports " +
+             "in file #{@lexer.file} at line #{@lexer.line}"
+         )
+    end
+
+    if pat =~ /[*{}\[\]?\\]/
+        files = self.class.glob(pat)
+    else
+        files = self.class.find(pat)
+    end
+
+    if ! files or files.size == 0
+        raise Puppet::ImportError.new("No file(s) found for import " + 
+                                          "of '#{pat}'")
+    end
+
+    files.each { |file|
+        parser = Puppet::Parser::Parser.new()
+        parser.files = self.files
+        Puppet.debug("importing '%s'" % file)
+
+        unless file =~ /^#{File::SEPARATOR}/
+            file = File.join(dir, file)
+        end
+        begin
+            parser.file = file
+        rescue Puppet::ImportError
+            Puppet.warning(
+                "Importing %s would result in an import loop" %
+                    File.join(file)
+            )
+            next
+        end
+        # push the results into the main result array
+        # We always return an array when we parse.
+        parser.parse.each do |child|
+            result.push child
+        end
+    }
+
+    return result
 end
 
 def initialize
@@ -661,6 +735,7 @@ def initialize
     #end
 end
 
+# How to handle error messages.
 def on_error(token,value,stack)
     #on '%s' at '%s' in\n'%s'" % [token,value,stack]
     #error = "line %s: parse error after '%s'" %

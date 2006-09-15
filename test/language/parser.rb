@@ -77,6 +77,8 @@ class TestParser < Test::Unit::TestCase
         @@tmpfiles << basedir
         Dir.mkdir(basedir)
 
+        Puppet[:lib] = [basedir]
+
         subdir = "subdir"
         Dir.mkdir(File.join(basedir, subdir))
         manifest = File.join(basedir, "manifest")
@@ -91,6 +93,7 @@ class TestParser < Test::Unit::TestCase
 
         assert_nothing_raised("Could not parse multiple files") {
             parser = Puppet::Parser::Parser.new()
+            #parser.import("#{subdir}/*")
             parser.file = manifest
             parser.parse
         }
@@ -239,6 +242,7 @@ class TestParser < Test::Unit::TestCase
     def test_fqfilesandlocalfiles
         dir = tempfile()
         Dir.mkdir(dir)
+        Puppet[:lib] = [dir]
         importer = File.join(dir, "site.pp")
         fullfile = File.join(dir, "full.pp")
         localfile = File.join(dir, "local.pp")
@@ -275,38 +279,11 @@ class TestParser < Test::Unit::TestCase
         assert_creates(importer, *files)
     end
 
-    # Make sure the parser adds '.pp' when necessary
-    def test_addingpp
-        dir = tempfile()
-        Dir.mkdir(dir)
-        importer = File.join(dir, "site.pp")
-        localfile = File.join(dir, "local.pp")
-
-        files = []
-
-        File.open(importer, "w") do |f|
-            f.puts %{import "local"\ninclude local}
-        end
-
-        file = tempfile()
-        files << file
-
-        File.open(localfile, "w") do |f|
-            f.puts %{class local { file { "#{file}": ensure => file }}}
-        end
-
-        parser = Puppet::Parser::Parser.new
-        parser.file = importer
-
-        assert_nothing_raised {
-            parser.parse
-        }
-    end
-
     # Make sure that file importing changes file relative names.
     def test_changingrelativenames
         dir = tempfile()
         Dir.mkdir(dir)
+        Puppet[:lib] = [dir]
         Dir.mkdir(File.join(dir, "subdir"))
         top = File.join(dir, "site.pp")
         subone = File.join(dir, "subdir/subone")
@@ -323,7 +300,7 @@ class TestParser < Test::Unit::TestCase
         otherfile = tempfile()
         files << otherfile
         File.open(subtwo + ".pp", "w") do |f|
-            f.puts %{import "subone"\n class two inherits one {
+            f.puts %{import "subdir/subone"\n class two inherits one {
                 file { "#{otherfile}": ensure => file }
             }}
         end
@@ -500,6 +477,105 @@ file { "/tmp/yayness":
         }
         assert_instance_of(Puppet::Parser::AST::IfStatement, ret)
         assert_instance_of(Puppet::Parser::AST::Else, ret.else)
+    end
+
+    def test_find
+        parser = Puppet::Parser::Parser.new()
+
+        dir = tempfile()
+        Dir.mkdir(dir)
+        name = "file"
+        file = File.join(dir, "#{name}.pp")
+        File.open(file, "w") { |f| f.puts "" }
+
+        Puppet[:lib] = dir
+
+        [name, name + ".pp", file].each do |f|
+            full = nil
+            assert_nothing_raised do
+                full = parser.class.find(f)
+            end
+
+            assert_equal(file, full)
+        end
+
+        assert_nil(parser.class.find("nosuchfile"))
+    end
+
+    def test_libsetup
+        lib = [tempfile, tempfile]
+        assert_nothing_raised do
+            Puppet[:lib] = lib.join(":")
+        end
+        env = [tempfile, tempfile]
+        assert_nothing_raised do
+            ENV["PUPPETLIB"] = env.join(":")
+        end
+
+        parser = Puppet::Parser::Parser.new()
+        assert_nothing_raised do
+            parser.class.libsetup
+        end
+
+        old = Puppet[:lib]
+
+        [lib, env].flatten.each do |dir|
+            assert(Puppet[:lib].include?(dir), "Did not include %s" % dir)
+        end
+
+        assert_nothing_raised do
+            parser.class.libsetup
+        end
+
+        assert_equal(old, Puppet[:lib], "Libdirs changed on second run")
+    end
+
+    def test_glob
+        dirs = []
+        subdirs = []
+        files = []
+        subfiles = []
+        2.times { |i|
+            dir = tempfile()
+            dirs << dir
+
+            Dir.mkdir(dir)
+
+            file = File.join(dir, "file.pp")
+            File.open(file, "w") { |f| f.puts "" }
+            files << file
+
+            subdir = File.join(dir, "subdir")
+            Dir.mkdir(subdir)
+            subdirs << subdir
+            subfile = File.join(subdir, "file.pp")
+            File.open(subfile, "w") { |f| f.puts "" }
+            subfiles << subfile
+        }
+        Puppet[:lib] = dirs.join(":")
+
+        klass = Puppet::Parser::Parser
+
+        # Okay, first glob a full path
+        dir = dirs[0]
+        assert_nothing_raised do
+            result = klass.glob("#{dir}/*")
+
+            assert_equal([File.join(dir, "file.pp")], result)
+        end
+
+        # Now check it across our search path
+        assert_nothing_raised do
+            result = klass.glob("file*")
+
+            assert_equal(files, result, "Did not find globbed files")
+
+            result = klass.glob("subdir/*")
+
+            assert_equal(subfiles, result, "Did not find globbed subfiles")
+        end
+
+        # Now try it with a normal file.
     end
 end
 
