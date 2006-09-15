@@ -1,0 +1,71 @@
+require 'rake/testtask'
+require 'find'
+include Find
+include FileTest
+
+$exclusions = %W(lib data)
+$test_dirs = [] # this is used to generate all the targets.
+$test_files = [] # this is ONLY used for the top-level test suite.
+
+# this basically amounts to:
+# find $(pwd) -type d -maxdepth 1 | xargs basename
+# with an exclusion list.
+
+find(Dir.pwd) do |path|
+    if File.basename(path) =~ /^\.+/
+        prune
+    elsif path != Dir.pwd and directory? path and !$exclusions.include? File.basename(path) 
+        $test_dirs.push File.basename(path)
+        prune
+    end
+end
+
+# another find for the test files themselves: this could probably be rolled into the original find loop.
+
+$test_dirs.each do |dir|
+    find(dir) do |path|
+        if File.basename(path) =~ /^\.+/
+            prune
+        elsif path != dir and !directory? path
+            $test_files.push path
+        end
+    end
+end
+
+desc "Run the full test suite"
+Rake::TestTask.new 'test' do |t|
+    t.libs << 'lib'
+    t.test_files = $test_files.dup
+    t.verbose = true
+end
+#task :test => $test_dirs
+
+$test_dirs.each do |path|
+    files = []
+
+    find(path) do |file|
+        if directory? file and path != file
+            prune
+        elsif file =~ /.rb$/ 
+            files.push file
+        end
+    end
+
+    Rake::TestTask.new path.to_sym do |t|
+       t.libs << 'lib'
+       t.test_files = files
+       t.verbose = true
+    end
+
+#    task path.to_sym => files.collect { |x| path + ':' + File.basename(x, '.rb') }
+
+    namespace path.to_sym do 
+        files.each do |file|
+            Rake::TestTask.new File.basename(file, '.rb').to_sym do |t|
+                t.libs << '..'
+                t.test_files = [ file ]
+                t.verbose = true 
+            end 
+        end
+    end
+end
