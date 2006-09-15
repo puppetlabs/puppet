@@ -36,8 +36,13 @@ module Puppet::Parser
                 end
             end
 
+            # Ruby treats variables like methods, so we can cheat here and
+            # trap missing vars like they were missing methods.
             def method_missing(name, *args)
-                if value = @scope.lookupvar(name.to_s) and value != :undefined and value != ""
+                # We have to tell lookupvar to return :undefined to us when
+                # appropriate; otherwise it converts to "".
+                value = @scope.lookupvar(name.to_s, false)
+                if value != :undefined
                     return value
                 else
                     # Just throw an error immediately, instead of searching for
@@ -690,11 +695,16 @@ module Puppet::Parser
             end
         end
 
-        # Look up a variable.  The simplest value search we do.
-        def lookupvar(name)
+        # Look up a variable.  The simplest value search we do.  Default to returning
+        # an empty string for missing values, but support returning a constant.
+        def lookupvar(name, usestring = true)
             value = lookup("variable", name)
             if value == :undefined
-                return ""
+                if usestring
+                    return ""
+                else
+                    return :undefined
+                end
             else
                 return value
             end

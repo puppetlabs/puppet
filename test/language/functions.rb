@@ -241,6 +241,45 @@ class TestLangFunctions < Test::Unit::TestCase
         assert(parsedate != newdate, "Parse date did not change")
     end
 
+    def test_template_defined_vars
+        template = tempfile()
+
+        File.open(template, "w") do |f|
+            f.puts "template <%= yayness %>"
+        end
+
+        func = nil
+        assert_nothing_raised do
+            func = Puppet::Parser::AST::Function.new(
+                :name => "template",
+                :ftype => :rvalue,
+                :arguments => AST::ASTArray.new(
+                    :children => [stringobj(template)]
+                )
+            )
+        end
+        ast = varobj("output", func)
+
+        {
+            "" => "",
+            false => "false",
+        }.each do |string, value|
+            scope = Puppet::Parser::Scope.new()
+            assert_raise(Puppet::ParseError) do
+                ast.evaluate(:scope => scope)
+            end
+
+            scope.setvar("yayness", string)
+
+            assert_nothing_raised("An empty string was not a valid variable value") do
+                ast.evaluate(:scope => scope)
+            end
+
+            assert_equal("template #{value}\n", scope.lookupvar("output"),
+                         "%s did not get evaluated correctly" % string.inspect)
+        end
+    end
+
     def test_autoloading_functions
         assert_equal(false, Puppet::Parser::Functions.function(:autofunc),
             "Got told autofunc already exists")
