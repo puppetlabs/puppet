@@ -37,8 +37,8 @@ directory and get them both:
 Last, we need to put the puppet binaries into our path and make the Puppet and
 Facter libraries available to Ruby:
 
-    $ PATH=$PATH:$SETUP_DIR/facter/bin:$SETUP_DIR/puppet/trunk/bin
-    $ RUBYLIB=$SETUP_DIR/facter/lib:$SETUP_DIR/puppet/trunk/lib
+    $ PATH=$PATH:$SETUP_DIR/facter/bin:$SETUP_DIR/puppet/bin
+    $ RUBYLIB=$SETUP_DIR/facter/lib:$SETUP_DIR/puppet/lib
     $ export PATH RUBYLIB
 
 Facter changes far less often than Puppet and it is very minimal (a single
