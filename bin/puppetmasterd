@@ -105,7 +105,7 @@ $haveusage = true
 
 begin
     require 'rdoc/usage'
-rescue
+rescue Exception
     $haveusage = false
 end
 
