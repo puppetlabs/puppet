@@ -82,14 +82,19 @@ class Puppet::Provider
         end
     end
 
-    # Does this implementation match all of the default requirements?
+    # Does this implementation match all of the default requirements?  If
+    # defaults are empty, we return false.
     def self.default?
-        if @defaults.find do |fact, value|
-                fval = Facter.value(fact)
-                if fval
-                    fval.to_s.downcase.intern != value.to_s.downcase.intern
-                else
+        return false if @defaults.empty?
+        if @defaults.find do |fact, values|
+                values = [values] unless values.is_a? Array
+                fval = Facter.value(fact).to_s.downcase.intern
+
+                # If any of the values match, we're a default.
+                if values.find do |value| fval == value.to_s.downcase.intern end
                     false
+                else
+                    true
                 end
             end
             return false

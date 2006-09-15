@@ -120,6 +120,35 @@ class TestProvider < Test::Unit::TestCase
 
         assert_equal(echo, newprov.command(:echo))
     end
+
+    def test_default?
+        provider = newprovider
+
+        assert(! provider.default?, "Was considered default with no settings")
+
+        assert_nothing_raised do
+            provider.defaultfor :operatingsystem => Facter.value(:operatingsystem)
+        end
+
+        assert(provider.default?, "Was not considered default")
+
+        # Make sure any true value is sufficient.
+        assert_nothing_raised do
+            provider.defaultfor :operatingsystem => [
+                :yayness, :rahness,
+                Facter.value(:operatingsystem)
+            ]
+        end
+
+        assert(provider.default?, "Was not considered default")
+
+        # Now make sure that a random setting returns false.
+        assert_nothing_raised do
+            provider.defaultfor :operatingsystem => :yayness
+        end
+
+        assert(! provider.default?, "Was considered default")
+    end
 end
 
 # $Id$
