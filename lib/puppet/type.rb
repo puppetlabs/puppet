@@ -1392,8 +1392,10 @@ class Type < Puppet::Element
         begin
             obj = new(hash)
         rescue => detail
-            if Puppet[:debug]
-                puts detail.backtrace
+            unless detail.is_a? Puppet::Error
+                if Puppet[:debug]
+                    puts detail.backtrace
+                end
             end
             Puppet.err "Could not create %s: %s" % [title, detail.to_s]
             if obj
@@ -1596,8 +1598,16 @@ class Type < Puppet::Element
             self.devfail "I was not passed a namevar"
         end
 
+        # If the name and title differ, set up an alias
         if self.name != self.title
-            self.class.alias(self.name, self)
+            if obj = self.class[self.name] 
+                if self.class.isomorphic?
+                    raise Puppet::Error, "%s already exists with name %s" %
+                        [obj.title, self.name]
+                end
+            else
+                self.class.alias(self.name, self)
+            end
         end
 
         # The information to cache to disk.  We have to do this after

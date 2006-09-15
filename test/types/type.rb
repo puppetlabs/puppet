@@ -706,6 +706,51 @@ end
 
         assert_equal(greater, type.defaultprovider)
     end
+
+    # Make sure that we can have multiple isomorphic objects with the same name,
+    # but not with non-isomorphic objects.
+    def test_isomorphic_names
+        # First do execs, since they're not isomorphic.
+        echo = Puppet::Util.binary "echo"
+        exec1 = exec2 = nil
+        assert_nothing_raised do
+            exec1 = Puppet::Type.type(:exec).create(
+                :title => "exec1",
+                :command => "#{echo} funtest"
+            )
+        end
+        assert_nothing_raised do
+            exec2 = Puppet::Type.type(:exec).create(
+                :title => "exec2",
+                :command => "#{echo} funtest"
+            )
+        end
+
+        assert_apply(exec1, exec2)
+
+        # Now do files, since they are. This should fail.
+        file1 = file2 = nil
+        path = tempfile()
+        assert_nothing_raised do
+            file1 = Puppet::Type.type(:file).create(
+                :title => "file1",
+                :path => path,
+                :content => "yayness"
+            )
+        end
+
+        # This will fail, but earlier systems will catch it.
+        assert_nothing_raised do
+            file2 = Puppet::Type.type(:file).create(
+                :title => "file2",
+                :path => path,
+                :content => "rahness"
+            )
+        end
+
+        assert(file1, "Did not create first file")
+        assert_nil(file2, "Incorrectly created second file")
+    end
 end
 
 # $Id$
