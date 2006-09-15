@@ -53,6 +53,7 @@ module Puppet
                 "default" => :DEFAULT,
                 "define" => :DEFINE,
                 "false" => :BOOLEAN,
+                "import" => :IMPORT,
                 "if" => :IF,
                 "elsif" => :ELSIF,
                 "else" => :ELSE,

@@ -349,35 +349,4 @@ class nothernode {}
 
 
     end
-
-    def test_filedirs_added_to_libdir
-        manifest = tempfile()
-        File.open(manifest, "w") do |f| f.puts "$yay = rah" end
-        interp = nil
-        assert_nothing_raised {
-            interp = Puppet::Parser::Interpreter.new(
-                :Manifest => manifest
-            )
-        }
-
-        assert(Puppet[:lib].include?(File.dirname(manifest)),
-            "File dir did not get added")
-
-        # Now try it with a local file
-        dir = tempfile()
-        Dir.mkdir(dir)
-        Dir.chdir(dir) do
-            manifest = "file"
-            File.open(manifest, "w") do |f| f.puts "$yay = rah" end
-            interp = nil
-            assert_nothing_raised {
-                interp = Puppet::Parser::Interpreter.new(
-                    :Manifest => manifest
-                )
-            }
-        end
-
-        assert(Puppet[:lib].include?("."),
-            "File dir did not get added")
-    end
 end

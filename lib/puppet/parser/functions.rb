@@ -155,62 +155,6 @@ module Functions
             end
         end.join("")
     end
-
-    newfunction(:import, :statement) do |vals|
-        result = AST::ASTArray.new({})
-
-        files = []
-
-        # Collect all of our files
-        vals.each do |pat|
-            # We can't interpolate at this point since we don't have any 
-            # scopes set up. Warn the user if they use a variable reference
-            tmp = nil
-            if pat =~ /[*{}\[\]?\\]/
-                tmp = Puppet::Parser::Parser.glob(pat)
-            else
-                tmp = Puppet::Parser::Parser.find(pat)
-                if tmp
-                    tmp = [tmp]
-                else
-                    tmp = []
-                end
-            end
-
-            if tmp.size == 0
-                raise Puppet::ImportError.new("No file(s) found for import " + 
-                                                  "of '#{pat}'")
-            end
-
-            files += tmp
-        end
-
-        files.each do |file|
-            parser = Puppet::Parser::Parser.new()
-            debug("importing '%s'" % file)
-
-            unless file =~ /^#{File::SEPARATOR}/
-                file = File.join(dir, file)
-            end
-            begin
-                parser.file = file
-            rescue Puppet::ImportError
-                Puppet.warning(
-                    "Importing %s would result in an import loop" %
-                        File.join(file)
-                )
-                next
-            end
-            # push the results into the main result array
-            # We always return an array when we parse.
-            parser.parse.each do |child|
-                result.push child
-            end
-        end
-
-        # Now that we have the entire result, evaluate it, since it's code
-        return result.safeevaluate(:scope => self)
-    end
 end
 end
 

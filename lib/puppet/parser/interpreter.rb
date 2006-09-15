@@ -89,18 +89,6 @@ module Puppet
                     raise Puppet::DevError, "You must provide code or a manifest"
                 end
 
-                # If they passed us a file, then make sure that the file's
-                # directory is in our search path.
-                if @file
-                    Puppet::Parser::Parser.libsetup
-
-                    dir = File.dirname(@file)
-                    unless Puppet[:lib].include?(dir)
-                        Puppet.debug "Adding %s to library path" % dir
-                        Puppet[:lib] << dir
-                    end
-                end
-
                 @lastchecked = 0
 
                 if hash.include?(:UseNodes)
