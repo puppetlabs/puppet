@@ -264,9 +264,11 @@ module Puppet
                 end
 
                 # Now just call to_type on them with the container as a parent
-                unless obj = child.to_type(container)
-                    # nothing; we assume the method already warned
-                    #Puppet.warning "Could not create child %s" % child.name
+                begin
+                    child.to_type(container)
+                rescue => detail
+                    # We don't do anything on failures, since we assume it's
+                    # been logged elsewhere.
                 end
             }
 

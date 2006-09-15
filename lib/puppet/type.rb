@@ -365,13 +365,14 @@ class Type < Puppet::Element
     # Find the namevar
     def self.namevar
         unless defined? @namevar
-            return nil unless defined? @parameters and ! @parameters.empty?
-            namevarparam = @parameters.find { |param|
-                param.isnamevar?
+            params = @parameters.find_all { |param|
+                param.isnamevar? or param.name == :name
             }
 
-            if namevarparam
-                @namevar = namevarparam.name
+            if params.length > 1
+                raise Puppet::DevError, "Found multiple namevars for %s" % self.name
+            elsif params.length == 1
+                @namevar = params[0].name
             else
                 raise Puppet::DevError, "No namevar for %s" % self.name
             end
@@ -1388,22 +1389,18 @@ class Type < Puppet::Element
         end
 
         # create it anew
-        # if there's a failure, destroy the object if it got that far
+        # if there's a failure, destroy the object if it got that far, but raise
+        # the error.
         begin
             obj = new(hash)
         rescue => detail
-            unless detail.is_a? Puppet::Error
-                if Puppet[:debug]
-                    puts detail.backtrace
-                end
-            end
             Puppet.err "Could not create %s: %s" % [title, detail.to_s]
             if obj
                 obj.remove(true)
             elsif obj = self[title]
                 obj.remove(true)
             end
-            return nil
+            raise
         end
 
         if implicit

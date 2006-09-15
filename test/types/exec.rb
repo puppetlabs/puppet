@@ -44,13 +44,11 @@ class TestExec < Test::Unit::TestCase
     def test_path_or_qualified
         command = nil
         output = nil
-        assert_nothing_raised {
+        assert_raise(Puppet::Error) {
             command = Puppet.type(:exec).create(
                 :command => "echo"
             )
-            assert_nil(command)
         }
-        Puppet.type(:exec).clear
         assert_nothing_raised {
             command = Puppet.type(:exec).create(
                 :command => "echo",

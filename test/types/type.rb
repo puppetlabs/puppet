@@ -690,6 +690,7 @@ end
     def test_defaultproviders
         # Make a fake type
         type = Puppet::Type.newtype(:defaultprovidertest) do
+            newparam(:name) do end
         end
 
         basic = type.provide(:basic) do
@@ -740,7 +741,7 @@ end
         end
 
         # This will fail, but earlier systems will catch it.
-        assert_nothing_raised do
+        assert_raise(Puppet::Error) do
             file2 = Puppet::Type.type(:file).create(
                 :title => "file2",
                 :path => path,

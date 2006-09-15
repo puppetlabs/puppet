@@ -59,6 +59,10 @@ module TestPuppet
             @methods = ary
         end
 
+        def self.default?
+            false
+        end
+
         def self.initvars
             @calls = Hash.new do |hash, key|
                 hash[key] = 0
