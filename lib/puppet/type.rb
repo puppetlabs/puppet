@@ -595,9 +595,9 @@ class Type < Puppet::Element
 
     # Create a new parameter.  Requires a block and a name, stores it in the
     # @parameters array, and does some basic checking on it.
-    def self.newparam(name, &block)
+    def self.newparam(name, options = {}, &block)
         param = genclass(name,
-            :parent => Puppet::Parameter,
+            :parent => options[:parent] || Puppet::Parameter,
             :attributes => { :element => self },
             :block => block,
             :prefix => "Parameter",
