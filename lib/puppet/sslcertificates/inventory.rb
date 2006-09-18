@@ -32,6 +32,7 @@ module Puppet::SSLCertificates
             end
             inv = File.open(filename, "w")
             inv.puts "# Inventory of signed certificates"
+            inv.puts "# SERIAL NOT_BEFORE _NOT_AFTER SUBJECT"
             Dir.glob(File::join(Puppet[:signeddir], "*.pem")) do |f|
                 format(inv, OpenSSL::X509::Certificate.new(File::read(f)))
             end

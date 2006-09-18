@@ -9,7 +9,7 @@
 # = Usage
 #
 #   puppetca [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
-#               [-g|--generate] [-l|--list] [-s|--sign]
+#               [-g|--generate] [-l|--list] [-s|--sign] [-r|--revoke]
 #               [-c|--clean] [host]
 #
 # = Description
@@ -31,7 +31,10 @@
 #   Operate on all outstanding requests.  Only makes sense with '--sign'.
 #
 # clean::
-#    Remove all traces of a host.  This is useful when rebuilding hosts.
+#    Remove all files related to a host from puppetca's storage. This is 
+#    useful when rebuilding hosts, since new certificate signing requests
+#    will only be honored if puppetca does not have a copy of a signed
+#    certificate for that host. The certificate of the host remains valid.
 #
 # debug::
 #   Enable full debugging.

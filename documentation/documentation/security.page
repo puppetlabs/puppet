@@ -50,8 +50,16 @@ Prior to the 1.0 release it is expected that there will be email notification
 of certificate requests waiting to be signed, but for now either the logs
 must be watched or ``puppetca --list`` can be used list waiting requests.
 
-Once a request arrives, ``puppetca --sign <hostname>`` can be used to sign the
-request.  Adding the ``--all`` flag will sign all outstanding requests.
+Once a request arrives, ``puppetca --sign <hostname>`` can be used to sign
+the request.  Adding the ``--all`` flag will sign all outstanding
+requests. A list of all certificates ever issued by Puppet's CA can be
+found in the file ``$cadir/inventory.txt''.
+
+Certificates, once issued, can be revoked with ``puppetca --revoke
+<hostname|serial>''. The server consults the certificate revocation list
+(CRL) every time a client tries to connect to the server; for revocations
+to take effect, the server must be restarted after the certificate
+revocation with ``puppetca''.
 
 # Access and Authorization
 
