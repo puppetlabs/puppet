@@ -121,8 +121,12 @@ class Server
             end
 
             # Always use the hostname from Facter.
-            client = facts["hostname"]
-            clientip = facts["ipaddress"]
+            if Puppet[:node_name] == 'facter'
+                client = facts["hostname"]
+                clientip = facts["ipaddress"]
+            else
+                facts['hostname'] = client
+            end
 
             # Add any server-side facts to our server.
             addfacts(facts)

@@ -196,22 +196,22 @@ class TestMaster < Test::Unit::TestCase
         end
     end
 
-    # Make sure we're using the facter hostname
-    def test_facterhostname_in_getconfig
+    # Make sure we're using the hostname as configured with :node_name
+    def test_hostname_in_getconfig
         master = nil
         file = tempfile()
         #@createdfile = File.join(tmpdir(), self.class.to_s + "manifesttesting" +
         #    "_" + @method_name)
-        nope = tempfile()
-        yep = tempfile()
+        file_cert = tempfile()
+        file_fact = tempfile()
 
-        fakename = "y4yn3ss"
-        realname = Facter["hostname"].value
+        certname = "y4yn3ss"
+        factname = Facter["hostname"].value
 
         File.open(file, "w") { |f|
             f.puts %{
-    node #{fakename} { file { "#{nope}": ensure => file, mode => 755 } }
-    node #{realname} { file { "#{yep}": ensure => file, mode => 755 } }
+    node #{certname} { file { "#{file_cert}": ensure => file, mode => 755 } }
+    node #{factname} { file { "#{file_fact}": ensure => file, mode => 755 } }
 }
         }
         # create our master
@@ -225,15 +225,34 @@ class TestMaster < Test::Unit::TestCase
         }
 
         result = nil
+
+        # Use the hostname from facter
+        Puppet[:node_name] = 'facter'
         assert_nothing_raised {
-            result = master.getconfig({"hostname" => realname}, "yaml", fakename, "127.0.0.1")
+            result = master.getconfig({"hostname" => factname}, "yaml", certname, "127.0.0.1")
         }
 
         result = result.flatten
 
-        assert(result.find { |obj| obj.name == yep },
+        assert(result.find { |obj| obj.name == file_fact },
             "Could not find correct file")
+        assert(!result.find { |obj| obj.name == file_cert },
+            "Found incorrect file")
+
+        # Use the hostname from the cert
+        Puppet[:node_name] = 'cert'
+        assert_nothing_raised {
+            result = master.getconfig({"hostname" => factname}, "yaml", certname, "127.0.0.1")
+        }
+
+        result = result.flatten
+
+        assert(!result.find { |obj| obj.name == file_fact },
+            "Could not find correct file")
+        assert(result.find { |obj| obj.name == file_cert },
+            "Found incorrect file")
     end
+
 end
 
 # $Id$
