@@ -89,8 +89,6 @@ module Puppet
                     raise Puppet::DevError, "You must provide code or a manifest"
                 end
 
-                @lastchecked = 0
-
                 if hash.include?(:UseNodes)
                     @usenodes = hash[:UseNodes]
                 else
@@ -386,8 +384,9 @@ module Puppet
                 # Check if the parser should reparse.
                 if @file
                     if defined? @parser
-                        unless @parser.reparse?
-                            @lastchecked = Time.now
+                        if stamp = @parser.reparse?
+                            Puppet.notice "Reloading files"
+                        else
                             return false
                         end
                     end
@@ -401,17 +400,14 @@ module Puppet
                     end
                 end
 
-                if defined? @parser
-                    # If this isn't our first time parsing in this process,
-                    # note that we're reparsing.
-                    Puppet.info "Reloading files"
-                end
                 # should i be creating a new parser each time...?
                 @parser = Puppet::Parser::Parser.new()
                 if @code
                     @parser.string = @code
                 else
                     @parser.file = @file
+                    # Mark when we parsed, so we can check freshness
+                    @parsedate = File.stat(@file).ctime.to_i
                 end
 
                 if @local
@@ -421,10 +417,7 @@ module Puppet
                         @ast = @parser.parse
                     end
                 end
-
-                # Mark when we parsed, so we can check freshness
                 @parsedate = Time.now.to_i
-                @lastchecked = Time.now
             end
 
             # Store the configs into the database.

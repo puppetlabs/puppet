@@ -661,19 +661,22 @@ def initialize
     #end
 end
 
+# Add a new file to be checked when we're checking to see if we should be
+# reparsed.
+def newfile(*files)
+    files.each do |file|
+        unless file.is_a? Puppet::LoadedFile
+            file = Puppet::LoadedFile.new(file)
+        end
+        @files << file
+    end
+end
+
 def on_error(token,value,stack)
     #on '%s' at '%s' in\n'%s'" % [token,value,stack]
     #error = "line %s: parse error after '%s'" %
     #    [@lexer.line,@lexer.last]
     error = "Syntax error at '%s'" % [value]
-
-    #if Puppet[:debug]
-        #puts stack.inspect
-        #puts stack.class
-    #end
-    #if @lexer.file
-    #    error += (" in '%s'" % @lexer.file)
-    #end
 
     except = Puppet::ParseError.new(error)
     except.line = @lexer.line
@@ -705,33 +708,27 @@ def parse(string = nil)
         # and this is a framework error
         except.line ||= @lexer.line
         except.file ||= @lexer.file
-        #if Puppet[:debug]
-        #    puts except.stack
-        #end
         raise except
     rescue Puppet::DevError => except
         except.line ||= @lexer.line
         except.file ||= @lexer.file
-        #if Puppet[:debug]
-        #    puts except.stack
-        #end
         raise except
     rescue => except
         error = Puppet::DevError.new(except.message)
         error.line = @lexer.line
         error.file = @lexer.file
         error.set_backtrace except.backtrace
-        #if Puppet[:debug]
-        #    puts caller
-        #end
         raise error
     end
 end
 
+# See if any of the files have changed.
 def reparse?
-    @files.detect { |file|
-        file.changed?
-    }
+    if file = @files.detect { |file| file.changed?  }
+        return file.stamp
+    else
+        return false
+    end
 end
 
 def string=(string)

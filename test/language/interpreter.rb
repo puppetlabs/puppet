@@ -349,4 +349,51 @@ class nothernode {}
 
 
     end
+
+    def test_parsedate
+        Puppet[:filetimeout] = 0
+        main = tempfile()
+        sub = tempfile()
+        mainfile = tempfile()
+        subfile = tempfile()
+        count = 0
+        updatemain = proc do
+            count += 1
+            File.open(main, "w") { |f|
+                f.puts "import '#{sub}'
+                    file { \"#{mainfile}\": content => #{count} }
+                    "
+            }
+        end
+        updatesub = proc do
+            count += 1
+            File.open(sub, "w") { |f|
+                f.puts "file { \"#{subfile}\": content => #{count} }
+                "
+            }
+        end
+
+        updatemain.call
+        updatesub.call
+
+        interp = Puppet::Parser::Interpreter.new(
+            :Manifest => main,
+            :Local => true
+        )
+
+        date = interp.parsedate
+
+        # Now update the site file and make sure we catch it
+        sleep 1
+        updatemain.call
+        newdate = interp.parsedate
+        assert(date != newdate, "Parsedate was not updated")
+        date = newdate
+
+        # And then the subfile
+        sleep 1
+        updatesub.call
+        newdate = interp.parsedate
+        assert(date != newdate, "Parsedate was not updated")
+    end
 end

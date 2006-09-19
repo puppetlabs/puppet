@@ -6,7 +6,7 @@ require 'puppet'
 module Puppet
     class NoSuchFile < Puppet::Error; end
     class LoadedFile
-        attr_reader :file
+        attr_reader :file, :statted
 
         # Provide a hook for setting the timestamp during testing, so we don't
         # have to depend on the granularity of the filesystem.
@@ -20,20 +20,19 @@ module Puppet
         )
 
         # Determine whether the file has changed and thus whether it should
-        # be reparsed
+        # be reparsed.
         def changed?
-            # Don't actually stat the file more often than filetimeout.
-            if Time.now - @statted >= Puppet[:filetimeout]
-                tmp = stamp()
+            tmp = stamp()
 
-                if tmp == @tstamp
-                    return false
-                else
-                    @tstamp = tmp
-                    return true
-                end
-            else
+            # We use a different internal variable than the stamp method
+            # because it doesn't keep historical state and we do -- that is,
+            # we will always be comparing two timestamps, whereas
+            # stamp() just always wants the latest one.
+            if tmp == @tstamp
                 return false
+            else
+                @tstamp = tmp
+                return @tstamp
             end
         end
 
@@ -41,20 +40,25 @@ module Puppet
         def initialize(file)
             @file = file
             unless FileTest.exists?(@file)
-                raise Puppet::NoSuchFile, "Can not use a non-existent file for parsing"
+                raise Puppet::NoSuchFile,
+                    "Can not use a non-existent file for parsing"
             end
+            @statted = 0
             @tstamp = stamp()
+        end
+
+        # Retrieve the filestamp, but only refresh it if we're beyond our
+        # filetimeout
+        def stamp
+            if @stamp.nil? or (Time.now.to_i - @statted >= Puppet[:filetimeout])
+                @statted = Time.now.to_i
+                @stamp = File.stat(@file).ctime
+            end
+            return @stamp
         end
 
         def to_s
             @file
-        end
-
-        private
-
-        def stamp
-            @statted = Time.now
-            return File.stat(@file).ctime
         end
     end
 end
