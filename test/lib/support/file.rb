@@ -226,3 +226,5 @@ module PuppetTestSupport
         end
     end
 end
+
+# $Id$
