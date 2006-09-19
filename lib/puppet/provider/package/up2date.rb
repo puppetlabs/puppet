@@ -28,7 +28,7 @@ Puppet.type(:package).provide :up2date, :parent => :rpm do
         else
             # up2date didn't find updates, pretend the current
             # version is the latest
-            return @model[:ensure]
+            return @model.is(:ensure)
         end
     end
 

@@ -21,13 +21,7 @@ Puppet::Type.type(:package).provide :portage do
                 if( match )
                     package = {}
                     result_fields.zip( match.captures ) { |field, value| package[field] = value unless value.empty? }
-                    if self.is_a? Puppet::Type and type = @model[:type]
-                        package[:type] = type
-                    elsif self.is_a? Module and self.respond_to? :name
-                        package[:type] = self.name
-                    else
-                        raise Puppet::DevError, "Cannot determine package type"
-                    end
+                    package[:provider] = :portage
                     package[:ensure] = package[:ensure].split.last
 
                     packages.push( Puppet.type(:package).installedpkg(package) )

@@ -14,7 +14,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     end
 
     def install
-        should = @model[:ensure]
+        should = @model.should(:ensure)
 
         if @model[:source]
             return super
@@ -34,7 +34,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     end
 
     def uninstall
-        pkgdelete "%s-%s" % [@model[:name], @model[:ensure]]
+        pkgdelete "%s-%s" % [@model[:name], @model.should(:ensure)]
     end
 end
 

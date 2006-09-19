@@ -42,7 +42,7 @@ Puppet::Type.type(:package).provide :darwinport do
     end
 
     def install
-        should = @model[:ensure]
+        should = @model.should(:ensure)
 
         # Seems like you can always say 'upgrade'
         port "upgrade #{@model[:name]}"

@@ -10,7 +10,7 @@ Puppet::Type.type(:package).provide :apple do
     defaultfor :operatingsystem => :darwin
 
     def self.listbyname
-        Dir.entries("/Library/Receipts").find { |f|
+        Dir.entries("/Library/Receipts").find_all { |f|
             f =~ /\.pkg$/
         }.collect { |f|
             name = f.sub(/\.pkg/, '')

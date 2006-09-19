@@ -55,7 +55,7 @@ Puppet::Type.type(:package).provide :openbsd do
     end
 
     def install
-        should = @model[:ensure]
+        should = @model.should(:ensure)
 
         unless @model[:source]
             raise Puppet::Error,
