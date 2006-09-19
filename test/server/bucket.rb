@@ -1,19 +1,9 @@
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-    $debug = true
-else
-    $debug = false
-end
-
 require 'puppet'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 require 'base64'
 
 class TestBucket < Test::Unit::TestCase
-	include ServerTest
+    include PuppetTest::ServerTest
 
     def out
         if defined? @num

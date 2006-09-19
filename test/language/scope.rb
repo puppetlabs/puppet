@@ -1,16 +1,9 @@
 #!/usr/bin/ruby
 
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppet/client'
-require 'test/unit'
 require 'puppettest'
 
 # so, what kind of things do we want to test?
@@ -23,7 +16,7 @@ require 'puppettest'
 # and test whether we've got things in the right scopes
 
 class TestScope < Test::Unit::TestCase
-	include ParserTesting
+    include PuppetTest::ParserTesting
 
     def to_ary(hash)
         hash.collect { |key,value|

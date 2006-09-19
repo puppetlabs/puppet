@@ -1,20 +1,9 @@
-if __FILE__ == $0
-    if Dir.getwd =~ /test\/server$/
-        Dir.chdir("..")
-    end
-
-    $:.unshift '../lib'
-    $puppetbase = ".."
-
-end
-
 require 'puppet'
 require 'puppet/server/authstore'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 
 class TestAuthStore < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     def mkstore
         store = nil
         assert_nothing_raised {

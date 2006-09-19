@@ -1,4 +1,6 @@
-module PuppetTest::Support::Assertions
+require 'puppettest'
+
+module PuppetTest
     def assert_rollback_events(events, trans, msg = nil)
         run_events(:rollback, events, trans, msg)
     end

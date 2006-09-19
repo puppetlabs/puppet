@@ -1,14 +1,7 @@
 #!/usr/bin/ruby
 
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/sslcertificates.rb'
-require 'test/unit'
 require 'puppettest'
 
 # so, what kind of things do we want to test?
@@ -21,7 +14,7 @@ require 'puppettest'
 # and test whether we've got things in the right scopes
 
 class TestCertMgr < Test::Unit::TestCase
-    include TestPuppet
+    include PuppetTest
     def setup
         super
         #@dir = File.join(Puppet[:certdir], "testing")

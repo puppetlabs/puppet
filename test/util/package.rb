@@ -1,16 +1,9 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = ".."
-end
-
 require 'puppet'
 require 'puppet/util/package'
 require 'puppettest'
-require 'test/unit'
 
 class TestPuppetUtilPackage < Test::Unit::TestCase
-    include TestPuppet
+    include PuppetTest
     include Puppet::Util::Package
 
     def test_versioncmp

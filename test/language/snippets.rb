@@ -1,32 +1,23 @@
 #!/usr/bin/ruby -w
 
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppet/client'
 require 'puppet/server'
-require 'test/unit'
 require 'puppettest'
 
-# so, what kind of things do we want to test?
-
-# we don't need to test function, since we're confident in the
-# library tests.  We do, however, need to test how things are actually
-# working in the language.
-
-# so really, we want to do things like test that our ast is correct
-# and test whether we've got things in the right scopes
-
 class TestSnippets < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     include ObjectSpace
-    $snippetbase = File.join($puppetbase, "examples", "code", "snippets")
+
+    def self.snippetdir
+        PuppetTest.exampledir "code", "snippets"
+    end
+
+    def snippet(name)
+        File.join(self.class.snippetdir, name)
+    end
     
     def file2ast(file)
         parser = Puppet::Parser::Parser.new()
@@ -492,8 +483,8 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
-    # XXX this is the answer
-    Dir.entries($snippetbase).sort.each { |file|
+    # Iterate across each of the snippets and create a test.
+    Dir.entries(snippetdir).sort.each { |file|
         next if file =~ /^\./
 
 
@@ -504,7 +495,7 @@ class TestSnippets < Test::Unit::TestCase
             self.send(:define_method, testname) {
                 # first parse the file
                 server = Puppet::Server::Master.new(
-                    :Manifest => File.join($snippetbase, file),
+                    :Manifest => snippet(file),
                     :Local => true
                 )
                 client = Puppet::Client::MasterClient.new(
@@ -557,3 +548,5 @@ class TestSnippets < Test::Unit::TestCase
         end
     }
 end
+
+# $Id$

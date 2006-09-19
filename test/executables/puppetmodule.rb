@@ -1,22 +1,19 @@
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/server'
 require 'puppet/sslcertificates'
-require 'test/unit'
-require 'puppettest.rb'
-
-$module = File.join($puppetbase, "ext", "module_puppet")
+require 'puppettest'
 
 class TestPuppetModule < Test::Unit::TestCase
-	include ExeTest
+    include PuppetTest::ExeTest
+
+
+    def setup
+        super
+        @module = File.join(basedir, "ext", "module_puppet")
+    end
 
     def test_existence
-        assert(FileTest.exists?($module), "Module does not exist")
+        assert(FileTest.exists?(@module), "Module does not exist")
     end
 
     def test_execution
@@ -29,7 +26,7 @@ class TestPuppetModule < Test::Unit::TestCase
         }
 
         output = nil
-        cmd = $module
+        cmd = @module
         cmd += " --verbose"
         #cmd += " --fqdn %s" % fqdn
         cmd += " --confdir %s" % Puppet[:confdir]

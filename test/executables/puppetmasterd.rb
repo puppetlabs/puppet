@@ -1,19 +1,12 @@
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/server'
 require 'puppet/daemon'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 require 'socket'
 require 'facter'
 
 class TestPuppetMasterD < Test::Unit::TestCase
-	include ExeTest
+    include PuppetTest::ExeTest
     def getcerts
         include Puppet::Daemon
         if self.readcerts
@@ -101,7 +94,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
     end
 
     def disabled_test_sslconnection
-        #file = File.join($puppetbase, "examples", "code", "head")
+        #file = File.join(exampledir, "code", "head")
         #startmasterd("--manifest #{file}")
 
         #assert_nothing_raised {

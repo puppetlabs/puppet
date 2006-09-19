@@ -1,17 +1,10 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk"
-end
-
 require 'puppet'
 require 'puppettest'
-require 'test/unit'
 
 # $Id$
 
 class TestEvents < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     def teardown
         super
         Puppet::Event::Subscription.clear

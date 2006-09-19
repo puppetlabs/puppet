@@ -1,21 +1,10 @@
-if __FILE__ == $0
-    if Dir.getwd =~ /test\/server$/
-        Dir.chdir("..")
-    end
-
-    $:.unshift '../lib'
-    $puppetbase = ".."
-
-end
-
 require 'puppet'
 require 'puppet/server'
 require 'puppet/client'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 
 class TestMaster < Test::Unit::TestCase
-	include ServerTest
+    include PuppetTest::ServerTest
     def teardown
         super
         #print "\n\n\n\n" if Puppet[:debug]

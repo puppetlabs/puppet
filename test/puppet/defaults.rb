@@ -1,17 +1,10 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = ".."
-end
-
 require 'puppet'
 require 'puppettest'
-require 'test/unit'
 
 # $Id$
 
 class TestPuppetDefaults < Test::Unit::TestCase
-    include TestPuppet
+    include PuppetTest
     @@dirs = %w{rrddir confdir vardir logdir statedir}
     @@files = %w{statefile manifest masterlog}
     @@normals = %w{puppetport masterport server}

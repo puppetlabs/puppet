@@ -1,16 +1,9 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'etc'
 require 'puppet/type'
 require 'puppettest'
-require 'test/unit'
 
 class TestGroupProvider < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     def setup
         super
         @@tmpgroups = []

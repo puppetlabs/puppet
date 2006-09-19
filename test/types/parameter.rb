@@ -1,15 +1,8 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet/type'
 require 'puppettest'
-require 'test/unit'
 
 class TestParameter < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     
     def newparam(name = :fakeparam)
         assert_nothing_raised {

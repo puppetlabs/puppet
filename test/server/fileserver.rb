@@ -1,20 +1,9 @@
-if __FILE__ == $0
-    if Dir.getwd =~ /test\/server$/
-        Dir.chdir("..")
-    end
-
-    $:.unshift '../lib'
-    $puppetbase = ".."
-
-end
-
 require 'puppet'
 require 'puppet/server/fileserver'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 
 class TestFileServer < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
 
     def mkmount(path = nil)
         mount = nil
@@ -53,7 +42,6 @@ class TestFileServer < Test::Unit::TestCase
     def mktestfiles(testdir)
         @@tmpfiles << testdir
         assert_nothing_raised {
-            Dir.mkdir(testdir)
             files = %w{a b c d e}.collect { |l|
                 name = File.join(testdir, "file%s" % l)
                 File.open(name, "w") { |f|

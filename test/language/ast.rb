@@ -1,20 +1,13 @@
 #!/usr/bin/ruby
 
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppet/client'
-require 'test/unit'
 require 'puppettest'
 
 class TestAST < Test::Unit::TestCase
-	include ParserTesting
+    include PuppetTest::ParserTesting
 
     # A fake class that we can use for testing evaluation.
     class FakeAST

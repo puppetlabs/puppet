@@ -1,16 +1,9 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppettest'
 require 'puppet'
-require 'test/unit'
 require 'facter'
 
 class TestNameServiceProvider < Test::Unit::TestCase
-	include FileTesting
+    include PuppetTest::FileTesting
 
     def test_option
         klass = Class.new(Puppet::Type::Provider::NameService)

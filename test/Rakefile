@@ -7,26 +7,19 @@ $exclusions = %W(lib data)
 $test_dirs = [] # this is used to generate all the targets.
 $test_files = [] # this is ONLY used for the top-level test suite.
 
-# this basically amounts to:
-# find $(pwd) -type d -maxdepth 1 | xargs basename
-# with an exclusion list.
+# Collect all of our test directories, skipping specifically excluded dirs.
+$test_dirs = Dir.glob("*").find_all { |f| directory?(f) }.reject { |d|
+    $exclusions.include?(File.basename(d))
+}
 
-find(Dir.pwd) do |path|
-    if File.basename(path) =~ /^\.+/
-        prune
-    elsif path != Dir.pwd and directory? path and !$exclusions.include? File.basename(path) 
-        $test_dirs.push File.basename(path)
-        prune
-    end
-end
-
-# another find for the test files themselves: this could probably be rolled into the original find loop.
+# another find for the test files themselves: this could probably be rolled
+# into the original find loop.
 
 $test_dirs.each do |dir|
     find(dir) do |path|
         if File.basename(path) =~ /^\.+/
             prune
-        elsif path != dir and !directory? path
+        elsif path != dir and ! directory?(path)
             $test_files.push path
         end
     end
@@ -35,12 +28,14 @@ end
 desc "Run the full test suite"
 Rake::TestTask.new 'test' do |t|
     t.libs << 'lib'
-    t.test_files = $test_files.dup
+    t.test_files = $test_files.sort
     t.verbose = true
 end
 #task :test => $test_dirs
 
-$test_dirs.each do |path|
+task :default => :test
+
+$test_dirs.sort.each do |path|
     files = []
 
     find(path) do |file|
@@ -53,7 +48,7 @@ $test_dirs.each do |path|
 
     Rake::TestTask.new path.to_sym do |t|
        t.libs << 'lib'
-       t.test_files = files
+       t.test_files = files.sort
        t.verbose = true
     end
 
@@ -69,3 +64,5 @@ $test_dirs.each do |path|
         end
     end
 end
+
+# $Id$

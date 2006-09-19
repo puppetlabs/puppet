@@ -1,19 +1,11 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $:.unshift "../../../../language/trunk/lib"
-    $puppetbase = "../../../../language/trunk"
-end
-
 require 'puppet'
 require 'cgi'
-require 'test/unit'
 require 'fileutils'
 require 'puppettest'
 
 
 class TestFileIgnoreSources < Test::Unit::TestCase
-	include FileTesting
+    include PuppetTest::FileTesting
    
     def setup
         super

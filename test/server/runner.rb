@@ -1,16 +1,9 @@
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/server/runner'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 
 class TestServerRunner < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
 
     def mkclient(file)
         master = nil

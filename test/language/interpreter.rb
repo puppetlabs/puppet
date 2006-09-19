@@ -1,11 +1,5 @@
 #!/usr/bin/ruby
 
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'facter'
 
 require 'puppet'
@@ -13,12 +7,11 @@ require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppet/client'
 require 'puppet/rails'
-require 'test/unit'
 require 'puppettest'
 
 class TestInterpreter < Test::Unit::TestCase
-	include TestPuppet
-	include ServerTest
+	include PuppetTest
+    include PuppetTest::ServerTest
     AST = Puppet::Parser::AST
 
     # create a simple manifest that uses nodes to create a file

@@ -1,19 +1,12 @@
 # Test key job creation, modification, and destruction
 
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppettest'
 require 'puppet'
 require 'puppet/type/parsedtype/sshkey'
-require 'test/unit'
 require 'facter'
 
 class TestSSHKey < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     def setup
         super
         # god i'm lazy

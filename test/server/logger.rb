@@ -1,17 +1,10 @@
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 require 'base64'
 require 'cgi'
 
 class TestLogger < Test::Unit::TestCase
-	include ServerTest
+    include PuppetTest::ServerTest
 
     def setup
         super

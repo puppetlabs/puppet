@@ -1,15 +1,8 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppettest'
-require 'test/unit'
 
 class TestOverrides < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     def mksubdirs(basedir, level)
         @@tmpfiles << basedir
         dir = basedir.dup

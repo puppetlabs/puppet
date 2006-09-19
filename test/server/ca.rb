@@ -1,15 +1,8 @@
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/server/ca'
 require 'puppet/sslcertificates'
 require 'openssl'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 
 # $Id$
 
@@ -20,7 +13,7 @@ else
 end
 
 class TestCA < Test::Unit::TestCase
-	include ServerTest
+    include PuppetTest::ServerTest
     # Verify that we're autosigning.  We have to autosign a "different" machine,
     # since we always autosign the CA server's certificate.
     def test_autocertgeneration

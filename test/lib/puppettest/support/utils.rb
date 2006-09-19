@@ -1,4 +1,6 @@
-module PuppetTest::Support::Utils
+require 'puppettest'
+
+module PuppetTest
     def gcdebug(type)
         Puppet.warning "%s: %s" % [type, ObjectSpace.each_object(type) { |o| }]
     end
@@ -15,7 +17,7 @@ module PuppetTest::Support::Utils
         assert_nothing_raised {
             file = transport.to_type
         }
-        end
+    end
 
     # stop any services that might be hanging around
     def stopservices
@@ -24,7 +26,7 @@ module PuppetTest::Support::Utils
                 service[:ensure] = :stopped
                 service.evaluate
             }
-                end
+        end
     end
 
     # TODO: rewrite this to use the 'etc' module.
@@ -65,7 +67,7 @@ module PuppetTest::Support::Utils
 
     # If there are any fake data files, retrieve them
     def fakedata(dir)
-        ary = [$puppetbase, "test"]
+        ary = [basedir, "test"]
         ary += dir.split("/")
         dir = File.join(ary)
 
@@ -80,7 +82,7 @@ module PuppetTest::Support::Utils
     end
 
     def fakefile(name)
-        ary = [$puppetbase, "test"]
+        ary = [basedir, "test"]
         ary += name.split("/")
         file = File.join(ary)
         unless FileTest.exists?(file)
@@ -100,7 +102,7 @@ module PuppetTest::Support::Utils
 
     # a list of files that we can parse for testing
     def textfiles
-        textdir = File.join($puppetbase,"examples","code", "snippets")
+        textdir = File.join(exampledir,"code", "snippets")
         Dir.entries(textdir).reject { |f|
             f =~ /^\./ or f =~ /fail/
         }.each { |f|
@@ -109,7 +111,7 @@ module PuppetTest::Support::Utils
     end
 
     def failers
-        textdir = File.join($puppetbase,"examples","code", "failers")
+        textdir = File.join(exampledir,"code", "failers")
         # only parse this one file now
         files = Dir.entries(textdir).reject { |file|
             file =~ %r{\.swp}

@@ -1,10 +1,52 @@
-require 'puppettest/support/helpers'
+require 'puppet'
+require 'test/unit'
 
 module PuppetTest
-    include PuppetTest::Support::Helpers
+    # Find the root of the Puppet tree; this is not the test directory, but
+    # the parent of that dir.
+    def basedir
+        unless defined? @@basedir
+            case $0
+            when /rake_test_loader/
+                @@basedir = File.dirname(Dir.getwd)
+            else
+                dir = nil
+                if /^#{File::SEPARATOR}.+\.rb/
+                    dir = $0
+                else
+                    dir = File.join(Dir.getwd, $0)
+                end
+                3.times { dir = File.dirname(dir) }
+                @@basedir = dir
+            end
+        end
+        @@basedir
+    end
 
     def cleanup(&block)
         @@cleaners << block
+    end
+
+    def datadir
+        File.join(basedir, "test", "data")
+    end
+
+    def exampledir(*args)
+        unless defined? @@exampledir
+            @@exampledir = File.join(basedir, "examples")
+        end
+
+        if args.empty?
+            return @@exampledir
+        else
+            return File.join(@@exampledir, *args)
+        end
+    end
+
+    module_function :basedir, :datadir, :exampledir
+
+    def rake?
+        $0 =~ /rake_test_loader/
     end
 
     def setup
@@ -38,16 +80,27 @@ module PuppetTest
 
         @@cleaners = []
 
-        if $0 =~ /.+\.rb/ or Puppet[:debug]
+        # If we're running under rake, then disable debugging and such.
+        if rake? and ! Puppet[:debug]
+            Puppet::Log.close
+            Puppet::Log.newdestination tempfile()
+            Puppet[:httplog] = tempfile()
+        else
             Puppet::Log.newdestination :console
             Puppet::Log.level = :debug
             #$VERBOSE = 1
             Puppet.info @method_name
-        else
-            Puppet::Log.close
-            Puppet::Log.newdestination tempfile()
-            Puppet[:httplog] = tempfile()
         end
+        #if $0 =~ /.+\.rb/ or Puppet[:debug]
+        #    Puppet::Log.newdestination :console
+        #    Puppet::Log.level = :debug
+        #    #$VERBOSE = 1
+        #    Puppet.info @method_name
+        #else
+        #    Puppet::Log.close
+        #    Puppet::Log.newdestination tempfile()
+        #    Puppet[:httplog] = tempfile()
+        #end
 
         Puppet[:ignoreschedules] = true
     end
@@ -135,5 +188,12 @@ module PuppetTest
         end
     end
 end
+
+require 'puppettest/support'
+require 'puppettest/filetesting'
+require 'puppettest/fakes'
+require 'puppettest/exetest'
+require 'puppettest/parsertesting'
+require 'puppettest/servertest'
 
 # $Id$

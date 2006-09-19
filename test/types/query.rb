@@ -1,23 +1,16 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = File.join(Dir.getwd(), "../..")
-end
-
 require 'puppet'
 require 'puppettest'
-require 'test/unit'
 
 # $Id$
 
 class TestQuery < Test::Unit::TestCase
-    include TestPuppet
+    include PuppetTest
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store
     def file
         assert_nothing_raised() {
-            cfile = File.join($puppetbase,"examples/root/etc/configfile")
+            cfile = exampledir("root/etc/configfile")
             unless Puppet.type(:file).has_key?(cfile)
                 Puppet.type(:file).create(
                     :path => cfile,
@@ -35,7 +28,7 @@ class TestQuery < Test::Unit::TestCase
                 Puppet.type(:service).create(
                     :name => "sleeper",
                     :provider => "init",
-                    :path => File.join($puppetbase,"examples/root/etc/init.d"),
+                    :path => exampledir("root/etc/init.d"),
                     :hasstatus => true,
                     :check => [:ensure]
                 )

@@ -1,19 +1,12 @@
 # Test host job creation, modification, and destruction
 
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppettest'
 require 'puppet'
 require 'puppet/type/parsedtype/port'
-require 'test/unit'
 require 'facter'
 
 class TestPort < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     def setup
         super
         @porttype = Puppet.type(:port)

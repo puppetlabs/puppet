@@ -1,18 +1,11 @@
 #!/usr/bin/env ruby
 
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/config'
 require 'puppettest'
-require 'test/unit'
 
 class TestConfig < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
 
     def check_for_users
         count = Puppet::Type.type(:user).inject(0) { |c,o|

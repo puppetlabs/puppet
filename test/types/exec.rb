@@ -1,16 +1,9 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppettest'
-require 'test/unit'
 require 'facter'
 
 class TestExec < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     def test_execution
         command = nil
         output = nil

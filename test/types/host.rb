@@ -1,18 +1,11 @@
 # Test host job creation, modification, and destruction
 
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppettest'
 require 'puppet'
-require 'test/unit'
 require 'facter'
 
 class TestHost < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     def setup
         super
         # god i'm lazy

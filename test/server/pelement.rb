@@ -1,18 +1,11 @@
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/server/pelement'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 require 'base64'
 require 'cgi'
 
 class TestPElementServer < Test::Unit::TestCase
-	include ServerTest
+    include PuppetTest::ServerTest
 
     def verify_described(type, described)
         described.each do |name, trans|
@@ -175,7 +168,7 @@ class TestPElementServer < Test::Unit::TestCase
     def test_describe_alltypes
         # Systems get pretty retarded, so I'm going to set the path to some fake
         # data for ports
-        #Puppet::Type::ParsedType::Port.path = File.join($puppetbase,
+        #Puppet::Type::ParsedType::Port.path = File.join(basedir,
         #    "test/data/types/ports/1")
         #Puppet.err Puppet::Type::ParsedType::Port.path
         server = nil

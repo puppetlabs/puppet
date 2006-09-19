@@ -1,15 +1,8 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet/type'
 require 'puppettest'
-require 'test/unit'
 
 class TestType < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     def test_typemethods
         Puppet::Type.eachtype { |type|
             name = nil

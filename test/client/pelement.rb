@@ -1,19 +1,12 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/client/pelement'
 require 'puppet/server'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 
 # $Id$
 
 class TestPElementClient < Test::Unit::TestCase
-	include ServerTest
+    include PuppetTest::ServerTest
 
     def mkpelementserver
         handlers = {

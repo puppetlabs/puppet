@@ -1,8 +1,8 @@
+require 'puppettest'
+
 module PuppetTest::Support
 end
 
-require 'support/assertions'
-require 'support/file'
-require 'support/helpers'
-require 'support/parser'
-require 'support/utils'
+require 'puppettest/support/assertions'
+require 'puppettest/support/helpers'
+require 'puppettest/support/utils'

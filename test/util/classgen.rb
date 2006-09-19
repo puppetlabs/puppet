@@ -1,15 +1,8 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = ".."
-end
-
 require 'puppet'
 require 'puppettest'
-require 'test/unit'
 
 class TestPuppetUtilClassGen < Test::Unit::TestCase
-    include TestPuppet
+    include PuppetTest
 
     class FakeBase
         class << self

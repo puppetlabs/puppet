@@ -1,16 +1,9 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
-require 'test/unit'
 require 'fileutils'
 require 'puppettest'
 
 class TestFile < Test::Unit::TestCase
-	include FileTesting
+    include PuppetTest::FileTesting
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store

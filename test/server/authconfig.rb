@@ -1,16 +1,9 @@
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/server/authconfig'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 
 class TestAuthConfig < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
 
     def test_parsingconfigfile
         file = tempfile()

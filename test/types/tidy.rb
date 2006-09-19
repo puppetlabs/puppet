@@ -1,17 +1,10 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../../../../language/trunk"
-end
-
 require 'puppet'
 require 'puppettest'
-require 'test/unit'
 
 # $Id$
 
 class TestTidy < Test::Unit::TestCase
-	include FileTesting
+    include PuppetTest::FileTesting
     def mktmpfile
         # because luke's home directory is on nfs, it can't be used for testing
         # as root

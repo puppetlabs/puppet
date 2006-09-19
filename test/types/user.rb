@@ -1,18 +1,11 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'etc'
 require 'puppet/type'
 require 'puppettest'
-require 'test/unit'
 
 class TestUser < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
 
-    p = Puppet::Type.type(:user).provide :fake, :parent => TestPuppet::FakeProvider do
+    p = Puppet::Type.type(:user).provide :fake, :parent => PuppetTest::FakeProvider do
         @name = :fake
         apimethods
         def create

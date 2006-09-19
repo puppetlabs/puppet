@@ -1,13 +1,6 @@
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/parser/lexer'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 
 #%q{service("telnet") = \{
 #    port => "23",
@@ -17,7 +10,7 @@ require 'puppettest.rb'
 #} => [[:NAME, "service"], [:LPAREN, "("], [:DQUOTE, "\""], [:NAME, "telnet"], [:DQUOTE, "\""], [:RPAREN, ")"], [:EQUALS, "="], [:lbrace, "{"], [:NAME, "port"], [:FARROW, "=>"], [:DQUOTE, "\""], [:NAME, "23"], [:DQUOTE, "\""], [:COMMA, ","], [:NAME, "protocol"], [:FARROW, "=>"], [:DQUOTE, "\""], [:NAME, "tcp"], [:DQUOTE, "\""], [:COMMA, ","], [:NAME, "name"], [:FARROW, "=>"], [:DQUOTE, "\""], [:NAME, "telnet"], [:DQUOTE, "\""], [:COMMA, ","], [:RBRACE, "}"]]
 
 class TestLexer < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     def setup
         super
         @lexer = Puppet::Parser::Lexer.new()

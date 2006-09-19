@@ -1,4 +1,4 @@
-require 'scaffold'
+require 'puppettest'
 
 module PuppetTest::ServerTest
     include PuppetTest

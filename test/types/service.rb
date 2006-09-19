@@ -1,12 +1,5 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppettest'
-require 'test/unit'
 
 $skipsvcs = false
 case Facter["operatingsystem"].value
@@ -18,13 +11,13 @@ if $skipsvcs
 else
 #class TestInitService < Test::Unit::TestCase
 class TestInitService
-	include TestPuppet
+	include PuppetTest
 
     def setup
         super
         sleeper = nil
-        script = File.join($puppetbase,"examples/root/etc/init.d/sleeper")
-        @init = File.join($puppetbase,"examples/root/etc/init.d")
+        script = exampledir("root/etc/init.d/sleeper")
+        @init = exampledir("root/etc/init.d")
         @status = script + " status"
     end
 
@@ -44,7 +37,7 @@ class TestInitService
 
     def mksleeper(hash = {})
         hash[:name] = "sleeper"
-        hash[:path] = File.join($puppetbase,"examples/root/etc/init.d")
+        hash[:path] = exampledir("root/etc/init.d")
         hash[:ensure] = true
         hash[:hasstatus] = true
         hash[:hasrestart] = true
@@ -111,7 +104,7 @@ class TestInitService
 end
 
 class TestLocalService < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
 
     def teardown
         Puppet.type(:service).clear

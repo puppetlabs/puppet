@@ -1,4 +1,7 @@
-module PuppetTest::Support::File
+require 'puppettest'
+
+module PuppetTest::FileTesting
+    include PuppetTest
     def cycle(comp)
         trans = nil
         assert_nothing_raised {
@@ -221,7 +224,7 @@ module PuppetTest::Support::File
     end
 
     def conffile
-        File.join($puppetbase,"examples/root/etc/configfile")
+        exampledir("root/etc/configfile")
     end
 end
 

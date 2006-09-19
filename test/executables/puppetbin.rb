@@ -1,17 +1,10 @@
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/server'
 require 'puppet/sslcertificates'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 
 class TestPuppetBin < Test::Unit::TestCase
-	include ExeTest
+    include PuppetTest::ExeTest
     def test_version
         output = nil
         assert_nothing_raised {

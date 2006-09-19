@@ -1,21 +1,14 @@
 #!/usr/bin/ruby
 
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/rails'
 require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppet/client'
-require 'test/unit'
 require 'puppettest'
 
 class TestRails < Test::Unit::TestCase
-	include ParserTesting
+    include PuppetTest::ParserTesting
 
     def test_includerails
         assert_nothing_raised {

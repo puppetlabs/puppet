@@ -1,18 +1,11 @@
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/server'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 require 'socket'
 require 'facter'
 
 class TestPuppetDExe < Test::Unit::TestCase
-	include ExeTest
+    include PuppetTest::ExeTest
     def test_normalstart
         # start the master
         file = startmasterd

@@ -1,18 +1,11 @@
 #!/usr/bin/env ruby
 
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/autoload'
 require 'puppettest'
-require 'test/unit'
 
 class TestAutoload < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     @things = []
     def self.newthing(name)
         @things << name

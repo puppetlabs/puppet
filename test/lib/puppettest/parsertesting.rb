@@ -1,4 +1,7 @@
-module PuppetTest::Support::Parser
+require 'puppettest'
+
+module PuppetTest::ParserTesting
+    include PuppetTest
     AST = Puppet::Parser::AST
 
     def astarray(*args)

@@ -1,13 +1,6 @@
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/server'
-require 'test/unit'
-require 'puppettest.rb'
+require 'puppettest'
 
 # $Id$
 
@@ -18,7 +11,7 @@ else
 end
 
 class TestServer < Test::Unit::TestCase
-	include ServerTest
+    include PuppetTest::ServerTest
 
     # test that we can connect to the server
     # we have to use fork here, because we apparently can't use threads

@@ -1,16 +1,9 @@
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/parser/parser'
-require 'test/unit'
 require 'puppettest'
 
 class TestParser < Test::Unit::TestCase
-	include ParserTesting
+    include PuppetTest::ParserTesting
 
     def setup
         super

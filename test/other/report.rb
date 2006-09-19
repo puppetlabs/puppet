@@ -1,16 +1,9 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/transaction/report'
 require 'puppettest'
-require 'test/unit'
 
 class TestReports < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
 
     # Make sure we can use reports as log destinations.
     def test_reports_as_log_destinations

@@ -1,19 +1,10 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/client'
 require 'puppet/server'
-require 'test/unit'
-require 'puppettest.rb'
-
-# $Id$
+require 'puppettest'
 
 class TestClient < Test::Unit::TestCase
-	include ServerTest
+    include PuppetTest::ServerTest
     # a single run through of connect, auth, etc.
     def test_sslInitWithAutosigningLocalServer
         # autosign everything, for simplicity
@@ -195,3 +186,5 @@ class TestClient < Test::Unit::TestCase
                "PID file was not created")
     end
 end
+
+# $Id$

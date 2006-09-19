@@ -1,15 +1,8 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppettest'
-require 'test/unit'
 
 class TestRelationships < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     def newfile
         assert_nothing_raised() {
             return Puppet.type(:file).create(

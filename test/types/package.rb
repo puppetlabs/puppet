@@ -1,12 +1,5 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppettest'
 require 'puppet'
-require 'test/unit'
 require 'facter'
 
 $platform = Facter["operatingsystem"].value
@@ -16,7 +9,7 @@ unless Puppet.type(:package).defaultprovider
 else
 
 class TestPackages < Test::Unit::TestCase
-	include FileTesting
+    include PuppetTest::FileTesting
     def setup
         super
         #@list = Puppet.type(:package).getpkglist

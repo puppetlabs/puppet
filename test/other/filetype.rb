@@ -1,16 +1,9 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/filetype'
 require 'puppettest'
-require 'test/unit'
 
 class TestFileType < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
 
     def test_flat
         obj = nil

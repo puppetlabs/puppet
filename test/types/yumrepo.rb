@@ -1,18 +1,11 @@
 # Test the yumrepo type
 
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppettest'
 require 'puppet'
-require 'test/unit'
 require 'fileutils'
 
 class TestYumRepo < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
 
     def setup
         super

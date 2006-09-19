@@ -1,19 +1,12 @@
 #!/usr/bin/ruby
 
-if __FILE__ == $0
-    $:.unshift '../../lib'
-    $:.unshift '..'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/transportable'
-require 'test/unit'
 require 'puppettest'
 require 'yaml'
 
 class TestTransportable < Test::Unit::TestCase
-	include ParserTesting
+    include PuppetTest::ParserTesting
 
     def test_yamldumpobject
         obj = mk_transobject

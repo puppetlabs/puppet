@@ -1,15 +1,8 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppettest'
-require 'test/unit'
 
 class TestTagging < Test::Unit::TestCase
-    include TestPuppet
+    include PuppetTest
 
     # Make sure the scopes are getting the right tags
     def test_scopetags
@@ -62,9 +55,14 @@ class TestTagging < Test::Unit::TestCase
             )
         }
 
+        ast = Puppet::Parser::AST::ASTArray.new({})
+
+        # We have to use 'evaluate', rather than just calling to_trans directly,
+        # because scopes do some internal checking to make sure the same object
+        # is not translated multiple times.
         objects = nil
         assert_nothing_raised {
-            objects = scope.to_trans
+            objects = scope.evaluate(:ast => ast)
         }
 
         # There's only one object, so shift it out

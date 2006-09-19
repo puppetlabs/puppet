@@ -1,4 +1,6 @@
-module PuppetTest::Support::Helpers
+require 'puppettest'
+
+module PuppetTest
     def nonrootuser
         Etc.passwd { |user|
             if user.uid != Process.uid and user.uid > 0

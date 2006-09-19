@@ -1,15 +1,8 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppettest'
-require 'test/unit'
 
 class TestBasic < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store
@@ -39,7 +32,7 @@ class TestBasic < Test::Unit::TestCase
             @sleeper = Puppet.type(:service).create(
                 :name => "sleeper",
                 :provider => "init",
-                :path => File.join($puppetbase,"examples/root/etc/init.d"),
+                :path => exampledir("root/etc/init.d"),
                 :hasstatus => true,
                 :ensure => :running
             )

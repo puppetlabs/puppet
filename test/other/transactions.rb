@@ -1,17 +1,10 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppettest'
-require 'test/unit'
 
 # $Id$
 
 class TestTransactions < Test::Unit::TestCase
-	include FileTesting
+    include PuppetTest::FileTesting
 
     def test_reports
         path1 = tempfile()
@@ -111,7 +104,7 @@ class TestTransactions < Test::Unit::TestCase
             return Puppet.type(:service).create(
                 :name => "sleeper",
                 :type => "init",
-                :path => File.join($puppetbase,"examples/root/etc/init.d"),
+                :path => exampledir("root/etc/init.d"),
                 :hasstatus => true,
                 :check => [:ensure]
             )

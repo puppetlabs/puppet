@@ -1,14 +1,7 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet/metric'
 require 'puppet'
 require 'puppettest'
 require 'puppet/type'
-require 'test/unit'
 
 $haverrd = true
 begin
@@ -19,7 +12,7 @@ end
 
 if $haverrd
     class TestMetric < Test::Unit::TestCase
-        include TestPuppet
+        include PuppetTest
 
         def gendata
             totalmax = 1000

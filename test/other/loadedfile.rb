@@ -1,16 +1,9 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppet/loadedfile'
 require 'puppettest'
-require 'test/unit'
 
 class TestLoadedFile < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     def test_file
         Puppet[:filetimeout] = 0
         file = nil

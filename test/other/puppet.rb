@@ -1,16 +1,9 @@
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppet'
 require 'puppettest'
-require 'test/unit'
 
 # Test the different features of the main puppet module
 class TestPuppetModule < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     include SignalObserver
     
     def mkfakeclient

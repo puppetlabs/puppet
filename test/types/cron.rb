@@ -1,18 +1,11 @@
 # Test cron job creation, modification, and destruction
 
-if __FILE__ == $0
-    $:.unshift '..'
-    $:.unshift '../lib'
-    $puppetbase = "../.."
-end
-
 require 'puppettest'
 require 'puppet'
-require 'test/unit'
 require 'facter'
 
 class TestCron < Test::Unit::TestCase
-	include TestPuppet
+	include PuppetTest
     def setup
         super
 

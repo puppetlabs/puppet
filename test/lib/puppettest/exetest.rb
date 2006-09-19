@@ -1,4 +1,4 @@
-require 'servertest'
+require 'puppettest/servertest'
 
 module PuppetTest::ExeTest
     include PuppetTest::ServerTest
@@ -10,7 +10,7 @@ module PuppetTest::ExeTest
     end
 
     def bindir
-        File.join($puppetbase, "bin")
+        File.join(basedir, "bin")
     end
 
     def setbindir
