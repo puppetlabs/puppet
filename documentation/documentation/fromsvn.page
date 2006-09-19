@@ -55,7 +55,7 @@ the [testing](testing.html) guide, and involves writing a short site manifest.  
 option is to run through all of the unit tests that ship with Puppet:
 
     $ cd $SETUP_DIR/puppet/test
-    $ ./test
+    $ rake
 
 This tends to take a long time, however, and is probably only useful if you
 already know there's a problem and want to report a bug or if you are planning

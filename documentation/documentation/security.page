@@ -53,7 +53,7 @@ must be watched or ``puppetca --list`` can be used list waiting requests.
 Once a request arrives, ``puppetca --sign <hostname>`` can be used to sign
 the request.  Adding the ``--all`` flag will sign all outstanding
 requests. A list of all certificates ever issued by Puppet's CA can be
-found in the file ``$cadir/inventory.txt''.
+found in the file ``$cadir/inventory.txt``.
 
 Certificates, once issued, can be revoked with ``puppetca --revoke
 <hostname|serial>''. The server consults the certificate revocation list
