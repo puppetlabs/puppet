@@ -129,7 +129,7 @@ class TestUserProvider < Test::Unit::TestCase
         when :name: name
         when :ensure: :present
         when :comment: "Puppet Testing User %s" % name
-        when :gid: Process.gid()
+        when :gid: nonrootgroup.name
         when :shell: findshell()
         when :home: "/home/%s" % name
         else

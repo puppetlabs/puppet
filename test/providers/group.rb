@@ -65,7 +65,7 @@ class TestGroupProvider < Test::Unit::TestCase
             %x{nireport / /groups name gid}.split("\n").each { |line|
                 group, id = line.chomp.split(/\s+/)
                 assert(id =~ /^-?\d+$/, "Group id %s for %s is not a number" %
-                    [id, group])
+                    [id.inspect, group])
                 if group == name
                     return Integer(id)
                 end

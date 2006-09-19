@@ -62,7 +62,7 @@ class NetInfo < Puppet::Provider::NameService
             # We need to generate the id if it's missing.
             @model.class.validstates.each do |name|
                 next if name == :ensure
-                unless val = @model[name]
+                unless val = @model.should(name)
                     if  (@model.class.name == :user and name == :uid) or
                         (@model.class.name == :group and name == :gid)
                         val = autogen()
@@ -76,14 +76,6 @@ class NetInfo < Puppet::Provider::NameService
             end
         end
     end
-
-    #def exists?
-    #    if self.report(:name)
-    #        return true
-    #    else
-    #        return false
-    #    end
-    #end
 
     # Retrieve a specific value by name.
     def get(param)
@@ -149,9 +141,15 @@ class NetInfo < Puppet::Provider::NameService
                     self.class.name
             end
         end
-        self.debug "Executing %s" % cmd.join(" ").inspect
 
-        %x{#{cmd.join(" ")} 2>&1}.split("\n").each { |line|
+        begin
+            output = execute(cmd.join(" "))
+        rescue Puppet::ExecutionFailure => detail
+            Puppet.err "Failed to call nireport: %s" % detail
+            return nil
+        end
+
+        output.split("\n").each { |line|
             values = line.split(/\t/)
 
             hash = {}
