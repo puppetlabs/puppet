@@ -436,7 +436,7 @@ module Util
 
         if failonfail
             unless $? == 0
-                raise ExecutionFailure, output
+                raise ExecutionFailure, "Could not execute '%s': %s" % [command, output]
             end
         end
 

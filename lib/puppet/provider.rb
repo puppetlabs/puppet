@@ -51,17 +51,9 @@ class Puppet::Provider
             unless metaclass.method_defined? name
                 meta_def(name) do |args|
                     cmd = command(name) + " " + args
-                    begin
-                        output = execute cmd
-                    rescue Puppet::ExecutionFailure
-                        if output
-                            raise Puppet::ExecutionFailure.new(output)
-                        else
-                            raise Puppet::ExecutionFailure, "Could not execute '#{cmd}'"
-                        end
-                    end
-
-                    return output
+                    # This might throw an ExecutionFailure, but the system above
+                    # will catch it, if so.
+                    return execute(cmd)
                 end
                 unless method_defined? name
                     define_method(name) do |args|

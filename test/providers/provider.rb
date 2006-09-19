@@ -142,6 +142,45 @@ class TestProvider < Test::Unit::TestCase
 
         assert(! provider.default?, "Was considered default")
     end
+
+    # Make sure that failed commands get their output in the error.
+    def test_outputonfailure
+        provider = newprovider
+
+        dir = tstdir()
+        file = File.join(dir, "mycmd")
+        sh = Puppet::Util.binary("sh")
+        File.open(file, "w") { |f|
+            f.puts %{#!#{sh}
+            echo A Failure >&2
+            exit 2
+            }
+        }
+        File.chmod(0755, file)
+
+        provider.commands :cmd => file
+
+        inst = provider.new(nil)
+
+        assert_raise(Puppet::ExecutionFailure) do
+            inst.cmd "some arguments"
+        end
+
+        out = nil
+        begin
+            inst.cmd "some arguments"
+        rescue Puppet::ExecutionFailure => detail
+            out = detail.to_s
+        end
+
+        assert(out =~ /A Failure/,
+               "Did not receive command output on failure")
+
+        assert(out =~ /Could not execute/,
+               "Did not receive info wrapper on failure")
+
+
+    end
 end
 
 # $Id$
