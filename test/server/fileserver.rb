@@ -388,7 +388,7 @@ class TestFileServer < Test::Unit::TestCase
     # verify that 'describe' works as advertised
     def test_describe
         server = nil
-        testdir = tempfile()
+        testdir = tstdir()
         files = mktestfiles(testdir)
 
         file = nil
@@ -455,6 +455,7 @@ class TestFileServer < Test::Unit::TestCase
         mounts = {}
         %w{thing thus these those}.each { |dir|
             path = File.join(basedir, dir)
+            Dir.mkdir(path)
             mounts[dir] = mktestfiles(path)
 
         }
