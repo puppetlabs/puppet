@@ -188,6 +188,10 @@ case mode
 when :list
     puts hosts.join("\n")
 when :clean
+    if hosts.empty?
+        $stderr.puts "You must specify one or more hosts to clean"
+        exit(24)
+    end
     hosts.each do |host|
         ca.clean(host)
     end
