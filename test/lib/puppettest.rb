@@ -1,7 +1,11 @@
-require 'support/helpers'
+require 'puppettest/support/helpers'
 
-module PuppetTestScaffold
-    include PuppetTestSupport::Helpers
+module PuppetTest
+    include PuppetTest::Support::Helpers
+
+    def cleanup(&block)
+        @@cleaners << block
+    end
 
     def setup
         @memoryatstart = Puppet::Util.memory
@@ -48,6 +52,45 @@ module PuppetTestScaffold
         Puppet[:ignoreschedules] = true
     end
 
+    def tempfile
+        if defined? @@tmpfilenum
+            @@tmpfilenum += 1
+        else
+            @@tmpfilenum = 1
+        end
+
+        f = File.join(self.tmpdir(), self.class.to_s + "_" + @method_name +
+                      @@tmpfilenum.to_s)
+        @@tmpfiles << f
+        return f
+    end
+
+    def tstdir
+        dir = tempfile()
+        Dir.mkdir(dir)
+        return dir
+    end
+
+    def tmpdir
+        unless defined? @tmpdir and @tmpdir
+            @tmpdir = case Facter["operatingsystem"].value
+                      when "Darwin": "/private/tmp"
+                      when "SunOS": "/var/tmp"
+                      else
+            "/tmp"
+                      end
+
+
+            @tmpdir = File.join(@tmpdir, "puppettesting")
+
+            unless File.exists?(@tmpdir)
+                FileUtils.mkdir_p(@tmpdir)
+                File.chmod(01777, @tmpdir)
+            end
+        end
+        @tmpdir
+    end
+
     def teardown
         stopservices
 
@@ -92,3 +135,5 @@ module PuppetTestScaffold
         end
     end
 end
+
+# $Id$

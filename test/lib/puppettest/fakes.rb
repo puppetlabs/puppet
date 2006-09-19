@@ -1,4 +1,4 @@
-module PuppetTestFakes
+module PuppetTest::Fakes
     # A baseclass for the faketypes.
     class FakeModel
         class << self

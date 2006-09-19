@@ -1,7 +1,7 @@
 require 'servertest'
 
-module ExeTest
-    include ServerTest
+module PuppetTest::ExeTest
+    include PuppetTest::ServerTest
 
     def setup
         super
@@ -118,3 +118,5 @@ module ExeTest
         super
     end
 end
+
+# $Id$

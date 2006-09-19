@@ -1,7 +1,7 @@
 require 'scaffold'
 
-module ServerTest
-    include PuppetTestScaffold
+module PuppetTest::ServerTest
+    include PuppetTest
     def setup
         super
 
@@ -66,3 +66,5 @@ module ServerTest
     end
 
 end
+
+# $Id$

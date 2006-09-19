@@ -1,4 +1,4 @@
-module PuppetTestSupport
+module PuppetTest::Support
 end
 
 require 'support/assertions'
