@@ -29,7 +29,7 @@ argument is approprite or not.
 
 * **ca_days** (*ca*)
 
-  How long a certificate should be valid.
+  How long a certificate should be valid. *Deprecated. Use ``ca_ttl'' instead*
 
 * **ca_md** (*ca*)
 
@@ -62,6 +62,10 @@ argument is approprite or not.
 * **capub** (*ca*)
 
   The CA public key.
+
+* **ca_ttl** (*ca*)
+
+  How long newly issued certificates should be valid
 
 * **certdir** (*certificates*)
 
