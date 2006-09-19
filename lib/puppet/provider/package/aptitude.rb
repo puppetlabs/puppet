@@ -7,7 +7,8 @@ Puppet::Type.type(:package).provide :aptitude, :parent => :apt do
     ENV['DEBIAN_FRONTEND'] = "noninteractive"
 
     def aptcmd(arg)
-        aptitude(arg)
+        # Apparently aptitude hasn't always supported a -q flag.
+        aptitude(arg.gsub(/-q/,""))
     end
 end
 
