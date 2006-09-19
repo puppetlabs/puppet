@@ -9,7 +9,6 @@
 require 'etc'
 require 'facter'
 require 'puppet/type/state'
-require 'puppet/type/nameservice'
 
 module Puppet
     newtype(:group) do

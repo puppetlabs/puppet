@@ -1,7 +1,6 @@
 require 'etc'
 require 'facter'
 require 'puppet/type/state'
-require 'puppet/type/nameservice'
 
 module Puppet
     newtype(:user) do
@@ -166,7 +165,6 @@ module Puppet
                 end
                 super
             end
-
         end
 
         newstate(:comment) do

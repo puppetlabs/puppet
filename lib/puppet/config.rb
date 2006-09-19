@@ -386,18 +386,20 @@ class Config
     def section_to_transportable(section, done = nil, includefiles = true)
         done ||= Hash.new { |hash, key| hash[key] = {} }
         objects = []
-        persection(section) { |obj|
+        persection(section) do |obj|
             if @config[:mkusers] and @config[:mkusers].value
-                [:owner, :group].each { |attr|
+                [:owner, :group].each do |attr|
                     type = nil
                     if attr == :owner
                         type = :user
                     else
                         type = attr
                     end
+                    # If a user and/or group is set, then make sure we're
+                    # managing that object
                     if obj.respond_to? attr and name = obj.send(attr)
-                        # Skip owners and groups we've already done, but tag them with
-                        # our section if necessary
+                        # Skip owners and groups we've already done, but tag
+                        # them with our section if necessary
                         if done[type].include?(name)
                             tags = done[type][name].tags
                             unless tags.include?(section)
@@ -412,11 +414,15 @@ class Config
                             newobj = TransObject.new(name, type.to_s)
                             newobj.tags = ["puppet", "configuration", section]
                             newobj[:ensure] = "present"
+                            # Set the group appropriately for the user
+                            if type == :user
+                                newobj[:gid] = Puppet[:group]
+                            end
                             done[type][name] = newobj
                             objects << newobj
                         end
                     end
-                }
+                end
             end
 
             if obj.respond_to? :to_transportable
@@ -433,7 +439,7 @@ class Config
                     end
                 end
             end
-        }
+        end
 
         bucket = Puppet::TransBucket.new
         bucket.type = section
