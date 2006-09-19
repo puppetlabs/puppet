@@ -99,7 +99,7 @@ module Puppet
             # it's an OS X bug, since it shows up in perl, too.
             if @is > 120000
                 self.warning "current state is silly: %s" % @is
-                @is = :absent
+                @is = :silly
             end
         end
 

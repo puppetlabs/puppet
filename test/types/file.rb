@@ -282,6 +282,25 @@ class TestFile < Test::Unit::TestCase
                 }
             }
         end
+
+        if Facter.value(:operatingsystem) == "Darwin"
+            def test_sillyowner
+                file = tempfile()
+                File.open(file, "w") { |f| f.puts "" }
+                File.chown(-2, nil, file)
+
+                assert(File.stat(file).uid > 120000, "eh?")
+                user = nonrootuser
+                obj = Puppet::Type.newfile(
+                    :path => file,
+                    :owner => user.name
+                )
+
+                assert_apply(obj)
+
+                assert_equal(user.uid, File.stat(file).uid)
+            end
+        end
     else
         $stderr.puts "Run as root for complete owner and group testing"
     end
