@@ -129,23 +129,36 @@ class TestLog < Test::Unit::TestCase
 
         file = Puppet.type(:file).create(
             :path => path,
-            :check => [:owner, :group, :mode, :checksum]
+            :check => [:owner, :group, :mode, :checksum],
+            :ensure => :file
         )
         file.tags = %w{this is a test}
 
+        state = file.state(:ensure)
+        assert(state, "Did not get state")
         log = nil
         assert_nothing_raised {
             log = Puppet::Log.new(
                 :level => :info,
-                :source => file,
+                :source => state,
                 :message => "A test message"
             )
         }
 
-        assert(log.tags, "Got no tags")
+        # Now yaml and de-yaml it, and test again
+        yamllog = YAML.load(YAML.dump(log))
 
-        assert_equal(log.tags, file.tags, "Tags were not equal")
-        assert_equal(log.source, file.path, "Source was not set correctly")
+        {:log => log, :yaml => yamllog}.each do |type, msg|
+            assert(msg.tags, "Got no tags")
+
+            msg.tags.each do |tag|
+                assert(msg.tagged?(tag), "Was not tagged with %s" % tag)
+            end
+
+            assert_equal(msg.tags, state.tags, "Tags were not equal")
+            assert_equal(msg.source, state.path, "Source was not set correctly")
+        end
+
     end
 
     # Verify that we can pass strings that match printf args

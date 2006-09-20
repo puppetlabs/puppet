@@ -745,6 +745,16 @@ end
         assert(file1, "Did not create first file")
         assert_nil(file2, "Incorrectly created second file")
     end
+
+    def test_tags
+        obj = Puppet::Type.type(:file).create(:path => tempfile())
+
+        tags = [:some, :test, :tags]
+
+        obj.tags = tags
+
+        assert_equal(tags + [:file], obj.tags)
+    end
 end
 
 # $Id$

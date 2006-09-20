@@ -5,6 +5,7 @@ module Puppet
     # expected that that will be the most common log destination.  Supports
     # multiple destinations, one of which is a remote server.
 	class Log
+        include Puppet::Util
         PINK="[0;31m"
         GREEN="[0;32m"
         YELLOW="[0;33m"
@@ -501,7 +502,7 @@ module Puppet
         end
 
         def tagged?(tag)
-            @tags.include?(tag)
+            @tags.detect { |t| t.to_s == tag.to_s }
         end
 
 		def to_report

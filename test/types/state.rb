@@ -119,6 +119,27 @@ class TestState < Test::Unit::TestCase
         assert_equal(:fake_other, ret,
                      "Event did not get returned correctly")
     end
+
+    def test_tags
+        obj = "yay"
+        metaobj = class << obj; self; end
+
+        metaobj.send(:attr_accessor, :tags)
+
+        tags = [:some, :tags, :for, :testing]
+        obj.tags = tags
+
+        stateklass = newstate
+ 
+        inst = nil
+        assert_nothing_raised do
+            inst = stateklass.new(:parent => obj)
+        end
+
+        assert_nothing_raised do
+            assert_equal(tags + [inst.name], inst.tags)
+        end
+    end
 end
 
 # $Id$

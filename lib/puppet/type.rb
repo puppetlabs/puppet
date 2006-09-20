@@ -1766,6 +1766,8 @@ class Type < Puppet::Element
                 self.warning "Ignoring tag %s of type %s" % [tag.inspect, tag.class]
             end
         end
+
+        @tags << self.class.name unless @tags.include?(self.class.name)
     end
 
     # Figure out of any of the specified tags apply to this object.  This is an

@@ -363,6 +363,19 @@ class State < Puppet::Parameter
         self.set
     end
 
+    # The states need to return tags so that logs correctly collect them.
+    def tags
+        unless defined? @tags
+            @tags = []
+            # This might not be true in testing
+            if @parent.respond_to? :tags
+                @tags = @parent.tags
+            end
+            @tags << self.name
+        end
+        @tags
+    end
+
     def to_s
         return "%s(%s)" % [@parent.name,self.name]
     end

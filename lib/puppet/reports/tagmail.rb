@@ -20,6 +20,8 @@ Puppet::Server::Report.newreport(:tagmail) do |report|
         return
     end
 
+    p report
+
     # Load the config file
     tags = {}
     File.readlines(Puppet[:tagmap]).each do |line|
@@ -83,6 +85,7 @@ Puppet::Server::Report.newreport(:tagmail) do |report|
                     # We need to open a separate process for every set of email addresses
                     IO.popen(Puppet[:sendmail] + " " + emails.join(" "), "w") do |p|
                         p.puts "From: #{Puppet[:reportfrom]}"
+                        p.puts "To: %s" % emails.join(', ')
                         p.puts "Subject: Puppet Report for %s" % report.host
 
                         p.puts messages
@@ -100,3 +103,5 @@ Puppet::Server::Report.newreport(:tagmail) do |report|
         end
     end
 end
+
+# $Id$
