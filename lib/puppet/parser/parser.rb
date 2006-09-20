@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id1e49212871', 'grammar.ra', 603
+module_eval <<'..end grammar.ra modeval..idc4b6d943e3', 'grammar.ra', 603
 require 'puppet/parser/functions'
 
 attr_reader :file
@@ -172,7 +172,7 @@ end
 
 # $Id$
 
-..end grammar.ra modeval..id1e49212871
+..end grammar.ra modeval..idc4b6d943e3
 
 ##### racc 1.4.5 generates ###
 
