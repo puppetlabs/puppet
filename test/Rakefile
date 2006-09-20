@@ -4,6 +4,7 @@ include Find
 include FileTest
 
 $exclusions = %W(lib data)
+$test_library_paths = %W(lib ../lib)
 $test_dirs = [] # this is used to generate all the targets.
 $test_files = [] # this is ONLY used for the top-level test suite.
 
@@ -27,7 +28,7 @@ end
 
 desc "Run the full test suite"
 Rake::TestTask.new 'test' do |t|
-    t.libs << 'lib'
+    t.libs << $test_library_paths
     t.test_files = $test_files.sort
     t.verbose = true
 end
@@ -47,7 +48,7 @@ $test_dirs.sort.each do |path|
     end
 
     Rake::TestTask.new path.to_sym do |t|
-       t.libs << 'lib'
+       t.libs << $test_library_paths
        t.test_files = files.sort
        t.verbose = true
     end
@@ -57,7 +58,7 @@ $test_dirs.sort.each do |path|
     namespace path.to_sym do 
         files.each do |file|
             Rake::TestTask.new File.basename(file, '.rb').to_sym do |t|
-                t.libs << '..'
+                t.libs << $test_library_paths + ['..']
                 t.test_files = [ file ]
                 t.verbose = true 
             end 
