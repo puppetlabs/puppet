@@ -269,13 +269,13 @@ rescue GetoptLong::InvalidOption => detail
     exit(1)
 end
 
-Puppet.genconfig
-Puppet.genmanifest
-
 # Now parse the config
 if Puppet[:config] and File.exists? Puppet[:config]
     Puppet.config.parse(Puppet[:config])
 end
+
+Puppet.genconfig
+Puppet.genmanifest
 
 # Default to daemonizing, but if verbose or debug is specified,
 # default to staying in the foreground.
