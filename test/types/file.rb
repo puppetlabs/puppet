@@ -1406,6 +1406,20 @@ class TestFile < Test::Unit::TestCase
         assert(FileTest.exists?(localfile), "File got purged")
         assert(! FileTest.exists?(randfile), "File did not get purged")
     end
+
+    # Testing #274.  Make sure target can be used without 'ensure'.
+    def test_target_without_ensure
+        source = tempfile()
+        dest = tempfile()
+        File.open(source, "w") { |f| f.puts "funtest" }
+
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet::Type.newfile(:path => dest, :target => source)
+        }
+
+        assert_apply(obj)
+    end
 end
 
 # $Id$

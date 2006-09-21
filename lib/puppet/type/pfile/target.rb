@@ -12,6 +12,12 @@ module Puppet
 
         # Anything else, basically
         newvalue(/./) do
+            if ! @parent.should(:ensure)
+                @parent[:ensure] = :link
+            elsif @parent.should(:ensure) != :link
+                raise Puppet::Error,
+                    "You cannot specify a target unless 'ensure' is set to 'link'"
+            end
             if @parent.state(:ensure).insync?
                 mklink()
             end
