@@ -98,7 +98,4 @@ TestAutoload.newthing(:#{name.to_s})
                     "Did not get loaded #{thing.to_s}")
         end
     end
-
-    def test_loadall
-    end
 end

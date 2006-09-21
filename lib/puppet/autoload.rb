@@ -76,8 +76,10 @@ class Puppet::Autoload
                     # aren't used.
                     name = File.basename(file).sub(".rb", '').intern
                     next if @loaded.include? name
+                    next if $".include?(File.join(@path, name.to_s + ".rb"))
+                    filepath = File.join(@path, name.to_s + ".rb")
                     begin
-                        Kernel.load file, @wrap
+                        Kernel.require filepath
                         @loaded[name] = true
                     rescue => detail
                         if Puppet[:trace]

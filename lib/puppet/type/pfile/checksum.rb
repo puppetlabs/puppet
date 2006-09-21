@@ -4,8 +4,13 @@
 # changes on its own.
 module Puppet
     Puppet.type(:file).newstate(:checksum) do
-        desc "How to check whether a file has changed.  **md5**/*lite-md5*/
-            *time*/*mtime*"
+        desc "How to check whether a file has changed.  This state is used internally
+            for file copying, but it can also be used to monitor files somewhat
+            like Tripwire without managing the file contents in any way.  You can
+            specify that a file's checksum should be monitored and then subscribe to
+            the file from another object and receive events to signify
+            checksum changes, for instance."
+
         @event = :file_changed
 
         @unmanaged = true
@@ -24,6 +29,8 @@ module Puppet
 
         str = @validtypes.join("|")
 
+        # This is here because Puppet sets this internally, using
+        # {md5}......
         newvalue(/^\{#{str}\}/) do
             handlesum()
         end
