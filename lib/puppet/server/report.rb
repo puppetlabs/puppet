@@ -46,12 +46,15 @@ class Server
         def self.report(name)
             name = name.intern if name.is_a? String
             unless @reports.include? name
-                @reportloader.load(name)
-                unless @reports.include? name
-                    Puppet.warning(
-                        "Loaded report file for %s but report was not defined" %
-                        name
-                    )
+                if @reportloader.load(name)
+                    unless @reports.include? name
+                        Puppet.warning(
+                            "Loaded report file for %s but report was not defined" %
+                            name
+                        )
+                        return nil
+                    end
+                else
                     return nil
                 end
             end
@@ -88,7 +91,14 @@ class Server
                 report = CGI.unescape(report)
             end
 
-            process(report)
+            begin
+                process(report)
+            rescue => detail
+                Puppet.err "Could not process report %s: %s" % [$1, detail]
+                if Puppet[:trace]
+                    puts detail.backtrace
+                end
+            end
 
             # We don't want any tracking back in the fs.  Unlikely, but there
             # you go.
@@ -152,10 +162,8 @@ class Server
                 return
             end
 
-            Puppet[:reports].split(/\s*,\s*/).each do |name|
-                method = self.class.report(name)
-
-                if respond_to? method
+            reports().each do |name|
+                if method = self.class.report(name) and respond_to? method
                     Puppet.info "Processing report %s" % name
                     begin
                         send(method, report)
@@ -170,6 +178,11 @@ class Server
                     Puppet.warning "No report named '%s'" % name
                 end
             end
+        end
+
+        # Handle the parsing of the reports attribute.
+        def reports
+            Puppet[:reports].gsub(/(^\s+)|(\s+$)/, '').split(/\s*,\s*/)
         end
     end
 end

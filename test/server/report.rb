@@ -121,6 +121,25 @@ class TestReportServer < Test::Unit::TestCase
         assert(server.respond_to?(method),
             "Server does not respond to report method")
 
+        # Now make sure our server doesn't die on missing reports
+        Puppet[:reports] = "fakereport"
+        assert_nothing_raised {
+            retval = server.send(:process, YAML.dump("a string"))
+        }
+    end
+
+    def test_reports
+        Puppet[:reports] = "myreport"
+
+        # Create a server
+        server = Puppet::Server::Report.new
+
+        {"myreport" => ["myreport"],
+            " fake, another, yay " => ["fake", "another", "yay"]
+        }.each do |str, ary|
+            Puppet[:reports] = str
+            assert_equal(ary, server.send(:reports))
+        end
     end
 end
 
