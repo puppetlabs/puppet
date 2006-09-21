@@ -639,6 +639,39 @@ class TestFileSources < Test::Unit::TestCase
         # Make sure it doesn't change.
         assert_equal("funtest\n", File.read(dest))
     end
+
+    # Testing #285.  This just makes sure that URI parsing works correctly.
+    def test_fileswithpoundsigns
+        dir = tstdir()
+        subdir = File.join(dir, "#dir")
+        Dir.mkdir(subdir)
+        file = File.join(subdir, "file")
+        File.open(file, "w") { |f| f.puts "yayness" }
+
+        dest = tempfile()
+        source = "file://localhost#{dir}"
+        obj = Puppet::Type.newfile(
+            :path => dest,
+            :source => source,
+            :recurse => true
+        )
+
+        newfile = File.join(dest, "#dir", "file")
+
+        poundsource = "file://localhost#{subdir}"
+
+        sourceobj = path = nil
+        assert_nothing_raised {
+            sourceobj, path = obj.uri2obj(poundsource)
+        }
+
+        assert_equal("/localhost" + URI.escape(subdir), path)
+
+        assert_apply(obj)
+
+        assert(FileTest.exists?(newfile), "File did not get created")
+        assert_equal("yayness\n", File.read(newfile))
+    end
 end
 
 # $Id$

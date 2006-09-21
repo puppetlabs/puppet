@@ -198,6 +198,8 @@ class Server
         def convert(url, client, clientip)
             readconfig
 
+            url = URI.unescape(url)
+
             mount, stub = splitpath(url, client)
 
             authcheck(url, mount, client, clientip)

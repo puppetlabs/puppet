@@ -740,25 +740,21 @@ module Puppet
                 end
             end
 
-            #ignore = self[:ignore] || false
             ignore = self[:ignore]
 
-            #self.warning "Listing path %s with ignore %s" %
-            #    [path.inspect, ignore.inspect]
             desc = server.list(path, self[:links], r, ignore)
-           
+
+            # Now create a new child for every file returned in the list.
             desc.split("\n").each { |line|
                 file, type = line.split("\t")
-                next if file == "/"
+                next if file == "/" # skip the listing object
                 name = file.sub(/^\//, '')
-                #self.warning "child name is %s" % name
                 args = {:source => source + file}
                 if type == file
                     args[:recurse] = nil
                 end
+
                 self.newchild(name, false, args)
-                #self.newchild(hash, source, recurse)
-                #hash2child(hash, source, recurse)
             }
         end
 
@@ -862,7 +858,7 @@ module Puppet
                 sourceobj.local = true
             end
             begin
-                uri = URI.parse(source)
+                uri = URI.parse(URI.escape(source))
             rescue => detail
                 self.fail "Could not understand source %s: %s" %
                     [source, detail.to_s]
