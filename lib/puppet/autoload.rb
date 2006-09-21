@@ -54,6 +54,9 @@ class Puppet::Autoload
             # of ruby are raising different errors on missing files.
             unless detail.to_s =~ /^no such file/i
                 warn "Could not autoload %s: %s" % [name, detail]
+                if Puppet[:trace]
+                    puts detail.backtrace
+                end
             end
             return false
         end
