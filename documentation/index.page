@@ -25,6 +25,10 @@ and "What is Puppet's License? (GPL)")
     Available documentation on puppet. Including an Introduction, and Language
     & Type Library References.
 
+* [Puppet Recipe Manager](http://prmweb.hezmatt.org/)
+
+    A CPAN-like site for sharing and downloading Puppet recipes.
+
 * [Cookbook](/cookbook/)
 
     A Cookbook wiki containing [recipes](/cookbook/PuppetRecipes) for Puppet
