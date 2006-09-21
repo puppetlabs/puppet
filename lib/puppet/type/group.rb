@@ -170,15 +170,20 @@ module Puppet
             defaultto false
         end
 
-        # List all groups
-        def self.listbyname
-            groups = []
-            while ent = Etc.getgrent
-                groups << ent.name
+        def self.list_by_name
+            users = []
+            defaultprovider.listbyname do |user|
+                users << user
             end
-            Etc.endgrent
+            return users
+        end
 
-            return groups
+        def self.list
+            defaultprovider.list
+
+            self.collect do |user|
+                user
+            end
         end
 
         def retrieve

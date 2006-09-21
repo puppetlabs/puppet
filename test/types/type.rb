@@ -755,6 +755,17 @@ end
 
         assert_equal(tags + [:file], obj.tags)
     end
+
+    def disabled_test_list
+        Puppet::Type.loadall
+
+        Puppet::Type.eachtype do |type|
+            next if type.name == :symlink
+            next if type.name == :component
+            next if type.name == :tidy
+            assert(type.respond_to?(:list), "%s does not respond to list" % type.name)
+        end
+    end
 end
 
 # $Id$
