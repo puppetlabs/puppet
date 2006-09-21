@@ -287,21 +287,23 @@ end
         desc %{The text to go into the sysidcfg file when the zone is first
             booted.  The best way is to use a template:
                 
+            <pre><code>
                 # $templatedir/sysidcfg
                 system_locale=en_US
                 timezone=GMT
                 terminal=xterms
                 security_policy=NONE
-                root_password=<%= password %>
+                root_password=&lt;%= password %>
                 timeserver=localhost
-                name_service=DNS {domain_name=<%= domain %>
-                        name_server=<%= nameserver %>}
-                network_interface=primary {hostname=<%= realhostname %>
-                        ip_address=<%= ip %>
-                        netmask=<%= netmask %>
+                name_service=DNS {domain_name=&lt;%= domain %>
+                        name_server=&lt;%= nameserver %>}
+                network_interface=primary {hostname=&lt;%= realhostname %>
+                        ip_address=&lt;%= ip %>
+                        netmask=&lt;%= netmask %>
                         protocol_ipv6=no
-                        default_route=<%= defaultroute %>}
+                        default_route=&lt;%= defaultroute %>}
                 nfs4_domain=dynamic
+            </code></pre>
 
             And then call that:
 

@@ -89,6 +89,9 @@ rescue GetoptLong::InvalidOption => detail
 end
 
 def scrub(text)
+
+    # Stupid markdown
+    #text = text.gsub("<%=", "&lt;%=")
     # For text with no carriage returns, there's nothing to do.
     if text !~ /\n/
         return text
@@ -191,6 +194,8 @@ orderInfo: 4
     }
 
     types = {}
+    Puppet::Type.loadall
+
     Puppet::Type.eachtype { |type|
         next if type.name == :puppet
         next if type.name == :component

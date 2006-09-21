@@ -128,6 +128,11 @@ class Type < Puppet::Element
 
     end
 
+    # Load all types.  Only currently used for documentation.
+    def self.loadall
+        typeloader.loadall
+    end
+
     # Do an on-demand plugin load
     def self.loadplugin(name)
         unless Puppet[:pluginpath].split(":").include?(Puppet[:plugindest])
@@ -213,18 +218,27 @@ class Type < Puppet::Element
         end
 
         unless @types.include? name
-            begin
-                require "puppet/type/#{name}"
+            if typeloader.load(name)
                 unless @types.include? name
                     Puppet.warning "Loaded puppet/type/#{name} but no class was created"
                 end
-            rescue LoadError => detail
+            else
                 # If we can't load it from there, try loading it as a plugin.
                 loadplugin(name)
             end
         end
 
         @types[name]
+    end
+
+    def self.typeloader
+        unless defined? @typeloader
+            @typeloader = Puppet::Autoload.new(self,
+                "puppet/type", :wrap => false
+            )
+        end
+
+        @typeloader
     end
 
     # class methods dealing with type instance management

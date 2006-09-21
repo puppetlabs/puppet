@@ -179,7 +179,15 @@ module PuppetTest
         Puppet::Log.close
 
         # Just in case there are processes waiting to die...
-        Process.waitall
+        require 'timeout'
+
+        begin
+            Timeout::timeout(5) do
+                Process.waitall
+            end
+        rescue Timeout::Error
+            # just move on
+        end
         if File.stat("/dev/null").mode & 007777 != 0666
             File.open("/tmp/nullfailure", "w") { |f|
                 f.puts self.class
