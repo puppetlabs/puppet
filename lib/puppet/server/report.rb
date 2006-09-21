@@ -160,7 +160,7 @@ class Server
                     begin
                         send(method, report)
                     rescue => detail
-                        if Puppet[:debug]
+                        if Puppet[:trace]
                             puts detail.backtrace
                         end
                         Puppet.err "Report %s failed: %s" %

@@ -1,4 +1,5 @@
 require 'puppet'
+require 'pp'
 
 Puppet.config.setdefaults(:reporting,
     :tagmap => ["$confdir/tagmail.conf",
@@ -20,10 +21,8 @@ Puppet::Server::Report.newreport(:tagmail) do |report|
         return
     end
 
-    p report
-
     # Load the config file
-    tags = {}
+    taglists = {}
     File.readlines(Puppet[:tagmap]).each do |line|
         taglist = emails = nil
         case line.chomp
@@ -36,27 +35,51 @@ Puppet::Server::Report.newreport(:tagmail) do |report|
             raise ArgumentError, "Invalid tagmail config file"
         end
 
+        pos = []
+        neg = []
         taglist.split(/\s*,\s*/).each do |tag|
-            tags[tag] = emails.split(/\s*,\s*/)
+            case tag
+            when /^\w+/: pos << tag
+            when /^!\w+/: neg << tag.sub("!", '')
+            else
+                raise Puppet::Error, "Invalid tag '%s'" % tag
+            end
         end
+
+        # Now split the emails
+        emails = emails.split(/\s*,\s*/)
+        taglists[emails] = [pos, neg]
     end
 
     # Now find any appropriately tagged messages.
     reports = {}
-    tags.each do |tag, emails|
+    taglists.each do |emails, tags|
+        pos, neg = tags
+
+        # First find all of the messages matched by our positive tags
         messages = nil
-        if tag == "all"
+        if pos.include?("all")
             messages = report.logs
         else
+            # Find all of the messages that are tagged with any of our
+            # tags.
             messages = report.logs.find_all do |log|
-                log.tagged?(tag)
+                pos.detect { |tag| log.tagged?(tag) }
             end
         end
 
-        if messages and ! messages.empty?
-            reports[emails] = messages.collect { |m| m.to_report }.join("\n")
+        # Now go through and remove any messages that match our negative tags
+        messages.reject! do |log|
+            if neg.detect do |tag| log.tagged?(tag) end
+                true
+            end
+        end
+
+        if messages.empty?
+            Puppet.info "No messages to report for %s" % tag
+            next
         else
-            Puppet.info "No messages to report"
+            reports[emails] = messages.collect { |m| m.to_report }.join("\n")
         end
     end
 
@@ -72,7 +95,7 @@ Puppet::Server::Report.newreport(:tagmail) do |report|
                     end
                 end
             rescue => detail
-                if Puppet[:trace]
+                if Puppet[:debug]
                     puts detail.backtrace
                 end
                 raise Puppet::Error,
@@ -87,6 +110,7 @@ Puppet::Server::Report.newreport(:tagmail) do |report|
                         p.puts "From: #{Puppet[:reportfrom]}"
                         p.puts "To: %s" % emails.join(', ')
                         p.puts "Subject: Puppet Report for %s" % report.host
+                       p.puts "To: " + emails.join(", ")
 
                         p.puts messages
                     end
