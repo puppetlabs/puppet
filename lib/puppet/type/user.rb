@@ -187,7 +187,7 @@ module Puppet
                 specified as an array."
 
             def should_to_s
-                self.should.join(",")
+                self.should
             end
 
             def is_to_s
@@ -204,13 +204,13 @@ module Puppet
                 @should ||= []
 
                 if @parent[:membership] == :inclusive
-                    @should.sort
+                    return @should.sort.join(",")
                 else
                     members = @should
                     if @is.is_a?(Array)
                         members += @is
                     end
-                    members.uniq.sort
+                    return members.uniq.sort.join(",")
                 end
             end
 
@@ -229,21 +229,18 @@ module Puppet
                 unless defined? @is and @is
                     return false
                 end
-                unless @is.class == @should.class
-                    return false
+                tmp = @is
+                if @is.is_a? Array
+                    tmp = @is.sort.join(",")
                 end
-                return @is.sort == @should.sort
+
+                return tmp == self.should
             end
 
             validate do |value|
                 if value =~ /^\d+$/
                     raise ArgumentError, "Group names must be provided, not numbers"
                 end
-            end
-
-            def sync
-                provider.groups = self.should.join(",")
-                :user_changed
             end
         end
 
@@ -338,7 +335,7 @@ module Puppet
                 }
             end
 
-            if @states.include?(:groups) and groups = @states[:groups].should
+            if @states.include?(:groups) and groups = @states[:groups].should.split(",")
                 autos += groups
             end
 

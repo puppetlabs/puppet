@@ -283,6 +283,8 @@ class TestUser < Test::Unit::TestCase
             user.retrieve
         }
 
+        assert_instance_of(String, user.state(:groups).should)
+
         # Some tests to verify that groups work correctly startig from nothing
         # Remove our user
         user[:ensure] = :absent
@@ -312,7 +314,7 @@ class TestUser < Test::Unit::TestCase
             user[:groups] = main
         }
 
-        assert_equal((main + extra).sort, user.state(:groups).should.sort)
+        assert_equal((main + extra).sort, user.state(:groups).should.split(",").sort)
 
         assert_nothing_raised {
             user.retrieve
@@ -347,6 +349,12 @@ class TestUser < Test::Unit::TestCase
 
         list = user.state(:groups).is
         assert_equal(main.sort, list.sort, "Group list is not equal")
+
+        # Set the values a bit differently.
+        user.state(:groups).should = list.sort { |a,b| b <=> a }
+        user.state(:groups).is = list.sort
+
+        assert(user.state(:groups).insync?, "Groups state did not sort groups")
 
         user.delete(:groups)
     end
