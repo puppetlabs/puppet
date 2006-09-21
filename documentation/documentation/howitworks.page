@@ -243,7 +243,7 @@ If the local file is out of sync with the remote file, then a StateChange
 instance is created reflecting this.  When that change is executed, it creates
 a ``file_changed`` event.  Because of the above subscription, the callback
 associated with this event is to call ``refresh`` on the ``sshd`` service; for
-services, ``refresh`` is equivalent to restarting, to sshd is restarted.  In
+services, ``refresh`` is equivalent to restarting, so sshd is restarted.  In
 this way, Puppet elements can react to changes that it makes to the system.
 
 While transactions are fully capable of moving both forward and backward
