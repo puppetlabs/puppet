@@ -11,7 +11,7 @@ serving function is provided as part of the central Puppet daemon,
 ``puppetmasterd``, and the client function is used through the ``source``
 attribute of ``file`` objects:
 
-    # copy a remove file to /etc/sudoers
+    # copy a remote file to /etc/sudoers
     file { "/etc/sudoers":
         mode => 440,
         owner => root,
