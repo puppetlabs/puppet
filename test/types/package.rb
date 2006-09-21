@@ -430,18 +430,15 @@ class TestPackages < Test::Unit::TestCase
 
     else
     $stderr.puts "Install gems for gem tests"
-    def test_nogems_nofailures
+    def test_failure_when_no_gems
         obj = nil
-        assert_nothing_raised do
+        assert_raise(ArgumentError) do
             Puppet::Type.newpackage(
                 :name => "yayness",
                 :provider => "gem",
                 :ensure => "installed"
             )
         end
-
-        assert_nil(Puppet::Type.type(:package)["yayness"],
-            "Invalid gem package got created")
     end
     end
     end
