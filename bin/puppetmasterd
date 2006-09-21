@@ -39,7 +39,7 @@
 #
 # logdest::
 #   Where to send messages.  Choose between syslog, the console, and a log file.
-#   Defaults to sending messages to /var/puppet/log/puppet.log, or the console
+#   Defaults to sending messages to syslog, or the console
 #   if debugging or verbosity is enabled.
 #
 # nobucket::
