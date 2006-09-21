@@ -259,6 +259,36 @@ end
                     "Did not retrieve facts")
         end
     end
+
+    if Process.uid == 0
+    # Testing #283.  Make sure plugins et al are downloaded as the running user.
+    def test_download_ownership
+        dir = tstdir()
+        dest = tstdir()
+        file = File.join(dir, "file")
+        File.open(file, "w") { |f| f.puts "funtest" }
+
+        user = nonrootuser()
+        group = nonrootgroup()
+        FileUtils.chown_R(user.name, group.name, dir)
+
+        assert_equal(user.uid, File.stat(file).uid)
+        assert_equal(group.gid, File.stat(file).gid)
+
+
+        assert_nothing_raised {
+            Puppet::Client::MasterClient.download(:dest => dest, :source => dir,
+                :name => "testing"
+            ) {}
+        }
+
+        destfile = File.join(dest, "file")
+
+        assert(FileTest.exists?(destfile), "Did not create destfile")
+
+        assert_equal(Process.uid, File.stat(destfile).uid)
+    end
+    end
 end
 
 # $Id$

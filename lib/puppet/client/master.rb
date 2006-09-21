@@ -505,7 +505,8 @@ class Puppet::Client::MasterClient < Puppet::Client
             :recurse => true,
             :source => args[:source],
             :tag => "#{args[:name]}s",
-            :owner => "root"
+            :owner => Process.uid,
+            :group => Process.gid
         }
 
         if args[:ignore]
