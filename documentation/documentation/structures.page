@@ -7,7 +7,7 @@ This is a brief overview of the language structures
 available for making site configurations in Puppet.
 For futher documentation, visit the [Puppet homepage](/projects/puppet/).
 
-# Types
+<h1><a name="types">Types</a></h1>
 
 The basic unit of configuration in Puppet are ``types``.  Types model objects
 on the computer being managed, and each builtin type has attributes that
@@ -25,7 +25,7 @@ work for defined types.
 See the [Type Reference](typedocs.html) for the documentation for the
 Puppet Library's primitive types.
 
-# Assignment
+<h1><a name="assignment">Assignment</a></h1>
 
 
     $variable = value
@@ -283,7 +283,7 @@ even though there is no code associated with them.  The syntax is just like
 
     tag $operatingsystem
 
-# Nodes
+<h1><a name="nodes">Nodes</a></h1>
 
     node <hostname> { ... }
 
