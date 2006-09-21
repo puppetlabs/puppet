@@ -76,7 +76,7 @@ Puppet::Server::Report.newreport(:tagmail) do |report|
         end
 
         if messages.empty?
-            Puppet.info "No messages to report for %s" % tag
+            Puppet.info "No messages to report to %s" % emails.join(",")
             next
         else
             reports[emails] = messages.collect { |m| m.to_report }.join("\n")
