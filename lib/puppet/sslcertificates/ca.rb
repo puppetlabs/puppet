@@ -265,7 +265,7 @@ class Puppet::SSLCertificates::CA
         )
 
         # This creates the cakey file
-        Puppet::Util.asuser(Puppet[:user], Puppet[:group]) do
+        Puppet::SUIDManager.asuser(Puppet[:user], Puppet[:group]) do
             @cert = cert.mkselfsigned
         end
         Puppet.config.write(:cacert) do |f|

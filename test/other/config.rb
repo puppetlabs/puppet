@@ -524,7 +524,7 @@ yay = /a/path
         user = nonrootuser()
         group = nonrootgroup()
 
-        if Process.uid == 0
+        if Puppet::SUIDManager.uid == 0
             args[:owner] = user.name
             args[:group] = group.name
         end
@@ -540,7 +540,7 @@ yay = /a/path
         assert_equal(mode, filemode(path), "Modes are not equal")
 
         # OS X is broken in how it chgrps files 
-        if Process.uid == 0
+        if Puppet::SUIDManager.uid == 0
             assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
 
             case Facter["operatingsystem"].value
@@ -562,7 +562,7 @@ yay = /a/path
         user = nonrootuser()
         group = nonrootgroup()
 
-        if Process.uid == 0
+        if Puppet::SUIDManager.uid == 0
             args[:owner] = user.name
             args[:group] = group.name
         end
@@ -577,7 +577,7 @@ yay = /a/path
 
 
         # OS X and *BSD is broken in how it chgrps files 
-        if Process.uid == 0
+        if Puppet::SUIDManager.uid == 0
             assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
 
             case Facter["operatingsystem"].value

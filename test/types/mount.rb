@@ -156,7 +156,7 @@ class TestMounts < Test::Unit::TestCase
         assert_events([:mount_changed], fs)
     end
 
-    if Process.uid == 0
+    if Puppet::SUIDManager.uid == 0
     def test_mountfs
         fs = nil
         case Facter["hostname"].value

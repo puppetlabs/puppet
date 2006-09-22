@@ -226,7 +226,7 @@ module Puppet
         # Determine the user to write files as.
         def asuser
             if self.should(:owner) and ! self.should(:owner).is_a?(Symbol)
-                writeable = Puppet::Util.asuser(self.should(:owner)) {
+                writeable = Puppet::SUIDManager.asuser(self.should(:owner)) {
                     FileTest.writable?(File.dirname(self[:path]))
                 }
 
@@ -930,7 +930,7 @@ module Puppet
             end
 
             # As the correct user and group
-            Puppet::Util.asuser(asuser(), self.should(:group)) do
+            Puppet::SUIDManager.asuser(asuser(), self.should(:group)) do
                 f = nil
                 # Open our file with the correct modes
                 if mode

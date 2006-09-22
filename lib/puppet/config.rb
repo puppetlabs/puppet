@@ -203,7 +203,7 @@ class Config
             raise ArgumentError, "Default %s is not a file" % default
         end
 
-        Puppet::Util.asuser(obj.owner, obj.group) do
+        Puppet::SUIDManager.asuser(obj.owner, obj.group) do
             mode = obj.mode || 0750
             Dir.mkdir(obj.value, mode)
         end
@@ -629,12 +629,12 @@ Generated on #{Time.now}.
         end
 
         chown = nil
-        if Process.uid == 0
+        if Puppet::SUIDManager.uid == 0
             chown = [obj.owner, obj.group]
         else
             chown = [nil, nil]
         end
-        Puppet::Util.asuser(*chown) do
+        Puppet::SUIDManager.asuser(*chown) do
             mode = obj.mode || 0640
 
             if args.empty?
@@ -662,13 +662,13 @@ Generated on #{Time.now}.
         end
 
         chown = nil
-        if Process.uid == 0
+        if Puppet::SUIDManager.uid == 0
             chown = [obj.owner, obj.group]
         else
             chown = [nil, nil]
         end
 
-        Puppet::Util.asuser(*chown) do
+        Puppet::SUIDManager.asuser(*chown) do
             mode = obj.mode || 0640
             if args.empty?
                 args << "w"
@@ -878,7 +878,7 @@ Generated on #{Time.now}.
             }
 
             # Only chown or chgrp when root
-            if Process.uid == 0
+            if Puppet::SUIDManager.uid == 0
                 [:group, :owner].each { |var|
                     if value = self.send(var)
                         obj[var] = value

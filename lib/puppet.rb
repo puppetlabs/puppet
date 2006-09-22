@@ -5,6 +5,7 @@ require 'puppet/event-loop'
 require 'puppet/util'
 require 'puppet/log'
 require 'puppet/config'
+require 'puppet/suidmanager'
 
 #------------------------------------------------------------
 # the top-level module
@@ -74,7 +75,7 @@ module Puppet
     # use basedirs that are in the user's home directory.
     conf = nil
     var = nil
-    if self.name == "puppet" and Process.uid != 0
+    if self.name == "puppet" and Puppet::SUIDManager.uid != 0
         conf = File.expand_path("~/.puppet")
         var = File.expand_path("~/.puppet/var")
     else

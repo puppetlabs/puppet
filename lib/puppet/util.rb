@@ -19,83 +19,6 @@ module Util
         return @@syncresources[resource]
     end
 
-    # Execute a block as a given user or group
-    def self.asuser(user = nil, group = nil)
-        require 'etc'
-
-        uid = nil
-        gid = nil
-        olduid = nil
-        oldgid = nil
-
-        # If they're running as a normal user, then just execute as that same
-        # user.
-        unless Process.uid == 0
-            retval = yield
-            return retval
-        end
-
-        begin
-            # the groupid, if we got passed a group
-            # The gid has to be changed first, because, well, otherwise we won't
-            # be able to
-            if group
-                if group.is_a? Integer
-                    gid = group
-                else
-                    gid = self.gid(group)
-                end
-
-                if gid
-                    if Process.gid != gid
-                        oldgid = Process.gid
-                        begin
-                            Process.egid = gid
-                        rescue => detail
-                            raise Puppet::Error, "Could not change GID: %s" % detail
-                        end
-                    end
-                else
-                    Puppet.warning "Could not retrieve GID for %s" % group
-                end
-            end
-
-            if user
-                if user.is_a? Integer
-                    uid = user
-                else
-                    uid = self.uid(user)
-                end
-                uid = self.uid(user)
-
-                if uid
-                    # Now change the uid
-                    if Process.uid != uid
-                        olduid = Process.uid
-                        begin
-                            Process.euid = uid
-                        rescue => detail
-                            raise Puppet::Error, "Could not change UID: %s" % detail
-                        end
-                    end
-                else
-                    Puppet.warning "Could not retrieve UID for %s" % user
-                end
-            end
-            retval = yield
-        ensure
-            if olduid
-                Process.euid = olduid
-            end
-
-            if oldgid
-                Process.egid = oldgid
-            end
-        end
-
-        return retval
-    end
-
     # Change the process to a different user
     def self.chuser
         if Facter["operatingsystem"].value == "Darwin"
@@ -107,10 +30,10 @@ module Util
             unless group
                 raise Puppet::Error, "No such group %s" % Puppet[:group]
             end
-            unless Process.gid == group
+            unless Puppet::SUIDManager.gid == group
                 begin
-                    Process.egid = group 
-                    Process.gid = group 
+                    Puppet::SUIDManager.egid = group 
+                    Puppet::SUIDManager.gid = group 
                 rescue => detail
                     Puppet.warning "could not change to group %s: %s" %
                         [group.inspect, detail]
@@ -128,10 +51,10 @@ module Util
             unless user
                 raise Puppet::Error, "No such user %s" % Puppet[:user]
             end
-            unless Process.uid == user
+            unless Puppet::SUIDManager.uid == user
                 begin
-                    Process.uid = user 
-                    Process.euid = user 
+                    Puppet::SUIDManager.uid = user 
+                    Puppet::SUIDManager.euid = user 
                 rescue
                     $stderr.puts "could not change to user %s" % user
                     exit(74)
@@ -221,6 +144,13 @@ module Util
     # Get the UID of a given user, whether a UID or name is provided
     def self.uid(user)
         uid = nil
+
+        # if we don't have any user info, warn and GTFO.
+        if !user
+            Puppet.warning "Username provided for lookup is nil" 
+            return nil
+        end
+
         if user =~ /^\d+$/
             user = Integer(user)
         end

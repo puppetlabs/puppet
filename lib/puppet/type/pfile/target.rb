@@ -45,7 +45,7 @@ module Puppet
                 end
             end
             Dir.chdir(File.dirname(@parent[:path])) do
-                Puppet::Util.asuser(@parent.asuser()) do
+                Puppet::SUIDManager.asuser(@parent.asuser()) do
                     mode = @parent.should(:mode)
                     if mode
                         Puppet::Util.withumask(000) do

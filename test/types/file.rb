@@ -103,7 +103,7 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    if Process.uid == 0
+    if Puppet::SUIDManager.uid == 0
         def test_createasuser
             dir = tmpdir()
 

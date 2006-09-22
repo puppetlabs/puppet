@@ -399,7 +399,7 @@ class TestUserProvider < Test::Unit::TestCase
         assert_equal(main.sort, list.sort, "Group list is not equal")
     end
 
-    if Process.uid == 0
+    if Puppet::SUIDManager.uid == 0
         def test_simpleuser
             name = "pptest"
 

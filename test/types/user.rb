@@ -64,7 +64,7 @@ class TestUser < Test::Unit::TestCase
             user = Puppet.type(:user).create(
                 :name => name,
                 :comment => "Puppet Testing User",
-                :gid => Process.gid,
+                :gid => Puppet::SUIDManager.gid,
                 :shell => findshell(),
                 :home => "/home/%s" % name
             )

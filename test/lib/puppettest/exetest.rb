@@ -47,8 +47,8 @@ module PuppetTest::ExeTest
         args += " --confdir %s" % Puppet[:confdir]
         args += " --vardir %s" % Puppet[:vardir]
         args += " --masterport %s" % @@port
-        args += " --user %s" % Process.uid
-        args += " --group %s" % Process.gid
+        args += " --user %s" % Puppet::SUIDManager.uid
+        args += " --group %s" % Puppet::SUIDManager.gid
         args += " --nonodes"
         args += " --autosign true"
 

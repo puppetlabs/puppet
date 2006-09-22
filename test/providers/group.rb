@@ -173,7 +173,7 @@ class TestGroupProvider < Test::Unit::TestCase
         }
     end
 
-    if Process.uid == 0
+    if Puppet::SUIDManager.uid == 0
         def test_mkgroup
             gobj = nil
             comp = nil

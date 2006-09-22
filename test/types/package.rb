@@ -191,7 +191,7 @@ class TestPackages < Test::Unit::TestCase
         end
     end
 
-    unless Process.uid == 0
+    unless Puppet::SUIDManager.uid == 0
         $stderr.puts "Run as root to perform package installation tests"
     else
     def test_installpkg

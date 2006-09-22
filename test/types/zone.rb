@@ -186,7 +186,7 @@ end"
             "Got incorrect config text")
     end
 
-    if Process.uid == 0
+    if Puppet::SUIDManager.uid == 0
     # Make sure our ensure process actually works.
     def test_ensure_sync
         zone = mkzone("ensuretesting")

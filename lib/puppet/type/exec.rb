@@ -186,7 +186,7 @@ module Puppet
                 is because of a bug within Ruby."
 
             munge do |user|
-                unless Process.uid == 0
+                unless Puppet::SUIDManager.uid == 0
                     self.fail "Only root can execute commands as other users"
                 end
                 require 'etc'
@@ -537,26 +537,9 @@ module Puppet
                     end
 
                     withenv env do
-                        # The user and group default to nil, which 'asuser'
-                        # handlers correctly
-                        Puppet::Util.asuser(self[:user], self[:group]) {
-                            # capture both stdout and stderr
-                            if self[:user]
-                                unless defined? @@alreadywarned
-                                    Puppet.warning(
-                            "Cannot capture STDERR when running as another user"
-                                    )
-                                    @@alreadywarned = true
-                                end
-                                output = %x{#{command}}
-                            else
-                                output = %x{#{command} 2>&1}
-                            end
-                        }
-                        status = $?.dup
-
+                        output, status = Puppet::SUIDManager.run_and_capture(command, self[:user], self[:group])
                         # The shell returns 127 if the command is missing.
-                        if $?.exitstatus == 127
+                        if status.exitstatus == 127
                             raise ArgumentError, output
                         end
                     end

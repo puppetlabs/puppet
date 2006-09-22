@@ -174,7 +174,7 @@ module Puppet
             # does not think I should be allowed to set the @path to my own user name
             def cmdbase
                 cmd = nil
-                if @uid == Process.uid
+                if @uid == Puppet::SUIDManager.uid
                     return "crontab"
                 else
                     return "crontab -u #{@path}"
@@ -187,14 +187,14 @@ module Puppet
         newfiletype(:suntab) do
             # Read a specific @path's cron tab.
             def read
-                Puppet::Util.asuser(@path) {
+                Puppet::SUIDManager.asuser(@path) {
                     %x{crontab -l 2>/dev/null}
                 }
             end
 
             # Remove a specific @path's cron tab.
             def remove
-                Puppet::Util.asuser(@path) {
+                Puppet::SUIDManager.asuser(@path) {
                     %x{crontab -r 2>/dev/null}
                 }
             end
@@ -202,7 +202,7 @@ module Puppet
             # Overwrite a specific @path's cron tab; must be passed the @path name
             # and the text with which to create the cron tab.
             def write(text)
-                Puppet::Util.asuser(@path) {
+                Puppet::SUIDManager.asuser(@path) {
                     IO.popen("crontab", "w") { |p|
                         p.print text
                     }

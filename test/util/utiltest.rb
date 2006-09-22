@@ -73,7 +73,7 @@ class TestPuppetUtil < Test::Unit::TestCase
     # know them
     def test_gidbyunknownid
         gid = nil
-        group = Process.gid
+        group = Puppet::SUIDManager.gid
         assert_nothing_raised {
             gid = Puppet::Util.gid(group)
         }
@@ -85,7 +85,7 @@ class TestPuppetUtil < Test::Unit::TestCase
     def user
         require 'etc'
         unless defined? @user
-            obj = Etc.getpwuid(Process.uid)
+            obj = Etc.getpwuid(Puppet::SUIDManager.uid)
             @user = obj.name
         end
         return @user
@@ -101,7 +101,7 @@ class TestPuppetUtil < Test::Unit::TestCase
         }
 
         assert(uid, "Could not retrieve uid for %s" % user)
-        assert_equal(Process.uid, uid, "UIDs did not match")
+        assert_equal(Puppet::SUIDManager.uid, uid, "UIDs did not match")
         assert(Puppet.type(:user)[user], "Util did not create %s" % user)
     end
 
@@ -127,7 +127,7 @@ class TestPuppetUtil < Test::Unit::TestCase
     # know them
     def test_uidbyunknownid
         uid = nil
-        user = Process.uid
+        user = Puppet::SUIDManager.uid
         assert_nothing_raised {
             uid = Puppet::Util.uid(user)
         }
@@ -179,7 +179,7 @@ class TestPuppetUtil < Test::Unit::TestCase
         end
     end
 
-    unless Process.uid == 0
+    unless Puppet::SUIDManager.uid == 0
         $stderr.puts "Run as root to perform Utility tests"
         def test_nothing
         end
@@ -213,23 +213,23 @@ class TestPuppetUtil < Test::Unit::TestCase
         if group
             gid = group.gid
         else
-            gid = Process.gid
+            gid = Puppet::SUIDManager.gid
         end
 
         uid = nil
         if user
             uid = user.uid
         else
-            uid = Process.uid
+            uid = Puppet::SUIDManager.uid
         end
 
         assert_nothing_raised {
-            Puppet::Util.asuser(*args) {
-                assert_equal(Process.euid, uid, "UID is %s instead of %s" %
-                    [Process.euid, uid]
+            Puppet::SUIDManager.asuser(*args) {
+                assert_equal(Puppet::SUIDManager.euid, uid, "UID is %s instead of %s" %
+                    [Puppet::SUIDManager.euid, uid]
                 )
-                assert_equal(Process.egid, gid, "GID is %s instead of %s" %
-                    [Process.egid, gid]
+                assert_equal(Puppet::SUIDManager.egid, gid, "GID is %s instead of %s" %
+                    [Puppet::SUIDManager.egid, gid]
                 )
                 system("touch %s" % file)
             }
@@ -284,7 +284,7 @@ class TestPuppetUtil < Test::Unit::TestCase
         rescue
         end
 
-        assert(Process.euid == 0, "UID did not get reset")
+        assert(Puppet::SUIDManager.euid == 0, "UID did not get reset")
     end
     end
 

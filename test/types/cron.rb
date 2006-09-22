@@ -360,7 +360,7 @@ class TestCron < Test::Unit::TestCase
 
         obj = nil
         assert_nothing_raised {
-            obj = type.new(Process.uid)
+            obj = type.new(Puppet::SUIDManager.uid)
         }
 
         txt = nil

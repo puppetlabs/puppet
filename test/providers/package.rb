@@ -18,7 +18,7 @@ class TestPackageProvider < Test::Unit::TestCase
     def test_nothing
     end
 
-    if Facter["operatingsystem"].value == "Solaris" and Process.uid == 0
+    if Facter["operatingsystem"].value == "Solaris" and Puppet::SUIDManager.uid == 0
     if Puppet.type(:package).provider(:blastwave).suitable?
     # FIXME The packaging crap needs to be rewritten to support testing
     # multiple package types on the same platform.
