@@ -116,6 +116,7 @@ class TestMaster < Test::Unit::TestCase
         # The client doesn't have a config, so it can't be up to date
         assert(! client.fresh?, "Client is incorrectly up to date")
 
+        Puppet.config.use(:puppet)
         assert_nothing_raised {
             client.getconfig
             client.apply
@@ -195,7 +196,7 @@ class TestMaster < Test::Unit::TestCase
         file_fact = tempfile()
 
         certname = "y4yn3ss"
-        factname = Facter["hostname"].value
+        factname = Facter.value("hostname")
 
         File.open(file, "w") { |f|
             f.puts %{
@@ -242,6 +243,58 @@ class TestMaster < Test::Unit::TestCase
             "Found incorrect file")
     end
 
+    # Make sure we're correctly doing clientname manipulations.
+    # Testing to make sure we always get a hostname and IP address.
+    def test_clientname
+        master = nil
+        file = tempfile()
+
+        File.open(file, "w") { |f|
+            f.puts %{
+    node yay { file { "/something": ensure => file, mode => 755 } }
+}
+        }
+        # create our master
+        assert_nothing_raised() {
+            # this is the default server setup
+            master = Puppet::Server::Master.new(
+                :Manifest => file,
+                :UseNodes => true,
+                :Local => true
+            )
+        }
+
+        Puppet[:node_name] = "cert"
+        # First act like we're local
+        fakename = nil
+        fakeip = nil
+
+        name = ip = nil
+        facts = Facter.to_hash
+        assert_nothing_raised do
+            name, ip = master.clientname(fakename, fakeip, facts)
+        end
+
+        assert(facts["hostname"], "Removed hostname fact")
+        assert(facts["ipaddress"], "Removed ipaddress fact")
+
+        assert_equal(facts["hostname"], name)
+        assert_equal(facts["ipaddress"], ip)
+
+        # Now set them to something real, and make sure we get them back
+        fakename = "yayness"
+        fakeip = "192.168.0.1"
+        facts = Facter.to_hash
+        assert_nothing_raised do
+            name, ip = master.clientname(fakename, fakeip, facts)
+        end
+
+        assert(facts["hostname"], "Removed hostname fact")
+        assert(facts["ipaddress"], "Removed ipaddress fact")
+
+        assert_equal(fakename, name)
+        assert_equal(fakeip, ip)
+    end
 end
 
 # $Id$

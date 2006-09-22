@@ -36,6 +36,23 @@ class Server
             end
         end
 
+        # Manipulate the client name as appropriate.
+        def clientname(name, ip, facts)
+            # Always use the hostname from Facter.
+            client = facts["hostname"]
+            clientip = facts["ipaddress"]
+            if Puppet[:node_name] == 'cert'
+                if name
+                    client = name
+                end
+                if ip
+                    clientip = ip
+                end
+            end
+
+            return client, clientip
+        end
+
         # Tell a client whether there's a fresh config for it
         def freshness(client = nil, clientip = nil)
             if defined? @interpreter
@@ -120,13 +137,7 @@ class Server
                 end
             end
 
-            # Always use the hostname from Facter.
-            if Puppet[:node_name] == 'facter'
-                client = facts["hostname"]
-                clientip = facts["ipaddress"]
-            else
-                facts['hostname'] = client
-            end
+            client, clientip = clientname(client, clientip, facts)
 
             # Add any server-side facts to our server.
             addfacts(facts)
