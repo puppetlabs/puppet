@@ -1,0 +1,108 @@
+--- !ruby/object:Puppet::Transaction::Report 
+host: culain.madstop.com
+logs: 
+- !ruby/object:Puppet::Log 
+  level: :notice
+  message: executed successfully
+  objectsource: true
+  source: //culain.madstop.com/puppetserver/exec=/bin/echo testing/returns
+  tags: 
+  - :puppetserver
+  - :puppetserver
+  - :basenode
+  - :"culain.madstop.com"
+  - :puppet
+  - :exec
+  - :returns
+  time: 2006-09-21 13:06:59.867782 -05:00
+- !ruby/object:Puppet::Log 
+  level: :notice
+  message: ensure changed 'stopped' to 'running'
+  objectsource: true
+  source: //culain.madstop.com/mailserver/service=spamassassin/ensure
+  tags: 
+  - :mailserver
+  - :mailserver
+  - :basenode
+  - :"culain.madstop.com"
+  - :puppet
+  - :service
+  - :ensure
+  time: 2006-09-21 13:07:01.336511 -05:00
+- !ruby/object:Puppet::Log 
+  level: :notice
+  message: ensure changed 'stopped' to 'running'
+  objectsource: true
+  source: //culain.madstop.com/mailserver/service=courier-imap-ssl/ensure
+  tags: 
+  - :mailserver
+  - :mailserver
+  - :basenode
+  - :"culain.madstop.com"
+  - :puppet
+  - :service
+  - :ensure
+  time: 2006-09-21 13:07:01.573506 -05:00
+- !ruby/object:Puppet::Log 
+  level: :notice
+  message: ensure changed 'stopped' to 'running'
+  objectsource: true
+  source: //culain.madstop.com/mailserver/service=courier-authdaemon/ensure
+  tags: 
+  - :mailserver
+  - :mailserver
+  - :basenode
+  - :"culain.madstop.com"
+  - :puppet
+  - :service
+  - :ensure
+  time: 2006-09-21 13:07:01.680440 -05:00
+metrics: 
+  time: !ruby/object:Puppet::Metric 
+    label: Time
+    name: time
+    values: 
+    - - :config_retrieval
+      - Config retrieval
+      - 2.26467204093933
+    - - :total
+      - Total
+      - 21.7894113063812
+  changes: !ruby/object:Puppet::Metric 
+    label: Changes
+    name: changes
+    values: 
+    - - :total
+      - Total
+      - 4
+  objects: !ruby/object:Puppet::Metric 
+    label: Objects
+    name: objects
+    values: 
+    - - :scheduled
+      - Scheduled
+      - 78
+    - - :applied
+      - Applied
+      - 4
+    - - :restarted
+      - Restarted
+      - 0
+    - - :skipped
+      - Skipped
+      - 0
+    - - :failed_restarts
+      - Failed restarts
+      - 0
+    - - :out_of_sync
+      - Out of sync
+      - 4
+    - - :failed
+      - Failed
+      - 0
+    - - :total
+      - Total
+      - 79
+records: {}
+
+time: 2006-09-21 13:07:06.825337 -05:00
