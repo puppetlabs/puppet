@@ -1,22 +1,37 @@
-require 'test/unit'
+require 'puppet'
 require 'puppettest'
+require 'test/unit'
 
-class TestProcess < Test::Unit::TestCase
+class TestSUIDManager < Test::Unit::TestCase
+    include PuppetTest
+
     def setup
         if Process.uid != 0
-            $stderr.puts "Process tests must be run as root"
+            warn "Process tests must be run as root"
             @run = false
         else 
             @run = true
+        end
+        super
+    end
+
+    def test_metaprogramming_function_additions
+        # NOTE: the way that we are dynamically generating the methods in SUIDManager for
+        # the UID/GID calls was causing problems due to the modification
+        # of a closure. Should the bug rear itself again, this test
+        # will fail.
+        assert_nothing_raised do
+            Puppet::SUIDManager.uid
+            Puppet::SUIDManager.uid
         end
     end
 
     def test_id_set
         if @run
-            # FIXME: use the test framework uid finder
+            user = nonrootuser
             assert_nothing_raised do
-                Puppet::SUIDManager.egid = 501
-                Puppet::SUIDManager.euid = 501
+                Puppet::SUIDManager.egid = user.gid
+                Puppet::SUIDManager.euid = user.uid
             end
             
             assert_equal(Puppet::SUIDManager.euid, Process.euid)
@@ -27,32 +42,33 @@ class TestProcess < Test::Unit::TestCase
                 Puppet::SUIDManager.egid = 0
             end
 
-            assert_uid_gid(501, 501)
+            assert_uid_gid(user.uid, user.gid, tempfile)
         end
     end
 
     def test_asuser
         if @run
+            user = nonrootuser
             uid, gid = [nil, nil]
 
             assert_nothing_raised do
-                Puppet::SUIDManager.asuser(501, 501) do 
+                Puppet::SUIDManager.asuser(user.uid, user.gid) do 
                     uid = Puppet::SUIDManager.euid
                     gid = Puppet::SUIDManager.egid
                 end
             end
 
-            assert_equal(501, uid)
-            assert_equal(501, gid)
+            assert_equal(user.uid, uid)
+            assert_equal(user.gid, gid)
         end
     end
 
     def test_system
         # NOTE: not sure what shells this will work on..
-        # FIXME: use the test framework uid finder, however the uid needs to be < 255
         if @run 
-            Puppet::SUIDManager.system("exit $EUID", 10, 10)
-            assert_equal($?.exitstatus, 10)
+            user = nonrootuser
+            status = Puppet::SUIDManager.system("exit $EUID", user.uid, user.gid)
+            assert_equal(status.exitstatus, user.uid)
         end
     end
 

@@ -1,17 +1,22 @@
 require 'facter'
-require 'puppet'
 
 module Puppet
     module SUIDManager
         platform = Facter["kernel"].value
-        [:uid=, :uid, :gid=, :gid].each do |method|
+        [:uid=, :gid=, :uid, :gid].each do |method|
             define_method(method) do |*args|
-                if platform == "Darwin" and (Facter['rubyversion'] <=> "1.8.5") < 0
-                    Puppet.warning "Cannot change real UID on Darwin on Ruby versions earlier than 1.8.5"
-                    method = ("e" + method.to_s).intern unless method.to_s[0] == 'e'
+                # NOTE: 'method' is closed here.
+                newmethod = method
+
+                if platform == "Darwin"
+                    if !@darwinwarned
+                        Puppet.warning "Cannot change real UID on Darwin"
+                        @darwinwarned = true
+                    end
+                    newmethod = ("e" + method.to_s).intern
                 end
 
-                return Process.send(method, *args)
+                return Process.send(newmethod, *args)
             end
             module_function method
         end
@@ -47,28 +52,39 @@ module Puppet
         module_function :run_and_capture
 
         def system(command, new_uid=self.euid, new_gid=self.egid)
+            status = nil
             asuser(new_uid, new_gid) do
                 Kernel.system(command)
+                status = $?.dup
             end
+            status
         end
         
         module_function :system
 
-        def asuser(new_euid, new_egid)
-            new_euid = Puppet::Util.uid(new_euid)
-            new_egid = Puppet::Util.uid(new_egid)
+        def asuser(new_euid=nil, new_egid=nil)
+            begin
+                old_egid = old_euid = nil
+                if new_egid
+                    new_egid = Puppet::Util.uid(new_egid)
+                    old_egid = self.egid
+                    self.egid = new_egid
+                end
+                if new_euid
+                    new_euid = Puppet::Util.uid(new_euid)
+                    old_euid = self.euid
+                    self.euid = new_euid
+                end
 
-            old_euid, old_egid = [ self.euid, self.egid ]
-            self.egid = new_egid ? new_egid : old_egid
-            self.euid = new_euid ? new_euid : old_euid
-            output = yield
-            self.egid = old_egid
-            self.euid = old_euid
+                output = yield
 
-            output
+                output
+            ensure
+                self.egid = old_egid
+                self.euid = old_euid
+            end
         end
 
         module_function :asuser
     end
 end
-
