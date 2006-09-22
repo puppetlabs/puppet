@@ -548,9 +548,74 @@ any given file manually, no matter how old.  Eventually,
 transactional support will be able to automatically restore
 filebucketed files.
 
+#### checksum
+How to check whether a file has changed.  This state is used internally
+for file copying, but it can also be used to monitor files somewhat
+like Tripwire without managing the file contents in any way.  You can
+specify that a file's checksum should be monitored and then subscribe to
+the file from another object and receive events to signify
+checksum changes, for instance.  Valid values are ``timestamp``, ``time``, ``nosum``, ``md5lite``, ``mtime``, ``md5``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
+
+#### content
+Specify the contents of a file as a string.  Newlines, tabs, and
+spaces can be specified using the escaped syntax (e.g., \n for a
+newline).  The primary purpose of this parameter is to provide a
+kind of limited templating:
+
+    define resolve(nameserver1, nameserver2, domain, search) {
+        $str = "search $search
+    domain $domain
+    nameserver $nameserver1
+    nameserver $nameserver2
+    "
+
+        file { "/etc/resolv.conf":
+            content => $str
+        }
+    }
+
+    This attribute is especially useful when used with
+    [templating](templating.html).
+
+#### ensure
+Whether to create files that don't currently exist.
+Possible values are *absent*, *present* (equivalent to ``exists`` in
+most file tests -- will match any form of file existence, and if the
+file is missing will create an empty file), *file*, and
+*directory*.  Specifying ``absent`` will delete the file, although
+currently this will not recursively delete directories.
+
+Anything other than those values will be considered to be a symlink.
+For instance, the following text creates a link:
+    
+    # Useful on solaris
+    file { "/etc/inetd.conf":
+        ensure => "/etc/inet/inetd.conf"
+    }
+
+You can make relative links:
+    
+    # Useful on solaris
+    file { "/etc/inetd.conf":
+        ensure => "inet/inetd.conf"
+    }
+
+If you need to make a relative link to a file named the same
+as one of the valid values, you must prefix it with ``./`` or
+something similar.
+
+You can also make recursive symlinks, which will create a
+directory structure that maps to the target directory,
+with directories corresponding to each directory
+and links corresponding to each file.  Valid values are ``link``, ``absent`` (also called ``false``), ``directory``, ``present``, ``file``.  Values can also match ``(?-mix:.)``.
+
 #### force
 Force the file operation.  Currently only used when replacing
 directories with links.  Valid values are ``true``, ``false``.
+
+#### group
+Which group should own the file.  Argument can be either group
+name or group ID.
 
 #### ignore
 A parameter which omits action on files matching
@@ -572,6 +637,14 @@ When not copying, ``manage`` and ``ignore`` behave equivalently
 recursion), and ``follow`` will manage the file to which the
 link points.  Valid values are ``follow``, ``manage``, ``ignore``.
 
+#### mode
+Mode the file should be.  Currently relatively limited:
+you must specify the exact mode the file should be.
+
+#### owner
+To whom the file should belong.  Argument can be user name or
+user ID.
+
 #### path (*namevar*)
 The path to the file to manage.  Must be fully qualified.
 
@@ -590,6 +663,50 @@ management.  Valid values are ``true``, ``false``, ``inf``.  Values can also mat
 Whether or not to replace a file that is
 sourced but exists.  This is useful for using file sources
 purely for initialization.  Valid values are ``true``, ``false``.
+
+#### source
+Copy a file over the current file.  Uses ``checksum`` to
+determine when a file should be copied.  Valid values are either
+fully qualified paths to files, or URIs.  Currently supported URI
+types are *puppet* and *file*.
+
+This is one of the primary mechanisms for getting content into
+applications that Puppet does not directly support and is very
+useful for those configuration files that don't change much across
+sytems.  For instance:
+
+    class sendmail {
+        file { "/etc/mail/sendmail.cf":
+            source => "puppet://server/module/sendmail.cf"
+        }
+    }
+
+See the [fileserver docs][] for information on how to configure
+and use file services within Puppet.
+
+If you specify multiple file sources for a file, then the first
+source that exists will be used.  This allows you to specify
+what amount to search paths for files:
+
+    file { "/path/to/my/file":
+        source => [
+            "/nfs/files/file.$host",
+            "/nfs/files/file.$operatingsystem",
+            "/nfs/files/file"
+        ]
+    }
+
+This will use the first found file as the source.
+
+[fileserver docs]: fsconfigref.html
+
+
+#### target
+The target for creating a link.  Currently, symlinks are the
+only type supported.  Valid values are ``notlink``.  Values can also match ``(?-mix:.)``.
+
+#### type
+A read-only state to check the file type.
 
 
 
@@ -870,28 +987,28 @@ appropriate provider for your platform.  Available providers are:
 * **apple**: Package management based on OS X's builtin packaging system.  This is
         essentially the simplest and least functional package system in existence --
         it only supports installation; no deletion or upgrades.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``/usr/sbin/installer``.
-* **apt**: Package management via ``apt-get``.  Default for ``operatingsystem`` == ``debian``.    Required binaries: ``/usr/bin/apt-cache``, ``/usr/bin/apt-get``.
-* **aptitude**: Package management via ``aptitude``.    Required binaries: ``/usr/bin/apt-cache``, ``/usr/bin/aptitude``.
+* **apt**: Package management via ``apt-get``.  Default for ``operatingsystem`` == ``debian``.    Required binaries: ``/usr/bin/apt-get``, ``/usr/bin/apt-cache``.
+* **aptitude**: Package management via ``aptitude``.    Required binaries: ``/usr/bin/aptitude``, ``/usr/bin/apt-cache``.
 * **blastwave**: Package management using Blastwave.org's ``pkg-get`` command on Solaris.    Required binaries: ``pkg-get``.
 * **darwinport**: Package management using DarwinPorts on OS X.    Required binaries: ``/opt/local/bin/port``.
 * **dpkg**: Package management via ``dpkg``.  Because this only uses ``dpkg``
         and not ``apt``, you must specify the source of any packages you want
-        to manage.    Required binaries: ``/usr/bin/dpkg``, ``/usr/bin/dpkg-query``.
+        to manage.    Required binaries: ``/usr/bin/dpkg-query``, ``/usr/bin/dpkg``.
 * **freebsd**: The specific form of package management on FreeBSD.  This is an
         extremely quirky packaging system, in that it freely mixes between
         ports and packages.  Apparently all of the tools are written in Ruby,
         so there are plans to rewrite this support to directly use those
-        libraries.    Required binaries: ``/usr/sbin/pkg_delete``, ``/usr/sbin/pkg_info``, ``/usr/sbin/pkg_add``.
+        libraries.    Required binaries: ``/usr/sbin/pkg_add``, ``/usr/sbin/pkg_delete``, ``/usr/sbin/pkg_info``.
 * **gem**: Ruby Gem support.  By default uses remote gems, but you can specify
         the path to a local gem via ``source``.    Required binaries: ``gem``.
-* **openbsd**: OpenBSD's form of ``pkg_add`` support.  Default for ``operatingsystem`` == ``openbsd``.    Required binaries: ``pkg_delete``, ``pkg_info``, ``pkg_add``.
-* **portage**: Provides packaging support for Gentoo's portage system.  Default for ``operatingsystem`` == ``gentoo``.    Required binaries: ``/usr/bin/emerge``, ``/usr/bin/eix``.
+* **openbsd**: OpenBSD's form of ``pkg_add`` support.  Default for ``operatingsystem`` == ``openbsd``.    Required binaries: ``pkg_add``, ``pkg_delete``, ``pkg_info``.
+* **portage**: Provides packaging support for Gentoo's portage system.  Default for ``operatingsystem`` == ``gentoo``.    Required binaries: ``/usr/bin/eix``, ``/usr/bin/emerge``.
 * **ports**: Support for FreeBSD's ports.  Again, this still mixes packages
-        and ports.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``/usr/sbin/pkg_info``, ``/usr/local/sbin/portupgrade``, ``/usr/local/sbin/portversion``, ``/usr/local/sbin/pkg_deinstall``.
+        and ports.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``/usr/local/sbin/pkg_deinstall``, ``/usr/sbin/pkg_info``, ``/usr/local/sbin/portupgrade``, ``/usr/local/sbin/portversion``.
 * **rpm**: RPM packaging support; should work anywhere with a working ``rpm``
         binary.  Default for ``operatingsystem`` == ``redhat``.    Required binaries: ``rpm``.
 * **sun**: Sun's packaging system.  Requires that you specify the source for
-        the packages you're managing.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/sbin/pkgrm``, ``/usr/bin/pkginfo``, ``/usr/sbin/pkgadd``.
+        the packages you're managing.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/sbin/pkgadd``, ``/usr/sbin/pkgrm``, ``/usr/bin/pkginfo``.
 * **sunfreeware**: Package management using sunfreeware.com's ``pkg-get`` command on Solaris.
         At this point, support is exactly the same as ``blastwave`` support and
         has not actually been tested.    Required binaries: ``pkg-get``.
@@ -1173,7 +1290,7 @@ appropriate provider for your platform.  Available providers are:
 * **smf**: Support for Sun's new Service Management Framework.  Starting a service
         is effectively equivalent to enabling it, so there is only support
         for starting and stopping services, which also enables and disables them,
-        respectively.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/sbin/svcadm``, ``/usr/bin/svcs``.
+        respectively.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/bin/svcs``, ``/usr/sbin/svcadm``.
 
 #### restart
 Specify a *restart* command manually.  If left
@@ -1600,4 +1717,4 @@ so Puppet only checks for it at that time.
 ----------------
 
 
-*This page autogenerated on Thu Sep 21 14:35:35 CDT 2006*
+*This page autogenerated on Thu Sep 21 17:27:28 CDT 2006*

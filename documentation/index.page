@@ -18,6 +18,9 @@ Many general questions about Puppet and Reductive are answered in the
 [FAQ](faq.html), such as "How to get started quickly", "How to contribute",
 and "What is Puppet's License? (GPL)")
 
+You can also often get good support on ``#puppet`` on irc.freenode.net;
+Puppet's primary author, Luke Kanies, is usually online there.
+
 ## Relevant Links
 
 * [Documentation](documentation/)
