@@ -53,7 +53,7 @@ if project.has?(:gem)
             '--title' <<  'Puppet - Configuration Management' <<
             '--main' << 'README' <<
             '--line-numbers'
-        task.test_file = "test/test"
+        task.test_file = "test/Rakefile"
     end
 end
 

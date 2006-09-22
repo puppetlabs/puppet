@@ -76,6 +76,10 @@ module Util
     # tmp file.
     def self.writelock(file, mode = 0600)
         tmpfile = file + ".tmp"
+        unless FileTest.directory?(File.dirname(tmpfile))
+            raise Puppet::DevError, "Cannot create %s; directory %s does not exist" %
+                [file, File.dirname(file)]
+        end
         self.sync(file).synchronize(Sync::EX) do
             File.open(file, "w", mode) do |rf|
                 rf.lock_exclusive do |lrf|

@@ -40,6 +40,7 @@ module Puppet
             if Puppet[:statefile].nil?
                 raise Puppet::DevError, "Somehow the statefile is nil"
             end
+            Puppet.config.use(:puppet)
 
             unless File.exists?(Puppet[:statefile])
                 unless defined? @@state and ! @@state.nil?
@@ -79,7 +80,6 @@ module Puppet
         end
 
         def self.store
-            Puppet.config.use(:puppet)
             Puppet.debug "Storing state"
 
             unless FileTest.exist?(Puppet[:statefile])
