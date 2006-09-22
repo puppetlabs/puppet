@@ -1,3 +1,9 @@
+0.19.2
+    Fixing a few smaller bugs, notably in the reports system.
+
+    Refreshed objects now generate an event, which can result in further
+    refreshes of other objects.
+
 0.19.1
     Fixing two critical bugs:  User management works again and cron jobs are
     no longer added to all user accounts.
