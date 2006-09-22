@@ -1,3 +1,7 @@
+0.19.3
+    Fixing a bug in server/master.rb that causes the hostname
+    not to be available in locally-executed manifests.
+
 0.19.2
     Fixing a few smaller bugs, notably in the reports system.
 
