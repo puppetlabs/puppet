@@ -25,7 +25,7 @@ class TestEvents < Test::Unit::TestCase
 
         comp = newcomp("eventtesting", file, exec)
 
-        trans = assert_events([:file_created], comp)
+        trans = assert_events([:file_created, :triggered], comp)
 
         assert_equal(1, trans.triggered?(exec, :refresh))
     end

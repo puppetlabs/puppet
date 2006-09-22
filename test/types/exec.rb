@@ -161,7 +161,7 @@ class TestExec < Test::Unit::TestCase
         # verify that only the file_changed event was kicked off, not the
         # command_executed
         assert_equal(
-            [:file_changed],
+            [:file_changed, :triggered],
             events
         )
     end

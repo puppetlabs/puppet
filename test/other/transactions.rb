@@ -48,6 +48,27 @@ class TestTransactions < Test::Unit::TestCase
         end
     end
 
+    def test_refreshes_generate_events
+        path = tempfile()
+        firstpath = tempfile()
+        secondpath = tempfile()
+        file = Puppet::Type.newfile(:path => path, :content => "yayness")
+        first = Puppet::Type.newexec(:title => "first",
+                                     :command => "/bin/echo first > #{firstpath}",
+                                     :subscribe => [:file, path],
+                                     :refreshonly => true
+        )
+        second = Puppet::Type.newexec(:title => "second",
+                                     :command => "/bin/echo second > #{secondpath}",
+                                     :subscribe => [:exec, "first"],
+                                     :refreshonly => true
+        )
+
+        assert_apply(file, first, second)
+
+        assert(FileTest.exists?(secondpath), "Refresh did not generate an event")
+    end
+
     unless %x{groups}.chomp.split(/ /).length > 1
         $stderr.puts "You must be a member of more than one group to test transactions"
     else
@@ -221,7 +242,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:mode] = "755"
         }
 
-        trans = assert_events([:file_changed], component)
+        trans = assert_events([:file_changed, :triggered], component)
 
         assert(FileTest.exists?(execfile), "Execfile does not exist")
         File.unlink(execfile)
@@ -229,7 +250,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:group] = @groups[1]
         }
 
-        trans = assert_events([:file_changed], component)
+        trans = assert_events([:file_changed, :triggered], component)
         assert(FileTest.exists?(execfile), "Execfile does not exist")
     end
 
@@ -260,7 +281,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:mode] = "755"
         }
 
-        trans = assert_events([:file_changed, :file_changed], component)
+        trans = assert_events([:file_changed, :file_changed, :triggered], component)
 
     end
 
@@ -348,7 +369,7 @@ class TestTransactions < Test::Unit::TestCase
 
         file[:content] = "some content"
 
-        assert_events([:file_changed], comp)
+        assert_events([:file_changed, :triggered], comp)
         assert(FileTest.exists?(fname), "File did not get recreated")
 
         # Now remove it, so it can get created again
@@ -366,7 +387,7 @@ class TestTransactions < Test::Unit::TestCase
 
         assert(! file.insync?, "Uh, file is in sync?")
 
-        assert_events([:file_changed], comp)
+        assert_events([:file_changed, :triggered], comp)
         assert(FileTest.exists?(fname), "File did not get recreated")
     end
 

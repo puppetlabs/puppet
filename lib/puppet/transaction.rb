@@ -159,7 +159,7 @@ class Transaction
 
         begin
             allevents = @objects.collect { |child|
-                events = nil
+                events = []
                 if (self.ignoretags or tags.nil? or child.tagged?(tags))
                     if self.ignoreschedules or child.scheduled?
                         @objectmetrics[:scheduled] += 1
@@ -171,9 +171,6 @@ class Transaction
 
                         # Keep track of how long we spend in each type of object
                         @timemetrics[child.class.name] += seconds
-
-                        # Collect the targets of any subscriptions to those events
-                        collecttargets(events)
                     else
                         child.debug "Not scheduled"
                     end
@@ -181,8 +178,13 @@ class Transaction
                     child.debug "Not tagged with %s" % tags.join(", ")
                 end
 
-                # Now check to see if there are any events for this child
-                trigger(child)
+                # Check to see if there are any events for this child
+                if triggedevents = trigger(child)
+                    events += triggedevents
+                end
+
+                # Collect the targets of any subscriptions to those events
+                collecttargets(events)
 
                 # And return the events for collection
                 events
@@ -327,6 +329,7 @@ class Transaction
         callbacks = Hash.new { |hash, key| hash[key] = [] }
         sources = Hash.new { |hash, key| hash[key] = [] }
 
+        trigged = []
         while obj
             if @targets.include?(obj)
                 callbacks.clear
@@ -345,8 +348,9 @@ class Transaction
                 end
 
                 callbacks.each do |callback, subs|
-                    obj.notice "Triggering '%s' from %s dependencies" %
+                    message = "Triggering '%s' from %s dependencies" %
                         [callback, subs.length]
+                    obj.notice message
                     # At this point, just log failures, don't try to react
                     # to them in any way.
                     begin
@@ -363,11 +367,25 @@ class Transaction
                         end
                     end
 
+                    # And then add an event for it.
+                    trigged << Puppet::Event.new(
+                        :event => :triggered,
+                        :transaction => self,
+                        :source => obj,
+                        :message => message
+                    )
+
                     triggered(obj, callback)
                 end
             end
 
             obj = obj.parent
+        end
+
+        if trigged.empty?
+            return nil
+        else
+            return trigged
         end
     end
 
