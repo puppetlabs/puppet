@@ -61,7 +61,13 @@ module Puppet
         @instances = []
 
         # FIXME This should be configurable.
-        @path = "/etc/ssh/ssh_known_hosts"
+        # Adding at least hard-coded alternative placement for Darwin - ajax
+        case Facter.value("operatingsystem")
+        when "Darwin":
+          @path = "/etc/ssh_known_hosts"
+        else
+          @path = "/etc/ssh/ssh_known_hosts"
+        end
         @fields = [:name, :type, :key]
 
         @filetype = Puppet::FileType.filetype(:flat)
