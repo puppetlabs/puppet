@@ -73,4 +73,26 @@ authentication already provides significant security.
 
 Recommendations on approaches are heartily recommended.
 
+# Examples
+
+To introduce a client machine to the puppet server, first run puppetd on
+the client with the `waitforcert` parameter:
+
+    $ puppetd --waitforcert 30 --server puppetserver.domain.net -v
+
+The client will request a certificate from the certificate authority
+facility on the server called `puppetserver.domain.net`.
+
+Assuming that the machine `puppetserver` is not set to autosign any new
+certificate requests (this is the default), you'll need to list the certificate
+requests from the command line on the server with an invocation like this:
+
+    $ puppetca --list
+
+You'll then be able to pick out the request by name (quite possibly, it will be the
+only request waiting) and instruct the certificate authority to sign the request:
+
+    $ puppetca --sign puppetclient-37.domain.net
+
+
 *$Id$*
