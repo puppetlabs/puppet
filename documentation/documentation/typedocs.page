@@ -554,7 +554,7 @@ for file copying, but it can also be used to monitor files somewhat
 like Tripwire without managing the file contents in any way.  You can
 specify that a file's checksum should be monitored and then subscribe to
 the file from another object and receive events to signify
-checksum changes, for instance.  Valid values are ``timestamp``, ``time``, ``nosum``, ``md5lite``, ``mtime``, ``md5``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
+checksum changes, for instance.  Valid values are ``nosum``, ``mtime``, ``md5lite``, ``time``, ``timestamp``, ``md5``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
 
 #### content
 Specify the contents of a file as a string.  Newlines, tabs, and
@@ -607,7 +607,7 @@ something similar.
 You can also make recursive symlinks, which will create a
 directory structure that maps to the target directory,
 with directories corresponding to each directory
-and links corresponding to each file.  Valid values are ``link``, ``absent`` (also called ``false``), ``directory``, ``present``, ``file``.  Values can also match ``(?-mix:.)``.
+and links corresponding to each file.  Valid values are ``absent`` (also called ``false``), ``link``, ``directory``, ``file``, ``present``.  Values can also match ``(?-mix:.)``.
 
 #### force
 Force the file operation.  Currently only used when replacing
@@ -876,7 +876,7 @@ Control what to do with this mount. If the value is
 but not mounted, if it is ``absent``, the entry is removed 
 from the mount table and the filesystem is unmounted if 
 currently mounted, if it is ``mounted``, the filesystem 
-is entered into the mount table and mounted.  Valid values are ``absent``, ``present``, ``mounted``.
+is entered into the mount table and mounted.  Valid values are ``absent``, ``mounted``, ``present``.
 
 #### fstype
 The mount type.  Valid values depend on the
@@ -993,22 +993,22 @@ appropriate provider for your platform.  Available providers are:
 * **darwinport**: Package management using DarwinPorts on OS X.    Required binaries: ``/opt/local/bin/port``.
 * **dpkg**: Package management via ``dpkg``.  Because this only uses ``dpkg``
         and not ``apt``, you must specify the source of any packages you want
-        to manage.    Required binaries: ``/usr/bin/dpkg-query``, ``/usr/bin/dpkg``.
+        to manage.    Required binaries: ``/usr/bin/dpkg``, ``/usr/bin/dpkg-query``.
 * **freebsd**: The specific form of package management on FreeBSD.  This is an
         extremely quirky packaging system, in that it freely mixes between
         ports and packages.  Apparently all of the tools are written in Ruby,
         so there are plans to rewrite this support to directly use those
-        libraries.    Required binaries: ``/usr/sbin/pkg_add``, ``/usr/sbin/pkg_delete``, ``/usr/sbin/pkg_info``.
+        libraries.    Required binaries: ``/usr/sbin/pkg_info``, ``/usr/sbin/pkg_add``, ``/usr/sbin/pkg_delete``.
 * **gem**: Ruby Gem support.  By default uses remote gems, but you can specify
         the path to a local gem via ``source``.    Required binaries: ``gem``.
-* **openbsd**: OpenBSD's form of ``pkg_add`` support.  Default for ``operatingsystem`` == ``openbsd``.    Required binaries: ``pkg_add``, ``pkg_delete``, ``pkg_info``.
+* **openbsd**: OpenBSD's form of ``pkg_add`` support.  Default for ``operatingsystem`` == ``openbsd``.    Required binaries: ``pkg_info``, ``pkg_add``, ``pkg_delete``.
 * **portage**: Provides packaging support for Gentoo's portage system.  Default for ``operatingsystem`` == ``gentoo``.    Required binaries: ``/usr/bin/eix``, ``/usr/bin/emerge``.
 * **ports**: Support for FreeBSD's ports.  Again, this still mixes packages
-        and ports.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``/usr/local/sbin/pkg_deinstall``, ``/usr/sbin/pkg_info``, ``/usr/local/sbin/portupgrade``, ``/usr/local/sbin/portversion``.
+        and ports.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``/usr/local/sbin/portupgrade``, ``/usr/local/sbin/portversion``, ``/usr/local/sbin/pkg_deinstall``, ``/usr/sbin/pkg_info``.
 * **rpm**: RPM packaging support; should work anywhere with a working ``rpm``
         binary.  Default for ``operatingsystem`` == ``redhat``.    Required binaries: ``rpm``.
 * **sun**: Sun's packaging system.  Requires that you specify the source for
-        the packages you're managing.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/sbin/pkgadd``, ``/usr/sbin/pkgrm``, ``/usr/bin/pkginfo``.
+        the packages you're managing.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/bin/pkginfo``, ``/usr/sbin/pkgadd``, ``/usr/sbin/pkgrm``.
 * **sunfreeware**: Package management using sunfreeware.com's ``pkg-get`` command on Solaris.
         At this point, support is exactly the same as ``blastwave`` support and
         has not actually been tested.    Required binaries: ``pkg-get``.
@@ -1227,7 +1227,7 @@ provided.
 Whether a service should be enabled to start at boot.
 This state behaves quite differently depending on the platform;
 wherever possible, it relies on local tools to enable or disable
-a given service.  *true*/*false*/*runlevels*  Valid values are ``true``, ``false``.
+a given service.  *true*/*false*/*runlevels*  Valid values are ``false``, ``true``.
 
 #### ensure
 Whether a service should be running.  **true**/*false*  Valid values are ``running`` (also called ``true``), ``stopped`` (also called ``false``).
@@ -1290,7 +1290,7 @@ appropriate provider for your platform.  Available providers are:
 * **smf**: Support for Sun's new Service Management Framework.  Starting a service
         is effectively equivalent to enabling it, so there is only support
         for starting and stopping services, which also enables and disables them,
-        respectively.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/bin/svcs``, ``/usr/sbin/svcadm``.
+        respectively.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/sbin/svcadm``, ``/usr/bin/svcs``.
 
 #### restart
 Specify a *restart* command manually.  If left
@@ -1636,7 +1636,7 @@ Solaris zones.
 
 ### Zone Parameters
 #### autoboot
-Whether the zone should automatically boot.  Valid values are ``true``, ``false``.
+Whether the zone should automatically boot.  Valid values are ``false``, ``true``.
 
 #### ensure
 The running state of the zone.  The valid states directly reflect
@@ -1717,4 +1717,4 @@ so Puppet only checks for it at that time.
 ----------------
 
 
-*This page autogenerated on Thu Sep 21 17:27:28 CDT 2006*
+*This page autogenerated on Mon Sep 25 14:48:14 EDT 2006*
