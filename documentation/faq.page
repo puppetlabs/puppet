@@ -240,4 +240,13 @@ This can apparently happen if Ruby is not compiled with IPv6 support; see the
 for more details.  The only known solution is to make sure you're running a
 version of Ruby compiled with IPv6 support.
 
+I'm getting ``tlsv1 alert unknown ca`` errors; what's wrong?
+------------------------------------------------------------
+This problem is caused by ``puppetmasterd`` not being able to read its
+ca certificate.  This problem might occur up to 0.18.4 but has been
+fixed in 0.19.0.  You can probably fix it for versions before 0.19.0 by
+chgrping /etc/puppet/ssl to the puppet group, but ``puppetd`` might
+chgrp it back.  Having ``puppetmasterd`` start as the root group should
+fix the problem permanently until you can upgrade.
+
 *$Id$*
