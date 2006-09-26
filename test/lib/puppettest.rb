@@ -103,6 +103,7 @@ module PuppetTest
         #end
 
         Puppet[:ignoreschedules] = true
+        Puppet[:trace] = true
     end
 
     def tempfile

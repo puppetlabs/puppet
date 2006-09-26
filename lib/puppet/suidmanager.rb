@@ -63,28 +63,26 @@ module Puppet
         module_function :system
 
         def asuser(new_euid=nil, new_egid=nil)
-            begin
-                old_egid = old_euid = nil
-                if new_egid
-                    new_egid = Puppet::Util.uid(new_egid)
-                    old_egid = self.egid
-                    self.egid = new_egid
-                end
-                if new_euid
-                    new_euid = Puppet::Util.uid(new_euid)
-                    old_euid = self.euid
-                    self.euid = new_euid
-                end
-
-                output = yield
-
-                output
-            ensure
-                self.egid = old_egid
-                self.euid = old_euid
+            old_egid = old_euid = nil
+            if new_egid
+                new_egid = Puppet::Util.uid(new_egid)
+                old_egid = self.egid
+                self.egid = new_egid
             end
+            if new_euid
+                new_euid = Puppet::Util.uid(new_euid)
+                old_euid = self.euid
+                self.euid = new_euid
+            end
+
+            return yield
+        ensure
+            self.egid = old_egid if old_egid
+            self.euid = old_euid if old_euid
         end
 
         module_function :asuser
     end
 end
+
+# $Id$
