@@ -257,18 +257,12 @@ class TestFileSources < Test::Unit::TestCase
 
     def test_NetworkSources
         server = nil
-        basedir = tempfile()
-        @@tmpfiles << basedir
-        Dir.mkdir(basedir)
-
         mounts = {
             "/" => "root"
         }
 
         fileserverconf = mkfileserverconf(mounts)
 
-        Puppet[:confdir] = basedir
-        Puppet[:vardir] = basedir
         Puppet[:autosign] = true
 
         Puppet[:masterport] = 8762

@@ -135,37 +135,6 @@ class TestPackages < Test::Unit::TestCase
         }
     end
 
-    def test_nosuchpkg
-        obj = nil
-        assert_nothing_raised {
-            obj = Puppet.type(:package).create(
-                :name => "thispackagedoesnotexist",
-                :ensure => :installed
-            )
-        }
-
-        assert(obj, "Failed to create fake package")
-
-        assert_nothing_raised {
-            obj.retrieve
-        }
-
-        assert_equal(:absent, obj.is(:ensure),
-            "Somehow retrieved unknown pkg's version")
-
-        state = obj.state(:ensure)
-        assert(state, "Could not retrieve ensure state")
-
-        # Add a fake state, for those that need it
-        file = tempfile()
-        File.open(file, "w") { |f| f.puts :yayness }
-        obj[:source] = file
-        assert_raise(Puppet::Error,
-            "Successfully installed nonexistent package") {
-            state.sync
-        }
-    end
-
     def test_latestpkg
         mkpkgs { |pkg|
             next unless pkg.respond_to? :latest
@@ -194,6 +163,37 @@ class TestPackages < Test::Unit::TestCase
     unless Puppet::SUIDManager.uid == 0
         $stderr.puts "Run as root to perform package installation tests"
     else
+    def test_nosuchpkg
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet.type(:package).create(
+                :name => "thispackagedoesnotexist",
+                :ensure => :installed
+            )
+        }
+
+        assert(obj, "Failed to create fake package")
+
+        assert_nothing_raised {
+            obj.retrieve
+        }
+
+        assert_equal(:absent, obj.is(:ensure),
+            "Somehow retrieved unknown pkg's version")
+
+        state = obj.state(:ensure)
+        assert(state, "Could not retrieve ensure state")
+
+        # Add a fake state, for those that need it
+        file = tempfile()
+        File.open(file, "w") { |f| f.puts :yayness }
+        obj[:source] = file
+        assert_raise(Puppet::Error, Puppet::ExecutionFailure,
+            "Successfully installed nonexistent package") {
+            state.sync
+        }
+    end
+
     def test_installpkg
         mkpkgs { |pkg|
             # we first set install to 'true', and make sure something gets

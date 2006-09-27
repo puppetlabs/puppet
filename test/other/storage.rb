@@ -21,6 +21,12 @@ class TestStorage < Test::Unit::TestCase
 
         f = mkfile()
 
+        # Load first, since that's what we do in the code base; this creates
+        # all of the necessary directories.
+        assert_nothing_raised {
+            Puppet::Storage.load
+        }
+
         hash = {:a => :b, :c => :d}
 
         state = nil

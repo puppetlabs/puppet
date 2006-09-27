@@ -5,7 +5,7 @@ require 'puppet/lock'
 
 module Puppet
     # A command failed to execute.
-    class ExecutionFailure < RuntimeError
+    class ExecutionFailure < Puppet::Error
     end
 module Util
     require 'benchmark'

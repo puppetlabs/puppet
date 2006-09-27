@@ -63,6 +63,10 @@ module Puppet
         module_function :system
 
         def asuser(new_euid=nil, new_egid=nil)
+            # Unless we're root, don't do a damn thing.
+            unless Process.uid == 0
+                return yield
+            end
             old_egid = old_euid = nil
             if new_egid
                 saved_state_egid = new_egid

@@ -151,6 +151,10 @@ module PuppetTest
         @@cleaners.each { |cleaner| cleaner.call() }
 
         @@tmpfiles.each { |file|
+            unless file =~ /tmp/
+                puts "Not deleting tmpfile %s" % file
+                next
+            end
             if FileTest.exists?(file)
                 system("chmod -R 755 %s" % file)
                 system("rm -rf %s" % file)
