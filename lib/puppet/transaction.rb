@@ -101,6 +101,11 @@ class Transaction
         unless changes.empty?
             # Record when we last synced
             child.cache(:synced, Time.now)
+
+            # Flush, if appropriate
+            if child.respond_to?(:flush)
+                child.flush
+            end
         end
 
         childevents
