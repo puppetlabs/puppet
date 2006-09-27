@@ -66,7 +66,6 @@ class TestSUIDManager < Test::Unit::TestCase
             assert_equal(user.gid, gid)
         end
     end
-
     def test_system
         # NOTE: not sure what shells this will work on..
         if @run 
@@ -89,3 +88,5 @@ class TestSUIDManager < Test::Unit::TestCase
         end
     end
 end
+
+# $Id:$
