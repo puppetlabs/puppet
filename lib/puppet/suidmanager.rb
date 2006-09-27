@@ -65,12 +65,20 @@ module Puppet
         def asuser(new_euid=nil, new_egid=nil)
             old_egid = old_euid = nil
             if new_egid
-                new_egid = Puppet::Util.uid(new_egid)
+                saved_state_egid = new_egid
+                new_egid = Puppet::Util.gid(new_egid)
+                if new_egid == nil
+                  raise Puppet::Error, "Invalid group: %s" % saved_state_egid
+                end
                 old_egid = self.egid
                 self.egid = new_egid
             end
             if new_euid
+                saved_state_euid = new_euid
                 new_euid = Puppet::Util.uid(new_euid)
+                if new_euid == nil
+                  raise Puppet::Error, "Invalid user: %s" % saved_state_euid
+                end
                 old_euid = self.euid
                 self.euid = new_euid
             end

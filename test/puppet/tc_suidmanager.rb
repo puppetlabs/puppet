@@ -45,7 +45,12 @@ class TestSUIDManager < Test::Unit::TestCase
             assert_uid_gid(user.uid, user.gid, tempfile)
         end
     end
-
+    def test_utiluid
+        user = nonrootuser
+        if @run
+            assert_not_equal(nil, Puppet::Util.uid(user))
+        end
+    end
     def test_asuser
         if @run
             user = nonrootuser
@@ -57,7 +62,6 @@ class TestSUIDManager < Test::Unit::TestCase
                     gid = Puppet::SUIDManager.egid
                 end
             end
-
             assert_equal(user.uid, uid)
             assert_equal(user.gid, gid)
         end

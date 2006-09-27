@@ -107,7 +107,7 @@ module Util
         end
         gid = nil
         obj = nil
-
+          
         # We want to look the group up either way
         if group.is_a?(Integer) 
             # If this doesn't find anything
