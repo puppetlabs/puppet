@@ -481,6 +481,7 @@ class TestCron < Test::Unit::TestCase
         }
 
         assert_apply(cron)
+
         cron.retrieve
 
         vals = cron.is(:environment)
@@ -490,6 +491,9 @@ class TestCron < Test::Unit::TestCase
 
         assert(vals.include?(env1), "Missing first env setting")
         assert(vals.include?(env2), "Missing second env setting")
+
+        # Now do it again and make sure there are no changes
+        assert_events([], cron)
 
     end
 

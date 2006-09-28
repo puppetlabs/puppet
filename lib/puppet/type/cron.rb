@@ -252,7 +252,11 @@ module Puppet
                 unmanaged environment setting is associated with a given cron
                 job.  If you already have cron jobs with environment settings,
                 then Puppet will keep those settings in the same place in the file,
-                but will not associate them with a specific job."
+                but will not associate them with a specific job.
+                
+                Settings should be specified exactly as they should appear in
+                the crontab, e.g., 'PATH=/bin:/usr/bin:/usr/sbin'.  Multiple
+                settings should be specified as an array."
 
             validate do |value|
                 unless value =~ /^\s*(\w+)\s*=\s*(.+)\s*$/
@@ -265,7 +269,7 @@ module Puppet
                 if @is.is_a? Array
                     return @is.sort == @should.sort
                 else
-                    return @is == @should[0]
+                    return @is == @should
                 end
             end
 
@@ -573,7 +577,9 @@ module Puppet
                 end
 
                 unless envs.empty?
-                    hash[:environment] = envs
+                    # We have to dup here so that we don't remove the settings
+                    # in @is on the object.
+                    hash[:environment] = envs.dup
                 end
 
                 hash[:user] = user
