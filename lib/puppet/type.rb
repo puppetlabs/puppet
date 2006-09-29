@@ -2673,5 +2673,6 @@ require 'puppet/type/symlink'
 require 'puppet/type/user'
 require 'puppet/type/tidy'
 require 'puppet/type/parsedtype'
+require 'puppet/type/notify'
 
 # $Id$
