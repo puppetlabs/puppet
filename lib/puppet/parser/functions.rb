@@ -137,6 +137,13 @@ module Functions
         raise Puppet::ParseError, vals.to_s
     end
 
+    # Runs a newfunction to create a function for each of the log levels
+    Puppet::Log.levels.each do |level|      
+        newfunction(level, :statement) do |vals| 
+            send(level, vals.join(" ")) 
+        end 
+    end
+
     newfunction(:template, :rvalue) do |vals|
         require 'erb'
 
