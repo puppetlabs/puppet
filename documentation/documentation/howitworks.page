@@ -156,11 +156,11 @@ user IDs, not user names, so Puppet objects convert them appropriately.
 (Incidentally, sometimes Puppet is creating the user that it's chowning a file
 to, so whenever possible it ignores validation errors until the last minute.)
 
-The last phase of instantiation is the *finalization* phase.  One of the goals
-of the Puppet language is to make file order matter as little as possible;
-this means that a Puppet object needs to be able to require other objects
-listed later in the manifest, which means that the required object will be
-instantiated after the requiring object.  So, the finalization phase is used
+The last stage of the instantiation process finalizes the object dependencies.  
+One of the goals of the Puppet language is to make file order matter as little 
+as possible; this means that a Puppet object needs to be able to require other 
+objects listed later in the manifest, which means that the required object will 
+be instantiated after the requiring object.  So, this finalization stage is used
 to actually handle all of these requirements -- Puppet objects use their
 references to objects and verify that the objects actually exist.
 
