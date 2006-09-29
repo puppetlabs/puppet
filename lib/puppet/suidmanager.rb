@@ -12,7 +12,7 @@ module Puppet
                 newmethod = method
 
                 if platform == "Darwin"
-                    warnonce "Cannot change real UID on Darwin"
+                    Puppet::Util::Warnings.warnonce "Cannot change real UID on Darwin"
                     newmethod = ("e" + method.to_s).intern
                 end
 
@@ -36,7 +36,7 @@ module Puppet
                 # NOTE: this would be much better facilitated with a specialized popen()
                 #       (see the test suite for more details.)
                 if (Facter['rubyversion'].value <=> "1.8.4") < 0
-                    warnonce "Cannot capture STDERR when running as another user on Ruby < 1.8.4"
+                    Puppet::Util::Warnings.warnonce "Cannot capture STDERR when running as another user on Ruby < 1.8.4"
                     output = %x{#{command}}
                 else
                     output = %x{#{command} 2>&1}
