@@ -46,7 +46,7 @@ class TestSUIDManager < Test::Unit::TestCase
         end
     end
     def test_utiluid
-        user = nonrootuser
+        user = nonrootuser.name
         if @run
             assert_not_equal(nil, Puppet::Util.uid(user))
         end

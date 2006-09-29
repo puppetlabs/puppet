@@ -155,6 +155,11 @@ module Util
             return nil
         end
 
+        # One of the unit tests was passing a Passwd struct
+        unless user.is_a?(String) or user.is_a?(Integer)
+            raise Puppet::DevError, "Invalid value for uid: %s" % user.class
+        end
+
         if user =~ /^\d+$/
             user = Integer(user)
         end

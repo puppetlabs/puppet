@@ -1,7 +1,10 @@
 require 'facter'
+require 'puppet/util/warnings'
 
 module Puppet
     module SUIDManager
+        include Puppet::Util::Warnings
+
         platform = Facter["kernel"].value
         [:uid=, :gid=, :uid, :gid].each do |method|
             define_method(method) do |*args|
@@ -9,10 +12,7 @@ module Puppet
                 newmethod = method
 
                 if platform == "Darwin"
-                    if !@darwinwarned
-                        Puppet.warning "Cannot change real UID on Darwin"
-                        @darwinwarned = true
-                    end
+                    warnonce "Cannot change real UID on Darwin"
                     newmethod = ("e" + method.to_s).intern
                 end
 
@@ -36,10 +36,7 @@ module Puppet
                 # NOTE: this would be much better facilitated with a specialized popen()
                 #       (see the test suite for more details.)
                 if (Facter['rubyversion'].value <=> "1.8.4") < 0
-                   unless @@alreadywarned
-                        Puppet.warning "Cannot capture STDERR when running as another user on Ruby < 1.8.4"
-                        @@alreadywarned = true
-                    end
+                    warnonce "Cannot capture STDERR when running as another user on Ruby < 1.8.4"
                     output = %x{#{command}}
                 else
                     output = %x{#{command} 2>&1}
