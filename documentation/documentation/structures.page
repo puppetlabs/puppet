@@ -316,6 +316,13 @@ Nodes can also inherit from other nodes, so it's easy to apply defaults:
         include webserver
     }
 
+You can specify fully-qualified node names, but you have to single-quote the
+names:
+
+    node 'host.domain.com' {
+        ...
+    }
+
 # Conditionals
 
 Puppet currently supports two types of conditionals: in-statement and around
