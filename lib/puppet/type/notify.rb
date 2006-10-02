@@ -13,7 +13,7 @@ module Puppet
           when :true:
             log(self.should)
           else  
-            Puppet::info(self.should)
+            Puppet.send(@parent[:loglevel], self.should)
           end
         return
       end
@@ -29,9 +29,7 @@ module Puppet
     end
     
     newparam(:withpath) do 
-      desc "Whether to not to show the full object path. If true, the message 
-            will be sent to the client at the current loglevel.  If false, 
-            the message will be sent to the client at the info level."
+      desc "Whether to not to show the full object path.  Sends the message at the current loglevel."
       defaultto :true
       newvalues(:true, :false) 
     end
