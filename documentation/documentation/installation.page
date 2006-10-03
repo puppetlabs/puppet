@@ -82,8 +82,10 @@ Ruby itself.
 
 #### Debian and Ubuntu
 
-Facter and Puppet now have quality Debian packges , thanks to Matthew Palmer
-and Jamie Wilkinson.  You can download these packages from any Debian mirror.
+Facter and Puppet now have quality
+[Debian packges](http://packages.debian.org/unstable/admin/puppet),
+thanks to Matthew Palmer and Jamie Wilkinson.  You can download these packages
+from any Debian mirror.
 
 The package maintainer for Ruby on these platforms has decided to split
 the Ruby standard library into many packages.  According to Eric Hollensbe,
