@@ -44,6 +44,7 @@ module Puppet
                     "Can not use a non-existent file for parsing"
             end
             @statted = 0
+            @stamp = nil
             @tstamp = stamp()
         end
 

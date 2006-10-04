@@ -12,6 +12,8 @@ module Puppet
         class Lexer
             attr_reader :line, :last, :file
 
+            attr_accessor :indefine
+
                 #%r{\w+} => :WORD,
             @@tokens = {
                 %r{#.*} => :COMMENT,
@@ -31,10 +33,13 @@ module Puppet
                 %r{<} => :LESSTHAN,
                 %r{<=} => :LESSEQUAL,
                 %r{!=} => :NOTEQUAL,
+                %r{!} => :NOT,
                 %r{,} => :COMMA,
                 %r{\.} => :DOT,
                 %r{:} => :COLON,
                 %r{@} => :AT,
+                %r{<<\|} => :LLCOLLECT,
+                %r{\|>>} => :RRCOLLECT,
                 %r{<\|} => :LCOLLECT,
                 %r{\|>} => :RCOLLECT,
                 %r{;} => :SEMIC,
@@ -42,6 +47,8 @@ module Puppet
                 %r{\\} => :BACKSLASH,
                 %r{=>} => :FARROW,
                 %r{[a-z][-\w]*} => :NAME,
+                %r{([a-z][-\w]*::)+[a-z][-\w]*} => :CLASSNAME,
+                %r{([A-Z][-\w]*::)+[A-Z][-\w]*} => :CLASSREF,
                 %r{[A-Z][-\w]*} => :TYPE,
                 %r{[0-9]+} => :NUMBER,
                 %r{\$\w+} => :VARIABLE
@@ -59,8 +66,14 @@ module Puppet
                 "else" => :ELSE,
                 "inherits" => :INHERITS,
                 "node" => :NODE,
-                "true" => :BOOLEAN
+                "true" => :BOOLEAN,
+                "and"  => :AND,
+                "or"   => :OR
             }
+
+            def clear
+                initvars
+            end
 
             # scan the whole file
             # basically just used for testing
@@ -90,14 +103,47 @@ module Puppet
                 }
             end
 
+            def indefine?
+                if defined? @indefine
+                    @indefine
+                else
+                    false
+                end
+            end
+
             def initialize
+                initvars()
+            end
+
+            def initvars
                 @line = 1
                 @last = ""
+                @lasttoken = nil
                 @scanner = nil
                 @file = nil
                 # AAARRGGGG! okay, regexes in ruby are bloody annoying
                 # no one else has "\n" =~ /\s/
                 @skip = %r{[ \t]+}
+
+                @namestack = []
+                @indefine = false
+            end
+
+            # Go up one in the namespace.
+            def namepop
+                @namestack.pop
+            end
+
+            # Collect the current namespace.
+            def namespace
+                @namestack.join("::")
+            end
+
+            # This value might have :: in it, but we don't care -- it'll be
+            # handled normally when joining, and when popping we want to pop
+            # this full value, however long the namespace is.
+            def namestack(value)
+                @namestack << value
             end
 
             def rest
@@ -164,6 +210,7 @@ module Puppet
                     # if this gets much more complicated, it should
                     # be moved up to where the tokens themselves are defined
                     # which will get me about 75% of the way to a lexer generator
+                    ptoken = stoken
                     case stoken
                     when :NAME then
                         wtoken = stoken
@@ -171,36 +218,51 @@ module Puppet
                         if @@keywords.include?(value)
                             wtoken = @@keywords[value]
                             #Puppet.debug("token '%s'" % wtoken)
+                            if wtoken == :BOOLEAN
+                                value = eval(value)
+                            end
                         end
-                        yield [wtoken,value]
-                        @last = value
+                        ptoken = wtoken
                     when :NUMBER then
-                        yield [:NAME,value]
-                        # just throw comments away
+                        ptoken = :NAME
                     when :COMMENT then
                         # just throw comments away
+                        next
                     when :RETURN then
                         @line += 1
                         @scanner.skip(@skip)
+                        next
                     when :SQUOTE then
                         #Puppet.debug("searching '%s' after '%s'" % [self.rest,value])
                         value = self.slurpstring(value)
-                        yield [:SQTEXT,value]
-                        @last = value
-                        #stoken = :DQTEXT
+                        ptoken = :SQTEXT
                         #Puppet.debug("got string '%s' => '%s'" % [:DQTEXT,value])
                     when :DQUOTE then
-                        #Puppet.debug("searching '%s' after '%s'" % [self.rest,value])
                         value = self.slurpstring(value)
-                        yield [:DQTEXT,value]
-                        @last = value
-                        #stoken = :DQTEXT
-                        #Puppet.debug("got string '%s' => '%s'" % [:DQTEXT,value])
-                    else
-                        #Puppet.debug("got token '%s' => '%s'" % [stoken,value])
-                        yield [stoken,value]
-                        @last = value
+                        ptoken = :DQTEXT
+                    when :VARIABLE then
+                        value = value.sub(/^\$/, '')
                     end
+
+                    yield [ptoken, value]
+
+                    if @lasttoken == :CLASS
+                        namestack(value)
+                    end
+
+                    if @lasttoken == :DEFINE
+                        if indefine?
+                            self.indefine = false
+                            raise Puppet::ParseError,
+                                "Definitions cannot nest"
+                        end
+
+                        @indefine = true
+                    end
+
+                    @last = value
+                    @lasttoken = ptoken
+
                     @scanner.skip(@skip)
                 end
                 @scanner = nil

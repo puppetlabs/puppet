@@ -8,15 +8,15 @@ class TestParser < Test::Unit::TestCase
         super
         Puppet[:parseonly] = true
         #@lexer = Puppet::Parser::Lexer.new()
-        @parser = Puppet::Parser::Parser.new()
     end
 
     def test_each_file
         textfiles { |file|
+            parser = mkparser
             Puppet.debug("parsing %s" % file) if __FILE__ == $0
             assert_nothing_raised() {
-                @parser.file = file
-                @parser.parse
+                parser.file = file
+                parser.parse
             }
 
             Puppet::Type.eachtype { |type|
@@ -32,18 +32,20 @@ class TestParser < Test::Unit::TestCase
 
     def test_failers
         failers { |file|
+            parser = mkparser
             Puppet.debug("parsing failer %s" % file) if __FILE__ == $0
             assert_raise(Puppet::ParseError) {
-                @parser.file = file
-                ast = @parser.parse
-                Puppet::Parser::Scope.new.evaluate(:ast => ast)
+                parser.file = file
+                ast = parser.parse
+                scope = mkscope :interp => parser.interp
+                ast.evaluate :scope => scope
             }
             Puppet::Type.allclear
         }
     end
 
     def test_arrayrvalues
-        parser = Puppet::Parser::Parser.new()
+        parser = mkparser
         ret = nil
         file = tempfile()
         assert_nothing_raised {
@@ -83,7 +85,7 @@ class TestParser < Test::Unit::TestCase
         }
 
         assert_nothing_raised("Could not parse multiple files") {
-            parser = Puppet::Parser::Parser.new()
+            parser = mkparser
             parser.file = manifest
             parser.parse
         }
@@ -98,94 +100,9 @@ class TestParser < Test::Unit::TestCase
             f.puts "import \" no such file \""
         end
         assert_raise(Puppet::ParseError) {
-            parser = Puppet::Parser::Parser.new()
+            parser = mkparser
             parser.file = manifest
             parser.parse
-        }
-    end
-
-    def test_defaults
-        basedir = File.join(tmpdir(), "defaulttesting")
-        @@tmpfiles << basedir
-        Dir.mkdir(basedir)
-
-        defs1 = {
-            "testing" => "value"
-        }
-
-        defs2 = {
-            "one" => "two",
-            "three" => "four",
-            "five" => false,
-            "seven" => "eight",
-            "nine" => true,
-            "eleven" => "twelve"
-        }
-
-        mkdef = proc { |hash|
-            hash.collect { |arg, value|
-                "$%s = %s" % [arg, value]
-            }.join(", ")
-        }
-        manifest = File.join(basedir, "manifest")
-        File.open(manifest, "w") { |f|
-            f.puts "
-    define method(#{mkdef.call(defs1)}, $other) {
-        $variable = $testing
-    }
-
-    define othermethod(#{mkdef.call(defs2)}, $goodness) {
-        $more = less
-    }
-
-    method {
-        other => yayness
-    }
-
-    othermethod {
-        goodness => rahness
-    }
-"
-
-        }
-
-        ast = nil
-        assert_nothing_raised("Could not parse multiple files") {
-            parser = Puppet::Parser::Parser.new()
-            parser.file = manifest
-            ast = parser.parse
-        }
-
-        assert(ast, "Did not receive AST while parsing defaults")
-
-        scope = nil
-        assert_nothing_raised("Could not evaluate defaults parse tree") {
-            scope = Puppet::Parser::Scope.new()
-            scope.name = "parsetest"
-            scope.type = "parsetest"
-            objects = scope.evaluate(:ast => ast)
-        }
-
-        method = nil
-        othermethod = nil
-        assert_nothing_raised {
-            method = scope.find { |child|
-                child.is_a?(Puppet::Parser::Scope) and child.type == "method"
-            }
-            defs1.each { |var, value|
-                curval = method.lookupvar(var)
-                assert_equal(value, curval, "Did not get default")
-            }
-        }
-
-        assert_nothing_raised {
-            method = scope.find { |child|
-                child.is_a?(Puppet::Parser::Scope) and child.type == "othermethod"
-            }
-            defs2.each { |var, value|
-                curval = method.lookupvar(var)
-                assert_equal(value, curval, "Did not get default")
-            }
         }
     end
 
@@ -194,7 +111,7 @@ class TestParser < Test::Unit::TestCase
         str = %{file { "#{path}": ensure => file, }
         }
 
-        parser = Puppet::Parser::Parser.new
+        parser = mkparser
         parser.string = str
 
         assert_nothing_raised("Could not parse trailing comma") {
@@ -216,7 +133,7 @@ class TestParser < Test::Unit::TestCase
             f.puts %{import "#{imported}"\ninclude foo}
         end
 
-        parser = Puppet::Parser::Parser.new
+        parser = mkparser
         parser.file = importer
 
         # Make sure it parses fine
@@ -256,7 +173,7 @@ class TestParser < Test::Unit::TestCase
             f.puts %{class local { file { "#{localmaker}": ensure => file }}}
         end
 
-        parser = Puppet::Parser::Parser.new
+        parser = mkparser
         parser.file = importer
 
         # Make sure it parses
@@ -288,7 +205,7 @@ class TestParser < Test::Unit::TestCase
             f.puts %{class local { file { "#{file}": ensure => file }}}
         end
 
-        parser = Puppet::Parser::Parser.new
+        parser = mkparser
         parser.file = importer
 
         assert_nothing_raised {
@@ -325,7 +242,7 @@ class TestParser < Test::Unit::TestCase
             f.puts %{import "subdir/subtwo"}
         end
 
-        parser = Puppet::Parser::Parser.new
+        parser = mkparser
         parser.file = top
 
         assert_nothing_raised {
@@ -333,46 +250,21 @@ class TestParser < Test::Unit::TestCase
         }
     end
 
-    # Verify that collectable objects are marked that way.
-    def test_collectable
-        Puppet[:storeconfigs] = true
-        ["@port { ssh: protocols => tcp, number => 22 }",
-         "@port { ssh: protocols => tcp, number => 22;
-            smtp: protocols => tcp, number => 25 }"].each do |text|
-            parser = Puppet::Parser::Parser.new
-            parser.string = text
-
-            ret = nil
-            assert_nothing_raised {
-                ret = parser.parse
-            }
-
-            assert_instance_of(AST::ASTArray, ret)
-
-            ret.each do |obj|
-                assert_instance_of(AST::ObjectDef, obj)
-                assert(obj.collectable, "Object was not marked collectable")
-            end
-        end
-    end
-
     # Defaults are purely syntactical, so it doesn't make sense to be able to
     # collect them.
     def test_uncollectabledefaults
         string = "@Port { protocols => tcp }"
-        parser = Puppet::Parser::Parser.new
-        parser.string = string
 
         assert_raise(Puppet::ParseError) {
-            parser.parse
+            mkparser.parse(string)
         }
     end
 
     # Verify that we can parse collections
     def test_collecting
         Puppet[:storeconfigs] = true
-        text = "port <| |>"
-        parser = Puppet::Parser::Parser.new
+        text = "Port <| |>"
+        parser = mkparser
         parser.string = text
 
         ret = nil
@@ -392,7 +284,7 @@ class TestParser < Test::Unit::TestCase
         File.open(file, "w") do |f|
             f.puts %{}
         end
-        parser = Puppet::Parser::Parser.new
+        parser = mkparser
         parser.file = file
         assert_nothing_raised {
             parser.parse
@@ -412,7 +304,7 @@ node nodeA, nodeB {
 }
         end
 
-        parser = Puppet::Parser::Parser.new
+        parser = mkparser
         parser.file = file
         ast = nil
         assert_nothing_raised {
@@ -423,7 +315,7 @@ node nodeA, nodeB {
     def test_emptyarrays
         str = %{$var = []\n}
 
-        parser = Puppet::Parser::Parser.new
+        parser = mkparser
         parser.string = str
 
         # Make sure it parses fine
@@ -442,7 +334,7 @@ file { "/tmp/yayness":
     ensure => exists
 }
 }
-        parser = Puppet::Parser::Parser.new
+        parser = mkparser
         parser.string = str
 
         # Make sure it parses fine
@@ -452,32 +344,21 @@ file { "/tmp/yayness":
     end
 
     def test_metaparams_in_definition_prototypes
-        parser = Puppet::Parser::Parser.new
+        parser = mkparser
 
-        str1 = %{define mydef($schedule) {}}
-        parser.string = str1
 
         assert_raise(Puppet::ParseError) {
-            parser.parse
+            parser.parse %{define mydef($schedule) {}}
         }
-
-        str2 = %{define mydef($schedule = false) {}}
-        parser.string = str2
-
-        assert_raise(Puppet::ParseError) {
-            parser.parse
-        }
-
-        str3 = %{define mydef($schedule = daily) {}}
-        parser.string = str3
 
         assert_nothing_raised {
-            parser.parse
+            parser.parse %{define adef($schedule = false) {}}
+            parser.parse %{define mydef($schedule = daily) {}}
         }
     end
 
     def test_parsingif
-        parser = Puppet::Parser::Parser.new()
+        parser = mkparser
         exec = proc do |val|
             %{exec { "/bin/echo #{val}": logoutput => true }}
         end
@@ -493,6 +374,208 @@ file { "/tmp/yayness":
         }
         assert_instance_of(Puppet::Parser::AST::IfStatement, ret)
         assert_instance_of(Puppet::Parser::AST::Else, ret.else)
+    end
+
+    def test_hostclass
+        parser = mkparser
+        interp = parser.interp
+
+        assert_nothing_raised {
+            parser.parse %{class myclass { class other {} }}
+        }
+        assert(interp.findclass("", "myclass"), "Could not find myclass")
+        assert(interp.findclass("", "myclass::other"), "Could not find myclass::other")
+
+        assert_nothing_raised {
+            parser.parse "class base {}
+            class container {
+                class deep::sub inherits base {}
+            }"
+        }
+        sub = interp.findclass("", "container::deep::sub")
+        assert(sub, "Could not find sub")
+        assert_equal("base", sub.parentclass.type)
+    end
+
+    def test_topnamespace
+        parser = mkparser
+        parser.interp.clear
+
+        # Make sure we put the top-level code into a class called "" in
+        # the "" namespace
+        assert_nothing_raised do
+            out = parser.parse ""
+
+            assert_nil(out)
+            assert_nil(parser.interp.findclass("", ""))
+        end
+
+        # Now try something a touch more complicated
+        parser.interp.clear
+        assert_nothing_raised do
+            out = parser.parse "Exec { path => '/usr/bin:/usr/sbin' }"
+            assert_instance_of(AST::ASTArray, out)
+            assert_equal("", parser.interp.findclass("", "").type)
+            assert_equal("", parser.interp.findclass("", "").namespace)
+            assert_equal(out.object_id, parser.interp.findclass("", "").code.object_id)
+        end
+    end
+
+    # Make sure virtual and exported resources work appropriately.
+    def test_virtualresources
+        Puppet[:storeconfigs] = true
+        [:virtual, :exported].each do |form|
+            parser = mkparser
+
+            if form == :virtual
+                at = "@"
+            else
+                at = "@@"
+            end
+
+            check = proc do |res|
+                # Real resources get marked virtual when exported
+                if form == :virtual or res.is_a?(Puppet::Parser::Resource)
+                    assert(res.virtual, "Resource #{res.class} is not virtual")
+                end
+                if form == :virtual
+                    assert(! res.exported, "Resource #{res.type} is exported")
+                else
+                    assert(res.exported, "Resource #{res.type} is not exported")
+                end
+            end
+
+            ret = nil
+            assert_nothing_raised do
+                ret = parser.parse("#{at}file { '/tmp/testing': owner => root }")
+            end
+
+            assert_equal("/tmp/testing", ret[0].title.value)
+            # We always get an astarray back, so...
+            assert_instance_of(AST::ResourceDef, ret[0])
+            check.call(ret[0])
+
+            # Now let's try it with multiple resources in the same spec
+            assert_nothing_raised do
+                ret = parser.parse("#{at}file { ['/tmp/1', '/tmp/2']: owner => root }")
+            end
+
+            assert_instance_of(AST::ASTArray, ret)
+            ret.each do |res|
+                assert_instance_of(AST::ResourceDef, res)
+                check.call(res)
+            end
+
+            # Now evaluate these
+            scope = mkscope
+
+            klass = scope.interp.newclass ""
+            scope.source = klass
+
+            assert_nothing_raised do
+                ret.evaluate :scope => scope
+            end
+
+            # Make sure we can find both of them
+            %w{/tmp/1 /tmp/2}.each do |title|
+                res = scope.findresource("file[#{title}]")
+                assert(res, "Could not find %s" % title)
+                check.call(res)
+            end
+        end
+    end
+
+    def test_collections
+        Puppet[:storeconfigs] = true
+        [:virtual, :exported].each do |form|
+            parser = mkparser
+
+            if form == :virtual
+                arrow = "<||>"
+            else
+                arrow = "<<||>>"
+            end
+
+            check = proc do |coll|
+                assert_instance_of(AST::Collection, coll)
+                assert_equal(form, coll.form)
+            end
+
+            ret = nil
+            assert_nothing_raised do
+                ret = parser.parse("File #{arrow}")
+            end
+            check.call(ret[0])
+        end
+    end
+
+    def test_collectionexpressions
+        %w{== !=}.each do |oper|
+            str = "File <| title #{oper} '/tmp/testing' |>"
+
+            parser = mkparser
+
+            res = nil
+            assert_nothing_raised do
+                res = parser.parse(str)[0]
+            end
+
+            assert_instance_of(AST::Collection, res)
+
+            query = res.query
+            assert_instance_of(AST::CollExpr, query)
+
+            assert_equal(:virtual, query.form)
+            assert_equal("title", query.test1.value)
+            assert_equal("/tmp/testing", query.test2.value)
+            assert_equal(oper, query.oper)
+        end
+    end
+
+    def test_collectionstatements
+        %w{and or}.each do |joiner|
+            str = "File <| title == '/tmp/testing' #{joiner} owner == root |>"
+
+            parser = mkparser
+
+            res = nil
+            assert_nothing_raised do
+                res = parser.parse(str)[0]
+            end
+
+            assert_instance_of(AST::Collection, res)
+
+            query = res.query
+            assert_instance_of(AST::CollExpr, query)
+
+            assert_equal(joiner, query.oper)
+            assert_instance_of(AST::CollExpr, query.test1)
+            assert_instance_of(AST::CollExpr, query.test2)
+        end
+    end
+
+    def test_collectionstatements_with_parens
+        [
+            "(title == '/tmp/testing' and owner == root) or owner == wheel",
+            "(title == '/tmp/testing')"
+        ].each do |test|
+            str = "File <| #{test} |>"
+            parser = mkparser
+
+            res = nil
+            assert_nothing_raised("Could not parse '#{test}'") do
+                res = parser.parse(str)[0]
+            end
+
+            assert_instance_of(AST::Collection, res)
+
+            query = res.query
+            assert_instance_of(AST::CollExpr, query)
+
+            #assert_equal(joiner, query.oper)
+            #assert_instance_of(AST::CollExpr, query.test1)
+            #assert_instance_of(AST::CollExpr, query.test2)
+        end
     end
 end
 

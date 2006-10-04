@@ -102,7 +102,7 @@ module PuppetTest
 
     # a list of files that we can parse for testing
     def textfiles
-        textdir = File.join(exampledir,"code", "snippets")
+        textdir = datadir "snippets"
         Dir.entries(textdir).reject { |f|
             f =~ /^\./ or f =~ /fail/
         }.each { |f|
@@ -111,7 +111,7 @@ module PuppetTest
     end
 
     def failers
-        textdir = File.join(exampledir,"code", "failers")
+        textdir = datadir "failers"
         # only parse this one file now
         files = Dir.entries(textdir).reject { |file|
             file =~ %r{\.swp}

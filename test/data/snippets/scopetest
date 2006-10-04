@@ -2,12 +2,12 @@
 $mode = 640
 
 define thing {
-    file { "/tmp/scopetest": ensure => file, mode => $mode }
+    file { "/tmp/$name": ensure => file, mode => $mode }
 }
 
 class testing {
     $mode = 755
-    thing {}
+    thing {scopetest: }
 }
 
 include testing

@@ -8,7 +8,6 @@ class TestParser < Test::Unit::TestCase
     def setup
         super
         Puppet[:parseonly] = true
-        @parser = Puppet::Parser::Parser.new()
     end
 
     def test_simple_hostname
@@ -41,48 +40,40 @@ class TestParser < Test::Unit::TestCase
         unless hostnames.is_a?(Array)
             hostnames = [ hostnames ]
         end
+        interp = nil
         assert_nothing_raised {
-            @parser.string = "node #{hostnames.join(", ")} { }"
+            interp = mkinterp :Code => "node #{hostnames.join(", ")} { }"
         }
         # Strip quotes
         hostnames.map! { |s| s.sub(/^'(.*)'$/, "\\1") }
-        ast = nil
+
+        # parse
         assert_nothing_raised {
-            ast = @parser.parse
+            interp.send(:parsefiles)
         }
-        # Verify that the AST has the expected structure
-        # and that the leaves have the right hostnames in them
-        assert_kind_of(AST::ASTArray, ast)
-        assert_equal(1, ast.children.size)
-        nodedef = ast.children[0]
-        assert_kind_of(AST::NodeDef, nodedef)
-        assert_kind_of(AST::ASTArray, nodedef.names)
-        assert_equal(hostnames.size, nodedef.names.children.size)
-        hostnames.size.times do |i|
-            hostnode = nodedef.names.children[i]
-            assert_kind_of(AST::HostName, hostnode)
-            assert_equal(hostnames[i], hostnode.value)
+
+        # Now make sure we can look up each of the names
+        hostnames.each do |name|
+            assert(interp.nodesearch_code(name),
+                "Could not find node %s" % name)
         end
     end
 
     def check_nonparseable(hostname)
-        assert_nothing_raised {
-            @parser.string = "node #{hostname} { }"
-        }
-
-        assert_raise(Puppet::DevError, Puppet::ParseError) {
-            @parser.parse
+        interp = nil
+        assert_raise(Puppet::DevError, Puppet::ParseError, "#{hostname} passed") {
+            interp = mkinterp :Code => "node #{hostname} { }"
+            interp.send(:parsefiles)
         }
     end
 
     # Make sure we can find default nodes if there's no other entry
     def test_default_node
         Puppet[:parseonly] = false
-        @parser = Puppet::Parser::Parser.new()
 
         fileA = tempfile()
         fileB = tempfile()
-        @parser.string = %{
+        code = %{
 node mynode {
     file { "#{fileA}": ensure => file }
 }
@@ -91,34 +82,25 @@ node default {
     file { "#{fileB}": ensure => file }
 }
 }
+        interp = nil
+        assert_nothing_raised {
+            interp = mkinterp :Code => code
+        }
 
         # First make sure it parses
-        ast = nil
         assert_nothing_raised {
-            ast = @parser.parse
+            interp.send(:parsefiles)
         }
 
-        args = {
-            :ast => ast,
-            :facts => {},
-            :names => ["mynode"]
-        }
-        # Make sure we get a config for "mynode"
+        # Make sure we find our normal node
+        assert(interp.nodesearch("mynode"),
+            "Did not find normal node")
 
-        trans = nil
-        assert_nothing_raised {
-            trans = Puppet::Parser::Scope.new.evaluate(args)
-        }
+        # Now look for the default node
+        default = interp.nodesearch("someother")
+        assert(default,
+            "Did not find default node")
 
-        assert(trans, "Did not get config for mynode")
-
-        args[:names] = ["othernode"]
-        # Now make sure the default node is used
-        trans = nil
-        assert_nothing_raised {
-            trans = Puppet::Parser::Scope.new.evaluate(args)
-        }
-
-        assert(trans, "Did not get config for default node")
+        assert_equal("default", default.fqname)
     end
 end

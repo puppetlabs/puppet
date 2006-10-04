@@ -34,16 +34,19 @@ class TestPuppetModule < Test::Unit::TestCase
         if Puppet[:debug]
             cmd += " --logdest %s" % "console"
             cmd += " --debug"
+            cmd += " --trace"
         else
             cmd += " --logdest %s" % "/dev/null"
         end
 
         ENV["CFALLCLASSES"] = "yaytest:all"
+        libsetup
 
+        out = nil
         assert_nothing_raised {
-            %x{#{cmd + " " + file} 2>&1}
+            out = %x{#{cmd + " " + file} 2>&1}
         }
-        assert($? == 0, "Puppet module exited with code %s" % $?.to_i)
+        assert($? == 0, "Puppet module exited with code %s: %s" % [$?.to_i, out])
 
         assert(FileTest.exists?(createdfile), "Failed to create config'ed file")
     end

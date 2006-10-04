@@ -1,11 +1,12 @@
-require 'puppet/rails/rails_object'
+require 'puppet/rails/rails_resource'
 
 #RailsObject = Puppet::Rails::RailsObject
 class Puppet::Rails::Host < ActiveRecord::Base
     serialize :facts, Hash
     serialize :classes, Array
 
-    has_many :rails_objects, :dependent => :delete_all
+    has_many :rails_resources, :dependent => :delete_all,
+             :include => :rails_parameters
 
     # If the host already exists, get rid of its objects
     def self.clean(host)
@@ -19,40 +20,43 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     # Store our host in the database.
     def self.store(hash)
-        name = hash[:host] || "localhost"
-        ip = hash[:ip] || "127.0.0.1"
-        facts = hash[:facts] || {}
-        objects = hash[:objects]
-
-        unless objects
-            raise ArgumentError, "You must pass objects"
+        unless hash[:name]
+            raise ArgumentError, "You must specify the hostname for storage"
         end
 
-        hostargs = {
-            :name => name,
-            :ip => ip,
-            :facts => facts,
-            :classes => objects.classes
-        }
+        args = {}
+        [:name, :facts, :classes].each do |param|
+            if hash[param]
+                args[param] = hash[param]
+            end
+        end
 
-        objects = objects.flatten
+        if hash[:facts].include?("ipaddress")
+            args[:ip] = hash[:facts]["ipaddress"]
+        end
 
-        host = nil
-        if host = clean(name)
-            [:name, :facts, :classes].each do |param|
-                unless host[param] == hostargs[param]
-                    host[param] = hostargs[param]
+        unless hash[:resources]
+            raise ArgumentError, "You must pass resources"
+        end
+
+        if host = self.find_by_name(hash[:name])
+            args.each do |param, value|
+                unless host[param] == args[param]
+                    host[param] = args[param]
                 end
             end
-            host.addobjects(objects)
         else
-            host = self.new(hostargs) do |hostobj|
-                hostobj.addobjects(objects)
-            end
+            # Create it anew
+            host = self.new(args)
         end
 
+        hash[:resources].each do |res|
+            res.store(host)
+        end
 
-        host.save
+        Puppet::Util.benchmark(:info, "Saved host to database") do
+            host.save
+        end
 
         return host
     end

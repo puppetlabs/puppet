@@ -4,14 +4,14 @@ require 'test/unit'
 module PuppetTest
     # Find the root of the Puppet tree; this is not the test directory, but
     # the parent of that dir.
-    def basedir
+    def basedir(*list)
         unless defined? @@basedir
             case $0
             when /rake_test_loader/
                 @@basedir = File.dirname(Dir.getwd)
             else
                 dir = nil
-                if /^#{File::SEPARATOR}.+\.rb/
+                if $0 =~ /^#{File::SEPARATOR}.+\.rb/
                     dir = $0
                 else
                     dir = File.join(Dir.getwd, $0)
@@ -20,15 +20,19 @@ module PuppetTest
                 @@basedir = dir
             end
         end
-        @@basedir
+        if list.empty?
+            @@basedir
+        else
+            File.join(@@basedir, *list)
+        end
     end
 
     def cleanup(&block)
         @@cleaners << block
     end
 
-    def datadir
-        File.join(basedir, "test", "data")
+    def datadir(*list)
+        File.join(basedir, "test", "data", *list)
     end
 
     def exampledir(*args)
@@ -44,6 +48,18 @@ module PuppetTest
     end
 
     module_function :basedir, :datadir, :exampledir
+
+    # Rails clobbers RUBYLIB, thanks
+    def libsetup
+        curlibs = ENV["RUBYLIB"].split(":")
+        $:.reject do |dir| dir =~ /^\/usr/ end.each do |dir|
+            unless curlibs.include?(dir)
+                curlibs << dir
+            end
+        end
+
+        ENV["RUBYLIB"] = curlibs.join(":")
+    end
 
     def rake?
         $0 =~ /rake_test_loader/
@@ -90,6 +106,7 @@ module PuppetTest
             Puppet::Log.level = :debug
             #$VERBOSE = 1
             Puppet.info @method_name
+            Puppet[:trace] = true
         end
         #if $0 =~ /.+\.rb/ or Puppet[:debug]
         #    Puppet::Log.newdestination :console
@@ -169,7 +186,9 @@ module PuppetTest
         @@tmppids.clear
         Puppet::Type.allclear
         Puppet::Storage.clear
-        Puppet::Rails.clear
+        if defined? Puppet::Rails
+            Puppet::Rails.clear
+        end
         Puppet.clear
 
         @memoryatend = Puppet::Util.memory

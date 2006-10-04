@@ -11,7 +11,10 @@ class Puppet::Parser::AST
 
             args = @arguments.safeevaluate(:scope => scope)
 
-            return scope.send("function_" + @name, args)
+            #exceptwrap :message => "Failed to execute %s" % @name,
+            #        :type => Puppet::ParseError do
+                return scope.send("function_" + @name, args)
+            #end
         end
 
         def initialize(hash)

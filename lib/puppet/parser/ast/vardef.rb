@@ -10,18 +10,8 @@ class Puppet::Parser::AST
             name = @name.safeevaluate(:scope => scope)
             value = @value.safeevaluate(:scope => scope)
 
-            begin
+            parsewrap do
                 scope.setvar(name,value)
-            rescue Puppet::ParseError => except
-                except.line = self.line
-                except.file = self.file
-                raise except
-            rescue => detail
-                error = Puppet::ParseError.new(detail)
-                error.line = self.line
-                error.file = self.file
-                error.set_backtrace detail.backtrace
-                raise error
             end
         end
 
@@ -43,3 +33,5 @@ class Puppet::Parser::AST
     end
 
 end
+
+# $Id$

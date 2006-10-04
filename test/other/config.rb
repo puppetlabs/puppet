@@ -3,9 +3,11 @@
 require 'puppet'
 require 'puppet/config'
 require 'puppettest'
+require 'puppettest/parsertesting'
 
 class TestConfig < Test::Unit::TestCase
 	include PuppetTest
+	include PuppetTest::ParserTesting
 
     def check_for_users
         count = Puppet::Type.type(:user).inject(0) { |c,o|
@@ -39,21 +41,16 @@ class TestConfig < Test::Unit::TestCase
         }
 
         Puppet[:parseonly] = true
-        parser = Puppet::Parser::Parser.new()
 
-        objects = nil
-        assert_nothing_raised("Could not parse generated manifest") {
-            parser.string = manifest
-            objects = parser.parse
-        }
-        scope = Puppet::Parser::Scope.new
-        assert_nothing_raised("Could not compile objects") {
-            scope.evaluate(:ast => objects)
-        }
+        interp = nil
+        assert_nothing_raised do
+            interp = mkinterp :Code => manifest, :UseNodes => false
+        end
+
         trans = nil
-        assert_nothing_raised("Could not convert objects to transportable") {
-            trans = scope.to_trans
-        }
+        assert_nothing_raised do
+            trans = interp.evaluate(nil, {})
+        end
         assert_nothing_raised("Could not instantiate objects") {
             trans.to_type
         }

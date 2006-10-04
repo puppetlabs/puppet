@@ -42,12 +42,8 @@ class Puppet::Parser::AST
                 if default
                     retvalue = default.value.safeevaluate(:scope => scope)
                 else
-                    error = Puppet::ParseError.new(
+                    self.fail Puppet::ParseError,
                         "No value for selector param '%s'" % paramvalue
-                    )
-                    error.line = self.line
-                    error.file = self.file
-                    raise error
                 end
             end
 

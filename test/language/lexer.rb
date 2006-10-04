@@ -13,6 +13,10 @@ class TestLexer < Test::Unit::TestCase
 	include PuppetTest
     def setup
         super
+        mklexer
+    end
+
+    def mklexer
         @lexer = Puppet::Parser::Lexer.new()
     end
 
@@ -79,9 +83,10 @@ class TestLexer < Test::Unit::TestCase
 
     def test_files
         textfiles() { |file|
-            @lexer.file = file
+            lexer = Puppet::Parser::Lexer.new()
+            lexer.file = file
             assert_nothing_raised() {
-                @lexer.fullscan()
+                lexer.fullscan()
             }
             Puppet::Type.allclear
         }
@@ -148,6 +153,75 @@ class TestLexer < Test::Unit::TestCase
         }
 
         assert_equal([[:AT, "@"], [:NAME, "type"], [:LBRACE, "{"], [false,false]],ret)
+    end
+
+    def test_namespace
+        @lexer.string = %{class myclass}
+
+        assert_nothing_raised {
+            @lexer.fullscan
+        }
+
+        assert_equal("myclass", @lexer.namespace)
+
+        assert_nothing_raised do
+            @lexer.namepop
+        end
+
+        assert_equal("", @lexer.namespace)
+
+        @lexer.string = "class base { class sub { class more"
+
+        assert_nothing_raised {
+            @lexer.fullscan
+        }
+
+        assert_equal("base::sub::more", @lexer.namespace)
+
+        assert_nothing_raised do
+            @lexer.namepop
+        end
+
+        assert_equal("base::sub", @lexer.namespace)
+
+        # Now try it with some fq names
+        mklexer
+
+        @lexer.string = "class base { class sub::more {"
+
+        assert_nothing_raised {
+            @lexer.fullscan
+        }
+
+        assert_equal("base::sub::more", @lexer.namespace)
+
+        assert_nothing_raised do
+            @lexer.namepop
+        end
+
+        assert_equal("base", @lexer.namespace)
+    end
+
+    def test_indefine
+        @lexer.string = %{define me}
+
+        assert_nothing_raised {
+            @lexer.fullscan
+        }
+
+        assert(@lexer.indefine?, "Lexer not considered in define")
+
+        # Now make sure we throw an error when trying to nest defines.
+        assert_raise(Puppet::ParseError) do
+            @lexer.string = %{define another}
+            @lexer.fullscan
+        end
+
+        assert_nothing_raised do
+            @lexer.indefine = false
+        end
+
+        assert(! @lexer.indefine?, "Lexer still considered in define")
     end
 end
 

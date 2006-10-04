@@ -3,7 +3,7 @@
 tag testing
 tag(funtest)
 
-define tagdefine {
+class tagdefine {
     $path = tagged(tagdefine) ? {
         true => "true", false => "false"
     }
@@ -11,7 +11,7 @@ define tagdefine {
     file { "/tmp/taggeddefine$path": ensure => file }
 }
 
-tagdefine {}
+include tagdefine
 
 $yayness = tagged(yayness) ? {
     true => "true", false => "false"

@@ -1,0 +1,81 @@
+require 'puppet'
+require 'puppet/parser/ast/branch'
+require 'puppet/parser/collector'
+
+# An object that collects stored objects from the central cache and returns
+# them to the current host, yo.
+class Puppet::Parser::AST
+class CollExpr < AST::Branch
+    attr_accessor :test1, :test2, :oper, :form, :type, :parens
+
+    # We return an object that does a late-binding evaluation.
+    def evaluate(hash)
+        scope = hash[:scope]
+
+        # Make sure our contained expressions have all the info they need.
+        [@test1, @test2].each do |t|
+            if t.is_a?(self.class)
+                t.form ||= self.form
+                t.type ||= self.type
+            end
+        end
+
+        # The code is only used for virtual lookups
+        str1, code1 = @test1.safeevaluate :scope => scope
+        str2, code2 = @test2.safeevaluate :scope => scope
+
+        # First build up the virtual code.
+        # If we're a conjunction operator, then we're calling code.  I did
+        # some speed comparisons, and it's at least twice as fast doing these
+        # case statements as doing an eval here.
+        code = proc do |resource|
+            case @oper
+            when "and": code1.call(resource) and code2.call(resource)
+            when "or": code1.call(resource) or code2.call(resource)
+            when "==": resource[str1] == str2
+            when "!=": resource[str1] != str2
+            end
+        end
+
+        # Now build up the rails conditions code
+        if self.parens and self.form == :exported
+            Puppet.warning "Parentheses are ignored in Rails searches"
+        end
+
+        case @oper
+        when "and", "or": oper = @oper.upcase
+        when "==": oper = "="
+        else
+            oper = @oper
+        end
+
+        if oper == "=" or oper == "!="
+            # Add the rails association info where necessary
+            if str1 == "title"
+                str = "title #{oper} '#{str2}'"
+            else
+                unless self.form == :virtual or str1 == "title"
+                    parsefail "Collection from the database only supports " +
+                        "title matching currently"
+                end
+                str = "rails_parameters.name = '#{str1}' and " +
+                    "rails_parameters.value #{oper} '#{str2}'"
+            end
+        else
+            str = [str1, oper, str2].join(" ")
+        end
+
+        return str, code
+    end
+
+    def initialize(hash = {})
+        super
+
+        unless %w{== != and or}.include?(@oper)
+            raise ArgumentError, "Invalid operator %s" % @oper
+        end
+    end
+end
+end
+
+# $Id$

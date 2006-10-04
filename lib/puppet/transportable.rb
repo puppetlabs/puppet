@@ -141,8 +141,8 @@ module Puppet
             end.flatten
         end
 
-        def initialize
-            @children = []
+        def initialize(children = [])
+            @children = children
         end
 
         def push(*args)
@@ -219,7 +219,7 @@ module Puppet
                 else
                     #Puppet.debug "%s[%s] has no parameters" % [@type, @name]
                 end
-                container = Puppet.type(:component).create(trans)
+                container = Puppet::Type::Component.create(trans)
             else
                 hash = {
                     :name => self.name,
@@ -238,7 +238,7 @@ module Puppet
                 #if parent
                 #    hash[:parent] = parent
                 #end
-                container = Puppet.type(:component).create(hash)
+                container = Puppet::Type::Component.create(hash)
             end
             #Puppet.info container.inspect
 
@@ -267,8 +267,10 @@ module Puppet
                 begin
                     child.to_type(container)
                 rescue => detail
-                    # We don't do anything on failures, since we assume it's
-                    # been logged elsewhere.
+                    if Puppet[:trace] and ! detail.is_a?(Puppet::Error)
+                        puts detail.backtrace
+                    end
+                    Puppet.err detail.to_s
                 end
             }
 

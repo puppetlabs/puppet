@@ -35,7 +35,7 @@ class TestLangFunctions < Test::Unit::TestCase
             )
         end
 
-        scope = Puppet::Parser::Scope.new()
+        scope = mkscope
         val = nil
         assert_nothing_raised do
             val = func.evaluate(:scope => scope)
@@ -45,10 +45,10 @@ class TestLangFunctions < Test::Unit::TestCase
     end
 
     def test_taggedfunction
-        scope = Puppet::Parser::Scope.new()
+        scope = mkscope
 
         tag = "yayness"
-        scope.setclass(tag.object_id, tag)
+        scope.tag(tag)
 
         {"yayness" => true, "booness" => false}.each do |tag, retval|
             func = taggedobj(tag, :rvalue)
@@ -75,7 +75,7 @@ class TestLangFunctions < Test::Unit::TestCase
             )
         end
 
-        scope = Puppet::Parser::Scope.new()
+        scope = mkscope
         val = nil
         assert_raise(Puppet::ParseError) do
             val = func.evaluate(:scope => scope)
@@ -107,7 +107,7 @@ class TestLangFunctions < Test::Unit::TestCase
         end
         ast = varobj("output", func)
 
-        scope = Puppet::Parser::Scope.new()
+        scope = mkscope
         assert_raise(Puppet::ParseError) do
             ast.evaluate(:scope => scope)
         end
@@ -145,7 +145,7 @@ class TestLangFunctions < Test::Unit::TestCase
         end
         ast = varobj("output", func)
 
-        scope = Puppet::Parser::Scope.new()
+        scope = mkscope
         assert_raise(Puppet::ParseError) do
             ast.evaluate(:scope => scope)
         end
@@ -180,7 +180,7 @@ class TestLangFunctions < Test::Unit::TestCase
         end
         ast = varobj("output", func)
 
-        scope = Puppet::Parser::Scope.new()
+        scope = mkscope
         scope.setvar("myvar", "this is yayness")
         assert_raise(Puppet::ParseError) do
             ast.evaluate(:scope => scope)
@@ -257,7 +257,7 @@ class TestLangFunctions < Test::Unit::TestCase
             "" => "",
             false => "false",
         }.each do |string, value|
-            scope = Puppet::Parser::Scope.new()
+            scope = mkscope
             assert_raise(Puppet::ParseError) do
                 ast.evaluate(:scope => scope)
             end

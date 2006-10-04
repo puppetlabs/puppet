@@ -1,80 +1,68 @@
+require 'puppet/parser/ast/branch'
+
 class Puppet::Parser::AST
     # Evaluate the stored parse tree for a given component.  This will
     # receive the arguments passed to the component and also the type and
     # name of the component.
     class Component < AST::Branch
+        include Puppet::Util
+        include Puppet::Util::Warnings
+        include Puppet::Util::MethodHelper
         class << self
             attr_accessor :name
         end
 
         # The class name
-        @name = :component
+        @name = :definition
 
-        attr_accessor :type, :args, :code, :scope, :keyword
-        attr_accessor :collectable, :parentclass
+        attr_accessor :type, :arguments, :code, :scope, :keyword
+        attr_accessor :exported, :namespace, :fqname, :interp
 
         # These are retrieved when looking up the superclass
-        attr_accessor :name, :arguments
+        attr_accessor :name
 
         def evaluate(hash)
             origscope = hash[:scope]
             objtype = hash[:type]
-            @name = hash[:name]
-            @arguments = hash[:arguments] || {}
+            name = hash[:name]
+            args = symbolize_options(hash[:arguments] || {})
 
-            @collectable = hash[:collectable]
+            exported = hash[:exported]
 
             pscope = origscope
-            #pscope = if ! Puppet[:lexical] or hash[:asparent] == false
-            #    origscope
-            #else
-            #    @scope
-            #end
-            scope = pscope.newscope(
-                :type => @type,
-                :name => @name,
-                :keyword => self.keyword
-            )
-            newcontext = hash[:newcontext]
+            scope = subscope(pscope, name)
 
-            if @collectable or origscope.collectable
-                scope.collectable = true
+            if exported or origscope.exported?
+                scope.exported = true
             end
-
-            unless self.is_a? AST::HostClass and ! newcontext
-                #scope.warning "Setting context to %s" % self.object_id
-                scope.context = self.object_id
-            end
-            @scope = scope
-
+            scope = scope
             # Additionally, add a tag for whatever kind of class
             # we are
-            scope.tag(@type)
+            if @type != ""
+                scope.tag(@type)
+            end
 
-            unless @name.nil?
-                scope.tag(@name)
+            unless name.nil? or name =~ /[^\w]/
+                scope.tag(name)
             end
 
             # define all of the arguments in our local scope
-            if self.args
+            if self.arguments
                 # Verify that all required arguments are either present or
                 # have been provided with defaults.
                 # FIXME This should probably also require each parent
                 # class's arguments...
-                self.args.each { |arg, default|
-                    unless @arguments.include?(arg)
+                self.arguments.each { |arg, default|
+                    arg = symbolize(arg)
+                    unless args.include?(arg)
                         if defined? default and ! default.nil?
-                            @arguments[arg] = default
+                            default = default.safeevaluate :scope => scope
+                            args[arg] = default
                             #Puppet.debug "Got default %s for %s in %s" %
                             #    [default.inspect, arg.inspect, @name.inspect]
                         else
-                            error = Puppet::ParseError.new(
-                                "Must pass %s to %s of type %s" %
-                                    [arg.inspect,@name,@type]
-                            )
-                            error.line = self.line
-                            error.file = self.file
-                            raise error
+                            parsefail "Must pass %s to %s of type %s" %
+                                    [arg,name,@type]
                         end
                     end
                 }
@@ -82,54 +70,116 @@ class Puppet::Parser::AST
 
             # Set each of the provided arguments as variables in the
             # component's scope.
-            @arguments.each { |arg,value|
-                begin
-                    scope.setvar(arg,@arguments[arg])
-                rescue Puppet::ParseError => except
-                    except.line = self.line
-                    except.file = self.file
-                    raise except
-                rescue Puppet::ParseError => except
-                    except.line = self.line
-                    except.file = self.file
-                    raise except
-                rescue => except
-                    error = Puppet::ParseError.new(except.message)
-                    error.line = self.line
-                    error.file = self.file
-                    error.set_backtrace except.backtrace
-                    raise error
+            args.each { |arg,value|
+                unless validattr?(arg)
+                    parsefail "%s does not accept attribute %s" % [@type, arg]
+                end
+
+                exceptwrap do
+                    scope.setvar(arg.to_s,args[arg])
                 end
             }
 
-            unless @arguments.include? "name"
-                scope.setvar("name",@name)
+            unless args.include? "name"
+                scope.setvar("name",name)
             end
 
-            # Now just evaluate the code with our new bindings.
-            #scope.inside(self) do # part of definition inheritance
-                self.code.safeevaluate(:scope => scope)
-            #end
-
-            # If we're being evaluated as a parent class, we want to return the
-            # scope, so it can be overridden and such, but if not, we want to 
-            # return a TransBucket of our objects.
-            if hash.include?(:asparent)
-                return scope
+            if self.code
+                return self.code.safeevaluate(:scope => scope)
             else
-                return scope.to_trans
+                return nil
             end
+        end
+
+        def initialize(hash = {})
+            @arguments = nil
+            @parentclass = nil
+            super
+
+            # Deal with metaparams in the argument list.
+            if @arguments
+                @arguments.each do |arg, defvalue|
+                    next unless Puppet::Type.metaparamclass(arg)
+                    if defvalue
+                        warnonce "%s is a metaparam; this value will inherit to all contained elements" % arg
+                    else
+                        raise Puppet::ParseError,
+                            "%s is a metaparameter; please choose another name" %
+                            name
+                    end
+                end
+            end
+        end
+
+        def parentclass
+            parentobj do |name|
+                @interp.findclass(namespace, name)
+            end
+        end
+
+        # Set our parent class, with a little check to avoid some potential
+        # weirdness.
+        def parentclass=(name)
+            if name == @type
+                parsefail "Parent classes must have dissimilar names"
+            end
+
+            @parentclass = name
+        end
+
+        # Hunt down our class object.
+        def parentobj
+            if @parentclass
+                # Cache our result, since it should never change.
+                unless @parentclass.is_a?(AST::HostClass)
+                    unless tmp = yield(@parentclass)
+                        parsefail "Could not find %s %s" % [self.class.name, @parentclass]
+                    end
+
+                    if tmp == self
+                        parsefail "Parent classes must have dissimilar names"
+                    end
+
+                    @parentclass = tmp
+                end
+                @parentclass
+            else
+                nil
+            end
+        end
+
+        # Create a new subscope in which to evaluate our code.
+        def subscope(scope, name = nil)
+            args = {
+                :type => @type,
+                :keyword => self.keyword,
+                :namespace => self.namespace
+            }
+
+            args[:name] = name if name
+            args[:type] = self.type if self.type
+            scope = scope.newscope(args)
+            scope.source = self
+
+            return scope
+        end
+
+        def to_s
+            fqname
         end
 
         # Check whether a given argument is valid.  Searches up through
         # any parent classes that might exist.
-        def validarg?(param)
+        def validattr?(param)
+            return true if Puppet::Type.metaparam?(param)
+
+            param = param.to_s
             found = false
-            unless @args.is_a? Array
-                @args = [@args]
+            unless @arguments.is_a? Array
+                @arguments = [@arguments]
             end
 
-            found = @args.detect { |arg|
+            found = @arguments.detect { |arg|
                 if arg.is_a? Array
                     arg[0] == param
                 else

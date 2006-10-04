@@ -856,9 +856,7 @@ class Type < Puppet::Element
     end
 
     def self.validattr?(name)
-        if name.is_a?(String)
-            name = name.intern
-        end
+        name = symbolize(name)
         if self.validstate?(name) or self.validparameter?(name) or self.metaparam?(name)
             return true
         else
@@ -1015,32 +1013,6 @@ class Type < Puppet::Element
         states().each { |state|
             yield state
         }
-    end
-
-    def devfail(msg)
-        self.fail(Puppet::DevError, msg)
-    end
-
-    # Throw an error, defaulting to a Puppet::Error
-    def fail(*args)
-        type = nil
-        if args[0].is_a?(Class)
-            type = args.shift
-        else
-            type = Puppet::Error
-        end
-
-        error = type.new(args.join(" "))
-
-        if defined? @line and @line
-            error.line = @line
-        end
-
-        if defined? @file and @file
-            error.file = @file
-        end
-
-        raise error
     end
 
     # retrieve the 'is' value for a specified state
@@ -2141,6 +2113,7 @@ class Type < Puppet::Element
 
     # Is the parameter in question a meta-parameter?
     def self.metaparam?(param)
+        param = symbolize(param)
         @@metaparamhash.include?(param)
     end
 

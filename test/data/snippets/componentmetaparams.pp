@@ -7,5 +7,5 @@ define thing {
 }
 
 thing { "/tmp/component2":
-    require => file["/tmp/component1"]
+    require => File["/tmp/component1"]
 }

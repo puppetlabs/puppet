@@ -1,14 +1,18 @@
 require 'puppet'
 require 'puppettest'
+require 'puppettest/parsertesting'
+require 'puppettest/resourcetesting'
 
 class TestTagging < Test::Unit::TestCase
     include PuppetTest
+    include PuppetTest::ParserTesting
+    include PuppetTest::ResourceTesting
 
     # Make sure the scopes are getting the right tags
     def test_scopetags
         scope = nil
         assert_nothing_raised {
-            scope = Puppet::Parser::Scope.new()
+            scope = mkscope
             scope.name = "yayness"
             scope.type = "solaris"
         }
@@ -22,7 +26,7 @@ class TestTagging < Test::Unit::TestCase
     def test_deepscopetags
         scope = nil
         assert_nothing_raised {
-            scope = Puppet::Parser::Scope.new()
+            scope = mkscope
             scope.name = "yayness"
             scope.type = "solaris"
             scope = scope.newscope
@@ -40,36 +44,21 @@ class TestTagging < Test::Unit::TestCase
     def test_objecttags
         scope = nil
         assert_nothing_raised {
-            scope = Puppet::Parser::Scope.new()
+            scope = mkscope
             scope.name = "yayness"
             scope.type = "solaris"
         }
 
+        resource = mkresource :type => "file", :title => "/tmp/testing",
+            :params => {:owner => "root"}, :file => "/yay", :line => 1,
+            :scope => scope
+
         assert_nothing_raised {
-            scope.setobject(
-                :type => "file",
-                :name => "/etc/passwd",
-                :arguments => {"owner" => "root"},
-                :file => "/yay",
-                :line => 1
-            )
+            scope.setresource(resource)
         }
 
-        ast = Puppet::Parser::AST::ASTArray.new({})
-
-        # We have to use 'evaluate', rather than just calling to_trans directly,
-        # because scopes do some internal checking to make sure the same object
-        # is not translated multiple times.
-        objects = nil
         assert_nothing_raised {
-            objects = scope.evaluate(:ast => ast)
-        }
-
-        # There's only one object, so shift it out
-        object = objects.shift
-
-        assert_nothing_raised {
-            assert_equal(%w{solaris}, object.tags,
+            assert_equal(%w{solaris}, resource.tags,
                 "Incorrect tags")
         }
     end

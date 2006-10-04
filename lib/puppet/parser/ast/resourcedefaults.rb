@@ -1,32 +1,22 @@
 class Puppet::Parser::AST
-    # A statement syntactically similar to an ObjectDef, but uses a
+    # A statement syntactically similar to an ResourceDef, but uses a
     # capitalized object type and cannot have a name.  
-    class TypeDefaults < AST::Branch
+    class ResourceDefaults < AST::Branch
         attr_accessor :type, :params
 
         def each
             [@type,@params].each { |child| yield child }
         end
 
-        # As opposed to ObjectDef, this stores each default for the given
+        # As opposed to ResourceDef, this stores each default for the given
         # object type.
         def evaluate(hash)
             scope = hash[:scope]
-            type = @type.safeevaluate(:scope => scope)
+            type = @type.downcase
             params = @params.safeevaluate(:scope => scope)
 
-            begin
-                scope.setdefaults(type.downcase,params)
-            rescue Puppet::ParseError => except
-                except.line = self.line
-                except.file = self.file
-                raise except
-            rescue => detail
-                error = Puppet::ParseError.new(detail)
-                error.line = self.line
-                error.file = self.file
-                error.set_backtrace detail.backtrace
-                raise error
+            parsewrap do
+                scope.setdefaults(type, params)
             end
         end
 
@@ -44,3 +34,5 @@ class Puppet::Parser::AST
     end
 
 end
+
+# $Id$

@@ -28,15 +28,11 @@ class Puppet::Parser::AST
         def initialize(hash)
             super
 
-            unless @value == 'true' or @value == 'false'
+            unless @value == true or @value == false
                 raise Puppet::DevError,
                     "'%s' is not a boolean" % @value
             end
-            if @value == 'true'
-                @value = true
-            else
-                @value = false
-            end
+            @value
         end
     end
 
@@ -69,6 +65,9 @@ class Puppet::Parser::AST
     # Lower-case words.
     class Name < AST::Leaf; end
 
+    # double-colon separated class names
+    class ClassName < AST::Leaf; end
+
     # Host names, either fully qualified or just the short name
     class HostName < AST::Leaf
         def initialize(hash)
@@ -87,18 +86,8 @@ class Puppet::Parser::AST
         # Looks up the value of the object in the scope tree (does
         # not include syntactical constructs, like '$' and '{}').
         def evaluate(hash)
-            begin
+            parsewrap do
                 return hash[:scope].lookupvar(@value)
-            rescue Puppet::ParseError => except
-                except.line = self.line
-                except.file = self.file
-                raise except
-            rescue => detail
-                error = Puppet::DevError.new(detail)
-                error.line = self.line
-                error.file = self.file
-                error.set_backtrace detail.backtrace
-                raise error
             end
         end
     end

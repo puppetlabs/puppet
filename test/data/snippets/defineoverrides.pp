@@ -11,7 +11,7 @@ class base {
 }
 
 class sub inherits base {
-    myfile { $file: mode => 755 }
+    Myfile[$file] { mode => 755 }
 }
 
 include sub

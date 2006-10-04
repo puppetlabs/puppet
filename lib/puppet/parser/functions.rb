@@ -76,29 +76,24 @@ module Functions
 
     # Include the specified classes
     newfunction(:include) do |vals|
-        vals.each do |val|
-            if objecttype = lookuptype(val)
-                # It's a defined type, so set it into the scope so it can
-                # be evaluated.
-                setobject(
-                    :type => val,
-                    :arguments => {}
-                )
-            else
-                raise Puppet::ParseError, "Unknown class %s" % val
-            end
+        klasses = evalclasses(*vals)
+
+        missing = vals.find_all do |klass|
+            ! klass.include?(klass)
+        end
+
+        # Throw an error if we didn't evaluate all of the classes.
+        if missing.length == 1
+            self.fail Puppet::ParseError,
+                "Could not find class %s" % missing
+        elsif missing.length > 1
+            self.fail Puppet::ParseError,
+                "Could not find classes %s" % missing.join(", ")
         end
     end
 
     # Tag the current scope with each passed name
     newfunction(:tag) do |vals|
-        vals.each do |val|
-            # Some hackery, because the tags are stored by object id
-            # for singletonness.
-            self.setclass(val.object_id, val)
-        end
-
-        # Also add them as tags
         self.tag(*vals)
     end
 
@@ -120,16 +115,13 @@ module Functions
 
     # Test whether a given class or definition is defined
     newfunction(:defined, :rvalue) do |vals|
-        retval = true
-
-        vals.each do |val|
-            unless builtintype?(val) or lookuptype(val)
-                retval = false
-                break
-            end
+        # For some reason, it doesn't want me to return from here.
+        if vals.detect do |val| Puppet::Type.type(val) or finddefine(val) end
+            true
+        else
+            false
         end
 
-        return retval
     end
 
     newfunction(:fail, :statement) do |vals|
@@ -151,7 +143,7 @@ module Functions
             # Use a wrapper, so the template can't get access to the full
             # Scope object.
             debug "Retrieving template %s" % file
-            wrapper = Puppet::Parser::Scope::TemplateWrapper.new(self, file)
+            wrapper = Puppet::Parser::TemplateWrapper.new(self, file)
 
             begin
                 wrapper.result()

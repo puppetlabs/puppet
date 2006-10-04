@@ -3,11 +3,11 @@ define distloc($path) {
         ensure => file
     }
     exec { "touch $path":
-        subscribe => file["/tmp/exectesting1"],
+        subscribe => File["/tmp/exectesting1"],
         refreshonly => true
     }
 }
 
-distloc {
+distloc { yay:
     path => "/tmp/execdisttesting",
 }

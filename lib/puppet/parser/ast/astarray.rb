@@ -25,14 +25,10 @@ class Puppet::Parser::AST
                 # This is such a stupid hack.  I've no real idea how to make a
                 # "real" declarative language, so I hack it so it looks like
                 # one, yay.
-                definelist = [
-                    AST::CompDef, AST::NodeDef, AST::ClassDef
-                ]
                 setlist = [
-                    AST::VarDef, AST::TypeDefaults, AST::Function
+                    AST::VarDef, AST::ResourceDefaults, AST::Function
                 ]
 
-                definers = []
                 settors = []
                 others = []
 
@@ -53,15 +49,13 @@ class Puppet::Parser::AST
 
                 # Now sort them all according to the type of action
                 items.each { |child|
-                    if definelist.include?(child.class)
-                        definers << child
-                    elsif setlist.include?(child.class)
+                    if setlist.include?(child.class)
                         settors << child
                     else
                         others << child
                     end
                 }
-                rets = [definers, settors, others].flatten.collect { |child|
+                rets = [settors, others].flatten.collect { |child|
                     child.safeevaluate(:scope => scope)
                 }
             else
@@ -107,37 +101,7 @@ class Puppet::Parser::AST
     # Used for abstracting the grammar declarations.  Basically unnecessary
     # except that I kept finding bugs because I had too many arrays that
     # meant completely different things.
-    class ObjectInst < ASTArray; end
-
-    # Another simple container class to make sure we can correctly arrayfy
-    # things.
-    class CompArgument < ASTArray
-        @@warnings = {}
-        def initialize(hash)
-            super
-            name = @children[0].value
-
-            # If it's not a metaparamer, we're fine.
-            return unless Puppet::Type.metaparamclass(name)
-
-            if @children[1]
-                if @children[1].value == false
-                    raise Puppet::ParseError,
-                        "%s is a metaparameter; please choose another name" %
-                        name
-                else
-                    unless @@warnings[name]
-                        @@warnings[name] = true
-                        Puppet.warning "%s is a metaparam; this value will inherit to all contained elements" % name
-                    end
-                end
-            else
-                raise Puppet::ParseError,
-                    "%s is a metaparameter; please choose another name" %
-                    name
-            end
-        end
-    end
+    class ResourceInst < ASTArray; end
 end
 
 # $Id$

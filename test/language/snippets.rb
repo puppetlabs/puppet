@@ -12,7 +12,7 @@ class TestSnippets < Test::Unit::TestCase
     include ObjectSpace
 
     def self.snippetdir
-        PuppetTest.exampledir "code", "snippets"
+        PuppetTest.datadir "snippets"
     end
 
     def snippet(name)
@@ -462,6 +462,13 @@ class TestSnippets < Test::Unit::TestCase
             "Empty exec was ignored")
 
         @@tmpfiles << "/tmp/emptyexextest"
+    end
+
+    def snippet_multisubs(trans)
+        path = "/tmp/multisubtest"
+        assert(FileTest.exists?(path), "Did not create file")
+        assert_equal("sub2", File.read(path), "sub2 did not override content")
+        assert_equal(0755, filemode(path), "sub1 did not override mode")
     end
 
     def disabled_snippet_dirchmod(trans)

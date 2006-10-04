@@ -456,11 +456,13 @@ module Util
 end
 end
 
+require 'puppet/util/errors'
 require 'puppet/util/methodhelper'
 require 'puppet/util/metaid'
 require 'puppet/util/classgen'
 require 'puppet/util/docs'
 require 'puppet/util/execution'
+require 'puppet/util/logging'
 require 'puppet/util/package'
 require 'puppet/util/warnings'
 

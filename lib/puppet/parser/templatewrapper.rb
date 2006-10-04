@@ -1,0 +1,58 @@
+# A simple wrapper for templates, so they don't have full access to
+# the scope objects.
+class Puppet::Parser::TemplateWrapper
+    attr_accessor :scope, :file
+    include Puppet::Util
+    Puppet::Util.logmethods(self)
+
+    def initialize(scope, file)
+        @scope = scope
+        if file =~ /^#{File::SEPARATOR}/
+            @file = file
+        else
+            @file = File.join(Puppet[:templatedir], file)
+        end
+
+        unless FileTest.exists?(@file)
+            raise Puppet::ParseError,
+                "Could not find template %s" % file
+        end
+
+        # We'll only ever not have an interpreter in testing, but, eh.
+        if @scope.interp
+            @scope.interp.newfile(@file)
+        end
+    end
+
+    # Ruby treats variables like methods, so we can cheat here and
+    # trap missing vars like they were missing methods.
+    def method_missing(name, *args)
+        # We have to tell lookupvar to return :undefined to us when
+        # appropriate; otherwise it converts to "".
+        value = @scope.lookupvar(name.to_s, false)
+        if value != :undefined
+            return value
+        else
+            # Just throw an error immediately, instead of searching for
+            # other missingmethod things or whatever.
+            raise Puppet::ParseError,
+                "Could not find value for '%s'" % name
+        end
+    end
+
+    def result
+        result = nil
+        benchmark(:debug, "Interpolated template #{@file}") do
+            template = ERB.new(File.read(@file), 0, "-")
+            result = template.result(binding)
+        end
+
+        result
+    end
+
+    def to_s
+        "template[%s]" % @file
+    end
+end
+
+# $Id$

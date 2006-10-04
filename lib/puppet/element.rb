@@ -7,6 +7,7 @@ require 'puppet'
 class Puppet::Element
     include Puppet
     include Puppet::Util
+    include Puppet::Util::Errors
     attr_writer :noop
 
     class << self
@@ -48,10 +49,10 @@ class Puppet::Element
                     @path = [@parent.path, self.class.name.to_s + "=" + self.name]
                 end
             else
-                # The top-level name is always puppet[top], so we don't bother with
+                # The top-level name is always main[top], so we don't bother with
                 # that.  And we don't add the hostname here, it gets added
                 # in the log server thingy.
-                if self.name == "puppet[top]"
+                if self.name == "main[top]"
                     @path = ["/"]
                 else
                     if self.is_a?(Puppet.type(:component))

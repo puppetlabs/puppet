@@ -5,38 +5,52 @@
 class Puppet::Parser::Parser
 
 token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE
-token FALSE EQUALS LESSEQUAL NOTEQUAL DOT COLON TYPE
+token FALSE EQUALS LESSEQUAL NOTEQUAL DOT COLON TYPE LLCOLLECT RRCOLLECT
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
-token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT
+token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSNAME CLASSREF
+token NOT OR AND
 
 # We have 2 shift/reduce conflicts
 #expect 2
 
 rule
 program:    statements {
-    # Make sure we always return an array.
-    if val[0].is_a?(AST::ASTArray)
-        result = val[0]
+    if val[0]
+        # Make sure we always return an array.
+        if val[0].is_a?(AST::ASTArray)
+            if val[0].children.empty?
+                result = nil
+            else
+                result = val[0]
+            end
+        else
+            result = aryfy(val[0])
+        end
     else
-        result = aryfy(val[0])
+        result = nil
     end
 }
-            | nothing
+            | nil
 
-statements: statement
+statements:   statement
             | statements statement {
-    if val[0].instance_of?(AST::ASTArray)
-        val[0].push(val[1])
-        result = val[0]
-    else
-        result = ast AST::ASTArray, :children => [val[0],val[1]]
+    if val[0] and val[1]
+        if val[0].instance_of?(AST::ASTArray)
+            val[0].push(val[1])
+            result = val[0]
+        else
+            result = ast AST::ASTArray, :children => [val[0],val[1]]
+        end
+    elsif obj = (val[0] || val[1])
+        result = obj
+    else result = nil
     end
 }
 
 # The main list of valid statements
-statement:    object
-            | collectable
+statement:    resource
+            | virtualresource
             | collection
             | assignment
             | casestatement
@@ -46,15 +60,16 @@ statement:    object
             | definition
             | hostclass
             | nodedef
+            | resourceoverride
 
-fstatement:   NAME LPAREN classnames RPAREN {
+fstatement:   NAME LPAREN namestrings RPAREN {
     args = aryfy(val[2])
     result = ast AST::Function,
         :name => val[0],
         :arguments => args,
         :ftype => :statement
 }
-            | NAME classnames {
+            | NAME namestrings {
     args = aryfy(val[1])
     result = ast AST::Function,
         :name => val[0],
@@ -62,108 +77,163 @@ fstatement:   NAME LPAREN classnames RPAREN {
         :ftype => :statement
 }
 
-# Includes are just syntactic sugar for classes with no names and
-# no arguments.
-#include:    INCLUDE classnames {
-#    result = function_include(val[1])
-#}
-
-# Define a new tag.  Both of these functions should really be done generically,
-# but I'm not in a position to do that just yet. :/
-#tag:        TAG classnames {
-#    result = function_tag(val[1])
-#}
-
-classnames:       classname
-                | classnames COMMA classname {
+namestrings:       namestring
+                | namestrings COMMA namestring {
     result = aryfy(val[0], val[2])
     result.line = @lexer.line
     result.file = @lexer.file
 }
 
-classname:        name
+namestring:        name
                 | variable
                 | quotedtext
 
-#object:       name LBRACE objectname COLON params endcomma RBRACE {
-object:       name LBRACE objectinstances endsemi RBRACE {
+resource:       NAME LBRACE resourceinstances endsemi RBRACE {
     if val[0].instance_of?(AST::ASTArray)
-        raise Puppet::ParseError, "Invalid name"
+        error "Invalid name"
     end
     array = val[2]
-    if array.instance_of?(AST::ObjectInst)
+    if array.instance_of?(AST::ResourceInst)
         array = [array]
     end
     result = ast AST::ASTArray
 
-    # this iterates across each specified objectinstance
+    # this iterates across each specified resourceinstance
     array.each { |instance|
-        unless instance.instance_of?(AST::ObjectInst)
+        unless instance.instance_of?(AST::ResourceInst)
             raise Puppet::Dev, "Got something that isn't an instance"
         end
         # now, i need to somehow differentiate between those things with
         # arrays in their names, and normal things
-        result.push ast(AST::ObjectDef,
+        result.push ast(AST::ResourceDef,
             :type => val[0],
-            :name => instance[0],
+            :title => instance[0],
             :params => instance[1])
     }
-}           | name LBRACE params endcomma RBRACE {
-    if val[0].instance_of?(AST::ASTArray)
-        Puppet.notice "invalid name"
-        raise Puppet::ParseError, "Invalid name"
-    end
-    # an object but without a name
-    # this cannot be an instance of a library type
-    result = ast AST::ObjectDef, :type => val[0], :params => val[2]
-
-}           | type LBRACE params endcomma RBRACE {
+}           | NAME LBRACE params endcomma RBRACE {
+    # This is a deprecated syntax.
+    error "All resource specifications require names"
+}           | TYPE LBRACE params endcomma RBRACE {
     # a template setting for a type
     if val[0].instance_of?(AST::ASTArray)
-        raise Puppet::ParseError, "Invalid type"
+        error "Invalid type"
     end
-    result = ast(AST::TypeDefaults, :type => val[0], :params => val[2])
+    result = ast(AST::ResourceDefaults, :type => val[0], :params => val[2])
 }
 
-# Collectable objects; these get stored in the database, instead of
-# being passed to the client.
-collectable:    AT object {
-    unless Puppet[:storeconfigs]
-        raise Puppet::ParseError, "You cannot collect without storeconfigs being set"
+# Override a value set elsewhere in the configuration.
+resourceoverride:     resourceref LBRACE params RBRACE {
+    result = ast AST::ResourceOverride, :object => val[0], :params => val[2]
+}
+
+# Exported and virtual resources; these don't get sent to the client
+# unless they get collected elsewhere in the db.
+virtualresource:  at resource {
+    type = val[0]
+
+    if type == :exported and ! Puppet[:storeconfigs]
+        error "You cannot collect without storeconfigs being set"
     end
 
-    if val[1].is_a? AST::TypeDefaults
-        raise Puppet::ParseError, "Defaults are not collectable"
+    if val[1].is_a? AST::ResourceDefaults
+        error "Defaults are not virtualizable"
     end
 
-    # Just mark our objects as collectable and pass them through.
+    method = type.to_s + "="
+
+    # Just mark our resources as exported and pass them through.
     if val[1].instance_of?(AST::ASTArray)
         val[1].each do |obj|
-            obj.collectable = true
+            obj.send(method, true)
         end
     else
-        val[1].collectable = true
+        val[1].send(method, true)
     end
 
     result = val[1]
 }
 
+at:   AT { result = :virtual }
+    | AT AT { result = :exported }
+
 # A collection statement.  Currently supports no arguments at all, but eventually
 # will, I assume.
-collection:     name LCOLLECT RCOLLECT {
-    unless Puppet[:storeconfigs]
-        raise Puppet::ParseError, "You cannot collect without storeconfigs being set"
+collection:     collectname collectrhand {
+    if val[0] =~ /^[a-z]/
+        Puppet.warning addcontext("Collection names must now be capitalized")
     end
-    result = ast AST::Collection, :type => val[0]
+    type = val[0].downcase
+    args = {:type => type}
+
+    if val[1].is_a?(AST::CollExpr)
+        args[:query] = val[1]
+        args[:query].type = type
+        args[:form] = args[:query].form
+    else
+        args[:form] = val[1]
+    end
+    if args[:form] == :exported and ! Puppet[:storeconfigs]
+        error "You cannot collect exported resources without storeconfigs being set"
+    end
+    result = ast AST::Collection, args
 }
 
-objectinst:   objectname COLON params endcomma {
-    result = ast AST::ObjectInst, :children => [val[0],val[2]]
+collectname: TYPE | NAME
+
+collectrhand:     LCOLLECT collstatements RCOLLECT {
+    if val[1]
+        result = val[1]
+        result.form = :virtual
+    else
+        result = :virtual
+    end
+}
+                | LLCOLLECT collstatements RRCOLLECT {
+    if val[1]
+        result = val[1]
+        result.form = :exported
+    else
+        result = :exported
+    end
 }
 
-objectinstances:   objectinst
-                 | objectinstances SEMIC objectinst {
-    if val[0].instance_of?(AST::ObjectInst)
+# A mini-language for handling collection comparisons.  This is organized
+# to avoid the need for precedence indications.
+collstatements:           nil
+                        | collstatement
+                        | collstatements colljoin collstatement {
+    result = ast AST::CollExpr, :test1 => val[0], :oper => val[1], :test2 => val[2]
+}
+
+collstatement:            collexpr
+                        | LPAREN collstatements RPAREN {
+    result = val[1]
+    result.parens = true
+}
+
+colljoin:                 AND | OR
+
+collexpr:                 colllval ISEQUAL simplervalue {
+    result = ast AST::CollExpr, :test1 => val[0], :oper => val[1], :test2 => val[2]
+    #result = ast AST::CollExpr
+    #result.push *val
+}
+                        | colllval NOTEQUAL simplervalue {
+    result = ast AST::CollExpr, :test1 => val[0], :oper => val[1], :test2 => val[2]
+    #result = ast AST::CollExpr
+    #result.push *val
+}
+
+colllval:                 variable
+                        | name
+
+resourceinst:   resourcename COLON params endcomma {
+    result = ast AST::ResourceInst, :children => [val[0],val[2]]
+}
+
+resourceinstances:   resourceinst
+                 | resourceinstances SEMIC resourceinst {
+    if val[0].instance_of?(AST::ResourceInst)
         result = ast AST::ASTArray, :children => [val[0],val[2]]
     else
         val[0].push val[2]
@@ -182,7 +252,7 @@ type:         TYPE {
     result = ast AST::Type, :value => val[0]
 }
 
-objectname:   quotedtext
+resourcename:   quotedtext
             | name
             | type
             | selector
@@ -191,7 +261,7 @@ objectname:   quotedtext
 
 assignment:     VARIABLE EQUALS rvalue {
     # this is distinct from referencing a variable
-    variable = ast AST::Name, :value => val[0].sub(/^\$/,'')
+    variable = ast AST::Name, :value => val[0]
     result = ast AST::VarDef, :name => variable, :value => val[2]
 }
 
@@ -210,8 +280,7 @@ params:   # nothing
 }
 
 param:        NAME FARROW rvalue {
-    leaf = ast AST::String, :value => val[0]
-    result = ast AST::ObjectParam, :param => leaf, :value => val[2]
+    result = ast AST::ResourceParam, :param => val[0], :value => val[2]
 }
 
 rvalues:      rvalue
@@ -223,6 +292,13 @@ rvalues:      rvalue
     end
 }
 
+simplervalue:       quotedtext
+            | name
+            | type
+            | boolean
+            | selector
+            | variable
+
 rvalue:       quotedtext
             | name
             | type
@@ -230,11 +306,11 @@ rvalue:       quotedtext
             | selector
             | variable
             | array
-            | objectref
+            | resourceref
             | funcrvalue
 
 # We currently require arguments in these functions.
-funcrvalue:   NAME LPAREN classnames RPAREN {
+funcrvalue:   NAME LPAREN namestrings RPAREN {
     args = aryfy(val[2])
     result = ast AST::Function,
         :name => val[0],
@@ -252,8 +328,11 @@ boolean:    BOOLEAN {
     result = ast AST::Boolean, :value => val[0]
 }
 
-objectref: name LBRACK rvalue RBRACK {
-    result = ast AST::ObjectRef, :type => val[0], :name => val[2]
+resourceref: NAME LBRACK rvalue RBRACK {
+    Puppet.warning addcontext("Deprecation notice:  Resource references should now be capitalized")
+    result = ast AST::ResourceRef, :type => val[0], :title => val[2]
+}               | TYPE LBRACK rvalue RBRACK {
+    result = ast AST::ResourceRef, :type => val[0], :title => val[2]
 }
 
 ifstatement:      IF iftest LBRACE statements RBRACE else {
@@ -333,7 +412,7 @@ sintvalues:   selectval
 }
 
 selectval:        selectlhand FARROW rvalue {
-    result = ast AST::ObjectParam, :param => val[0], :value => val[2]
+    result = ast AST::ResourceParam, :param => val[0], :value => val[2]
 }
 
 selectlhand:  name
@@ -378,7 +457,7 @@ import: IMPORT quotedtext {
         end
 
         files.each { |file|
-            parser = Puppet::Parser::Parser.new()
+            parser = Puppet::Parser::Parser.new(interp)
             parser.files = self.files
             Puppet.debug("importing '%s'" % file)
 
@@ -396,8 +475,13 @@ import: IMPORT quotedtext {
             end
             # push the results into the main result array
             # We always return an array when we parse.
-            parser.parse.each do |child|
-                result.push child
+            ast = parser.parse
+
+            # Things that just get added to the classtable or whatever return nil
+            if ast
+                ast.each do |child|
+                    result.push child
+                end
             end
         }
     }
@@ -405,165 +489,99 @@ import: IMPORT quotedtext {
 
 # Disable definition inheritance for now. 8/27/06, luke
 #definition: DEFINE NAME argumentlist parent LBRACE statements RBRACE {
-definition: DEFINE NAME argumentlist LBRACE statements RBRACE {
-    args = {
-        :type => ast(AST::Name, :value => val[1]),
-        :args => val[2],
-        :code => val[4] # Switch to 5 for parents
-    }
+definition: DEFINE fqname argumentlist LBRACE statements RBRACE {
+    interp.newdefine fqname(val[1]), :arguments => val[2], :code => val[4]
+    @lexer.indefine = false
+    result = nil
 
-    if val[3].instance_of?(AST::Name)
-        args[:parentclass] = val[3]
-    end
-    result = ast AST::CompDef, args
 #}           | DEFINE NAME argumentlist parent LBRACE RBRACE {
-}           | DEFINE NAME argumentlist LBRACE RBRACE {
-    args = {
-        :type => ast(AST::Name, :value => val[1]),
-        :args => val[2],
-        :code => ast(AST::ASTArray)
-    }
-
-    if val[3].instance_of?(AST::Name)
-        args[:parentclass] = val[3]
-    end
-
-    result = ast AST::CompDef, args
+}           | DEFINE fqname argumentlist LBRACE RBRACE {
+    interp.newdefine fqname(val[1]), :arguments => val[2]
+    @lexer.indefine = false
+    result = nil
 }
 
 #hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
-hostclass: CLASS NAME parent LBRACE statements RBRACE {
-        #:args => val[2],
-    args = {
-        :type => ast(AST::Name, :value => val[1]),
-        :code => val[4]
-    }
-    # It'll be an ASTArray if we didn't get a parent
-    if val[2].instance_of?(AST::Name)
-        args[:parentclass] = val[2]
-    end
-    result = ast AST::ClassDef, args
-}           | CLASS NAME parent LBRACE RBRACE {
-    args = {
-        :type => ast(AST::Name, :value => val[1]),
-        :code => ast(AST::ASTArray, :children => [])
-    }
-    # It'll be an ASTArray if we didn't get a parent
-    if val[2].instance_of?(AST::Name)
-        args[:parentclass] = val[2]
-    end
-    result = ast AST::ClassDef, args
+hostclass: CLASS fqname parent LBRACE statements RBRACE {
+    # Our class gets defined in the parent namespace, not our own.
+    @lexer.namepop
+    interp.newclass fqname(val[1]), :code => val[4], :parent => val[2]
+    result = nil
+}           | CLASS fqname parent LBRACE RBRACE {
+    # Our class gets defined in the parent namespace, not our own.
+    @lexer.namepop
+    interp.newclass fqname(val[1]), :parent => val[2]
+    result = nil
 }
 
 nodedef: NODE hostnames parent LBRACE statements RBRACE {
-    unless val[1].instance_of?(AST::ASTArray)
-        val[1] = ast AST::ASTArray,
-            :line => val[1].line,
-            :file => val[1].file,
-            :children => [val[1]]
-    end
-    args = {
-        :names => val[1],
-        :code => val[4]
-    }
-    if val[2].instance_of?(AST::Name)
-        args[:parentclass] = val[2]
-    end
-    result = ast AST::NodeDef, args
+    interp.newnode val[1], :parent => val[2], :code => val[4]
+    result = nil
 }       |  NODE hostnames parent LBRACE RBRACE {
-    unless val[1].instance_of?(AST::ASTArray)
-        val[1] = ast AST::ASTArray,
-            :line => val[1].line,
-            :file => val[1].file,
-            :children => [val[1]]
-    end
-    args = {
-        :names => val[1],
-        :code => ast(AST::ASTArray, :children => [])
-    }
-    if val[2].instance_of?(AST::Name)
-        args[:parentclass] = val[2]
-    end
-    result = ast AST::NodeDef,args
+    interp.newnode val[1], :parent => val[2]
+    result = nil
 }
 
-# Multiple hostnames, as used for node names.
+fqname:       NAME
+            | CLASSNAME
+
+# Multiple hostnames, as used for node names.  These are all literal
+# strings, not AST objects.
 hostnames:    hostname 
   | hostnames COMMA hostname {
-    if val[0].instance_of?(AST::ASTArray)
-        result = val[0]
-        result.push val[2]
-    else
-        result = ast AST::ASTArray, :children => [val[0], val[2]]
-    end
+    result = val[0]
+    result = [result] unless result.is_a?(Array)
+    result << val[2]
 }
 
-hostname: NAME {
-   result = ast AST::HostName, :value => val[0]
-}        | SQTEXT {
-   result = ast AST::HostName, :value => val[0]
-}        | DEFAULT {
-   result = ast AST::Default, :value => val[0]
+hostname: NAME
+        | SQTEXT
+        | DEFAULT
+
+nil:    {
+    result = nil
 }
 
 nothing:    {
     result = ast AST::ASTArray, :children => []
 }
 
-argumentlist: nothing
+argumentlist: nil
             | LPAREN nothing RPAREN {
-    result = val[1]
+    result = nil
 }
             | LPAREN arguments RPAREN {
-    if val[1].instance_of?(AST::ASTArray)
-        result = val[1]
-    else
-        result = ast AST::ASTArray, :children => [val[1]]
-    end
+    result = val[1]
+    result = [result] unless result[0].is_a?(Array)
 }
 
 arguments:    argument
             | arguments COMMA argument {
-    if val[0].instance_of?(AST::ASTArray)
-        val[0].push(val[2])
-        result = val[0]
-    else
-        result = ast AST::ASTArray, :children => [val[0],val[2]]
-    end
+    result = val[0]
+    result = [result] unless result[0].is_a?(Array)
+    result << val[2]
 }
 
-argument:     name EQUALS rvalue {
-    msg = "Deprecation notice:  #{val[0].value} must now include '$' in prototype"
-    msg += " at line %s" % @lexer.line
-    msg += " in file %s" % @lexer.file if @lexer.file
-    Puppet.warning msg
-    result = ast AST::CompArgument, :children => [val[0],val[2]]
+argument:     NAME EQUALS rvalue {
+    Puppet.warning addcontext("Deprecation notice:  #{val[0].value} must now include '$' in prototype")
+    result = [val[0], val[2]]
 }
-            | name {
-    msg = "Deprecation notice:  #{val[0].value} must now include '$' in prototype"
-    msg += " at line %s" % @lexer.line
-    msg += " in file %s" % @lexer.file if @lexer.file
-    Puppet.warning msg
-    result = ast AST::CompArgument, :children => [val[0]]
-}           | lvariable EQUALS rvalue {
-    result = ast AST::CompArgument, :children => [val[0],val[2]]
-}           | lvariable {
-    result = ast AST::CompArgument, :children => [val[0]]
+            | NAME {
+    Puppet.warning addcontext("Deprecation notice:  #{val[0].value} must now include '$' in prototype")
+    result = [val[0]]
+}           | VARIABLE EQUALS rvalue {
+    result = [val[0], val[2]]
+}           | VARIABLE {
+    result = [val[0]]
 }
 
-parent:       nothing
+parent:       nil
             | INHERITS NAME {
-    result = ast AST::Name, :value => val[1]
+    result = val[1]
 }
 
 variable:     VARIABLE {
-    name = val[0].sub(/^\$/,'')
-    result = ast AST::Variable, :value => name
-}
-
-# This is variables as lvalues; we're assigning them, not deferencing them.
-lvariable:     VARIABLE {
-    result = ast AST::Name, :value => val[0].sub(/^\$/,'')
+    result = ast AST::Variable, :value => val[0]
 }
 
 array:        LBRACK rvalues RBRACK {
@@ -602,8 +620,20 @@ Puppet[:paramcheck] = true
 ---- inner ----
 require 'puppet/parser/functions'
 
-attr_reader :file
+attr_reader :file, :interp
 attr_accessor :files
+
+# Add context to a message; useful for error messages and such.
+def addcontext(message, obj = nil)
+    obj ||= @lexer
+
+    message += " on line %s" % obj.line
+    if file = obj.file
+        message += " in file %s" % file
+    end
+
+    return message
+end
 
 # Create an AST array out of all of the args
 def aryfy(*args)
@@ -636,6 +666,17 @@ def ast(klass, hash = nil)
     return klass.new(hash)
 end
 
+# Raise a Parse error.
+def error(message)
+    except = Puppet::ParseError.new(message)
+    except.line = @lexer.line
+    if @lexer.file
+        except.file = @lexer.file
+    end
+
+    raise except
+end
+
 def file=(file)
     unless FileTest.exists?(file)
         unless file =~ /\.pp$/
@@ -653,23 +694,20 @@ def file=(file)
     end
 end
 
-def initialize
-    @lexer = Puppet::Parser::Lexer.new()
-    @files = []
-    #if Puppet[:debug]
-    #    @yydebug = true
-    #end
+def initialize(interpreter)
+    @interp = interpreter
+    initvars()
 end
 
-# Add a new file to be checked when we're checking to see if we should be
-# reparsed.
-def newfile(*files)
-    files.each do |file|
-        unless file.is_a? Puppet::LoadedFile
-            file = Puppet::LoadedFile.new(file)
-        end
-        @files << file
-    end
+# Initialize or reset all of our variables.
+def initvars
+    @lexer = Puppet::Parser::Lexer.new()
+    @files = []
+end
+
+# The fully qualifed name, with the full namespace.
+def fqname(name)
+    [@lexer.namespace, name].join("::").sub(/^::/, '')
 end
 
 def on_error(token,value,stack)
@@ -693,7 +731,7 @@ def parse(string = nil)
         self.string = string
     end
     begin
-        yyparse(@lexer,:scan)
+        main = yyparse(@lexer,:scan)
     rescue Racc::ParseError => except
         error = Puppet::ParseError.new(except)
         error.line = @lexer.line
@@ -720,6 +758,13 @@ def parse(string = nil)
         error.set_backtrace except.backtrace
         raise error
     end
+    if main
+        # Store the results as the top-level class.
+        interp.newclass("", :code => main)
+        return main
+    end
+ensure
+    @lexer.clear
 end
 
 # See if any of the files have changed.

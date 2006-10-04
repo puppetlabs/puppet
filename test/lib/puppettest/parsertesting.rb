@@ -1,4 +1,5 @@
 require 'puppettest'
+require 'puppet/rails'
 
 module PuppetTest::ParserTesting
     include PuppetTest
@@ -6,23 +7,36 @@ module PuppetTest::ParserTesting
 
     def astarray(*args)
         AST::ASTArray.new(
-                          :children => args
-                         )
+            :children => args
+        )
     end
 
-    def classobj(name, args = {})
-        args[:type] ||= nameobj(name)
-        args[:code] ||= AST::ASTArray.new(
-            :file => __FILE__,
-            :line => __LINE__,
-            :children => [
-                varobj("%svar" % name, "%svalue" % name),
-                fileobj("/%s" % name)
-            ]
-        )
-        assert_nothing_raised("Could not create class %s" % name) {
-            return AST::ClassDef.new(args)
-        }
+    def mkinterp(args = {})
+        args[:Code] ||= ""
+        args[:Local] ||= true
+        Puppet::Parser::Interpreter.new(args)
+    end
+
+    def mkparser
+        Puppet::Parser::Parser.new(mkinterp)
+    end
+
+    def mkscope(hash = {})
+        hash[:interp] ||= mkinterp
+        hash[:source] ||= (hash[:interp].findclass("", "") ||
+            hash[:interp].newclass(""))
+
+        unless hash[:source]
+            raise "Could not find source for scope"
+        end
+        Puppet::Parser::Scope.new(hash)
+    end
+
+    def classobj(name, hash = {})
+        hash[:file] ||= __FILE__
+        hash[:line] ||= __LINE__
+        hash[:type] ||= name
+        AST::HostClass.new(hash)
     end
 
     def tagobj(*names)
@@ -40,50 +54,47 @@ module PuppetTest::ParserTesting
         }
     end
 
-    def compobj(name, args = {})
-        args[:file] ||= tempfile()
-        args[:line] ||= rand(100)
-        args[:type] ||= nameobj(name)
-        args[:args] ||= AST::ASTArray.new(
-                                          :file => tempfile(),
-                                          :line => rand(100),
-                                          :children => []
-                                         )
-        args[:code] ||= AST::ASTArray.new(
-            :file => tempfile(),
-            :line => rand(100),
-            :children => [
-                varobj("%svar" % name, "%svalue" % name),
-                fileobj("/%s" % name)
-            ]
-        )
-        assert_nothing_raised("Could not create compdef %s" % name) {
-            return AST::CompDef.new(args)
+    def resourcedef(type, title, params)
+        unless title.is_a?(AST)
+            title = stringobj(title)
+        end
+        assert_nothing_raised("Could not create %s %s" % [type, title]) {
+            return AST::ResourceDef.new(
+                :file => __FILE__,
+                :line => __LINE__,
+                :title => title,
+                :type => type,
+                :params => resourceinst(params)
+            )
         }
     end
 
-    def objectdef(type, name, params)
+    def resourceoverride(type, title, params)
         assert_nothing_raised("Could not create %s %s" % [type, name]) {
-            return AST::ObjectDef.new(
-                                      :file => __FILE__,
-                                      :line => __LINE__,
-                                      :name => stringobj(name),
-                                      :type => nameobj(type),
-                                      :params => objectinst(params)
-                                     )
+            return AST::ResourceOverride.new(
+                :file => __FILE__,
+                :line => __LINE__,
+                :object => resourceref(type, title),
+                :type => type,
+                :params => resourceinst(params)
+            )
+        }
+    end
+
+    def resourceref(type, title)
+        assert_nothing_raised("Could not create %s %s" % [type, title]) {
+            return AST::ResourceRef.new(
+                :file => __FILE__,
+                :line => __LINE__,
+                :type => type,
+                :title => stringobj(title)
+            )
         }
     end
 
     def fileobj(path, hash = {"owner" => "root"})
         assert_nothing_raised("Could not create file %s" % path) {
-            return objectdef("file", path, hash)
-            #            return AST::ObjectDef.new(
-            #                :file => tempfile(),
-            #                :line => rand(100),
-            #                :name => stringobj(path),
-            #                :type => nameobj("file"),
-            #                :params => objectinst(hash)
-            #            )
+            return resourcedef("file", path, hash)
         }
     end
 
@@ -123,12 +134,12 @@ module PuppetTest::ParserTesting
         }
     end
 
-    def objectinst(hash)
-        assert_nothing_raised("Could not create object instance") {
+    def resourceinst(hash)
+        assert_nothing_raised("Could not create resource instance") {
             params = hash.collect { |param, value|
-            objectparam(param, value)
+            resourceparam(param, value)
         }
-        return AST::ObjectInst.new(
+        return AST::ResourceInst.new(
                                    :file => tempfile(),
                                    :line => rand(100),
                                    :children => params
@@ -136,16 +147,16 @@ module PuppetTest::ParserTesting
         }
     end
 
-    def objectparam(param, value)
+    def resourceparam(param, value)
         # Allow them to pass non-strings in
         if value.is_a?(String)
             value = stringobj(value)
         end
         assert_nothing_raised("Could not create param %s" % param) {
-            return AST::ObjectParam.new(
+            return AST::ResourceParam.new(
                                         :file => tempfile(),
                                         :line => rand(100),
-                                        :param => nameobj(param),
+                                        :param => param,
                                         :value => value
                                        )
         }
@@ -194,10 +205,10 @@ module PuppetTest::ParserTesting
     def defaultobj(type, params)
         pary = []
         params.each { |p,v|
-            pary << AST::ObjectParam.new(
+            pary << AST::ResourceParam.new(
                                          :file => __FILE__,
                                          :line => __LINE__,
-                                         :param => nameobj(p),
+                                         :param => p,
                                          :value => stringobj(v)
                                         )
         }
@@ -208,10 +219,10 @@ module PuppetTest::ParserTesting
                                 )
 
         assert_nothing_raised("Could not create defaults for %s" % type) {
-            return AST::TypeDefaults.new(
+            return AST::ResourceDefaults.new(
                 :file => __FILE__,
                 :line => __LINE__,
-                :type => typeobj(type),
+                :type => type,
                 :params => past
             )
         }
@@ -274,7 +285,7 @@ module PuppetTest::ParserTesting
         return obj
     end
 
-    def mk_transbucket(*objects)
+    def mk_transbucket(*resources)
         bucket = nil
         assert_nothing_raised {
             bucket = Puppet::TransBucket.new
@@ -282,12 +293,12 @@ module PuppetTest::ParserTesting
             bucket.type = "yaytype"
         }
 
-        objects.each { |o| bucket << o }
+        resources.each { |o| bucket << o }
 
         return bucket
     end
 
-    # Make a tree of objects, yielding if desired
+    # Make a tree of resources, yielding if desired
     def mk_transtree(depth = 4, width = 2)
         top = nil
         assert_nothing_raised {
@@ -300,7 +311,7 @@ module PuppetTest::ParserTesting
 
         file = tempfile()
         depth.times do |i|
-            objects = []
+            resources = []
             width.times do |j|
                 path = tempfile + i.to_s
                 obj = Puppet::TransObject.new("file", path)
@@ -312,10 +323,10 @@ module PuppetTest::ParserTesting
                     yield(obj, i, j)
                 end
 
-                objects << obj
+                resources << obj
             end
 
-            newbucket = mk_transbucket(*objects)
+            newbucket = mk_transbucket(*resources)
 
             bucket.push newbucket
             bucket = newbucket
@@ -324,13 +335,13 @@ module PuppetTest::ParserTesting
         return top
     end
 
-    # Take a list of AST objects, evaluate them, and return the results
+    # Take a list of AST resources, evaluate them, and return the results
     def assert_evaluate(children)
         top = nil
         assert_nothing_raised("Could not create top object") {
             top = AST::ASTArray.new(
-                                    :children => children
-                                   )
+                :children => children
+            )
         }
 
         trans = nil

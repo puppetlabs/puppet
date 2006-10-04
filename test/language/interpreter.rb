@@ -8,10 +8,18 @@ require 'puppet/parser/parser'
 require 'puppet/client'
 require 'puppet/rails'
 require 'puppettest'
+require 'puppettest/resourcetesting'
+require 'puppettest/parsertesting'
+require 'puppettest/servertest'
+require 'puppettest/railstesting'
+require 'timeout'
 
 class TestInterpreter < Test::Unit::TestCase
 	include PuppetTest
     include PuppetTest::ServerTest
+    include PuppetTest::ParserTesting
+    include PuppetTest::ResourceTesting
+    include PuppetTest::RailsTesting
     AST = Puppet::Parser::AST
 
     # create a simple manifest that uses nodes to create a file
@@ -135,81 +143,48 @@ class TestInterpreter < Test::Unit::TestCase
         return parent, classes
     end
 
+    def test_ldapsearch
+        Puppet[:ldapbase] = "ou=hosts, dc=madstop, dc=com"
+        Puppet[:ldapnodes] = true
+
+        ldapconnect()
+
+        interp = mkinterp :NodeSources => [:ldap, :code]
+
+        # Make sure we can find 'culain' in ldap
+        parent, classes = nil
+        assert_nothing_raised do
+            parent, classes = interp.ldapsearch("culain")
+        end
+
+        realparent, realclasses = ldaphost("culain")
+        assert_equal(realparent, parent)
+        assert_equal(realclasses, classes)
+    end
+
     def test_ldapnodes
         Puppet[:ldapbase] = "ou=hosts, dc=madstop, dc=com"
         Puppet[:ldapnodes] = true
 
         ldapconnect()
-        file = tempfile()
-        files = []
-        parentfile = tempfile() + "-parent"
-        files << parentfile
-        hostname = Facter["hostname"].value
-        lparent, lclasses = ldaphost(Facter["hostname"].value)
-        assert(lclasses, "Did not retrieve info from ldap")
-        File.open(file, "w") { |f|
-            f.puts "node #{lparent} {
-    file { \"#{parentfile}\": ensure => file }
-}"
 
-            lclasses.each { |klass|
-                kfile = tempfile() + "-klass"
-                files << kfile
-                f.puts "class #{klass} { file { \"#{kfile}\": ensure => file } }"
-            }
-        }
-        interp = nil
-        assert_nothing_raised {
-            interp = Puppet::Parser::Interpreter.new(
-                :Manifest => file
-            )
-        }
+        interp = mkinterp :NodeSources => [:ldap, :code]
 
-        parent = nil
-        classes = nil
-        # First make sure we get the default node for unknown hosts
-        dparent, dclasses = ldaphost("default")
+        # culain uses basenode, so create that
+        basenode = interp.newnode([:basenode])[0]
 
-        assert_nothing_raised {
-            parent, classes = interp.nodesearch("nosuchhostokay")
-        }
+        # Make sure we can find 'culain' in ldap
+        culain = nil
+        assert_nothing_raised do
+            culain = interp.nodesearch_ldap("culain")
+        end
 
-        assert_equal(dparent, parent, "Default parent node did not match")
-        assert_equal(dclasses, classes, "Default parent class list did not match")
+        assert(culain, "Did not find culain in ldap")
 
-        # Look for a host we know doesn't have a parent
-        npparent, npclasses = ldaphost("noparent")
-        assert_nothing_raised {
-            #parent, classes = interp.nodesearch_ldap("noparent")
-            parent, classes = interp.nodesearch("noparent")
-        }
-
-        assert_equal(npparent, parent, "Parent node did not match")
-        assert_equal(npclasses, classes, "Class list did not match")
-
-        # Now look for our normal host
-        assert_nothing_raised {
-            parent, classes = interp.nodesearch_ldap(hostname)
-        }
-
-        assert_equal(lparent, parent, "Parent node did not match")
-        assert_equal(lclasses, classes, "Class list did not match")
-
-        objects = nil
-        assert_nothing_raised {
-            objects = interp.run(hostname, Puppet::Client::MasterClient.facts)
-        }
-
-        comp = nil
-        assert_nothing_raised {
-            comp = objects.to_type
-        }
-
-        assert_apply(comp)
-        files.each { |cfile|
-            @@tmpfiles << cfile
-            assert(FileTest.exists?(cfile), "Did not make %s" % cfile)
-        }
+        assert_nothing_raised do
+            assert_equal(basenode.fqname.to_s, culain.parentclass.fqname.to_s,
+                "Did not get parent class")
+        end
     end
 
     if Puppet::SUIDManager.uid == 0 and Facter["hostname"].value == "culain"
@@ -260,87 +235,32 @@ class TestInterpreter < Test::Unit::TestCase
 
     # Make sure searchnode behaves as we expect.
     def test_nodesearch
-        # First create a fake nodesearch algorithm
-        i = 0
-        bucket = []
-        Puppet::Parser::Interpreter.send(:define_method, "nodesearch_fake") do |node|
-            return nil, nil if node == "default"
+        interp = mkinterp
 
-            return bucket[0], bucket[1]
-        end
-        text = %{
-node nodeparent {}
-node othernodeparent {}
-class nodeclass {}
-class nothernode {}
-}
-        manifest = tempfile()
-        File.open(manifest, "w") do |f| f.puts text end
-        interp = nil
-        assert_nothing_raised {
-            interp = Puppet::Parser::Interpreter.new(
-                :Manifest => manifest,
-                :NodeSources => [:fake]
-            )
-        }
-        # Make sure it behaves correctly for all forms
-        [[nil, nil],
-        ["nodeparent", nil],
-        [nil, ["nodeclass"]],
-        [nil, ["nodeclass", "nothernode"]],
-        ["othernodeparent", ["nodeclass", "nothernode"]],].each do |ary|
-            # Set the return values
-            bucket = ary
+        # Make some nodes
+        names = %w{node1 node2 node2.domain.com}
+        interp.newnode names
 
-            # Look them back up
-            parent, classes = interp.nodesearch("mynode")
-
-            # Basically, just make sure that if we have either or both,
-            # we get a result back.
-            assert_equal(ary[0], parent,
-                "Parent is not %s" % parent)
-            assert_equal(ary[1], classes,
-                "Parent is not %s" % parent)
-
-            next if ary == [nil, nil]
-            # Now make sure we actually get the configuration.  This will throw
-            # an exception if we don't.
-            assert_nothing_raised do
-                interp.run("mynode", {})
-            end
-        end
-    end
-
-    # Make sure nodesearch uses all names, not just one.
-    def test_nodesearch_multiple_names
-        bucket = {}
-        Puppet::Parser::Interpreter.send(:define_method, "nodesearch_multifake") do |node|
-            if bucket[node]
-                return *bucket[node]
-            else
-                return nil, nil
-            end
-        end
-        manifest = tempfile()
-        File.open(manifest, "w") do |f| f.puts "" end
-        interp = nil
-        assert_nothing_raised {
-            interp = Puppet::Parser::Interpreter.new(
-                :Manifest => manifest,
-                :NodeSources => [:multifake]
-            )
-        }
-
-        bucket["name.domain.com"] = [:parent, [:classes]]
-
-        ret = nil
-
-        assert_nothing_raised do
-            assert_equal bucket["name.domain.com"],
-                interp.nodesearch("name", "name.domain.com")
+        nodes = {}
+        # Make sure we can find them all, using the direct method
+        names.each do |name|
+            nodes[name] = interp.nodesearch_code(name)
+            assert(nodes[name], "Could not find %s" % name)
+            nodes[name].file = __FILE__
         end
 
+        # Now let's try it with the nodesearch method
+        names.each do |name|
+            node = interp.nodesearch(name)
+            assert(node, "Could not find #{name} via nodesearch")
+        end
 
+        # Now make sure the longest match always wins
+        node = interp.nodesearch(*%w{node2 node2.domain.com})
+
+        assert(node, "Did not find node2")
+        assert_equal("node2.domain.com", node.fqname,
+            "Did not get longest match")
     end
 
     def test_parsedate
@@ -389,4 +309,519 @@ class nothernode {}
         newdate = interp.parsedate
         assert(date != newdate, "Parsedate was not updated")
     end
+
+    # Make sure our node gets added to the node table.
+    def test_newnode
+        interp = mkinterp
+
+        # First just try calling it directly
+        assert_nothing_raised {
+            interp.newnode("mynode", :code => :yay)
+        }
+
+        assert_equal(:yay, interp.nodesearch_code("mynode").code)
+
+        # Now make sure that trying to redefine it throws an error.
+        assert_raise(Puppet::ParseError) {
+            interp.newnode("mynode", {})
+        }
+
+        # Now try one with no code
+        assert_nothing_raised {
+            interp.newnode("simplenode", :parent => :foo)
+        }
+
+        # Make sure trying to get the parentclass throws an error
+        assert_raise(Puppet::ParseError) do
+            interp.nodesearch_code("simplenode").parentclass
+        end
+
+        # Now define the parent node
+        interp.newnode(:foo)
+
+        # And make sure we get things back correctly
+        assert_equal("foo", interp.nodesearch_code("simplenode").parentclass.fqname)
+        assert_nil(interp.nodesearch_code("simplenode").code)
+
+        # Now make sure that trying to redefine it throws an error.
+        assert_raise(Puppet::ParseError) {
+            interp.newnode("mynode", {})
+        }
+
+        # Test multiple names
+        names = ["one", "two", "three"]
+        assert_nothing_raised {
+            interp.newnode(names, {:code => :yay, :parent => :foo})
+        }
+
+        names.each do |name|
+            assert_equal(:yay, interp.nodesearch_code(name).code)
+            assert_equal("foo", interp.nodesearch_code(name).parentclass.name)
+            # Now make sure that trying to redefine it throws an error.
+            assert_raise(Puppet::ParseError) {
+                interp.newnode(name, {})
+            }
+        end
+    end
+
+    # Make sure we're correctly generating a node definition.
+    def test_gennode
+        interp = mkinterp
+
+        node = nil
+        assert_nothing_raised {
+            node = interp.gennode("nodeA", :classes => %w{classA classB})
+        }
+
+        assert_instance_of(Puppet::Parser::AST::Node, node)
+
+        assert_equal("nodeA", node.name)
+    end
+
+    def test_fqfind
+        interp = mkinterp
+
+        table = {}
+        # Define a bunch of things.
+        %w{a c a::b a::b::c a::c a::b::c::d a::b::c::d::e::f c::d}.each do |string|
+            table[string] = string
+        end
+
+        check = proc do |namespace, hash|
+            hash.each do |thing, result|
+                assert_equal(result, interp.fqfind(namespace, thing, table),
+                            "Could not find %s in %s" % [thing, namespace])
+            end
+        end
+
+        # Now let's do some test lookups.
+
+        # First do something really simple
+        check.call "a", "b" => "a::b", "b::c" => "a::b::c", "d" => nil, "::c" => "c"
+
+        check.call "a::b", "c" => "a::b::c", "b" => "a::b", "a" => "a"
+
+        check.call "a::b::c::d::e", "c" => "a::b::c", "::c" => "c",
+            "c::d" => "a::b::c::d", "::c::d" => "c::d"
+
+        check.call "", "a" => "a", "a::c" => "a::c"
+    end
+
+    def test_newdefine
+        interp = mkinterp
+
+        assert_nothing_raised {
+            interp.newdefine("mydefine", :code => :yay,
+                :arguments => ["a", stringobj("b")])
+        }
+
+        mydefine = interp.finddefine("", "mydefine")
+        assert(mydefine, "Could not find definition")
+        assert_equal("mydefine", interp.finddefine("", "mydefine").type)
+        assert_equal("", mydefine.namespace)
+        assert_equal("mydefine", mydefine.type)
+
+        assert_raise(Puppet::ParseError) do
+            interp.newdefine("mydefine", :code => :yay,
+                :arguments => ["a", stringobj("b")])
+        end
+
+        # Now define the same thing in a different scope
+        assert_nothing_raised {
+            interp.newdefine("other::mydefine", :code => :other,
+                :arguments => ["a", stringobj("b")])
+        }
+        other = interp.finddefine("other", "mydefine")
+        assert(other, "Could not find definition")
+        assert(interp.finddefine("", "other::mydefine"),
+            "Could not find other::mydefine")
+        assert_equal(:other, other.code)
+        assert_equal("other", other.namespace)
+        assert_equal("mydefine", other.type)
+        assert_equal("other::mydefine", other.fqname)
+    end
+
+    def test_newclass
+        interp = mkinterp
+
+        mkcode = proc do |ary|
+            classes = ary.collect do |string|
+                AST::FlatString.new(:value => string)
+            end
+            AST::ASTArray.new(:children => classes)
+        end
+        scope = Puppet::Parser::Scope.new(:interp => interp)
+
+        # First make sure that code is being appended
+        code = mkcode.call(%w{original code})
+
+        klass = nil
+        assert_nothing_raised {
+            klass = interp.newclass("myclass", :code => code)
+        }
+
+        assert(klass, "Did not return class")
+
+        assert(interp.findclass("", "myclass"), "Could not find definition")
+        assert_equal("myclass", interp.findclass("", "myclass").type)
+        assert_equal(%w{original code},
+             interp.findclass("", "myclass").code.evaluate(:scope => scope))
+
+        # Now create the same class name in a different scope
+        assert_nothing_raised {
+            klass = interp.newclass("other::myclass",
+                            :code => mkcode.call(%w{something diff}))
+        }
+        assert(klass, "Did not return class")
+        other = interp.findclass("other", "myclass")
+        assert(other, "Could not find class")
+        assert(interp.findclass("", "other::myclass"), "Could not find class")
+        assert_equal("other::myclass", other.fqname)
+        assert_equal("other", other.namespace)
+        assert_equal("myclass", other.type)
+        assert_equal(%w{something diff},
+             interp.findclass("other", "myclass").code.evaluate(:scope => scope))
+
+        # Newclass behaves differently than the others -- it just appends
+        # the code to the existing class.
+        code = mkcode.call(%w{something new})
+        assert_nothing_raised do
+            klass = interp.newclass("myclass", :code => code)
+        end
+        assert(klass, "Did not return class when appending")
+        assert_equal(%w{original code something new},
+            interp.findclass("", "myclass").code.evaluate(:scope => scope))
+
+        # Make sure newclass deals correctly with nodes with no code
+        klass = interp.newclass("nocode")
+        assert(klass, "Did not return class")
+
+        assert_nothing_raised do
+            klass = interp.newclass("nocode", :code => mkcode.call(%w{yay test}))
+        end
+        assert(klass, "Did not return class with no code")
+        assert_equal(%w{yay test},
+            interp.findclass("", "nocode").code.evaluate(:scope => scope))
+
+        # Then try merging something into nothing
+        interp.newclass("nocode2", :code => mkcode.call(%w{foo test}))
+        assert(klass, "Did not return class with no code")
+
+        assert_nothing_raised do
+            klass = interp.newclass("nocode2")
+        end
+        assert(klass, "Did not return class with no code")
+        assert_equal(%w{foo test},
+            interp.findclass("", "nocode2").code.evaluate(:scope => scope))
+
+        # And lastly, nothing and nothing
+        klass = interp.newclass("nocode3")
+        assert(klass, "Did not return class with no code")
+
+        assert_nothing_raised do
+            klass = interp.newclass("nocode3")
+        end
+        assert(klass, "Did not return class with no code")
+        assert_nil(interp.findclass("", "nocode3").code)
+
+    end
+    
+    # Now make sure we get appropriate behaviour with parent class conflicts.
+    def test_newclass_parentage
+        interp = mkinterp
+        interp.newclass("base1")
+        interp.newclass("one::two::three")
+
+        # First create it with no parentclass.
+        assert_nothing_raised {
+            interp.newclass("sub")
+        }
+        assert(interp.findclass("", "sub"), "Could not find definition")
+        assert_nil(interp.findclass("", "sub").parentclass)
+
+        # Make sure we can't set the parent class to ourself.
+        assert_raise(Puppet::ParseError) {
+            interp.newclass("sub", :parent => "sub")
+        }
+
+        # Now create another one, with a parentclass.
+        assert_nothing_raised {
+            interp.newclass("sub", :parent => "base1")
+        }
+
+        # Make sure we get the right parent class, and make sure it's an object.
+        assert_equal(interp.findclass("", "base1"),
+                    interp.findclass("", "sub").parentclass)
+
+        # Now make sure we get a failure if we try to conflict.
+        assert_raise(Puppet::ParseError) {
+            interp.newclass("sub", :parent => "one::two::three")
+        }
+
+        # Make sure that failure didn't screw us up in any way.
+        assert_equal(interp.findclass("", "base1"),
+                    interp.findclass("", "sub").parentclass)
+        # But make sure we can create a class with a fq parent
+        assert_nothing_raised {
+            interp.newclass("another", :parent => "one::two::three")
+        }
+        assert_equal(interp.findclass("", "one::two::three"),
+                    interp.findclass("", "another").parentclass)
+
+    end
+
+    def test_namesplit
+        interp = mkinterp
+
+        assert_nothing_raised do
+            {"base::sub" => %w{base sub},
+                "main" => ["", "main"],
+                "one::two::three::four" => ["one::two::three", "four"],
+            }.each do |name, ary|
+                result = interp.namesplit(name)
+                assert_equal(ary, result, "%s split to %s" % [name, result])
+            end
+        end
+    end
+
+    # Make sure you can't have classes and defines with the same name in the
+    # same scope.
+    def test_classes_beat_defines
+        interp = mkinterp
+
+        assert_nothing_raised {
+            interp.newclass("yay::funtest")
+        }
+
+        assert_raise(Puppet::ParseError) do
+            interp.newdefine("yay::funtest")
+        end
+
+        assert_nothing_raised {
+            interp.newdefine("yay::yaytest")
+        }
+
+        assert_raise(Puppet::ParseError) do
+            interp.newclass("yay::yaytest")
+        end
+    end
+
+    # Make sure our whole chain works.
+    def test_evaluate
+        interp, scope, source = mkclassframing
+
+        # Create a define that we'll be using
+        interp.newdefine("wrapper", :code => AST::ASTArray.new(:children => [
+            resourcedef("file", varref("name"), "owner" => "root")
+        ]))
+
+        # Now create a resource that uses that define
+        define = mkresource(:type => "wrapper", :title => "/tmp/testing",
+            :scope => scope, :source => source, :params => :none)
+
+        scope.setresource define
+
+        # And a normal resource
+        scope.setresource mkresource(:type => "file", :title => "/tmp/rahness",
+            :scope => scope, :source => source,
+            :params => {:owner => "root"})
+
+        # Now evaluate everything
+        objects = nil
+        interp.usenodes = false
+        assert_nothing_raised do
+            objects = interp.evaluate(nil, {})
+        end
+
+        assert_instance_of(Puppet::TransBucket, objects)
+    end
+
+    def test_evaliterate
+        interp, scope, source = mkclassframing
+
+        # Create a top-level definition that creates a builtin object
+        interp.newdefine("one", :arguments => [%w{owner}],
+            :code => AST::ASTArray.new(:children => [
+                resourcedef("file", varref("name"),
+                    "owner" => varref("owner")
+                )
+            ])
+        )
+
+        # Create another definition to call that one
+        interp.newdefine("two", :arguments => [%w{owner}],
+            :code => AST::ASTArray.new(:children => [
+                resourcedef("one", varref("name"),
+                    "owner" => varref("owner")
+                )
+            ])
+        )
+
+        # And then a third
+        interp.newdefine("three", :arguments => [%w{owner}],
+            :code => AST::ASTArray.new(:children => [
+                resourcedef("two", varref("name"),
+                    "owner" => varref("owner")
+                )
+            ])
+        )
+
+        three = Puppet::Parser::Resource.new(
+            :type => "three", :title => "/tmp/yayness",
+            :scope => scope, :source => source,
+            :params => paramify(source, :owner => "root")
+        )
+
+        scope.setresource(three)
+
+        ret = nil
+        assert_nothing_raised do
+            ret = scope.unevaluated
+        end
+
+
+        assert_instance_of(Array, ret)
+        assert(1, ret.length)
+        assert_equal([three], ret)
+
+        assert(ret.detect { |r| r.ref == "three[/tmp/yayness]"},
+            "Did not get three back as unevaluated")
+
+        # Now translate the whole tree
+        assert_nothing_raised do
+            interp.evaliterate(scope)
+        end
+
+        # Now make sure we've got our file
+        file = scope.findresource "file[/tmp/yayness]"
+        assert(file, "Could not find file")
+
+        assert_equal("root", file[:owner])
+    end
+
+    # Make sure we fail if there are any leftover overrides to perform.
+    # This would normally mean that someone is trying to override an object
+    # that does not exist.
+    def test_failonleftovers
+        interp, scope, source = mkclassframing
+
+        # Make sure we don't fail, since there are no overrides
+        assert_nothing_raised do
+            interp.failonleftovers(scope)
+        end
+
+        # Add an override, and make sure it causes a failure
+        over1 = mkresource :scope => scope, :source => source,
+                :params => {:one => "yay"}
+
+        scope.setoverride(over1)
+
+        assert_raise(Puppet::ParseError) do
+            interp.failonleftovers(scope)
+        end
+
+    end
+
+    def test_evalnode
+        interp = mkinterp
+        interp.usenodes = false
+        scope = Parser::Scope.new(:interp => interp)
+        facts = Facter.to_hash
+
+        # First make sure we get no failures when client is nil
+        assert_nothing_raised do
+            interp.evalnode(nil, scope, facts)
+        end
+
+        # Now define a node
+        interp.newnode "mynode", :code => AST::ASTArray.new(:children => [
+            resourcedef("file", "/tmp/testing", "owner" => "root")
+        ])
+
+        # Eval again, and make sure it does nothing
+        assert_nothing_raised do
+            interp.evalnode("mynode", scope, facts)
+        end
+
+        assert_nil(scope.findresource("file[/tmp/testing]"),
+            "Eval'ed node with nodes off")
+
+        # Now enable usenodes and make sure it works.
+        interp.usenodes = true
+        assert_nothing_raised do
+            interp.evalnode("mynode", scope, facts)
+        end
+        file = scope.findresource("file[/tmp/testing]")
+
+        assert_instance_of(Puppet::Parser::Resource, file,
+            "Could not find file")
+    end
+
+    # This is mostly used for the cfengine module
+    def test_specificclasses
+        interp = mkinterp :Classes => %w{klass1 klass2}, :UseNodes => false
+
+        # Make sure it's not a failure to be missing classes, since
+        # we're using the cfengine class list, which is huge.
+        assert_nothing_raised do
+            interp.evaluate(nil, {})
+        end
+
+        interp.newclass("klass1", :code => AST::ASTArray.new(:children => [
+            resourcedef("file", "/tmp/klass1", "owner" => "root")
+        ]))
+        interp.newclass("klass2", :code => AST::ASTArray.new(:children => [
+            resourcedef("file", "/tmp/klass2", "owner" => "root")
+        ]))
+
+        ret = nil
+        assert_nothing_raised do
+            ret = interp.evaluate(nil, {})
+        end
+
+        found = ret.flatten.collect do |res| res.name end
+
+        assert(found.include?("/tmp/klass1"), "Did not evaluate klass1")
+        assert(found.include?("/tmp/klass2"), "Did not evaluate klass2")
+    end
+
+    if defined? ActiveRecord::Base
+    # We need to make sure finished objects are stored in the db.
+    def test_finish_before_store
+        railsinit
+        interp = mkinterp
+
+        node = interp.newnode ["myhost"], :code => AST::ASTArray.new(:children => [
+            resourcedef("file", "/tmp/yay", :group => "root"),
+            defaultobj("file", :owner => "root")
+        ])
+
+        interp.newclass "myclass", :code => AST::ASTArray.new(:children => [
+        ])
+
+        interp.newclass "sub", :parent => "myclass",
+            :code => AST::ASTArray.new(:children => [
+                resourceoverride("file", "/tmp/yay", :owner => "root")
+            ]
+        )
+
+        # Now do the rails crap
+        Puppet[:storeconfigs] = true
+
+        interp.evaluate("myhost", {})
+
+        # And then retrieve the object from rails
+        res = Puppet::Rails::RailsResource.find_by_restype_and_title("file", "/tmp/yay")
+
+        assert(res, "Did not get resource from rails")
+
+        param = res.rails_parameters.find_by_name("owner")
+
+        assert(param, "Did not find owner param")
+
+        assert_equal("root", param[:value])
+    end
+    end
 end
+
+# $Id$

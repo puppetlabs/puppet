@@ -3,6 +3,7 @@
 require 'puppet'
 require 'puppet/transportable'
 require 'puppettest'
+require 'puppettest/parsertesting'
 require 'yaml'
 
 class TestTransportable < Test::Unit::TestCase
