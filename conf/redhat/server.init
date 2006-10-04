@@ -59,11 +59,8 @@ stop() {
 }
 
 restart() {
-	echo -n $"Restarting puppet: "
-        killproc $PUPPETMASTER -HUP
-	RETVAL=$?
-	echo
-	return $RETVAL
+  stop
+  start
 }
 
 case "$1" in
@@ -74,7 +71,7 @@ case "$1" in
 	stop
 	;;
   restart|reload|force-reload)
-	restart
+        restart
 	;;
   condrestart)
 	[ -f "$lockfile" ] && restart
