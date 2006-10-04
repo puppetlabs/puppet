@@ -14,7 +14,7 @@ Enabling and configuring reports must be handled both on the client and server a
 
 ### Turn on reporting on the client-side.
 
-In order to turn on reporting on the client-side (`puppetd`), the `report` argument must be given to the `puppetd` executable either by pasing the argument to the executable on the command line, like this:
+In order to turn on reporting on the client-side (`puppetd`), the `report` argument must be given to the `puppetd` executable either by passing the argument to the executable on the command line, like this:
 
     $ puppetd --report
 
@@ -46,7 +46,7 @@ or we can include these configuration parameters in the configuration file, typi
 
 You may also wish to specify the directory where reports will be stored with the  `[reportdirectory](configref.html#reportdirectory)` parameter.  Furthermore, transaction 
 reports can optionally be sent to a special report server (not necessarily the server or 
-client).  This server can be specified with the `[reportserver](configref.html#reportserver).
+client).  This server can be specified with the `[reportserver](configref.html#reportserver)`.
 
 For more about configuring your server, take a look at the section on [Configuration Reference](configref.html).
 
