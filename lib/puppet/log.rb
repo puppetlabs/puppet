@@ -181,7 +181,7 @@ module Puppet
                 options = Syslog::LOG_PID | Syslog::LOG_NDELAY
 
                 # XXX This should really be configurable.
-                str = Puppet[:logfacility]
+                str = Puppet[:syslogfacility]
                 begin
                     facility = Syslog.const_get("LOG_#{str.upcase}")
                 rescue NameError
