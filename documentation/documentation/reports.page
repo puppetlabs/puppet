@@ -78,7 +78,8 @@ The 'from' email address for the reports.
 Default: report@hostname.domain.you
 
 #### smtpserver
-    The server through which to send email reports.
+
+The server through which to send email reports.
 
 ### rrdgraph
 
@@ -86,5 +87,7 @@ The `rrdgraph` reports on the puppet system and its operations.  The reports are
 
 #### rrddir
 The directory into which puppet will put the web-ready report files.  Of course, this directory will need to be puppet-writable.
+
+
 
 * $Id:$
