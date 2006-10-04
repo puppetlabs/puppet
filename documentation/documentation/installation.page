@@ -119,9 +119,11 @@ adding ``deb http://snapshot.debian.net/archive pool ruby1.8`` to your
 
 #### SuSE
 
-Martin Vuk is maintaining a SuSE
-[yum repository](http://lmmri.fri.uni-lj.si/suse/)
-with Puppet and Facter packages.
+Martin Vuk has set up the SuSE build service to create Puppet and Facter
+packages, so you can get them
+[there](http://software.opensuse.org/download/systemmanagement:/misc/).  Older
+versions of Puppet can still be retrieved from his old
+[yum repository](http://lmmri.fri.uni-lj.si/suse/).
 
 #### Gentoo
 
