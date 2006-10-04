@@ -106,6 +106,9 @@ module Puppet
 
     self.setdefaults(:puppet,
         :trace => [false, "Whether to print stack traces on some errors"],
+        :logfacility => ["daemon", "What syslog facility to use when logging to syslog.
+            Syslog has a fixed list of valid facilities, and you must choose one of
+            those; you cannot just make one up."],
         :statedir => { :default => "$vardir/state",
             :mode => 01777,
             :desc => "The directory where Puppet state is stored.  Generally,

@@ -181,7 +181,12 @@ module Puppet
                 options = Syslog::LOG_PID | Syslog::LOG_NDELAY
 
                 # XXX This should really be configurable.
-                facility = Syslog::LOG_DAEMON
+                str = Puppet[:logfacility]
+                begin
+                    facility = Syslog.const_get("LOG_#{str.upcase}")
+                rescue NameError
+                    raise Puppet::Error, "Invalid syslog facility %s" % str
+                end
 
                 @syslog = Syslog.open(name, options, facility)
             end
