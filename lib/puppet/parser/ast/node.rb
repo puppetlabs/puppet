@@ -17,14 +17,11 @@ class Puppet::Parser::AST
             #    origscope
             #end
 
-            Puppet.warning "%s => %s" % [scope.type, self.name]
-
             # We don't have to worry about the declarativeness of node parentage,
             # because the entry point is always a single node definition.
             if parent = self.parentclass
                 scope = parent.safeevaluate :scope => scope
             end
-            Puppet.notice "%s => %s" % [scope.type, self.name]
 
             scope = scope.newscope(
                 :type => self.name,
@@ -32,7 +29,6 @@ class Puppet::Parser::AST
                 :source => self,
                 :namespace => "" # nodes are always in ""
             )
-            Puppet.info "%s => %s" % [scope.type, self.name]
 
             # Mark our node name as a class, too, but strip it of the domain
             # name.  Make the mark before we evaluate the code, so that it is
