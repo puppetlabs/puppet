@@ -151,8 +151,16 @@ class TestInterpreter < Test::Unit::TestCase
 
         interp = mkinterp :NodeSources => [:ldap, :code]
 
-        # Make sure we can find 'culain' in ldap
+        # Make sure we get nil and nil back when we search for something missing
         parent, classes = nil
+        assert_nothing_raised do
+            parent, classes = interp.ldapsearch("nosuchhost")
+        end
+
+        assert_nil(parent, "Got a parent for a non-existent host")
+        assert_nil(classes, "Got classes for a non-existent host")
+
+        # Make sure we can find 'culain' in ldap
         assert_nothing_raised do
             parent, classes = interp.ldapsearch("culain")
         end
@@ -172,6 +180,14 @@ class TestInterpreter < Test::Unit::TestCase
 
         # culain uses basenode, so create that
         basenode = interp.newnode([:basenode])[0]
+
+        # Make sure we get nothing for nonexistent hosts
+        none = nil
+        assert_nothing_raised do
+            none = interp.nodesearch_ldap("nosuchhost")
+        end
+
+        assert_nil(none, "Got a node for a non-existent host")
 
         # Make sure we can find 'culain' in ldap
         culain = nil

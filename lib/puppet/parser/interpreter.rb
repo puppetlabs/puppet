@@ -438,6 +438,10 @@ class Puppet::Parser::Interpreter
 
         classes.flatten!
 
+        if classes.empty?
+            classes = nil
+        end
+
         return parent, classes
     end
 
@@ -605,7 +609,7 @@ class Puppet::Parser::Interpreter
         parent, classes = ldapsearch(node)
         if parent or classes
             args = {}
-            args[:classes] = classes if classes and ! classes.empty?
+            args[:classes] = classes if classes
             args[:parentnode] = parent if parent
             return gennode(node, args)
         else
