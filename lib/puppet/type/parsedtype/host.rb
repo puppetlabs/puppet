@@ -7,7 +7,7 @@ module Puppet
     newtype(:host, Puppet::Type::ParsedType) do
 
         newstate(:ip) do
-            desc "The host's IP address."
+            desc "The host's IP address. (ipv4 or ipv6)"
         end
 
         newstate(:alias) do

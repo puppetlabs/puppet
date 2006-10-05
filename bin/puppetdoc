@@ -139,8 +139,10 @@ orderInfo: 6
 ---
 # Puppet Configuration Reference
 
+## Specifying Configuration Parameters
+
 Every Puppet executable (with the exception of ``puppetdoc``) accepts all of
-these arguments, but not all of the arguments make sense for every executable.
+the arguments below, but not all of the arguments make sense for every executable.
 Each argument has a section listed with it in parentheses; often, that section
 will map to an executable (e.g., ``puppetd``), in which case it probably only
 makes sense for that one executable.  If ``puppet`` is listed as the section,
@@ -207,7 +209,21 @@ and one `puppet` user) if it is invoked as `root` with the `--mkusers` argument:
 
     $ puppetd --mkusers
   
-Any default values are in ``block type`` at the end of the description.
+## Signals
+
+The `puppetd` and `puppetmasterd` executables catch some signals for special 
+handling.  Both daemons catch (`SIGHUP`), which forces the server to restart 
+tself.  Predictably, interrupt and terminate (`SIGINT` and `SIGHUP`) will shut 
+down the server, whether it be an instance of `puppetd` or `puppetmasterd`.
+
+Sending the `SIGUSR1` signal to an instance of `puppetd` will cause it to 
+immediately begin a new configuration transaction with the server.  This 
+signal has no effect on `puppetmasterd`.
+
+
+## Configuration Parameter Reference
+
+Below is a list of all documented parameters.  Any default values are in ``block type`` at the end of the description.
 
 }
 
