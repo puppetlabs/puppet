@@ -307,7 +307,7 @@ class Puppet::Parser::Interpreter
         end
 
         # By default, we only search for parsed nodes.
-        @nodesources = [:code]
+        @nodesources = []
 
         if Puppet[:ldapnodes]
             # Nodes in the file override nodes in ldap.
@@ -325,6 +325,10 @@ class Puppet::Parser::Interpreter
                     Puppet.warning "Node source '#{src}' not supported"
                 end
             end
+        end
+
+        unless @nodesources.include?(:code)
+            @nodesources << :code
         end
 
         @setup = false
@@ -584,15 +588,17 @@ class Puppet::Parser::Interpreter
                         nsource = obj.file || source
                         Puppet.info "Found %s in %s" % [node, nsource]
                         return obj
-                    else
-                        # Look for a default node.
-                        if defobj = self.send(method, "default")
-                            Puppet.info "Found default node for %s in %s" %
-                                [node, source]
-                            return defobj
-                        end
                     end
                 end
+            end
+        end
+
+        # If they made it this far, we haven't found anything, so look for a
+        # default node.
+        unless nodes.include?("default")
+            if defobj = self.nodesearch("default")
+                Puppet.notice "Using default node for %s" % [nodes[0]]
+                return defobj
             end
         end
 

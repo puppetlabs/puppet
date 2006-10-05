@@ -249,13 +249,41 @@ class TestInterpreter < Test::Unit::TestCase
         $stderr.puts "Not in madstop.com; skipping ldap tests"
     end
 
+    # Test that node info and default node info in different sources isn't
+    # bad.
+    def test_multiple_nodesources
+
+        # Create another node source
+        Puppet::Parser::Interpreter.send(:define_method, :nodesearch_multi) do |*names|
+            if names[0] == "default"
+                gennode("default", {:facts => {}})
+            else
+                nil
+            end
+        end
+
+        interp = mkinterp :NodeSources => [:multi, :code]
+
+        interp.newnode(["node"])
+
+        obj = nil
+        assert_nothing_raised do
+            obj = interp.nodesearch("node")
+        end
+        assert(obj, "Did not find node")
+        assert_equal("node", obj.fqname)
+    end
+
     # Make sure searchnode behaves as we expect.
     def test_nodesearch
+        # We use two sources here to catch a weird bug where the default
+        # node is used if the host isn't in the first source.
         interp = mkinterp
 
         # Make some nodes
         names = %w{node1 node2 node2.domain.com}
         interp.newnode names
+        interp.newnode %w{default}
 
         nodes = {}
         # Make sure we can find them all, using the direct method
@@ -269,6 +297,13 @@ class TestInterpreter < Test::Unit::TestCase
         names.each do |name|
             node = interp.nodesearch(name)
             assert(node, "Could not find #{name} via nodesearch")
+        end
+
+        # Make sure we find the default node when we search for nonexistent nodes
+        assert_nothing_raised do
+            default = interp.nodesearch("nosuchnode")
+            assert(default, "Did not find default node")
+            assert_equal("default", default.fqname)
         end
 
         # Now make sure the longest match always wins
