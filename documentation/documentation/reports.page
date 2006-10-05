@@ -33,20 +33,29 @@ With this setting enabled, the client will then send the data necessary for repo
 
 Next, the server must be configured to intepret the report results.  We'll tell it which reports to run by giving it a comma-separated list of reports we want to run against the client-submitted data.  Again, we can do this from the command line, like so:
 
-    $ puppetmasterd --reports tagmail, daily, security
+    $ puppetmasterd --reports tagmail,daily,security
 
+or you might enclose the list of reports in quotes:
+
+	$ puppetmasterd --reports "tagmail,daily,security"
+
+note that leaving spaces in between the report names will result in an error:
+
+    $ puppetmasterd --reports tagmail, daily, security	# Wrong.
+   
 or we can include these configuration parameters in the configuration file, typically `/etc/puppet/puppetmasterd.conf`.  For example,
 
     #
     #  /etc/puppetmasterd.conf
     #
     [puppetmasterd]
-        reports = tagmail, daily, security
+        reports = tagmail,daily,security
     
+Note that in the configuration file, the list of reports should be comma-separated without spaces and not enclosed in quotes (which is otherwise acceptable for a command-line invocation).
 
-You may also wish to specify the directory where reports will be stored with the  `[reportdirectory](configref.html#reportdirectory)` parameter.  Furthermore, transaction 
+You may also wish to specify the directory where reports will be stored with the  [reportdirectory](configref.html#reportdirectory) parameter.  Furthermore, transaction 
 reports can optionally be sent to a special report server (not necessarily the server or 
-client).  This server can be specified with the `[reportserver](configref.html#reportserver)`.
+client).  This server can be specified with the [reportserver](configref.html#reportserver).
 
 For more about configuring your server, take a look at the section on [Configuration Reference](configref.html).
 
@@ -83,11 +92,11 @@ The server through which to send email reports.
 
 ### rrdgraph
 
-The `rrdgraph` reports on the puppet system and its operations.  The reports are stored as HTML in the rrd directory, so puppet must have write access to this directory.
+The `rrdgraph` report reports on the puppet system and its operations.  The reports are stored as HTML in the rrd directory, so puppet must have write access to this directory.
 
 #### rrddir
 The directory into which puppet will put the web-ready report files.  Of course, this directory will need to be puppet-writable.
 
 
 
-* $Id:$
+* $Id$
