@@ -8,9 +8,13 @@ module Puppet
             :rrddir => {:default => "$vardir/rrd",
                 :owner => "$user",
                 :group => "$group",
-                :desc => "The directory where RRD database files are stored."
+                :desc => "The directory where RRD database files are stored.
+                    Directories for each reporting host will be created under
+                    this directory."
             },
-            :rrdgraph => [false, "Whether RRD information should be graphed."]
+            :rrdgraph => [false, "Whether RRD information should be graphed."],
+            :rrdinterval => ["$runinterval", "How often RRD should expect data.
+                This should match how often the hosts report back to the server."]
         )
 
         @@haverrd = false
@@ -26,6 +30,16 @@ module Puppet
 
         attr_accessor :type, :name, :value, :label
 
+        attr_writer :basedir
+
+        def basedir
+            if defined? @basedir
+                @basedir
+            else
+                Puppet[:rrddir]
+            end
+        end
+
         def create
             Puppet.config.use(:metrics)
 
@@ -33,7 +47,7 @@ module Puppet
             args = [
                 path,
                 "--start", Time.now.to_i - 5,
-                "--step", "300", # XXX Defaulting to every five minutes, but prob bad
+                "--step", Puppet[:rrdinterval]
             ]
 
             @values.each { |value|
@@ -46,29 +60,6 @@ module Puppet
             rescue => detail
                 raise "Could not create RRD file %s: %s" % [path,detail]
             end
-        end
-
-        def initialize(name,label = nil)
-            @name = name.to_s
-
-            if label
-                @label = label
-            else
-                @label = name.to_s.capitalize.gsub("_", " ")
-            end
-
-            @values = []
-        end
-
-        def newvalue(name,value,label = nil)
-            unless label
-                label = name.to_s.capitalize.gsub("_", " ")
-            end
-            @values.push [name,label,value]
-        end
-
-        def path
-            return File.join(Puppet[:rrddir],@name + ".rrd")
         end
 
         def graph(range = nil)
@@ -103,6 +94,29 @@ module Puppet
             rescue => detail
                 Puppet.err "Failed to graph %s: %s" % [self.name,detail]
             end
+        end
+
+        def initialize(name,label = nil)
+            @name = name.to_s
+
+            if label
+                @label = label
+            else
+                @label = name.to_s.capitalize.gsub("_", " ")
+            end
+
+            @values = []
+        end
+
+        def path
+            return File.join(self.basedir, @name + ".rrd")
+        end
+
+        def newvalue(name,value,label = nil)
+            unless label
+                label = name.to_s.capitalize.gsub("_", " ")
+            end
+            @values.push [name,label,value]
         end
 
         def store(time)

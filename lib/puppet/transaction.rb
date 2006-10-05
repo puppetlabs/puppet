@@ -37,7 +37,7 @@ class Transaction
 
             if skip
                 child.warning "Skipping because of failed dependencies"
-                @objectmetrics[:skipped] += 1
+                @resourcemetrics[:skipped] += 1
                 return []
             end
         end
@@ -63,7 +63,7 @@ class Transaction
         end
 
         if changes.length > 0
-            @objectmetrics[:out_of_sync] += 1
+            @resourcemetrics[:out_of_sync] += 1
         end
 
         childevents = changes.collect { |change|
@@ -92,7 +92,7 @@ class Transaction
             # if we ever get to that point
             unless events.nil? or (events.is_a?(Array) and events.empty?)
                 change.changed = true
-                @objectmetrics[:applied] += 1
+                @resourcemetrics[:applied] += 1
             end
 
             events
@@ -167,7 +167,7 @@ class Transaction
                 events = []
                 if (self.ignoretags or tags.nil? or child.tagged?(tags))
                     if self.ignoreschedules or child.scheduled?
-                        @objectmetrics[:scheduled] += 1
+                        @resourcemetrics[:scheduled] += 1
                         # Perform the actual changes
 
                         seconds = thinmark do
@@ -215,7 +215,7 @@ class Transaction
     def initialize(objects)
         @objects = objects
 
-        @objectmetrics = {
+        @resourcemetrics = {
             :total => @objects.length,
             :out_of_sync => 0,    # The number of objects that had changes
             :applied => 0,        # The number of objects fixed
@@ -252,7 +252,7 @@ class Transaction
 
     # Generate a transaction report.
     def report
-        @objectmetrics[:failed] = @failures.find_all do |name, num|
+        @resourcemetrics[:failed] = @failures.find_all do |name, num|
             num > 0
         end.length
 
@@ -273,7 +273,7 @@ class Transaction
         end
 
         # Add all of the metrics related to object count and status
-        @report.newmetric(:objects, @objectmetrics)
+        @report.newmetric(:resources, @resourcemetrics)
 
         # Record the relative time spent in each object.
         @report.newmetric(:time, @timemetrics)
@@ -360,12 +360,12 @@ class Transaction
                     # to them in any way.
                     begin
                         obj.send(callback)
-                        @objectmetrics[:restarted] += 1
+                        @resourcemetrics[:restarted] += 1
                     rescue => detail
                         obj.err "Failed to call %s on %s: %s" %
                             [callback, obj, detail]
 
-                        @objectmetrics[:failed_restarts] += 1
+                        @resourcemetrics[:failed_restarts] += 1
 
                         if Puppet[:debug]
                             puts detail.backtrace
