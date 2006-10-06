@@ -21,7 +21,6 @@ Tags can be used in configuration files to create a permanent context for the ho
     tags = global,westside,newnet
     
 ### Specifying Tags on the Command Line
-	(configref.html#tags)
 
 You can also specify tags on the command-line.  This may be more useful if your configuration cycle occurs in multiple phases.
 
@@ -53,7 +52,7 @@ any object.  In the example below, we're tagging this file object, "/etc/httpd",
 
 ### Automatic Tagging
 
-All language statements enclosed in a `node` `define` or `class` structure (read more about puppet control structures [here](structures.html)) will automatically be tagged with the name of that statement.  These automatically-applied tags will be inherited by any object enclosed in that class, regardless of the depth of enclosure.
+All language statements enclosed in a `node`, `define` or `class` structure (read more about puppet control structures [here](structures.html)) will automatically be tagged with the name of that statement.  These automatically-applied tags will be inherited by any object enclosed in that class, regardless of the depth of enclosure.
 
 Let's take a look at the configuration we looked at above, with a slight change:
 
