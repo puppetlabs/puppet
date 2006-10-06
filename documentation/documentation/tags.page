@@ -1,0 +1,75 @@
+---
+inMenu: true
+title: Gaining More Control with Tags
+orderInfo: 10
+---
+# Gaining More Control with Tags
+
+Puppet allows for arbitrary tags to be applied to any or all objects in its configuration.  You can use these tags to control your configuration roll-out with greater precision or greater complexity.
+
+## Invoking `puppet` in a Tag-Restricted Context
+
+One way to make use of tagging in `puppet` is to use tags at invocation-time to restrict which objects will be taken into consideration at run-time.  In addition to the section below, you might want to glance at the [tags](configref.html#tags) section of the [Configuration Reference](configref.html).
+
+### Specifying Tags in Configuration Files
+
+Tags can be used in configuration files to create a permanent context for the host's configuration.  For instance, the host below is configured to configure itself only against objects tagged with "global", "westside", or "subnet7".  Presumably, then, this network is categorized by physical geography ("westside") as well as by network topology ("subnet7").
+
+    #
+    # /etc/puppet/puppetd.conf
+    #
+    tags = global,westside,newnet
+    
+### Specifying Tags on the Command Line
+	(configref.html#tags)
+
+You can also specify tags on the command-line.  This may be more useful if your configuration cycle occurs in multiple phases.
+
+    $ puppetd --tags phase1,morning
+    
+The invocation above might be used to execute only a select phase of the configuration process, here, using both procedural time ("phase1") as well as real chronological time ("morning").
+
+
+## Specifying Tags for Different Configuration Scopes
+
+In order to make use of the tagging capability of Puppet, however, you must first set meaningful
+tags in your object definitions.
+
+### Specifying Tags Explicitly in Object Definitions
+
+The easiest way to mark an object with a tag is to do it explicitly with the "tag" [metaparameter](typedocs.html#metaparameters).  Since it is a metaparameter, it can be set on
+any object.  In the example below, we're tagging this file object, "/etc/httpd", with the tag
+"apache", since it is part of the Apache webserver configuration.
+
+	#
+    # /etc/puppet/manifests/site.pp
+    #
+	file { "/etc/httpd":
+		ensure => directory,
+		mode   => 0755,
+		owner  => $rootuser,
+		tag    => apache
+		}
+
+### Automatic Tagging
+
+All language statements enclosed in a `node` `define` or `class` structure (read more about puppet control structures [here](structures.html)) will automatically be tagged with the name of that statement.  These automatically-applied tags will be inherited by any object enclosed in that class, regardless of the depth of enclosure.
+
+Let's take a look at the configuration we looked at above, with a slight change:
+
+	    #
+	    # /etc/puppet/manifests/site.pp
+	    #
+		class apache {
+			file { "/etc/httpd":
+				ensure => directory,
+				mode   => 0755,
+				owner  => $rootuser,
+				tag    => apache 		# This line is now redundant
+				}
+		}
+
+Now, since the file object `"/etc/httpd"` is automatically tagged with "apache" because it is contained in the class named "apache", it is no longer necessary to explicitly tag it with the
+"tag" metaparam.
+
+* $Id:$
