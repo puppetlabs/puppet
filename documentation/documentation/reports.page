@@ -95,8 +95,13 @@ The server through which to send email reports.
 The `rrdgraph` report reports on the puppet system and its operations.  The reports are stored as HTML in the rrd directory, so puppet must have write access to this directory.
 
 #### rrddir
-The directory into which puppet will put the web-ready report files.  Of course, this directory will need to be puppet-writable.
+The directory into which puppet will put the web-ready report files.  Puppet will create one subdirectory for each host here and put host-specific data in each subdirectory.  This directory will need to be puppet-writable.
 
+#### rrdgraph
+Defines whether RRD information should be graphed (boolean).
+
+#### rrdinterval
+How often RRD should expect data.  This should match how often the hosts report back to the server.
 
 
 * $Id$
