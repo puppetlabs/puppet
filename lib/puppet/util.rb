@@ -414,7 +414,7 @@ module Util
 
     def symbolize(value)
         if value.respond_to? :intern
-            return value.intern
+            value.intern
         else
             value
         end

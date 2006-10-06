@@ -3,6 +3,8 @@ class Puppet::Parser::AST
     class VarDef < AST::Branch
         attr_accessor :name, :value
 
+        @settor = true
+
         # Look up our name and value, and store them appropriately.  The
         # lexer strips off the syntax stuff like '$'.
         def evaluate(hash)

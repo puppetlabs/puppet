@@ -3,6 +3,8 @@ class Puppet::Parser::AST
     class Function < AST::Branch
         attr_accessor :name, :arguments
 
+        @settor = true
+
         def evaluate(hash)
             # We don't need to evaluate the name, because it's plaintext
 

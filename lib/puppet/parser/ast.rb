@@ -43,6 +43,15 @@ class Puppet::Parser::AST
         return @@midline
     end
 
+    # Does this ast object set something?  If so, it gets evaluated first.
+    def self.settor?
+        if defined? @settor
+            @settor
+        else
+            false
+        end
+    end
+
     # Evaluate the current object.  Basically just iterates across all
     # of the contained children and evaluates them in turn, returning a
     # list of all of the collected values, rejecting nil values
@@ -72,8 +81,23 @@ class Puppet::Parser::AST
     # it can enable you to catch the error where it happens, rather than
     # much higher up the stack.
     def safeevaluate(*args)
-        exceptwrap do
-            self.evaluate(*args)
+        # We duplicate code here, rather than using exceptwrap, because this
+        # is called so many times during parsing.
+        #exceptwrap do
+        #    self.evaluate(*args)
+        #end
+        begin
+            return self.evaluate(*args)
+        rescue Puppet::Error => detail
+            raise adderrorcontext(detail)
+        rescue => detail
+            message = options[:message] || "%s failed with error %s: %s" %
+                    [self.class, detail.class, detail.to_s]
+
+            error = options[:type].new(message)
+            # We can't use self.fail here because it always expects strings,
+            # not exceptions.
+            raise adderrorcontext(error, detail)
         end
     end
 
@@ -96,8 +120,6 @@ class Puppet::Parser::AST
     end
     #---------------------------------------------------------------
     # Now autoload everything.
-    # XXX We can't do this, because it causes multiple loads of some
-    # things.
     @autoloader = Puppet::Autoload.new(self,
         "puppet/parser/ast"
     )

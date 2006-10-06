@@ -12,17 +12,12 @@ class Puppet::Parser::AST
         # Return the parameter and the value.
         def evaluate(hash)
             scope = hash[:scope]
-            param = @param
-            value = @value.safeevaluate(:scope => scope)
 
-            args = {:name => param, :value => value, :source => scope.source}
-            [:line, :file].each do |p|
-                if v = self.send(p)
-                    args[p] = v
-                end
-            end
-
-            return Puppet::Parser::Resource::Param.new(args)
+            return Puppet::Parser::Resource::Param.new(
+                :name => @param,
+                :value => @value.safeevaluate(:scope => scope),
+                :source => scope.source, :line => self.line, :file => self.file
+            )
         end
 
         def tree(indent = 0)

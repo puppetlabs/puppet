@@ -96,17 +96,29 @@ class Puppet::Parser::AST
             @parentclass = nil
             super
 
-            # Deal with metaparams in the argument list.
+            # Convert the arguments to a hash for ease of later use.
             if @arguments
-                @arguments.each do |arg, defvalue|
-                    next unless Puppet::Type.metaparamclass(arg)
-                    if defvalue
-                        warnonce "%s is a metaparam; this value will inherit to all contained elements" % arg
-                    else
-                        raise Puppet::ParseError,
-                            "%s is a metaparameter; please choose another name" %
-                            name
-                    end
+                unless @arguments.is_a? Array
+                    @arguments = [@arguments]
+                end
+                oldargs = @arguments
+                @arguments = {}
+                oldargs.each do |arg, val|
+                    @arguments[arg] = val
+                end
+            else
+                @arguments = {}
+            end
+
+            # Deal with metaparams in the argument list.
+            @arguments.each do |arg, defvalue|
+                next unless Puppet::Type.metaparamclass(arg)
+                if defvalue
+                    warnonce "%s is a metaparam; this value will inherit to all contained elements" % arg
+                else
+                    raise Puppet::ParseError,
+                        "%s is a metaparameter; please choose another name" %
+                        name
                 end
             end
         end
@@ -120,7 +132,7 @@ class Puppet::Parser::AST
         # Set our parent class, with a little check to avoid some potential
         # weirdness.
         def parentclass=(name)
-            if name == @type
+            if name == self.type
                 parsefail "Parent classes must have dissimilar names"
             end
 
@@ -171,35 +183,23 @@ class Puppet::Parser::AST
         # Check whether a given argument is valid.  Searches up through
         # any parent classes that might exist.
         def validattr?(param)
-            return true if Puppet::Type.metaparam?(param)
-
             param = param.to_s
-            found = false
-            unless @arguments.is_a? Array
-                @arguments = [@arguments]
-            end
 
-            found = @arguments.detect { |arg|
-                if arg.is_a? Array
-                    arg[0] == param
-                else
-                    arg == param
-                end
-            }
-
-            if found
+            if @arguments.include?(param)
                 # It's a valid arg for us
                 return true
-            elsif defined? @parentclass and @parentclass
-                # Else, check any existing parent
-                if parent = @scope.lookuptype(@parentclass) and parent != []
-                    return parent.validarg?(param)
-                elsif builtin = Puppet::Type.type(@parentclass)
-                    return builtin.validattr?(param)
-                else
-                    raise Puppet::Error, "Could not find parent class %s" %
-                        @parentclass
-                end
+#            elsif defined? @parentclass and @parentclass
+#                # Else, check any existing parent
+#                if parent = @scope.lookuptype(@parentclass) and parent != []
+#                    return parent.validarg?(param)
+#                elsif builtin = Puppet::Type.type(@parentclass)
+#                    return builtin.validattr?(param)
+#                else
+#                    raise Puppet::Error, "Could not find parent class %s" %
+#                        @parentclass
+#                end
+            elsif Puppet::Type.metaparam?(param)
+                return true
             else
                 # Or just return false
                 return false

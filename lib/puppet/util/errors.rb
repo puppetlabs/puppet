@@ -22,7 +22,7 @@ module Puppet::Util::Errors
     def exceptwrap(options = {})
         options[:type] ||= Puppet::DevError
         begin
-            retval = yield
+            return yield
         rescue Puppet::Error => detail
             raise adderrorcontext(detail)
         rescue => detail

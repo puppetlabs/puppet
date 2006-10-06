@@ -135,12 +135,13 @@ class Type < Puppet::Element
 
     # Do an on-demand plugin load
     def self.loadplugin(name)
-        unless Puppet[:pluginpath].split(":").include?(Puppet[:plugindest])
+        paths = Puppet[:pluginpath].split(":")
+        unless paths.include?(Puppet[:plugindest])
             Puppet.notice "Adding plugin destination %s to plugin search path" %
                 Puppet[:plugindest]
             Puppet[:pluginpath] += ":" + Puppet[:plugindest]
         end
-        Puppet[:pluginpath].split(":").each do |dir|
+        paths.each do |dir|
             file = ::File.join(dir, name.to_s + ".rb")
             if FileTest.exists?(file)
                 begin
@@ -213,11 +214,11 @@ class Type < Puppet::Element
     def self.type(name)
         @types ||= {}
 
-        if name.is_a?(String)
-            name = name.intern
-        end
+        name = symbolize(name)
 
-        unless @types.include? name
+        if t = @types[name]
+            return t
+        else
             if typeloader.load(name)
                 unless @types.include? name
                     Puppet.warning "Loaded puppet/type/#{name} but no class was created"
@@ -226,9 +227,9 @@ class Type < Puppet::Element
                 # If we can't load it from there, try loading it as a plugin.
                 loadplugin(name)
             end
-        end
 
-        @types[name]
+            return @types[name]
+        end
     end
 
     def self.typeloader
@@ -857,11 +858,17 @@ class Type < Puppet::Element
 
     def self.validattr?(name)
         name = symbolize(name)
-        if self.validstate?(name) or self.validparameter?(name) or self.metaparam?(name)
-            return true
-        else
-            return false
+        @validattrs ||= {}
+
+        unless @validattrs.include?(name)
+            if self.validstate?(name) or self.validparameter?(name) or self.metaparam?(name)
+                @validattrs[name] = true
+            else
+                @validattrs[name] = false
+            end
         end
+
+        @validattrs[name]
     end
 
     # abstract accessing parameters and states, and normalize

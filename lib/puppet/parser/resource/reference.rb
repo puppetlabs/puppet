@@ -49,7 +49,10 @@ class Puppet::Parser::Resource::Reference
     end
 
     def to_s
-        "%s[%s]" % [type, title]
+        unless defined? @namestring
+            @namestring = "%s[%s]" % [type, title]
+        end
+        @namestring
     end
 
     def typeclass

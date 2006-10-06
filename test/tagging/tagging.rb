@@ -58,7 +58,7 @@ class TestTagging < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            assert_equal(%w{solaris}, resource.tags,
+            assert_equal(%w{solaris file}, resource.tags,
                 "Incorrect tags")
         }
     end

@@ -17,6 +17,15 @@ module PuppetTest::ResourceTesting
         return interp, scope, source
     end
 
+    def mkevaltest(interp = nil)
+        interp ||= mkinterp
+        @interp.newdefine("evaltest",
+            :arguments => [%w{one}, ["two", stringobj("755")]],
+            :code => resourcedef("file", "/tmp",
+                "owner" => varref("one"), "mode" => varref("two"))
+        )
+    end
+
     def mkresource(args = {})
 
         if args[:scope] and ! args[:source]

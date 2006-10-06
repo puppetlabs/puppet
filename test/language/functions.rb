@@ -263,6 +263,7 @@ class TestLangFunctions < Test::Unit::TestCase
             end
 
             scope.setvar("yayness", string)
+            assert_equal(string, scope.lookupvar("yayness", false))
 
             assert_nothing_raised("An empty string was not a valid variable value") do
                 ast.evaluate(:scope => scope)

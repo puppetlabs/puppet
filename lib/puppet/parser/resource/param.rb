@@ -1,13 +1,14 @@
 # The parameters we stick in Resources.
 class Puppet::Parser::Resource::Param
     attr_accessor :name, :value, :source, :line, :file
+    include Puppet::Util
     include Puppet::Util::Errors
     include Puppet::Util::MethodHelper
 
     def initialize(hash)
         set_options(hash)
         requiredopts(:name, :value, :source)
-        @name = @name.intern if @name.is_a?(String)
+        @name = symbolize(@name)
     end
 
     def inspect

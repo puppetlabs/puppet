@@ -6,6 +6,7 @@ module Puppet
 # The class for handling configuration files.
 class Config
     include Enumerable
+    include Puppet::Util
 
     @@sync = Sync.new
 
@@ -17,14 +18,20 @@ class Config
 
         # Yay, recursion.
         self.reparse() unless param == :filetimeout
-        if @config.include?(param)
-            if @config[param]
-                val = @config[param].value
-                return val
+
+        # Cache the returned values; this method was taking close to
+        # 10% of the compile time.
+        unless @returned[param]
+            if @config.include?(param)
+                if @config[param]
+                    @returned[param] = @config[param].value
+                end
+            else
+                raise ArgumentError, "Undefined configuration parameter '%s'" % param
             end
-        else
-            raise ArgumentError, "Undefined configuration parameter '%s'" % param
         end
+
+        return @returned[param]
     end
 
     # Set a config value.  This doesn't set the defaults, it sets the value itself.
@@ -39,6 +46,9 @@ class Config
                 @order << param
             end
             @config[param].value = value
+            if @returned.include?(param)
+                @returned.delete(param)
+            end
         end
 
         return value
@@ -109,6 +119,7 @@ class Config
                 obj.clear
             end
         }
+        @returned.clear
 
         # Don't clear the 'used' in this case, since it's a config file reparse,
         # and we want to retain this info.
@@ -119,6 +130,7 @@ class Config
 
     # This is mostly just used for testing.
     def clearused
+        @returned.clear
         @used = []
     end
 
@@ -190,6 +202,7 @@ class Config
         @config = {}
 
         @created = []
+        @returned = {}
     end
 
     # Make a directory with the appropriate user, group, and mode
@@ -483,15 +496,6 @@ class Config
         end
     end
 
-    def symbolize(param)
-        case param
-        when String: return param.intern
-        when Symbol: return param
-        else
-            raise ArgumentError, "Invalid param type %s" % param.class
-        end
-    end
-
     # Convert our list of objects into a component that can be applied.
     def to_component
         transport = self.to_transportable
@@ -695,6 +699,7 @@ Generated on #{Time.now}.
             @value = nil
         end
 
+        # Do variable interpolation on the value.
         def convert(value)
             return value unless value
             return value unless value.is_a? String

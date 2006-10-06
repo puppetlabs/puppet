@@ -25,10 +25,6 @@ class Puppet::Parser::AST
                 # This is such a stupid hack.  I've no real idea how to make a
                 # "real" declarative language, so I hack it so it looks like
                 # one, yay.
-                setlist = [
-                    AST::VarDef, AST::ResourceDefaults, AST::Function
-                ]
-
                 settors = []
                 others = []
 
@@ -40,34 +36,30 @@ class Puppet::Parser::AST
                 @children.each { |child|
                     if child.instance_of?(AST::ASTArray)
                         child.each do |ac|
-                            items << ac
+                            if ac.class.settor?
+                                settors << ac
+                            else
+                                others << ac
+                            end
                         end
                     else
-                        items << child
-                    end
-                }
-
-                # Now sort them all according to the type of action
-                items.each { |child|
-                    if setlist.include?(child.class)
-                        settors << child
-                    else
-                        others << child
+                        if child.class.settor?
+                            settors << child
+                        else
+                            others << child
+                        end
                     end
                 }
                 rets = [settors, others].flatten.collect { |child|
                     child.safeevaluate(:scope => scope)
                 }
+                return rets.reject { |o| o.nil? }
             else
                 # If we're not declarative, just do everything in order.
-                rets = @children.collect { |item|
+                return @children.collect { |item|
                     item.safeevaluate(:scope => scope)
-                }
+                }.reject { |o| o.nil? }
             end
-
-            rets = rets.reject { |obj| obj.nil? }
-
-            return rets
         end
 
         def push(*ary)

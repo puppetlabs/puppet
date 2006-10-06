@@ -23,7 +23,8 @@ class TestResource < Test::Unit::TestCase
             :source => @source, :scope => @scope}
         # Check our arg requirements
         args.each do |name, value|
-            try = args.dup.delete(name)
+            try = args.dup
+            try.delete(name)
             assert_raise(Puppet::DevError) do
                 Parser::Resource.new(try)
             end
@@ -291,10 +292,14 @@ class TestResource < Test::Unit::TestCase
     end
 
     def test_addmetaparams
+        mkevaltest @interp
         res = Parser::Resource.new :type => "evaltest", :title => "yay",
             :source => @source, :scope => @scope
 
         assert_nil(res[:schedule], "Got schedule already")
+        assert_nothing_raised do
+            res.addmetaparams
+        end
         @scope.setvar("schedule", "daily")
 
         assert_nothing_raised do

@@ -200,7 +200,7 @@ class Puppet::Client::MasterClient < Puppet::Client
                 retry
             rescue => detail
                 raise Puppet::Error.new("Cannot remove %s: %s" %
-                    [Puppet[statefile], detail])
+                    [Puppet[:statefile], detail])
             end
         end
     end

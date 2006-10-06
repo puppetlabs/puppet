@@ -24,7 +24,7 @@ class Puppet::Parser::Scope
     include Puppet::Util::Errors
     attr_accessor :parent, :level, :interp, :source, :host
     attr_accessor :name, :type, :topscope, :base, :keyword, :namespace
-    attr_accessor :top, :context, :translated, :exported
+    attr_accessor :top, :translated, :exported
 
     # Whether we behave declaratively.  Note that it's a class variable,
     # so all scopes behave the same.
@@ -83,13 +83,11 @@ class Puppet::Parser::Scope
 
     # Verify that the given object isn't defined elsewhere.
     def chkobjectclosure(obj)
-        if @definedtable.include?(obj.ref)
+        if exobj = @definedtable[obj.ref]
             typeklass = Puppet::Type.type(obj.type)
             if typeklass and ! typeklass.isomorphic?
                 Puppet.info "Allowing duplicate %s" % type
             else
-                exobj = @definedtable[obj.ref]
-
                 # Either it's a defined type, which are never
                 # isomorphic, or it's a non-isomorphic type.
                 msg = "Duplicate definition: %s is already defined" % obj.ref
@@ -238,8 +236,7 @@ class Puppet::Parser::Scope
             @interp = @parent.interp
             @source = hash[:source] || @parent.source
             @topscope = @parent.topscope
-            @context = @parent.context
-            @inside = @parent.inside
+            #@inside = @parent.inside # Used for definition inheritance
             @host = @parent.host
             @type ||= @parent.type
         end
@@ -247,20 +244,14 @@ class Puppet::Parser::Scope
         # Our child scopes and objects
         @children = []
 
-        # The symbol table for this scope
-        @symtable = Hash.new(nil)
+        # The symbol table for this scope.  This is where we store variables.
+        @symtable = {}
 
         # All of the defaults set for types.  It's a hash of hashes,
         # with the first key being the type, then the second key being
         # the parameter.
         @defaultstable = Hash.new { |dhash,type|
-            dhash[type] = Hash.new(nil)
-        }
-
-        # Map the names to the tables.
-        @map = {
-            "variable" => @symtable,
-            "defaults" => @defaultstable
+            dhash[type] = {}
         }
 
         unless @interp
@@ -288,7 +279,7 @@ class Puppet::Parser::Scope
 
         # The table for storing class singletons.  This will only actually
         # be used by top scopes and node scopes.
-        @classtable = Hash.new(nil)
+        @classtable = {}
 
         self.class.declarative = declarative
 
@@ -315,7 +306,6 @@ class Puppet::Parser::Scope
         # but they each refer back to the scope that created them.
         @collecttable = []
 
-        @context = nil
         @topscope = self
         @type = "puppet"
         @name = "top"
@@ -369,15 +359,15 @@ class Puppet::Parser::Scope
     # Look up a variable.  The simplest value search we do.  Default to returning
     # an empty string for missing values, but support returning a constant.
     def lookupvar(name, usestring = true)
-        value = lookup("variable", name)
-        if value == :undefined
-            if usestring
-                return ""
-            else
-                return :undefined
-            end
+        # We can't use "if @symtable[name]" here because the value might be false
+        if @symtable.include?(name)
+            return @symtable[name]
+        elsif self.parent 
+            return @parent.lookupvar(name, usestring)
+        elsif usestring
+            return ""
         else
-            return value
+            return :undefined
         end
     end
 
@@ -395,7 +385,8 @@ class Puppet::Parser::Scope
 
     # Return the list of remaining overrides.
     def overrides
-        @overridetable.collect { |name, overs| overs }.flatten
+        #@overridetable.collect { |name, overs| overs }.flatten
+        @overridetable.values.flatten
     end
 
     def resources
@@ -492,29 +483,36 @@ class Puppet::Parser::Scope
     def setvar(name,value)
         #Puppet.debug "Setting %s to '%s' at level %s" %
         #    [name.inspect,value,self.level]
-        if @@declarative and @symtable.include?(name)
-            raise Puppet::ParseError, "Cannot reassign variable %s" % name
-        else
-            if @symtable.include?(name)
+        if @symtable.include?(name)
+            if @@declarative
+                raise Puppet::ParseError, "Cannot reassign variable %s" % name
+            else
                 Puppet.warning "Reassigning %s to %s" % [name,value]
             end
-            @symtable[name] = value
         end
+        @symtable[name] = value
     end
 
     # Return an interpolated string.
     def strinterp(string)
-        newstring = string.gsub(/\\\$|\$\{(\w+)\}|\$(\w+)/) do |value|
-            # If it matches the backslash, then just retun the dollar sign.
-            if value == '\\$'
-                '$'
-            else # look the variable up
-                var = $1 || $2
-                lookupvar($1 || $2)
+        # Most strings won't have variables in them.
+        if string =~ /\$/
+            string = string.gsub(/\\\$|\$\{(\w+)\}|\$(\w+)/) do |value|
+                # If it matches the backslash, then just retun the dollar sign.
+                if value == '\\$'
+                    '$'
+                else # look the variable up
+                    lookupvar($1 || $2)
+                end
             end
         end
 
-        return newstring.gsub(/\\t/, "\t").gsub(/\\n/, "\n").gsub(/\\s/, "\s")
+        # And most won't have whitespace replacements.
+        if string =~ /\\/
+            return string.gsub(/\\t/, "\t").gsub(/\\n/, "\n").gsub(/\\s/, "\s")
+        else
+            return string
+        end
     end
 
     # Add a tag to our current list.  These tags will be added to all
@@ -573,20 +571,19 @@ class Puppet::Parser::Scope
     def translate
         ret = @children.collect do |child|
             case child
-            when self.class
-                child.translate
             when Puppet::Parser::Resource
                 child.to_trans
+            when self.class
+                child.translate
             else
                 devfail "Got %s for translation" % child.class
             end
         end.reject { |o| o.nil? }
         bucket = Puppet::TransBucket.new ret
-        unless self.type
-            devfail "A Scope with no type"
-        end
-        if @type == ""
-            bucket.type = "main"
+
+        case self.type
+        when "": bucket.type = "main"
+        when nil: devfail "A Scope with no type"
         else
             bucket.type = @type
         end
@@ -613,34 +610,6 @@ class Puppet::Parser::Scope
             return nil
         else
             return ary
-        end
-    end
-
-    protected
-
-    # This method abstracts recursive searching.  It accepts the type
-    # of search being done and then either a literal key to search for or
-    # a Proc instance to do the searching.
-    def lookup(type,sub, usecontext = false)
-        table = @map[type]
-        if table.nil?
-            self.fail "Could not retrieve %s table at level %s" %
-                    [type,self.level]
-        end
-
-        if sub.is_a?(Proc) and obj = sub.call(table)
-            return obj
-        elsif table.include?(sub)
-            return table[sub]
-        elsif ! @parent.nil?
-            # Context is used for retricting overrides.
-            if usecontext and self.context != @parent.context
-                return :undefined
-            else
-                return @parent.lookup(type,sub, usecontext)
-            end
-        else
-            return :undefined
         end
     end
 end

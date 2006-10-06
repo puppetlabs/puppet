@@ -87,9 +87,16 @@ class TestReports < Test::Unit::TestCase
             server = Puppet::Server::Report.new()
         }
 
+        report = trans.report
         assert_nothing_raised {
-            server.report_rrdgraph(trans.report)
+            server.report_rrdgraph(report)
         }
+
+        hostdir = File.join(Puppet[:rrddir], report.host)
+
+        assert(FileTest.directory?(hostdir), "Host rrd dir did not get created")
+        index = File.join(hostdir, "index.html")
+        assert(FileTest.exists?(index), "index file was not created")
     end
     else
     $stderr.puts "Install RRD for metric reporting tests"

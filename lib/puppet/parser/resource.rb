@@ -85,25 +85,42 @@ class Puppet::Parser::Resource
 
     # Retrieve the associated definition and evaluate it.
     def evaluate
-        if builtin?
+        if klass = @ref.definedtype
+            finish()
+            scope.deleteresource(self)
+            return klass.evaluate(:scope => scope,
+                                  :type => self.type,
+                                  :name => self.title,
+                                  :arguments => self.to_hash,
+                                  :scope => self.scope,
+                                  :exported => self.exported
+            )
+        elsif builtin?
             devfail "Cannot evaluate a builtin type"
-        end
-
-        unless klass = scope.finddefine(self.type)
+        else
             self.fail "Cannot find definition %s" % self.type
         end
 
-        finish()
 
-        scope.deleteresource(self)
-
-        return klass.evaluate(:scope => scope,
-                              :type => self.type,
-                              :name => self.title,
-                              :arguments => self.to_hash,
-                              :scope => self.scope,
-                              :exported => self.exported
-        )
+#        if builtin?
+#            devfail "Cannot evaluate a builtin type"
+#        end
+#
+#        unless klass = scope.finddefine(self.type)
+#            self.fail "Cannot find definition %s" % self.type
+#        end
+#
+#        finish()
+#
+#        scope.deleteresource(self)
+#
+#        return klass.evaluate(:scope => scope,
+#                              :type => self.type,
+#                              :name => self.title,
+#                              :arguments => self.to_hash,
+#                              :scope => self.scope,
+#                              :exported => self.exported
+#        )
     ensure
         @evaluated = true
     end
@@ -138,8 +155,7 @@ class Puppet::Parser::Resource
 
         # Collect the options necessary to make the reference.
         refopts = [:type, :title].inject({}) do |hash, param|
-            hash[param] = options[param] ||
-                devfail("%s must be passed to Resources" % param)
+            hash[param] = options[param]
             options.delete(param)
             hash
         end
@@ -175,22 +191,25 @@ class Puppet::Parser::Resource
         end
     end
 
+    # This *significantly* reduces the number of calls to Puppet.[].
+    def paramcheck?
+        unless defined? @@paramcheck
+            @@paramcheck = Puppet[:paramcheck]
+        end
+        @@paramcheck
+    end
+
     # Verify that all passed parameters are valid.  This throws an error if there's
     # a problem, so we don't have to worry about the return value.
     def paramcheck(param)
-        # This defaults to true
-        unless Puppet[:paramcheck]
-            return
-        end
-
-        return if param == "name" or param == "title" # always allow these
-
-        # FIXME We might need to do more here eventually.  Metaparams
-        # behave strangely on containers.
-        return if Puppet::Type.metaparam?(param)
-
-        # Now make sure it's a valid argument to our class.
-        unless @ref.typeclass.validattr?(param)
+        # Now make sure it's a valid argument to our class.  These checks
+        # are organized in order of commonhood -- most types, it's a valid argument
+        # and paramcheck is enabled.
+        if @ref.typeclass.validattr?(param)
+            true
+        elsif (param == "name" or param == "title") # always allow these
+            true
+        elsif paramcheck?
             self.fail Puppet::ParseError, "Invalid parameter '%s' for type '%s'" %
                     [param.inspect, @ref.type]
         end

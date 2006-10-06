@@ -4,7 +4,6 @@ module Puppet # :nodoc:
     # errors, but...
     class Error < RuntimeError
         attr_accessor :line, :file
-        attr_writer :backtrace
 
         def backtrace
             if defined? @backtrace
@@ -39,13 +38,13 @@ module Puppet # :nodoc:
 
     # An error class for when I don't know what happened.  Automatically
     # prints a stack trace when in debug mode.
-    class DevError < Error
+    class DevError < Puppet::Error
         # XXX This is probably the wrong way to do this, but...
         def set_backtrace(trace)
             if Puppet[:trace]
                 puts trace
             end
-            super(trace)
+            super
         end
     end
 end

@@ -10,14 +10,14 @@ module Puppet::Util::MethodHelper
 
     # Iterate over a hash, treating each member as an attribute.
     def set_options(options)
-        options.dup.each do |param,value|
+        options.each do |param,value|
             method = param.to_s + "="
-            unless self.respond_to?(method)
+            begin
+                self.send(method, value)
+            rescue NoMethodError
                 self.fail "Invalid parameter %s to object class %s" %
                         [param,self.class.to_s]
             end
-
-            self.send(method,value)
         end
     end
 
