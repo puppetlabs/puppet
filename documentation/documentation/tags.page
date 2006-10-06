@@ -11,6 +11,20 @@ Puppet allows for arbitrary tags to be applied to any or all objects in its conf
 
 One way to make use of tagging in `puppet` is to use tags at invocation-time to restrict which objects will be taken into consideration at run-time.  In addition to the section below, you might want to glance at the [tags](configref.html#tags) section of the [Configuration Reference](configref.html).
 
+### Testing Configurations with Tags
+
+You can also specify tags on the command-line.  This can be very useful for testing just a portion of the configuration, for instance, when you are first developing your site manifests.
+
+    $ puppetd --tags solaris
+
+In the example above, we might want to only test the solaris hosts (perhaps because the HP-UX and Linux host configuration isn't stable yet).
+
+Specifying tags on the command-line might also be useful if your configuration cycle occurs in multiple phases, e.g.:
+
+    $ puppetd --tags phase1,morning
+    
+The invocation above might be used to execute only a select phase of the configuration process, here, using both procedural time ("phase1") as well as real chronological time ("morning").
+
 ### Specifying Tags in Configuration Files
 
 Tags can be used in configuration files to create a permanent context for the host's configuration.  For instance, the host below is configured to configure itself only against objects tagged with "global", "westside", or "subnet7".  Presumably, then, this network is categorized by physical geography ("westside") as well as by network topology ("subnet7").
@@ -19,14 +33,7 @@ Tags can be used in configuration files to create a permanent context for the ho
     # /etc/puppet/puppetd.conf
     #
     tags = global,westside,newnet
-    
-### Specifying Tags on the Command Line
 
-You can also specify tags on the command-line.  This may be more useful if your configuration cycle occurs in multiple phases.
-
-    $ puppetd --tags phase1,morning
-    
-The invocation above might be used to execute only a select phase of the configuration process, here, using both procedural time ("phase1") as well as real chronological time ("morning").
 
 
 ## Specifying Tags for Different Configuration Scopes
@@ -71,4 +78,4 @@ Let's take a look at the configuration we looked at above, with a slight change:
 Now, since the file object `"/etc/httpd"` is automatically tagged with "apache" because it is contained in the class named "apache", it is no longer necessary to explicitly tag it with the
 "tag" metaparam.
 
-* $Id:$
+* $Id$
