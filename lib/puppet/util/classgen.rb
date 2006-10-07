@@ -154,6 +154,15 @@ module Puppet::Util::ClassGen
             end
         end
 
+        [:include, :extend].each do |method|
+            if set = options[method]
+                set = [set] unless set.is_a?(Array)
+                set.each do |mod|
+                    klass.send(method, mod)
+                end
+            end
+        end
+
         if klass.respond_to? :preinit
             klass.preinit
         end

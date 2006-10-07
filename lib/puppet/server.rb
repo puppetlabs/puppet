@@ -143,6 +143,10 @@ module Puppet
             # the base class for the different handlers
             class Handler
                 attr_accessor :server
+                class << self
+                    include Puppet::Util
+                end
+
                 @subclasses = []
 
                 def self.each

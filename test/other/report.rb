@@ -1,16 +1,15 @@
 require 'puppet'
 require 'puppet/transaction/report'
 require 'puppettest'
+require 'puppettest/reporttesting'
 
 class TestReports < Test::Unit::TestCase
 	include PuppetTest
+	include PuppetTest::Reporttesting
 
     # Make sure we can use reports as log destinations.
     def test_reports_as_log_destinations
-        report = nil
-        assert_nothing_raised {
-            report = Puppet::Transaction::Report.new
-        }
+        report = fakereport
 
         assert_nothing_raised {
             Puppet::Log.newdestination(report)
@@ -53,6 +52,33 @@ class TestReports < Test::Unit::TestCase
         }
     end
 
+    def test_store_report
+        # Create a bunch of log messages in an array.
+        report = Puppet::Transaction::Report.new
+
+        10.times { |i|
+            log = Puppet.info("Report test message %s" % i)
+            log.tags = %w{a list of tags}
+            log.tags << "tag%s" % i
+
+            report.newlog(log)
+        }
+
+        assert_nothing_raised do
+            report.extend(Puppet::Server::Report.report(:store))
+        end
+
+        yaml = YAML.dump(report)
+
+        file = nil
+        assert_nothing_raised {
+            file = report.process(yaml)
+        }
+
+        assert(FileTest.exists?(file), "report file did not get created")
+        assert_equal(yaml, File.read(file), "File did not get written")
+    end
+
     if Puppet::Metric.haverrd?
     def test_rrdgraph_report
         Puppet.config.use(:metrics)
@@ -81,15 +107,14 @@ class TestReports < Test::Unit::TestCase
             trans.evaluate
         }
 
-        method = Puppet::Server::Report.report("rrdgraph")
-        server = nil
-        assert_nothing_raised {
-            server = Puppet::Server::Report.new()
-        }
-
         report = trans.report
+
+        assert_nothing_raised do
+            report.extend(Puppet::Server::Report.report(:rrdgraph))
+        end
+
         assert_nothing_raised {
-            server.report_rrdgraph(report)
+            report.process
         }
 
         hostdir = File.join(Puppet[:rrddir], report.host)

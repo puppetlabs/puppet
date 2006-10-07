@@ -115,6 +115,30 @@ class TestPuppetUtilClassGen < Test::Unit::TestCase
         assert_nil(klass.three, "Class was initialized incorrectly")
     end
 
+    def test_initclass_include_and_extend
+        sub, klass = testclasses("attributes")
+
+        incl = Module.new do
+            attr_accessor :included
+        end
+        self.class.const_set("Incl", incl)
+
+        ext = Module.new do
+            attr_accessor :extended
+        end
+        self.class.const_set("Ext", ext)
+
+        assert(! klass.respond_to?(:extended), "Class already responds to extended")
+        assert(! klass.new.respond_to?(:included), "Class already responds to included")
+
+        assert_nothing_raised do sub.send(:initclass, klass,
+            :include => incl, :extend => ext)
+        end
+
+        assert(klass.respond_to?(:extended), "Class did not get extended")
+        assert(klass.new.respond_to?(:included), "Class did not include")
+    end
+
     def test_genclass
         hash = {}
         array = []
