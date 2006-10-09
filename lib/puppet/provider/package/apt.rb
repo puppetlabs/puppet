@@ -41,8 +41,6 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
         end
     end
 
-    attr_accessor :keepconfig
-
     # Install a package using 'apt-get'.  This function needs to support
     # installing a specific version.
     def install
@@ -63,12 +61,14 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
         end
 
         keep = ""
-        if defined? @keepconfig
-            case @keepconfig
-            when true
+        if config = @model[:configfiles]
+            case config
+            when :keep
                 keep = "-o 'DPkg::Options::=--force-confold'"
-            else
+            when :replace
                 keep = "-o 'DPkg::Options::=--force-confnew'"
+            else
+                raise Puppet::Error, "Invalid 'configfiles' value %s" % config
             end
         end
         

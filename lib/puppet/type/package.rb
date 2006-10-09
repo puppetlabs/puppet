@@ -244,31 +244,11 @@ module Puppet
 
         newparam(:configfiles) do
             desc "Whether configfiles should be kept or replaced.  Most packages
-                types do not support this parameter, but those that do will default
-                to keeping their configuration files."
+                types do not support this parameter."
 
-            unless provider.respond_to?(:keepconfig=)
-                self.fail(
-                    "Package provider %s does not support keeping the configuration files" %
-                    @parent[:provider]
-                )
-            end
+            defaultto :keep
 
-            # There is only a default for those that support this parameter.
-            defaultto do
-                if provider.respond_to?(:keepconfig)
-                    :keep
-                else
-                    nil
-                end
-            end
-
-            newvalue(:keep) do
-                provider.keepconfig = true
-            end
-            newvalue(:replace) do
-                provider.keepconfig = false
-            end
+            newvalues(:keep, :replace)
         end
 
         newparam(:category) do
