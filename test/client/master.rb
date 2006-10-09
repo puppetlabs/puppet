@@ -190,6 +190,7 @@ end
     def test_getfacts
         Puppet[:factsource] = tempfile()
         Dir.mkdir(Puppet[:factsource])
+        hostname = Facter.value(:hostname)
 
         myfact = File.join(Puppet[:factsource], "myfact.rb")
         File.open(myfact, "w") do |f|
@@ -207,7 +208,9 @@ end
 
         assert(File.exists?(destfile), "Did not get fact")
 
-        assert_equal("yayness", Facter["myfact"].value,
+        assert_equal(hostname, Facter.value(:hostname),
+            "Lost value to hostname")
+        assert_equal("yayness", Facter.value(:myfact),
             "Did not get correct fact value")
 
         # Now modify the file and make sure the type is replaced
@@ -222,8 +225,20 @@ end
             Puppet::Client::MasterClient.getfacts
         }
 
-        assert_equal("funtest", Facter["myfact"].value,
+        assert_equal("funtest", Facter.value(:myfact),
             "Did not reload fact")
+        assert_equal(hostname, Facter.value(:hostname),
+            "Lost value to hostname")
+
+        # Now run it again and make sure the fact still loads
+        assert_nothing_raised {
+            Puppet::Client::MasterClient.getfacts
+        }
+
+        assert_equal("funtest", Facter.value(:myfact),
+            "Did not reload fact")
+        assert_equal(hostname, Facter.value(:hostname),
+            "Lost value to hostname")
     end
 
     # Make sure we load all facts on startup.

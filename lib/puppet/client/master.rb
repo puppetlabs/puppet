@@ -539,9 +539,10 @@ class Puppet::Client::MasterClient < Puppet::Client
 
     # Retrieve facts from the central server.
     def self.getfacts
-        # First clear all existing definitions.
+        # Clear all existing definitions.
         Facter.clear
 
+        # Download the new facts
         path = Puppet[:factpath].split(":")
         files = []
         download(:dest => Puppet[:factdest], :source => Puppet[:factsource],
@@ -553,18 +554,8 @@ class Puppet::Client::MasterClient < Puppet::Client
 
         end
 
-        Facter.clear
-        files.each do |file|
-            begin
-                Puppet.info "Loading fact %s" %
-                    File.basename(File.basename(file)).sub(".rb",'')
-                load file
-            rescue => detail
-                Puppet.warning "Could not reload fact %s: %s" %
-                    [file, detail]
-            end
-        end
     ensure
+        # Reload everything.
         if Facter.respond_to? :loadfacts
             Facter.loadfacts
         elsif Facter.respond_to? :load
@@ -573,6 +564,10 @@ class Puppet::Client::MasterClient < Puppet::Client
             raise Puppet::Error,
                 "You must upgrade your version of Facter to use centralized facts"
         end
+
+        # This loads all existing facts and any new ones.  We have to remove and
+        # reload because there's no way to unload specific facts.
+        loadfacts()
     end
 
     # Retrieve the plugins from the central server.  We only have to load the

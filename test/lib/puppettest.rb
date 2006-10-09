@@ -81,6 +81,8 @@ module PuppetTest
             $user = nonrootuser().uid.to_s
             $group = nonrootgroup().gid.to_s
         end
+
+        Puppet.config.clear
         Puppet[:user] = $user
         Puppet[:group] = $group
 
