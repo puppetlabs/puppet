@@ -41,6 +41,8 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
         end
     end
 
+    attr_accessor :keepconfig
+
     # Install a package using 'apt-get'.  This function needs to support
     # installing a specific version.
     def install
@@ -59,7 +61,18 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
             # Add the package version
             str += "=%s" % should
         end
-        aptcmd("-q -y install %s" % str)
+
+        keep = ""
+        if defined? @keepconfig
+            case @keepconfig
+            when true
+                keep = "-o 'DPkg::Options::=--force-confold'"
+            else
+                keep = "-o 'DPkg::Options::=--force-confnew'"
+            end
+        end
+        
+        aptcmd("-q -y %s install %s" % [keep, str])
     end
 
     # What's the latest package version available?
