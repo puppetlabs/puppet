@@ -1451,6 +1451,21 @@ class TestFile < Test::Unit::TestCase
         assert(home.requires?(user), "File did not require owner")
         assert(home.requires?(group), "File did not require group")
     end
+
+    # Testing #309 -- //my/file => /my/file
+    def test_slash_deduplication
+        ["/my/////file/for//testing", "//my/file/for/testing///",
+            "/my/file/for/testing"].each do |path|
+            file = nil
+            assert_nothing_raised do
+                file = Puppet::Type.newfile(:path => path)
+            end
+
+            assert_equal("/my/file/for/testing", file.title)
+            assert_equal(file, Puppet::Type.type(:file)["/my/file/for/testing"])
+            Puppet::Type.type(:file).clear
+        end
+    end
 end
 
 # $Id$
