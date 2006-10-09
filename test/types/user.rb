@@ -375,6 +375,7 @@ class TestUser < Test::Unit::TestCase
             )
             home = Puppet.type(:file).create(
                 :path => file,
+                :owner => "pptestu",
                 :ensure => "directory"
             )
             group = Puppet.type(:group).create(
@@ -389,7 +390,7 @@ class TestUser < Test::Unit::TestCase
         comp.retrieve
 
         assert(user.requires?(group), "User did not require group")
-        assert(user.requires?(home), "User did not require home dir")
+        assert(home.requires?(user), "Homedir did not require user")
         assert(user.requires?(ogroup), "User did not require other groups")
     end
 

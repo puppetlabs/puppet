@@ -342,15 +342,6 @@ module Puppet
             autos
         end
 
-        autorequire(:file) do
-            dir = self.should(:home) or self.is(:home)
-            if dir =~ /^#{File::SEPARATOR}/
-                dir
-            else
-                nil
-            end
-        end
-
         def self.list_by_name
             users = []
             defaultprovider.listbyname do |user|

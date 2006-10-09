@@ -172,6 +172,7 @@ module Puppet
             newvalues(:true, :false)
         end
 
+        # Autorequire any parent directories.
         autorequire(:file) do
             cur = []
             pary = self[:path].split(File::SEPARATOR)
@@ -185,6 +186,21 @@ module Puppet
             end
 
             cur
+        end
+
+        # Autorequire the owner and group of the file.
+        {:user => :owner, :group => :group}.each do |type, state|
+            autorequire(type) do
+                if @states.include?(state)
+                    # The user/group states automatically converts to IDs
+                    val = @states[state].shouldorig[0]
+                    if val.is_a?(Integer) or val =~ /^\d+$/
+                        nil
+                    else
+                        val
+                    end
+                end
+            end
         end
 
         validate do

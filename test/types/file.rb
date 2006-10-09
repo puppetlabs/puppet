@@ -1420,6 +1420,37 @@ class TestFile < Test::Unit::TestCase
 
         assert_apply(obj)
     end
+
+    def test_autorequire_owner_and_group
+        file = tempfile()
+        comp = nil
+        user = nil
+        group =nil
+        home = nil
+        ogroup = nil
+        assert_nothing_raised {
+            user = Puppet.type(:user).create(
+                :name => "pptestu",
+                :home => file,
+                :gid => "pptestg"
+            )
+            home = Puppet.type(:file).create(
+                :path => file,
+                :owner => "pptestu",
+                :group => "pptestg",
+                :ensure => "directory"
+            )
+            group = Puppet.type(:group).create(
+                :name => "pptestg"
+            )
+            comp = newcomp(user, group, home)
+        }
+        comp.finalize
+        comp.retrieve
+
+        assert(home.requires?(user), "File did not require owner")
+        assert(home.requires?(group), "File did not require group")
+    end
 end
 
 # $Id$
