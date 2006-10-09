@@ -8,7 +8,7 @@
 # = Usage
 #
 #   puppet [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
-#               [-l|--logfile <file>] <file>
+#               [-l|--logdest <file>] <file>
 #
 # = Description
 #
@@ -39,7 +39,7 @@
 #   /etc/puppet/classes.txt), and setting this option causes all of those classes
 #   to be set in your +puppet+ manifest.
 #
-# logfile::
+# logdest::
 #   Where to send messages.  Choose between syslog, the console, and a log file.
 #   Defaults to sending messages to the console.
 #
@@ -93,14 +93,13 @@ verbose = false
 noop = false
 logfile = false
 loadclasses = false
+logset = false
 
 code = nil
 
 master = {
     :Local => true
 }
-
-Puppet::Log.newdestination(:console)
 
 begin
     result.each { |opt,arg|
@@ -128,6 +127,7 @@ begin
             when "--logdest"
                 begin
                     Puppet::Log.newdestination(arg)
+                    logset = true
                 rescue => detail
                     $stderr.puts detail.to_s
                 end
@@ -141,6 +141,10 @@ rescue GetoptLong::InvalidOption => detail
     #    RDoc::usage(1,'usage')
     #end
     exit(1)
+end
+
+unless logset
+    Puppet::Log.newdestination(:console)
 end
 
 client = nil
