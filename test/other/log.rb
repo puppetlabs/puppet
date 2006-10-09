@@ -232,4 +232,49 @@ class TestLog < Test::Unit::TestCase
         assert(dest.match("Yayness"), "Did not match yayness")
         Puppet::Log.close(dest)
     end
+
+    def test_autoflush
+        file = tempfile
+        Puppet::Log.newdestination(file)
+        Puppet.info "A test"
+        assert(File.read(file) !~ /A test/,
+            "File defualted to autoflush")
+        Puppet::Log.flush
+        assert(File.read(file) =~ /A test/,
+            "File did not flush")
+        Puppet::Log.close(file)
+
+        # Now try one with autoflush enabled
+        Puppet[:autoflush] = true
+        file = tempfile
+        Puppet::Log.newdestination(file)
+        Puppet.info "A test"
+        assert(File.read(file) =~ /A test/,
+            "File did not autoflush")
+        Puppet::Log.close(file)
+    end
+
+    def test_reopen
+        Puppet[:autoflush] = true
+        file = tempfile
+        Puppet::Log.newdestination(file)
+        Puppet.info "A test"
+        assert(File.read(file) =~ /A test/,
+            "File did not flush")
+        # Rename the file 
+        newfile = file + ".old"
+        File.rename(file, newfile)
+
+        # Send another log
+        Puppet.info "Another test"
+        assert(File.read(newfile) =~ /Another test/,
+            "File did not rename")
+
+        # Now reopen the log
+        Puppet::Log.reopen
+        Puppet.info "Reopen test"
+        assert(File.read(file) =~ /Reopen test/,
+            "File did not reopen")
+        Puppet::Log.close(file)
+    end
 end

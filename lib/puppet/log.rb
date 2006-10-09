@@ -237,11 +237,15 @@ module Puppet
                 file = File.open(path, File::WRONLY|File::CREAT|File::APPEND)
 
                 @file = file
+
+                @autoflush = Puppet[:autoflush]
             end
 
             def handle(msg)
                 @file.puts("%s %s (%s): %s" %
                     [msg.time, msg.source, msg.level, msg.to_s])
+
+                @file.flush if @autoflush
             end
         end
 
@@ -411,6 +415,7 @@ module Puppet
 
         # Reopen all of our logs.
         def Log.reopen
+            Puppet.notice "Reopening log files"
             types = @destinations.keys
             @destinations.each { |type, dest|
                 if dest.respond_to?(:close)

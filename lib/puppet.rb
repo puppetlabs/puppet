@@ -107,6 +107,7 @@ module Puppet
 
     self.setdefaults(:puppet,
         :trace => [false, "Whether to print stack traces on some errors"],
+        :autoflush => [false, "Whether log files should always flush to disk."],
         :syslogfacility => ["daemon", "What syslog facility to use when logging to
             syslog.  Syslog has a fixed list of valid facilities, and you must
             choose one of those; you cannot just make one up."],
@@ -341,6 +342,7 @@ module Puppet
         command = $0 + " " + self.args.join(" ")
         Puppet.notice "Restarting with '%s'" % command
         Puppet.shutdown(false)
+        Puppet::Log.reopen
         exec(command)
     end
 
@@ -388,6 +390,10 @@ module Puppet
             unless done > 0
                 Puppet.notice "No clients were run"
             end
+        end
+
+        trap(:USR2) do
+            Puppet::Log.reopen
         end
     end
 
