@@ -308,7 +308,12 @@ module Puppet
             # We always fail this test, because we're only supposed to run
             # on refresh.
             def check(value)
-                false
+                # We have to invert the values.
+                if value == :true
+                    false
+                else
+                    true
+                end
             end
         end
 

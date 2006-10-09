@@ -105,7 +105,7 @@ class TestExec < Test::Unit::TestCase
         assert_equal(wd,command.output.chomp)
     end
 
-    def test_refreshonly
+    def test_refreshonly_functional
         file = nil
         cmd = nil
         tmpfile = tempfile()
@@ -164,6 +164,24 @@ class TestExec < Test::Unit::TestCase
             [:file_changed, :triggered],
             events
         )
+    end
+
+    def test_refreshonly
+        cmd = true
+        assert_nothing_raised {
+            cmd = Puppet.type(:exec).create(
+                :command => "pwd",
+                :path => "/usr/bin:/bin:/usr/sbin:/sbin",
+                :refreshonly => true
+            )
+        }
+
+        # Checks should always fail when refreshonly is enabled
+        assert(!cmd.check, "Check passed with refreshonly true")
+
+        # Now set it to false
+        cmd[:refreshonly] = false
+        assert(cmd.check, "Check failed with refreshonly false")
     end
 
     def test_creates
