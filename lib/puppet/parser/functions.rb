@@ -12,7 +12,7 @@ module Functions
     end
 
     # Create a new function type.
-    def self.newfunction(name, ftype = :statement, &block)
+    def self.newfunction(name, ftype = :statement, doc = nil, &block)
         @functions ||= {}
         name = symbolize(name)
 

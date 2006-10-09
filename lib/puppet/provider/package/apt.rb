@@ -6,6 +6,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
 
     commands :aptget => "/usr/bin/apt-get"
     commands :aptcache => "/usr/bin/apt-cache"
+    commands :preseed => "/usr/bin/debconf-set-selections"
 
     defaultfor :operatingsystem => :debian
 
@@ -43,6 +44,9 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     # Install a package using 'apt-get'.  This function needs to support
     # installing a specific version.
     def install
+        if @model[:responsefile]
+            self.preseed
+        end
         should = @model.should(:ensure)
 
         checkforcdrom()
@@ -85,6 +89,19 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
             return version
         else
             self.err "Could not match string"
+        end
+    end
+
+	#
+	# preseeds answers to dpkg-set-selection from the "responsefile"
+	#
+    def preseed
+        if response = @model[:responsefile] && FileTest.exists?(response)
+            self.info("Preseeding %s to debconf-set-selections" % response)
+
+            preseed response
+        else 
+            self.info "No responsefile specified or non existant, not preseeding anything"
         end
     end
 
