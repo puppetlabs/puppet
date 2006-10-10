@@ -121,7 +121,7 @@
 end
 begin
     require 'ldap'
-rescue
+rescue LoadError
     $stderr.puts "Failed to load ruby LDAP library. LDAP functionality will not be available"
 end
 require 'puppet'
