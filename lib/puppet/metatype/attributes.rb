@@ -135,9 +135,23 @@ class Puppet::Type
         return ens
     end
 
+    # Is the parameter in question a meta-parameter?
+    def self.metaparam?(param)
+        param = symbolize(param)
+        @@metaparamhash.include?(param)
+    end
+
     # Find the metaparameter class associated with a given metaparameter name.
     def self.metaparamclass(name)
         @@metaparamhash[symbolize(name)]
+    end
+
+    def self.metaparams
+        @@metaparams.collect { |param| param.name }
+    end
+
+    def self.metaparamdoc(metaparam)
+        @@metaparamhash[metaparam].doc
     end
 
     # Create a new metaparam.  Requires a block and a name, stores it in the
@@ -267,6 +281,10 @@ class Puppet::Type
         return s
     end
 
+    def self.paramdoc(param)
+        @paramhash[param].doc
+    end
+
     # Return the parameter names
     def self.parameters
         return [] unless defined? @parameters
@@ -283,9 +301,24 @@ class Puppet::Type
         @validstates[name]
     end
 
+    def self.validattr?(name)
+        name = symbolize(name)
+        @validattrs ||= {}
+
+        unless @validattrs.include?(name)
+            if self.validstate?(name) or self.validparameter?(name) or self.metaparam?(name)
+                @validattrs[name] = true
+            else
+                @validattrs[name] = false
+            end
+        end
+
+        @validattrs[name]
+    end
+
     # does the name reflect a valid state?
     def self.validstate?(name)
-        name = name.intern if name.is_a? String
+        name = symbolize(name)
         if @validstates.include?(name)
             return @validstates[name]
         else
@@ -310,21 +343,6 @@ class Puppet::Type
         else
             return false
         end
-    end
-
-    def self.validattr?(name)
-        name = symbolize(name)
-        @validattrs ||= {}
-
-        unless @validattrs.include?(name)
-            if self.validstate?(name) or self.validparameter?(name) or self.metaparam?(name)
-                @validattrs[name] = true
-            else
-                @validattrs[name] = false
-            end
-        end
-
-        @validattrs[name]
     end
 
     # fix any namevar => param translations
@@ -662,24 +680,6 @@ class Puppet::Type
 
     # Meta-parameter methods:  These methods deal with the results
     # of specifying metaparameters
-
-    def self.metaparams
-        @@metaparams.collect { |param| param.name }
-    end
-
-    # Is the parameter in question a meta-parameter?
-    def self.metaparam?(param)
-        param = symbolize(param)
-        @@metaparamhash.include?(param)
-    end
-
-    # Documentation methods
-    def self.paramdoc(param)
-        @paramhash[param].doc
-    end
-    def self.metaparamdoc(metaparam)
-        @@metaparamhash[metaparam].doc
-    end
 
     private
 
