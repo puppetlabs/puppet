@@ -263,6 +263,7 @@ class State < Puppet::Parameter
                 error = Puppet::Error.new("Could not set %s on %s: %s" %
                     [value, self.class.name, detail], @parent.line, @parent.file)
                 error.set_backtrace detail.backtrace
+                raise error
             end
         elsif ary = self.class.match?(value)
             # FIXME It'd be better here to define a method, so that

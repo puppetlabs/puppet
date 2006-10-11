@@ -140,6 +140,26 @@ class TestState < Test::Unit::TestCase
             assert_equal(tags + [inst.name], inst.tags)
         end
     end
+
+    def test_failure
+        s = Struct.new(:line, :file, :path)
+        p = s.new(1, "yay", "rah")
+        mystate = Class.new(Puppet::State)
+        mystate.initvars
+        state = mystate.new(:parent => p)
+
+        class << state
+            def set_mkfailure
+                raise "It's all broken"
+            end
+        end
+
+        state.should = :mkfailure
+
+        assert_raise(Puppet::Error) do
+            state.set
+        end
+    end
 end
 
 # $Id$
