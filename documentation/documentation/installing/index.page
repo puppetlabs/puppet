@@ -8,10 +8,12 @@ subtreeLevel: 6
 
 Installing Puppet
 =================
-* [Test-Driving Puppet](testing.html)
-* [Building from Source](fromsvn.html)
-* [Installation](installation.html)
-* [SSL Configuration](security.html)
-* [Fileserver Reference](fsconfigref.html)
+*[Test-Driving Puppet](testing.html)
+*[Building from Source](fromsvn.html)
+*[Installation](installation.html)
+*[SSL Configuration](security.html)
+*[Fileserver Reference](fsconfigref.html)
 
-* $Id:$
+
+
+*$Id$*
