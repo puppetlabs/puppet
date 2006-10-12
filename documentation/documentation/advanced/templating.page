@@ -1,7 +1,10 @@
 ---
 inMenu: true
-orderInfo: 10
+title: Templating with ERB
+orderInfo: 50
 ---
+# Templating with ERB
+
 Puppet supports templating via
 [ERB](http://www.ruby-doc.org/stdlib/libdoc/erb/rdoc/), which is part of the
 Ruby standard library and is used for many other projects including Ruby on

@@ -1,9 +1,9 @@
 ---
 inMenu: true
 title: How It Works
-orderInfo: 9
+orderInfo: 60
 ---
-# Introduction
+# How it Works: Introduction
 
 The goal of this document is to describe how a manifest you write in Puppet
 gets converted to work being done on the system.  This process is relatively

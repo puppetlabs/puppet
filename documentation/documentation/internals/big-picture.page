@@ -1,10 +1,9 @@
 ---
 inMenu: true
 title: The Big Picture
-orderInfo: 10
+orderInfo: 60
 ---
-
-# Big picture
+# Big Picture
 
 Puppet is a **declarative language** for expressing system configuration, a
 **client and server** for distributing it, and a **library** for realizing the

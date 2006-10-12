@@ -1,7 +1,7 @@
 ---
 inMenu: true
-title: Language Tutorial
-orderInfo: 5
+title: Puppet Language Tutorial
+orderInfo: 30
 ---
 
 # Elements and Organization

@@ -1,9 +1,9 @@
 ---
 inMenu: true
-title: Gaining More Control with Tags
-orderInfo: 10
+title: Using Tags
+orderInfo: 50
 ---
-# Gaining More Control with Tags
+# Using Tags
 
 Puppet allows for arbitrary tags to be applied to any or all objects in its configuration.  You can use these tags to control your configuration roll-out with greater precision or greater complexity.
 

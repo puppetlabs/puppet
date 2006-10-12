@@ -1,10 +1,9 @@
 ---
 inMenu: true
-title: Reports and Reporting
-orderInfo: 10
+title: Transaction Reporting
+orderInfo: 50
 ---
-
-# Reports and Reporting
+# Transaction Reporting
 
 Puppet can be configured to run specialized reports to help you to better keep track of your configurations.
 

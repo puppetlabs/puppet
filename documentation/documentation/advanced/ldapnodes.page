@@ -1,10 +1,9 @@
 ---
 inMenu: true
-title: LDAP Node Storage
-orderInfo: 10
+title: Storing Configs in LDAP
+orderInfo: 50
 ---
-
-# Storing Node Information in LDAP
+# Storing Configs in LDAP
 
 By default, ``puppetmasterd`` looks for nodes in its normal manifests, but you
 can instead have it look in LDAP.  This works especially well if you are

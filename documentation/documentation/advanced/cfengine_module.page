@@ -3,6 +3,7 @@ inMenu: true
 title: Cfengine Module
 orderInfo: 10
 ---
+# Cfengine Module
 
 For those who are still using Cfengine but would like either to take advantage
 of Puppet's greater abstractive or modeling capabilities, we have created a
