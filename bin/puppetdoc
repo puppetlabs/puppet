@@ -135,7 +135,7 @@ def self.arguments
     puts %{---
 inMenu: true
 title: Configuration Reference
-orderInfo: 6
+orderInfo: 40
 ---
 # Puppet Configuration Reference
 
@@ -259,7 +259,7 @@ def self.types
     puts %{---
 inMenu: true
 title: Type Reference
-orderInfo: 4
+orderInfo: 40
 ---
 # Type Reference
 
