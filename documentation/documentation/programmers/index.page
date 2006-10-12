@@ -1,0 +1,13 @@
+---
+inMenu: false
+directoryName: Programmer's Reference
+title: Programmer's Reference
+orderInfo: 4
+subtreeLevel: 6
+---
+
+Programmer's Reference
+======================
+* [Creating a Puppet Type](creating-a-puppet-type.html)
+
+* $Id:$

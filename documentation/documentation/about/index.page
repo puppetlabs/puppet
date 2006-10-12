@@ -1,0 +1,14 @@
+---
+inMenu: false
+directoryName: About
+title: About Puppet
+orderInfo: 1
+subtreeLevel: 6
+---
+
+About Puppet
+=====================
+* [Introduction](introduction.html)
+* [Puppet vs. Cfengine](notcfengine.html)
+
+*$Id$*

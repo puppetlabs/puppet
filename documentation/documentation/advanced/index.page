@@ -1,0 +1,19 @@
+---
+inMenu: false
+directoryName: Advanced Functionality
+title: Advanced Functionality
+orderInfo: 5
+subtreeLevel: 6
+---
+
+Advanced Functionality
+=====================
+* [Using Puppet with Cfengine](cfengine_module.html)
+* [Storing Configs in LDAP](ldapnodes.html)
+* [Managing Puppet with PuppetShow](puppetshow.html)
+* [Transaction Reporting](reports.html)
+* [Using Tags](tags.html)
+* [Templating with ERB](templating.html)
+
+
+* $Id:$

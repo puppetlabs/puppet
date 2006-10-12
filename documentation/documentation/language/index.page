@@ -1,0 +1,14 @@
+---
+inMenu: false
+directoryName: Puppet Internals
+title: Puppet Internals
+orderInfo: 6
+subtreeLevel: 6
+---
+
+Puppet Internals
+=====================
+* [Puppet Language Tutorial](languagetutorial.html)
+* [Control Structures](structures.html)
+
+* $Id:$
