@@ -1,12 +1,12 @@
 ---
 inMenu: false
-directoryName: Advanced Functionality
-title: Advanced Functionality
+directoryName: Puppet Internals
+title: Puppet Internals
 orderInfo: 5
 subtreeLevel: 6
 ---
 
-Advanced Functionality
+Puppet Internals
 =====================
 *[The Big Picture](big-picture.html)
 *[How it Works](howitworks.html)

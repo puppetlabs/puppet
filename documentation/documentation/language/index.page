@@ -1,13 +1,14 @@
 ---
 inMenu: false
-directoryName: Puppet Internals
-title: Puppet Internals
+directoryName: Language Syntax
+title: Language Syntax
 orderInfo: 6
 subtreeLevel: 6
 ---
 
-Puppet Internals
-=====================
+Language Syntax
+===============
+
 *[Puppet Language Tutorial](languagetutorial.html)
 *[Control Structures](structures.html)
 
