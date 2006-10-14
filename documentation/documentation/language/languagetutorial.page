@@ -100,6 +100,26 @@ the builtin [conditionals](structures.html#conditionals):
 
 This is only one assignment, so no errors.
 
+# Fact Variables (facts)
+
+In addition to variables that are manually assigned (as above), `puppet` also uses
+the [facter](/projects/facter/index.html) utility to glean information about the system.
+The facts gleaned by `facter` are made available as variables for use in `puppet`.
+
+You can get a full listing of variables that should be set by `puppet` from `facter` facts by
+running the `facter` command with no arguments:
+
+  $ facter
+  rubysitedir => /usr/lib/ruby/site_ruby/1.8
+  operatingsystemrelease => 8.8.0
+  hardwaremodel => Power Macintosh
+  ipaddress => 10.10.10.52
+  kernelrelease => 8.8.0
+  […]
+  facterversion => 1.3.3
+  operatingsystem => Darwin
+  macaddress => 00:0d:de:ad:be:ef
+
 # Overriding
 
 Puppet provides a separate scope for every class and component, and scope
