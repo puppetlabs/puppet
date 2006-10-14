@@ -2,7 +2,7 @@ require 'puppet'
 
 # This is the parent class of all NSS classes.  They're very different in
 # their backend, but they're pretty similar on the front-end.  This class
-# provides a way for them all to be as siilar as possible.
+# provides a way for them all to be as similar as possible.
 class Puppet::Provider::NameService < Puppet::Provider
     class << self
 

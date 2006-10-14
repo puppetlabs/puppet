@@ -1,0 +1,51 @@
+---
+inMenu: true
+title: Providers
+orderInfo: 70
+---
+
+# Providers
+
+Since different systems often have ways of doing things, Puppet's uses a layer of abstraction called "providers" to provide a mechanism for implementing its types in system-specific ways.
+
+For instance, on most UNIX systems, users and groups are added to the system simply by adding the new user or group to a flat file in the `/etc` directory.  However, other systems may use different mechanisms (such as NetInfo, LDAP, or Kerberos) either alone or in combination with flat files.
+
+Currently, providers exist for groups, users, packages, nameservice, and system services using these mechanisms:
+
+The following providers exist to add groups and users:
+* `groupadd`/`useradd`
+* NetInfo
+* flat files
+
+There are also providers for the following package management utilities:
+* Apple Package Manager (pkg)
+* `apt`
+* `aptitude`
+* `blastwave`
+* `darwinport`
+* Debian Package format (`dpkg`)
+* FreeBSD Package format
+* Ruby Gems
+* OpenBSD Package format
+* Portage
+* Ports
+* Redhat Package Manager (`rpm`)
+* Sun
+* Sunfreeware
+* `up2date`
+* `yum`
+
+These providers can be used to add system services:
+* base (basic service description)
+* Standard SysV `init`
+* debian-style SysV `init`
+* redhat-style SysV `init` using `chkconfig`
+* Sun Microsystem's "Service Management Framework" (`smf`)
+
+If you create provider code for mechanisms not cited above, please consider contributing them to the project.
+
+
+
+
+
+
