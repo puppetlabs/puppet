@@ -1,3 +1,5 @@
+require 'puppet/parser/ast/branch'
+
 class Puppet::Parser::AST
     # The inline conditional operator.  Unlike CaseStatement, which executes
     # code, we just return a value.

@@ -1,3 +1,5 @@
+require 'puppet/parser/ast/branch'
+
 class Puppet::Parser::AST
     # The basic logical structure in Puppet.  Supports a list of
     # tests and statement arrays.
