@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby -I../lib -I../../lib
 
 require 'puppet'
 require 'puppet/transportable'

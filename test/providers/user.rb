@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby -I../lib -I../../lib
+
 require 'puppettest'
 require 'puppet'
 require 'facter'
