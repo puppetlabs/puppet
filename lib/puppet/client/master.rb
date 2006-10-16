@@ -168,8 +168,8 @@ class Puppet::Client::MasterClient < Puppet::Client
         Puppet::Type.allclear
     end
 
-    # Disable running the configuration.  This can be used from the command line, but
-    # is also used to make sure only one client is running at a time.
+    # Disable running the configuration.  This can be used from the command
+    # line, but is also used to make sure only one client is running at a time.
     def disable(running = false)
         threadlock(:puppetd) do
             text = nil

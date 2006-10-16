@@ -294,8 +294,7 @@ module Util
         end
 
         unless level
-            puts caller.join("\n")
-            raise Puppet::DevError, "Failed to provide level"
+            raise Puppet::DevError, "Failed to provide level to :benchmark"
         end
 
         unless object.respond_to? level

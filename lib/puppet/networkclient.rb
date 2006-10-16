@@ -23,8 +23,8 @@ rescue LoadError => detail
 end
 
 module Puppet
-    class NetworkClientError < RuntimeError; end
-    class ClientError < RuntimeError; end
+    class NetworkClientError < Puppet::Error; end
+    class ClientError < Puppet::Error; end
     #---------------------------------------------------------------
     if $noclientnetworking
         Puppet.err "Could not load client network libs: %s" % $noclientnetworking
@@ -80,16 +80,17 @@ module Puppet
                                     [@host, @port]
                                 raise NetworkClientError, msg
                             rescue SocketError => detail
-                                Puppet.err "Could not find server %s" % @puppetserver
-                                exit(12)
+                                error = NetworkClientError.new(
+                                    "Could not find server %s" % @puppetserver
+                                )
+                                error.set_backtrace detail.backtrace
+                                raise error
                             rescue => detail
                                 Puppet.err "Could not call %s.%s: %s" %
                                     [namespace, method, detail.inspect]
-                                #raise NetworkClientError.new(detail.to_s)
-                                if Puppet[:trace]
-                                    puts detail.backtrace
-                                end
-                                raise
+                                error = NetworkClientError.new(detail.to_s)
+                                error.set_backtrace detail.backtrace
+                                raise error
                             end
                         }
                     }

@@ -289,12 +289,12 @@ module Puppet
     # waiting for someone, somewhere, to generate events of some kind.
     def self.start(block = true)
         # Starting everything in its own thread, fwiw
-        defined? @services and @services.each do |svc|
+        defined? @services and @services.dup.each do |svc|
             newthread do
                 begin
                     svc.start
                 rescue => detail
-                    if Puppet[:debug]
+                    if Puppet[:trace]
                         puts detail.backtrace
                     end
                     @services.delete svc
@@ -303,14 +303,14 @@ module Puppet
             end
         end
 
+        # We need to give the services a chance to register their timers before
+        # we try to start monitoring them.
+        sleep 0.5
+
         unless @services.length > 0
             Puppet.notice "No remaining services; exiting"
             exit(1)
         end
-
-        # We need to give the services a chance to register their timers before
-        # we try to start monitoring them.
-        sleep 0.5
 
         if defined? @timers and ! @timers.empty?
             @timers.each do |timer|
