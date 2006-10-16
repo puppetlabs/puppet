@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby -I../lib -I../../lib
+
 require 'puppet'
 require 'puppettest'
 
@@ -65,6 +67,19 @@ class TestPuppetModule < Test::Unit::TestCase
 
         assert(!obj.started?, "Object is still running")
 
+    end
+
+    def test_path
+        oldpath = ENV["PATH"]
+        cleanup do
+            ENV["PATH"] = oldpath
+        end
+        newpath = oldpath + ":" + "/something/else"
+        assert_nothing_raised do
+            Puppet[:path] = newpath
+        end
+
+        assert_equal(newpath, ENV["PATH"])
     end
 end
 
