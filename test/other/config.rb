@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env ruby -I../lib -I../../lib
 
 require 'puppet'
 require 'puppet/config'
@@ -796,6 +796,60 @@ inttest = 27
         assert(FileTest.directory?(newpath), "new dir did not get created")
 
 
+    end
+
+    # Test that config parameters correctly call passed-in blocks when the value
+    # is set.
+    def test_paramblocks
+        config = mkconfig()
+
+        testing = nil
+        elem = nil
+        assert_nothing_raised do
+            elem = config.newelement :default => "yay",
+                :name => :blocktest,
+                :section => :test,
+                :hook => proc { |value| testing = value }
+        end
+
+        assert_nothing_raised do
+            assert_equal("yay", elem.value)
+        end
+
+        assert_nothing_raised do
+            elem.value = "yaytest"
+        end
+
+        assert_nothing_raised do
+            assert_equal("yaytest", elem.value)
+        end
+        assert_equal("yaytest", testing)
+
+        assert_nothing_raised do
+            elem.value = "another"
+        end
+
+        assert_nothing_raised do
+            assert_equal("another", elem.value)
+        end
+        assert_equal("another", testing)
+
+        # Now verify it works from setdefault
+        assert_nothing_raised do
+            config.setdefaults :test,
+                :blocktest2 => {
+                    :default => "yay",
+                    :hook => proc { |v| testing = v }
+                }
+        end
+
+        assert_equal("yay", config[:blocktest2])
+
+        assert_nothing_raised do
+            config[:blocktest2] = "footest"
+        end
+        assert_equal("footest", config[:blocktest2])
+        assert_equal("footest", testing)
     end
 end
 

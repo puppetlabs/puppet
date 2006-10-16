@@ -721,6 +721,10 @@ Generated on #{Time.now}.
             @desc = value.gsub(/^\s*/, '')
         end
 
+        def hook=(block)
+            meta_def :handle, &block
+        end
+
         # Create the new element.  Pretty much just sets the name.
         def initialize(args = {})
             if args.include?(:parent)
@@ -805,10 +809,15 @@ Generated on #{Time.now}.
             if respond_to?(:validate)
                 validate(value)
             end
+
             if respond_to?(:munge)
                 @value = munge(value)
             else
                 @value = value
+            end
+
+            if respond_to?(:handle)
+                handle(@value)
             end
         end
     end
