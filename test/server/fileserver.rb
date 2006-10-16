@@ -1,4 +1,6 @@
-#!/usr/bin/env ruby -I../lib -I../../lib
+#!/usr/bin/env ruby
+
+$:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
 require 'puppet/server/fileserver'

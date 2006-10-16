@@ -11,10 +11,11 @@ module PuppetTest
                 @@basedir = File.dirname(Dir.getwd)
             else
                 dir = nil
-                if $0 =~ /^#{File::SEPARATOR}.+\.rb/
-                    dir = $0
+                app = $0.sub /^\.\//, ""
+                if app =~ /^#{File::SEPARATOR}.+\.rb/
+                    dir = app
                 else
-                    dir = File.join(Dir.getwd, $0)
+                    dir = File.join(Dir.getwd, app)
                 end
                 3.times { dir = File.dirname(dir) }
                 @@basedir = dir
