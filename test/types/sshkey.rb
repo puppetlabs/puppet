@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby -I../lib -I../../lib
+
 # Test key job creation, modification, and destruction
 
 require 'puppettest'
