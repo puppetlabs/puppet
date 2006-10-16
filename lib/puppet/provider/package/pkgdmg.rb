@@ -70,7 +70,7 @@ Puppet::Type.type(:package).provide :pkgdmg do
                     Dir.entries(fspath).select { |f|
                         f =~ /\.m{0,1}pkg$/i
                     }.each { |pkg|
-                        installpkg ("#{fspath}/#{pkg}", name, source)
+                        installpkg("#{fspath}/#{pkg}", name, source)
                     }
                 end
             hdiutil "eject '#{mounts[0]}'"
