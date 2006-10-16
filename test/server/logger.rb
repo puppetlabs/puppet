@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby -I../lib -I../../lib
+
 require 'puppet'
 require 'puppettest'
 require 'base64'
