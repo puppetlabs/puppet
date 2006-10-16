@@ -154,6 +154,10 @@ module Puppet
         end
 
         def sync
+            unless self.should == :absent
+                @parent.remove_existing(self.should)
+            end
+
             event = super
 
             # There are some cases where all of the work does not get done on

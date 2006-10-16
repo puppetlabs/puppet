@@ -318,25 +318,12 @@ module Puppet
                             end
                         end
 
-                        require 'fileutils'
-                        FileUtils.rmtree(self[:path])
                         return true
                     when String:
                         newfile = file + backup
                         # Just move it, since it's a directory.
-                        if FileTest.directory?(newfile)
-                            raise Puppet::Error, "Will not replace directory backup; use a filebucket"
-                        elsif FileTest.exists?(newfile)
-                            begin
-                                File.unlink(newfile)
-                            rescue => detail
-                                if Puppet[:trace]
-                                    puts detail.backtrace
-                                end
-                                self.err "Could not remove old backup: %s" %
-                                    detail
-                                return false
-                            end
+                        if FileTest.exists?(newfile)
+                            remove_backup(newfile)
                         end
                         begin
                             bfile = file + backup
@@ -367,13 +354,7 @@ module Puppet
                 when String:
                     newfile = file + backup
                     if FileTest.exists?(newfile)
-                        begin
-                            File.unlink(newfile)
-                        rescue => detail
-                            self.err "Could not remove old backup: %s" %
-                                detail
-                            return false
-                        end
+                        remove_backup(newfile)
                     end
                     begin
                         # FIXME Shouldn't this just use a Puppet object with
@@ -394,6 +375,7 @@ module Puppet
                     self.err "Invalid backup type %s" % backup.inspect
                     return false
                 end
+            when "link": return true
             else
                 self.notice "Cannot backup files of type %s" %
                     File.stat(file).ftype
@@ -439,6 +421,108 @@ module Puppet
             end
 
             @stat = nil
+        end
+
+        # Build a recursive map of a link source
+        def linkrecurse(recurse)
+            target = @states[:target].should
+
+            method = :lstat
+            if self[:links] == :follow
+                method = :stat
+            end
+
+            targetstat = nil
+            unless FileTest.exist?(target)
+                #self.info "%s does not exist; not recursing" %
+                #    target
+                return
+            end
+            # Now stat our target
+            targetstat = File.send(method, target)
+            unless targetstat.ftype == "directory"
+                #self.info "%s is not a directory; not recursing" %
+                #    target
+                return
+            end
+
+            # Now that we know our corresponding target is a directory,
+            # change our type
+            self[:ensure] = :directory
+
+            unless FileTest.readable? target
+                self.notice "Cannot manage %s: permission denied" % self.name
+                return
+            end
+
+            children = Dir.entries(target).reject { |d| d =~ /^\.+$/ }
+         
+            #Get rid of ignored children
+            if @parameters.include?(:ignore)
+                children = handleignore(children)
+            end  
+
+            added = []
+            children.each do |file|
+                Dir.chdir(target) do
+                    longname = File.join(target, file)
+
+                    # Files know to create directories when recursion
+                    # is enabled and we're making links
+                    args = {
+                        :recurse => recurse,
+                        :ensure => longname
+                    }
+
+                    if child = self.newchild(file, true, args)
+                        unless @children.include?(child)
+                            self.push child
+                            added.push file
+                        end
+                    end
+                end
+            end
+        end
+
+        # Build up a recursive map of what's around right now
+        def localrecurse(recurse)
+            unless FileTest.exist?(self[:path]) and self.stat.directory?
+                #self.info "%s is not a directory; not recursing" %
+                #    self[:path]
+                return
+            end
+
+            unless FileTest.readable? self[:path]
+                self.notice "Cannot manage %s: permission denied" % self.name
+                return
+            end
+
+            children = Dir.entries(self[:path])
+         
+            #Get rid of ignored children
+            if @parameters.include?(:ignore)
+                children = handleignore(children)
+            end  
+
+            added = []
+            children.each { |file|
+                file = File.basename(file)
+                next if file =~ /^\.\.?$/ # skip . and .. 
+                options = {:recurse => recurse}
+
+                if child = self.newchild(file, true, options)
+                    # Mark any unmanaged files for removal if purge is set.
+                    # Use the array rather than [] because tidy uses this method, too.
+                    if @parameters.include?(:purge) and self[:purge] == :true and child.implicit?
+                        child[:ensure] = :absent
+                    end
+
+                    unless @children.include?(child)
+                        self.push child
+                        added.push file
+                    end
+                end
+            }
         end
         
         # Create a new file or directory object as a child to the current
@@ -624,104 +708,105 @@ module Puppet
             end
         end
 
-        # Build a recursive map of a link source
-        def linkrecurse(recurse)
-            target = @states[:target].should
-
-            method = :lstat
-            if self[:links] == :follow
+        # Remove the old backup.
+        def remove_backup(newfile)
+            if self.class.name == :file and self[:links] != :follow
+                method = :lstat
+            else
                 method = :stat
             end
+            old = File.send(method, newfile).ftype
 
-            targetstat = nil
-            unless FileTest.exist?(target)
-                #self.info "%s does not exist; not recursing" %
-                #    target
-                return
-            end
-            # Now stat our target
-            targetstat = File.send(method, target)
-            unless targetstat.ftype == "directory"
-                #self.info "%s is not a directory; not recursing" %
-                #    target
-                return
+            if old == "directory"
+                raise Puppet::Error,
+                    "Will not remove directory backup %s; use a filebucket" %
+                    newfile
             end
 
-            # Now that we know our corresponding target is a directory,
-            # change our type
-            self[:ensure] = :directory
+            info "Removing old backup of type %s" %
+                File.send(method, newfile).ftype
 
-            unless FileTest.readable? target
-                self.notice "Cannot manage %s: permission denied" % self.name
-                return
-            end
-
-            children = Dir.entries(target).reject { |d| d =~ /^\.+$/ }
-         
-            #Get rid of ignored children
-            if @parameters.include?(:ignore)
-                children = handleignore(children)
-            end  
-
-            added = []
-            children.each do |file|
-                Dir.chdir(target) do
-                    longname = File.join(target, file)
-
-                    # Files know to create directories when recursion
-                    # is enabled and we're making links
-                    args = {
-                        :recurse => recurse,
-                        :ensure => longname
-                    }
-
-                    if child = self.newchild(file, true, args)
-                        unless @children.include?(child)
-                            self.push child
-                            added.push file
-                        end
-                    end
+            begin
+                File.unlink(newfile)
+            rescue => detail
+                if Puppet[:trace]
+                    puts detail.backtrace
                 end
+                self.err "Could not remove old backup: %s" %
+                    detail
+                return false
             end
         end
 
-        # Build up a recursive map of what's around right now
-        def localrecurse(recurse)
-            unless FileTest.exist?(self[:path]) and self.stat.directory?
-                #self.info "%s is not a directory; not recursing" %
-                #    self[:path]
+        # Remove any existing data.  This is only used when dealing with
+        # links or directories.
+        def remove_existing(should)
+            return unless s = stat(true)
+
+            unless handlebackup
+                self.fail "Could not back up; will not replace"
+            end
+
+            unless should.to_s == "link"
+                return if s.ftype.to_s == should.to_s 
+            end
+
+            case s.ftype
+            when "directory":
+                if self[:force] == :true
+                    debug "Removing existing directory for replacement with %s" %
+                        should
+                    FileUtils.rmtree(self[:path])
+                else
+                    notice "Not replacing directory; use 'force' to override"
+                end
+            when "link", "file":
+                debug "Removing existing %s for replacement with %s" %
+                    [s.ftype, should]
+                File.unlink(self[:path])
+            else
+                self.fail "Could not back up files of type %s" % s.ftype
+            end
+        end
+
+        # a wrapper method to make sure the file exists before doing anything
+        def retrieve
+            if @states.include?(:source)
+                # This probably isn't the best place for it, but we need
+                # to make sure that we have a corresponding checksum state.
+                unless @states.include?(:checksum)
+                    self[:checksum] = "md5"
+                end
+
+                # We have to retrieve the source info before the recursion happens,
+                # although I'm not exactly clear on why.
+                @states[:source].retrieve
+            end
+
+            if @parameters.include?(:recurse)
+                self.recurse
+            end
+
+            unless stat = self.stat(true)
+                self.debug "File does not exist"
+                @states.each { |name,state|
+                    # We've already retrieved the source, and we don't
+                    # want to overwrite whatever it did.  This is a bit
+                    # of a hack, but oh well, source is definitely special.
+                    next if name == :source
+                    state.is = :absent
+                }
+
                 return
             end
 
-            unless FileTest.readable? self[:path]
-                self.notice "Cannot manage %s: permission denied" % self.name
-                return
-            end
-
-            children = Dir.entries(self[:path])
-         
-            #Get rid of ignored children
-            if @parameters.include?(:ignore)
-                children = handleignore(children)
-            end  
-
-            added = []
-            children.each { |file|
-                file = File.basename(file)
-                next if file =~ /^\.\.?$/ # skip . and .. 
-                options = {:recurse => recurse}
-
-                if child = self.newchild(file, true, options)
-                    # Mark any unmanaged files for removal if purge is set.
-                    # Use the array rather than [] because tidy uses this method, too.
-                    if @parameters.include?(:purge) and self[:purge] == :true and child.implicit?
-                        child[:ensure] = :absent
-                    end
-
-                    unless @children.include?(child)
-                        self.push child
-                        added.push file
-                    end
+            states().each { |state|
+                # We don't want to call 'describe()' twice, so only do a local
+                # retrieve on the source.
+                if state.name == :source
+                    state.retrieve(false)
+                else
+                    state.retrieve
                 end
             }
         end
@@ -775,48 +860,6 @@ module Puppet
                 end
 
                 self.newchild(name, false, args)
-            }
-        end
-
-        # a wrapper method to make sure the file exists before doing anything
-        def retrieve
-            if @states.include?(:source)
-                # This probably isn't the best place for it, but we need
-                # to make sure that we have a corresponding checksum state.
-                unless @states.include?(:checksum)
-                    self[:checksum] = "md5"
-                end
-
-                # We have to retrieve the source info before the recursion happens,
-                # although I'm not exactly clear on why.
-                @states[:source].retrieve
-            end
-
-            if @parameters.include?(:recurse)
-                self.recurse
-            end
-
-            unless stat = self.stat(true)
-                self.debug "File does not exist"
-                @states.each { |name,state|
-                    # We've already retrieved the source, and we don't
-                    # want to overwrite whatever it did.  This is a bit
-                    # of a hack, but oh well, source is definitely special.
-                    next if name == :source
-                    state.is = :absent
-                }
-
-                return
-            end
-
-            states().each { |state|
-                # We don't want to call 'describe()' twice, so only do a local
-                # retrieve on the source.
-                if state.name == :source
-                    state.retrieve(false)
-                else
-                    state.retrieve
-                end
             }
         end
 
@@ -930,16 +973,7 @@ module Puppet
         def write(usetmp = true)
             mode = self.should(:mode)
 
-            #if FileTest.exists?(self[:path])
-            if s = stat(false)
-                # this makes sure we have a copy for posterity
-                @backed = self.handlebackup
-
-                if s.ftype == "link" and self[:links] != :follow
-                    # Remove existing links, since we're writing out a file
-                    File.unlink(self[:path])
-                end
-            end
+            remove_existing(:file)
 
             # The temporary file
             path = nil

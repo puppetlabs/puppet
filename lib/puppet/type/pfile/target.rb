@@ -27,23 +27,9 @@ module Puppet
         def mklink
             target = self.should
 
-            if stat = @parent.stat
-                unless @parent.handlebackup
-                    self.fail "Could not back up; will not replace with link"
-                end
+            # Clean up any existing objects.
+            @parent.remove_existing(target)
 
-                case stat.ftype
-                when "directory":
-                    if @parent[:force] == :true
-                        FileUtils.rmtree(@parent[:path])
-                    else
-                        notice "Not replacing directory with link; use 'force' to override"
-                        return :nochange
-                    end
-                else
-                    File.unlink(@parent[:path])
-                end
-            end
             Dir.chdir(File.dirname(@parent[:path])) do
                 Puppet::SUIDManager.asuser(@parent.asuser()) do
                     mode = @parent.should(:mode)

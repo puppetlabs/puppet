@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby -I../lib -I../../lib
+
 require 'puppet'
 require 'fileutils'
 require 'puppettest'
@@ -1464,6 +1466,125 @@ class TestFile < Test::Unit::TestCase
             assert_equal("/my/file/for/testing", file.title)
             assert_equal(file, Puppet::Type.type(:file)["/my/file/for/testing"])
             Puppet::Type.type(:file).clear
+        end
+    end
+
+    # Testing #304
+    def test_links_to_directories
+        link = tempfile()
+        file = tempfile()
+        dir = tempfile()
+        Dir.mkdir(dir)
+
+        bucket = Puppet::Type.newfilebucket :name => "main"
+        File.symlink(dir, link)
+        File.open(file, "w") { |f| f.puts "" }
+        assert_equal(dir, File.readlink(link))
+        obj = Puppet::Type.newfile :path => link, :ensure => :link,
+            :target => file, :recurse => false, :backup => "main"
+
+        assert_apply(obj)
+
+        assert_equal(file, File.readlink(link))
+    end
+
+    # Testing #303
+    def test_nobackups_with_links
+        link = tempfile()
+        new = tempfile()
+
+        File.open(link, "w") { |f| f.puts "old" }
+        File.open(new, "w") { |f| f.puts "new" }
+        obj = Puppet::Type.newfile :path => link, :ensure => :link,
+            :target => new, :recurse => true, :backup => false
+
+        assert_nothing_raised do
+            obj.handlebackup
+        end
+
+        bfile = [link, "puppet-bak"].join(".")
+
+        assert(! FileTest.exists?(bfile), "Backed up when told not to")
+
+        assert_apply(obj)
+
+        assert(! FileTest.exists?(bfile), "Backed up when told not to")
+    end
+
+    def test_remove_existing
+    end
+
+    # Make sure we consistently handle backups for all cases.
+    def test_ensure_with_backups
+        # We've got three file types, so make sure we can replace any type
+        # with the other type and that backups are done correctly.
+        types = [:file, :directory, :link]
+
+        dir = tempfile()
+        path = File.join(dir, "test")
+        linkdest = tempfile()
+        creators = {
+            :file => proc { File.open(path, "w") { |f| f.puts "initial" } },
+            :directory => proc { Dir.mkdir(path) },
+            :link => proc { File.symlink(linkdest, path) }
+        }
+
+        bucket = Puppet::Type.newfilebucket :name => "main", :path => tempfile()
+
+        obj = Puppet::Type.newfile :path => path, :force => true,
+            :links => :manage
+
+        Puppet[:trace] = true
+        ["main", false].each do |backup|
+            obj[:backup] = backup
+            obj.finish
+            types.each do |should|
+                types.each do |is|
+                    # It makes no sense to replace a directory with a directory
+                    # next if should == :directory and is == :directory
+
+                    Dir.mkdir(dir)
+
+                    # Make the thing
+                    creators[is].call
+
+                    obj[:ensure] = should
+
+                    if should == :link
+                        obj[:target] = linkdest
+                    else
+                        if obj.state(:target)
+                            obj.delete(:target)
+                        end
+                    end
+
+                    # First try just removing the initial data
+                    assert_nothing_raised do
+                        obj.remove_existing(should)
+                    end
+
+                    unless is == should
+                        # Make sure the original is gone
+                        assert(! FileTest.exists?(obj[:path]),
+                            "remove_existing did not work: " +
+                            "did not remove %s with %s" % [is, should])
+                    end
+                    FileUtils.rmtree(obj[:path])
+
+                    # Now make it again
+                    creators[is].call
+
+                    state = obj.state(:ensure)
+
+                    state.retrieve
+                    unless state.insync?
+                        assert_nothing_raised do
+                            state.sync
+                        end
+                    end
+                    FileUtils.rmtree(dir)
+                end
+            end
         end
     end
 end
