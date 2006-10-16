@@ -419,14 +419,48 @@ class TestInterpreter < Test::Unit::TestCase
     def test_gennode
         interp = mkinterp
 
-        node = nil
-        assert_nothing_raised {
-            node = interp.gennode("nodeA", :classes => %w{classA classB})
-        }
+        interp.newnode "base"
+        interp.newclass "yaytest"
 
-        assert_instance_of(Puppet::Parser::AST::Node, node)
+        # Go through the different iterations:
+        [
+         [nil, "yaytest"],
+         [nil, ["yaytest"]],
+         [nil, nil],
+         [nil, []],
+         ["base", nil],
+         ["base", []],
+         ["base", "yaytest"],
+         ["base", ["yaytest"]]
+        ].each do |parent, classes|
+            node = nil
+            assert_nothing_raised {
+                node = interp.gennode("nodeA", :classes => classes,
+                    :parentnode => parent)
+            }
 
-        assert_equal("nodeA", node.name)
+            assert_instance_of(Puppet::Parser::AST::Node, node)
+
+            assert_equal("nodeA", node.name)
+
+            scope = mkscope :interp => interp
+
+            assert_nothing_raised do
+                node.evaluate :scope => scope
+            end
+
+            # If there's a parent, make sure it got evaluated
+            if parent
+                assert(scope.classlist.include?("base"),
+                    "Did not evaluate parent node")
+            end
+
+            # If there are classes make sure they got evaluated
+            if classes == ["yaytest"] or classes == "yaytest"
+                assert(scope.classlist.include?("yaytest"),
+                    "Did not evaluate class")
+            end
+        end
     end
 
     def test_fqfind

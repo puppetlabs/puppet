@@ -267,22 +267,28 @@ class Puppet::Parser::Interpreter
         parent = hash[:parentnode]
         arghash = {
             :name => name,
-            :code => AST::ASTArray.new(:pin => "[]"),
             :interp => self,
             :fqname => name
         }
-        classes = [classes] unless classes.is_a?(Array)
 
-        classcode = @parser.ast(AST::ASTArray, :children => classes.collect do |klass|
-            @parser.ast(AST::FlatString, :value => klass)
-        end)
+        if (classes.is_a?(Array) and classes.empty?) or classes.nil?
+            arghash[:code] = AST::ASTArray.new(:children => [])
+        else
+            classes = [classes] unless classes.is_a?(Array)
 
-        # Now generate a function call.
-        code = @parser.ast(AST::Function,
-            :name => "include",
-            :arguments => classcode,
-            :ftype => :statement
-        )
+            classcode = @parser.ast(AST::ASTArray, :children => classes.collect do |klass|
+                @parser.ast(AST::FlatString, :value => klass)
+            end)
+
+            # Now generate a function call.
+            code = @parser.ast(AST::Function,
+                :name => "include",
+                :arguments => classcode,
+                :ftype => :statement
+            )
+
+            arghash[:code] = code
+        end
 
         if parent
             arghash[:parentclass] = parent
