@@ -770,6 +770,20 @@ end
             assert(type.respond_to?(:list), "%s does not respond to list" % type.name)
         end
     end
+
+    def test_to_hash
+        file = Puppet::Type.newfile :path => tempfile(), :owner => "luke",
+            :recurse => true, :loglevel => "warning"
+
+        hash = nil
+        assert_nothing_raised do
+            hash = file.to_hash
+        end
+
+        [:path, :owner, :recurse, :loglevel].each do |param|
+            assert(hash[param], "Hash did not include %s" % param)
+        end
+    end
 end
 
 # $Id$

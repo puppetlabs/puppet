@@ -2,32 +2,32 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-# Test host job creation, modification, and destruction
-
 require 'puppettest'
 require 'puppet'
+require 'test/unit'
 require 'facter'
 
 class TestHost < Test::Unit::TestCase
 	include PuppetTest
+
     def setup
         super
-        # god i'm lazy
         @hosttype = Puppet.type(:host)
-        @oldhosttype = @hosttype.filetype
-    end
 
-    def teardown
-        Puppet::FileType.filetype(:ram).clear
-        @hosttype.filetype = @oldhosttype
-        Puppet.type(:file).clear
-        super
-    end
+        @provider = @hosttype.defaultprovider
 
-    # Here we just create a fake host type that answers to all of the methods
-    # but does not modify our actual system.
-    def mkfaketype
-        @hosttype.filetype = Puppet::FileType.filetype(:ram)
+        # Make sure they aren't using something funky like netinfo
+        unless @provider.name == :parsed
+            @hosttype.defaultprovider = @hosttype.provider(:parsed)
+        end
+
+        cleanup do @hosttype.defaultprovider = nil end
+
+        oldpath = @provider.path
+        cleanup do
+            @provider.path = oldpath
+        end
+        @provider.path = tempfile()
     end
 
     def mkhost
@@ -49,10 +49,16 @@ class TestHost < Test::Unit::TestCase
     end
 
     def test_simplehost
-        mkfaketype
         host = nil
         assert_nothing_raised {
-            assert_nil(Puppet.type(:host).retrieve)
+            Puppet.type(:host).defaultprovider.retrieve
+
+            count = 0
+            @hosttype.each do |h|
+                count += 1
+            end
+
+            assert_equal(0, count, "Found hosts in empty file somehow")
         }
 
         assert_nothing_raised {
@@ -62,49 +68,14 @@ class TestHost < Test::Unit::TestCase
             )
         }
 
-        assert_nothing_raised {
-            Puppet.type(:host).store
-        }
+        assert_apply(host)
 
-        assert_nothing_raised {
-            assert(
-                Puppet.type(:host).to_file.include?(
-                    Puppet.type(:host).fileobj.read
-                ),
-                "File does not include all of our objects"
-            )
-        }
-    end
+        assert_nothing_raised { host.retrieve }
 
-    def test_hostsparse
-        fakedata("data/types/hosts").each { |file|
-            @hosttype.path = file
-            Puppet.info "Parsing %s" % file
-            assert_nothing_raised {
-                Puppet.type(:host).retrieve
-            }
-
-            text = Puppet.type(:host).fileobj.read
-
-            dest = tempfile()
-            @hosttype.path = dest
-
-            # Now write it back out
-            assert_nothing_raised {
-                Puppet.type(:host).store
-            }
-
-            newtext = Puppet.type(:host).fileobj.read
-
-            # Don't worry about difference in whitespace
-            assert_equal(text.gsub(/\s+/, ' '), newtext.gsub(/\s+/, ' '))
-
-            @hosttype.clear
-        }
+        assert_equal(:present, host.is(:ensure))
     end
 
     def test_moddinghost
-        mkfaketype
         host = mkhost()
 
         assert_events([:host_created], host)
@@ -142,34 +113,33 @@ class TestHost < Test::Unit::TestCase
     end
 
     def test_removal
-        mkfaketype
         host = mkhost()
         assert_nothing_raised {
             host[:ensure] = :present
         }
         assert_events([:host_created], host)
 
-        host.retrieve
-        assert(host.insync?)
+        assert(host.exists?, "Host is not considered in sync")
+
+        assert_equal(:present, host.is(:ensure))
+
         assert_nothing_raised {
             host[:ensure] = :absent
         }
-
         assert_events([:host_removed], host)
+
+        text = host.provider.class.fileobj.read
+
+        assert(! text.include?(host[:name]), "Host is still in text")
         host.retrieve
         assert_events([], host)
     end
 
     def test_modifyingfile
-        hostfile = tempfile()
-        Puppet.type(:host).path = hostfile
-
         hosts = []
         names = []
         3.times {
             h = mkhost()
-            #h[:ensure] = :present
-            #h.retrieve
             hosts << h
             names << h.name
         }
@@ -177,20 +147,18 @@ class TestHost < Test::Unit::TestCase
         hosts.clear
         Puppet.type(:host).clear
         newhost = mkhost()
-        #newhost[:ensure] = :present
         names << newhost.name
         assert_apply(newhost)
-        Puppet.type(:host).clear
         # Verify we can retrieve that info
         assert_nothing_raised("Could not retrieve after second write") {
             newhost.retrieve
         }
 
+        text = newhost.provider.class.fileobj.read
+
         # And verify that we have data for everything
         names.each { |name|
-            host = Puppet.type(:host)[name]
-            assert(host)
-            assert(host[:ip])
+            assert(text.include?(name), "Host is not in file")
         }
     end
 end

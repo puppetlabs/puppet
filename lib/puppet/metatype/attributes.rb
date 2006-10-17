@@ -1,10 +1,7 @@
 require 'puppet'
 require 'puppet/type'
 
-# see the bottom of the file for the rest of the inclusions
-
 class Puppet::Type
-
     class << self
         include Puppet::Util::ClassGen
         attr_reader :states
@@ -268,6 +265,10 @@ class Puppet::Type
             @states.unshift s
         else
             @states << s
+        end
+
+        if options[:event]
+            s.event = options[:event]
         end
 
 #        define_method(name) do
@@ -676,6 +677,19 @@ class Puppet::Type
             end
         }
 
+    end
+
+    # Convert our object to a hash.  This just includes states.
+    def to_hash
+        rethash = {}
+    
+        [@parameters, @metaparams, @states].each do |hash|
+            hash.each do |name, obj|
+                rethash[name] = obj.value
+            end
+        end
+
+        rethash
     end
 
     # Meta-parameter methods:  These methods deal with the results

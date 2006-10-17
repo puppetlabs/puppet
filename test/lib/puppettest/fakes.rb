@@ -61,6 +61,16 @@ module PuppetTest
             @should[param]
         end
 
+        def to_hash
+            hash = @params.dup
+            [@is, @should].each do |h|
+                h.each do |p, v|
+                    hash[p] = v
+                end
+            end
+            hash
+        end
+
         def name
             self[:name]
         end

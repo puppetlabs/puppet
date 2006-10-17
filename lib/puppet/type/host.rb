@@ -1,13 +1,9 @@
-require 'etc'
-require 'facter'
 require 'puppet/type/parsedtype'
-require 'puppet/type/state'
 
 module Puppet
     newtype(:host, Puppet::Type::ParsedType) do
-
         newstate(:ip) do
-            desc "The host's IP address. (ipv4 or ipv6)"
+            desc "The host's IP address."
         end
 
         newstate(:alias) do
@@ -16,6 +12,19 @@ module Puppet
                 as one of the metaparams; using this state to set aliases will
                 make those aliases available in your Puppet scripts and also on
                 disk."
+
+            # Make sure our "is" value is always an array.
+            def is
+                current = super
+                unless current.is_a? Array
+                    current = [current]
+                end
+                current
+            end
+
+            def is_to_s
+                self.is.join(" ")
+            end
 
             # We have to override the feeding mechanism; it might be nil or 
             # white-space separated
@@ -75,69 +84,6 @@ module Puppet
         @doc = "Installs and manages host entries.  For most systems, these
             entries will just be in /etc/hosts, but some systems (notably OS X)
             will have different solutions."
-
-        @instances = []
-
-        @path = "/etc/hosts"
-        @fields = [:ip, :name, :alias]
-
-        @filetype = Puppet::FileType.filetype(:flat)
-
-        # Parse a host file
-        #
-        # This method also stores existing comments, and it stores all host
-        # jobs in order, mostly so that comments are retained in the order
-        # they were written and in proximity to the same jobs.
-        def self.parse(text)
-            count = 0
-            hash = {}
-            text.chomp.split("\n").each { |line|
-                case line
-                when /^#/, /^\s*$/:
-                    # add comments and blank lines to the list as they are
-                    @instances << line 
-                else
-                    if line.sub!(/^(\S+)\s+(\S+)\s*/, '')
-                        hash[:ip] = $1
-                        hash[:name] = $2
-
-                        unless line == ""
-                            line.sub!(/\s*/, '')
-                            line.sub!(/^([^#]+)\s*/) do |value|
-                                aliases = $1
-                                unless aliases =~ /^\s*$/
-                                    hash[:alias] = aliases
-                                end
-
-                                ""
-                            end
-                        end
-                    else
-                        raise Puppet::Error, "Could not match '%s'" % line
-                    end
-
-                    if hash[:alias] == ""
-                        hash.delete(:alias)
-                    end
-
-                    hash2obj(hash)
-
-                    hash.clear
-                    count += 1
-                end
-            }
-        end
-
-        # Convert the current object into a host-style string.
-        def to_record
-            str = "%s\t%s" % [self.state(:ip).value, self[:name]]
-
-            if value = self.value(:alias)
-                str += "\t%s" % value.join("\t")
-            end
-
-            str
-        end
     end
 end
 
