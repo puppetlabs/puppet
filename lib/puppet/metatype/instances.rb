@@ -24,9 +24,9 @@ class Puppet::Type
             raise Puppet::DevError, "must pass a Puppet::Type object"
         end
 
-        if exobj = @objects.has_key?(name) and self.isomorphic?
+        if exobj = @objects[name] and self.isomorphic?
             msg = "Object '%s[%s]' already exists" %
-                [name, newobj.class.name]
+                [newobj.class.name, name]
 
             if exobj.file and exobj.line
                 msg += ("in file %s at line %s" %
@@ -37,6 +37,7 @@ class Puppet::Type
                     [object.file, object.line])
             end
             error = Puppet::Error.new(msg)
+            raise error
         else
             #Puppet.info("adding %s of type %s to class list" %
             #    [name,object.class])

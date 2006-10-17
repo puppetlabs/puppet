@@ -137,16 +137,25 @@ class Server
                 rescue Puppet::Error => detail
                     #Puppet.warning obj.inspect
                     #Puppet.warning args.inspect
+                    if Puppet[:trace]
+                        puts detail.backtrace
+                    end
                     Puppet.err detail.to_s
-                    raise XMLRPC::FaultException.new(
+                    error = XMLRPC::FaultException.new(
                         1, detail.to_s
                     )
+                    error.set_backtrace = detail.backtrace
+                    raise error
                 rescue => detail
                     #Puppet.warning obj.inspect
                     #Puppet.warning args.inspect
-                    puts detail.inspect
+                    if Puppet[:trace]
+                        puts detail.backtrace
+                    end
                     Puppet.err "Could not call: %s" % detail.to_s
-                    raise XMLRPC::FaultException.new(1, detail.to_s)
+                    error = XMLRPC::FaultException.new(1, detail.to_s)
+                    error.set_backtrace detail.backtrace
+                    raise error
                 end
             }
         end

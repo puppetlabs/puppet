@@ -784,6 +784,20 @@ end
             assert(hash[param], "Hash did not include %s" % param)
         end
     end
+
+    # Make sure that classes behave like hashes.
+    def test_class_hash_behaviour
+        path = tempfile()
+
+        filetype = Puppet::Type.type(:file)
+        one = Puppet::Type.newfile :path => path
+
+        assert_equal(one, filetype[path], "Did not get file back")
+
+        assert_raise(Puppet::Error) do
+            filetype[path] = one
+        end
+    end
 end
 
 # $Id$
