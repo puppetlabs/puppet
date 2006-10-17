@@ -1,4 +1,4 @@
-module PuppetTest::Parsing
+module PuppetTest::FileParsing
     # Run an isomorphism test on our parsing process.
     def fakedataparse(file)
         @provider.path = file

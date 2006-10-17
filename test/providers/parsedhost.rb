@@ -5,12 +5,12 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'etc'
 require 'puppet/type'
 require 'puppettest'
-require 'puppettest/parsing'
+require 'puppettest/fileparsing'
 require 'test/unit'
 
 class TestParsedHostProvider < Test::Unit::TestCase
 	include PuppetTest
-	include PuppetTest::Parsing
+	include PuppetTest::FileParsing
 
     def setup
         super
