@@ -20,7 +20,11 @@ module Puppet::Util::Docs
             self.send(m)
         }.join("  ")
 
-        @doc + extra
+        if defined? @doc and @doc
+            @doc + extra
+        else
+            extra
+        end
     end
 end
 
