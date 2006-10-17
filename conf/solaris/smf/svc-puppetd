@@ -10,7 +10,7 @@
 prefix=/opt/csw
 exec_prefix=/opt/csw
 sysconfdir=/opt/csw/etc
-sbindir=/opt/csw/sbin
+sbindir=/opt/csw/bin
 
 pidfile=/var/puppet/run/puppetd.pid
 
