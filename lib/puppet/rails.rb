@@ -94,9 +94,21 @@ module Puppet::Rails
         end
 
         if Puppet[:dbadapter] == "sqlite3" and ! FileTest.exists?(Puppet[:dblocation])
-            require 'puppet/rails/database'
+
+            dbdir = nil
+            $:.each { |d|
+                tmp = File.join(d, "puppet/rails/database")
+                if FileTest.directory?(tmp)
+                    dbdir = tmp
+                end
+            }
+
+            unless dbdir
+                raise Puppet::Error, "Could not find Puppet::Rails database dir"
+            end
+
             begin
-                Puppet::Rails::Database.up
+                ActiveRecord::Migrator.migrate(dbdir)
             rescue => detail
                 if Puppet[:trace]
                     puts detail.backtrace

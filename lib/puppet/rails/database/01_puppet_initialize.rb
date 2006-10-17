@@ -1,4 +1,4 @@
-class Puppet::Rails::Database < ActiveRecord::Migration
+class PuppetInitialize < ActiveRecord::Migration
     require 'sqlite3'
 
     def self.up
