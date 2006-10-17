@@ -3,6 +3,7 @@ require 'puppettest'
 module PuppetTest
     # A baseclass for the faketypes.
     class FakeModel
+        include Puppet::Util
         class << self
             attr_accessor :name
             @name = :fakemodel
@@ -29,7 +30,8 @@ module PuppetTest
         end
 
         def []=(param, value)
-            unless @realmodel.attrtype(param)
+            param = symbolize(param)
+            unless @realmodel.validattr?(param)
                 raise Puppet::DevError, "Invalid attribute %s for %s" %
                     [param, @realmodel.name]
             end
@@ -46,7 +48,7 @@ module PuppetTest
             @is = {}
             @should = {}
             @params = {}
-            self[:name] = name
+            self[@realmodel.namevar] = name
         end
 
         def inspect
@@ -121,6 +123,29 @@ module PuppetTest
         end
     end
 
+    class FakeParsedProvider < FakeProvider
+        def hash
+            ret = {}
+            instance_variables.each do |v|
+                v = v.sub("@", '')
+                if val = self.send(v)
+                    ret[v.intern] = val
+                end
+            end
+
+            return ret
+        end 
+        
+        def store(hash)
+            hash.each do |n, v|
+                method = n.to_s + "="
+                if respond_to? method
+                    send(method, v)
+                end
+            end
+        end
+    end
+
     @@fakemodels = {}
     @@fakeproviders = {}
 
@@ -132,7 +157,6 @@ module PuppetTest
         end
 
         obj = @@fakemodels[type].new(name)
-        obj[:name] = name
         options.each do |name, val|
             obj[name] = val
         end

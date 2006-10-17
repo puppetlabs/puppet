@@ -167,7 +167,7 @@ class Puppet::Type
             provider.suitable?
         }.collect { |name, provider|
             provider
-        }
+        }.reject { |p| p.name == :fake } # For testing
     end
 
     def provider=(name)

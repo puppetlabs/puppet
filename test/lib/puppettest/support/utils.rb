@@ -142,6 +142,19 @@ module PuppetTest
 
         return comp
     end
+    
+    def setme
+        # retrieve the user name
+        id = %x{id}.chomp 
+        if id =~ /uid=\d+\(([^\)]+)\)/
+            @me = $1
+        else
+            puts id
+        end 
+        unless defined? @me
+            raise "Could not retrieve user name; 'id' did not work"
+        end
+    end
 end
 
 # $Id$

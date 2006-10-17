@@ -304,6 +304,7 @@ class Puppet::Type
 
     def self.validattr?(name)
         name = symbolize(name)
+        return true if name == :name
         @validattrs ||= {}
 
         unless @validattrs.include?(name)

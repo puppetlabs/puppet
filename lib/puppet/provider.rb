@@ -7,6 +7,7 @@ class Puppet::Provider
     class << self
         # Include the util module so we have access to things like 'binary'
         include Puppet::Util, Puppet::Util::Docs
+        include Puppet::Util::Logging
         attr_accessor :name, :model
         attr_writer :doc
     end
@@ -127,15 +128,18 @@ class Puppet::Provider
             when :exists:
                 values.each do |value|
                     unless value and FileTest.exists? value
+                        debug "Not suitable: missing %s" % value
                         return false
                     end
                 end
             when :true:
                 values.each do |v|
+                    debug "Not suitable: false value"
                     return false unless v
                 end
             when :false:
                 values.each do |v|
+                    debug "Not suitable: true value"
                     return false if v
                 end
             else # Just delegate everything else to facter
@@ -145,6 +149,7 @@ class Puppet::Provider
                     found = values.find do |v|
                         result == v.to_s.downcase.intern
                     end
+                    debug "Not suitable: %s not in %s" [check, values]
                     return false unless found
                 else
                     return false
@@ -153,6 +158,12 @@ class Puppet::Provider
         end
 
         return true
+    end
+
+    def self.to_s
+        unless defined? @str
+            @str = "%s provider %s" % [@model.name, self.name]
+        end
     end
 
     dochook(:defaults) do
