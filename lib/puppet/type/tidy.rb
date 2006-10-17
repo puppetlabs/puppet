@@ -5,7 +5,9 @@ require 'puppet/type/pfile'
 
 module Puppet
     newtype(:tidy, Puppet.type(:file)) do
-        @doc = "Remove unwanted files based on specific criteria."
+        @doc = "Remove unwanted files based on specific criteria.  Multiple
+            criteria or OR'd together, so a file that is too large but is not
+            old enough will still get tidied."
 
         newparam(:path) do
             desc "The path to the file or directory to manage.  Must be fully
@@ -17,22 +19,41 @@ module Puppet
 
         newparam(:age) do
             desc "Tidy files whose age is equal to or greater than
-                the specified number of days."
+                the specified number of days.  You can choose seconds, minutes,
+                hours, days, or weeks by specifying the first letter of any
+                of those words (e.g., '1w')."
+
+            @@ageconvertors = {
+                :s => 1,
+                :m => 60
+            }
+
+            @@ageconvertors[:h] = @@ageconvertors[:m] * 60
+            @@ageconvertors[:d] = @@ageconvertors[:h] * 24
+            @@ageconvertors[:w] = @@ageconvertors[:d] * 7
+
+            def convert(unit, multi)
+                if num = @@ageconvertors[unit]
+                    return num * multi
+                else
+                    self.fail "Invalid age unit '%s'" % unit
+                end
+            end
 
             munge do |age|
+                unit = multi = nil
                 case age
-                when /^[0-9]+$/, /^[0-9]+[dD]/:
-                    Integer(age.gsub(/[^0-9]+/,'')) *
-                        60 * 60 * 24
-                when /^[0-9]+$/, /^[0-9]+[hH]/:
-                    Integer(age.gsub(/[^0-9]+/,'')) * 60 * 60
-                when /^[0-9]+[mM]/:
-                    Integer(age.gsub(/[^0-9]+/,'')) * 60
-                when /^[0-9]+[sS]/:
-                    Integer(age.gsub(/[^0-9]+/,''))
+                when /^([0-9]+)(\w)\w*$/:
+                    multi = Integer($1)
+                    unit = $2.downcase.intern
+                when /^([0-9]+)$/:
+                    multi = Integer($1)
+                    unit = :d
                 else
                     self.fail "Invalid tidy age %s" % age
                 end
+
+                convert(unit, multi)
             end
         end
 
@@ -42,38 +63,46 @@ module Puppet
                 *b*, *k*, and *m* can be appended to specify *bytes*, *kilobytes*,
                 and *megabytes*, respectively.  Only the first character is
                 significant, so the full word can also be used."
+
+            @@sizeconvertors = {
+                :b => 0,
+                :k => 1,
+                :m => 2,
+                :g => 3
+            }
+
+            def convert(unit, multi)
+                if num = @@sizeconvertors[unit]
+                    result = multi
+                    num.times do result *= 1024 end
+                    return result
+                else
+                    self.fail "Invalid size unit '%s'" % unit
+                end
+            end
             
             munge do |size|
-                if FileTest.directory?(@parent[:path])
-                    # don't do size comparisons for directories
-                    return
-                end
                 case size
-                when /^[0-9]+$/, /^[0-9]+[kK]/:
-                    Integer(size.gsub(/[^0-9]+/,'')) * 1024
-                when /^[0-9]+[bB]/:
-                    Integer(size.gsub(/[^0-9]+/,''))
-                when /^[0-9]+[mM]/:
-                    Integer(size.gsub(/[^0-9]+/,'')) *
-                        1024 * 1024
+                when /^([0-9]+)(\w)\w*$/:
+                    multi = Integer($1)
+                    unit = $2.downcase.intern
+                when /^([0-9]+)$/:
+                    multi = Integer($1)
+                    unit = :k
                 else
-                    self.fail "Invalid tidy size %s" % size
+                    self.fail "Invalid tidy size %s" % age
                 end
+
+                convert(unit, multi)
             end
         end
 
         newparam(:type) do
-            desc "Set the mechanism for determining age.
-            **atime**/*mtime*/*ctime*."
+            desc "Set the mechanism for determining age."
             
-            munge do |type|
-                case type
-                when "atime", "mtime", "ctime":
-                    type.intern
-                else
-                    self.fail "Invalid tidy type %s" % type
-                end
-            end
+            newvalues(:atime, :mtime, :ctime)
+
+            defaultto :atime
         end
 
         newparam(:recurse) do
@@ -83,7 +112,9 @@ module Puppet
 
         newparam(:rmdirs) do
             desc "Tidy directories in addition to files; that is, remove
-                directories whose age is older than the specified criteria."
+                directories whose age is older than the specified criteria.
+                This will only remove empty directories, so all contained
+                files must also be tidied before a directory gets removed."
         end
 
         newstate(:tidyup) do
@@ -100,7 +131,44 @@ module Puppet
                     type = @parent[:type] || :atime
                 end
                 
-                return Integer(Time.now - stat.send(type))
+                #return Integer(Time.now - stat.send(type))
+                return stat.send(type).to_i
+            end
+
+            def change_to_s
+                start = "Tidying"
+                unless insync_age?
+                    start += ", older than %s seconds" % @parent[:age]
+                end
+                unless insync_size?
+                    start += ", larger than %s bytes" % @parent[:size]
+                end
+
+                start
+            end
+
+            def insync_age?
+                if num = @parent[:age] and @is[0]
+                    if (Time.now.to_i - @is[0]) > num
+                        return false
+                    end
+                end
+
+                true
+            end
+
+            def insync_size?
+                if num = @parent[:size] and @is[1]
+                    if @is[1] > num
+                        return false
+                    end
+                end
+
+                true
+            end
+
+            def insync?
+                insync_age? and insync_size?
             end
 
             def retrieve
@@ -143,7 +211,7 @@ module Puppet
                 when "file":
                     @parent.handlebackup(file)
                     File.unlink(file)
-                when "symlink":     File.unlink(file)
+                when "link":     File.unlink(file)
                 else
                     self.fail "Cannot tidy files of type %s" %
                         File.lstat(file).ftype
