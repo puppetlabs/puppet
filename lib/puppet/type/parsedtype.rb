@@ -165,7 +165,7 @@ module Puppet
         def exists?
             h = self.retrieve
 
-            if h[:ensure] == :absent
+            if h.nil? or h[:ensure] == :absent
                 return false
             else
                 return true
