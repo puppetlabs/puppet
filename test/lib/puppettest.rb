@@ -132,7 +132,7 @@ module PuppetTest
             @@tmpfilenum = 1
         end
 
-        f = File.join(self.tmpdir(), self.class.to_s + "_" + @method_name +
+        f = File.join(self.tmpdir(), self.class.to_s + "_" + @method_name.to_s +
                       @@tmpfilenum.to_s)
         @@tmpfiles << f
         return f

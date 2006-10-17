@@ -4,7 +4,8 @@ module PuppetTest::Reporttesting
         report = Puppet::Transaction::Report.new
 
         3.times { |i|
-            log = Puppet.info("Report test message %s" % i)
+            # We have to use warning so that the logs always happen
+            log = Puppet.warning("Report test message %s" % i)
             log.tags = %w{a list of tags}
             log.tags << "tag%s" % i
 

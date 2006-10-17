@@ -8,12 +8,12 @@ require 'puppettest'
 require 'puppettest/railstesting'
 require 'puppettest/resourcetesting'
 
+# Don't do any tests w/out this class
+if defined? ActiveRecord::Base
 class TestRailsResource < Test::Unit::TestCase
     include PuppetTest::RailsTesting
     include PuppetTest::ResourceTesting
     
-    # Don't do any tests w/out this class
-    if defined? ActiveRecord::Base
     # Create a resource param from a rails parameter
     def test_to_resource
         railsinit
@@ -54,9 +54,9 @@ class TestRailsResource < Test::Unit::TestCase
         assert_equal("/tmp/to_resource", res.title)
         assert_equal(source, res.source)
     end
-    else
-        $stderr.puts "Install Rails for Rails and Caching tests"
-    end
+end
+else
+    $stderr.puts "Install Rails for Rails and Caching tests"
 end
 
 # $Id$

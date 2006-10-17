@@ -6,8 +6,6 @@ require 'puppet'
 require 'puppet/log'
 require 'puppettest'
 
-# $Id$
-
 class TestLog < Test::Unit::TestCase
     include PuppetTest
 
@@ -239,8 +237,9 @@ class TestLog < Test::Unit::TestCase
 
     def test_autoflush
         file = tempfile
+        Puppet::Log.close(:console)
         Puppet::Log.newdestination(file)
-        Puppet.info "A test"
+        Puppet.warning "A test"
         assert(File.read(file) !~ /A test/,
             "File defualted to autoflush")
         Puppet::Log.flush
@@ -252,7 +251,7 @@ class TestLog < Test::Unit::TestCase
         Puppet[:autoflush] = true
         file = tempfile
         Puppet::Log.newdestination(file)
-        Puppet.info "A test"
+        Puppet.warning "A test"
         assert(File.read(file) =~ /A test/,
             "File did not autoflush")
         Puppet::Log.close(file)
@@ -261,8 +260,9 @@ class TestLog < Test::Unit::TestCase
     def test_reopen
         Puppet[:autoflush] = true
         file = tempfile
+        Puppet::Log.close(:console)
         Puppet::Log.newdestination(file)
-        Puppet.info "A test"
+        Puppet.warning "A test"
         assert(File.read(file) =~ /A test/,
             "File did not flush")
         # Rename the file 
@@ -270,15 +270,17 @@ class TestLog < Test::Unit::TestCase
         File.rename(file, newfile)
 
         # Send another log
-        Puppet.info "Another test"
+        Puppet.warning "Another test"
         assert(File.read(newfile) =~ /Another test/,
             "File did not rename")
 
         # Now reopen the log
         Puppet::Log.reopen
-        Puppet.info "Reopen test"
+        Puppet.warning "Reopen test"
         assert(File.read(file) =~ /Reopen test/,
             "File did not reopen")
         Puppet::Log.close(file)
     end
 end
+
+# $Id$

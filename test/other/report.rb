@@ -29,7 +29,7 @@ class TestReports < Test::Unit::TestCase
 
         assert(report.logs.include?(log), "Report did not get log message")
 
-        log = Puppet.info "This is a non-sourced message"
+        log = Puppet.warning "This is a non-sourced message"
 
         assert(! report.logs.include?(log), "Report got log message")
 
@@ -60,8 +60,8 @@ class TestReports < Test::Unit::TestCase
         # Create a bunch of log messages in an array.
         report = Puppet::Transaction::Report.new
 
-        10.times { |i|
-            log = Puppet.info("Report test message %s" % i)
+        3.times { |i|
+            log = Puppet.warning("Report test message %s" % i)
             log.tags = %w{a list of tags}
             log.tags << "tag%s" % i
 

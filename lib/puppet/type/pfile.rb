@@ -193,7 +193,8 @@ module Puppet
             autorequire(type) do
                 if @states.include?(state)
                     # The user/group states automatically converts to IDs
-                    val = @states[state].shouldorig[0]
+                    next unless should = @states[state].shouldorig
+                    val = should[0]
                     if val.is_a?(Integer) or val =~ /^\d+$/
                         nil
                     else
