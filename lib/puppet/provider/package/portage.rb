@@ -41,14 +41,14 @@ Puppet::Type.type(:package).provide :portage do
             # We must install a specific version
             package_name = "=#{@model[:category]}/#{@model[:name]}-#{@model.should( :ensure )}"
         end
-        command = "EMERGE_DEFAULT_OPTS=\"\" #{command(:emerge)} #{package_name}"
+        command = "#{command(:emerge)} #{package_name}"
 
         output = execute( command )
     end
 
     def uninstall
         package_name = "#{@model[:category]}/#{@model[:name]}"
-        command ="EMERGE_DEFAULT_OPTS=\"\" #{command(:emerge)} --unmerge #{package_name}"
+        command ="#{command(:emerge)} --unmerge #{package_name}"
         begin
             output = execute( command )
         rescue Puppet::ExecutionFailure => detail
