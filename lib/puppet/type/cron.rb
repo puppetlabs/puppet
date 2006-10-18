@@ -11,11 +11,75 @@ module Puppet
     # and is used to manage the job.
     newtype(:cron) do
 
+        # A stupid hack because Cron is the only parsed type that I haven't
+        # converted to using providers.  This whole stupid type needs to
+        # be rewritten.
+        class CronHackParam < Puppet::State::ParsedParam
+            # Normally this would retrieve the current value, but our state is not
+            # actually capable of doing so.
+            def retrieve
+                # If we've synced, then just copy the values over and return.
+                # This allows this state to behave like any other state.
+                if defined? @synced and @synced
+                    # by default, we only copy over the first value.
+                    @is = @synced
+                    @synced = false
+                    return
+                end
+
+                unless defined? @is and ! @is.nil?
+                    @is = :absent
+                end
+            end
+
+            # If the ensure state is out of sync, it will always be called
+            # first, so I don't need to worry about that.
+            def sync(nostore = false)
+                ebase = @parent.class.name.to_s
+
+                tail = nil
+                if self.class.name == :ensure
+                    # We're either creating or destroying the object
+                    if @is == :absent
+                        #@is = self.should
+                        tail = "created"
+
+                        # If we're creating it, then sync all of the other states
+                        # but tell them not to store (we'll store just once,
+                        # at the end).
+                        unless nostore
+                            @parent.eachstate { |state|
+                                next if state == self or state.name == :ensure
+                                state.sync(true)
+                            }
+                        end
+                    elsif self.should == :absent
+                        @parent.remove(true)
+                        tail = "deleted"
+                    end
+                else
+                    # We don't do the work here, it gets done in 'store'
+                    tail = "changed"
+                end
+                @synced = self.should
+
+                # This should really only be done once per run, rather than
+                # every time.  I guess we need some kind of 'flush' mechanism.
+                if nostore
+                    self.retrieve
+                else
+                    @parent.store
+                end
+                
+                return (ebase + "_" + tail).intern
+            end
+        end
+
         # A base class for all of the Cron parameters, since they all have
         # similar argument checking going on.  We're stealing the base class
         # from parsedtype, and we should probably subclass Cron from there,
         # but it was just too annoying to do.
-        class CronParam < Puppet::State::ParsedParam
+        class CronParam < CronHackParam
             class << self
                 attr_accessor :boundaries, :default
             end
@@ -189,7 +253,7 @@ module Puppet
             end
         end
 
-        newstate(:special, :parent => Puppet::State::ParsedParam) do
+        newstate(:special, :parent => CronHackParam) do
             desc "Special schedules only supported on FreeBSD."
 
             def specials
@@ -242,7 +306,7 @@ module Puppet
                 command.  Optional; if specified, must be between 1 and 31."
         end
 
-        newstate(:environment, :parent => Puppet::State::ParsedParam) do
+        newstate(:environment, :parent => CronHackParam) do
             desc "Any environment settings associated with this cron job.  They
                 will be stored between the header and the job in the crontab.  There
                 can be no guarantees that other, earlier settings will not also
