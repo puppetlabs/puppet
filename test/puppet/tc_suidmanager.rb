@@ -45,8 +45,6 @@ class TestSUIDManager < Test::Unit::TestCase
                 Puppet::SUIDManager.euid = 0
                 Puppet::SUIDManager.egid = 0
             end
-
-            assert_uid_gid(user.uid, user.gid, tempfile)
         end
     end
 
@@ -106,4 +104,4 @@ class TestSUIDManager < Test::Unit::TestCase
     end
 end
 
-# $Id:$
+# $Id$

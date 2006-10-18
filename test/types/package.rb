@@ -349,7 +349,7 @@ class TestPackages < Test::Unit::TestCase
 
             if pkg.insync?
                 Puppet.notice "Test package is already installed; please remove it"
-                next
+                return
             end
 
             # The file installed, and the receipt

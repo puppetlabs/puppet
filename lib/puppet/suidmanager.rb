@@ -11,7 +11,7 @@ module Puppet
                 # NOTE: 'method' is closed here.
                 newmethod = method
 
-                if platform == "Darwin"
+                if platform == "Darwin" and (method == :uid= or method == :gid=)
                     Puppet::Util::Warnings.warnonce "Cannot change real UID on Darwin"
                     newmethod = ("e" + method.to_s).intern
                 end
@@ -55,8 +55,8 @@ module Puppet
 
             return yield
         ensure
-            self.egid = old_egid if old_egid
             self.euid = old_euid if old_euid
+            self.egid = old_egid if old_egid
         end
 
         module_function :asuser
@@ -68,7 +68,7 @@ module Puppet
                 # capture both stdout and stderr unless we are on ruby < 1.8.4
                 # NOTE: this would be much better facilitated with a specialized popen()
                 #       (see the test suite for more details.)
-                if (Facter['rubyversion'].value <=> "1.8.4") < 0
+                if new_uid and (Facter['rubyversion'].value <=> "1.8.4") < 0
                     Puppet::Util::Warnings.warnonce "Cannot capture STDERR when running as another user on Ruby < 1.8.4"
                     output = %x{#{command}}
                 else

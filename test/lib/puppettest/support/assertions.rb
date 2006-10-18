@@ -22,8 +22,8 @@ module PuppetTest
         f = File.open(filename, "r")
 
         a = f.readlines 
-        assert_equal(uid, a[0].chomp.to_i)
-        assert_equal(gid, a[1].chomp.to_i)
+        assert_equal(uid, a[0].chomp.to_i, "UID was incorrect")
+        assert_equal(gid, a[1].chomp.to_i, "GID was incorrect")
         FileUtils.rm(filename)
     end
 
