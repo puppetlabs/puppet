@@ -162,6 +162,8 @@ class Transaction
         # Start logging.
         Puppet::Log.newdestination(@report)
 
+        prefetch()
+
         begin
             allevents = @objects.collect { |child|
                 events = []
@@ -248,6 +250,22 @@ class Transaction
         end
 
         @report = Report.new
+    end
+
+    # Prefetch any providers that support it.  We don't support prefetching
+    # types, just providers.
+    def prefetch
+        @objects.collect { |obj|
+            if pro = obj.provider
+                pro.class
+            else
+                nil
+            end
+        }.reject { |o| o.nil? }.uniq.each do |klass|
+            if klass.respond_to?(:prefetch)
+                klass.prefetch
+            end
+        end
     end
 
     # Generate a transaction report.

@@ -52,6 +52,44 @@ class TestTransactions < Test::Unit::TestCase
         end
     end
 
+    def test_prefetch
+        # Create a type just for testing prefetch
+        name = :prefetchtesting
+        $prefetched = false
+        type = Puppet::Type.newtype(name) do
+            newparam(:name) {}
+        end
+
+        # Now create a provider
+        type.provide(:prefetch) do
+            def self.prefetch
+                $prefetched = true
+            end
+        end
+
+        # Now create an instance
+        inst = type.create :name => "yay"
+
+
+        # Create a transaction
+        trans = Puppet::Transaction.new([inst])
+
+        # Make sure prefetch works
+        assert_nothing_raised do
+            trans.prefetch
+        end
+
+        assert_equal(true, $prefetched, "type prefetch was not called")
+
+        # Now make sure it gets called from within evaluate()
+        $prefetched = false
+        assert_nothing_raised do
+            trans.evaluate
+        end
+
+        assert_equal(true, $prefetched, "evaluate did not call prefetch")
+    end
+
     def test_refreshes_generate_events
         path = tempfile()
         firstpath = tempfile()
