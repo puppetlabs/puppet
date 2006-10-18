@@ -263,6 +263,7 @@ class TestTransactions < Test::Unit::TestCase
         states = {}
         check = [:group,:mode]
         file[:check] = check
+        file[:group] = @groups[0]
 
         @@tmpfiles << execfile
 
@@ -284,7 +285,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:mode] = "755"
         }
 
-        trans = assert_events([:file_changed, :triggered], component)
+        trans = assert_events([:file_changed, :file_changed, :triggered], component)
 
         assert(FileTest.exists?(execfile), "Execfile does not exist")
         File.unlink(execfile)
@@ -305,6 +306,8 @@ class TestTransactions < Test::Unit::TestCase
         states = {}
         check = [:group,:mode]
         file[:check] = check
+        file[:group] = @groups[0]
+        assert_apply(file)
 
         fcomp = newcomp("file",file)
         ecomp = newcomp("exec",exec)

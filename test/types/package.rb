@@ -353,8 +353,10 @@ class TestPackages < Test::Unit::TestCase
             end
 
             # The file installed, and the receipt
-            @@tmpfiles << "/tmp/file"
-            @@tmpfiles << "/Library/Receipts/pkgtesting.pkg"
+            cleanup do
+                FileUtils.rmtree("/tmp/file")
+                FileUtils.rmtree("/Library/Receipts/pkgtesting.pkg")
+            end
 
             assert_events([:package_installed], pkg, "package")
 
