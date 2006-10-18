@@ -1,3 +1,16 @@
+0.20.0
+    Significantly refactored the parser.  Resource overrides now consistently
+    work anywhere in a class hierarchy.
+
+    The language was also modified somewhat.  The previous export/collect syntax
+    is now used for handling virtual objects, and export/collect (which is still
+    experimental) now uses double sigils (@@ and <<| |>>).
+
+    Resource references (e.g., File["/etc/passwd"]) now have to be capitalized,
+    in fitting in with capitalizing type operations.
+
+    As usual, lots of other smaller fixes, but most of the work was in the language.
+
 0.19.3
     Fixing a bug in server/master.rb that causes the hostname
     not to be available in locally-executed manifests.
