@@ -176,8 +176,10 @@ class Puppet::Parser::Interpreter
         failonleftovers(scope)
 
         # Now perform the collections
-        scope.collections.each do |coll|
-            coll.evaluate
+        exceptwrap do
+            scope.collections.each do |coll|
+                coll.evaluate
+            end
         end
 
         # Now finish everything.  This recursively calls finish on the

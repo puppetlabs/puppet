@@ -1,7 +1,7 @@
 # An object that collects stored objects from the central cache and returns
 # them to the current host, yo.
 class Puppet::Parser::Collector
-    attr_accessor :type, :scope, :query, :form
+    attr_accessor :type, :scope, :vquery, :rquery, :form
 
     # Collect exported objects.
     def collect_exported
@@ -75,10 +75,11 @@ class Puppet::Parser::Collector
         objects
     end
 
-    def initialize(scope, type, query, form)
+    def initialize(scope, type, equery, vquery, form)
         @scope = scope
         @type = type
-        @query = query
+        @equery = equery
+        @vquery = vquery
         @form = form
         @tests = []
     end
@@ -86,8 +87,8 @@ class Puppet::Parser::Collector
     # Does the resource match our tests?  We don't yet support tests,
     # so it's always true at the moment.
     def match?(resource)
-        if self.query
-            return self.query.call(resource)
+        if self.vquery
+            return self.vquery.call(resource)
         else
             return true
         end

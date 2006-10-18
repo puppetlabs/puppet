@@ -13,12 +13,12 @@ class Collection < AST::Branch
         scope = hash[:scope]
 
         if self.query
-            q = self.query.safeevaluate :scope => scope
+            str, code = self.query.safeevaluate :scope => scope
         else
-            q = nil
+            str = code = nil
         end
 
-        newcoll = Puppet::Parser::Collector.new(scope, @type, q, self.form)
+        newcoll = Puppet::Parser::Collector.new(scope, @type, str, code, self.form)
 
         scope.newcollection(newcoll)
 

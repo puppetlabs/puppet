@@ -189,6 +189,11 @@ end
 
         assert(! obj.validattr?(:argument),
             "Old namevar is still valid")
+
+        # Now try it again, to make sure we don't have any objects lying around
+        assert_nothing_raised {
+            Puppet::Client::MasterClient.getplugins
+        }
     end
 
     def test_getfacts

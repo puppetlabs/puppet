@@ -35,8 +35,13 @@ class TestCollector < Test::Unit::TestCase
 
         # Now make a collector
         coll = nil
+
+        # Make a fake query
+        code = proc do |res|
+            true
+        end
         assert_nothing_raised do
-            coll = Puppet::Parser::Collector.new(@scope, "file", nil, :virtual)
+            coll = Puppet::Parser::Collector.new(@scope, "file", nil, code, :virtual)
         end
 
         # Set it in our scope
@@ -67,7 +72,7 @@ class TestCollector < Test::Unit::TestCase
         # Now make a new collector of a different type and make sure it
         # finds nothing.
         assert_nothing_raised do
-            coll = Puppet::Parser::Collector.new(@scope, "exec", nil, :virtual)
+            coll = Puppet::Parser::Collector.new(@scope, "exec", nil, nil, :virtual)
         end
 
         # Remark this as virtual
@@ -99,7 +104,7 @@ class TestCollector < Test::Unit::TestCase
         # Now make a collector
         coll = nil
         assert_nothing_raised do
-            coll = Puppet::Parser::Collector.new(@scope, "file", nil, :exported)
+            coll = Puppet::Parser::Collector.new(@scope, "file", nil, nil, :exported)
         end
 
         # Set it in our scope
@@ -133,7 +138,7 @@ class TestCollector < Test::Unit::TestCase
         # Now make a new collector of a different type and make sure it
         # finds nothing.
         assert_nothing_raised do
-            coll = Puppet::Parser::Collector.new(@scope, "exec", nil, :exported)
+            coll = Puppet::Parser::Collector.new(@scope, "exec", nil, nil, :exported)
         end
 
         # Remark this as virtual
@@ -165,7 +170,7 @@ class TestCollector < Test::Unit::TestCase
         # Now make a collector
         coll = nil
         assert_nothing_raised do
-            coll = Puppet::Parser::Collector.new(@scope, "file", nil, :exported)
+            coll = Puppet::Parser::Collector.new(@scope, "file", nil, nil, :exported)
         end
 
         # And try to collect the virtual resources.
@@ -191,7 +196,7 @@ class TestCollector < Test::Unit::TestCase
         # Now make a collector
         coll = nil
         assert_nothing_raised do
-            coll = Puppet::Parser::Collector.new(@scope, "file", nil, :exported)
+            coll = Puppet::Parser::Collector.new(@scope, "file", nil, nil, :exported)
         end
 
         # And make sure we get nada back

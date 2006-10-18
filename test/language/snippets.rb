@@ -473,6 +473,11 @@ class TestSnippets < Test::Unit::TestCase
         assert_equal(0755, filemode(path), "sub1 did not override mode")
     end
 
+    def snippet_collection(trans)
+        assert(FileTest.exists?("/tmp/colltest1"), "Did not collect file")
+        assert(! FileTest.exists?("/tmp/colltest2"), "Incorrectly collected file")
+    end
+
     def disabled_snippet_dirchmod(trans)
         dirs = %w{a b}.collect { |letter|
             "/tmp/dirchmodtest%s" % letter
