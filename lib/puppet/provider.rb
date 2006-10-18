@@ -149,7 +149,7 @@ class Puppet::Provider
                     found = values.find do |v|
                         result == v.to_s.downcase.intern
                     end
-                    debug "Not suitable: %s not in %s" [check, values]
+                    debug "Not suitable: %s not in %s" % [check, values]
                     return false unless found
                 else
                     return false
@@ -162,7 +162,11 @@ class Puppet::Provider
 
     def self.to_s
         unless defined? @str
-            @str = "%s provider %s" % [@model.name, self.name]
+            if self.model
+                @str = "%s provider %s" % [@model.name, self.name]
+            else
+                @str = "unattached provider %s" % [self.name]
+            end
         end
     end
 

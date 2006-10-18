@@ -28,37 +28,6 @@ module Puppet
             module_function method
         end
 
-        def run_and_capture(command, new_uid=self.euid, new_gid=self.egid)
-            output = nil
-
-            asuser(new_uid, new_gid) do
-                # capture both stdout and stderr unless we are on ruby < 1.8.4
-                # NOTE: this would be much better facilitated with a specialized popen()
-                #       (see the test suite for more details.)
-                if (Facter['rubyversion'].value <=> "1.8.4") < 0
-                    Puppet::Util::Warnings.warnonce "Cannot capture STDERR when running as another user on Ruby < 1.8.4"
-                    output = %x{#{command}}
-                else
-                    output = %x{#{command} 2>&1}
-                end
-            end
-
-            [output, $?.dup]
-        end
-
-        module_function :run_and_capture
-
-        def system(command, new_uid=self.euid, new_gid=self.egid)
-            status = nil
-            asuser(new_uid, new_gid) do
-                Kernel.system(command)
-                status = $?.dup
-            end
-            status
-        end
-        
-        module_function :system
-
         def asuser(new_euid=nil, new_egid=nil)
             # Unless we're root, don't do a damn thing.
             unless Process.uid == 0
@@ -91,6 +60,37 @@ module Puppet
         end
 
         module_function :asuser
+
+        def run_and_capture(command, new_uid=nil, new_gid=nil)
+            output = nil
+
+            asuser(new_uid, new_gid) do
+                # capture both stdout and stderr unless we are on ruby < 1.8.4
+                # NOTE: this would be much better facilitated with a specialized popen()
+                #       (see the test suite for more details.)
+                if (Facter['rubyversion'].value <=> "1.8.4") < 0
+                    Puppet::Util::Warnings.warnonce "Cannot capture STDERR when running as another user on Ruby < 1.8.4"
+                    output = %x{#{command}}
+                else
+                    output = %x{#{command} 2>&1}
+                end
+            end
+
+            [output, $?.dup]
+        end
+
+        module_function :run_and_capture
+
+        def system(command, new_uid=nil, new_gid=nil)
+            status = nil
+            asuser(new_uid, new_gid) do
+                Kernel.system(command)
+                status = $?.dup
+            end
+            status
+        end
+        
+        module_function :system
     end
 end
 

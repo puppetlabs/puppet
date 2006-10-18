@@ -1,6 +1,11 @@
 require 'puppet'
 require 'test/unit'
 
+# Yay; hackish but it works
+if ARGV.include?("-d")
+    Puppet.debug = true
+end
+
 module PuppetTest
     # Find the root of the Puppet tree; this is not the test directory, but
     # the parent of that dir.

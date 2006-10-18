@@ -20,10 +20,10 @@ class TestSUIDManager < Test::Unit::TestCase
     end
 
     def test_metaprogramming_function_additions
-        # NOTE: the way that we are dynamically generating the methods in SUIDManager for
-        # the UID/GID calls was causing problems due to the modification
-        # of a closure. Should the bug rear itself again, this test
-        # will fail.
+        # NOTE: the way that we are dynamically generating the methods in
+        # SUIDManager for the UID/GID calls was causing problems due to the
+        # modification of a closure. Should the bug rear itself again, this
+        # test will fail.
         assert_nothing_raised do
             Puppet::SUIDManager.uid
             Puppet::SUIDManager.uid
@@ -49,12 +49,14 @@ class TestSUIDManager < Test::Unit::TestCase
             assert_uid_gid(user.uid, user.gid, tempfile)
         end
     end
+
     def test_utiluid
         user = nonrootuser.name
         if @run
             assert_not_equal(nil, Puppet::Util.uid(user))
         end
     end
+
     def test_asuser
         if @run
             user = nonrootuser
@@ -62,20 +64,21 @@ class TestSUIDManager < Test::Unit::TestCase
 
             assert_nothing_raised do
                 Puppet::SUIDManager.asuser(user.uid, user.gid) do 
-                    uid = Puppet::SUIDManager.euid
-                    gid = Puppet::SUIDManager.egid
+                    uid = Process.euid
+                    gid = Process.egid
                 end
             end
             assert_equal(user.uid, uid)
             assert_equal(user.gid, gid)
         end
     end
+
     def test_system
         # NOTE: not sure what shells this will work on..
         if @run 
             user = nonrootuser
             status = Puppet::SUIDManager.system("exit $EUID", user.uid, user.gid)
-            assert_equal(status.exitstatus, user.uid)
+            assert_equal(user.uid, status.exitstatus)
         end
     end
 
@@ -87,8 +90,18 @@ class TestSUIDManager < Test::Unit::TestCase
             # works, we cannot just blindly echo to stderr. This little
             # hack gets around our problem, but the real problem is the
             # way that run_and_capture works.
-            output = Puppet::SUIDManager.run_and_capture("ruby -e '$stderr.puts \"foo\"'")[0].chomp
-            assert_equal(output, 'foo')
+            user = nil
+            uid = nil
+            if Puppet::SUIDManager.uid == 0
+                userobj = nonrootuser()
+                user = userobj.name
+                uid = userobj.uid
+            else
+                uid = Process.uid
+            end
+            cmd = "/bin/echo $EUID"
+            output = Puppet::SUIDManager.run_and_capture(cmd, uid)[0].chomp
+            assert_equal(uid.to_s, output)
         end
     end
 end

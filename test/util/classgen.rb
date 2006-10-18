@@ -120,7 +120,7 @@ class TestPuppetUtilClassGen < Test::Unit::TestCase
     end
 
     def test_initclass_include_and_extend
-        sub, klass = testclasses("attributes")
+        sub, klass = testclasses("include_and_extend")
 
         incl = Module.new do
             attr_accessor :included

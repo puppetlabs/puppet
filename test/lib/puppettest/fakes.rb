@@ -5,8 +5,12 @@ module PuppetTest
     class FakeModel
         include Puppet::Util
         class << self
-            attr_accessor :name
+            attr_accessor :name, :realmodel
             @name = :fakemodel
+        end
+
+        def self.namevar
+            @realmodel.namevar
         end
 
         def self.validstates
@@ -154,6 +158,10 @@ module PuppetTest
         unless @@fakemodels.include? type
             @@fakemodels[type] = Class.new(FakeModel)
             @@fakemodels[type].name = type
+
+            model = Puppet::Type.type(type)
+            raise("Could not find type %s" % type) unless model
+            @@fakemodels[type].realmodel = model
         end
 
         obj = @@fakemodels[type].new(name)

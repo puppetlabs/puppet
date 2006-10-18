@@ -3,11 +3,13 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
+require 'puppettest/fileparsing'
 require 'puppet'
 require 'facter'
 
 class TestParsedMounts < Test::Unit::TestCase
 	include PuppetTest
+	include PuppetTest::FileParsing
 
     def setup
         super

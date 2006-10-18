@@ -122,8 +122,9 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     def hash
         @instances = allinstances()
 
+        namevar = @model.class.namevar
         if @instances and h = @instances.find do |o|
-            o.is_a? Hash and o[:name] == @model[:name] 
+            o.is_a? Hash and o[namevar] == @model[namevar]
         end
             @me = h
         else
