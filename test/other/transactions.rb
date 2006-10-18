@@ -265,6 +265,8 @@ class TestTransactions < Test::Unit::TestCase
         file[:check] = check
         file[:group] = @groups[0]
 
+        assert_apply(file)
+
         @@tmpfiles << execfile
 
         component = newcomp("both",file,exec)
@@ -285,7 +287,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:mode] = "755"
         }
 
-        trans = assert_events([:file_changed, :file_changed, :triggered], component)
+        trans = assert_events([:file_changed, :triggered], component)
 
         assert(FileTest.exists?(execfile), "Execfile does not exist")
         File.unlink(execfile)

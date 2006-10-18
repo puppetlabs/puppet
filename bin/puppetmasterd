@@ -257,7 +257,7 @@ begin
     #server = Puppet::Server.new(:CA => ca)
     server = Puppet::Server.new(args)
 rescue => detail
-    if Puppet[:debug]
+    if Puppet[:trace]
         puts detail.backtrace
     end
     $stderr.puts detail

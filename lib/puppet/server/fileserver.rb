@@ -245,7 +245,7 @@ class Server
                             name = $1
                             if newmounts.include?(name)
                                 raise FileServerError, "%s is already mounted at %s" %
-                                    [newmounts[name], name]
+                                    [newmounts[name], name], count, @config.file
                             end
                             mount = Mount.new(name)
                             newmounts[name] = mount
@@ -267,8 +267,8 @@ class Server
                                         mount.info "allowing %s access" % val
                                         mount.allow(val)
                                     rescue AuthStoreError => detail
-                                        raise FileServerError, "%s at line %s of %s" %
-                                            [detail.to_s, count, @config]
+                                        raise FileServerError.new(detail.to_s,
+                                            count, @config.file)
                                     end
                                 }
                             when "deny":
@@ -277,16 +277,17 @@ class Server
                                         mount.info "denying %s access" % val
                                         mount.deny(val)
                                     rescue AuthStoreError => detail
-                                        raise FileServerError, "%s at line %s of %s" %
-                                            [detail.to_s, count, @config]
+                                        raise FileServerError.new(detail.to_s,
+                                            count, @config.file)
                                     end
                                 }
                             else
-                                raise FileServerError,
-                                    "Invalid argument '%s' at line %s" % [var, count]
+                                raise FileServerError.new("Invalid argument '%s'" % var,
+                                    count, @config.file)
                             end
                         else
-                            raise FileServerError, "Invalid line %s: %s" % [count, line]
+                            raise FileServerError.new("Invalid line '%s'" % line.chomp,
+                                count, @config.file)
                         end
                         count += 1
                     }

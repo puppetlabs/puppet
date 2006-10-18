@@ -87,7 +87,7 @@ Puppet::Server::Report.newreport(:tagmail) do
 
         # Let's fork for the sending of the email, since you never know what might
         # happen.
-        fork do
+        pid = fork do
             if Puppet[:smtpserver] != "none"
                 begin
                     Net::SMTP.start(Puppet[:smtpserver]) do |smtp|
@@ -128,6 +128,8 @@ Puppet::Server::Report.newreport(:tagmail) do
                 raise Puppet::Error, "SMTP server is unset and could not find sendmail"
             end
         end
+
+        Process.detach(pid)
     end
 end
 
