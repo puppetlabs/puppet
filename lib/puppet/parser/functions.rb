@@ -155,22 +155,14 @@ module Functions
         end.join("")
     end
 
+    # This is just syntactic sugar for a collection, although it will generally
+    # be a good bit faster.
     newfunction(:realize, :statement) do |vals|
+        coll = Puppet::Parser::Collector.new(self, :nomatter, nil, nil, :virtual)
         vals = [vals] unless vals.is_a?(Array)
-        vals.each do |val|
-            unless val.is_a?(Puppet::Parser::Resource::Reference)
-                raise Puppet::ParseError,
-                    "'realize' expects a resource reference; " +
-                    "e.g., File['/etc/passwd'], not %s" % val
-            end
+        coll.resources = vals
 
-            if resource = findresource(val.to_s)
-                resource.virtual = false
-            else
-                raise Puppet::ParseError, "Could not find virtual resource %s" %
-                    val.to_s
-            end
-        end
+        newcollection(coll)
     end
 end
 end

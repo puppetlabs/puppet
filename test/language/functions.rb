@@ -321,18 +321,36 @@ class TestLangFunctions < Test::Unit::TestCase
             @scope.function_realize(ref)
         end
 
+        # Make sure it created a collection
+        assert_equal(1, @scope.collections.length,
+            "Did not set collection")
+
+        assert_nothing_raised do
+            @scope.collections.each do |coll| coll.evaluate end
+        end
+        @scope.collections.clear
+
         # Now make sure the virtual resource is no longer virtual
         assert(! virtual.virtual?, "Did not make virtual resource real")
 
         # Make sure we puke on any resource that doesn't exist
-
         none = Puppet::Parser::Resource::Reference.new(
             :type => "file", :title => "/tmp/nosuchfile",
             :scope => @scope
         )
 
-        assert_raise(Puppet::ParseError) do
+        # The function works
+        assert_nothing_raised do
             @scope.function_realize(none)
+        end
+
+        # Make sure it created a collection
+        assert_equal(1, @scope.collections.length,
+            "Did not set collection")
+
+        # But the collection fails
+        assert_raise(Puppet::ParseError) do
+            @scope.collections.each do |coll| coll.evaluate end
         end
     end
 end

@@ -1,7 +1,7 @@
 # An object that collects stored objects from the central cache and returns
 # them to the current host, yo.
 class Puppet::Parser::Collector
-    attr_accessor :type, :scope, :vquery, :rquery, :form
+    attr_accessor :type, :scope, :vquery, :rquery, :form, :resources
 
     # Collect exported objects.
     def collect_exported
@@ -48,6 +48,31 @@ class Puppet::Parser::Collector
         return resources
     end
 
+    def collect_resources
+        unless @resources.is_a?(Array)
+            @resources = [@resources]
+        end
+        method = "collect_#{form.to_s}_resources"
+        send(method)
+    end
+
+    def collect_exported_resources
+        raise Puppet::ParseError,
+            "realize() is not yet implemented for exported resources"
+    end
+
+    def collect_virtual_resources
+        @resources.collect do |ref|
+            if res = @scope.findresource(ref.to_s)
+                res
+            else
+                raise Puppet::ParseError, "Could not find resource %s" % ref
+            end
+        end.each do |res|
+            res.virtual = false
+        end
+    end
+
     # Collect just virtual objects, from our local configuration.
     def collect_virtual(exported = false)
         if exported
@@ -63,6 +88,10 @@ class Puppet::Parser::Collector
     # Call the collection method, mark all of the returned objects as non-virtual,
     # and then delete this object from the list of collections to evaluate.
     def evaluate
+        if self.resources
+            return collect_resources
+        end
+
         method = "collect_#{@form.to_s}"
         objects = send(method).each do |obj|
             obj.virtual = false

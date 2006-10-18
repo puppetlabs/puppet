@@ -22,6 +22,42 @@ class TestCollector < Test::Unit::TestCase
         @interp, @scope, @source = mkclassframing
     end
 
+    # Test just collecting a specific resource.  This is used by the 'realize'
+    # function, and it's much faster than iterating over all of the resources.
+    def test_collect_resource
+        # Make a couple of virtual resources
+        one = mkresource(:type => "file", :title => "/tmp/virtual1",
+            :virtual => true, :params => {:owner => "root"})
+        two = mkresource(:type => "file", :title => "/tmp/virtual2",
+            :virtual => true, :params => {:owner => "root"})
+        @scope.setresource one
+        @scope.setresource two
+
+        # Now make a collector
+        coll = nil
+        assert_nothing_raised do
+            coll = Puppet::Parser::Collector.new(@scope, "file", nil, nil, :virtual)
+        end
+
+        # Now set the resource in the collector
+        assert_nothing_raised do 
+            coll.resources = one.ref
+        end
+
+        # Now run the collector
+        assert_nothing_raised do
+            coll.evaluate
+        end
+
+        # And make sure the resource is no longer virtual
+        assert(! one.virtual?,
+            "Resource is still virtual")
+
+        # But the other still is
+        assert(two.virtual?,
+            "Resource got realized")
+    end
+
     def test_virtual
         # Make a virtual resource
         virtual = mkresource(:type => "file", :title => "/tmp/virtual",
