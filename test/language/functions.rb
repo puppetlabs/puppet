@@ -7,9 +7,11 @@ require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppet/client'
 require 'puppettest'
+require 'puppettest/resourcetesting'
 
 class TestLangFunctions < Test::Unit::TestCase
     include PuppetTest::ParserTesting
+    include PuppetTest::ResourceTesting
     def test_functions
         assert_raise(Puppet::ParseError) do
             Puppet::Parser::AST::Function.new(
@@ -301,6 +303,37 @@ class TestLangFunctions < Test::Unit::TestCase
         assert(obj, "Did not autoload function")
         assert(Puppet::Parser::Scope.method_defined?(:function_autofunc),
             "Did not set function correctly")
+    end
+
+    def test_realize
+        @interp, @scope, @source = mkclassframing
+        # Make a virtual resource
+        virtual = mkresource(:type => "file", :title => "/tmp/virtual",
+            :virtual => true, :params => {:owner => "root"})
+        @scope.setresource virtual
+
+        ref = Puppet::Parser::Resource::Reference.new(
+            :type => "file", :title => "/tmp/virtual",
+            :scope => @scope
+        )
+        # Now call the realize function
+        assert_nothing_raised do
+            @scope.function_realize(ref)
+        end
+
+        # Now make sure the virtual resource is no longer virtual
+        assert(! virtual.virtual?, "Did not make virtual resource real")
+
+        # Make sure we puke on any resource that doesn't exist
+
+        none = Puppet::Parser::Resource::Reference.new(
+            :type => "file", :title => "/tmp/nosuchfile",
+            :scope => @scope
+        )
+
+        assert_raise(Puppet::ParseError) do
+            @scope.function_realize(none)
+        end
     end
 end
 

@@ -154,6 +154,24 @@ module Functions
             end
         end.join("")
     end
+
+    newfunction(:realize, :statement) do |vals|
+        vals = [vals] unless vals.is_a?(Array)
+        vals.each do |val|
+            unless val.is_a?(Puppet::Parser::Resource::Reference)
+                raise Puppet::ParseError,
+                    "'realize' expects a resource reference; " +
+                    "e.g., File['/etc/passwd'], not %s" % val
+            end
+
+            if resource = findresource(val.to_s)
+                resource.virtual = false
+            else
+                raise Puppet::ParseError, "Could not find virtual resource %s" %
+                    val.to_s
+            end
+        end
+    end
 end
 end
 

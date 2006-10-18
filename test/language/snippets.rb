@@ -478,6 +478,13 @@ class TestSnippets < Test::Unit::TestCase
         assert(! FileTest.exists?("/tmp/colltest2"), "Incorrectly collected file")
     end
 
+    def snippet_virtualresources(trans)
+        %w{1 2 3 4}.each do |num|
+            assert(FileTest.exists?("/tmp/virtualtest#{num}"),
+                "Did not collect file #{num}")
+        end
+    end
+
     def disabled_snippet_dirchmod(trans)
         dirs = %w{a b}.collect { |letter|
             "/tmp/dirchmodtest%s" % letter

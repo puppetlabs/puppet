@@ -62,20 +62,23 @@ statement:    resource
             | nodedef
             | resourceoverride
 
-fstatement:   NAME LPAREN namestrings RPAREN {
+fstatement:   NAME LPAREN funcvalues RPAREN {
     args = aryfy(val[2])
     result = ast AST::Function,
         :name => val[0],
         :arguments => args,
         :ftype => :statement
 }
-            | NAME namestrings {
+            | NAME funcvalues {
     args = aryfy(val[1])
     result = ast AST::Function,
         :name => val[0],
         :arguments => args,
         :ftype => :statement
 }
+
+funcvalues:       namestrings
+                | resourcerefs
 
 namestrings:       namestring
                 | namestrings COMMA namestring {
@@ -87,6 +90,17 @@ namestrings:       namestring
 namestring:        name
                 | variable
                 | quotedtext
+
+resourcerefs:     resourceref
+                | resourcerefs COMMA resourceref {
+    unless val[0].is_a?(AST::ASTArray)
+        val[0] = aryfy(val[0])
+    end
+
+    val[0].push(val[2])
+
+    result = val[0]
+}
 
 resource:       NAME LBRACE resourceinstances endsemi RBRACE {
     if val[0].instance_of?(AST::ASTArray)
