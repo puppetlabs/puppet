@@ -130,14 +130,6 @@ module Puppet
                 end
             end
 
-            def to_s
-                if self.ismetaparameter
-                    "Puppet::Type::" + @name.to_s.capitalize
-                else
-                    self.element.to_s + @name.to_s.capitalize
-                end
-            end
-
             # Verify that we got a good value
             def validate(&block)
                 #@validater = block
@@ -423,3 +415,5 @@ module Puppet
         end
     end
 end
+
+# $Id$

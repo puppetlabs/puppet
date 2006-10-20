@@ -168,6 +168,7 @@ class Puppet::Provider
                 @str = "unattached provider %s" % [self.name]
             end
         end
+        @str
     end
 
     dochook(:defaults) do
