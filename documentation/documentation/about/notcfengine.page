@@ -4,16 +4,20 @@ title: Puppet vs. Cfengine
 orderInfo: 10
 ---
 
-[Cfengine](http://www.cfengine.org) is currently the most widely deployed
-configuration management tool.  In many ways, [Puppet](/projects/puppet/) can
-be thought of as a next-generation version of cfengine, in that many of
-puppet's design goals are specifically derived from experience with cfengine
-and are meant to overcome many of cfengine's weaknesses.
+[Cfengine](http://www.cfengine.org) is currently the most widely
+deployed configuration management tool.  In many ways,
+[Puppet](/projects/puppet/) can be thought of as a next-generation
+version of cfengine, in that many of puppet's design goals are
+specifically derived from experience with cfengine and are meant to
+overcome many of cfengine's weaknesses.  However, Puppet was developed
+based on experience with many tools, and it was heavily influenced by a
+lot of time spent on theory, so there are some significant differences
+between Puppet and cfengine.
 
 This document summarizes the primary advances that Puppet makes over
 cfengine's current state.  Left out of this document are any process decisions
-that also led to Puppet's creation (e.g., the difficulty in getting changes
-accepted to cfengine).
+that also led to Puppet's creation (e.g., the difficulty in getting
+significant changes accepted to cfengine).
 
 # Abstraction
 
