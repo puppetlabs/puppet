@@ -45,7 +45,7 @@ Here we create a symbolic name instead of using the path as the name, and now
 we can refer to that element by name elsewhere in the manifest:
 
     service { sshd:
-        subscribe => file[sshdconfig]
+        subscribe => File[sshdconfig]
     }
 
 This will cause the ``sshd`` service to get restarted when the ``sshdconfig``
@@ -131,7 +131,7 @@ trees are created as a manifest is parsed.  Take the following configuration:
     }
 
     class sub inherits base {
-        file { "/etc/issue":
+        File["/etc/issue"] {
             source => "puppet://server/module/mysite/issue"
         }
     }
@@ -171,4 +171,5 @@ This can be used for any element type.  For instance, CentOS defaults to using
     }
 
     ...
+
 *$Id$*

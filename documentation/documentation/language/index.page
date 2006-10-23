@@ -9,7 +9,8 @@ subtreeLevel: 6
 Language Syntax
 ===============
 
-* [Puppet Language Tutorial](languagetutorial.html)
+* [Specifying Resources](resources.html)
+* [Puppet Language Tutorial](tutorial.html)
 * [Control Structures](structures.html)
 
 
