@@ -154,13 +154,6 @@ require 'puppet/server'
 require 'puppet/client'
 require 'getoptlong'
 
-$haveusage = true
-begin
-    require 'rdoc/usage'
-rescue Exception
-    $haveusage = false
-end
-
 options = [
 	[ "--centrallogging",			GetoptLong::NO_ARGUMENT ],
 	[ "--daemonize", "-D",			GetoptLong::NO_ARGUMENT ],
@@ -223,7 +216,7 @@ begin
             when "--centrallogging"
                 options[:centrallogs] = true
             when "--help"
-                if $haveusage
+                if Puppet.feature.usage?
                     RDoc::usage && exit
                 else
                     puts "No help available unless you have RDoc::usage installed"
@@ -262,10 +255,6 @@ begin
 rescue GetoptLong::InvalidOption => detail
     $stderr.puts detail
     $stderr.puts "Try '#{$0} --help'"
-    # FIXME RDoc::usage doesn't seem to work
-    #if $haveusage
-    #    RDoc::usage(1,'usage')
-    #end
     exit(1)
 end
 

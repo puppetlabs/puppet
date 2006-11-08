@@ -284,9 +284,8 @@ class Type < Puppet::Element
                 hash.delete attr
             end
         }
-
-        # While this could theoretically be set after all of the objects are
-        # created, it seems to make more sense to set them immediately.
+        
+        # Set all default values.
         self.setdefaults
 
         if hash.length > 0
@@ -333,6 +332,11 @@ class Type < Puppet::Element
     # works everywhere, I'll switch it.
     def name
         return self[:name]
+    end
+
+    # Return the "type[name]" style reference.
+    def ref
+        "%s[%s]" % [self.class.name, self.title]
     end
 
     # Retrieve the title of an object.  If no title was set separately,

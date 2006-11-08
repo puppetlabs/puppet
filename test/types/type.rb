@@ -798,6 +798,15 @@ end
             filetype[path] = one
         end
     end
+
+    def test_ref
+        path = tempfile()
+        file = Puppet::Type.newfile(:path => path)
+        assert_equal("file[#{path}]", file.ref)
+
+        exec = Puppet::Type.newexec(:title => "yay", :command => "/bin/echo yay")
+        assert_equal("exec[yay]", exec.ref)
+    end
 end
 
 # $Id$

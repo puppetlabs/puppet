@@ -9,6 +9,9 @@ module Puppet
     end
 module Util
     require 'benchmark'
+    
+    require 'puppet/util/posix'
+    extend Puppet::Util::POSIX
 
     # Create a hash to store the different sync objects.
     @@syncresources = {}
@@ -96,109 +99,6 @@ module Util
             end
         end
     end
-
-    # Get the GID of a given group, provided either a GID or a name
-    def self.gid(group)
-        if group =~ /^\d+$/
-            group = Integer(group)
-        end
-        unless group
-            raise Puppet::DevError, "Invalid group %s" % group.inspect
-        end
-        gid = nil
-        obj = nil
-          
-        # We want to look the group up either way
-        if group.is_a?(Integer) 
-            # If this doesn't find anything
-            obj = Puppet.type(:group).find { |gobj|
-                gobj.should(:gid) == group ||
-                    gobj.is(:gid) == group
-            }
-
-            unless obj
-                begin
-                    gobj = Etc.getgrgid(group)
-                    gid = gobj.gid
-                rescue ArgumentError => detail
-                    # ignore it; we couldn't find the group
-                end
-            end
-        else
-            if obj = Puppet.type(:group)[group]
-                obj[:check] = [:gid]
-            else
-                obj = Puppet.type(:group).create(
-                    :name => group,
-                    :check => [:gid]
-                )
-            end
-            obj.retrieve
-        end
-        if obj
-            gid = obj.should(:gid) || obj.is(:gid)
-            if gid == :absent
-                gid = nil
-            end
-        end
-
-        return gid
-    end
-
-    # Get the UID of a given user, whether a UID or name is provided
-    def self.uid(user)
-        uid = nil
-
-        # if we don't have any user info, warn and GTFO.
-        if !user
-            Puppet.warning "Username provided for lookup is nil" 
-            return nil
-        end
-
-        # One of the unit tests was passing a Passwd struct
-        unless user.is_a?(String) or user.is_a?(Integer)
-            raise Puppet::DevError, "Invalid value for uid: %s" % user.class
-        end
-
-        if user =~ /^\d+$/
-            user = Integer(user)
-        end
-
-        if user.is_a?(Integer)
-            # If this doesn't find anything
-            obj = Puppet.type(:user).find { |uobj|
-                uobj.should(:uid) == user ||
-                    uobj.is(:uid) == user
-            }
-
-            unless obj
-                begin
-                    uobj = Etc.getpwuid(user)
-                    uid = uobj.uid
-                rescue ArgumentError => detail
-                    # ignore it; we couldn't find the user
-                end
-            end
-        else
-            unless obj = Puppet.type(:user)[user]
-                obj = Puppet.type(:user).create(
-                    :name => user
-                )
-            end
-            obj[:check] = [:uid, :gid]
-        end
-
-        if obj
-            obj.retrieve
-            uid = obj.should(:uid) || obj.is(:uid)
-            if uid == :absent
-                uid = nil
-            end
-        end
-
-        return uid
-    end
-
 
     # Create instance methods for each of the log levels.  This allows
     # the messages to be a little richer.  Most classes will be calling this

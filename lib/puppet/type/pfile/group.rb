@@ -54,24 +54,21 @@ module Puppet
             self.is = stat.gid
         end
 
-        # Determine if the group is valid, and if so, return the UID
+        # Determine if the group is valid, and if so, return the GID
         def validgroup?(value)
             if value =~ /^\d+$/
                 value = value.to_i
             end
-
-            if value = Puppet::Util.gid(value)
-                return value
+        
+            if gid = Puppet::Util.gid(value)
+                return gid
             else
+                warning "could not find %s" % value
                 return false
             end
         end
-
+        
         munge do |value|
-            method = nil
-            gid = nil
-            gname = nil
-
             if val = validgroup?(value)
                 return val
             else

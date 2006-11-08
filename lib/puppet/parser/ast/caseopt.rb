@@ -1,3 +1,5 @@
+require 'puppet/parser/ast/branch'
+
 class Puppet::Parser::AST
     # Each individual option in a case statement.
     class CaseOpt < AST::Branch

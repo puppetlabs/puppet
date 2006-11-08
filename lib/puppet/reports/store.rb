@@ -49,7 +49,7 @@ Puppet::Server::Report.newreport(:store, :useyaml => true) do
 
         begin
             File.open(file, "w", 0640) do |f|
-                f.puts yaml
+                f.print yaml
             end
         rescue => detail
             if Puppet[:trace]

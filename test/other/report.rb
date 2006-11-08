@@ -21,6 +21,7 @@ class TestReports < Test::Unit::TestCase
 
         # Now make a file for testing logging
         file = Puppet::Type.newfile(:path => tempfile(), :ensure => "file")
+        file.finish
 
         log = nil
         assert_nothing_raised {
@@ -83,7 +84,7 @@ class TestReports < Test::Unit::TestCase
         assert_equal(yaml, File.read(file), "File did not get written")
     end
 
-    if Puppet::Metric.haverrd?
+    if Puppet.features.rrd?
     def test_rrdgraph_report
         Puppet.config.use(:metrics)
         # First do some work

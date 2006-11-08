@@ -136,19 +136,17 @@ class TestGroup < Test::Unit::TestCase
 
     def test_mkgroup
         gobj = nil
-        comp = nil
         name = "pptestgr"
 
         assert_nothing_raised {
             gobj = Puppet.type(:group).create(
                 :name => name,
-                :ensure => :present
+                :gid => 123
             )
-
-            comp = newcomp("groupmaker %s" % name, gobj)
         }
+        gobj.finish
 
-        trans = assert_events([:group_created], comp, "group")
+        trans = assert_events([:group_created], gobj, "group")
 
         assert(gobj.provider.exists?,
                 "Did not create group")

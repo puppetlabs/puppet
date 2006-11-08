@@ -7,14 +7,7 @@ require 'puppet'
 require 'puppettest'
 require 'puppet/type'
 
-$haverrd = true
-begin
-    require 'RRD'
-rescue LoadError
-    $haverrd = false
-end
-
-if $haverrd
+if Puppet.features.rrd?
     class TestMetric < Test::Unit::TestCase
         include PuppetTest
 

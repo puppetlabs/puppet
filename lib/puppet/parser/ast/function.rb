@@ -1,3 +1,5 @@
+require 'puppet/parser/ast/branch'
+
 class Puppet::Parser::AST
     # An AST object to call a function.
     class Function < AST::Branch

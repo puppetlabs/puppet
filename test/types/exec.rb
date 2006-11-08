@@ -144,7 +144,7 @@ class TestExec < Test::Unit::TestCase
             file.retrieve
 
             sum = file.state(:checksum)
-            assert_equal(sum.is, sum.should)
+            assert(sum.insync?, "checksum is not in sync")
             events = trans.evaluate.collect { |event|
                 event.event
             }

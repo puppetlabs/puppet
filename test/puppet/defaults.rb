@@ -15,7 +15,7 @@ class TestPuppetDefaults < Test::Unit::TestCase
     @@booleans = %w{rrdgraph noop}
 
     def testVersion
-        assert( Puppet.version =~ /^[0-9]+(\.[0-9]+)*$/ )
+        assert( Puppet.version =~ /^[0-9]+(\.[0-9]+)*/, "got invalid version number %s" % Puppet.version )
     end
 
     def testStringOrParam

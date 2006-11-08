@@ -109,23 +109,16 @@ module PuppetTest
             Puppet::Log.close
             Puppet::Log.newdestination tempfile()
             Puppet[:httplog] = tempfile()
-        else
+        else    
+            if textmate?
+                Puppet[:color] = false
+            end
             Puppet::Log.newdestination :console
             Puppet::Log.level = :debug
             #$VERBOSE = 1
             Puppet.info @method_name
             Puppet[:trace] = true
         end
-        #if $0 =~ /.+\.rb/ or Puppet[:debug]
-        #    Puppet::Log.newdestination :console
-        #    Puppet::Log.level = :debug
-        #    #$VERBOSE = 1
-        #    Puppet.info @method_name
-        #else
-        #    Puppet::Log.close
-        #    Puppet::Log.newdestination tempfile()
-        #    Puppet[:httplog] = tempfile()
-        #end
 
         Puppet[:ignoreschedules] = true
     end
@@ -141,6 +134,14 @@ module PuppetTest
                       @@tmpfilenum.to_s)
         @@tmpfiles << f
         return f
+    end
+    
+    def textmate?
+        if ENV["TM_FILENAME"]
+            return true
+        else
+            return false
+        end
     end
 
     def tstdir

@@ -149,8 +149,10 @@ class Puppet::Provider
                     found = values.find do |v|
                         result == v.to_s.downcase.intern
                     end
-                    debug "Not suitable: %s not in %s" % [check, values]
-                    return false unless found
+                    unless found
+                        debug "Not suitable: %s not in %s" % [check, values]
+                        return false
+                    end
                 else
                     return false
                 end

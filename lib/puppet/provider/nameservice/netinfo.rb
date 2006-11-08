@@ -68,7 +68,6 @@ class NetInfo < Puppet::Provider::NameService
                         val = autogen()
                     else
                         # No value, and it's not required, so skip it.
-                        info "No value for %s" % name
                         next
                     end
                 end

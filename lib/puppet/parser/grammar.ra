@@ -487,16 +487,9 @@ import: IMPORT quotedtext {
                 )
                 next
             end
-            # push the results into the main result array
-            # We always return an array when we parse.
-            ast = parser.parse
 
-            # Things that just get added to the classtable or whatever return nil
-            if ast
-                ast.each do |child|
-                    result.push child
-                end
-            end
+            # This will normally add code to the 'main' class.
+            parser.parse
         }
     }
 }

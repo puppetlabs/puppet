@@ -581,6 +581,29 @@ file { "/tmp/yayness":
             #assert_instance_of(AST::CollExpr, query.test2)
         end
     end
+
+    # We've had problems with files other than site.pp importing into main.
+    def test_importing_into_main
+        top = tempfile()
+        other = tempfile()
+        File.open(top, "w") do |f|
+            f.puts "import '#{other}'"
+        end
+
+        file = tempfile()
+        File.open(other, "w") do |f|
+            f.puts "file { '#{file}': ensure => present }"
+        end
+
+        interp = mkinterp :Manifest => top, :UseNodes => false
+
+        code = nil
+        assert_nothing_raised do
+            code = interp.run("hostname.domain.com", {}).flatten
+        end
+        assert(code.length == 1, "Did not get the file")
+        assert_instance_of(Puppet::TransObject, code[0])
+    end
 end
 
 # $Id$

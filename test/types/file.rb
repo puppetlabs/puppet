@@ -388,29 +388,24 @@ class TestFile < Test::Unit::TestCase
                         :checksum => type
                     )
                 }
-                comp = Puppet.type(:component).create(
-                    :name => "checksum %s" % type
-                )
-                comp.push file
                 trans = nil
 
                 file.retrieve
 
                 if file.title !~ /nonexists/
                     sum = file.state(:checksum)
-                    assert_equal(sum.is, sum.should)
-                    assert(sum.insync?)
+                    assert(sum.insync?, "file is not in sync")
                 end
 
-                events = assert_apply(comp)
+                events = assert_apply(file)
 
                 assert(! events.include?(:file_changed),
                     "File incorrectly changed")
-                assert_events([], comp)
+                assert_events([], file)
 
                 # We have to sleep because the time resolution of the time-based
                 # mechanisms is greater than one second
-                sleep 1
+                sleep 1 if type =~ /time/
 
                 assert_nothing_raised() {
                     File.open(path,File::CREAT|File::TRUNC|File::WRONLY) { |of|
@@ -418,7 +413,6 @@ class TestFile < Test::Unit::TestCase
                     }
                 }
                 Puppet.type(:file).clear
-                Puppet.type(:component).clear
 
                 # now recreate the file
                 assert_nothing_raised() {
@@ -427,19 +421,19 @@ class TestFile < Test::Unit::TestCase
                         :checksum => type
                     )
                 }
-                comp = Puppet.type(:component).create(
-                    :name => "checksum, take 2, %s" % type
-                )
-                comp.push file
                 trans = nil
 
-                # If the file was missing, it should not generate an event
-                # when it gets created.
-                #if path =~ /nonexists/
-                #    assert_events([], comp)
-                #else
-                    assert_events([:file_changed], comp)
-                #end
+                assert_events([:file_changed], file)
+
+                # Run it a few times to make sure we aren't getting
+                # spurious changes.
+                assert_nothing_raised do
+                    file.state(:checksum).retrieve
+                end
+                assert(file.state(:checksum).insync?,
+                    "checksum is not in sync")
+
+                sleep 1.1 if type =~ /time/
                 assert_nothing_raised() {
                     File.unlink(path)
                     File.open(path,File::CREAT|File::TRUNC|File::WRONLY) { |of|
@@ -451,13 +445,11 @@ class TestFile < Test::Unit::TestCase
                         of.flush
                     }
                 }
-                #assert_apply(comp)
-                assert_events([:file_changed], comp)
+                assert_events([:file_changed], file)
 
                 # verify that we're actually getting notified when a file changes
                 assert_nothing_raised() {
                     Puppet.type(:file).clear
-                    Puppet.type(:component).clear
                 }
 
                 if path =~ /nonexists/

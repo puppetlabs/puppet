@@ -40,35 +40,48 @@ module Puppet
             :nochange
         end
 
-        # Convert from the sum type to the stored checksum.
+        # If they pass us a sum type, behave normally, but if they pass
+        # us a sum type + sum, stick the sum in the cache.
         munge do |value|
-            unless defined? @checktypes
-                @checktypes = []
-            end
-
             if value =~ /^\{(\w+)\}(.+)$/
-                @checktypes << $1
-                #return $2
-                return value
+                type = symbolize($1)
+                sum = $2
+                cache(type, sum)
+                return type
             else
                 if FileTest.directory?(@parent[:path])
-                    value = "time"
+                    return :time
+                else
+                    return symbolize(value)
                 end
-                value = super(value)
-                @checktypes << value
-                return getcachedsum()
             end
         end
 
-        def checktype
-            @checktypes[0]
+        # Store the checksum in the data cache, or retrieve it if only the
+        # sum type is provided.
+        def cache(type, sum = nil)
+            type = symbolize(type)
+            unless state = @parent.cached(:checksums) 
+                self.debug "Initializing checksum hash"
+                state = {}
+                @parent.cache(:checksums, state)
+            end
+
+            if sum
+                unless sum =~ /\{\w+\}/
+                    sum = "{%s}%s" % [type, sum]
+                end
+                state[type] = sum
+            else
+                return state[type]
+            end
         end
 
         # Because source and content and whomever else need to set the checksum
         # and do the updating, we provide a simple mechanism for doing so.
         def checksum=(value)
             @is = value
-            @should = [value]
+            munge(@should)
             self.updatesum
         end
 
@@ -77,13 +90,13 @@ module Puppet
             begin
                 if @is == :absent
                     return "defined '%s' as '%s'" %
-                        [self.name, self.should_to_s]
+                        [self.name, self.currentsum]
                 elsif self.should == :absent
                     return "undefined %s from '%s'" %
                         [self.name, self.is_to_s]
                 else
                     return "%s changed '%s' to '%s'" %
-                        [self.name, self.should_to_s, self.is_to_s]
+                        [self.name, self.currentsum, self.is_to_s]
                 end
             rescue Puppet::Error, Puppet::DevError
                 raise
@@ -91,6 +104,11 @@ module Puppet
                 raise Puppet::DevError, "Could not convert change %s to string: %s" %
                     [self.name, detail]
             end
+        end
+
+        def currentsum
+            #"{%s}%s" % [self.should, cache(self.should)]
+            cache(self.should)
         end
 
         # Retrieve the cached sum
@@ -101,11 +119,7 @@ module Puppet
                 @parent.cache(:checksums, hash)
             end
 
-            sumtype = @checktypes[0]
-
-            #unless state
-            #    self.devfail "Did not get state back from Storage"
-            #end
+            sumtype = self.should
 
             if hash.include?(sumtype)
                 #self.notice "Found checksum %s for %s" %
@@ -133,14 +147,10 @@ module Puppet
             checktype = checktype.intern if checktype.is_a? String
             case checktype
             when :md5, :md5lite:
-                unless FileTest.file?(@parent[:path])
-                    @parent.info "Cannot MD5 sum directory %s" %
-                        @parent[:path]
-
-                    @should = [nil]
-                    @is = nil
-                    #@parent.delete(self[:path])
-                    return
+                if ! FileTest.file?(@parent[:path])
+                    @parent.debug "Cannot MD5 sum %s; using mtime" %
+                        [@parent.stat.ftype]
+                    sum = @parent.stat.mtime.to_s
                 else
                     begin
                         File.open(@parent[:path]) { |file|
@@ -165,7 +175,7 @@ module Puppet
                             @parent[:path]
                         @parent.delete(self.class.name)
                     rescue => detail
-                        self.notice "Cannot checksum %s: %s" %
+                        self.notice "Cannot checksum: %s" %
                             detail
                         @parent.delete(self.class.name)
                     end
@@ -181,7 +191,6 @@ module Puppet
             end
 
             return "{#{checktype}}" + sum.to_s
-            #return sum.to_s
         end
 
         # At this point, we don't actually modify the system, we modify
@@ -226,6 +235,16 @@ module Puppet
             end
         end
 
+        def insync?
+            if cache(self.should)
+                return @is == currentsum()
+            else
+                # If there's no cached sum, then we don't want to generate
+                # an event.
+                return true
+            end
+        end
+
         # Even though they can specify multiple checksums, the insync?
         # mechanism can really only test against one, so we'll just retrieve
         # the first specified sum type.
@@ -234,10 +253,6 @@ module Puppet
             # that we aren't reading the file twice in quick succession, yo.
             if usecache and @is
                 return @is
-            end
-
-            unless defined? @checktypes
-                @checktypes = ["md5"]
             end
 
             stat = nil
@@ -249,29 +264,20 @@ module Puppet
             if stat.ftype == "link" and @parent[:links] != :follow
                 self.debug "Not checksumming symlink"
                 #@parent.delete(:checksum)
-                self.is = self.should
+                self.is = self.currentsum
                 return
             end
 
-            if stat.ftype == "directory" and @checktypes[0] =~ /md5/
-                @checktypes = ["time"]
-            end
+            checktype = self.should || :md5
 
             # Just use the first allowed check type
-            @is = getsum(@checktypes[0])
+            @is = getsum(checktype)
 
-            # @should should always be set, so if it's not set at all, we
-            # know we haven't looked in the cache yet.
-            unless defined? @should and ! @should.nil?
-                @should = [getcachedsum()]
-            end
-
-            # If there is no should defined, then store the current value
-            # into the 'should' value, so that we're not marked as being
+            # If there is no sum defined, then store the current value
+            # into the cache, so that we're not marked as being
             # out of sync.  We don't want to generate an event the first
             # time we get a sum.
-            if @should == [:nosum]
-                @should = [@is]
+            unless cache(self.should)
                 # FIXME we should support an updatechecksums-like mechanism
                 self.updatesum
             end
@@ -282,36 +288,37 @@ module Puppet
         # Store the new sum to the state db.
         def updatesum
             result = false
-            state = nil
-            unless state = @parent.cached(:checksums) 
-                self.debug "Initializing checksum hash for %s" % @parent.title
-                state = {}
-                @parent.cache(:checksums, state)
-            end
 
             if @is.is_a?(Symbol)
-                error = Puppet::Error.new("%s has invalid checksum" %
-                    @parent.title)
-                raise error
+                raise Puppet::Error, "%s has invalid checksum" % @parent.title
             end
 
             # if we're replacing, vs. updating
-            if state.include?(@checktypes[0])
+            if sum = cache(self.should)
                 unless defined? @should
                     raise Puppet::Error.new(
                         ("@should is not initialized for %s, even though we " +
                         "found a checksum") % @parent[:path]
                     )
                 end
+                
+                if @is == sum
+                    info "Sums are already equal"
+                    return false
+                end
+
+                #if cache(self.should) == @is
+                #    raise Puppet::Error, "Got told to update same sum twice"
+                #end
                 self.debug "Replacing %s checksum %s with %s" %
-                    [@parent.title, state[@checktypes[0]],@is]
+                    [@parent.title, sum, @is]
                 #@parent.debug "@is: %s; @should: %s" % [@is,@should]
                 result = true
             else
                 @parent.debug "Creating checksum %s" % @is
                 result = false
             end
-            state[@checktypes[0]] = @is
+            cache(self.should, @is)
             return result
         end
     end

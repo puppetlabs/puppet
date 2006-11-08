@@ -5,6 +5,7 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppet'
 require 'puppet/sslcertificates.rb'
 require 'puppettest'
+require 'puppettest/certificates'
 
 # so, what kind of things do we want to test?
 
@@ -16,34 +17,12 @@ require 'puppettest'
 # and test whether we've got things in the right scopes
 
 class TestCertMgr < Test::Unit::TestCase
-    include PuppetTest
+    include PuppetTest::Certificates
     def setup
         super
         #@dir = File.join(Puppet[:certdir], "testing")
         @dir = File.join(@configpath, "certest")
         system("mkdir -p %s" % @dir)
-    end
-
-    def mkPassFile()
-        keyfile = File.join(@dir, "tmpkeyfile")
-        @@tmpfiles << keyfile
-        unless FileTest.exists?(@dir)
-            system("mkdir -p %s" % @dir)
-        end
-        File.open(keyfile, "w", 0600) { |f|
-            f.print "as;dklj23rlkjzdflij23wr"
-        }
-
-        return keyfile
-    end
-
-    def mkCA
-        ca = nil
-        assert_nothing_raised {
-            ca = Puppet::SSLCertificates::CA.new()
-        }
-
-        return ca
     end
 
     def testCreateSelfSignedCertificate
@@ -191,16 +170,6 @@ class TestCertMgr < Test::Unit::TestCase
         assert_equal($?,0)
         assert_equal(File.join(Puppet[:certdir], "signedcertest.pem: OK\n"), output)
     end
-
-    def mkcert(hostname)
-        cert = nil
-        assert_nothing_raised {
-            cert = Puppet::SSLCertificates::Certificate.new(:name => hostname)
-            cert.mkcsr
-        }
-        
-        return cert
-    end 
  
 
     def test_interactiveca
@@ -259,8 +228,8 @@ class TestCertMgr < Test::Unit::TestCase
 
     def test_crl
         ca = mkCA()
-        h1 = mkSignedCert(ca, "host1.example.com")
-        h2 = mkSignedCert(ca, "host2.example.com")
+        h1 = mksignedcert(ca, "host1.example.com")
+        h2 = mksignedcert(ca, "host2.example.com")
         
         assert(ca.cert.verify(ca.cert.public_key))
         assert(h1.verify(ca.cert.public_key))
@@ -295,23 +264,6 @@ class TestCertMgr < Test::Unit::TestCase
         assert(!store.verify(h2, [ca.cert]))
     end
 
-    def mkSignedCert(ca, host)
-        cert = mkcert(host)
-        assert_nothing_raised {
-            signedcert, cacert = ca.sign(cert.mkcsr)
-            return signedcert
-        }
-    end
-
-    def mkStore(ca)
-        store = OpenSSL::X509::Store.new
-        store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
-        store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK
-        store.add_cert(ca.cert)
-        store.add_crl(ca.crl)
-        store
-    end
-
     def test_ttl
         cert = mksignedcert
         assert_equal(5 * 365 * 24 * 60 * 60,  cert.not_after - cert.not_before)
@@ -343,15 +295,6 @@ class TestCertMgr < Test::Unit::TestCase
         assert_equal(3 * 24 * 60 * 60,  cert.not_after - cert.not_before)
 
     end
-
-    def mksignedcert
-        ca = mkCA()
-        hostname = "ttltest.example.com"
-
-        cert = nil
-        assert_nothing_raised {
-            cert, cacert = ca.sign(mkcert(hostname).mkcsr)
-        }
-        return cert
-    end
 end
+
+# $Id$

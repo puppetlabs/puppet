@@ -144,7 +144,7 @@ class Server
                     error = XMLRPC::FaultException.new(
                         1, detail.to_s
                     )
-                    error.set_backtrace = detail.backtrace
+                    error.set_backtrace detail.backtrace
                     raise error
                 rescue => detail
                     #Puppet.warning obj.inspect

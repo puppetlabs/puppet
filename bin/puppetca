@@ -87,14 +87,6 @@ require 'puppet'
 require 'puppet/sslcertificates'
 require 'getoptlong'
 
-$haveusage = true
-
-begin
-    require 'rdoc/usage'
-rescue Exception
-    $haveusage = false
-end
-
 options = [
     [ "--all",      "-a",  GetoptLong::NO_ARGUMENT ],
     [ "--clean",    "-c",  GetoptLong::NO_ARGUMENT ],
@@ -129,7 +121,7 @@ begin
                 generate = arg
                 mode = :generate
             when "--help"
-                if $haveusage
+                if Puppet.feature.usage?
                     RDoc::usage && exit
                 else
                     puts "No help available unless you have RDoc::usage installed"
@@ -149,9 +141,6 @@ begin
     }
 rescue GetoptLong::InvalidOption => detail
     $stderr.puts "Try '#{$0} --help'"
-    #if $haveusage
-    #    RDoc::usage_no_exit('usage')
-    #end
     exit(1)
 end
 

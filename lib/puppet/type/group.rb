@@ -187,7 +187,7 @@ module Puppet
         end
 
         def retrieve
-            if @provider.exists?
+            if self.provider and @provider.exists?
                 super
             else
                 # the group does not exist

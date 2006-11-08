@@ -629,39 +629,34 @@ module Puppet
             return child
         end
 
-        # Paths are special for files, because we don't actually want to show
-        # the parent's full path.
-        def path
-            unless defined? @path
-                if defined? @parent
-                    # We only need to behave specially when our parent is also
-                    # a file
-                    if @parent.is_a?(self.class)
-                        # Remove the parent file name
-                        ppath = @parent.path.sub(/\/?file=.+/, '')
-                        @path = []
-                        if ppath != "/" and ppath != ""
-                            @path << ppath
-                        end
-                        @path << self.class.name.to_s + "=" + self.name
-                    else
-                        super
+        def pathbuilder
+            if defined? @parent
+                # We only need to behave specially when our parent is also
+                # a file
+                if @parent.is_a?(self.class)
+                    # Remove the parent file name
+                    ppath = @parent.path.sub(/\/?file=.+/, '')
+                    tmp = []
+                    if ppath != "/" and ppath != ""
+                        tmp << ppath
                     end
+                    tmp << self.class.name.to_s + "=" + self.name
+                    return tmp
                 else
-                    # The top-level name is always puppet[top], so we don't
-                    # bother with that.  And we don't add the hostname
-                    # here, it gets added in the log server thingy.
-                    if self.name == "puppet[top]"
-                        @path = ["/"]
-                    else
-                        # We assume that if we don't have a parent that we
-                        # should not cache the path
-                        @path = [self.class.name.to_s + "=" + self.name]
-                    end
+                    return super
+                end
+            else
+                # The top-level name is always puppet[top], so we don't
+                # bother with that.  And we don't add the hostname
+                # here, it gets added in the log server thingy.
+                if self.name == "puppet[top]"
+                    return ["/"]
+                else
+                    # We assume that if we don't have a parent that we
+                    # should not cache the path
+                    return [self.class.name.to_s + "=" + self.name]
                 end
             end
-
-            return @path.join("/")
         end
 
         # Recurse into the directory.  This basically just calls 'localrecurse'
@@ -837,7 +832,7 @@ module Puppet
             server = sourceobj.server
             sum = "md5"
             if state = self.state(:checksum)
-                sum = state.checktype
+                sum = state.should
             end
             r = false
             if recurse

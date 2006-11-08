@@ -131,6 +131,8 @@ class TestPackages < Test::Unit::TestCase
             assert_nothing_raised {
                 obj.retrieve
             }
+            
+            assert(obj.is(:ensure) != :absent, "Package %s is not installed" % obj.title)
 
             assert_instance_of(String, obj[:ensure],
                 "Ensure did not return a version number")

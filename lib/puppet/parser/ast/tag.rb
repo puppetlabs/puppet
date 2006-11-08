@@ -1,3 +1,5 @@
+require 'puppet/parser/ast/branch'
+
 class Puppet::Parser::AST
     # The code associated with a class.  This is different from components
     # in that each class is a singleton -- only one will exist for a given

@@ -6,13 +6,6 @@ module Puppet
     # multiple destinations, one of which is a remote server.
 	class Log
         include Puppet::Util
-        PINK="[0;31m"
-        GREEN="[0;32m"
-        YELLOW="[0;33m"
-        SLATE="[0;34m"
-        ORANGE="[0;35m"
-        BLUE="[0;36m"
-        RESET="[0m"
 
         @levels = [:debug,:info,:notice,:warning,:err,:alert,:emerg,:crit]
         @loglevel = 2
@@ -250,7 +243,17 @@ module Puppet
         end
 
         newdesttype :console do
-            @@colors = {
+                    
+            
+            PINK = {:console => "[0;31m", :html => "FFA0A0"}
+            GREEN = {:console => "[0;32m", :html => "00CD00"}
+            YELLOW = {:console => "[0;33m", :html => "FFFF60"}
+            SLATE = {:console => "[0;34m", :html => "80A0FF"}
+            ORANGE = {:console => "[0;35m", :html => "FFA500"}
+            BLUE = {:console => "[0;36m", :html => "40FFFF"}
+            RESET = {:console => "[0m", :html => ""}
+
+            @@colormap = {
                 :debug => SLATE,
                 :info => GREEN,
                 :notice => PINK,
@@ -260,6 +263,22 @@ module Puppet
                 :emerg => RESET,
                 :crit => RESET
             }
+            
+            def colorize(level, str)
+                case Puppet[:color]
+                when false: str
+                when true, :ansi, "ansi": console_color(level, str)
+                when :html, "html": html_color(level, str)
+                end
+            end
+            
+            def console_color(level, str)
+                @@colormap[level][:console] + str + RESET[:console]
+            end
+            
+            def html_color(level, str)
+                %{<span style="color: %s">%s</span>} % [@@colormap[level][:html], str]
+            end
 
             def initialize
                 # Flush output immediately.
@@ -267,20 +286,10 @@ module Puppet
             end
 
             def handle(msg)
-                color = ""
-                reset = ""
-                if Puppet[:color]
-                    color = @@colors[msg.level]
-                    reset = RESET
-                end
                 if msg.source == "Puppet"
-                    puts color + "%s: %s" % [
-                        msg.level, msg.to_s
-                    ] + reset
+                    puts colorize(msg.level, "%s: %s" % [msg.level, msg.to_s])
                 else
-                    puts color + "%s: %s: %s" % [
-                        msg.level, msg.source, msg.to_s
-                    ] + reset
+                    puts colorize(msg.level, "%s: %s: %s" % [msg.level, msg.source, msg.to_s])
                 end
             end
         end

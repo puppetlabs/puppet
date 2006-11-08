@@ -16,17 +16,9 @@ module Puppet
             :rrdinterval => ["$runinterval", "How often RRD should expect data.
                 This should match how often the hosts report back to the server."]
         )
-
-        @@haverrd = false
-        begin
-            require 'RRD'
-            @@haverrd = true
-        rescue LoadError
-        end
-
-        def self.haverrd?
-            @@haverrd
-        end
+        
+        # Load the library as a feature, so we can test its presence.
+        Puppet.features.add :rrd, :libs => 'RRD'
 
         attr_accessor :type, :name, :value, :label
 
@@ -63,7 +55,7 @@ module Puppet
         end
 
         def graph(range = nil)
-            unless @@haverrd
+            unless Puppet.features.rrd?
                 Puppet.warning "RRD library is missing; cannot graph metrics"
                 return
             end
@@ -120,7 +112,7 @@ module Puppet
         end
 
         def store(time)
-            unless @@haverrd
+            unless Puppet.features.rrd?
                 Puppet.warning "RRD library is missing; cannot store metrics"
                 return
             end

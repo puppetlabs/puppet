@@ -12,7 +12,7 @@ module PuppetTest::ParserTesting
     end
 
     def mkinterp(args = {})
-        args[:Code] ||= ""
+        args[:Code] ||= "" unless args.include?(:Manifest)
         args[:Local] ||= true
         Puppet::Parser::Interpreter.new(args)
     end

@@ -44,14 +44,6 @@
 require 'puppet'
 require 'getoptlong'
 
-$haveusage = true
-
-begin
-    require 'rdoc/usage'
-rescue Exception
-    $haveusage = false
-end
-
 result = GetoptLong.new(
 	[ "--arguments",	"-a",			GetoptLong::NO_ARGUMENT ],
 	[ "--types",	"-t",			GetoptLong::NO_ARGUMENT ],
@@ -72,7 +64,7 @@ begin
             when "--types"
                 mode = :types
             when "--help"
-                if $haveusage
+                if Puppet.feature.usage?
                     RDoc::usage && exit
                 else
                     puts "No help available unless you have RDoc::usage installed"
@@ -82,9 +74,6 @@ begin
     }
 rescue GetoptLong::InvalidOption => detail
     $stderr.puts "Try '#{$0} --help'"
-    #if $haveusage
-    #    RDoc::usage_no_exit('usage')
-    #end
     exit(1)
 end
 

@@ -3,48 +3,51 @@
 module Puppet::SSLCertificates
     module Inventory
 
+        Puppet.config.setdefaults(:ca,
+            :cert_inventory => {
+                :default => "$cadir/inventory.txt",
+                :mode => 0644,
+                :owner => "$user",
+                :group => "$group",
+                :desc => "A Complete listing of all certificates"
+            }
+        )
+
         # Add CERT to the inventory of issued certs in '$cadir/inventory.txt'
         # If no inventory exists yet, build an inventory and list all the 
         # certificates that have been signed so far
-        def Inventory.add(cert)
-            f = open
-            format(f, cert)
-            f.close()
-        end
+        def self.add(cert)
+            unless FileTest.exists?(Puppet[:cert_inventory])
+                inited = false
+            end
 
-        def Inventory.filename
-            File::join(Puppet[:cadir], "inventory.txt")
+            Puppet.config.write(:cert_inventory, "a") do |f|
+                unless inited
+                    f.puts self.init
+                end
+                f.puts format(cert)
+            end
         end
 
         private
-        def Inventory.open
-            if File::exist?(filename)
-                File::open(filename, "a")
-            else
-                init
-            end
-        end
 
-        def Inventory.init
-            if File::exist?(filename)
-                raise Puppet::Error, 
-                "Inventory file #{filename} already exists"
-            end
-            inv = File.open(filename, "w")
-            inv.puts "# Inventory of signed certificates"
-            inv.puts "# SERIAL NOT_BEFORE _NOT_AFTER SUBJECT"
+        def self.init
+            inv = "# Inventory of signed certificates\n"
+            inv += "# SERIAL NOT_BEFORE NOT_AFTER SUBJECT\n"
             Dir.glob(File::join(Puppet[:signeddir], "*.pem")) do |f|
-                format(inv, OpenSSL::X509::Certificate.new(File::read(f)))
+                inv += format(OpenSSL::X509::Certificate.new(File::read(f))) + "\n"
             end
             return inv
         end
 
-        def Inventory.format(f, cert)
+        def self.format(cert)
             iso = '%Y-%m-%dT%H:%M:%S%Z'
-            f.puts "0x%04x %s %s %s" % [cert.serial,  
+            return "0x%04x %s %s %s" % [cert.serial,  
                                         cert.not_before.strftime(iso), 
                                         cert.not_after.strftime(iso),
                                         cert.subject]
         end
     end
 end
+
+# $Id$

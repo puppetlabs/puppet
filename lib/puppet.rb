@@ -5,7 +5,9 @@ require 'puppet/error'
 require 'puppet/event-loop'
 require 'puppet/util'
 require 'puppet/log'
+require 'puppet/autoload'
 require 'puppet/config'
+require 'puppet/feature'
 require 'puppet/suidmanager'
 
 #------------------------------------------------------------
@@ -17,7 +19,7 @@ require 'puppet/suidmanager'
 # it's also a place to find top-level commands like 'debug'
 
 module Puppet
-    PUPPETVERSION = '0.20.0'
+    PUPPETVERSION = '0.20.0svn'
 
     def Puppet.version
         return PUPPETVERSION
@@ -32,6 +34,7 @@ module Puppet
         # To keep a copy of arguments.  Set within Config#addargs, because I'm
         # lazy.
         attr_accessor :args
+        attr_reader :features
     end
 
 
@@ -66,6 +69,10 @@ module Puppet
     # I keep wanting to use Puppet.error
     # XXX this isn't actually working right now
     alias :error :err
+    
+    # The feature collection
+    @features = Puppet::Feature.new('puppet/feature')
+    @features.load
 
     # Store a new default value.
     def self.setdefaults(section, hash)

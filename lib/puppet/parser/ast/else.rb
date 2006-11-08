@@ -1,3 +1,5 @@
+require 'puppet/parser/ast/branch'
+
 class Puppet::Parser::AST
     # A separate ElseIf statement; can function as an 'else' if there's no
     # test.
@@ -24,3 +26,5 @@ class Puppet::Parser::AST
         end
     end
 end
+
+# $Id$

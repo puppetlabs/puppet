@@ -218,11 +218,11 @@ class State < Puppet::Parameter
 
     # return the full path to us, for logging and rollback; not currently
     # used
-    def path
+    def pathbuilder
         if defined? @parent and @parent
-            return [@parent.path, self.name].join("/")
+            return [@parent.path, self.name]
         else
-            return self.name
+            return [self.name]
         end
     end
 

@@ -21,7 +21,15 @@ module Puppet
             unless object.is_a? Puppet::Type
                 raise Puppet::DevFail, "Must pass a Type instance to Storage.cache"
             end
-            return @@state[object.path] ||= {}
+
+            # We used to store things by path, now we store them by ref.
+            # In oscar(0.20.0) this changed to using the ref.
+            if @@state.include?(object.path)
+                @@state[object.ref] = @@state[object.path]
+                @@state.delete(object.path)
+            end
+
+            return @@state[object.ref] ||= {}
         end
 
         def self.clear
