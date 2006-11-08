@@ -60,6 +60,9 @@ module Puppet
         # Store the checksum in the data cache, or retrieve it if only the
         # sum type is provided.
         def cache(type, sum = nil)
+            unless type
+                raise ArgumentError, "A type must be specified to cache a checksum"
+            end
             type = symbolize(type)
             unless state = @parent.cached(:checksums) 
                 self.debug "Initializing checksum hash"
@@ -85,6 +88,10 @@ module Puppet
             self.updatesum
         end
 
+        def checktype
+            self.should || :md5
+        end
+
         # Checksums need to invert how changes are printed.
         def change_to_s
             begin
@@ -95,8 +102,13 @@ module Puppet
                     return "undefined %s from '%s'" %
                         [self.name, self.is_to_s]
                 else
-                    return "%s changed '%s' to '%s'" %
-                        [self.name, self.currentsum, self.is_to_s]
+                    if defined? @cached and @cached
+                        return "%s changed '%s' to '%s'" %
+                            [self.name, @cached, self.is_to_s]
+                    else
+                        return "%s changed '%s' to '%s'" %
+                            [self.name, self.currentsum, self.is_to_s]
+                    end
                 end
             rescue Puppet::Error, Puppet::DevError
                 raise
@@ -108,7 +120,7 @@ module Puppet
 
         def currentsum
             #"{%s}%s" % [self.should, cache(self.should)]
-            cache(self.should)
+            cache(checktype())
         end
 
         # Retrieve the cached sum
@@ -236,7 +248,8 @@ module Puppet
         end
 
         def insync?
-            if cache(self.should)
+            @should = [checktype]
+            if cache(checktype())
                 return @is == currentsum()
             else
                 # If there's no cached sum, then we don't want to generate
@@ -268,16 +281,14 @@ module Puppet
                 return
             end
 
-            checktype = self.should || :md5
-
             # Just use the first allowed check type
-            @is = getsum(checktype)
+            @is = getsum(checktype())
 
             # If there is no sum defined, then store the current value
             # into the cache, so that we're not marked as being
             # out of sync.  We don't want to generate an event the first
             # time we get a sum.
-            unless cache(self.should)
+            unless cache(checktype())
                 # FIXME we should support an updatechecksums-like mechanism
                 self.updatesum
             end
@@ -294,7 +305,7 @@ module Puppet
             end
 
             # if we're replacing, vs. updating
-            if sum = cache(self.should)
+            if sum = cache(checktype())
                 unless defined? @should
                     raise Puppet::Error.new(
                         ("@should is not initialized for %s, even though we " +
@@ -318,7 +329,10 @@ module Puppet
                 @parent.debug "Creating checksum %s" % @is
                 result = false
             end
-            cache(self.should, @is)
+
+            # Cache the sum so the log message can be right if possible.
+            @cached = sum
+            cache(checktype(), @is)
             return result
         end
     end

@@ -52,8 +52,6 @@ class Puppet::Type
     # this returns any changes resulting from testing, thus 'collect'
     # rather than 'each'
     def evaluate
-        now = Time.now
-
         #Puppet.err "Evaluating %s" % self.path.join(":")
         unless defined? @evalcount
             self.err "No evalcount defined on '%s' of type '%s'" %
@@ -77,7 +75,7 @@ class Puppet::Type
 
         changes << @children.collect { |child|
             ch = child.evaluate
-            child.cache(:checked, now)
+            child.cache(:checked, Time.now)
             ch
         }
 
@@ -92,7 +90,7 @@ class Puppet::Type
             self.debug "%s change(s)" %
                 [changes.length]
         end
-        self.cache(:checked, now)
+        self.cache(:checked, Time.now)
         return changes.flatten
     end
 

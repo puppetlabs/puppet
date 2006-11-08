@@ -1505,9 +1505,6 @@ class TestFile < Test::Unit::TestCase
         assert(! FileTest.exists?(bfile), "Backed up when told not to")
     end
 
-    def test_remove_existing
-    end
-
     # Make sure we consistently handle backups for all cases.
     def test_ensure_with_backups
         # We've got three file types, so make sure we can replace any type
@@ -1578,6 +1575,36 @@ class TestFile < Test::Unit::TestCase
                     end
                     FileUtils.rmtree(dir)
                 end
+            end
+        end
+    end
+
+    def test_check_checksums
+        dir = tempfile()
+        Dir.mkdir(dir)
+        subdir = File.join(dir, "sub")
+        Dir.mkdir(subdir)
+        file = File.join(dir, "file")
+        File.open(file, "w") { |f| f.puts "yay" }
+
+        obj = Puppet::Type.type(:file).create(
+            :path => dir, :check => :checksum, :recurse => true
+        )
+
+        assert_apply(obj)
+        File.open(file, "w") { |f| f.puts "rah" }
+        sleep 1
+        system("touch %s" % subdir)
+        Puppet::Storage.store
+        Puppet::Storage.load
+        assert_apply(obj)
+        [file, subdir].each do |path|
+            sub = Puppet::Type.type(:file)[path]
+            assert(sub, "did not find obj for %s" % path)
+            sub.retrieve
+
+            assert_nothing_raised do
+                sub.state(:checksum).sync
             end
         end
     end

@@ -92,6 +92,7 @@ class Puppet::Type
             }
         end
     end
+
     # For each object we require, subscribe to all events that it generates. We
     # might reduce the level of subscription eventually, but for now...
     newmetaparam(:require) do

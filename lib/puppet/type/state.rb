@@ -247,6 +247,9 @@ class State < Puppet::Parameter
         end
 
         value = self.should
+        if value.nil?
+            self.devfail "Got a nil value for should"
+        end
         method = "set_" + value.to_s
         event = nil
         if self.respond_to?(method)
@@ -270,11 +273,16 @@ class State < Puppet::Parameter
             # the blocks could return values.
             event = self.instance_eval(&ary[1])
         else
-            begin
-                provider.send(self.class.name.to_s + "=", self.should)
-            rescue NoMethodError
-                self.fail "The %s provider can not handle attribute %s" %
-                    [provider.class.name, self.class.name]
+            if @parent.provider
+                begin
+                    provider.send(self.class.name.to_s + "=", self.should)
+                rescue NoMethodError
+                    self.fail "The %s provider can not handle attribute %s" %
+                        [provider.class.name, self.class.name]
+                end
+            else
+                self.fail "%s cannot handle values of type %s" %
+                    [self.class.name, self.should.inspect]
             end
         end
 
