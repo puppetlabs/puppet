@@ -570,11 +570,11 @@ arguments:    argument
 }
 
 argument:     NAME EQUALS rvalue {
-    Puppet.warning addcontext("Deprecation notice:  #{val[0].value} must now include '$' in prototype")
+    Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
     result = [val[0], val[2]]
 }
             | NAME {
-    Puppet.warning addcontext("Deprecation notice:  #{val[0].value} must now include '$' in prototype")
+    Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
     result = [val[0]]
 }           | VARIABLE EQUALS rvalue {
     result = [val[0], val[2]]

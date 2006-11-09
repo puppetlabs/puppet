@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id4401d72c60', 'grammar.ra', 628
+module_eval <<'..end grammar.ra modeval..id77a61a6f39', 'grammar.ra', 628
 require 'puppet/parser/functions'
 
 attr_reader :file, :interp
@@ -199,7 +199,7 @@ end
 
 # $Id$
 
-..end grammar.ra modeval..id4401d72c60
+..end grammar.ra modeval..id77a61a6f39
 
 ##### racc 1.4.5 generates ###
 
@@ -1636,7 +1636,7 @@ module_eval <<'.,.,', 'grammar.ra', 570
 
 module_eval <<'.,.,', 'grammar.ra', 575
   def _reduce_137( val, _values, result )
-    Puppet.warning addcontext("Deprecation notice:  #{val[0].value} must now include '$' in prototype")
+    Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
     result = [val[0], val[2]]
    result
   end
@@ -1644,7 +1644,7 @@ module_eval <<'.,.,', 'grammar.ra', 575
 
 module_eval <<'.,.,', 'grammar.ra', 579
   def _reduce_138( val, _values, result )
-    Puppet.warning addcontext("Deprecation notice:  #{val[0].value} must now include '$' in prototype")
+    Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
     result = [val[0]]
    result
   end
