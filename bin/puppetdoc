@@ -45,8 +45,7 @@ require 'puppet'
 require 'getoptlong'
 
 result = GetoptLong.new(
-	[ "--arguments",	"-a",			GetoptLong::NO_ARGUMENT ],
-	[ "--types",	"-t",			GetoptLong::NO_ARGUMENT ],
+	[ "--mode",	"-m",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
 )
 
@@ -59,10 +58,8 @@ mode = :types
 begin
     result.each { |opt,arg|
         case opt
-            when "--arguments"
-                mode = :arguments
-            when "--types"
-                mode = :types
+            when "--mode"
+                mode = arg.intern
             when "--help"
                 if Puppet.feature.usage?
                     RDoc::usage && exit
@@ -77,31 +74,7 @@ rescue GetoptLong::InvalidOption => detail
     exit(1)
 end
 
-def scrub(text)
-
-    # Stupid markdown
-    #text = text.gsub("<%=", "&lt;%=")
-    # For text with no carriage returns, there's nothing to do.
-    if text !~ /\n/
-        return text
-    end
-    indent = nil
-
-    # If we can match an indentation, then just remove that same level of
-    # indent from every line.
-    if text =~ /^(\s+)/
-        indent = $1
-        begin
-            return text.gsub(/^#{indent}/,'')
-        rescue => detail
-            puts detail.backtrace
-            puts detail
-        end
-    else
-        return text
-    end
-
-end
+include Puppet::Util::Docs
 
 # Indent every line in the chunk except those which begin with '..'.
 def indent(text, tab)
@@ -120,7 +93,7 @@ def paramwrap(name, text, namevar = false)
 end
 
 # Print the docs for arguments
-def self.arguments
+def self.configref
     puts %{---
 inMenu: true
 title: Configuration Reference
@@ -394,6 +367,18 @@ path.
         }
         puts "\n"
     }
+end
+
+def self.reports
+    puts Puppet::Server::Report.reportdocs
+end
+
+def self.functions
+    puts Puppet::Parser::Functions.functiondocs
+end
+
+unless respond_to?(mode)
+    raise "Invalid mode %s" % mode
 end
 
 send(mode)
