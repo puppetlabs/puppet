@@ -122,11 +122,27 @@ class TestReports < Test::Unit::TestCase
             report.process
         }
 
-        hostdir = File.join(Puppet[:rrddir], report.host)
+        hostdir = nil
+        assert_nothing_raised do
+            hostdir = report.hostdir
+        end
+
+        assert(hostdir, "Did not get hostdir back")
 
         assert(FileTest.directory?(hostdir), "Host rrd dir did not get created")
         index = File.join(hostdir, "index.html")
         assert(FileTest.exists?(index), "index file was not created")
+
+        # Now make sure it creaets each of the rrd files
+        %w{changes resources time}.each do |type|
+            file = File.join(hostdir, "%s.rrd" % type)
+            assert(FileTest.exists?(file), "Did not create rrd file for %s" % type)
+
+            daily = file.sub ".rrd", "-daily.png"
+            assert(FileTest.exists?(daily),
+                "Did not make daily graph for %s" % type)
+        end
+
     end
     else
     $stderr.puts "Install RRD for metric reporting tests"

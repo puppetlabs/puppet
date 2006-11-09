@@ -1,14 +1,98 @@
 require 'puppet'
 
 Puppet::Server::Report.newreport(:rrdgraph) do
-    desc "Graph some data about hosts."
+    desc "Graph all available data about hosts using the RRD library.  You
+        must have the RRD binary library installed to use this report, which
+        you can get from [Tobias Oetiker's site](http://people.ee.ethz.ch/~oetiker/webtools/rrdtool/pub/contrib/).
+        
+        This report will create, manage, and graph RRD database files for each
+        of the metrics generated during transactions, and it will create a
+        few simple html files to display the reporting host's graphs.  At this
+        point, it will not create a common index file to display links to
+        all hosts.
+        
+        All RRD files and graphs get created in the ``rrddir`` directory.  If
+        you want to serve these publicly, you should be able to just alias that
+        directory in a web server."
 
-    def process
-        time = Time.now.to_i
+    def hostdir
+        unless defined? @hostdir
+            @hostdir = File.join(Puppet[:rrddir], self.host)
+        end
+        @hostdir
+    end
 
-        host = self.host
+    def htmlfile(type, graphs, field)
+        file = File.join(hostdir, "%s.html" % type)
+        File.open(file, "w") do |of|
+            of.puts "<html><head><title>%s graphs for %s</title></head><body>" %
+                [type.capitalize, host]
 
-        hostdir = File.join(Puppet[:rrddir], host)
+            graphs.each do |graph|
+                if field == :first
+                    name = graph.sub(/-\w+.png/, '').capitalize
+                else
+                    name = graph.sub(/\w+-/, '').sub(".png", '').capitalize
+                end
+                of.puts "<img src=%s><br>" % graph
+            end
+            of.puts "</body></html>"
+        end
+
+        return file
+    end
+
+    def mkhtml
+        images = Dir.entries(hostdir).find_all { |d| d =~ /\.png/ }
+
+        periodorder = %w{daily weekly monthly yearly}
+
+        periods = {}
+        types = {}
+        images.each do |n|
+            type, period = n.sub(".png", '').split("-")
+            periods[period] ||= []
+            types[type] ||= []
+            periods[period] << n
+            types[type] << n
+        end
+
+        files = []
+        # Make the period html files
+        periodorder.each do |period|
+            unless ary = periods[period]
+                raise "Could not find graphs for %s" % period
+            end
+            files << htmlfile(period, ary, :first)
+        end
+
+        # make the type html files
+        types.sort { |a,b| a[0] <=> b[0] }.each do |type, ary|
+            newary = []
+            periodorder.each do |period|
+                if graph = ary.find { |g| g.include?("-%s.png" % period) }
+                    newary << graph
+                else
+                    raise "Could not find %s-%s graph" % [type, period]
+                end
+            end
+
+            files << htmlfile(type, newary, :second)
+        end
+
+        File.open(File.join(hostdir, "index.html"), "w") do |of|
+            of.puts "<html><head><title>Report graphs for %s</title></head><body>" %
+                host
+            files.each do |file|
+                of.puts "<a href='#{File.basename(file)}'>%s</a><br/>" %
+                    File.basename(file).sub(".html",'').capitalize
+            end
+            of.puts "</body></html>"
+        end
+    end
+
+    def process(time = nil)
+        time ||= Time.now.to_i
 
         unless File.directory?(hostdir)
             # Some hackishness to create the dir
@@ -19,19 +103,16 @@ Puppet::Server::Report.newreport(:rrdgraph) do
             config.use(:reports)
         end
 
-        File.open(File.join(hostdir, "index.html"),"w") { |of|
-            of.puts "<html><body>"
-            self.metrics.each do |name, metric|
-                metric.basedir = hostdir
-                metric.store(time)
+        self.metrics.each do |name, metric|
+            metric.basedir = hostdir
+            metric.store(time)
 
-                metric.graph
+            metric.graph
+        end
 
-                of.puts "<img src=%s.png><br>" % name
-            end
-
-            of.puts "</body></html>"
-        }
+        unless FileTest.exists?(File.join(hostdir, "index.html"))
+            mkhtml()
+        end
     end
 end
 

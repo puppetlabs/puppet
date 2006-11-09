@@ -15,7 +15,29 @@ Puppet.config.setdefaults(:reporting,
 require 'net/smtp'
 
 Puppet::Server::Report.newreport(:tagmail) do
-    desc "Send email reports."
+    desc "This report sends specific log messages to specific email addresses
+        based on the tags in the log messages.  See the
+        [tag documentation](../advanced/tags.html) for more information on tags.
+        
+        To use this report, you must create a ``tagmail.conf`` (in the location
+        specified by ``tagmap``).  This is a simple file that maps tags to
+        email addresses:  Any log messages in the report that match the specified
+        tags will be sent to the specified email addresses.
+        
+        Tags must be comma-separated, and they can be negated so that messages
+        only match when they do not have that tag.  The tags are separated from
+        the email addresses by a colon, and the email addresses should also
+        be comma-separated.
+
+        Lastly, there is an ``all`` tag that will always match all log messages.
+
+        Here is an example tagmail.conf:
+
+            all: me@domain.com
+            webserver, !mailserver: httpadmins@domain.com
+
+        "
+
     def process
         unless FileTest.exists?(Puppet[:tagmap])
             Puppet.notice "Cannot send tagmail report; no tagmap file %s" %

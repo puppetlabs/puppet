@@ -12,7 +12,12 @@ Puppet::Server::Report.newreport(:store, :useyaml => true) do
 
     Puppet.config.use(:reporting)
 
-    desc "Store the yaml report on disk"
+    desc "Store the yaml report on disk.  Each host sends its report as a YAML dump
+        and this just stores the file on disk, in the ``reportdir`` directory.
+        
+        These files collect quickly -- one every half hour -- so it is a good idea
+        to perform some maintenance on them if you use this report (it's the only
+        default report)."
 
     def mkclientdir(client, dir)
         config = Puppet::Config.new
