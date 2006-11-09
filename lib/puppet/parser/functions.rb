@@ -11,8 +11,19 @@ module Functions
         include Puppet::Util
     end
 
+    def self.autoloader
+        unless defined? @autoloader
+            @autoloader = Puppet::Autoload.new(self,
+                "puppet/parser/functions",
+                :wrap => false
+            )
+        end
+
+        @autoloader
+    end
+
     # Create a new function type.
-    def self.newfunction(name, ftype = :statement, doc = nil, &block)
+    def self.newfunction(name, options = {}, &block)
         @functions ||= {}
         name = symbolize(name)
 
@@ -26,6 +37,8 @@ module Functions
             eval("module FCollection; end")
         end
 
+        ftype = options[:type] || :statement
+
         unless ftype == :statement or ftype == :rvalue
             raise Puppet::DevError, "Invalid statement type %s" % ftype.inspect
         end
@@ -36,21 +49,17 @@ module Functions
         # Someday we'll support specifying an arity, but for now, nope
         #@functions[name] = {:arity => arity, :type => ftype}
         @functions[name] = {:type => ftype, :name => fname}
+        if options[:doc]
+            @functions[name][:doc] = options[:doc]
+        end
     end
 
     # Determine if a given name is a function
     def self.function(name)
         name = symbolize(name)
 
-        unless defined? @autoloader
-            @autoloader = Puppet::Autoload.new(self,
-                "puppet/parser/functions",
-                :wrap => false
-            )
-        end
-
         unless @functions.include? name
-            @autoloader.load(name)
+            autoloader.load(name)
         end
 
         if @functions.include? name
@@ -58,6 +67,42 @@ module Functions
         else
             return false
         end
+    end
+
+    def self.functiondocs
+        autoloader.loadall
+
+        header = %{inMenu: true
+title: Function Reference
+orderInfo: 40
+
+There are two types of functions in Puppet: Statements and rvalues.
+Statements stand on their own and do not return arguments; they are used for
+performing stand-alone work like importing.  Rvalues return values and can
+only be used in a statement requiring a value, such as an assignment or a case
+statement.
+
+Here are the functions available in Puppet:
+
+}
+
+        ret = header.dup
+
+        @functions.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
+            ret += "* **%s** (*%s*)" % [name, hash[:type]]
+            if hash[:doc]
+                ret += ":  " + hash[:doc].gsub(/\n\s*/, ' ')
+            else
+                ret += ":  ``undocumented``"
+            end
+            ret += "\n\n"
+        end
+
+        return ret
+    end
+
+    def self.functions
+        @functions.keys
     end
 
     # Determine if a given function returns a value or not.
@@ -75,7 +120,7 @@ module Functions
     end
 
     # Include the specified classes
-    newfunction(:include) do |vals|
+    newfunction(:include, :doc => "Evaluate one or more classes.") do |vals|
         klasses = evalclasses(*vals)
 
         missing = vals.find_all do |klass|
@@ -93,13 +138,18 @@ module Functions
     end
 
     # Tag the current scope with each passed name
-    newfunction(:tag) do |vals|
+    newfunction(:tag, :doc => "Add the specified tags to the containing class
+    or definition.  All contained objects will then acquire that tag, also.
+    ") do |vals|
         self.tag(*vals)
     end
 
     # Test whether a given tag is set.  This functions as a big OR -- if any of the
     # specified tags are unset, we return false.
-    newfunction(:tagged, :rvalue) do |vals|
+    newfunction(:tagged, :type => :rvalue, :doc => "A boolean function that
+    tells you whether the current container is tagged with the specified tags.
+    The tags are ANDed, so thta all of the specified tags must be included for
+    the function to return true.") do |vals|
         classlist = self.classlist
 
         retval = true
@@ -114,7 +164,8 @@ module Functions
     end
 
     # Test whether a given class or definition is defined
-    newfunction(:defined, :rvalue) do |vals|
+    newfunction(:defined, :type => :rvalue, :doc => "Determine whether a given
+    type is defined, either as a native type or a defined type.") do |vals|
         # For some reason, it doesn't want me to return from here.
         if vals.detect do |val| Puppet::Type.type(val) or finddefine(val) end
             true
@@ -124,19 +175,22 @@ module Functions
 
     end
 
-    newfunction(:fail, :statement) do |vals|
+    newfunction(:fail, :doc => "Fail with a parse error.") do |vals|
         vals = vals.collect { |s| s.to_s }.join(" ") if vals.is_a? Array
         raise Puppet::ParseError, vals.to_s
     end
 
     # Runs a newfunction to create a function for each of the log levels
     Puppet::Log.levels.each do |level|      
-        newfunction(level, :statement) do |vals| 
+        newfunction(level, :doc => "Log a message on the server at level
+        #{level.to_s}.") do |vals| 
             send(level, vals.join(" ")) 
         end 
     end
 
-    newfunction(:template, :rvalue) do |vals|
+    newfunction(:template, :type => :rvalue, :doc => "Evaluate a template and
+    return its value.  See [the templating docs](../advanced/templating.html)
+    for more information.") do |vals|
         require 'erb'
 
         vals.collect do |file|
@@ -157,7 +211,11 @@ module Functions
 
     # This is just syntactic sugar for a collection, although it will generally
     # be a good bit faster.
-    newfunction(:realize, :statement) do |vals|
+    newfunction(:realize, :doc => "Make a virtual object real.  This is useful
+    when you want to know the name of the virtual object and don't want to
+    bother with a full collection.  It is slightly faster than a collection,
+    and, of course, is a bit shorter.  You must pass the object using a
+    reference; e.g.: ``realize User[luke]``." ) do |vals|
         coll = Puppet::Parser::Collector.new(self, :nomatter, nil, nil, :virtual)
         vals = [vals] unless vals.is_a?(Array)
         coll.resources = vals

@@ -217,7 +217,7 @@ Below is a list of all documented parameters.  Any default values are in ``block
 end
 
 # Print the docs for types
-def self.types
+def self.typedocs
     puts %{---
 inMenu: true
 title: Type Reference

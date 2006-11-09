@@ -38,7 +38,7 @@ require 'puppet/rails/database/schema_init'
 
     Puppet.config.setdefaults(:puppetmaster,
         #this should be changed to use $statedir, but for now it only works this way.
-        :dblocation => { :default => "#{Puppet[:statedir]}/clientconfigs.sqlite3",
+        :dblocation => { :default => "$statedir/clientconfigs.sqlite3",
             :mode => 0600,
             :owner => "$user",
             :group => "$group",
@@ -54,14 +54,13 @@ require 'puppet/rails/database/schema_init'
         :dbpassword => [ "puppet", "The database password for Client caching. Only
             used when networked databases are used."],
         #this should be changed to use $logdir, but for now it only works this way.
-        :railslog => {:default => "#{Puppet[:logdir]}/puppetrails.log",
+        :railslog => {:default => "$logdir/puppetrails.log",
             :mode => 0600,
             :owner => "$user",
             :group => "$group",
             :desc => "Where Rails-specific logs are sent"
         }
     )
-        ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
 
     def self.clear
         @inited = false
@@ -85,6 +84,12 @@ require 'puppet/rails/database/schema_init'
             case Puppet[:dbadapter]
             when "sqlite3":
                 args[:database] = Puppet[:dblocation]
+                unless FileTest.exists?(Puppet[:dblocation])
+                    Puppet.config.use(:puppet)
+                    Puppet.config.write(:dblocation) do |f|
+                        f.print ""
+                    end
+                end
             
             when "mysql":
                 args[:host]     = Puppet[:dbserver]
@@ -101,7 +106,11 @@ require 'puppet/rails/database/schema_init'
                 end
                 raise Puppet::Error, "Could not connect to database: %s" % detail
             end 
-            @inited = true if ActiveRecord::Base.connection.tables.include? "resources"
+            begin
+                @inited = true if ActiveRecord::Base.connection.tables.include? "resources"
+            rescue SQLite3::CantOpenException => detail
+                @inited = false
+            end
             #puts "Database initialized: #{@inited.inspect} "
         end
 
@@ -130,6 +139,7 @@ require 'puppet/rails/database/schema_init'
             Puppet::Rails::Schema.init
         end
         Puppet.config.use(:puppet)
+        ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
     end
 end
 

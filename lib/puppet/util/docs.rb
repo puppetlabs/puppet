@@ -26,6 +26,34 @@ module Puppet::Util::Docs
             extra
         end
     end
+
+    # Handle the inline indentation in the docs.
+    def scrub(text)
+        # Stupid markdown
+        #text = text.gsub("<%=", "&lt;%=")
+        # For text with no carriage returns, there's nothing to do.
+        if text !~ /\n/
+            return text
+        end
+        indent = nil
+
+        # If we can match an indentation, then just remove that same level of
+        # indent from every line.
+        if text =~ /^(\s+)/
+            indent = $1
+            begin
+                return text.gsub(/^#{indent}/,'')
+            rescue => detail
+                puts detail.backtrace
+                puts detail
+            end
+        else
+            return text
+        end
+
+    end
+
+    module_function :scrub
 end
 
 # $Id$

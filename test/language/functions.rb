@@ -23,7 +23,7 @@ class TestLangFunctions < Test::Unit::TestCase
         end
 
         assert_nothing_raised do
-            Puppet::Parser::Functions.newfunction(:fakefunction, :rvalue) do |input|
+            Puppet::Parser::Functions.newfunction(:fakefunction, :type => :rvalue) do |input|
                 return "output %s" % input[0]
             end
         end
@@ -289,7 +289,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
         File.open(File.join(newpath, "autofunc.rb"), "w") { |f|
             f.puts %{
-                Puppet::Parser::Functions.newfunction(:autofunc, :rvalue) do |vals|
+                Puppet::Parser::Functions.newfunction(:autofunc, :type => :rvalue) do |vals|
                     Puppet.wanring vals.inspect
                 end
             }

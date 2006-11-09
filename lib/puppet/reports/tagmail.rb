@@ -36,6 +36,8 @@ Puppet::Server::Report.newreport(:tagmail) do
             all: me@domain.com
             webserver, !mailserver: httpadmins@domain.com
 
+        This will send all messages to ``me@domain.com``, and all messages from
+        webservers that are not also from mailservers to ``httpadmins@domain.com``.
         "
 
     def process

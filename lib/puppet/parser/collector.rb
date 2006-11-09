@@ -27,7 +27,7 @@ class Puppet::Parser::Collector
         # and such, we'll need to vary the conditions, but this works with no
         # attributes, anyway.
         Puppet::Util.benchmark(:debug, "Collected #{self.type} resources") do
-            Puppet::Rails::RailsResource.find_all_by_restype_and_exported(@type, true,
+            Puppet::Rails::Resource.find_all_by_restype_and_exported(@type, true,
                 args
             ).each do |obj|
                 count += 1
