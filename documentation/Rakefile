@@ -36,7 +36,22 @@ docs = %w{configref typedocs reports functions}
 
 docs.each do |doc|
     task doc do
-        sh %{puppetdoc --mode %s > documentation/reference/%s.page} % [doc, doc]
+        docs = %x{puppetdoc --mode #{doc}}
+
+        header = "documentation/reference/%s.header" % doc
+        if FileTest.exists?(header)
+            headertext = File.read(header)
+        else
+            headertext = ""
+        end
+
+        file = "documentation/reference/%s.page" % doc
+
+        puts "Creating %s" % file
+        File.open(file, "w") do |f|
+            f.puts headertext
+            f.puts docs
+        end
     end
 end
 
