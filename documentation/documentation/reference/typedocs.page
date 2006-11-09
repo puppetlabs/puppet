@@ -1,7 +1,7 @@
 ---
 inMenu: true
 title: Type Reference
-orderInfo: 30
+orderInfo: 40
 ---
 # Type Reference
 
@@ -16,6 +16,7 @@ orderInfo: 30
 1. <a href='#group'>Group</a>
 1. <a href='#host'>Host</a>
 1. <a href='#mount'>Mount</a>
+1. <a href='#notify'>Notify</a>
 1. <a href='#package'>Package</a>
 1. <a href='#port'>Port</a>
 1. <a href='#schedule'>Schedule</a>
@@ -293,6 +294,10 @@ job.  If you already have cron jobs with environment settings,
 then Puppet will keep those settings in the same place in the file,
 but will not associate them with a specific job.
 
+Settings should be specified exactly as they should appear in
+the crontab, e.g., 'PATH=/bin:/usr/bin:/usr/sbin'.  Multiple
+settings should be specified as an array.
+
 #### hour
 The hour at which to run the cron job. Optional;
 if specified, must be between 0 and 23, inclusive.
@@ -554,7 +559,7 @@ for file copying, but it can also be used to monitor files somewhat
 like Tripwire without managing the file contents in any way.  You can
 specify that a file's checksum should be monitored and then subscribe to
 the file from another object and receive events to signify
-checksum changes, for instance.  Valid values are ``nosum``, ``mtime``, ``md5lite``, ``time``, ``timestamp``, ``md5``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
+checksum changes, for instance.  Valid values are ``timestamp``, ``nosum``, ``md5``, ``mtime``, ``time``, ``md5lite``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
 
 #### content
 Specify the contents of a file as a string.  Newlines, tabs, and
@@ -607,7 +612,7 @@ something similar.
 You can also make recursive symlinks, which will create a
 directory structure that maps to the target directory,
 with directories corresponding to each directory
-and links corresponding to each file.  Valid values are ``absent`` (also called ``false``), ``link``, ``directory``, ``file``, ``present``.  Values can also match ``(?-mix:.)``.
+and links corresponding to each file.  Valid values are ``link``, ``absent`` (also called ``false``), ``directory``, ``present``, ``file``.  Values can also match ``(?-mix:.)``.
 
 #### force
 Force the file operation.  Currently only used when replacing
@@ -830,13 +835,20 @@ make those aliases available in your Puppet scripts and also on
 disk.
 
 #### ensure
-The basic state that the object should be in.  Valid values are ``absent``, ``present``.
+  Valid values are ``absent``, ``present``.
 
 #### ip
-The host's IP address.
+The host's IP address, IPv4 or IPv6.
 
 #### name (*namevar*)
 The host name.
+
+#### provider
+The specific backend for provider to use. You will
+seldom need to specify this -- Puppet will usually discover the
+appropriate provider for your platform.  Available providers are:
+
+* **parsed**:   
 
 
 
@@ -892,6 +904,33 @@ The pass in which the mount is checked.
 #### path (*namevar*)
 The mount path for the mount.
 
+#### provider
+The specific backend for provider to use. You will
+seldom need to specify this -- Puppet will usually discover the
+appropriate provider for your platform.  Available providers are:
+
+* **parsed**:     Required binaries: ``umount``, ``mount``, ``df``.
+
+
+
+
+----------------
+
+
+<h2><a name='notify'>notify</a></h2>
+Sends an arbitrary message to the puppetd run-time log.
+
+
+### Notify Parameters
+#### message
+The message to be sent to the log.
+
+#### name (*namevar*)
+An arbitrary tag for your own reference; the name of the message.
+
+#### withpath
+Whether to not to show the full object path.  Sends the message at the current loglevel.  Valid values are ``true``, ``false``.
+
 
 
 
@@ -927,6 +966,10 @@ Normally apt will bail if you try this.  Valid values are ``true``, ``false``.
 #### category
 A read-only parameter set by the package.
 
+#### configfiles
+Whether configfiles should be kept or replaced.  Most packages
+types do not support this parameter.  Valid values are ``keep``, ``replace``.
+
 #### description
 A read-only parameter set by the package.
 
@@ -935,7 +978,7 @@ What state the package should be in.
 *latest* only makes sense for those packaging formats that can
 retrieve new packages on their own and will throw an error on
 those that cannot.  For those packaging systems that allow you
-to specify package versions, specify them here.  Valid values are ``absent``, ``latest``, ``present`` (also called ``installed``).  Values can also match ``(?-mix:.)``.
+to specify package versions, specify them here.  Valid values are ``absent``, ``present`` (also called ``installed``), ``latest``.  Values can also match ``(?-mix:.)``.
 
 #### instance
 A read-only parameter set by the package.
@@ -987,8 +1030,8 @@ appropriate provider for your platform.  Available providers are:
 * **apple**: Package management based on OS X's builtin packaging system.  This is
         essentially the simplest and least functional package system in existence --
         it only supports installation; no deletion or upgrades.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``/usr/sbin/installer``.
-* **apt**: Package management via ``apt-get``.  Default for ``operatingsystem`` == ``debian``.    Required binaries: ``/usr/bin/apt-get``, ``/usr/bin/apt-cache``.
-* **aptitude**: Package management via ``aptitude``.    Required binaries: ``/usr/bin/aptitude``, ``/usr/bin/apt-cache``.
+* **apt**: Package management via ``apt-get``.  Default for ``operatingsystem`` == ``debian``.    Required binaries: ``/usr/bin/apt-cache``, ``/usr/bin/debconf-set-selections``, ``/usr/bin/apt-get``.
+* **aptitude**: Package management via ``aptitude``.    Required binaries: ``/usr/bin/apt-cache``, ``/usr/bin/aptitude``.
 * **blastwave**: Package management using Blastwave.org's ``pkg-get`` command on Solaris.    Required binaries: ``pkg-get``.
 * **darwinport**: Package management using DarwinPorts on OS X.    Required binaries: ``/opt/local/bin/port``.
 * **dpkg**: Package management via ``dpkg``.  Because this only uses ``dpkg``
@@ -1002,13 +1045,14 @@ appropriate provider for your platform.  Available providers are:
 * **gem**: Ruby Gem support.  By default uses remote gems, but you can specify
         the path to a local gem via ``source``.    Required binaries: ``gem``.
 * **openbsd**: OpenBSD's form of ``pkg_add`` support.  Default for ``operatingsystem`` == ``openbsd``.    Required binaries: ``pkg_info``, ``pkg_add``, ``pkg_delete``.
-* **portage**: Provides packaging support for Gentoo's portage system.  Default for ``operatingsystem`` == ``gentoo``.    Required binaries: ``/usr/bin/eix``, ``/usr/bin/emerge``.
+* **pkgdmg**: Package management based on Apple's Installer.app and DiskUtility.app    Required binaries: ``/usr/sbin/installer``, ``/usr/bin/hdiutil``.
+* **portage**: Provides packaging support for Gentoo's portage system.  Default for ``operatingsystem`` == ``gentoo``.    Required binaries: ``/usr/bin/emerge``, ``/usr/bin/eix``.
 * **ports**: Support for FreeBSD's ports.  Again, this still mixes packages
         and ports.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``/usr/local/sbin/portupgrade``, ``/usr/local/sbin/portversion``, ``/usr/local/sbin/pkg_deinstall``, ``/usr/sbin/pkg_info``.
 * **rpm**: RPM packaging support; should work anywhere with a working ``rpm``
         binary.  Default for ``operatingsystem`` == ``redhat``.    Required binaries: ``rpm``.
 * **sun**: Sun's packaging system.  Requires that you specify the source for
-        the packages you're managing.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/bin/pkginfo``, ``/usr/sbin/pkgadd``, ``/usr/sbin/pkgrm``.
+        the packages you're managing.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/sbin/pkgrm``, ``/usr/bin/pkginfo``, ``/usr/sbin/pkgadd``.
 * **sunfreeware**: Package management using sunfreeware.com's ``pkg-get`` command on Solaris.
         At this point, support is exactly the same as ``blastwave`` support and
         has not actually been tested.    Required binaries: ``pkg-get``.
@@ -1062,7 +1106,7 @@ those aliases available in your Puppet scripts and also on disk.
 The port description.
 
 #### ensure
-The basic state that the object should be in.  Valid values are ``absent``, ``present``.
+  Valid values are ``absent``, ``present``.
 
 #### name (*namevar*)
 The port name.
@@ -1076,6 +1120,13 @@ Most services have both protocols, but not all.  If you want
 both protocols, you must specify that; Puppet replaces the
 current values, it does not merge with them.  If you specify
 multiple protocols they must be as an array.
+
+#### provider
+The specific backend for provider to use. You will
+seldom need to specify this -- Puppet will usually discover the
+appropriate provider for your platform.  Available providers are:
+
+* **parsed**:   
 
 
 
@@ -1227,7 +1278,7 @@ provided.
 Whether a service should be enabled to start at boot.
 This state behaves quite differently depending on the platform;
 wherever possible, it relies on local tools to enable or disable
-a given service.  *true*/*false*/*runlevels*  Valid values are ``false``, ``true``.
+a given service.  *true*/*false*/*runlevels*  Valid values are ``true``, ``false``.
 
 #### ensure
 Whether a service should be running.  **true**/*false*  Valid values are ``running`` (also called ``true``), ``stopped`` (also called ``false``).
@@ -1281,6 +1332,8 @@ appropriate provider for your platform.  Available providers are:
         so using ``init``.  
 * **debian**: Debian's form of ``init``-style management.  The only difference
         is that this supports service enabling and disabling via ``update-rc.d``.  Default for ``operatingsystem`` == ``debian``.    Required binaries: ``/usr/sbin/update-rc.d``.
+* **gentoo**: Gentoo's form of ``init``-style service
+        management; uses ``rc-update`` for service enabling and disabling.  Default for ``operatingsystem`` == ``gentoo``.    Required binaries: ``/sbin/rc-update``.
 * **init**: Standard init service management.  This provider assumes that the
         init script has not ``status`` command, because so few scripts do,
         so you need to either provide a status command or specify via ``hasstatus``
@@ -1339,13 +1392,20 @@ as one of the metaparams; using this state to set aliases will
 make those aliases available in your Puppet scripts.
 
 #### ensure
-The basic state that the object should be in.  Valid values are ``absent``, ``present``.
+  Valid values are ``absent``, ``present``.
 
 #### key
 The key itself; generally a long string of hex digits.
 
 #### name (*namevar*)
 The host name.
+
+#### provider
+The specific backend for provider to use. You will
+seldom need to specify this -- Puppet will usually discover the
+appropriate provider for your platform.  Available providers are:
+
+* **parsed**:   
 
 #### type
 The encryption type used.  Probably ssh-dss or ssh-rsa.
@@ -1394,13 +1454,17 @@ are created in the destination, and any files are linked over.
 
 
 <h2><a name='tidy'>tidy</a></h2>
-Remove unwanted files based on specific criteria.
+Remove unwanted files based on specific criteria.  Multiple
+criteria or OR'd together, so a file that is too large but is not
+old enough will still get tidied.
 
 
 ### Tidy Parameters
 #### age
 Tidy files whose age is equal to or greater than
-the specified number of days.
+the specified number of days.  You can choose seconds, minutes,
+hours, days, or weeks by specifying the first letter of any
+of those words (e.g., '1w').
 
 #### backup
 Whether files should be backed up before
@@ -1446,6 +1510,8 @@ into the directory looking for files to tidy.
 #### rmdirs
 Tidy directories in addition to files; that is, remove
 directories whose age is older than the specified criteria.
+This will only remove empty directories, so all contained
+files must also be tidied before a directory gets removed.
 
 #### size
 Tidy files whose size is equal to or greater than
@@ -1455,8 +1521,7 @@ and *megabytes*, respectively.  Only the first character is
 significant, so the full word can also be used.
 
 #### type
-Set the mechanism for determining age.
-**atime**/*mtime*/*ctime*.
+Set the mechanism for determining age.  Valid values are ``atime``, ``mtime``, ``ctime``.
 
 
 
@@ -1636,7 +1701,7 @@ Solaris zones.
 
 ### Zone Parameters
 #### autoboot
-Whether the zone should automatically boot.  Valid values are ``false``, ``true``.
+Whether the zone should automatically boot.  Valid values are ``true``, ``false``.
 
 #### ensure
 The running state of the zone.  The valid states directly reflect
@@ -1717,4 +1782,4 @@ so Puppet only checks for it at that time.
 ----------------
 
 
-*This page autogenerated on Mon Sep 25 14:59:47 EDT 2006*
+*This page autogenerated on Thu Nov 09 14:43:00 CST 2006*

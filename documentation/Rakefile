@@ -32,7 +32,7 @@ task :html => htmlfiles
 
 task :default => :html
 
-docs = %w{configref types reports functions}
+docs = %w{configref typedocs reports functions}
 
 docs.each do |doc|
     task doc do

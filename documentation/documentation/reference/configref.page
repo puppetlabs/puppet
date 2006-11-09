@@ -1,12 +1,14 @@
 ---
 inMenu: true
 title: Configuration Reference
-orderInfo: 30
+orderInfo: 40
 ---
 # Puppet Configuration Reference
 
+## Specifying Configuration Parameters
+
 Every Puppet executable (with the exception of ``puppetdoc``) accepts all of
-these arguments, but not all of the arguments make sense for every executable.
+the arguments below, but not all of the arguments make sense for every executable.
 Each argument has a section listed with it in parentheses; often, that section
 will map to an executable (e.g., ``puppetd``), in which case it probably only
 makes sense for that one executable.  If ``puppet`` is listed as the section,
@@ -73,11 +75,29 @@ and one `puppet` user) if it is invoked as `root` with the `--mkusers` argument:
 
     $ puppetd --mkusers
   
-Any default values are in ``block type`` at the end of the description.
+## Signals
+
+The `puppetd` and `puppetmasterd` executables catch some signals for special 
+handling.  Both daemons catch (`SIGHUP`), which forces the server to restart 
+tself.  Predictably, interrupt and terminate (`SIGINT` and `SIGHUP`) will shut 
+down the server, whether it be an instance of `puppetd` or `puppetmasterd`.
+
+Sending the `SIGUSR1` signal to an instance of `puppetd` will cause it to 
+immediately begin a new configuration transaction with the server.  This 
+signal has no effect on `puppetmasterd`.
+
+
+## Configuration Parameter Reference
+
+Below is a list of all documented parameters.  Any default values are in ``block type`` at the end of the description.
 
 #### <a name="authconfig">authconfig</a> (<em>puppet</em>)
 
 The configuration file that defines the rights to the different namespaces and methods.  This can be used as a coarse-grained authorization system for both ``puppetd`` and ``puppetmasterd``.  ``/etc/puppet/namespaceauth.conf``
+
+#### <a name="autoflush">autoflush</a> (<em>puppet</em>)
+
+Whether log files should always flush to disk.
 
 #### <a name="autosign">autosign</a> (<em>ca</em>)
 
@@ -127,6 +147,10 @@ Where the CA stores private certificate information.  ``/etc/puppet/ssl/ca/priva
 
 The CA public key.  ``/etc/puppet/ssl/ca/ca_pub.pem``
 
+#### <a name="cert_inventory">cert_inventory</a> (<em>ca</em>)
+
+A Complete listing of all certificates  ``/etc/puppet/ssl/ca/inventory.txt``
+
 #### <a name="certdir">certdir</a> (<em>certificates</em>)
 
 The certificate directory.  ``/etc/puppet/ssl/certs``
@@ -137,7 +161,7 @@ The file in which puppetd stores a list of the classes associated with the retri
 
 #### <a name="color">color</a> (<em>puppet</em>)
 
-Whether to use ANSI colors when logging to the console.  ``true``
+Whether to use colors when logging to the console. Valid values are ``ansi`` (equivalent to ``true``), ``html`` (mostly used during testing with TextMate), and ``false``, which produces no color.  ``ansi``
 
 #### <a name="confdir">confdir</a> (<em>puppet</em>)
 
@@ -154,30 +178,6 @@ Print the value of a specific configuration parameter.  If a parameter is provid
 #### <a name="csrdir">csrdir</a> (<em>ca</em>)
 
 Where the CA stores certificate requests  ``/etc/puppet/ssl/ca/requests``
-
-#### <a name="dbadapter">dbadapter</a> (<em>puppetmaster</em>)
-
-The type of database to use.  ``sqlite3``
-
-#### <a name="dblocation">dblocation</a> (<em>puppetmaster</em>)
-
-The database cache for client configurations.  Used for querying within the language.  ``/var/puppet/state/clientconfigs.sqlite3``
-
-#### <a name="dbname">dbname</a> (<em>puppetmaster</em>)
-
-The name of the database to use.  ``puppet``
-
-#### <a name="dbpassword">dbpassword</a> (<em>puppetmaster</em>)
-
-The database password for Client caching. Only used when networked databases are used.  ``puppet``
-
-#### <a name="dbserver">dbserver</a> (<em>puppetmaster</em>)
-
-The database server for Client caching. Only used when networked databases are used.  ``puppet``
-
-#### <a name="dbuser">dbuser</a> (<em>puppetmaster</em>)
-
-The database user for Client caching. Only used when networked databases are used.  ``puppet``
 
 #### <a name="factdest">factdest</a> (<em>puppet</em>)
 
@@ -355,6 +355,10 @@ Just check the syntax of the manifests.
 
 Where puppetd stores the password for its private key. Generally unused.  ``/etc/puppet/ssl/private/password``
 
+#### <a name="path">path</a> (<em>puppet</em>)
+
+The shell search path.  Defaults to whatever is inherited from the parent process.  ``none``
+
 #### <a name="plugindest">plugindest</a> (<em>puppet</em>)
 
 Where Puppet should store plugins that it pulls down from the central server.  ``/var/puppet/plugins``
@@ -399,21 +403,13 @@ The log file for puppetd.  This is generally not used.  ``/var/puppet/log/puppet
 
 Which port puppetd listens on.  ``8139``
 
-#### <a name="railslog">railslog</a> (<em>puppetmaster</em>)
-
-Where Rails-specific logs are sent  ``/var/puppet/log/puppetrails.log``
-
 #### <a name="report">report</a> (<em>puppetd</em>)
 
 Whether to send reports after every transaction.
 
-#### <a name="reportdirectory">reportdirectory</a> (<em>reporting</em>)
-
-The directory in which to store reports received from the client.  Each client gets a separate subdirectory.  ``/var/puppet/reports``
-
 #### <a name="reports">reports</a> (<em>reporting</em>)
 
-The list of reports to generate.  All reports are looked for in puppet/reports/<name>.rb, and multiple report names should be comma-separated (whitespace is okay).  ``none``
+The list of reports to generate.  All reports are looked for in puppet/reports/<name>.rb, and multiple report names should be comma-separated (whitespace is okay).  ``store``
 
 #### <a name="reportserver">reportserver</a> (<em>puppetd</em>)
 
@@ -425,11 +421,15 @@ The bit length of the certificates.  ``2048``
 
 #### <a name="rrddir">rrddir</a> (<em>metrics</em>)
 
-The directory where RRD database files are stored.  ``/var/puppet/rrd``
+The directory where RRD database files are stored. Directories for each reporting host will be created under this directory.  ``/var/puppet/rrd``
 
 #### <a name="rrdgraph">rrdgraph</a> (<em>metrics</em>)
 
 Whether RRD information should be graphed.
+
+#### <a name="rrdinterval">rrdinterval</a> (<em>metrics</em>)
+
+How often RRD should expect data. This should match how often the hosts report back to the server.  ``1800``
 
 #### <a name="rundir">rundir</a> (<em>puppet</em>)
 
@@ -471,6 +471,10 @@ Where puppetd and puppetmasterd store state associated with the running configur
 
 Whether to store each client's configuration.  This requires ActiveRecord from Ruby on Rails.
 
+#### <a name="syslogfacility">syslogfacility</a> (<em>puppet</em>)
+
+What syslog facility to use when logging to syslog.  Syslog has a fixed list of valid facilities, and you must choose one of those; you cannot just make one up.  ``daemon``
+
 #### <a name="tags">tags</a> (<em>transaction</em>)
 
 Tags to use to find objects.  If this is set, then only objects tagged with the specified tags will be applied. Values must be comma-separated.
@@ -504,4 +508,4 @@ Where Puppet stores dynamic and growing data.  ``/var/puppet``
 ----------------
 
 
-*This page autogenerated on Mon Sep 25 14:05:16 CDT 2006*
+*This page autogenerated on Thu Nov 09 14:32:06 CST 2006*
