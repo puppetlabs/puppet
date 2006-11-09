@@ -243,6 +243,8 @@ class TestPackages < Test::Unit::TestCase
                 pkg.retrieve
                 assert(pkg.insync?, "After install, package is not insync")
 
+                assert_events([], comp, "package")
+
                 assert_nothing_raised {
                     pkg[:ensure] = "absent"
                 }

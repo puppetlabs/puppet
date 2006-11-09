@@ -137,7 +137,7 @@ module Puppet
                             return true
                         else
                             self.debug "@is is %s, latest %s is %s" %
-                                [@is, @parent.name, @latest]
+                                [@is.inspect, @parent.name, @latest.inspect]
                         end
                     when :absent
                         if @is == :absent

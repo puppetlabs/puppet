@@ -92,14 +92,14 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
                 versioncmp(a,b)
             }
 
-            unless version
+            unless version.length > 0
                 self.debug "No latest version"
                 if Puppet[:debug]
                     print output
                 end
             end
 
-            return version
+            return version.shift
         else
             self.err "Could not match string"
         end
