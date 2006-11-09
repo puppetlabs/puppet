@@ -102,12 +102,13 @@ This is only one assignment, so no errors.
 
 # Fact Variables (facts)
 
-In addition to variables that are manually assigned (as above), `puppet` also uses
-the [facter](/projects/facter/index.html) utility to glean information about the system.
-The facts gleaned by `facter` are made available as variables for use in `puppet`.
+In addition to variables that are manually assigned (as above), `puppet` also
+uses the [facter](/projects/facter/index.html) utility to glean information
+about the system.  The facts gleaned by `facter` are made available as
+variables for use in `puppet`.
 
-You can get a full listing of variables that should be set by `puppet` from `facter` facts by
-running the `facter` command with no arguments, for instance:
+You can get a full listing of variables that should be set by `puppet` from
+`facter` facts by running the `facter` command with no arguments, for instance:
 
     $ facter
     rubysitedir => /usr/lib/ruby/site_ruby/1.8

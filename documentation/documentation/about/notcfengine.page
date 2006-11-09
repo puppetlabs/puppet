@@ -19,6 +19,29 @@ cfengine's current state.  Left out of this document are any process decisions
 that also led to Puppet's creation (e.g., the difficulty in getting
 significant changes accepted to cfengine).
 
+# Extensibility
+
+One of the biggest differences between Cfengine and Puppet is how easy it is
+to extend Puppet.  There are many places in Puppet where you can create your
+own classes and Puppet will load them automatically, making them available for
+use immediately with no modification to the core.  For instance, you can
+create [new native resource types](../programmers/creating-a-puppet-type.html)
+(that is, types written entirely in Ruby), drop them where Ruby can find them,
+and just start using them -- Puppet will automatically load those types for
+you.  In addition to the types themselves, you can create
+[new providers](../programmers/providers.html), to support new package
+managers, for instance.  There are a few other areas that will automatically
+load your extensions, such as the report handlers.
+
+In contrast, Cfengine has a very limited interface for expansion -- you can
+call out to modules using a shell interface.  This limits the interface itself
+to being very simple, but it also means you don't get good logging, noop
+control, or much else.
+
+You could theoretically add new native types in C to Cfengine, but that would
+require modification of the entire tree, from the lexer through the parser and
+all the way through to the backend.
+
 # Abstraction
 
 Cfengine is a great way to scale common administrative practices -- you can

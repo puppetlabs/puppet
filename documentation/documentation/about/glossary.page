@@ -1,0 +1,56 @@
+---
+inMenu: true
+title: A Glossary of Terms
+orderInfo: 3
+subtreeLevel: 6
+---
+
+As developers have found time and time again, terminology is critical to
+successful projects.  The Puppet community has begun to coalesce around
+certain terms found to be useful in working with Puppet:
+
+* **client**:  An operating system instance managed by Puppet.  This can be
+  an OS running on its own hardware or a virtual image.
+
+* **defined type**:  A type written in Puppet's language.  Also sometimes
+  called ``definitions`` or ``components``.
+
+* **manifest**:  A configuration file written in the Puppet language.
+
+* **native type**:  A type written purely in Ruby.
+
+* **provider**:  A simple implementation of a type; examples of package
+  providers are ``dpkg`` and ``rpm``, and examples of user providers are
+  ``useradd`` and ``netinfo``.  Most often, providers are just Ruby wrappers
+  around shell commands, and they are usually very short and thus easy to
+  create.
+
+* **resource**:  An element to be managed on a client, such as a user, group,
+  or package.  Resources do not always directly map to simple details on the
+  client -- they might sometimes involve spreading information across multiple
+  files, or even involve modifying devices.
+
+* **resource object**:  A Puppet object in memory meant to manage a resource
+  on disk.  Resource specifications get converted to these, and then they
+  are used to perform any necessary work.
+
+* **resource specification**:  The details of how to manage a resource as
+  specified in Puppet code.  When speaking about resources, it is sometimes
+  important to differentiate between the literal resource on disk and the
+  specification for how to manage that resource; most often, these are just
+  referred to as resources.
+
+* **type**:  Also called ``resource type``.  A class of resources that can be
+  managed.  Types determine the modeling of the resources they are meant to
+  manage -- e.g., what attributes are valid, and what the valid values are for
+  those attributes.
+
+Here is a simple glossary of term
+
+About Puppet
+=====================
+* [Introduction](introduction.html)
+* [Puppet vs. Cfengine](notcfengine.html)
+
+
+*$Id$*

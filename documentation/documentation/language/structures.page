@@ -4,46 +4,11 @@ title: Control Structures
 orderInfo: 30
 ---
 
-This is a brief overview of the language structures 
-available for making site configurations in Puppet.
-For futher documentation, visit the [Puppet homepage](/projects/puppet/).
+This is a brief overview of the language structures available for making site
+configurations in Puppet.  For futher documentation, visit the
+[Puppet homepage](/projects/puppet/).
 
-<h1><a name="types">Types</a></h1>
-
-The basic unit of configuration in Puppet are ``types``.  Types model objects
-on the computer being managed, and each builtin type has attributes that
-determine the final type configuration:
-
-    file { "/etc/passwd": owner => root, mode => 644 } 
-    package { apache: install => true }
-
-Puppet also provides facilities for defining new types as collections of
-existing types (see Components below), but there is no syntactic difference
-between using builtin types like ``file`` and ``package`` and using defined
-types.  Any operation or syntax that succeeds for builtin types should also
-work for defined types.
-
-See the [Type Reference](typedocs.html) for the documentation for the
-Puppet Library's primitive types.
-
-<h1><a name="assignment">Assignment</a></h1>
-
-
-    $variable = value
-
-Variables available in the current scope are referenced
-by preceding them with the ``$`` character. 
-
-Once assigned, variables cannot be reassigned. However,
-within a sub-scope a new assignment can be made for a
-variable name for that sub-scope and any further 
-sub-scopes created within it:
-  
-    $x = foo
-    $y = bar
-    $z = "$x$y"
-
-# Bringing Config files together
+# Importing Manifests
 
     import "filename"
 

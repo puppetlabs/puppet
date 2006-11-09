@@ -32,7 +32,12 @@ task :html => htmlfiles
 
 task :default => :html
 
-task :docs do
-    sh %{puppetdoc --arguments > documentation/reference/configref.page}
-    sh %{puppetdoc --types > documentation/reference/typedocs.page}
+docs = %w{configref types reports functions}
+
+docs.each do |doc|
+    task doc do
+        sh %{puppetdoc --mode %s > documentation/reference/%s.page} % [doc, doc]
+    end
 end
+
+task :docs => docs
