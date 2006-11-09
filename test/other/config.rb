@@ -853,6 +853,48 @@ inttest = 27
         assert_equal("footest", config[:blocktest2])
         assert_equal("footest", testing)
     end
+
+    def test_no_modify_root
+        config = mkconfig
+        config.setdefaults(:yay,
+            :mydir => {:default => tempfile(),
+                :mode => 0644,
+                :owner => "root",
+                :group => "root",
+                :desc => "yay"
+            },
+            :mkusers => [false, "yay"]
+        )
+
+        assert_nothing_raised do
+            config.use(:yay)
+        end
+
+        # Now enable it so they'll be added
+        config[:mkusers] = true
+
+        comp = config.to_component
+        comp.each do |c|
+            puts c.ref
+        end
+
+        Puppet::Type.type(:user).each do |u|
+            assert(u.name != "root", "Tried to manage root user")
+        end
+        Puppet::Type.type(:group).each do |u|
+            assert(u.name != "root", "Tried to manage root group")
+            assert(u.name != "wheel", "Tried to manage wheel group")
+        end
+
+#        assert(yay, "Did not find yay component")
+#        yay.each do |c|
+#            puts c.ref
+#        end
+#        assert(! yay.find { |o| o.class.name == :user and o.name == "root" },
+#            "Found root user")
+#        assert(! yay.find { |o| o.class.name == :group and o.name == "root" },
+#            "Found root group")
+    end
 end
 
 # $Id$

@@ -411,6 +411,9 @@ class Config
                     # If a user and/or group is set, then make sure we're
                     # managing that object
                     if obj.respond_to? attr and name = obj.send(attr)
+                        # Skip root or wheel
+                        next if %w{root wheel}.include?(name.to_s)
+
                         # Skip owners and groups we've already done, but tag
                         # them with our section if necessary
                         if done[type].include?(name)
