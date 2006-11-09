@@ -34,8 +34,11 @@ unless defined? ActiveRecord
 end
 
 module Puppet::Rails
+require 'puppet/rails/database/schema_init'
+
     Puppet.config.setdefaults(:puppetmaster,
-        :dblocation => { :default => "$statedir/clientconfigs.sqlite3",
+        #this should be changed to use $statedir, but for now it only works this way.
+        :dblocation => { :default => "#{Puppet[:statedir]}/clientconfigs.sqlite3",
             :mode => 0600,
             :owner => "$user",
             :group => "$group",
@@ -44,19 +47,21 @@ module Puppet::Rails
         },
         :dbadapter => [ "sqlite3", "The type of database to use." ],
         :dbname => [ "puppet", "The name of the database to use." ],
-        :dbserver => [ "puppet", "The database server for Client caching. Only
+        :dbserver => [ "localhost", "The database server for Client caching. Only
             used when networked databases are used."],
         :dbuser => [ "puppet", "The database user for Client caching. Only
             used when networked databases are used."],
         :dbpassword => [ "puppet", "The database password for Client caching. Only
             used when networked databases are used."],
-        :railslog => {:default => "$logdir/puppetrails.log",
+        #this should be changed to use $logdir, but for now it only works this way.
+        :railslog => {:default => "#{Puppet[:logdir]}/puppetrails.log",
             :mode => 0600,
             :owner => "$user",
             :group => "$group",
             :desc => "Where Rails-specific logs are sent"
         }
     )
+        ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
 
     def self.clear
         @inited = false
@@ -73,14 +78,14 @@ module Puppet::Rails
         # the state dir on every test.
         #unless (defined? @inited and @inited) or defined? Test::Unit::TestCase
         unless (defined? @inited and @inited)
-            Puppet.config.use(:puppet)
+            Puppet.config.use(:puppetmaster)
 
-            ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
             args = {:adapter => Puppet[:dbadapter]}
 
             case Puppet[:dbadapter]
             when "sqlite3":
                 args[:database] = Puppet[:dblocation]
+            
             when "mysql":
                 args[:host]     = Puppet[:dbserver]
                 args[:username] = Puppet[:dbuser]
@@ -88,18 +93,24 @@ module Puppet::Rails
                 args[:database] = Puppet[:dbname]
             end
 
-            ActiveRecord::Base.establish_connection(args)
-
-            @inited = true
+            begin
+                ActiveRecord::Base.establish_connection(args)
+            rescue => detail
+                if Puppet[:trace]
+                    puts detail.backtrace
+                end
+                raise Puppet::Error, "Could not connect to database: %s" % detail
+            end 
+            @inited = true if ActiveRecord::Base.connection.tables.include? "resources"
+            #puts "Database initialized: #{@inited.inspect} "
         end
 
-        if Puppet[:dbadapter] == "sqlite3" and ! FileTest.exists?(Puppet[:dblocation])
-
+        if @inited
             dbdir = nil
             $:.each { |d|
                 tmp = File.join(d, "puppet/rails/database")
                 if FileTest.directory?(tmp)
-                    dbdir = tmp
+                    dbdir = tmp 
                 end
             }
 
@@ -115,8 +126,10 @@ module Puppet::Rails
                 end
                 raise Puppet::Error, "Could not initialize database: %s" % detail
             end
+        else
+            Puppet::Rails::Schema.init
         end
-        Puppet.config.use(:puppetmaster)
+        Puppet.config.use(:puppet)
     end
 end
 

@@ -14,16 +14,14 @@ module PuppetTest::RailsTesting
         host = Puppet::Rails::Host.new(:name => Facter.value("hostname"))
 
         # Now build a resource
-        resource = host.rails_resources.build(
-            :title => title, :restype => type,
-            :exported => true
+        resource = host.resources.build(
+            :title => title, :exported => true
         )
 
         # Now add some params
         params.each do |param, value|
-            resource.rails_parameters.build(
-                :name => param, :value => value
-            )
+            pvalue = ParamValue.new(:value => value)
+            resource.param_name.find_or_create_by_name(param).param_values << pvalue
         end
 
         # Now save the whole thing

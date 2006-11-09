@@ -1,12 +1,18 @@
-require 'puppet/rails/rails_resource'
+require 'puppet/rails/resource'
 
-#RailsObject = Puppet::Rails::RailsObject
 class Puppet::Rails::Host < ActiveRecord::Base
-    serialize :facts, Hash
-    serialize :classes, Array
+    has_many :fact_values, :through => :fact_names 
+    has_many :fact_names
+    belongs_to :puppet_classes
+    has_many :source_files
+    has_many :resources, :include => [ :param_names, :param_values ]
 
-    has_many :rails_resources, :dependent => :delete_all,
-             :include => :rails_parameters
+    acts_as_taggable
+
+    def facts(name)
+        fv = self.fact_values.find(:first, :conditions => "fact_names.name = '#{name}'") 
+        return fv.value
+    end
 
     # If the host already exists, get rid of its objects
     def self.clean(host)
@@ -25,33 +31,42 @@ class Puppet::Rails::Host < ActiveRecord::Base
         end
 
         args = {}
-        [:name, :facts, :classes].each do |param|
-            if hash[param]
-                args[param] = hash[param]
-            end
-        end
 
         if hash[:facts].include?("ipaddress")
             args[:ip] = hash[:facts]["ipaddress"]
+        end
+        host = self.find_or_create_by_name(hash[:facts]["hostname"], args)
+
+        hash[:facts].each do |name, value|
+            fn = host.fact_names.find_or_create_by_name(name)
+            fv = fn.fact_values.find_or_create_by_value(value)
+            host.fact_names << fn
         end
 
         unless hash[:resources]
             raise ArgumentError, "You must pass resources"
         end
 
-        if host = self.find_by_name(hash[:name])
-            args.each do |param, value|
-                unless host[param] == args[param]
-                    host[param] = args[param]
-                end
-            end
-        else
-            # Create it anew
-            host = self.new(args)
+	typenames = []
+        Puppet::Type.eachtype do |type|
+            typenames << type.name.to_s
         end
 
-        hash[:resources].each do |res|
-            res.store(host)
+        hash[:resources].each do |resource|
+            resargs = resource.to_hash.stringify_keys
+
+            if typenames.include?(resource.instance_eval("type"))
+                rtype = "Puppet#{resource.instance_eval("type").capitalize}"
+            end
+
+            res = host.resources.find_or_create_by_title(resource[:title])
+            res.type = rtype
+            res.save
+            resargs.each do |param, value|
+                pn = res.param_names.find_or_create_by_name(param)
+                pv = pn.param_values.find_or_create_by_value(value)
+                res.param_names << pn
+            end
         end
 
         Puppet::Util.benchmark(:info, "Saved host to database") do

@@ -252,27 +252,25 @@ class Puppet::Parser::Resource
     # with.
     def store(host)
         args = {}
-        %w{type title tags file line exported}.each do |param|
+        #FIXME: support files/lines, etc.
+        #%w{type title tags file line exported}.each do |param|
+        %w{type title tags exported}.each do |param|
             if value = self.send(param)
                 args[param] = value
             end
         end
 
-        # 'type' isn't a valid column name, so we have to use something else.
         args = symbolize_options(args)
-        args[:restype] = args[:type]
-        args.delete(:type)
 
         # Let's see if the object exists
-        #if obj = host.rails_resources.find_by_type_and_title(self.type, self.title)
-        if obj = host.rails_resources.find_by_restype_and_title(self.type, self.title)
+        if obj = host.resources.find_by_type_and_title(self.type, self.title)
             # We exist
             args.each do |param, value|
                 obj[param] = value
             end
         else
             # Else create it anew
-            obj = host.rails_resources.build(args)
+            obj = host.resources.build(args)
         end
 
         # Either way, now add our parameters
