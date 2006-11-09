@@ -44,12 +44,4 @@ certain terms found to be useful in working with Puppet:
   manage -- e.g., what attributes are valid, and what the valid values are for
   those attributes.
 
-Here is a simple glossary of term
-
-About Puppet
-=====================
-* [Introduction](introduction.html)
-* [Puppet vs. Cfengine](notcfengine.html)
-
-
 *$Id$*

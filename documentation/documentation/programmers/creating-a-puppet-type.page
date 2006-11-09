@@ -47,7 +47,7 @@ block passed to ``newtype``, using the ``newparam`` method:
 
 The ``desc`` method provides documentation for your parameter.  This
 documentation is used by ``puppetdoc`` to create the
-[Type Reference](typedocs.html).
+[Type Reference](../reference/typedocs.html).
 
 The ``newvalues`` method is optional; if you use it, then only those values
 (in string or symbol form) will be considered valid values, and they will
@@ -308,7 +308,7 @@ process of applying one or more type instances.
 ## Dependency Sorting
 
 I'll ignore the process of turning Puppet manifests into types; that's handled
-in the [How It Works](howitworks.html) document.  The collection of objects
+in the [How It Works](../internals/howitworks.html) document.  The collection of objects
 are always contained in a top-level instance of the ``component`` type (this
 is an unfortunate hold-over from some flawed design ideas in the early
 development of Puppet -- expect it to change internally at some point).

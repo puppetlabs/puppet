@@ -54,10 +54,9 @@ feel the particular need to build it manually, you can get the source from
 Puppet and Facter are now available in Fedora Extras, thanks to David
 Lutterkort at Red Hat.  Fedora users should be able to retrieve them via
 yum from the Fedora Extras repository. Users of RHEL4 can get the package
-from David's [yum
-repository](http://people.redhat.com/dlutter/yum/rhel4). Please let the
-puppet-users mailing list know if you have built RPM's for RHEL2.1 or RHEL3
-(or the equivalent CentOS builds)
+from David's [yum repository](http://people.redhat.com/dlutter/yum/rhel4).
+Please let the puppet-users mailing list know if you have built RPM's for
+RHEL2.1 or RHEL3 (or the equivalent CentOS builds)
 
 If you are building ruby on Red Hat (at least on version 3), you
 apparently must build it with ``CPPFLAGS=-I/usr/kerberos/include/``, else you
@@ -67,7 +66,7 @@ tracking that one down).
 #### Solaris
 
 There are Solaris packages for Puppet and Facter in the
-[downloads](http://reductivelabs.com/downloads/packages/SunOS.  These packages
+[downloads](http://reductivelabs.com/downloads/packages/SunOS).  These packages
 suffice for both sparc and x86 (even though they're marked x86), but they
 don't specify dependencies.  They're automatically built during new releases,
 so they should always be the latest.
@@ -302,7 +301,7 @@ Otherwise, you will need to define each of your nodes in your site manifest:
     }
 
 Alternatively, you can tell ``puppetmasterd`` to use
-[LDAP for node storage](ldapnodes.html).
+[LDAP for node storage](../advanced/ldapnodes.html).
 
 # Verifying Installation
 

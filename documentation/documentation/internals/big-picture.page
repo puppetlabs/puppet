@@ -19,7 +19,7 @@ used to handling, like ``service`` and ``node``, and Puppet is responsible for
 either achieving the configuration or providing the user enough information to
 fix any encountered problems.
 
-This document is a supplement to the [Introduction](introduction.html) and it is assumed that
+This document is a supplement to the [Introduction](../about/introduction.html) and it is assumed that
 readers are familiar with the contents of that document.
 
 # Less Detail, More Information

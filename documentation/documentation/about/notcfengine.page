@@ -192,7 +192,7 @@ or anything else in the stack.  In contract, new types in cfengine require
 modifications all the way through the stack, including the lexer.  Puppet will
 even automatically load any new types you create -- just drop them into your
 search path and you can start using them (or, even better, drop them into the
-[plugins directory](configref.html) and the client will automatically
+[plugins directory](../reference/configref.html) and the client will automatically
 retrieve and load them).
 
 Puppet also uses the industry-standard XMLRPC protocol for communication

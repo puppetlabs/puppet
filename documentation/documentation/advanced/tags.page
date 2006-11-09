@@ -9,7 +9,7 @@ Puppet allows for arbitrary tags to be applied to any or all objects in its conf
 
 ## Invoking `puppet` in a Tag-Restricted Context
 
-One way to make use of tagging in `puppet` is to use tags at invocation-time to restrict which objects will be taken into consideration at run-time.  In addition to the section below, you might want to glance at the [tags](configref.html#tags) section of the [Configuration Reference](configref.html).
+One way to make use of tagging in `puppet` is to use tags at invocation-time to restrict which objects will be taken into consideration at run-time.  In addition to the section below, you might want to glance at the [tags](../reference/configref.html#tags) section of the [Configuration Reference](../reference/configref.html).
 
 ### Testing Configurations with Tags
 
@@ -43,7 +43,7 @@ tags in your object definitions.
 
 ### Specifying Tags Explicitly in Object Definitions
 
-The easiest way to mark an object with a tag is to do it explicitly with the "tag" [metaparameter](typedocs.html#metaparameters).  Since it is a metaparameter, it can be set on
+The easiest way to mark an object with a tag is to do it explicitly with the "tag" [metaparameter](../reference/typedocs.html#metaparameters).  Since it is a metaparameter, it can be set on
 any object.  In the example below, we're tagging this file object, "/etc/httpd", with the tag
 "apache", since it is part of the Apache webserver configuration.
 
@@ -59,7 +59,7 @@ any object.  In the example below, we're tagging this file object, "/etc/httpd",
 
 ### Automatic Tagging
 
-All language statements enclosed in a `node`, `define` or `class` structure (read more about puppet control structures [here](structures.html)) will automatically be tagged with the name of that statement.  These automatically-applied tags will be inherited by any object enclosed in that class, regardless of the depth of enclosure.
+All language statements enclosed in a `node`, `define` or `class` structure (read more about puppet control structures [here](../language/structures.html)) will automatically be tagged with the name of that statement.  These automatically-applied tags will be inherited by any object enclosed in that class, regardless of the depth of enclosure.
 
 Let's take a look at the configuration we looked at above, with a slight change:
 

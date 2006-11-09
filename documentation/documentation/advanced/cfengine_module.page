@@ -34,7 +34,7 @@ directory at once:
 
 ## Setting Up Cfengine
 
-Currently, the module must be retrieved [from subversion](fromsvn.html) or
+Currently, the module must be retrieved [from subversion](../installing/fromsvn.html) or
 from the online
 [source browser](https://reductivelabs.com/cgi-bin/puppet.cgi/browser/trunk/ext/module_puppet).
 
@@ -107,9 +107,9 @@ Puppet was largely developed as a successor to Cfengine, based on years of
 Cfengine consulting and development; as a result, it overcomes some
 significant shortcomings in Cfengine, and it makes the most sense to use
 Puppet in those places where Cfengine is weakest.  Specifically, Puppet
-provides [higher-level types](typedocs.html#user) than Cfengine, supports
+provides [higher-level types](../reference/typedocs.html#user) than Cfengine, supports
 high-level abstractions akin to functions, and makes it easy to define your
-own [custom types](creating-a-puppet-type.html).
+own [custom types](../programmers/creating-a-puppet-type.html).
 
 Generally, it's probably best to start out using Puppet to manage elements
 that Cfengine cannot manage or is not good at managing, such as users,
@@ -126,7 +126,7 @@ being restricted to use Cfengine's shell-script module interface.
 If you are using a templating system with Cfengine or are generating your
 Cfengine configurations somehow, you might be especially happy with this
 Puppet module, since you can create reusable types with external templates.
-For an example, see the [Puppet vs. Cfengine comparison](notcfengine.html).
+For an example, see the [Puppet vs. Cfengine comparison](../about/notcfengine.html).
 
 ## Transitioning
 

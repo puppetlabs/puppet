@@ -372,7 +372,7 @@ considered the name:
         isnamevar
     end
 
-See [Creating a Puppet Type](creating-a-puppet-type.html) for more
+See [Creating a Puppet Type](../programmers/creating-a-puppet-type.html) for more
 information.
 
 *$Id$*
