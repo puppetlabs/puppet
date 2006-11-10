@@ -20,12 +20,12 @@ class TestFileType < Test::Unit::TestCase
     end
 
     def test_simple
-        fname = mkfile("[main]\nkey1=value1\n# Comment\nkey2=value2")
+        fname = mkfile("[main]\nkey1=value1\n# Comment\nkey2=value=2")
         assert_nothing_raised {
             @file.read(fname)
         }
         s = get_section('main')
-        assert_entries(s, { 'key1' => 'value1', 'key2' => 'value2' })
+        assert_entries(s, { 'key1' => 'value1', 'key2' => 'value=2' })
         @file['main']['key2'] = 'newvalue2'
         @file['main']['key3'] = 'newvalue3'
         text = s.format

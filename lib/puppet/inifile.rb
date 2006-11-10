@@ -117,7 +117,7 @@ module Puppet
                         else
                             section.add_line(l)
                         end
-                    elsif l =~ /^\s*(\S+)\s*\=(.+)$/
+                    elsif l =~ /^\s*([^\s=]+)\s*\=(.+)$/
                         # We allow space around the keys, but not the values
                         # For the values, we don't know if space is significant
                         if section.nil?
