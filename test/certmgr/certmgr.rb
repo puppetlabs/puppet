@@ -255,13 +255,12 @@ class TestCertMgr < Test::Unit::TestCase
         ca.revoke(h2.serial)
         assert_equal(1, ca.crl.extensions.size)
 
-        File::open("/tmp/crl.pem", "w") { |f| f.write(ca.crl.to_pem) }
         # Recreate the CA from disk
         ca = mkCA()
         store = mkStore(ca)
         assert( store.verify(ca.cert))
-        assert(!store.verify(h1, [ca.cert]))
-        assert(!store.verify(h2, [ca.cert]))
+        assert(!store.verify(h1, [ca.cert]), "revoked cert passed")
+        assert(!store.verify(h2, [ca.cert]), "revoked cert passed")
     end
 
     def test_ttl

@@ -874,9 +874,6 @@ inttest = 27
         config[:mkusers] = true
 
         comp = config.to_component
-        comp.each do |c|
-            puts c.ref
-        end
 
         Puppet::Type.type(:user).each do |u|
             assert(u.name != "root", "Tried to manage root user")

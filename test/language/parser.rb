@@ -438,14 +438,19 @@ file { "/tmp/yayness":
             end
 
             check = proc do |res|
+                if res.is_a?(Puppet::Parser::Resource)
+                    txt = res.ref
+                else
+                    txt = res.class
+                end
                 # Real resources get marked virtual when exported
                 if form == :virtual or res.is_a?(Puppet::Parser::Resource)
-                    assert(res.virtual, "Resource #{res.class} is not virtual")
+                    assert(res.virtual, "Resource #{txt} is not virtual")
                 end
                 if form == :virtual
-                    assert(! res.exported, "Resource #{res.type} is exported")
+                    assert(! res.exported, "Resource #{txt} is exported")
                 else
-                    assert(res.exported, "Resource #{res.type} is not exported")
+                    assert(res.exported, "Resource #{txt} is not exported")
                 end
             end
 
