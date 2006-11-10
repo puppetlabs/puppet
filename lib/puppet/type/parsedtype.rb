@@ -130,7 +130,10 @@ module Puppet
         end
 
         def self.list
-            retrieve.collect { |i| i.is_a? Hash }.collect { |i| hash2obj(i) }
+            suitableprovider.collect do |provider|
+                puts provider.name
+                provider.retrieve.collect { |i| p i; i.is_a? Hash }.collect { |i| hash2obj(i) }
+            end.flatten
         end
 
         def self.listbyname

@@ -3,7 +3,7 @@ require 'puppet/provider/parsedfile'
 Puppet::Type.type(:mount).provide :parsed, :parent => Puppet::Provider::ParsedFile do
     @filetype = Puppet::FileType.filetype(:flat)
 
-    commands :mount => "mount", :umount => "umount", :df => "df"
+    commands :mountcmd => "mount", :umount => "umount", :df => "df"
 
     def self.init
         @platform = Facter["operatingsystem"].value
@@ -135,11 +135,7 @@ Puppet::Type.type(:mount).provide :parsed, :parent => Puppet::Provider::ParsedFi
 
     # This only works when the mount point is synced to the fstab.
     def mount
-        output = %x{#{command(:mount)} #{@model[:path]} 2>&1}
-
-        unless $? == 0
-            raise Puppet::Error, "Could not mount %s: %s" % [@model[:path], output]
-        end
+        mountcmd @model[:path]
     end
 
     # This only works when the mount point is synced to the fstab.

@@ -139,14 +139,6 @@ module Manager
 
         @typeloader
     end
-
-    # remove all type instances; this is mostly only useful for testing
-    def allclear
-        Puppet::Event::Subscription.clear
-        @types.each { |name, type|
-            type.clear
-        }
-    end
 end
 end
 

@@ -72,6 +72,9 @@ require 'puppet/rails/database/schema_init'
         unless defined? ActiveRecord::Base
             raise Puppet::DevError, "No activerecord, cannot init Puppet::Rails"
         end
+        
+        
+        ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
 
         # This global init does not work for testing, because we remove
         # the state dir on every test.

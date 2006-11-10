@@ -105,6 +105,7 @@ class TestMounts < Test::Unit::TestCase
         mount = mkmount
 
         assert_apply(mount)
+        assert_events([], mount)
 
         assert_nothing_raised { mount.retrieve }
 
@@ -147,6 +148,15 @@ class TestMounts < Test::Unit::TestCase
 
         obj.retrieve
         assert(obj.provider.mounted?, "Object is not mounted")
+    end
+    
+    def test_list
+        list = nil
+        assert_nothing_raised do
+            list = Puppet::Type.type(:mount).list
+        end
+        
+        assert(list.length > 0, "Did not return any mounts")
     end
 end
 

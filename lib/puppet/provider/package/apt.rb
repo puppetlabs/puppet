@@ -45,7 +45,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     # installing a specific version.
     def install
         if @model[:responsefile]
-            self.preseed
+            self.run_preseed
         end
         should = @model.should(:ensure)
 
@@ -108,7 +108,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
 	#
 	# preseeds answers to dpkg-set-selection from the "responsefile"
 	#
-    def preseed
+    def run_preseed
         if response = @model[:responsefile] && FileTest.exists?(response)
             self.info("Preseeding %s to debconf-set-selections" % response)
 
