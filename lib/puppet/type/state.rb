@@ -38,6 +38,9 @@ class State < Puppet::Parameter
 
     # Only retrieve the event, don't autogenerate one.
     def self.event(value)
+        if value.is_a?(String)
+            value = symbolize(value)
+        end
         if hash = @parameteroptions[value]
             hash[:event]
         else
@@ -70,6 +73,10 @@ class State < Puppet::Parameter
             paramopts[symbolize(opt)] = symbolize(val)
         end
 
+        # If there was no block given, we still want to store the information
+        # for validation, but we won't be defining a method
+        block ||= true
+
         case name
         when Symbol
             if @parametervalues.include?(name)
@@ -77,9 +84,11 @@ class State < Puppet::Parameter
             end
             @parametervalues[name] = block
 
-            method = "set_" + name.to_s
-            settor = paramopts[:settor] || (self.name.to_s + "=")
-            define_method(method, &block)
+            if block_given?
+                method = "set_" + name.to_s
+                settor = paramopts[:settor] || (self.name.to_s + "=")
+                define_method(method, &block)
+            end
         when Regexp
             # The regexes are handled in parameter.rb
             @parameterregexes[name] = block
@@ -108,6 +117,31 @@ class State < Puppet::Parameter
             raise Puppet::DevError, "Could not convert change %s to string: %s" %
                 [self.name, detail]
         end
+    end
+
+    # Figure out which event to return.
+    # not specified.
+    def event(value, event = nil)
+        if setevent = self.class.event(value)
+            return setevent
+        else
+            if event and event.is_a?(Symbol)
+                if event == :nochange
+                    return nil
+                else
+                    return event
+                end
+            else
+                event = case self.should
+                when :present: (@parent.class.name.to_s + "_created").intern
+                when :absent: (@parent.class.name.to_s + "_removed").intern
+                else
+                    (@parent.class.name.to_s + "_changed").intern
+                end
+            end
+        end
+
+        return event
     end
     
     # initialize our state
@@ -250,6 +284,9 @@ class State < Puppet::Parameter
         if value.nil?
             self.devfail "Got a nil value for should"
         end
+
+        # Set a name for looking up associated options like the event.
+        name = symbolize(value)
         method = "set_" + value.to_s
         event = nil
         if self.respond_to?(method)
@@ -268,11 +305,19 @@ class State < Puppet::Parameter
                 error.set_backtrace detail.backtrace
                 raise error
             end
-        elsif ary = self.class.match?(value)
+        elsif ary = self.class.match?(value) and ary[1].is_a?(Proc)
             # FIXME It'd be better here to define a method, so that
             # the blocks could return values.
-            event = self.instance_eval(&ary[1])
+            # If the regex was defined with no associated block, then just pass
+            # through and the correct event will be passed back.
+            if ary[1].is_a?(Proc)
+                event = self.instance_eval(&ary[1])
+            end
         else
+            # This will get set if the regex matches but has no proc
+            if ary
+                name = ary[0]
+            end
             if @parent.provider
                 begin
                     provider.send(self.class.name.to_s + "=", self.should)
@@ -286,30 +331,7 @@ class State < Puppet::Parameter
             end
         end
 
-        if setevent = self.class.event(value)
-            return setevent
-        else
-            if event and event.is_a?(Symbol)
-                if event == :nochange
-                    return nil
-                else
-                    return event
-                end
-            else
-                # Return the appropriate event.
-                event = case self.should
-                when :present: (@parent.class.name.to_s + "_created").intern
-                when :absent: (@parent.class.name.to_s + "_removed").intern
-                else
-                    (@parent.class.name.to_s + "_changed").intern
-                end
-
-                #self.log "made event %s because 'should' is %s, 'is' is %s" %
-                #    [event, self.should.inspect, self.is.inspect]
-
-                return event
-            end
-        end
+        return event(name, event)
     end
 
     # Only return the first value

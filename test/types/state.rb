@@ -8,17 +8,21 @@ require 'puppettest'
 class TestState < Test::Unit::TestCase
 	include PuppetTest
 
-    def newinst(state)
+    def newinst(state, parent = nil)
         inst = nil
+        unless parent
+            parent = "fakeparent"
+            parent.meta_def(:path) do self.to_s end
+        end
         assert_nothing_raised {
-            return state.new(:parent => nil)
+            return state.new(:parent => parent)
         }
     end
     
     def newstate(name = :fakestate)
         assert_nothing_raised {
             state = Class.new(Puppet::State) do
-                @name = :fakeparam
+                @name = name
             end
             state.initvars
 
@@ -122,6 +126,51 @@ class TestState < Test::Unit::TestCase
 
         assert_equal(:fake_other, ret,
                      "Event did not get returned correctly")
+    end
+
+    # We want to support values with no blocks, either regexes or strings.
+    # If there's no block provided, then we should call the provider mechanism
+    # like we would normally.
+    def test_newvalue_with_no_block
+        state = newstate(:mystate)
+
+        assert_nothing_raised {
+            state.newvalue(:value, :event => :matched_value)
+        }
+        assert_nothing_raised {
+            state.newvalue(/^\d+$/, :event => :matched_number)
+        }
+
+        # Create an object that responds to mystate as an attr
+        provklass = Class.new { attr_accessor :mystate }
+        prov = provklass.new
+
+        klass = Class.new { attr_accessor :provider, :path }
+        klassinst = klass.new
+        klassinst.path = "instpath"
+        klassinst.provider = prov
+
+        inst = newinst(state, klassinst)
+
+        # Now make sure we can set the values, they get validated as normal,
+        # and they set the values on the parent rathe than trying to call
+        # a method
+        {:value => :matched_value, "27" => :matched_number}.each do |value, event|
+            assert_nothing_raised do
+                inst.should = value
+            end
+            ret = nil
+            assert_nothing_raised do
+                ret = inst.sync
+            end
+            assert_equal(event, ret, "Did not return correct event for %s" % value)
+            assert_equal(value, prov.mystate, "%s was not set right" % value)
+        end
+
+        # And make sure we still fail validations
+        assert_raise(ArgumentError) do
+            inst.should = "invalid"
+        end
     end
 
     def test_tags
