@@ -50,7 +50,7 @@ module Puppet::Util::ClassGen
     # Remove an existing class
     def rmclass(name, options)
         options = symbolize_options(options)
-        const = name2const(name)
+        const = genconst_string(name, options)
         retval = false
         if const_defined? const
             remove_const(const)
@@ -67,6 +67,16 @@ module Puppet::Util::ClassGen
     end
 
     private
+
+    # Generate the constant to create or remove.
+    def genconst_string(name, options)
+        unless const = options[:constant]
+            prefix = options[:prefix] || ""
+            const = prefix + name2const(name)
+        end
+
+        return const
+    end
 
     # This does the actual work of creating our class or module.  It's just a
     # slightly abstract version of genclass.
@@ -120,10 +130,7 @@ module Puppet::Util::ClassGen
 
     # Handle the setting and/or removing of the associated constant.
     def handleclassconst(klass, name, options)
-        unless const = options[:constant]
-            prefix = options[:prefix] || ""
-            const = prefix + name2const(name)
-        end
+        const = genconst_string(name, options)
 
         if const_defined? const
             if options[:overwrite]

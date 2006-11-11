@@ -1,44 +1,58 @@
 require 'puppet'
+require 'puppet/util/fileparsing'
 
+# This provider can be used as the parent class for a provider that
+# parses and generates files.  Its content must be loaded via the
+# 'prefetch' method, and the file will be written when 'flush' is called
+# on the provider instance.  At this point, the file is written once
+# for every provider instance.
+#
+# Once the provider prefetches the data, it's the model's job to copy
+# that data over to the @is variables.
 class Puppet::Provider::ParsedFile < Puppet::Provider
+    extend Puppet::Util::FileParsing
+
     class << self
-        attr_accessor :filetype, :fields
-        attr_reader :path
-        attr_writer :fileobj
+        attr_reader :filetype
+        attr_accessor :default_target
     end
 
-    # Override 'newstate' so that all states default to having the
-    # correct parent type
-    def self.newstate(name, options = {}, &block)
-        options[:parent] ||= Puppet::State::ParsedParam
-        super(name, options, &block)
+    attr_accessor :state_hash
+
+    def self.clear
+        @target_objects.clear
+        @records.clear
     end
 
-    # Add another type var.
-    def self.initvars
-        @instances = []
-        super
-    end
-
-    # Add a non-object comment or whatever to our list of instances
-    def self.comment(line)
-        @instances << line
-    end
-
-    # Override the default Puppet::Type method, because instances
-    # also need to be deleted from the @instances hash
-    def self.delete(child)
-        if @instances.include?(child)
-            @instances.delete(child)
+    def self.filetype=(type)
+        if type.is_a?(Class)
+            @filetype = type
+        elsif klass = Puppet::FileType.filetype(type)
+            @filetype = klass
+        else
+            raise ArgumentError, "Invalid filetype %s" % type
         end
-        super
     end
 
-    # Initialize the object if necessary.
-    def self.fileobj
-        @fileobj ||= @filetype.new(@path)
+    # Flush all of the targets for which there are modified records.
+    def self.flush(record)
+        return unless defined?(@modified) and ! @modified.empty?
 
-        @fileobj
+        # Make sure this record is on the list to be flushed.
+        unless record[:on_disk]
+            record[:on_disk] = true
+            @records << record
+        end
+
+        @modified.sort { |a,b| a.to_s <=> b.to_s }.uniq.each do |target|
+            Puppet.debug "Flushing %s provider target %s" % [@model.name, target]
+            flush_target(target)
+        end
+    end
+
+    # Flush all of the records relating to a specific target.
+    def self.flush_target(target)
+        target_object(target).write(to_file(target_records(target)))
     end
 
     # Return the header placed at the top of each generated file, warning
@@ -49,24 +63,93 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 # HEADER: is definitely not recommended.\n}
     end
 
-    # Parse a file
-    #
-    # Subclasses must override this method.
-    def self.parse(text)
-        raise Puppet::DevError, "Parse was not overridden in %s" %
-            self.name
+    # Add another type var.
+    def self.initvars
+        @records = []
+
+        # Default to flat files
+        @filetype = Puppet::FileType.filetype(:flat)
+        super
     end
 
-    # If they change the path, we need to get rid of our cache object
-    def self.path=(path)
-        @fileobj = nil
-        @path = path
+    # Create attribute methods for each of the model's non-metaparam attributes.
+    def self.model=(model)
+        [model.validstates, model.parameters].flatten.each do |attr|
+            define_method(attr) do @state_hash[attr] end
+
+            define_method(attr.to_s + "=") do |val|
+                # Mark that this target was modified.
+                modeltarget = @model[:target]
+
+                # If they're the same, then just mark that one as modified
+                if @state_hash[:target] and @state_hash[:target] == modeltarget
+                    self.class.modified(modeltarget)
+                else
+                    # Always mark the modeltarget as modified, and if there's
+                    # and old state_hash target, mark it as modified and replace
+                    # it.
+                    self.class.modified(modeltarget)
+                    if @state_hash[:target]
+                        self.class.modified(@state_hash[:target])
+                    end
+                    @state_hash[:target] = modeltarget
+                end
+                @state_hash[attr] = val.to_s
+            end
+        end
+        @model = model
+    end
+
+    # Mark a target as modified so we know to flush it.  This only gets
+    # used within the attr= methods.
+    def self.modified(target)
+        @modified ||= []
+        @modified << target
+    end
+
+    # Retrieve all of the data from disk.  There are three ways to know
+    # while files to retrieve:  We might have a list of file objects already
+    # set up, there might be instances of our associated model and they
+    # will have a path parameter set, and we will have a default path
+    # set.  We need to turn those three locations into a list of files,
+    # prefetch each one, and make sure they're associated with each appropriate
+    # model instance.
+    def self.prefetch
+        # Reset the record list.
+        @records = []
+        targets().each do |target|
+            prefetch_target(target)
+        end
+    end
+
+    # Prefetch an individual target.
+    def self.prefetch_target(target)
+        @records += retrieve(target).each do |r|
+            r[:on_disk] = true
+            r[:target] = target
+        end
+
+        # Retrieve the current state of this target.
+        target_records(target).find_all { |i| i.is_a?(Hash) }.each do |record|
+            # Find any model instances whose names match our instances.
+            if instance = self.model[record[:name]]
+                instance.provider.state_hash = record
+            elsif self.respond_to?(:match)
+                if instance = self.match(record)
+                    record[:name] = instance[:name]
+                    instance.provider.state_hash = record
+                end
+            end
+            # Any unmatched records are assumed to be unmanaged, so
+            # we just leave them alone.
+        end
     end
 
     # Retrieve the text for the file. Returns nil in the unlikely
     # event that it doesn't exist.
-    def self.retrieve
-        text = fileobj.read
+    def self.retrieve(path)
+        # XXX We need to be doing something special here in case of failure.
+        text = target_object(path).read
         if text.nil? or text == ""
             # there is no file
             return []
@@ -76,73 +159,68 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     end
 
     # Write out the file.
-    def self.store(instances)
-        if instances.empty?
-            Puppet.notice "No %s instances for %s" % [self.name, @path]
+    def self.store(records)
+        if records.empty?
+            Puppet.notice "No %s records for %s" % [self.name, @path]
         else
-            fileobj.write(self.to_file(instances))
+            target_object.write(self.to_file(instances))
         end
     end
 
-    # Collect all Host instances convert them into literal text.
-    def self.to_file(instances)
-        str = self.header()
-        unless instances.empty?
-            # Reject empty hashes and those with :ensure == :absent
-            str += instances.reject { |obj|
-                obj.is_a? Hash and (obj.empty? or obj[:ensure] == :absent)
-            }.collect { |obj|
-                # If it's a hash, convert it, otherwise just write it out
-                if obj.is_a?(Hash)
-                    to_record(obj)
-                else
-                    obj.to_s
-                end
-            }.join("\n") + "\n"
+    # Initialize the object if necessary.
+    def self.target_object(target)
+        @target_objects ||= {}
+        @target_objects[target] ||= @filetype.new(target)
 
-            return str
-        else
-            Puppet.notice "No %s instances" % self.name
-            return ""
-        end
+        @target_objects[target]
     end
 
-    # A Simple wrapper method that subclasses can override, so there's more control
-    # over how instances are retrieved.
-    def allinstances
-        self.class.retrieve
+    # Find all of the records for a given target
+    def self.target_records(target)
+        @records.find_all { |r| r[:target] == target }
     end
 
-    def clear
-        super
-        @instances = nil
+    # Find a list of all of the targets that we should be reading.  This is
+    # used to figure out what targets we need to prefetch.
+    def self.targets
+        targets = []
+        # First get the default target
+        unless self.default_target
+            raise Puppet::DevError, "Parsed Providers must define a default target"
+        end
+        targets << self.default_target
+
+        # Then get each of the file objects
+        targets += @target_objects.keys
+
+        # Lastly, check the file from any model instances
+        self.model.each do |model|
+            targets << model[:target]
+        end
+
+        targets.uniq
     end
 
-    # Return a hash that maps to our info, if possible.
-    def hash
-        @instances = allinstances()
+    # Write our data to disk.
+    def flush
+        # Make sure we've got a target and name set.
+        @state_hash[:target] ||= @model[:target]
+        @state_hash[:name] ||= @model[:name]
 
-        namevar = @model.class.namevar
-        if @instances and h = @instances.find do |o|
-            o.is_a? Hash and o[namevar] == @model[namevar]
-        end
-            @me = h
-        else
-            @me = {}
-            if @instances.empty?
-                @instances = [@me]
-            else
-                @instances << @me
-            end
-        end
-
-        return @me
+        self.class.flush(@state_hash)
     end
 
     def initialize(model)
         super
 
-        @instances = nil
+        # Initialize our data hash with the record type.  The record type
+        # in the subclass has to create a record matching its name.
+        @state_hash = {:record_type => self.class.name}
+    end
+
+    # Have we been modified since the last flush?
+    def modified?
+        @state[:flush_needed]
     end
 
     def store(hash = nil)

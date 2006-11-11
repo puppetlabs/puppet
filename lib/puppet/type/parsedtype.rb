@@ -120,6 +120,8 @@ module Puppet
                     obj.is = [param, value]
                 }
             end
+
+            return obj
         end
 
         # Override 'newstate' so that all states default to having the
@@ -130,14 +132,15 @@ module Puppet
         end
 
         def self.list
-            suitableprovider.collect do |provider|
-                puts provider.name
-                provider.retrieve.collect { |i| p i; i.is_a? Hash }.collect { |i| hash2obj(i) }
+            ret = suitableprovider.collect do |provider|
+                provider.retrieve.find_all { |i| i.is_a? Hash }.collect { |i| hash2obj(i) }
             end.flatten
         end
 
         def self.listbyname
-            retrieve.collect { |i| i.is_a? Hash }.collect { |i| i[:name] }
+            suitableprovider.collect do |provider|
+                provider.retrieve.find_all { |i| i.is_a? Hash }.collect { |i| i[:name] }
+            end.flatten
         end
 
         # Make sure they've got an explicit :ensure class.

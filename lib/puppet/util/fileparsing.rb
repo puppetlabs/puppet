@@ -108,10 +108,11 @@ module Puppet::Util::FileParsing
             raise ArgumentError, "Must include a list of fields"
         end
 
+        invalidfields = [:record_type, :target, :on_disk]
         options[:fields] = options[:fields].collect do |field|
             r = symbolize(field)
-            if r == :record_type
-                raise ArgumentError.new("Cannot have fields named record_type")
+            if invalidfields.include?(r)
+                raise ArgumentError.new("Cannot have fields named %s" % r)
             end
             r
         end

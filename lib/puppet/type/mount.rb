@@ -13,6 +13,9 @@ module Puppet
                   is entered into the mount table and mounted."
 
             newvalue(:present, :event => :mount_created) do
+                # The parsedtype nature of the provider automatically
+                # creates the mount in the file, and we're not mounting,
+                # so we don't do anything here.
             end
 
             newvalue(:absent, :event => :mount_deleted) do
@@ -37,12 +40,15 @@ module Puppet
             end
 
             def retrieve
+                fail "called retrieve"
+                Puppet.warning @is.inspect
                 if provider.mounted?
-                    return :mounted
+                    @is = :mounted
                 else
                     val = super()
-                    return val
+                    @is = val
                 end
+
             end
         end
 

@@ -214,6 +214,14 @@ class TestPuppetUtilClassGen < Test::Unit::TestCase
         assert(array.include?(mod),
             "Class did not get added to array")
     end
+
+    def test_genconst_string
+        const = nil
+        assert_nothing_raised do
+            const = GenTest.send(:genconst_string, :testing, :prefix => "Yayness")
+        end
+        assert_equal("YaynessTesting", const)
+    end
 end
 
 # $Id$

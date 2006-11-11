@@ -154,10 +154,13 @@ class Puppet::Type
 
     def self.unprovide(name)
         if @providers.has_key? name
+            rmclass(name,
+                :hash => @providers,
+                :prefix => "Provider"
+            )
             if @defaultprovider and @defaultprovider.name == name
                 @defaultprovider = nil
             end
-            @providers.delete(name)
         end
     end
 

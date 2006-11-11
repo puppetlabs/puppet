@@ -262,6 +262,7 @@ class Transaction
                 nil
             end
         }.reject { |o| o.nil? }.uniq.each do |klass|
+            # XXX We need to do something special here in case of failure.
             if klass.respond_to?(:prefetch)
                 klass.prefetch
             end

@@ -147,6 +147,9 @@ class TestMounts < Test::Unit::TestCase
         assert_events([], obj)
 
         obj.retrieve
+        assert_equal(:mounted, obj.is(:ensure))
+
+        obj.retrieve
         assert(obj.provider.mounted?, "Object is not mounted")
     end
     

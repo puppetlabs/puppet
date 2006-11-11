@@ -156,6 +156,7 @@ Puppet::Type.type(:mount).provide :parsed, :parent => Puppet::Provider::ParsedFi
         when "Solaris": df = "#{command(:df)} -k"
         end
         %x{#{df}}.split("\n").find do |line|
+            p line
             fs = line.split(/\s+/)[-1]
             if platform == "Darwin"
                 fs == "/private/var/automount" + @model[:path] or
