@@ -30,6 +30,65 @@ class TestState < Test::Unit::TestCase
         }
     end
 
+    def newmodel(name)
+        # Create an object that responds to mystate as an attr
+        provklass = Class.new { attr_accessor name }
+        prov = provklass.new
+
+        klass = Class.new { attr_accessor :provider, :path }
+        klassinst = klass.new
+        klassinst.path = "instpath"
+        klassinst.provider = prov
+
+        return prov, klassinst
+    end
+
+    # Make sure we correctly look up names.
+    def test_value_name
+        state = newstate()
+
+        state.newvalue(:one)
+        state.newvalue(/\d+/)
+
+        name = nil
+        ["one", :one].each do |value|
+            assert_nothing_raised do
+                name = state.value_name(value)
+            end
+            assert_equal(:one, name)
+        end
+        ["42"].each do |value|
+            assert_nothing_raised do
+                name = state.value_name(value)
+            end
+            assert_equal(/\d+/, name)
+        end
+        ["two", :three].each do |value|
+            assert_nothing_raised do
+                name = state.value_name(value)
+            end
+            assert_nil(name)
+        end
+    end
+
+    # Test that we correctly look up options for values.
+    def test_value_option
+        state = newstate()
+
+        options = {
+            :one => {:event => :yay, :call => :before},
+            /\d+/ => {:event => :fun, :call => :instead}
+        }
+        state.newvalue(:one, options[:one])
+        state.newvalue(/\d+/, options[/\d+/])
+
+        options.each do |name, opts|
+            opts.each do |param, value|
+                assert_equal(value, state.value_option(name, param))
+            end
+        end
+    end
+
     def test_newvalue
         state = newstate()
 
@@ -45,6 +104,10 @@ class TestState < Test::Unit::TestCase
                 @is = 2
             end
         }
+
+        # Make sure we default to using the block instead
+        assert_equal(:instead, state.value_option(:one, :call),
+            ":call was not set to :instead when a block was provided")
 
         inst = newinst(state)
 
@@ -141,14 +204,10 @@ class TestState < Test::Unit::TestCase
             state.newvalue(/^\d+$/, :event => :matched_number)
         }
 
-        # Create an object that responds to mystate as an attr
-        provklass = Class.new { attr_accessor :mystate }
-        prov = provklass.new
+        assert_equal(:none, state.value_option(:value, :call),
+            ":call was not set to none when no block is provided")
 
-        klass = Class.new { attr_accessor :provider, :path }
-        klassinst = klass.new
-        klassinst.path = "instpath"
-        klassinst.provider = prov
+        prov, klassinst = newmodel(:mystate)
 
         inst = newinst(state, klassinst)
 
@@ -199,18 +258,75 @@ class TestState < Test::Unit::TestCase
         p = s.new(1, "yay", "rah")
         mystate = Class.new(Puppet::State)
         mystate.initvars
+
+        mystate.newvalue :mkfailure do
+            raise "It's all broken"
+        end
         state = mystate.new(:parent => p)
 
-        class << state
-            def set_mkfailure
-                raise "It's all broken"
+        assert_raise(Puppet::Error) do
+            state.set(:mkfailure)
+        end
+    end
+
+    # Make sure 'set' behaves correctly WRT to call order.  This tests that the
+    # :call value is handled correctly in all cases.
+    def test_set
+        state = newstate(:mystate)
+
+        $setting = []
+
+        newval = proc do |name, call|
+            options = {}
+            if call
+                options[:call] = name
+                block = proc { $setting << name }
+            end
+            assert_nothing_raised("Could not create %s value" % name) {
+                if block
+                    state.newvalue(name, options, &block)
+                else
+                    state.newvalue(name, options)
+                end
+            }
+        end
+
+        newval.call(:none, false)
+
+        # Create a value with no block; it should default to :none
+        newval.call(:before, true)
+
+        # One with a block but after
+        newval.call(:after, true)
+
+        # One with an explicit instead
+        newval.call(:instead, true)
+
+        # And one with an implicit instead
+        assert_nothing_raised do
+            state.newvalue(:implicit) do
+                $setting << :implicit
             end
         end
 
-        state.should = :mkfailure
+        # Now create a provider
+        prov, model = newmodel(:mystate)
+        inst = newinst(state, model)
 
-        assert_raise(Puppet::Error) do
-            state.set
+        # Mark when we're called
+        prov.meta_def(:mystate=) do |value| $setting << :provider end
+
+        # Now run through the list and make sure everything is correct
+        {:before => [:before, :provider],
+            :after => [:provider, :after],
+            :instead => [:instead],
+            :none => [:provider],
+            :implicit => [:implicit]
+        }.each do |name, result|
+            inst.set(name)
+
+            assert_equal(result, $setting, "%s was not handled right" % name)
+            $setting.clear
         end
     end
 end

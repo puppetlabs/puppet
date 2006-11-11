@@ -1,10 +1,10 @@
 require 'puppet/type/parsedtype'
 
 module Puppet
-    newtype(:mount, Puppet::Type::ParsedType) do
+    newtype(:mount) do
         # Use the normal parent class, because we actually want to
         # call code when sync() is called.
-        newstate(:ensure, :parent => Puppet::State) do
+        newstate(:ensure) do
             desc "Control what to do with this mount. If the value is 
                   ``present``, the mount is entered into the mount table, 
                   but not mounted, if it is ``absent``, the entry is removed 
@@ -12,19 +12,22 @@ module Puppet
                   currently mounted, if it is ``mounted``, the filesystem 
                   is entered into the mount table and mounted."
 
-            newvalue(:present, :event => :mount_created) do
-                # The parsedtype nature of the provider automatically
-                # creates the mount in the file, and we're not mounting,
-                # so we don't do anything here.
+            newvalue(:present, :call => :after) do
+                if provider.mounted?
+                    provider.unmount
+                    return :mount_unmounted
+                else
+                    return :mount_created
+                end
             end
 
-            newvalue(:absent, :event => :mount_deleted) do
+            newvalue(:absent, :event => :mount_deleted, :call => :after) do
                 if provider.mounted?
                     provider.unmount
                 end
             end
 
-            newvalue(:mounted, :event => :mount_mounted) do
+            newvalue(:mounted, :event => :mount_mounted, :call => :after) do
                 # We have to flush any changes to disk.
                 @parent.flush
 

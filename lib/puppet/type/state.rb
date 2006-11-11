@@ -36,13 +36,25 @@ class State < Puppet::Parameter
         end
     end
 
-    # Only retrieve the event, don't autogenerate one.
-    def self.event(value)
-        if value.is_a?(String)
-            value = symbolize(value)
+    # Look up a value's name, so we can find options and such.
+    def self.value_name(value)
+        name = symbolize(value)
+        if @parametervalues[name]
+            return name
+        elsif ary = self.match?(value)
+            return ary[0]
+        else
+            return nil
         end
-        if hash = @parameteroptions[value]
-            hash[:event]
+    end
+
+    # Retrieve an option set when a value was defined.
+    def self.value_option(name, option)
+        if option.is_a?(String)
+            option = symbolize(option)
+        end
+        if hash = @parameteroptions[name]
+            hash[option]
         else
             nil
         end
@@ -62,6 +74,11 @@ class State < Puppet::Parameter
     # The first argument to the method is either the value itself or a regex.
     # The second argument is an option hash; valid options are:
     # * <tt>:event</tt>: The event that should be returned when this value is set.
+    # * <tt>:call</tt>: When to call any associated block.  The default value
+    #   is ``instead``, which means to call the value instead of calling the
+    #   provider.  You can also specify ``before`` or ``after``, which will 
+    #   call both the block and the provider, according to the order you specify
+    #   (the ``first`` refers to when the block is called, not the provider).
     def self.newvalue(name, options = {}, &block)
         name = name.intern if name.is_a? String
 
@@ -73,6 +90,12 @@ class State < Puppet::Parameter
             paramopts[symbolize(opt)] = symbolize(val)
         end
 
+        # By default, call the block instead of the provider.
+        if block_given?
+            paramopts[:call] ||= :instead
+        else
+            paramopts[:call] ||= :none
+        end
         # If there was no block given, we still want to store the information
         # for validation, but we won't be defining a method
         block ||= true
@@ -88,14 +111,61 @@ class State < Puppet::Parameter
                 method = "set_" + name.to_s
                 settor = paramopts[:settor] || (self.name.to_s + "=")
                 define_method(method, &block)
+                paramopts[:method] = method
             end
         when Regexp
-            # The regexes are handled in parameter.rb
+            # The regexes are handled in parameter.rb.  This value is used
+            # for validation.
             @parameterregexes[name] = block
+
+            # This is used for looking up the block for execution.
+            if block_given?
+                paramopts[:block] = block
+            end
         else
             raise ArgumentError, "Invalid value %s of type %s" %
                 [name, name.class]
         end
+    end
+
+    # Call the provider method.
+    def call_provider(value)
+        begin
+            provider.send(self.class.name.to_s + "=", value)
+        rescue NoMethodError
+            self.fail "The %s provider can not handle attribute %s" %
+                [provider.class.name, self.class.name]
+        end
+    end
+
+    # Call the dynamically-created method associated with our value, if
+    # there is one.
+    def call_valuemethod(name, value)
+        event = nil
+        if method = self.class.value_option(name, :method) and self.respond_to?(method)
+            self.debug "setting %s (currently %s)" % [value, self.is]
+
+            begin
+                event = self.send(method)
+            rescue Puppet::Error
+                raise
+            rescue => detail
+                if Puppet[:trace]
+                    puts detail.backtrace
+                end
+                error = Puppet::Error.new("Could not set %s on %s: %s" %
+                    [value, self.class.name, detail], @parent.line, @parent.file)
+                error.set_backtrace detail.backtrace
+                raise error
+            end
+        elsif block = self.class.value_option(name, :block)
+            # FIXME It'd be better here to define a method, so that
+            # the blocks could return values.
+            # If the regex was defined with no associated block, then just pass
+            # through and the correct event will be passed back.
+            event = self.instance_eval(&block)
+        end
+        return event, name
     end
 
     # How should a state change be printed as a string?
@@ -121,9 +191,9 @@ class State < Puppet::Parameter
 
     # Figure out which event to return.
     # not specified.
-    def event(value, event = nil)
-        if setevent = self.class.event(value)
-            return setevent
+    def event(name, event = nil)
+        if value_event = self.class.value_option(name, :event)
+            return value_event
         else
             if event and event.is_a?(Symbol)
                 if event == :nochange
@@ -273,62 +343,29 @@ class State < Puppet::Parameter
         @is = provider.send(self.class.name)
     end
 
-    # Call the method associated with a given value.
-    def set
-        if self.insync?
-            self.log "already in sync"
-            return nil
-        end
-
-        value = self.should
-        if value.nil?
-            self.devfail "Got a nil value for should"
-        end
-
+    # Set our value, using the provider, an associated block, or both.
+    def set(value)
         # Set a name for looking up associated options like the event.
-        name = symbolize(value)
-        method = "set_" + value.to_s
-        event = nil
-        if self.respond_to?(method)
-            self.debug "setting %s (currently %s)" % [value, self.is]
+        name = self.class.value_name(value)
 
-            begin
-                event = self.send(method)
-            rescue Puppet::Error
-                raise
-            rescue => detail
-                if Puppet[:trace]
-                    puts detail.backtrace
-                end
-                error = Puppet::Error.new("Could not set %s on %s: %s" %
-                    [value, self.class.name, detail], @parent.line, @parent.file)
-                error.set_backtrace detail.backtrace
-                raise error
-            end
-        elsif ary = self.class.match?(value) and ary[1].is_a?(Proc)
-            # FIXME It'd be better here to define a method, so that
-            # the blocks could return values.
-            # If the regex was defined with no associated block, then just pass
-            # through and the correct event will be passed back.
-            if ary[1].is_a?(Proc)
-                event = self.instance_eval(&ary[1])
-            end
-        else
-            # This will get set if the regex matches but has no proc
-            if ary
-                name = ary[0]
-            end
+        call = self.class.value_option(name, :call)
+
+        # If we're supposed to call the block first or instead, call it now
+        if call == :before or call == :instead
+            event, tmp = call_valuemethod(name, value) 
+        end
+        unless call == :instead
             if @parent.provider
-                begin
-                    provider.send(self.class.name.to_s + "=", self.should)
-                rescue NoMethodError
-                    self.fail "The %s provider can not handle attribute %s" %
-                        [provider.class.name, self.class.name]
-                end
+                call_provider(value)
             else
+                # They haven't provided a block, and our parent does not have
+                # a provider, so we have no idea how to handle this.
                 self.fail "%s cannot handle values of type %s" %
-                    [self.class.name, self.should.inspect]
+                    [self.class.name, value.inspect]
             end
+        end
+        if call == :after
+            event, tmp = call_valuemethod(name, value) 
         end
 
         return event(name, event)
@@ -383,16 +420,17 @@ class State < Puppet::Parameter
         if self.insync?
             self.info "already in sync"
             return nil
-        #else
-            #self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
         end
         unless self.class.values
             self.devfail "No values defined for %s" %
                 self.class.name
         end
 
-        # Set ourselves to whatever our should value is.
-        self.set
+        if value = self.should
+            set(value)
+        else
+            self.devfail "Got a nil value for should"
+        end
     end
 
     # The states need to return tags so that logs correctly collect them.
