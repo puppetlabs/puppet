@@ -89,7 +89,7 @@ module Puppet
                 end
 
                 # Set ourselves to whatever our should value is.
-                self.set
+                self.set(self.should)
             end
 
         end

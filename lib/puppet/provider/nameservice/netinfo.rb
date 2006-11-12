@@ -184,11 +184,6 @@ class NetInfo < Puppet::Provider::NameService
         return nil
     end
 
-    def retrieve
-        raise "wtf?"
-        @is = report() || :absent
-    end
-
     def setuserlist(group, list)
         cmd = "#{command(:niutil)} -createprop / /groups/%s users %s" %
             [group, list.join(",")]

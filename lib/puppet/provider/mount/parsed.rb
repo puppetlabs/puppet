@@ -1,4 +1,5 @@
 require 'puppet/provider/parsedfile'
+require 'puppet/provider/mount'
 
 fstab = nil
 case Facter.value(:operatingsystem)
@@ -12,6 +13,8 @@ Puppet::Type.type(:mount).provide(:parsed,
     :default_target => fstab,
     :filetype => :flat
 ) do
+    include Puppet::Provider::Mount
+    confine :exists => fstab
 
     commands :mountcmd => "mount", :umount => "umount", :df => "df"
 
@@ -29,35 +32,6 @@ Puppet::Type.type(:mount).provide(:parsed,
     text_line :blank, :match => /^\s*$/
 
     record_line self.name, :fields => @fields, :separator => /\s+/, :joiner => "\t"
-
-    # This only works when the mount point is synced to the fstab.
-    def mount
-        mountcmd @model[:name]
-    end
-
-    # This only works when the mount point is synced to the fstab.
-    def unmount
-        umount @model[:name]
-    end
-
-    # Is the mount currently mounted?
-    def mounted?
-        platform = Facter["operatingsystem"].value
-        df = command(:df)
-        case Facter["operatingsystem"].value
-        # Solaris's df prints in a very weird format
-        when "Solaris": df = "#{command(:df)} -k"
-        end
-        %x{#{df}}.split("\n").find do |line|
-            fs = line.split(/\s+/)[-1]
-            if platform == "Darwin"
-                fs == "/private/var/automount" + @model[:name] or
-                    fs == @model[:name]
-            else
-                fs == @model[:name]
-            end
-        end
-    end
 end
 
 # $Id$

@@ -44,7 +44,7 @@ class Puppet::Type
     # Convert a hash, as provided by, um, a provider, into an instance of self.
     def self.hash2obj(hash)
         obj = nil
-
+        
         namevar = self.namevar
         unless hash.include?(namevar) and hash[namevar]
             raise Puppet::DevError, "Hash was not passed with namevar"
@@ -93,7 +93,14 @@ class Puppet::Type
                 suitableprovider.find_all { |p| p.respond_to?(:list) }.collect { |prov|
                     prov.list.each { |h| h[:provider] = prov.name }
                 }.flatten.collect do |hash|
-                    hash2obj(hash)
+                    if hash.is_a?(Hash)
+                        hash2obj(hash)
+                    elsif hash.is_a?(self)
+                        hash
+                    else
+                        raise Puppet::DevError, "Provider %s returned object of type %s in list" %
+                            [prov.name, hash.class]
+                    end
                 end
             end
         end

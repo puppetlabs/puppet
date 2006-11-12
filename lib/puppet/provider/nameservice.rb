@@ -37,8 +37,8 @@ class Puppet::Provider::NameService < Puppet::Provider
         end
 
         def options(name, hash)
-            unless model.validstate?(name)
-                raise Puppet::DevError, "%s is not a valid state for %s" %
+            unless model.validattr?(name)
+                raise Puppet::DevError, "%s is not a valid attribute for %s" %
                     [name, model.name]
             end
             @options ||= {}
