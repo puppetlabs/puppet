@@ -13,15 +13,32 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     extend Puppet::Util::FileParsing
 
     class << self
-        attr_reader :filetype
         attr_accessor :default_target
     end
 
     attr_accessor :state_hash
 
+    def self.clean(hash)
+        newhash = hash.dup
+        [:record_type, :on_disk].each do |p|
+            if newhash.include?(p)
+                newhash.delete(p)
+            end
+        end
+
+        return newhash
+    end
+
     def self.clear
         @target_objects.clear
         @records.clear
+    end
+
+    def self.filetype
+        unless defined? @filetype
+            @filetype = Puppet::FileType.filetype(:flat)
+        end
+        return @filetype
     end
 
     def self.filetype=(type)
@@ -34,25 +51,37 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         end
     end
 
-    # Flush all of the targets for which there are modified records.
+    # Flush all of the targets for which there are modified records.  The only
+    # reason we pass a record here is so that we can add it to the stack if
+    # necessary -- it's passed from the instance calling 'flush'.
     def self.flush(record)
-        return unless defined?(@modified) and ! @modified.empty?
-
         # Make sure this record is on the list to be flushed.
         unless record[:on_disk]
             record[:on_disk] = true
             @records << record
+
+            # If we've just added the record, then make sure our
+            # target will get flushed.
+            modified(record[:target] || default_target)
         end
 
+        return unless defined?(@modified) and ! @modified.empty?
+
+        flushed = []
         @modified.sort { |a,b| a.to_s <=> b.to_s }.uniq.each do |target|
             Puppet.debug "Flushing %s provider target %s" % [@model.name, target]
             flush_target(target)
+            flushed << target
         end
+
+        @modified.reject! { |t| flushed.include?(t) }
     end
 
     # Flush all of the records relating to a specific target.
     def self.flush_target(target)
-        target_object(target).write(to_file(target_records(target)))
+        target_object(target).write(to_file(target_records(target).reject { |r|
+            r[:ensure] == :absent
+        }))
     end
 
     # Return the header placed at the top of each generated file, warning
@@ -66,20 +95,43 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     # Add another type var.
     def self.initvars
         @records = []
+        @target_objects = {}
 
         # Default to flat files
         @filetype = Puppet::FileType.filetype(:flat)
         super
     end
 
+    # Return a list of all of the records we can find.
+    def self.list
+        prefetch()
+        @records.find_all { |r| r[:record_type] == self.name }.collect { |r|
+            clean(r)
+        }
+    end
+
+    def self.list_by_name
+        list.collect { |r| r[:name] }
+    end
+
     # Create attribute methods for each of the model's non-metaparam attributes.
     def self.model=(model)
         [model.validstates, model.parameters].flatten.each do |attr|
-            define_method(attr) do @state_hash[attr] end
+            attr = symbolize(attr)
+            define_method(attr) do
+                # If it's not a valid field for this record type (which can happen
+                # when different platforms support different fields), then just
+                # return the should value, so the model shuts up.
+                if @state_hash[attr] or self.class.valid_attr?(self.class.name, attr)
+                    @state_hash[attr] || :absent
+                else
+                    @model.should(attr)
+                end
+            end
 
             define_method(attr.to_s + "=") do |val|
                 # Mark that this target was modified.
-                modeltarget = @model[:target]
+                modeltarget = @model[:target] || self.class.default_target
 
                 # If they're the same, then just mark that one as modified
                 if @state_hash[:target] and @state_hash[:target] == modeltarget
@@ -94,7 +146,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
                     end
                     @state_hash[:target] = modeltarget
                 end
-                @state_hash[attr] = val.to_s
+                @state_hash[attr] = val
             end
         end
         @model = model
@@ -104,7 +156,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     # used within the attr= methods.
     def self.modified(target)
         @modified ||= []
-        @modified << target
+        @modified << target unless @modified.include?(target)
     end
 
     # Retrieve all of the data from disk.  There are three ways to know
@@ -127,9 +179,10 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         @records += retrieve(target).each do |r|
             r[:on_disk] = true
             r[:target] = target
+            r[:ensure] = :present
         end
 
-        # Retrieve the current state of this target.
+        # Set current state on any existing resource instances.
         target_records(target).find_all { |i| i.is_a?(Hash) }.each do |record|
             # Find any model instances whose names match our instances.
             if instance = self.model[record[:name]]
@@ -140,9 +193,12 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
                     instance.provider.state_hash = record
                 end
             end
-            # Any unmatched records are assumed to be unmanaged, so
-            # we just leave them alone.
         end
+    end
+
+    # Is there an existing record with this name?
+    def self.record?(name)
+        @records.find { |r| r[:name] == name }
     end
 
     # Retrieve the text for the file. Returns nil in the unlikely
@@ -169,7 +225,6 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     # Initialize the object if necessary.
     def self.target_object(target)
-        @target_objects ||= {}
         @target_objects[target] ||= @filetype.new(target)
 
         @target_objects[target]
@@ -198,14 +253,42 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             targets << model[:target]
         end
 
-        targets.uniq
+        targets.uniq.reject { |t| t.nil? }
+    end
+
+    def create
+        @model.class.validstates.each do |state|
+            if value = @model.should(state)
+                @state_hash[state] = value
+            end
+        end
+        self.class.modified(@state_hash[:target] || self.class.default_target)
+    end
+
+    def destroy
+        # We use the method here so it marks the target as modified.
+        self.ensure = :absent
+    end
+
+    def exists?
+        if @state_hash[:ensure] == :absent or @state_hash[:ensure].nil?
+            return false
+        else
+            return true
+        end
     end
 
     # Write our data to disk.
     def flush
         # Make sure we've got a target and name set.
-        @state_hash[:target] ||= @model[:target]
-        @state_hash[:name] ||= @model[:name]
+
+        # If the target isn't set, then this is our first modification, so
+        # mark it for flushing.
+        unless @state_hash[:target]
+            @state_hash[:target] = @model[:target] || self.class.default_target
+            self.class.modified(@state_hash[:target])
+        end
+        @state_hash[:name] ||= @model.name
 
         self.class.flush(@state_hash)
     end
@@ -213,40 +296,13 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     def initialize(model)
         super
 
-        # Initialize our data hash with the record type.  The record type
-        # in the subclass has to create a record matching its name.
-        @state_hash = {:record_type => self.class.name}
-    end
-
-    # Have we been modified since the last flush?
-    def modified?
-        @state[:flush_needed]
-    end
-
-    def store(hash = nil)
-        hash ||= self.model.to_hash
-
-        unless @instances
-            self.hash
-        end
-
-        if hash.empty? 
-            @me.clear
-        else
-            hash.each do |name, value|
-                if @me[name] != hash[name]
-                    @me[name] = hash[name]
-                end
-            end
-
-            @me.each do |name, value|
-                unless hash.has_key? name
-                    @me.delete(name)
-                end
-            end
-        end
-
-        self.class.store(@instances)
+        # See if there's already a matching state_hash in the records list;
+        # else, use a default value.
+        # We provide a default for 'ensure' here, because the provider will
+        # override it if the thing exists, but it won't touch it if it doesn't
+        # exist.
+        @state_hash = self.class.record?(model[:name]) ||
+            {:record_type => self.class.name, :ensure => :absent}
     end
 end
 

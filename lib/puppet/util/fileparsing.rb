@@ -34,6 +34,15 @@ module Puppet::Util::FileParsing
         @record_order.clear
     end
 
+    def fields(type)
+        type = symbolize(type)
+        if @record_types.include?(type)
+            @record_types[type][:fields].dup
+        else
+            nil
+        end
+    end
+
     # Try to match a specific text line.
     def handle_text_line(line, hash)
         if line =~ hash[:match]
@@ -46,10 +55,22 @@ module Puppet::Util::FileParsing
     # Try to match a record.
     def handle_record_line(line, hash)
         if hash[:match]
+            raise "No provision yet for matching whole lines"
         else
             ret = {}
-            hash[:fields].zip(line.split(hash[:separator])) do |param, value|
-                ret[param] = value
+            sep = hash[:separator]
+
+            # String "helpfully" replaces ' ' with /\s+/ in splitting, so we
+            # have to work around it.
+            if sep == " "
+                sep = / /
+            end
+            hash[:fields].zip(line.split(sep)) do |param, value|
+                if value and value != ""
+                    ret[param] = value
+                else
+                    ret[param] = :absent
+                end
             end
             ret[:record_type] = hash[:name]
             return ret
@@ -117,6 +138,8 @@ module Puppet::Util::FileParsing
             r
         end
 
+        options[:absent] ||= ""
+
         options[:separator] ||= /\s+/
 
         # Unless they specified a string-based joiner, just use a single
@@ -164,7 +187,14 @@ module Puppet::Util::FileParsing
         else
             joinchar = type[:joiner] || type[:separator]
 
-            return type[:fields].collect { |field| details[field].to_s }.join(joinchar)
+            return type[:fields].collect { |field|
+                # If the field is marked absent, use the appropriate replacement
+                if details[field] == :absent
+                    type[:absent]
+                else
+                    details[field].to_s
+                end
+            }.join(joinchar)
         end
     end
 
@@ -174,6 +204,19 @@ module Puppet::Util::FileParsing
             return @trailing_separator
         else
             return true
+        end
+    end
+
+    def valid_attr?(type, attr)
+        type = symbolize(type)
+        if @record_types[type] and @record_types[type][:fields].include?(symbolize(attr))
+            return true
+        else
+            if symbolize(attr) == :ensure
+                return true
+            else
+                false
+            end
         end
     end
 

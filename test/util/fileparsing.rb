@@ -273,6 +273,51 @@ class TestUtilFileParsing < Test::Unit::TestCase
         end
     end
 
+    # Make sure fields that are marked absent get replaced with the appropriate
+    # string.
+    def test_absent_fields
+        parser = FParser.new
+
+        options = nil
+        assert_nothing_raised do
+            options = parser.record_line :record, :fields => %w{one two three}
+        end
+        assert_equal("", options[:absent], "Did not set a default absent string")
+
+        result = nil
+        assert_nothing_raised do
+            result = parser.to_line(:record_type => :record,
+                :one => "a", :two => :absent, :three => "b")
+        end
+
+        assert_equal("a  b", result, "Absent was not correctly replaced")
+
+        # Now try using a different replacement character
+        options[:absent] = "*" # Because cron is a pain in my ass
+        assert_nothing_raised do
+            result = parser.to_line(:record_type => :record,
+                :one => "a", :two => :absent, :three => "b")
+        end
+
+        assert_equal("a * b", result, "Absent was not correctly replaced")
+
+        # Make sure we deal correctly with the string 'absent'
+        assert_nothing_raised do
+            result = parser.to_line(:record_type => :record,
+                :one => "a", :two => "b", :three => 'absent')
+        end
+
+        assert_equal("a b absent", result, "Replaced string 'absent'")
+
+        # And, of course, make sure we can swap things around.
+        assert_nothing_raised do
+            result = parser.to_line(:record_type => :record,
+                :one => "a", :two => "b", :three => :absent)
+        end
+
+        assert_equal("a b *", result, "Absent was not correctly replaced")
+    end
+
     # Make sure we can specify a different join character than split character
     def test_split_join_record_line
         parser = FParser.new
@@ -329,6 +374,21 @@ billy three four"
         assert_nothing_raised do
             assert_equal
         end
+    end
+
+    def test_valid_attrs
+        parser = FParser.new
+
+        parser.record_line :record, :fields => %w{one two three}
+
+        assert(parser.valid_attr?(:record, :one),
+            "one was considered invalid")
+
+        assert(parser.valid_attr?(:record, :ensure),
+            "ensure was considered invalid")
+
+        assert(! parser.valid_attr?(:record, :four),
+            "four was considered valid")
     end
 
     # Make sure we correctly handle optional fields.  We'll skip this

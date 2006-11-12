@@ -13,7 +13,8 @@ class TestParsedMounts < Test::Unit::TestCase
 
     def setup
         super
-        @provider = Puppet.type(:mount).provider(:parsed)
+        @mount = Puppet.type(:mount)
+        @provider = @mount.provider(:parsed)
 
         @oldfiletype = @provider.filetype
     end
@@ -21,6 +22,7 @@ class TestParsedMounts < Test::Unit::TestCase
     def teardown
         Puppet::FileType.filetype(:ram).clear
         @provider.filetype = @oldfiletype
+        @provider.clear
         super
     end
 
@@ -33,13 +35,13 @@ class TestParsedMounts < Test::Unit::TestCase
             @pcount = 1
         end
         args = {
-            :path => "/fspuppet%s" % @pcount,
+            :name => "/fspuppet%s" % @pcount,
             :device => "/dev/dsk%s" % @pcount,
         }
 
-        @provider.fields.each do |field|
+        @provider.fields(:parsed).each do |field|
             unless args.include? field
-                args[field] = "fake%s" % @pcount
+                args[field] = "fake%s%s" % [field, @pcount]
             end
         end
 
@@ -50,15 +52,13 @@ class TestParsedMounts < Test::Unit::TestCase
         hash = mkmountargs()
         #hash[:provider] = @provider.name
 
-        fakemodel = fakemodel(:mount, hash[:path])
+        fakemodel = fakemodel(:mount, hash[:name])
 
         mount = @provider.new(fakemodel)
-        #mount = Puppet.type(:mount).create(hash)
-
-        hash.each do |name, val|
-            fakemodel[name] = val
-        end
         assert(mount, "Could not create provider mount")
+        hash[:record_type] = :parsed
+        hash[:ensure] = :present
+        mount.state_hash = hash
 
         return mount
     end
@@ -69,11 +69,22 @@ class TestParsedMounts < Test::Unit::TestCase
         @provider.filetype = Puppet::FileType.filetype(:ram)
     end
 
+    def test_default_target
+        should = case Facter.value(:operatingsystem)
+        when "Solaris": "/etc/vfstab"
+        else
+            "/etc/fstab"
+        end
+        assert_equal(should, @provider.default_target)
+    end
+
     def test_simplemount
         mkfaketype
-        assert_nothing_raised {
-            assert_equal([], @provider.retrieve)
-        }
+        target = @provider.default_target
+
+        # Make sure we start with an empty file
+        assert_equal("", @provider.target_object(target).read,
+            "Got a non-empty starting file")
 
         # Now create a provider
         mount = nil
@@ -82,50 +93,49 @@ class TestParsedMounts < Test::Unit::TestCase
         }
 
         # Make sure we're still empty
-        assert_nothing_raised {
-            assert_equal([], @provider.retrieve)
-        }
+        assert_equal("", @provider.target_object(target).read,
+            "Got a non-empty starting file")
 
-        hash = mount.model.to_hash
-
-        # Try storing it
+        # Try flushing it to disk
         assert_nothing_raised do
-            mount.store(hash)
+            mount.flush
         end
 
-        # Make sure we get the mount back
-        assert_nothing_raised {
-            assert_equal([hash], @provider.retrieve)
-        }
-
-        # Now remove the whole object
-        assert_nothing_raised {
-            mount.store({})
-            assert_equal([], @provider.retrieve)
-        }
+        # Make sure it's now in the file.  The file format is validated in
+        # the isomorphic methods.
+        assert(@provider.target_object(target).read.include?("\t%s\t" %
+            mount.state_hash[:name]), "Mount was not written to disk")
     end
 
     unless Facter["operatingsystem"].value == "Darwin"
         def test_mountsparse
-            fakedataparse(fake_fstab) do
+            tab = fake_fstab
+            fakedataparse(tab) do
                 # Now just make we've got some mounts we know will be there
-                hashes = @provider.retrieve.find_all { |i| i.is_a? Hash }
+                hashes = @provider.target_records(tab).find_all { |i| i.is_a? Hash }
                 assert(hashes.length > 0, "Did not create any hashes")
-                root = hashes.find { |i| i[:path] == "/" }
+                root = hashes.find { |i| i[:name] == "/" }
                 assert(root, "Could not retrieve root mount")
             end
         end
 
         def test_rootfs
             fs = nil
-            @provider.path = fake_fstab()
-            fakemodel = fakemodel(:mount, "/")
-            mount = @provider.new(fakemodel)
-            mount.model[:path] = "/"
-            assert(mount.hash, "Could not retrieve root fs")
+            type = @mount.create :name => "/"
+
+            provider = type.provider
+
+            assert(FileTest.exists?(@provider.default_target),
+                "FSTab %s does not exist" % @provider.default_target)
+            assert_nothing_raised do
+                @provider.prefetch
+            end
+
+            assert_equal(:present, provider.state_hash[:ensure],
+                "Could not find root fs")
 
             assert_nothing_raised {
-                assert(mount.mounted?, "Root is considered not mounted")
+                assert(provider.mounted?, "Root is considered not mounted")
             }
         end
     end
@@ -133,44 +143,28 @@ class TestParsedMounts < Test::Unit::TestCase
     if Puppet::SUIDManager.uid == 0
     def test_mountfs
         fs = nil
-        case Facter["hostname"].value
+        case Facter.value(:hostname)
         when "culain": fs = "/ubuntu"
         when "atalanta": fs = "/mnt"
-        when "figurehead": fs = "/cg4/net/depts"
         else
             $stderr.puts "No mount for mount testing; skipping"
             return
         end
 
-        oldtext = @provider.fileobj.read
+        oldtext = @provider.target_object(@provider.default_target).read
 
         ftype = @provider.filetype
 
-        # Make sure the original gets reinstalled.
-        if ftype == Puppet::FileType.filetype(:netinfo)
-            cleanup do 
-                IO.popen("niload -r /mounts .", "w") do |file|
-                    file.puts oldtext
-                end
-            end
-        else
-            cleanup do 
-                @provider.fileobj.write(oldtext)
-            end
-        end
-
-        fakemodel = fakemodel(:mount, "/")
-        obj = @provider.new(fakemodel)
-        obj.model[:path] = fs
+        mount = @mount.create :name => fs
+        obj = mount.provider
 
         current = nil
-
         assert_nothing_raised {
             current = obj.mounted?
         }
 
         if current
-            # Make sure the original gets reinstalled.
+            # Make sure the original gets remounted.
             cleanup do
                 unless obj.mounted?
                     obj.mount
@@ -188,10 +182,13 @@ class TestParsedMounts < Test::Unit::TestCase
             obj.unmount
         }
         assert(! obj.mounted?, "FS still mounted")
+        # Check the actual output of df
+        assert(! obj.df(nil).include?(fs), "%s is still listed in df" % fs)
         assert_nothing_raised {
             obj.mount
         }
         assert(obj.mounted?, "FS not mounted")
+        assert(obj.df(nil).include?(fs), "%s is not listed in df" % fs)
 
     end
     end
@@ -206,8 +203,7 @@ class TestParsedMounts < Test::Unit::TestCase
             # Catchall for other fstabs
             name = "linux.fstab"
         end
-        oldpath = @provider.path
-        cleanup do @provider.path = oldpath end
+        oldpath = @provider.default_target
         return fakefile(File::join("data/types/mount", name))
     end
 end

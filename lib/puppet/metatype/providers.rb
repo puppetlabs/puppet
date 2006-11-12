@@ -41,6 +41,64 @@ class Puppet::Type
         return @defaultprovider
     end
 
+    # Convert a hash, as provided by, um, a provider, into an instance of self.
+    def self.hash2obj(hash)
+        obj = nil
+
+        namevar = self.namevar
+        unless hash.include?(namevar) and hash[namevar]
+            raise Puppet::DevError, "Hash was not passed with namevar"
+        end
+
+        # if the obj already exists with that name...
+        if obj = self[hash[namevar]]
+            # We're assuming here that objects with the same name
+            # are the same object, which *should* be the case, assuming
+            # we've set up our naming stuff correctly everywhere.
+
+            # Mark found objects as present
+            obj.is = [:ensure, :present]
+            obj.state(:ensure).found = :present
+            hash.each { |param, value|
+                if state = obj.state(param)
+                    state.is = value
+                elsif val = obj[param]
+                    obj[param] = val
+                else
+                    # There is a value on disk, but it should go away
+                    obj.is = [param, value]
+                    obj[param] = :absent
+                end
+            }
+        else
+            # create a new obj, since no existing one seems to
+            # match
+            obj = self.create(namevar => hash[namevar])
+
+            # We can't just pass the hash in at object creation time,
+            # because it sets the should value, not the is value.
+            hash.delete(namevar)
+            hash.each { |param, value|
+                obj.is = [param, value]
+            }
+        end
+
+        return obj
+    end
+
+    # Create a list method that just calls our providers.
+    def self.mkprovider_list
+        unless respond_to?(:list)
+            meta_def(:list) do
+                suitableprovider.find_all { |p| p.respond_to?(:list) }.collect { |prov|
+                    prov.list.each { |h| h[:provider] = prov.name }
+                }.flatten.collect do |hash|
+                    hash2obj(hash)
+                end
+            end
+        end
+    end
+
     # Retrieve a provider by name.
     def self.provider(name)
         name = Puppet::Util.symbolize(name)
@@ -67,9 +125,9 @@ class Puppet::Type
     # directly on the type that it's implementing.
     def self.provide(name, options = {}, &block)
         name = Puppet::Util.symbolize(name)
-        model = self
 
         parent = if pname = options[:parent]
+            options.delete(:parent)
             if pname.is_a? Class
                 pname
             else
@@ -85,6 +143,8 @@ class Puppet::Type
             Puppet::Type::Provider
         end
 
+        options[:model] ||= self
+
         self.providify
 
         provider = genclass(name,
@@ -92,9 +152,7 @@ class Puppet::Type
             :hash => @providers,
             :prefix => "Provider",
             :block => block,
-            :attributes => {
-                :model => model
-            }
+            :attributes => options
         )
 
         return provider
@@ -105,6 +163,8 @@ class Puppet::Type
     def self.providify
         return if @paramhash.has_key? :provider
         model = self
+
+        mkprovider_list()
         newparam(:provider) do
             desc "The specific backend for #{self.name.to_s} to use. You will
                 seldom need to specify this -- Puppet will usually discover the

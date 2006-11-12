@@ -51,7 +51,11 @@ class Puppet::Provider
             #unless method_defined? name
             unless metaclass.method_defined? name
                 meta_def(name) do |args|
-                    cmd = command(name) + " " + args
+                    if args
+                        cmd = command(name) + " " + args
+                    else
+                        cmd = command(name)
+                    end
                     # This might throw an ExecutionFailure, but the system above
                     # will catch it, if so.
                     return execute(cmd)

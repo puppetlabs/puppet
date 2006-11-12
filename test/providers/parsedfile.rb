@@ -13,13 +13,14 @@ class TestParsedFile < Test::Unit::TestCase
 	include PuppetTest::FileParsing
 
     Puppet::Type.newtype(:parsedfiletype) do
+        ensurable
         newstate(:one) do
-            newvalue(:a) {}
-            newvalue(:b) {}
+            newvalue(:a)
+            newvalue(:b)
         end
         newstate(:two) do
-            newvalue(:c) {}
-            newvalue(:d) {}
+            newvalue(:c)
+            newvalue(:d)
         end
 
         newparam(:name) do
@@ -32,7 +33,9 @@ class TestParsedFile < Test::Unit::TestCase
 
     # A simple block to skip the complexity of a full transaction.
     def apply(model)
-        [:one, :two].each do |st|
+        [:one, :two, :ensure].each do |st|
+            Puppet.info "Setting %s: %s => %s" %
+                [model[:name], st, model.should(st)]
             model.provider.send(st.to_s + "=", model.should(st))
         end
     end
@@ -46,7 +49,8 @@ class TestParsedFile < Test::Unit::TestCase
     end
 
     def mkprovider(name = :parsed)
-        @provider = @type.provide(name, :parent => Puppet::Provider::ParsedFile) do
+        @provider = @type.provide(name, :parent => Puppet::Provider::ParsedFile,
+            :filetype => :ram) do
             record_line name, :fields => %w{name one two}
         end
     end
@@ -90,7 +94,7 @@ class TestParsedFile < Test::Unit::TestCase
         end
 
         # The provider converts to strings
-        assert_equal("yayness", file.name)
+        assert_equal(:yayness, file.name)
     end
 
     def test_filetype
@@ -121,8 +125,8 @@ class TestParsedFile < Test::Unit::TestCase
             obj = prov.target_object(path)
         end
 
-        # The default filetype is 'flat'
-        assert_instance_of(Puppet::FileType.filetype(:flat), obj)
+        # The default filetype is 'ram'
+        assert_instance_of(Puppet::FileType.filetype(:ram), obj)
 
         newobj = nil
         assert_nothing_raised do
@@ -208,6 +212,24 @@ class TestParsedFile < Test::Unit::TestCase
         assert_equal("b", model.provider.one)
         assert_equal("b", default.provider.one)
         assert_equal("d", default.provider.two)
+
+        # Now list all of them and make sure we get everything back
+        hashes = nil
+        assert_nothing_raised do
+            hashes = prov.list
+        end
+
+        names = nil
+        assert_nothing_raised do
+            names = prov.list_by_name
+        end
+
+        %w{bill jill will}.each do |name|
+            assert(hashes.find { |r| r[:name] == name},
+                "Did not return %s in list" % name)
+            assert(names.include?(name),
+                "Did not return %s in list_by_name" % name)
+        end
     end
 
     # Make sure we can correctly prefetch on a target.
@@ -316,8 +338,8 @@ class TestParsedFile < Test::Unit::TestCase
         assert_nothing_raised { one.flush }
 
         # Make sure it changed our file
-        assert_equal("a", one.provider.one)
-        assert_equal("c", one.provider.two)
+        assert_equal(:a, one.provider.one)
+        assert_equal(:c, one.provider.two)
 
         # And make sure it's right on disk
         assert(prov.target_object(:yayness).read.include?("one a c"),
@@ -340,16 +362,18 @@ class TestParsedFile < Test::Unit::TestCase
         assert_nothing_raised { apply(two) }
         assert_nothing_raised { two.flush }
 
-        assert_equal("b", two.provider.one)
+        assert_equal(:b, two.provider.one)
     end
 
     def test_creating_file
         prov = mkprovider
+        prov.clear
 
-        prov.filetype = :ram
         prov.default_target = :basic
 
         model = mkmodel "yay", :target => :basic, :one => "a", :two => "c"
+
+        assert_equal(:present, model.should(:ensure))
 
         apply(model)
 
@@ -385,16 +409,17 @@ class TestParsedFile < Test::Unit::TestCase
         second = mkmodel "second", :target => :second
         mover = mkmodel "mover", :target => :first
 
-        # Apply them all
         [first, second, mover].each do |m|
             assert_nothing_raised("Could not apply %s" % m[:name]) do
                 apply(m)
             end
         end
 
-        # Flush
-        assert_nothing_raised do
-            [first, second, mover].each do |m| m.flush end
+        # Flush.
+        [first, second, mover].each do |m|
+            assert_nothing_raised do
+                m.flush
+            end
         end
 
         check = proc do |target, name|
@@ -427,6 +452,148 @@ class TestParsedFile < Test::Unit::TestCase
         # And make sure the mover is no longer in the first file
         assert(prov.target_object(:first) !~ /mover/,
             "Mover was not removed from first file")
+    end
+
+    # Make sure that 'ensure' correctly calls 'sync' on all states.
+    def test_ensure
+        prov = mkprovider
+
+        prov.filetype = :ram
+        prov.default_target = :first
+
+        # Make two models, one that starts on disk and one that doesn't
+        ondisk = mkmodel "ondisk", :target => :first
+        notdisk = mkmodel "notdisk", :target => :first
+
+        prov.target_object(:first).write "ondisk a c\n"
+        prov.prefetch
+
+        assert_equal(:present, notdisk.should(:ensure),
+            "Did not get default ensure value")
+
+        # Try creating the object
+        assert_nothing_raised { notdisk.provider.create() }
+
+        # Now make sure all of the data is copied over correctly.
+        notdisk.class.validstates.each do |state|
+            assert_equal(notdisk.should(state), notdisk.provider.state_hash[state],
+                "%s was not copied over during creation" % state)
+        end
+
+        # Flush it to disk and make sure it got copied down
+        assert_nothing_raised do
+            notdisk.flush
+        end
+
+        assert(prov.target_object(:first).read =~ /^notdisk/,
+            "Did not write out object to disk")
+        assert(prov.target_object(:first).read =~ /^ondisk/,
+            "Lost object on disk")
+
+        # Make sure our on-disk model behaves appropriately.
+        assert_equal(:present, ondisk.provider.ensure)
+
+        # Now destroy the object
+        assert_nothing_raised { notdisk.provider.destroy() }
+
+        assert_nothing_raised { notdisk.flush }
+
+        # And make sure it's no longer present
+        assert(prov.target_object(:first).read !~ /^notdisk/,
+            "Did not remove thing from disk")
+        assert(prov.target_object(:first).read =~ /^ondisk/,
+            "Lost object on disk")
+        assert_equal(:present, ondisk.provider.ensure)
+    end
+
+    def test_absent_fields
+        prov = @type.provide(:record, :parent => Puppet::Provider::ParsedFile) do
+            record_line :record, :fields => %w{name one two},
+                :separator => "\s"
+        end
+        cleanup { @type.unprovide(:record) }
+
+        records = prov.parse("a  d")
+
+        line = records.find { |r| r[:name] == "a" }
+        assert(line, "Could not find line")
+
+        assert_equal(:absent, line[:one], "field one was not set to absent")
+    end
+
+    # This test is because in x2puppet I was having problems where multiple
+    # retrievals somehow destroyed the 'is' values.
+    def test_value_retrieval
+        prov = mkprovider
+        prov.default_target = :yayness
+
+        prov.target_object(:yayness).write "bill a c\njill b d"
+
+        list = Puppet::Type.type(:parsedfiletype).list
+
+        bill = list.find { |r| r[:name] == "bill" }
+        jill = list.find { |r| r[:name] == "jill" }
+        assert(bill, "Could not find bill")
+        assert(jill, "Could not find jill")
+
+        prov = bill.provider
+
+        4.times do |i|
+            assert(prov.one, "Did not get a value for 'one' on try %s" % (i + 1))
+        end
+
+        # First make sure we can retrieve values multiple times from the
+        # provider
+        assert(bill.is(:one), "Bill does not have a value for 'one'")
+        assert(bill.is(:one), "Bill does not have a value for 'one' on second try")
+        assert_nothing_raised do
+            bill.retrieve
+        end
+        assert(bill.is(:one), "bill's value for 'one' disappeared")
+    end
+
+    # Make sure that creating a new model finds existing records in memory
+    def test_initialize_finds_records
+        prov = mkprovider
+        prov.default_target = :yayness
+
+        prov.target_object(:yayness).write "bill a c\njill b d"
+
+        prov.prefetch
+
+        # Now make a model
+        bill = nil
+        assert_nothing_raised do
+            bill = Puppet::Type.type(:parsedfiletype).create :name => "bill"
+        end
+
+        assert_equal("a", bill.provider.one,
+            "Record was not found in memory")
+    end
+
+    # Make sure invalid fields always show up as insync
+    def test_invalid_fields
+        prov = @type.provide(:test, :parent => Puppet::Provider::ParsedFile,
+            :filetype => :ram, :default_target => :yayness) do
+            record_line :test, :fields => %w{name two}
+        end
+        cleanup do @type.unprovide(:test) end
+
+        bill = nil
+        assert_nothing_raised do
+            bill = Puppet::Type.type(:parsedfiletype).create :name => "bill",
+                :one => "a", :two => "c"
+        end
+
+        assert_apply(bill)
+
+        prov.prefetch
+        assert_nothing_raised do
+            bill.retrieve
+        end
+
+        assert(bill.insync?,
+            "An invalid field marked the record out of sync")
     end
 end
 

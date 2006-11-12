@@ -272,7 +272,7 @@ class State < Puppet::Parameter
 
         # Look for a matching value
         @should.each { |val|
-            if @is == val
+            if @is == val or @is == val.to_s
                 return true
             end
         }
@@ -457,11 +457,27 @@ class State < Puppet::Parameter
 
         def self.defaultvalues
             newvalue(:present) do
-                @parent.create
+                if @parent.provider and @parent.provider.respond_to?(:create)
+                    @parent.provider.create
+                else
+                    @parent.create
+                end
             end
 
             newvalue(:absent) do
-                @parent.destroy
+                if @parent.provider and @parent.provider.respond_to?(:destroy)
+                    @parent.provider.destroy
+                else
+                    @parent.destroy
+                end
+            end
+
+            defaultto do
+                if @parent.managed?
+                    :present
+                else
+                    nil
+                end
             end
 
             # This doc will probably get overridden
@@ -498,7 +514,15 @@ class State < Puppet::Parameter
             # to get checked, which means that those other states do not have
             # @is values set.  This seems to be the source of quite a few bugs,
             # although they're mostly logging bugs, not functional ones.
-            if @parent.exists?
+            if prov = @parent.provider and prov.respond_to?(:exists?)
+                result = prov.exists?
+            elsif @parent.respond_to?(:exists?)
+                result = @parent.exists?
+            else
+                raise Puppet::DevError, "No ability to determine if %s exists" %
+                    @parent.class.name
+            end
+            if result
                 @is = :present
             else
                 @is = :absent

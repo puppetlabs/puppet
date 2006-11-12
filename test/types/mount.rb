@@ -14,11 +14,20 @@ class TestMounts < Test::Unit::TestCase
 
         attr_accessor :mounted
 
-        def create
-            @ensure = :present
+        def self.default_target
+            :yayness
         end
 
-        def delete
+        def create
+            @ensure = :present
+            @model.class.validstates.each do |state|
+                if value = @model.should(state)
+                    self.send(state.to_s + "=", value)
+                end
+            end
+        end
+
+        def destroy
             @ensure = :absent
             @mounted = false
         end
@@ -50,12 +59,14 @@ class TestMounts < Test::Unit::TestCase
 
     def setup
         super
-        @realprovider = Puppet::Type.type(:mount).defaultprovider
-        Puppet::Type.type(:mount).defaultprovider = FakeMountProvider
+        @mount = Puppet::Type.type(:mount)
+        @realprovider = @mount.defaultprovider
+        @mount.defaultprovider = FakeMountProvider
     end
 
     def teardown
         Puppet.type(:mount).clear
+        @realprovider.clear
         Puppet::Type.type(:mount).defaultprovider = nil
         super
     end
@@ -73,7 +84,10 @@ class TestMounts < Test::Unit::TestCase
             :device => "/dev/dsk%s" % @pcount,
         }
 
-        @realprovider.fields.each do |field|
+        [@mount.validstates, @mount.parameters].flatten.each do |field|
+            next if field == :provider
+            next if field == :target
+            next if field == :ensure
             unless args.include? field
                 args[field] = "fake%s" % @pcount
             end
@@ -87,24 +101,13 @@ class TestMounts < Test::Unit::TestCase
     end
 
     def test_simplemount
-        mount = nil
-        oldprv = Puppet.type(:mount).defaultprovider
-        Puppet.type(:mount).defaultprovider = nil
-        assert_nothing_raised {
-            Puppet.type(:mount).defaultprovider.retrieve
-
-            count = 0
-            Puppet.type(:mount).each do |h|
-                count += 1
-            end
-
-            assert_equal(0, count, "Found mounts in empty file somehow")
-        }
-        Puppet.type(:mount).defaultprovider = oldprv
-
         mount = mkmount
 
         assert_apply(mount)
+        mount.send(:states).each do |state|
+            assert_equal(state.should, mount.provider.send(state.name),
+                "%s was not set to %s" % [state.name, state.should])
+        end
         assert_events([], mount)
 
         assert_nothing_raised { mount.retrieve }
@@ -155,11 +158,60 @@ class TestMounts < Test::Unit::TestCase
     
     def test_list
         list = nil
+        assert(@mount.respond_to?(:list),
+            "No list method defined for mount")
+
         assert_nothing_raised do
             list = Puppet::Type.type(:mount).list
         end
         
         assert(list.length > 0, "Did not return any mounts")
+
+        root = list.find { |o| o[:name] == "/" }
+        assert(root, "Could not find root root filesystem in list results")
+
+        assert(root.is(:device), "Device was not set")
+        assert(root.state(:device).value, "Device was not returned by value method")
+
+        assert_nothing_raised do
+            root.retrieve
+        end
+
+        assert(root.is(:device), "Device was not set")
+        assert(root.state(:device).value, "Device was not returned by value method")
+    end
+
+    # Make sure we actually remove the object from the file and such.
+    def test_removal
+        # Reset the provider so that we're using the real thing
+        @mount.defaultprovider = nil
+
+        provider = @mount.defaultprovider
+        assert(provider, "Could not retrieve default provider")
+
+        file = provider.default_target
+        assert(FileTest.exists?(file),
+            "FSTab %s does not exist" % file)
+
+        # Now switch to ram, so we're just doing this there, not really on disk.
+        provider.filetype = :ram
+        #provider.target_object(file).write text
+
+        mount = mkmount
+
+        mount[:ensure] = :present
+
+        assert_events([:mount_created], mount)
+        assert_events([], mount)
+
+        mount[:ensure] = :absent
+        assert_events([:mount_deleted], mount)
+        assert_events([], mount)
+
+        # Now try listing and making sure the object is actually gone.
+        list = mount.provider.class.list
+        assert(! list.find { |r| r[:name] == mount[:name] },
+            "Mount was not actually removed")
     end
 end
 

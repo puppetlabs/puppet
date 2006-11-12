@@ -1,28 +1,26 @@
 module PuppetTest::FileParsing
     # Run an isomorphism test on our parsing process.
     def fakedataparse(file)
-        @provider.path = file
-        instances = nil
+        oldtarget = @provider.default_target
+        cleanup do
+            @provider.default_target = oldtarget
+        end
+        @provider.default_target = file
+
         assert_nothing_raised {
-            instances = @provider.retrieve
+            @provider.prefetch
         }
 
-        text = @provider.fileobj.read
+        text = @provider.to_file(@provider.target_records(file))
 
         yield if block_given?
 
-        dest = tempfile()
-        @provider.path = dest
-
-        # Now write it back out
-        assert_nothing_raised {
-            @provider.store(instances)
-        }
-
-        newtext = @provider.fileobj.read
-
-        # Don't worry about difference in whitespace
-        assert_equal(text.gsub(/\s+/, ' '), newtext.gsub(/\s+/, ' '))
+        oldlines = File.readlines(file)
+        newlines = text.chomp.split "\n"
+        oldlines.zip(newlines).each do |old, new|
+            assert_equal(old.chomp.gsub(/\s+/, ''), new.gsub(/\s+/, ''),
+                "Lines are not equal")
+        end
     end
 end
 

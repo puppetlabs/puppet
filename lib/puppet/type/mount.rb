@@ -12,22 +12,30 @@ module Puppet
                   currently mounted, if it is ``mounted``, the filesystem 
                   is entered into the mount table and mounted."
 
-            newvalue(:present, :call => :after) do
+            newvalue(:present) do
                 if provider.mounted?
                     provider.unmount
                     return :mount_unmounted
                 else
+                    provider.create
                     return :mount_created
                 end
             end
+            aliasvalue :unmounted, :present
 
-            newvalue(:absent, :event => :mount_deleted, :call => :after) do
+            newvalue(:absent, :event => :mount_deleted) do
                 if provider.mounted?
                     provider.unmount
                 end
+
+                provider.destroy
             end
 
-            newvalue(:mounted, :event => :mount_mounted, :call => :after) do
+            newvalue(:mounted, :event => :mount_mounted) do
+                # Create the mount point if it does not already exist.
+                if self.is == :absent or self.is.nil?
+                    provider.create
+                end
                 # We have to flush any changes to disk.
                 @parent.flush
 
@@ -43,13 +51,10 @@ module Puppet
             end
 
             def retrieve
-                fail "called retrieve"
-                Puppet.warning @is.inspect
                 if provider.mounted?
                     @is = :mounted
                 else
-                    val = super()
-                    @is = val
+                    @is = super()
                 end
 
             end
@@ -107,10 +112,27 @@ module Puppet
                 support this."
         end
 
-        newparam(:path) do
+        newstate(:target) do
+            desc "The file in which to store the mount table.  Only used by
+                those providers that write to disk (i.e., not NetInfo)."
+
+            defaultto { @parent.class.defaultprovider.default_target }
+        end
+
+        newparam(:name) do
             desc "The mount path for the mount."
 
             isnamevar
+        end
+
+        newparam(:path) do
+            desc "The deprecated name for the mount point.  Please use ``name`` now."
+
+            def should=(value)
+                warning "'path' is deprecated for mounts.  Please use 'name'."
+                @parent[:name] = value
+                super
+            end
         end
 
         @doc = "Manages mounted mounts, including putting mount
