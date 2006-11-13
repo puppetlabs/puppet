@@ -143,6 +143,14 @@ module Puppet
         @doc = "Manages mounted mounts, including putting mount
             information into the mount table. The actual behavior depends 
             on the value of the 'ensure' parameter."
+
+        def value(name)
+            name = symbolize(name)
+            ret = nil
+            if state = @states[name]
+                return state.value
+            end
+        end
     end
 end
 
