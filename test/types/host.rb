@@ -23,11 +23,12 @@ class TestHost < Test::Unit::TestCase
 
         cleanup do @hosttype.defaultprovider = nil end
 
-        oldpath = @provider.path
+        @default_file = @provider.default_target
         cleanup do
-            @provider.path = oldpath
+            @provider.default_target = @default_file
         end
-        @provider.path = tempfile()
+        @target = tempfile()
+        @provider.default_target = @target
     end
 
     def mkhost
@@ -48,18 +49,21 @@ class TestHost < Test::Unit::TestCase
         return host
     end
 
+    def test_list
+        assert_nothing_raised do
+            @hosttype.defaultprovider.prefetch
+        end
+
+        count = 0
+        @hosttype.each do |h|
+            count += 1
+        end
+
+        assert_equal(0, count, "Found hosts in empty file somehow")
+    end
+
     def test_simplehost
         host = nil
-        assert_nothing_raised {
-            Puppet.type(:host).defaultprovider.retrieve
-
-            count = 0
-            @hosttype.each do |h|
-                count += 1
-            end
-
-            assert_equal(0, count, "Found hosts in empty file somehow")
-        }
 
         assert_nothing_raised {
             host = Puppet.type(:host).create(
@@ -68,11 +72,19 @@ class TestHost < Test::Unit::TestCase
             )
         }
 
-        assert_apply(host)
+        assert_events([:host_created], host)
 
         assert_nothing_raised { host.retrieve }
 
         assert_equal(:present, host.is(:ensure))
+
+        host[:ensure] = :absent
+
+        assert_events([:host_deleted], host)
+
+        assert_nothing_raised { host.retrieve }
+
+        assert_equal(:absent, host.is(:ensure))
     end
 
     def test_moddinghost
@@ -88,6 +100,10 @@ class TestHost < Test::Unit::TestCase
         host[:alias] = %w{madstop kirby yayness}
 
         assert_events([:host_changed], host)
+
+        host.retrieve
+
+        assert_equal(%w{madstop kirby yayness}, host.is(:alias))
     end
 
     def test_aliasisstate
@@ -110,56 +126,6 @@ class TestHost < Test::Unit::TestCase
 
         same = host.class["testing"]
         assert(same, "Could not retrieve by alias")
-    end
-
-    def test_removal
-        host = mkhost()
-        assert_nothing_raised {
-            host[:ensure] = :present
-        }
-        assert_events([:host_created], host)
-
-        assert(host.exists?, "Host is not considered in sync")
-
-        assert_equal(:present, host.is(:ensure))
-
-        assert_nothing_raised {
-            host[:ensure] = :absent
-        }
-        assert_events([:host_removed], host)
-
-        text = host.provider.class.fileobj.read
-
-        assert(! text.include?(host[:name]), "Host is still in text")
-        host.retrieve
-        assert_events([], host)
-    end
-
-    def test_modifyingfile
-        hosts = []
-        names = []
-        3.times {
-            h = mkhost()
-            hosts << h
-            names << h.name
-        }
-        assert_apply(*hosts)
-        hosts.clear
-        Puppet.type(:host).clear
-        newhost = mkhost()
-        names << newhost.name
-        assert_apply(newhost)
-        # Verify we can retrieve that info
-        assert_nothing_raised("Could not retrieve after second write") {
-            newhost.retrieve
-        }
-
-        text = newhost.provider.class.fileobj.read
-
-        # And verify that we have data for everything
-        names.each { |name|
-            assert(text.include?(name), "Host is not in file")
-        }
     end
 end
 

@@ -22,6 +22,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
     def teardown
         Puppet::FileType.filetype(:ram).clear
         @provider.filetype = @oldfiletype
+        @provider.clear
         super
     end
 
@@ -45,7 +46,8 @@ class TestParsedHostProvider < Test::Unit::TestCase
         return {
             :name => "fakehost%s" % @hcount,
             :ip => "192.168.27.%s" % @hcount,
-            :alias => ["alias%s" % @hcount]
+            :alias => ["alias%s" % @hcount],
+            :ensure => :present
         }
     end
 
@@ -56,21 +58,21 @@ class TestParsedHostProvider < Test::Unit::TestCase
 
         host = @provider.new(fakemodel)
 
-        hash.each do |name, val|
-            fakemodel[name] = val
-        end
         assert(host, "Could not create provider host")
+        hash.each do |name, val|
+            host.send(name.to_s + "=", val)
+        end
 
         return host
     end
 
     # Make sure we convert both directlys correctly using a simple host.
     def test_basic_isomorphism
-        hash = {:name => "myhost", :ip => "192.168.43.56", :alias => %w{another host}}
+        hash = {:record_type => :parsed, :name => "myhost", :ip => "192.168.43.56", :alias => %w{another host}}
 
         str = nil
         assert_nothing_raised do
-            str = @provider.to_record(hash)
+            str = @provider.to_line(hash)
         end
 
         assert_equal("192.168.43.56\tmyhost\tanother\thost", str)
@@ -100,51 +102,30 @@ class TestParsedHostProvider < Test::Unit::TestCase
         end
 
         assert_equal([
-            "# comment one",
-            "",
-            {:name => "myhost", :ip => "192.168.43.56", :alias => %w{another host}},
-            "    ",
-            "# another comment",
-            {:name => "anotherhost", :ip => "192.168.43.57"}
+            {:record_type => :comment, :line => "# comment one"},
+            {:record_type => :blank, :line => ""},
+            {:record_type => :parsed, :name => "myhost", :ip => "192.168.43.56", :alias => %w{another host}},
+            {:record_type => :blank, :line => "    "},
+            {:record_type => :comment, :line => "# another comment"},
+            {:record_type => :parsed, :name => "anotherhost", :ip => "192.168.43.57"}
         ], instances)
 
-        assert_nothing_raised do
-            @provider.store(instances)
-        end
         newtext = nil
         assert_nothing_raised do
-            newtext = @provider.fileobj.read
+            newtext = @provider.to_file(instances)
         end
-
-        assert_equal(text, newtext)
-    end
-
-    def test_empty_and_absent_hashes_are_not_written
-        mkfaketype()
-
-        instances = [
-            {:name => "myhost", :ip => "192.168.43.56", :alias => %w{another host}},
-            {},
-            {:ensure => :absent, :name => "anotherhost", :ip => "192.168.43.57"}
-        ]
-
-        assert_nothing_raised do
-            newtext = @provider.store(instances)
-        end
-        newtext = nil
-        assert_nothing_raised do
-            newtext = @provider.fileobj.read
-        end
-        text = "192.168.43.56\tmyhost\tanother\thost\n"
 
         assert_equal(text, newtext)
     end
 
     def test_simplehost
         mkfaketype
+        @provider.default_target = :yayness
+        file = @provider.target_object(:yayness)
+
         # Start out with no content.
         assert_nothing_raised {
-            assert_equal([], @provider.retrieve)
+            assert_equal([], @provider.parse(file.read))
         }
 
         # Now create a provider
@@ -155,40 +136,42 @@ class TestParsedHostProvider < Test::Unit::TestCase
 
         # Make sure we're still empty
         assert_nothing_raised {
-            assert_equal([], @provider.retrieve)
+            assert_equal([], @provider.parse(file.read))
         }
-
-        hash = host.model.to_hash
 
         # Try storing it
         assert_nothing_raised do
-            host.store(hash)
+            host.flush
         end
 
         # Make sure we get the host back
         assert_nothing_raised {
-            assert_equal([hash], @provider.retrieve)
+            assert(file.read.include?(host.name),
+                "Did not flush host to disk")
         }
 
         # Remove a single field and make sure it gets tossed
-        hash.delete(:alias)
+        name = host.alias
+        host.alias = [:absent]
 
         assert_nothing_raised {
-            host.store(hash)
-            assert_equal([hash], @provider.retrieve)
+            host.flush
+            assert(! file.read.include?(name[0]),
+                "Did not remove alias from disk")
         }
 
         # Make sure it throws up if we remove a required field
-        hash.delete(:ip)
+        host.ip = :absent
 
         assert_raise(ArgumentError) {
-            host.store(hash)
+            host.flush
         }
 
         # Now remove the whole object
+        host.ensure = :absent
         assert_nothing_raised {
-            host.store({})
-            assert_equal([], @provider.retrieve)
+            host.flush
+            assert_equal([], @provider.parse(file.read))
         }
     end
 
@@ -201,7 +184,9 @@ class TestParsedHostProvider < Test::Unit::TestCase
     # get taken into account.
     def test_modifyingfile
         hostfile = tempfile()
-        @provider.path = hostfile
+        @provider.default_target = hostfile
+
+        file = @provider.target_object(hostfile)
 
         hosts = []
         3.times {
@@ -210,32 +195,37 @@ class TestParsedHostProvider < Test::Unit::TestCase
         }
 
         hosts.each do |host|
-            host.store
+            host.flush
         end
 
         newhost = mkhost()
         hosts << newhost
 
         # Now store our new host
-        newhost.store()
+        newhost.flush()
 
         # Verify we can retrieve that info
         assert_nothing_raised("Could not retrieve after second write") {
-            newhost.hash
+            @provider.prefetch
         }
 
-        text = @provider.fileobj.read
+        text = file.read
 
-        instances = @provider.retrieve
+        instances = @provider.parse(text)
 
         # And verify that we have data for everything
         hosts.each { |host|
             name = host.model[:name]
             assert(text.include?(name), "Host %s is not in file" % name)
-            hash = host.hash
+            hash = host.state_hash
             assert(! hash.empty?, "Could not find host %s" % name)
             assert(hash[:ip], "Could not find ip for host %s" % name)
         }
+    end
+
+    def test_mountsparse
+        files = fakedata("data/types/hosts")
+        fakedataparse(*files)
     end
 end
 

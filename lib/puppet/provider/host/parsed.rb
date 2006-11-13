@@ -1,62 +1,57 @@
 require 'puppet/provider/parsedfile'
 
-Puppet::Type.type(:host).provide :parsed, :parent => Puppet::Provider::ParsedFile do
-    @path = "/etc/hosts"
-    @filetype = Puppet::FileType.filetype(:flat)
+hosts = nil
+case Facter.value(:operatingsystem)
+when "Solaris": hosts = "/etc/inet/hosts"
+else
+    hosts = "/etc/hosts"
+end
 
-    confine :exists => @path
+Puppet::Type.type(:host).provide(:parsed,
+    :parent => Puppet::Provider::ParsedFile,
+    :default_target => hosts,
+    :filetype => :flat
+) do
+    confine :exists => hosts
 
-    # Parse a host file
-    #
-    # This method also stores existing comments, and it stores all host
-    # jobs in order, mostly so that comments are retained in the order
-    # they were written and in proximity to the same jobs.
-    def self.parse(text)
-        count = 0
-        instances = []
-        text.chomp.split("\n").each { |line|
-            hash = {}
-            case line
-            when /^#/, /^\s*$/:
-                # add comments and blank lines to the list as they are
-                instances << line 
-            else
-                if line.sub!(/^(\S+)\s+(\S+)\s*/, '')
-                    hash[:ip] = $1
-                    hash[:name] = $2
+    text_line :comment, :match => /^#/ 
+    text_line :blank, :match => /^\s*$/ 
 
-                    unless line == ""
-                        line.sub!(/\s*/, '')
-                        line.sub!(/^([^#]+)\s*/) do |value|
-                            aliases = $1
-                            unless aliases =~ /^\s*$/
-                                hash[:alias] = aliases.split(/\s+/)
-                            end
+    record_line :parsed, :fields => %w{ip name alias},
+        :optional => %w{alias},
+        :rts => true do |line|
+        hash = {}
+        if line.sub!(/^(\S+)\s+(\S+)\s*/, '')
+            hash[:ip] = $1
+            hash[:name] = $2
 
-                            ""
-                        end
+            unless line == ""
+                line.sub!(/\s*/, '')
+                line.sub!(/^([^#]+)\s*/) do |value|
+                    aliases = $1
+                    unless aliases =~ /^\s*$/
+                        hash[:alias] = aliases.split(/\s+/)
                     end
-                else
-                    raise Puppet::Error, "Could not match '%s'" % line
+
+                    ""
                 end
-
-                if hash[:alias] == ""
-                    hash.delete(:alias)
-                end
-
-                instances << hash
-
-                count += 1
             end
-        }
+        else
+            raise Puppet::Error, "Could not match '%s'" % line
+        end
 
-        return instances
+        if hash[:alias] == ""
+            hash.delete(:alias)
+        end
+
+        return hash
     end
 
     # Convert the current object into a host-style string.
-    def self.to_record(hash)
+    def self.to_line(hash)
+        return super unless hash[:record_type] == :parsed
         [:ip, :name].each do |n|
-            unless hash.has_key? n
+            unless hash[n] and hash[n] != :absent
                 raise ArgumentError, "%s is a required attribute for hosts" % n
             end
         end

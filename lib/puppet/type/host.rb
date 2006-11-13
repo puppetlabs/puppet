@@ -1,7 +1,9 @@
 require 'puppet/type/parsedtype'
 
 module Puppet
-    newtype(:host, Puppet::Type::ParsedType) do
+    newtype(:host) do
+        ensurable
+
         newstate(:ip) do
             desc "The host's IP address, IPv4 or IPv6."
         end
@@ -73,6 +75,18 @@ module Puppet
                     value
                 end
             end
+        end
+
+        newstate(:target) do
+            desc "The file in which to store service information.  Only used by
+                those providers that write to disk (i.e., not NetInfo)."
+
+            defaultto { if @parent.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
+                    @parent.class.defaultprovider.default_target
+                else
+                    nil
+                end
+            }
         end
 
         newparam(:name) do

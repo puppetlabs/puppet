@@ -190,7 +190,6 @@ class State < Puppet::Parameter
     end
 
     # Figure out which event to return.
-    # not specified.
     def event(name, event = nil)
         if value_event = self.class.value_option(name, :event)
             return value_event

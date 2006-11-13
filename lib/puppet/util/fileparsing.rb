@@ -145,7 +145,18 @@ module Puppet::Util::FileParsing
         return nil
     end
 
-    # Define a new type of record.  These lines get split into hashes.
+    # Define a new type of record.  These lines get split into hashes.  Valid
+    # options are:
+    # * <tt>:absent</tt>: What to use when a field is absent.  Defaults to "".
+    # * <tt>:fields</tt>: The list of fields, as an array.  By default, all
+    #   fields are considered required.
+    # * <tt>:joiner</tt>: How to join fields together.  Defaults to '\t'.
+    # * <tt>:optional</tt>: Which fields are optional.  If these are missing,
+    #   you'll just get the 'absent' value instead of an ArgumentError.
+    # * <tt>:rts</tt>: Whether to remove trailing whitespace.  Defaults to false.
+    #   If true, whitespace will be removed; if a regex, then whatever matches
+    #   the regex will be removed.
+    # * <tt>:separator</tt>: The record separator.  Defaults to /\s+/.
     def record_line(name, options, &block)
         unless options.include?(:fields)
             raise ArgumentError, "Must include a list of fields"
@@ -161,6 +172,12 @@ module Puppet::Util::FileParsing
         end
 
         options[:absent] ||= ""
+
+        if options[:optional]
+            options[:optional] = options[:optional].collect { |f| symbolize(f) }
+        else
+            options[:optional] = []
+        end
 
         options[:separator] ||= /\s+/
 
@@ -218,14 +235,28 @@ module Puppet::Util::FileParsing
         else
             joinchar = type[:joiner] || type[:separator]
 
-            return type[:fields].collect { |field|
+            line = type[:fields].collect { |field|
                 # If the field is marked absent, use the appropriate replacement
-                if details[field] == :absent
-                    type[:absent]
+                if details[field] == :absent or details[field].nil?
+                    if type[:optional].include?(field)
+                        type[:absent]
+                    else
+                        raise ArgumentError, "Field %s is required" % field
+                    end
                 else
                     details[field].to_s
                 end
-            }.join(joinchar)
+            }.reject { |c| c.nil?}.join(joinchar)
+
+            if regex = type[:rts]
+                # If they say true, then use whitespace; else, use their regex.
+                if regex == true
+                    regex = /\s+$/
+                end
+                return line.sub(regex,'')
+            else
+                return line
+            end
         end
     end
 

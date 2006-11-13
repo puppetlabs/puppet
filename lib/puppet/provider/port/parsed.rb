@@ -24,7 +24,9 @@ Puppet::Type.type(:port).provide(:parsed,
     text_line :funky_darwin, :match => /^\s+\d+\//
 
     # We have to manually parse the line, since it's so darn complicated.
-    record_line :parsed, :fields => %w{name port protocols alias} do |line|
+    record_line :parsed, :fields => %w{name port protocols alias description},
+        :optional => %w{alias description}
+    do |line|
         if line =~ /\/ddp/
             raise "missed ddp in %s" % line
         end

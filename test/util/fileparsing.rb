@@ -464,17 +464,18 @@ billy three four\n"
 
     # Make sure we correctly handle optional fields.  We'll skip this
     # functionality until we really know we need it.
-    def disabled_test_optional_fields
+    def test_optional_fields
         parser = FParser.new
 
         assert_nothing_raised do
             parser.record_line :record,
                 :fields => %w{one two three four},
                 :optional => %w{three four},
+                :absent => "*",
                 :separator => " " # A single space
         end
 
-        ["a b c d", "a b  d", "a b", "a b  ", "a b c"].each do |line|
+        ["a b c d", "a b * d", "a b * *", "a b c *"].each do |line|
             record = nil
             assert_nothing_raised do
                 record = parser.parse_line(line)
@@ -489,6 +490,53 @@ billy three four\n"
             # And make sure they're equal
             assert_equal(line, newline)
         end
+
+        # Now make sure it pukes if we don't provide the required fields
+        assert_raise(ArgumentError) do
+            parser.to_line(:record_type => :record, :one => "yay")
+        end
+    end
+
+    def test_record_rts
+        parser = FParser.new
+
+        # Start with the default
+        assert_nothing_raised do
+            parser.record_line :record,
+                :fields => %w{one two three four},
+                :optional => %w{three four}
+        end
+
+        assert_equal("a b  ",
+            parser.to_line(:record_type => :record, :one => "a", :two => "b")
+        )
+
+        # Now say yes to removing
+        parser.clear_records
+        assert_nothing_raised do
+            parser.record_line :record,
+                :fields => %w{one two three four},
+                :optional => %w{three four},
+                :rts => true
+        end
+
+        assert_equal("a b",
+            parser.to_line(:record_type => :record, :one => "a", :two => "b")
+        )
+
+        # Lastly, try a regex
+        parser.clear_records
+        assert_nothing_raised do
+            parser.record_line :record,
+                :fields => %w{one two three four},
+                :optional => %w{three four},
+                :absent => "*",
+                :rts => /[ *]+$/
+        end
+
+        assert_equal("a b",
+            parser.to_line(:record_type => :record, :one => "a", :two => "b")
+        )
     end
 end
 

@@ -224,15 +224,6 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         end
     end
 
-    # Write out the file.
-    def self.store(records)
-        if records.empty?
-            Puppet.notice "No %s records for %s" % [self.name, @path]
-        else
-            target_object.write(self.to_file(instances))
-        end
-    end
-
     # Initialize the object if necessary.
     def self.target_object(target)
         @target_objects[target] ||= @filetype.new(target)
@@ -273,11 +264,13 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             end
         end
         self.class.modified(@state_hash[:target] || self.class.default_target)
+        return (@model.class.name.to_s + "_created").intern
     end
 
     def destroy
         # We use the method here so it marks the target as modified.
         self.ensure = :absent
+        return (@model.class.name.to_s + "_deleted").intern
     end
 
     def exists?
