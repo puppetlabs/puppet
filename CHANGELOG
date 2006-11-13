@@ -1,3 +1,16 @@
+0.20.1
+    Mostly a bug-fix release, with the most important fix being the
+    multiple-definition error.
+
+    Completely rewrote the ParsedFile system; each provider is now much
+    shorter and much more maintainable.  However, fundamental problems
+    were found with the 'port' type, so it was disabled.  Also, added
+    a NetInfo provider for 'host' and an experimental NetInfo provider
+    for 'mount'.
+
+    Made the RRDGraph report *much* better and added reference
+    generation for reports and functions.
+
 0.20.0
     Significantly refactored the parser.  Resource overrides now consistently
     work anywhere in a class hierarchy.
