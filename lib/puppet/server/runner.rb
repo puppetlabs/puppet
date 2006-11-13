@@ -23,7 +23,7 @@ class Server
                 return "running"
             end
 
-            if tags == ""
+            if tags == "" or tags == []
                 tags = nil
             end
 
