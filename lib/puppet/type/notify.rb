@@ -3,42 +3,43 @@
 #
 
 module Puppet
-  newtype(:notify) do
+    newtype(:notify) do
     @doc = "Sends an arbitrary message to the puppetd run-time log."
 
     newstate(:message) do
-      desc "The message to be sent to the log."
-      def sync
-        case @parent["withpath"]
-          when :true:
+        desc "The message to be sent to the log."
+        def sync
+            case @parent["withpath"]
+            when :true:
             log(self.should)
-          else  
+            else  
             Puppet.send(@parent[:loglevel], self.should)
-          end
-        return
-      end
-    
-      def retrieve
-        return
-      end
-      
-      def insync?
-        false
-      end
-      
+            end
+            return
+        end
+
+        def retrieve
+            return
+        end
+
+        def insync?
+            false
+        end
     end
-    
+
     newparam(:withpath) do 
-      desc "Whether to not to show the full object path.  Sends the message at the current loglevel."
-      defaultto :true
-      newvalues(:true, :false) 
+        desc "Whether to not to show the full object path.  Sends the
+            message at the current loglevel."
+        defaultto :true
+
+        newvalues(:true, :false) 
     end
-    
+
     newparam(:name) do
-      desc "An arbitrary tag for your own reference; the name of the message."
-      isnamevar
+        desc "An arbitrary tag for your own reference; the name of the message."
+        isnamevar
     end
-  end
+    end
 end
 
 # $Id:$
