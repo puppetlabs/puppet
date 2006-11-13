@@ -6,6 +6,9 @@ require 'puppet/provider/nameservice'
 
 class Puppet::Provider::NameService
 class NetInfo < Puppet::Provider::NameService
+    class << self
+        attr_writer :netinfodir
+    end
     # Attempt to flush the database, but this doesn't seem to work at all.
     def self.flush
         begin
@@ -34,6 +37,68 @@ class NetInfo < Puppet::Provider::NameService
             noautogen
         end
     end
+    
+    # Convert a NetInfo line into a hash of data.
+    def self.line2hash(line, params)
+        values = line.split(/\t/)
+
+        hash = {}
+        params.zip(values).each do |param, value|
+            next if value == '#NoValue#'
+            hash[param] = if value =~ /^[-0-9]+$/
+                Integer(value)
+            else
+                value
+            end
+        end
+        hash
+    end
+    
+    def self.list
+        report(@model.validstates).collect do |hash|
+            @model.hash2obj(hash)
+        end
+    end
+    
+    # What field the value is stored under.
+    def self.netinfokey(name)
+        name = symbolize(name)
+        self.option(name, :key) || name
+    end
+    
+    # Retrieve the data, yo.
+    # FIXME This should retrieve as much information as possible,
+    # rather than retrieving it one at a time.
+    def self.report(*params)
+        dir = self.netinfodir()
+        cmd = [command(:nireport), "/", "/%s" % dir]
+
+        # We require the name in order to know if we match.  There's no
+        # way to just report on our individual object, we have to get the
+        # whole list.
+        params.unshift :name unless params.include? :name
+
+        params.each do |param|
+            if key = netinfokey(param)
+                cmd << key.to_s
+            else
+                raise Puppet::DevError,
+                    "Could not find netinfokey for state %s" %
+                    self.class.name
+            end
+        end
+
+        begin
+            output = execute(cmd.join(" "))
+        rescue Puppet::ExecutionFailure => detail
+            Puppet.err "Failed to call nireport: %s" % detail
+            return nil
+        end
+
+        return output.split("\n").collect { |line|
+            line2hash(line, params)
+        }
+    end
 
     # How to add an object.
     def addcmd
@@ -51,6 +116,10 @@ class NetInfo < Puppet::Provider::NameService
 
     def deletecmd
         creatorcmd("-destroy")
+    end
+    
+    def destroy
+        delete()
     end
 
     def ensure=(arg)
@@ -91,7 +160,7 @@ class NetInfo < Puppet::Provider::NameService
         if refresh or (! defined? @infohash or ! @infohash)
             states = [:name] + self.class.model.validstates
             states.delete(:ensure) if states.include? :ensure
-            @infohash = report(*states)
+            @infohash = single_report(*states)
         end
 
         return @infohash
@@ -115,73 +184,12 @@ class NetInfo < Puppet::Provider::NameService
 
     # Determine the flag to pass to our command.
     def netinfokey(name)
-        name = symbolize(name)
-        self.class.option(name, :key) || name
+        self.class.netinfokey(name)
     end
-
-    # Retrieve the data, yo.
-    # FIXME This should retrieve as much information as possible,
-    # rather than retrieving it one at a time.
-    def report(*params)
-        dir = self.class.netinfodir()
-        cmd = [command(:nireport), "/", "/%s" % dir]
-
-        # We require the name in order to know if we match.  There's no
-        # way to just report on our individual object, we have to get the
-        # whole list.
-        params.unshift :name unless params.include? :name
-
-        params.each do |param|
-            if key = netinfokey(param)
-                cmd << key.to_s
-            else
-                raise Puppet::DevError,
-                    "Could not find netinfokey for state %s" %
-                    self.class.name
-            end
-        end
-
-        begin
-            output = execute(cmd.join(" "))
-        rescue Puppet::ExecutionFailure => detail
-            Puppet.err "Failed to call nireport: %s" % detail
-            return nil
-        end
-
-        output.split("\n").each { |line|
-            values = line.split(/\t/)
-
-            hash = {}
-            params.zip(values).each do |param, value|
-                next if value == '#NoValue#'
-                hash[param] = if value =~ /^[-0-9]+$/
-                    Integer(value)
-                else
-                    value
-                end
-            end
-
-            if hash[:name] == @model[:name]
-                return hash
-            else
-                next
-            end
-
-#
-#            if line =~ /^(\w+)\s+(.+)$/
-#                name = $1
-#                value = $2.sub(/\s+$/, '')
-#
-#                if name == @model[:name]
-#                    if value =~ /^[-0-9]+$/
-#                        return Integer(value)
-#                    else
-#                        return value
-#                    end
-#                end
-        }
-
-        return nil
+    
+    # Get a report for a single resource, not the whole table
+    def single_report(*states)
+        self.class.report(*states).find do |hash| hash[:name] == @model[:name] end
     end
 
     def setuserlist(group, list)

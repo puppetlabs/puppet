@@ -3,7 +3,7 @@
 require 'puppet/provider/nameservice/netinfo'
 require 'puppet/provider/mount'
 
-Puppet::Type.type(:mount).provide :netinfo, :parent => Puppet::Provider::NameService::NetInfo do
+Puppet::Type.type(:mount).provide :netinfo, :parent => Puppet::Provider::NetInfo do
     include Puppet::Provider::Mount
     desc "Mount management in NetInfo.  This provider is highly experimental and is known
         not to work currently."
@@ -21,6 +21,7 @@ Puppet::Type.type(:mount).provide :netinfo, :parent => Puppet::Provider::NameSer
     
     def initialize(model)
         warning "The NetInfo mount provider is highly experimental.  Use at your own risk."
+        super
     end
     
     def mount

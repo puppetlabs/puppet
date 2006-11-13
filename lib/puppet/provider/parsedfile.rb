@@ -188,6 +188,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         target_records(target).find_all { |i| i.is_a?(Hash) }.each do |record|
             # Find any model instances whose names match our instances.
             if instance = self.model[record[:name]]
+                next unless instance.provider.is_a?(self)
                 instance.provider.state_hash = record
             elsif self.respond_to?(:match)
                 if instance = self.match(record)
