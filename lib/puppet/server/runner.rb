@@ -10,7 +10,7 @@ class Server
 
         # Run the client configuration right now, optionally specifying
         # tags and whether to ignore schedules
-        def run(tags = [], ignoreschedules = false, fg = true, client = nil, clientip = nil)
+        def run(tags = nil, ignoreschedules = false, fg = true, client = nil, clientip = nil)
             # We need to retrieve the client
             master = Puppet::Client::MasterClient.instance
 
@@ -23,7 +23,7 @@ class Server
                 return "running"
             end
 
-            if tags == "" or tags == []
+            if tags == ""
                 tags = nil
             end
 
@@ -31,18 +31,20 @@ class Server
                 ignoreschedules == nil
             end
 
+            msg = ""
             if client
-                msg = "%s(%s) triggered run" % [client, clientip]
-                if tags
-                    msg += " with tags %s" % tags.join(", ")
-                end
-
-                if ignoreschedules
-                    msg += " without schedules"
-                end
-
-                Puppet.notice msg
+                msg = "%s(%s) " % [client, clientip]
             end
+            msg += "triggered run" %
+            if tags
+                msg += " with tags %s" % tags
+            end
+
+            if ignoreschedules
+                msg += " without schedules"
+            end
+
+            Puppet.notice msg
 
             # And then we need to tell it to run, with this extra info.
             if fg
