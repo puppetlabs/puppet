@@ -66,7 +66,9 @@ class TestMounts < Test::Unit::TestCase
 
     def teardown
         Puppet.type(:mount).clear
-        #@realprovider.clear
+        if @realprovider.respond_to?(:clear)
+            @realprovider.clear
+        end
         Puppet::Type.type(:mount).defaultprovider = nil
         super
     end
