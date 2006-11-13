@@ -296,7 +296,8 @@ class TestResource < Test::Unit::TestCase
     def test_addmetaparams
         mkevaltest @interp
         res = Parser::Resource.new :type => "evaltest", :title => "yay",
-            :source => @source, :scope => @scope
+            :source => @source, :scope => @scope,
+            :params => paramify(@source, :tag => "yay")
 
         assert_nil(res[:schedule], "Got schedule already")
         assert_nothing_raised do
@@ -304,11 +305,15 @@ class TestResource < Test::Unit::TestCase
         end
         @scope.setvar("schedule", "daily")
 
+        # This is so we can test that it won't override already-set metaparams
+        @scope.setvar("tag", "funtest")
+
         assert_nothing_raised do
             res.addmetaparams
         end
 
         assert_equal("daily", res[:schedule], "Did not get metaparam")
+        assert_equal("yay", res[:tag], "Overrode explicitly-set metaparam")
         assert_nil(res[:noop], "Got invalid metaparam")
     end
 

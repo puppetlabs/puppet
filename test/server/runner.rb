@@ -72,6 +72,8 @@ class TestServerRunner < Test::Unit::TestCase
                 ["yayness"], true, false, true],
             ["with a third good tag",
                 "yayness", true, false, true],
+            ["with no tags",
+                "", true, false, true],
             ["not ignoring schedules",
                 nil, false, false, false],
             ["ignoring schedules",

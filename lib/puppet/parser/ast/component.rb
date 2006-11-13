@@ -21,6 +21,10 @@ class Puppet::Parser::AST
         # These are retrieved when looking up the superclass
         attr_accessor :name
 
+        def child_of?(klass)
+            false
+        end
+
         def evaluate(hash)
             origscope = hash[:scope]
             objtype = hash[:type]

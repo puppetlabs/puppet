@@ -60,6 +60,7 @@ class Puppet::Parser::Resource
     # from any parent scope, and there's currently no way to turn that off.
     def addmetaparams
         Puppet::Type.eachmetaparam do |name|
+            next if self[name]
             if val = scope.lookupvar(name.to_s, false)
                 unless val == :undefined
                     set Param.new(:name => name, :value => val, :source => scope.source)
@@ -236,6 +237,9 @@ class Puppet::Parser::Resource
                 # Replace it, keeping all of its info.
                 @params[param.name] = param
             else
+                if Puppet[:trace]
+                    puts caller
+                end
                 fail Puppet::ParseError, "Parameter %s is already set on %s by %s" %
                     [param.name, self.to_s, param.source]
             end
