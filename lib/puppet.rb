@@ -391,8 +391,5 @@ end
 require 'puppet/server'
 require 'puppet/type'
 require 'puppet/storage'
-if Puppet[:storeconfigs]
-    require 'puppet/rails'
-end
 
 # $Id$

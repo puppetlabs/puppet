@@ -18,22 +18,20 @@ class Puppet::Parser::Resource::Param
     # Store this parameter in a Rails db.
     def store(resource)
         args = {}
-	#FIXME: re-add line/file support
-        #[:name, :value, :line, :file].each do |var|
-        [:name, :value ].each do |var|
+        [:name, :value, :line, :file].each do |var|
             if val = self.send(var)
                 args[var] = val
             end
         end
         args[:name] = args[:name].to_s
-        if pname = resource.param_names.find_by_name(self.name)
+        if obj = resource.rails_parameters.find_by_name(self.name)
             # We exist
             args.each do |p, v|
-                pname.param_values.build(v)
+                obj[p] = v
             end
         else
             # Else create it anew
-            obj = resource.param_names.build(:name => self.class)
+            obj = resource.rails_parameters.build(args)
         end
 
         return obj

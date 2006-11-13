@@ -34,10 +34,7 @@ unless defined? ActiveRecord
 end
 
 module Puppet::Rails
-require 'puppet/rails/database/schema_init'
-
     Puppet.config.setdefaults(:puppetmaster,
-        #this should be changed to use $statedir, but for now it only works this way.
         :dblocation => { :default => "$statedir/clientconfigs.sqlite3",
             :mode => 0600,
             :owner => "$user",
@@ -47,13 +44,12 @@ require 'puppet/rails/database/schema_init'
         },
         :dbadapter => [ "sqlite3", "The type of database to use." ],
         :dbname => [ "puppet", "The name of the database to use." ],
-        :dbserver => [ "localhost", "The database server for Client caching. Only
+        :dbserver => [ "puppet", "The database server for Client caching. Only
             used when networked databases are used."],
         :dbuser => [ "puppet", "The database user for Client caching. Only
             used when networked databases are used."],
         :dbpassword => [ "puppet", "The database password for Client caching. Only
             used when networked databases are used."],
-        #this should be changed to use $logdir, but for now it only works this way.
         :railslog => {:default => "$logdir/puppetrails.log",
             :mode => 0600,
             :owner => "$user",
@@ -74,25 +70,25 @@ require 'puppet/rails/database/schema_init'
         end
         
         
-        ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
 
         # This global init does not work for testing, because we remove
         # the state dir on every test.
         #unless (defined? @inited and @inited) or defined? Test::Unit::TestCase
         unless (defined? @inited and @inited)
-            Puppet.config.use(:puppetmaster)
+            Puppet.config.use(:puppet)
 
+            ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
             args = {:adapter => Puppet[:dbadapter]}
 
             case Puppet[:dbadapter]
             when "sqlite3":
                 args[:database] = Puppet[:dblocation]
-                unless FileTest.exists?(Puppet[:dblocation])
-                    Puppet.config.use(:puppet)
-                    Puppet.config.write(:dblocation) do |f|
-                        f.print ""
-                    end
-                end
+                #unless FileTest.exists?(Puppet[:dblocation])
+                #    Puppet.config.use(:puppet)
+                #    Puppet.config.write(:dblocation) do |f|
+                #        f.print ""
+                #    end
+                #end
             
             when "mysql":
                 args[:host]     = Puppet[:dbserver]
@@ -109,20 +105,17 @@ require 'puppet/rails/database/schema_init'
                 end
                 raise Puppet::Error, "Could not connect to database: %s" % detail
             end 
-            begin
-                @inited = true if ActiveRecord::Base.connection.tables.include? "resources"
-            rescue SQLite3::CantOpenException => detail
-                @inited = false
-            end
             #puts "Database initialized: #{@inited.inspect} "
         end
+        ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
 
-        if @inited
+        if Puppet[:dbadapter] == "sqlite3" and ! FileTest.exists?(Puppet[:dblocation])
+
             dbdir = nil
             $:.each { |d|
                 tmp = File.join(d, "puppet/rails/database")
                 if FileTest.directory?(tmp)
-                    dbdir = tmp 
+                    dbdir = tmp
                 end
             }
 
@@ -138,10 +131,8 @@ require 'puppet/rails/database/schema_init'
                 end
                 raise Puppet::Error, "Could not initialize database: %s" % detail
             end
-        else
-            Puppet::Rails::Schema.init
         end
-        Puppet.config.use(:puppet)
+        Puppet.config.use(:puppetmaster)
         ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
     end
 end

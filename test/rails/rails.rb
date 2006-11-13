@@ -60,14 +60,13 @@ class TestRails < Test::Unit::TestCase
         }
         assert(host, "Could not find host object")
 
-        assert(host.resources, "No objects on host")
+        assert(host.rails_resources, "No objects on host")
 
-        # This changed from a hash to a method call, hope that doesn't break anything!
-        assert_equal(facts["hostname"], host.facts("hostname"),
+        assert_equal(facts["hostname"], host.facts["hostname"],
             "Did not retrieve facts")
 
         count = 0
-        host.resources.each do |resource|
+        host.rails_resources.each do |resource|
             count += 1
             i = nil
             if resource[:title] =~ /file([0-9]+)/
@@ -75,7 +74,9 @@ class TestRails < Test::Unit::TestCase
             else
                 raise "Got weird resource %s" % resource.inspect
             end
-            assert_equal("user#{i}", resource.parameters[:owner])
+
+            assert_equal("user#{i}",
+                resource.rails_parameters.find_by_name("owner")[:value])
         end
 
         assert_equal(20, count, "Did not get enough resources")
