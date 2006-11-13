@@ -23,12 +23,14 @@ class TestHost < Test::Unit::TestCase
 
         cleanup do @hosttype.defaultprovider = nil end
 
-        @default_file = @provider.default_target
-        cleanup do
-            @provider.default_target = @default_file
+        if @provider.respond_to?(:default_target=)
+            @default_file = @provider.default_target
+            cleanup do
+                @provider.default_target = @default_file
+            end
+            @target = tempfile()
+            @provider.default_target = @target
         end
-        @target = tempfile()
-        @provider.default_target = @target
     end
 
     def mkhost
@@ -62,6 +64,8 @@ class TestHost < Test::Unit::TestCase
         assert_equal(0, count, "Found hosts in empty file somehow")
     end
 
+    # Darwin will actually write to netinfo here.
+    if Facter.value(:operatingsystem) != "Darwin" or Process.uid == 0
     def test_simplehost
         host = nil
 
@@ -104,6 +108,7 @@ class TestHost < Test::Unit::TestCase
         host.retrieve
 
         assert_equal(%w{madstop kirby yayness}, host.is(:alias))
+    end
     end
 
     def test_aliasisstate

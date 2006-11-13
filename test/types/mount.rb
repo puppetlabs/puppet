@@ -66,7 +66,7 @@ class TestMounts < Test::Unit::TestCase
 
     def teardown
         Puppet.type(:mount).clear
-        @realprovider.clear
+        #@realprovider.clear
         Puppet::Type.type(:mount).defaultprovider = nil
         super
     end
@@ -156,6 +156,8 @@ class TestMounts < Test::Unit::TestCase
         assert(obj.provider.mounted?, "Object is not mounted")
     end
     
+    # Darwin doesn't put its mount table into netinfo
+    unless Facter.value(:operatingsystem) == "Darwin"
     def test_list
         list = nil
         assert(@mount.respond_to?(:list),
@@ -180,8 +182,11 @@ class TestMounts < Test::Unit::TestCase
         assert(root.is(:device), "Device was not set")
         assert(root.state(:device).value, "Device was not returned by value method")
     end
+    end
 
     # Make sure we actually remove the object from the file and such.
+    # Darwin will actually write to netinfo here.
+    if Facter.value(:operatingsystem) != "Darwin" or Process.uid == 0
     def test_removal
         # Reset the provider so that we're using the real thing
         @mount.defaultprovider = nil
@@ -189,13 +194,15 @@ class TestMounts < Test::Unit::TestCase
         provider = @mount.defaultprovider
         assert(provider, "Could not retrieve default provider")
 
-        file = provider.default_target
-        assert(FileTest.exists?(file),
-            "FSTab %s does not exist" % file)
+        if provider.respond_to?(:default_target)
+            file = provider.default_target
+            assert(FileTest.exists?(file),
+                "FSTab %s does not exist" % file)
 
-        # Now switch to ram, so we're just doing this there, not really on disk.
-        provider.filetype = :ram
-        #provider.target_object(file).write text
+            # Now switch to ram, so we're just doing this there, not really on disk.
+            provider.filetype = :ram
+            #provider.target_object(file).write text
+        end
 
         mount = mkmount
 
@@ -212,6 +219,7 @@ class TestMounts < Test::Unit::TestCase
         list = mount.provider.class.list
         assert(! list.find { |r| r[:name] == mount[:name] },
             "Mount was not actually removed")
+    end
     end
 end
 

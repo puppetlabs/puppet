@@ -23,11 +23,20 @@ class TestSSHKey < Test::Unit::TestCase
 
         cleanup do @sshkeytype.defaultprovider = nil end
 
-        oldpath = @provider.path
-        cleanup do
-            @provider.path = oldpath
+        if @provider.respond_to?(:default_target)
+            oldpath = @provider.default_target
+            cleanup do
+                @provider.default_target = oldpath
+            end
+            @provider.default_target = tempfile()
         end
-        @provider.path = tempfile()
+    end
+
+    def teardown
+        super
+        if @provider.respond_to?(:clear)
+            @provider.clear
+        end
     end
 
     def mkkey
@@ -51,23 +60,25 @@ class TestSSHKey < Test::Unit::TestCase
         return key
     end
 
-    def test_simplekey
+    def test_list
         assert_nothing_raised {
-            Puppet.type(:sshkey).defaultprovider.retrieve
-
-            count = 0
-            @sshkeytype.each do |h|
-                count += 1
-            end
-
-            assert_equal(0, count, "Found sshkeys in empty file somehow")
+            Puppet.type(:sshkey).defaultprovider.list
         }
 
+        count = 0
+        @sshkeytype.each do |h|
+            count += 1
+        end
+
+        assert_equal(0, count, "Found sshkeys in empty file somehow")
+    end
+
+    def test_simplekey
         key = mkkey
 
         assert_apply(key)
 
-        assert(key.exists?, "Key did not get created")
+        assert(key.provider.exists?, "Key did not get created")
     end
 
     def test_moddingkey
@@ -111,13 +122,13 @@ class TestSSHKey < Test::Unit::TestCase
         }
         assert_events([:sshkey_created], sshkey)
 
-        assert(sshkey.exists?, "key was not created")
+        assert(sshkey.provider.exists?, "key was not created")
         assert_nothing_raised {
             sshkey[:ensure] = :absent
         }
 
-        assert_events([:sshkey_removed], sshkey)
-        assert(! sshkey.exists?, "Key was not deleted")
+        assert_events([:sshkey_deleted], sshkey)
+        assert(! sshkey.provider.exists?, "Key was not deleted")
         assert_events([], sshkey)
     end
 
@@ -142,14 +153,16 @@ class TestSSHKey < Test::Unit::TestCase
 
         # Verify we can retrieve that info
         assert_nothing_raised("Could not retrieve after second write") {
+            newkey.provider.class.prefetch
             newkey.retrieve
         }
 
         # And verify that we have data for everything
         names.each { |name|
-            key = Puppet.type(:sshkey)[name] || Puppet.type(:sshkey).create(:name => name)
+            key = Puppet.type(:sshkey)[name] ||
+                Puppet.type(:sshkey).create(:name => name)
             assert(key, "Could not retrieve key for %s" % name)
-            assert(key.exists?, "key %s is missing" % name)
+            assert(key.provider.exists?, "key %s is missing" % name)
         }
     end
 end

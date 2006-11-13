@@ -21,7 +21,7 @@ module Puppet
             if insync?
                 result = nil
             else
-                result = set
+                result = set(self.should)
                 if should == :absent
                     parent.section[inikey] = nil
                 else
