@@ -951,6 +951,7 @@ class TestFile < Test::Unit::TestCase
         file = nil
         assert_nothing_raised {
             file = Puppet.type(:file).create(
+                :title => "somethingelse",
                 :ensure => path,
                 :path => link
             )
@@ -963,6 +964,8 @@ class TestFile < Test::Unit::TestCase
         assert_equal(path, File.readlink(link), "Link was created incorrectly")
 
         # Make sure running it again works
+        assert_events([], file)
+        assert_events([], file)
         assert_events([], file)
     end
 
