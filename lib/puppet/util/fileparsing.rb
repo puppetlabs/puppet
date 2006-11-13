@@ -186,6 +186,7 @@ module Puppet::Util::FileParsing
         unless options[:separator].is_a?(String) or options[:joiner]
             options[:joiner] = " "
         end
+        
 
         if block_given?
             method = "handle_record_line_%s" % name

@@ -15,6 +15,10 @@ module Puppet
                 make those aliases available in your Puppet scripts and also on
                 disk."
 
+            def insync?
+                @is == @should
+            end
+            
             # Make sure our "is" value is always an array.
             def is
                 current = super
@@ -40,6 +44,11 @@ module Puppet
                 else
                     @is = value
                 end
+            end
+            
+            def retrieve
+                super
+                @is = [@is] unless @is.is_a?(Array)
             end
 
             # We actually want to return the whole array here, not just the first

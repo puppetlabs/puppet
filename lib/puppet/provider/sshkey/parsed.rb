@@ -1,55 +1,43 @@
 require 'puppet/provider/parsedfile'
 
-Puppet::Type.type(:sshkey).provide :parsed, :parent => Puppet::Provider::ParsedFile do
-    @filetype = Puppet::FileType.filetype(:flat)
-    @path = "/etc/ssh/ssh_known_hosts"
-    @fields = [:name, :type, :key]
 
-    # Parse an sshknownhosts file
-    #
-    # This method also stores existing comments, and it stores all host
-    # jobs in order, mostly so that comments are retained in the order
-    # they were written and in proximity to the same jobs.
-    def self.parse(text)
-        count = 0
-        instances = []
-        text.chomp.split("\n").each { |line|
-            hash = {}
-            case line
-            when /^#/, /^\s*$/:
-                # add comments and blank lines to the list as they are
-                instances << line 
-            else
-                hash = {}
-                fields().zip(line.split(" ")).each { |param, value|
-                    hash[param] = value
-                }
+known = nil
+case Facter.value(:operatingsystem)
+when "Darwin": known = "/etc/ssh_known_hosts"
+else
+    known = "/etc/ssh/ssh_known_hosts"
+end
 
-                if hash[:name] =~ /,/
-                    names = hash[:name].split(",")
-                    hash[:name] = names.shift
-                    hash[:alias] = names
-                end
-
-                if hash[:alias] == ""
-                    hash.delete(:alias)
-                end
-
-                instances << hash
-                count += 1
-            end
-        }
-
-        return instances
-    end
-
-    # Convert the current object into an entry for a known-hosts file.
-    def self.to_record(hash)
-        name = hash[:name]
-        if hash.include?(:alias)
-            name += "," + hash[:alias].join(",")
+Puppet::Type.type(:sshkey).provide(:parsed,
+    :parent => Puppet::Provider::ParsedFile,
+    :default_target => known,
+    :filetype => :flat
+) do
+    text_line :comment, :match => /^#/
+    text_line :blank, :match => /^\s+/
+    record_line :parsed, :fields => %w{name type key}
+    
+    # Override the line parsing a bit, so we can split the aliases out.
+    def self.parse_line(line)
+        hash = super
+        if hash[:name] =~ /,/
+            names = hash[:name].split(",")
+            hash[:name] = names.shift
+            hash[:alias] = names
         end
-        [name, hash[:type], hash[:key]].join(" ")
+        hash
+    end
+        
+    
+    def self.to_line(hash)
+        if hash[:alias]
+            hash = hash.dup
+            names = [hash[:name], hash[:alias]].flatten
+            
+            hash[:name] = [hash[:name], hash[:alias]].flatten.join(",")
+            hash.delete(:alias)
+        end
+        super(hash)
     end
 end
 

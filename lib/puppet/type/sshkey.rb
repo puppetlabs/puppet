@@ -1,8 +1,10 @@
 module Puppet
-    newtype(:sshkey, Puppet::Type::ParsedType) do
+    newtype(:sshkey) do
         @doc = "Installs and manages ssh host keys.  At this point, this type
             only knows how to install keys into /etc/ssh/ssh_known_hosts, and
             it cannot manage user authorized keys yet."
+        
+        ensurable
 
         newstate(:type) do
             desc "The encryption type used.  Probably ssh-dss or ssh-rsa."
@@ -19,6 +21,10 @@ module Puppet
                 specified as an array.  Note that this state has the same name
                 as one of the metaparams; using this state to set aliases will
                 make those aliases available in your Puppet scripts."
+            
+            def insync?
+                @is == @should
+            end
 
             # We actually want to return the whole array here, not just the first
             # value.
@@ -53,6 +59,18 @@ module Puppet
             desc "The host name."
 
             isnamevar
+        end
+
+        newstate(:target) do
+            desc "The file in which to store the mount table.  Only used by
+                those providers that write to disk (i.e., not NetInfo)."
+
+            defaultto { if @parent.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
+                    @parent.class.defaultprovider.default_target
+                else
+                    nil
+                end
+            }
         end
     end
 end

@@ -3,7 +3,7 @@
 require 'puppet/provider/nameservice/netinfo'
 require 'puppet/provider/mount'
 
-Puppet::Type.type(:mount).provide :netinfo, :parent => Puppet::Provider::NetInfo do
+Puppet::Type.type(:mount).provide :netinfo, :parent => Puppet::Provider::NameService::NetInfo do
     include Puppet::Provider::Mount
     desc "Mount management in NetInfo.  This provider is highly experimental and is known
         not to work currently."
