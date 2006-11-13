@@ -172,6 +172,7 @@ end
 
 flags = [
     [ "--all",      "-a",	        GetoptLong::NO_ARGUMENT ],
+    [ "--tag",      "-t",           GetoptLong::REQUIRED_ARGUMENT ],
     [ "--class",	"-c",			GetoptLong::REQUIRED_ARGUMENT ],
     [ "--foreground", "-f",	        GetoptLong::NO_ARGUMENT ],
     [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
