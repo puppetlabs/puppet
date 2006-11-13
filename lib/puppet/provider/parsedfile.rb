@@ -13,7 +13,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     extend Puppet::Util::FileParsing
 
     class << self
-        attr_accessor :default_target
+        attr_accessor :default_target, :target
     end
 
     attr_accessor :state_hash
@@ -96,6 +96,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     def self.initvars
         @records = []
         @target_objects = {}
+
+        @target = nil
 
         # Default to flat files
         @filetype = Puppet::FileType.filetype(:flat)
@@ -210,7 +212,15 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             # there is no file
             return []
         else
-            self.parse(text)
+            # Set the target, for logging.
+            old = @target
+            begin
+                @target = path
+                self.parse(text)
+            ensure
+                @target = old
+            end
+
         end
     end
 

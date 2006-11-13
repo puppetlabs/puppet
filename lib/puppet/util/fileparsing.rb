@@ -54,8 +54,30 @@ module Puppet::Util::FileParsing
 
     # Try to match a record.
     def handle_record_line(line, hash)
-        if hash[:match]
-            raise "No provision yet for matching whole lines"
+        if method = hash[:method]
+            if ret = send(method, line.dup)
+                ret[:record_type] = hash[:name]
+                return ret
+            else
+                return nil
+            end
+        elsif regex = hash[:match]
+            raise "Cannot use matches to handle records yet"
+            # In this case, we try to match the whole line and then use the
+            # match captures to get our fields.
+            if match = regex.match(line)
+                fields = []
+                ignore = hash[:ignore] || []
+                p match.captures
+                match.captures.each_with_index do |value, i|
+                    fields << value unless ignore.include? i
+                end
+                p fields
+                nil
+            else
+                Puppet.info "Did not match %s" % line
+                nil
+            end
         else
             ret = {}
             sep = hash[:separator]
@@ -124,7 +146,7 @@ module Puppet::Util::FileParsing
     end
 
     # Define a new type of record.  These lines get split into hashes.
-    def record_line(name, options)
+    def record_line(name, options, &block)
         unless options.include?(:fields)
             raise ArgumentError, "Must include a list of fields"
         end
@@ -146,6 +168,15 @@ module Puppet::Util::FileParsing
         # space as the join value.
         unless options[:separator].is_a?(String) or options[:joiner]
             options[:joiner] = " "
+        end
+
+        if block_given?
+            method = "handle_record_line_%s" % name
+            if respond_to?(method)
+                raise "Already have a method defined for this record"
+            end
+            meta_def(method, &block)
+            options[:method] = method
         end
 
         new_line_type(name, :record, options)

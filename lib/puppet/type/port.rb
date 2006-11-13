@@ -1,7 +1,7 @@
 require 'puppet/type/parsedtype'
 
 module Puppet
-    newtype(:port, Puppet::Type::ParsedType) do
+    newtype(:port) do
         @doc = "Installs and manages port entries.  For most systems, these
             entries will just be in /etc/services, but some systems (notably OS X)
             will have different solutions."
@@ -55,7 +55,6 @@ module Puppet
 
         newstate(:description) do
             desc "The port description."
-            isoptional
         end
 
         newstate(:alias) do
@@ -63,8 +62,6 @@ module Puppet
                 specified as an array.  Note that this state has the same name as
                 one of the metaparams; using this state to set aliases will make
                 those aliases available in your Puppet scripts and also on disk."
-
-            isoptional
 
             # We actually want to return the whole array here, not just the first
             # value.
@@ -97,6 +94,18 @@ module Puppet
                 end
                 value
             end
+        end
+
+        newstate(:target) do
+            desc "The file in which to store service information.  Only used by
+                those providers that write to disk (i.e., not NetInfo)."
+
+            defaultto { if @parent.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
+                    @parent.class.defaultprovider.default_target
+                else
+                    nil
+                end
+            }
         end
 
         newparam(:name) do

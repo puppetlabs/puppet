@@ -324,11 +324,14 @@ class TestUtilFileParsing < Test::Unit::TestCase
 
         check = proc do |start, record, final|
             # Check parsing first
-            assert_equal(record, parser.parse_line(start),
-                "Did not correctly parse %s" % start.inspect)
+            result = parser.parse_line(start)
+            [:one, :two].each do |param|
+                assert_equal(record[param], result[param], 
+                    "Did not correctly parse %s" % start.inspect)
+            end
 
             # And generating
-            assert_equal(final, parser.to_line(record),
+            assert_equal(final, parser.to_line(result),
                 "Did not correctly generate %s from %s" %
                 [final.inspect, record.inspect])
         end
@@ -337,24 +340,22 @@ class TestUtilFileParsing < Test::Unit::TestCase
         parser.record_line :symmetric, :fields => %w{one two},
             :separator => " "
 
-        check.call "a b",
-            {:record_type => :symmetric, :one => "a", :two => "b"}, "a b"
+        check.call "a b", {:one => "a", :two => "b"}, "a b"
+        parser.clear_records
 
         # Now assymetric but both strings
         parser.record_line :asymmetric, :fields => %w{one two},
             :separator => "\t", :joiner => " "
 
-        check.call "a\tb",
-            {:record_type => :symmetric, :one => "a", :two => "b"}, "a b"
+        check.call "a\tb", {:one => "a", :two => "b"}, "a b"
+        parser.clear_records
 
         # And assymmetric with a regex
         parser.record_line :asymmetric2, :fields => %w{one two},
             :separator => /\s+/, :joiner => " "
 
-        check.call "a\tb",
-            {:record_type => :symmetric, :one => "a", :two => "b"}, "a b"
-        check.call "a b",
-            {:record_type => :symmetric, :one => "a", :two => "b"}, "a b"
+        check.call "a\tb", {:one => "a", :two => "b"}, "a b"
+        check.call "a b", {:one => "a", :two => "b"}, "a b"
     end
 
     # Make sure we correctly regenerate files.
@@ -368,11 +369,12 @@ class TestUtilFileParsing < Test::Unit::TestCase
         text = "# This is a comment
 
 johnny one two
-billy three four"
+billy three four\n"
 
         # Just parse and generate, to make sure it's isomorphic.
         assert_nothing_raised do
-            assert_equal
+            assert_equal(text, parser.to_file(parser.parse(text)),
+                "parsing was not isomorphic")
         end
     end
 
@@ -389,6 +391,75 @@ billy three four"
 
         assert(! parser.valid_attr?(:record, :four),
             "four was considered valid")
+    end
+
+    def test_record_blocks
+        parser = FParser.new
+
+        options = nil
+        assert_nothing_raised do
+            # Just do a simple test
+            options = parser.record_line :record,
+                :fields => %w{name alias info} do |line|
+                line = line.dup
+                ret = {}
+                if line.sub!(/(\w+)\s*/, '')
+                    ret[:name] = $1
+                else
+                    return nil
+                end
+
+                if line.sub!(/(#.+)/, '')
+                    desc = $1.sub(/^#\s*/, '')
+                    ret[:description] = desc unless desc == ""
+                end
+
+                if line != ""
+                    ret[:alias] = line.split(/\s+/)
+                end
+
+                return ret
+            end
+        end
+
+        assert(parser.respond_to?(:handle_record_line_record),
+            "Parser did not define record method")
+
+        values = {
+            :name => "tcpmux",
+            :description => "TCP port service multiplexer",
+            :alias => ["sink"]
+        }
+
+        {
+
+            "tcpmux      " => [:name],
+            "tcpmux" => [:name],
+            "tcpmux      sink" => [:name, :port, :protocols, :alias],
+            "tcpmux      # TCP port service multiplexer" =>
+                [:name, :description, :port, :protocols],
+            "tcpmux      sink         # TCP port service multiplexer" =>
+                [:name, :description, :port, :alias, :protocols],
+            "tcpmux      sink null    # TCP port service multiplexer" =>
+                [:name, :description, :port, :alias, :protocols],
+        }.each do |line, should|
+            result = nil
+            assert_nothing_raised do
+                result = parser.handle_record_line(line, options)
+            end
+            assert(result, "Did not get a result back for '%s'" % line)
+            should.each do |field|
+                if field == :alias and line =~ /null/
+                    assert_equal(%w{sink null}, result[field],
+                        "Field %s was not right in '%s'" % [field, line])
+                else
+                    assert_equal(values[field], result[field],
+                        "Field %s was not right in '%s'" % [field, line])
+                end
+            end
+        end
+
+
     end
 
     # Make sure we correctly handle optional fields.  We'll skip this

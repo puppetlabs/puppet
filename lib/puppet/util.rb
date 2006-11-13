@@ -25,7 +25,7 @@ module Util
     # Change the process to a different user
     def self.chuser
         if Facter["operatingsystem"].value == "Darwin"
-            $stderr.puts "Ruby on darwin is broken; puppetmaster must run as root"
+            $stderr.puts "Ruby on darwin is broken; puppetmaster will not set its UID to 'puppet' and must run as root"
             return
         end
         if group = Puppet[:group]

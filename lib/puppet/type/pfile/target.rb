@@ -25,6 +25,7 @@ module Puppet
 
         # Create our link.
         def mklink
+            notice @is.inspect
             target = self.should
 
             # Clean up any existing objects.

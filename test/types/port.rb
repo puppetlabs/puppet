@@ -51,18 +51,23 @@ class TestPort < Test::Unit::TestCase
         return port
     end
 
+    def test_list
+        assert_nothing_raised {
+            Puppet.type(:port).list
+        }
+
+        count = 0
+        @porttype.each do |h|
+            count += 1
+        end
+
+        assert_equal(0, count, "Found hosts in empty file somehow")
+
+        dns = @porttype["domain"]
+        assert(dns, "Did not retrieve dns service")
+    end
     def test_simpleport
         host = nil
-        assert_nothing_raised {
-            Puppet.type(:port).defaultprovider.retrieve
-
-            count = 0
-            @porttype.each do |h|
-                count += 1
-            end
-
-            assert_equal(0, count, "Found hosts in empty file somehow")
-        }
 
         port = mkport
 
