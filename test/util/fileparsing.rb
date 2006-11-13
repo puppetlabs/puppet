@@ -280,7 +280,8 @@ class TestUtilFileParsing < Test::Unit::TestCase
 
         options = nil
         assert_nothing_raised do
-            options = parser.record_line :record, :fields => %w{one two three}
+            options = parser.record_line :record, :fields => %w{one two three},
+                :optional => %w{two three}
         end
         assert_equal("", options[:absent], "Did not set a default absent string")
 
