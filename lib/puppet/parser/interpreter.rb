@@ -683,10 +683,6 @@ class Puppet::Parser::Interpreter
         return @scope
     end
 
-    # Iteratively make sure that every object in the scope tree is translated.
-    def translate(scope)
-    end
-
     private
 
     # Check whether any of our files have changed.
@@ -777,11 +773,18 @@ class Puppet::Parser::Interpreter
                 end
             }
         else
-            # We store all of the objects, even the collectable ones
-            benchmark(:info, "Stored configuration for #{hash[:name]}") do
-                Puppet::Rails::Host.transaction do
-                    Puppet::Rails::Host.store(hash)
+            begin
+                # We store all of the objects, even the collectable ones
+                benchmark(:info, "Stored configuration for #{hash[:name]}") do
+                    Puppet::Rails::Host.transaction do
+                        Puppet::Rails::Host.store(hash)
+                    end
                 end
+            rescue => detail
+                if Puppet[:trace]
+                    puts detail.backtrace
+                end
+                Puppet.err "Could not store configs: %s" % detail.to_s
             end
         end
 

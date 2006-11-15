@@ -19,9 +19,7 @@ class Puppet::Parser::Resource::Param
     def store(resource)
         args = {}
         [:name, :value, :line, :file].each do |var|
-            if val = self.send(var)
-                args[var] = val
-            end
+            args[var] = self.send(var)
         end
         args[:name] = args[:name].to_s
         if obj = resource.rails_parameters.find_by_name(self.name)
