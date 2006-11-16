@@ -133,7 +133,7 @@ module Puppet
         newparam(:path) do
             desc "The deprecated name for the mount point.  Please use ``name`` now."
 
-            def should=(value)
+            def value=(value)
                 warning "'path' is deprecated for mounts.  Please use 'name'."
                 @parent[:name] = value
                 super

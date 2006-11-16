@@ -76,6 +76,14 @@ class TestMounts < Test::Unit::TestCase
     def mkmount
         mount = nil
 
+        assert_nothing_raised {
+            mount = Puppet.type(:mount).create(mkmount_args)
+        }
+
+        return mount
+    end
+
+    def mkmount_args
         if defined? @pcount
             @pcount += 1
         else
@@ -95,11 +103,7 @@ class TestMounts < Test::Unit::TestCase
             end
         end
 
-        assert_nothing_raised {
-            mount = Puppet.type(:mount).create(args)
-        }
-
-        return mount
+        return args
     end
 
     def test_simplemount
@@ -222,6 +226,21 @@ class TestMounts < Test::Unit::TestCase
         assert(! list.find { |r| r[:name] == mount[:name] },
             "Mount was not actually removed")
     end
+    end
+
+    # Make sure that the name gets correctly set if they set the path,
+    # which used to be the namevar.
+    def test_name_and_path
+        mount = nil
+        args = mkmount_args
+        args[:name] = "mount_name"
+        args[:path] = "mount_path"
+
+        assert_nothing_raised do
+            mount = @mount.create(args)
+        end
+
+        assert_equal("mount_path", mount[:name], "Name did not get copied over")
     end
 end
 
