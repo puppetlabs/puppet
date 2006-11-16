@@ -100,7 +100,7 @@ begin
                 puts "%s" % Puppet.version
                 exit
             when "--help"
-                if Puppet.feature.usage?
+                if Puppet.features.usage?
                     RDoc::usage && exit
                 else
                     puts "No help available unless you have RDoc::usage installed"
