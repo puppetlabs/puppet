@@ -119,6 +119,13 @@
         exit(1)
     end
 end
+
+begin
+    require 'rubygems'
+rescue LoadError
+    # Nothing; we were just doing this just in case
+end
+
 begin
     require 'ldap'
 rescue LoadError
