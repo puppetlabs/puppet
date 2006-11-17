@@ -90,11 +90,12 @@ class TestMounts < Test::Unit::TestCase
             @pcount = 1
         end
         args = {
-            :path => "/fspuppet%s" % @pcount,
+            :name => "/fspuppet%s" % @pcount,
             :device => "/dev/dsk%s" % @pcount,
         }
 
         [@mount.validstates, @mount.parameters].flatten.each do |field|
+            next if field == :path
             next if field == :provider
             next if field == :target
             next if field == :ensure
