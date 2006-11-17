@@ -323,6 +323,40 @@ class TestAST < Test::Unit::TestCase
         assert_equal("755", secondobj[:mode])
     end
 
+    # Make sure that classes set their namespaces to themselves.  This
+    # way they start looking for definitions in their own namespace.
+    def test_hostclass_namespace
+        interp, scope, source = mkclassframing
+
+        # Create a new class
+        klass = nil
+        assert_nothing_raised do
+            klass = interp.newclass "funtest"
+        end
+
+        # Now define a definition in that namespace
+
+        define = nil
+        assert_nothing_raised do
+            define = interp.newdefine "funtest::mydefine"
+        end
+
+        assert_equal("funtest", klass.namespace,
+            "component namespace was not set in the class")
+
+        assert_equal("funtest", define.namespace,
+            "component namespace was not set in the definition")
+
+        newscope = klass.subscope(scope)
+
+        assert_equal("funtest", newscope.namespace,
+            "Scope did not inherit namespace")
+
+        # Now make sure we can find the define
+        assert(newscope.finddefine("mydefine"),
+            "Could not find definition in my enclosing class")
+    end
+
     def test_node
         interp = mkinterp
         scope = mkscope(:interp => interp)

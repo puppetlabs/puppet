@@ -505,7 +505,11 @@ class Puppet::Parser::Interpreter
         else
             # Define it anew.
             ns, name = namesplit(fqname)
-            args = {:type => name, :namespace => ns, :fqname => fqname, :interp => self}
+
+            # Note we're doing something somewhat weird here -- we're setting
+            # the class's namespace to its fully qualified name.  This means
+            # anything inside that class starts looking in that namespace first.
+            args = {:type => name, :namespace => fqname, :fqname => fqname, :interp => self}
             args[:code] = code if code
             args[:parentclass] = parent if parent
             @classtable[fqname] = @parser.ast AST::HostClass, args
