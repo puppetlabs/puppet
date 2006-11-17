@@ -115,7 +115,7 @@ into ``/etc/apt/preferences``:
 If you have already upgraded your library1.8 package, you can downgrade it by
 adding ``deb http://snapshot.debian.net/archive pool ruby1.8`` to your
 ``/etc/apt/sources.list`` and then running
-``apt-get install libruby1=1.8.4-1``.
+``apt-get install libruby1.8=1.8.4-1``.
 
 #### SuSE
 
