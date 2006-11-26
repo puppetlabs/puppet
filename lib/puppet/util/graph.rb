@@ -2,18 +2,7 @@
 #  Copyright (c) 2006. All rights reserved.
 
 require 'puppet'
-require 'puppet/gratr/digraph'
-require 'puppet/gratr/import'
-require 'puppet/gratr/dot'
-
-class GRATR::Digraph
-    # Determine all of the leaf nodes below a given vertex.
-    def leaves(vertex, type = :dfs)
-        tree = tree_from_vertex(vertex, type)
-        leaves = tree.keys.find_all { |c| adjacent(c, :direction => :out).empty? }
-        return leaves
-    end
-end
+require 'puppet/pgraph'
 
 # A module that handles the small amount of graph stuff in Puppet.
 module Puppet::Util::Graph
@@ -23,7 +12,7 @@ module Puppet::Util::Graph
     def to_graph(graph = nil, &block)
         # Allow our calling function to send in a graph, so that we
         # can call this recursively with one graph.
-        graph ||= GRATR::Digraph.new
+        graph ||= Puppet::PGraph.new
         
         self.each do |child|
             unless block_given? and ! yield(child)
@@ -44,14 +33,6 @@ module Puppet::Util::Graph
         end
         
         graph
-    end
-    
-    def to_jpg(graph = nil)
-        graph ||= to_graph
-        gv = graph.vertices
-        Dir.chdir("/Users/luke/Desktop/pics") do
-            graph.induced_subgraph(gv).write_to_graphic_file('jpg', 'graph')
-        end
     end
 end
 

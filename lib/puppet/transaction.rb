@@ -29,7 +29,7 @@ class Transaction
         # First make sure there are no failed dependencies
         child.eachdependency do |dep|
             skip = false
-            if @failures[dep] > 0
+            if fails = failed?(dep)
                 child.notice "Dependency %s[%s] has %s failures" %
                     [dep.class.name, dep.name, @failures[dep]]
                 skip = true
@@ -209,7 +209,11 @@ class Transaction
 
     # Determine whether a given object has failed.
     def failed?(obj)
-        @failures[obj] > 0
+        if @failures[obj] > 0
+            return @failures[obj]
+        else
+            return false
+        end
     end
 
     # this should only be called by a Puppet::Container object now

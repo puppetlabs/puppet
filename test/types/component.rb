@@ -12,6 +12,8 @@ class TestComponent < Test::Unit::TestCase
     def setup
         super
         @@used = {}
+        @type = Puppet::Type::Component
+        @file = Puppet::Type.type(:file)
     end
 
     def randnum(limit)
@@ -102,6 +104,53 @@ class TestComponent < Test::Unit::TestCase
                 assert(list.index(dep) < index)
             }
         }
+    end
+    
+    def treefile(name)
+        @file.create :path => "/tmp/#{name}", :mode => 0755
+    end
+    
+    def treecomp(name)
+        @type.create :name => name, :type => "yay"
+    end
+    
+    def treenode(name, *children)
+        comp = treecomp name
+        children.each do |c| 
+            if c.is_a?(String)
+                comp.push treefile(c)
+            else
+                comp.push c
+            end
+        end
+        return comp
+    end
+    
+    def mktree
+        one = treenode("one", "a", "b")
+        two = treenode("two", "c", "d")
+        middle = treenode("middle", "e", "f", two)
+        top = treenode("top", "g", "h", middle, one)
+        
+        return one, two, middle, top
+    end
+        
+    def test_to_graph
+        one, two, middle, top = mktree
+        
+        graph = nil
+        assert_nothing_raised do
+            graph = top.to_graph
+        end
+        
+        assert(graph.is_a?(Puppet::PGraph), "result is not a pgraph")
+        
+        [one, two, middle, top].each do |comp|
+            comp.each do |child|
+                assert(graph.edge?(comp, child),
+                    "Did not create edge from %s => %s" % [comp.name, child.name])
+            end
+        end
     end
 
     def test_correctsorting

@@ -5,6 +5,7 @@
 require 'puppet'
 require 'puppet/type'
 require 'puppet/transaction'
+require 'puppet/pgraph'
 
 module Puppet
     newtype(:component) do
@@ -148,6 +149,24 @@ module Puppet
                     child.log "triggering %s" % :refresh
                 end
             }
+        end
+        
+        # Convert to a graph object with all of the container info.
+        def to_graph
+            graph = Puppet::PGraph.new
+            
+            delver = proc do |obj|
+                obj.each do |child|
+                    if child.is_a?(Puppet::Type)
+                        graph.add_edge!(obj, child)
+                        delver.call(child)
+                    end
+                end
+            end
+            
+            delver.call(self)
+            
+            return graph
         end
 
         def to_s

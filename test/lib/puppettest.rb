@@ -11,9 +11,11 @@ module PuppetTest
     # the parent of that dir.
     def basedir(*list)
         unless defined? @@basedir
-            case $0
-            when /rake_test_loader/
+            case
+            when $0 =~ /rake_test_loader/
                 @@basedir = File.dirname(Dir.getwd)
+            when ENV['BASEDIR']
+                @@basedir = ENV['BASEDIR']
             else
                 dir = nil
                 app = $0.sub /^\.\//, ""
