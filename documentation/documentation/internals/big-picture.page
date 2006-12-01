@@ -73,7 +73,7 @@ given host.  For example:
 
     node server1 {
         # use a locally-available config file
-        apache {
+        apache { apache-server1:
             version => 1,
             conf => "/nfs/configs/apache/server1.conf",
             user => www-data,
@@ -83,7 +83,7 @@ given host.  For example:
 
     node server2 {
         # use a config that we pull from elsewhere
-        apache {
+        apache { apache-server2:
             version => 2,
             conf => "http://configserver/configs/server2/httpd.conf"
             user => www-data,
