@@ -39,7 +39,7 @@ module Puppet
             
             This will use the first found file as the source.
 
-            [fileserver docs]: fsconfigref.html
+            [fileserver docs]: ../installing/fsconfigref.html
 
             "
 
