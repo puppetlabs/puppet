@@ -301,8 +301,6 @@ class Type < Puppet::Element
 
     # Set up all of our autorequires.
     def finish
-        self.autorequire
-
         # Scheduling has to be done when the whole config is instantiated, so
         # that file order doesn't matter in finding them.
         self.schedule

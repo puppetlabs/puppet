@@ -411,55 +411,6 @@ end
             "newparam method got replaced by newtype")
     end
 
-    def test_notify_metaparam
-        file = Puppet::Type.newfile(
-            :path => tempfile(),
-            :notify => ["exec", "notifytest"],
-            :ensure => :file
-        )
-
-        path = tempfile()
-        exec = Puppet::Type.newexec(
-            :title => "notifytest",
-            :path => "/usr/bin:/bin",
-            :command => "touch #{path}",
-            :refreshonly => true
-        )
-
-        assert_apply(file, exec)
-
-        assert(exec.requires?(file),
-            "Notify did not correctly set up the requirement chain.")
-
-        assert(FileTest.exists?(path),
-            "Exec path did not get created.")
-    end
-
-    def test_before_metaparam
-        file = Puppet::Type.newfile(
-            :path => tempfile(),
-            :before => ["exec", "beforetest"],
-            :content => "yaytest"
-        )
-
-        path = tempfile()
-        exec = Puppet::Type.newexec(
-            :title => "beforetest",
-            :command => "/bin/cp #{file[:path]} #{path}"
-        )
-
-        assert_apply(file, exec)
-
-        assert(exec.requires?(file),
-            "Before did not correctly set up the requirement chain.")
-
-        assert(FileTest.exists?(path),
-            "Exec path did not get created.")
-
-        assert_equal("yaytest", File.read(path),
-            "Exec did not correctly copy file.")
-    end
-
     def test_newstate_options
         # Create a type with a fake provider
         providerclass = Class.new do

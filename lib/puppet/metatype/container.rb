@@ -78,26 +78,6 @@ class Puppet::Type
 
             hash.clear
         end
-
-        if rmdeps
-            Puppet::Event::Subscription.dependencies(self).each { |dep|
-                #info "Deleting dependency %s" % dep
-                #begin
-                #    self.unsubscribe(dep)
-                #rescue
-                #    # ignore failed unsubscribes
-                #end
-                dep.delete
-            }
-            Puppet::Event::Subscription.subscribers(self).each { |dep|
-                #info "Unsubscribing from %s" % dep
-                begin
-                    dep.unsubscribe(self)
-                rescue
-                    # ignore failed unsubscribes
-                end
-            }
-        end
         self.class.delete(self)
 
         if defined? @parent and @parent

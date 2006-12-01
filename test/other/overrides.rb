@@ -27,6 +27,7 @@ class TestOverrides < Test::Unit::TestCase
         basefile = File.join(basedir, "file")
         assert_nothing_raised("Could not create base obj") {
             baseobj = Puppet.type(:file).create(
+                :title => "base",
                 :path => basedir,
                 :recurse => true,
                 :mode => "755"
@@ -38,23 +39,20 @@ class TestOverrides < Test::Unit::TestCase
         subfile = File.join(subdir, "file")
         assert_nothing_raised("Could not create sub obj") {
             subobj = Puppet.type(:file).create(
+                :title => "sub",
                 :path => subdir,
                 :recurse => true,
                 :mode => "644"
             )
         }
 
-        comp = newcomp("overrides", baseobj, subobj)
-        assert_nothing_raised("Could not eval component") {
-            trans = comp.evaluate
-            trans.evaluate
-        }
+        assert_apply(baseobj, subobj)
 
         assert(File.stat(basefile).mode & 007777 == 0755)
         assert(File.stat(subfile).mode & 007777 == 0644)
     end
 
-    def test_zdeepoverride
+    def test_deepoverride
         basedir = File.join(tmpdir(), "deepoverridetesting")
         mksubdirs(basedir, 10)
 

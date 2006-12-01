@@ -4,6 +4,7 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
 require 'puppettest'
+require 'puppettest/support/resources'
 
 # $Id$
 
@@ -104,35 +105,6 @@ class TestComponent < Test::Unit::TestCase
                 assert(list.index(dep) < index)
             }
         }
-    end
-    
-    def treefile(name)
-        @file.create :path => "/tmp/#{name}", :mode => 0755
-    end
-    
-    def treecomp(name)
-        @type.create :name => name, :type => "yay"
-    end
-    
-    def treenode(name, *children)
-        comp = treecomp name
-        children.each do |c| 
-            if c.is_a?(String)
-                comp.push treefile(c)
-            else
-                comp.push c
-            end
-        end
-        return comp
-    end
-    
-    def mktree
-        one = treenode("one", "a", "b")
-        two = treenode("two", "c", "d")
-        middle = treenode("middle", "e", "f", two)
-        top = treenode("top", "g", "h", middle, one)
-        
-        return one, two, middle, top
     end
         
     def test_to_graph

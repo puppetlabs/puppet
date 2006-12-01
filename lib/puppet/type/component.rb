@@ -79,7 +79,7 @@ module Puppet
         # this also won't work with scheduling, but eh
         def evaluate
             self.finalize unless self.finalized?
-            transaction = Puppet::Transaction.new(self.flatten)
+            transaction = Puppet::Transaction.new(self)
             transaction.component = self
             return transaction
         end
@@ -102,7 +102,6 @@ module Puppet
                 end
                 unless finished.has_key?(object)
                     object.finish
-                    object.builddepends
                     finished[object] = true
                 end
             end

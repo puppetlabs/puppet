@@ -18,6 +18,7 @@ class Puppet::Type
     # Figure out of there are any objects we can automatically add as
     # dependencies.
     def autorequire
+        reqs = []
         self.class.eachautorequire { |type, block|
             # Ignore any types we can't find, although that would be a bit odd.
             next unless typeobj = Puppet.type(type)
@@ -32,74 +33,48 @@ class Puppet::Type
             list.each { |dep|
                 obj = nil
                 # Support them passing objects directly, to save some effort.
-                if dep.is_a? Puppet::Type
-                    type = dep.class.name
-                    obj = dep
-
-                    # Now change our dependency to just the string, instead of
-                    # the object itself.
-                    dep = dep.title
-                else
+                unless dep.is_a? Puppet::Type
                     # Skip autorequires that we aren't managing
-                    unless obj = typeobj[dep]
+                    unless dep = typeobj[dep]
                         next
                     end
                 end
-
-                # Skip autorequires that we already require
-                next if self.requires?(obj)
-
-                debug "Autorequiring %s %s" % [obj.class.name, obj.title]
-                self[:require] = [type, dep]
+                
+                debug "Autorequiring %s" % [dep.ref]
+                reqs << Puppet::Relationship[dep, self]
             }
-
-            #self.info reqs.inspect
-            #self[:require] = reqs
         }
+        
+        return reqs
     end
 
-    # Build the dependencies associated with an individual object.
+    # Build the dependencies associated with an individual object.  :in
+    # relationships are specified by the event-receivers, and :out
+    # relationships are specified by the event generator.  This
+    # way 'source' and 'target' are consistent terms in both edges
+    # and events -- that is, an event targets edges whose source matches
+    # the event's source.  Note that the direction of the relationship
+    # doesn't actually mean anything until you start using events --
+    # the same information is present regardless.
     def builddepends
         # Handle the requires
-        if self[:require]
-            self.handledepends(self[:require], :NONE, nil, true)
-        end
-
-        # And the subscriptions
-        if self[:subscribe]
-            self.handledepends(self[:subscribe], :ALL_EVENTS, :refresh, true)
-        end
-
-        if self[:notify]
-            self.handledepends(self[:notify], :ALL_EVENTS, :refresh, false)
-        end
-
-        if self[:before]
-            self.handledepends(self[:before], :NONE, nil, false)
-        end
+        {:require => [:NONE, nil, :in],
+            :subscribe => [:ALL_EVENTS, :refresh, :in],
+            :notify => [:ALL_EVENTS, :refresh, :out],
+            :before => [:NONE, nil, :out]}.collect do |type, args|
+                if self[type]
+                    handledepends(self[type], *args)
+                end
+            end.flatten.reject { |r| r.nil? }
     end
 
-    # return all objects that we depend on
-    def eachdependency
-        Puppet::Event::Subscription.dependencies(self).each { |dep|
-            yield dep.source
-        }
-    end
-
-    # return all objects subscribed to the current object
-    def eachsubscriber
-        Puppet::Event::Subscription.subscribers(self).each { |sub|
-            yield sub.target
-        }
-    end
-
-    def handledepends(requires, event, method, up)
+    def handledepends(requires, event, method, direction)
         # Requires are specified in the form of [type, name], so they're always
         # an array.  But we want them to be an array of arrays.
         unless requires[0].is_a?(Array)
             requires = [requires]
         end
-        requires.each { |rname|
+        requires.collect { |rname|
             # we just have a name and a type, and we need to convert it
             # to an object...
             type = nil
@@ -115,9 +90,9 @@ class Puppet::Type
             end
             self.debug("subscribes to %s" % [object])
 
-            # Are we requiring them, or vice versa?
-            source = target = nil
-            if up
+            # Are we requiring them, or vice versa?  See the builddepends
+            # method for further docs on this.
+            if direction == :in
                 source = object
                 target = self
             else
@@ -129,61 +104,30 @@ class Puppet::Type
             # we store the method to call when a given subscription is 
             # triggered, but the source object decides whether 
             subargs = {
-                :event => event,
-                :source => source,
-                :target => target
+                :event => event
             }
 
-            if method and target.respond_to?(method)
+            if method
                 subargs[:callback] = method
             end
-            Puppet::Event::Subscription.new(subargs)
+            rel = Puppet::Relationship.new(source, target, subargs)
         }
-    end
-
-    def requires?(object)
-        req = false
-        self.eachdependency { |dep|
-            if dep == object
-                req = true
-                break
-            end
-        }
-
-        return req
-    end
-
-    def subscribe(hash)
-        hash[:source] = self
-        Puppet::Event::Subscription.new(hash)
-
-        # add to the correct area
-        #@subscriptions.push sub
-    end
-
-    def subscribesto?(object)
-        sub = false
-        self.eachsubscriber { |o|
-            if o == object
-                sub = true
-                break
-            end
-        }
-
-        return sub
     end
 
     # Unsubscribe from a given object, possibly with a specific event.
     def unsubscribe(object, event = nil)
-        Puppet::Event::Subscription.dependencies(self).find_all { |sub|
-            if event
-                sub.match?(event)
-            else
-                sub.source == object
+        # First look through our own relationship params
+        [:require, :subscribe].each do |param|
+            if values = self[param]
+                newvals = values.reject { |d|
+                    d == [object.class.name, object.title]
+                }
+                if newvals.length != values.length
+                    self.delete(param)
+                    self[param] = newvals
+                end
             end
-        }.each { |sub|
-            sub.delete
-        }
+        end
     end
 
     # we've received an event

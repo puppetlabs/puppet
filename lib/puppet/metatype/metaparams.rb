@@ -92,6 +92,47 @@ class Puppet::Type
             }
         end
     end
+    
+    # We've got four relationship metaparameters, so this method is used
+    # to reduce code duplication between them.
+    def store_relationship(param, values)
+        # We need to support values passed in as an array or as a
+        # resource reference.
+        result = []
+        
+        # 'values' could be an array or a reference.  If it's an array,
+        # it could be an array of references or an array of arrays.
+        if values.is_a?(Puppet::Type)
+            result << [values.class.name, values.title]
+        else
+            unless values.is_a?(Array)
+                devfail "Relationships must be resource references"
+            end
+            if values[0].is_a?(String) or values[0].is_a?(Symbol)
+                # we're a type/title array reference
+                values[0] = symbolize(values[0])
+                result << values
+            else
+                # we're an array of stuff
+                values.each do |value|
+                    if value.is_a?(Puppet::Type)
+                        result << [value.class.name, value.title]
+                    elsif value.is_a?(Array)
+                        value[0] = symbolize(value[0])
+                        result << value
+                    else
+                        devfail "Invalid relationship %s" % value.inspect
+                    end
+                end
+            end
+        end
+        
+        if existing = self[param]
+            result = existing + result
+        end
+        
+        result
+    end
 
     # For each object we require, subscribe to all events that it generates. We
     # might reduce the level of subscription eventually, but for now...
@@ -133,17 +174,7 @@ class Puppet::Type
         # Take whatever dependencies currently exist and add these.
         # Note that this probably doesn't behave correctly with unsubscribe.
         munge do |requires|
-            # We need to be two arrays deep...
-            unless requires.is_a?(Array)
-                requires = [requires]
-            end
-            unless requires[0].is_a?(Array)
-                requires = [requires]
-            end
-            if values = @parent[:require]
-                requires = values + requires
-            end
-            requires
+            @parent.store_relationship(:require, requires)
         end
     end
 
@@ -167,11 +198,7 @@ class Puppet::Type
             "
 
         munge do |requires|
-            if values = @parent[:subscribe]
-                requires = values + requires
-            end
-            requires
-        #    @parent.handledepends(requires, :ALL_EVENTS, :refresh)
+            @parent.store_relationship(:subscribe, requires)
         end
     end
 
@@ -295,21 +322,9 @@ class Puppet::Type
             This will restart the sshd service if the sshd config file changes.}
 
 
-        # Take whatever dependencies currently exist and add these.
         munge do |notifies|
-            # We need to be two arrays deep...
-            unless notifies.is_a?(Array)
-                notifies = [notifies]
-            end
-            unless notifies[0].is_a?(Array)
-                notifies = [notifies]
-            end
-            if values = @parent[:notify]
-                notifies = values + notifies
-            end
-            notifies
+            @parent.store_relationship(:notify, notifies)
         end
-        
     end
 
     newmetaparam(:before) do
@@ -331,21 +346,9 @@ class Puppet::Type
             This will make sure all of the files are up to date before the
             make command is run.}
 
-        # Take whatever dependencies currently exist and add these.
         munge do |notifies|
-            # We need to be two arrays deep...
-            unless notifies.is_a?(Array)
-                notifies = [notifies]
-            end
-            unless notifies[0].is_a?(Array)
-                notifies = [notifies]
-            end
-            if values = @parent[:notify]
-                notifies = values + notifies
-            end
-            notifies
+            @parent.store_relationship(:before, notifies)
         end
-        
     end
 end # Puppet::Type
 

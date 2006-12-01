@@ -11,15 +11,23 @@ require 'puppet/gratr'
 class Puppet::Relationship < GRATR::Edge
     # Return the callback
     def callback
-        label[:callback]
+        if label
+            label[:callback]
+        else
+            nil
+        end
     end
     
     # Return our event.
     def event
-        label[:event]
+        if label
+            label[:event]
+        else
+            nil
+        end
     end
     
-    def initialize(source, target, label = nil)
+    def initialize(source, target, label = {})
         if label
             unless label.is_a?(Hash)
                 raise Puppet::DevError, "The label must be a hash"
@@ -45,6 +53,10 @@ class Puppet::Relationship < GRATR::Edge
         else
             return false
         end
+    end
+    
+    def ref
+        "%s => %s" % [source.ref, target.ref]
     end
 end
 

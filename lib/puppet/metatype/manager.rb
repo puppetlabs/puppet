@@ -106,6 +106,14 @@ module Manager
 
         klass
     end
+    
+    # Remove an existing defined type.  Largely used for testing.
+    def rmtype(name)
+        # Then create the class.
+        klass = rmclass(name,
+            :hash => @types
+        )
+    end
 
     # Return a Type instance by name.
     def type(name)

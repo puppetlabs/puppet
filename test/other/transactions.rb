@@ -4,11 +4,13 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
 require 'puppettest'
+require 'puppettest/support/resources'
 
 # $Id$
 
 class TestTransactions < Test::Unit::TestCase
     include PuppetTest::FileTesting
+    include PuppetTest::Support::Resources
 
     def test_reports
         path1 = tempfile()
@@ -59,6 +61,10 @@ class TestTransactions < Test::Unit::TestCase
         type = Puppet::Type.newtype(name) do
             newparam(:name) {}
         end
+        
+        cleanup do
+            Puppet::Type.rmtype(name)
+        end
 
         # Now create a provider
         type.provide(:prefetch) do
@@ -69,10 +75,9 @@ class TestTransactions < Test::Unit::TestCase
 
         # Now create an instance
         inst = type.create :name => "yay"
-
-
+        
         # Create a transaction
-        trans = Puppet::Transaction.new([inst])
+        trans = Puppet::Transaction.new(newcomp(inst))
 
         # Make sure prefetch works
         assert_nothing_raised do
@@ -94,7 +99,7 @@ class TestTransactions < Test::Unit::TestCase
         path = tempfile()
         firstpath = tempfile()
         secondpath = tempfile()
-        file = Puppet::Type.newfile(:path => path, :content => "yayness")
+        file = Puppet::Type.newfile(:title => "file", :path => path, :content => "yayness")
         first = Puppet::Type.newexec(:title => "first",
                                      :command => "/bin/echo first > #{firstpath}",
                                      :subscribe => [:file, path],
@@ -299,7 +304,9 @@ class TestTransactions < Test::Unit::TestCase
         assert(FileTest.exists?(execfile), "Execfile does not exist")
     end
 
-    def test_refreshAcrossTwoComponents
+    # Verify that one component requiring another causes the contained
+    # resources in the requiring component to get refreshed.
+    def test_refresh_across_two_components
         transaction = nil
         file = newfile()
         execfile = File.join(tmpdir(), "exectestingness2")
@@ -318,7 +325,7 @@ class TestTransactions < Test::Unit::TestCase
 
         # 'subscribe' expects an array of arrays
         #component[:require] = [[file.class.name,file.name]]
-        ecomp[:subscribe] = [[fcomp.class.name,fcomp.name]]
+        ecomp[:subscribe] = fcomp
         exec[:refreshonly] = true
 
         trans = assert_events([], component)
@@ -329,7 +336,6 @@ class TestTransactions < Test::Unit::TestCase
         }
 
         trans = assert_events([:file_changed, :file_changed, :triggered], component)
-
     end
 
     # Make sure that multiple subscriptions get triggered.
@@ -386,7 +392,7 @@ class TestTransactions < Test::Unit::TestCase
     end
 
     # Make sure that unscheduled and untagged objects still respond to events
-    def test_unscheduledanduntaggedresponse
+    def test_unscheduled_and_untagged_response
         Puppet::Type.type(:schedule).mkdefaultschedules
         Puppet[:ignoreschedules] = false
         file = Puppet.type(:file).create(
@@ -444,21 +450,127 @@ class TestTransactions < Test::Unit::TestCase
             :title => "mkdir"
         )
 
-        file = Puppet::Type.type(:file).create(
+        file1 = Puppet::Type.type(:file).create(
+            :title => "file1",
             :path => tempfile(),
-            :require => ["exec", "mkdir"],
+            :require => exec,
             :ensure => :file
         )
 
-        comp = newcomp(exec, file)
+        file2 = Puppet::Type.type(:file).create(
+            :title => "file2",
+            :path => tempfile(),
+            :require => file1,
+            :ensure => :file
+        )
+
+        comp = newcomp(exec, file1, file2)
 
         comp.finalize
 
         assert_apply(comp)
 
-        assert(! FileTest.exists?(file[:path]),
+        assert(! FileTest.exists?(file1[:path]),
             "File got created even tho its dependency failed")
+        assert(! FileTest.exists?(file2[:path]),
+            "File got created even tho its deep dependency failed")
     end
+    end
+    
+    def f(n)
+        Puppet::Type.type(:file)["/tmp/#{n.to_s}"]
+    end
+    
+    def test_relationship_graph
+        one, two, middle, top = mktree
+        
+        {one => two, "f" => "c", "h" => middle}.each do |source, target|
+            if source.is_a?(String)
+                source = f(source)
+            end
+            if target.is_a?(String)
+                target = f(target)
+            end
+            target[:require] = source
+        end
+        
+        trans = Puppet::Transaction.new(top)
+        
+        graph = nil
+        assert_nothing_raised do
+            graph = trans.relationship_graph
+        end
+        
+        assert_instance_of(Puppet::PGraph, graph,
+            "Did not get relationship graph")
+        
+        # Make sure all of the components are gone
+        comps = graph.vertices.find_all { |v| v.is_a?(Puppet::Type::Component)}
+        assert(comps.empty?, "Deps graph still contains components")
+        
+        # It must be reversed because of how topsort works
+        sorted = graph.topsort.reverse
+        
+        # Now make sure the appropriate edges are there and are in the right order
+        assert(graph.dependencies(f(:f)).include?(f(:c)),
+            "c not marked a dep of f")
+        assert(sorted.index(f(:c)) < sorted.index(f(:f)),
+            "c is not before f")
+            
+        one.each do |o|
+            two.each do |t|
+                assert(graph.dependencies(o).include?(t),
+                    "%s not marked a dep of %s" % [t.ref, o.ref])
+                assert(sorted.index(t) < sorted.index(o),
+                    "%s is not before %s" % [t.ref, o.ref])
+            end
+        end
+        
+        trans.resources.leaves(middle).each do |child|
+            assert(graph.dependencies(f(:h)).include?(child),
+                "%s not marked a dep of h" % [child.ref])
+            assert(sorted.index(child) < sorted.index(f(:h)),
+                "%s is not before h" % child.ref)
+        end
+        
+        # Lastly, make sure our 'g' vertex made it into the relationship
+        # graph, since it's not involved in any relationships.
+        assert(graph.vertex?(f(:g)),
+            "Lost vertexes with no relations")
+
+        graph.to_jpg("normal_relations")
+    end
+    
+    def test_generate
+        # Create a bogus type that generates new instances with shorter
+        Puppet::Type.newtype(:generator) do
+            newparam(:name, :namevar => true)
+            
+            def generate
+                ret = []
+                if title.length > 1
+                    ret << self.class.create(:title => title[0..-2])
+                end
+                ret
+            end
+        end
+        cleanup do
+            Puppet::Type.rmtype(:generator)
+        end
+        
+        yay = Puppet::Type.newgenerator :title => "yay"
+        rah = Puppet::Type.newgenerator :title => "rah"
+        comp = newcomp(yay, rah)
+        trans = comp.evaluate
+        
+        assert_nothing_raised do
+            trans.generate
+        end
+        
+        %w{ya ra y r}.each do |name|
+            assert(trans.resources.vertex?(Puppet::Type.type(:generator)[name]),
+                "Generated %s was not a vertex" % name)
+        end
     end
 end
 

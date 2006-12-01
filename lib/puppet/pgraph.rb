@@ -11,27 +11,6 @@ require 'puppet/relationship'
 # This class subclasses a graph class in order to handle relationships
 # among resources.
 class Puppet::PGraph < GRATR::Digraph
-    # Collect all of the targets for the list of events.  Basically just iterates
-    # over the sources of the events and returns all of the targets of them.
-    def collect_targets(events)
-        events.collect do |event|
-            source = event.source
-            start = source
-            
-            # Get all of the edges that this vertex points at
-            adjacent(source, :direction => :out, :type => :edges).find_all do |edge|
-                edge.match?(event.event)
-            end.collect { |event|
-                target = event.target
-                if target.respond_to?(:ref)
-                    source.info "Scheduling %s of %s" %
-                        [event.callback, target.ref]
-                end
-                target
-            }
-        end.flatten
-    end
-    
     # The dependencies for a given resource.
     def dependencies(resource)
         tree_from_vertex(resource, :dfs).keys
@@ -49,6 +28,32 @@ class Puppet::PGraph < GRATR::Digraph
         return leaves
     end
     
+    # Collect all of the edges that the passed events match.  Returns
+    # an array of edges.
+    def matching_edges(events)
+        events.collect do |event|
+            source = event.source
+            
+            unless vertex?(source)
+                Puppet.warning "Got an event from invalid vertex %s" % source.ref
+                next
+            end
+            
+            # Get all of the edges that this vertex should forward events
+            # to, which is the same thing as saying all edges directly below
+            # This vertex in the graph.
+            adjacent(source, :direction => :out, :type => :edges).find_all do |edge|
+                edge.match?(event.event)
+            end.each { |edge|
+                target = edge.target
+                if target.respond_to?(:ref)
+                    source.info "Scheduling %s of %s" %
+                        [edge.callback, target.ref]
+                end
+            }
+        end.flatten
+    end
+    
     # Take container information from another graph and use it
     # to replace any container vertices with their respective leaves.
     # This creates direct relationships where there were previously
@@ -63,9 +68,9 @@ class Puppet::PGraph < GRATR::Digraph
             next if leaves.empty?
             
             # First create new edges for each of the :in edges
-            adjacent(vertex, :direction => :in).each do |up|
+            adjacent(vertex, :direction => :in, :type => :edges).each do |edge|
                 leaves.each do |leaf|
-                    add_edge!(up, leaf)
+                    add_edge!(edge.source, leaf, edge.label)
                     if cyclic?
                         raise ArgumentError,
                             "%s => %s results in a loop" %
@@ -75,9 +80,9 @@ class Puppet::PGraph < GRATR::Digraph
             end
             
             # Then for each of the out edges
-            adjacent(vertex, :direction => :out).each do |down|
+            adjacent(vertex, :direction => :out, :type => :edges).each do |edge|
                 leaves.each do |leaf|
-                    add_edge!(leaf, down)
+                    add_edge!(leaf, edge.target, edge.label)
                     if cyclic?
                         raise ArgumentError,
                             "%s => %s results in a loop" %
@@ -89,76 +94,10 @@ class Puppet::PGraph < GRATR::Digraph
             # And finally, remove the vertex entirely.
             remove_vertex!(vertex)
         end
-    end    
-
-    # Trigger any subscriptions to a child.  This does an upwardly recursive
-    # search -- it triggers the passed object, but also the object's parent
-    # and so on up the tree.
-    def trigger(child)
-        obj = child
-        callbacks = Hash.new { |hash, key| hash[key] = [] }
-        sources = Hash.new { |hash, key| hash[key] = [] }
-
-        trigged = []
-        while obj
-            if @targets.include?(obj)
-                callbacks.clear
-                sources.clear
-                @targets[obj].each do |event, sub|
-                    # Collect all of the subs for each callback
-                    callbacks[sub.callback] << sub
-
-                    # And collect the sources for logging
-                    sources[event.source] << sub.callback
-                end
-
-                sources.each do |source, callbacklist|
-                    obj.debug "%s[%s] results in triggering %s" %
-                        [source.class.name, source.name, callbacklist.join(", ")]
-                end
-
-                callbacks.each do |callback, subs|
-                    message = "Triggering '%s' from %s dependencies" %
-                        [callback, subs.length]
-                    obj.notice message
-                    # At this point, just log failures, don't try to react
-                    # to them in any way.
-                    begin
-                        obj.send(callback)
-                        @resourcemetrics[:restarted] += 1
-                    rescue => detail
-                        obj.err "Failed to call %s on %s: %s" %
-                            [callback, obj, detail]
-
-                        @resourcemetrics[:failed_restarts] += 1
-
-                        if Puppet[:debug]
-                            puts detail.backtrace
-                        end
-                    end
-
-                    # And then add an event for it.
-                    trigged << Puppet::Event.new(
-                        :event => :triggered,
-                        :transaction => self,
-                        :source => obj,
-                        :message => message
-                    )
-
-                    triggered(obj, callback)
-                end
-            end
-
-            obj = obj.parent
-        end
-
-        if trigged.empty?
-            return nil
-        else
-            return trigged
-        end
     end
     
+    # For some reason, unconnected vertices do not show up in
+    # this graph.
     def to_jpg(name)
         gv = vertices()
         Dir.chdir("/Users/luke/Desktop/pics") do
