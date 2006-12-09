@@ -1,7 +1,11 @@
 require 'puppet/server/fileserver'
 
 module Puppet
-    # Copy files from a local or remote source.
+    # Copy files from a local or remote source.  This state *only* does any work
+    # when the remote file is an actual file; in that case, this state copies
+    # the file down.  If the remote file is a dir or a link or whatever, then
+    # this state, during retrieval, modifies the appropriate other states
+    # so that things get taken care of appropriately.
     Puppet.type(:file).newstate(:source) do
         PINPARAMS = Puppet::Server::FileServer::CHECKPARAMS
 
@@ -38,12 +42,38 @@ module Puppet
                 }
             
             This will use the first found file as the source.
+            
+            You cannot currently copy links using this mechanism; set ``links``
+            to ``follow`` if any remote sources are links.
 
             [fileserver docs]: ../installing/fsconfigref.html
 
             "
 
         uncheckable
+        
+        validate do |source|
+            unless @parent.uri2obj(source)
+                raise Puppet::Error, "Invalid source %s" % source
+            end
+        end
+            
+        munge do |source|
+            # if source.is_a? Symbol
+            #     return source
+            # end
+
+            # Remove any trailing slashes
+            source.sub(/\/$/, '')
+        end
+        
+        def checksum
+            if defined?(@stats)
+                @stats[:checksum]
+            else
+                nil
+            end
+        end
 
         # Ask the file server to describe our file.
         def describe(source)
@@ -75,34 +105,52 @@ module Puppet
                 args.delete(:owner)
             end
 
-            if args.empty?
+            if args.empty? or (args[:type] == "link" and @parent[:links] == :ignore)
                 return nil
             else
                 return args
             end
         end
-
+        
+        # Have we successfully described the remote source?
+        def described?
+            ! @stats.nil? and ! @stats[:type].nil? and @is != :notdescribed
+        end
+        
+        # Use the info we get from describe() to check if we're in sync.
+        def insync?
+            unless described?
+                info "No specified sources exist"
+                return true
+            end
+            
+            if @is == :nocopy
+                return true
+            end
+            
+            # the only thing this actual state can do is copy files around.  Therefore,
+            # only pay attention if the remote is a file.
+            unless @stats[:type] == "file" 
+                return true
+            end
+            # Now, we just check to see if the checksums are the same
+            return @parent.is(:checksum) == @stats[:checksum]
+        end
+        
         # This basically calls describe() on our file, and then sets all
         # of the local states appropriately.  If the remote file is a normal
         # file then we set it to copy; if it's a directory, then we just mark
         # that the local directory should be created.
         def retrieve(remote = true)
             sum = nil
-
-            unless defined? @shouldorig
-                raise Puppet::DevError, "No sources defined for %s" %
-                    @parent.title
-            end
-
-            @source = nil unless defined? @source
+            @source = nil
 
             # This is set to false by the File#retrieve function on the second
             # retrieve, so that we do not do two describes.
             if remote
-                @source = nil
                 # Find the first source that exists.  @shouldorig contains
                 # the sources as specified by the user.
-                @shouldorig.each { |source|
+                @should.each { |source|
                     if @stats = self.describe(source)
                         @source = source
                         break
@@ -112,70 +160,18 @@ module Puppet
 
             if @stats.nil? or @stats[:type].nil?
                 @is = :notdescribed
-                @source = nil
                 return nil
             end
-
-            # If we're a normal file, then set things up to copy the file down.
+            
             case @stats[:type]
-            when "file":
-                if sum = @parent.state(:checksum)
-                    if sum.is
-                        if sum.is == :absent
-                            sum.retrieve(true)
-                        end
-                        @is = sum.is
-                    else
-                        @is = :absent
-                    end
-                else
-                    self.info "File does not have checksum"
-                    @is = :absent
-                end
-                # if replace => false then fake the checksum so that the file
-                # is not overwritten.
-                unless @is == :absent
-                    if @parent[:replace] == :false
-                        info "Not replacing existing file"
-                        @is = @stats[:checksum]
-                    end
-                end
-                @should = [@stats[:checksum]]
-            # If we're a directory, then do not copy anything, and instead just
-            # create the directory using the 'create' state.
-            when "directory":
-                if state = @parent.state(:ensure)
-                    unless state.should == "directory"
-                        state.should = "directory"
-                    end
-                else
-                    @parent[:ensure] = "directory"
-                    @parent.state(:ensure).retrieve
-                end
-                # we'll let the :ensure state do our work
-                @should.clear
-                @is = true
-            when "link":
-                case @parent[:links]
-                when :ignore
-                    @is = :nocopy
-                    @should = [:nocopy]
-                    self.info "Ignoring link %s" % @source
-                    return
-                when :follow
-                    @stats = self.describe(source, :follow)
-                    if @stats.empty?
-                        raise Puppet::Error, "Could not follow link %s" % @source
-                    end
-                when :copy
-                    raise Puppet::Error, "Cannot copy links yet"
-                end
+            when "directory", "file":
+                @parent[:ensure] = @stats[:type]
             else
                 self.info @stats.inspect
                 self.err "Cannot use files of type %s as sources" %
                     @stats[:type]
-                @should = [:nocopy]
                 @is = :nocopy
+                return
             end
 
             # Take each of the stats and set them as states on the local file
@@ -187,71 +183,38 @@ module Puppet
                 # was the stat already specified, or should the value
                 # be inherited from the source?
                 unless @parent.argument?(stat)
-                    if state = @parent.state(stat)
-                        state.should = value
-                    else
-                        @parent[stat] = value
-                    end
-                #else
-                #    @parent.info "Already specified %s" % stat
+                    @parent[stat] = value
                 end
             }
+            
+            @is = @stats[:checksum]
         end
-
-        # The special thing here is that we need to make sure that 'should'
-        # is only set for files, not directories.  The processing we're doing
-        # here doesn't really matter, because the @should values will be
-        # overridden when we 'retrieve'.
-        munge do |source|
-            if source.is_a? Symbol
-                return source
+        
+        def should
+            @should
+        end
+        
+        # Make sure we're also checking the checksum
+        def should=(value)
+            super
+            
+            # @parent[:check] = [:checksum, :ensure]
+            unless @parent.state(:checksum)
+                @parent[:checksum] = :md5
             end
-
-            # Remove any trailing slashes
-            source.sub!(/\/$/, '')
-            unless @parent.uri2obj(source)
-                raise Puppet::Error, "Invalid source %s" % source
-            end
-
-            if ! defined? @stats or @stats.nil?
-                # stupid hack for now; it'll get overriden
-                return source
-            else
-                if @stats[:type] == "directory"
-                    @is = true
-                    return nil
-                else
-                    return source
-                end
+            
+            unless @parent.state(:ensure)
+                @parent[:check] = :ensure
             end
         end
 
         def sync
-            if @is == :notdescribed
-                self.retrieve # try again
-                if @is == :notdescribed
-                    @parent.log "Could not retrieve information on %s" %
-                        @parent.title
-                    return nil
-                end
-                if @is == @should
-                    return nil
-                end
-            end
-
-            case @stats[:type]
-            when "link":
-            end
             unless @stats[:type] == "file"
                 #if @stats[:type] == "directory"
                         #[@parent.name, @is.inspect, @should.inspect]
                 #end
                 raise Puppet::DevError, "Got told to copy non-file %s" %
                     @parent[:path]
-            end
-
-            unless defined? @source
-                raise Puppet::DevError, "Somehow source is still undefined"
             end
 
             sourceobj, path = @parent.uri2obj(@source)

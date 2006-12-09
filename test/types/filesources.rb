@@ -11,15 +11,19 @@ class TestFileSources < Test::Unit::TestCase
     include PuppetTest::FileTesting
     def setup
         super
-        begin
-            initstorage
-        rescue
-            system("rm -rf %s" % Puppet[:statefile])
-        end
         if defined? @port
             @port += 1
         else
             @port = 8800
+        end
+        @file = Puppet::Type.type(:file)
+    end
+    
+    def use_storage
+        begin
+            initstorage
+        rescue
+            system("rm -rf %s" % Puppet[:statefile])
         end
     end
 
@@ -27,10 +31,17 @@ class TestFileSources < Test::Unit::TestCase
         Puppet::Storage.init
         Puppet::Storage.load
     end
-
-    def clearstorage
-        Puppet::Storage.store
-        Puppet::Storage.clear
+    
+    # Make a simple recursive tree.
+    def mk_sourcetree
+        source = tempfile()
+        sourcefile = File.join(source, "file")
+        Dir.mkdir source
+        File.open(sourcefile, "w") { |f| f.puts "yay" }
+        
+        dest = tempfile()
+        destfile = File.join(dest, "file")
+        return source, dest, sourcefile, destfile
     end
 
     def test_newchild
@@ -58,10 +69,244 @@ class TestFileSources < Test::Unit::TestCase
             file.newchild(File.join(path,"childtest"), true)
         }
     end
+    
+    def test_describe
+        source = tempfile()
+        dest = tempfile()
+        
+        file = Puppet::Type.newfile :path => dest, :source => source,
+            :title => "copier"
+        
+        state = file.state(:source)
+        
+        # First try describing with a normal source
+        result = nil
+        assert_nothing_raised do
+            result = state.describe(source)
+        end
+        assert_nil(result, "Got a result back when source is missing")
+        
+        # Now make a remote directory
+        Dir.mkdir(source)
+        assert_nothing_raised do
+            result = state.describe(source)
+        end
+        assert_equal("directory", result[:type])
+        
+        # And as a file
+        Dir.rmdir(source)
+        File.open(source, "w") { |f| f.puts "yay" }
+        assert_nothing_raised do
+            result = state.describe(source)
+        end
+        assert_equal("file", result[:type])
+        assert(result[:checksum], "did not get value for checksum")
+        if Puppet::SUIDManager.uid == 0
+            assert(result.has_key?("owner"), "Lost owner in describe")
+        else
+            assert(! result.has_key?("owner"),
+                "Kept owner in describe even tho not root")
+        end
+        
+        # Now let's do the various link things
+        File.unlink(source)
+        target = tempfile()
+        File.open(target, "w") { |f| f.puts "yay" }
+        File.symlink(target, source)
+        
+        file[:links] = :ignore
+        assert_nil(state.describe(source),
+            "Links were not ignored")
+        
+        file[:links] = :manage
+        # We can't manage links at this point
+        assert_raise(Puppet::FileServerError) do
+            state.describe(source)
+        end
+        
+        # And then make sure links get followed, otherwise
+        file[:links] = :follow
+        assert_equal("file", state.describe(source)[:type])
+    end
+    
+    def test_source_retrieve
+        source = tempfile()
+        dest = tempfile()
+        
+        file = Puppet::Type.newfile :path => dest, :source => source,
+            :title => "copier"
+        
+        assert(file.state(:checksum), "source state did not create checksum state")
+        state = file.state(:source)
+        assert(state, "did not get source state")
+        
+        # Make sure the munge didn't actually change the source
+        assert_equal(source, state.should, "munging changed the source")
+        
+        # First try it with a missing source
+        assert_nothing_raised do
+            state.retrieve
+        end
+        
+        # And make sure the state considers itself in sync, since there's nothing
+        # to do
+        assert(state.insync?, "source thinks there's work to do with no file or dest")
+        
+        # Now make the dest a directory, and make sure the object sets :ensure up to
+        # create a directory
+        Dir.mkdir(source)
+        assert_nothing_raised do
+            state.retrieve
+        end
+        assert_equal(:directory, file.should(:ensure),
+            "Did not set to create directory")
+        
+        # And make sure the source state won't try to do anything with a remote dir
+        assert(state.insync?, "Source was out of sync even tho remote is dir")
+        
+        # Now remove the source, and make sure :ensure was not modified
+        Dir.rmdir(source)
+        assert_nothing_raised do
+            state.retrieve
+        end
+        assert_equal(:directory, file.should(:ensure),
+            "Did not keep :ensure setting")
+        
+        # Now have a remote file and make sure things work correctly
+        File.open(source, "w") { |f| f.puts "yay" }
+        File.chmod(0755, source)
+        
+        assert_nothing_raised do
+            state.retrieve
+        end
+        assert_equal(:file, file.should(:ensure),
+            "Did not make correct :ensure setting")
+        assert_equal(0755, file.should(:mode),
+            "Mode was not copied over")
+        
+        # Now let's make sure that we get the first found source
+        fake = tempfile()
+        state.should = [fake, source]
+        assert_nothing_raised do
+            state.retrieve
+        end
+        assert_equal(Digest::MD5.hexdigest(File.read(source)), state.checksum.sub(/^\{\w+\}/, ''), 
+            "Did not catch later source")
+    end
+    
+    def test_insync
+        source = tempfile()
+        dest = tempfile()
+        
+        file = Puppet::Type.newfile :path => dest, :source => source,
+            :title => "copier"
+        
+        state = file.state(:source)
+        assert(state, "did not get source state")
+        
+        # Try it with no source at all
+        file.retrieve
+        assert(state.insync?, "source state not in sync with missing source")
+
+        # with a directory
+        Dir.mkdir(source)
+        file.retrieve
+        assert(state.insync?, "source state not in sync with directory as source")
+        Dir.rmdir(source)
+        
+        # with a file
+        File.open(source, "w") { |f| f.puts "yay" }
+        file.retrieve
+        assert(!state.insync?, "source state was in sync when file was missing")
+        
+        # With a different file
+        File.open(dest, "w") { |f| f.puts "foo" }
+        file.retrieve
+        assert(!state.insync?, "source state was in sync with different file")
+        
+        # with matching files
+        File.open(dest, "w") { |f| f.puts "yay" }
+        file.retrieve
+        assert(state.insync?, "source state was not in sync with matching file")
+    end
+    
+    def test_source_sync
+        source = tempfile()
+        dest = tempfile()
+
+        file = Puppet::Type.newfile :path => dest, :source => source,
+            :title => "copier"
+        state = file.state(:source)
+        
+        File.open(source, "w") { |f| f.puts "yay" }
+        
+        file.retrieve
+        assert(! state.insync?, "source thinks it's in sync")
+        
+        event = nil
+        assert_nothing_raised do
+            event = state.sync
+        end
+        assert_equal(:file_created, event)
+        assert_equal(File.read(source), File.read(dest),
+            "File was not copied correctly")
+        
+        # Now write something different
+        File.open(source, "w") { |f| f.puts "rah" }
+        file.retrieve
+        assert(! state.insync?, "source should be out of sync")
+        assert_nothing_raised do
+            event = state.sync
+        end
+        assert_equal(:file_changed, event)
+        assert_equal(File.read(source), File.read(dest),
+            "File was not copied correctly")
+    end
+    
+    # XXX This test doesn't cover everything.  Specifically,
+    # it doesn't handle 'ignore' and 'links'.
+    def test_sourcerecurse
+        source, dest, sourcefile, destfile = mk_sourcetree
+        
+        # The sourcerecurse method will only ever get called when we're
+        # recursing, so we go ahead and set it.
+        obj = Puppet::Type.newfile :source => source, :path => dest, :recurse => true
+
+        result = nil
+        assert_nothing_raised do
+            result = obj.sourcerecurse(true)
+        end
+        dfileobj = @file[destfile]
+        assert(dfileobj, "Did not create destfile object")
+        assert_equal([dfileobj], result)
+        
+        # Clean this up so it can be recreated
+        dfileobj.remove
+        
+        # Make sure we correctly iterate over the sources
+        nosource = tempfile()
+        obj[:source] = [nosource, source]
+
+        result = nil
+        assert_nothing_raised do
+            result = obj.sourcerecurse(true)
+        end
+        dfileobj = @file[destfile]
+        assert(dfileobj, "Did not create destfile object with a missing source")
+        assert_equal([dfileobj], result)
+        dfileobj.remove
+        
+        # Lastly, make sure we return an empty array when no sources are there
+        obj[:source] = [nosource, tempfile()]
+        
+        assert_nothing_raised do
+            result = obj.sourcerecurse(true)
+        end
+        assert_equal([], result, "Sourcerecurse failed when all sources are missing")
+    end
 
     def test_simplelocalsource
         path = tempfile()
-        @@tmpfiles.push path
         FileUtils.mkdir_p path
         frompath = File.join(path,"source")
         topath = File.join(path,"dest")
@@ -85,7 +330,19 @@ class TestFileSources < Test::Unit::TestCase
         from = File.open(frompath) { |o| o.read }
         to = File.open(topath) { |o| o.read }
         assert_equal(from,to)
-        @@tmpfiles.push path
+    end
+    
+    # Make sure a simple recursive copy works
+    def test_simple_recursive_source
+        source, dest, sourcefile, destfile = mk_sourcetree
+        
+        file = Puppet::Type.newfile :path => dest, :source => source, :recurse => true
+        
+        assert_events([:directory_created, :file_created], file)
+        
+        assert(FileTest.directory?(dest), "Dest dir was not created")
+        assert(FileTest.file?(destfile), "dest file was not created")
+        assert_equal("yay\n", File.read(destfile), "dest file was not copied correctly")
     end
 
     def recursive_source_test(fromdir, todir)
@@ -110,17 +367,16 @@ class TestFileSources < Test::Unit::TestCase
 
     def run_complex_sources(networked = false)
         path = tempfile()
-        @@tmpfiles.push path
 
         # first create the source directory
         FileUtils.mkdir_p path
-
 
         # okay, let's create a directory structure
         fromdir = File.join(path,"fromdir")
         Dir.mkdir(fromdir)
         FileUtils.cd(fromdir) {
-            mkranddirsandfiles()
+            File.open("one", "w") { |f| f.puts "onefile"}
+            File.open("two", "w") { |f| f.puts "twofile"}
         }
 
         todir = File.join(path, "todir")
@@ -130,28 +386,36 @@ class TestFileSources < Test::Unit::TestCase
         end
         recursive_source_test(source, todir)
 
-        return [fromdir,todir]
+        return [fromdir,todir, File.join(todir, "one"), File.join(todir, "two")]
     end
 
     def test_complex_sources_twice
-        fromdir, todir = run_complex_sources
+        fromdir, todir, one, two = run_complex_sources
         assert_trees_equal(fromdir,todir)
+        recursive_source_test(fromdir, todir)
+        assert_trees_equal(fromdir,todir)
+        # Now remove the whole tree and try it again.
+        [one, two].each do |f| File.unlink(f) end
+        Dir.rmdir(todir)
         recursive_source_test(fromdir, todir)
         assert_trees_equal(fromdir,todir)
     end
 
     def test_sources_with_deleted_destfiles
-        fromdir, todir = run_complex_sources
-        # then delete some files
+        fromdir, todir, one, two = run_complex_sources
         assert(FileTest.exists?(todir))
-        missing_files = delete_random_files(todir)
+        
+        # We shouldn't have a 'two' file object in memory
+        assert_nil(@file[two], "object for 'two' is still in memory")
 
+        # then delete a file
+        File.unlink(two)
+
+        puts "yay"
         # and run
         recursive_source_test(fromdir, todir)
 
-        missing_files.each { |file|
-            assert(FileTest.exists?(file), "Deleted file %s is still missing" % file)
-        }
+        assert(FileTest.exists?(two), "Deleted file was not recopied")
 
         # and make sure they're still equal
         assert_trees_equal(fromdir,todir)

@@ -491,7 +491,7 @@ class State < Puppet::Parameter
 
         def change_to_s
             begin
-                if @is == :absent
+                if @is == :absent or @is.nil?
                     return "created"
                 elsif self.should == :absent
                     return "removed"

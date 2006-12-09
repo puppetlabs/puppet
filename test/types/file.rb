@@ -30,6 +30,7 @@ class TestFile < Test::Unit::TestCase
 
     def setup
         super
+        @file = Puppet::Type.type(:file)
         begin
             initstorage
         rescue
@@ -489,11 +490,173 @@ class TestFile < Test::Unit::TestCase
             Puppet::Type.allclear
         }
     end
-
+    
+    def test_localrecurse
+        # Create a test directory
+        path = tempfile()
+        dir = @file.create :path => path, :mode => 0755, :recurse => true
+        
+        Dir.mkdir(path)
+        
+        # Make sure we return nothing when there are no children
+        ret = nil
+        assert_nothing_raised() { ret = dir.localrecurse(true) }
+        assert_equal([], ret, "empty dir returned children")
+        
+        # Now make a file and make sure we get it
+        test = File.join(path, "file")
+        File.open(test, "w") { |f| f.puts "yay" }
+        assert_nothing_raised() { ret = dir.localrecurse(true) }
+        fileobj = @file[test]
+        assert(fileobj, "child object was not created")
+        assert_equal([fileobj], ret, "child object was not returned")
+        
+        # check that the file lists us as a dependency
+        assert_equal([[:file, dir.title]], fileobj[:require], "dependency was not set up")
+        
+        # And that it inherited our recurse setting
+        assert_equal(true, fileobj[:recurse], "file did not inherit recurse")
+        
+        # Make sure it's not returned again
+        assert_nothing_raised() { ret = dir.localrecurse(true) }
+        assert_equal([], ret, "child object was returned twice")
+        
+        # Now just for completion, make sure we will return many files
+        files = []
+        10.times do |i|
+            f = File.join(path, i.to_s)
+            files << f
+            File.open(f, "w") do |o| o.puts "" end
+        end
+        assert_nothing_raised() { ret = dir.localrecurse(true) }
+        assert_equal(files.sort, ret.collect { |f| f.title }, "child object was returned twice")
+        
+        # Clean everything up and start over
+        files << test
+        files.each do |f| File.unlink(f) end
+        
+        # Now make sure we correctly ignore things
+        dir[:ignore] = "*.out"
+        bad = File.join(path, "test.out")
+        good = File.join(path, "yayness")
+        [good, bad].each do |f|
+            File.open(f, "w") { |o| o.puts "" }
+        end
+        
+        assert_nothing_raised() { ret = dir.localrecurse(true) }
+        assert_equal([good], ret.collect { |f| f.title }, "ignore failed")
+        
+        # Now make sure purging works
+        dir[:purge] = true
+        dir[:ignore] = "svn"
+        
+        assert_nothing_raised() { ret = dir.localrecurse(true) }
+        assert_equal([bad], ret.collect { |f| f.title }, "purge failed")
+        
+        badobj = @file[bad]
+        assert(badobj, "did not create bad object")
+        assert_equal(:absent, badobj.should(:ensure), "ensure was not set to absent on bad object")
+    end
+    
+    def test_recurse
+        basedir = tempfile()
+        FileUtils.mkdir_p(basedir)
+        
+        # Create our file
+        dir = nil
+        assert_nothing_raised {
+            dir = Puppet.type(:file).create(
+                :path => basedir,
+                :check => %w{owner mode group}
+            )
+        }
+        
+        return_nil = false
+        
+        # and monkey-patch it
+        [:localrecurse, :sourcerecurse, :linkrecurse].each do |m|
+            dir.meta_def(m) do |recurse|
+                if return_nil # for testing nil return, of course
+                    return nil
+                else
+                    return [recurse]
+                end
+            end
+        end
+        
+        # First try it with recurse set to false
+        dir[:recurse] = false
+        assert_nothing_raised do
+            assert_nil(dir.recurse)
+        end
+        
+        # Now try it with the different valid positive values
+        [true, "true", "inf", 50].each do |value|
+            assert_nothing_raised { dir[:recurse] = value}
+            
+            # Now make sure the methods are called appropriately
+            ret = nil
+            assert_nothing_raised do
+                ret = dir.recurse
+            end
+            
+            # We should only call the localrecurse method, so make sure
+            # that's the case
+            if value == 50
+                # Make sure our counter got decremented
+                assert_equal([49], ret, "did not call localrecurse")
+            else
+                assert_equal([true], ret, "did not call localrecurse")
+            end
+        end
+        
+        # Make sure it doesn't recurse when we've set recurse to false
+        [false, "false"].each do |value|
+            assert_nothing_raised { dir[:recurse] = value }
+            
+            ret = nil
+            assert_nothing_raised() { ret = dir.recurse }
+            assert_nil(ret)
+        end
+        dir[:recurse] = true
+        
+        # Now add a target, so we do the linking thing
+        dir[:target] = tempfile()
+        ret = nil
+        assert_nothing_raised { ret = dir.recurse }
+        assert_equal([true, true], ret, "did not call linkrecurse")
+        
+        # And add a source, and make sure we call that
+        dir[:source] = tempfile()
+        assert_nothing_raised { ret = dir.recurse }
+        assert_equal([true, true, true], ret, "did not call linkrecurse")
+        
+        # Lastly, make sure we correctly handle returning nil
+        return_nil = true
+        assert_nothing_raised { ret = dir.recurse }
+    end
+    
+    def test_recurse?
+        file = Puppet::Type.type(:file).create :path => tempfile
+        
+        # Make sure we default to false
+        assert(! file.recurse?, "Recurse defaulted to true")
+        
+        [true, "true", 10, "inf"].each do |value|
+            file[:recurse] = value
+            assert(file.recurse?, "%s did not cause recursion" % value)
+        end
+        
+        [false, "false", 0].each do |value|
+            file[:recurse] = value
+            assert(! file.recurse?, "%s caused recursion" % value)
+        end
+    end
+    
     def test_recursion
         basedir = tempfile()
-        subdir = File.join(basedir, "this", "is", "sub", "dir")
-        tmpfile = File.join(subdir,"testing")
+        subdir = File.join(basedir, "subdir")
+        tmpfile = File.join(basedir,"testing")
         FileUtils.mkdir_p(subdir)
 
         dir = nil
@@ -505,65 +668,31 @@ class TestFile < Test::Unit::TestCase
                     :check => %w{owner mode group}
                 )
             }
+            
+            children = nil
 
             assert_nothing_raised {
-                dir.evaluate
+                children = dir.eval_generate
             }
-
-            subobj = nil
-            assert_nothing_raised {
-                subobj = Puppet.type(:file)[subdir]
-            }
-
-            assert(subobj, "Could not retrieve %s object" % subdir)
+            
+            assert_equal([subdir], children.collect {|c| c.title },
+                "Incorrect generated children")
+            
+            dir.class[subdir].remove
 
             File.open(tmpfile, "w") { |f| f.puts "yayness" }
-
-            dir.evaluate
-
-            file = nil
+            
             assert_nothing_raised {
-                file = Puppet.type(:file)[tmpfile]
+                children = dir.eval_generate
             }
 
-            assert(file, "Could not retrieve %s object" % tmpfile)
+            assert_equal([subdir, tmpfile].sort, children.collect {|c| c.title }.sort,
+                "Incorrect generated children")
+            
+            File.unlink(tmpfile)
             #system("rm -rf %s" % basedir)
             Puppet.type(:file).clear
         end
-    end
-
-=begin
-    def test_ignore
-
-    end
-=end
-
-    # XXX disabled until i change how dependencies work
-    def disabled_test_recursionwithcreation
-        path = "/tmp/this/directory/structure/does/not/exist"
-        @@tmpfiles.push "/tmp/this"
-
-        file = nil
-        assert_nothing_raised {
-            file = mkfile(
-                :name => path,
-                :recurse => true,
-                :ensure => "file"
-            )
-        }
-
-        trans = nil
-        comp = newcomp("recursewithfiles", file) 
-        assert_nothing_raised {
-            trans = comp.evaluate
-        }
-
-        events = nil
-        assert_nothing_raised {
-            events = trans.evaluate.collect { |e| e.event.to_s }
-        }
-
-        puts "events are %s" % events.join(",  ")
     end
 
     def test_filetype_retrieval
@@ -621,7 +750,7 @@ class TestFile < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            dir.retrieve
+            dir.eval_generate
         }
 
         obj = nil
@@ -645,7 +774,7 @@ class TestFile < Test::Unit::TestCase
     def test_path
         dir = tempfile()
 
-        path = File.join(dir, "and", "a", "sub", "dir")
+        path = File.join(dir, "subdir")
 
         assert_nothing_raised("Could not make file") {
             FileUtils.mkdir_p(File.dirname(path))
@@ -663,7 +792,7 @@ class TestFile < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            dirobj.evaluate
+            dirobj.generate
         }
 
         assert_nothing_raised {
@@ -968,10 +1097,57 @@ class TestFile < Test::Unit::TestCase
         assert_events([], file)
         assert_events([], file)
     end
+    
+    def test_linkrecurse
+        dest = tempfile()
+        link = @file.create :path => tempfile(), :recurse => true, :ensure => dest
+        
+        ret = nil
+        
+        # Start with nothing, just to make sure we get nothing back
+        assert_nothing_raised { ret = link.linkrecurse(true) }
+        assert_nil(ret, "got a return when the dest doesn't exist")
+        
+        # then with a directory with only one file
+        Dir.mkdir(dest)
+        one = File.join(dest, "one")
+        File.open(one, "w") { |f| f.puts "" }
+        link[:ensure] = dest
+        assert_nothing_raised { ret = link.linkrecurse(true) }
+        
+        assert_equal(:directory, link.should(:ensure), "ensure was not set to directory")
+        assert_equal([File.join(link.title, "one")], ret.collect { |f| f.title },
+            "Did not get linked file")
+        oneobj = @file[File.join(link.title, "one")]
+        assert_equal(one, oneobj.should(:target), "target was not set correctly")
+        
+        oneobj.remove
+        File.unlink(one)
+        
+        # Then make sure we get multiple files
+        returns = []
+        5.times do |i|
+            path = File.join(dest, i.to_s)
+            returns << File.join(link.title, i.to_s)
+            File.open(path, "w") { |f| f.puts "" }
+        end
+        assert_nothing_raised { ret = link.linkrecurse(true) }
+
+        assert_equal(returns.sort, ret.collect { |f| f.title },
+            "Did not get links back")
+        
+        returns.each do |path|
+            obj = @file[path]
+            assert(path, "did not get obj for %s" % path)
+            sdest = File.join(dest, File.basename(path))
+            assert_equal(sdest, obj.should(:target),
+                "target was not set correctly for %s" % path)
+        end
+    end
 
     def test_simplerecursivelinking
         source = tempfile()
-        dest = tempfile()
+        path = tempfile()
         subdir = File.join(source, "subdir")
         file = File.join(subdir, "file")
 
@@ -982,20 +1158,21 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised {
             link = Puppet.type(:file).create(
                 :ensure => source,
-                :path => dest,
+                :path => path,
                 :recurse => true
             )
         }
 
         assert_apply(link)
 
-        subdest = File.join(dest, "subdir")
-        linkpath = File.join(subdest, "file")
-        assert(File.directory?(dest), "dest is not a dir")
-        assert(File.directory?(subdest), "subdest is not a dir")
+        sublink = File.join(path, "subdir")
+        linkpath = File.join(sublink, "file")
+        assert(File.directory?(path), "dest is not a dir")
+        assert(File.directory?(sublink), "subdest is not a dir")
         assert(File.symlink?(linkpath), "path is not a link")
         assert_equal(file, File.readlink(linkpath))
 
+        assert_nil(@file[sublink], "objects were not removed")
         assert_events([], link)
     end
 
@@ -1077,12 +1254,14 @@ class TestFile < Test::Unit::TestCase
         objects = []
         objects << Puppet.type(:exec).create(
             :command => "mkdir %s; touch %s/file" % [source, source],
+            :title => "yay",
             :path => ENV["PATH"]
         )
         objects << Puppet.type(:file).create(
             :ensure => source,
             :path => dest,
-            :recurse => true
+            :recurse => true,
+            :require => objects[0]
         )
 
         assert_apply(*objects)
@@ -1371,7 +1550,7 @@ class TestFile < Test::Unit::TestCase
         assert_equal("yayness", File.read(path), "Content did not get set correctly")
     end
 
-    # Make sure unmanaged files can be purged.
+    # Make sure unmanaged files are be purged.
     def test_purge
         sourcedir = tempfile()
         destdir = tempfile()
@@ -1386,11 +1565,11 @@ class TestFile < Test::Unit::TestCase
         File.open(randfile, "w") { |f| f.puts "footest" }
 
         lfobj = Puppet::Type.newfile(:path => localfile, :content => "rahtest")
+        
 
         destobj = Puppet::Type.newfile(:path => destdir,
                                     :source => sourcedir,
                                     :recurse => true)
-
 
         assert_apply(lfobj, destobj)
 

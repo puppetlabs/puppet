@@ -28,6 +28,9 @@ class Server
 
         def allowed?(name, ip)
             if name or ip
+                # This is probably unnecessary, and can cause some weirdnesses in
+                # cases where we're operating over localhost but don't have a real
+                # IP defined.
                 unless name and ip
                     raise Puppet::DevError, "Name and IP must be passed to 'allowed?'"
                 end

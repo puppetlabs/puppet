@@ -174,18 +174,7 @@ module Puppet
 
         # Autorequire any parent directories.
         autorequire(:file) do
-            cur = []
-            pary = self[:path].split(File::SEPARATOR)
-            pary.shift # remove the initial nil
-            pary.pop   # remove us
-
-            pary.inject([""]) do |ary, dir|
-                ary << dir
-                cur << ary.join(File::SEPARATOR)
-                ary
-            end
-
-            cur
+            File.dirname(self[:path])
         end
 
         # Autorequire the owner and group of the file.
@@ -284,6 +273,11 @@ module Puppet
                 end
             end
             super
+        end
+        
+        # Create any children via recursion or whatever.
+        def eval_generate
+            recurse()
         end
 
         # Deal with backups.
@@ -413,12 +407,14 @@ module Puppet
             @arghash = tmphash
             @arghash.delete(self.class.namevar)
 
-            if @arghash.include?(:source)
-                @arghash.delete(:source)
+            [:source, :parent].each do |param|
+                if @arghash.include?(param)
+                    @arghash.delete(param)
+                end
             end
 
-            if @arghash.include?(:parent)
-                @arghash.delete(:parent)
+            if @arghash[:target]
+                warning "%s vs %s" % [@arghash[:ensure], @arghash[:target]]
             end
 
             @stat = nil
@@ -435,15 +431,11 @@ module Puppet
 
             targetstat = nil
             unless FileTest.exist?(target)
-                #self.info "%s does not exist; not recursing" %
-                #    target
                 return
             end
             # Now stat our target
             targetstat = File.send(method, target)
             unless targetstat.ftype == "directory"
-                #self.info "%s is not a directory; not recursing" %
-                #    target
                 return
             end
 
@@ -458,10 +450,10 @@ module Puppet
 
             children = Dir.entries(target).reject { |d| d =~ /^\.+$/ }
          
-            #Get rid of ignored children
+            # Get rid of ignored children
             if @parameters.include?(:ignore)
                 children = handleignore(children)
-            end  
+            end
 
             added = []
             children.each do |file|
@@ -476,13 +468,12 @@ module Puppet
                     }
 
                     if child = self.newchild(file, true, args)
-                        unless @children.include?(child)
-                            self.push child
-                            added.push file
-                        end
+                        added << child
                     end
                 end
             end
+            
+            added
         end
 
         # Build up a recursive map of what's around right now
@@ -503,7 +494,7 @@ module Puppet
             #Get rid of ignored children
             if @parameters.include?(:ignore)
                 children = handleignore(children)
-            end  
+            end
 
             added = []
             children.each { |file|
@@ -514,16 +505,17 @@ module Puppet
                 if child = self.newchild(file, true, options)
                     # Mark any unmanaged files for removal if purge is set.
                     # Use the array rather than [] because tidy uses this method, too.
-                    if @parameters.include?(:purge) and self[:purge] == :true and child.implicit?
+                    if @parameters.include?(:purge) and self.purge?
+                        info "purging %s" % child.ref
                         child[:ensure] = :absent
+                    else
+                        child[:require] = self
                     end
-
-                    unless @children.include?(child)
-                        self.push child
-                        added.push file
-                    end
+                    added << child
                 end
             }
+            
+            added
         end
         
         # Create a new file or directory object as a child to the current
@@ -574,13 +566,13 @@ module Puppet
             else
                 klass = self.class
             end
-
+            
             # The child might already exist because 'localrecurse' runs
             # before 'sourcerecurse'.  I could push the override stuff into
             # a separate method or something, but the work is the same other
             # than this last bit, so it doesn't really make sense.
             if child = klass[path]
-                unless @children.include?(child)
+                unless child.parent.object_id == self.object_id
                     self.debug "Not managing more explicit file %s" %
                         path
                     return nil
@@ -599,6 +591,7 @@ module Puppet
                         end
                     }
                 end
+                return nil
             else # create it anew
                 #notice "Creating new file with args %s" % args.inspect
                 args[:parent] = self
@@ -609,7 +602,6 @@ module Puppet
                     if child.nil?
                         return nil
                     end
-                    @children << child
                 rescue Puppet::Error => detail
                     self.notice(
                         "Cannot manage: %s" %
@@ -629,6 +621,9 @@ module Puppet
             return child
         end
 
+        # Files handle paths specially, because they just lengthen their
+        # path names, rather than including the full parent's title each
+        # time.
         def pathbuilder
             if defined? @parent
                 # We only need to behave specially when our parent is also
@@ -658,40 +653,53 @@ module Puppet
                 end
             end
         end
+        
+        # Should we be purging?
+        def purge?
+            @parameters.include?(:purge) and (self[:purge] == :true or self[:purge] == "true")
+        end
 
         # Recurse into the directory.  This basically just calls 'localrecurse'
-        # and maybe 'sourcerecurse'.
+        # and maybe 'sourcerecurse', returning the collection of generated
+        # files.
         def recurse
+            # are we at the end of the recursion?
+            unless self.recurse?
+                return
+            end
+
             recurse = self[:recurse]
             # we might have a string, rather than a number
             if recurse.is_a?(String)
                 if recurse =~ /^[0-9]+$/
                     recurse = Integer(recurse)
-                #elsif recurse =~ /^inf/ # infinite recursion
                 else # anything else is infinite recursion
                     recurse = true
                 end
             end
 
-            # are we at the end of the recursion?
-            #if recurse == 0
-            unless self.recurse?
-                return
-            end
-
             if recurse.is_a?(Integer)
                 recurse -= 1
             end
-
-            self.localrecurse(recurse)
-            if @states.include? :target
-                self.linkrecurse(recurse)
+            
+            children = []
+            
+            # We want to do link-recursing before normal recursion so that all
+            # of the target stuff gets copied over correctly.
+            if @states.include? :target and ret = self.linkrecurse(recurse)
+                children += ret
             end
-            if @states.include?(:source)
-                self.sourcerecurse(recurse)
+            if ret = self.localrecurse(recurse)
+                children += ret
             end
+            if @states.include?(:source) and ret = self.sourcerecurse(recurse)
+                children += ret
+            end
+            
+            children
         end
 
+        # A simple method for determining whether we should be recursing.
         def recurse?
             return false unless @parameters.include?(:recurse)
 
@@ -767,96 +775,78 @@ module Puppet
 
         # a wrapper method to make sure the file exists before doing anything
         def retrieve
-            if @states.include?(:source)
-                # This probably isn't the best place for it, but we need
-                # to make sure that we have a corresponding checksum state.
-                unless @states.include?(:checksum)
-                    self[:checksum] = "md5"
-                end
-
-                # We have to retrieve the source info before the recursion happens,
-                # although I'm not exactly clear on why.
-                @states[:source].retrieve
-            end
-
-            if @parameters.include?(:recurse)
-                self.recurse
-            end
-
             unless stat = self.stat(true)
                 self.debug "File does not exist"
                 @states.each { |name,state|
                     # We've already retrieved the source, and we don't
                     # want to overwrite whatever it did.  This is a bit
                     # of a hack, but oh well, source is definitely special.
-                    next if name == :source
+                    # next if name == :source
                     state.is = :absent
                 }
+                
+                # If the file doesn't exist but we have a source, then call
+                # retrieve on that state
+                if @states.include?(:source)
+                    @states[:source].retrieve
+                end
 
                 return
             end
 
             states().each { |state|
-                # We don't want to call 'describe()' twice, so only do a local
-                # retrieve on the source.
-                if state.name == :source
-                    state.retrieve(false)
-                else
-                    state.retrieve
-                end
+                state.retrieve
             }
         end
 
         # This recurses against the remote source and makes sure the local
-        # and remote structures match.  It's run after 'localrecurse'.
+        # and remote structures match.  It's run after 'localrecurse'.  This
+        # method only does anything when its corresponding remote entry is
+        # a directory; in that case, this method creates file objects that
+        # correspond to any contained remote files.
         def sourcerecurse(recurse)
-            # FIXME sourcerecurse should support purging non-remote files
-            source = @states[:source].source
-
-            unless ! source.nil? and source !~ /^\s*$/
-                self.notice "source %s does not exist" % @states[:source].should
-                return nil
-            end
-            
-            sourceobj, path = uri2obj(source)
-
             # we'll set this manually as necessary
             if @arghash.include?(:ensure)
                 @arghash.delete(:ensure)
             end
-
-            # okay, we've got our source object; now we need to
-            # build up a local file structure to match the remote
-            # one
-
-            server = sourceobj.server
-            sum = "md5"
-            if state = self.state(:checksum)
-                sum = state.should
-            end
+            
             r = false
             if recurse
                 unless recurse == 0
                     r = 1
                 end
             end
-
+            
             ignore = self[:ignore]
 
-            desc = server.list(path, self[:links], r, ignore)
+            @states[:source].should.each do |source|
+                sourceobj, path = uri2obj(source)
 
-            # Now create a new child for every file returned in the list.
-            desc.split("\n").each { |line|
-                file, type = line.split("\t")
-                next if file == "/" # skip the listing object
-                name = file.sub(/^\//, '')
-                args = {:source => source + file}
-                if type == file
-                    args[:recurse] = nil
+                # okay, we've got our source object; now we need to
+                # build up a local file structure to match the remote
+                # one
+
+                server = sourceobj.server
+
+                desc = server.list(path, self[:links], r, ignore)
+                if desc == "" 
+                    next
                 end
+            
+                # Now create a new child for every file returned in the list.
+                return desc.split("\n").collect { |line|
+                    file, type = line.split("\t")
+                    next if file == "/" # skip the listing object
+                    name = file.sub(/^\//, '')
+                    args = {:source => source + file}
+                    if type == file
+                        args[:recurse] = nil
+                    end
 
-                self.newchild(name, false, args)
-            }
+                    self.newchild(name, false, args)
+                }.reject {|c| c.nil? }.each do |f| f.info "sourced" end
+            end
+            return []
         end
 
         # Set the checksum, from another state.  There are multiple states that

@@ -80,10 +80,7 @@ class Puppet::Type
         end
         self.class.delete(self)
 
-        if defined? @parent and @parent
-            @parent.delete(self)
-            @parent = nil
-        end
+        @parent = nil
 
         # Remove the reference to the provider.
         if self.provider

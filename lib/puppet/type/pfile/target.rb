@@ -59,8 +59,6 @@ module Puppet
                             (tstat = File.lstat(should)) and
                             (tstat.ftype == "directory") and
                             @parent.recurse?
-                        warning "Changing ensure to directory; recurse is %s but %s" %
-                            [@parent[:recurse].inspect, @parent.recurse?]
                         @parent[:ensure] = :directory
                         @is = should
                         @linkmaker = true

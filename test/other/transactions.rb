@@ -11,6 +11,21 @@ require 'puppettest/support/resources'
 class TestTransactions < Test::Unit::TestCase
     include PuppetTest::FileTesting
     include PuppetTest::Support::Resources
+    
+    def mkgenerator(&block)
+        # Create a bogus type that generates new instances with shorter
+        type = Puppet::Type.newtype(:generator) do
+            newparam(:name, :namevar => true)
+        end
+        if block
+            type.class_eval(&block)
+        end
+        cleanup do
+            Puppet::Type.rmtype(:generator)
+        end
+        
+        return type
+    end
 
     def test_reports
         path1 = tempfile()
@@ -541,21 +556,18 @@ class TestTransactions < Test::Unit::TestCase
         graph.to_jpg("normal_relations")
     end
     
+    # Test pre-evaluation generation
     def test_generate
-        # Create a bogus type that generates new instances with shorter
-        Puppet::Type.newtype(:generator) do
-            newparam(:name, :namevar => true)
-            
+        mkgenerator() do
             def generate
                 ret = []
                 if title.length > 1
                     ret << self.class.create(:title => title[0..-2])
+                else
+                    return nil
                 end
                 ret
             end
-        end
-        cleanup do
-            Puppet::Type.rmtype(:generator)
         end
         
         yay = Puppet::Type.newgenerator :title => "yay"
@@ -571,6 +583,184 @@ class TestTransactions < Test::Unit::TestCase
             assert(trans.resources.vertex?(Puppet::Type.type(:generator)[name]),
                 "Generated %s was not a vertex" % name)
         end
+        
+        # Now make sure that cleanup gets rid of those generated types.
+        assert_nothing_raised do
+            trans.cleanup
+        end
+        
+        %w{ya ra y r}.each do |name|
+            assert(!trans.resources.vertex?(Puppet::Type.type(:generator)[name]),
+                "Generated vertex %s was not removed from graph" % name)
+            assert_nil(Puppet::Type.type(:generator)[name],
+                "Generated vertex %s was not removed from class" % name)
+        end
+    end
+    
+    # Test mid-evaluation generation.
+    def test_eval_generate
+        $evaluated = {}
+        type = mkgenerator() do
+            def eval_generate
+                ret = []
+                if title.length > 1
+                    ret << self.class.create(:title => title[0..-2])
+                else
+                    return nil
+                end
+                ret
+            end
+            
+            def evaluate
+                $evaluated[self.title] = true
+                return []
+            end
+        end
+
+        yay = Puppet::Type.newgenerator :title => "yay"
+        rah = Puppet::Type.newgenerator :title => "rah", :subscribe => yay
+        comp = newcomp(yay, rah)
+        trans = comp.evaluate
+        
+        trans.prepare
+        
+        # Now apply the resources, and make sure they appropriately generate
+        # things.
+        assert_nothing_raised("failed to apply yay") do
+            trans.apply(yay)
+        end
+        ya = type["ya"]
+        assert(ya, "Did not generate ya")
+        assert(trans.relgraph.vertex?(ya),
+            "Did not add ya to rel_graph")
+        
+        # Now make sure the appropriate relationships were added
+        assert(trans.relgraph.edge?(yay, ya),
+            "parent was not required by child")
+        assert(trans.relgraph.edge?(ya, rah),
+            "rah was not subscribed to ya")
+        
+        # And make sure the relationship is a subscription with a callback,
+        # not just a require.
+        assert_equal({:callback => :refresh, :event => :ALL_EVENTS},
+            trans.relgraph[Puppet::Relationship.new(ya, rah)],
+            "The label was not retained")
+        
+        # Now make sure it in turn eval_generates appropriately
+        assert_nothing_raised("failed to apply yay") do
+            trans.apply(type["ya"])
+        end
+
+        %w{y}.each do |name|
+            res = type[name]
+            assert(res, "Did not generate %s" % name)
+            assert(trans.relgraph.vertex?(res),
+                "Did not add %s to rel_graph" % name)
+        end
+        
+        assert_nothing_raised("failed to eval_generate with nil response") do
+            trans.apply(type["y"])
+        end
+        
+        assert_equal(%w{yay ya y rah}, trans.sorted_resources.collect { |r| r.title },
+            "Did not eval_generate correctly")
+            
+        assert_nothing_raised("failed to apply rah") do
+            trans.apply(rah)
+        end
+
+        ra = type["ra"]
+        assert(ra, "Did not generate ra")
+        assert(trans.relgraph.vertex?(ra),
+            "Did not add ra to rel_graph" % name)
+        
+        # Now make sure this generated resource has the same relationships as the generating
+        # resource
+        assert(trans.relgraph.edge?(yay, ra),
+            "yay is not required by ra")
+        assert(trans.relgraph.edge?(ya, ra),
+            "ra is not subscribed to ya")
+        
+        # And make sure the relationship is a subscription with a callback,
+        # not just a require.
+        assert_equal({:callback => :refresh, :event => :ALL_EVENTS},
+            trans.relgraph[Puppet::Relationship.new(ya, ra)],
+            "The label was not retained")
+        
+        # Now make sure that cleanup gets rid of those generated types.
+        assert_nothing_raised do
+            trans.cleanup
+        end
+        
+        %w{ya ra y r}.each do |name|
+            assert(!trans.relgraph.vertex?(type[name]),
+                "Generated vertex %s was not removed from graph" % name)
+            assert_nil(type[name],
+                "Generated vertex %s was not removed from class" % name)
+        end
+        
+        # Now, start over and make sure that everything gets evaluated.
+        trans = comp.evaluate
+        assert_nothing_raised do
+            trans.evaluate
+        end
+        
+        assert_equal(%w{yay ya y rah ra r}.sort, $evaluated.keys.sort,
+            "Not all resources were evaluated")
+    end
+    
+    def test_tags
+        res = Puppet::Type.newfile :path => tempfile()
+        comp = newcomp(res)
+        
+        # Make sure they default to none
+        assert_equal([], comp.evaluate.tags)
+        
+        # Make sure we get the main tags
+        Puppet[:tags] = %w{this is some tags}
+        assert_equal(%w{this is some tags}, comp.evaluate.tags)
+        
+        # And make sure they get processed correctly
+        Puppet[:tags] = ["one", "two,three", "four"]
+        assert_equal(%w{one two three four}, comp.evaluate.tags)
+        
+        # lastly, make sure we can override them
+        trans = comp.evaluate
+        trans.tags = ["one", "two,three", "four"]
+        assert_equal(%w{one two three four}, comp.evaluate.tags)
+    end
+    
+    def test_tagged?
+        res = Puppet::Type.newfile :path => tempfile()
+        comp = newcomp(res)
+        trans = comp.evaluate
+        
+        assert(trans.tagged?(res), "tagged? defaulted to false")
+        
+        # Now set some tags
+        trans.tags = %w{some tags}
+        
+        # And make sure it's false
+        assert(! trans.tagged?(res), "matched invalid tags")
+        
+        # Set ignoretags and make sure it sticks
+        trans.ignoretags = true
+        assert(trans.tagged?(res), "tags were not ignored")
+        
+        # Now make sure we actually correctly match tags
+        res[:tag] = "mytag"
+        trans.ignoretags = false
+        trans.tags = %w{notag}
+        
+        assert(! trans.tagged?(res), "tags incorrectly matched")
+        
+        trans.tags = %w{mytag yaytag}
+        assert(trans.tagged?(res), "tags should have matched")
+        
+    end
+    
+    # Make sure events propagate down the relationship graph appropriately.
+    def test_trigger
     end
 end
 

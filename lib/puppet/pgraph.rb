@@ -11,6 +11,9 @@ require 'puppet/relationship'
 # This class subclasses a graph class in order to handle relationships
 # among resources.
 class Puppet::PGraph < GRATR::Digraph
+    # This is the type used for splicing.
+    attr_accessor :container_type
+    
     # The dependencies for a given resource.
     def dependencies(resource)
         tree_from_vertex(resource, :dfs).keys

@@ -493,7 +493,7 @@ class TestFileServer < Test::Unit::TestCase
         # create a server with the file
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
-                :Local => true,
+                :Local => false,
                 :Config => conffile
             )
         }
@@ -658,7 +658,7 @@ class TestFileServer < Test::Unit::TestCase
         # start our server with a fast timeout
         assert_nothing_raised {
             server = Puppet::Server::FileServer.new(
-                :Local => true,
+                :Local => false,
                 :Config => conffile
             )
         }
@@ -968,6 +968,7 @@ allow *
 
     end
 
+    # Test that the fileserver expands the %h and %d things.
     def test_fileserver_expansion
         server = nil
         assert_nothing_raised {

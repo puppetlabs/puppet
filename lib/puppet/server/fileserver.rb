@@ -126,6 +126,10 @@ class Server
                 sub.join("\t")
             }.join("\n")
         end
+        
+        def local?
+            self.local
+        end
 
         # Mount a new directory with a name.
         def mount(path, name)
@@ -188,6 +192,11 @@ class Server
         private
 
         def authcheck(file, mount, client, clientip)
+            # If we're local, don't bother passing in information.
+            if local?
+                client = nil
+                clientip = nil
+            end
             unless mount.allowed?(client, clientip)
                 mount.warning "%s cannot access %s" %
                     [client, file]
@@ -482,12 +491,6 @@ class Server
                     @path = nil
                 end
 
-                @comp = Puppet.type(:component).create(
-                    :name => "mount[#{name}]"
-                )
-                #@comp.type = "mount"
-                #@comp.name = name
-
                 super()
             end
 
@@ -504,8 +507,6 @@ class Server
                         :name => path,
                         :check => CHECKPARAMS
                     )
-
-                    @comp.push(obj)
                 end
 
                 if links == :manage
