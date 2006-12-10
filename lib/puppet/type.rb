@@ -396,17 +396,10 @@ end
 require 'puppet/statechange'
 require 'puppet/provider'
 require 'puppet/type/component'
-require 'puppet/type/cron'
-require 'puppet/type/exec'
-require 'puppet/type/group'
-require 'puppet/type/package'
 require 'puppet/type/pfile'
 require 'puppet/type/pfilebucket'
-require 'puppet/type/schedule'
-require 'puppet/type/service'
-require 'puppet/type/user'
 require 'puppet/type/tidy'
-require 'puppet/type/parsedtype'
-require 'puppet/type/notify'
+
+
 
 # $Id$

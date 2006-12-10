@@ -94,8 +94,8 @@ module Puppet
                         Puppet.debug "Reraising %s" % detail
                         raise
                     rescue => detail
-                        raise Puppet::DevError, "Munging failed for class %s: %s" %
-                            [self.name, detail], detail.backtrace
+                        raise Puppet::DevError, "Munging failed for value %s in class %s: %s" %
+                            [args.inspect, self.name, detail], detail.backtrace
                     end
                 end
                 #@munger = block
