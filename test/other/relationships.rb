@@ -237,6 +237,30 @@ class TestRelationships < Test::Unit::TestCase
         graph = trans.relgraph
         assert(graph.edge?(file, exec), "autorequire edge was not created")
     end
+    
+    def test_requires?
+        # Test the first direction
+        file1 = Puppet::Type.newfile(:title => "one", :path => tempfile,
+            :ensure => :directory)
+        file2 = Puppet::Type.newfile(:title => "two", :path => tempfile,
+            :ensure => :directory)
+        
+        file1[:require] = file2
+        assert(file1.requires?(file2), "requires? failed to catch :require relationship")
+        file1.delete(:require)
+        assert(! file1.requires?(file2), "did not delete relationship")
+        file1[:subscribe] = file2
+        assert(file1.requires?(file2), "requires? failed to catch :subscribe relationship")
+        file1.delete(:subscribe)
+        assert(! file1.requires?(file2), "did not delete relationship")
+        file2[:before] = file1
+        assert(file1.requires?(file2), "requires? failed to catch :before relationship")
+        file2.delete(:before)
+        assert(! file1.requires?(file2), "did not delete relationship")
+        file2[:notify] = file1
+        assert(file1.requires?(file2), "requires? failed to catch :notify relationship")
+    end
+        
 end
 
 # $Id$

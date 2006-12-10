@@ -306,12 +306,12 @@ module Puppet
 
             # if we're replacing, vs. updating
             if sum = cache(checktype())
-                unless defined? @should
-                    raise Puppet::Error.new(
-                        ("@should is not initialized for %s, even though we " +
-                        "found a checksum") % @parent[:path]
-                    )
-                end
+                # unless defined? @should
+                #     raise Puppet::Error.new(
+                #         ("@should is not initialized for %s, even though we " +
+                #         "found a checksum") % @parent[:path]
+                #     )
+                # end
                 
                 if @is == sum
                     info "Sums are already equal"

@@ -113,7 +113,7 @@ module Puppet
             end
         end
 
-        newparam(:replace) do
+        newparam(:replace, :boolean => true) do
             desc "Whether or not to replace a file that is
                 sourced but exists.  This is useful for using file sources
                 purely for initialization."
@@ -121,7 +121,7 @@ module Puppet
             defaultto :true
         end
 
-        newparam(:force) do
+        newparam(:force, :boolean => true) do
             desc "Force the file operation.  Currently only used when replacing
                 directories with links."
             newvalues(:true, :false)
@@ -160,7 +160,7 @@ module Puppet
             defaultto :ignore
         end
 
-        newparam(:purge) do
+        newparam(:purge, :boolean => true) do
             desc "Whether unmanaged files should be purged.  If you have a filebucket
                 configured the purged files will be uploaded, but if you do not,
                 this will destroy data.  Only use this option for generated
@@ -413,10 +413,6 @@ module Puppet
                 end
             end
 
-            if @arghash[:target]
-                warning "%s vs %s" % [@arghash[:ensure], @arghash[:target]]
-            end
-
             @stat = nil
         end
 
@@ -441,6 +437,7 @@ module Puppet
 
             # Now that we know our corresponding target is a directory,
             # change our type
+            info "setting ensure to target"
             self[:ensure] = :directory
 
             unless FileTest.readable? target
@@ -778,10 +775,6 @@ module Puppet
             unless stat = self.stat(true)
                 self.debug "File does not exist"
                 @states.each { |name,state|
-                    # We've already retrieved the source, and we don't
-                    # want to overwrite whatever it did.  This is a bit
-                    # of a hack, but oh well, source is definitely special.
-                    # next if name == :source
                     state.is = :absent
                 }
                 

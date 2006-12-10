@@ -113,6 +113,10 @@ module Manager
         klass = rmclass(name,
             :hash => @types
         )
+        
+        if respond_to?("new" + name.to_s)
+            metaclass.send(:remove_method, "new" + name.to_s)
+        end
     end
 
     # Return a Type instance by name.

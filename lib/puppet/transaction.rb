@@ -29,28 +29,6 @@ class Transaction
     # Apply all changes for a resource, returning a list of the events
     # generated.
     def apply(resource)
-        # First make sure there are no failed dependencies.  To do this,
-        # we check for failures in any of the vertexes above us.  It's not
-        # enough to check the immediate dependencies, which is why we use
-        # a tree from the reversed graph.
-        @relgraph.reversal.tree_from_vertex(resource, :dfs).keys.each do |dep|
-            skip = false
-            if fails = failed?(dep)
-                resource.notice "Dependency %s[%s] has %s failures" %
-                    [dep.class.name, dep.name, @failures[dep]]
-                skip = true
-            end
-
-            if skip
-                resource.warning "Skipping because of failed dependencies"
-                @resourcemetrics[:skipped] += 1
-                return []
-            end
-        end
-        
-        # If the resource needs to generate new objects at eval time, do it now.
-        eval_generate(resource)
-
         begin
             changes = resource.evaluate
         rescue => detail
@@ -139,20 +117,24 @@ class Transaction
     def eval_generate(resource)
         if resource.respond_to?(:eval_generate)
             if children = resource.eval_generate
+                depthfirst = resource.depthfirst?
                 dependents = @relgraph.adjacent(resource, :direction => :out, :type => :edges)
                 targets = @relgraph.adjacent(resource, :direction => :in, :type => :edges)
                 children.each do |gen_child|
-                    gen_child.info "generated"
-                    @relgraph.add_edge!(resource, gen_child)
+                    if depthfirst
+                        @relgraph.add_edge!(gen_child, resource)
+                    else
+                        @relgraph.add_edge!(resource, gen_child)
+                    end
                     dependents.each do |edge|
                         @relgraph.add_edge!(gen_child, edge.target, edge.label)
                     end
                     targets.each do |edge|
                         @relgraph.add_edge!(edge.source, gen_child, edge.label)
                     end
-                    @sorted_resources.insert(@sorted_resources.index(resource) + 1, gen_child)
                     @generated << gen_child
                 end
+                return children
             end
         end
     end
@@ -161,25 +143,35 @@ class Transaction
     def eval_resource(resource)
         events = []
         
-        unless tagged?(resource)
-            resource.debug "Not tagged with %s" % tags.join(", ")
-            return events
-        end
-        
-        unless scheduled?(resource)
-            resource.debug "Not scheduled"
-            return events
-        end
-        
-        @resourcemetrics[:scheduled] += 1
+        if skip?(resource)
+            @resourcemetrics[:skipped] += 1
+        else
+            @resourcemetrics[:scheduled] += 1
+            
+            # We need to generate first regardless, because the recursive
+            # actions sometimes change how the top resource is applied.
+            children = eval_generate(resource)
+            
+            if resource.depthfirst? and children
+                children.each do |child|
+                    events += eval_resource(child)
+                end
+            end
 
-        # Perform the actual changes
-        seconds = thinmark do
-            events = apply(resource)
-        end
+            # Perform the actual changes
+            seconds = thinmark do
+                events += apply(resource)
+            end
+            
+            if ! resource.depthfirst? and children
+                children.each do |child|
+                    events += eval_resource(child)
+                end
+            end
 
-        # Keep track of how long we spend in each type of resource
-        @timemetrics[resource.class.name] += seconds
+            # Keep track of how long we spend in each type of resource
+            @timemetrics[resource.class.name] += seconds
+        end
 
         # Check to see if there are any events for this resource
         if triggedevents = trigger(resource)
@@ -230,6 +222,24 @@ class Transaction
         else
             return false
         end
+    end
+
+    # Does this resource have any failed dependencies?
+    def failed_dependencies?(resource)
+        # First make sure there are no failed dependencies.  To do this,
+        # we check for failures in any of the vertexes above us.  It's not
+        # enough to check the immediate dependencies, which is why we use
+        # a tree from the reversed graph.
+        skip = false
+        @relgraph.reversal.tree_from_vertex(resource, :dfs).keys.each do |dep|
+            if fails = failed?(dep)
+                resource.notice "Dependency %s[%s] has %s failures" %
+                    [dep.class.name, dep.name, @failures[dep]]
+                skip = true
+            end
+        end
+        
+        return skip
     end
     
     # Collect any dynamically generated resources.
@@ -441,6 +451,21 @@ class Transaction
     # Is the resource currently scheduled?
     def scheduled?(resource)
         self.ignoreschedules or resource.scheduled?
+    end
+    
+    # Should this resource be skipped?
+    def skip?(resource)
+        skip = false
+        if ! tagged?(resource)
+            resource.debug "Not tagged with %s" % tags.join(", ")
+        elsif ! scheduled?(resource)
+            resource.debug "Not scheduled"
+        elsif failed_dependencies?(resource)
+            resource.warning "Skipping because of failed dependencies"
+        else
+            return false
+        end
+        return true
     end
     
     # The tags we should be checking.

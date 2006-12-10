@@ -23,42 +23,6 @@ module Puppet
             defaultto "component"
         end
 
-        # topo sort functions
-        def self.sort(objects)
-            list = []
-            tmplist = {}
-
-            objects.each { |obj|
-                self.recurse(obj, tmplist, list)
-            }
-
-            return list.flatten
-        end
-
-        # FIXME this method assumes that dependencies themselves
-        # are never components
-        def self.recurse(obj, inlist, list)
-            if inlist.include?(obj.object_id)
-                return
-            end
-            inlist[obj.object_id] = true
-            begin
-                obj.eachdependency { |req|
-                    self.recurse(req, inlist, list)
-                }
-            rescue Puppet::Error => detail
-                raise Puppet::Error, "%s: %s" % [obj.path, detail]
-            end
-
-            if obj.is_a? self
-                obj.each { |child|
-                    self.recurse(child, inlist, list)
-                }
-            else
-                list << obj
-            end
-        end
-
         # Remove a child from the component.
         def delete(child)
             if @children.include?(child)
@@ -115,12 +79,6 @@ module Puppet
             else
                 return false
             end
-        end
-        
-        # Return a flattened array containing all of the children
-        # and all child components' children, sorted in order of dependencies.
-        def flatten
-            self.class.sort(@children).flatten
         end
 
         # Initialize a new component

@@ -263,23 +263,28 @@ class TestExec < Test::Unit::TestCase
             :command => "cat %s %s" % [exe, oexe],
             :path => ENV["PATH"]
         )
-
-        comp = newcomp(ofile, exec, cat, file, baseobj)
-        comp.finalize
+        
+        rels = nil
+        assert_nothing_raised do
+            rels = exec.autorequire
+        end
 
         # Verify we get the script itself
-        assert(exec.requires?(file), "Exec did not autorequire %s" % file)
+        assert(rels.detect { |r| r.source == file }, "Exec did not autorequire its command")
 
         # Verify we catch the cwd
-        assert(exec.requires?(baseobj), "Exec did not autorequire cwd")
+        assert(rels.detect { |r| r.source == baseobj }, "Exec did not autorequire its cwd")
 
         # Verify we don't require ourselves
+        assert(! rels.detect { |r| r.source == ofile }, "Exec incorrectly required mentioned file")
         assert(!exec.requires?(ofile), "Exec incorrectly required file")
 
-        # Verify that we catch inline files
         # We not longer autorequire inline files
-        assert(! cat.requires?(ofile), "Exec required second inline file")
-        assert(! cat.requires?(file), "Exec required inline file")
+        assert_nothing_raised do
+            rels = cat.autorequire
+        end
+        assert(! rels.detect { |r| r.source == ofile }, "Exec required second inline file")
+        assert(! rels.detect { |r| r.source == file }, "Exec required inline file")
     end
 
     def test_ifonly

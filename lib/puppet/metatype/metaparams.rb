@@ -87,7 +87,6 @@ class Puppet::Type
                         [state, self.class.name]
                 end
                 next unless stateklass.checkable?
-
                 @parent.newstate(state)
             }
         end
@@ -132,74 +131,6 @@ class Puppet::Type
         end
         
         result
-    end
-
-    # For each object we require, subscribe to all events that it generates. We
-    # might reduce the level of subscription eventually, but for now...
-    newmetaparam(:require) do
-        desc "One or more objects that this object depends on.
-            This is used purely for guaranteeing that changes to required objects
-            happen before the dependent object.  For instance:
-            
-                # Create the destination directory before you copy things down
-                file { \"/usr/local/scripts\":
-                    ensure => directory
-                }
-
-                file { \"/usr/local/scripts/myscript\":
-                    source => \"puppet://server/module/myscript\",
-                    mode => 755,
-                    require => file[\"/usr/local/scripts\"]
-                }
-
-            Note that Puppet will autorequire everything that it can, and
-            there are hooks in place so that it's easy for elements to add new
-            ways to autorequire objects, so if you think Puppet could be
-            smarter here, let us know.
-
-            In fact, the above code was redundant -- Puppet will autorequire
-            any parent directories that are being managed; it will
-            automatically realize that the parent directory should be created
-            before the script is pulled down.
-            
-            Currently, exec elements will autorequire their CWD (if it is
-            specified) plus any fully qualified paths that appear in the
-            command.   For instance, if you had an ``exec`` command that ran
-            the ``myscript`` mentioned above, the above code that pulls the
-            file down would be automatically listed as a requirement to the
-            ``exec`` code, so that you would always be running againts the
-            most recent version.
-            "
-
-        # Take whatever dependencies currently exist and add these.
-        # Note that this probably doesn't behave correctly with unsubscribe.
-        munge do |requires|
-            @parent.store_relationship(:require, requires)
-        end
-    end
-
-    # For each object we require, subscribe to all events that it generates.
-    # We might reduce the level of subscription eventually, but for now...
-    newmetaparam(:subscribe) do
-        desc "One or more objects that this object depends on.  Changes in the
-            subscribed to objects result in the dependent objects being
-            refreshed (e.g., a service will get restarted).  For instance:
-            
-                class nagios {
-                    file { \"/etc/nagios/nagios.conf\":
-                        source => \"puppet://server/module/nagios.conf\",
-                        alias => nagconf # just to make things easier for me
-                    }
-                    service { nagios:
-                        running => true,
-                        subscribe => file[nagconf]
-                    }
-                }
-            "
-
-        munge do |requires|
-            @parent.store_relationship(:subscribe, requires)
-        end
     end
 
     newmetaparam(:loglevel) do
@@ -305,8 +236,133 @@ class Puppet::Type
             end
         end
     end
+    
+    class RelationshipMetaparam < Puppet::Parameter
+        class << self
+            attr_accessor :direction, :events, :callback, :subclasses
+        end
+        
+        @subclasses = []
+        
+        def self.inherited(sub)
+            @subclasses << sub
+        end
+        
+        def munge(rels)
+            @parent.store_relationship(self.class.name, rels)
+        end
+        
+        # Create edges from each of our relationships.    :in
+        # relationships are specified by the event-receivers, and :out
+        # relationships are specified by the event generator.  This
+        # way 'source' and 'target' are consistent terms in both edges
+        # and events -- that is, an event targets edges whose source matches
+        # the event's source.  The direction of the relationship determines
+        # which resource is applied first and which resource is considered
+        # to be the event generator.
+        def to_edges
+            @value.collect do |value|
+                # we just have a name and a type, and we need to convert it
+                # to an object...
+                tname, name = value
+                object = nil
+                unless type = Puppet::Type.type(tname)
+                    self.fail "Could not find type %s" % tname.inspect
+                end
+                unless object = type[name]
+                    self.fail "Could not retrieve object '%s' of type '%s'" %
+                        [name,type]
+                end
+                self.debug("subscribes to %s" % [object])
 
-    newmetaparam(:notify) do
+                # Are we requiring them, or vice versa?  See the builddepends
+                # method for further docs on this.
+                if self.class.direction == :in
+                    source = object
+                    target = @parent
+                else
+                    source = @parent
+                    target = object
+                end
+
+                # ok, both sides of the connection store some information
+                # we store the method to call when a given subscription is 
+                # triggered, but the source object decides whether 
+                subargs = {
+                    :event => self.class.events
+                }
+
+                if method = self.class.callback
+                    subargs[:callback] = method
+                end
+                rel = Puppet::Relationship.new(source, target, subargs)
+            end
+        end
+    end
+    
+    def self.relationship_params
+        RelationshipMetaparam.subclasses
+    end
+
+    # For each object we require, subscribe to all events that it generates. We
+    # might reduce the level of subscription eventually, but for now...
+    newmetaparam(:require, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :NONE}) do
+        desc "One or more objects that this object depends on.
+            This is used purely for guaranteeing that changes to required objects
+            happen before the dependent object.  For instance:
+            
+                # Create the destination directory before you copy things down
+                file { \"/usr/local/scripts\":
+                    ensure => directory
+                }
+
+                file { \"/usr/local/scripts/myscript\":
+                    source => \"puppet://server/module/myscript\",
+                    mode => 755,
+                    require => file[\"/usr/local/scripts\"]
+                }
+
+            Note that Puppet will autorequire everything that it can, and
+            there are hooks in place so that it's easy for elements to add new
+            ways to autorequire objects, so if you think Puppet could be
+            smarter here, let us know.
+
+            In fact, the above code was redundant -- Puppet will autorequire
+            any parent directories that are being managed; it will
+            automatically realize that the parent directory should be created
+            before the script is pulled down.
+            
+            Currently, exec elements will autorequire their CWD (if it is
+            specified) plus any fully qualified paths that appear in the
+            command.   For instance, if you had an ``exec`` command that ran
+            the ``myscript`` mentioned above, the above code that pulls the
+            file down would be automatically listed as a requirement to the
+            ``exec`` code, so that you would always be running againts the
+            most recent version.
+            "
+    end
+
+    # For each object we require, subscribe to all events that it generates.
+    # We might reduce the level of subscription eventually, but for now...
+    newmetaparam(:subscribe, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :ALL_EVENTS, :callback => :refresh}) do
+        desc "One or more objects that this object depends on.  Changes in the
+            subscribed to objects result in the dependent objects being
+            refreshed (e.g., a service will get restarted).  For instance:
+            
+                class nagios {
+                    file { \"/etc/nagios/nagios.conf\":
+                        source => \"puppet://server/module/nagios.conf\",
+                        alias => nagconf # just to make things easier for me
+                    }
+                    service { nagios:
+                        running => true,
+                        subscribe => file[nagconf]
+                    }
+                }
+            "
+    end
+    
+    newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :ALL_EVENTS, :callback => :refresh}) do
         desc %{This parameter is the opposite of **subscribe** -- it sends events
             to the specified object:
 
@@ -320,14 +376,9 @@ class Puppet::Type
                 }
             
             This will restart the sshd service if the sshd config file changes.}
-
-
-        munge do |notifies|
-            @parent.store_relationship(:notify, notifies)
-        end
     end
 
-    newmetaparam(:before) do
+    newmetaparam(:before, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :NONE}) do
         desc %{This parameter is the opposite of **require** -- it guarantees
             that the specified object is applied later than the specifying
             object:
@@ -345,10 +396,6 @@ class Puppet::Type
             
             This will make sure all of the files are up to date before the
             make command is run.}
-
-        munge do |notifies|
-            @parent.store_relationship(:before, notifies)
-        end
     end
 end # Puppet::Type
 

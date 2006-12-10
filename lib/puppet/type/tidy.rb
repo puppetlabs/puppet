@@ -168,7 +168,15 @@ module Puppet
             end
 
             def insync?
-                insync_age? and insync_size?
+                if @is.is_a?(Symbol)
+                    if @is == :absent
+                        return true
+                    else
+                        return false
+                    end
+                else
+                    insync_age? and insync_size?
+                end
             end
 
             def retrieve

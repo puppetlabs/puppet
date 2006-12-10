@@ -599,7 +599,7 @@ class TestTransactions < Test::Unit::TestCase
     
     # Test mid-evaluation generation.
     def test_eval_generate
-        $evaluated = {}
+        $evaluated = []
         type = mkgenerator() do
             def eval_generate
                 ret = []
@@ -612,7 +612,7 @@ class TestTransactions < Test::Unit::TestCase
             end
             
             def evaluate
-                $evaluated[self.title] = true
+                $evaluated << self.title
                 return []
             end
         end
@@ -627,7 +627,7 @@ class TestTransactions < Test::Unit::TestCase
         # Now apply the resources, and make sure they appropriately generate
         # things.
         assert_nothing_raised("failed to apply yay") do
-            trans.apply(yay)
+            trans.eval_resource(yay)
         end
         ya = type["ya"]
         assert(ya, "Did not generate ya")
@@ -648,7 +648,7 @@ class TestTransactions < Test::Unit::TestCase
         
         # Now make sure it in turn eval_generates appropriately
         assert_nothing_raised("failed to apply yay") do
-            trans.apply(type["ya"])
+            trans.eval_resource(type["ya"])
         end
 
         %w{y}.each do |name|
@@ -659,14 +659,12 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         assert_nothing_raised("failed to eval_generate with nil response") do
-            trans.apply(type["y"])
+            trans.eval_resource(type["y"])
         end
+        assert(trans.relgraph.edge?(yay, ya), "no edge was created for ya => yay")
         
-        assert_equal(%w{yay ya y rah}, trans.sorted_resources.collect { |r| r.title },
-            "Did not eval_generate correctly")
-            
         assert_nothing_raised("failed to apply rah") do
-            trans.apply(rah)
+            trans.eval_resource(rah)
         end
 
         ra = type["ra"]
@@ -701,12 +699,13 @@ class TestTransactions < Test::Unit::TestCase
         
         # Now, start over and make sure that everything gets evaluated.
         trans = comp.evaluate
+        $evaluated.clear
         assert_nothing_raised do
             trans.evaluate
         end
         
-        assert_equal(%w{yay ya y rah ra r}.sort, $evaluated.keys.sort,
-            "Not all resources were evaluated")
+        assert_equal(%w{yay ya y rah ra r}, $evaluated,
+            "Not all resources were evaluated or not in the right order")
     end
     
     def test_tags

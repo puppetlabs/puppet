@@ -792,7 +792,7 @@ class TestFile < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            dirobj.generate
+            dirobj.eval_generate
         }
 
         assert_nothing_raised {
@@ -817,12 +817,12 @@ class TestFile < Test::Unit::TestCase
             :name => subfile,
             :ensure => "file"
         )
-        comp = newcomp(baseobj, subobj)
-        comp.finalize
-
-        assert(subobj.requires?(baseobj), "File did not require basedir")
-        assert(!subobj.requires?(subobj), "File required itself")
-        assert_events([:directory_created, :file_created], comp)
+        edge = nil
+        assert_nothing_raised do
+            edge = subobj.autorequire.shift
+        end
+        assert_equal(baseobj, edge.source, "file did not require its parent dir")
+        assert_equal(subobj, edge.target, "file did not require its parent dir")
     end
 
     def test_content
@@ -1623,11 +1623,12 @@ class TestFile < Test::Unit::TestCase
             )
             comp = newcomp(user, group, home)
         }
-        comp.finalize
-        comp.retrieve
-
-        assert(home.requires?(user), "File did not require owner")
-        assert(home.requires?(group), "File did not require group")
+        
+        # Now make sure we get a relationship for each of these
+        rels = nil
+        assert_nothing_raised { rels = home.autorequire }
+        assert(rels.detect { |e| e.source == user }, "owner was not autorequired")
+        assert(rels.detect { |e| e.source == group }, "group was not autorequired")
     end
 
     # Testing #309 -- //my/file => /my/file
@@ -1757,36 +1758,6 @@ class TestFile < Test::Unit::TestCase
                     end
                     FileUtils.rmtree(dir)
                 end
-            end
-        end
-    end
-
-    def test_check_checksums
-        dir = tempfile()
-        Dir.mkdir(dir)
-        subdir = File.join(dir, "sub")
-        Dir.mkdir(subdir)
-        file = File.join(dir, "file")
-        File.open(file, "w") { |f| f.puts "yay" }
-
-        obj = Puppet::Type.type(:file).create(
-            :path => dir, :check => :checksum, :recurse => true
-        )
-
-        assert_apply(obj)
-        File.open(file, "w") { |f| f.puts "rah" }
-        sleep 1
-        system("touch %s" % subdir)
-        Puppet::Storage.store
-        Puppet::Storage.load
-        assert_apply(obj)
-        [file, subdir].each do |path|
-            sub = Puppet::Type.type(:file)[path]
-            assert(sub, "did not find obj for %s" % path)
-            sub.retrieve
-
-            assert_nothing_raised do
-                sub.state(:checksum).sync
             end
         end
     end

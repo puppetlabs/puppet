@@ -390,12 +390,14 @@ class TestUser < Test::Unit::TestCase
             )
             comp = newcomp(user, group, home, ogroup)
         }
-        comp.finalize
-        comp.retrieve
+        
+        rels = nil
+        assert_nothing_raised() { rels = user.autorequire }
 
-        assert(user.requires?(group), "User did not require group")
-        assert(home.requires?(user), "Homedir did not require user")
-        assert(user.requires?(ogroup), "User did not require other groups")
+        assert(rels.detect { |r| r.source == group }, "User did not require group")
+        assert(rels.detect { |r| r.source == ogroup }, "User did not require other groups")
+        assert_nothing_raised() { rels = home.autorequire }
+        assert(rels.detect { |r| r.source == user }, "Homedir did not require user")
     end
 
     def test_simpleuser

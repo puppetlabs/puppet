@@ -67,6 +67,10 @@ module Puppet
             source.sub(/\/$/, '')
         end
         
+        def change_to_s
+            "replacing from source %s" % @source
+        end
+        
         def checksum
             if defined?(@stats)
                 @stats[:checksum]
@@ -133,6 +137,10 @@ module Puppet
             unless @stats[:type] == "file" 
                 return true
             end
+            
+            if @parent.is(:ensure) != :absent and ! @parent.replace?
+                return true
+            end
             # Now, we just check to see if the checksums are the same
             return @parent.is(:checksum) == @stats[:checksum]
         end
@@ -184,6 +192,7 @@ module Puppet
                 # be inherited from the source?
                 unless @parent.argument?(stat)
                     @parent[stat] = value
+                    @parent.state(stat).retrieve
                 end
             }
             
@@ -197,14 +206,13 @@ module Puppet
         # Make sure we're also checking the checksum
         def should=(value)
             super
+
+            checks = (PINPARAMS + [:ensure])
+            checks.delete(:checksum)
             
-            # @parent[:check] = [:checksum, :ensure]
+            @parent[:check] = checks
             unless @parent.state(:checksum)
                 @parent[:checksum] = :md5
-            end
-            
-            unless @parent.state(:ensure)
-                @parent[:check] = :ensure
             end
         end
 

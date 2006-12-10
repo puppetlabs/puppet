@@ -27,9 +27,9 @@ class TestTidy < Test::Unit::TestCase
 
     def test_tidydirs
         dir = mktmpdir
-        file = File.join(dir, "tidytesting")
+        file = File.join(dir, "file")
         File.open(file, "w") { |f|
-            f.puts rand(100)
+            f.puts "some stuff"
         }
 
         tidy = Puppet.type(:tidy).create(

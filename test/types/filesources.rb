@@ -141,7 +141,7 @@ class TestFileSources < Test::Unit::TestCase
         assert(state, "did not get source state")
         
         # Make sure the munge didn't actually change the source
-        assert_equal(source, state.should, "munging changed the source")
+        assert_equal([source], state.should, "munging changed the source")
         
         # First try it with a missing source
         assert_nothing_raised do
@@ -411,7 +411,6 @@ class TestFileSources < Test::Unit::TestCase
         # then delete a file
         File.unlink(two)
 
-        puts "yay"
         # and run
         recursive_source_test(fromdir, todir)
 
@@ -422,9 +421,16 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def test_sources_with_readonly_destfiles
-        fromdir, todir = run_complex_sources
+        fromdir, todir, one, two = run_complex_sources
         assert(FileTest.exists?(todir))
-        readonly_random_files(todir)
+        File.chmod(0600, one)
+        recursive_source_test(fromdir, todir)
+
+        # and make sure they're still equal
+        assert_trees_equal(fromdir,todir)
+        
+        # Now try it with the directory being read-only
+        File.chmod(0111, todir)
         recursive_source_test(fromdir, todir)
 
         # and make sure they're still equal
@@ -432,11 +438,12 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def test_sources_with_modified_dest_files
-        fromdir, todir = run_complex_sources
+        fromdir, todir, one, two = run_complex_sources
 
         assert(FileTest.exists?(todir))
-        # then modify some files
-        modify_random_files(todir)
+        
+        # Modify a dest file
+        File.open(two, "w") { |f| f.puts "something else" }
 
         recursive_source_test(fromdir, todir)
 
@@ -470,6 +477,7 @@ class TestFileSources < Test::Unit::TestCase
         assert_trees_equal(fromdir,todir)
     end
 
+    # Make sure added files get correctly caught during recursion
     def test_RecursionWithAddedFiles
         basedir = tempfile()
         Dir.mkdir(basedir)
@@ -478,37 +486,28 @@ class TestFileSources < Test::Unit::TestCase
         file2 = File.join(basedir, "file2")
         subdir1 = File.join(basedir, "subdir1")
         file3 = File.join(subdir1, "file")
-        File.open(file1, "w") { |f| 3.times { f.print rand(100) } }
+        File.open(file1, "w") { |f| f.puts "yay" }
         rootobj = nil
         assert_nothing_raised {
             rootobj = Puppet.type(:file).create(
                 :name => basedir,
                 :recurse => true,
-                :check => %w{type owner}
+                :check => %w{type owner},
+                :mode => 0755
             )
-
-            rootobj.evaluate
         }
+        
+        assert_apply(rootobj)
+        assert_equal(0755, filemode(file1))
 
-        klass = Puppet.type(:file)
-        assert(klass[basedir])
-        assert(klass[file1])
-        assert_nil(klass[file2])
-
-        File.open(file2, "w") { |f| 3.times { f.print rand(100) } }
-
-        assert_nothing_raised {
-            rootobj.evaluate
-        }
-        assert(klass[file2])
+        File.open(file2, "w") { |f| f.puts "rah" }
+        assert_apply(rootobj)
+        assert_equal(0755, filemode(file2))
 
         Dir.mkdir(subdir1)
-        File.open(file3, "w") { |f| 3.times { f.print rand(100) } }
-
-        assert_nothing_raised {
-            rootobj.evaluate
-        }
-        assert(klass[file3])
+        File.open(file3, "w") { |f| f.puts "foo" }
+        assert_apply(rootobj)
+        assert_equal(0755, filemode(file3))
     end
 
     def mkfileserverconf(mounts)
@@ -890,7 +889,8 @@ class TestFileSources < Test::Unit::TestCase
         assert_apply(file)
 
         # Make sure it doesn't change.
-        assert_equal("yayness\n", File.read(dest))
+        assert_equal("yayness\n", File.read(dest),
+            "File got replaced when :replace was false")
 
         # Now set it to true and make sure it does change.
         assert_nothing_raised {
@@ -899,7 +899,8 @@ class TestFileSources < Test::Unit::TestCase
         assert_apply(file)
 
         # Make sure it doesn't change.
-        assert_equal("funtest\n", File.read(dest))
+        assert_equal("funtest\n", File.read(dest),
+            "File was not replaced when :replace was true")
     end
 
     # Testing #285.  This just makes sure that URI parsing works correctly.

@@ -10,6 +10,10 @@ class Puppet::Type
             return false
         end
     end
+    
+    def depthfirst?
+        self.class.depthfirst?
+    end
 
     def parent=(parent)
         if self.parentof?(parent)

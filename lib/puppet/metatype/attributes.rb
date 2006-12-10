@@ -131,6 +131,21 @@ class Puppet::Type
 
         return ens
     end
+    
+    # Deal with any options passed into parameters.
+    def self.handle_param_options(name, options)
+        # If it's a boolean parameter, create a method to test the value easily
+        if options[:boolean]
+            define_method(name.to_s + "?") do
+                val = self[name]
+                if val == :true or val == true
+                    return true
+                end
+            end
+        end
+        
+        # If this param handles relationships, store that information
+    end
 
     # Is the parameter in question a meta-parameter?
     def self.metaparam?(param)
@@ -153,18 +168,21 @@ class Puppet::Type
 
     # Create a new metaparam.  Requires a block and a name, stores it in the
     # @parameters array, and does some basic checking on it.
-    def self.newmetaparam(name, &block)
+    def self.newmetaparam(name, options = {}, &block)
         @@metaparams ||= []
         @@metaparamhash ||= {}
         name = symbolize(name)
 
         param = genclass(name,
-            :parent => Puppet::Parameter,
+            :parent => options[:parent] || Puppet::Parameter,
             :prefix => "MetaParam",
             :hash => @@metaparamhash,
             :array => @@metaparams,
+            :attributes => options[:attributes],
             &block
         )
+        
+        handle_param_options(name, options)
 
         param.ismetaparameter
 
@@ -192,14 +210,18 @@ class Puppet::Type
     # Create a new parameter.  Requires a block and a name, stores it in the
     # @parameters array, and does some basic checking on it.
     def self.newparam(name, options = {}, &block)
+        options[:attributes] ||= {}
+        options[:attributes][:element] = self
         param = genclass(name,
             :parent => options[:parent] || Puppet::Parameter,
-            :attributes => { :element => self },
+            :attributes => options[:attributes],
             :block => block,
             :prefix => "Parameter",
             :array => @parameters,
             :hash => @paramhash
         )
+        
+        handle_param_options(name, options)
 
         # These might be enabled later.
 #        define_method(name) do

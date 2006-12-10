@@ -60,7 +60,6 @@ module Puppet
         end
 
         newvalue(:directory) do
-            p @is
             mode = @parent.should(:mode)
             parent = File.dirname(@parent[:path])
             unless FileTest.exists? parent

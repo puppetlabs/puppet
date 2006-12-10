@@ -12,7 +12,7 @@ module Puppet::Util::POSIX
         else
             method = (prefix + "nam").intern
         end
-        
+
         begin
             return Etc.send(method, id).send(field)
         rescue ArgumentError => detail
