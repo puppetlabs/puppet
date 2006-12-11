@@ -1,5 +1,7 @@
 # Rakefile for Puppet
 
+$: << File.expand_path(File.join(File.dirname(__FILE__), 'lib'))
+
 begin
     require 'rake/reductive'
 rescue LoadError
