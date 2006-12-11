@@ -125,27 +125,40 @@ class TestEvents < Test::Unit::TestCase
         assert(FileTest.exists?(fname), "Exec file did not get created")
     end
 
+    # Make sure refreshing happens mid-transaction, rather than at the end.
     def test_refreshordering
         file = tempfile()
 
         exec1 = Puppet.type(:exec).create(
+            :title => "one",
             :name => "echo one >> %s" % file,
             :path => "/usr/bin:/bin"
         )
 
         exec2 = Puppet.type(:exec).create(
+            :title => "two",
             :name => "echo two >> %s" % file,
             :path => "/usr/bin:/bin",
             :refreshonly => true,
-            :subscribe => ["exec", exec1.name]
+            :subscribe => exec1
         )
 
         exec3 = Puppet.type(:exec).create(
+            :title => "three",
             :name => "echo three >> %s" % file,
             :path => "/usr/bin:/bin"
         )
+        execs = [exec1, exec2, exec3]
 
         comp = newcomp(exec1,exec2,exec3)
+        
+        trans = comp.evaluate
+        execs.each do |e| assert(trans.resources.vertex?(e), "%s is not in graph" % e.title) end
+        trans.prepare
+        execs.each do |e| assert(trans.relgraph.vertex?(e), "%s is not in relgraph" % e.title) end
+        reverse = trans.relgraph.reversal
+        execs.each do |e| assert(reverse.vertex?(e), "%s is not in reversed graph" % e.title) end
+        
 
         assert_apply(comp)
 

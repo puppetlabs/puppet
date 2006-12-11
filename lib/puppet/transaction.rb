@@ -143,6 +143,10 @@ class Transaction
     def eval_resource(resource)
         events = []
         
+        if resource.is_a?(Puppet::Type::Component)
+            raise Puppet::DevError, "Got a component to evaluate"
+        end
+        
         if skip?(resource)
             @resourcemetrics[:skipped] += 1
         else
@@ -231,6 +235,7 @@ class Transaction
         # enough to check the immediate dependencies, which is why we use
         # a tree from the reversed graph.
         skip = false
+        resource.info "checking for failed deps"
         @relgraph.reversal.tree_from_vertex(resource, :dfs).keys.each do |dep|
             if fails = failed?(dep)
                 resource.notice "Dependency %s[%s] has %s failures" %

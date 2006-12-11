@@ -54,6 +54,10 @@ class TestPGraph < Test::Unit::TestCase
     # Test that we can take a containment graph and rearrange it by dependencies
     def test_splice
         one, two, middle, top = build_tree
+        empty = Container.new("empty", [])
+        # Also, add an empty container to top
+        top.push empty
+        
         contgraph = top.to_graph
         
         # Now add a couple of child files, so that we can test whether all containers
@@ -66,7 +70,9 @@ class TestPGraph < Test::Unit::TestCase
             deps.add_vertex(v)
         end
         
-        {one => two, "f" => "c", "h" => middle}.each do |source, target|
+        # We have to specify a relationship to our empty container, else it never makes it
+        # into the dep graph in the first place.
+        {one => two, "f" => "c", "h" => middle, "c" => empty}.each do |source, target|
             deps.add_edge!(source, target, :callback => :refresh)
         end
         
@@ -86,6 +92,10 @@ class TestPGraph < Test::Unit::TestCase
             end
         end
         
+        # Make sure there are no container objects remaining
+        c = deps.vertices.find_all { |v| v.is_a?(Container) }
+        assert(c.empty?, "Still have containers %s" % c.inspect)
+        
         nons = deps.vertices.find_all { |v| ! v.is_a?(String) }
         assert(nons.empty?,
             "still contain non-strings %s" % nons.inspect)
@@ -96,6 +106,10 @@ class TestPGraph < Test::Unit::TestCase
             assert_equal({:callback => :refresh}, edge.label,
                 "Label was not copied on splice")
         end
+    end
+    
+    # Make sure empty containers are also removed
+    def test_empty_splice
     end
 end
 

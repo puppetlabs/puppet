@@ -553,6 +553,12 @@ class TestTransactions < Test::Unit::TestCase
         assert(graph.vertex?(f(:g)),
             "Lost vertexes with no relations")
 
+        # Now make the reversal graph and make sure all of the vertices made it into that
+        reverse = graph.reversal
+        %w{a b c d e f g h}.each do |letter|
+            file = f(letter)
+            assert(reverse.vertex?(file), "%s did not make it into reversal" % letter)
+        end
         graph.to_jpg("normal_relations")
     end
     

@@ -178,6 +178,9 @@ module GRATR
  
     alias graph_adjacent adjacent
     def adjacent(x, options={})
+        unless @vertex_dict.has_key?(x)
+            raise ArgumentError, "%s is not a vertex" % x
+        end
       options[:direction] ||= :out
       if !x.kind_of?(GRATR::Edge) and (options[:direction] == :out || !directed?)
         if options[:type] == :edges

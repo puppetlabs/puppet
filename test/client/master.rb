@@ -128,6 +128,22 @@ class TestMasterClient < Test::Unit::TestCase
             client.run
         }
     end
+    
+    def test_download
+        source = tempfile()
+        dest = tempfile()
+        sfile = File.join(source, "file")
+        Dir.mkdir(source)
+        File.open(sfile, "w") {|f| f.puts "yay"}
+        
+        files = []
+        assert_nothing_raised do
+            
+            Puppet::Client::Master.download(:dest => dest, :source => source, :name => "testing") do |path|
+                    files << path
+            end
+        end
+    end
 
     def test_getplugins
         Puppet[:pluginsource] = tempfile()

@@ -68,7 +68,10 @@ class Puppet::PGraph < GRATR::Digraph
             next unless vertex.is_a?(type)
             
             leaves = other.leaves(vertex)
-            next if leaves.empty?
+            if leaves.empty?
+                remove_vertex!(vertex)
+                next
+            end
             
             # First create new edges for each of the :in edges
             adjacent(vertex, :direction => :in, :type => :edges).each do |edge|

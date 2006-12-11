@@ -68,7 +68,10 @@ module GRATR
     # Reverse all edges in a graph
     def reversal
       return new(self) unless directed?
-      edges.inject(self.class.new) {|a,e| a << e.reverse}
+      result = self.class.new
+      edges.inject(result) {|a,e| a << e.reverse}
+      vertices.each { |v| result.add_vertex!(v) unless result.vertex?(v) }
+      result
     end
 
     # Return true if the Graph is oriented.
