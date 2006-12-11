@@ -85,6 +85,7 @@ module PuppetTest
         assert_nothing_raised("Failed to evaluate transaction") {
             events = trans.evaluate.collect { |e| e.event }
         }
+        trans.cleanup
         Puppet.type(:component).delete(comp)
         events
     end

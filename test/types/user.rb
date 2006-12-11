@@ -182,7 +182,7 @@ class TestUser < Test::Unit::TestCase
                 rescue ArgumentError => detail
                     next
                 end
-                old != group.gid
+                old != group.gid and group.gid > 0
         }
 
         unless newgid
@@ -200,7 +200,7 @@ class TestUser < Test::Unit::TestCase
         # then by id
         newgid = Etc.getgrnam(newgid).gid
 
-        assert_nothing_raised("Failed to specify group by id") {
+        assert_nothing_raised("Failed to specify group by id for %s" % newgid) {
             user[:gid] = newgid
         }
 

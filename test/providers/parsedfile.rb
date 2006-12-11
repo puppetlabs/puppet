@@ -5,6 +5,7 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppettest'
 require 'puppettest/fileparsing'
 require 'puppet'
+require 'puppet/filetype'
 require 'puppet/provider/parsedfile'
 require 'facter'
 
@@ -12,7 +13,7 @@ class TestParsedFile < Test::Unit::TestCase
 	include PuppetTest
 	include PuppetTest::FileParsing
 
-    Puppet::Type.newtype(:parsedfiletype) do
+    Puppet::Type.newtype(:testparsedfiletype) do
         ensurable
         newstate(:one) do
             newvalue(:a)
@@ -57,7 +58,7 @@ class TestParsedFile < Test::Unit::TestCase
 
     def setup
         super
-        @type = Puppet::Type.type(:parsedfiletype)
+        @type = Puppet::Type.type(:testparsedfiletype)
     end
 
     def teardown
@@ -85,7 +86,7 @@ class TestParsedFile < Test::Unit::TestCase
         end
 
         # Now make sure they stay around
-        fakemodel = fakemodel(:parsedfiletype, "yay")
+        fakemodel = fakemodel(:testparsedfiletype, "yay")
 
         file = prov.new(fakemodel)
 
@@ -529,7 +530,7 @@ class TestParsedFile < Test::Unit::TestCase
 
         prov.target_object(:yayness).write "bill a c\njill b d"
 
-        list = Puppet::Type.type(:parsedfiletype).list
+        list = @type.list
 
         bill = list.find { |r| r[:name] == "bill" }
         jill = list.find { |r| r[:name] == "jill" }
@@ -564,7 +565,7 @@ class TestParsedFile < Test::Unit::TestCase
         # Now make a model
         bill = nil
         assert_nothing_raised do
-            bill = Puppet::Type.type(:parsedfiletype).create :name => "bill"
+            bill = @type.create :name => "bill"
         end
 
         assert_equal("a", bill.provider.one,
@@ -581,7 +582,7 @@ class TestParsedFile < Test::Unit::TestCase
 
         bill = nil
         assert_nothing_raised do
-            bill = Puppet::Type.type(:parsedfiletype).create :name => "bill",
+            bill = @type.create :name => "bill",
                 :one => "a", :two => "c"
         end
 

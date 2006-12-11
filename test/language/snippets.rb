@@ -149,7 +149,7 @@ class TestSnippets < Test::Unit::TestCase
     def test_nothing
     end
 
-    def snippet_filecreate(trans)
+    def snippet_filecreate
         %w{a b c d}.each { |letter|
             file = "/tmp/create%stest" % letter
             Puppet.info "testing %s" % file
@@ -161,29 +161,16 @@ class TestSnippets < Test::Unit::TestCase
             file = "/tmp/create%stest" % letter
             assert(File.stat(file).mode & 007777 == 0755)
         }
-
-        assert_nothing_raised {
-            trans.rollback
-        }
-        %w{a b c d}.each { |letter|
-            file = "/tmp/create%stest" % letter
-            assert(! FileTest.exists?(file), "File %s still exists" % file)
-        }
     end
 
-    def snippet_simpledefaults(trans)
+    def snippet_simpledefaults
         file = "/tmp/defaulttest"
         @@tmpfiles << file
         assert(FileTest.exists?(file), "File %s does not exist" % file)
         assert(File.stat(file).mode & 007777 == 0755)
-
-        assert_nothing_raised {
-            trans.rollback
-        }
-        assert(! FileTest.exists?(file), "%s still exists" % file)
     end
 
-    def snippet_simpleselector(trans)
+    def snippet_simpleselector
         files = %w{a b c d}.collect { |letter|
             "/tmp/snippetselect%stest" % letter
         }
@@ -195,16 +182,9 @@ class TestSnippets < Test::Unit::TestCase
                 "File %s is the incorrect mode" % file)
             @@tmpfiles << file
         }
-
-        assert_nothing_raised {
-            trans.rollback
-        }
-        files.each { |file|
-            assert(! FileTest.exists?(file), "%s still exists" % file)
-        }
     end
 
-    def snippet_classpathtest(trans)
+    def snippet_classpathtest
         file = "/tmp/classtest"
         @@tmpfiles << file
 
@@ -221,14 +201,9 @@ class TestSnippets < Test::Unit::TestCase
                 obj.path)
             #Puppet.err obj.path
         }
-
-        assert_nothing_raised {
-            trans.rollback
-        }
-        assert(! FileTest.exists?(file), "%s still exists" % file)
     end
 
-    def snippet_argumentdefaults(trans)
+    def snippet_argumentdefaults
         file1 = "/tmp/argumenttest1"
         file2 = "/tmp/argumenttest2"
         @@tmpfiles << file1
@@ -241,7 +216,7 @@ class TestSnippets < Test::Unit::TestCase
         assert(File.stat(file2).mode & 007777 == 0644)
     end
 
-    def snippet_casestatement(trans)
+    def snippet_casestatement
         files = %w{
             /tmp/existsfile
             /tmp/existsfile2
@@ -254,13 +229,9 @@ class TestSnippets < Test::Unit::TestCase
             assert(FileTest.exists?(file), "File %s is missing" % file)
             assert(File.stat(file).mode & 007777 == 0755, "File %s is not 755" % file)
         }
-
-        assert_nothing_raised {
-            trans.rollback
-        }
     end
 
-    def snippet_implicititeration(trans)
+    def snippet_implicititeration
         files = %w{a b c d e f g h}.collect { |l| "/tmp/iteration%stest" % l }
 
         files.each { |file|
@@ -270,17 +241,9 @@ class TestSnippets < Test::Unit::TestCase
                 "File %s is not 755" % file)
 
         }
-
-        assert_nothing_raised {
-            trans.rollback
-        }
-
-        files.each { |file|
-            assert(! FileTest.exists?(file), "file %s still exists" % file)
-        }
     end
 
-    def snippet_multipleinstances(trans)
+    def snippet_multipleinstances
         files = %w{a b c}.collect { |l| "/tmp/multipleinstances%s" % l }
 
         files.each { |file|
@@ -290,17 +253,9 @@ class TestSnippets < Test::Unit::TestCase
                 "File %s is not 755" % file)
 
         }
-
-        assert_nothing_raised {
-            trans.rollback
-        }
-
-        files.each { |file|
-            assert(! FileTest.exists?(file), "file %s still exists" % file)
-        }
     end
 
-    def snippet_namevartest(trans)
+    def snippet_namevartest
         file = "/tmp/testfiletest"
         dir = "/tmp/testdirtest"
         @@tmpfiles << file
@@ -309,7 +264,7 @@ class TestSnippets < Test::Unit::TestCase
         assert(FileTest.directory?(dir), "Directory %s does not exist" % dir)
     end
 
-    def snippet_scopetest(trans)
+    def snippet_scopetest
         file = "/tmp/scopetest"
         @@tmpfiles << file
         assert(FileTest.file?(file), "File %s does not exist" % file)
@@ -317,7 +272,7 @@ class TestSnippets < Test::Unit::TestCase
             "File %s is not 755" % file)
     end
 
-    def snippet_failmissingexecpath(trans)
+    def snippet_failmissingexecpath
         file = "/tmp/exectesting1"
         execfile = "/tmp/execdisttesting"
         @@tmpfiles << file
@@ -325,7 +280,7 @@ class TestSnippets < Test::Unit::TestCase
         assert(!FileTest.exists?(execfile), "File %s exists" % execfile)
     end
 
-    def snippet_selectorvalues(trans)
+    def snippet_selectorvalues
         nums = %w{1 2 3 4 5}
         files = nums.collect { |n|
             "/tmp/selectorvalues%s" % n
@@ -339,7 +294,7 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
-    def snippet_singleselector(trans)
+    def snippet_singleselector
         nums = %w{1 2 3}
         files = nums.collect { |n|
             "/tmp/singleselector%s" % n
@@ -353,13 +308,13 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
-    def snippet_falsevalues(trans)
+    def snippet_falsevalues
         file = "/tmp/falsevaluesfalse"
         @@tmpfiles << file
         assert(FileTest.exists?(file), "File %s does not exist" % file)
     end
 
-    def disabled_snippet_classargtest(trans)
+    def disabled_snippet_classargtest
         [1,2].each { |num|
             file = "/tmp/classargtest%s" % num
             @@tmpfiles << file
@@ -369,7 +324,7 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
-    def snippet_classheirarchy(trans)
+    def snippet_classheirarchy
         [1,2,3].each { |num|
             file = "/tmp/classheir%s" % num
             @@tmpfiles << file
@@ -379,7 +334,7 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
-    def snippet_singleary(trans)
+    def snippet_singleary
         [1,2,3,4].each { |num|
             file = "/tmp/singleary%s" % num
             @@tmpfiles << file
@@ -387,7 +342,7 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
-    def snippet_classincludes(trans)
+    def snippet_classincludes
         [1,2,3].each { |num|
             file = "/tmp/classincludes%s" % num
             @@tmpfiles << file
@@ -397,19 +352,19 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
-    def snippet_componentmetaparams(trans)
+    def snippet_componentmetaparams
         ["/tmp/component1", "/tmp/component2"].each { |file|
             assert(FileTest.file?(file), "File %s does not exist" % file)
         }
     end
 
-    def snippet_aliastest(trans)
+    def snippet_aliastest
         %w{/tmp/aliastest /tmp/aliastest2 /tmp/aliastest3}.each { |file|
             assert(FileTest.file?(file), "File %s does not exist" % file)
         }
     end
 
-    def snippet_singlequote(trans)
+    def snippet_singlequote
         {   1 => 'a $quote',
             2 => 'some "\yayness\"'
         }.each { |count, str|
@@ -423,12 +378,12 @@ class TestSnippets < Test::Unit::TestCase
 
     # There's no way to actually retrieve the list of classes from the
     # transaction.
-    def snippet_tag(trans)
+    def snippet_tag
         @@tmpfiles << "/tmp/settestingness"
     end
 
     # Make sure that set tags are correctly in place, yo.
-    def snippet_tagged(trans)
+    def snippet_tagged
         tags = {"testing" => true, "yayness" => false,
             "both" => false, "bothtrue" => true, "define" => true}
 
@@ -441,13 +396,13 @@ class TestSnippets < Test::Unit::TestCase
         end
     end
 
-    def snippet_defineoverrides(trans)
+    def snippet_defineoverrides
         file = "/tmp/defineoverrides1"
         assert(FileTest.exists?(file), "File does not exist")
         assert_equal(0755, filemode(file))
     end
 
-    def snippet_deepclassheirarchy(trans)
+    def snippet_deepclassheirarchy
         5.times { |i|
             i += 1
             file = "/tmp/deepclassheir%s" % i
@@ -455,37 +410,37 @@ class TestSnippets < Test::Unit::TestCase
         }
     end
 
-    def snippet_emptyclass(trans)
+    def snippet_emptyclass
         # There's nothing to check other than that it works
     end
 
-    def snippet_emptyexec(trans)
+    def snippet_emptyexec
         assert(FileTest.exists?("/tmp/emptyexectest"),
             "Empty exec was ignored")
 
         @@tmpfiles << "/tmp/emptyexextest"
     end
 
-    def snippet_multisubs(trans)
+    def snippet_multisubs
         path = "/tmp/multisubtest"
         assert(FileTest.exists?(path), "Did not create file")
         assert_equal("sub2", File.read(path), "sub2 did not override content")
         assert_equal(0755, filemode(path), "sub1 did not override mode")
     end
 
-    def snippet_collection(trans)
+    def snippet_collection
         assert(FileTest.exists?("/tmp/colltest1"), "Did not collect file")
         assert(! FileTest.exists?("/tmp/colltest2"), "Incorrectly collected file")
     end
 
-    def snippet_virtualresources(trans)
+    def snippet_virtualresources
         %w{1 2 3 4}.each do |num|
             assert(FileTest.exists?("/tmp/virtualtest#{num}"),
                 "Did not collect file #{num}")
         end
     end
 
-    def disabled_snippet_dirchmod(trans)
+    def disabled_snippet_dirchmod
         dirs = %w{a b}.collect { |letter|
             "/tmp/dirchmodtest%s" % letter
         }
@@ -498,10 +453,6 @@ class TestSnippets < Test::Unit::TestCase
 
         assert(File.stat("/tmp/dirchmodtesta").mode & 007777 == 0755)
         assert(File.stat("/tmp/dirchmodtestb").mode & 007777 == 0700)
-
-        assert_nothing_raised {
-            trans.rollback
-        }
     end
 
     # Iterate across each of the snippets and create a test.
@@ -540,7 +491,6 @@ class TestSnippets < Test::Unit::TestCase
                 assert_nothing_raised {
                     client.getconfig()
                 }
-                trans = nil
                 assert_nothing_raised {
                     trans = client.apply()
                 }
@@ -560,7 +510,7 @@ class TestSnippets < Test::Unit::TestCase
                     }
                 }
                 assert_nothing_raised {
-                    self.send(mname, trans)
+                    self.send(mname)
                 }
 
                 client.clear
