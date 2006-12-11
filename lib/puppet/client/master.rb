@@ -125,20 +125,16 @@ class Puppet::Client::MasterClient < Puppet::Client
         ensure
             Puppet::Storage.store
         end
-
+        
         if Puppet[:report]
-            begin
-                report = transaction.report()
-                if Puppet[:rrdgraph] == true
-                    report.graph()
-                end
-                reportclient().report(report)
-            rescue => detail
-                Puppet.err "Reporting failed: %s" % detail
-            end
+            report(transaction)
         end
 
         return transaction
+    ensure
+        if defined? transaction and transaction
+            transaction.cleanup
+        end
     end
 
     # Cache the config
@@ -496,6 +492,8 @@ class Puppet::Client::MasterClient < Puppet::Client
 
     private
 
+    # Download files from the remote server, returning a list of all
+    # changed files.
     def self.download(args)
         objects = Puppet::Type.type(:component).create(
             :name => "#{args[:name]}_collector"
@@ -529,12 +527,16 @@ class Puppet::Client::MasterClient < Puppet::Client
 
         # Now source all of the changed objects, but only source those
         # that are top-level.
+        files = []
         trans.changed?.find_all do |object|
-            yield object
+            yield object if block_given?
+            files << object[:path]
         end
+        trans.cleanup
 
         # Now clean up after ourselves
         objects.remove
+        files
     end
 
     # Retrieve facts from the central server.
@@ -608,6 +610,19 @@ class Puppet::Client::MasterClient < Puppet::Client
     def self.loadfacts
         Puppet[:factpath].split(":").each do |dir|
             loaddir(dir, "fact")
+        end
+    end
+    
+    # Send off the transaction report.
+    def report(transaction)
+        begin
+            report = transaction.report()
+            if Puppet[:rrdgraph] == true
+                report.graph()
+            end
+            reportclient().report(report)
+        rescue => detail
+            Puppet.err "Reporting failed: %s" % detail
         end
     end
 

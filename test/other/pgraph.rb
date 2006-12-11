@@ -14,6 +14,18 @@ class TestPGraph < Test::Unit::TestCase
 	
 	Edge = Puppet::Relationship
 	
+	def test_clear
+	    graph = Puppet::PGraph.new
+	    graph.add_edge!("a", "b")
+	    graph.add_vertex! "c"
+	    assert_nothing_raised do
+	        graph.clear
+        end
+        assert(graph.vertices.empty?, "Still have vertices after clear")
+        assert(graph.edges.empty?, "still have edges after clear")
+    end
+	    
+	
 	def test_matching_edges
 	    graph = Puppet::PGraph.new
 	    

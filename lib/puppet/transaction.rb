@@ -105,12 +105,16 @@ class Transaction
         }.uniq
     end
     
-    # Do any necessary cleanup.  Basically just removes any generated
-    # resources.
+    # Do any necessary cleanup.  If we don't get rid of the graphs, the
+    # contained resources might never get cleaned up.
     def cleanup
         @generated.each do |resource|
             resource.remove
         end
+        if defined? @relgraph
+            @relgraph.clear
+        end
+        @resources.clear
     end
     
     # See if the resource generates new resources at evaluation time.
@@ -210,8 +214,6 @@ class Transaction
             # And then close the transaction log.
             Puppet::Log.close(@report)
         end
-        
-        cleanup()
 
         Puppet.debug "Finishing transaction %s with %s changes" %
             [self.object_id, @count]
@@ -235,7 +237,6 @@ class Transaction
         # enough to check the immediate dependencies, which is why we use
         # a tree from the reversed graph.
         skip = false
-        resource.info "checking for failed deps"
         @relgraph.reversal.tree_from_vertex(resource, :dfs).keys.each do |dep|
             if fails = failed?(dep)
                 resource.notice "Dependency %s[%s] has %s failures" %

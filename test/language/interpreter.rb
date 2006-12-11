@@ -564,7 +564,7 @@ class TestInterpreter < Test::Unit::TestCase
         assert(other, "Could not find class")
         assert(interp.findclass("", "other::myclass"), "Could not find class")
         assert_equal("other::myclass", other.fqname)
-        assert_equal("other", other.namespace)
+        assert_equal("other::myclass", other.namespace)
         assert_equal("myclass", other.type)
         assert_equal(%w{something diff},
              interp.findclass("other", "myclass").code.evaluate(:scope => scope))

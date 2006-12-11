@@ -193,6 +193,7 @@ class TestDSL < Test::Unit::TestCase
     end
 
     def test_typemethods
+        Puppet::Type.loadall
         filetype = Puppet::Type.type(:file)
         path = tempfile()
 

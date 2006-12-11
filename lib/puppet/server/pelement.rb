@@ -40,6 +40,9 @@ class Server::PElement < Server::Handler
         # And then apply the configuration.  This way we're reusing all
         # the code in there.  It should probably just be separated out, though.
         transaction = client.apply
+        
+        # And then clean up
+        component.remove
 
         # It'd be nice to return some kind of report, but... at this point
         # we have no such facility.

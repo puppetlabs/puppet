@@ -9,6 +9,30 @@ require 'puppettest'
 
 class TestMasterClient < Test::Unit::TestCase
     include PuppetTest::ServerTest
+    
+    class FakeTrans
+        def initialize
+            @counters = Hash.new { |h,k| h[k] = 0 }
+        end
+        [:evaluate, :report, :cleanup, :addtimes, :tags, :ignoreschedules].each do |m|
+            define_method(m.to_s + "=") do |*args|
+                @counters[m] += 1
+            end
+            define_method(m) do |*args|
+                @counters[m] += 1
+            end
+            define_method(m.to_s + "?") do
+                @counters[m]
+            end
+        end
+    end
+    class FakeComponent
+        attr_accessor :trans
+        def evaluate
+            @trans = FakeTrans.new
+            @trans
+        end
+    end
 
     def mkmaster(file = nil)
         master = nil
@@ -36,6 +60,73 @@ class TestMasterClient < Test::Unit::TestCase
         }
 
         return client
+    end
+    
+    def mk_fake_client
+        server = Puppet::Server::Master.new :Code => ""
+        master = Puppet::Client::MasterClient.new :Server => server, :Local => true
+
+        # Now create some objects
+        objects = FakeComponent.new
+
+        master.send(:instance_variable_set, "@objects", objects)
+
+        class << master
+            def report(r)
+                @reported ||= 0
+                @reported += 1
+            end
+            def reported
+                @reported ||= 0
+                @reported
+            end
+        end
+        return master, objects
+    end
+    
+    def test_apply
+        master, objects = mk_fake_client
+        
+        check = Proc.new do |hash|
+            assert(objects.trans, "transaction was not created")
+            trans = objects.trans
+            hash[:yes].each do |m|
+                assert_equal(1, trans.send(m.to_s + "?"), "did not call #{m} enough times")
+            end
+            hash[:no].each do |m|
+                assert_equal(0, trans.send(m.to_s + "?"), "called #{m} too many times")
+            end
+        end
+        
+        # First try it with no arguments
+        assert_nothing_raised do
+            master.apply
+        end
+        check.call :yes => %w{evaluate cleanup addtimes}, :no => %w{report tags ignoreschedules}
+        assert_equal(0, master.reported, "master sent report with reports disabled")
+        
+        
+        # Now enable reporting and make sure the report method gets called
+        Puppet[:report] = true
+        assert_nothing_raised do
+            master.apply
+        end
+        check.call :yes => %w{evaluate cleanup addtimes}, :no => %w{tags ignoreschedules}
+        assert_equal(1, master.reported, "master did not send report")
+        
+        # Now try it with tags enabled
+        assert_nothing_raised do
+            master.apply("tags")
+        end
+        check.call :yes => %w{evaluate cleanup tags addtimes}, :no => %w{ignoreschedules}
+        assert_equal(2, master.reported, "master did not send report")
+        
+        # and ignoreschedules
+        assert_nothing_raised do
+            master.apply("tags", true)
+        end
+        check.call :yes => %w{evaluate cleanup tags ignoreschedules addtimes}, :no => %w{}
+        assert_equal(3, master.reported, "master did not send report")
     end
 
     def test_disable
@@ -129,20 +220,24 @@ class TestMasterClient < Test::Unit::TestCase
         }
     end
     
+    # This method is supposed
     def test_download
         source = tempfile()
         dest = tempfile()
         sfile = File.join(source, "file")
+        dfile = File.join(dest, "file")
         Dir.mkdir(source)
         File.open(sfile, "w") {|f| f.puts "yay"}
         
         files = []
         assert_nothing_raised do
-            
-            Puppet::Client::Master.download(:dest => dest, :source => source, :name => "testing") do |path|
-                    files << path
-            end
+            files = Puppet::Client::MasterClient.download(:dest => dest, :source => source, :name => "testing")
         end
+        
+        assert(FileTest.directory?(dest), "dest dir was not created")
+        assert(FileTest.file?(dfile), "dest file was not created")
+        assert_equal(File.read(sfile), File.read(dfile), "Dest file had incorrect contents")
+        assert_equal([dest, dfile].sort, files.sort, "Changed files were not returned correctly")
     end
 
     def test_getplugins

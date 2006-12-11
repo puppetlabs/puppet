@@ -14,6 +14,13 @@ class Puppet::PGraph < GRATR::Digraph
     # This is the type used for splicing.
     attr_accessor :container_type
     
+    def clear
+        @vertex_dict.clear
+        if defined? @edge_number
+            @edge_number.clear
+        end
+    end
+    
     # The dependencies for a given resource.
     def dependencies(resource)
         tree_from_vertex(resource, :dfs).keys

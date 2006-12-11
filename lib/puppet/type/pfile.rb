@@ -174,6 +174,9 @@ module Puppet
 
         # Autorequire any parent directories.
         autorequire(:file) do
+            unless self[:path]
+                raise "no path for %s" % self.ref
+            end
             File.dirname(self[:path])
         end
 
