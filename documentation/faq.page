@@ -249,4 +249,10 @@ chgrping /etc/puppet/ssl to the puppet group, but ``puppetd`` might
 chgrp it back.  Having ``puppetmasterd`` start as the root group should
 fix the problem permanently until you can upgrade.
 
+How do all of these variables, like ``operatingsystem``, get set?
+-----------------------------------------------------------------
+The variables are all set by [Facter](/projects/facter).  You can get
+a full listing of the available variables and their values by running
+``facter`` by itself in a shell.
+
 *$Id$*
