@@ -559,7 +559,6 @@ class TestTransactions < Test::Unit::TestCase
             file = f(letter)
             assert(reverse.vertex?(file), "%s did not make it into reversal" % letter)
         end
-        graph.to_jpg("normal_relations")
     end
     
     # Test pre-evaluation generation

@@ -88,8 +88,6 @@ class TestPGraph < Test::Unit::TestCase
             deps.add_edge!(source, target, :callback => :refresh)
         end
         
-        deps.to_jpg("deps-before")
-        
         deps.splice!(contgraph, Container)
         
         assert(! deps.cyclic?, "Created a cyclic graph")

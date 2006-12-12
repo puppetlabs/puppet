@@ -200,6 +200,7 @@ class TestDSL < Test::Unit::TestCase
         a = aspect :testing
 
         Puppet::Type.eachtype do |type|
+            next if type.name.to_s =~ /test/
             assert(a.respond_to?(type.name),
                 "Aspects do not have a %s method" % type.name)
         end

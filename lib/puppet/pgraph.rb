@@ -111,9 +111,9 @@ class Puppet::PGraph < GRATR::Digraph
     
     # For some reason, unconnected vertices do not show up in
     # this graph.
-    def to_jpg(name)
+    def to_jpg(path, name)
         gv = vertices()
-        Dir.chdir("/Users/luke/Desktop/pics") do
+        Dir.chdir(path) do
             induced_subgraph(gv).write_to_graphic_file('jpg', name)
         end
     end

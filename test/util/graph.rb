@@ -51,8 +51,6 @@ class TestUtilGraph < Test::Unit::TestCase
             end
         end
         
-        graph.to_jpg("graph")
-        
         # Now make sure we correctly retrieve the leaves from each container
         {top => %w{a b c d e f g h},
          one => %w{a b},
