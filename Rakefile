@@ -20,7 +20,8 @@ project = Rake::RedLabProject.new("puppet") do |p|
     p.filelist = [
         'install.rb',
         '[A-Z]*',
-        'lib/**/*.rb',
+        'lib/puppet.rb',
+        'lib/puppet/*.rb',
         'test/**/*.rb',
         'bin/**/*',
         'ext/**/*',
