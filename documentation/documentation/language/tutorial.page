@@ -100,6 +100,20 @@ the builtin [conditionals](structures.html#conditionals):
 
 This is only one assignment, so no errors.
 
+## Variable Interpolation
+
+Variables will get interpolated within double-quoted strings by default.  You
+can disable the interpolation by escaping the dollar sign:
+
+    $str = "A string with a \$dollar sign in it"
+
+During interpolation, you can also surround your variable with curly braces if
+necessary:
+
+    $a = "something"
+    $b = "else"
+    $c = "${a}_${b}"
+
 # Fact Variables (facts)
 
 In addition to variables that are manually assigned (as above), `puppet` also
