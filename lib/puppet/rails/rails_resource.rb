@@ -22,6 +22,7 @@ class Puppet::Rails::RailsResource < ActiveRecord::Base
         end
         hash[:scope] = scope
         hash[:source] = scope.source
+        hash[:rails_id] = self.id
         obj = Puppet::Parser::Resource.new(hash)
         rails_parameters.each do |param|
             obj.set(param.to_resourceparam(scope.source))

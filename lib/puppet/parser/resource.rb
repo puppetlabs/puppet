@@ -9,7 +9,7 @@ class Puppet::Parser::Resource
     include Puppet::Util::Errors
     include Puppet::Util::Logging
 
-    attr_accessor :source, :line, :file, :scope
+    attr_accessor :source, :line, :file, :scope, :rails_id
     attr_accessor :virtual, :override, :params, :translated
 
     attr_reader :exported

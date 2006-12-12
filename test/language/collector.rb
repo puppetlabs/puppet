@@ -185,6 +185,50 @@ class TestCollector < Test::Unit::TestCase
         end
 
         assert_equal([], ret)
+
+        # Now create a whole new scope and make sure we can actually retrieve
+        # the resource from the database, not just from the scope.
+        # First create a host object and store our resource in it.
+        host = Puppet::Rails::Host.find_or_create_by_name("localhost")
+        assert(host, "did not get rails host")
+        assert_nothing_raised("could not store resource") do
+            exported.store(host)
+        end
+        host.save
+
+        # And make sure it's in there
+        newres = Puppet::Rails::RailsResource.find_by_title("/tmp/exported")
+        assert(newres, "Did not find resource in db")
+        interp, scope, source = mkclassframing
+
+        # Now make a collector
+        coll = nil
+        assert_nothing_raised do
+            coll = Puppet::Parser::Collector.new(scope, "file", nil, nil, :exported)
+        end
+
+        # Set it in our scope
+        scope.newcollection(coll)
+
+        # Make sure it's in the collections
+        assert_equal([coll], scope.collections)
+
+        # And try to collect the virtual resources.
+        ret = nil
+        assert_nothing_raised do
+            ret = coll.collect_exported
+        end
+
+        assert_equal(["/tmp/exported"], ret.collect { |f| f.title })
+
+        # Make sure we can evaluate the same collection multiple times and
+        # that later collections do nothing
+        assert_nothing_raised do
+            ret = coll.evaluate
+        end
+
+        # Make sure it got deleted from the collection list
+        assert_equal([], scope.collections)
     end
 
     def test_collection_conflicts

@@ -20,10 +20,7 @@ class Puppet::Feature
             begin
                 result = yield
             rescue => detail
-                if Puppet[:trace]
-                    puts detail.backtrace
-                    Puppet.err "Failed to load %s: %s" % [name, detail]
-                end
+                warn "Failed to load feature test for %s: %s" % [name, detail]
                 result = false
             end
         end

@@ -4,6 +4,7 @@
 
 require 'puppet'
 require 'timeout'
+require 'puppet/rails'
 require 'puppet/parser/parser'
 require 'puppet/parser/scope'
 
@@ -142,7 +143,7 @@ class Puppet::Parser::Interpreter
         scope.name = "top"
         scope.type = "main"
 
-        scope.host = facts["hostname"] || Facter.value("hostname")
+        scope.host = client
 
         classes = @classes.dup
 
@@ -358,7 +359,7 @@ class Puppet::Parser::Interpreter
         end
 
         # The class won't always be defined during testing.
-        if Puppet[:storeconfigs] and defined? ActiveRecord::Base
+        if Puppet[:storeconfigs] and Puppet.features.rails?
             Puppet::Rails.init
         end
 

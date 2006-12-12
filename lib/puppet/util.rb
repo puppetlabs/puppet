@@ -351,7 +351,7 @@ module Util
         return seconds
     end
 
-    module_function :memory
+    module_function :memory, :thinmark
 end
 end
 

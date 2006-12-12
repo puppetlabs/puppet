@@ -3,36 +3,6 @@
 require 'facter'
 require 'puppet'
 
-begin
-    require 'active_record'
-rescue LoadError => detail
-    if Facter["operatingsystem"].value == "Debian" and
-        FileTest.exists?("/usr/share/rails")
-            count = 0
-            Dir.entries("/usr/share/rails").each do |dir|
-                libdir = File.join("/usr/share/rails", dir, "lib")
-                if FileTest.exists?(libdir) and ! $:.include?(libdir)
-                    count += 1
-                    $: << libdir
-                end
-            end
-
-            if count > 0
-                retry
-            end
-    end
-end
-
-# If we couldn't find it the normal way, try using a Gem.
-unless defined? ActiveRecord
-    begin
-        require 'rubygems'
-        require_gem 'rails'
-    rescue LoadError
-        # Nothing
-    end
-end
-
 module Puppet::Rails
     Puppet.config.setdefaults(:puppetmaster,
         :dblocation => { :default => "$statedir/clientconfigs.sqlite3",
@@ -65,11 +35,9 @@ module Puppet::Rails
     # Set up our database connection.  It'd be nice to have a "use" system
     # that could make callbacks.
     def self.init
-        unless defined? ActiveRecord::Base
+        unless Puppet.features.rails?
             raise Puppet::DevError, "No activerecord, cannot init Puppet::Rails"
         end
-        
-        
 
         # This global init does not work for testing, because we remove
         # the state dir on every test.
@@ -137,7 +105,7 @@ module Puppet::Rails
     end
 end
 
-if defined? ActiveRecord::Base
+if Puppet.features.rails?
     require 'puppet/rails/host'
 end
 
