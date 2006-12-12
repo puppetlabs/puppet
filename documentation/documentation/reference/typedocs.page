@@ -16,7 +16,6 @@ orderInfo: 40
 1. <a href='#mount'>Mount</a>
 1. <a href='#notify'>Notify</a>
 1. <a href='#package'>Package</a>
-1. <a href='#port'>Port</a>
 1. <a href='#schedule'>Schedule</a>
 1. <a href='#service'>Service</a>
 1. <a href='#sshkey'>Sshkey</a>
@@ -278,7 +277,7 @@ All cron parameters support ``absent`` as a value; this will
 remove any existing values for that field.
 
 #### ensure
-The basic state that the object should be in.  Valid values are ``absent``, ``present``.
+The basic state that the object should be in.  Valid values are ``present``, ``absent``.
 
 #### environment
 Any environment settings associated with this cron job.  They
@@ -557,7 +556,7 @@ for file copying, but it can also be used to monitor files somewhat
 like Tripwire without managing the file contents in any way.  You can
 specify that a file's checksum should be monitored and then subscribe to
 the file from another object and receive events to signify
-checksum changes, for instance.  Valid values are ``nosum``, ``md5``, ``mtime``, ``md5lite``, ``time``, ``timestamp``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
+checksum changes, for instance.  Valid values are ``nosum``, ``mtime``, ``md5lite``, ``md5``, ``time``, ``timestamp``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
 
 #### content
 Specify the contents of a file as a string.  Newlines, tabs, and
@@ -610,7 +609,7 @@ something similar.
 You can also make recursive symlinks, which will create a
 directory structure that maps to the target directory,
 with directories corresponding to each directory
-and links corresponding to each file.  Valid values are ``link``, ``absent`` (also called ``false``), ``present``, ``directory``, ``file``.  Values can also match ``(?-mix:.)``.
+and links corresponding to each file.  Valid values are ``link``, ``present``, ``directory``, ``absent`` (also called ``false``), ``file``.  Values can also match ``(?-mix:.)``.
 
 #### force
 Force the file operation.  Currently only used when replacing
@@ -701,7 +700,7 @@ what amount to search paths for files:
 
 This will use the first found file as the source.
 
-[fileserver docs]: fsconfigref.html
+[fileserver docs]: ../installing/fsconfigref.html
 
 
 #### target
@@ -788,7 +787,7 @@ Whether to allow duplicate GIDs.  This option does not work on
 FreeBSD (contract to the ``pw`` man page).  Valid values are ``true``, ``false``.
 
 #### ensure
-The basic state that the object should be in.  Valid values are ``absent``, ``present``.
+The basic state that the object should be in.  Valid values are ``present``, ``absent``.
 
 #### gid
 The group ID.  Must be specified numerically.  If not
@@ -808,8 +807,8 @@ seldom need to specify this -- Puppet will usually discover the
 appropriate provider for your platform.  Available providers are:
 
 * **groupadd**: Group management via ``groupadd`` and its ilk.  The default
-        for most platforms    Required binaries: ``groupadd``, ``groupdel``, ``groupmod``.
-* **netinfo**: Group management using NetInfo.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``niutil``, ``nireport``.
+        for most platforms    Required binaries: ``groupmod``, ``groupadd``, ``groupdel``.
+* **netinfo**: Group management using NetInfo.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``nireport``, ``niutil``.
 * **pw**: Group management via ``pw``.  Only works on FreeBSD.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``/usr/sbin/pw``.
 
 
@@ -833,7 +832,7 @@ make those aliases available in your Puppet scripts and also on
 disk.
 
 #### ensure
-  Valid values are ``absent``, ``present``.
+The basic state that the object should be in.  Valid values are ``present``, ``absent``.
 
 #### ip
 The host's IP address, IPv4 or IPv6.
@@ -846,7 +845,13 @@ The specific backend for provider to use. You will
 seldom need to specify this -- Puppet will usually discover the
 appropriate provider for your platform.  Available providers are:
 
+* **netinfo**: Host management in NetInfo.  This provider is highly experimental and is known
+        not to work currently.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``umount``, ``mount``, ``df``, ``nireport``, ``niutil``.
 * **parsed**:   
+
+#### target
+The file in which to store service information.  Only used by
+those providers that write to disk (i.e., not NetInfo).
 
 
 
@@ -886,11 +891,14 @@ Control what to do with this mount. If the value is
 but not mounted, if it is ``absent``, the entry is removed 
 from the mount table and the filesystem is unmounted if 
 currently mounted, if it is ``mounted``, the filesystem 
-is entered into the mount table and mounted.  Valid values are ``absent``, ``mounted``, ``present``.
+is entered into the mount table and mounted.  Valid values are ``present`` (also called ``unmounted``), ``absent``, ``mounted``.
 
 #### fstype
 The mount type.  Valid values depend on the
 operating system.
+
+#### name (*namevar*)
+The mount path for the mount.
 
 #### options
 Mount options for the mounts, as they would
@@ -899,15 +907,21 @@ appear in the fstab.
 #### pass
 The pass in which the mount is checked.
 
-#### path (*namevar*)
-The mount path for the mount.
+#### path
+The deprecated name for the mount point.  Please use ``name`` now.
 
 #### provider
 The specific backend for provider to use. You will
 seldom need to specify this -- Puppet will usually discover the
 appropriate provider for your platform.  Available providers are:
 
+* **netinfo**: Mount management in NetInfo.  This provider is highly experimental and is known
+        not to work currently.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``umount``, ``mount``, ``df``, ``nireport``, ``niutil``.
 * **parsed**:     Required binaries: ``umount``, ``mount``, ``df``.
+
+#### target
+The file in which to store the mount table.  Only used by
+those providers that write to disk (i.e., not NetInfo).
 
 
 
@@ -927,7 +941,8 @@ The message to be sent to the log.
 An arbitrary tag for your own reference; the name of the message.
 
 #### withpath
-Whether to not to show the full object path.  Sends the message at the current loglevel.  Valid values are ``true``, ``false``.
+Whether to not to show the full object path.  Sends the
+message at the current loglevel.  Valid values are ``true``, ``false``.
 
 
 
@@ -976,7 +991,7 @@ What state the package should be in.
 *latest* only makes sense for those packaging formats that can
 retrieve new packages on their own and will throw an error on
 those that cannot.  For those packaging systems that allow you
-to specify package versions, specify them here.  Valid values are ``absent``, ``present`` (also called ``installed``), ``latest``.  Values can also match ``(?-mix:.)``.
+to specify package versions, specify them here.  Valid values are ``present`` (also called ``installed``), ``absent``, ``latest``.  Values can also match ``(?-mix:.)``.
 
 #### instance
 A read-only parameter set by the package.
@@ -1028,8 +1043,8 @@ appropriate provider for your platform.  Available providers are:
 * **apple**: Package management based on OS X's builtin packaging system.  This is
         essentially the simplest and least functional package system in existence --
         it only supports installation; no deletion or upgrades.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``/usr/sbin/installer``.
-* **apt**: Package management via ``apt-get``.  Default for ``operatingsystem`` == ``debian``.    Required binaries: ``/usr/bin/debconf-set-selections``, ``/usr/bin/apt-get``, ``/usr/bin/apt-cache``.
-* **aptitude**: Package management via ``aptitude``.    Required binaries: ``/usr/bin/aptitude``, ``/usr/bin/apt-cache``.
+* **apt**: Package management via ``apt-get``.  Default for ``operatingsystem`` == ``debian``.    Required binaries: ``/usr/bin/apt-get``, ``/usr/bin/apt-cache``, ``/usr/bin/debconf-set-selections``.
+* **aptitude**: Package management via ``aptitude``.    Required binaries: ``/usr/bin/apt-cache``, ``/usr/bin/aptitude``.
 * **blastwave**: Package management using Blastwave.org's ``pkg-get`` command on Solaris.    Required binaries: ``pkg-get``.
 * **darwinport**: Package management using DarwinPorts on OS X.    Required binaries: ``/opt/local/bin/port``.
 * **dpkg**: Package management via ``dpkg``.  Because this only uses ``dpkg``
@@ -1050,7 +1065,7 @@ appropriate provider for your platform.  Available providers are:
 * **rpm**: RPM packaging support; should work anywhere with a working ``rpm``
         binary.  Default for ``operatingsystem`` == ``redhat``.    Required binaries: ``rpm``.
 * **sun**: Sun's packaging system.  Requires that you specify the source for
-        the packages you're managing.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/sbin/pkgrm``, ``/usr/bin/pkginfo``, ``/usr/sbin/pkgadd``.
+        the packages you're managing.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/bin/pkginfo``, ``/usr/sbin/pkgadd``, ``/usr/sbin/pkgrm``.
 * **sunfreeware**: Package management using sunfreeware.com's ``pkg-get`` command on Solaris.
         At this point, support is exactly the same as ``blastwave`` support and
         has not actually been tested.    Required binaries: ``pkg-get``.
@@ -1080,51 +1095,6 @@ Deprecated form of ``provider``.
 
 #### vendor
 A read-only parameter set by the package.
-
-
-
-
-----------------
-
-
-<h2><a name='port'>port</a></h2>
-Installs and manages port entries.  For most systems, these
-entries will just be in /etc/services, but some systems (notably OS X)
-will have different solutions.
-
-
-### Port Parameters
-#### alias
-Any aliases the port might have.  Multiple values must be
-specified as an array.  Note that this state has the same name as
-one of the metaparams; using this state to set aliases will make
-those aliases available in your Puppet scripts and also on disk.
-
-#### description
-The port description.
-
-#### ensure
-  Valid values are ``absent``, ``present``.
-
-#### name (*namevar*)
-The port name.
-
-#### number
-The port number.
-
-#### protocols
-The protocols the port uses.  Valid values are *udp* and *tcp*.
-Most services have both protocols, but not all.  If you want
-both protocols, you must specify that; Puppet replaces the
-current values, it does not merge with them.  If you specify
-multiple protocols they must be as an array.
-
-#### provider
-The specific backend for provider to use. You will
-seldom need to specify this -- Puppet will usually discover the
-appropriate provider for your platform.  Available providers are:
-
-* **parsed**:   
 
 
 
@@ -1279,7 +1249,7 @@ wherever possible, it relies on local tools to enable or disable
 a given service.  *true*/*false*/*runlevels*  Valid values are ``false``, ``true``.
 
 #### ensure
-Whether a service should be running.  **true**/*false*  Valid values are ``running`` (also called ``true``), ``stopped`` (also called ``false``).
+Whether a service should be running.  **true**/*false*  Valid values are ``stopped`` (also called ``false``), ``running`` (also called ``true``).
 
 #### hasrestart
 Specify that an init script has a ``restart`` option.  Otherwise,
@@ -1390,7 +1360,7 @@ as one of the metaparams; using this state to set aliases will
 make those aliases available in your Puppet scripts.
 
 #### ensure
-  Valid values are ``absent``, ``present``.
+The basic state that the object should be in.  Valid values are ``present``, ``absent``.
 
 #### key
 The key itself; generally a long string of hex digits.
@@ -1404,6 +1374,10 @@ seldom need to specify this -- Puppet will usually discover the
 appropriate provider for your platform.  Available providers are:
 
 * **parsed**:   
+
+#### target
+The file in which to store the mount table.  Only used by
+those providers that write to disk (i.e., not NetInfo).
 
 #### type
 The encryption type used.  Probably ssh-dss or ssh-rsa.
@@ -1551,7 +1525,7 @@ Whether to allow duplicate UIDs.  Valid values are ``true``, ``false``.
 A description of the user.  Generally is a user's full name.
 
 #### ensure
-The basic state that the object should be in.  Valid values are ``absent``, ``present``.
+The basic state that the object should be in.  Valid values are ``present``, ``absent``.
 
 #### gid
 The user's primary group.  Can be specified numerically or
@@ -1581,9 +1555,9 @@ The specific backend for provider to use. You will
 seldom need to specify this -- Puppet will usually discover the
 appropriate provider for your platform.  Available providers are:
 
-* **netinfo**: User management in NetInfo.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``niutil``, ``nireport``.
+* **netinfo**: User management in NetInfo.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``nireport``, ``niutil``.
 * **pw**: User management via ``pw`` on FreeBSD.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``pw``.
-* **useradd**: User management via ``useradd`` and its ilk.    Required binaries: ``useradd``, ``userdel``, ``usermod``.
+* **useradd**: User management via ``useradd`` and its ilk.    Required binaries: ``usermod``, ``useradd``, ``userdel``.
 
 #### shell
 The user's login shell.  The shell must exist and be
@@ -1780,4 +1754,4 @@ so Puppet only checks for it at that time.
 ----------------
 
 
-*This page autogenerated on Thu Nov 09 15:19:07 CST 2006*
+*This page autogenerated on Thu Nov 30 18:24:06 CST 2006*

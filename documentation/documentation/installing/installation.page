@@ -183,6 +183,13 @@ maintained as the RPMs.
 
 # Building the Server
 
+Puppet is designed so that essentially all of its configuration can be
+maintained on the server.  The clients do not need copies of the configuration
+manifests, nor any templates you might create, and Puppet knows how to
+download any custom types or facts you create.  Thus, the manifest you create
+should just be on the server, and it will be compiled by the server for each
+client.
+
 ## Create Your Site Manifest
 
 Because the Puppet language is declarative, it does not make as much sense to
@@ -302,6 +309,13 @@ Otherwise, you will need to define each of your nodes in your site manifest:
 
 Alternatively, you can tell ``puppetmasterd`` to use
 [LDAP for node storage](../advanced/ldapnodes.html).
+
+# Client Setup
+
+In most environments, the clients will need no initial configuration.  They
+will try to contact a server named ``puppet`` by default, so if you set up a
+DNS alias pointing that to your Puppet server, your clients shouldn't need any
+configuration.
 
 # Verifying Installation
 
