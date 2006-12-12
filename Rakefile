@@ -67,4 +67,30 @@ if project.has?(:epm)
     end
 end
 
+rule(/_is_runnable$/) do |t|
+    available = false
+    executable = t.name.sub(/_is_runnable$/, '')
+    ENV['PATH'].split(':').each do |elem|
+        available = true if File.executable? File.join(elem, executable)
+    end
+    
+    unless available
+        puts "You do not have #{executable} available in your path"
+        exit 1
+    end
+end
+
+file "debian" => :bzr_is_runnable do
+    system("bzr get http://www.hezmatt.org/~mpalmer/bzr/puppet.debian.svn debian") || exit(1)
+end
+
+task :check_build_deps => 'dpkg-checkbuilddeps_is_runnable' do
+    system("dpkg-checkbuilddeps") || exit(1)
+end
+
+task :debian_packages => [ "debian", :check_build_deps, :fakeroot_is_runnable ] do
+    system("fakeroot debian/rules clean") || exit(1)
+    system("fakeroot debian/rules binary") || exit(1)
+end
+
 # $Id$
