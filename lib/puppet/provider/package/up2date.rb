@@ -3,6 +3,7 @@ Puppet.type(:package).provide :up2date, :parent => :rpm do
         mechanism."
 
     commands :up2date => "/usr/sbin/up2date-nox"
+    defaultfor :operatingsystem => :redhat
 
     # Install a package using 'up2date'.
     def install

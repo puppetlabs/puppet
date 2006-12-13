@@ -6,7 +6,6 @@ Puppet::Type.type(:package).provide :rpm do
     VERSIONSTRING = "%{VERSION}-%{RELEASE}"
 
     commands :rpm => "rpm"
-    defaultfor :operatingsystem => :redhat
 
     def self.list
         packages = []
