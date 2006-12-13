@@ -82,7 +82,7 @@ class TestResources < Test::Unit::TestCase
         
         purger = nil
         assert_nothing_raised do
-            purger = @type.create :name => "purgetest"
+            purger = @type.create :name => "purgetest", :noop => true, :loglevel => :warning
         end
         assert(purger, "did not get purger manager")
         
@@ -119,10 +119,24 @@ class TestResources < Test::Unit::TestCase
         unmanned.each do |u|
             assert(! u.managed?, "unmanaged resource was considered managed")
         end
+        
+        genned = nil
+        assert_nothing_raised do
+            genned = purger.generate
+        end
+        assert(genned, "Did not get any generated resources")
+        assert(! genned.empty?, "generated resource list was empty")
 
         # Now make sure the generate method only finds the unmanaged resources
-        assert_equal(unmanned.collect { |r| r.title }.sort, purger.generate.collect { |r| r.title },
+        assert_equal(unmanned.collect { |r| r.title }.sort, genned.collect { |r| r.title },
             "Did not return correct purge list")
+        
+        # Now make sure our metaparams carried over
+        genned.each do |res|
+            [:noop, :loglevel].each do |param|
+                assert_equal(purger[param], res[param], "metaparam %s did not carry over" % param)
+            end
+        end
     end
 end
 

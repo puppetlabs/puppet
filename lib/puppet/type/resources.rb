@@ -51,6 +51,9 @@ Puppet::Type.newtype(:resources) do
                     [self[:name]]
                 return []
             end
+            @metaparams.each do |name, param|
+                resource[name] = param.value
+            end
         end
     end
     

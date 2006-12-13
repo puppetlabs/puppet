@@ -11,14 +11,13 @@ class Puppet::Type
 
     newmetaparam(:noop) do
         desc "Boolean flag indicating whether work should actually
-            be done.  *true*/**false**"
-        munge do |noop|
-            if noop == "true" or noop == true
-                return true
-            elsif noop == "false" or noop == false
-                return false
-            else
-                self.fail("Invalid noop value '%s'" % noop)
+            be done."
+            
+        newvalues(:true, :false)
+        munge do |value|
+            case value
+            when true, :true, "true": @parent.noop = true
+            when false, :false, "false": @parent.noop = false
             end
         end
     end
