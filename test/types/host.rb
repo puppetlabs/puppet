@@ -92,7 +92,18 @@ class TestHost < Test::Unit::TestCase
     end
 
     def test_moddinghost
+        # We want to actually use the netinfo provider on darwin
+        if Facter.value(:operatingsystem) == "Darwin"
+            Puppet::Type.type(:host).defaultprovider = nil
+        end
         host = mkhost()
+        if Facter.value(:operatingsystem) == "Darwin"
+            assert_equal(:netinfo, host[:provider], "Got incorrect provider")
+        end
+        cleanup do
+            host[:ensure] = :absent
+            assert_apply(host)
+        end
 
         assert_events([:host_created], host)
 
@@ -107,7 +118,14 @@ class TestHost < Test::Unit::TestCase
 
         host.retrieve
 
-        assert_equal(%w{madstop kirby yayness}, host.is(:alias))
+        if Facter.value(:operatingsystem) == "Darwin"
+            # Netinfo can't handle arrays right now
+            assert_equal(%w{madstop}, host.is(:alias))
+        else
+            assert_equal(%w{madstop kirby yayness}, host.is(:alias))
+        end
+        host[:ensure] = :absent
+        assert_events([:host_removed], host)
     end
     end
 

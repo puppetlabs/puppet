@@ -102,9 +102,9 @@ class TestFileSources < Test::Unit::TestCase
         assert_equal("file", result[:type])
         assert(result[:checksum], "did not get value for checksum")
         if Puppet::SUIDManager.uid == 0
-            assert(result.has_key?("owner"), "Lost owner in describe")
+            assert(result.has_key?(:owner), "Lost owner in describe")
         else
-            assert(! result.has_key?("owner"),
+            assert(! result.has_key?(:owner),
                 "Kept owner in describe even tho not root")
         end
         

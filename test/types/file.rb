@@ -1571,14 +1571,8 @@ class TestFile < Test::Unit::TestCase
                                     :source => sourcedir,
                                     :recurse => true)
 
-        puts "a"
         comp = newcomp(lfobj, destobj)
-        # trans = comp.evaluate
         assert_apply(comp)
-        # assert_nothing_raised { trans.evaluate }
-        puts "b"
-        # graph = trans.relgraph
-        # graph.to_jpg("/Users/luke/Desktop/pics", "purging")
 
         assert(FileTest.exists?(dsourcefile), "File did not get copied")
         assert(FileTest.exists?(localfile), "File did not get created")
@@ -1586,7 +1580,6 @@ class TestFile < Test::Unit::TestCase
 
         assert_nothing_raised { destobj[:purge] = true }
         assert_apply(comp)
-        system("find %s" % destdir)
 
         assert(FileTest.exists?(dsourcefile), "File got purged")
         assert(FileTest.exists?(localfile), "File got purged")

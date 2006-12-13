@@ -60,6 +60,9 @@ class TestReports < Test::Unit::TestCase
     def test_store_report
         # Create a bunch of log messages in an array.
         report = Puppet::Transaction::Report.new
+        
+        # We have to reuse reporting here because of something going on in the server/report.rb file
+        Puppet.config.use(:reporting)
 
         3.times { |i|
             log = Puppet.warning("Report test message %s" % i)

@@ -7,6 +7,11 @@ require 'puppettest'
 
 class TestRelationships < Test::Unit::TestCase
 	include PuppetTest
+	def setup
+	    super
+	    Puppet::Type.type(:exec)
+    end
+    
     def newfile
         assert_nothing_raised() {
             return Puppet.type(:file).create(
@@ -150,66 +155,6 @@ class TestRelationships < Test::Unit::TestCase
         end
         
         assert_equal(symbols, result)
-    end
-
-    def test_newsub
-        file1 = newfile()
-        file2 = newfile()
-
-        sub = nil
-        assert_nothing_raised("Could not create subscription") {
-            sub = Puppet::Event::Subscription.new(
-                :source => file1,
-                :target => file2,
-                :event => :ALL_EVENTS,
-                :callback => :refresh
-            )
-        }
-
-        subs = nil
-
-        assert_nothing_raised {
-            subs = Puppet::Event::Subscription.subscribers(file1)
-        }
-        assert_equal(1, subs.length, "Got incorrect number of subs")
-        assert_equal(sub.target, subs[0], "Got incorrect sub")
-
-        deps = nil
-        assert_nothing_raised {
-            deps = Puppet::Event::Subscription.dependencies(file2)
-        }
-        assert_equal(1, deps.length, "Got incorrect number of deps")
-        assert_equal(sub, deps[0], "Got incorrect dep")
-    end
-
-    def test_eventmatch
-        file1 = newfile()
-        file2 = newfile()
-
-        sub = nil
-        assert_nothing_raised("Could not create subscription") {
-            sub = Puppet::Event::Subscription.new(
-                :source => file1,
-                :target => file2,
-                :event => :ALL_EVENTS,
-                :callback => :refresh
-            )
-        }
-
-        assert(sub.match?(:anything), "ALL_EVENTS did not match")
-        assert(! sub.match?(:NONE), "ALL_EVENTS matched :NONE")
-
-        sub.event = :file_created
-
-        assert(sub.match?(:file_created), "event did not match")
-        assert(sub.match?(:ALL_EVENTS), "ALL_EVENTS did not match")
-        assert(! sub.match?(:NONE), "ALL_EVENTS matched :NONE")
-
-        sub.event = :NONE
-
-        assert(! sub.match?(:file_created), "Invalid match")
-        assert(! sub.match?(:ALL_EVENTS), "ALL_EVENTS matched")
-        assert(! sub.match?(:NONE), "matched :NONE")
     end
     
     def test_autorequire

@@ -752,11 +752,12 @@ end
 
     def test_ref
         path = tempfile()
+        Puppet::Type.type(:exec) # uggh, the methods need to load the types
         file = Puppet::Type.newfile(:path => path)
         assert_equal("File[#{path}]", file.ref)
 
         exec = Puppet::Type.newexec(:title => "yay", :command => "/bin/echo yay")
-        assert_equal("exec[yay]", exec.ref)
+        assert_equal("Exec[yay]", exec.ref)
     end
     
     def test_noop_metaparam

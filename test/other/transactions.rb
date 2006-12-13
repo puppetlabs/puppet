@@ -527,14 +527,14 @@ class TestTransactions < Test::Unit::TestCase
         sorted = graph.topsort.reverse
         
         # Now make sure the appropriate edges are there and are in the right order
-        assert(graph.dependencies(f(:f)).include?(f(:c)),
+        assert(graph.dependents(f(:f)).include?(f(:c)),
             "c not marked a dep of f")
         assert(sorted.index(f(:c)) < sorted.index(f(:f)),
             "c is not before f")
             
         one.each do |o|
             two.each do |t|
-                assert(graph.dependencies(o).include?(t),
+                assert(graph.dependents(o).include?(t),
                     "%s not marked a dep of %s" % [t.ref, o.ref])
                 assert(sorted.index(t) < sorted.index(o),
                     "%s is not before %s" % [t.ref, o.ref])
@@ -542,7 +542,7 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         trans.resources.leaves(middle).each do |child|
-            assert(graph.dependencies(f(:h)).include?(child),
+            assert(graph.dependents(f(:h)).include?(child),
                 "%s not marked a dep of h" % [child.ref])
             assert(sorted.index(child) < sorted.index(f(:h)),
                 "%s is not before h" % child.ref)

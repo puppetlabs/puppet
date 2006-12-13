@@ -168,6 +168,9 @@ class NetInfo < Puppet::Provider::NameService
 
     def modifycmd(param, value)
         cmd = [command(:niutil)]
+        # if value.is_a?(Array)
+        #     warning "Netinfo providers cannot currently handle multiple values"
+        # end
 
         cmd << "-createprop" << "/" << "/%s/%s" %
             [self.class.netinfodir, @model[:name]]

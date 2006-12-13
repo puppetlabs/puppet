@@ -9,10 +9,6 @@ require 'puppettest'
 
 class TestEvents < Test::Unit::TestCase
 	include PuppetTest
-    def teardown
-        super
-        Puppet::Event::Subscription.clear
-    end
 
     def test_simplesubscribe
         name = tempfile()

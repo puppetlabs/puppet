@@ -9,7 +9,6 @@ module Manager
 
     # remove all type instances; this is mostly only useful for testing
     def allclear
-        Puppet::Event::Subscription.clear
         @types.each { |name, type|
             type.clear
         }
