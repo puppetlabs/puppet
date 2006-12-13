@@ -20,10 +20,15 @@ class Puppet::PGraph < GRATR::Digraph
             @edge_number.clear
         end
     end
-    
-    # The dependencies for a given resource.
-    def dependencies(resource)
+
+    # Which resources a given resource depends upon.
+    def dependents(resource)
         tree_from_vertex(resource, :dfs).keys
+    end
+    
+    # The which resources depend upon the given resource.
+    def dependencies(resource)
+        reversal.tree_from_vertex(resource, :dfs).keys
     end
     
     # Override this method to use our class instead.

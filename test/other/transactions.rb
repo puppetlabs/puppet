@@ -760,11 +760,26 @@ class TestTransactions < Test::Unit::TestCase
         
         trans.tags = %w{mytag yaytag}
         assert(trans.tagged?(res), "tags should have matched")
-        
     end
     
-    # Make sure events propagate down the relationship graph appropriately.
-    def test_trigger
+    # We don't want to purge resources that have relationships with other resources,
+    # so we want our transactions to check for that.
+    def test_required_resources_not_deleted
+        @file = Puppet::Type.type(:file)
+        path1 = tempfile()
+        path2 = tempfile()
+        
+        # Create our first file
+        File.open(path1, "w") { |f| f.puts "yay" }
+        
+        # Create a couple of related resources
+        file1 = @file.create :title => "dependee", :path => path1, :ensure => :absent
+        file2 = @file.create :title => "depender", :path => path2, :content => "some stuff", :require => file1
+                
+        # Now make sure we don't actually delete the first file
+        assert_apply(file1, file2)
+        
+        assert(FileTest.exists?(path1), "required file was deleted")
     end
 end
 

@@ -58,9 +58,15 @@ class TestPGraph < Test::Unit::TestCase
         graph.add_edge!("a", "c")
         graph.add_edge!("b", "d")
         
-        assert_equal(%w{b c d}.sort, graph.dependencies("a").sort)
-        assert_equal(%w{d}.sort, graph.dependencies("b").sort)
-        assert_equal([].sort, graph.dependencies("c").sort)
+        assert_equal(%w{b c d}.sort, graph.dependents("a").sort)
+        assert_equal(%w{d}.sort, graph.dependents("b").sort)
+        assert_equal([].sort, graph.dependents("c").sort)
+        
+        assert_equal(%w{a b}, graph.dependencies("d").sort)
+        assert_equal(%w{a}, graph.dependencies("b").sort)
+        assert_equal(%w{a}, graph.dependencies("c").sort)
+        assert_equal([], graph.dependencies("a").sort)
+        
     end
     
     # Test that we can take a containment graph and rearrange it by dependencies
@@ -110,16 +116,10 @@ class TestPGraph < Test::Unit::TestCase
         assert(nons.empty?,
             "still contain non-strings %s" % nons.inspect)
         
-        deps.to_jpg("deps-after")
-        
         deps.edges.each do |edge|
             assert_equal({:callback => :refresh}, edge.label,
                 "Label was not copied on splice")
         end
-    end
-    
-    # Make sure empty containers are also removed
-    def test_empty_splice
     end
 end
 

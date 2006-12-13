@@ -1559,30 +1559,38 @@ class TestFile < Test::Unit::TestCase
         sourcefile = File.join(sourcedir, "sourcefile")
         dsourcefile = File.join(destdir, "sourcefile")
         localfile = File.join(destdir, "localfile")
-        randfile = File.join(destdir, "random")
+        purgee = File.join(destdir, "to_be_purged")
         File.open(sourcefile, "w") { |f| f.puts "funtest" }
         # this file should get removed
-        File.open(randfile, "w") { |f| f.puts "footest" }
+        File.open(purgee, "w") { |f| f.puts "footest" }
 
-        lfobj = Puppet::Type.newfile(:path => localfile, :content => "rahtest")
+        lfobj = Puppet::Type.newfile(:title => "localfile", :path => localfile, :content => "rahtest")
         
 
-        destobj = Puppet::Type.newfile(:path => destdir,
+        destobj = Puppet::Type.newfile(:title => "destdir", :path => destdir,
                                     :source => sourcedir,
                                     :recurse => true)
 
-        assert_apply(lfobj, destobj)
+        puts "a"
+        comp = newcomp(lfobj, destobj)
+        # trans = comp.evaluate
+        assert_apply(comp)
+        # assert_nothing_raised { trans.evaluate }
+        puts "b"
+        # graph = trans.relgraph
+        # graph.to_jpg("/Users/luke/Desktop/pics", "purging")
 
         assert(FileTest.exists?(dsourcefile), "File did not get copied")
         assert(FileTest.exists?(localfile), "File did not get created")
-        assert(FileTest.exists?(randfile), "File got prematurely purged")
+        assert(FileTest.exists?(purgee), "File got prematurely purged")
 
         assert_nothing_raised { destobj[:purge] = true }
-        assert_apply(lfobj, destobj)
+        assert_apply(comp)
+        system("find %s" % destdir)
 
         assert(FileTest.exists?(dsourcefile), "File got purged")
         assert(FileTest.exists?(localfile), "File got purged")
-        assert(! FileTest.exists?(randfile), "File did not get purged")
+        assert(! FileTest.exists?(purgee), "File did not get purged")
     end
 
     # Testing #274.  Make sure target can be used without 'ensure'.

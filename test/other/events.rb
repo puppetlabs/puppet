@@ -146,7 +146,8 @@ class TestEvents < Test::Unit::TestCase
         exec3 = Puppet.type(:exec).create(
             :title => "three",
             :name => "echo three >> %s" % file,
-            :path => "/usr/bin:/bin"
+            :path => "/usr/bin:/bin",
+            :require => exec2
         )
         execs = [exec1, exec2, exec3]
 

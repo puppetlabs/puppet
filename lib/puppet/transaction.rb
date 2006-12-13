@@ -44,6 +44,16 @@ class Transaction
             # And then return
             return []
         end
+        
+        # If a resource is going to be deleted but it still has dependencies, then
+        # don't delete it unless it's implicit.
+        if ! resource.implicit? and deps = @relgraph.dependents(resource) and ! deps.empty? and changes.detect { |change|
+            change.state.name == :ensure and change.should == :absent
+        }
+            resource.warning "%s still depend%s on me -- not deleting" %
+                [deps.collect { |r| r.ref }.join(","), if deps.length > 1; ""; else "s"; end] 
+            return []
+        end
 
         unless changes.is_a? Array
             changes = [changes]
@@ -237,7 +247,7 @@ class Transaction
         # enough to check the immediate dependencies, which is why we use
         # a tree from the reversed graph.
         skip = false
-        @relgraph.reversal.tree_from_vertex(resource, :dfs).keys.each do |dep|
+        @relgraph.dependencies(resource).each do |dep|
             if fails = failed?(dep)
                 resource.notice "Dependency %s[%s] has %s failures" %
                     [dep.class.name, dep.name, @failures[dep]]

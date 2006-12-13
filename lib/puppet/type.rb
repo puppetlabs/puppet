@@ -334,7 +334,7 @@ class Type < Puppet::Element
 
     # Return the "type[name]" style reference.
     def ref
-        "%s[%s]" % [self.class.name, self.title]
+        "%s[%s]" % [self.class.name.to_s.capitalize, self.title]
     end
 
     # Retrieve the title of an object.  If no title was set separately,
