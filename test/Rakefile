@@ -6,57 +6,59 @@ include FileTest
 
 $exclusions = %W(lib data)
 $test_library_paths = %W(lib ../lib)
-$test_dirs = [] # this is used to generate all the targets.
-$test_files = [] # this is ONLY used for the top-level test suite.
 
-# Collect all of our test directories, skipping specifically excluded dirs.
-$test_dirs = Dir.glob("*").find_all { |f| directory?(f) }.reject { |d|
-    $exclusions.include?(File.basename(d))
-}
+filemap = Hash.new { |hash, key| hash[key] = [] }
 
-# another find for the test files themselves: this could probably be rolled
-# into the original find loop.
+allfiles = []
 
-$test_dirs.each do |dir|
-    find(dir) do |path|
-        if File.basename(path) =~ /^\.+/
-            prune
-        elsif path != dir and ! directory?(path)
-            $test_files.push path
+# First collect the entire file list.
+find(".") do |f|
+    # Get rid of the leading ./
+    f = f.sub(/^\.\//, '')
+
+    file = File.basename(f)
+    dir = File.dirname(f)
+
+    # Prune . directories and excluded dirs
+    if (file =~ /^\./ and f != ".") or $exclusions.include?(File.basename(file))
+        prune
+        next
+    end
+    next if f == "."
+    next if dir == "."
+
+    # If we're a ruby script, then add it to the list of files for that dir
+    if file =~ /\.rb/
+        allfiles << f
+        # Add it to all of the parent dirs, not just our own
+        parts = File.split(dir)
+        if parts[0] == "."
+            parts.shift
         end
+        parts.each_with_index { |part, i|
+            path = File.join(parts[0..i])
+            filemap[path] << f
+        }
     end
 end
 
 desc "Run the full test suite"
-Rake::TestTask.new 'test' do |t|
+task :test do |t|
     t.libs << $test_library_paths
-    t.test_files = $test_files.sort
+
+    # Add every file as a test file to run
+    t.test_files = allfiles
     t.verbose = true
 end
-#task :test => $test_dirs
 
 task :default => :test
 
-$test_dirs.sort.each do |path|
-    files = []
+# Now create a task for every directory
+filemap.each do |dir, files|
+    ns = dir.gsub "/", ":"
 
-    find(path) do |file|
-        if directory? file and path != file
-            prune
-        elsif file =~ /.rb$/ 
-            files.push file
-        end
-    end
-
-    Rake::TestTask.new path.to_sym do |t|
-       t.libs << $test_library_paths
-       t.test_files = files.sort
-       t.verbose = true
-    end
-
-#    task path.to_sym => files.collect { |x| path + ':' + File.basename(x, '.rb') }
-
-    namespace path.to_sym do 
+    # First create a separate task for each file in the namespace.
+    namespace ns do
         files.each do |file|
             Rake::TestTask.new File.basename(file, '.rb').to_sym do |t|
                 t.libs << $test_library_paths + ['..']
@@ -65,6 +67,16 @@ $test_dirs.sort.each do |path|
             end 
         end
     end
+
+    # Then create a task that matches the directory itself.
+    Rake::TestTask.new dir do |t|
+       t.libs << $test_library_paths
+       t.test_files = files.sort
+       t.verbose = true
+    end
+
+    # And alias it with a slash on the end
+    Rake::TestTask.new(dir + "/" => dir)
 end
 
 # $Id$

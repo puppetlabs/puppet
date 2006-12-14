@@ -405,7 +405,10 @@ end
 
         user = nonrootuser()
         group = nonrootgroup()
-        FileUtils.chown_R(user.name, group.name, dir)
+        chowner = Puppet::Type.type(:file).create :path => dir,
+            :owner => user.name, :group => group.name, :recurse => true
+        assert_apply(chowner)
+        chowner.remove
 
         assert_equal(user.uid, File.stat(file).uid)
         assert_equal(group.gid, File.stat(file).gid)

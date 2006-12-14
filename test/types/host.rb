@@ -84,7 +84,7 @@ class TestHost < Test::Unit::TestCase
 
         host[:ensure] = :absent
 
-        assert_events([:host_deleted], host)
+        assert_events([:host_removed], host)
 
         assert_nothing_raised { host.retrieve }
 
