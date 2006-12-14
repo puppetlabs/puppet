@@ -6,11 +6,11 @@ file { "a file":
 file { "another":
     path => "/tmp/aliastest2",
     ensure => file,
-    require => file["a file"]
+    require => File["a file"]
 }
 
 file { "a third":
     path => "/tmp/aliastest3",
     ensure => file,
-    require => file["/tmp/aliastest"]
+    require => File["/tmp/aliastest"]
 }

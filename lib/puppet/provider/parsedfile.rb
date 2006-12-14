@@ -1,4 +1,5 @@
 require 'puppet'
+require 'puppet/filetype'
 require 'puppet/util/fileparsing'
 
 # This provider can be used as the parent class for a provider that

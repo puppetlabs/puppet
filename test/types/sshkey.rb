@@ -127,7 +127,7 @@ class TestSSHKey < Test::Unit::TestCase
             sshkey[:ensure] = :absent
         }
 
-        assert_events([:sshkey_deleted], sshkey)
+        assert_events([:sshkey_removed], sshkey)
         assert(! sshkey.provider.exists?, "Key was not deleted")
         assert_events([], sshkey)
     end

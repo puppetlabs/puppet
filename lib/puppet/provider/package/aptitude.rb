@@ -8,7 +8,14 @@ Puppet::Type.type(:package).provide :aptitude, :parent => :apt do
 
     def aptcmd(arg)
         # Apparently aptitude hasn't always supported a -q flag.
-        aptitude(arg.gsub(/-q/,""))
+        output = aptitude(arg.gsub(/-q/,""))
+
+        # Yay, stupid aptitude doesn't throw an error when the package is missing.
+        if output =~ /0 newly installed/
+            raise Puppet::Error.new(
+                "Could not find package %s" % self.name
+            )
+        end
     end
 end
 

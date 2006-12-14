@@ -139,7 +139,7 @@ module PuppetTest
 
             return ret
         end 
-        
+
         def store(hash)
             hash.each do |n, v|
                 method = n.to_s + "="

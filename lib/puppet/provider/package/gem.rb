@@ -55,7 +55,7 @@ Puppet::Type.type(:package).provide :gem do
     end
 
     def self.list(justme = false)
-        gemlist(:local => true).each do |hash|
+        gemlist(:local => true).collect do |hash|
             Puppet::Type.type(:package).installedpkg(hash)
         end
     end

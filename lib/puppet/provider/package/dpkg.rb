@@ -10,7 +10,9 @@ Puppet::Type.type(:package).provide :dpkg do
         packages = []
 
         # list out all of the packages
-        open("| #{command(:dpkgquery)} -W --showformat '${Status} ${Package} ${Version}\\n'") { |process|
+        cmd = "#{command(:dpkgquery)} -W --showformat '${Status} ${Package} ${Version}\\n'"
+        Puppet.debug "Executing '%s'" % cmd
+        execpipe(cmd) do |process|
             # our regex for matching dpkg output
             regex = %r{^(\S+ +\S+ +\S+) (\S+) (\S+)$}
             fields = [:status, :name, :ensure]
@@ -33,9 +35,16 @@ Puppet::Type.type(:package).provide :dpkg do
                         "Failed to match dpkg-query line %s" % line
                 end
             }
-        }
+        end
 
         return packages
+    end
+
+    def install
+        unless file = @model[:source]
+            raise ArgumentError, "You cannot install dpkg packages without a source"
+        end
+        dpkg "-i", file
     end
 
     def query
