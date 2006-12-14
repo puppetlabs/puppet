@@ -7,24 +7,34 @@ module PuppetTest::RailsTesting
         Puppet::Rails.init
     end
 
+    def railsteardown
+        Puppet::Rails.teardown
+    end
+
     def railsresource(type = "file", title = "/tmp/testing", params = {})
+        railsteardown
         railsinit
         
         # We need a host for resources
-        host = Puppet::Rails::Host.new(:name => Facter.value("hostname"))
+        #host = Puppet::Rails::Host.new(:name => Facter.value("hostname"))
 
         # Now build a resource
-        resource = host.rails_resources.build(
-            :title => title, :restype => type,
-            :exported => true
-        )
+        resources = []
+        resources << mkresource(:type => type, :title => title, :exported => true,
+                   :params => params)
 
-        # Now add some params
-        params.each do |param, value|
-            resource.rails_parameters.build(
-                :name => param, :value => value
+        # Now collect our facts
+        facts = Facter.to_hash
+
+        # Now try storing our crap
+        host = nil 
+        assert_nothing_raised {
+            host = Puppet::Rails::Host.store(
+                :resources => resources,
+                :facts => facts,
+                :name => facts["hostname"]
             )
-        end
+        }        
 
         # Now save the whole thing
         host.save

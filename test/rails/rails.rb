@@ -38,6 +38,7 @@ class TestRails < Test::Unit::TestCase
         facts = Facter.to_hash
 
         assert_nothing_raised {
+            Puppet::Rails.teardown
             Puppet::Rails.init
         }
 
@@ -74,9 +75,7 @@ class TestRails < Test::Unit::TestCase
             else
                 raise "Got weird resource %s" % resource.inspect
             end
-
-            assert_equal("user#{i}",
-                resource.rails_parameters.find_by_name("owner")[:value])
+            assert_equal("user#{i}", resource.parameters["owner"])
         end
 
         assert_equal(20, count, "Did not get enough resources")

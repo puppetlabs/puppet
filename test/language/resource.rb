@@ -375,7 +375,7 @@ class TestResource < Test::Unit::TestCase
             obj = res.store(host)
         end
 
-        assert_instance_of(Puppet::Rails::RailsResource, obj)
+        assert_instance_of(Puppet::Rails::Resource, obj)
 
         assert_nothing_raised do
             Puppet::Util.benchmark(:info, "Saved host") do
@@ -385,14 +385,14 @@ class TestResource < Test::Unit::TestCase
 
         # Now make sure we can find it again
         assert_nothing_raised do
-            obj = Puppet::Rails::RailsResource.find_by_host_id_and_restype_and_title(
-                host.id, res.type, res.title
+            obj = Puppet::Rails::Resource.find_by_host_id_and_title(
+                host.id, res.title
             )
         end
-        assert_instance_of(Puppet::Rails::RailsResource, obj)
+        assert_instance_of(Puppet::Rails::Resource, obj)
 
         # Make sure we get the parameters back
-        obj.rails_parameters.each do |param|
+        obj.parameters.each do |param|
             assert_equal(res[param[:name]], param[:value],
                 "%s was different" % param[:name])
         end

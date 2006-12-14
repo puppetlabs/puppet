@@ -189,15 +189,24 @@ class TestCollector < Test::Unit::TestCase
         # Now create a whole new scope and make sure we can actually retrieve
         # the resource from the database, not just from the scope.
         # First create a host object and store our resource in it.
-        host = Puppet::Rails::Host.find_or_create_by_name("localhost")
+            # Now collect our facts
+            facts = {}
+            Facter.each do |fact, value| facts[fact] = value end 
+
+
+            # Now try storing our crap
+            resources = []
+            resources << exported
+            host = Puppet::Rails::Host.store(
+                :resources => resources,
+                :facts => facts,
+                :name => facts["hostname"]
+            )
         assert(host, "did not get rails host")
-        assert_nothing_raised("could not store resource") do
-            exported.store(host)
-        end
         host.save
 
         # And make sure it's in there
-        newres = Puppet::Rails::RailsResource.find_by_title("/tmp/exported")
+        newres = host.resources.find_by_title("/tmp/exported")
         assert(newres, "Did not find resource in db")
         interp, scope, source = mkclassframing
 
@@ -237,7 +246,7 @@ class TestCollector < Test::Unit::TestCase
         # First make a railshost we can conflict with
         host = Puppet::Rails::Host.new(:name => "myhost")
 
-        host.rails_resources.build(:title => "/tmp/conflicttest", :restype => "file",
+        host.resources.build(:title => "/tmp/conflicttest", :type => "PuppetFile",
             :exported => true)
 
         host.save
@@ -266,7 +275,7 @@ class TestCollector < Test::Unit::TestCase
         # Make our configuration
         host = Puppet::Rails::Host.new(:name => "myhost")
 
-        host.rails_resources.build(:title => "/tmp/hosttest", :restype => "file",
+        host.resources.build(:title => "/tmp/hosttest", :type => "PuppetFile",
             :exported => true)
 
         host.save

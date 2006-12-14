@@ -29,10 +29,10 @@ class Puppet::Parser::Collector
         # and such, we'll need to vary the conditions, but this works with no
         # attributes, anyway.
         time = Puppet::Util.thinmark do
-            Puppet::Rails::RailsResource.find_all_by_restype_and_exported(@type, true,
+            Puppet::Rails::Resource.find_all_by_type_and_exported(@type, true,
                 args
             ).each do |obj|
-                if existing = @scope.findresource(obj.restype, obj.title)
+                if existing = @scope.findresource(obj.type, obj.title)
                     # See if we exported it; if so, just move on
                     if @scope.host == obj.host.name
                         next
@@ -44,7 +44,7 @@ class Puppet::Parser::Collector
                         else
                             raise Puppet::ParseError,
                                 "Exported resource %s[%s] cannot override local resource" %
-                                [obj.restype, obj.title]
+                                [obj.type, obj.title]
                         end
                     end
                 end

@@ -898,15 +898,16 @@ class TestInterpreter < Test::Unit::TestCase
         interp.evaluate("myhost", {})
 
         # And then retrieve the object from rails
-        res = Puppet::Rails::RailsResource.find_by_restype_and_title("file", "/tmp/yay")
+        res = Puppet::Rails::Resource.find_by_type_and_title("PuppetFile", "/tmp/yay")
 
         assert(res, "Did not get resource from rails")
 
-        param = res.rails_parameters.find_by_name("owner")
+        param = res.param_names.find_by_name("owner", :include => :param_values)
 
         assert(param, "Did not find owner param")
 
-        assert_equal("root", param[:value])
+	pvalue = param.param_values.find_by_value("root")
+        assert_equal("root", pvalue[:value])
     end
     end
 end

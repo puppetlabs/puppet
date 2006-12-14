@@ -12,23 +12,56 @@ module Puppet::Rails
             :desc => "The database cache for client configurations.  Used for
                 querying within the language."
         },
-        :dbadapter => [ "sqlite3", "The type of database to use." ],
+        :dbadapter => [ "mysql", "The type of database to use." ],
         :dbname => [ "puppet", "The name of the database to use." ],
-        :dbserver => [ "puppet", "The database server for Client caching. Only
+        :dbserver => [ "localhost", "The database server for Client caching. Only
             used when networked databases are used."],
         :dbuser => [ "puppet", "The database user for Client caching. Only
             used when networked databases are used."],
         :dbpassword => [ "puppet", "The database password for Client caching. Only
             used when networked databases are used."],
-        :railslog => {:default => "$logdir/puppetrails.log",
+        :railslog => {:default => "/tmp/puppetpuppetrails.log",
             :mode => 0600,
             :owner => "$user",
             :group => "$group",
             :desc => "Where Rails-specific logs are sent"
         }
     )
-
+    
     def self.clear
+    end
+
+    def self.teardown
+        unless defined? ActiveRecord::Base
+            raise Puppet::DevError, "No activerecord, cannot init Puppet::Rails"
+        end
+            Puppet.config.use(:puppetmaster)
+
+            args = {:adapter => Puppet[:dbadapter]}
+        case Puppet[:dbadapter]
+           when "sqlite3":
+                args[:database] = Puppet[:dblocation]
+            
+            when "mysql":
+                args[:host]     = Puppet[:dbserver]
+                args[:username] = Puppet[:dbuser]
+                args[:password] = Puppet[:dbpassword]
+                args[:database] = Puppet[:dbname]
+        end
+
+        begin
+            ActiveRecord::Base.establish_connection(args)
+        rescue => detail
+            if Puppet[:trace]
+               puts detail.backtrace
+            end
+            raise Puppet::Error, "Could not connect to database: %s" % detail
+        end 
+
+        ActiveRecord::Base.connection.tables.each do |t| 
+            ActiveRecord::Base.connection.drop_table t
+        end
+
         @inited = false
     end
 
@@ -73,7 +106,12 @@ module Puppet::Rails
                 end
                 raise Puppet::Error, "Could not connect to database: %s" % detail
             end 
-            #puts "Database initialized: #{@inited.inspect} "
+            unless ActiveRecord::Base.connection.tables.include?("resources")
+                require 'puppet/rails/database/schema'
+	        Puppet::Rails::Schema.init
+                #puts "Database initialized: #{@inited.inspect} "
+            end
+            @inited = true
         end
         ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
 
