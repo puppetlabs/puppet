@@ -90,14 +90,21 @@ class ResourceDef < AST::Branch
         # many times.
         objtitles.collect { |objtitle|
             exceptwrap :type => Puppet::ParseError do
+                exp = self.exported || scope.exported
+                # We want virtual to be true if exported is true.  We can't
+                # just set :virtual => self.virtual in the initialization,
+                # because sometimes the :virtual attribute is set *after*
+                # :exported, in which case it clobbers :exported if :exported
+                # is true.  Argh, this was a very tough one to track down.
+                virt = self.virtual || exported
                 obj = Puppet::Parser::Resource.new(
                     :type => objtype,
                     :title => objtitle,
                     :params => paramobjects,
                     :file => @file,
                     :line => @line,
-                    :exported => self.exported || scope.exported,
-                    :virtual => self.virtual,
+                    :exported => exp,
+                    :virtual => virt,
                     :source => scope.source,
                     :scope => scope
                 )

@@ -437,7 +437,7 @@ file { "/tmp/yayness":
                 at = "@@"
             end
 
-            check = proc do |res|
+            check = proc do |res, msg|
                 if res.is_a?(Puppet::Parser::Resource)
                     txt = res.ref
                 else
@@ -445,12 +445,12 @@ file { "/tmp/yayness":
                 end
                 # Real resources get marked virtual when exported
                 if form == :virtual or res.is_a?(Puppet::Parser::Resource)
-                    assert(res.virtual, "Resource #{txt} is not virtual")
+                    assert(res.virtual, "#{msg} #{at}#{txt} is not virtual")
                 end
                 if form == :virtual
-                    assert(! res.exported, "Resource #{txt} is exported")
+                    assert(! res.exported, "#{msg} #{at}#{txt} is exported")
                 else
-                    assert(res.exported, "Resource #{txt} is not exported")
+                    assert(res.exported, "#{msg} #{at}#{txt} is not exported")
                 end
             end
 
@@ -462,7 +462,7 @@ file { "/tmp/yayness":
             assert_equal("/tmp/testing", ret[0].title.value)
             # We always get an astarray back, so...
             assert_instance_of(AST::ResourceDef, ret[0])
-            check.call(ret[0])
+            check.call(ret[0], "simple resource")
 
             # Now let's try it with multiple resources in the same spec
             assert_nothing_raised do
@@ -472,7 +472,7 @@ file { "/tmp/yayness":
             assert_instance_of(AST::ASTArray, ret)
             ret.each do |res|
                 assert_instance_of(AST::ResourceDef, res)
-                check.call(res)
+                check.call(res, "multiresource")
             end
 
             # Now evaluate these
@@ -489,7 +489,7 @@ file { "/tmp/yayness":
             %w{/tmp/1 /tmp/2}.each do |title|
                 res = scope.findresource("file[#{title}]")
                 assert(res, "Could not find %s" % title)
-                check.call(res)
+                check.call(res, "found multiresource")
             end
         end
     end
