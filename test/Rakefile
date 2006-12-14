@@ -43,7 +43,7 @@ find(".") do |f|
 end
 
 desc "Run the full test suite"
-task :test do |t|
+Rake::TestTask.new :test do |t|
     t.libs << $test_library_paths
 
     # Add every file as a test file to run
@@ -76,7 +76,7 @@ filemap.each do |dir, files|
     end
 
     # And alias it with a slash on the end
-    Rake::TestTask.new(dir + "/" => dir)
+    task(dir + "/" => dir)
 end
 
 # $Id$
