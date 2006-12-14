@@ -298,14 +298,13 @@ module Puppet
 
         # List all available services
         def self.list
-            # First see if the default service type can list services for us
-            deftype = svctype(defaulttype())
+            defprov = defaultprovider
 
             names = []
-            if deftype.respond_to? :list
-                deftype.list(deftype.name)
+            if defprov.respond_to? :list
+                defprov.list(defprov.name)
             else
-                Puppet.debug "Type %s does not respond to list" % deftype.name
+                Puppet.debug "Type %s does not respond to list" % defprov.name
             end
 
             self.collect { |s| s }

@@ -8,6 +8,14 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
 
     defaultfor :operatingsystem => [:redhat, :fedora, :suse]
 
+    def self.defpath
+        superclass.defpath
+    end
+
+    if self.suitable?
+        Puppet.type(:service).newpath(:redhat, defpath())
+    end
+
     # Remove the symlinks
     def disable
         begin
