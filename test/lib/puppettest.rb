@@ -11,21 +11,8 @@ module PuppetTest
     # the parent of that dir.
     def basedir(*list)
         unless defined? @@basedir
-            case
-            when $0 =~ /rake_test_loader/
-                @@basedir = File.dirname(Dir.getwd)
-            when ENV['BASEDIR']
-                @@basedir = ENV['BASEDIR']
-            else
-                dir = nil
-                app = $0.sub /^\.\//, ""
-                if app =~ /^#{File::SEPARATOR}.+\.rb/
-                    dir = app
-                else
-                    dir = File.join(Dir.getwd, app)
-                end
-                3.times { dir = File.dirname(dir) }
-                @@basedir = dir
+            Dir.chdir(File.dirname(__FILE__)) do
+                @@basedir = File.dirname(File.dirname(Dir.getwd))
             end
         end
         if list.empty?
