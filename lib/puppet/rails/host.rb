@@ -65,7 +65,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
                     rtype = "Puppet#{resource.type.to_s.capitalize}"
                 end
 
-                res = host.resources.find_or_create_by_title(resource[:title])
+                res = host.resources.create(:title => resource[:title])
                 res.type = rtype
                 res.save
                 resargs.each do |param, value|
