@@ -1,5 +1,4 @@
 require 'puppet/rails/resource'
-require 'pp'
 
 class Puppet::Rails::Host < ActiveRecord::Base
     has_many :fact_values, :through => :fact_names 
