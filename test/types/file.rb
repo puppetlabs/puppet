@@ -1762,6 +1762,45 @@ class TestFile < Test::Unit::TestCase
             end
         end
     end
+    
+    if Process.uid == 0
+    # Testing #364.
+    def test_writing_in_directories_with_no_write_access
+        # Make a directory that our user does not have access to
+        dir = tempfile()
+        Dir.mkdir(dir)
+        
+        # Get a fake user
+        user = nonrootuser
+        # and group
+        group = nonrootgroup
+        
+        # First try putting a file in there
+        path = File.join(dir, "file")
+        file = Puppet::Type.newfile :path => path, :owner => user.name, :group => group.name, :content => "testing"
+        
+        # Make sure we can create it
+        assert_apply(file)
+        assert(FileTest.exists?(path), "File did not get created")
+        # And that it's owned correctly
+        assert_equal(user.uid, File.stat(path).uid, "File has the wrong owner")
+        assert_equal(group.gid, File.stat(path).gid, "File has the wrong group")
+
+        assert_equal("testing", File.read(path), "file has the wrong content")
+        
+        # Now make a dir
+        subpath = File.join(dir, "subdir")
+        subdir = Puppet::Type.newfile :path => subpath, :owner => user.name, :group => group.name, :ensure => :directory
+        # Make sure we can create it
+        assert_apply(subdir)
+        assert(FileTest.directory?(subpath), "File did not get created")
+        # And that it's owned correctly
+        assert_equal(user.uid, File.stat(subpath).uid, "File has the wrong owner")
+        assert_equal(group.gid, File.stat(subpath).gid, "File has the wrong group")
+
+        assert_equal("testing", File.read(path), "file has the wrong content")
+    end
+    end
 end
 
 # $Id$
