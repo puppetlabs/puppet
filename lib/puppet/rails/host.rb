@@ -10,8 +10,11 @@ class Puppet::Rails::Host < ActiveRecord::Base
     acts_as_taggable
 
     def facts(name)
-        fv = self.fact_values.find(:first, :conditions => "fact_names.name = '#{name}'") 
-        return fv.value
+        if fv = self.fact_values.find(:first, :conditions => "fact_names.name = '#{name}'") 
+            return fv.value
+        else
+            return nil
+        end
     end
 
     # If the host already exists, get rid of its objects
@@ -30,6 +33,8 @@ class Puppet::Rails::Host < ActiveRecord::Base
             raise ArgumentError, "You must specify the hostname for storage"
         end
 
+        create = true
+
         args = {}
 
         if hash[:facts].include?("ipaddress")
@@ -40,10 +45,19 @@ class Puppet::Rails::Host < ActiveRecord::Base
             host = self.find_or_create_by_name(hash[:facts]["hostname"], args)
         end
 
-        hash[:facts].each do |name, value|
-            fn = host.fact_names.find_or_create_by_name(name)
-            fv = fn.fact_values.find_or_create_by_value(value)
-            host.fact_names << fn
+        Puppet::Util.benchmark(:info, "Converted facts") do
+            hash[:facts].each do |name, value|
+                if create
+                    fn = host.fact_names.find_or_create_by_name(name)
+                    fv = fn.fact_values.find_or_create_by_value(value)
+                else
+                    fn = host.fact_names.find_by_name(name) || host.fact_names.new(:name => name)
+                    unless fv = fn.fact_values.find_by_value(value)
+                        fn.fact_values << fn.fact_values.new(:value => value)
+                    end
+                end
+                host.fact_names << fn
+            end
         end
 
         unless hash[:resources]
@@ -65,11 +79,27 @@ class Puppet::Rails::Host < ActiveRecord::Base
                     rtype = "Puppet#{resource.type.to_s.capitalize}"
                 end
 
-                res = host.resources.create(:title => resource[:title], :type => rtype)
-                res.save
+                if create
+                    res = host.resources.find_or_create_by_type_and_title(rtype, resource[:title])
+                else
+                    unless res = host.resources.find_by_type_and_title(rtype, resource[:title])
+                        res = host.resources.new(:type => rtype, :title => resource[:title])
+                        host.resources << res
+                    end
+                end
+
                 resargs.each do |param, value|
-                    pn = res.param_names.find_or_create_by_name(param)
-                    pv = pn.param_values.find_or_create_by_value(value)
+                    if create
+                        pn = res.param_names.find_or_create_by_name(param)
+                        pv = pn.param_values.find_or_create_by_value(value)
+                    else
+                        unless pn = res.param_names.find_by_name(param)
+                            pn = res.param_names.new(:name => param)
+                        end
+                        unless pn.param_values.find_by_value(value)
+                            pn.param_values << pn.param_values.new(:value => value)
+                        end
+                    end
                     res.param_names << pn
                 end
             end
