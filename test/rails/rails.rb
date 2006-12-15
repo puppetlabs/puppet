@@ -26,6 +26,7 @@ class TestRails < Test::Unit::TestCase
     # Don't do any tests w/out this class
     if defined? ActiveRecord::Base
     def test_hostcache
+	railsinit
         @interp, @scope, @source = mkclassframing
         # First make some objects
         resources = []
@@ -61,13 +62,13 @@ class TestRails < Test::Unit::TestCase
         }
         assert(host, "Could not find host object")
 
-        assert(host.rails_resources, "No objects on host")
+        assert(host.resources, "No objects on host")
 
-        assert_equal(facts["hostname"], host.facts["hostname"],
+        assert_equal(facts["hostname"], host.facts("hostname"),
             "Did not retrieve facts")
 
         count = 0
-        host.rails_resources.each do |resource|
+        host.resources.each do |resource|
             count += 1
             i = nil
             if resource[:title] =~ /file([0-9]+)/
