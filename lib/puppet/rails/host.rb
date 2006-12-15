@@ -64,8 +64,6 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
             res = host.resources.find_or_create_by_title(resource[:title])
             res.type = rtype
-f = File.new("/tmp/rtype.dump", "w+")
-f.puts rtype
             res.save
             resargs.each do |param, value|
                 pn = res.param_names.find_or_create_by_name(param)
