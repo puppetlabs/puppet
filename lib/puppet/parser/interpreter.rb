@@ -479,8 +479,7 @@ class Puppet::Parser::Interpreter
         if other = @classtable[fqname]
             # Make sure the parents match
             if parent and other.parentclass and (parent != other.parentclass)
-                @parser.error @parser.addcontext("Class %s is already defined" % fqname) +
-                    " with parent %s" % [fqname, other.parentclass]
+                @parser.error("Class %s is already defined at %s:%s; cannot redefine" % [fqname, other.file, other.line])
             end
 
             # This might be dangerous...
@@ -527,10 +526,7 @@ class Puppet::Parser::Interpreter
         end
         # Make sure our definition doesn't already exist
         if other = @definetable[fqname]
-            @parser.error @parser.addcontext(
-                "%s is already defined at line %s" % [fqname, other.line],
-                other
-            )
+            @parser.error("%s is already defined at %s:%s; cannot redefine" % [fqname, other.file, other.line])
         end
 
         ns, name = namesplit(fqname)
@@ -555,7 +551,7 @@ class Puppet::Parser::Interpreter
         names = [names] unless names.instance_of?(Array)
         names.collect do |name|
             if other = @nodetable[name]
-                @parser.error @parser.addcontext("Node %s is already defined" % [other.name], other)
+                @parser.error("Node %s is already defined at %s:%s; cannot redefine" % [other.name, other.file, other.line])
             end
             name = name.to_s if name.is_a?(Symbol)
             args = {
