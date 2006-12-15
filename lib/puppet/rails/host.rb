@@ -64,26 +64,15 @@ class Puppet::Rails::Host < ActiveRecord::Base
             raise ArgumentError, "You must pass resources"
         end
 
-        typenames = []
-        Puppet::Type.loadall
-        Puppet::Type.eachtype do |type|
-            typenames << type.name.to_s
-        end
-
         Puppet::Util.benchmark(:info, "Converted resources") do
             hash[:resources].each do |resource|
                 resargs = resource.to_hash.stringify_keys
 
-
-                if typenames.include?(resource.type)
-                    rtype = "Puppet#{resource.type.to_s.capitalize}"
-                end
-
                 if create
-                    res = host.resources.find_or_create_by_type_and_title(rtype, resource[:title])
+                    res = host.resources.find_or_create_by_restype_and_title(resource[:type], resource[:title])
                 else
-                    unless res = host.resources.find_by_type_and_title(rtype, resource[:title])
-                        res = host.resources.new(:type => rtype, :title => resource[:title])
+                    unless res = host.resources.find_by_restype_and_title(resource[:type], resource[:title])
+                        res = host.resources.new(:restype => resource[:type], :title => resource[:title])
                         host.resources << res
                     end
                 end

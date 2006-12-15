@@ -266,11 +266,11 @@ class Puppet::Parser::Resource
 
         # 'type' isn't a valid column name, so we have to use something else.
         args = symbolize_options(args)
-        #args[:type] = args[:type]
-        #args.delete(:type)
+        args[:restype] = args[:type]
+        args.delete(:type)
 
         # Let's see if the object exists
-        if obj = host.resources.find_by_type_and_title(self.type, self.title)
+        if obj = host.resources.find_by_restype_and_title(self.type, self.title)
             # We exist
             args.each do |param, value|
                 obj[param] = value

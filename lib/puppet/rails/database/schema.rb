@@ -4,7 +4,7 @@ def self.init
     ActiveRecord::Schema.define do
         create_table :resources do |t|
             t.column :title, :string, :null => false
-            t.column :type,  :string
+            t.column :restype,  :string
             t.column :host_id, :integer
             t.column :source_file_id, :integer
             t.column :exported, :boolean

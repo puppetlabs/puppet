@@ -22,7 +22,7 @@ module PuppetTest::RailsTesting
 
         # Now build a resource
         resources = []
-        resources << mkresource(:type => type, :title => title, :exported => true,
+        resources << mkresource(:restype => type, :title => title, :exported => true,
                    :params => params)
 
         # Now collect our facts

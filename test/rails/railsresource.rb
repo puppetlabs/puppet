@@ -24,11 +24,11 @@ class TestRailsResource < Test::Unit::TestCase
         # Now build a resource
         resource = host.resources.create(
             :title => "/tmp/to_resource", 
+            :restype => "file",
             :exported => true)
         
         # For some reason the child class doesn't exist until after the resource is created.
         # Probably an issue with the dynamic class generation.
-        resource.type = "PuppetFile"  
         resource.save
   
         # Now add some params
