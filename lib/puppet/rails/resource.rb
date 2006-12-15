@@ -20,7 +20,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         hash = {}
         self.param_values.find(:all).each do |pvalue|
             pname = self.param_names.find(:first)
-            hash.store(pname.name.to_sym, pvalue.value)
+            hash.store(pname.name, pvalue.value)
         end
         return hash
     end
