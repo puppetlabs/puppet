@@ -40,9 +40,16 @@ class TestRails < Test::Unit::TestCase
         @interp, @scope, @source = mkclassframing
         # First make some objects
         resources = []
-        20.times { |i|
-            resources << mkresource(:type => "file", :title => "/tmp/file#{i.to_s}",
+        10.times { |i|
+            # Make a file
+            resources << mkresource(:type => "file",
+                :title => "/tmp/file#{i.to_s}",
                 :params => {:owner => "user#{i}"})
+
+            # And an exec, so we're checking multiple types
+            resources << mkresource(:type => "exec",
+                :title => "/bin/echo file#{i.to_s}",
+                :params => {})
         }
 
         # Now collect our facts
@@ -74,6 +81,7 @@ class TestRails < Test::Unit::TestCase
 
         count = 0
         host.resources.each do |resource|
+            assert_equal(host, resource.host)
             count += 1
             i = nil
             if resource[:title] =~ /file([0-9]+)/
@@ -81,7 +89,10 @@ class TestRails < Test::Unit::TestCase
             else
                 raise "Got weird resource %s" % resource.inspect
             end
-            assert_equal("user#{i}", resource.parameters["owner"])
+            assert(resource[:type] != "", "Did not get a type from the resource")
+            if resource[:type] != "PuppetExec"
+                assert_equal("user#{i}", resource.parameters["owner"])
+            end
         end
 
         assert_equal(20, count, "Did not get enough resources")
