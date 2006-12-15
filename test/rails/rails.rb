@@ -24,7 +24,17 @@ class TestRails < Test::Unit::TestCase
     end
 
     # Don't do any tests w/out this class
-    if defined? ActiveRecord::Base
+    if Puppet.features.rails?
+    def setup
+        super
+        railsinit
+    end
+
+    def teardown
+        super
+        railsteardown
+    end
+
     def test_hostcache
 	railsinit
         @interp, @scope, @source = mkclassframing
@@ -37,11 +47,6 @@ class TestRails < Test::Unit::TestCase
 
         # Now collect our facts
         facts = Facter.to_hash
-
-        assert_nothing_raised {
-            Puppet::Rails.teardown
-            Puppet::Rails.init
-        }
 
         # Now try storing our crap
         host = nil

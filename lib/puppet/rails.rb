@@ -12,7 +12,8 @@ module Puppet::Rails
             :desc => "The database cache for client configurations.  Used for
                 querying within the language."
         },
-        :dbadapter => [ "mysql", "The type of database to use." ],
+        :dbadapter => [ "sqlite3", "The type of database to use." ],
+        :dbmigrate => [ false, "Whether to automatically migrate the database." ],
         :dbname => [ "puppet", "The name of the database to use." ],
         :dbserver => [ "localhost", "The database server for Client caching. Only
             used when networked databases are used."],
@@ -108,20 +109,19 @@ module Puppet::Rails
             end 
             unless ActiveRecord::Base.connection.tables.include?("resources")
                 require 'puppet/rails/database/schema'
-	        Puppet::Rails::Schema.init
-                #puts "Database initialized: #{@inited.inspect} "
+                Puppet::Rails::Schema.init
             end
             @inited = true
         end
         ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
 
-        if Puppet[:dbadapter] == "sqlite3" and ! FileTest.exists?(Puppet[:dblocation])
-
+        if Puppet[:dbmigrate]
             dbdir = nil
             $:.each { |d|
                 tmp = File.join(d, "puppet/rails/database")
                 if FileTest.directory?(tmp)
                     dbdir = tmp
+                    break
                 end
             }
 

@@ -36,7 +36,10 @@ class Puppet::Rails::Host < ActiveRecord::Base
         if hash[:facts].include?("ipaddress")
             args[:ip] = hash[:facts]["ipaddress"]
         end
-        host = self.find_or_create_by_name(hash[:facts]["hostname"], args)
+        host = nil
+        Puppet::Util.benchmark(:info, "Found/created host") do
+            host = self.find_or_create_by_name(hash[:facts]["hostname"], args)
+        end
 
         hash[:facts].each do |name, value|
             fn = host.fact_names.find_or_create_by_name(name)
@@ -48,27 +51,29 @@ class Puppet::Rails::Host < ActiveRecord::Base
             raise ArgumentError, "You must pass resources"
         end
 
-	typenames = []
+        typenames = []
         Puppet::Type.loadall
         Puppet::Type.eachtype do |type|
             typenames << type.name.to_s
         end
 
-        hash[:resources].each do |resource|
-            resargs = resource.to_hash.stringify_keys
+        Puppet::Util.benchmark(:info, "Converted resources") do
+            hash[:resources].each do |resource|
+                resargs = resource.to_hash.stringify_keys
 
 
-            if typenames.include?(resource.type)
-                rtype = "Puppet#{resource.type.to_s.capitalize}"
-            end
+                if typenames.include?(resource.type)
+                    rtype = "Puppet#{resource.type.to_s.capitalize}"
+                end
 
-            res = host.resources.find_or_create_by_title(resource[:title])
-            res.type = rtype
-            res.save
-            resargs.each do |param, value|
-                pn = res.param_names.find_or_create_by_name(param)
-                pv = pn.param_values.find_or_create_by_value(value)
-                res.param_names << pn
+                res = host.resources.find_or_create_by_title(resource[:title])
+                res.type = rtype
+                res.save
+                resargs.each do |param, value|
+                    pn = res.param_names.find_or_create_by_name(param)
+                    pv = pn.param_values.find_or_create_by_value(value)
+                    res.param_names << pn
+                end
             end
         end
 

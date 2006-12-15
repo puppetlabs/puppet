@@ -8,7 +8,9 @@ module PuppetTest::RailsTesting
     end
 
     def railsteardown
-        Puppet::Rails.teardown
+        if Puppet[:dbadapter] != "sqlite3"
+            Puppet::Rails.teardown
+        end
     end
 
     def railsresource(type = "file", title = "/tmp/testing", params = {})
