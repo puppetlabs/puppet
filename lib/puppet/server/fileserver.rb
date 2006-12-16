@@ -372,20 +372,12 @@ class Server
             mount = nil
             path = nil
             if dir =~ %r{/(\w+)/?}
-                mount = $1
-                path = dir.sub(%r{/#{mount}/?}, '')
+                tmp = $1
+                path = dir.sub(%r{/#{tmp}/?}, '')
 
-                unless @mounts.include?(mount)
-                    raise FileServerError, "Fileserver module '%s' not mounted" % mount
+                unless mount = @mounts[tmp]
+                    raise FileServerError, "Fileserver module '%s' not mounted" % tmp
                 end
-
-                unless @mounts[mount].valid?
-                    raise FileServerError,
-                        "Fileserver error: Mount '%s' does not have a path set" % mount
-                end
-
-                # And now replace the name with the actual object.
-                mount = @mounts[mount]
             else
                 raise FileServerError, "Fileserver error: Invalid path '%s'" % dir
             end
