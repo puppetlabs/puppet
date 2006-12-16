@@ -188,7 +188,11 @@ module Util
         object = nil
 
         if args.empty?
-            object = Puppet
+            if respond_to?(level)
+                object = self
+            else
+                object = Puppet
+            end
         else
             object = args.pop
         end
