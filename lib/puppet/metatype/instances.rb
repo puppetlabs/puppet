@@ -6,13 +6,7 @@ class Puppet::Type
 
     # retrieve a named instance of the current type
     def self.[](name)
-        if @objects.has_key?(name)
-            return @objects[name]
-        elsif @aliases.has_key?(name)
-            return @aliases[name]
-        else
-            return nil
-        end
+        @objects[name] || @aliases[name]
     end
 
     # add an instance by name to the class list of instances
