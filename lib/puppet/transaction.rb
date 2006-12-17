@@ -16,7 +16,10 @@ class Transaction
     Puppet.config.setdefaults(:transaction,
         :tags => ["", "Tags to use to find resources.  If this is set, then
             only resources tagged with the specified tags will be applied.
-            Values must be comma-separated."]
+            Values must be comma-separated."],
+        :evaltrace => [false, "Whether each resource should log when it is
+            being evaluated.  This allows you to interactively see exactly
+            what is being done."]
     )
 
     # Add some additional times for reporting
@@ -47,12 +50,12 @@ class Transaction
         
         # If a resource is going to be deleted but it still has dependencies, then
         # don't delete it unless it's implicit.
-        if ! resource.implicit? and deps = @relgraph.dependents(resource) and ! deps.empty? and changes.detect { |change|
-            change.state.name == :ensure and change.should == :absent
-        }
-            resource.warning "%s still depend%s on me -- not deleting" %
-                [deps.collect { |r| r.ref }.join(","), if deps.length > 1; ""; else "s"; end] 
-            return []
+        if ! resource.implicit? and deleting?(changes)
+            if deps = @relgraph.dependents(resource) and ! deps.empty?
+                resource.warning "%s still depend%s on me -- not deleting" %
+                    [deps.collect { |r| r.ref }.join(","), if deps.length > 1; ""; else "s"; end] 
+                return []
+            end
         end
 
         unless changes.is_a? Array
@@ -126,42 +129,62 @@ class Transaction
         end
         @resources.clear
     end
-    
+
+    # Copy an important relationships from the parent to the newly-generated
+    # child resource.
+    def copy_relationships(resource, children)
+        depthfirst = resource.depthfirst?
+
+        # We only have to worry about dependents, because any dependencies
+        # already missed their chance to register an event for us.
+        dependents = @relgraph.adjacent(resource,
+            :direction => :out, :type => :edges).reject { |e| ! e.callback }
+
+        #sources = @relgraph.adjacent(resource,
+        #    :direction => :in, :type => :edges).reject { |e| ! e.callback }
+
+        children.each do |gen_child|
+            if depthfirst
+                @relgraph.add_edge!(gen_child, resource)
+            else
+                @relgraph.add_edge!(resource, gen_child)
+            end
+            dependents.each do |edge|
+                @relgraph.add_edge!(gen_child, edge.target, edge.label)
+            end
+            #sources.each do |edge|
+            #    @relgraph.add_edge!(edge.source, gen_child, edge.label)
+            #end
+        end
+    end
+
+    # Are we deleting this resource?
+    def deleting?(changes)
+        changes.detect { |change|
+            change.state.name == :ensure and change.should == :absent
+        }
+    end
+
     # See if the resource generates new resources at evaluation time.
     def eval_generate(resource)
         if resource.respond_to?(:eval_generate)
             if children = resource.eval_generate
-                depthfirst = resource.depthfirst?
-                dependents = @relgraph.adjacent(resource, :direction => :out, :type => :edges)
-                targets = @relgraph.adjacent(resource, :direction => :in, :type => :edges)
-                children.each do |gen_child|
-                    if depthfirst
-                        @relgraph.add_edge!(gen_child, resource)
-                    else
-                        @relgraph.add_edge!(resource, gen_child)
-                    end
-                    dependents.each do |edge|
-                        @relgraph.add_edge!(gen_child, edge.target, edge.label)
-                    end
-                    targets.each do |edge|
-                        @relgraph.add_edge!(edge.source, gen_child, edge.label)
-                    end
-                    @generated << gen_child
-                end
+                copy_relationships(resource, children)
+                @generated += children
                 return children
             end
         end
     end
     
     # Evaluate a single resource.
-    def eval_resource(resource)
+    def eval_resource(resource, checkskip = true)
         events = []
         
         if resource.is_a?(Puppet::Type::Component)
             raise Puppet::DevError, "Got a component to evaluate"
         end
         
-        if skip?(resource)
+        if checkskip and skip?(resource)
             @resourcemetrics[:skipped] += 1
         else
             @resourcemetrics[:scheduled] += 1
@@ -172,7 +195,8 @@ class Transaction
             
             if resource.depthfirst? and children
                 children.each do |child|
-                    events += eval_resource(child)
+                    # The child will never be skipped when the parent isn't
+                    events += eval_resource(child, false)
                 end
             end
 
@@ -180,7 +204,7 @@ class Transaction
             seconds = thinmark do
                 events += apply(resource)
             end
-            
+
             if ! resource.depthfirst? and children
                 children.each do |child|
                     events += eval_resource(child)
@@ -218,12 +242,22 @@ class Transaction
 
         begin
             allevents = @sorted_resources.collect { |resource|
-                eval_resource(resource)
+                ret = nil
+                seconds = thinmark do
+                    ret = eval_resource(resource)
+                end
+
+                if Puppet[:evaltrace]
+                    resource.info "Evaluated in %0.2f seconds" % seconds
+                end
+                ret
             }.flatten.reject { |e| e.nil? }
         ensure
             # And then close the transaction log.
             Puppet::Log.close(@report)
         end
+
+        @relgraph.to_jpg(File.expand_path("~/tmp/graphs"), "simple_relgraph")
 
         Puppet.debug "Finishing transaction %s with %s changes" %
             [self.object_id, @count]
@@ -247,7 +281,8 @@ class Transaction
         # enough to check the immediate dependencies, which is why we use
         # a tree from the reversed graph.
         skip = false
-        @relgraph.dependencies(resource).each do |dep|
+        deps = @relgraph.dependencies(resource)
+        deps.each do |dep|
             if fails = failed?(dep)
                 resource.notice "Dependency %s[%s] has %s failures" %
                     [dep.class.name, dep.name, @failures[dep]]

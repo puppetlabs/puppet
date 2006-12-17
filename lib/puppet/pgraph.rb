@@ -60,8 +60,8 @@ class Puppet::PGraph < GRATR::Digraph
     # Determine all of the leaf nodes below a given vertex.
     def leaves(vertex, type = :dfs)
         tree = tree_from_vertex(vertex, type)
-        leaves = tree.keys.find_all { |c| adjacent(c, :direction => :out).empty? }
-        return leaves
+        l = tree.keys.find_all { |c| adjacent(c, :direction => :out).empty? }
+        return l
     end
     
     # Collect all of the edges that the passed events match.  Returns
@@ -100,32 +100,33 @@ class Puppet::PGraph < GRATR::Digraph
             # to the leaves instead
             next unless vertex.is_a?(type)
             
-            leaves = other.leaves(vertex)
-            if leaves.empty?
+            #oleaves = other.leaves(vertex)
+            oleaves = other.adjacent(vertex, :direction => :out)
+            if oleaves.empty?
                 remove_vertex!(vertex)
                 next
             end
             
             # First create new edges for each of the :in edges
             adjacent(vertex, :direction => :in, :type => :edges).each do |edge|
-                leaves.each do |leaf|
+                oleaves.each do |leaf|
                     add_edge!(edge.source, leaf, edge.label)
                     if cyclic?
                         raise ArgumentError,
                             "%s => %s results in a loop" %
-                            [up, leaf]
+                            [edge.source, leaf]
                     end
                 end
             end
             
             # Then for each of the out edges
             adjacent(vertex, :direction => :out, :type => :edges).each do |edge|
-                leaves.each do |leaf|
+                oleaves.each do |leaf|
                     add_edge!(leaf, edge.target, edge.label)
                     if cyclic?
                         raise ArgumentError,
                             "%s => %s results in a loop" %
-                            [leaf, down]
+                            [leaf, edge.target]
                     end
                 end
             end

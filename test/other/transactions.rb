@@ -677,10 +677,12 @@ class TestTransactions < Test::Unit::TestCase
         assert(trans.relgraph.vertex?(ra),
             "Did not add ra to rel_graph" % name)
         
-        # Now make sure this generated resource has the same relationships as the generating
-        # resource
-        assert(trans.relgraph.edge?(yay, ra),
-            "yay is not required by ra")
+        # Now make sure this generated resource has the same relationships as
+        # the generating resource
+        #assert(trans.relgraph.edge?(yay, ra),
+        #    "yay is not required by ra")
+        assert(trans.relgraph.edge?(ya, rah),
+            "rah is not subscribed to ya")
         assert(trans.relgraph.edge?(ya, ra),
             "ra is not subscribed to ya")
         
