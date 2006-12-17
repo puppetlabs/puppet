@@ -13,6 +13,18 @@ require 'puppet/relationship'
 class Puppet::PGraph < GRATR::Digraph
     # This is the type used for splicing.
     attr_accessor :container_type
+
+    include Puppet::Util
+
+    def add_edge!(*args)
+        @reversal = nil
+        super
+    end
+
+    def add_vertex!(*args)
+        @reversal = nil
+        super
+    end
     
     def clear
         @vertex_dict.clear
@@ -23,12 +35,21 @@ class Puppet::PGraph < GRATR::Digraph
 
     # Which resources a given resource depends upon.
     def dependents(resource)
-        tree_from_vertex(resource, :dfs).keys
+        tree_from_vertex2(resource).keys
     end
     
-    # The which resources depend upon the given resource.
+    # Which resources depend upon the given resource.
     def dependencies(resource)
-        reversal.tree_from_vertex(resource, :dfs).keys
+        # Cache the reversal graph, because it's somewhat expensive
+        # to create.
+        unless defined? @reversal and @reversal
+            @reversal = reversal
+        end
+        # Strangely, it's significantly faster to search a reversed
+        # tree in the :out direction than to search a normal tree
+        # in the :in direction.
+        @reversal.tree_from_vertex2(resource, :out).keys
+        #tree_from_vertex2(resource, :in).keys
     end
     
     # Override this method to use our class instead.
@@ -120,6 +141,25 @@ class Puppet::PGraph < GRATR::Digraph
         gv = vertices()
         Dir.chdir(path) do
             induced_subgraph(gv).write_to_graphic_file('jpg', name)
+        end
+    end
+
+    # A different way of walking a tree, and a much faster way than the
+    # one that comes with GRATR.
+    def tree_from_vertex2(start, direction = :out)
+        predecessor={}
+        walk(start, direction) do |parent, child|
+            predecessor[child] = parent
+        end
+        predecessor       
+    end
+
+    # A support method for tree_from_vertex2.  Just walk the tree and pass
+    # the parents and children.
+    def walk(source, direction, &block)
+        adjacent(source, :direction => direction).each do |target|
+            yield source, target
+            walk(target, direction, &block)
         end
     end
 end
