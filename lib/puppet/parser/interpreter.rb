@@ -360,6 +360,7 @@ class Puppet::Parser::Interpreter
 
         # The class won't always be defined during testing.
         if Puppet[:storeconfigs] and Puppet.features.rails?
+            require 'puppet/rails'
             Puppet::Rails.init
         end
 
