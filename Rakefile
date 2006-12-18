@@ -94,4 +94,47 @@ task :debian_packages => [ "debian", :check_build_deps, :fakeroot_is_runnable ] 
     system("fakeroot debian/rules binary") || exit(1)
 end
 
+
+def dailyfile(package)
+    "#{downdir}/#{package}/#{package}-daily-#{stamp}.tgz"
+end
+
+def daily(package)
+    edir = "/tmp/daily-export"
+    Dir.mkdir edir
+    Dir.chdir(edir) do
+        sh %{svn export http://reductivelabs.com/svn/#{package}/trunk #{package} >/dev/null}
+        sh %{tar cf - #{package} | gzip -c > #{dailyfile(package)}}
+    end
+    FileUtils.rm_rf(edir)
+end
+
+def downdir
+    ENV['DOWNLOAD_DIR'] || "/export/docroots/reductivelabs.com/htdocs/downloads"
+end
+
+def stamp
+    [Time.now.year, Time.now.month, Time.now.day].collect { |i| i.to_s}.join
+end
+
+pdaily = dailyfile("puppet")
+fdaily = dailyfile("facter")
+
+file pdaily do
+    daily("puppet")
+end
+
+file fdaily do
+    daily("facter")
+end
+
+task :daily => [pdaily, fdaily]
+
+task :dailyclean do
+    Dir.glob("#{downdir}/*/*daily*.tgz").each do |file|
+        puts "Removing %s" % file
+        File.unlink(file)
+    end
+end
+
 # $Id$
