@@ -41,7 +41,7 @@ module Puppet::Rails
             args = {:adapter => Puppet[:dbadapter]}
         case Puppet[:dbadapter]
            when "sqlite3":
-                args[:database] = Puppet[:dblocation]
+                args[:dbfile] = Puppet[:dblocation]
             
             when "mysql":
                 args[:host]     = Puppet[:dbserver]
