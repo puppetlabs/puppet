@@ -6,9 +6,8 @@ Puppet::Type.type(:package).provide :portage do
     defaultfor :operatingsystem => :gentoo
 
     def self.list
-        search_format = /(\S+) (\S+) \[(.*)\] \[(\S*)\] ([\S]*) (.*)/
-        result_fields = [:category, :name, :ensure, :version_available,
-                :vendor, :description]
+        search_format = /(\S+) (\S+) \[(.*)\] \[([^\s:]*)(:\S*)?\] ([\S]*) (.*)/
+        result_fields = [:category, :name, :ensure, :version_available, :slot, :vendor, :description]
         command = "#{command(:eix)} --format \"{installedversions}<category> <name> [<installedversions>] [<best>] <homepage> <description>{}\""
 
         begin
@@ -20,7 +19,7 @@ Puppet::Type.type(:package).provide :portage do
 
                 if( match )
                     package = {}
-                    result_fields.zip( match.captures ) { |field, value| package[field] = value unless value.empty? }
+                    result_fields.zip( match.captures ) { |field, value| package[field] = value unless !value or value.empty? }
                     package[:provider] = :portage
                     package[:ensure] = package[:ensure].split.last
 
@@ -61,8 +60,8 @@ Puppet::Type.type(:package).provide :portage do
     end
 
     def query
-        search_format = /(\S+) (\S+) \[(.*)\] \[(\S*)\] ([\S]*) (.*)/
-        result_fields = [:category, :name, :ensure, :version_available, :vendor, :description]
+        search_format = /(\S+) (\S+) \[(.*)\] \[([^\s:]*)(:\S*)?\] ([\S]*) (.*)/
+        result_fields = [:category, :name, :ensure, :version_available, :slot, :vendor, :description]
 
         search_field = @model[:name].include?( '/' ) ? "--category-name" : "--name"
         command = "#{command(:eix)} --format \"<category> <name> [<installedversions>] [<best>] <homepage> <description>\" --exact #{search_field} #{@model[:name]}"
@@ -76,7 +75,7 @@ Puppet::Type.type(:package).provide :portage do
 
                 if( match )
                     package = {}
-                    result_fields.zip( match.captures ) { |field, value| package[field] = value unless value.empty? }
+                    result_fields.zip( match.captures ) { |field, value| package[field] = value unless !value or value.empty? }
                     if package[:ensure]
                         package[:ensure] = package[:ensure].split.last
                     else
