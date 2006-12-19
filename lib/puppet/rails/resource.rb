@@ -8,10 +8,20 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
     has_many :param_values, :through => :param_names
     has_many :param_names, :dependent => :destroy
-    has_many :source_files
+    belongs_to :source_file
     belongs_to :host
 
     acts_as_taggable
+    
+    def tags=(tags)
+        tags.each do |tag|   
+            self.tag_with tag
+	end
+    end
+
+    def file=(file)
+       self.source_file = Puppet::Rails::SourceFile.new(:filename => file)
+    end
 
     def [](param)
         return super || parameter(param)

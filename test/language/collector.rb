@@ -281,7 +281,7 @@ class TestCollector < Test::Unit::TestCase
         # Make our configuration
         host = Puppet::Rails::Host.new(:name => "myhost")
 
-        host.resources.build(:title => "/tmp/hosttest", :type => "PuppetFile",
+        host.resources.build(:title => "/tmp/hosttest", :type => "file",
             :exported => true)
 
         host.save

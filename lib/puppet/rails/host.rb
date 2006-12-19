@@ -53,6 +53,12 @@ class Puppet::Rails::Host < ActiveRecord::Base
         return host
     end
 
+    def tags=(tags)
+        tags.each do |tag|   
+            self.tag_with tag
+	end
+    end
+
     # Return the value of a fact.
     def fact(name)
         if fv = self.fact_values.find(:first, :conditions => "fact_names.name = '#{name}'") 

@@ -231,13 +231,13 @@ class Puppet::Parser::Resource
         end
     end
 
-    #def tags
-    #    unless defined? @tags
-    #        @tags = scope.tags
-    #        @tags << self.type
-    #    end
-    #    @tags
-    #end
+    def tags
+        unless defined? @tags
+            @tags = scope.tags
+            @tags << self.type
+        end
+        @tags
+    end
 
     def to_hash
         @params.inject({}) do |hash, ary|
@@ -250,9 +250,7 @@ class Puppet::Parser::Resource
     # Turn our parser resource into a Rails resource.
     def to_rails(host)
         args = {}
-        #FIXME: support files/lines, etc.
-        #%w{type title tags file line exported}.each do |param|
-        %w{type title exported}.each do |param|
+        %w{type title tags file line exported}.each do |param|
             if value = self.send(param)
                 args[param] = value
             end
@@ -317,7 +315,7 @@ class Puppet::Parser::Resource
         obj.file = self.file
         obj.line = self.line
 
-        #obj.tags = self.tags
+        obj.tags = self.tags
 
         return obj
     end

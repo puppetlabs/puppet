@@ -32,6 +32,10 @@ module ActiveRecord
             acts_as_taggable_options[:taggable_type], list
           ])
         end
+        def tags(options = {})
+          options.merge!(:taggable_type => self.to_s)
+          Tag.tags(options)
+        end
       end
       
       module InstanceMethods
