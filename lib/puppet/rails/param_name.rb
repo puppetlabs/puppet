@@ -1,4 +1,7 @@
+require 'puppet/util/rails/collection_merger'
+
 class Puppet::Rails::ParamName < ActiveRecord::Base
+    include Puppet::Util::CollectionMerger
     has_many :param_values, :dependent => :destroy
     belongs_to :resource
 

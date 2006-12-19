@@ -1,8 +1,11 @@
 require 'puppet'
 require 'puppet/rails/lib/init'
 require 'puppet/rails/param_name'
+require 'puppet/util/rails/collection_merger'
 
 class Puppet::Rails::Resource < ActiveRecord::Base
+    include Puppet::Util::CollectionMerger
+
     has_many :param_values, :through => :param_names
     has_many :param_names, :dependent => :destroy
     has_many :source_files

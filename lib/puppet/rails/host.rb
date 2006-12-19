@@ -1,6 +1,9 @@
 require 'puppet/rails/resource'
+require 'puppet/util/rails/collection_merger'
 
 class Puppet::Rails::Host < ActiveRecord::Base
+    include Puppet::Util::CollectionMerger
+
     has_many :fact_values, :through => :fact_names 
     has_many :fact_names, :dependent => :destroy
     belongs_to :puppet_classes
@@ -10,14 +13,6 @@ class Puppet::Rails::Host < ActiveRecord::Base
         :dependent => :destroy
 
     acts_as_taggable
-
-    def facts(name)
-        if fv = self.fact_values.find(:first, :conditions => "fact_names.name = '#{name}'") 
-            return fv.value
-        else
-            return nil
-        end
-    end
 
     # If the host already exists, get rid of its objects
     def self.clean(host)
@@ -31,60 +26,59 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     # Store our host in the database.
     def self.store(hash)
-        unless hash[:name]
+        unless name = hash[:name]
             raise ArgumentError, "You must specify the hostname for storage"
         end
 
         args = {}
 
-        if hash[:facts].include?("ipaddress")
-            args[:ip] = hash[:facts]["ipaddress"]
+        unless host = find_by_name(name)
+            host = new(:name => name)
         end
-        unless host = find_by_name(hash[:facts]["hostname"])
-            host = new(:name => hash[:facts]["hostname"])
+        if ip = hash[:facts]["ipaddress"]
+            host.ip = ip
         end
 
-        # Store the facts into the 
-        hash[:facts].each do |name, value|
-            fn = host.fact_names.find_by_name(name) || host.fact_names.build(:name => name)
-            unless fn.fact_values.find_by_value(value)
-                fn.fact_values.build(:value => value)
-            end
-        end
+        # Store the facts into the database.
+        host.setfacts(hash[:facts])
 
         unless hash[:resources]
             raise ArgumentError, "You must pass resources"
         end
 
-        resources = []
-        hash[:resources].each do |resource|
-            resources << resource.to_rails(host)
-        end
+        host.setresources(hash[:resources])
 
         host.save
 
         return host
     end
 
-    # Add all of our RailsObjects
-    def addobjects(objects)
-        objects.each do |tobj|
-            params = {}
-            tobj.each do |p,v| params[p] = v end
+    # Return the value of a fact.
+    def fact(name)
+        if fv = self.fact_values.find(:first, :conditions => "fact_names.name = '#{name}'") 
+            return fv.value
+        else
+            return nil
+        end
+    end
 
-            args = {:ptype => tobj.type, :name => tobj.name}
-            [:tags, :file, :line].each do |param|
-                if val = tobj.send(param)
-                    args[param] = val
-                end
+    def setfacts(facts)
+        collection_merge(:fact_names, facts) do |name, value|
+            fn = fact_names.find_by_name(name) || fact_names.build(:name => name)
+            # We're only ever going to have one fact value, at this point.
+            unless fv = fn.fact_values.find_by_value(value)
+                fv = fn.fact_values.build(:value => value)
             end
+            fn.fact_values = [fv]
 
-            robj = rails_objects.build(args)
+            fn
+        end
+    end
 
-            robj.addparams(params)
-            if tobj.collectable
-                robj.toggle(:collectable)
-            end
+    # Set our resources.
+    def setresources(list)
+        collection_merge(:resources, list) do |resource|
+            resource.to_rails(self)
         end
     end
 end

@@ -279,18 +279,8 @@ class Puppet::Parser::Resource
         end
 
         # Either way, now add our parameters
-        exists = {}
-        obj.param_names.each do |pn| exists[pn.name] = pn end
-        @params.each do |name, param|
+        obj.collection_merge(:param_names, @params) do |name, param|
             param.to_rails(obj)
-            exists.delete(name.to_s) if exists.include?(name.to_s)
-        end
-
-        unless exists.empty?
-            obj.save
-            exists.each do |name, param|
-                obj.param_names.delete(param)
-            end
         end
 
         return obj

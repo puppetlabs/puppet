@@ -23,31 +23,18 @@ class Puppet::Parser::Resource::Param
             # We're creating it anew.
             pn = res.param_names.build(:name => self.name.to_s)
         end
+        
+        value_objects = []
 
         if l = self.line
             pn.line = Integer(l)
         end
 
-        exists = {}
-        pn.param_values.each { |pv| exists[pv.value] = pv }
-        values.each do |value|
-            unless pn.param_values.find_by_value(value)
-                pn.param_values.build(:value => value)
+        pn.collection_merge(:param_values, values) do |value|
+            unless pv = pn.param_values.find_by_value(value)
+                pv = pn.param_values.build(:value => value)
             end
-            # Mark that this is still valid.
-            if exists.include?(value)
-                exists.delete(value)
-            end
-        end
-
-        # And remove any existing values that are not in the current value list.
-        unless exists.empty?
-            # We have to save the current state else the deletion somehow deletes
-            # our new values.
-            pn.save
-            exists.each do |value, obj|
-                pn.param_values.delete(obj)
-            end
+            pv
         end
 
         return pn

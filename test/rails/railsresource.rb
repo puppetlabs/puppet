@@ -66,8 +66,8 @@ class TestRailsResource < Test::Unit::TestCase
             res = resource.to_resource(scope)
         end
         assert_instance_of(Puppet::Parser::Resource, res)
-        assert_equal("root", res[:owner])
-        assert_equal("644", res[:mode])
+        assert_equal(["root"], res[:owner])
+        assert_equal(["644"], res[:mode])
         assert_equal("/tmp/to_resource", res.title)
         assert_equal(source, res.source)
     end

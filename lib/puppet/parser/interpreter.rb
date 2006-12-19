@@ -143,7 +143,7 @@ class Puppet::Parser::Interpreter
         scope.name = "top"
         scope.type = "main"
 
-        scope.host = client
+        scope.host = client || facts["hostname"] || Facter.value(:hostname)
 
         classes = @classes.dup
 
@@ -192,7 +192,7 @@ class Puppet::Parser::Interpreter
         if Puppet[:storeconfigs]
             args = {
                 :resources => scope.resources,
-                :name => client,
+                :name => scope.host,
                 :facts => facts
             }
             unless scope.classlist.empty?
