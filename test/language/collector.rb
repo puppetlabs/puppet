@@ -121,9 +121,13 @@ class TestCollector < Test::Unit::TestCase
         assert_equal([], ret)
     end
 
-    if defined? ActiveRecord::Base
+    if Puppet.features.rails?
     def test_collect_exported
         railsinit
+
+        # Set a hostname
+        @scope.host = Facter.value(:hostname)
+
         # make an exported resource
         exported = mkresource(:type => "file", :title => "/tmp/exported",
             :exported => true, :params => {:owner => "root"})
@@ -189,26 +193,27 @@ class TestCollector < Test::Unit::TestCase
         # Now create a whole new scope and make sure we can actually retrieve
         # the resource from the database, not just from the scope.
         # First create a host object and store our resource in it.
-            # Now collect our facts
-            facts = {}
-            Facter.each do |fact, value| facts[fact] = value end 
 
+        # Now collect our facts
+        facts = {}
+        Facter.each do |fact, value| facts[fact] = value end 
 
-            # Now try storing our crap
-            resources = []
-            resources << exported
-            host = Puppet::Rails::Host.store(
-                :resources => resources,
-                :facts => facts,
-                :name => facts["hostname"]
-            )
+        # Now try storing our crap
+        # Remark this as exported
+        exported.exported = true
+        host = Puppet::Rails::Host.store(
+            :resources => [exported],
+            :facts => facts,
+            :name => facts["hostname"]
+        )
         assert(host, "did not get rails host")
         host.save
 
         # And make sure it's in there
-        newres = host.resources.find_by_title("/tmp/exported")
+        newres = host.resources.find_by_restype_and_title_and_exported("file", "/tmp/exported", true)
         assert(newres, "Did not find resource in db")
         interp, scope, source = mkclassframing
+        scope.host = "two"
 
         # Now make a collector
         coll = nil
@@ -246,7 +251,7 @@ class TestCollector < Test::Unit::TestCase
         # First make a railshost we can conflict with
         host = Puppet::Rails::Host.new(:name => "myhost")
 
-        host.resources.build(:title => "/tmp/conflicttest", :type => "PuppetFile",
+        host.resources.build(:title => "/tmp/conflicttest", :restype => "file",
             :exported => true)
 
         host.save
@@ -255,6 +260,7 @@ class TestCollector < Test::Unit::TestCase
         normal = mkresource(:type => "file", :title => "/tmp/conflicttest",
             :params => {:owner => "root"})
         @scope.setresource normal
+        @scope.host = "otherhost"
 
         # Now make a collector
         coll = nil

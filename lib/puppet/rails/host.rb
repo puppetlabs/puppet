@@ -2,10 +2,12 @@ require 'puppet/rails/resource'
 
 class Puppet::Rails::Host < ActiveRecord::Base
     has_many :fact_values, :through => :fact_names 
-    has_many :fact_names
+    has_many :fact_names, :dependent => :destroy
     belongs_to :puppet_classes
     has_many :source_files
-    has_many :resources, :include => [ :param_names, :param_values ]
+    has_many :resources,
+        :include => [ :param_names, :param_values ],
+        :dependent => :destroy
 
     acts_as_taggable
 
@@ -33,30 +35,20 @@ class Puppet::Rails::Host < ActiveRecord::Base
             raise ArgumentError, "You must specify the hostname for storage"
         end
 
-        create = true
-
         args = {}
 
         if hash[:facts].include?("ipaddress")
             args[:ip] = hash[:facts]["ipaddress"]
         end
-        host = nil
-        Puppet::Util.benchmark(:info, "Found/created host") do
-            host = self.find_or_create_by_name(hash[:facts]["hostname"], args)
+        unless host = find_by_name(hash[:facts]["hostname"])
+            host = new(:name => hash[:facts]["hostname"])
         end
 
-        Puppet::Util.benchmark(:info, "Converted facts") do
-            hash[:facts].each do |name, value|
-                if create
-                    fn = host.fact_names.find_or_create_by_name(name)
-                    fv = fn.fact_values.find_or_create_by_value(value)
-                else
-                    fn = host.fact_names.find_by_name(name) || host.fact_names.new(:name => name)
-                    unless fv = fn.fact_values.find_by_value(value)
-                        fn.fact_values << fn.fact_values.new(:value => value)
-                    end
-                end
-                host.fact_names << fn
+        # Store the facts into the 
+        hash[:facts].each do |name, value|
+            fn = host.fact_names.find_by_name(name) || host.fact_names.build(:name => name)
+            unless fn.fact_values.find_by_value(value)
+                fn.fact_values.build(:value => value)
             end
         end
 
@@ -64,39 +56,12 @@ class Puppet::Rails::Host < ActiveRecord::Base
             raise ArgumentError, "You must pass resources"
         end
 
-        Puppet::Util.benchmark(:info, "Converted resources") do
-            hash[:resources].each do |resource|
-                resargs = resource.to_hash.stringify_keys
-
-                if create
-                    res = host.resources.find_or_create_by_restype_and_title(resource[:type], resource[:title])
-                else
-                    unless res = host.resources.find_by_restype_and_title(resource[:type], resource[:title])
-                        res = host.resources.new(:restype => resource[:type], :title => resource[:title])
-                        host.resources << res
-                    end
-                end
-
-                resargs.each do |param, value|
-                    if create
-                        pn = res.param_names.find_or_create_by_name(param)
-                        pv = pn.param_values.find_or_create_by_value(value)
-                    else
-                        unless pn = res.param_names.find_by_name(param)
-                            pn = res.param_names.new(:name => param)
-                        end
-                        unless pn.param_values.find_by_value(value)
-                            pn.param_values << pn.param_values.new(:value => value)
-                        end
-                    end
-                    res.param_names << pn
-                end
-            end
+        resources = []
+        hash[:resources].each do |resource|
+            resources << resource.to_rails(host)
         end
 
-        Puppet::Util.benchmark(:info, "Saved host to database") do
-            host.save
-        end
+        host.save
 
         return host
     end

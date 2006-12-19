@@ -6,12 +6,15 @@ class Puppet::Parser::Collector
     # Collect exported objects.
     def collect_exported
         require 'puppet/rails'
-        Puppet.info "collecting %s" % @type
         # First get everything from the export table.  Just reuse our
         # collect_virtual method but tell it to use 'exported? for the test.
         resources = collect_virtual(true)
 
         count = 0
+
+        unless @scope.host
+            raise Puppet::DevError, "Cannot collect resources for a nil host"
+        end
 
         # We're going to collect objects from rails, but we don't want any
         # objects from this host.
@@ -23,53 +26,23 @@ class Puppet::Parser::Collector
         else
             #Puppet.info "Host %s is uninitialized" % @scope.host
         end
-        Puppet.info "collecting %s" % @type
 
         # Now look them up in the rails db.  When we support attribute comparison
         # and such, we'll need to vary the conditions, but this works with no
         # attributes, anyway.
         time = Puppet::Util.thinmark do
-            Puppet::Rails::Resource.find_all_by_type_and_exported(@type, true,
+            Puppet::Rails::Resource.find_all_by_restype_and_exported(@type, true,
                 args
             ).each do |obj|
-                if existing = @scope.findresource(obj.type, obj.title)
-                    # See if we exported it; if so, just move on
-                    if @scope.host == obj.host.name
-                        next
-                    else
-                        # Next see if we've already collected this resource
-                        if existing.rails_id == obj.id
-                            # This is the one we've already collected
-                            next
-                        else
-                            raise Puppet::ParseError,
-                                "Exported resource %s[%s] cannot override local resource" %
-                                [obj.type, obj.title]
-                        end
-                    end
+                if resource = export_resource(obj)
+                    count += 1
+                    resources << resource
                 end
-                count += 1
-                begin
-                resource = obj.to_resource(self.scope)
-                
-                # XXX Because the scopes don't expect objects to return values,
-                # we have to manually add our objects to the scope.  This is
-                # uber-lame.
-                    scope.setresource(resource)
-                rescue => detail
-                    if Puppet[:trace]
-                        puts detail.backtrace
-                    end
-                    raise
-                end
-                resource.exported = false
-
-                resources << resource
             end
         end
 
-        scope.debug("Collected %s %s resources in %.2f seconds" %
-            [count, @type, time])
+        scope.debug("Collected %s %s resource%s in %.2f seconds" %
+            [count, @type, count == 1 ? "" : "s", time])
 
         return resources
     end
@@ -147,6 +120,42 @@ class Puppet::Parser::Collector
         else
             return true
         end
+    end
+
+    def export_resource(obj)
+        if existing = @scope.findresource(obj.restype, obj.title)
+            # See if we exported it; if so, just move on
+            if @scope.host == obj.host.name
+                return nil
+            else
+                # Next see if we've already collected this resource
+                if existing.rails_id == obj.id
+                    # This is the one we've already collected
+                    return nil
+                else
+                    raise Puppet::ParseError,
+                        "Exported resource %s cannot override local resource" %
+                        [obj.ref]
+                end
+            end
+        end
+
+        begin
+            resource = obj.to_resource(self.scope)
+            
+            # XXX Because the scopes don't expect objects to return values,
+            # we have to manually add our objects to the scope.  This is
+            # über-lame.
+            scope.setresource(resource)
+        rescue => detail
+            if Puppet[:trace]
+                puts detail.backtrace
+            end
+            raise
+        end
+        resource.exported = false
+
+        return resource
     end
 end
 

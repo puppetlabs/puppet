@@ -17,6 +17,16 @@ class TestRails < Test::Unit::TestCase
     include PuppetTest::ResourceTesting
     include PuppetTest::RailsTesting
 
+    def setup
+        super
+        railsinit
+    end
+
+    def teardown
+        railsteardown
+        super
+    end
+
     def test_includerails
         assert_nothing_raised {
             require 'puppet/rails'
@@ -25,18 +35,7 @@ class TestRails < Test::Unit::TestCase
 
     # Don't do any tests w/out this class
     if Puppet.features.rails?
-    def setup
-        super
-        railsinit
-    end
-
-    def teardown
-        super
-        railsteardown
-    end
-
     def test_hostcache
-	railsinit
         @interp, @scope, @source = mkclassframing
         # First make some objects
         resources = []
@@ -49,11 +48,11 @@ class TestRails < Test::Unit::TestCase
             # And an exec, so we're checking multiple types
             resources << mkresource(:type => "exec",
                 :title => "/bin/echo file#{i.to_s}",
-                :params => {})
+                :params => {:user => "user#{i}"})
         }
 
         # Now collect our facts
-        facts = Facter.to_hash
+        facts = {"hostname" => Facter.value(:hostname), "test1" => "funtest"}
 
         # Now try storing our crap
         host = nil
@@ -89,13 +88,30 @@ class TestRails < Test::Unit::TestCase
             else
                 raise "Got weird resource %s" % resource.inspect
             end
-            assert(resource[:type] != "", "Did not get a type from the resource")
-            if resource[:type] != "PuppetExec"
-                assert_equal("user#{i}", resource.parameters["owner"])
+            assert(resource[:restype] != "", "Did not get a type from the resource")
+            case resource["restype"]
+            when "file":
+                assert_equal("user#{i}", resource.parameter("owner"),
+                    "got no owner for %s" % resource.ref)
+            when "exec":
+                assert_equal("user#{i}", resource.parameter("user"),
+                    "got no user for %s" % resource.ref)
+            else
+                raise "Unknown type %s" % resource[:restype].inspect
             end
         end
 
         assert_equal(20, count, "Did not get enough resources")
+
+        host = nil
+        assert_nothing_raised {
+            host = Puppet::Rails::Host.store(
+                :resources => resources,
+                :facts => facts,
+                :name => facts["hostname"],
+                :classes => ["one", "two::three", "four"]
+            )
+        }
     end
     else
         $stderr.puts "Install Rails for Rails and Caching tests"

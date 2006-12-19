@@ -5,6 +5,9 @@ module PuppetTest::RailsTesting
 
     def railsinit
         Puppet::Rails.init
+        cleanup do
+            ActiveRecord::Base.clear_active_connections!
+        end
     end
 
     def railsteardown

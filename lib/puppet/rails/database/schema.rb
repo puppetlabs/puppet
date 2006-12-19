@@ -1,17 +1,18 @@
 class Puppet::Rails::Schema
     def self.init
         oldout = nil
-        Puppet::Util.benchmark(:notice, "Initialized database") do
+        Puppet::Util.benchmark(Puppet, :notice, "Initialized database") do
             # We want to rewrite stdout, so we don't get migration messages.
             oldout = $stdout
             $stdout = File.open("/dev/null", "w")
             ActiveRecord::Schema.define do
                 create_table :resources do |t|
                     t.column :title, :string, :null => false
-                    t.column :restype,  :string
+                    t.column :restype,  :string, :null => false
                     t.column :host_id, :integer
                     t.column :source_file_id, :integer
                     t.column :exported, :boolean
+                    t.column :line, :integer
                 end
 
                 create_table :source_files do |t| 
@@ -52,6 +53,7 @@ class Puppet::Rails::Schema
                 create_table :param_names do |t| 
                     t.column :name, :string, :null => false
                     t.column :resource_id, :integer
+                    t.column :line, :integer
                 end
 
                 create_table :tags do |t| 
@@ -64,9 +66,12 @@ class Puppet::Rails::Schema
                     t.column :taggable_type, :string
                 end
             end
+            $stdout.close
+            $stdout = oldout
+            oldout = nil
         end
     ensure
-        $stdout = oldout
+        $stdout = oldout if oldout
     end
 end
 

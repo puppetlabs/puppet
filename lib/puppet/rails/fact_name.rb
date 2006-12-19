@@ -1,3 +1,3 @@
 class Puppet::Rails::FactName < ActiveRecord::Base
-    has_many :fact_values
+    has_many :fact_values, :dependent => :destroy
 end

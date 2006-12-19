@@ -19,19 +19,16 @@ module Puppet
     )
 
     if self.name == "puppetmasterd"
-        self.setdefaults(:puppetmasterd,
-            :logdir => {:default => "$vardir/log",
-                :mode => 0750,
-                :owner => "$user",
-                :group => "$group",
-                :desc => "The Puppet log directory."
-            }
-        )
+        logopts = {:default => "$vardir/log",
+            :mode => 0750,
+            :owner => "$user",
+            :group => "$group",
+            :desc => "The Puppet log directory."
+        }
     else
-        self.setdefaults(:puppet,
-            :logdir => ["$vardir/log", "The Puppet log directory."]
-        )
+        logopts = ["$vardir/log", "The Puppet log directory."]
     end
+    setdefaults(:puppet, :logdir => logopts)
 
     self.setdefaults(:puppet,
         :trace => [false, "Whether to print stack traces on some errors"],

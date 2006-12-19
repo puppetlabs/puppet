@@ -9,15 +9,22 @@ require 'puppettest/railstesting'
 require 'puppettest/resourcetesting'
 
 # Don't do any tests w/out this class
-if defined? ActiveRecord::Base
+if Puppet.features.rails?
 class TestRailsResource < Test::Unit::TestCase
     include PuppetTest::RailsTesting
     include PuppetTest::ResourceTesting
-    
-    # Create a resource param from a rails parameter
-    def test_to_resource
+
+    def setup
+        super
         railsinit
-        
+    end
+
+    def teardown
+        railsteardown
+        super
+    end
+
+    def mktest_resource
         # We need a host for resources
         host = Puppet::Rails::Host.new(:name => "myhost")
 
@@ -26,21 +33,26 @@ class TestRailsResource < Test::Unit::TestCase
             :title => "/tmp/to_resource", 
             :restype => "file",
             :exported => true)
-        
-        # For some reason the child class doesn't exist until after the resource is created.
-        # Probably an issue with the dynamic class generation.
-        resource.save
-  
+
         # Now add some params
-        {"owner" => "root", "mode" => "644"}.each do |param, value|
+        params.each do |param, value|
             pn = resource.param_names.find_or_create_by_name(param)
             pv = pn.param_values.find_or_create_by_value(value)
             resource.param_names << pn
         end
 
-        # Now save the whole thing
         host.save
 
+        return resource
+    end
+    
+    def params
+        {"owner" => "root", "mode" => "644"}
+    end
+
+    # Create a resource param from a rails parameter
+    def test_to_resource
+        resource = mktest_resource
 
         # We need a scope
         interp, scope, source = mkclassframing
@@ -58,6 +70,26 @@ class TestRailsResource < Test::Unit::TestCase
         assert_equal("644", res[:mode])
         assert_equal("/tmp/to_resource", res.title)
         assert_equal(source, res.source)
+    end
+
+    def test_parameters
+        resource = mktest_resource
+
+        setparams = nil
+        assert_nothing_raised do
+            setparams = resource.parameters
+        end
+        assert_equal(params, setparams,
+            "Did not get the right answer from #parameters")
+    end
+
+    # Make sure we can retrieve individual parameters by name.
+    def test_parameter
+        resource = mktest_resource
+
+        params.each do |p,v|
+            assert_equal(v, resource.parameter(p), "%s is not correct" % p)
+        end
     end
 end
 else

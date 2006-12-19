@@ -101,27 +101,6 @@ class Puppet::Parser::Resource
         else
             self.fail "Cannot find definition %s" % self.type
         end
-
-
-#        if builtin?
-#            devfail "Cannot evaluate a builtin type"
-#        end
-#
-#        unless klass = scope.finddefine(self.type)
-#            self.fail "Cannot find definition %s" % self.type
-#        end
-#
-#        finish()
-#
-#        scope.deleteresource(self)
-#
-#        return klass.evaluate(:scope => scope,
-#                              :type => self.type,
-#                              :name => self.title,
-#                              :arguments => self.to_hash,
-#                              :scope => self.scope,
-#                              :exported => self.exported
-#        )
     ensure
         @evaluated = true
     end
@@ -252,9 +231,24 @@ class Puppet::Parser::Resource
         end
     end
 
-    # Store our object as a Rails object.  We need the host object we're storing it
-    # with.
-    def store(host)
+    #def tags
+    #    unless defined? @tags
+    #        @tags = scope.tags
+    #        @tags << self.type
+    #    end
+    #    @tags
+    #end
+
+    def to_hash
+        @params.inject({}) do |hash, ary|
+            param = ary[1]
+            hash[param.name] = param.value
+            hash
+        end
+    end
+
+    # Turn our parser resource into a Rails resource.
+    def to_rails(host)
         args = {}
         #FIXME: support files/lines, etc.
         #%w{type title tags file line exported}.each do |param|
@@ -280,28 +274,26 @@ class Puppet::Parser::Resource
             obj = host.resources.build(args)
         end
 
+        if l = self.line
+            obj.line = l
+        end
+
         # Either way, now add our parameters
+        exists = {}
+        obj.param_names.each do |pn| exists[pn.name] = pn end
         @params.each do |name, param|
-            param.store(obj)
+            param.to_rails(obj)
+            exists.delete(name.to_s) if exists.include?(name.to_s)
+        end
+
+        unless exists.empty?
+            obj.save
+            exists.each do |name, param|
+                obj.param_names.delete(param)
+            end
         end
 
         return obj
-    end
-
-    #def tags
-    #    unless defined? @tags
-    #        @tags = scope.tags
-    #        @tags << self.type
-    #    end
-    #    @tags
-    #end
-
-    def to_hash
-        @params.inject({}) do |hash, ary|
-            param = ary[1]
-            hash[param.name] = param.value
-            hash
-        end
     end
 
     def to_s

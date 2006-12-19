@@ -360,19 +360,13 @@ class TestResource < Test::Unit::TestCase
 
         assert_nil(ref.builtintype, "Component was considered builtin")
     end
-    if defined? ActiveRecord::Base
-    def test_store
-        railsinit
-        res = mkresource :type => "file", :title => "/tmp/testing",
-            :source => @source, :scope => @scope,
-            :params => {:owner => "root", :mode => "755"}
+    if Puppet.features.rails?
 
-        # We also need a Rails Host to store under
-        host = Puppet::Rails::Host.new(:name => Facter.hostname)
-
+    # Compare a parser resource to a rails resource.
+    def compare_resources(host, res)
         obj = nil
         assert_nothing_raised do
-            obj = res.store(host)
+            obj = res.to_rails(host)
         end
 
         assert_instance_of(Puppet::Rails::Resource, obj)
@@ -383,19 +377,72 @@ class TestResource < Test::Unit::TestCase
             end
         end
 
+        # Make sure we find our object and only our object
+        count = 0
+        Puppet::Rails::Resource.find(:all).each do |obj|
+            count += 1
+            [:title, :restype, :line, :exported].each do |param|
+                if param == :restype
+                    method = :type
+                else
+                    method = param
+                end
+                assert_equal(res.send(method), obj[param],
+                    "attribute %s is incorrect" % param)
+            end
+        end
+        assert_equal(1, count, "Got too many resources")
         # Now make sure we can find it again
         assert_nothing_raised do
-            obj = Puppet::Rails::Resource.find_by_host_id_and_title(
-                host.id, res.title
+            obj = Puppet::Rails::Resource.find_by_restype_and_title(
+                res.type, res.title
             )
         end
         assert_instance_of(Puppet::Rails::Resource, obj)
 
         # Make sure we get the parameters back
-        obj.parameters.each do |param|
-            assert_equal(res[param[:name]], param[:value],
-                "%s was different" % param[:name])
+        params = [obj.param_names.collect { |p| p.name },
+            res.to_hash.keys].flatten.collect { |n| n.to_s }.uniq
+
+        params.each do |name|
+            param = obj.param_names.find_by_name(name)
+            if res[name]
+                assert(param, "resource did not keep %s" % name)
+            else
+                assert(! param, "resource did not delete %s" % name)
+            end
+            values = param.param_values.collect { |pv| pv.value }
+            should = res[param.name]
+            should = [should] unless should.is_a?(Array)
+            assert_equal(should, values,
+                "%s was different" % param.name)
         end
+    end
+
+    def test_to_rails
+        railsinit
+        res = mkresource :type => "file", :title => "/tmp/testing",
+            :source => @source, :scope => @scope,
+            :params => {:owner => "root", :source => ["/tmp/A", "/tmp/B"],
+                :mode => "755"}
+
+        res.line = 50
+
+        # We also need a Rails Host to store under
+        host = Puppet::Rails::Host.new(:name => Facter.hostname)
+
+        compare_resources(host, res)
+
+        # Now make some changes to our resource.
+        res = mkresource :type => "file", :title => "/tmp/testing",
+            :source => @source, :scope => @scope,
+            :params => {:owner => "bin", :source => ["/tmp/A", "/tmp/C"],
+            :check => "checksum"}
+
+        res.line = 75
+        res.exported = true
+
+        compare_resources(host, res)
     end
     end
 end
