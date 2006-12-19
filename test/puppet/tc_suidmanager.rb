@@ -97,7 +97,7 @@ class TestSUIDManager < Test::Unit::TestCase
             else
                 uid = Process.uid
             end
-            cmd = "/bin/echo $EUID"
+            cmd = [%{/bin/echo $EUID}]
             output = Puppet::SUIDManager.run_and_capture(cmd, uid)[0].chomp
             assert_equal(uid.to_s, output)
         end

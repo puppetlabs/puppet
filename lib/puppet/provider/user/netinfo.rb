@@ -9,6 +9,13 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
     options :comment, :key => "realname"
 
     defaultfor :operatingsystem => :darwin
+    
+    def gid=(value)
+        unless value.is_a?(Integer)
+            raise ArgumentError, "gid= only accepts integers, not %s(%s)" % [value.class, value.inspect]
+        end
+        super
+    end
 
     # The list of all groups the user is a member of.  Different
     # user mgmt systems will need to override this method.
@@ -71,16 +78,12 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
             end
         end
     end
-
-    def setuserlist(group, list)
-        cmd = "#{command(:niutil)} -createprop / /groups/%s users %s" %
-            [group, list.join(",")]
-        begin
-            output = execute(cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::Error,
-                "Failed to set groups: %s" % output
+    
+    def uid=(value)
+        unless value.is_a?(Integer)
+            raise ArgumentError, "uid= only accepts integers"
         end
+        super
     end
 end
 

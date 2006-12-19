@@ -6,16 +6,16 @@ Puppet::Type.type(:package).provide :gem do
     commands :gem => "gem"
 
     def self.gemlist(hash)
-        command = "#{command(:gem)} list "
+        command = [command(:gem), "list"]
 
         if hash[:local]
-            command += "--local "
+            command << "--local"
         else
-            command += "--remote "
+            command << "--remote"
         end
 
         if name = hash[:justme]
-            command += name
+            command << name
         end
 
         begin
@@ -61,17 +61,17 @@ Puppet::Type.type(:package).provide :gem do
     end
 
     def install(useversion = true)
-        command = "install "
+        command = ["install"]
         if (! @model.should(:ensure).is_a? Symbol) and useversion
-            command += "-v %s " % @model.should(:ensure)
+            command << "-v" << @model.should(:ensure)
         end
         if source = @model[:source]
-            command += source
+            command << source
         else
-            command += @model[:name]
+            command << @model[:name]
         end
 
-        gem command
+        gem(*command)
     end
 
     def latest
@@ -86,7 +86,7 @@ Puppet::Type.type(:package).provide :gem do
     end
 
     def uninstall
-        gem "uninstall -x -a #{@model[:name]}"
+        gem "uninstall", "-x", "-a", @model[:name]
     end
 
     def update

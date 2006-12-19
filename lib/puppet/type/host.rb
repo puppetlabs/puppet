@@ -22,9 +22,7 @@ module Puppet
             # Make sure our "is" value is always an array.
             def is
                 current = super
-                unless current.is_a? Array
-                    current = [current]
-                end
+                current = [current] unless current.is_a? Array
                 current
             end
 
@@ -48,7 +46,16 @@ module Puppet
             
             def retrieve
                 super
-                @is = [@is] unless @is.is_a?(Array)
+                case @is
+                when String
+                    @is = @is.split(/\s*,\s*/)
+                when Symbol:
+                    @is = [@is]
+                when Array
+                    # nothing
+                else
+                    raise Puppet::DevError, "Invalid @is type %s" % @is.class
+                end
             end
 
             # We actually want to return the whole array here, not just the first

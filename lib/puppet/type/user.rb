@@ -124,6 +124,10 @@ module Puppet
         newstate(:gid) do
             desc "The user's primary group.  Can be specified numerically or
                 by name."
+            
+            def found?
+                defined? @found and @found
+            end
 
             munge do |gid|
                 method = :getgrgid
@@ -157,7 +161,7 @@ module Puppet
                 unless defined? @should
                     return super
                 end
-                unless defined? @found and @found
+                unless found?
                     @should = @should.each { |val|
                         next unless val
                         Puppet::Util.gid(val)

@@ -21,6 +21,7 @@ Puppet::Type.type(:package).provide :darwinport do
                     }
 
                     hash.delete :location
+                    hash[:provider] = self.name
                     yield hash.dup
                 else
                     raise Puppet::DevError,

@@ -506,6 +506,7 @@ class Transaction
     def skip?(resource)
         skip = false
         if ! tagged?(resource)
+            p resource.tags
             resource.debug "Not tagged with %s" % tags.join(", ")
         elsif ! scheduled?(resource)
             resource.debug "Not scheduled"

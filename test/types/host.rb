@@ -12,7 +12,7 @@ class TestHost < Test::Unit::TestCase
 
     def setup
         super
-        @hosttype = Puppet.type(:host)
+        @hosttype = Puppet::Type.type(:host)
 
         @provider = @hosttype.defaultprovider
 
@@ -68,6 +68,10 @@ class TestHost < Test::Unit::TestCase
     if Facter.value(:operatingsystem) != "Darwin" or Process.uid == 0
     def test_simplehost
         host = nil
+        # We want to actually use the netinfo provider on darwin
+        if Facter.value(:operatingsystem) == "Darwin"
+            Puppet::Type.type(:host).defaultprovider = nil
+        end
 
         assert_nothing_raised {
             host = Puppet.type(:host).create(
@@ -76,6 +80,7 @@ class TestHost < Test::Unit::TestCase
             )
         }
 
+        host.retrieve
         assert_events([:host_created], host)
 
         assert_nothing_raised { host.retrieve }
@@ -118,12 +123,8 @@ class TestHost < Test::Unit::TestCase
 
         host.retrieve
 
-        if Facter.value(:operatingsystem) == "Darwin"
-            # Netinfo can't handle arrays right now
-            assert_equal(%w{madstop}, host.is(:alias))
-        else
-            assert_equal(%w{madstop kirby yayness}, host.is(:alias))
-        end
+        assert_equal(%w{madstop kirby yayness}, host.is(:alias))
+        
         host[:ensure] = :absent
         assert_events([:host_removed], host)
     end

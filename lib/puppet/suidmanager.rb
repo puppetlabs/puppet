@@ -35,22 +35,12 @@ module Puppet
             end
             old_egid = old_euid = nil
             if new_egid
-                saved_state_egid = new_egid
-                new_egid = Puppet::Util.gid(new_egid)
-                if new_egid == nil
-                  raise Puppet::Error, "Invalid group: %s" % saved_state_egid
-                end
                 old_egid = self.egid
-                self.egid = new_egid
+                self.egid = convert_xid(:gid, new_egid)
             end
             if new_euid
-                saved_state_euid = new_euid
-                new_euid = Puppet::Util.uid(new_euid)
-                if new_euid == nil
-                  raise Puppet::Error, "Invalid user: %s" % saved_state_euid
-                end
                 old_euid = self.euid
-                self.euid = new_euid
+                self.euid = convert_xid(:uid, new_euid)
             end
 
             return yield
@@ -58,23 +48,24 @@ module Puppet
             self.euid = old_euid if old_euid
             self.egid = old_egid if old_egid
         end
+        
+        # Make sure the passed argument is a number.
+        def convert_xid(type, id)
+            map = {:gid => :group, :uid => :user}
+            raise ArgumentError, "Invalid id type %s" % type unless map.include?(type)
+            ret = Puppet::Util.send(type, id)
+            if ret == nil
+              raise Puppet::Error, "Invalid %s: %s" % [map[type], id]
+            end
+            return ret
+        end
 
-        module_function :asuser
+        module_function :asuser, :convert_xid
 
         def run_and_capture(command, new_uid=nil, new_gid=nil)
             output = nil
-
-            asuser(new_uid, new_gid) do
-                # capture both stdout and stderr unless we are on ruby < 1.8.4
-                # NOTE: this would be much better facilitated with a specialized popen()
-                #       (see the test suite for more details.)
-                if new_uid and (Facter['rubyversion'].value <=> "1.8.4") < 0
-                    Puppet::Util::Warnings.warnonce "Cannot capture STDERR when running as another user on Ruby < 1.8.4"
-                    output = %x{#{command}}
-                else
-                    output = %x{#{command} 2>&1}
-                end
-            end
+            
+            output = Puppet::Util.execute(command, false, new_uid, new_gid)
 
             [output, $?.dup]
         end
@@ -89,7 +80,7 @@ module Puppet
             end
             status
         end
-        
+                
         module_function :system
     end
 end

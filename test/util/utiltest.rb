@@ -261,6 +261,52 @@ class TestPuppetUtil < Test::Unit::TestCase
 
         assert_equal(nil, ret)
     end
+    
+    def test_execute
+        command = tempfile()
+        File.open(command, "w") { |f|
+            f.puts %{#!/bin/sh\n/bin/echo "$1">&1; echo "$2">&2}
+        }
+        File.chmod(0755, command)
+        output = nil
+        assert_nothing_raised do
+            output = Puppet::Util.execute([command, "yaytest", "funtest"])
+        end
+        assert_equal("yaytest\nfuntest\n", output)
+        
+        # Now try it with a single quote
+        assert_nothing_raised do
+            output = Puppet::Util.execute([command, "yay'test", "funtest"])
+            # output = Puppet::Util.execute(command)
+            
+        end
+        assert_equal("yay'test\nfuntest\n", output)
+        
+        # Now test that we correctly fail if the command returns non-zero
+        assert_raise(Puppet::ExecutionFailure) do
+            out = Puppet::Util.execute(["touch", "/no/such/file/could/exist"])
+        end
+        
+        # And that we can tell it not to fail
+        assert_nothing_raised() do
+            out = Puppet::Util.execute(["touch", "/no/such/file/could/exist"], false)
+        end
+        
+        if Process.uid == 0
+            # Make sure we correctly set our uid and gid
+            user = nonrootuser
+            group = nonrootgroup
+            file = tempfile()
+            assert_nothing_raised do
+                Puppet::Util.execute(["touch", file], true, user.name, group.name)
+            end
+            assert(FileTest.exists?(file), "file was not created")
+            assert_equal(user.uid, File.stat(file).uid, "uid was not set correctly")
+            
+            # We can't really check the gid, because it just behaves too inconsistently everywhere.
+            # assert_equal(group.gid, File.stat(file).gid, "gid was not set correctly")
+        end
+    end
 end
 
 # $Id$

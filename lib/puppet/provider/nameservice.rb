@@ -307,6 +307,9 @@ class Puppet::Provider::NameService < Puppet::Provider
     def set(param, value)
         #self.class.validate(param, value)
         cmd = modifycmd(param, value)
+        unless cmd.is_a?(Array)
+            raise Puppet::DevError, "Nameservice command must be an array"
+        end
         begin
             execute(cmd)
         rescue Puppet::ExecutionFailure => detail

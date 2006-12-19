@@ -267,18 +267,60 @@ module Util
     end
 
     # Execute the desired command, and return the status and output.
-    def execute(command, failonfail = true)
-        if respond_to? :debug
-            debug "Executing '%s'" % command
+    def execute(command, failonfail = true, uid = nil, gid = nil)
+        if command.is_a?(Array)
+            command = command.collect { |i| i.to_s }
+            str = command.join(" ")
         else
-            Puppet.debug "Executing '%s'" % command
+            raise "Must pass an array"
+            str = command
         end
-        command += " 2>&1" unless command =~ />/
-        output = %x{#{command}}
+        if respond_to? :debug
+            debug "Executing '%s'" % str
+        else
+            Puppet.debug "Executing '%s'" % str
+        end
+        
+        if uid
+            uid = Puppet::SUIDManager.convert_xid(:uid, uid)
+        end
+        if gid
+            gid = Puppet::SUIDManager.convert_xid(:gid, gid)
+        end
+        
+        @@os ||= Facter.value(:operatingsystem)
+        output = nil
+        IO.popen("-") do |f|
+            if f
+                output = f.read
+            else
+                begin
+                    $stderr.close
+                    $stderr = $stdout.dup
+                    if gid
+                        Process.egid = gid
+                        Process.gid = gid unless @@os == "Darwin"
+                    end
+                    if uid
+                        Process.euid = uid
+                        Process.uid = uid unless @@os == "Darwin"
+                    end
+                    if command.is_a?(Array)
+                        system(*command)
+                    else
+                        system(command)
+                    end
+                    exit!($?.exitstatus)
+                rescue => detail
+                    puts detail.to_s
+                    exit!(1)
+                end
+            end
+        end
 
         if failonfail
             unless $? == 0
-                raise ExecutionFailure, "Could not execute '%s': %s" % [command, output]
+                raise ExecutionFailure, "Execution of '%s' returned %s: %s" % [str, $?, output]
             end
         end
 

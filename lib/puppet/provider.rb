@@ -1,6 +1,7 @@
 # The container class for implementations.
 class Puppet::Provider
     include Puppet::Util
+    include Puppet::Util::Errors
 
     Puppet::Util.logmethods(self, true)
 
@@ -47,22 +48,24 @@ class Puppet::Provider
             @commands[name] = path
             confine :exists => path
 
-            # Now define a method for that package
-            #unless method_defined? name
+            # Now define a method for that command
             unless metaclass.method_defined? name
-                meta_def(name) do |args|
-                    if args
-                        cmd = command(name) + " " + args
+                meta_def(name) do |*args|
+                    if args.empty?
+                        cmd = [command(name)]
                     else
-                        cmd = command(name)
+                        cmd = [command(name)] + args
                     end
                     # This might throw an ExecutionFailure, but the system above
                     # will catch it, if so.
                     return execute(cmd)
                 end
+                
+                # And then define an instance method that just calls the class method.
+                # We need both, so both instances and classes can easily run the commands.
                 unless method_defined? name
-                    define_method(name) do |args|
-                        self.class.send(name, args)
+                    define_method(name) do |*args|
+                        self.class.send(name, *args)
                     end
                 end
             end

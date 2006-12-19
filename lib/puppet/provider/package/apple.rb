@@ -44,7 +44,7 @@ Puppet::Type.type(:package).provide :apple do
             self.fail "Mac OS X packages must specify a package source"
         end
 
-        installer "-pkg #{source} -target /"
+        installer "-pkg", source, "-target", "/"
     end
 end
 

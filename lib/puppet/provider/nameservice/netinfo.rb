@@ -12,7 +12,7 @@ class NetInfo < Puppet::Provider::NameService
     # Attempt to flush the database, but this doesn't seem to work at all.
     def self.flush
         begin
-            output = execute("/usr/sbin/lookupd -flushcache 2>&1")
+            output = execute(["/usr/sbin/lookupd", "-flushcache"])
         rescue Puppet::ExecutionFailure
             # Don't throw an error; it's just a failed cache flush
             Puppet.err "Could not flush lookupd cache: %s" % output
@@ -89,7 +89,7 @@ class NetInfo < Puppet::Provider::NameService
         end
 
         begin
-            output = execute(cmd.join(" "))
+            output = execute(cmd)
         rescue Puppet::ExecutionFailure => detail
             Puppet.err "Failed to call nireport: %s" % detail
             return nil
@@ -111,7 +111,7 @@ class NetInfo < Puppet::Provider::NameService
 
         cmd << "/" << "/%s/%s" %
             [self.class.netinfodir(), @model[:name]]
-        return cmd.join(" ")
+        return cmd
     end
 
     def deletecmd
@@ -175,14 +175,16 @@ class NetInfo < Puppet::Provider::NameService
         cmd << "-createprop" << "/" << "/%s/%s" %
             [self.class.netinfodir, @model[:name]]
 
+        value = [value] unless value.is_a?(Array)
         if key = netinfokey(param)
-            cmd << key << "'%s'" % value
+            cmd << key
+            cmd += value
         else
             raise Puppet::DevError,
                 "Could not find netinfokey for state %s" %
                 self.class.name
         end
-        cmd.join(" ")
+        cmd
     end
 
     # Determine the flag to pass to our command.
@@ -196,11 +198,10 @@ class NetInfo < Puppet::Provider::NameService
     end
 
     def setuserlist(group, list)
-        cmd = "#{command(:niutil)} -createprop / /groups/%s users %s" %
-            [group, list.join(",")]
+        cmd = [command(:niutil), "-createprop", "/", "/groups/%s" % group, "users", list.join(",")]
         begin
             output = execute(cmd)
-        rescue Puppet::Execution::Failure => detail
+        rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error, "Failed to set user list on %s: %s" %
                 [group, detail]
         end

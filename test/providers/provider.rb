@@ -90,7 +90,7 @@ class TestProvider < Test::Unit::TestCase
         inst = provider.new(nil)
         assert_nothing_raised do
             [provider, inst].each do |thing|
-                out = thing.echo "some text"
+                out = thing.echo "some", "text"
                 assert_equal("some text\n", out)
             end
         end
@@ -167,12 +167,12 @@ class TestProvider < Test::Unit::TestCase
         inst = provider.new(nil)
 
         assert_raise(Puppet::ExecutionFailure) do
-            inst.cmd "some arguments"
+            inst.cmd "some", "arguments"
         end
 
         out = nil
         begin
-            inst.cmd "some arguments"
+            inst.cmd "some", "arguments"
         rescue Puppet::ExecutionFailure => detail
             out = detail.to_s
         end
@@ -180,10 +180,8 @@ class TestProvider < Test::Unit::TestCase
         assert(out =~ /A Failure/,
                "Did not receive command output on failure")
 
-        assert(out =~ /Could not execute/,
+        assert(out =~ /Execution of/,
                "Did not receive info wrapper on failure")
-
-
     end
 end
 

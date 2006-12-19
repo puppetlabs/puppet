@@ -118,6 +118,10 @@ class TestPackageProvider < Test::Unit::TestCase
                 return
             end
         end
+        
+        if cleancmd = hash[:cleanup]
+            hash.delete(:cleanup)
+        end
 
         pkg = nil
         assert_nothing_raised(
@@ -141,8 +145,14 @@ class TestPackageProvider < Test::Unit::TestCase
         end
 
         cleanup do
-            pkg[:ensure] = :absent
-            assert_apply(pkg)
+            if pkg.provider.respond_to?(:uninstall)
+                pkg[:ensure] = :absent
+                assert_apply(pkg)
+            else
+                if cleancmd
+                    system(cleancmd)
+                end
+            end
         end
 
         assert_nothing_raised("Could not install package") do
@@ -175,11 +185,13 @@ class TestPackageProvider < Test::Unit::TestCase
         end
 
         # Now remove the package
-        assert_nothing_raised do
-            provider.uninstall
-        end
+        if provider.respond_to?(:uninstall)
+            assert_nothing_raised do
+                provider.uninstall
+            end
 
-        assert_absent(provider)
+            assert_absent(provider)
+        end
     end
 
     # Now create a separate test method for each package

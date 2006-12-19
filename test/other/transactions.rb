@@ -521,7 +521,9 @@ class TestTransactions < Test::Unit::TestCase
         
         # Make sure all of the components are gone
         comps = graph.vertices.find_all { |v| v.is_a?(Puppet::Type::Component)}
-        assert(comps.empty?, "Deps graph still contains components")
+        assert(comps.empty?, "Deps graph still contains components %s" % comps.inspect)
+        
+        assert_equal([], comps, "Deps graph still contains components")
         
         # It must be reversed because of how topsort works
         sorted = graph.topsort.reverse

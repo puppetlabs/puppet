@@ -57,6 +57,7 @@
   :files:
   - /Users/luke/Documents/Puppet/pkgtesting.pkg
   :name: pkgtesting
+  :cleanup: rm -rf /Library/Receipts/pkgtesting.pkg/ /tmp/file
 - :provider: :gem
   :name: wxrubylayouts
   :versions:

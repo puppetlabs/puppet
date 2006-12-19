@@ -17,16 +17,6 @@ class TestRails < Test::Unit::TestCase
     include PuppetTest::ResourceTesting
     include PuppetTest::RailsTesting
 
-    def setup
-        super
-        railsinit
-    end
-
-    def teardown
-        railsteardown
-        super
-    end
-
     def test_includerails
         assert_nothing_raised {
             require 'puppet/rails'

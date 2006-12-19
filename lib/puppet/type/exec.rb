@@ -536,13 +536,13 @@ module Puppet
                                 end
                                 env[name] = value
                             else
-                                warning "Cannot understand env setting '%s'" % setting
+                                warning "Cannot understand env setting %s" % setting.inspect
                             end
                         end
                     end
 
                     withenv env do
-                        output, status = Puppet::SUIDManager.run_and_capture(command, self[:user], self[:group])
+                        output, status = Puppet::SUIDManager.run_and_capture([command], self[:user], self[:group])
                         # The shell returns 127 if the command is missing.
                         if status.exitstatus == 127
                             raise ArgumentError, output

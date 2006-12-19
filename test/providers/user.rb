@@ -29,7 +29,6 @@ class TestUserProvider < Test::Unit::TestCase
             end
         }
         super
-        #Puppet.type(:user).clear
     end
 
     case Facter["operatingsystem"].value
@@ -51,20 +50,17 @@ class TestUserProvider < Test::Unit::TestCase
                 st.name == param
             }
 
-            output = %x{nireport / /users name #{state.netinfokey}}
-            output.split("\n").each { |line|
-                if line =~ /^(\w+)\s+(.+)$/
-                    username = $1
-                    id = $2.sub(/\s+$/, '')
-                    if username == user.name
-                        if id =~ /^[-0-9]+$/
-                            return Integer(id)
-                        else
-                            return id
-                        end
+            prov = Puppet::Type.type(:user).defaultprovider
+            output = prov.report(param)
+            # output = %x{nireport / /users name #{prov.netinfokey(param)}}
+            output.each { |hash|
+                if hash[:name] == user.name
+                    val = hash[param]
+                    if val =~ /^[-0-9]+$/
+                        return Integer(val)
+                    else
+                        return val
                     end
-                else
-                    raise "Could not match %s" % line
                 end
             }
 
@@ -125,8 +121,8 @@ class TestUserProvider < Test::Unit::TestCase
         case param
         when :name: name
         when :ensure: :present
-        when :comment: "Puppet Testing User %s" % name
-        when :gid: nonrootgroup.name
+        when :comment: "Puppet's Testing User %s" % name # use a single quote a la #375
+        when :gid: nonrootgroup.gid
         when :shell: findshell()
         when :home: "/home/%s" % name
         else
@@ -222,11 +218,12 @@ class TestUserProvider < Test::Unit::TestCase
     def attrtest_comment(user)
         old = user.comment
 
+        newname = "Billy O'Neal" # use a single quote, a la #372
         assert_nothing_raised {
-            user.comment = "A different comment"
+            user.comment = newname
         }
 
-        assert_equal("A different comment", current?(:comment, user),
+        assert_equal(newname, current?(:comment, user),
             "Comment was not changed")
 
         assert_nothing_raised {
@@ -423,7 +420,7 @@ class TestUserProvider < Test::Unit::TestCase
                 user.create
             }
 
-            assert_equal("Puppet Testing User pptest",
+            assert_equal("Puppet's Testing User pptest",
                  user.comment,
                 "Comment was not set")
 
@@ -453,14 +450,13 @@ class TestUserProvider < Test::Unit::TestCase
             assert_nothing_raised {
                 user.create
             }
-            assert_equal("Puppet Testing User pptest", user.comment,
+            assert_equal("Puppet's Testing User pptest", user.comment,
                 "Comment was not set")
 
             tests = Puppet::Type.type(:user).validstates
 
             just = nil
             tests.each { |test|
-                next unless test == :groups
                 if self.respond_to?("attrtest_%s" % test)
                     self.send("attrtest_%s" % test, user)
                 else
