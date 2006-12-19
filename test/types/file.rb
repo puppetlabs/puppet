@@ -1801,6 +1801,15 @@ class TestFile < Test::Unit::TestCase
         assert_equal("testing", File.read(path), "file has the wrong content")
     end
     end
+    
+    # #366
+    def test_replace_aliases
+        file = Puppet::Type.newfile :path => tempfile()
+        file[:replace] = :yes
+        assert_equal(:true, file[:replace], ":replace did not alias :true to :yes")
+        file[:replace] = :no
+        assert_equal(:false, file[:replace], ":replace did not alias :false to :no")
+    end
 end
 
 # $Id$

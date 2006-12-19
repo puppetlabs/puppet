@@ -70,3 +70,5 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         return obj
     end
 end
+
+# $Id$

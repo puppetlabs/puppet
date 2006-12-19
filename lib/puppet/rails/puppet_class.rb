@@ -5,3 +5,5 @@ class Puppet::Rails::PuppetClass < ActiveRecord::Base
 
     acts_as_taggable
 end
+
+# $Id$

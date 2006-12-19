@@ -118,6 +118,8 @@ module Puppet
                 sourced but exists.  This is useful for using file sources
                 purely for initialization."
             newvalues(:true, :false)
+            aliasvalue(:yes, :true)
+            aliasvalue(:no, :false)
             defaultto :true
         end
 

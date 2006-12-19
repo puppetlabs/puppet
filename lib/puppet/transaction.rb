@@ -257,8 +257,6 @@ class Transaction
             Puppet::Log.close(@report)
         end
 
-        @relgraph.to_jpg(File.expand_path("~/tmp/graphs"), "simple_relgraph")
-
         Puppet.debug "Finishing transaction %s with %s changes" %
             [self.object_id, @count]
 
