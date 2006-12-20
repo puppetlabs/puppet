@@ -461,14 +461,26 @@ yay = /a/path
             c.to_component
         }
 
-        assert(Puppet.type(:user)["pptest"], "User object did not get created")
-        assert(Puppet.type(:user)["pptest"].managed?,
-            "User object is not managed."
-        )
-        assert(Puppet.type(:group)["pptest"], "Group object did not get created")
-        assert(Puppet.type(:group)["pptest"].managed?,
+        user = Puppet.type(:user)["pptest"]
+        assert(user, "User object did not get created")
+        assert(user.managed?, "User object is not managed.")
+        assert(user.should(:comment), "user does not have a comment set")
+        
+        group = Puppet.type(:group)["pptest"]
+        assert(group, "Group object did not get created")
+        assert(group.managed?,
             "Group object is not managed."
         )
+        
+        if Process.uid == 0
+            cleanup do
+                user[:ensure] = :absent
+                group[:ensure] = :absent
+                assert_apply(user, group)
+            end
+            
+            assert_apply(user, group)
+        end
     end
 
     def test_notmanagingdev
