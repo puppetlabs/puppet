@@ -426,10 +426,16 @@ class Config
                                 newobj[:ensure] = "present"
                             end
                             newobj.tag(section)
+                            if type == :user
+                                newobj[:comment] ||= "%s user" % name
+                            end
                         else
                             newobj = TransObject.new(name, type.to_s)
                             newobj.tags = ["puppet", "configuration", section]
                             newobj[:ensure] = "present"
+                            if type == :user
+                                newobj[:comment] ||= "%s user" % name
+                            end
                             # Set the group appropriately for the user
                             if type == :user
                                 newobj[:gid] = Puppet[:group]
