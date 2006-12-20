@@ -173,16 +173,32 @@ module Puppet
 
         newstate(:comment) do
             desc "A description of the user.  Generally is a user's full name."
+            
+            defaultto do
+                "%s User" % @parent.title.capitalize
+            end
         end
 
         newstate(:home) do
             desc "The home directory of the user.  The directory must be created
                 separately and is not currently checked for existence."
+            
+            defaultto do
+                if Facter.value(:operatingsystem) == "Darwin"
+                    "/var/empty"
+                end
+            end
         end
 
         newstate(:shell) do
             desc "The user's login shell.  The shell must exist and be
                 executable."
+            
+            defaultto do
+                if Facter.value(:operatingsystem) == "Darwin"
+                    "/usr/bin/false"
+                end
+            end
         end
 
         newstate(:groups) do
