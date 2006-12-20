@@ -307,6 +307,25 @@ class TestPuppetUtil < Test::Unit::TestCase
             # assert_equal(group.gid, File.stat(file).gid, "gid was not set correctly")
         end
     end
+    
+    # This is mostly to test #380.
+    def test_get_provider_value
+        group = Puppet::Type.type(:group).create :name => "yayness", :ensure => :present
+        
+        root = Puppet::Type.type(:user).create :name => "root", :ensure => :present
+        
+        val = nil
+        assert_nothing_raised do
+            val = Puppet::Util.get_provider_value(:group, :gid, "yayness")
+        end
+        assert_nil(val, "returned a value on a missing group")
+        
+        # Now make sure we get a value for one we know exists
+        assert_nothing_raised do
+            val = Puppet::Util.get_provider_value(:user, :uid, "root")
+        end
+        assert_equal(0, val, "got invalid uid for root")
+    end
 end
 
 # $Id$

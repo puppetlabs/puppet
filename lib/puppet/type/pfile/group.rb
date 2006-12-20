@@ -7,6 +7,12 @@ module Puppet
         @event = :file_changed
 
         def id2name(id)
+            if id > 70000
+                return nil
+            end
+            if id.is_a?(Symbol)
+                return id.to_s
+            end
             begin
                 group = Etc.getgrgid(id)
             rescue ArgumentError
@@ -63,7 +69,6 @@ module Puppet
             if gid = Puppet::Util.gid(value)
                 return gid
             else
-                warning "could not find %s" % value
                 return false
             end
         end

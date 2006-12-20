@@ -9,6 +9,9 @@ module Puppet
             if id.is_a?(Symbol)
                 return id.to_s
             end
+            if id > 70000
+                return nil
+            end
             begin
                 user = Etc.getpwuid(id)
             rescue TypeError

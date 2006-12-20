@@ -43,7 +43,12 @@ module Puppet::Util::POSIX
         
         if obj.provider
             begin
-                return obj.provider.send(field)
+                val = obj.provider.send(field)
+                if val == :absent
+                    return nil
+                else
+                    return val
+                end
             rescue => detail
                 if Puppet[:trace]
                     puts detail.backtrace
