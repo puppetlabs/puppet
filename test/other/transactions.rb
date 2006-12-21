@@ -681,18 +681,12 @@ class TestTransactions < Test::Unit::TestCase
         
         # Now make sure this generated resource has the same relationships as
         # the generating resource
-        #assert(trans.relgraph.edge?(yay, ra),
-        #    "yay is not required by ra")
+        assert(! trans.relgraph.edge?(yay, ra),
+           "rah passed its dependencies on to its children")
         assert(trans.relgraph.edge?(ya, rah),
             "rah is not subscribed to ya")
-        assert(trans.relgraph.edge?(ya, ra),
-            "ra is not subscribed to ya")
-        
-        # And make sure the relationship is a subscription with a callback,
-        # not just a require.
-        assert_equal({:callback => :refresh, :event => :ALL_EVENTS},
-            trans.relgraph[Puppet::Relationship.new(ya, ra)],
-            "The label was not retained")
+        assert(! trans.relgraph.edge?(ya, ra),
+            "children have a direct relationship")
         
         # Now make sure that cleanup gets rid of those generated types.
         assert_nothing_raised do
