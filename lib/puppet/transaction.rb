@@ -137,8 +137,8 @@ class Transaction
 
         # We only have to worry about dependents, because any dependencies
         # already missed their chance to register an event for us.
-        dependents = @relgraph.adjacent(resource,
-            :direction => :out, :type => :edges).reject { |e| ! e.callback }
+        #dependents = @relgraph.adjacent(resource,
+        #    :direction => :out, :type => :edges).reject { |e| ! e.callback }
 
         #sources = @relgraph.adjacent(resource,
         #    :direction => :in, :type => :edges).reject { |e| ! e.callback }
@@ -149,9 +149,9 @@ class Transaction
             else
                 @relgraph.add_edge!(resource, gen_child)
             end
-            dependents.each do |edge|
-                @relgraph.add_edge!(gen_child, edge.target, edge.label)
-            end
+            #dependents.each do |edge|
+            #    @relgraph.add_edge!(gen_child, edge.target, edge.label)
+            #end
             #sources.each do |edge|
             #    @relgraph.add_edge!(edge.source, gen_child, edge.label)
             #end
@@ -221,7 +221,7 @@ class Transaction
         end
 
         # Collect the targets of any subscriptions to those events
-        @relgraph.matching_edges(events).each do |edge|
+        @relgraph.matching_edges(resource, events).each do |edge|
             @targets[edge.target] << edge
         end
 
@@ -483,6 +483,7 @@ class Transaction
                 # but a chmod failed?  how would i handle that error? dern
             end
             
+            # FIXME This won't work right now.
             @relgraph.matching_edges(events).each do |edge|
                 @targets[edge.target] << edge
             end

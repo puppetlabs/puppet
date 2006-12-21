@@ -190,6 +190,9 @@ class Puppet::Client::MasterClient < Puppet::Client
             Puppet::Storage.init
             Puppet::Storage.load
         rescue => detail
+            if Puppet[:trace]
+                puts detail.backtrace
+            end
             Puppet.err "Corrupt state file %s: %s" % [Puppet[:statefile], detail]
             begin
                 File.unlink(Puppet[:statefile])

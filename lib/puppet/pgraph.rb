@@ -66,15 +66,13 @@ class Puppet::PGraph < GRATR::Digraph
     
     # Collect all of the edges that the passed events match.  Returns
     # an array of edges.
-    def matching_edges(events)
+    def matching_edges(source, events)
+        unless vertex?(source)
+            Puppet.warning "Got an event from invalid vertex %s" % source.ref
+            return []
+        end
+
         events.collect do |event|
-            source = event.source
-            
-            unless vertex?(source)
-                Puppet.warning "Got an event from invalid vertex %s" % source.ref
-                next
-            end
-            
             # Get all of the edges that this vertex should forward events
             # to, which is the same thing as saying all edges directly below
             # This vertex in the graph.
