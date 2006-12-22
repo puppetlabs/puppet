@@ -308,6 +308,18 @@ class TestPuppetUtil < Test::Unit::TestCase
         end
     end
     
+    def test_string_exec
+        cmd = "/bin/echo howdy"
+        output = nil
+        assert_nothing_raised {
+            output = Puppet::Util.execute(cmd)
+        }
+        assert_equal("howdy\n", output)
+        assert_raise(RuntimeError) {
+            Puppet::Util.execute(cmd, 0, 0)
+        }
+    end
+
     # This is mostly to test #380.
     def test_get_provider_value
         group = Puppet::Type.type(:group).create :name => "yayness", :ensure => :present

@@ -272,7 +272,7 @@ module Util
             command = command.collect { |i| i.to_s }
             str = command.join(" ")
         else
-            raise "Must pass an array"
+            raise "Must pass an array" unless uid.nil? && gid.nil?
             str = command
         end
         if respond_to? :debug
