@@ -89,7 +89,7 @@ class TestLexer < Test::Unit::TestCase
         textfiles() { |file|
             lexer = Puppet::Parser::Lexer.new()
             lexer.file = file
-            assert_nothing_raised() {
+            assert_nothing_raised("Failed to lex %s" % file) {
                 lexer.fullscan()
             }
             Puppet::Type.allclear

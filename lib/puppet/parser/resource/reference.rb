@@ -50,7 +50,7 @@ class Puppet::Parser::Resource::Reference
 
     def to_s
         unless defined? @namestring
-            @namestring = "%s[%s]" % [type, title]
+            @namestring = "%s[%s]" % [type.capitalize, title]
         end
         @namestring
     end

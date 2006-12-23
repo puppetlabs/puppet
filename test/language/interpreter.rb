@@ -799,7 +799,7 @@ class TestInterpreter < Test::Unit::TestCase
         assert(1, ret.length)
         assert_equal([three], ret)
 
-        assert(ret.detect { |r| r.ref == "three[/tmp/yayness]"},
+        assert(ret.detect { |r| r.ref == "Three[/tmp/yayness]"},
             "Did not get three back as unevaluated")
 
         # Now translate the whole tree
@@ -808,7 +808,7 @@ class TestInterpreter < Test::Unit::TestCase
         end
 
         # Now make sure we've got our file
-        file = scope.findresource "file[/tmp/yayness]"
+        file = scope.findresource "File[/tmp/yayness]"
         assert(file, "Could not find file")
 
         assert_equal("root", file[:owner])
@@ -858,7 +858,7 @@ class TestInterpreter < Test::Unit::TestCase
             interp.evalnode("mynode", scope, facts)
         end
 
-        assert_nil(scope.findresource("file[/tmp/testing]"),
+        assert_nil(scope.findresource("File[/tmp/testing]"),
             "Eval'ed node with nodes off")
 
         # Now enable usenodes and make sure it works.
@@ -866,7 +866,7 @@ class TestInterpreter < Test::Unit::TestCase
         assert_nothing_raised do
             interp.evalnode("mynode", scope, facts)
         end
-        file = scope.findresource("file[/tmp/testing]")
+        file = scope.findresource("File[/tmp/testing]")
 
         assert_instance_of(Puppet::Parser::Resource, file,
             "Could not find file")

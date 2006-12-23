@@ -224,7 +224,7 @@ class TestResource < Test::Unit::TestCase
         end
 
         # Make sure we can find our object now
-        result = @scope.findresource("file[/tmp]")
+        result = @scope.findresource("File[/tmp]")
         
         # Now make sure we got the code we expected.
         assert_instance_of(Puppet::Parser::Resource, result)
@@ -235,7 +235,7 @@ class TestResource < Test::Unit::TestCase
         assert_equal("755", result["mode"])
 
         # And that we cannot find the old resource
-        assert_nil(@scope.findresource("evaltest[yay]"),
+        assert_nil(@scope.findresource("Evaltest[yay]"),
             "Evaluated resource was not deleted")
     end
 

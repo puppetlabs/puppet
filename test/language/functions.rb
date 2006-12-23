@@ -307,31 +307,38 @@ class TestLangFunctions < Test::Unit::TestCase
 
     def test_realize
         @interp, @scope, @source = mkclassframing
-        # Make a virtual resource
-        virtual = mkresource(:type => "file", :title => "/tmp/virtual",
-            :virtual => true, :params => {:owner => "root"})
-        @scope.setresource virtual
+    
+        # Make a definition
+        @interp.newdefine("mytype")
+        
+        [%w{file /tmp/virtual}, %w{mytype yay}].each do |type, title|
+            # Make a virtual resource
+            virtual = mkresource(:type => type, :title => title,
+                :virtual => true, :params => {})
+        
+            @scope.setresource virtual
 
-        ref = Puppet::Parser::Resource::Reference.new(
-            :type => "file", :title => "/tmp/virtual",
-            :scope => @scope
-        )
-        # Now call the realize function
-        assert_nothing_raised do
-            @scope.function_realize(ref)
+            ref = Puppet::Parser::Resource::Reference.new(
+                :type => type, :title => title,
+                :scope => @scope
+            )
+            # Now call the realize function
+            assert_nothing_raised do
+                @scope.function_realize(ref)
+            end
+
+            # Make sure it created a collection
+            assert_equal(1, @scope.collections.length,
+                "Did not set collection")
+
+            assert_nothing_raised do
+                @scope.collections.each do |coll| coll.evaluate end
+            end
+            @scope.collections.clear
+
+            # Now make sure the virtual resource is no longer virtual
+            assert(! virtual.virtual?, "Did not make virtual resource real")
         end
-
-        # Make sure it created a collection
-        assert_equal(1, @scope.collections.length,
-            "Did not set collection")
-
-        assert_nothing_raised do
-            @scope.collections.each do |coll| coll.evaluate end
-        end
-        @scope.collections.clear
-
-        # Now make sure the virtual resource is no longer virtual
-        assert(! virtual.virtual?, "Did not make virtual resource real")
 
         # Make sure we puke on any resource that doesn't exist
         none = Puppet::Parser::Resource::Reference.new(

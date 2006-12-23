@@ -81,6 +81,8 @@ module Puppet
                 array = []
 
                 self.scan { |token,str|
+                    # Ignore any definition nesting problems
+                    @indefine = false
                     #Puppet.debug("got token '%s' => '%s'" % [token,str])
                     if token.nil?
                         return array
@@ -252,12 +254,12 @@ module Puppet
 
                     if @lasttoken == :DEFINE
                         if indefine?
+                            msg = "Cannot nest definition %s inside %s" % [value, @indefine]
                             self.indefine = false
-                            raise Puppet::ParseError,
-                                "Definitions cannot nest"
+                            raise Puppet::ParseError, msg
                         end
 
-                        @indefine = true
+                        @indefine = value
                     end
 
                     @last = value

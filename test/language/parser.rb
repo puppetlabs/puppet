@@ -487,7 +487,7 @@ file { "/tmp/yayness":
 
             # Make sure we can find both of them
             %w{/tmp/1 /tmp/2}.each do |title|
-                res = scope.findresource("file[#{title}]")
+                res = scope.findresource("File[#{title}]")
                 assert(res, "Could not find %s" % title)
                 check.call(res, "found multiresource")
             end

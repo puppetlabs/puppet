@@ -180,7 +180,7 @@ class TestAST < Test::Unit::TestCase
 
         assert(scope.setclass?(klass), "Class was not considered evaluated")
 
-        tmp = scope.findresource("file[/tmp]")
+        tmp = scope.findresource("File[/tmp]")
         assert(tmp, "Could not find file /tmp")
         assert_equal("nobody", tmp[:owner])
         assert_equal("755", tmp[:mode])
@@ -221,12 +221,12 @@ class TestAST < Test::Unit::TestCase
         assert(scope.setclass?(newbase), "Did not eval newbase")
         assert(scope.setclass?(newsub), "Did not eval newsub")
 
-        yay = scope.findresource("file[/tmp/yay]")
+        yay = scope.findresource("File[/tmp/yay]")
         assert(yay, "Did not find file /tmp/yay")
         assert_equal("nobody", yay[:owner])
         assert_equal("755", yay[:mode])
 
-        other = scope.findresource("file[/tmp/other]")
+        other = scope.findresource("File[/tmp/other]")
         assert(other, "Did not find file /tmp/other")
         assert_equal("daemon", other[:owner])
         assert_equal("755", other[:mode])
@@ -261,7 +261,7 @@ class TestAST < Test::Unit::TestCase
         end
 
         # And make sure it didn't create the file
-        assert_nil(scope.findresource("file[/tmp/bad]"),
+        assert_nil(scope.findresource("File[/tmp/bad]"),
             "Made file with invalid params")
 
         assert_nothing_raised do
@@ -271,7 +271,7 @@ class TestAST < Test::Unit::TestCase
             )
         end
 
-        firstobj = scope.findresource("file[/tmp/first]")
+        firstobj = scope.findresource("File[/tmp/first]")
         assert(firstobj, "Did not create /tmp/first obj")
 
         assert_equal("file", firstobj.type)
@@ -295,7 +295,7 @@ class TestAST < Test::Unit::TestCase
             )
         end
 
-        secondobj = scope.findresource("file[/tmp/second]")
+        secondobj = scope.findresource("File[/tmp/second]")
         assert(secondobj, "Did not create /tmp/second obj")
 
         assert_equal("file", secondobj.type)
@@ -368,11 +368,11 @@ class TestAST < Test::Unit::TestCase
         end
 
         # Make sure that we can find each of the files
-        myfile = scope.findresource "file[/tmp/mynode]"
+        myfile = scope.findresource "File[/tmp/mynode]"
         assert(myfile, "Could not find file from node")
         assert_equal("root", myfile[:owner])
 
-        basefile = scope.findresource "file[/tmp/basenode]"
+        basefile = scope.findresource "File[/tmp/basenode]"
         assert(basefile, "Could not find file from base node")
         assert_equal("daemon", basefile[:owner])
 
@@ -384,7 +384,7 @@ class TestAST < Test::Unit::TestCase
             child.evaluate :scope => newscope
         end
 
-        assert(newscope.findresource("file[/tmp/base]"),
+        assert(newscope.findresource("File[/tmp/base]"),
             "Could not find base resource")
     end
 

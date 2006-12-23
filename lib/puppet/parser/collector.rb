@@ -88,12 +88,17 @@ class Puppet::Parser::Collector
     # and then delete this object from the list of collections to evaluate.
     def evaluate
         if self.resources
-            return collect_resources
-        end
-
-        method = "collect_#{@form.to_s}"
-        objects = send(method).each do |obj|
-            obj.virtual = false
+            # We don't want to get rid of the collection unless it actually finds something,
+            # so that the collection will keep trying until all of the definitions are
+            # evaluated.
+            unless objects = collect_resources
+                return
+            end
+        else
+            method = "collect_#{@form.to_s}"
+            objects = send(method).each do |obj|
+                obj.virtual = false
+            end
         end
 
         # And then remove us from the list of collections, since we've

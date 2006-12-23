@@ -447,6 +447,13 @@ class TestSnippets < Test::Unit::TestCase
             end
     end
 
+    def snippet_realize_defined_types
+        assert(FileTest.exists?("/tmp/realize_defined_test1"),
+            "Did not make file from realized defined type")
+        assert(FileTest.exists?("/tmp/realize_defined_test2"),
+            "Did not make file from realized file inside defined type")
+    end
+
     def disabled_snippet_dirchmod
         dirs = %w{a b}.collect { |letter|
             "/tmp/dirchmodtest%s" % letter

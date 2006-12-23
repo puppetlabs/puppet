@@ -92,21 +92,36 @@ class Puppet::Parser::Interpreter
         initparsevars
     end
 
-    # Iteratively evaluate all of the objects.  This finds all fo the
+    # Iteratively evaluate all of the objects.  This finds all of the
     # objects that represent definitions and evaluates the definitions appropriately.
     # It also adds defaults and overrides as appropriate.
     def evaliterate(scope)
         count = 0
-        begin
-            timeout 300 do
-                while ary = scope.unevaluated
-                    ary.each do |resource|
-                        resource.evaluate
+        loop do
+            count += 1
+            done = true
+            # First perform collections, so we can collect defined types.
+            if coll = scope.collections and ! coll.empty?
+                exceptwrap do
+                    coll.each do |c|
+                        c.evaluate
                     end
                 end
+                done = false
             end
-        rescue Timeout::Error
-            raise Puppet::DevError, "Got a timeout trying to evaluate all definitions"
+            
+            # Then evaluate any defined types.
+            if ary = scope.unevaluated
+                ary.each do |resource|
+                    resource.evaluate
+                end
+                done = false
+            end
+            break if done
+            
+            if count > 1000
+                raise Puppet::ParseError, "Got 1000 class levels, which is unsupported"
+            end
         end
     end
 
@@ -181,13 +196,6 @@ class Puppet::Parser::Interpreter
 
         # Now make sure we fail if there's anything left to do
         failonleftovers(scope)
-
-        # Now perform the collections
-        exceptwrap do
-            scope.collections.each do |coll|
-                coll.evaluate
-            end
-        end
 
         # Now finish everything.  This recursively calls finish on the
         # contained scopes and resources.
