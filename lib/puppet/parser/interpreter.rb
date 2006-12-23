@@ -4,7 +4,7 @@
 
 require 'puppet'
 require 'timeout'
-#require 'puppet/rails'
+require 'puppet/rails'
 require 'puppet/parser/parser'
 require 'puppet/parser/scope'
 
