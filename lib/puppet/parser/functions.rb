@@ -153,7 +153,7 @@ module Functions
     newfunction(:defined, :type => :rvalue, :doc => "Determine whether a given
     type is defined, either as a native type or a defined type.") do |vals|
         # For some reason, it doesn't want me to return from here.
-        if vals.detect do |val| Puppet::Type.type(val) or finddefine(val) end
+        if vals.detect do |val| Puppet::Type.type(val) or finddefine(val) or findclass(val) end
             true
         else
             false

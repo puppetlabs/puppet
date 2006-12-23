@@ -353,6 +353,29 @@ class TestLangFunctions < Test::Unit::TestCase
             @scope.collections.each do |coll| coll.evaluate end
         end
     end
+    
+    def test_defined
+        interp = mkinterp
+        scope = mkscope(:interp => interp)
+        
+        interp.newclass("yayness")
+        interp.newdefine("rahness")
+        
+        assert_nothing_raised do
+            assert(scope.function_defined("yayness"), "yayness class was not considered defined")
+            assert(scope.function_defined("rahness"), "rahness definition was not considered defined")
+            assert(scope.function_defined("service"), "service type was not considered defined")
+            assert(! scope.function_defined("fakness"), "fakeness was considered defined")
+        end
+        
+        # Now make sure any match in a list will work
+        assert(scope.function_defined(["booness", "yayness", "fakeness"]),
+            "A single answer was not sufficient to return true")
+        
+        # and make sure multiple falses are still false
+        assert(! scope.function_defined(%w{no otherno stillno}),
+            "Multiple falses were somehow true")
+    end
 end
 
 # $Id$
