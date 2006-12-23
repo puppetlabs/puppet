@@ -11,7 +11,7 @@ class base {
 }
 
 class sub inherits base {
-    Myfile[$file] { mode => 755 }
+    Myfile[$file] { mode => 755, } # test the end-comma
 }
 
 include sub

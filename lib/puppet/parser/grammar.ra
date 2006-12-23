@@ -136,7 +136,7 @@ resource:       NAME LBRACE resourceinstances endsemi RBRACE {
 }
 
 # Override a value set elsewhere in the configuration.
-resourceoverride:     resourceref LBRACE params RBRACE {
+resourceoverride:     resourceref LBRACE params endcomma RBRACE {
     result = ast AST::ResourceOverride, :object => val[0], :params => val[2]
 }
 
