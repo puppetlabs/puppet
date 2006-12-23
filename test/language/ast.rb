@@ -16,26 +16,7 @@ class TestAST < Test::Unit::TestCase
     include PuppetTest::RailsTesting
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
-
-    # A fake class that we can use for testing evaluation.
-    class FakeAST
-        attr_writer :evaluate
-
-        def evaluate(*args)
-            return @evaluate
-        end
-
-        def initialize(val = nil)
-            if val
-                @evaluate = val
-            end
-        end
-
-        def safeevaluate(*args)
-            evaluate()
-        end
-    end
-
+    
     if defined? ActiveRecord
     # Verify that our collection stuff works.
     def test_collection

@@ -10,6 +10,12 @@ require 'puppet/parser/scope'
 
 class Puppet::Parser::Interpreter
     include Puppet::Util
+    
+    Puppet.setdefaults(:puppet,
+        :casesensitive => [false,
+            "Whether matching in case statements and selectors
+            should be case-sensitive.  Case insensitivity is
+            handled by downcasing all values before comparison."])
 
     Puppet.setdefaults("ldap",
         :ldapnodes => [false,
@@ -239,6 +245,8 @@ class Puppet::Parser::Interpreter
 
     # The recursive method used to actually look these objects up.
     def fqfind(namespace, name, table)
+        namespace = namespace.downcase
+        name = name.downcase
         if name =~ /^::/ or namespace == ""
             return table[name.sub(/^::/, '')]
         end
@@ -469,6 +477,7 @@ class Puppet::Parser::Interpreter
 
     # Create a new class, or merge with an existing class.
     def newclass(fqname, options = {})
+        fqname = fqname.downcase
         if @definetable.include?(fqname)
             raise Puppet::ParseError, "Cannot redefine class %s as a definition" %
                 fqname
@@ -521,6 +530,7 @@ class Puppet::Parser::Interpreter
 
     # Create a new definition.
     def newdefine(fqname, options = {})
+        fqname = fqname.downcase
         if @classtable.include?(fqname)
             raise Puppet::ParseError, "Cannot redefine class %s as a definition" %
                 fqname
@@ -551,6 +561,7 @@ class Puppet::Parser::Interpreter
     def newnode(names, options = {})
         names = [names] unless names.instance_of?(Array)
         names.collect do |name|
+            name = name.to_s.downcase
             if other = @nodetable[name]
                 @parser.error("Node %s is already defined at %s:%s; cannot redefine" % [other.name, other.file, other.line])
             end
@@ -585,6 +596,7 @@ class Puppet::Parser::Interpreter
 
     # Search for our node in the various locations.
     def nodesearch(*nodes)
+        nodes = nodes.collect { |n| n.to_s.downcase }
         # At this point, stop at the first source that defines
         # the node
         @nodesources.each do |source|

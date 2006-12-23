@@ -55,6 +55,15 @@ module PuppetTest
 
         ENV["RUBYLIB"] = curlibs.join(":")
     end
+    
+    def logcollector
+        collector = []
+        Puppet::Log.newdestination(collector)
+        cleanup do
+            Puppet::Log.close(collector)
+        end
+        collector
+    end
 
     def rake?
         $0 =~ /rake_test_loader/

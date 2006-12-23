@@ -368,6 +368,19 @@ module Puppet
             end
         end
 
+        # Log to an array, just for testing.
+        newdesttype :array do
+            match "Array"
+
+            def initialize(array)
+                @array = array
+            end
+
+            def handle(msg)
+                @array << msg
+            end
+        end
+
         # Create a new log destination.
         def Log.newdestination(dest)
             # Each destination can only occur once.

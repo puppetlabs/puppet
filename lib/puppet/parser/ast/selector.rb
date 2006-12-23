@@ -18,10 +18,15 @@ class Puppet::Parser::AST
 
             # Get our parameter.
             paramvalue = @param.safeevaluate(:scope => scope)
+            
+            sensitive = Puppet[:casesensitive]
+            
+            if ! sensitive and paramvalue.respond_to?(:downcase)
+                paramvalue = paramvalue.downcase
+            end
 
             default = nil
 
-            #@values = [@values] unless @values.instance_of? AST::ASTArray
             unless @values.instance_of? AST::ASTArray or @values.instance_of? Array
                 @values = [@values]
             end
@@ -29,6 +34,9 @@ class Puppet::Parser::AST
             # Then look for a match in the options.
             @values.each { |obj|
                 param = obj.param.safeevaluate(:scope => scope)
+                if ! sensitive && param.respond_to?(:downcase)
+                    param = param.downcase
+                end
                 if param == paramvalue
                     # we found a matching option
                     retvalue = obj.value.safeevaluate(:scope => scope)

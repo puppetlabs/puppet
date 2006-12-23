@@ -5,6 +5,34 @@ module PuppetTest::ParserTesting
     include PuppetTest
     AST = Puppet::Parser::AST
 
+    # A fake class that we can use for testing evaluation.
+    class FakeAST
+        attr_writer :evaluate
+
+        def evaluated?
+            defined? @evaluated and @evaluated
+        end
+        
+        def evaluate(*args)
+            @evaluated = true
+            return @evaluate
+        end
+
+        def initialize(val = nil)
+            if val
+                @evaluate = val
+            end
+        end
+        
+        def reset
+            @evaluated = nil
+        end
+
+        def safeevaluate(*args)
+            evaluate()
+        end
+    end
+    
     def astarray(*args)
         AST::ASTArray.new(
             :children => args

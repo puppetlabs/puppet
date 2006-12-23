@@ -11,13 +11,21 @@ class Puppet::Parser::AST
         def evaluate(hash)
             scope = hash[:scope]
             value = @test.safeevaluate(:scope => scope)
+            sensitive = Puppet[:casesensitive]
+            value = value.downcase if ! sensitive and value.respond_to?(:downcase)
 
             retvalue = nil
             found = false
             
             # Iterate across the options looking for a match.
             @options.each { |option|
-                if option.eachvalue(scope) { |opval| break true if opval == value }
+                if option.eachvalue(scope) { |opval|
+                        opval = opval.downcase if ! sensitive and opval.respond_to?(:downcase)
+                        # break true if opval == value
+                        if opval == value
+                            break true
+                        end
+                    }
                     # we found a matching option
                     retvalue = option.safeevaluate(:scope => scope)
                     found = true
@@ -31,6 +39,7 @@ class Puppet::Parser::AST
                     retvalue = @default.safeevaluate(:scope => scope)
                 else
                     Puppet.debug "No true answers and no default"
+                    retvalue = nil
                 end
             end
             return retvalue

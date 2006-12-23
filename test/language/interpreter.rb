@@ -610,7 +610,35 @@ class TestInterpreter < Test::Unit::TestCase
         end
         assert(klass, "Did not return class with no code")
         assert_nil(interp.findclass("", "nocode3").code)
-
+    end
+    
+    # Make sure class, node, and define methods are case-insensitive
+    def test_structure_case_insensitivity
+        interp = mkinterp
+        
+        result = nil
+        assert_nothing_raised do
+            result = interp.newclass "Yayness"
+        end
+        assert_equal(result, interp.findclass("", "yayNess"))
+        
+        assert_nothing_raised do
+            result = interp.newdefine "FunTest"
+        end
+        assert_equal(result, interp.finddefine("", "fUntEst"),
+            "%s was not matched" % "fUntEst")
+        
+        assert_nothing_raised do
+            result = interp.newnode("MyNode").shift
+        end
+        assert_equal(result, interp.nodesearch("mYnOde"),
+            "mYnOde was not matched")
+        
+        assert_nothing_raised do
+            result = interp.newnode("YayTest.Domain.Com").shift
+        end
+        assert_equal(result, interp.nodesearch("yaYtEst.domAin.cOm"),
+            "yaYtEst.domAin.cOm was not matched")
     end
     
     # Now make sure we get appropriate behaviour with parent class conflicts.

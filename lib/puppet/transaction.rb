@@ -47,6 +47,7 @@ class Transaction
             # And then return
             return []
         end
+        changes = [changes] unless changes.is_a?(Array)
         
         # If a resource is going to be deleted but it still has dependencies, then
         # don't delete it unless it's implicit.
@@ -79,6 +80,7 @@ class Transaction
                 if Puppet[:trace]
                     puts detail.backtrace
                 end
+                puts detail
                 change.state.err "change from %s to %s failed: %s" %
                     [change.state.is_to_s, change.state.should_to_s, detail]
                 @failures[resource] += 1
@@ -134,27 +136,13 @@ class Transaction
     # child resource.
     def copy_relationships(resource, children)
         depthfirst = resource.depthfirst?
-
-        # We only have to worry about dependents, because any dependencies
-        # already missed their chance to register an event for us.
-        #dependents = @relgraph.adjacent(resource,
-        #    :direction => :out, :type => :edges).reject { |e| ! e.callback }
-
-        #sources = @relgraph.adjacent(resource,
-        #    :direction => :in, :type => :edges).reject { |e| ! e.callback }
-
+        
         children.each do |gen_child|
             if depthfirst
                 @relgraph.add_edge!(gen_child, resource)
             else
                 @relgraph.add_edge!(resource, gen_child)
             end
-            #dependents.each do |edge|
-            #    @relgraph.add_edge!(gen_child, edge.target, edge.label)
-            #end
-            #sources.each do |edge|
-            #    @relgraph.add_edge!(edge.source, gen_child, edge.label)
-            #end
         end
     end
 
@@ -189,11 +177,13 @@ class Transaction
         else
             @resourcemetrics[:scheduled] += 1
             
+            changecount = @changes.length
+            
             # We need to generate first regardless, because the recursive
             # actions sometimes change how the top resource is applied.
             children = eval_generate(resource)
             
-            if resource.depthfirst? and children
+            if children and resource.depthfirst?
                 children.each do |child|
                     # The child will never be skipped when the parent isn't
                     events += eval_resource(child, false)
@@ -205,10 +195,18 @@ class Transaction
                 events += apply(resource)
             end
 
-            if ! resource.depthfirst? and children
+            if children and ! resource.depthfirst?
                 children.each do |child|
-                    events += eval_resource(child)
+                    events += eval_resource(child, false)
                 end
+            end
+            
+            # A bit of hackery here -- if skipcheck is true, then we're the top-level
+            # resource.  If that's the case, then make sure all of the changes list this resource
+            # as a proxy.  This is really only necessary for rollback, since we know the generating
+            # resource during forward changes.
+            if children and checkskip
+                @changes[changecount..-1].each { |change| change.proxy = resource }
             end
 
             # Keep track of how long we spend in each type of resource
@@ -220,8 +218,10 @@ class Transaction
             events += triggedevents
         end
 
-        # Collect the targets of any subscriptions to those events
-        @relgraph.matching_edges(resource, events).each do |edge|
+        # Collect the targets of any subscriptions to those events.  We pass the parent resource
+        # in so it will override the source in the events, since eval_generated children can't
+        # have direct relationships.
+        @relgraph.matching_edges(events, resource).each do |edge|
             @targets[edge.target] << edge
         end
 
@@ -360,6 +360,7 @@ class Transaction
         end
 
         @report = Report.new
+        @count = 0
     end
 
     # Prefetch any providers that support it.  We don't support prefetching
@@ -507,7 +508,6 @@ class Transaction
     def skip?(resource)
         skip = false
         if ! tagged?(resource)
-            p resource.tags
             resource.debug "Not tagged with %s" % tags.join(", ")
         elsif ! scheduled?(resource)
             resource.debug "Not scheduled"
@@ -604,8 +604,7 @@ class Transaction
                     trigged << Puppet::Event.new(
                         :event => :triggered,
                         :transaction => self,
-                        :source => obj,
-                        :message => message
+                        :source => obj
                     )
 
                     triggered(obj, callback)

@@ -427,6 +427,23 @@ end
         assert_equal(Process.uid, File.stat(destfile).uid)
     end
     end
+    
+    # Test retrieving all of the facts.
+    def test_facts
+        facts = nil
+        assert_nothing_raised do
+            facts = Puppet::Client::MasterClient.facts
+        end
+        Facter.to_hash.each do |fact, value|
+            assert_equal(facts[fact.downcase], value, "%s is not equal" % fact.inspect)
+        end
+        
+        # Make sure the puppet version got added
+        assert_equal(Puppet::PUPPETVERSION, facts["clientversion"], "client version did not get added")
+        
+        # And make sure the ruby version is in there
+        assert_equal(RUBY_VERSION, facts["rubyversion"], "ruby version did not get added")
+    end
 end
 
 # $Id$

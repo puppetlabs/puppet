@@ -1,5 +1,6 @@
 require 'puppet'
-require 'puppet/type'
+require 'puppet/util/methodhelper'
+require 'puppet/util/errors'
 
 module Puppet
     # events are transient packets of information; they result in one or more (or none)
@@ -7,19 +8,16 @@ module Puppet
     # eventually, these will be passed on to some central event system
 	class Event
         include Puppet
+        include Puppet::Util::MethodHelper
+        include Puppet::Util::Errors
+        
 		attr_accessor :event, :source, :transaction
 
         @@events = []
 
 		def initialize(args)
-            unless args.include?(:event) and args.include?(:source)
-				raise Puppet::DevError, "Event.new called incorrectly"
-			end
-
-			@change = args[:change]
-			@event = args[:event]
-			@source = args[:source]
-			@transaction = args[:transaction]
+		    set_options symbolize_options(args)
+		    requiredopts(:event, :source)
 		end
 
         def to_s

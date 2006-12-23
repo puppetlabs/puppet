@@ -80,24 +80,18 @@ class Puppet::Parser::AST
     # correctly handles errors.  It is critical to use this method because
     # it can enable you to catch the error where it happens, rather than
     # much higher up the stack.
-    def safeevaluate(*args)
+    def safeevaluate(options)
         # We duplicate code here, rather than using exceptwrap, because this
         # is called so many times during parsing.
-        #exceptwrap do
-        #    self.evaluate(*args)
-        #end
         begin
-            return self.evaluate(*args)
+            return self.evaluate(options)
         rescue Puppet::Error => detail
             raise adderrorcontext(detail)
         rescue => detail
-            message = options[:message] || "%s failed with error %s: %s" %
-                    [self.class, detail.class, detail.to_s]
-
-            error = options[:type].new(message)
+            error = Puppet::Error.new(detail.to_s)
             # We can't use self.fail here because it always expects strings,
             # not exceptions.
-            raise adderrorcontext(error, detail)
+            raise adderrorcontext(error)
         end
     end
 

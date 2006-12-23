@@ -58,8 +58,8 @@ class TestParser < Test::Unit::TestCase
 
         # Now make sure we can look up each of the names
         hostnames.each do |name|
-            assert(interp.nodesearch_code(name),
-                "Could not find node %s" % name)
+            assert(interp.nodesearch(name),
+                "Could not find node %s" % name.inspect)
         end
     end
 
