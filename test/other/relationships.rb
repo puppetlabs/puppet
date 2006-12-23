@@ -205,7 +205,6 @@ class TestRelationships < Test::Unit::TestCase
         file2[:notify] = file1
         assert(file1.requires?(file2), "requires? failed to catch :notify relationship")
     end
-        
 end
 
 # $Id$

@@ -439,6 +439,13 @@ class TestSnippets < Test::Unit::TestCase
                 "Did not collect file #{num}")
         end
     end
+    
+    def snippet_componentrequire
+        %w{1 2}.each do |num|
+            assert(FileTest.exists?("/tmp/testing_component_requires#{num}"),
+                "#{num} does not exist")
+            end
+    end
 
     def disabled_snippet_dirchmod
         dirs = %w{a b}.collect { |letter|

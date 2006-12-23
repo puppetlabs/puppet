@@ -265,13 +265,17 @@ class Puppet::Type
                 # to an object...
                 tname, name = value
                 object = nil
-                unless type = Puppet::Type.type(tname)
-                    self.fail "Could not find type %s" % tname.inspect
+                if type = Puppet::Type.type(tname)
+                    unless object = type[name]
+                        self.fail "Could not retrieve object '%s' of type '%s'" %
+                            [name,type]
+                    end
+                else # try to treat it as a component
+                    unless object = Puppet::Type::Component["#{tname}[#{name}]"]
+                        self.fail "Could not find object %s[%s]" % [tname, name]
+                    end
                 end
-                unless object = type[name]
-                    self.fail "Could not retrieve object '%s' of type '%s'" %
-                        [name,type]
-                end
+                
                 self.debug("subscribes to %s" % [object])
 
                 # Are we requiring them, or vice versa?  See the builddepends
