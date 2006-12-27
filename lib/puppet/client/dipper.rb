@@ -26,7 +26,11 @@ module Puppet
                 unless FileTest.exists?(file)
                     raise(BucketError, "File %s does not exist" % file)
                 end
-                return @driver.addfile(Base64.encode64(File.read(file)),file)
+                contents = File.read(file)
+                unless local?
+                    contents = Base64.encode64(contents)
+                end
+                return @driver.addfile(contents,file)
             end
 
             # Restore the file
@@ -44,8 +48,10 @@ module Puppet
 
                 if restore
                     #puts "Restoring %s" % file
-                    if tmp = @driver.getfile(sum)
-                        newcontents = Base64.decode64(tmp)
+                    if newcontents = @driver.getfile(sum)
+                        unless local?
+                            newcontents = Base64.decode64(newcontents)
+                        end
                         tmp = ""
                         newsum = Digest::MD5.hexdigest(newcontents)
                         changed = nil

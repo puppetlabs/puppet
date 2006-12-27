@@ -77,8 +77,11 @@ module Puppet
                     # We can't depend on looking this up right now,
                     # we have to do it after all of the objects
                     # have been instantiated.
-                    @bucket = value
-                    value
+                    if bucketobj = Puppet::Type.type(:filebucket)[value]
+                        @bucket = bucketobj.bucket
+                    else
+                        @bucket = value
+                    end
                 else
                     self.fail "Invalid backup type %s" %
                         value.inspect

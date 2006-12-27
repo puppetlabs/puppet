@@ -64,8 +64,10 @@ class Server
         end
 
         # accept a file from a client
-        def addfile(string,path, client = nil, clientip = nil)
-            contents = Base64.decode64(string)
+        def addfile(contents, path, client = nil, clientip = nil)
+            if client
+                contents = Base64.decode64(contents)
+            end
             md5 = Digest::MD5.hexdigest(contents)
 
             bpath, bfile, pathpath = FileBucket.paths(@path,md5)
@@ -141,8 +143,12 @@ class Server
             File.open(bfile) { |of|
                 contents = of.read
             }
-
-            return Base64.encode64(contents)
+            
+            if client
+                return Base64.encode64(contents)
+            else
+                return contents
+            end
         end
 
         def to_s
