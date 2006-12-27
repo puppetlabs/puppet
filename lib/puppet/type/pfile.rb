@@ -870,7 +870,7 @@ module Puppet
             method = :stat
 
             # Files are the only types that support links
-            if self.class.name == :file and self[:links] != :follow
+            if (self.class.name == :file and self[:links] != :follow) or self.class.name == :tidy
                 method = :lstat
             end
             path = self[:path]

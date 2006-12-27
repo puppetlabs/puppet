@@ -6,7 +6,7 @@ require 'puppet/type/pfile'
 module Puppet
     newtype(:tidy, Puppet.type(:file)) do
         @doc = "Remove unwanted files based on specific criteria.  Multiple
-            criteria or OR'd together, so a file that is too large but is not
+            criteria are OR'd together, so a file that is too large but is not
             old enough will still get tidied."
 
         newparam(:path) do
@@ -16,10 +16,108 @@ module Puppet
         end
 
         copyparam(Puppet.type(:file), :backup)
+        
+        newstate(:ensure) do
+            desc "An internal attribute used to determine which files should be removed."
+            require 'etc'
 
-        newparam(:age) do
+            @nodoc = true
+            
+            TATTRS = [:age, :size]
+            
+            defaultto :anything # just so we always get this state
+
+            def change_to_s
+                start = "Tidying"
+                if @out.include?(:age)
+                    start += ", older than %s seconds" % @parent.should(:age)
+                end
+                if @out.include?(:size)
+                    start += ", larger than %s bytes" % @parent.should(:size)
+                end
+
+                start
+            end
+
+            def insync?
+                if @is.is_a?(Symbol)
+                    if [:absent, :notidy].include?(@is)
+                        return true
+                    else
+                        return false
+                    end
+                else
+                    @out = []
+                    TATTRS.each do |param|
+                        if state = @parent.state(param)
+                            unless state.insync?
+                                @out << param
+                            end
+                        end
+                    end
+                    if @out.length > 0
+                        return false
+                    else
+                        return true
+                    end
+                end
+            end
+
+            def retrieve
+                stat = nil
+                unless stat = @parent.stat
+                    @is = :absent
+                    return
+                end
+                
+                if stat.ftype == "directory" and ! @parent[:rmdirs]
+                    @is = :notidy
+                    return
+                end
+
+                TATTRS.each { |param|
+                    if state = @parent.state(param)
+                        state.is = state.assess(stat)
+                    end
+                }
+            end
+
+            def sync
+                file = @parent[:path]
+                case File.lstat(file).ftype
+                when "directory":
+                    if @parent[:rmdirs]
+                        subs = Dir.entries(@parent[:path]).reject { |d|
+                            d == "." or d == ".."
+                        }.length
+                        if subs > 0
+                            self.info "%s has %s children; not tidying" %
+                                [@parent[:path], subs]
+                            self.info Dir.entries(@parent[:path]).inspect
+                        else
+                            Dir.rmdir(@parent[:path])
+                        end
+                    else
+                        self.debug "Not tidying directories"
+                        return nil
+                    end
+                when "file":
+                    @parent.handlebackup(file)
+                    File.unlink(file)
+                when "link":
+                    File.unlink(file)
+                else
+                    self.fail "Cannot tidy files of type %s" %
+                        File.lstat(file).ftype
+                end
+
+                return :file_tidied
+            end
+        end
+
+        newstate(:age) do
             desc "Tidy files whose age is equal to or greater than
-                the specified number of days.  You can choose seconds, minutes,
+                the specified time.  You can choose seconds, minutes,
                 hours, days, or weeks by specifying the first letter of any
                 of those words (e.g., '1w')."
 
@@ -32,12 +130,32 @@ module Puppet
             @@ageconvertors[:d] = @@ageconvertors[:h] * 24
             @@ageconvertors[:w] = @@ageconvertors[:d] * 7
 
+            def assess(stat)
+                type = nil
+                if stat.ftype == "directory"
+                    type = :mtime
+                else
+                    type = @parent[:type] || :atime
+                end
+                
+                #return Integer(Time.now - stat.send(type))
+                return stat.send(type).to_i
+            end
+
             def convert(unit, multi)
                 if num = @@ageconvertors[unit]
                     return num * multi
                 else
                     self.fail "Invalid age unit '%s'" % unit
                 end
+            end
+
+            def insync?
+                if (Time.now.to_i - @is) > self.should
+                    return false
+                end
+
+                true
             end
 
             munge do |age|
@@ -57,7 +175,7 @@ module Puppet
             end
         end
 
-        newparam(:size) do
+        newstate(:size) do
             desc "Tidy files whose size is equal to or greater than
                 the specified size.  Unqualified values are in kilobytes, but
                 *b*, *k*, and *m* can be appended to specify *bytes*, *kilobytes*,
@@ -71,6 +189,11 @@ module Puppet
                 :g => 3
             }
 
+            # Retrieve the size from a File::Stat object
+            def assess(stat)
+                return stat.size
+            end
+
             def convert(unit, multi)
                 if num = @@sizeconvertors[unit]
                     result = multi
@@ -79,6 +202,14 @@ module Puppet
                 else
                     self.fail "Invalid size unit '%s'" % unit
                 end
+            end
+            
+            def insync?
+                if @is > self.should
+                    return false
+                end
+
+                true
             end
             
             munge do |size|
@@ -116,119 +247,7 @@ module Puppet
                 This will only remove empty directories, so all contained
                 files must also be tidied before a directory gets removed."
         end
-
-        newstate(:tidyup) do
-            require 'etc'
-
-            @nodoc = true
-            @name = :tidyup
-
-            def age(stat)
-                type = nil
-                if stat.ftype == "directory"
-                    type = :mtime
-                else
-                    type = @parent[:type] || :atime
-                end
-                
-                #return Integer(Time.now - stat.send(type))
-                return stat.send(type).to_i
-            end
-
-            def change_to_s
-                start = "Tidying"
-                unless insync_age?
-                    start += ", older than %s seconds" % @parent[:age]
-                end
-                unless insync_size?
-                    start += ", larger than %s bytes" % @parent[:size]
-                end
-
-                start
-            end
-
-            def insync_age?
-                if num = @parent[:age] and @is[0]
-                    if (Time.now.to_i - @is[0]) > num
-                        return false
-                    end
-                end
-
-                true
-            end
-
-            def insync_size?
-                if num = @parent[:size] and @is[1]
-                    if @is[1] > num
-                        return false
-                    end
-                end
-
-                true
-            end
-
-            def insync?
-                if @is.is_a?(Symbol)
-                    if @is == :absent
-                        return true
-                    else
-                        return false
-                    end
-                else
-                    insync_age? and insync_size?
-                end
-            end
-
-            def retrieve
-                stat = nil
-                unless stat = @parent.stat
-                    @is = :unknown
-                    return
-                end
-
-                @is = [:age, :size].collect { |param|
-                    if @parent[param]
-                        self.send(param, stat)
-                    end
-                }.reject { |p| p == false or p.nil? }
-            end
-
-            def size(stat)
-                return stat.size
-            end
-
-            def sync
-                file = @parent[:path]
-                case File.lstat(file).ftype
-                when "directory":
-                    if @parent[:rmdirs]
-                        subs = Dir.entries(@parent[:path]).reject { |d|
-                            d == "." or d == ".."
-                        }.length
-                        if subs > 0
-                            self.info "%s has %s children; not tidying" %
-                                [@parent[:path], subs]
-                            self.info Dir.entries(@parent[:path]).inspect
-                        else
-                            Dir.rmdir(@parent[:path])
-                        end
-                    else
-                        self.debug "Not tidying directories"
-                        return nil
-                    end
-                when "file":
-                    @parent.handlebackup(file)
-                    File.unlink(file)
-                when "link":     File.unlink(file)
-                else
-                    self.fail "Cannot tidy files of type %s" %
-                        File.lstat(file).ftype
-                end
-
-                return :file_tidied
-            end
-        end
-
+        
         # Erase PFile's validate method
         validate do
         end
@@ -241,10 +260,9 @@ module Puppet
 
         def initialize(hash)
             super
-            #self.setdefaults
 
-            unless  @parameters.include?(:age) or
-                    @parameters.include?(:size)
+            unless  @states.include?(:age) or
+                    @states.include?(:size)
                 unless FileTest.directory?(self[:path])
                     # don't do size comparisons for directories
                     self.fail "Tidy must specify size, age, or both"
@@ -255,11 +273,17 @@ module Puppet
             unless self[:backup].is_a? Puppet::Client::Dipper
                 self[:backup] = false
             end
-            self[:tidyup] = [:age, :size].collect { |param|
-                self[param]
-            }.reject { |p| p == false }
         end
-
+        
+        def retrieve
+            # Our ensure state knows how to retrieve everything for us.
+            @states[:ensure].retrieve
+        end
+        
+        # Hack things a bit so we only ever check the ensure state.
+        def states
+            []
+        end
     end
 end
 

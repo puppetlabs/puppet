@@ -35,13 +35,10 @@ class TestTidy < Test::Unit::TestCase
         tidy = Puppet.type(:tidy).create(
             :name => dir,
             :size => "1b",
-            :age => "1s",
             :rmdirs => true,
             :recurse => true
         )
 
-
-        sleep(2)
         assert_events([:file_tidied, :file_tidied], tidy)
 
         assert(!FileTest.exists?(file), "Tidied %s still exists" % file)
@@ -93,7 +90,7 @@ class TestTidy < Test::Unit::TestCase
             tidy[:age] = "2"
         end
 
-        assert_equal(2 * convertors[:day], tidy[:age],
+        assert_equal(2 * convertors[:day], tidy.should(:age),
             "Converted 2 wrong")
 
         convertors.each do |name, number|
@@ -105,7 +102,7 @@ class TestTidy < Test::Unit::TestCase
                         tidy[:age] = age
                     end
 
-                    assert_equal(multi * convertors[name], tidy[:age],
+                    assert_equal(multi * convertors[name], tidy.should(:age),
                         "Converted %s wrong" % age)
                 end
             end
@@ -127,7 +124,7 @@ class TestTidy < Test::Unit::TestCase
             tidy[:size] = "2"
         end
 
-        assert_equal(2048, tidy[:size],
+        assert_equal(2048, tidy.should(:size),
             "Converted 2 wrong")
 
         convertors.each do |name, number|
@@ -142,7 +139,7 @@ class TestTidy < Test::Unit::TestCase
                     total = multi
                     number.times do total *= 1024 end
 
-                    assert_equal(total, tidy[:size],
+                    assert_equal(total, tidy.should(:size),
                         "Converted %s wrong" % size)
                 end
             end
@@ -152,33 +149,33 @@ class TestTidy < Test::Unit::TestCase
     def test_agetest
         tidy = Puppet::Type.newtidy :path => tempfile(), :age => "1m"
 
-        state = tidy.state(:tidyup)
+        age = tidy.state(:age)
 
         # Set it to something that should be fine
-        state.is = [Time.now.to_i - 5, 50]
+        age.is = Time.now.to_i - 5
 
-        assert(state.insync?, "Tried to tidy a low age")
+        assert(age.insync?, "Tried to tidy a low age")
 
         # Now to something that should fail
-        state.is = [Time.now.to_i - 120, 50]
+        age.is = Time.now.to_i - 120
 
-        assert(! state.insync?, "Incorrectly skipped tidy")
+        assert(! age.insync?, "Incorrectly skipped tidy")
     end
 
     def test_sizetest
         tidy = Puppet::Type.newtidy :path => tempfile(), :size => "1k"
 
-        state = tidy.state(:tidyup)
+        size = tidy.state(:size)
 
         # Set it to something that should be fine
-        state.is = [5, 50]
+        size.is = 50
 
-        assert(state.insync?, "Tried to tidy a low size")
+        assert(size.insync?, "Tried to tidy a low size")
 
         # Now to something that should fail
-        state.is = [120, 2048]
+        size.is = 2048
 
-        assert(! state.insync?, "Incorrectly skipped tidy")
+        assert(! size.insync?, "Incorrectly skipped tidy")
     end
 
     # Make sure we can remove different types of files
@@ -201,10 +198,43 @@ class TestTidy < Test::Unit::TestCase
 
         # And a directory
         Dir.mkdir(path)
-        tidy.is = [:tidyup, [Time.now - 1024, 1]]
+        tidy.is = [:ensure, [Time.now - 1024, 1]]
         tidy[:rmdirs] = true
         assert_events([:file_tidied], tidy)
         assert(! FileTest.exists?(path), "File was not removed")
+    end
+    
+    # Make sure we can specify either attribute and get appropriate behaviour.
+    # I found that the original implementation of this did not work unless both
+    # size and age were specified.
+    def test_one_attribute
+        path = tempfile()
+        File.open(path, "w") { |f| 10.times { f.puts "yayness " } }
+        tidy = Puppet::Type.type(:tidy).create :path => path, :size => "1b"
+        
+        assert_apply(tidy)
+        assert(! FileTest.exists?(path), "file did not get tidied")
+        
+        # Now try one with just an age attribute.
+        File.open(path, "w") { |f| 10.times { f.puts "yayness " } }
+        tidy = Puppet::Type.type(:tidy).create :path => path, :age => "5s"
+        
+        tidy.state(:age).is = "0s"
+        assert_apply(tidy)
+        assert(! FileTest.exists?(path), "file did not get tidied")
+    end
+    
+    # Testing #355.
+    def test_remove_dead_links
+        dir = tempfile()
+        link = File.join(dir, "link")
+        target = tempfile()
+        Dir.mkdir(dir)
+        File.symlink(target, link)
+        
+        tidy = Puppet::Type.newtidy :path => dir, :size => "1b", :recurse => true
+        assert_apply(tidy)
+        assert(! FileTest.symlink?(link), "link was not tidied")
     end
 end
 
