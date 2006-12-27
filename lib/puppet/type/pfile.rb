@@ -32,13 +32,17 @@ module Puppet
 
         newparam(:backup) do
             desc "Whether files should be backed up before
-                being replaced.  If a filebucket is specified, files will be
-                backed up there; else, they will be backed up in the same directory
-                with a ``.puppet-bak`` extension,, and no backups
-                will be made if backup is ``false``.
+                being replaced.  The preferred method of backing files up is via
+                a ``filebucket``, which stores files by their MD5 sums and allows
+                easy retrieval without littering directories with backups.  You can
+                specify a local filebucket or a network-accessible server-based filebucket.
+                Alternatively, if you specify any value that begins with a ``.`` (e.g.,
+                ``.puppet-bak``), then Puppet will use copy the file in the same directory with that value as the
+                extension of the backup.
                 
-                To use filebuckets, you must first create a filebucket in your
-                configuration:
+                Puppet automatically creates a local filebucket named ``puppet`` and
+                defaults to backing up there.  To use a server-based filebucket,
+                you must specify one in your configuration:
                     
                     filebucket { main:
                         server => puppet
@@ -56,7 +60,7 @@ module Puppet
 
                 This will back the file up to the central server.
 
-                At this point, the only benefits to doing so are that you do not
+                At this point, the benefits of using a filebucket are that you do not
                 have backup files lying around on each of your machines, a given
                 version of a file is only backed up once, and you can restore
                 any given file manually, no matter how old.  Eventually,
@@ -64,34 +68,30 @@ module Puppet
                 filebucketed files.
                 "
 
-            attr_reader :bucket
-            defaultto ".puppet-bak"
-
+            defaultto "puppet"
+            
             munge do |value|
                 case value
                 when false, "false", :false:
                     false
                 when true, "true", ".puppet-bak", :true:
                     ".puppet-bak"
+                when /^\./
+                    value
                 when String:
                     # We can't depend on looking this up right now,
                     # we have to do it after all of the objects
                     # have been instantiated.
                     if bucketobj = Puppet::Type.type(:filebucket)[value]
-                        @bucket = bucketobj.bucket
+                        @parent.bucket = bucketobj.bucket
                     else
-                        @bucket = value
+                        @parent.bucket = value
                     end
+                when Puppet::Client::Dipper: value
                 else
                     self.fail "Invalid backup type %s" %
                         value.inspect
                 end
-            end
-
-            # Provide a straight-through hook for setting the bucket.
-            def bucket=(bucket)
-                @value = bucket
-                @bucket = bucket
             end
         end
 
@@ -176,6 +176,8 @@ module Puppet
 
             newvalues(:true, :false)
         end
+        
+        attr_accessor :bucket
 
         # Autorequire any parent directories.
         autorequire(:file) do
@@ -263,15 +265,19 @@ module Puppet
             @@filebuckets ||= {}
 
             # Look up our bucket, if there is one
-            if @parameters.include?(:backup) and bucket = @parameters[:backup].bucket
+            if @parameters.include?(:backup) and bucket = self.bucket
                 case bucket
                 when String:
                     if obj = @@filebuckets[bucket]
                         # This sets the @value on :backup, too
-                        @parameters[:backup].bucket = obj
-                    elsif obj = Puppet.type(:filebucket).bucket(bucket)
+                        self.bucket = obj
+                    # elsif bucket == "puppet"
+                    #     obj = Puppet::Client::Dipper.new(
+                    #         :Path => Puppet[:puppetdir]
+                    #     )
+                    elsif obj = Puppet::Type.type(:filebucket).bucket(bucket)
                         @@filebuckets[bucket] = obj
-                        @parameters[:backup].bucket = obj
+                        self.bucket = obj
                     else
                         self.fail "Could not find filebucket %s" % bucket
                     end

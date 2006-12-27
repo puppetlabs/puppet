@@ -243,7 +243,7 @@ class Puppet::Client::MasterClient < Puppet::Client
 
         # Retrieve the plugins.
         if Puppet[:pluginsync]
-            self.class.getplugins()
+            getplugins()
         end
 
         facts = self.class.facts
@@ -254,68 +254,7 @@ class Puppet::Client::MasterClient < Puppet::Client
             )
         end
 
-        objects = nil
-        if @local
-            # If we're local, we don't have to do any of the conversion
-            # stuff.
-            objects = @driver.getconfig(facts, "yaml")
-            @configstamp = Time.now.to_i
-
-            if objects == ""
-                raise Puppet::Error, "Could not retrieve configuration"
-            end
-        else
-            textobjects = ""
-
-            textfacts = CGI.escape(YAML.dump(facts))
-
-            benchmark(:debug, "Retrieved configuration") do
-                # error handling for this is done in the network client
-                begin
-                    textobjects = @driver.getconfig(textfacts, "yaml")
-                rescue => detail
-                    Puppet.err "Could not retrieve configuration: %s" % detail
-
-                    unless Puppet[:usecacheonfailure]
-                        @objects = nil
-                        Puppet.warning "Not using cache on failed configuration"
-                        return
-                    end
-                end
-            end
-
-            fromcache = false
-            if textobjects == ""
-                textobjects = self.retrievecache
-                if textobjects == ""
-                    raise Puppet::Error.new(
-                        "Cannot connect to server and there is no cached configuration"
-                    )
-                end
-                Puppet.warning "Could not get config; using cached copy"
-                fromcache = true
-            else
-                @configstamp = Time.now.to_i
-            end
-
-            begin
-                textobjects = CGI.unescape(textobjects)
-            rescue => detail
-                raise Puppet::Error, "Could not CGI.unescape configuration"
-            end
-
-            if @cache and ! fromcache
-                self.cache(textobjects)
-            end
-
-            begin
-                objects = YAML.load(textobjects)
-            rescue => detail
-                raise Puppet::Error,
-                    "Could not understand configuration: %s" %
-                    detail.to_s
-            end
-        end
+        objects = get_actual_config(facts)
 
         unless objects.is_a?(Puppet::TransBucket)
             raise NetworkClientError,
@@ -334,7 +273,10 @@ class Puppet::Client::MasterClient < Puppet::Client
         @objects = nil
 
         # First create the default scheduling objects
-        Puppet.type(:schedule).mkdefaultschedules
+        Puppet::Type.type(:schedule).mkdefaultschedules
+        
+        # And filebuckets
+        Puppet::Type.type(:filebucket).mkdefaultbucket
 
         # Now convert the objects to real Puppet objects
         @objects = objects.to_type
@@ -348,7 +290,12 @@ class Puppet::Client::MasterClient < Puppet::Client
 
         return @objects
     end
-
+    
+    # A simple proxy method, so it's easy to test.
+    def getplugins
+        self.class.getplugins
+    end
+    
     # Just so we can specify that we are "the" instance.
     def initialize(*args)
         super
@@ -640,6 +587,87 @@ class Puppet::Client::MasterClient < Puppet::Client
     end
 
     loadfacts()
+    
+    private
+    
+    # Actually retrieve the configuration, either from the server or from a local master.
+    def get_actual_config(facts)
+        if @local
+            return get_local_config(facts)
+        else
+            return get_remote_config(facts)
+        end
+    end
+    
+    # Retrieve a configuration from a local master.
+    def get_local_config(facts)
+        # If we're local, we don't have to do any of the conversion
+        # stuff.
+        objects = @driver.getconfig(facts, "yaml")
+        @configstamp = Time.now.to_i
+
+        if objects == ""
+            raise Puppet::Error, "Could not retrieve configuration"
+        end
+        
+        return objects
+    end
+    
+    # Retrieve a config from a remote master.
+    def get_remote_config(facts)
+        textobjects = ""
+
+        textfacts = CGI.escape(YAML.dump(facts))
+
+        benchmark(:debug, "Retrieved configuration") do
+            # error handling for this is done in the network client
+            begin
+                textobjects = @driver.getconfig(textfacts, "yaml")
+            rescue => detail
+                Puppet.err "Could not retrieve configuration: %s" % detail
+
+                unless Puppet[:usecacheonfailure]
+                    @objects = nil
+                    Puppet.warning "Not using cache on failed configuration"
+                    return
+                end
+            end
+        end
+
+        fromcache = false
+        if textobjects == ""
+            textobjects = self.retrievecache
+            if textobjects == ""
+                raise Puppet::Error.new(
+                    "Cannot connect to server and there is no cached configuration"
+                )
+            end
+            Puppet.warning "Could not get config; using cached copy"
+            fromcache = true
+        else
+            @configstamp = Time.now.to_i
+        end
+
+        begin
+            textobjects = CGI.unescape(textobjects)
+        rescue => detail
+            raise Puppet::Error, "Could not CGI.unescape configuration"
+        end
+
+        if @cache and ! fromcache
+            self.cache(textobjects)
+        end
+
+        begin
+            objects = YAML.load(textobjects)
+        rescue => detail
+            raise Puppet::Error,
+                "Could not understand configuration: %s" %
+                detail.to_s
+        end
+        
+        return objects
+    end
 end
 
 # $Id$

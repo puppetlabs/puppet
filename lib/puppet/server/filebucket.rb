@@ -60,7 +60,7 @@ class Server
 
             Puppet.config.use(:filebucket)
 
-            @name = "filebucket[#{@path}]"
+            @name = "Filebucket[#{@path}]"
         end
 
         # accept a file from a client

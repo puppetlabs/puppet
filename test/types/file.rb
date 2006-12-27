@@ -1280,18 +1280,9 @@ class TestFile < Test::Unit::TestCase
         obj = nil
         assert_nothing_raised {
             obj = Puppet::Type.type(:file).create(
-                :path => file, :content => "rahness\n"
+                :path => file, :content => "rahness\n", :backup => ".puppet-bak"
             )
         }
-
-#        user = group = nil
-#        if Process.uid == 0
-#            user = nonrootuser
-#            group = nonrootgroup
-#            obj[:owner] = user.name
-#            obj[:group] = group.name
-#            File.chown(user.uid, group.gid, file)
-#        end
 
         assert_apply(obj)
 
@@ -1302,11 +1293,6 @@ class TestFile < Test::Unit::TestCase
 
         assert_equal(0411, filemode(backupfile),
             "File mode is wrong for backupfile")
-
-#        if Process.uid == 0
-#            assert_equal(user.uid, File.stat(backupfile).uid)
-#            assert_equal(group.gid, File.stat(backupfile).gid)
-#        end
 
         bucket = "bucket"
         bpath = tempfile()
@@ -1865,7 +1851,47 @@ class TestFile < Test::Unit::TestCase
             assert(result, "file %s was not backed to filebucket" % f)
             assert_equal("yay: %s\n" % f, result, "file backup was not correct")
         end
+    end
+    
+    def test_backup
+        path = tempfile()
+        file = Puppet::Type.newfile :path => path, :content => "yay"
         
+        [false, :false, "false"].each do |val|
+            assert_nothing_raised do
+                file[:backup] = val
+            end
+            assert_equal(false, file[:backup], "%s did not translate" % val.inspect)
+        end
+        [true, :true, "true", ".puppet-bak"].each do |val|
+            assert_nothing_raised do
+                file[:backup] = val
+            end
+            assert_equal(".puppet-bak", file[:backup], "%s did not translate" % val.inspect)
+        end
+        
+        # Now try a non-bucket string
+        assert_nothing_raised do
+            file[:backup] = ".bak"
+        end
+        assert_equal(".bak", file[:backup], ".bak did not translate")
+        
+        # Now try a non-existent bucket
+        assert_nothing_raised do
+            file[:backup] = "main"
+        end
+        assert_equal("main", file[:backup], "bucket name was not retained")
+        assert_equal("main", file.bucket, "file's bucket was not set")
+        
+        # And then an existing bucket
+        obj = Puppet::Type.type(:filebucket).create :name => "testing"
+        bucket = obj.bucket
+        
+        assert_nothing_raised do
+            file[:backup] = "testing"
+        end
+        assert_equal(obj.bucket, file[:backup], "bucket was not retrieved")
+        assert_equal(obj.bucket, file.bucket, "file's bucket was not set")
     end
 end
 

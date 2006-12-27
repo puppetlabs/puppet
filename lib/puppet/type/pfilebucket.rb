@@ -29,8 +29,6 @@ module Puppet
             work in a default configuration.
             "
 
-        @states = []
-
         newparam(:name) do
             desc "The name of the filebucket."
             isnamevar
@@ -65,6 +63,13 @@ module Puppet
                 return nil
             end
         end
+        
+        # Create a default filebucket.
+        def self.mkdefaultbucket
+            unless self["puppet"]
+                self.create :name => "puppet", :path => Puppet[:bucketdir]
+            end
+        end
 
         def self.list
             self.collect do |obj| obj.name end
@@ -91,14 +96,12 @@ module Puppet
                     )
                 end
             else
-                unless self[:path]
-                    self[:path] = Puppet[:bucketdir] 
-                end
                 begin
                     @bucket = Puppet::Client::Dipper.new(
                         :Path => self[:path]
                     )
                 rescue => detail
+                    puts detail.backtrace
                     self.fail(
                         "Could not create local filebucket: %s" % detail
                     )

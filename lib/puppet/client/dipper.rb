@@ -47,7 +47,6 @@ module Puppet
                 end
 
                 if restore
-                    #puts "Restoring %s" % file
                     if newcontents = @driver.getfile(sum)
                         unless local?
                             newcontents = Base64.decode64(newcontents)
@@ -69,7 +68,6 @@ module Puppet
                         Puppet.err "Could not find file with checksum %s" % sum
                         return nil
                     end
-                    #puts "Done"
                     return newsum
                 else
                     return nil

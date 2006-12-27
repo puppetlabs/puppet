@@ -32,6 +32,14 @@ class TestMasterClient < Test::Unit::TestCase
             @trans = FakeTrans.new
             @trans
         end
+        
+        def finalize
+            @finalized = true
+        end
+        
+        def finalized?
+            @finalized
+        end
     end
 
     def mkmaster(file = nil)
@@ -127,6 +135,48 @@ class TestMasterClient < Test::Unit::TestCase
         end
         check.call :yes => %w{evaluate cleanup tags ignoreschedules addtimes}, :no => %w{}
         assert_equal(3, master.reported, "master did not send report")
+    end
+    
+    def test_getconfig
+        client = mkclient
+        
+        $methodsrun = []
+        cleanup { $methodsrun = nil }
+        client.meta_def(:getplugins) do
+            $methodsrun << :getplugins
+        end
+        client.meta_def(:get_actual_config) do
+            $methodsrun << :get_actual_config
+            result = Puppet::TransBucket.new()
+            result.type = "testing"
+            result.name = "yayness"
+            result
+        end
+        
+        assert_nothing_raised do
+            client.getconfig
+        end
+        [:get_actual_config].each do |method|
+            assert($methodsrun.include?(method), "method %s was not run" % method)
+        end
+        assert(! $methodsrun.include?(:getplugins), "plugins were synced even tho disabled")
+        # Make sure we've got schedules
+        assert(Puppet::Type.type(:schedule)["hourly"], "Could not retrieve hourly schedule")
+        assert(Puppet::Type.type(:filebucket)["puppet"], "Could not retrieve default bucket")
+
+        # Now set pluginsync
+        Puppet[:pluginsync] = true
+        $methodsrun.clear
+        
+        assert_nothing_raised do
+            client.getconfig
+        end
+        [:getplugins, :get_actual_config].each do |method|
+            assert($methodsrun.include?(method), "method %s was not run" % method)
+        end
+        
+        objects = client.objects
+        assert(objects.finalized?, "objects were not finalized")
     end
 
     def test_disable

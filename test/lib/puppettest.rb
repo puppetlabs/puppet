@@ -92,6 +92,9 @@ module PuppetTest
 
         Puppet[:confdir] = @configpath
         Puppet[:vardir] = @configpath
+        
+        # And create the default bucket
+        Puppet::Type.type(:filebucket).mkdefaultbucket
 
         unless File.exists?(@configpath)
             Dir.mkdir(@configpath)

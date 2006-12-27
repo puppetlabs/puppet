@@ -288,11 +288,25 @@ class TestSchedule < Test::Unit::TestCase
 
     # Verify that each of our default schedules exist
     def test_defaultschedules
-        Puppet.type(:schedule).mkdefaultschedules
+        assert_nothing_raised do
+            Puppet.type(:schedule).mkdefaultschedules
+        end
+        s = {}
         %w{puppet hourly daily weekly monthly}.each { |period|
-            assert(Puppet.type(:schedule)[period], "Could not find %s schedule" %
+            obj = Puppet.type(:schedule)[period]
+            assert(obj, "Could not find %s schedule" %
                 period)
+            s[period] = obj
         }
+        assert_nothing_raised("Could not rerun mkdefaultschedules") do
+            Puppet.type(:schedule).mkdefaultschedules
+        end
+        s.each do |period, obj|
+            newobj = Puppet.type(:schedule)[period]
+            assert(newobj, "somehow lost schedule for %s" % period)
+            assert_equal(obj.object_id, newobj.object_id,
+                "created a new schedule instead of reusing existing one")
+        end
     end
 
     def test_period_with_repeat

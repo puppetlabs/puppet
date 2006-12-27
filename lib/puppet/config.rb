@@ -911,6 +911,11 @@ Generated on #{Time.now}.
 
             # And set the loglevel to debug for everything
             obj[:loglevel] = "debug"
+            
+            # We're not actually modifying any files here, and if we allow a
+            # filebucket to get used here we get into an infinite recursion
+            # trying to set the filebucket up.
+            obj[:backup] = false
 
             if self.section
                 obj.tags += ["puppet", "configuration", self.section, self.name]
