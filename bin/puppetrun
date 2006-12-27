@@ -342,10 +342,20 @@ while go
 
             print "Triggering %s\n" % host
             begin
-                client.run(tags, options[:ignoreschedules], options[:foreground])
+                result = client.run(tags, options[:ignoreschedules], options[:foreground])
             rescue => detail
                 $stderr.print "Host %s failed: %s\n" % [host, detail]
                 exit(2)
+            end
+            
+            case result
+            when "success": exit(0)
+            when "running":
+                $stderr.print "Host %s is already running" % host
+                exit(3)
+            else
+                $stderr.print "Host %s returned unknown answer '%s'" % [host, result]
+                exit(12)
             end
         end
         children[pid] = host
