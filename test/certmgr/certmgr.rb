@@ -7,15 +7,6 @@ require 'puppet/sslcertificates.rb'
 require 'puppettest'
 require 'puppettest/certificates'
 
-# so, what kind of things do we want to test?
-
-# we don't need to test function, since we're confident in the
-# library tests.  We do, however, need to test how things are actually
-# working in the language.
-
-# so really, we want to do things like test that our ast is correct
-# and test whether we've got things in the right scopes
-
 class TestCertMgr < Test::Unit::TestCase
     include PuppetTest::Certificates
     def setup

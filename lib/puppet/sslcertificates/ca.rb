@@ -85,40 +85,9 @@ class Puppet::SSLCertificates::CA
         @config[:cacert]
     end
 
-    # TTL for new certificates in seconds. If config param :ca_ttl is set, 
-    # use that, otherwise use :ca_days for backwards compatibility
-    def ttl
-        days = @config[:ca_days]
-        if days && days.size > 0
-            warnonce "Parameter ca_ttl is not set. Using depecated ca_days instead."
-            return @config[:ca_days] * 24 * 60 * 60
-        else
-            ttl = @config[:ca_ttl]
-            if ttl.is_a?(String)
-                unless ttl =~ /^(\d+)(y|d|h|s)$/
-                    raise ArgumentError, "Invalid ca_ttl #{ttl}"
-                end
-                case $2
-                when 'y'
-                    unit = 365 * 24 * 60 * 60
-                when 'd'
-                    unit = 24 * 60 * 60
-                when 'h'
-                    unit = 60 * 60
-                when 's'
-                    unit = 1
-                else
-                    raise ArgumentError, "Invalid unit for ca_ttl #{ttl}"
-                end
-                return $1.to_i * unit
-            else
-                return ttl
-            end
-        end
-    end
-
     # Remove all traces of a given host.  This is kind of hackish, but, eh.
     def clean(host)
+        host = host.downcase
         [:csrdir, :signeddir, :publickeydir, :privatekeydir, :certdir].each do |name|
             dir = Puppet[name]
 
@@ -142,13 +111,13 @@ class Puppet::SSLCertificates::CA
     end
 
     def host2csrfile(hostname)
-        File.join(Puppet[:csrdir], [hostname, "pem"].join("."))
+        File.join(Puppet[:csrdir], [hostname.downcase, "pem"].join("."))
     end
 
     # this stores signed certs in a directory unrelated to 
     # normal client certs
     def host2certfile(hostname)
-        File.join(Puppet[:signeddir], [hostname, "pem"].join("."))
+        File.join(Puppet[:signeddir], [hostname.downcase, "pem"].join("."))
     end
 
     # Turn our hostname into a Name object
@@ -238,7 +207,8 @@ class Puppet::SSLCertificates::CA
         return [OpenSSL::X509::Certificate.new(File.read(certfile)), @cert]
     end
 
-    # List certificates waiting to be signed.
+    # List certificates waiting to be signed.  This returns a list of hostnames, not actual
+    # files -- the names can be converted to full paths with host2csrfile.
     def list
         return Dir.entries(Puppet[:csrdir]).find_all { |file|
             file =~ /\.pem$/
@@ -283,6 +253,23 @@ class Puppet::SSLCertificates::CA
         File.unlink(csrfile)
     end
 
+    # Revoke the certificate with serial number SERIAL issued by this
+    # CA. The REASON must be one of the OpenSSL::OCSP::REVOKED_* reasons
+    def revoke(serial, reason = OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
+        if @config[:cacrl] == 'none'
+            raise Puppet::Error, "Revocation requires a CRL, but ca_crl is set to 'none'"
+        end
+        time = Time.now
+        revoked = OpenSSL::X509::Revoked.new
+        revoked.serial = serial
+        revoked.time = time
+        enum = OpenSSL::ASN1::Enumerated(reason)
+        ext = OpenSSL::X509::Extension.new("CRLReason", enum)
+        revoked.add_extension(ext)
+        @crl.add_revoked(revoked)
+        store_crl
+    end
+    
     # Take the Puppet config and store it locally.
     def setconfig(hash)
         @config = {}
@@ -363,23 +350,6 @@ class Puppet::SSLCertificates::CA
         end
     end
 
-    # Revoke the certificate with serial number SERIAL issued by this
-    # CA. The REASON must be one of the OpenSSL::OCSP::REVOKED_* reasons
-    def revoke(serial, reason = OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
-        if @config[:cacrl] == 'none'
-            raise Puppet::Error, "Revocation requires a CRL, but ca_crl is set to 'none'"
-        end
-        time = Time.now
-        revoked = OpenSSL::X509::Revoked.new
-        revoked.serial = serial
-        revoked.time = time
-        enum = OpenSSL::ASN1::Enumerated(reason)
-        ext = OpenSSL::X509::Extension.new("CRLReason", enum)
-        revoked.add_extension(ext)
-        @crl.add_revoked(revoked)
-        store_crl
-    end
-
     # Store the certificate that we generate.
     def storeclientcert(cert)
         host = thing2name(cert)
@@ -396,6 +366,38 @@ class Puppet::SSLCertificates::CA
         end
     end
 
+    # TTL for new certificates in seconds. If config param :ca_ttl is set, 
+    # use that, otherwise use :ca_days for backwards compatibility
+    def ttl
+        days = @config[:ca_days]
+        if days && days.size > 0
+            warnonce "Parameter ca_ttl is not set. Using depecated ca_days instead."
+            return @config[:ca_days] * 24 * 60 * 60
+        else
+            ttl = @config[:ca_ttl]
+            if ttl.is_a?(String)
+                unless ttl =~ /^(\d+)(y|d|h|s)$/
+                    raise ArgumentError, "Invalid ca_ttl #{ttl}"
+                end
+                case $2
+                when 'y'
+                    unit = 365 * 24 * 60 * 60
+                when 'd'
+                    unit = 24 * 60 * 60
+                when 'h'
+                    unit = 60 * 60
+                when 's'
+                    unit = 1
+                else
+                    raise ArgumentError, "Invalid unit for ca_ttl #{ttl}"
+                end
+                return $1.to_i * unit
+            else
+                return ttl
+            end
+        end
+    end
+    
     private
     def init_crl
         if FileTest.exists?(@config[:cacrl])

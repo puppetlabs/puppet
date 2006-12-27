@@ -167,11 +167,11 @@ unless mode
     exit(12)
 end
 
-if mode == :generate or mode == :clean or mode == :revoke
-    hosts = ARGV
+if [:generate, :clean, :revoke].include?(mode)
+    hosts = ARGV.collect { |h| h.downcase }
 else
-    hosts = ca.list
-    unless hosts.length > 0
+    waiting = ca.list
+    unless waiting.length > 0
         puts "No certificates to sign"
         if ARGV.length > 0
             exit(17)
@@ -179,11 +179,12 @@ else
             exit(0)
         end
     end
+    to_sign = ARGV.collect { |h| h.downcase }
 end
 
 case mode
 when :list
-    puts hosts.join("\n")
+    puts waiting.join("\n")
 when :clean
     if hosts.empty?
         $stderr.puts "You must specify one or more hosts to clean"
@@ -193,7 +194,7 @@ when :clean
         ca.clean(host)
     end
 when :sign
-    unless ARGV.length > 0 or all
+    unless to_sign.length > 0 or all
         $stderr.puts(
             "You must specify to sign all certificates or you must specify hostnames"
         )
@@ -201,17 +202,17 @@ when :sign
     end
 
     unless all
-        ARGV.each { |host|
-            unless hosts.include?(host)
+        to_sign.each { |host|
+            unless waiting.include?(host)
                 $stderr.puts "No waiting request for %s" % host
             end
         }
-        hosts = hosts.find_all { |host|
-            ARGV.include?(host)
+        waiting = waiting.find_all { |host|
+            to_sign.include?(host)
         }
     end
 
-    hosts.each { |host|
+    waiting.each { |host|
         begin
             csr = ca.getclientcsr(host)
         rescue => detail

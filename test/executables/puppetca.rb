@@ -9,6 +9,16 @@ require 'puppettest'
 
 class TestPuppetCA < Test::Unit::TestCase
     include PuppetTest::ExeTest
+    
+    def gen_cert(ca, host)
+        runca("-g #{host}")
+        ca.getclientcert(host)[0]
+    end
+    
+    def mkca
+        Puppet::Server::CA.new()
+    end
+    
     def mkcert(hostname)
         cert = nil
         assert_nothing_raised {
@@ -27,59 +37,53 @@ class TestPuppetCA < Test::Unit::TestCase
             debug = "-d "
         end
         return %x{puppetca --user=#{Puppet[:user]} #{debug} --group=#{Puppet[:group]} --confdir=#{Puppet[:confdir]} --vardir=#{Puppet[:vardir]} #{args} 2>&1}
-
     end
 
     def test_signing
-        ca = nil
+        ca = mkca
         Puppet[:autosign] = false
-        assert_nothing_raised {
-            ca = Puppet::Server::CA.new()
-        }
-        #Puppet.warning "SSLDir is %s" % Puppet[:confdir]
-        #system("find %s" % Puppet[:confdir])
+        
+        %w{host.test.com Other.Testing.Com}.each do |host|
+            cert = mkcert(host)
+            resp = nil
+            assert_nothing_raised {
+                # We need to use a fake name so it doesn't think the cert is from
+                # itself.  Strangely, getcert stores the csr, because it's a server-side
+                # method, not client.
+                resp = ca.getcert(cert.csr.to_pem, host, "127.0.0.1")
+            }
+            assert_equal(["",""], resp)
 
-        cert = mkcert("host.test.com")
-        resp = nil
-        assert_nothing_raised {
-            # We need to use a fake name so it doesn't think the cert is from
-            # itself.
-            resp = ca.getcert(cert.csr.to_pem, "fakename", "127.0.0.1")
-        }
-        assert_equal(["",""], resp)
-        #Puppet.warning "SSLDir is %s" % Puppet[:confdir]
-        #system("find %s" % Puppet[:confdir])
-
-        output = nil
-        assert_nothing_raised {
-            output = runca("--list").chomp.split("\n").reject { |line| line =~ /warning:/ } # stupid ssl.rb
-        }
-        #Puppet.warning "SSLDir is %s" % Puppet[:confdir]
-        #system("find %s" % Puppet[:confdir])
-        assert_equal($?,0)
-        assert_equal(%w{host.test.com}, output)
-        assert_nothing_raised {
-            output = runca("--sign -a").chomp.split("\n")
-        }
+            output = nil
+            assert_nothing_raised {
+                output = runca("--list").chomp.split("\n").reject { |line| line =~ /warning:/ } # stupid ssl.rb
+            }
+            assert_equal($?,0)
+            assert_equal([host.downcase], output)
+            assert_nothing_raised {
+                output = runca("--sign -a").chomp.split("\n")
+            }
 
 
-        assert_equal($?,0)
-        assert_equal(["Signed host.test.com"], output)
+            assert_equal($?,0)
+            assert_equal(["Signed #{host.downcase}"], output)
 
-        signedfile = File.join(Puppet[:signeddir], "host.test.com.pem")
-        assert(FileTest.exists?(signedfile), "cert does not exist")
-        assert(! FileTest.executable?(signedfile), "cert is executable")
+            
+            signedfile = ca.ca.host2certfile(host)
+            assert(FileTest.exists?(signedfile), "cert does not exist")
+            assert(! FileTest.executable?(signedfile), "cert is executable")
 
-        uid = Puppet::Util.uid(Puppet[:user])
+            uid = Puppet::Util.uid(Puppet[:user])
 
-        if Puppet::SUIDManager.uid == 0
-            assert(! FileTest.owned?(signedfile), "cert is owned by root")
+            if Puppet::SUIDManager.uid == 0
+                assert(! FileTest.owned?(signedfile), "cert is owned by root")
+            end
+            assert_nothing_raised {
+                output = runca("--list").chomp.split("\n")
+            }
+            assert_equal($?,0)
+            assert_equal(["No certificates to sign"], output)
         end
-        assert_nothing_raised {
-            output = runca("--list").chomp.split("\n")
-        }
-        assert_equal($?,0)
-        assert_equal(["No certificates to sign"], output)
     end
     
     # This method takes a long time to run because of all of the external
@@ -102,9 +106,7 @@ class TestPuppetCA < Test::Unit::TestCase
         assert_equal(exp, revoked)
     end
     
-    def gen_cert(ca, host)
-        runca("-g #{host}")
-        ca.getclientcert(host)[0]
+    def test_case_insensitive_sign
     end
 end
 
