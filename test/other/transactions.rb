@@ -13,9 +13,15 @@ class TestTransactions < Test::Unit::TestCase
     include PuppetTest::Support::Resources
     
     def mkgenerator(&block)
+        $finished = []
+        cleanup { $finished = nil }
+        
         # Create a bogus type that generates new instances with shorter
         type = Puppet::Type.newtype(:generator) do
             newparam(:name, :namevar => true)
+            def finish
+                $finished << self.name
+            end
         end
         if block
             type.class_eval(&block)
@@ -590,6 +596,7 @@ class TestTransactions < Test::Unit::TestCase
         %w{ya ra y r}.each do |name|
             assert(trans.resources.vertex?(Puppet::Type.type(:generator)[name]),
                 "Generated %s was not a vertex" % name)
+            assert($finished.include?(name), "%s was not finished" % name)
         end
         
         # Now make sure that cleanup gets rid of those generated types.
@@ -649,6 +656,7 @@ class TestTransactions < Test::Unit::TestCase
             assert(res, "Did not generate %s" % name)
             assert(trans.relgraph.vertex?(res),
                 "Did not add %s to rel_graph" % name)
+            assert($finished.include?("y"), "y was not finished")
         end
         
         assert_nothing_raised("failed to eval_generate with nil response") do
@@ -664,6 +672,7 @@ class TestTransactions < Test::Unit::TestCase
         assert(ra, "Did not generate ra")
         assert(trans.relgraph.vertex?(ra),
             "Did not add ra to rel_graph" % name)
+        assert($finished.include?("ra"), "y was not finished")
         
         # Now make sure this generated resource has the same relationships as
         # the generating resource

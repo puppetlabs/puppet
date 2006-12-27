@@ -159,6 +159,7 @@ class Transaction
             if children = resource.eval_generate
                 copy_relationships(resource, children)
                 @generated += children
+                children.each { |child| child.finish }
                 return children
             end
         end
@@ -313,6 +314,7 @@ class Transaction
                         @resources.add_vertex!(res)
                         newlist << res
                         @generated << res
+                        res.finish
                     end
                 end
             end
