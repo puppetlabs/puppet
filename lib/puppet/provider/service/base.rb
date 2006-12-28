@@ -6,16 +6,7 @@ Puppet::Type.type(:service).provide :base do
         specify start, stop, and status commands, akin to how you would do
         so using ``init``."
 
-    # Execute a command.  Basically just makes sure it exits with a 0
-    # code.
-    def execute(type, cmd)
-        self.debug "Executing %s" % cmd.inspect
-        output = %x(#{cmd} 2>&1)
-        unless $? == 0
-            @model.fail "Could not %s %s: %s" %
-                [type, self.name, output.chomp]
-        end
-    end
+    commands :kill => "kill"
 
     # Get the process ID for a running process. Requires the 'pattern'
     # parameter.
@@ -46,8 +37,7 @@ Puppet::Type.type(:service).provide :base do
     # How to restart the process.
     def restart
         if @model[:restart] or self.respond_to?(:restartcmd)
-            cmd = @model[:restart] || self.restartcmd
-            self.execute("restart", cmd)
+            ucommand(:restart)
         else
             self.stop
             self.start
@@ -63,9 +53,9 @@ Puppet::Type.type(:service).provide :base do
         if @model[:status] or (
             self.respond_to?(:statuscmd) and self.statuscmd
         )
-            cmd = @model[:status] || self.statuscmd
-            self.debug "Executing %s" % cmd.inspect
-            output = %x(#{cmd} 2>&1)
+            # Don't fail when the exit status is not 0.
+            output = ucommand(:status, false)
+
             self.debug "%s status returned %s" %
                 [self.name, output.inspect]
             if $? == 0
@@ -83,8 +73,7 @@ Puppet::Type.type(:service).provide :base do
 
     # Run the 'start' parameter command, or the specified 'startcmd'.
     def start
-        cmd = @model[:start] || self.startcmd
-        self.execute("start", cmd)
+        ucommand(:start)
     end
 
     # The command used to start.  Generated if the 'binary' argument
@@ -107,20 +96,42 @@ Puppet::Type.type(:service).provide :base do
         if @model[:stop]
             return @model[:stop]
         elsif self.respond_to?(:stopcmd)
-            self.execute("stop", self.stopcmd)
+            texecute(:stop, self.stopcmd)
         else
             pid = getpid
             unless pid
                 self.info "%s is not running" % self.name
                 return false
             end
-            output = %x(kill #{pid} 2>&1)
-            if $? != 0
+            begin
+                output = kill pid
+            rescue Puppet::ExecutionFailure => detail
                 @model.fail "Could not kill %s, PID %s: %s" %
                         [self.name, pid, output]
             end
             return true
         end
+    end
+
+    # A simple wrapper so execution failures are a bit more informative.
+    def texecute(type, command, fof = true)
+        begin
+            output = execute(command, fof)
+        rescue Puppet::ExecutionFailure => detail
+            warning "Could not %s %s: %s" % [type, @model.ref, detail]
+        end
+
+        return output
+    end
+
+    # Use either a specified command or the default for our provider.
+    def ucommand(type, fof = true)
+        if c = @model[type]
+            cmd = [c]
+        else
+            cmd = self.send("%scmd" % type)
+        end
+        return texecute(type, cmd, fof)
     end
 end
 

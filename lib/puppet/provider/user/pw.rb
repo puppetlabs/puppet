@@ -26,7 +26,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
             # the value needs to be quoted, mostly because -c might
             # have spaces in it
             if value = @model.should(state) and value != ""
-                cmd << flag(state) << "'%s'" % value
+                cmd << flag(state) << value
             end
         end
 
@@ -34,7 +34,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
             cmd << "-o"
         end
 
-        return cmd.join(" ")
+        return cmd
     end
 end
 

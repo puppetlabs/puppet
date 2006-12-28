@@ -47,10 +47,10 @@ Puppet::Type.type(:package).provide :rpm do
             :description => "DESCRIPTION"
         }
 
-        cmd = "-q #{@model[:name]} --qf '%{NAME} #{VERSIONSTRING}\n'"
+        cmd = ["-q", @model[:name], "--qf", '%{NAME} #{VERSIONSTRING}\n']
 
         begin
-            output = rpm cmd
+            output = rpm *cmd
         rescue Puppet::ExecutionFailure
             return nil
         end
@@ -95,11 +95,11 @@ Puppet::Type.type(:package).provide :rpm do
             flag = "-U"
         end
 
-        rpm "#{flag} #{source}"
+        rpm flag, source
     end
 
     def uninstall
-        rpm "-e " + @model[:name]
+        rpm "-e", @model[:name]
     end
 
     def update

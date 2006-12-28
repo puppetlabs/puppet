@@ -79,8 +79,13 @@ class TestPackageProvider < Test::Unit::TestCase
         assert_nothing_raised("Could not query provider") do
             result = provider.query
         end
-        assert_instance_of(Hash, result, "query did not return hash")
-        assert(result[:ensure] != :absent, msg)
+        assert((result == :listed or result.is_a?(Hash)),
+            "query did not return hash or :listed")
+        if result == :listed
+            assert(provider.model.is(:ensure) != :absent, msg)
+        else
+            assert(result[:ensure] != :absent, msg)
+        end
     end
 
     # Run a package through all of its paces.  FIXME This should use the

@@ -4,13 +4,14 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
 require 'puppet'
+require 'puppet/provider/nameservice'
 require 'facter'
 
 class TestNameServiceProvider < Test::Unit::TestCase
     include PuppetTest::FileTesting
 
     def test_option
-        klass = Class.new(Puppet::Type::Provider::NameService)
+        klass = Class.new(Puppet::Provider::NameService)
         klass.model = Puppet::Type.type(:user)
 
         val = nil

@@ -46,7 +46,7 @@ Puppet::Type.type(:package).provide :darwinport do
         should = @model.should(:ensure)
 
         # Seems like you can always say 'upgrade'
-        port "upgrade #{@model[:name]}"
+        port "upgrade", @model[:name]
     end
 
     def query
@@ -61,7 +61,7 @@ Puppet::Type.type(:package).provide :darwinport do
     end
 
     def latest
-        info = port "search '^#{@model[:name]}$' 2>/dev/null"
+        info = port :search, "^#{@model[:name]}$"
 
         if $? != 0 or info =~ /^Error/
             return nil
@@ -74,7 +74,7 @@ Puppet::Type.type(:package).provide :darwinport do
     end
 
     def uninstall
-        port "uninstall #{@model[:name]}"
+        port :uninstall, @model[:name]
     end
 
     def update

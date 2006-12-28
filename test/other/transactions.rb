@@ -209,18 +209,6 @@ class TestTransactions < Test::Unit::TestCase
         }
     end
 
-    def newservice
-        assert_nothing_raised() {
-            return Puppet.type(:service).create(
-                :name => "sleeper",
-                :type => "init",
-                :path => exampledir("root/etc/init.d"),
-                :hasstatus => true,
-                :check => [:ensure]
-            )
-        }
-    end
-
     def newexec(file)
         assert_nothing_raised() {
             return Puppet.type(:exec).create(
@@ -528,7 +516,8 @@ class TestTransactions < Test::Unit::TestCase
         
         # Make sure all of the components are gone
         comps = graph.vertices.find_all { |v| v.is_a?(Puppet::Type::Component)}
-        assert(comps.empty?, "Deps graph still contains components %s" % comps.inspect)
+        assert(comps.empty?, "Deps graph still contains components %s" %
+            comps.collect { |c| c.ref }.join(","))
         
         assert_equal([], comps, "Deps graph still contains components")
         

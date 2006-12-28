@@ -121,16 +121,16 @@ Puppet::Type.type(:package).provide :sun do
         cmd = []
         
         if @model[:adminfile]
-            cmd << " -a " + @model[:adminfile]
+            cmd << "-a" << @model[:adminfile]
         end
 
         if @model[:responsefile]
-            cmd << " -r " + @model[:responsefile]
+            cmd << "-r" << @model[:responsefile]
         end
 
-        cmd += ["-d", @model[:source]]
-        cmd += ["-n", @model[:name]]
-        cmd = cmd.join(" ")
+        cmd << "-d" << @model[:source]
+        cmd << "-n" << @model[:name]
+        cmd = cmd
 
         pkgadd cmd
     end
@@ -146,13 +146,13 @@ Puppet::Type.type(:package).provide :sun do
     end
 
     def uninstall
-        command  = "-n "
+        command  = ["-n"]
 
         if @model[:adminfile]
-            command += " -a " + @model[:adminfile]
+            command << "-a" << @model[:adminfile]
         end
 
-        command += " " + @model[:name]
+        command << @model[:name]
         pkgrm command
     end
 

@@ -12,7 +12,7 @@ class ObjectAdd < Puppet::Provider::NameService
     end
     
     def deletecmd
-        [command(:delete), @model[:name]].join(" ")
+        [command(:delete), @model[:name]]
     end
 
     # Determine the flag to pass to our command.
@@ -24,13 +24,13 @@ class ObjectAdd < Puppet::Provider::NameService
     def modifycmd(param, value)
         cmd = [command(:modify),
             flag(param),
-            "'%s'" % value]
+            value]
         if @model[:allowdupe]  == :true
             cmd << "-o"
         end
         cmd << @model[:name]
 
-        return cmd.join(" ")
+        return cmd
     end
 
     def posixmethod(name)

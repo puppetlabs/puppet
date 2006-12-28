@@ -24,7 +24,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
             # the value needs to be quoted, mostly because -c might
             # have spaces in it
             if value = @model.should(state) and value != ""
-                cmd << flag(state) << "'%s'" % value
+                cmd << flag(state) << value
             end
         end
         # stupid fedora
@@ -39,7 +39,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
         cmd << @model[:name]
 
-        cmd.join(" ")
+        cmd
     end
 end
 

@@ -31,7 +31,7 @@ Puppet::Type.type(:mount).provide :netinfo, :parent => Puppet::Provider::NameSer
         end
         cmd << @model.should(:device)
         cmd << @model[:name]
-        mountcmd cmd.join(" ")
+        mountcmd cmd
     end
 end
 

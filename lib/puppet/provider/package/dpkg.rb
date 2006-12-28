@@ -87,7 +87,7 @@ Puppet::Type.type(:package).provide :dpkg do
     end
 
     def uninstall
-        dpkg "-r %s" % @model[:name]
+        dpkg "-r", @model[:name]
     end
 end
 

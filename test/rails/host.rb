@@ -19,11 +19,11 @@ class TestRailsHost < Test::Unit::TestCase
 
     def setup
         super
-        railsinit
+        railsinit if Puppet.features.rails?
     end
 
     def teardown
-        railsteardown
+        railsteardown if Puppet.features.rails?
         super
     end
 

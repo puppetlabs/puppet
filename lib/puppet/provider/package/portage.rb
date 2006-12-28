@@ -5,25 +5,30 @@ Puppet::Type.type(:package).provide :portage do
 
     defaultfor :operatingsystem => :gentoo
 
+    def self.format
+        "{installedversions}<category> <name> [<installedversions>] [<best>] <homepage> <description>{}"
+    end
+
     def self.list
         search_format = /(\S+) (\S+) \[(.*)\] \[([^\s:]*)(:\S*)?\] ([\S]*) (.*)/
         result_fields = [:category, :name, :ensure, :version_available, :slot, :vendor, :description]
-        command = "#{command(:eix)} --format \"{installedversions}<category> <name> [<installedversions>] [<best>] <homepage> <description>{}\""
 
         begin
-            search_output = execute( command )
+            search_output = eix "--format", format()
 
             packages = []
             search_output.each do |search_result|
                 match = search_format.match( search_result )
 
-                if( match )
+                if match
                     package = {}
-                    result_fields.zip( match.captures ) { |field, value| package[field] = value unless !value or value.empty? }
+                    result_fields.zip(match.captures) { |field, value|
+                        package[field] = value unless !value or value.empty?
+                    }
                     package[:provider] = :portage
                     package[:ensure] = package[:ensure].split.last
 
-                    packages.push( Puppet.type(:package).installedpkg(package) )
+                    packages.push(Puppet.type(:package).installedpkg(package))
                 end
             end
 
@@ -34,25 +39,22 @@ Puppet::Type.type(:package).provide :portage do
     end
 
     def install
-        if @model.should( :ensure ) == :present || @model.should( :ensure ) == :latest
-            package_name = "#{@model[:category]}/#{@model[:name]}"
-        else
+        should = @model.should(:ensure)
+        name = package_name
+        unless should == :present or should == :latest
             # We must install a specific version
-            package_name = "=#{@model[:category]}/#{@model[:name]}-#{@model.should( :ensure )}"
+            name = "=%s-%s" % [name, should]
         end
-        command = "#{command(:emerge)} #{package_name}"
+        emerge name
+    end
 
-        output = execute( command )
+    # The common package name format.
+    def package_name
+        "%s/%s" % [@model[:category], @model[:name]]
     end
 
     def uninstall
-        package_name = "#{@model[:category]}/#{@model[:name]}"
-        command ="#{command(:emerge)} --unmerge #{package_name}"
-        begin
-            output = execute( command )
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::PackageError.new(detail)
-        end
+        emerge "--unmerge", package_name
     end
 
     def update
@@ -64,10 +66,10 @@ Puppet::Type.type(:package).provide :portage do
         result_fields = [:category, :name, :ensure, :version_available, :slot, :vendor, :description]
 
         search_field = @model[:name].include?( '/' ) ? "--category-name" : "--name"
-        command = "#{command(:eix)} --format \"<category> <name> [<installedversions>] [<best>] <homepage> <description>\" --exact #{search_field} #{@model[:name]}"
+        format = "<category> <name> [<installedversions>] [<best>] <homepage> <description>"
 
         begin
-            search_output = execute( command )
+            search_output = eix "-format", format, "--exact", search_field, @model[:name]
 
             packages = []
             search_output.each do |search_result|
@@ -87,11 +89,11 @@ Puppet::Type.type(:package).provide :portage do
 
             case packages.size
                 when 0
-                    raise Puppet::PackageError.new( "No package found with the specified name [#{@model[:name]}]" )
+                    raise Puppet::PackageError.new("No package found with the specified name [#{@model[:name]}]")
                 when 1
                     return packages[0]
                 else
-                    raise Puppet::PackageError.new( "More than one package with the specified name [#{@model[:name]}], please use category/name to disambiguate" )
+                    raise Puppet::PackageError.new("More than one package with the specified name [#{@model[:name]}], please use category/name to disambiguate")
             end
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::PackageError.new(detail)

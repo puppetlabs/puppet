@@ -16,8 +16,8 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     # Debian boxes, and the only thing that differs is that it can
     # install packages from remote sites.
 
-    def aptcmd(arg)
-        aptget(arg)
+    def aptcmd(*args)
+        aptget(*args)
     end
 
     def checkforcdrom
@@ -59,25 +59,28 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
             # Add the package version
             str += "=%s" % should
         end
+        cmd = %w{-q -y}
 
         keep = ""
         if config = @model[:configfiles]
             case config
             when :keep
-                keep = "-o 'DPkg::Options::=--force-confold'"
+                cmd << "-o" << 'DPkg::Options::=--force-confold'
             when :replace
-                keep = "-o 'DPkg::Options::=--force-confnew'"
+                cmd << "-o" << 'DPkg::Options::=--force-confnew'
             else
                 raise Puppet::Error, "Invalid 'configfiles' value %s" % config
             end
         end
+
+        cmd << :install << str
         
-        aptcmd("-q -y %s install %s" % [keep, str])
+        aptcmd(cmd)
     end
 
     # What's the latest package version available?
     def latest
-        output = aptcache("showpkg %s" % @model[:name] )
+        output = aptcache :showpkg,  @model[:name]
 
         if output =~ /Versions:\s*\n((\n|.)+)^$/
             versions = $1
@@ -109,7 +112,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
 	# preseeds answers to dpkg-set-selection from the "responsefile"
 	#
     def run_preseed
-        if response = @model[:responsefile] && FileTest.exists?(response)
+        if response = @model[:responsefile] and FileTest.exists?(response)
             self.info("Preseeding %s to debconf-set-selections" % response)
 
             preseed response
@@ -123,7 +126,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     end
 
     def uninstall
-        aptcmd("-y -q remove %s" % @model[:name])
+        aptcmd "-y", "-q", :remove, @model[:name]
     end
 
     def versionable?

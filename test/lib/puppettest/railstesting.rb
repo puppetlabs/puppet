@@ -8,7 +8,9 @@ module PuppetTest::RailsTesting
 
         # If we don't clean up the connection list, then the rails
         # lib will still think it's connected.
-        ActiveRecord::Base.clear_active_connections!
+        if Puppet.features.rails?
+            ActiveRecord::Base.clear_active_connections!
+        end
     end
 
     def railsinit

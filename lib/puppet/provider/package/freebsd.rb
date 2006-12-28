@@ -8,6 +8,8 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     commands :pkginfo => "/usr/sbin/pkg_info",
              :pkgadd => "/usr/sbin/pkg_add",
              :pkgdelete => "/usr/sbin/pkg_delete"
+    
+    confine :operatingsystem => :freebsd
 
     def self.listcmd
         command(:pkginfo)
@@ -20,7 +22,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
             return super
         end
 
-        pkgadd " -r " + @model[:name]
+        pkgadd "-r", @model[:name]
     end
 
     def query

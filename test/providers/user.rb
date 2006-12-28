@@ -291,8 +291,11 @@ class TestUserProvider < Test::Unit::TestCase
             return
         end
 
-        assert_raise(ArgumentError, "gid allowed a non-integer value") do
-            user.gid = group.name
+        # Stupid netinfo
+        if Facter.value(:operatingsystem) == "Darwin"
+            assert_raise(ArgumentError, "gid allowed a non-integer value") do
+                user.gid = group.name
+            end
         end
 
         assert_nothing_raised("Failed to specify group by id") {

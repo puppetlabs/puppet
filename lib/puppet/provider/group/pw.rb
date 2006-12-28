@@ -14,7 +14,7 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
         cmd = [command(:pw), "groupadd", @model[:name]]
         if gid = @model.should(:gid)
             unless gid == :absent
-                cmd << flag(:gid) << "'%s'" % gid
+                cmd << flag(:gid) << gid
             end
         end
 
@@ -24,7 +24,7 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
         #    cmd << "-o"
         #end
 
-        return cmd.join(" ")
+        return cmd
     end
 end
 

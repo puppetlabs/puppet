@@ -28,7 +28,14 @@ class Server
                 "The list of reports to generate.  All reports are looked for
                 in puppet/reports/<name>.rb, and multiple report names should be
                 comma-separated (whitespace is okay)."
-            ]
+            ],
+            :reportdir => {:default => "$vardir/reports",
+                    :mode => 0750,
+                    :owner => "$user",
+                    :group => "$group",
+                    :desc => "The directory in which to store reports
+                        received from the client.  Each client gets a separate
+                        subdirectory."}
         )
 
         @reports = {}

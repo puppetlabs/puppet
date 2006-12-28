@@ -9,24 +9,11 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
 
     # Remove the symlinks
     def disable
-        cmd = %{#{command(:update)} -f #{@model[:name]} remove 2>&1}
-        self.debug "Executing '%s'" % cmd
-        output = %x{#{cmd}}
-
-        unless $? == 0
-            raise Puppet::Error, "Could not disable %s: %s" %
-                [self.name, output]
-        end
+        update "-f", @model[:name], "remove"
     end
 
     def enabled?
-        cmd = %{#{command(:update)} -n -f #{@model[:name]} remove 2>&1}
-        self.debug "Executing 'enabled' test: '%s'" % cmd
-        output = %x{#{cmd}}
-        unless $? == 0
-            raise Puppet::Error, "Could not check %s: %s" %
-                [self.name, output]
-        end
+        output = update "-n", "-f", @model[:name], "remove"
 
         # If it's enabled, then it will print output showing removal of
         # links.
@@ -38,14 +25,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
     end
 
     def enable
-        cmd = %{#{command(:update)} #{@model[:name]} defaults 2>&1}
-        self.debug "Executing '%s'" % cmd
-        output = %x{#{cmd}}
-
-        unless $? == 0
-            raise Puppet::Error, "Could not enable %s: %s" %
-                [self.name, output]
-        end
+        update @model[:name], "defaults"
     end
 end
 

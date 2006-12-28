@@ -44,7 +44,7 @@ Puppet::Type.type(:package).provide :pkgdmg do
     end
 
     def self.installpkg(source, name, orig_source)
-      installer "-pkg '#{source}' -target /"
+      installer "-pkg", source, "-target", "/"
       File.open("/var/db/.puppet_pkgdmg_installed_#{name}", "w") do |t|
           t.print "name: '#{name}'\n"
           t.print "source: '#{orig_source}'\n"
@@ -58,7 +58,7 @@ Puppet::Type.type(:package).provide :pkgdmg do
         require 'open-uri'
         require 'puppet/util/plist'
         open(source) do |dmg|
-            cmd = "/usr/bin/hdiutil mount -plist -nobrowse -readonly -mountrandom /tmp #{dmg.path}"
+            cmd = "#{command(:hdiutil)} mount -plist -nobrowse -readonly -mountrandom /tmp #{dmg.path}"
             IO.popen(cmd) do |pipe|
                 xml_str = pipe.read
                 ptable = Plist::parse_xml xml_str
@@ -73,7 +73,7 @@ Puppet::Type.type(:package).provide :pkgdmg do
                         installpkg("#{fspath}/#{pkg}", name, source)
                     }
                 end
-            hdiutil "eject '#{mounts[0]}'"
+            hdiutil "eject", mounts[0]
             end
         end
     end

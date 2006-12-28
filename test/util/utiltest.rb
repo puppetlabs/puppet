@@ -303,21 +303,24 @@ class TestPuppetUtil < Test::Unit::TestCase
             assert(FileTest.exists?(file), "file was not created")
             assert_equal(user.uid, File.stat(file).uid, "uid was not set correctly")
             
-            # We can't really check the gid, because it just behaves too inconsistently everywhere.
-            # assert_equal(group.gid, File.stat(file).gid, "gid was not set correctly")
+            # We can't really check the gid, because it just behaves too
+            # inconsistently everywhere.
+            # assert_equal(group.gid, File.stat(file).gid,
+            #    "gid was not set correctly")
         end
     end
     
+    # Check whether execute() accepts strings in addition to arrays.
     def test_string_exec
         cmd = "/bin/echo howdy"
         output = nil
-        assert_nothing_raised {
+        assert_raise(ArgumentError) {
             output = Puppet::Util.execute(cmd)
         }
-        assert_equal("howdy\n", output)
-        assert_raise(RuntimeError) {
-            Puppet::Util.execute(cmd, 0, 0)
-        }
+        #assert_equal("howdy\n", output)
+        #assert_raise(RuntimeError) {
+        #    Puppet::Util.execute(cmd, 0, 0)
+        #}
     end
 
     # This is mostly to test #380.

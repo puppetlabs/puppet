@@ -90,10 +90,14 @@ module Puppet
                     # have been instantiated.
                     if bucketobj = Puppet::Type.type(:filebucket)[value]
                         @parent.bucket = bucketobj.bucket
+                        bucketobj.title
                     else
+                        # Set it to the string; finish() turns it into a
+                        # filebucket.
                         @parent.bucket = value
+                        value
                     end
-                when Puppet::Client::Dipper: value
+                when Puppet::Client::Dipper: value.name
                 else
                     self.fail "Invalid backup type %s" %
                         value.inspect
@@ -264,23 +268,25 @@ module Puppet
         end
 
         # We have to do some extra finishing, to retrieve our bucket if
-        # there is one
+        # there is one.
         def finish
             # Let's cache these values, since there should really only be
             # a couple of these buckets
             @@filebuckets ||= {}
 
             # Look up our bucket, if there is one
-            if @parameters.include?(:backup) and bucket = self.bucket
+            if bucket = self.bucket
                 case bucket
                 when String:
                     if obj = @@filebuckets[bucket]
                         # This sets the @value on :backup, too
                         self.bucket = obj
-                    # elsif bucket == "puppet"
-                    #     obj = Puppet::Client::Dipper.new(
-                    #         :Path => Puppet[:puppetdir]
-                    #     )
+                    elsif bucket == "puppet"
+                        obj = Puppet::Client::Dipper.new(
+                            :Path => Puppet[:bucketdir]
+                        )
+                        self.bucket = obj
+                        @@filebuckets[bucket] = obj
                     elsif obj = Puppet::Type.type(:filebucket).bucket(bucket)
                         @@filebuckets[bucket] = obj
                         self.bucket = obj
@@ -320,7 +326,7 @@ module Puppet
                     # we don't need to backup directories when recurse is on
                     return true
                 else
-                    backup = self[:backup]
+                    backup = self.bucket || self[:backup]
                     case backup
                     when Puppet::Client::Dipper:
                         notice "Recursively backing up to filebucket"
@@ -359,7 +365,7 @@ module Puppet
                     end
                 end
             when "file":
-                backup = self[:backup]
+                backup = self.bucket || self[:backup]
                 case backup
                 when Puppet::Client::Dipper:
                     sum = backup.backup(file)

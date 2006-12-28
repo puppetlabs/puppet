@@ -7,7 +7,7 @@ Puppet.type(:package).provide :up2date, :parent => :rpm do
 
     # Install a package using 'up2date'.
     def install
-        up2date "-u %s" % @model[:name]
+        up2date "-u", @model[:name]
 
         #@states[:ensure].retrieve
         #if @states[:ensure].is == :absent
@@ -21,7 +21,6 @@ Puppet.type(:package).provide :up2date, :parent => :rpm do
     # What's the latest package version available?
     def latest
         #up2date can only get a list of *all* available packages?
-        #cmd = "/usr/sbib/up2date-nox --show-available %s" % self[:name] 
         output = up2date "--show-available"
 
         if output =~ /#{@model[:name]}-(\d+.*)\.\w+/

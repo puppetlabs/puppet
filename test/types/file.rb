@@ -1797,7 +1797,7 @@ class TestFile < Test::Unit::TestCase
         assert_equal(:false, file[:replace], ":replace did not alias :false to :no")
     end
     
-    # #365
+    # #365 -- make sure generated files also use filebuckets.
     def test_recursive_filebuckets
         source = tempfile()
         dest = tempfile()
@@ -1830,16 +1830,20 @@ class TestFile < Test::Unit::TestCase
         end
         
         # Now modify the source files to make sure things get backed up correctly
-        [s1, s2].each { |sf| File.open(sf, "w") { |f| f.puts "boo: %s" % File.basename(sf) } }
+        [s1, s2].each { |sf| File.open(sf, "w") { |f|
+            f.puts "boo: %s" % File.basename(sf)
+        } }
         
         assert_apply(file)
         dfiles.each do |f|
-            assert_equal("boo: %s\n" % File.basename(f), File.read(f), "file was not copied correctly")
+            assert_equal("boo: %s\n" % File.basename(f), File.read(f),
+                "file was not copied correctly")
         end
         
         # Make sure we didn't just copy the files over to backup locations
         dfiles.each do |f|
-            assert(! FileTest.exists?(f + "rtest"), "file %s was copied for backup instead of bucketed" % File.basename(f))
+            assert(! FileTest.exists?(f + "rtest"),
+            "file %s was copied for backup instead of bucketed" % File.basename(f))
         end
         
         # Now make sure we can get the source sums from the bucket
@@ -1890,7 +1894,7 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised do
             file[:backup] = "testing"
         end
-        assert_equal(obj.bucket, file[:backup], "bucket was not retrieved")
+        assert_equal("testing", file[:backup], "backup value was reset")
         assert_equal(obj.bucket, file.bucket, "file's bucket was not set")
     end
     

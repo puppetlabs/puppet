@@ -19,8 +19,8 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
     # Remove the symlinks
     def disable
         begin
-            output = util_execute("#{command(:chkconfig)} #{@model[:name]} off 2>&1")
-            output += util_execute("#{command(:chkconfig)} --del #{@model[:name]} 2>&1")
+            output = chkconfig(@model[:name], :off)
+            output += chkconfig("--del", @model[:name])
         rescue Puppet::ExecutionFailure
             raise Puppet::Error, "Could not disable %s: %s" %
                 [self.name, output]
@@ -29,7 +29,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
 
     def enabled?
         begin
-            output = util_execute("#{command(:chkconfig)} #{@model[:name]} 2>&1").chomp
+            output = chkconfig(@model[:name])
         rescue Puppet::ExecutionFailure
             return :false
         end
@@ -47,11 +47,11 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
     # in the init scripts.
     def enable
         begin
-            output = util_execute("#{command(:chkconfig)} --add #{@model[:name]} 2>&1")
-            output += util_execute("#{command(:chkconfig)} #{@model[:name]} on 2>&1")
-        rescue Puppet::ExecutionFailure
+            output = chkconfig("--add", @model[:name])
+            output += chkconfig(@model[:name], :on)
+        rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error, "Could not enable %s: %s" %
-                [self.name, output]
+                [self.name, detail]
         end
     end
 end

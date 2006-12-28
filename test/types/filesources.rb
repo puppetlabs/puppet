@@ -14,7 +14,7 @@ class TestFileSources < Test::Unit::TestCase
         if defined? @port
             @port += 1
         else
-            @port = 8800
+            @port = 12345
         end
         @file = Puppet::Type.type(:file)
     end
@@ -625,7 +625,7 @@ class TestFileSources < Test::Unit::TestCase
         Puppet[:masterport] = @port
 
         serverpid = nil
-        assert_nothing_raised() {
+        assert_nothing_raised("Could not start on port %s" % @port) {
             server = Puppet::Server.new(
                 :Port => @port,
                 :Handlers => {

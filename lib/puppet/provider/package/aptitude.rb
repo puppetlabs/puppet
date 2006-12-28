@@ -6,12 +6,15 @@ Puppet::Type.type(:package).provide :aptitude, :parent => :apt do
 
     ENV['DEBIAN_FRONTEND'] = "noninteractive"
 
-    def aptcmd(arg)
+    def aptcmd(*args)
         # Apparently aptitude hasn't always supported a -q flag.
-        output = aptitude(arg.gsub(/-q/,""))
+        if args.include?("-q")
+            args.delete("-q")
+        end
+        output = aptitude(*args)
 
         # Yay, stupid aptitude doesn't throw an error when the package is missing.
-        if output =~ /0 newly installed/
+        if args.include?(:install) and output =~ /0 newly installed/
             raise Puppet::Error.new(
                 "Could not find package %s" % self.name
             )

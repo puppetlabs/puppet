@@ -419,7 +419,7 @@ set zonepath=%s
 
     def destroy
         begin
-            execute("/usr/sbin/zonecfg -z #{self[:name]} delete -F")
+            execute(["/usr/sbin/zonecfg", "-z", self[:name], :delete, "-F"])
         rescue Puppet::ExecutionFailure => detail
             self.fail "Could not destroy zone: %s" % detail
         end
@@ -427,7 +427,7 @@ set zonepath=%s
 
     def install
         begin
-            execute("/usr/sbin/zoneadm -z #{self[:name]} install")
+            execute(["/usr/sbin/zoneadm", "-z", self[:name], :install])
         rescue Puppet::ExecutionFailure => detail
             self.fail "Could not install zone: %s" % detail
         end

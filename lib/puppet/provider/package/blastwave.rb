@@ -32,10 +32,10 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
 
     # Turn our blastwave listing into a bunch of hashes.
     def self.blastlist(hash)
-        command = "-c"
+        command = ["-c"]
 
         if hash[:justme]
-            command += " " + hash[:justme]
+            command << hash[:justme]
         end
 
         output = pkgget command
@@ -84,7 +84,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
     end
 
     def install
-        pkgget "-f install #{@model[:name]}"
+        pkgget "-f", :install, @model[:name]
     end
 
     # Retrieve the version from the current package file.
@@ -101,11 +101,11 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
 
     # Remove the old package, and install the new one
     def update
-        pkgget "-f upgrade #{@model[:name]}"
+        pkgget "-f", :upgrade, @model[:name]
     end
 
     def uninstall
-        pkgget "-f remove #{@model[:name]}"
+        pkgget "-f", :remove, @model[:name]
     end
 end
 

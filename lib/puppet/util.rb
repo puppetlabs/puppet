@@ -272,8 +272,14 @@ module Util
             command = command.collect { |i| i.to_s }
             str = command.join(" ")
         else
-            raise "Must pass an array" unless uid.nil? && gid.nil?
-            str = command
+            # We require an array here so we know where we're incorrectly
+            # using a string instead of an array.  Once everything is
+            # switched to an array, we might relax this requirement.
+            raise ArgumentError, "Must pass an array to execute()"
+        end
+
+        if command[0].is_a?(Array)
+            raise ArgumentError, "Will not flatten arrays"
         end
         if respond_to? :debug
             debug "Executing '%s'" % str

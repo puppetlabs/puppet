@@ -5,6 +5,7 @@ Puppet::Type.type(:package).provide :openbsd do
     commands :pkginfo => "pkg_info", :pkgadd => "pkg_add", :pkgdelete => "pkg_delete"
 
     defaultfor :operatingsystem => :openbsd
+    confine :operatingsystem => :openbsd
 
     def self.list
         packages = []
@@ -51,7 +52,7 @@ Puppet::Type.type(:package).provide :openbsd do
     end
 
     def self.listcmd
-        "#{command(:info)} -a"
+        [command(:info), "-a"]
     end
 
     def install

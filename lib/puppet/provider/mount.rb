@@ -19,12 +19,12 @@ module Puppet::Provider::Mount
     # Is the mount currently mounted?
     def mounted?
         platform = Facter["operatingsystem"].value
-        df = command(:df)
+        df = [command(:df)]
         case Facter["operatingsystem"].value
         # Solaris's df prints in a very weird format
-        when "Solaris": df = "#{command(:df)} -k"
+        when "Solaris": df << "-k"
         end
-        %x{#{df}}.split("\n").find do |line|
+        execute(df).split("\n").find do |line|
             fs = line.split(/\s+/)[-1]
             if platform == "Darwin"
                 fs == "/private/var/automount" + @model[:name] or

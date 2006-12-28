@@ -9,10 +9,17 @@ class NetInfo < Puppet::Provider::NameService
     class << self
         attr_writer :netinfodir
     end
+
+    # We have to initialize manually because we're not using
+    # classgen() here.
+    initvars()
+
+    commands :lookupd => "/usr/sbin/lookupd"
+
     # Attempt to flush the database, but this doesn't seem to work at all.
     def self.flush
         begin
-            output = execute(["/usr/sbin/lookupd", "-flushcache"])
+            lookupd "-flushcache"
         rescue Puppet::ExecutionFailure
             # Don't throw an error; it's just a failed cache flush
             Puppet.err "Could not flush lookupd cache: %s" % output
@@ -109,8 +116,7 @@ class NetInfo < Puppet::Provider::NameService
         cmd = [command(:niutil)]
         cmd << arg
 
-        cmd << "/" << "/%s/%s" %
-            [self.class.netinfodir(), @model[:name]]
+        cmd << "/" << "/%s/%s" % [self.class.netinfodir(), @model[:name]]
         return cmd
     end
 
@@ -172,8 +178,7 @@ class NetInfo < Puppet::Provider::NameService
         #     warning "Netinfo providers cannot currently handle multiple values"
         # end
 
-        cmd << "-createprop" << "/" << "/%s/%s" %
-            [self.class.netinfodir, @model[:name]]
+        cmd << "-createprop" << "/" << "/%s/%s" % [self.class.netinfodir, @model[:name]]
 
         value = [value] unless value.is_a?(Array)
         if key = netinfokey(param)

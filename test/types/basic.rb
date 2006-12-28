@@ -7,14 +7,12 @@ require 'puppettest'
 
 class TestBasic < Test::Unit::TestCase
 	include PuppetTest
-    # hmmm
-    # this is complicated, because we store references to the created
-    # objects in a central store
+
     def setup
         super
         @component = nil
         @configfile = nil
-        @sleeper = nil
+        @command = nil
 
         assert_nothing_raised() {
             @component = Puppet.type(:component).create(
@@ -25,7 +23,6 @@ class TestBasic < Test::Unit::TestCase
 
         assert_nothing_raised() {
             @filepath = tempfile()
-            @@tmpfiles << @filepath
             @configfile = Puppet.type(:file).create(
                 :path => @filepath,
                 :ensure => "file",
@@ -33,27 +30,27 @@ class TestBasic < Test::Unit::TestCase
             )
         }
         assert_nothing_raised() {
-            @sleeper = Puppet.type(:service).create(
-                :name => "sleeper",
-                :provider => "init",
-                :path => exampledir("root/etc/init.d"),
-                :hasstatus => true,
-                :ensure => :running
+            @command = Puppet.type(:exec).create(
+                :title => "echo",
+                :command => "echo yay",
+                :path => ENV["PATH"]
             )
         }
         assert_nothing_raised() {
             @component.push(
                 @configfile,
-                @sleeper
+                @command
             )
         }
-        
-        #puts "Component is %s, id %s" % [@component, @component.object_id]
-        #puts "ConfigFile is %s, id %s" % [@configfile, @configfile.object_id]
+    end
+
+    def teardown
+        super
+        stopservices
     end
 
     def test_name_calls
-        [@sleeper,@configfile].each { |obj|
+        [@command, @configfile].each { |obj|
             Puppet.debug "obj is %s" % obj
             assert_nothing_raised(){
                 obj.name
@@ -62,48 +59,20 @@ class TestBasic < Test::Unit::TestCase
     end
 
     def test_name_equality
-        #puts "Component is %s, id %s" % [@component, @component.object_id]
-        assert_equal(
-            @filepath,
-            @configfile.name
-        )
+        assert_equal(@filepath, @configfile.title)
 
-        assert_equal(
-            "sleeper",
-            @sleeper.name
-        )
+        assert_equal("echo", @command.title)
     end
 
     def test_object_retrieval
-        [@sleeper,@configfile].each { |obj|
-            assert_equal(
-                obj.class[obj.name].object_id,
-                obj.object_id
-            )
-        }
-    end
-
-    def test_transaction
-        transaction = nil
-        assert_nothing_raised() {
-            transaction = @component.evaluate
-        }
-        assert_nothing_raised() {
-            transaction.evaluate
-        }
-        assert_nothing_raised() {
-            @sleeper[:ensure] = :running
-        }
-        assert_nothing_raised() {
-            transaction = @component.evaluate
-        }
-        assert_nothing_raised() {
-            transaction.evaluate
+        [@command, @configfile].each { |obj|
+            assert_equal(obj.class[obj.name].object_id, obj.object_id,
+                "%s did not match class version" % obj.ref)
         }
     end
 
     def test_paths
-        [@configfile,@sleeper,@component].each { |obj|
+        [@configfile, @command, @component].each { |obj|
             assert_nothing_raised {
                 assert_instance_of(String, obj.path)
             }

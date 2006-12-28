@@ -17,6 +17,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         @defpath = "/etc/init.d"
     end
 
+    # We can't confine this here, because the init path can be overridden.
     #confine :exists => @defpath
 
     if self.suitable?
@@ -92,8 +93,8 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
     def restart
         if @model[:hasrestart] == :true
-            command = self.initscript + " restart"
-            self.execute("restart", command)
+            command = [self.initscript, :restart]
+            texecute("restart", command)
         else
             super
         end
@@ -118,7 +119,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
     # The start command is just the init scriptwith 'start'.
     def startcmd
-        self.initscript + " start"
+        [self.initscript, :start]
     end
 
     # If it was specified that the init script has a 'status' command, then
@@ -126,7 +127,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     # fallback to other mechanisms.
     def statuscmd
         if @model[:hasstatus]
-            return self.initscript + " status"
+            return [self.initscript, :status]
         else
             return false
         end
@@ -134,7 +135,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
     # The stop command is just the init script with 'stop'.
     def stopcmd
-        self.initscript + " stop"
+        [self.initscript, :stop]
     end
 end
 

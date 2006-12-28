@@ -10,7 +10,7 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
 
     def disable
         begin
-            output = util_execute("#{command(:update)} del #{@model[:name]} default 2>&1")
+            output = update :del, @model[:name], :default
         rescue Puppet::ExecutionFailure
             raise Puppet::Error, "Could not disable %s: %s" %
                 [self.name, output]
@@ -19,10 +19,14 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
 
     def enabled?
         begin
-            output = util_execute("#{command(:update)} show | grep #{@model[:name]}").chomp
+            output = update :show
         rescue Puppet::ExecutionFailure
             return :false
         end
+
+        line = output.split(/\n/).find { |l| l.include?(@model[:name]) }
+
+        return :false unless line
 
         # If it's enabled then it will print output showing service | runlevel
         if output =~ /#{@model[:name]}\s*|\s*default/
@@ -34,7 +38,7 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
 
     def enable
         begin
-            output = util_execute("#{command(:update)} add #{@model[:name]} default 2>&1")
+            output = update :add, @model[:name], :default
         rescue Puppet::ExecutionFailure
             raise Puppet::Error, "Could not enable %s: %s" %
                 [self.name, output]

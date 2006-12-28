@@ -229,7 +229,7 @@ class TestType < Test::Unit::TestCase
 
         assert_nothing_raised {
             user = Puppet.type(:user).create(
-                :name => "pptestAA",
+                :name => "pptestAB",
                 :comment => "Testingness"
             )
         }
@@ -238,7 +238,7 @@ class TestType < Test::Unit::TestCase
 
         assert_nothing_raised {
             user = Puppet.type(:user).create(
-                :name => "pptestBB",
+                :name => "pptestBC",
                 :comment => "A fake user"
             )
         }
