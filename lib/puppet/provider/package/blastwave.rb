@@ -24,7 +24,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
     end
 
     def self.list(hash = {})
-        blastlist(hash).each do |bhash|
+        blastlist(hash).collect do |bhash|
             bhash.delete(:avail)
             Puppet::Type.type(:package).installedpkg(bhash)
         end
@@ -74,7 +74,9 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
             if hash[:avail] == "SAME"
                 hash[:avail] = hash[:ensure]
             end
-            hash[:provider] = :blastwave
+
+            # Use the name method, so it works with subclasses.
+            hash[:provider] = self.name
 
             return hash
         else

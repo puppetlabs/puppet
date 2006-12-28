@@ -130,7 +130,6 @@ Puppet::Type.type(:package).provide :sun do
 
         cmd << "-d" << @model[:source]
         cmd << "-n" << @model[:name]
-        cmd = cmd
 
         pkgadd cmd
     end

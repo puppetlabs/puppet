@@ -242,7 +242,10 @@ class TestPackageProvider < Test::Unit::TestCase
                 result = provider.list
             end
             result.each do |pkg|
-                assert_instance_of(Puppet::Type.type(:package), pkg)
+                assert_instance_of(Puppet::Type.type(:package), pkg,
+                    "%s returned non-package" % provider.name)
+                assert_equal(provider.name, pkg.provider.class.name,
+                    "%s did not set provider correctly" % provider.name)
             end
         end
     end

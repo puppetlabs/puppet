@@ -7,7 +7,7 @@ Puppet::Type.newtype(:zone) do
     class ZoneConfigState < Puppet::State
         # Perform the config operation.
         def sync
-            @parent.cfg self.configtext
+            provider.setconfig self.configtext
         end
     end
 
@@ -151,7 +151,7 @@ Puppet::Type.newtype(:zone) do
                         end
                         sleep 1
                     end
-                    @parent.send(method)
+                    provider.send(method)
                 else
                     raise Puppet::DevError, "Cannot move %s from %s" %
                         [dir, st[:name]]
@@ -354,51 +354,6 @@ end
         end
     end
 
-    # Convert the output of a list into a hash
-    def self.line2hash(line)
-        fields = [:id, :name, :ensure, :path]
-
-        hash = {}
-        line.split(":").each_with_index { |value, index|
-            hash[fields[index]] = value
-        }
-
-        # Configured but not installed zones do not have IDs
-        if hash[:id] == "-"
-            hash.delete(:id)
-        end
-
-        return hash
-    end
-
-    def self.list
-        %x{/usr/sbin/zoneadm list -cp}.split("\n").collect do |line|
-            hash = line2hash(line)
-
-            obj = nil
-            unless obj = @objects[hash[:name]]
-                obj = create(:name => hash[:name])
-            end
-
-            obj.setstatus(hash)
-
-            obj
-        end
-    end
-
-    # Execute a configuration string.  Can't be private because it's called
-    # by the states.
-    def cfg(str)
-        debug "Executing '%s' in zone %s" % [str, self[:name]]
-        IO.popen("/usr/sbin/zonecfg -z %s -f - 2>&1" % self[:name], "w") do |pipe|
-            pipe.puts str
-        end
-
-        unless $? == 0
-            raise ArgumentError, "Failed to apply configuration"
-        end
-    end
-
     # Perform all of our configuration steps.
     def configure
         # If the thing is entirely absent, then we need to create the config.
@@ -414,29 +369,13 @@ set zonepath=%s
         end
 
         str += "commit\n"
-        cfg(str)
-    end
-
-    def destroy
-        begin
-            execute(["/usr/sbin/zonecfg", "-z", self[:name], :delete, "-F"])
-        rescue Puppet::ExecutionFailure => detail
-            self.fail "Could not destroy zone: %s" % detail
-        end
-    end
-
-    def install
-        begin
-            execute(["/usr/sbin/zoneadm", "-z", self[:name], :install])
-        rescue Puppet::ExecutionFailure => detail
-            self.fail "Could not install zone: %s" % detail
-        end
+        provider.setconfig(str)
     end
 
     # We need a way to test whether a zone is in process.  Our 'ensure'
     # state models the static states, but we need to handle the temporary ones.
     def processing?
-        if hash = statushash()
+        if hash = provider.statushash()
             case hash[:ensure]
             when "incomplete", "ready", "shutting_down"
                 true
@@ -449,11 +388,11 @@ set zonepath=%s
     end
 
     def retrieve
-        if hash = statushash()
+        if hash = provider.statushash()
             setstatus(hash)
 
             # Now retrieve the configuration itself and set appropriately.
-            getconfig()
+            config2status(provider.getconfig())
         else
             @states.each do |name, state|
                 state.is = :absent
@@ -472,69 +411,9 @@ set zonepath=%s
                 self[param] = value
             end
         end
-
-        # For any configured items that are not found, mark absent.
-        @states.each do |name, st|
-            next unless st.is_a? ZoneConfigState
-
-            unless hash.has_key? st.name
-                st.is = :absent
-            end
-        end
-    end
-
-    def start
-        # Check the sysidcfg stuff
-        if cfg = self[:sysidcfg]
-            path = File.join(self[:path], "root", "etc", "sysidcfg")
-
-            unless File.exists?(path)
-                begin
-                    File.open(path, "w", 0600) do |f|
-                        f.puts cfg
-                    end
-                rescue => detail
-                    if Puppet[:debug]
-                        puts detail.stacktrace
-                    end
-                    raise Puppet::Error, "Could not create sysidcfg: %s" % detail
-                end
-            end
-        end
-
-        begin
-            execute("/usr/sbin/zoneadm -z #{self[:name]} boot")
-        rescue Puppet::ExecutionFailure => detail
-            self.fail "Could not start zone: %s" % detail
-        end
-    end
-
-    def stop
-        begin
-            execute("/usr/sbin/zoneadm -z #{self[:name]} halt")
-        rescue Puppet::ExecutionFailure => detail
-            self.fail "Could not halt zone: %s" % detail
-        end
-    end
-
-    def unconfigure
-        begin
-            execute("/usr/sbin/zonecfg -z #{self[:name]} delete -F")
-        rescue Puppet::ExecutionFailure => detail
-            self.fail "Could not unconfigure zone: %s" % detail
-        end
-    end
-
-    def uninstall
-        begin
-            execute("/usr/sbin/zoneadm -z #{self[:name]} uninstall -F")
-        rescue Puppet::ExecutionFailure => detail
-            self.fail "Could not halt zone: %s" % detail
-        end
     end
 
     private
-
     # Turn the results of getconfig into status information.
     def config2status(config)
         config.each do |name, value|
@@ -560,52 +439,6 @@ set zonepath=%s
                 self.is = [:ip, vals]
             end
         end
-    end
-
-    # Collect the configuration of the zone.
-    def getconfig
-        output = execute("/usr/sbin/zonecfg -z %s info" % self[:name])
-
-        name = nil
-        current = nil
-        hash = {}
-        output.split("\n").each do |line|
-            case line
-            when /^(\S+):\s*$/:
-                name = $1
-                current = nil # reset it
-            when /^(\S+):\s*(.+)$/:
-                hash[$1.intern] = $2
-                #self.is = [$1.intern, $2]
-            when /^\s+(\S+):\s*(.+)$/:
-                if name
-                    unless hash.include? name
-                        hash[name] = []
-                    end
-
-                    unless current
-                        current = {}
-                        hash[name] << current
-                    end
-                    current[$1.intern] = $2
-                else
-                    err "Ignoring '%s'" % line
-                end
-            else
-                debug "Ignoring zone output '%s'" % line
-            end
-        end
-        config2status(hash)
-    end
-
-    def statushash
-        begin
-            output = execute("/usr/sbin/zoneadm -z #{self[:name]} list -p 2>/dev/null")
-        rescue Puppet::ExecutionFailure => detail
-            return nil
-        end
-
-        return self.class.line2hash(output.chomp)
     end
 end
 

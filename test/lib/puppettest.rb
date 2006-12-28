@@ -169,8 +169,6 @@ module PuppetTest
     end
 
     def teardown
-        stopservices
-
         @@cleaners.each { |cleaner| cleaner.call() }
 
         @@tmpfiles.each { |file|

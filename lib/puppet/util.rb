@@ -269,7 +269,7 @@ module Util
     # Execute the desired command, and return the status and output.
     def execute(command, failonfail = true, uid = nil, gid = nil)
         if command.is_a?(Array)
-            command = command.collect { |i| i.to_s }
+            command = command.flatten.collect { |i| i.to_s }
             str = command.join(" ")
         else
             # We require an array here so we know where we're incorrectly
@@ -278,9 +278,6 @@ module Util
             raise ArgumentError, "Must pass an array to execute()"
         end
 
-        if command[0].is_a?(Array)
-            raise ArgumentError, "Will not flatten arrays"
-        end
         if respond_to? :debug
             debug "Executing '%s'" % str
         else

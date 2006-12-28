@@ -142,8 +142,11 @@ class TestZone < Test::Unit::TestCase
         }
 
         methods.each do |m|
-            assert(Puppet::Type.type(:zone).method_defined?(m),
-                "Zones do not define method %s" % m)
+            Puppet::Type.type(:zone).suitableprovider.each do |prov|
+                assert(prov.method_defined?(m),
+                    "Zone provider %s does not define method %s" %
+                    [prov.name, m])
+            end
         end
 
     end
@@ -245,11 +248,15 @@ end
 
         #@@zones << "configtesting"
 
+        hash = nil
         assert_nothing_raised {
-            zone.send(:getconfig)
+            hash = zone.provider.send(:getconfig)
         }
 
-        # Now, make sure everything is right.
+        # Now set the configuration
+        assert_nothing_raised { zone.send(:config2status, hash) }
+
+        # And make sure it gets set correctly.
         assert_equal(%w{/sbin /usr /opt/csw /lib /platform}.sort,
             zone.is(:inherit).sort, "Inherited dirs did not get collected correctly."
         )
@@ -385,7 +392,7 @@ end
                 zone.retrieve
             }
             assert_nothing_raised {
-                zone.send(method)
+                zone.provider.send(method)
             }
             assert_nothing_raised {
                 zone.retrieve
