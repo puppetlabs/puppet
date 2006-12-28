@@ -94,38 +94,37 @@ class Puppet::PGraph < GRATR::Digraph
     # This creates direct relationships where there were previously
     # indirect relationships through the containers. 
     def splice!(other, type)
-        vertices.each do |vertex|
-            # Go through each vertex and replace the edges with edges
-            # to the leaves instead
-            next unless vertex.is_a?(type)
-            
-            #oleaves = other.leaves(vertex)
-            oleaves = other.adjacent(vertex, :direction => :out)
-            if oleaves.empty?
+        vertices.find_all { |v| v.is_a?(type) }.each do |vertex|
+            # Get the list of children from the other graph.
+            children = other.adjacent(vertex, :direction => :out)
+
+            # Just remove the container if it's empty.
+            if children.empty?
                 remove_vertex!(vertex)
                 next
             end
             
             # First create new edges for each of the :in edges
-            adjacent(vertex, :direction => :in, :type => :edges).each do |edge|
-                oleaves.each do |leaf|
-                    add_edge!(edge.source, leaf, edge.label)
-                    if cyclic?
-                        raise ArgumentError,
-                            "%s => %s results in a loop" %
-                            [edge.source, leaf]
-                    end
-                end
-            end
-            
-            # Then for each of the out edges
-            adjacent(vertex, :direction => :out, :type => :edges).each do |edge|
-                oleaves.each do |leaf|
-                    add_edge!(leaf, edge.target, edge.label)
-                    if cyclic?
-                        raise ArgumentError,
-                            "%s => %s results in a loop" %
-                            [leaf, edge.target]
+            [:in, :out].each do |dir|
+                adjacent(vertex, :direction => dir, :type => :edges).each do |edge|
+                    children.each do |leaf|
+                        if dir == :in
+                            s = edge.source
+                            t = leaf
+                        else
+                            s = leaf
+                            t = edge.target
+                        end
+
+                        # It *appears* that we're having a problem
+                        # with multigraphs.
+                        next if edge?(s, t)
+                        add_edge!(s, t, edge.label)
+                        if cyclic?
+                            raise ArgumentError,
+                                "%s => %s results in a loop" %
+                                [s, t]
+                        end
                     end
                 end
             end

@@ -243,6 +243,10 @@ class Transaction
 
         begin
             allevents = @sorted_resources.collect { |resource|
+                if resource.is_a?(Puppet::Type::Component)
+                    Puppet.warning "Somehow left a component in the relationship graph"
+                    next
+                end
                 ret = nil
                 seconds = thinmark do
                     ret = eval_resource(resource)

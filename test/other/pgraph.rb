@@ -88,8 +88,8 @@ class TestPGraph < Test::Unit::TestCase
             deps.add_vertex(v)
         end
         
-        # We have to specify a relationship to our empty container, else it never makes it
-        # into the dep graph in the first place.
+        # We have to specify a relationship to our empty container, else it
+        # never makes it into the dep graph in the first place.
         {one => two, "f" => "c", "h" => middle, "c" => empty}.each do |source, target|
             deps.add_edge!(source, target, :callback => :refresh)
         end
@@ -97,6 +97,10 @@ class TestPGraph < Test::Unit::TestCase
         deps.splice!(contgraph, Container)
         
         assert(! deps.cyclic?, "Created a cyclic graph")
+        
+        # Make sure there are no container objects remaining
+        c = deps.vertices.find_all { |v| v.is_a?(Container) }
+        assert(c.empty?, "Still have containers %s" % c.inspect)
         
         # Now make sure the containers got spliced correctly.
         contgraph.leaves(middle).each do |leaf|
@@ -107,10 +111,6 @@ class TestPGraph < Test::Unit::TestCase
                 assert(deps.edge?(oobj, tobj), "no %s => %s edge" % [oobj, tobj])
             end
         end
-        
-        # Make sure there are no container objects remaining
-        c = deps.vertices.find_all { |v| v.is_a?(Container) }
-        assert(c.empty?, "Still have containers %s" % c.inspect)
         
         nons = deps.vertices.find_all { |v| ! v.is_a?(String) }
         assert(nons.empty?,
