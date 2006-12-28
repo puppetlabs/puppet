@@ -28,9 +28,6 @@ module Puppet::Rails
             :desc => "Where Rails-specific logs are sent"
         }
     )
-    
-    def self.clear
-    end
 
     # The arguments for initializing the database connection.
     def self.database_arguments
@@ -57,7 +54,6 @@ module Puppet::Rails
 
         # This global init does not work for testing, because we remove
         # the state dir on every test.
-        #unless (defined? @inited and @inited) or defined? Test::Unit::TestCase
         unless ActiveRecord::Base.connected?
             Puppet.config.use(:puppet)
 

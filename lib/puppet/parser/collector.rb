@@ -88,9 +88,9 @@ class Puppet::Parser::Collector
     # and then delete this object from the list of collections to evaluate.
     def evaluate
         if self.resources
-            # We don't want to get rid of the collection unless it actually finds something,
-            # so that the collection will keep trying until all of the definitions are
-            # evaluated.
+            # We don't want to get rid of the collection unless it actually
+            # finds something, so that the collection will keep trying until
+            # all of the definitions are evaluated.
             unless objects = collect_resources
                 return
             end

@@ -34,11 +34,12 @@ module Puppet
             desc "Whether files should be backed up before
                 being replaced.  The preferred method of backing files up is via
                 a ``filebucket``, which stores files by their MD5 sums and allows
-                easy retrieval without littering directories with backups.  You can
-                specify a local filebucket or a network-accessible server-based filebucket.
-                Alternatively, if you specify any value that begins with a ``.`` (e.g.,
-                ``.puppet-bak``), then Puppet will use copy the file in the same directory with that value as the
-                extension of the backup.
+                easy retrieval without littering directories with backups.  You
+                can specify a local filebucket or a network-accessible
+                server-based filebucket.  Alternatively, if you specify any
+                value that begins with a ``.`` (e.g., ``.puppet-bak``), then
+                Puppet will use copy the file in the same directory with that
+                value as the extension of the backup.
                 
                 Puppet automatically creates a local filebucket named ``puppet`` and
                 defaults to backing up there.  To use a server-based filebucket,
@@ -68,7 +69,12 @@ module Puppet
                 filebucketed files.
                 "
 
-            defaultto "puppet"
+            defaultto  do
+                # Make sure the default file bucket exists.
+                obj = Puppet::Type.type(:filebucket)["puppet"] ||
+                    Puppet::Type.type(:filebucket).create(:name => "puppet")
+                obj.bucket
+            end
             
             munge do |value|
                 case value

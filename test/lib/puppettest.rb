@@ -92,9 +92,6 @@ module PuppetTest
 
         Puppet[:confdir] = @configpath
         Puppet[:vardir] = @configpath
-        
-        # And create the default bucket
-        Puppet::Type.type(:filebucket).mkdefaultbucket
 
         unless File.exists?(@configpath)
             Dir.mkdir(@configpath)
@@ -195,9 +192,6 @@ module PuppetTest
         @@tmppids.clear
         Puppet::Type.allclear
         Puppet::Storage.clear
-        if defined? Puppet::Rails
-            Puppet::Rails.clear
-        end
         Puppet.clear
 
         @memoryatend = Puppet::Util.memory

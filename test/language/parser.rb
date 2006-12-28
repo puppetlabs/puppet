@@ -25,9 +25,9 @@ class TestParser < Test::Unit::TestCase
 
             Puppet::Type.eachtype { |type|
                 type.each { |obj|
-                    assert(obj.file)
-                    assert(obj.name)
-                    assert(obj.line)
+                    assert(obj.file, "File is not set on %s" % obj.ref)
+                    assert(obj.name, "Name is not set on %s" % obj.ref)
+                    assert(obj.line, "Line is not set on %s" % obj.ref)
                 }
             }
             Puppet::Type.allclear

@@ -237,7 +237,7 @@ class TestCollector < Test::Unit::TestCase
 
         # Make sure we can evaluate the same collection multiple times and
         # that later collections do nothing
-        assert_nothing_raised do
+        assert_nothing_raised("Collection found same resource twice") do
             ret = coll.evaluate
         end
 

@@ -189,7 +189,7 @@ class Puppet::Parser::Scope
 
     def findresource(string, name = nil)
         if name
-            string = "%s[%s]" % [string, name]
+            string = "%s[%s]" % [string.capitalize, name]
         end
 
         @definedtable[string]

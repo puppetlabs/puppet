@@ -3,11 +3,16 @@ module PuppetTest::RailsTesting
     AST = Puppet::Parser::AST
     include PuppetTest::ParserTesting
 
+    def teardown
+        super
+
+        # If we don't clean up the connection list, then the rails
+        # lib will still think it's connected.
+        ActiveRecord::Base.clear_active_connections!
+    end
+
     def railsinit
         Puppet::Rails.init
-        cleanup do
-            ActiveRecord::Base.clear_active_connections!
-        end
     end
 
     def railsteardown

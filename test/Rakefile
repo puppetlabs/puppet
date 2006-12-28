@@ -71,7 +71,11 @@ filemap.each do |dir, files|
     # Then create a task that matches the directory itself.
     Rake::TestTask.new dir do |t|
        t.libs << $test_library_paths
-       t.test_files = files.sort
+       if ENV["TESTFILES"]
+           t.test_files = ENV["TESTFILES"].split(/\s+/)
+       else
+           t.test_files = files.sort
+       end
        t.verbose = true
     end
 

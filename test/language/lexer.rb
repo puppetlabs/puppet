@@ -210,7 +210,7 @@ class TestLexer < Test::Unit::TestCase
         @lexer.string = %{define me}
 
         assert_nothing_raised {
-            @lexer.fullscan
+            @lexer.scan { |t,s| }
         }
 
         assert(@lexer.indefine?, "Lexer not considered in define")
@@ -218,7 +218,7 @@ class TestLexer < Test::Unit::TestCase
         # Now make sure we throw an error when trying to nest defines.
         assert_raise(Puppet::ParseError) do
             @lexer.string = %{define another}
-            @lexer.fullscan
+            @lexer.scan { |t,s| }
         end
 
         assert_nothing_raised do

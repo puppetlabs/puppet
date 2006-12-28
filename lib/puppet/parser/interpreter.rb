@@ -685,15 +685,14 @@ class Puppet::Parser::Interpreter
     # Connect to the LDAP Server
     def setup_ldap
         self.class.ldap = nil
-        begin
-            require 'ldap'
-        rescue LoadError
+        unless Puppet.features.ldap?
             Puppet.notice(
                 "Could not set up LDAP Connection: Missing ruby/ldap libraries"
             )
             @ldap = nil
             return
         end
+
         begin
             @ldap = self.class.ldap()
         rescue => detail
@@ -809,11 +808,6 @@ class Puppet::Parser::Interpreter
                 Puppet.err "Could not store configs: %s" % detail.to_s
             end
         end
-
-        # Now that we've stored everything, we need to strip out
-        # the collectable objects so that they are not sent on
-        # to the host
-        #hash[:objects].collectstrip!
     end
 end
 

@@ -76,7 +76,7 @@ class TestInterpreter < Test::Unit::TestCase
         assert(config != newconfig, "Configs are somehow the same")
     end
 
-    if defined? ActiveRecord
+    if Puppet.features.rails?
     def test_hoststorage
         assert_nothing_raised {
             Puppet[:storeconfigs] = true
@@ -112,17 +112,10 @@ class TestInterpreter < Test::Unit::TestCase
     end
 
     if Facter["domain"].value == "madstop.com"
-    begin
-        require 'ldap'
-        $haveldap = true
-    rescue LoadError
-        $stderr.puts "Missing ldap; skipping ldap source tests"
-        $haveldap = false
-    end
 
     # Only test ldap stuff on luke's network, since that's the only place we
     # have data for.
-    if $haveldap
+    if Puppet.features.ldap?
     def ldapconnect
 
         @ldap = LDAP::Conn.new("ldap", 389)
@@ -900,7 +893,7 @@ class TestInterpreter < Test::Unit::TestCase
         assert(found.include?("/tmp/klass2"), "Did not evaluate klass2")
     end
 
-    if defined? ActiveRecord::Base
+    if Puppet.features.rails?
     # We need to make sure finished objects are stored in the db.
     def test_finish_before_store
         railsinit

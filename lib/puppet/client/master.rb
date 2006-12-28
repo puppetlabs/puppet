@@ -454,7 +454,8 @@ class Puppet::Client::MasterClient < Puppet::Client
             :source => args[:source],
             :tag => "#{args[:name]}s",
             :owner => Process.uid,
-            :group => Process.gid
+            :group => Process.gid,
+            :backup => false
         }
 
         if args[:ignore]
