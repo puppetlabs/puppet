@@ -45,34 +45,7 @@ class Puppet::Element
             @path = pathbuilder
         end
 
-        #puts "%s[%s]: %s" % [self.class.name, self.title, @path]
-
-        return @path.join("/")
-    end
-
-    def pathbuilder
-        tmp = if defined? @parent and @parent
-            if self.is_a?(Puppet.type(:component))
-                [@parent.path, self.name]
-            else
-                [@parent.path, self.class.name.to_s + "=" + self.name]
-            end
-        else
-            # The top-level name is always main[top], so we don't bother with
-            # that.  And we don't add the hostname here, it gets added
-            # in the log server thingy.
-            if self.name == "main[top]"
-                ["/"]
-            else
-                if self.is_a?(Puppet.type(:component))
-                    [self.name]
-                else
-                    [self.class.name.to_s + "=" + self.name.to_s]
-                end
-            end
-        end
-
-        return tmp
+        return "/" + @path.join("/")
     end
 end
 

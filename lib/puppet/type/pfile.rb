@@ -647,27 +647,14 @@ module Puppet
                 # a file
                 if @parent.is_a?(self.class)
                     # Remove the parent file name
-                    ppath = @parent.path.sub(/\/?file=.+/, '')
-                    tmp = []
-                    if ppath != "/" and ppath != ""
-                        tmp << ppath
-                    end
-                    tmp << self.class.name.to_s + "=" + self.name
-                    return tmp
+                    list = @parent.pathbuilder
+                    list.pop # remove the parent's path info
+                    return list << self.ref
                 else
                     return super
                 end
             else
-                # The top-level name is always puppet[top], so we don't
-                # bother with that.  And we don't add the hostname
-                # here, it gets added in the log server thingy.
-                if self.name == "puppet[top]"
-                    return ["/"]
-                else
-                    # We assume that if we don't have a parent that we
-                    # should not cache the path
-                    return [self.class.name.to_s + "=" + self.name]
-                end
+                return [self.ref]
             end
         end
         

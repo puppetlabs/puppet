@@ -1893,6 +1893,21 @@ class TestFile < Test::Unit::TestCase
         assert_equal(obj.bucket, file[:backup], "bucket was not retrieved")
         assert_equal(obj.bucket, file.bucket, "file's bucket was not set")
     end
+    
+    def test_pathbuilder
+        dir = tempfile()
+        Dir.mkdir(dir)
+        file = File.join(dir, "file")
+        File.open(file, "w") { |f| f.puts "" }
+        obj = Puppet::Type.newfile :path => dir, :recurse => true, :mode => 0755
+        
+        assert_equal("/%s" % obj.ref, obj.path)
+        
+        list = obj.eval_generate
+        fileobj = obj.class[file]
+        assert(fileobj, "did not generate file object")
+        assert_equal("/%s" % fileobj.ref, fileobj.path, "did not generate correct subfile path")
+    end
 end
 
 # $Id$

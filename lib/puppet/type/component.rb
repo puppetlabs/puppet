@@ -86,14 +86,34 @@ module Puppet
             @children = []
             super(args)
         end
+        
+        # Component paths are special because they function as containers.
+        def pathbuilder
+            tmp = []
+            if defined? @parent and @parent
+                tmp += [@parent.pathbuilder, self.title]
+            else
+                # The top-level name is always main[top], so we don't bother with
+                # that.
+                if self.title == "main[top]"
+                    tmp << "" # This empty field results in "//" in the path
+                else
+                    tmp << self.title
+                end
+            end
+            
+            tmp
+        end
 
         # We have a different way of setting the title
         def title
             unless defined? @title
-                if self[:type] == self[:name] or self[:name] =~ /--\d+$/
+                if self[:type] == self[:name] # this is the case for classes
                     @title = self[:type]
-                else
-                    @title = "%s[%s]" % [self[:type],self[:name]]
+                elsif self[:name] =~ /\[.+\]/ # most components already have ref info in the name
+                    @title = self[:name]
+                else # else, set it up
+                    @title = "%s[%s]" % [self[:type].capitalize, self[:name]]
                 end
             end
             return @title

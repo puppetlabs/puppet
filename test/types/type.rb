@@ -775,6 +775,42 @@ end
         file[:noop] = false
         assert(file.noop, "file should be in noop")
     end
+    
+    def test_path
+        # Check that our paths are built correctly.  Just pick a random, "normal" type.
+        type = Puppet::Type.type(:exec)
+        mk = Proc.new do |i, hash|
+            hash[:title] = "exec%s" % i
+            hash[:command] = "/bin/echo"
+            type.create(hash)
+        end
+        
+        exec = mk.call(1, {})
+        
+        assert_equal("/Exec[exec1]", exec.path)
+        
+        comp = Puppet::Type.newcomponent :title => "My[component]", :type => "Yay"
+        
+        exec = mk.call(2, :parent => comp)
+        
+        assert_equal("/My[component]/Exec[exec2]", exec.path)
+        
+        comp = Puppet::Type.newcomponent :name => "Other[thing]"
+        exec = mk.call(3, :parent => comp)
+        assert_equal("/Other[thing]/Exec[exec3]", exec.path)
+        
+        comp = Puppet::Type.newcomponent :type => "server", :name => "server"
+        exec = mk.call(4, :parent => comp)
+        assert_equal("/server/Exec[exec4]", exec.path)
+        
+        comp = Puppet::Type.newcomponent :type => "whatever", :name => "main[top]"
+        exec = mk.call(5, :parent => comp)
+        assert_equal("//Exec[exec5]", exec.path)
+        
+        comp = Puppet::Type.newcomponent :type => "yay", :name => "Good[bad]", :parent => comp
+        exec = mk.call(6, :parent => comp)
+        assert_equal("//Good[bad]/Exec[exec6]", exec.path)
+    end
 end
 
 # $Id$

@@ -319,16 +319,6 @@ class State < Puppet::Parameter
         return tmp
     end
 
-    # return the full path to us, for logging and rollback; not currently
-    # used
-    def pathbuilder
-        if defined? @parent and @parent
-            return [@parent.path, self.name]
-        else
-            return [self.name]
-        end
-    end
-
     # Retrieve the parent's provider.  Some types don't have providers, in which
     # case we return the parent object itself.
     def provider

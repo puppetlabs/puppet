@@ -247,6 +247,15 @@ class Puppet::Type
 
         return trans
     end
+
+    # Create the path for logging and such.
+    def pathbuilder
+        if defined? @parent and @parent
+            [@parent.pathbuilder, self.ref].flatten
+        else
+            [self.ref]
+        end
+    end
 end
 
 # $Id$
