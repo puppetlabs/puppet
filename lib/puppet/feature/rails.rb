@@ -35,6 +35,7 @@ Puppet.features.add(:rails) do
     end
 
     if defined? ActiveRecord
+        require 'puppet/rails'
         true
     else
         false

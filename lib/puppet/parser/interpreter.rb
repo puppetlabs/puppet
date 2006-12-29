@@ -375,9 +375,12 @@ class Puppet::Parser::Interpreter
         end
 
         # The class won't always be defined during testing.
-        if Puppet[:storeconfigs] and Puppet.features.rails?
-            require 'puppet/rails'
-            Puppet::Rails.init
+        if Puppet[:storeconfigs] 
+            if Puppet.features.rails?
+                Puppet::Rails.init
+            else
+                raise Puppet::Error, "Rails is missing; cannot store configurations"
+            end
         end
 
         @files = []
@@ -770,12 +773,9 @@ class Puppet::Parser::Interpreter
 
     # Store the configs into the database.
     def storeconfigs(hash)
-        unless defined? ActiveRecord
-            require 'puppet/rails'
-            unless defined? ActiveRecord
-                raise LoadError,
-                    "storeconfigs is enabled but rails is unavailable"
-            end
+        unless Puppet.features.rails?
+            raise Puppet::Error,
+                "storeconfigs is enabled but rails is unavailable"
         end
 
         Puppet::Rails.init

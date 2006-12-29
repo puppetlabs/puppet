@@ -385,9 +385,6 @@ module Puppet
     def self.type(name)
         Puppet::Type.type(name)
     end
-
-    # Only load all of the features once the Puppet module methods are defined.
-    @features.load
 end
 
 require 'puppet/server'

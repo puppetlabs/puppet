@@ -5,7 +5,6 @@ class Puppet::Parser::Collector
 
     # Collect exported objects.
     def collect_exported
-        require 'puppet/rails'
         # First get everything from the export table.  Just reuse our
         # collect_virtual method but tell it to use 'exported? for the test.
         resources = collect_virtual(true)
