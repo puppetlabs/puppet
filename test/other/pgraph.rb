@@ -130,7 +130,6 @@ class TestPGraph < Test::Unit::TestCase
 
         # Now add some relationships to three, but only add labels to one of
         # the relationships.
-        Puppet.err :yay
 
         # Add a simple, label-less relationship
         deps.add_edge!(two, three)

@@ -125,50 +125,30 @@ class Puppet::PGraph < GRATR::Digraph
             # First create new edges for each of the :in edges
             [:in, :out].each do |dir|
                 adjacent(vertex, :direction => dir, :type => :edges).each do |edge|
-                    if dir == :in
-                        nvertex = edge.source
-                    else
-                        nvertex = edge.target
-                    end
-                    if nvertex.is_a?(type)
-                        neighbors = other.leaves(nvertex)
-                    else
-                        neighbors = [nvertex]
-                    end
-
                     children.each do |child|
-                        neighbors.each do |neighbor|
-                            if dir == :in
-                                s = neighbor
-                                t = child
-                            else
-                                s = child
-                                t = neighbor
-                            end
+                        if dir == :in
+                            s = edge.source
+                            t = child
+                        else
+                            s = child
+                            t = edge.target
+                        end
 
-                            if s.is_a?(type)
-                                raise "Source %s is still a container" % s
-                            end
-                            if t.is_a?(type)
-                                raise "Target %s is still a container" % t
-                            end
-
-                            # We don't want to add multiple copies of the
-                            # same edge, but we *do* want to make sure we
-                            # keep labels around.
-                            # XXX This will *not* work when we support multiple
-                            # types of labels, and only works now because
-                            # you can only do simple subscriptions.
-                            if edge?(s, t)
-                                copy_label(s, t, edge.label)
-                                next
-                            end
-                            add_edge!(s, t, edge.label)
-                            if cyclic?
-                                raise ArgumentError,
-                                    "%s => %s results in a loop" %
-                                    [s, t]
-                            end
+                        # We don't want to add multiple copies of the
+                        # same edge, but we *do* want to make sure we
+                        # keep labels around.
+                        # XXX This will *not* work when we support multiple
+                        # types of labels, and only works now because
+                        # you can only do simple subscriptions.
+                        if edge?(s, t)
+                            copy_label(s, t, edge.label)
+                            next
+                        end
+                        add_edge!(s, t, edge.label)
+                        if cyclic?
+                            raise ArgumentError,
+                                "%s => %s results in a loop" %
+                                [s, t]
                         end
                     end
                 end
