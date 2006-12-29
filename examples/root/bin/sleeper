@@ -62,8 +62,6 @@ unless debug
 	daemonize()
 end
 
-var = true
-
-while var do
-	sleep 600
-end
+# Sleep for no more than two minutes
+sleep 120
+exit
