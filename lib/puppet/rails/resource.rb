@@ -61,7 +61,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         # FIXME At some point, we're going to want to retain this information
         # for logging and auditing.
         hash.delete("host_id")
-
+        hash.delete("updated_at")
         hash.delete("source_file_id")
         hash.delete("id")
         hash.each do |p, v|
