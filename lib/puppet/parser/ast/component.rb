@@ -42,11 +42,11 @@ class Puppet::Parser::AST
             scope = scope
             # Additionally, add a tag for whatever kind of class
             # we are
-            if @type != ""
+            if @type != "" and ! @type.nil?
                 scope.tag(@type)
             end
 
-            unless name.nil? or name =~ /[^\w]/
+            unless name.nil? or name =~ /[^\w]/ or name == ""
                 scope.tag(name)
             end
 
