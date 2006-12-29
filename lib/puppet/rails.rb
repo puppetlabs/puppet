@@ -6,7 +6,7 @@ require 'puppet'
 module Puppet::Rails
     Puppet.config.setdefaults(:puppetmaster,
         :dblocation => { :default => "$statedir/clientconfigs.sqlite3",
-            :mode => 0600,
+            :mode => 0660,
             :owner => "$user",
             :group => "$group",
             :desc => "The database cache for client configurations.  Used for

@@ -26,8 +26,6 @@ class Puppet::Parser::Collector
             #Puppet.info "Host %s is uninitialized" % @scope.host
         end
 
-        p args
-
         # Now look them up in the rails db.  When we support attribute comparison
         # and such, we'll need to vary the conditions, but this works with no
         # attributes, anyway.
@@ -35,7 +33,6 @@ class Puppet::Parser::Collector
             Puppet::Rails::Resource.find_all_by_restype_and_exported(@type, true,
                 args
             ).each do |obj|
-                p obj
                 if resource = export_resource(obj)
                     count += 1
                     resources << resource
