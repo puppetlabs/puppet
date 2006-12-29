@@ -812,6 +812,82 @@ class TestTransactions < Test::Unit::TestCase
         assert_apply(dirobj, exec)
         assert(FileTest.exists?(maker), "Did not make callback file")
     end
+
+    # Yay, this out to be fun.
+    def test_trigger
+        $triggered = []
+        cleanup { $triggered = nil }
+        trigger = Class.new do
+            attr_accessor :name
+            include Puppet::Util::Logging
+            def initialize(name)
+                @name = name
+            end
+            def ref
+                self.name
+            end
+            def refresh
+                $triggered << self.name
+            end
+
+            def to_s
+                self.name
+            end
+        end
+
+        # Make a graph with some stuff in it.
+        graph = Puppet::PGraph.new
+
+        # Add a non-triggering edge.
+        a = trigger.new(:a)
+        b = trigger.new(:b)
+        c = trigger.new(:c)
+        nope = Puppet::Relationship.new(a, b)
+        yep = Puppet::Relationship.new(a, c, {:callback => :refresh})
+        graph.add_edge!(nope)
+
+        # And a triggering one.
+        graph.add_edge!(yep)
+
+        # Create our transaction
+        trans = Puppet::Transaction.new(graph)
+
+        # Set the non-triggering on
+        assert_nothing_raised do
+            trans.set_trigger(nope)
+        end
+
+        assert(! trans.targeted?(b), "b is incorrectly targeted")
+
+        # Now set the other
+        assert_nothing_raised do
+            trans.set_trigger(yep)
+        end
+        assert(trans.targeted?(c), "c is not targeted")
+
+        # Now trigger our three resources
+        assert_nothing_raised do
+            assert_nil(trans.trigger(a), "a somehow triggered something")
+        end
+        assert_nothing_raised do
+            assert_nil(trans.trigger(b), "b somehow triggered something")
+        end
+        assert_equal([], $triggered,"got something in triggered")
+        result = nil
+        assert_nothing_raised do
+            result = trans.trigger(c)
+        end
+        assert(result, "c did not trigger anything")
+        assert_instance_of(Array, result)
+        event = result.shift
+        assert_instance_of(Puppet::Event, event)
+        assert_equal(:triggered, event.event, "event was not set correctly")
+        assert_equal(c, event.source, "source was not set correctly")
+        assert_equal(trans, event.transaction, "transaction was not set correctly")
+
+        assert(trans.triggered?(c, :refresh),
+            "Transaction did not store the trigger")
+    end
 end
 
 # $Id$

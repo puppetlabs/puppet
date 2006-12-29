@@ -96,13 +96,7 @@ class Puppet::PGraph < GRATR::Digraph
             # This vertex in the graph.
             adjacent(source, :direction => :out, :type => :edges).find_all do |edge|
                 edge.match?(event.event)
-            end.each { |edge|
-                target = edge.target
-                if target.respond_to?(:ref)
-                    source.info "Scheduling %s of %s" %
-                        [edge.callback, target.ref]
-                end
-            }
+            end
         end.flatten
     end
     

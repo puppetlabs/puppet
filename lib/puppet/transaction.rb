@@ -224,7 +224,7 @@ class Transaction
         # the parent resource in so it will override the source in the events,
         # since eval_generated children can't have direct relationships.
         @relgraph.matching_edges(events, resource).each do |edge|
-            @targets[edge.target] << edge
+            set_trigger(edge)
         end
 
         # And return the events for collection
@@ -332,7 +332,11 @@ class Transaction
     # this should only be called by a Puppet::Type::Component resource now
     # and it should only receive an array
     def initialize(resources)
-        @resources = resources.to_graph
+        if resources.is_a?(Puppet::PGraph)
+            @resources = resources
+        else
+            @resources = resources.to_graph
+        end
 
         @resourcemetrics = {
             :total => @resources.vertices.length,
@@ -510,6 +514,15 @@ class Transaction
     def scheduled?(resource)
         self.ignoreschedules or resource.scheduled?
     end
+
+    # Set an edge to be triggered when we evaluate its target.
+    def set_trigger(edge)
+        return unless edge.callback
+        if edge.target.respond_to?(:ref)
+            edge.source.info "Scheduling %s of %s" % [edge.callback, edge.target.ref]
+        end
+        @targets[edge.target] << edge
+    end
     
     # Should this resource be skipped?
     def skip?(resource)
@@ -555,70 +568,51 @@ class Transaction
     
     # Are there any edges that target this resource?
     def targeted?(resource)
-        @targets[resource]
+        # The default value is a new array so we have to test the length of it.
+        @targets.include?(resource) and @targets[resource].length > 0
     end
 
     # Trigger any subscriptions to a child.  This does an upwardly recursive
     # search -- it triggers the passed resource, but also the resource's parent
     # and so on up the tree.
-    def trigger(child)
-        obj = child
+    def trigger(resource)
+        return nil unless targeted?(resource)
         callbacks = Hash.new { |hash, key| hash[key] = [] }
-        sources = Hash.new { |hash, key| hash[key] = [] }
 
         trigged = []
-        while obj
-            if @targets.include?(obj)
-                callbacks.clear
-                sources.clear
-                @targets[obj].each do |edge|
-                    # Some edges don't have callbacks
-                    next unless edge.callback
-                    
-                    # Collect all of the subs for each callback
-                    callbacks[edge.callback] << edge
+        @targets[resource].each do |edge|
+            # Collect all of the subs for each callback
+            callbacks[edge.callback] << edge
+        end
 
-                    # And collect the sources for logging
-                    sources[edge.source] << edge.callback
-                end
+        callbacks.each do |callback, subs|
+            message = "Triggering '%s' from %s dependencies" %
+                [callback, subs.length]
+            resource.notice message
+            # At this point, just log failures, don't try to react
+            # to them in any way.
+            begin
+                resource.send(callback)
+                @resourcemetrics[:restarted] += 1
+            rescue => detail
+                resource.err "Failed to call %s on %s: %s" %
+                    [callback, resource, detail]
 
-                sources.each do |source, callbacklist|
-                    obj.debug "%s[%s] results in triggering %s" %
-                        [source.class.name, source.name, callbacklist.join(", ")]
-                end
+                @resourcemetrics[:failed_restarts] += 1
 
-                callbacks.each do |callback, subs|
-                    message = "Triggering '%s' from %s dependencies" %
-                        [callback, subs.length]
-                    obj.notice message
-                    # At this point, just log failures, don't try to react
-                    # to them in any way.
-                    begin
-                        obj.send(callback)
-                        @resourcemetrics[:restarted] += 1
-                    rescue => detail
-                        obj.err "Failed to call %s on %s: %s" %
-                            [callback, obj, detail]
-
-                        @resourcemetrics[:failed_restarts] += 1
-
-                        if Puppet[:trace]
-                            puts detail.backtrace
-                        end
-                    end
-
-                    # And then add an event for it.
-                    trigged << Puppet::Event.new(
-                        :event => :triggered,
-                        :transaction => self,
-                        :source => obj
-                    )
-
-                    triggered(obj, callback)
+                if Puppet[:trace]
+                    puts detail.backtrace
                 end
             end
 
-            obj = obj.parent
+            # And then add an event for it.
+            trigged << Puppet::Event.new(
+                :event => :triggered,
+                :transaction => self,
+                :source => resource
+            )
+
+            triggered(resource, callback)
         end
 
         if trigged.empty?

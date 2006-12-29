@@ -46,7 +46,7 @@ class TestRelationships < Test::Unit::TestCase
                     assert_equal(:ALL_EVENTS, edge.event)
                     assert_equal(:refresh, edge.callback)
                 else
-                    assert_equal(:NONE, edge.event)
+                    assert_nil(edge.event)
                     assert_nil(edge.callback, "Got a callback with no events")
                 end
             end
