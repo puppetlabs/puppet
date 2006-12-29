@@ -520,7 +520,7 @@ class Puppet::Parser::Scope
     def tag(*ary)
         ary.each { |tag|
             unless tag =~ /^\w[-\w]+$/
-                fail Puppet::ParseError, "Invalid tag %s" % tag
+                fail Puppet::ParseError, "Invalid tag %s" % tag.inspect
             end
             if tag.nil? or tag == ""
                 puts caller
