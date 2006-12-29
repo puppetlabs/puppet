@@ -91,11 +91,8 @@ class TestPGraph < Test::Unit::TestCase
         # We have to specify a relationship to our empty container, else it
         # never makes it into the dep graph in the first place.
         #{one => two, three => [middle, two, "c"], "f" => "c", "h" => middle, "c" => empty}.each do |source, targets|
-        {one => two, two => three, middle => three, "f" => "c", "h" => middle, "c" => [three, empty]}.each do |source, targets|
-            targets = [targets] unless targets.is_a?(Array)
-            targets.each do |target|
-                deps.add_edge!(source, target, :callback => :refresh)
-            end
+        {one => two, "f" => "c", "h" => middle, "c" => empty}.each do |source, target|
+            deps.add_edge!(source, target, :callback => :refresh)
         end
 
         #num = 6
@@ -103,7 +100,7 @@ class TestPGraph < Test::Unit::TestCase
         #contgraph.reversal.to_jpg(File.expand_path("~/tmp/graphs"), "reversal#{num}")
         #deps.to_jpg(File.expand_path("~/tmp/graphs"), "relationships#{num}")
         
-        deps.splice!(contgraph, Container)
+        assert_nothing_raised { deps.splice!(contgraph, Container) }
         #deps.to_jpg(File.expand_path("~/tmp/graphs"), "after_relationships#{num}")
         
         assert(! deps.cyclic?, "Created a cyclic graph")
@@ -128,8 +125,73 @@ class TestPGraph < Test::Unit::TestCase
         
         deps.edges.each do |edge|
             assert_equal({:callback => :refresh}, edge.label,
-                "Label was not copied on splice")
+                "Label was not copied for %s => %s" % [edge.source, edge.target])
         end
+
+        # Now add some relationships to three, but only add labels to one of
+        # the relationships.
+        Puppet.err :yay
+
+        # Add a simple, label-less relationship
+        deps.add_edge!(two, three)
+        assert_nothing_raised { deps.splice!(contgraph, Container) }
+
+        # And make sure it stuck, with no labels.
+        assert_equal({}, deps.edge_label("c", "i"),
+            "label was created for c => i")
+
+        # Now add some edges with labels, in a way that should overwrite
+        deps.add_edge!("c", three, {:callback => :refresh})
+        assert_nothing_raised { deps.splice!(contgraph, Container) }
+
+        # And make sure the label got copied.
+        assert_equal({:callback => :refresh}, deps.edge_label("c", "i"),
+            "label was not copied for c => i")
+
+        # Lastly, add some new label-less edges and make sure the label stays.
+        deps.add_edge!(middle, three)
+        assert_nothing_raised { deps.splice!(contgraph, Container) }
+        assert_equal({:callback => :refresh}, deps.edge_label("c", "i"),
+            "label was lost for c => i")
+        
+        # Now make sure the 'three' edges all have the label we've used.
+        # Note that this will not work when we support more than one type of
+        # subscription.
+        three.each do |child|
+            edge = deps.edge_class.new("c", child)
+            assert(deps.edge?(edge), "no c => %s edge" % child)
+            assert_equal({:callback => :refresh}, deps[edge],
+                "label was not retained for c => %s" % child)
+        end
+    end
+
+    def test_copy_label
+        graph = Puppet::PGraph.new
+
+        # First make an edge with no label
+        graph.add_edge!(:a, :b)
+        assert_nil(graph.edge_label(:a, :b), "Created a label")
+
+        # Now try to copy an empty label in.
+        graph.copy_label(:a, :b, {})
+
+        # It should just do nothing, since we copied an empty label.
+        assert_nil(graph.edge_label(:a, :b), "Created a label")
+
+        # Now copy in a real label.
+        graph.copy_label(:a, :b, {:callback => :yay})
+        assert_equal({:callback => :yay},
+            graph.edge_label(:a, :b), "Did not copy label")
+
+        # Now copy in a nil label
+        graph.copy_label(:a, :b, nil)
+        assert_equal({:callback => :yay},
+            graph.edge_label(:a, :b), "lost label")
+
+        # And an empty one.
+        graph.copy_label(:a, :b, {})
+        assert_equal({:callback => :yay},
+            graph.edge_label(:a, :b), "lost label")
     end
 end
 

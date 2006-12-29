@@ -288,15 +288,15 @@ class Puppet::Type
                     target = object
                 end
 
-                # ok, both sides of the connection store some information
-                # we store the method to call when a given subscription is 
-                # triggered, but the source object decides whether 
-                subargs = {
-                    :event => self.class.events
-                }
-
                 if method = self.class.callback
-                    subargs[:callback] = method
+                    subargs = {
+                        :event => self.class.events,
+                        :callback => method
+                    }
+                else
+                    # If there's no callback, there's no point in even adding
+                    # a label.
+                    subargs = nil
                 end
                 rel = Puppet::Relationship.new(source, target, subargs)
             end

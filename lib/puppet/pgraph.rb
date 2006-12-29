@@ -33,6 +33,23 @@ class Puppet::PGraph < GRATR::Digraph
         end
     end
 
+    # Make sure whichever edge has a label keeps the label
+    def copy_label(source, target, label)
+        # 'require' relationships will not have a label,
+        # and all 'subscribe' relationships have the same
+        # label, at least for now.
+
+        # Labels default to {}, so we can't just test for nil.
+        newlabel = label || {}
+        oldlabel = edge_label(source, target) || {}
+        if ! newlabel.empty? and oldlabel.empty?
+            edge_label_set(source, target, label)
+            # We should probably check to see if the labels both exist
+            # and don't match, but we'd just throw an error which the user
+            # couldn't do anyting about.
+        end
+    end
+
     # Which resources a given resource depends upon.
     def dependents(resource)
         tree_from_vertex2(resource).keys
@@ -128,6 +145,7 @@ class Puppet::PGraph < GRATR::Digraph
                                 s = child
                                 t = neighbor
                             end
+
                             if s.is_a?(type)
                                 raise "Source %s is still a container" % s
                             end
@@ -135,9 +153,16 @@ class Puppet::PGraph < GRATR::Digraph
                                 raise "Target %s is still a container" % t
                             end
 
-                            # It *appears* that we're having a problem
-                            # with multigraphs.
-                            next if edge?(s, t)
+                            # We don't want to add multiple copies of the
+                            # same edge, but we *do* want to make sure we
+                            # keep labels around.
+                            # XXX This will *not* work when we support multiple
+                            # types of labels, and only works now because
+                            # you can only do simple subscriptions.
+                            if edge?(s, t)
+                                copy_label(s, t, edge.label)
+                                next
+                            end
                             add_edge!(s, t, edge.label)
                             if cyclic?
                                 raise ArgumentError,

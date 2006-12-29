@@ -46,9 +46,9 @@ class Puppet::Relationship < GRATR::Edge
     # Does the passed event match our event?  This is where the meaning
     # of :NONE comes from. 
     def match?(event)
-        if event == :NONE or self.event == :NONE
+        if self.event.nil? or event == :NONE or self.event == :NONE
             return false
-        elsif self.event == :ALL_EVENTS or event == :ALL_EVENTS or event == self.event
+        elsif self.event == :ALL_EVENTS or event == self.event
             return true
         else
             return false

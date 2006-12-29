@@ -43,6 +43,32 @@ class TestRelationship < Test::Unit::TestCase
         assert_nil(i.event, "event was not nil")
         assert_nil(i.callback, "callback was not nil")
     end
+
+    def test_match
+        edge = Puppet::Relationship.new(:a, :b)
+
+        assert(! edge.match?(:NONE), "nil event matched :NONE")
+        assert(! edge.match?(:ALL_EVENT), "nil event matched :ALL_EVENTS")
+        assert(! edge.match?(:random), "nil event matched random")
+
+        # Now set the edge to none
+        edge.label = {:event => :NONE}
+        assert(! edge.match?(:NONE), ":NONE event matched :NONE")
+        assert(! edge.match?(:ALL_EVENT), ":NONE event matched :ALL_EVENTS")
+        assert(! edge.match?(:random), ":NONE event matched random")
+
+        # Now set it to :ALL
+        edge.label = {:event => :ALL_EVENTS}
+        assert(! edge.match?(:NONE), ":ALL_EVENTS event matched :NONE")
+        assert(edge.match?(:ALL_EVENTS), ":ALL_EVENTS did not match :ALL_EVENTS")
+        assert(edge.match?(:random), ":ALL_EVENTS did not match random")
+
+        # And finally, :random
+        edge.label = {:event => :random}
+        assert(! edge.match?(:NONE), ":random event matched :NONE")
+        assert(! edge.match?(:ALL_EVENTS), ":random matched :ALL_EVENTS")
+        assert(edge.match?(:random), ":random did not match random")
+    end
 end
 
 # $Id$
