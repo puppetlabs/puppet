@@ -519,13 +519,13 @@ class Puppet::Parser::Scope
     # of the objects contained in this scope.
     def tag(*ary)
         ary.each { |tag|
-            unless tag =~ /^\w[-\w]+$/
-                fail Puppet::ParseError, "Invalid tag %s" % tag.inspect
-            end
             if tag.nil? or tag == ""
                 puts caller
                 Puppet.debug "got told to tag with %s" % tag.inspect
                 next
+            end
+            unless tag =~ /^\w[-\w]+$/
+                fail Puppet::ParseError, "Invalid tag %s" % tag.inspect
             end
             tag = tag.to_s
             unless @tags.include?(tag)
