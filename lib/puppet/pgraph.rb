@@ -96,7 +96,8 @@ class Puppet::PGraph < GRATR::Digraph
     def splice!(other, type)
         vertices.find_all { |v| v.is_a?(type) }.each do |vertex|
             # Get the list of children from the other graph.
-            children = other.adjacent(vertex, :direction => :out)
+            #children = other.adjacent(vertex, :direction => :out)
+            children = other.leaves(vertex)
 
             # Just remove the container if it's empty.
             if children.empty?
@@ -107,29 +108,46 @@ class Puppet::PGraph < GRATR::Digraph
             # First create new edges for each of the :in edges
             [:in, :out].each do |dir|
                 adjacent(vertex, :direction => dir, :type => :edges).each do |edge|
-                    children.each do |leaf|
-                        if dir == :in
-                            s = edge.source
-                            t = leaf
-                        else
-                            s = leaf
-                            t = edge.target
-                        end
+                    if dir == :in
+                        nvertex = edge.source
+                    else
+                        nvertex = edge.target
+                    end
+                    if nvertex.is_a?(type)
+                        neighbors = other.leaves(nvertex)
+                    else
+                        neighbors = [nvertex]
+                    end
 
-                        # It *appears* that we're having a problem
-                        # with multigraphs.
-                        next if edge?(s, t)
-                        add_edge!(s, t, edge.label)
-                        if cyclic?
-                            raise ArgumentError,
-                                "%s => %s results in a loop" %
-                                [s, t]
+                    children.each do |child|
+                        neighbors.each do |neighbor|
+                            if dir == :in
+                                s = neighbor
+                                t = child
+                            else
+                                s = child
+                                t = neighbor
+                            end
+                            if s.is_a?(type)
+                                raise "Source %s is still a container" % s
+                            end
+                            if t.is_a?(type)
+                                raise "Target %s is still a container" % t
+                            end
+
+                            # It *appears* that we're having a problem
+                            # with multigraphs.
+                            next if edge?(s, t)
+                            add_edge!(s, t, edge.label)
+                            if cyclic?
+                                raise ArgumentError,
+                                    "%s => %s results in a loop" %
+                                    [s, t]
+                            end
                         end
                     end
                 end
             end
-            
-            # And finally, remove the vertex entirely.
             remove_vertex!(vertex)
         end
     end

@@ -71,15 +71,15 @@ class TestPGraph < Test::Unit::TestCase
     
     # Test that we can take a containment graph and rearrange it by dependencies
     def test_splice
-        one, two, middle, top = build_tree
+        one, two, three, middle, top = build_tree
         empty = Container.new("empty", [])
         # Also, add an empty container to top
         top.push empty
         
         contgraph = top.to_graph
         
-        # Now add a couple of child files, so that we can test whether all containers
-        # get spliced, rather than just components.
+        # Now add a couple of child files, so that we can test whether all
+        # containers get spliced, rather than just components.
         
         # Now make a dependency graph
         deps = Puppet::PGraph.new
@@ -90,14 +90,24 @@ class TestPGraph < Test::Unit::TestCase
         
         # We have to specify a relationship to our empty container, else it
         # never makes it into the dep graph in the first place.
-        {one => two, "f" => "c", "h" => middle, "c" => empty}.each do |source, target|
-            deps.add_edge!(source, target, :callback => :refresh)
+        #{one => two, three => [middle, two, "c"], "f" => "c", "h" => middle, "c" => empty}.each do |source, targets|
+        {one => two, two => three, middle => three, "f" => "c", "h" => middle, "c" => [three, empty]}.each do |source, targets|
+            targets = [targets] unless targets.is_a?(Array)
+            targets.each do |target|
+                deps.add_edge!(source, target, :callback => :refresh)
+            end
         end
+
+        #num = 6
+        #contgraph.to_jpg(File.expand_path("~/tmp/graphs"), "containers#{num}")
+        #contgraph.reversal.to_jpg(File.expand_path("~/tmp/graphs"), "reversal#{num}")
+        #deps.to_jpg(File.expand_path("~/tmp/graphs"), "relationships#{num}")
         
         deps.splice!(contgraph, Container)
+        #deps.to_jpg(File.expand_path("~/tmp/graphs"), "after_relationships#{num}")
         
         assert(! deps.cyclic?, "Created a cyclic graph")
-        
+
         # Make sure there are no container objects remaining
         c = deps.vertices.find_all { |v| v.is_a?(Container) }
         assert(c.empty?, "Still have containers %s" % c.inspect)
