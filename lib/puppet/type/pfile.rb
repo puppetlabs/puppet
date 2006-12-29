@@ -77,6 +77,10 @@ module Puppet
             end
             
             munge do |value|
+                # I don't really know how this is happening.
+                if value.is_a?(Array)
+                    value = value.shift
+                end
                 case value
                 when false, "false", :false:
                     false
@@ -850,7 +854,7 @@ module Puppet
                     end
 
                     self.newchild(name, false, args)
-                }.reject {|c| c.nil? }.each do |f| f.info "sourced" end
+                }.reject {|c| c.nil? }
             end
             return []
         end
