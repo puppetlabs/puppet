@@ -1,5 +1,5 @@
 require 'puppet'
-require 'puppet/rails/lib/init'
+require 'puppet/rails/external/tagging/init'
 require 'puppet/rails/param_name'
 require 'puppet/util/rails/collection_merger'
 
