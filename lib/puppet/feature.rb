@@ -2,6 +2,8 @@
 #  Copyright (c) 2006. All rights reserved.
 
 class Puppet::Feature
+    attr_reader :path
+
     # Create a new feature test.  You have to pass the feature name,
     # and it must be unique.  You can either provide a block that
     # will get executed immediately to determine if the feature
@@ -50,11 +52,24 @@ class Puppet::Feature
     # Create a new feature collection.
     def initialize(path)
         @path = path
+        @loader = Puppet::Autoload.new(self, @path)
     end
     
     def load
-        loader = Puppet::Autoload.new(self, @path)
-        loader.loadall
+        @loader.loadall
+    end
+
+    def method_missing(method, *args)
+        return super unless method.to_s =~ /\?$/
+
+        feature = method.to_s.sub(/\?$/, '')
+        @loader.load(feature)
+
+        if respond_to?(method)
+            return self.send(method)
+        else
+            return false
+        end
     end
 end
 
