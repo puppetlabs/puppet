@@ -120,6 +120,11 @@ class TestMounts < Test::Unit::TestCase
         assert_nothing_raised { mount.retrieve }
 
         assert_equal(:mounted, mount.is(:ensure))
+
+        # Now modify a field
+        mount[:dump] = 2
+
+        assert_events([:mount_changed], mount)
     end
 
     # Make sure fs mounting behaves appropriately.  This is more a test of

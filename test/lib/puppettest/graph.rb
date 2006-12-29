@@ -31,9 +31,10 @@ module PuppetTest::Graph
     def build_tree
         one = Container.new("one", %w{a b})
         two = Container.new("two", ["c", "d"])
+        three = Container.new("three", ["i", "j"])
         middle = Container.new("middle", ["e", "f", two])
-        top = Container.new("top", ["g", "h", middle, one])
-        return one, two, middle, top
+        top = Container.new("top", ["g", "h", middle, one, three])
+        return one, two, three, middle, top
     end
 end
 

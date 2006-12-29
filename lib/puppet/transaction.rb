@@ -202,10 +202,11 @@ class Transaction
                 end
             end
             
-            # A bit of hackery here -- if skipcheck is true, then we're the top-level
-            # resource.  If that's the case, then make sure all of the changes list this resource
-            # as a proxy.  This is really only necessary for rollback, since we know the generating
-            # resource during forward changes.
+            # A bit of hackery here -- if skipcheck is true, then we're the
+            # top-level resource.  If that's the case, then make sure all of
+            # the changes list this resource as a proxy.  This is really only
+            # necessary for rollback, since we know the generating resource
+            # during forward changes.
             if children and checkskip
                 @changes[changecount..-1].each { |change| change.proxy = resource }
             end
@@ -219,9 +220,9 @@ class Transaction
             events += triggedevents
         end
 
-        # Collect the targets of any subscriptions to those events.  We pass the parent resource
-        # in so it will override the source in the events, since eval_generated children can't
-        # have direct relationships.
+        # Collect the targets of any subscriptions to those events.  We pass
+        # the parent resource in so it will override the source in the events,
+        # since eval_generated children can't have direct relationships.
         @relgraph.matching_edges(events, resource).each do |edge|
             @targets[edge.target] << edge
         end

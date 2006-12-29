@@ -52,7 +52,7 @@ class Server::PElement < Server::Handler
     # Describe a given object.  This returns the 'is' values for every state
     # available on the object type.
     def describe(type, name, retrieve = nil, ignore = [], format = "yaml", client = nil, clientip = nil)
-        Puppet.info "Describing %s[%s]" % [type, name]
+        Puppet.info "Describing %s[%s]" % [type.to_s.capitalize, name]
         @local = true unless client
         typeklass = nil
         unless typeklass = Puppet.type(type)

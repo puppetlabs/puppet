@@ -28,7 +28,7 @@ class Puppet::Client::PElement < Puppet::Client
     end
 
     def describe(type, name, retrieve = false, ignore = false)
-        Puppet.info "Describing %s[%s]" % [type.capitalize, name]
+        Puppet.info "Describing %s[%s]" % [type.to_s.capitalize, name]
         text = @driver.describe(type, name, retrieve, ignore, "yaml")
 
         object = nil
