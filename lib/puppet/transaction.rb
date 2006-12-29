@@ -67,7 +67,24 @@ class Transaction
             @resourcemetrics[:out_of_sync] += 1
         end
 
-        resourceevents = changes.collect { |change|
+        resourceevents = apply_changes(resource, changes)
+
+        unless changes.empty?
+            # Record when we last synced
+            resource.cache(:synced, Time.now)
+
+            # Flush, if appropriate
+            if resource.respond_to?(:flush)
+                resource.flush
+            end
+        end
+
+        resourceevents
+    end
+
+    # Apply each change in turn.
+    def apply_changes(resource, changes)
+        changes.collect { |change|
             @changes << change
             @count += 1
             change.transaction = self
@@ -99,18 +116,6 @@ class Transaction
 
             events
         }.flatten.reject { |e| e.nil? }
-
-        unless changes.empty?
-            # Record when we last synced
-            resource.cache(:synced, Time.now)
-
-            # Flush, if appropriate
-            if resource.respond_to?(:flush)
-                resource.flush
-            end
-        end
-
-        resourceevents
     end
 
     # Find all of the changed resources.

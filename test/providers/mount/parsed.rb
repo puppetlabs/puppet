@@ -105,6 +105,13 @@ class TestParsedMounts < Test::Unit::TestCase
         # the isomorphic methods.
         assert(@provider.target_object(target).read.include?("\t%s\t" %
             mount.state_hash[:name]), "Mount was not written to disk")
+
+        # now make a change
+        assert_nothing_raised { mount.dump = 5 }
+        assert_nothing_raised { mount.flush }
+
+        @provider.prefetch
+        assert_equal(5, mount.dump, "did not flush change to disk")
     end
 
     unless Facter["operatingsystem"].value == "Darwin"
