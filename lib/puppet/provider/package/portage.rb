@@ -6,11 +6,11 @@ Puppet::Type.type(:package).provide :portage do
     defaultfor :operatingsystem => :gentoo
 
     def self.format
-        "{installedversions}<category> <name> [<installedversions>] [<best>] <homepage> <description>{}"
+        "{installedversionsshort}<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>{}"
     end
 
     def self.list
-        search_format = /(\S+) (\S+) \[(.*)\] \[([^\s:]*)(:\S*)?\] ([\S]*) (.*)/
+        search_format = /(\S+) (\S+) \[(.*)\] \[[^0-9]*([^\s:]*)(:\S*)?\] ([\S]*) (.*)/
         result_fields = [:category, :name, :ensure, :version_available, :slot, :vendor, :description]
 
         begin
@@ -62,14 +62,14 @@ Puppet::Type.type(:package).provide :portage do
     end
 
     def query
-        search_format = /(\S+) (\S+) \[(.*)\] \[([^\s:]*)(:\S*)?\] ([\S]*) (.*)/
+        search_format = /(\S+) (\S+) \[(.*)\] \[[^0-9]*([^\s:]*)(:\S*)?\] ([\S]*) (.*)/
         result_fields = [:category, :name, :ensure, :version_available, :slot, :vendor, :description]
 
         search_field = @model[:name].include?( '/' ) ? "--category-name" : "--name"
-        format = "<category> <name> [<installedversions>] [<best>] <homepage> <description>"
+        format = "<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>"
 
         begin
-            search_output = eix "-format", format, "--exact", search_field, @model[:name]
+            search_output = eix "--format", format, "--exact", search_field, @model[:name]
 
             packages = []
             search_output.each do |search_result|
