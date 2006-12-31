@@ -2,8 +2,6 @@
 require 'sync'
 
 class Puppet::Client::MasterClient < Puppet::Client
-    include MonitorMixin
-    
     unless defined? @@sync
         @@sync = Sync.new
     end
@@ -316,11 +314,11 @@ class Puppet::Client::MasterClient < Puppet::Client
     def run(tags = nil, ignoreschedules = false)
         lockfile = Puppet::Util::Pidlock.new(Puppet[:puppetdlockfile])
         
-        if !lockfile.lock
-            Puppet.notice "Lock file %s exists; skipping configuration run" %
-                lockfile.lockfile
-        else
-            self.synchronize do
+        Puppet::Util.sync(:puppetrun).synchronize(Sync::EX) do
+            if !lockfile.lock
+                Puppet.notice "Lock file %s exists; skipping configuration run" %
+                    lockfile.lockfile
+            else
                 @running = true
                 @configtime = thinmark do
                     self.getconfig
