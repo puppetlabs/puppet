@@ -2,6 +2,8 @@
 require 'sync'
 
 class Puppet::Client::MasterClient < Puppet::Client
+    include MonitorMixin
+    
     unless defined? @@sync
         @@sync = Sync.new
     end
@@ -164,26 +166,6 @@ class Puppet::Client::MasterClient < Puppet::Client
         Puppet::Type.allclear
     end
 
-    # Disable running the configuration.  This can be used from the command
-    # line, but is also used to make sure only one client is running at a time.
-    def disable(running = false)
-        threadlock(:puppetd) do
-            text = nil
-            if running
-                text = Process.pid
-            else
-                text = ""
-                Puppet.notice "Disabling puppetd"
-            end
-            Puppet.config.use(:puppet)
-            begin
-                File.open(Puppet[:puppetdlockfile], "w") { |f| f.puts text }
-            rescue => detail
-                raise Puppet::Error, "Could not lock puppetd: %s" % detail
-            end
-        end
-    end
-
     # Initialize and load storage
     def dostorage
         begin
@@ -204,19 +186,6 @@ class Puppet::Client::MasterClient < Puppet::Client
         end
     end
 
-    # Enable running again.  This can be used from the command line, but
-    # is also used to make sure only one client is running at a time.
-    def enable(running = false)
-        threadlock(:puppetd) do
-            unless running
-                Puppet.debug "Enabling puppetd"
-            end
-            if FileTest.exists? Puppet[:puppetdlockfile]
-                File.unlink(Puppet[:puppetdlockfile])
-            end
-        end
-    end
-
     # Check whether our configuration is up to date
     def fresh?
         unless defined? @configstamp
@@ -229,6 +198,17 @@ class Puppet::Client::MasterClient < Puppet::Client
         else
             return false
         end
+    end
+
+    # Let the daemon run again, freely in the filesystem.  Frolick, little
+    # daemon!
+    def enable
+        Puppet::Util::Pidlock.new(Puppet[:puppetdlockfile]).unlock(:anonymous => true)
+    end
+
+    # Stop the daemon from making any configuration runs.
+    def disable
+        Puppet::Util::Pidlock.new(Puppet[:puppetdlockfile]).lock(:anonymous => true)
     end
 
     # Retrieve the config from a remote server.  If this fails, then
@@ -306,41 +286,6 @@ class Puppet::Client::MasterClient < Puppet::Client
         @running = false
     end
 
-    # Make sure only one client runs at a time, and make sure only one thread
-    # runs at a time.  However, this does not lock local clients -- you could have
-    # as many separate puppet scripts running as you want.
-    def lock
-        if @local
-            yield
-        else
-            #@@sync.synchronize(Sync::EX) do
-                disable(true)
-                begin
-                    yield
-                ensure
-                    enable(true)
-                end
-            #end
-        end
-    end
-
-    def locked?
-        return(FileTest.exists? Puppet[:puppetdlockfile])
-    end
-
-    def lockpid
-        if FileTest.exists? Puppet[:puppetdlockfile]
-            text = File.read(Puppet[:puppetdlockfile]).chomp
-            if text =~ /\d+/
-                return text.to_i
-            else
-                return 0
-            end
-        else
-            return 0
-        end
-    end
-
     # Mark that we should restart.  The Puppet module checks whether we're running,
     # so this only gets called if we're in the middle of a run.
     def restart
@@ -369,30 +314,13 @@ class Puppet::Client::MasterClient < Puppet::Client
 
     # The code that actually runs the configuration.  
     def run(tags = nil, ignoreschedules = false)
-        # Check if the lock is stale, so we can clear it
-        if locked?
-            pid = lockpid
-
-            if pid != 0
-                begin
-                    Process.kill(0, pid)
-                rescue Errno::ESRCH
-                    # No process with the given PID exists; stale lockfile
-                    File.unlink(Puppet[:puppetdlockfile])
-                    Puppet.notice("Stale lockfile %s left by process %i; removing" %
-                        [Puppet[:puppetdlockfile], pid])
-                    lockpid = false
-                else
-                    Puppet.notice "Locked by process %s" % pid
-                end
-            end
-        end
-
-        if locked?
+        lockfile = Puppet::Util::Pidlock.new(Puppet[:puppetdlockfile])
+        
+        if !lockfile.lock
             Puppet.notice "Lock file %s exists; skipping configuration run" %
-                Puppet[:puppetdlockfile]
+                lockfile.lockfile
         else
-            lock do
+            self.synchronize do
                 @running = true
                 @configtime = thinmark do
                     self.getconfig
@@ -408,6 +336,8 @@ class Puppet::Client::MasterClient < Puppet::Client
                 end
                 @running = false
             end
+            
+            lockfile.unlock
 
             # Did we get HUPped during the run?  If so, then restart now that we're
             # done with the run.

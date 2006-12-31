@@ -33,6 +33,7 @@ class TestServerRunner < Test::Unit::TestCase
     end
 
     def test_runner
+        FileUtils.mkdir_p(Puppet[:statedir])
         Puppet[:ignoreschedules] = false
         # Okay, make our manifest
         file = tempfile()

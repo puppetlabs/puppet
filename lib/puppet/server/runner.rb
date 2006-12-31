@@ -18,7 +18,7 @@ class Server
                 raise MissingMasterError, "Could not find the master client"
             end
 
-            if master.locked?
+            if Puppet::Util::Pidlock.new(Puppet[:puppetdlockfile]).locked?
                 Puppet.notice "Could not trigger run; already running"
                 return "running"
             end

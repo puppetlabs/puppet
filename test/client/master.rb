@@ -180,6 +180,7 @@ class TestMasterClient < Test::Unit::TestCase
     end
 
     def test_disable
+        FileUtils.mkdir_p(Puppet[:statedir])
         manifest = mktestmanifest
 
         master = mkmaster(manifest)
@@ -220,40 +221,9 @@ class TestMasterClient < Test::Unit::TestCase
         
     end
 
-    # Make sure the client correctly locks itself
-    def test_locking
-        manifest = mktestmanifest
-
-        master = nil
-
-        # First test with a networked master
-        client = Puppet::Client::MasterClient.new(
-            :Server => "localhost"
-        )
-
-        assert_nothing_raised do
-            client.lock do
-                pid = nil
-                assert(client.locked?, "Client is not locked")
-                assert(client.lockpid.is_a?(Integer), "PID #{client.lockpid} is, um, not a pid")
-            end
-        end
-        assert(! client.locked?)
-
-        # Now test with a local client
-        client = mkclient
-
-        assert_nothing_raised do
-            client.lock do
-                pid = nil
-                assert(! client.locked?, "Local client is locked")
-            end
-        end
-        assert(! client.locked?)
-    end
-
     # Make sure non-string facts don't make things go kablooie
     def test_nonstring_facts
+        FileUtils.mkdir_p(Puppet[:statedir])
         # Add a nonstring fact
         Facter.add("nonstring") do
             setcode { 1 }
