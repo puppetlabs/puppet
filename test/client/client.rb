@@ -170,6 +170,7 @@ class TestClient < Test::Unit::TestCase
     end
 
     def test_setpidfile
+        FileUtils.mkdir_p(Puppet[:rundir])
         $clientrun = false
         newclass = Class.new(Puppet::Client) do
             def run
