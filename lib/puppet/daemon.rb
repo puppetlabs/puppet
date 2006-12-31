@@ -248,7 +248,7 @@ module Puppet
             
             threadlock(:pidfile) do
                 unless Puppet::Util::Pidlock.new(pidfile).lock
-                    Puppet.err("Could not create PID file: %s" % [pidfile]
+                    Puppet.err("Could not create PID file: %s" % [pidfile])
                     exit(74)
                 end
             end
