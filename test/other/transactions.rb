@@ -888,6 +888,46 @@ class TestTransactions < Test::Unit::TestCase
         assert(trans.triggered?(c, :refresh),
             "Transaction did not store the trigger")
     end
+
+    def test_graph
+        Puppet.config.use(:puppet)
+        # Make a graph
+        graph = Puppet::PGraph.new
+        graph.add_edge!("a", "b")
+
+        # Create our transaction
+        trans = Puppet::Transaction.new(graph)
+
+        assert_nothing_raised do
+            trans.graph(graph, :testing)
+        end
+
+        dotfile = File.join(Puppet[:graphdir], "testing.dot")
+        assert(! FileTest.exists?(dotfile), "Enabled graphing even tho disabled")
+
+        # Now enable graphing
+        Puppet[:graph] = true
+
+        assert_nothing_raised do
+            trans.graph(graph, :testing)
+        end
+        assert(FileTest.exists?(dotfile), "Did not create graph.")
+    end
+
+    def test_created_graphs
+        FileUtils.mkdir_p(Puppet[:graphdir])
+        file = Puppet::Type.newfile(:path => tempfile, :content => "yay")
+        exec = Puppet::Type.type(:exec).create(:command => "echo yay", :path => ENV['PATH'],
+            :require => file)
+
+        Puppet[:graph] = true
+        assert_apply(file, exec)
+
+        %w{resources relationships expanded_relationships}.each do |name|
+            file = File.join(Puppet[:graphdir], "%s.dot" % name)
+            assert(FileTest.exists?(file), "graph for %s was not created" % name)
+        end
+    end
 end
 
 # $Id$

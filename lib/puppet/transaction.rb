@@ -13,6 +13,16 @@ class Transaction
 
     include Puppet::Util
 
+    Puppet.config.setdefaults(:puppet,
+        :graph => [false, "Whether to create dot graph files for the different
+            configuration graphs.  These dot files can be interpreted by tools
+            like OmniGraffle or dot (which is part of ImageMagick)."],
+        :graphdir => { :default => "$statedir/graphs",
+            :mode => 0775,
+            :owner => "$user",
+            :group => "$group",
+        }
+    )
     Puppet.config.setdefaults(:transaction,
         :tags => ["", "Tags to use to find resources.  If this is set, then
             only resources tagged with the specified tags will be applied.
@@ -334,6 +344,16 @@ class Transaction
         end
     end
 
+    # Produce the graph files if requested.
+    def graph(gr, name)
+        return unless Puppet[:graph]
+
+        file = File.join(Puppet[:graphdir], "%s.dot" % name.to_s)
+        File.open(file, "w") { |f|
+            f.puts gr.to_dot
+        }
+    end
+
     # this should only be called by a Puppet::Type::Component resource now
     # and it should only receive an array
     def initialize(resources)
@@ -342,6 +362,8 @@ class Transaction
         else
             @resources = resources.to_graph
         end
+
+        graph(@resources, :resources)
 
         @resourcemetrics = {
             :total => @resources.vertices.length,
@@ -420,9 +442,8 @@ class Transaction
                 graph.add_edge!(edge)
             end
         end
-        
-        # Then splice in the container information
-        graph.splice!(@resources, Puppet::Type::Component)
+
+        graph(graph, :relationships)
         
         # Lastly, add in any autorequires
         graph.vertices.each do |vertex|
@@ -432,6 +453,11 @@ class Transaction
                 end
             end
         end
+        
+        # Then splice in the container information
+        graph.splice!(@resources, Puppet::Type::Component)
+
+        graph(graph, :expanded_relationships)
         
         return graph
     end
