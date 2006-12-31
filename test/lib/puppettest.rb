@@ -1,3 +1,8 @@
+# Add .../test/lib
+$LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
+# Add .../lib
+$LOAD_PATH.unshift(File.expand_path(File.join(File.dirname(__FILE__), '../../lib')))
+
 require 'puppet'
 require 'test/unit'
 
@@ -103,7 +108,7 @@ module PuppetTest
         @@cleaners = []
 
         # If we're running under rake, then disable debugging and such.
-        if rake? and ! Puppet[:debug]
+        if rake? or ! Puppet[:debug]
             Puppet::Log.close
             Puppet::Log.newdestination tempfile()
             Puppet[:httplog] = tempfile()
