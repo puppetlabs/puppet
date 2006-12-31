@@ -238,40 +238,19 @@ module Puppet
         # Remove the pid file
         def rmpidfile
             threadlock(:pidfile) do
-                if defined? @pidfile and @pidfile and FileTest.exists?(@pidfile)
-                    begin
-                        File.unlink(@pidfile)
-                    rescue => detail
-                        Puppet.err "Could not remove PID file %s: %s" %
-                            [@pidfile, detail]
-                    end
-                end
+                Puppet::Util::Pidlock.new(pidfile).unlock or Puppet.err "Could not remove PID file %s" % [pidfile]
             end
         end
 
         # Create the pid file.
         def setpidfile
             return unless Puppet[:setpidfile]
+            
             threadlock(:pidfile) do
-                Puppet.config.use(:puppet)
-                @pidfile = self.pidfile
-                if FileTest.exists?(@pidfile)
-                    if defined? $setpidfile
-                        return
-                    else
-                        raise Puppet::Error, "A PID file already exists for #{Puppet.name}
-    at #{@pidfile}.  Not starting."
-                    end
-                end
-
-                Puppet.info "Creating PID file to %s" % @pidfile
-                begin
-                    File.open(@pidfile, "w") { |f| f.puts $$ }
-                rescue => detail
-                    Puppet.err "Could not create PID file: %s" % detail
+                unless Puppet::Util::Pidlock.new(pidfile).lock
+                    Puppet.err("Could not create PID file: %s" % [pidfile]
                     exit(74)
                 end
-                $setpidfile = true
             end
         end
 
