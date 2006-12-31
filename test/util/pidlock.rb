@@ -37,6 +37,8 @@ class TestPuppetUtilPidlock < Test::Unit::TestCase
 		assert l.locked?
 		assert l.mine?
 		assert !l.anonymous?
+		# It's OK to call lock multiple times
+		assert l.lock
 		assert l.unlock
 		assert !l.locked?
 		assert !l.mine?

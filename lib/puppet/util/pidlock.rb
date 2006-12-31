@@ -25,7 +25,7 @@ class Puppet::Util::Pidlock
 		opts = {:anonymous => false}.merge(opts)
 
 		if locked?
-			false
+			mine?
 		else
 			if opts[:anonymous]
 				File.open(@lockfile, 'w') { |fd| true }
