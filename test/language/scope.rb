@@ -460,7 +460,6 @@ class TestScope < Test::Unit::TestCase
     # scope.
     def test_storeandcollect
         Puppet[:storeconfigs] = true
-        Puppet::Rails.clear
         Puppet::Rails.init
         sleep 1
         children = []

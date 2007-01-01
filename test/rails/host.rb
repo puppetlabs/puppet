@@ -106,9 +106,22 @@ class TestRailsHost < Test::Unit::TestCase
 
         assert_equal(20, count, "Did not get enough resources")
 
-        # Now remove a couple of resources and change a fact
+        # Now remove a couple of resources
         resources.reject! { |r| r.title =~ /file9/ }
+
+        # Change a few resources
+        resources.find_all { |r| r.title =~ /file8/ }.each do |r|
+            r.set("loglevel", "notice", r.source)
+        end
+
+        # And add a new resource
+        resources << mkresource(:type => "file",
+            :title => "/tmp/file_added",
+            :params => {:owner => "user_added"})
+
+        # And change some facts
         facts["test2"] = "yaytest"
+        facts["test3"] = "funtest"
         facts.delete("test1")
         host = nil
         assert_nothing_raised {
@@ -127,6 +140,22 @@ class TestRailsHost < Test::Unit::TestCase
 
         assert(! host.resources.find(:all).detect { |r| r.title =~ /file9/ },
             "Removed resources are still present")
+
+        res = host.resources.find_by_title("/tmp/file_added")
+        assert(res, "New resource was not added")
+        p res.parameters
+        assert_equal("user_added", res.parameter("owner"), "user info was not stored")
+
+        count = 0
+        host.resources.find(:all).find_all { |r| r.title =~ /file8/ }.each do |r|
+            assert_equal("notice", r.parameter("loglevel"),
+                "loglevel was not added")
+            if r.type == "file"
+                assert_equal("fake", r.parameter("owner"), "owner was not modified")
+            else
+                assert_equal("fake", r.parameter("user"), "user was not modified")
+            end
+        end
     end
     else
         $stderr.puts "Install Rails for Rails and Caching tests"

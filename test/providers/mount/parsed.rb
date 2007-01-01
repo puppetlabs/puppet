@@ -190,12 +190,12 @@ class TestParsedMounts < Test::Unit::TestCase
         }
         assert(! obj.mounted?, "FS still mounted")
         # Check the actual output of df
-        assert(! obj.df(nil).include?(fs), "%s is still listed in df" % fs)
+        assert(! obj.df().include?(fs), "%s is still listed in df" % fs)
         assert_nothing_raised {
             obj.mount
         }
         assert(obj.mounted?, "FS not mounted")
-        assert(obj.df(nil).include?(fs), "%s is not listed in df" % fs)
+        assert(obj.df().include?(fs), "%s is not listed in df" % fs)
 
     end
     end
