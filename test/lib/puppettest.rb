@@ -108,7 +108,8 @@ module PuppetTest
         @@cleaners = []
 
         # If we're running under rake, then disable debugging and such.
-        if rake? or ! Puppet[:debug]
+        #if rake? or ! Puppet[:debug]
+        if rake?
             Puppet::Log.close
             Puppet::Log.newdestination tempfile()
             Puppet[:httplog] = tempfile()
