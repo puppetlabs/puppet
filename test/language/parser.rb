@@ -266,7 +266,6 @@ class TestParser < Test::Unit::TestCase
 
     # Verify that we can parse collections
     def test_collecting
-        Puppet[:storeconfigs] = true
         text = "Port <| |>"
         parser = mkparser
         parser.string = text
@@ -427,8 +426,13 @@ file { "/tmp/yayness":
 
     # Make sure virtual and exported resources work appropriately.
     def test_virtualresources
-        Puppet[:storeconfigs] = true
-        [:virtual, :exported].each do |form|
+        tests = [:virtual]
+        if Puppet.features.rails?
+            Puppet[:storeconfigs] = true
+            tests << :exported
+        end
+
+        tests.each do |form|
             parser = mkparser
 
             if form == :virtual
@@ -495,8 +499,13 @@ file { "/tmp/yayness":
     end
 
     def test_collections
-        Puppet[:storeconfigs] = true
-        [:virtual, :exported].each do |form|
+        tests = [:virtual]
+        if Puppet.features.rails?
+            Puppet[:storeconfigs] = true
+            tests << :exported
+        end
+
+        tests.each do |form|
             parser = mkparser
 
             if form == :virtual

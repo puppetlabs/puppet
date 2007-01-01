@@ -34,7 +34,7 @@ class TestUtilGraph < Test::Unit::TestCase
     end
     
     def test_recursive_to_graph
-        one, two, middle, top = build_tree
+        one, two, three, middle, top = build_tree
         
         graph = nil
         assert_nothing_raised do
@@ -52,9 +52,10 @@ class TestUtilGraph < Test::Unit::TestCase
         end
         
         # Now make sure we correctly retrieve the leaves from each container
-        {top => %w{a b c d e f g h},
+        {top => %w{a b c d e f g h i j},
          one => %w{a b},
          two => %w{c d},
+         three => %w{i j},
          middle => %w{c d e f}}.each do |cont, list|
             leaves = nil
             assert_nothing_raised do
