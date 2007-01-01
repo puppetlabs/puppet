@@ -29,7 +29,6 @@ class TestMounts < Test::Unit::TestCase
 
         def destroy
             @ensure = :absent
-            @mounted = false
         end
 
         def exists?
@@ -41,15 +40,15 @@ class TestMounts < Test::Unit::TestCase
         end
 
         def mounted?
-            self.mounted
+            @ensure == :mounted
         end
 
         def mount
-            self.mounted = true
+            @ensure = :mounted
         end
 
         def unmount
-            self.mounted = false
+            @ensure = :present
         end
     end
 
@@ -123,8 +122,27 @@ class TestMounts < Test::Unit::TestCase
 
         # Now modify a field
         mount[:dump] = 2
+        mount[:options] = "defaults,ro"
 
-        assert_events([:mount_changed], mount)
+        assert_events([:mount_changed,:mount_changed], mount)
+        assert_equal(2, mount.provider.dump, "Changes did not get flushed")
+        assert_equal("defaults,ro", mount.provider.options, "Changes did not get flushed")
+
+        # Now modify a field in addition to change :ensure.
+        mount[:ensure] = :present
+        mount[:options] = "defaults"
+
+        assert_apply(mount)
+        assert(! mount.provider.mounted?, "mount was still mounted")
+        assert_equal("defaults", mount.provider.options)
+
+        # Now remount it and make sure changes get flushed then, too.
+        mount[:ensure] = :mounted
+        mount[:options] = "aftermount"
+
+        assert_apply(mount)
+        assert(mount.provider.mounted?, "mount was not mounted")
+        assert_equal("aftermount", mount.provider.options)
     end
 
     # Make sure fs mounting behaves appropriately.  This is more a test of

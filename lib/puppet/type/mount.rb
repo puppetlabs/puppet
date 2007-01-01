@@ -14,6 +14,7 @@ module Puppet
 
             newvalue(:present) do
                 if provider.mounted?
+                    syncothers()
                     provider.unmount
                     return :mount_unmounted
                 else
@@ -36,9 +37,8 @@ module Puppet
                 if self.is == :absent or self.is.nil?
                     provider.create
                 end
-                # We have to flush any changes to disk.
-                @parent.flush
 
+                syncothers()
                 provider.mount
             end
 
@@ -56,7 +56,20 @@ module Puppet
                 else
                     @is = super()
                 end
+            end
 
+            def syncothers
+                # We have to flush any changes to disk.
+                oos = @parent.send(:states).find_all do |st|
+                    if st.name == :ensure
+                        false
+                    else
+                        ! st.insync?
+                    end
+                end.each { |st| st.sync }.length
+                if oos > 0
+                    @parent.flush
+                end
             end
         end
 
