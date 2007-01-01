@@ -206,7 +206,14 @@ class Puppet::Parser::Resource
     end
 
     # You have to pass a Resource::Param to this.
-    def set(param)
+    def set(param, value = nil, source = nil)
+        if value and source
+            param = Puppet::Parser::Resource::Param.new(
+                :name => param, :value => value, :source => source
+            )
+        elsif ! param.is_a?(Puppet::Parser::Resource::Param)
+            raise ArgumentError, "Must pass a parameter or all necessary values"
+        end
         # Because definitions are now parse-time, I can paramcheck immediately.
         paramcheck(param.name)
 
