@@ -529,7 +529,8 @@ class TestFile < Test::Unit::TestCase
             File.open(f, "w") do |o| o.puts "" end
         end
         assert_nothing_raised() { ret = dir.localrecurse(true) }
-        assert_equal(files.sort, ret.collect { |f| f.title }, "child object was returned twice")
+        assert_equal(files.sort, ret.collect { |f| f.title }.sort,
+            "child object was returned twice")
         
         # Clean everything up and start over
         files << test
@@ -801,7 +802,7 @@ class TestFile < Test::Unit::TestCase
 
         assert(file, "Could not retrieve file object")
 
-        assert_equal("file=%s" % file.title, file.path)
+        assert_equal("/%s" % file.ref, file.path)
     end
 
     def test_autorequire
@@ -1133,7 +1134,7 @@ class TestFile < Test::Unit::TestCase
         end
         assert_nothing_raised { ret = link.linkrecurse(true) }
 
-        assert_equal(returns.sort, ret.collect { |f| f.title },
+        assert_equal(returns.sort, ret.collect { |f| f.title }.sort,
             "Did not get links back")
         
         returns.each do |path|

@@ -47,7 +47,7 @@ Puppet::Type.type(:package).provide :rpm do
             :description => "DESCRIPTION"
         }
 
-        cmd = ["-q", @model[:name], "--qf", '%{NAME} #{VERSIONSTRING}\n']
+        cmd = ["-q", @model[:name], "--qf", "%{NAME} #{VERSIONSTRING}\n"]
 
         begin
             output = rpm *cmd

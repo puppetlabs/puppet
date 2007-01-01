@@ -1,6 +1,7 @@
 # helper functions for daemons
 
 require 'puppet'
+require 'puppet/util/pidlock'
 
 module Puppet
     # A module that handles operations common to all daemons.  This is included
