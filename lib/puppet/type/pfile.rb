@@ -191,7 +191,7 @@ module Puppet
             newvalues(:true, :false)
         end
 
-        newparam(:sourcematch) do
+        newparam(:sourceselect) do
             desc "Whether to copy all valid sources, or just the first one."
 
             defaultto :first
@@ -874,7 +874,7 @@ module Puppet
                     self.newchild(name, false, args)
                 }.reject {|c| c.nil? }
 
-                if self[:sourcematch] == :first
+                if self[:sourceselect] == :first
                     return result
                 end
             end

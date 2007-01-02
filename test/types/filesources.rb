@@ -936,7 +936,7 @@ class TestFileSources < Test::Unit::TestCase
         assert_equal("yayness\n", File.read(newfile))
     end
 
-    def test_sourcematch
+    def test_sourceselect
         dest = tempfile()
         sources = []
         2.times { |i|
@@ -961,7 +961,7 @@ class TestFileSources < Test::Unit::TestCase
         obj = Puppet::Type.newfile(:path => dest, :recurse => true,
             :source => sources)
 
-        assert_equal(:first, obj[:sourcematch], "sourcematch has the wrong default")
+        assert_equal(:first, obj[:sourceselect], "sourceselect has the wrong default")
         # First, make sure we default to just copying file1
         assert_apply(obj)
 
@@ -970,9 +970,9 @@ class TestFileSources < Test::Unit::TestCase
         assert(FileTest.exists?(file3), "File from source 1 was not copied")
         assert_equal("0", File.read(file3), "file3 got wrong contents")
 
-        # Now reset sourcematch
+        # Now reset sourceselect
         assert_nothing_raised do
-            obj[:sourcematch] = :all
+            obj[:sourceselect] = :all
         end
         File.unlink(file1)
         File.unlink(file3)
