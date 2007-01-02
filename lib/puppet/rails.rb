@@ -36,11 +36,13 @@ module Puppet::Rails
         case Puppet[:dbadapter]
         when "sqlite3":
             args[:dbfile] = Puppet[:dblocation]
-        when "mysql":
+        when "mysql", "postgresql":
             args[:host]     = Puppet[:dbserver]
             args[:username] = Puppet[:dbuser]
             args[:password] = Puppet[:dbpassword]
             args[:database] = Puppet[:dbname]
+        else
+            raise ArgumentError, "Invalid db adapter %s" % Puppet[:dbadapter]
         end
         args
     end
