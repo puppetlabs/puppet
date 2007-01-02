@@ -53,28 +53,37 @@ Puppet::Type.type(:package).provide :dpkg do
         fields = [:desired, :error, :status, :name, :ensure]
 
         hash = {}
+
         # list out our specific package
-        open("| #{command(:dpkgquery)} -W --showformat '${Status} ${Package} ${Version}\\n' %s" % @model[:name]) { |process|
-            # our regex for matching dpkg-query output
-            regex = %r{^(\S+) (\S+) (\S+) (\S+) (\S+)$}
+        begin
+            output = dpkgquery("-W", "--showformat",
+                '${Status} ${Package} ${Version}\\n', @model[:name]
+            )
+        rescue Puppet::ExecutionFailure
+            # dpkg-query exits 1 if the package is not found.
+            return {:ensure => :absent, :status => 'missing',
+                :name => @model[:name], :error => 'ok'}
 
-            lines = process.readlines.collect {|l| l.chomp }
+        end
+        # Our regex for matching dpkg-query output.  We could probably just
+        # use split here, but I'm not positive that dpkg-query will never
+        # return whitespace.
+        regex = %r{^(\S+) (\S+) (\S+) (\S+) (\S+)$}
 
-            line = lines[0]
-            
-            if match = regex.match(line)
-                fields.zip(match.captures) { |field,value|
-                    hash[field] = value
-                }
-            else
-                hash = {:ensure => :absent, :status => 'missing', :name => @model[:name], :error => 'ok'}
-            end
-        }
+        line = output.split("\n").shift.chomp
+        
+        if match = regex.match(line)
+            fields.zip(match.captures) { |field,value|
+                hash[field] = value
+            }
+        else
+            raise Puppet::DevError, "Failed to handle dpkg-query output"
+        end
 
         if hash[:error] != "ok"
             raise Puppet::PackageError.new(
                 "Package %s, version %s is in error state: %s" %
-            [hash[:name], hash[:ensure], hash[:error]]
+                    [hash[:name], hash[:ensure], hash[:error]]
             )
         end
 
