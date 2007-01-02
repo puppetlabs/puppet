@@ -3,6 +3,9 @@ Puppet::Type.type(:package).provide :rpm do
     desc "RPM packaging support; should work anywhere with a working ``rpm``
         binary."
 
+    # The query format by which we identify installed packages
+    IDSTRING = "%{NAME}-%{VERSION}-%{RELEASE}"
+
     VERSIONSTRING = "%{VERSION}-%{RELEASE}"
 
     commands :rpm => "rpm"
@@ -47,7 +50,7 @@ Puppet::Type.type(:package).provide :rpm do
             :description => "DESCRIPTION"
         }
 
-        cmd = ["-q", @model[:name], "--qf", "%{NAME} #{VERSIONSTRING}\n"]
+        cmd = ["-q", @model[:name], "--qf", "#{IDSTRING} #{VERSIONSTRING}\n"]
 
         begin
             output = rpm *cmd
@@ -78,9 +81,8 @@ Puppet::Type.type(:package).provide :rpm do
             @model.fail "RPMs must specify a package source"
         end
         
-        cmd = "#{command(:rpm)} -q --qf '#{VERSIONSTRING}' -p #{@model[:source]}"
+        cmd = [command(:rpm), "-q", "--qf", "#{VERSIONSTRING}", "-p", "#{@model[:source]}"]
         version = execfail(cmd, Puppet::Error)
-
         return version
     end
 
@@ -89,13 +91,19 @@ Puppet::Type.type(:package).provide :rpm do
         unless source = @model[:source]
             @model.fail "RPMs must specify a package source"
         end
+        if @model.should(:ensure) == @model.is(:ensure) ||
+           @model.should(:ensure) == :latest && @model.is(:ensure) == latest
+            # RPM gets pissy if you try to install an already 
+            # installed package
+            return
+        end
 
         flag = "-i"
         if @model.is(:ensure) != :absent
             flag = "-U"
         end
 
-        rpm flag, source
+        rpm flag, "--oldpackage", source
     end
 
     def uninstall
