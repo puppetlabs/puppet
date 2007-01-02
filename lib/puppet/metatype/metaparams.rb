@@ -266,14 +266,16 @@ class Puppet::Type
                 tname, name = value
                 object = nil
                 if type = Puppet::Type.type(tname)
-                    unless object = type[name]
-                        self.fail "Could not retrieve object '%s' of type '%s'" %
-                            [name,type]
-                    end
+                    object = type[name]
                 else # try to treat it as a component
-                    unless object = Puppet::Type::Component["#{tname}[#{name}]"]
-                        self.fail "Could not find object %s[%s]" % [tname, name]
-                    end
+                    object = Puppet::Type::Component["#{tname}[#{name}]"]
+                end
+                
+                # Either of the two retrieval attempts could have returned
+                # nil.
+                unless object
+                    self.fail "Could not retrieve dependency '%s[%s]'" %
+                        [type.capitalize, name]
                 end
                 
                 self.debug("subscribes to %s" % [object])
