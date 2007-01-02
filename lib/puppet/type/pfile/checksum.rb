@@ -314,7 +314,6 @@ module Puppet
                 # end
                 
                 if @is == sum
-                    info "Sums are already equal"
                     return false
                 end
 

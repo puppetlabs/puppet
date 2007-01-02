@@ -935,6 +935,55 @@ class TestFileSources < Test::Unit::TestCase
         assert(FileTest.exists?(newfile), "File did not get created")
         assert_equal("yayness\n", File.read(newfile))
     end
+
+    def test_sourcematch
+        dest = tempfile()
+        sources = []
+        2.times { |i|
+            i = i + 1
+            source = tempfile()
+            sources << source
+            file = File.join(source, "file%s" % i)
+            Dir.mkdir(source)
+            File.open(file, "w") { |f| f.print "yay" }
+        }
+        file1 = File.join(dest, "file1")
+        file2 = File.join(dest, "file2")
+        file3 = File.join(dest, "file3")
+
+        # Now make different files with the same name in each source dir
+        sources.each_with_index do |source, i|
+            File.open(File.join(source, "file3"), "w") { |f|
+                f.print i.to_s
+            }
+        end
+
+        obj = Puppet::Type.newfile(:path => dest, :recurse => true,
+            :source => sources)
+
+        assert_equal(:first, obj[:sourcematch], "sourcematch has the wrong default")
+        # First, make sure we default to just copying file1
+        assert_apply(obj)
+
+        assert(FileTest.exists?(file1), "File from source 1 was not copied")
+        assert(! FileTest.exists?(file2), "File from source 2 was copied")
+        assert(FileTest.exists?(file3), "File from source 1 was not copied")
+        assert_equal("0", File.read(file3), "file3 got wrong contents")
+
+        # Now reset sourcematch
+        assert_nothing_raised do
+            obj[:sourcematch] = :all
+        end
+        File.unlink(file1)
+        File.unlink(file3)
+        Puppet.err :yay
+        assert_apply(obj)
+
+        assert(FileTest.exists?(file1), "File from source 1 was not copied")
+        assert(FileTest.exists?(file2), "File from source 2 was copied")
+        assert(FileTest.exists?(file3), "File from source 1 was not copied")
+        assert_equal("0", File.read(file3), "file3 got wrong contents")
+    end
 end
 
 # $Id$

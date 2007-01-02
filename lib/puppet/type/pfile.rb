@@ -190,6 +190,14 @@ module Puppet
 
             newvalues(:true, :false)
         end
+
+        newparam(:sourcematch) do
+            desc "Whether to copy all valid sources, or just the first one."
+
+            defaultto :first
+
+            newvalues(:first, :all)
+        end
         
         attr_accessor :bucket
 
@@ -612,6 +620,7 @@ module Puppet
                     args.each { |var,value|
                         next if var == :path
                         next if var == :name
+
                         # behave idempotently
                         unless child.should(var) == value
                             child[var] = value
@@ -829,6 +838,8 @@ module Puppet
             
             ignore = self[:ignore]
 
+            result = []
+            found = []
             @states[:source].should.each do |source|
                 sourceobj, path = uri2obj(source)
 
@@ -844,19 +855,30 @@ module Puppet
                 end
             
                 # Now create a new child for every file returned in the list.
-                return desc.split("\n").collect { |line|
+                result += desc.split("\n").collect { |line|
                     file, type = line.split("\t")
                     next if file == "/" # skip the listing object
                     name = file.sub(/^\//, '')
+
+                    # This makes sure that the first source *always* wins
+                    # for conflicting files.
+                    next if found.include?(name)
+
                     args = {:source => source + file}
                     if type == file
                         args[:recurse] = nil
                     end
 
+                    found << name
+
                     self.newchild(name, false, args)
                 }.reject {|c| c.nil? }
+
+                if self[:sourcematch] == :first
+                    return result
+                end
             end
-            return []
+            return result
         end
 
         # Set the checksum, from another state.  There are multiple states that
