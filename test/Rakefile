@@ -1,4 +1,9 @@
-require 'rake/testtask'
+begin
+    require 'rake/testtask'
+rescue LoadError
+    $stderr.puts "You must have 'rake' installed to use this file"
+    exit(1)
+end
 require 'find'
 
 include Find
