@@ -17,11 +17,7 @@ class Transaction
         :graph => [false, "Whether to create dot graph files for the different
             configuration graphs.  These dot files can be interpreted by tools
             like OmniGraffle or dot (which is part of ImageMagick)."],
-        :graphdir => { :default => "$statedir/graphs",
-            :mode => 0775,
-            :owner => "$user",
-            :group => "$group",
-        }
+        :graphdir => ["$statedir/graphs", "Where to store dot-outputted graphs."]
     )
     Puppet.config.setdefaults(:transaction,
         :tags => ["", "Tags to use to find resources.  If this is set, then
