@@ -43,13 +43,10 @@ Puppet::Type.type(:package).provide :rpm do
         return packages
     end
 
+    # Find the fully versioned package name and the version alone. Returns
+    # a hash with entries :instance => fully versioned package name, and 
+    # :ensure => version-release
     def query
-        fields = {
-            :name => "NAME",
-            :version => "VERSION",
-            :description => "DESCRIPTION"
-        }
-
         cmd = ["-q", @model[:name], "--qf", "#{IDSTRING} #{VERSIONSTRING}\n"]
 
         begin
@@ -59,8 +56,7 @@ Puppet::Type.type(:package).provide :rpm do
         end
 
         regex = %r{^(\S+)\s+(\S+)}
-        #fields = [:name, :ensure, :description]
-        fields = [:name, :ensure]
+        fields = [:instance, :ensure]
         hash = {}
         if match = regex.match(output)
             fields.zip(match.captures) { |field,value|
@@ -107,11 +103,15 @@ Puppet::Type.type(:package).provide :rpm do
     end
 
     def uninstall
-        rpm "-e", @model[:name]
+        rpm "-e", @model[:instance]
     end
 
     def update
         self.install
+    end
+
+    def versionable?
+        true
     end
 end
 
