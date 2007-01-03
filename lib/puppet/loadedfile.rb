@@ -53,7 +53,11 @@ module Puppet
         def stamp
             if @stamp.nil? or (Time.now.to_i - @statted >= Puppet[:filetimeout])
                 @statted = Time.now.to_i
-                @stamp = File.stat(@file).ctime
+                begin
+                    @stamp = File.stat(@file).ctime
+                rescue Errno::ENOENT
+                    @stamp = Time.now
+                end
             end
             return @stamp
         end

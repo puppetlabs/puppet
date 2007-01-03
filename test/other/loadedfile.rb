@@ -79,6 +79,28 @@ class TestLoadedFile < Test::Unit::TestCase
         assert_equal(File.stat(file).ctime, obj.stamp,
             "File did not refresh")
     end
+
+    # Testing #394.
+    def test_changed_missing_file
+        file = tempfile()
+        File.open(file, "w") { |f| f.puts "" }
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet::LoadedFile.new(file)
+        }
+        Puppet[:filetimeout] = -10
+
+        assert_nothing_raised {
+            obj.changed?
+        }
+
+        # Now remove the file
+        File.unlink(file)
+
+        assert_nothing_raised("removed file threw an error") {
+            assert(obj.changed?, "File was not considered changed when missing")
+        }
+    end
 end
 
 # $Id$
