@@ -6,7 +6,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm do
 
     # Install a package using 'yum'.
     def install
-        output = yum "-y", :install, @model[:name]
+        output = yum "-d", "0", "-e", "0", "-y", :install, @model[:name]
 
         unless self.query
             raise Puppet::Error.new(
@@ -17,7 +17,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm do
 
     # What's the latest package version available?
     def latest
-        output = yum :list, :available, @model[:name]
+        output = yum "-d", "0", "-e", "0", :list, :available, @model[:name]
 
         if output =~ /^#{@model[:name]}\S+\s+(\S+)\s/
             return $1
