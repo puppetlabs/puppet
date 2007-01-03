@@ -37,7 +37,7 @@ class Tag < ActiveRecord::Base
   end
   
   def on(taggable)
-    taggings.create :taggable => taggable
+    taggings.build :taggable => taggable
   end
   
   def ==(comparison_object)
