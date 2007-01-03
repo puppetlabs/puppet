@@ -544,7 +544,8 @@ class Transaction
 
     # Set an edge to be triggered when we evaluate its target.
     def set_trigger(edge)
-        return unless edge.callback
+        return unless method = edge.callback
+        return unless edge.target.respond_to?(method)
         if edge.target.respond_to?(:ref)
             edge.source.info "Scheduling %s of %s" % [edge.callback, edge.target.ref]
         end

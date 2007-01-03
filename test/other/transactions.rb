@@ -928,6 +928,50 @@ class TestTransactions < Test::Unit::TestCase
             assert(FileTest.exists?(file), "graph for %s was not created" % name)
         end
     end
+    
+    def test_set_target
+        file = Puppet::Type.newfile(:path => tempfile(), :content => "yay")
+        exec1 = Puppet::Type.type(:exec).create :command => "/bin/echo exec1"
+        exec2 = Puppet::Type.type(:exec).create :command => "/bin/echo exec2"
+        trans = Puppet::Transaction.new(newcomp(file, exec1, exec2))
+        
+        # First try it with an edge that has no callback
+        edge = Puppet::Relationship.new(file, exec1)
+        assert_nothing_raised { trans.set_trigger(edge) }
+        assert(! trans.targeted?(exec1), "edge with no callback resulted in a target")
+        
+        # Now with an edge that has an unsupported callback
+        edge = Puppet::Relationship.new(file, exec1, :callback => :nosuchmethod, :event => :ALL_EVENTS)
+        assert_nothing_raised { trans.set_trigger(edge) }
+        assert(! trans.targeted?(exec1), "edge with invalid callback resulted in a target")
+        
+        # Lastly, with an edge with a supported callback
+        edge = Puppet::Relationship.new(file, exec1, :callback => :refresh, :event => :ALL_EVENTS)
+        assert_nothing_raised { trans.set_trigger(edge) }
+        assert(trans.targeted?(exec1), "edge with valid callback did not result in a target")
+    end
+    
+    # Testing #401 -- transactions are calling refresh() on classes that don't support it.
+    def test_callback_availability
+        $called = []
+        klass = Puppet::Type.newtype(:norefresh) do
+            newparam(:name, :namevar => true) {}
+            def method_missing(method, *args)
+                $called << method
+            end
+        end
+        cleanup do
+            $called = nil
+            Puppet::Type.rmtype(:norefresh)
+        end
+
+        file = Puppet::Type.newfile :path => tempfile(), :content => "yay"
+        one = klass.create :name => "one", :subscribe => file
+        
+        assert_apply(file, one)
+        
+        assert(! $called.include?(:refresh), "Called refresh when it wasn't set as a method")
+    end
 end
 
 # $Id$
