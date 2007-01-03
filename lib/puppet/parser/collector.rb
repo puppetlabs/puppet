@@ -17,6 +17,9 @@ class Puppet::Parser::Collector
 
         # We're going to collect objects from rails, but we don't want any
         # objects from this host.
+        unless ActiveRecord::Base.connected?
+            Puppet::Rails.init
+        end
         host = Puppet::Rails::Host.find_by_name(@scope.host)
 
         args = {}

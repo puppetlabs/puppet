@@ -60,6 +60,7 @@ module Puppet::Rails
             Puppet.config.use(:puppet)
 
             ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
+            ActiveRecord::Base.allow_concurrency = true
 
             begin
                 ActiveRecord::Base.establish_connection(database_arguments())

@@ -16,7 +16,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     def tags=(tags)
         tags.each do |tag|   
             self.tag_with tag
-	end
+        end
     end
 
     def file=(file)

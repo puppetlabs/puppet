@@ -778,7 +778,9 @@ class Puppet::Parser::Interpreter
                 "storeconfigs is enabled but rails is unavailable"
         end
 
-        Puppet::Rails.init
+        unless ActiveRecord::Base.connected?
+            Puppet::Rails.init
+        end
 
         # Fork the storage, since we don't need the client waiting
         # on that.  How do I avoid this duplication?
