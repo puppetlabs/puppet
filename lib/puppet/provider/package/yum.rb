@@ -17,9 +17,9 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm do
 
     # What's the latest package version available?
     def latest
-        output = yum :list, :available, @model[:name] 
+        output = yum :list, :available, @model[:name]
 
-        if output =~ /#{@model[:name]}\S+\s+(\S+)\s/
+        if output =~ /^#{@model[:name]}\S+\s+(\S+)\s/
             return $1
         else
             # Yum didn't find updates, pretend the current
