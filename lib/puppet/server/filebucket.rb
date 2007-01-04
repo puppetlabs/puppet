@@ -13,14 +13,17 @@ module Puppet
 class Server
     class BucketError < RuntimeError; end
     class FileBucket < Handler
-        Puppet.config.setdefaults("filebucket",
+        Puppet.config.setdefaults("puppetmasterd",
             :bucketdir => {
                 :default => "$vardir/bucket",
                 :mode => 0750,
                 :owner => "$user",
                 :group => "$group",
                 :desc => "Where FileBucket files are stored."
-            },
+            }
+        )
+            
+        Puppet.config.setdefaults("filebucket",
             :clientbucketdir => {
                 :default => "$vardir/clientbucket",
                 :mode => 0750,
