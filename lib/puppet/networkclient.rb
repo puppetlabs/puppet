@@ -110,10 +110,7 @@ module Puppet
             def ca_file=(cafile)
                 @http.ca_file = cafile
                 store = OpenSSL::X509::Store.new
-                cacert = OpenSSL::X509::Certificate.new(
-                    File.read(cafile)
-                )
-                store.add_cert(cacert) 
+                store.add_file(cafile)
                 store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
                 @http.cert_store = store
             end

@@ -60,7 +60,7 @@ module Puppet
                 store = OpenSSL::X509::Store.new
                 store.purpose = OpenSSL::X509::PURPOSE_ANY
                 store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
-                store.add_cert(@cacert)
+                store.add_file(@cacertfile)
                 store.add_crl(crl)
                 return store
             end
