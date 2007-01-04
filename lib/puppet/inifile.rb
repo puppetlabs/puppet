@@ -5,6 +5,9 @@
 # something has changed are written back to disk
 # Great care is taken to preserve comments and blank lines from the original
 # files
+
+require 'puppet/filetype'
+
 module Puppet
     module IniConfig
 
