@@ -5,6 +5,8 @@
 # something has changed are written back to disk
 # Great care is taken to preserve comments and blank lines from the original
 # files
+# 
+# The parsing tries to stay close to python's ConfigParser
 
 require 'puppet/filetype'
 
@@ -106,20 +108,29 @@ module Puppet
                     raise "Could not find #{file}"
                 end
 
-                section = nil
+                section = nil   # The name of the current section
+                optname = nil   # The name of the last option in section
                 line = 0
                 @files[file] = []
                 text.each_line do |l|
                     line += 1
-                    if l =~ /^\[(.+)\]$/
-                        section.mark_clean unless section.nil?
-                        section = add_section($1, file)
-                    elsif l =~ /^(\s*\#|\s*$)/
+                    if l.strip.empty? || "#;".include?(l[0,1]) ||
+                            (l.split(nil, 2)[0].downcase == "rem" && 
+                             l[0,1].downcase == "r")
+                        # Whitespace or comment
                         if section.nil?
                             @files[file] << l
                         else
                             section.add_line(l)
                         end
+                    elsif " \t\r\n\f".include?(l[0,1]) && section && optname
+                        # continuation line
+                        section[optname] += "\n" + l.chomp
+                    elsif l =~ /^\[([^\]]+)\]/
+                        # section heading
+                        section.mark_clean unless section.nil?
+                        section = add_section($1, file)
+                        optname = nil
                     elsif l =~ /^\s*([^\s=]+)\s*\=(.+)$/
                         # We allow space around the keys, but not the values
                         # For the values, we don't know if space is significant
@@ -127,12 +138,9 @@ module Puppet
                             raise "#{file}:#{line}:Key/value pair outside of a section for key #{$1}"
                         else
                             section[$1] = $2
+                            optname = $1
                         end
                     else
-                        # FIXME: We can't deal with continuation lines
-                        # that at least yum allows (lines that start with
-                        # whitespace, and that should really be appended
-                        # to the value of the previous key)
                         raise "#{file}:#{line}: Can't parse '#{l.chomp}'"
                     end
                 end

@@ -37,6 +37,7 @@ class TestYumRepo < Test::Unit::TestCase
         assert_equal('New description', inifile['development']['name'])
         assert_equal('Fedora Core $releasever - $basearch - Base',
                      inifile['base']['name'])
+        assert_equal("foo\n  bar\n  baz", inifile['base']['exclude'])
         assert_equal(['base', 'development', 'main'],
                      all_sections(inifile))
     end
