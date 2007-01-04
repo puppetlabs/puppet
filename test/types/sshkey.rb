@@ -75,10 +75,26 @@ class TestSSHKey < Test::Unit::TestCase
 
     def test_simplekey
         key = mkkey
+        file = tempfile()
+        key[:target] = file
+        key[:provider] = :parsed
 
         assert_apply(key)
-
+        
+        assert_events([], key, "created events on in-sync key")
+        
         assert(key.provider.exists?, "Key did not get created")
+        
+        # Now create a new key object
+        name = key.name
+        key = nil
+        @sshkeytype.clear
+        
+        key = @sshkeytype.create :name => name, :target => file, :provider => :parsed
+        key.retrieve
+        
+        assert(key.provider.exists?, "key thinks it does not exist")
+        
     end
 
     def test_moddingkey

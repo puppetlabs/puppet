@@ -183,6 +183,7 @@ module Puppet
             end
 
             def aliasvalue(name, other)
+                other = symbolize(other)
                 unless @parametervalues.include?(other)
                     raise Puppet::DevError,
                         "Cannot alias nonexistent value %s" % other

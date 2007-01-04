@@ -8,6 +8,11 @@ module Puppet
 
         newstate(:type) do
             desc "The encryption type used.  Probably ssh-dss or ssh-rsa."
+            
+            newvalue("ssh-dss")
+            newvalue("ssh-rsa")
+            aliasvalue(:dsa, "ssh-dss")
+            aliasvalue(:rsa, "ssh-rsa")
         end
 
         newstate(:key) do
