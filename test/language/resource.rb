@@ -363,7 +363,7 @@ class TestResource < Test::Unit::TestCase
     if Puppet.features.rails?
 
     # Compare a parser resource to a rails resource.
-    def compare_resources(host, res)
+    def compare_resources(host, res, options = {})
         obj = nil
         assert_nothing_raised do
             obj = res.to_rails(host)
@@ -395,13 +395,13 @@ class TestResource < Test::Unit::TestCase
         # Now make sure we can find it again
         assert_nothing_raised do
             obj = Puppet::Rails::Resource.find_by_restype_and_title(
-                res.type, res.title
+                res.type, res.title, :include => :param_names
             )
         end
         assert_instance_of(Puppet::Rails::Resource, obj)
 
         # Make sure we get the parameters back
-        params = [obj.param_names.collect { |p| p.name },
+        params = options[:params] || [obj.param_names.collect { |p| p.name },
             res.to_hash.keys].flatten.collect { |n| n.to_s }.uniq
 
         params.each do |name|
@@ -411,11 +411,13 @@ class TestResource < Test::Unit::TestCase
             else
                 assert(! param, "resource did not delete %s" % name)
             end
-            values = param.param_values.collect { |pv| pv.value }
-            should = res[param.name]
-            should = [should] unless should.is_a?(Array)
-            assert_equal(should, values,
-                "%s was different" % param.name)
+            if param
+                values = param.param_values.collect { |pv| pv.value }
+                should = res[param.name]
+                should = [should] unless should.is_a?(Array)
+                assert_equal(should, values,
+                    "%s was different" % param.name)
+            end
         end
     end
 
@@ -431,9 +433,10 @@ class TestResource < Test::Unit::TestCase
         # We also need a Rails Host to store under
         host = Puppet::Rails::Host.new(:name => Facter.hostname)
 
-        compare_resources(host, res)
+        compare_resources(host, res, :params => %w{owner source mode})
 
-        # Now make some changes to our resource.
+        # Now make some changes to our resource.  We're removing the mode,
+        # changing the source, and adding 'check'.
         res = mkresource :type => "file", :title => "/tmp/testing",
             :source => @source, :scope => @scope,
             :params => {:owner => "bin", :source => ["/tmp/A", "/tmp/C"],
@@ -442,7 +445,7 @@ class TestResource < Test::Unit::TestCase
         res.line = 75
         res.exported = true
 
-        compare_resources(host, res)
+        compare_resources(host, res, :params => %w{owner source mode check})
     end
     end
 end

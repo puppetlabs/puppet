@@ -55,6 +55,14 @@ class Server
 
         # Tell a client whether there's a fresh config for it
         def freshness(client = nil, clientip = nil)
+            if Puppet.features.rails? and Puppet[:storeconfigs]
+                host = Puppet::Rails::Host.find_or_create_by_name(client)
+                host.last_freshcheck = Time.now
+                if clientip and (! host.ip or host.ip == "")
+                    host.ip = clientip
+                end
+                host.save
+            end
             if defined? @interpreter
                 return @interpreter.parsedate
             else

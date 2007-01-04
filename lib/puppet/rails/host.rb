@@ -48,6 +48,8 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
         host.setresources(hash[:resources])
 
+        host.last_compile = Time.now
+
         host.save
 
         return host
@@ -56,7 +58,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
     def tags=(tags)
         tags.each do |tag|   
             self.tag_with tag
-	end
+        end
     end
 
     # Return the value of a fact.
@@ -86,6 +88,11 @@ class Puppet::Rails::Host < ActiveRecord::Base
         collection_merge(:resources, list) do |resource|
             resource.to_rails(self)
         end
+    end
+
+    def update_connect_time
+        self.last_connect = Time.now
+        save
     end
 end
 

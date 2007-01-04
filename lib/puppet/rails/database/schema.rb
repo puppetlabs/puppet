@@ -32,7 +32,9 @@ class Puppet::Rails::Schema
                 create_table :hosts do |t|
                     t.column :name, :string, :null => false
                     t.column :ip, :string
-                    t.column :connect, :date
+                    t.column :last_compile, :date
+                    t.column :last_freshcheck, :date
+                    t.column :last_report, :date
                     #Use updated_at to automatically add timestamp on save.
                     t.column :updated_at, :date
                     t.column :source_file_id, :integer

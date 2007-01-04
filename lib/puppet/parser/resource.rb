@@ -191,7 +191,7 @@ class Puppet::Parser::Resource
             true
         elsif paramcheck?
             self.fail Puppet::ParseError, "Invalid parameter '%s' for type '%s'" %
-                    [param.inspect, @ref.type]
+                    [param, @ref.type]
         end
     end
 
