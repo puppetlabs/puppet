@@ -406,7 +406,7 @@ yay = /a/path
         section = "testing"
         assert_nothing_raised {
             c.setdefaults(section,
-                :myfile => {:default => file, :create => true}
+                :myfile => {:default => file, :create => true, :desc => "yay"}
             )
         }
 
@@ -436,6 +436,7 @@ yay = /a/path
                     :default => file,
                     :owner => "pptest",
                     :group => "pptest",
+                    :desc => "yay",
                     :create => true
                 }
             )
@@ -530,7 +531,7 @@ yay = /a/path
 
         config = mkconfig
 
-        args = { :default => path, :mode => mode }
+        args = { :default => path, :mode => mode, :desc => "yay" }
 
         user = nonrootuser()
         group = nonrootgroup()
@@ -568,7 +569,7 @@ yay = /a/path
 
         config = mkconfig
 
-        args = { :default => path, :mode => mode }
+        args = { :default => path, :mode => mode, :desc => "a file" }
 
         user = nonrootuser()
         group = nonrootgroup()
@@ -690,6 +691,7 @@ inttest = 27
                 elem = config.newelement(
                     :name => value,
                     :default => value,
+                    :desc => name.to_s,
                     :section => :yayness
                 )
             }
@@ -822,6 +824,7 @@ inttest = 27
         assert_nothing_raised do
             elem = config.newelement :default => "yay",
                 :name => :blocktest,
+                :desc => "boo",
                 :section => :test,
                 :hook => proc { |value| testing = value }
         end
@@ -853,6 +856,7 @@ inttest = 27
             config.setdefaults :test,
                 :blocktest2 => {
                     :default => "yay",
+                    :desc => "yay",
                     :hook => proc { |v| testing = v }
                 }
         end

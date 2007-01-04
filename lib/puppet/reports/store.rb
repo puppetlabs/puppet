@@ -15,6 +15,7 @@ Puppet::Server::Report.newreport(:store, :useyaml => true) do
         config.setdefaults("reportclient-#{client}",
             "clientdir-#{client}" => { :default => dir,
                 :mode => 0750,
+                :desc => "Client dir for %s" % client,
                 :owner => Puppet[:user],
                 :group => Puppet[:group]
             }
