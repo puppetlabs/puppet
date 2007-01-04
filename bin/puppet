@@ -139,16 +139,7 @@ end
 client = nil
 server = nil
 
-[:INT, :TERM].each do |signal|
-    trap(signal) do
-        Puppet.notice "Caught #{signal}; shutting down"
-        [client, server].each { |obj|
-            if obj
-                obj.shutdown
-            end
-        }
-    end
-end
+Puppet.settraps
 
 if debug
     Puppet::Log.level = :debug
