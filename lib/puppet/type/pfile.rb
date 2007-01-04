@@ -1046,17 +1046,19 @@ module Puppet
         # Run the block as the specified user if the dir is writeable, else
         # run it as root (or the current user).
         def write_if_writable(dir)
-            asroot = true
-            Puppet::SUIDManager.asuser(asuser(), self.should(:group)) do
-                if FileTest.writable?(dir)
-                    asroot = false
-                    yield
-                end
-            end
-            
-            if asroot
-                yield
-            end
+            yield
+            # We're getting different behaviors from different versions of ruby, so...
+            # asroot = true
+            # Puppet::SUIDManager.asuser(asuser(), self.should(:group)) do
+            #     if FileTest.writable?(dir)
+            #         asroot = false
+            #         yield
+            #     end
+            # end
+            # 
+            # if asroot
+            #     yield
+            # end
         end
     end # Puppet.type(:pfile)
 
