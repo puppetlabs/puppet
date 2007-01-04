@@ -748,6 +748,10 @@ Generated on #{Time.now}.
 
                 self.send(method, value)
             end
+
+            unless self.desc
+                raise ArgumentError, "You must provide a description for the %s config option" % self.name
+            end
         end
 
         def iscreated
