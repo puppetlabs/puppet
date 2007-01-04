@@ -295,7 +295,7 @@ module Puppet
                         self.bucket = obj
                     elsif bucket == "puppet"
                         obj = Puppet::Client::Dipper.new(
-                            :Path => Puppet[:bucketdir]
+                            :Path => Puppet[:clientbucketdir]
                         )
                         self.bucket = obj
                         @@filebuckets[bucket] = obj

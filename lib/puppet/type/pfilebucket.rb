@@ -52,7 +52,7 @@ module Puppet
                 not specified, then the bucket is remote and *server* must be
                 specified."
 
-            defaultto { Puppet[:bucketdir] }
+            defaultto { Puppet[:clientbucketdir] }
         end
 
         # get the actual filebucket object
@@ -67,7 +67,7 @@ module Puppet
         # Create a default filebucket.
         def self.mkdefaultbucket
             unless self["puppet"]
-                self.create :name => "puppet", :path => Puppet[:bucketdir]
+                self.create :name => "puppet", :path => Puppet[:clientbucketdir]
             end
         end
 

@@ -20,6 +20,11 @@ class Server
                 :owner => "$user",
                 :group => "$group",
                 :desc => "Where FileBucket files are stored."
+            },
+            :clientbucketdir => {
+                :default => "$vardir/clientbucket",
+                :mode => 0750,
+                :desc => "Where FileBucket files are stored locally."
             }
         )
         @interface = XMLRPC::Service::Interface.new("puppetbucket") { |iface|
