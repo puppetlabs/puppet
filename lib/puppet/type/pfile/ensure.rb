@@ -67,7 +67,7 @@ module Puppet
                     "Cannot create %s; parent directory %s does not exist" %
                         [@parent[:path], parent]
             end
-            Puppet::SUIDManager.asuser(@parent.asuser()) {
+            @parent.write_if_writable(parent) do
                 if mode
                     Puppet::Util.withumask(000) do
                         Dir.mkdir(@parent[:path],mode)
@@ -75,7 +75,7 @@ module Puppet
                 else
                     Dir.mkdir(@parent[:path])
                 end
-            }
+            end
             @parent.setchecksum
             return :directory_created
         end

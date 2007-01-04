@@ -1002,7 +1002,7 @@ module Puppet
             end
 
             # As the correct user and group
-            Puppet::SUIDManager.asuser(asuser(), self.should(:group)) do
+            write_if_writable(File.dirname(path)) do
                 f = nil
                 # Open our file with the correct modes
                 if mode
@@ -1040,6 +1040,23 @@ module Puppet
             # FIXME This is extra work, because it's going to read the whole
             # file back in again.
             self.setchecksum
+            
+        end
+        
+        # Run the block as the specified user if the dir is writeable, else
+        # run it as root (or the current user).
+        def write_if_writable(dir)
+            asroot = true
+            Puppet::SUIDManager.asuser(asuser(), self.should(:group)) do
+                if FileTest.writable?(dir)
+                    asroot = false
+                    yield
+                end
+            end
+            
+            if asroot
+                yield
+            end
         end
     end # Puppet.type(:pfile)
 
