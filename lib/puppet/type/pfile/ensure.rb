@@ -154,8 +154,9 @@ module Puppet
         end
 
         def sync
-            unless self.should == :absent
-                @parent.remove_existing(self.should)
+            @parent.remove_existing(self.should)
+            if self.should == :absent
+                return :file_removed
             end
 
             event = super

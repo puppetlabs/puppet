@@ -1913,6 +1913,16 @@ class TestFile < Test::Unit::TestCase
         assert(fileobj, "did not generate file object")
         assert_equal("/%s" % fileobj.ref, fileobj.path, "did not generate correct subfile path")
     end
+    
+    # Testing #403
+    def test_removal_with_content_set
+        path = tempfile()
+        File.open(path, "w") { |f| f.puts "yay" }
+        file = Puppet::Type.newfile(:name => path, :ensure => :absent, :content => "foo")
+        
+        assert_apply(file)
+        assert(! FileTest.exists?(path), "File was not removed")
+    end
 end
 
 # $Id$
