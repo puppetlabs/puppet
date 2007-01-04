@@ -31,8 +31,8 @@ Puppet::Type.type(:package).provide :dpkg do
 
                     packages.push Puppet.type(:package).installedpkg(hash)
                 else
-                    raise Puppet::DevError,
-                        "Failed to match dpkg-query line %s" % line
+                    Puppet.warning "Failed to match dpkg-query line %s" %
+                        line.inspect
                 end
             }
         end
@@ -77,7 +77,9 @@ Puppet::Type.type(:package).provide :dpkg do
                 hash[field] = value
             }
         else
-            raise Puppet::DevError, "Failed to handle dpkg-query output"
+            notice "Failed to handle dpkg-query line %s" % line.inspect
+            return {:ensure => :absent, :status => 'missing',
+                :name => @model[:name], :error => 'ok'}
         end
 
         if hash[:error] != "ok"
