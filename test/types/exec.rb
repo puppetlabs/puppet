@@ -603,6 +603,19 @@ and stuff"
         }
         assert_equal("A B\n", output)
     end
+    
+    def test_timeout
+        exec = Puppet::Type.type(:exec).create(:command => "sleep 1", :path => ENV["PATH"], :timeout => "0.2")
+        time = Time.now
+        
+        assert_raise(Timeout::Error) {
+            exec.run("sleep 1")
+        }
+        Puppet.info "%s seconds, vs a timeout of %s" % [Time.now.to_f - time.to_f, exec[:timeout]]
+        
+        
+        assert_apply(exec)
+    end
 end
 
 # $Id$

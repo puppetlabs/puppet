@@ -1,6 +1,7 @@
 module Puppet
     newtype(:exec) do
         include Puppet::Util::Execution
+        require 'timeout'
 
         @doc = "Executes external commands.  It is critical that all commands
             executed using this mechanism can be run multiple times without
@@ -134,7 +135,11 @@ module Puppet
 
                 event = :executed_command
 
-                @output, status = @parent.run(self.parent[:command])
+                begin
+                    @output, status = @parent.run(self.parent[:command])
+                rescue Timeout::Error
+                    self.fail "Command exceeded timeout" % value.inspect
+                end
 
                 loglevel = @parent[:loglevel]
                 if status.exitstatus.to_s != self.should.to_s
@@ -281,6 +286,26 @@ module Puppet
                 end
             end
         end
+        
+        newparam(:timeout) do
+            desc "The maximum time the command should take.  If the command takes
+                longer than the timeout, the command is considered to have failed
+                and will be stopped.  Use any negative number to disable the timeout."
+            
+            munge do |value|
+                value = value.shift if value.is_a?(Array)
+                if value.is_a?(String)
+                    unless value =~ /^[-\d.]+$/
+                        raise ArgumentError, "The timeout must be a number."
+                    end
+                    Float(value)
+                else
+                    value
+                end
+            end
+            
+            defaultto 300
+        end
 
         newcheck(:refreshonly) do
             desc "The command should only be run as a
@@ -377,7 +402,12 @@ module Puppet
 
             # Return true if the command does not return 0.
             def check(value)
-                output, status = @parent.run(value, true)
+                begin
+                    output, status = @parent.run(value, true)
+                rescue Timeout::Error
+                    err "Check %s exceeded timeout" % value.inspect
+                    return false
+                end
 
                 return status.exitstatus != 0
             end
@@ -408,7 +438,12 @@ module Puppet
 
             # Return true if the command returns 0.
             def check(value)
-                output, status = @parent.run(value, true)
+                begin
+                    output, status = @parent.run(value, true)
+                rescue Timeout::Error
+                    err "Check %s exceeded timeout" % value.inspect
+                    return false
+                end
 
                 return status.exitstatus == 0
             end
@@ -542,7 +577,9 @@ module Puppet
                     end
 
                     withenv env do
-                        output, status = Puppet::SUIDManager.run_and_capture([command], self[:user], self[:group])
+                        Timeout::timeout(self[:timeout]) do
+                            output, status = Puppet::SUIDManager.run_and_capture([command], self[:user], self[:group])
+                        end
                         # The shell returns 127 if the command is missing.
                         if status.exitstatus == 127
                             raise ArgumentError, output
