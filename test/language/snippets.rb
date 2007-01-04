@@ -454,7 +454,7 @@ class TestSnippets < Test::Unit::TestCase
             "Did not make file from realized file inside defined type")
     end
 
-    def disabled_snippet_dirchmod
+    def snippet_dirchmod
         dirs = %w{a b}.collect { |letter|
             "/tmp/dirchmodtest%s" % letter
         }

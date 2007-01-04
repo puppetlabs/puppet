@@ -5,15 +5,11 @@ file {
     "/tmp/dirchmodtesta/testing": ensure => file
 }
 
-file { "/tmp/dirchmodtesta":
-    mode => 644, recurse => true
-}
+File["/tmp/dirchmodtesta"] { mode => 644, recurse => true }
 
 file {
     "/tmp/dirchmodtestb": ensure => directory;
     "/tmp/dirchmodtestb/testing": ensure => file
 }
 
-file { "/tmp/dirchmodtestb":
-    mode => 600, recurse => true
-}
+File["/tmp/dirchmodtestb"] { mode => 600, recurse => true }
