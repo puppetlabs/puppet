@@ -38,7 +38,6 @@ module Puppet
 
             # If they're talking about the thing at all, they generally want to
             # say it should exist.
-            #defaultto :present
             defaultto do
                 if @parent.managed?
                     :present
@@ -175,7 +174,9 @@ module Puppet
             desc "A description of the user.  Generally is a user's full name."
             
             defaultto do
-                "%s User" % @parent.title.capitalize
+                if @parent.managed?
+                    "%s User" % @parent.title.capitalize
+                end
             end
         end
 
@@ -184,7 +185,10 @@ module Puppet
                 separately and is not currently checked for existence."
             
             defaultto do
-                if Facter.value(:operatingsystem) == "Darwin"
+                unless defined? @@os
+                    @@os = Facter.value(:operatingsystem)
+                end
+                if @parent.managed? and @@os == "Darwin"
                     "/var/empty"
                 end
             end
@@ -195,7 +199,10 @@ module Puppet
                 executable."
             
             defaultto do
-                if Facter.value(:operatingsystem) == "Darwin"
+                unless defined? @@os
+                    @@os = Facter.value(:operatingsystem)
+                end
+                if @@os == "Darwin" and @parent.managed?
                     "/usr/bin/false"
                 end
             end

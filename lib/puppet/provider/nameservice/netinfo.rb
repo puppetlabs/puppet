@@ -79,6 +79,8 @@ class NetInfo < Puppet::Provider::NameService
     def self.report(*params)
         dir = self.netinfodir()
         cmd = [command(:nireport), "/", "/%s" % dir]
+        
+        params.flatten!
 
         # We require the name in order to know if we match.  There's no
         # way to just report on our individual object, we have to get the

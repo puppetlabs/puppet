@@ -18,6 +18,8 @@ Puppet::Type.newtype(:resources) do
                 raise ArgumentError, "Could not find resource type '%s'" % name
             end
         end
+        
+        munge { |v| v.to_s }
     end
     
     newparam(:purge, :boolean => true) do
@@ -30,7 +32,7 @@ Puppet::Type.newtype(:resources) do
         validate do |value|
             if [:true, true, "true"].include?(value)
                 unless @parent.resource_type.respond_to?(:list)
-                    raise ArgumentError, "Purging resources of type %s is not supported" % @parent[:name]
+                    raise ArgumentError, "Purging resources of type %s is not supported, since they cannot be listed" % @parent[:name]
                 end
                 unless @parent.resource_type.validstate?(:ensure)
                     raise ArgumentError, "Purging is only supported on types that accept 'ensure'"
@@ -39,10 +41,60 @@ Puppet::Type.newtype(:resources) do
         end
     end
     
-    # Generate any new resources we need to manage.
+    newparam(:unless_system_user) do
+        desc "This keeps system users from being purged.  By default, it
+            does not purge users whose UIDs are less than or equal to 500, but you can specify
+            a different UID as the inclusive limit."
+        
+        newvalues(:true, :false, /^\d+$/)
+        
+        munge do |value|
+            case value
+            when /^\d+/
+                Integer(value)
+            when :true, true
+                500
+            when :false, false
+                false
+            when Integer: value
+            else
+                raise ArgumentError, "Invalid value %s" % value.inspect
+            end
+        end
+        
+        defaultto {
+            if @parent[:name] == "user"
+                500
+            else
+                nil
+            end
+        }
+    end
+    
+    def check(resource)
+        unless defined? @checkmethod
+            @checkmethod = "%s_check" % self[:name]
+        end
+        unless defined? @hascheck
+            @hascheck = respond_to?(@checkmethod)
+        end
+        if @hascheck
+            return send(@checkmethod, resource)
+        else
+            return true
+        end
+    end
+    
+    # Generate any new resources we need to manage.  This is pretty hackish right now,
+    # because it only supports purging.
     def generate
+        return [] unless self.purge?
+        hascheck = false
+        method = 
         resource_type.list.find_all do |resource|
             ! resource.managed?
+        end.find_all do |resource|
+            check(resource)
         end.each do |resource|
             begin
                 resource[:ensure] = :absent
@@ -65,6 +117,24 @@ Puppet::Type.newtype(:resources) do
             @resource_type = type
         end
         @resource_type
+    end
+    
+    def user_check(resource)
+        return true unless self[:name] == "user"
+        return true unless self[:unless_system_user]
+        
+        resource[:check] = :uid
+        resource.retrieve
+        
+        if %w{root nobody bin noaccess daemon sys}.include?(resource[:name])
+            return false
+        end
+        
+        if resource.is(:uid) <= self[:unless_system_user]
+            return false
+        else
+            return true
+        end
     end
 end
 

@@ -120,13 +120,22 @@ class TestResources < Test::Unit::TestCase
             assert(! u.managed?, "unmanaged resource was considered managed")
         end
         
+        # First make sure we get nothing back when purge is false
         genned = nil
+        purger[:purge] = false
+        assert_nothing_raised do
+            genned = purger.generate
+        end
+        assert_equal([], genned, "Purged even when purge is false")
+        
+        # Now make sure we can purge
+        purger[:purge] = true
         assert_nothing_raised do
             genned = purger.generate
         end
         assert(genned, "Did not get any generated resources")
         assert(! genned.empty?, "generated resource list was empty")
-
+        
         # Now make sure the generate method only finds the unmanaged resources
         assert_equal(unmanned.collect { |r| r.title }.sort, genned.collect { |r| r.title },
             "Did not return correct purge list")
@@ -137,6 +146,71 @@ class TestResources < Test::Unit::TestCase
                 assert_equal(purger[param], res[param], "metaparam %s did not carry over" % param)
             end
         end
+    end
+    
+    # Part of #408.
+    def test_check
+        # First check a non-user
+        res = Puppet::Type.type(:resources).create :name => :package
+        assert_nil(res[:unless_system_user], "got bad default for package")
+        
+        
+        assert_nothing_raised {
+            assert(res.check("A String"), "String failed check")
+            assert(res.check(Puppet::Type.newfile(:path => tempfile())), "File failed check")
+            assert(res.check(Puppet::Type.type(:user).create(:name => "yayness")), "User failed check in package")
+        }
+        
+        # Now create a user manager
+        res = Puppet::Type.type(:resources).create :name => :user
+        
+        # Make sure the default is 500
+        assert_equal(500, res[:unless_system_user], "got bad default")
+        
+        # Now make sure root fails the test
+        @user = Puppet::Type.type(:user)
+        assert_nothing_raised {
+            assert(! res.check(@user.create(:name => "root")), "root passed check")
+            assert(! res.check(@user.create(:name => "nobody")), "nobody passed check")
+        }
+        
+        # Now find a user between 0 and the limit
+        low = high = nil
+        Etc.passwd { |entry|
+            if ! low and (entry.uid > 10 and entry.uid < 500)
+                low = entry.name
+            else
+                # We'll reset the limit, since we can't really guarantee that
+                # there are any users with uid > 500
+                if ! high and entry.uid > 50
+                    high = entry.name
+                    break
+                end
+            end
+        }
+        
+        if low
+            assert(! res.check(@user.create(:name => low)), "low user %s passed check" % low)
+        end
+        if high
+            res[:unless_system_user] = 50
+            assert(res.check(@user.create(:name => high)), "high user %s failed check" % high)
+        end
+    end
+    
+    # The other half of #408.
+    def test_check_is_called
+        res = Puppet::Type.type(:resources).create :name => :user, :purge => true
+        
+        list = nil
+        assert_nothing_raised { list = res.generate }
+        
+        assert(! list.empty?, "did not get any users")
+        
+        bad = list.find_all { |u|
+                %w{root bin nobody}.include?(u[:name]) or (u.retrieve and u.is(:uid) < 500)
+            }
+        assert(bad.empty?, "incorrectly passed users %s" % bad.collect { |u| u[:name]}.join(", "))
     end
 end
 
