@@ -932,17 +932,7 @@ class TestInterpreter < Test::Unit::TestCase
     end
     end
     
-    def test_nodesearch_external
-        interp = mkinterp
-        
-        # Make a fake gennode method
-        class << interp
-            def gennode(name, args)
-                args[:name] = name
-                return args
-            end
-        end
-        
+    def mk_node_mapper
         # First, make sure our nodesearch command works as we expect
         # Make a nodemapper
         mapper = tempfile()
@@ -963,6 +953,19 @@ class TestInterpreter < Test::Unit::TestCase
             "
         }    
         File.chmod(0755, mapper)
+        mapper
+    end
+    
+    def test_nodesearch_external
+        interp = mkinterp
+        
+        # Make a fake gennode method
+        class << interp
+            def gennode(name, args)
+                args[:name] = name
+                return args
+            end
+        end
         
         # Make sure it gives the right response
         assert_equal("bpple\napple1 apple2 apple3\n",
@@ -973,6 +976,8 @@ class TestInterpreter < Test::Unit::TestCase
             assert_nil(interp.nodesearch_external("apple"),
                 "Interp#nodesearch_external defaulted to a non-nil response")
         }
+        
+        mapper = mk_node_mapper
         assert_nothing_raised { Puppet[:external_nodes] = mapper }
         
         node = nil
@@ -991,7 +996,19 @@ class TestInterpreter < Test::Unit::TestCase
         
         assert_nothing_raised { node = interp.nodesearch_external("honeydew")} # neither, thus nil
         assert_nil(node)
+    end
+    
+    def test_nodesearch_external_functional
+        mapper = mk_node_mapper
         
+        Puppet[:external_nodes] = mapper
+        interp = mkinterp
+        
+        node = nil
+        assert_nothing_raised do
+            node = interp.nodesearch("apple")
+        end
+        assert_instance_of(Puppet::Parser::AST::Node, node, "did not create node")
     end
 end
 

@@ -364,6 +364,10 @@ class Puppet::Parser::Interpreter
         unless @nodesources.include?(:code)
             @nodesources << :code
         end
+        
+        unless Puppet[:external_nodes] == "none"
+            @nodesources << :external
+        end
 
         @setup = false
 
