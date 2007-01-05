@@ -147,7 +147,11 @@ module Puppet
         end
 
         def to_s
-            return "component(%s)" % self.title
+            if self.title =~ /\[/
+                return self.title
+            else
+                return "component(%s)" % self.title
+            end
         end
 	end
 end

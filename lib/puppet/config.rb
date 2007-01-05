@@ -610,6 +610,7 @@ Generated on #{Time.now}.
             end
             trans = objects.evaluate
             trans.ignoretags = true
+            trans.configurator = true
             trans.evaluate
             if tags
                 Puppet[:tags] = tags

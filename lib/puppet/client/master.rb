@@ -139,12 +139,8 @@ class Puppet::Client::MasterClient < Puppet::Client
 
     # Cache the config
     def cache(text)
-        Puppet.config.use(:puppet, :sslcertificates, :puppetd)
         Puppet.info "Caching configuration at %s" % self.cachefile
         confdir = File.dirname(Puppet[:localconfig])
-        #unless FileTest.exists?(confdir)
-        #    Puppet.recmkdir(confdir, 0770)
-        #end
         File.open(self.cachefile + ".tmp", "w", 0660) { |f|
             f.print text
         }
@@ -167,7 +163,6 @@ class Puppet::Client::MasterClient < Puppet::Client
     # Initialize and load storage
     def dostorage
         begin
-            Puppet::Storage.init
             Puppet::Storage.load
         rescue => detail
             if Puppet[:trace]
@@ -276,6 +271,7 @@ class Puppet::Client::MasterClient < Puppet::Client
     
     # Just so we can specify that we are "the" instance.
     def initialize(*args)
+        Puppet.config.use(:puppet, :sslcertificates, :puppetd)
         super
 
         @configtime = Time.now

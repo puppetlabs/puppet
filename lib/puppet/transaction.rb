@@ -7,7 +7,7 @@ require 'puppet/statechange'
 module Puppet
 class Transaction
     attr_accessor :component, :resources, :ignoreschedules, :ignoretags
-    attr_accessor :relgraph, :sorted_resources
+    attr_accessor :relgraph, :sorted_resources, :configurator
     
     attr_writer :tags
 
@@ -134,8 +134,10 @@ class Transaction
     # Do any necessary cleanup.  If we don't get rid of the graphs, the
     # contained resources might never get cleaned up.
     def cleanup
-        @generated.each do |resource|
-            resource.remove
+        if defined? @generated
+            @generated.each do |resource|
+                resource.remove
+            end
         end
         if defined? @relgraph
             @relgraph.clear
@@ -248,6 +250,8 @@ class Transaction
     def evaluate
         @count = 0
         
+        graph(@resources, :resources)
+        
         # Start logging.
         Puppet::Log.newdestination(@report)
         
@@ -342,11 +346,14 @@ class Transaction
 
     # Produce the graph files if requested.
     def graph(gr, name)
+        # We don't want to graph the configuration process.
+        return if self.configurator
+        
         return unless Puppet[:graph]
 
         file = File.join(Puppet[:graphdir], "%s.dot" % name.to_s)
         File.open(file, "w") { |f|
-            f.puts gr.to_dot
+            f.puts gr.to_dot("name" => name.to_s.capitalize)
         }
     end
 
@@ -358,8 +365,6 @@ class Transaction
         else
             @resources = resources.to_graph
         end
-
-        graph(@resources, :resources)
 
         @resourcemetrics = {
             :total => @resources.vertices.length,

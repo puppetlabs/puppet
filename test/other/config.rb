@@ -339,6 +339,10 @@ yay = /a/path
     end
 
     def test_usesection
+        # We want to make sure that config processes do not result in graphing.
+        Puppet[:graphdir] = tempfile()
+        Puppet[:graph] = true
+        Dir.mkdir(Puppet[:graphdir])
         c = mkconfig
 
         dir = tempfile()
@@ -365,6 +369,10 @@ yay = /a/path
         assert_nothing_raised("Could not reuse a section") {
             c.use(section)
         }
+        
+        # Make sure it didn't graph anything, which is the only real way
+        # to test that the transaction was marked as a configurator.
+        assert(Dir.entries(Puppet[:graphdir]).reject { |f| f =~ /^\.\.?$/ }.empty?, "Graphed config process")
 
         assert(FileTest.directory?(dir), "Did not create directory")
         assert(FileTest.exists?(otherfile), "Did not create file")

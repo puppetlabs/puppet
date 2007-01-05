@@ -45,9 +45,6 @@ module Puppet
         self.init
 
         def self.load
-            if Puppet[:statefile].nil?
-                raise Puppet::DevError, "Somehow the statefile is nil"
-            end
             Puppet.config.use(:puppet)
 
             unless File.exists?(Puppet[:statefile])

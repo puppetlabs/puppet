@@ -593,10 +593,6 @@ module Puppet
             return output, status
         end
 
-        def to_s
-            "exec(%s)" % self.name
-        end
-
         def validatecmd(cmd)
             # if we're not fully qualified, require a path
             if cmd !~ /^\//

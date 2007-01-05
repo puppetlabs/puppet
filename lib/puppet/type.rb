@@ -357,7 +357,7 @@ class Type < Puppet::Element
 
     # convert to a string
     def to_s
-        self.title
+        self.ref
     end
 
     # Convert to a transportable object

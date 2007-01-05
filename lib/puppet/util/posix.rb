@@ -8,6 +8,10 @@ module Puppet::Util::POSIX
         end
         prefix = "get" + space.to_s
         if id.is_a?(Integer)
+            if id > 1000000
+                Puppet.err "Tried to get %s field for silly id %s" % [field, id]
+                return nil
+            end
             method = (prefix + idfield(space).to_s).intern
         else
             method = (prefix + "nam").intern

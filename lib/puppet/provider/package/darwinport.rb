@@ -46,7 +46,10 @@ Puppet::Type.type(:package).provide :darwinport do
         should = @model.should(:ensure)
 
         # Seems like you can always say 'upgrade'
-        port "upgrade", @model[:name]
+        output = port "upgrade", @model[:name]
+        if output =~ /^Error: No port/
+            raise Puppet::ExecutionFailure, "Could not find package %s" % @model[:name]
+        end
     end
 
     def query

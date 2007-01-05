@@ -967,6 +967,7 @@ class TestInterpreter < Test::Unit::TestCase
             end
         end
         
+        mapper = mk_node_mapper
         # Make sure it gives the right response
         assert_equal("bpple\napple1 apple2 apple3\n",
             %x{#{mapper} apple})
@@ -976,8 +977,6 @@ class TestInterpreter < Test::Unit::TestCase
             assert_nil(interp.nodesearch_external("apple"),
                 "Interp#nodesearch_external defaulted to a non-nil response")
         }
-        
-        mapper = mk_node_mapper
         assert_nothing_raised { Puppet[:external_nodes] = mapper }
         
         node = nil
