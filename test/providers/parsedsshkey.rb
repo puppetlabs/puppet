@@ -26,8 +26,6 @@ class TestParsedSSHKey < Test::Unit::TestCase
     end
     
     def mkkey(name = "host.domain.com")
-        mount = nil
-
         if defined? @pcount
             @pcount += 1
         else
@@ -41,7 +39,7 @@ class TestParsedSSHKey < Test::Unit::TestCase
             :ensure => :present
         }
 
-        fakemodel = fakemodel(:mount, args[:name])
+        fakemodel = fakemodel(:sshkey, args[:name])
 
         key = @provider.new(fakemodel)
         args.each do |p,v|

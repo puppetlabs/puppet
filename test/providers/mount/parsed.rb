@@ -139,7 +139,7 @@ class TestParsedMounts < Test::Unit::TestCase
             end
 
             assert_equal(:present, provider.state_hash[:ensure],
-                "Could not find root fs")
+                "Could not find root fs with provider %s" % provider.name)
 
             assert_nothing_raised {
                 assert(provider.mounted?, "Root is considered not mounted")

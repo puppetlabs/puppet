@@ -4,6 +4,7 @@ rescue LoadError
     $stderr.puts "You must have 'rake' installed to use this file"
     exit(1)
 end
+
 require 'find'
 
 include Find
@@ -11,6 +12,10 @@ include FileTest
 
 $exclusions = %W(lib data)
 $test_library_paths = %W(lib ../lib)
+
+$: << File.join(Dir.getwd, "lib")
+
+require 'rake/puppet_testtask'
 
 filemap = Hash.new { |hash, key| hash[key] = [] }
 
@@ -48,7 +53,7 @@ find(".") do |f|
 end
 
 desc "Run the full test suite"
-Rake::TestTask.new :test do |t|
+Rake::PuppetTestTask.new :test do |t|
     t.libs << $test_library_paths
 
     # Add every file as a test file to run
@@ -65,7 +70,7 @@ filemap.each do |dir, files|
     # First create a separate task for each file in the namespace.
     namespace ns do
         files.each do |file|
-            Rake::TestTask.new File.basename(file, '.rb').to_sym do |t|
+            Rake::PuppetTestTask.new File.basename(file, '.rb').to_sym do |t|
                 t.libs << $test_library_paths + ['..']
                 t.test_files = [ file ]
                 t.verbose = true 
@@ -74,7 +79,7 @@ filemap.each do |dir, files|
     end
 
     # Then create a task that matches the directory itself.
-    Rake::TestTask.new dir do |t|
+    Rake::PuppetTestTask.new dir do |t|
        t.libs << $test_library_paths
        if ENV["TESTFILES"]
            t.test_files = ENV["TESTFILES"].split(/\s+/)
