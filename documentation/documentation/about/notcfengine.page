@@ -110,7 +110,7 @@ might deploy them on Debian:
         # Create the vhost config file
         file { "/etc/apache2/sites-available/$name":
             content => "
-<VirtualHost $ip
+<VirtualHost $ip>
     ServerAdmin luke at madstop.com
     DocumentRoot $realdocroot
     ServerName $name
@@ -118,7 +118,7 @@ might deploy them on Debian:
     CustomLog /var/log/apache2/$name/logs/access_log common
 </VirtualHost>
 ",
-            notify => service[apache] # restart apache if this changes
+            notify => Service[apache] # restart apache if this changes
         }
 
         case $ensure {
@@ -126,14 +126,14 @@ might deploy them on Debian:
                 # Create the link
                 file { "/etc/apache2/sites-enabled/$order-$name":
                     ensure => "/etc/apache2/sites-available/$name",
-                    notify => service[apache]
+                    notify => Service[apache]
                 }
             }
             default: {
                 # Make sure the link is missing
                 file { "/etc/apache2/sites-enabled/$order-$name":
                     ensure => absent,
-                    notify => service[apache]
+                    notify => Service[apache]
                 }
             }
         }

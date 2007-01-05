@@ -16,10 +16,10 @@ orderInfo: 40
 1. <a href='#mount'>Mount</a>
 1. <a href='#notify'>Notify</a>
 1. <a href='#package'>Package</a>
+1. <a href='#resources'>Resources</a>
 1. <a href='#schedule'>Schedule</a>
 1. <a href='#service'>Service</a>
 1. <a href='#sshkey'>Sshkey</a>
-1. <a href='#symlink'>Symlink</a>
 1. <a href='#tidy'>Tidy</a>
 1. <a href='#user'>User</a>
 1. <a href='#yumrepo'>Yumrepo</a>
@@ -107,7 +107,7 @@ syslog (which is currently the default).  Valid values are ``debug``, ``info``, 
 
 #### noop
 Boolean flag indicating whether work should actually
-be done.  *true*/**false**
+be done.  Valid values are ``true``, ``false``.
 
 #### notify
 This parameter is the opposite of **subscribe** -- it sends events
@@ -277,7 +277,7 @@ All cron parameters support ``absent`` as a value; this will
 remove any existing values for that field.
 
 #### ensure
-The basic state that the object should be in.  Valid values are ``present``, ``absent``.
+The basic state that the object should be in.  Valid values are ``absent``, ``present``.
 
 #### environment
 Any environment settings associated with this cron job.  They
@@ -477,6 +477,11 @@ so it only makes sense to use ``refreshonly`` with ``subscribe``.  Valid values 
 The expected return code.  An error will be returned if the
 executed command returns something else.  Defaults to 0.
 
+#### timeout
+The maximum time the command should take.  If the command takes
+longer than the timeout, the command is considered to have failed
+and will be stopped.  Use any negative number to disable the timeout.
+
 #### unless
 If this parameter is set, then this ``exec`` will run unless
 the command returns 0.  For example:
@@ -519,13 +524,18 @@ native element to support what you are doing.
 ### File Parameters
 #### backup
 Whether files should be backed up before
-being replaced.  If a filebucket is specified, files will be
-backed up there; else, they will be backed up in the same directory
-with a ``.puppet-bak`` extension,, and no backups
-will be made if backup is ``false``.
+being replaced.  The preferred method of backing files up is via
+a ``filebucket``, which stores files by their MD5 sums and allows
+easy retrieval without littering directories with backups.  You
+can specify a local filebucket or a network-accessible
+server-based filebucket.  Alternatively, if you specify any
+value that begins with a ``.`` (e.g., ``.puppet-bak``), then
+Puppet will use copy the file in the same directory with that
+value as the extension of the backup.
 
-To use filebuckets, you must first create a filebucket in your
-configuration:
+Puppet automatically creates a local filebucket named ``puppet`` and
+defaults to backing up there.  To use a server-based filebucket,
+you must specify one in your configuration:
     
     filebucket { main:
         server => puppet
@@ -543,7 +553,7 @@ configuration, you can use it in any file:
 
 This will back the file up to the central server.
 
-At this point, the only benefits to doing so are that you do not
+At this point, the benefits of using a filebucket are that you do not
 have backup files lying around on each of your machines, a given
 version of a file is only backed up once, and you can restore
 any given file manually, no matter how old.  Eventually,
@@ -556,7 +566,7 @@ for file copying, but it can also be used to monitor files somewhat
 like Tripwire without managing the file contents in any way.  You can
 specify that a file's checksum should be monitored and then subscribe to
 the file from another object and receive events to signify
-checksum changes, for instance.  Valid values are ``nosum``, ``mtime``, ``md5lite``, ``md5``, ``time``, ``timestamp``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
+checksum changes, for instance.  Valid values are ``time``, ``timestamp``, ``md5lite``, ``md5``, ``mtime``, ``nosum``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
 
 #### content
 Specify the contents of a file as a string.  Newlines, tabs, and
@@ -609,7 +619,7 @@ something similar.
 You can also make recursive symlinks, which will create a
 directory structure that maps to the target directory,
 with directories corresponding to each directory
-and links corresponding to each file.  Valid values are ``link``, ``present``, ``directory``, ``absent`` (also called ``false``), ``file``.  Values can also match ``(?-mix:.)``.
+and links corresponding to each file.  Valid values are ``link``, ``present``, ``absent`` (also called ``false``), ``directory``, ``file``.  Values can also match ``(?-mix:.)``.
 
 #### force
 Force the file operation.  Currently only used when replacing
@@ -664,7 +674,7 @@ management.  Valid values are ``true``, ``false``, ``inf``.  Values can also mat
 #### replace
 Whether or not to replace a file that is
 sourced but exists.  This is useful for using file sources
-purely for initialization.  Valid values are ``true``, ``false``.
+purely for initialization.  Valid values are ``true`` (also called ``yes``), ``false`` (also called ``no``).
 
 #### source
 Copy a file over the current file.  Uses ``checksum`` to
@@ -700,8 +710,14 @@ what amount to search paths for files:
 
 This will use the first found file as the source.
 
+You cannot currently copy links using this mechanism; set ``links``
+to ``follow`` if any remote sources are links.
+
 [fileserver docs]: ../installing/fsconfigref.html
 
+
+#### sourceselect
+Whether to copy all valid sources, or just the first one.  Valid values are ``first``, ``all``.
 
 #### target
 The target for creating a link.  Currently, symlinks are the
@@ -787,7 +803,7 @@ Whether to allow duplicate GIDs.  This option does not work on
 FreeBSD (contract to the ``pw`` man page).  Valid values are ``true``, ``false``.
 
 #### ensure
-The basic state that the object should be in.  Valid values are ``present``, ``absent``.
+The basic state that the object should be in.  Valid values are ``absent``, ``present``.
 
 #### gid
 The group ID.  Must be specified numerically.  If not
@@ -807,7 +823,7 @@ seldom need to specify this -- Puppet will usually discover the
 appropriate provider for your platform.  Available providers are:
 
 * **groupadd**: Group management via ``groupadd`` and its ilk.  The default
-        for most platforms    Required binaries: ``groupmod``, ``groupadd``, ``groupdel``.
+        for most platforms    Required binaries: ``groupadd``, ``groupdel``, ``groupmod``.
 * **netinfo**: Group management using NetInfo.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``nireport``, ``niutil``.
 * **pw**: Group management via ``pw``.  Only works on FreeBSD.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``/usr/sbin/pw``.
 
@@ -832,7 +848,7 @@ make those aliases available in your Puppet scripts and also on
 disk.
 
 #### ensure
-The basic state that the object should be in.  Valid values are ``present``, ``absent``.
+The basic state that the object should be in.  Valid values are ``absent``, ``present``.
 
 #### ip
 The host's IP address, IPv4 or IPv6.
@@ -846,7 +862,7 @@ seldom need to specify this -- Puppet will usually discover the
 appropriate provider for your platform.  Available providers are:
 
 * **netinfo**: Host management in NetInfo.  This provider is highly experimental and is known
-        not to work currently.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``umount``, ``mount``, ``df``, ``nireport``, ``niutil``.
+        not to work currently.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``nireport``, ``mount``, ``niutil``, ``umount``, ``df``.
 * **parsed**:   
 
 #### target
@@ -891,7 +907,7 @@ Control what to do with this mount. If the value is
 but not mounted, if it is ``absent``, the entry is removed 
 from the mount table and the filesystem is unmounted if 
 currently mounted, if it is ``mounted``, the filesystem 
-is entered into the mount table and mounted.  Valid values are ``present`` (also called ``unmounted``), ``absent``, ``mounted``.
+is entered into the mount table and mounted.  Valid values are ``absent``, ``present`` (also called ``unmounted``), ``mounted``.
 
 #### fstype
 The mount type.  Valid values depend on the
@@ -916,8 +932,8 @@ seldom need to specify this -- Puppet will usually discover the
 appropriate provider for your platform.  Available providers are:
 
 * **netinfo**: Mount management in NetInfo.  This provider is highly experimental and is known
-        not to work currently.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``umount``, ``mount``, ``df``, ``nireport``, ``niutil``.
-* **parsed**:     Required binaries: ``umount``, ``mount``, ``df``.
+        not to work currently.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``nireport``, ``mount``, ``niutil``, ``umount``, ``df``.
+* **parsed**:     Required binaries: ``mount``, ``umount``, ``df``.
 
 #### target
 The file in which to store the mount table.  Only used by
@@ -991,7 +1007,7 @@ What state the package should be in.
 *latest* only makes sense for those packaging formats that can
 retrieve new packages on their own and will throw an error on
 those that cannot.  For those packaging systems that allow you
-to specify package versions, specify them here.  Valid values are ``present`` (also called ``installed``), ``absent``, ``latest``.  Values can also match ``(?-mix:.)``.
+to specify package versions, specify them here.  Valid values are ``absent``, ``present`` (also called ``installed``), ``latest``.  Values can also match ``(?-mix:.)``.
 
 #### instance
 A read-only parameter set by the package.
@@ -1054,24 +1070,24 @@ appropriate provider for your platform.  Available providers are:
         extremely quirky packaging system, in that it freely mixes between
         ports and packages.  Apparently all of the tools are written in Ruby,
         so there are plans to rewrite this support to directly use those
-        libraries.    Required binaries: ``/usr/sbin/pkg_info``, ``/usr/sbin/pkg_add``, ``/usr/sbin/pkg_delete``.
+        libraries.    Required binaries: ``/usr/sbin/pkg_add``, ``/usr/sbin/pkg_delete``, ``/usr/sbin/pkg_info``.
 * **gem**: Ruby Gem support.  By default uses remote gems, but you can specify
         the path to a local gem via ``source``.    Required binaries: ``gem``.
-* **openbsd**: OpenBSD's form of ``pkg_add`` support.  Default for ``operatingsystem`` == ``openbsd``.    Required binaries: ``pkg_info``, ``pkg_add``, ``pkg_delete``.
+* **openbsd**: OpenBSD's form of ``pkg_add`` support.  Default for ``operatingsystem`` == ``openbsd``.    Required binaries: ``pkg_add``, ``pkg_delete``, ``pkg_info``.
 * **pkgdmg**: Package management based on Apple's Installer.app and DiskUtility.app    Required binaries: ``/usr/sbin/installer``, ``/usr/bin/hdiutil``.
 * **portage**: Provides packaging support for Gentoo's portage system.  Default for ``operatingsystem`` == ``gentoo``.    Required binaries: ``/usr/bin/emerge``, ``/usr/bin/eix``.
 * **ports**: Support for FreeBSD's ports.  Again, this still mixes packages
-        and ports.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``/usr/local/sbin/portupgrade``, ``/usr/local/sbin/portversion``, ``/usr/local/sbin/pkg_deinstall``, ``/usr/sbin/pkg_info``.
+        and ports.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``/usr/local/sbin/portversion``, ``/usr/local/sbin/pkg_deinstall``, ``/usr/sbin/pkg_info``, ``/usr/local/sbin/portupgrade``.
 * **rpm**: RPM packaging support; should work anywhere with a working ``rpm``
-        binary.  Default for ``operatingsystem`` == ``redhat``.    Required binaries: ``rpm``.
+        binary.    Required binaries: ``rpm``.
 * **sun**: Sun's packaging system.  Requires that you specify the source for
-        the packages you're managing.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/bin/pkginfo``, ``/usr/sbin/pkgadd``, ``/usr/sbin/pkgrm``.
+        the packages you're managing.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/sbin/pkgadd``, ``/usr/bin/pkginfo``, ``/usr/sbin/pkgrm``.
 * **sunfreeware**: Package management using sunfreeware.com's ``pkg-get`` command on Solaris.
         At this point, support is exactly the same as ``blastwave`` support and
         has not actually been tested.    Required binaries: ``pkg-get``.
 * **up2date**: Support for Red Hat's proprietary ``up2date`` package update
-        mechanism.    Required binaries: ``/usr/sbin/up2date-nox``.
-* **yum**: Support via ``yum``.  Default for ``operatingsystem`` == ``fedora``.    Required binaries: ``rpm``, ``yum``.
+        mechanism.  Default for ``operatingsystem`` == ``redhat``.    Required binaries: ``/usr/sbin/up2date-nox``.
+* **yum**: Support via ``yum``.  Default for ``operatingsystem`` == ``fedora``.    Required binaries: ``yum``, ``rpm``.
 
 #### responsefile
 A file containing any necessary answers to questions asked by
@@ -1095,6 +1111,33 @@ Deprecated form of ``provider``.
 
 #### vendor
 A read-only parameter set by the package.
+
+
+
+
+----------------
+
+
+<h2><a name='resources'>resources</a></h2>
+This is a metatype that can manage other resource types.  Any
+metaparams specified here will be passed on to any generated resources,
+so you can purge umanaged resources but set ``noop`` to true so the
+purging is only logged and does not actually happen.
+
+
+### Resources Parameters
+#### name (*namevar*)
+The name of the type to be managed.
+
+#### purge
+Purge unmanaged resources.  This will delete any resource
+that is not specified in your configuration
+and is not required by any specified resources.  Valid values are ``true``, ``false``.
+
+#### unless_system_user
+This keeps system users from being purged.  By default, it
+does not purge users whose UIDs are less than or equal to 500, but you can specify
+a different UID as the inclusive limit.  Valid values are ``true``, ``false``.  Values can also match ``(?-mix:^\d+$)``.
 
 
 
@@ -1246,10 +1289,10 @@ provided.
 Whether a service should be enabled to start at boot.
 This state behaves quite differently depending on the platform;
 wherever possible, it relies on local tools to enable or disable
-a given service.  *true*/*false*/*runlevels*  Valid values are ``false``, ``true``.
+a given service.  *true*/*false*/*runlevels*  Valid values are ``true``, ``false``.
 
 #### ensure
-Whether a service should be running.  **true**/*false*  Valid values are ``stopped`` (also called ``false``), ``running`` (also called ``true``).
+Whether a service should be running.  **true**/*false*  Valid values are ``running`` (also called ``true``), ``stopped`` (also called ``false``).
 
 #### hasrestart
 Specify that an init script has a ``restart`` option.  Otherwise,
@@ -1297,7 +1340,7 @@ appropriate provider for your platform.  Available providers are:
         is a binary for starting the process, and this same binary will be searched
         for in the process table to stop the service.  It is preferable to
         specify start, stop, and status commands, akin to how you would do
-        so using ``init``.  
+        so using ``init``.    Required binaries: ``kill``.
 * **debian**: Debian's form of ``init``-style management.  The only difference
         is that this supports service enabling and disabling via ``update-rc.d``.  Default for ``operatingsystem`` == ``debian``.    Required binaries: ``/usr/sbin/update-rc.d``.
 * **gentoo**: Gentoo's form of ``init``-style service
@@ -1311,7 +1354,7 @@ appropriate provider for your platform.  Available providers are:
 * **smf**: Support for Sun's new Service Management Framework.  Starting a service
         is effectively equivalent to enabling it, so there is only support
         for starting and stopping services, which also enables and disables them,
-        respectively.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/sbin/svcadm``, ``/usr/bin/svcs``.
+        respectively.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/bin/svcs``, ``/usr/sbin/svcadm``.
 
 #### restart
 Specify a *restart* command manually.  If left
@@ -1360,7 +1403,7 @@ as one of the metaparams; using this state to set aliases will
 make those aliases available in your Puppet scripts.
 
 #### ensure
-The basic state that the object should be in.  Valid values are ``present``, ``absent``.
+The basic state that the object should be in.  Valid values are ``absent``, ``present``.
 
 #### key
 The key itself; generally a long string of hex digits.
@@ -1380,44 +1423,7 @@ The file in which to store the mount table.  Only used by
 those providers that write to disk (i.e., not NetInfo).
 
 #### type
-The encryption type used.  Probably ssh-dss or ssh-rsa.
-
-
-
-
-----------------
-
-
-<h2><a name='symlink'>symlink</a></h2>
-Create symbolic links to existing files.  **This type is deprecated;
-use file instead.**
-
-
-### Symlink Parameters
-#### ensure
-Create a link to another file.  Currently only symlinks
-are supported, and attempts to replace normal files with
-links will currently fail, while existing but incorrect symlinks
-will be removed.
-
-#### path (*namevar*)
-The path to the file to manage.  Must be fully qualified.
-
-#### recurse
-If target is a directory, recursively create
-directories (using `file`'s `source` parameter) and link all
-contained files.  For instance:
-
-    # The Solaris Blastwave repository installs everything
-    # in /opt/csw; link it into /usr/local
-    symlink { "/usr/local":
-        ensure => "/opt/csw",
-        recurse => true
-    }
-
-
-Note that this does not link directories -- any directories
-are created in the destination, and any files are linked over.
+The encryption type used.  Probably ssh-dss or ssh-rsa.  Valid values are ``ssh-dss`` (also called ``dsa``), ``ssh-rsa`` (also called ``rsa``).
 
 
 
@@ -1427,26 +1433,31 @@ are created in the destination, and any files are linked over.
 
 <h2><a name='tidy'>tidy</a></h2>
 Remove unwanted files based on specific criteria.  Multiple
-criteria or OR'd together, so a file that is too large but is not
+criteria are OR'd together, so a file that is too large but is not
 old enough will still get tidied.
 
 
 ### Tidy Parameters
 #### age
 Tidy files whose age is equal to or greater than
-the specified number of days.  You can choose seconds, minutes,
+the specified time.  You can choose seconds, minutes,
 hours, days, or weeks by specifying the first letter of any
 of those words (e.g., '1w').
 
 #### backup
 Whether files should be backed up before
-being replaced.  If a filebucket is specified, files will be
-backed up there; else, they will be backed up in the same directory
-with a ``.puppet-bak`` extension,, and no backups
-will be made if backup is ``false``.
+being replaced.  The preferred method of backing files up is via
+a ``filebucket``, which stores files by their MD5 sums and allows
+easy retrieval without littering directories with backups.  You
+can specify a local filebucket or a network-accessible
+server-based filebucket.  Alternatively, if you specify any
+value that begins with a ``.`` (e.g., ``.puppet-bak``), then
+Puppet will use copy the file in the same directory with that
+value as the extension of the backup.
 
-To use filebuckets, you must first create a filebucket in your
-configuration:
+Puppet automatically creates a local filebucket named ``puppet`` and
+defaults to backing up there.  To use a server-based filebucket,
+you must specify one in your configuration:
     
     filebucket { main:
         server => puppet
@@ -1464,7 +1475,7 @@ configuration, you can use it in any file:
 
 This will back the file up to the central server.
 
-At this point, the only benefits to doing so are that you do not
+At this point, the benefits of using a filebucket are that you do not
 have backup files lying around on each of your machines, a given
 version of a file is only backed up once, and you can restore
 any given file manually, no matter how old.  Eventually,
@@ -1525,7 +1536,7 @@ Whether to allow duplicate UIDs.  Valid values are ``true``, ``false``.
 A description of the user.  Generally is a user's full name.
 
 #### ensure
-The basic state that the object should be in.  Valid values are ``present``, ``absent``.
+The basic state that the object should be in.  Valid values are ``absent``, ``present``.
 
 #### gid
 The user's primary group.  Can be specified numerically or
@@ -1557,7 +1568,7 @@ appropriate provider for your platform.  Available providers are:
 
 * **netinfo**: User management in NetInfo.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``nireport``, ``niutil``.
 * **pw**: User management via ``pw`` on FreeBSD.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``pw``.
-* **useradd**: User management via ``useradd`` and its ilk.    Required binaries: ``usermod``, ``useradd``, ``userdel``.
+* **useradd**: User management via ``useradd`` and its ilk.    Required binaries: ``useradd``, ``userdel``, ``usermod``.
 
 #### shell
 The user's login shell.  The shell must exist and be
@@ -1673,7 +1684,7 @@ Solaris zones.
 
 ### Zone Parameters
 #### autoboot
-Whether the zone should automatically boot.  Valid values are ``false``, ``true``.
+Whether the zone should automatically boot.  Valid values are ``true``, ``false``.
 
 #### ensure
 The running state of the zone.  The valid states directly reflect
@@ -1706,6 +1717,13 @@ Puppet to move a zone.
 
 #### pool
 The resource pool for this zone.
+
+#### provider
+The specific backend for provider to use. You will
+seldom need to specify this -- Puppet will usually discover the
+appropriate provider for your platform.  Available providers are:
+
+* **solaris**: Provider for Solaris Zones.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/sbin/zoneadm``, ``/usr/sbin/zonecfg``.
 
 #### realhostname
 The actual hostname of the zone.
@@ -1754,4 +1772,4 @@ so Puppet only checks for it at that time.
 ----------------
 
 
-*This page autogenerated on Thu Nov 30 18:24:06 CST 2006*
+*This page autogenerated on Fri Jan 05 16:38:59 CST 2007*
