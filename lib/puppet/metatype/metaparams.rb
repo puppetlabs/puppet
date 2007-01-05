@@ -275,10 +275,10 @@ class Puppet::Type
                 # nil.
                 unless object
                     self.fail "Could not retrieve dependency '%s[%s]'" %
-                        [type.capitalize, name]
+                        [tname.to_s.capitalize, name]
                 end
                 
-                self.debug("subscribes to %s" % [object])
+                self.debug("subscribes to %s" % [object.ref])
 
                 # Are we requiring them, or vice versa?  See the builddepends
                 # method for further docs on this.

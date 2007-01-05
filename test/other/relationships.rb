@@ -205,6 +205,15 @@ class TestRelationships < Test::Unit::TestCase
         file2[:notify] = file1
         assert(file1.requires?(file2), "requires? failed to catch :notify relationship")
     end
+    
+    # Testing #411.  It was a problem with builddepends.
+    def test_missing_deps
+        file = Puppet::Type.newfile :path => tempfile, :require => ["file", "/no/such/file"]
+        
+        assert_raise(Puppet::Error) do
+            file.builddepends
+        end
+    end
 end
 
 # $Id$
