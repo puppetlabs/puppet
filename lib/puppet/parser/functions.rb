@@ -176,7 +176,8 @@ module Functions
 
     newfunction(:template, :type => :rvalue, :doc => "Evaluate a template and
     return its value.  See [the templating docs](../advanced/templating.html)
-    for more information.") do |vals|
+    for more information.  Note that if multiple templates are specified, their
+    output is all concatenated and returned as the output of the function.") do |vals|
         require 'erb'
 
         vals.collect do |file|
