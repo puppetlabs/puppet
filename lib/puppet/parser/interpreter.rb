@@ -15,7 +15,16 @@ class Puppet::Parser::Interpreter
         :casesensitive => [false,
             "Whether matching in case statements and selectors
             should be case-sensitive.  Case insensitivity is
-            handled by downcasing all values before comparison."])
+            handled by downcasing all values before comparison."],
+        :external_nodes => ["none",
+            "An external command that can produce node information.  The
+            first line of output must be either the parent node or blank,
+            and if there is a second line of output it should be a list of
+            whitespace-separated classes to include on that node.  This command
+            makes it straightforward to store your node mapping information
+            in other data sources like databases.
+            
+            For unknown nodes, the commands should exit with an exit code of 1."])
 
     Puppet.setdefaults("ldap",
         :ldapnodes => [false,
@@ -641,6 +650,45 @@ class Puppet::Parser::Interpreter
     # See if our node was defined in the code.
     def nodesearch_code(name)
         @nodetable[name]
+    end
+    
+    # Look for external node definitions.
+    def nodesearch_external(name)
+        return nil unless Puppet[:external_nodes] != "none"
+        
+        begin
+            output = Puppet::Util.execute([Puppet[:external_nodes], name])
+        rescue Puppet::ExecutionFailure => detail
+            if $?.exitstatus == 1
+                return nil
+            else
+                Puppet.err "Could not retrieve external node information for %s: %s" % [name, detail]
+            end
+            return nil
+        end
+        
+        if output =~ /\A\s+\Z/ # all whitespace
+            puts "empty response for %s" % name
+            return nil
+        end
+        
+        lines = output.split("\n")
+        
+        args = {}
+        parent = lines[0].gsub(/\s+/, '')
+        args[:parentnode] = parent unless parent == ""
+        
+        if lines[1]
+            classes = lines[1].sub(/^\s+/,'').sub(/\s+$/,'').split(/\s+/)
+            args[:classes] = classes unless classes.empty?
+        end
+        
+        if args.empty?
+            Puppet.warning "Somehow got a node with no information"
+            return nil
+        else
+            return gennode(name, args)
+        end
     end
 
     # Look for our node in ldap.

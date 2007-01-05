@@ -931,6 +931,68 @@ class TestInterpreter < Test::Unit::TestCase
         assert_equal("root", pvalue[:value])
     end
     end
+    
+    def test_nodesearch_external
+        interp = mkinterp
+        
+        # Make a fake gennode method
+        class << interp
+            def gennode(name, args)
+                args[:name] = name
+                return args
+            end
+        end
+        
+        # First, make sure our nodesearch command works as we expect
+        # Make a nodemapper
+        mapper = tempfile()
+        ruby = %x{which ruby}.chomp
+        File.open(mapper, "w") { |f|
+            f.puts "#!#{ruby}
+            name = ARGV[0]
+            if name =~ /a/
+                puts ARGV[0].gsub('a', 'b')
+            else
+                puts ''
+            end
+            if name =~ /p/
+                puts [1,2,3].collect { |n| ARGV[0] + n.to_s }.join(' ')
+            else
+                puts ''
+            end
+            "
+        }    
+        File.chmod(0755, mapper)
+        
+        # Make sure it gives the right response
+        assert_equal("bpple\napple1 apple2 apple3\n",
+            %x{#{mapper} apple})
+        
+        # First make sure we get nil back by default
+        assert_nothing_raised {
+            assert_nil(interp.nodesearch_external("apple"),
+                "Interp#nodesearch_external defaulted to a non-nil response")
+        }
+        assert_nothing_raised { Puppet[:external_nodes] = mapper }
+        
+        node = nil
+        assert_nothing_raised { node = interp.nodesearch_external("apple") }
+        
+        assert_equal({:name => "apple", :classes => %w{apple1 apple2 apple3}, :parentnode => "bpple"},
+            node)
+        
+        assert_nothing_raised { node = interp.nodesearch_external("plum")} # no a's, thus no parent
+        assert_equal({:name => "plum", :classes => %w{plum1 plum2 plum3}},
+            node)
+        
+        assert_nothing_raised { node = interp.nodesearch_external("guava")} # no p's, thus no classes
+        assert_equal({:name => "guava", :parentnode => "gubvb"},
+            node)
+        
+        assert_nothing_raised { node = interp.nodesearch_external("honeydew")} # neither, thus nil
+        assert_nil(node)
+        
+    end
 end
 
 # $Id$
