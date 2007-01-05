@@ -182,7 +182,7 @@ class TestResources < Test::Unit::TestCase
             else
                 # We'll reset the limit, since we can't really guarantee that
                 # there are any users with uid > 500
-                if ! high and entry.uid > 50
+                if ! high and entry.uid > 100
                     high = entry.name
                     break
                 end

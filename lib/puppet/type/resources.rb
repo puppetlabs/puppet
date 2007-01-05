@@ -85,8 +85,8 @@ Puppet::Type.newtype(:resources) do
         end
     end
     
-    # Generate any new resources we need to manage.  This is pretty hackish right now,
-    # because it only supports purging.
+    # Generate any new resources we need to manage.  This is pretty hackish
+    # right now, because it only supports purging.
     def generate
         return [] unless self.purge?
         hascheck = false

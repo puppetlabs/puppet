@@ -228,7 +228,9 @@ module Puppet
                     retrieve
                 end
 
-                @should ||= []
+                unless defined? @should and @should
+                    return nil
+                end
 
                 if @parent[:membership] == :inclusive
                     return @should.sort.join(",")

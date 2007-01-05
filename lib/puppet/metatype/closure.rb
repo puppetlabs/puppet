@@ -46,7 +46,8 @@ class Puppet::Type
         else
             @managed = false
             states.each { |state|
-                if state.should and ! state.class.unmanaged
+                s = state.should
+                if s and ! state.class.unmanaged
                     @managed = true
                     break
                 end
