@@ -267,6 +267,7 @@ class TestFile < Test::Unit::TestCase
         def test_groupasroot
             file = mktestfile()
             [%x{groups}.chomp.split(/ /), Process.groups].flatten.each { |group|
+                next unless Puppet::Util.gid(group) # grr.
                 assert_nothing_raised() {
                     file[:group] = group
                 }

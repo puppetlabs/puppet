@@ -71,7 +71,7 @@ module PuppetTest
     end
 
     def rake?
-        $0 =~ /rake_test_loader/
+        $0 =~ /test_loader/
     end
 
     def setup
