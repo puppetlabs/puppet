@@ -4,7 +4,7 @@ Puppet::Type.type(:package).provide :rpm do
         binary."
 
     # The query format by which we identify installed packages
-    IDSTRING = "%{NAME}-%{VERSION}-%{RELEASE}"
+    NVRFORMAT = "%{NAME}-%{VERSION}-%{RELEASE}"
 
     VERSIONSTRING = "%{VERSION}-%{RELEASE}"
 
@@ -47,7 +47,7 @@ Puppet::Type.type(:package).provide :rpm do
     # a hash with entries :instance => fully versioned package name, and 
     # :ensure => version-release
     def query
-        cmd = ["-q", @model[:name], "--qf", "#{IDSTRING} #{VERSIONSTRING}\n"]
+        cmd = ["-q", @model[:name], "--qf", "#{NVRFORMAT} #{VERSIONSTRING}\n"]
 
         begin
             output = rpm *cmd
@@ -67,6 +67,8 @@ Puppet::Type.type(:package).provide :rpm do
                 "Failed to match rpm output '%s'" %
                 output
         end
+
+        @nvr = hash[:instance]
 
         return hash
     end
@@ -103,7 +105,7 @@ Puppet::Type.type(:package).provide :rpm do
     end
 
     def uninstall
-        rpm "-e", @model[:instance]
+        rpm "-e", nvr
     end
 
     def update
@@ -112,6 +114,11 @@ Puppet::Type.type(:package).provide :rpm do
 
     def versionable?
         true
+    end
+
+    def nvr
+        query unless @nvr
+        @nvr
     end
 end
 
