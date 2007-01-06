@@ -94,41 +94,41 @@
   (interactive)
   (beginning-of-line)
   (if (bobp)
-      (indent-line-to 0)	   ; First line is always non-indented
+      (indent-line-to 0)                ; First line is always non-indented
     (let ((not-indented t) cur-indent)
-      (if (looking-at "^.*}") ; If the line we are looking at is the end of a block, then decrease the indentation
-	(progn
-	    (save-excursion
-	      (forward-line -1)
-
-	      (if (looking-at "^.*}")
+      (if (looking-at "^.*}") ; If the line we are looking at is the end of
+			      ; a block, then decrease the indentation
+          (progn
+            (save-excursion
+              (forward-line -1)
+            
+              (if (looking-at "^.*}")
 		  (progn
-;;		    (setq cur-indent (current-indentation)) 
-		(setq cur-indent (- (current-indentation) 2))
+                    (setq cur-indent (- (current-indentation) 2))
 		    (setq not-indented nil))
 		(setq cur-indent (- (current-indentation) 2))))
-	    (if (< cur-indent 0) ; We can't indent past the left margin
+	    (if (< cur-indent 0)     ; We can't indent past the left margin
 		(setq cur-indent 0)))
 	(save-excursion
-	  (while not-indented ; Iterate backwards until we find an indentation hint
+	  (while not-indented ; Iterate backwards until we find an
+			      ; indentation hint
 	    (forward-line -1)
-	    (if (looking-at "^.*}") ; This hint indicates that we need to indent at the level of the END_ token
+	    (if (looking-at "^.*}") ; This hint indicates that we need to
+				    ; indent at the level of the END_ token
 		(progn
 		  (setq cur-indent (current-indentation))
 		  (setq not-indented nil))
-	      (if (looking-at "^.*{") ; This hint indicates that we need to indent an extra level
+	      (if (looking-at "^.*{") ; This hint indicates that we need to
+				      ; indent an extra level
 		  (progn
-		    (setq cur-indent (+ (current-indentation) 2)) ; Do the actual indenting
+                                        ; Do the actual indenting
+		    (setq cur-indent (+ (current-indentation) 2)) 
 		    (setq not-indented nil))
 		(if (bobp)
 		    (setq not-indented nil)))))))
       (if cur-indent
 	  (indent-line-to cur-indent)
-	(indent-line-to 0))))
-  (end-of-line)
-)  ; If we didn't see an indentation hint, then allow no indentation
-
-
+	(indent-line-to 0)))))
 
 
 ;;;###autoload
