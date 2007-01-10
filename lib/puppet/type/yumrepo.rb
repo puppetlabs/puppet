@@ -83,6 +83,26 @@ module Puppet
         # Where to put files for brand new sections
         @defaultrepodir = nil
 
+        def self.list
+            l = []
+            check = validstates
+            inifile.each_section do |s|
+                next if s.name == "main"
+                obj = create(:name => s.name, :check => check)
+                obj.retrieve
+                obj.eachstate do |state|
+                    if state.is.nil?
+                        obj.delete(state.name)
+                    else
+                        state.should = state.is
+                    end
+                end
+                obj.delete(:check)
+                l << obj
+            end
+            l
+        end
+
         # Return the Puppet::IniConfig::File for the whole yum config
         def self.inifile
             if @inifile.nil?
