@@ -47,11 +47,11 @@ module Puppet
         end
 
         def to_manifest
-            "#{self.type.to_s} { \"#{self.name}\":\n%s\n}" % @params.collect { |p, v|
+            "#{self.type.to_s} { \'#{self.name}\':\n%s\n}" % @params.collect { |p, v|
                 if v.is_a? Array
-                    "    #{p} => [\"#{v.join('","')}\"]"
+                    "    #{p} => [\'#{v.join("','")}\']"
                 else
-                    "    #{p} => \"#{v}\""
+                    "    #{p} => \'#{v}\'"
                 end
             }.join(",\n")
         end
