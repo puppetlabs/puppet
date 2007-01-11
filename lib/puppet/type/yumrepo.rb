@@ -86,6 +86,7 @@ module Puppet
         def self.list
             l = []
             check = validstates
+            clear
             inifile.each_section do |s|
                 next if s.name == "main"
                 obj = create(:name => s.name, :check => check)
