@@ -14,7 +14,7 @@ Puppet::Type.type(:package).provide :dpkg do
         Puppet.debug "Executing '%s'" % cmd
         execpipe(cmd) do |process|
             # our regex for matching dpkg output
-            regex = %r{^(\S+ +\S+ +\S+) (\S+) (\S+)$}
+            regex = %r{^(\S+ +\S+ +\S+) (\S+) (\S*)$}
             fields = [:status, :name, :ensure]
             hash = {}
 
@@ -68,7 +68,7 @@ Puppet::Type.type(:package).provide :dpkg do
         # Our regex for matching dpkg-query output.  We could probably just
         # use split here, but I'm not positive that dpkg-query will never
         # return whitespace.
-        regex = %r{^(\S+) (\S+) (\S+) (\S+) (\S+)$}
+        regex = %r{^(\S+) (\S+) (\S+) (\S+) (\S*)$}
 
         line = output.split("\n").shift.chomp
         
