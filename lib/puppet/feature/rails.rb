@@ -34,7 +34,10 @@ Puppet.features.add(:rails) do
         end
     end
 
-    if defined? ActiveRecord
+    # We check a fairly specific class, so that we can be sure that we've
+    # loaded a new enough version of AR that will support the features we
+    # actually use.
+    if defined? ActiveRecord::Associations::BelongsToPolymorphicAssociation
         require 'puppet/rails'
         true
     else
