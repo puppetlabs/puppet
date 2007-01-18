@@ -1,135 +1,18 @@
 ---
 inMenu: false
-directoryName: Documentation
-title: Puppet Documentation
-orderInfo: 1
-subtreeLevel: 5
+directoryName: Reference
+title: Reference
+orderInfo: 4
+subtreeLevel: 6
 ---
 
-How to Use This Guide
-=====================
-This guide is largely a pointer to smaller, more focused guides, although it
-includes unique information when no appropriate smaller guide exists.
-
-Introduction to Puppet
-=======================
-
-Puppet is a declarative *language* for expressing system configuration, a
-*client and server* for distributing it, and a *library* for realizing the
-configuration.
-
-The Puppet [Introduction](introduction.html) covers the basic architecture and
-design goals, including whether and why you should be using Puppet on your
-network.
-
-Cookbook
-========
-This documentation collection is somewhat more of a reference than a how-to,
-so we have developed a [Cookbook](/cookbook/) wiki for writing recipes and
-how-tos for solving specific problems with Puppet.  Because the cookbook is a
-wiki, you can edit and create recipes yourself.
-
-Installation
-===============
-There is an [Installation Guide](installation.html) meant for installation of
-Puppet across a network.
-
-There is also a guide for [using Puppet from source](fromsvn.html), and one for
-[testing Puppet](testing.html), to get an idea of what you can do without making a full
-deployment.
-
-Command Line Executables
-==========================
-
-This section will eventually have links to full man-pages for each executable,
-but for now the man pages can be found by running the respective executable
-with the '--help' flag (this requires the Rdoc::usage module, which is
-often missing).
-
-However, most arguments for the executables are in the form of configuration
-parameters used internally in the library.  All of the executables are
-written to accept any of these configuration parameters, and they
-are all defined in the
-[Puppet Executable Reference](configref.html).
-
-* **puppet**
-
-    Stand alone Puppet Site Manifest Script evaluator. Parses, evaluates,
-    and implements a Site Manifest locally.
-
-* **puppetmasterd**
-
-    Puppet Site Manifest Server Daemon. Runs on each host
-    serving/providing configurations to Puppet client hosts.
-
-* **puppetd**
-
-    Puppet Client Host Configuration Daemon. Runs on each host whose
-    configuration is managed by Puppet. Requests a Host Specific Manifest
-    from a Puppet Manifest Server and implements it locally.
-
-* **puppetca**
-
-    SSL Certificate Authority Server used for receiving cerification
-    requests from puppet clients. Puppet Client Hosts are required to have
-    their SSL certs signed by their Puppet Manifest Server's Authority
-    before they can be authenticated and authorized to recieve
-    configurations.
-
-* **puppetdoc**
-
-    Command line tool for printing Puppet Default and Local Type Library
-    reference documentation.  This is really only used internally.
-
-Type and Language Reference
-==============================
-The Puppet reference is split into two pieces:
-
-* [Language Tutorial](languagetutorial.html)
-
-  A simple description of how the Puppet language functions, with multiple
-  examples.
-
+Reference
+=========
+* [Configuration Parameter Reference](configref.html)
+* [Function Reference](functions.html)
+* [Reports Reference](reports.html)
 * [Type Reference](typedocs.html)
 
-  A reference of all available Puppet Types.  The types defined in this
-  reference represent the total ability of Puppet to manage your system -- if
-  an object is not in this reference, then Puppet cannot currently manage it.
 
-* [Language Reference](structures.html)
-
-  A reference to all available language structures within Puppet.  This
-  reference presents the limits of and options for expressibility within
-  Puppet.
-
-API Documentation
-=================
-Until I have time to write tutorials on how to extend Puppet, you might find
-some benefit in perusing the [API docs](/downloads/puppet/apidocs/).
-They're woefully incomplete as of the middle of 2006, but I'll be
-updating them over time.
-
-Configuration
-================
-Puppet configuration can be done through per-process configuration
-files (e.g., ``puppetd.conf``) or on the command-line via switches.
-Much of the documentation is available via ``--help`` switches on each
-executable, but most of the useful switches are common to all
-executables and are thus documented in the [executable reference](configref.html).
-
-There are some guides already, though:
-
-* [File Serving Configuration](fsconfigref.html)
-
-* [Puppet Certificates and Security](security.html)
-
-Additional Documentation
-========================
-While the above links represent the standard, recommended documentation, there
-is additional information available for those who are interested:
-
-* [Puppet Internals](howitworks.html)
-
-* [How Cfengine compares to Puppet](notcfengine.html)
 
 *$Id$*

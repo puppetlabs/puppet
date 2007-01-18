@@ -23,7 +23,7 @@ Puppet's primary author, Luke Kanies, is usually online there.
 
 ## Relevant Links
 
-* [Documentation](documentation/)
+* [Documentation](/trac/puppet/wiki/DocumentationStart)
 
     Available documentation on puppet. Including an Introduction, and Language
     & Type Library References.
@@ -45,7 +45,7 @@ Puppet's primary author, Luke Kanies, is usually online there.
 
     Puppet Subversion Repository
 
-* [Bug Tracker](/cgi-bin/puppet.cgi)
+* [Bug Tracker](https://reductivelabs.com/trac/puppet)
 
     Bug tickets, feature enhancements, and source browsing
 
