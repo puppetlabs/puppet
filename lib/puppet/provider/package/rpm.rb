@@ -15,7 +15,7 @@ Puppet::Type.type(:package).provide :rpm do
 
         # list out all of the packages
         begin
-            execpipe("#{command(:rpm)} -q -a --qf '%{NAME} #{VERSIONSTRING}\n'") { |process|
+            execpipe("#{command(:rpm)} -qa --nosignature --nodigest --qf '%{NAME} #{VERSIONSTRING}\n'") { |process|
                 # our regex for matching dpkg output
                 regex = %r{^(\S+)\s+(\S+)}
                 fields = [:name, :ensure]
@@ -47,7 +47,7 @@ Puppet::Type.type(:package).provide :rpm do
     # a hash with entries :instance => fully versioned package name, and 
     # :ensure => version-release
     def query
-        cmd = ["-q", @model[:name], "--qf", "#{NVRFORMAT} #{VERSIONSTRING}\n"]
+        cmd = ["-q", @model[:name], "--nosignature", "--nodigest", "--qf", "#{NVRFORMAT} #{VERSIONSTRING}\n"]
 
         begin
             output = rpm *cmd
