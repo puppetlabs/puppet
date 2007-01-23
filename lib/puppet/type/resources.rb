@@ -98,7 +98,7 @@ Puppet::Type.newtype(:resources) do
         end.each do |resource|
             begin
                 resource[:ensure] = :absent
-            rescue ArgumentError, Parse::Error => detail
+            rescue ArgumentError, Puppet::Error => detail
                 err "The 'ensure' attribute on %s resources does not accept 'absent' as a value" %
                     [self[:name]]
                 return []
