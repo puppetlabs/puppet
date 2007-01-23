@@ -83,6 +83,20 @@ module Puppet
         end
 
         def retrieve
+            if self.should
+                @should = @should.collect do |val|
+                    unless val.is_a?(Integer)
+                        if tmp = validuser?(val)
+                            val = tmp
+                        else
+                            raise "Could not find user %s" % val
+                        end
+                    else
+                        val
+                    end
+                end
+            end
+            
             unless stat = @parent.stat(false)
                 @is = :absent
                 return
@@ -103,19 +117,6 @@ module Puppet
             if @is > 120000
                 self.warning "current state is silly: %s" % @is
                 @is = :silly
-            end
-        end
-
-        # If we're not root, we can check the values but we cannot change
-        # them.  We can't really do any processing here, because users
-        # might not exist yet.  FIXME There's still a bit of a problem here
-        # if the user's UID changes at run time, but we're just going to
-        # have to be okay with that for now, unfortunately.
-        munge do |value|
-            if tmp = self.validuser?(value)
-                return tmp
-            else
-                return value
             end
         end
 

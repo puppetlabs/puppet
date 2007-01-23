@@ -44,6 +44,19 @@ module Puppet
         end
 
         def retrieve
+            if self.should
+                @should = @should.collect do |val|
+                    unless val.is_a?(Integer)
+                        if tmp = validgroup?(val)
+                            val = tmp
+                        else
+                            raise "Could not find group %s" % val
+                        end
+                    else
+                        val
+                    end
+                end
+            end
             stat = @parent.stat(false)
 
             unless stat
@@ -70,14 +83,6 @@ module Puppet
                 return gid
             else
                 return false
-            end
-        end
-        
-        munge do |value|
-            if val = validgroup?(value)
-                return val
-            else
-                return value
             end
         end
 

@@ -1076,7 +1076,7 @@ module Puppet
     require 'puppet/type/pfile/source'      # can create the file
     require 'puppet/type/pfile/target'
     require 'puppet/type/pfile/ensure'      # can create the file
-    require 'puppet/type/pfile/uid'
+    require 'puppet/type/pfile/owner'
     require 'puppet/type/pfile/group'
     require 'puppet/type/pfile/mode'
     require 'puppet/type/pfile/type'
