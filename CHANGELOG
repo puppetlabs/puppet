@@ -1,3 +1,27 @@
+0.22.0
+    Integrated the GRATR graph library into Puppet, for handling resource
+    relationships.
+
+    Lots of bug-fixes (see bugs tickets associated with the 'minor' milestone).
+
+    Added new 'resources' metatype, which currently only includes the ability
+    to purge unmanaged resources.
+
+    Added better ability to generate new resource objects during transactions
+    (using 'generate' and 'eval_generate' methods).
+
+    Rewrote all Rails support with a much better database design.  Export/collect
+    now works, although the database is incompatible with previous versions.
+
+    Removed downcasing of facts and made most of the language case-insensitive.
+
+    Added support for printing the graphs built during transactions.
+
+    Reworked how paths are built for logging.
+
+    Switched all providers to directly executing commands instead of going through
+    a subshell, which removes the need to quote or escape arguments.
+
 0.20.1
     Mostly a bug-fix release, with the most important fix being the
     multiple-definition error.
