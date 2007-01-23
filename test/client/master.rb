@@ -464,6 +464,40 @@ end
         # And make sure the ruby version is in there
         assert_equal(RUBY_VERSION, facts["rubyversion"], "ruby version did not get added")
     end
+    
+    # #424
+    def test_caching_of_compile_time
+        file = tempfile()
+        manifest = tempfile()
+        File.open(manifest, "w") { |f| f.puts "file { '#{file}': content => yay }" }
+        
+        driver = mkmaster(manifest)
+        driver.local = false
+        master = mkclient(driver)
+        
+        # We have to make everything thinks it's remote, because there's no local caching info
+        master.local = false
+        
+        assert(! master.fresh?, "Considered fresh with no compile at all")
+        
+        assert_nothing_raised { master.run }
+        assert(master.fresh?, "not considered fresh after compile")
+        
+        # Now make sure the config time is cached
+        assert(master.compile_time, "No stored config time")
+        assert_equal(master.compile_time, Puppet::Storage.cache(:configuration)[:compile_time], "times did not match")
+        time = master.compile_time
+        master.clear
+        File.unlink(file)
+        Puppet::Storage.store
+        
+        # Now make a new master
+        Puppet::Storage.clear
+        master = mkclient(driver)
+        master.run
+        assert_equal(time, master.compile_time, "time was not retrieved from cache")
+        assert(FileTest.exists?(file), "file was not created on second run")
+    end
 end
 
 # $Id$

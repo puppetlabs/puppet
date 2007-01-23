@@ -69,6 +69,7 @@ class Puppet::Client::MasterClient < Puppet::Client
     @drivername = :Master
 
     attr_accessor :objects
+    attr_reader :compile_time
 
     class << self
         # Puppetd should only have one instance running, and we need a way
@@ -103,7 +104,6 @@ class Puppet::Client::MasterClient < Puppet::Client
 
     # This method actually applies the configuration.
     def apply(tags = nil, ignoreschedules = false)
-        dostorage()
         unless defined? @objects
             raise Puppet::Error, "Cannot apply; objects not defined"
         end
@@ -172,6 +172,7 @@ class Puppet::Client::MasterClient < Puppet::Client
     def dostorage
         begin
             Puppet::Storage.load
+            @compile_time ||= Puppet::Storage.cache(:configuration)[:compile_time]
         rescue => detail
             if Puppet[:trace]
                 puts detail.backtrace
@@ -189,14 +190,16 @@ class Puppet::Client::MasterClient < Puppet::Client
 
     # Check whether our configuration is up to date
     def fresh?
-        unless defined? @configstamp
+        unless self.compile_time
+            Puppet.warning "No compile time"
             return false
         end
 
         # We're willing to give a 2 second drift
-        if @driver.freshness - @configstamp < 1
+        if @driver.freshness - @compile_time < 1
             return true
         else
+            Puppet.warning "%s vs %s" % [@driver.freshness, @compile_time]
             return false
         end
     end
@@ -215,12 +218,19 @@ class Puppet::Client::MasterClient < Puppet::Client
     # Retrieve the config from a remote server.  If this fails, then
     # use the cached copy.
     def getconfig
+        dostorage()
         if self.fresh?
             Puppet.info "Config is up to date"
+            unless defined? @objects
+                begin
+                    @objects = YAML.load(self.retrievecache).to_type
+                rescue => detail
+                    Puppet.warning "Could not load cached configuration: %s" % detail
+                end
+            end
             return
         end
         Puppet.debug("getting config")
-        dostorage()
 
         # Retrieve the plugins.
         if Puppet[:pluginsync]
@@ -282,7 +292,8 @@ class Puppet::Client::MasterClient < Puppet::Client
         Puppet.config.use(:puppet, :sslcertificates, :puppetd)
         super
 
-        @configtime = Time.now
+        # This might be nil
+        @configtime = 0
 
         self.class.instance = self
         @running = false
@@ -537,7 +548,7 @@ class Puppet::Client::MasterClient < Puppet::Client
         # If we're local, we don't have to do any of the conversion
         # stuff.
         objects = @driver.getconfig(facts, "yaml")
-        @configstamp = Time.now.to_i
+        @compile_time = Time.now.to_i
 
         if objects == ""
             raise Puppet::Error, "Could not retrieve configuration"
@@ -578,7 +589,9 @@ class Puppet::Client::MasterClient < Puppet::Client
             Puppet.warning "Could not get config; using cached copy"
             fromcache = true
         else
-            @configstamp = Time.now.to_i
+            @compile_time = Time.now.to_i
+            Puppet.warning "Caching compile time %s" % @compile_time.inspect
+            Puppet::Storage.cache(:configuration)[:compile_time] = @compile_time
         end
 
         begin

@@ -18,18 +18,21 @@ module Puppet
         # types like exec, but it also means that if an object changes locations
         # in the configuration it will lose its cache.
         def self.cache(object)
-            unless object.is_a? Puppet::Type
-                raise Puppet::DevFail, "Must pass a Type instance to Storage.cache"
+            if object.is_a? Puppet::Type
+                # We used to store things by path, now we store them by ref.
+                # In oscar(0.20.0) this changed to using the ref.
+                if @@state.include?(object.path)
+                    @@state[object.ref] = @@state[object.path]
+                    @@state.delete(object.path)
+                end
+                name = object.ref
+            elsif object.is_a?(Symbol)
+                name = object
+            else
+                raise ArgumentError, "You can only cache information for Types and symbols"
             end
 
-            # We used to store things by path, now we store them by ref.
-            # In oscar(0.20.0) this changed to using the ref.
-            if @@state.include?(object.path)
-                @@state[object.ref] = @@state[object.path]
-                @@state.delete(object.path)
-            end
-
-            return @@state[object.ref] ||= {}
+            return @@state[name] ||= {}
         end
 
         def self.clear

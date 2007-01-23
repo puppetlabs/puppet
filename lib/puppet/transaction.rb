@@ -38,7 +38,6 @@ class Transaction
     # Apply all changes for a resource, returning a list of the events
     # generated.
     def apply(resource)
-        resource.info "Applying"
         begin
             changes = resource.evaluate
         rescue => detail
