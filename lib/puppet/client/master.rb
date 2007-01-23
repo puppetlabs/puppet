@@ -16,7 +16,9 @@ class Puppet::Client::MasterClient < Puppet::Client
             configuration will not compile.  This option is useful for testing
             new configurations, where you want to fix the broken configuration
             rather than reverting to a known-good one."
-        ]
+        ],
+        :downcasefacts => [false,
+            "Whether facts should be made all lowercase when sent to the server."]
     )
 
     Puppet.setdefaults(:puppetd,
@@ -80,10 +82,16 @@ class Puppet::Client::MasterClient < Puppet::Client
         if Puppet[:factsync]
             self.getfacts()
         end
+        
+        down = Puppet[:downcasefacts]
 
         facts = {}
         Facter.each { |name,fact|
-            facts[name] = fact.to_s
+            if down
+                facts[name] = fact.to_s.downcase
+            else
+                facts[name] = fact.to_s
+            end
         }
 
         # Add our client version to the list of facts, so people can use it
