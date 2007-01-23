@@ -42,13 +42,9 @@ module Puppet
                 this directory can be removed without causing harm (although it
                 might result in spurious service restarts)."
         },
-        :rundir => { :default => "$vardir/run",
+        :rundir => { :default => "/var/run/puppet",
             :mode => 01777,
             :desc => "Where Puppet PID files are kept."
-        },
-        :lockdir => { :default => "$vardir/locks",
-            :mode => 01777,
-            :desc => "Where lock files are kept."
         },
         :statefile => { :default => "$statedir/state.yaml",
             :mode => 0660,
