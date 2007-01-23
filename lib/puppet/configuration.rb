@@ -29,6 +29,12 @@ module Puppet
         logopts = ["$vardir/log", "The Puppet log directory."]
     end
     setdefaults(:puppet, :logdir => logopts)
+    
+    if Process.uid == 0
+        rundir = "/var/run/puppet"
+    else
+        rundir = "$vardir/run"
+    end
 
     self.setdefaults(:puppet,
         :trace => [false, "Whether to print stack traces on some errors"],
@@ -42,10 +48,6 @@ module Puppet
                 this directory can be removed without causing harm (although it
                 might result in spurious service restarts)."
         },
-        :rundir => { :default => "/var/run/puppet",
-            :mode => 01777,
-            :desc => "Where Puppet PID files are kept."
-        },
         :statefile => { :default => "$statedir/state.yaml",
             :mode => 0660,
             :desc => "Where puppetd and puppetmasterd store state associated
@@ -58,6 +60,10 @@ module Puppet
             :mode => 0771,
             :owner => "root",
             :desc => "Where SSL certificates are kept."
+        },
+        :rundir => { :default => rundir,
+            :mode => 01777,
+            :desc => "Where Puppet PID files are kept."
         },
         :genconfig => [false,
             "Whether to just print a configuration to stdout and exit.  Only makes
