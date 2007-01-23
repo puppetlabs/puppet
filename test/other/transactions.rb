@@ -985,6 +985,23 @@ class TestTransactions < Test::Unit::TestCase
             trans.relationship_graph
         end
     end
+
+    def test_errors_during_generation
+        type = Puppet::Type.newtype(:failer) do
+            newparam(:name) {}
+            def eval_generate
+                raise ArgumentError, "Invalid value"
+            end
+            def generate
+                raise ArgumentError, "Invalid value"
+            end
+        end
+        cleanup { Puppet::Type.rmtype(:failer) }
+
+        obj = type.create(:name => "testing")
+
+        assert_apply(obj)
+    end
 end
 
 # $Id$

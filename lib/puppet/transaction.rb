@@ -169,7 +169,15 @@ class Transaction
     # See if the resource generates new resources at evaluation time.
     def eval_generate(resource)
         if resource.respond_to?(:eval_generate)
-            if children = resource.eval_generate
+            begin
+                children = resource.eval_generate
+            rescue => detail
+                resource.err "Failed to generate additional resources during transaction: %s" %
+                    detail
+                return nil
+            end
+
+            if children
                 copy_relationships(resource, children)
                 @generated += children
                 children.each { |child| child.finish }
@@ -324,7 +332,12 @@ class Transaction
         while ! list.empty?
             list.each do |resource|
                 if resource.respond_to?(:generate)
-                    made = resource.generate
+                    begin
+                        made = resource.generate
+                    rescue => detail
+                        resource.err "Failed to generate additional resources: %s" %
+                            detail
+                    end
                     next unless made
                     unless made.is_a?(Array)
                         made = [made]
