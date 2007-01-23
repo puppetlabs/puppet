@@ -230,7 +230,7 @@ class Config
             when /^true$/i: true
             when /^\d+$/i: Integer(value)
             else
-                value.gsub(/^["']|["']$/,'')
+                value.gsub(/^["']|["']$/,'').sub(/\s+$/, '')
         end
     end
 

@@ -916,6 +916,18 @@ inttest = 27
 #        assert(! yay.find { |o| o.class.name == :group and o.name == "root" },
 #            "Found root group")
     end
+    
+    # #415
+    def test_remove_trailing_spaces
+        config = mkconfig()
+        config.setdefaults(:yay, :rah => ["testing", "a desc"])
+        
+        file = tempfile()
+        File.open(file, "w") { |f| f.puts "rah = something " }
+        
+        assert_nothing_raised { config.parse(file) }
+        assert_equal("something", config[:rah], "did not remove trailing whitespace in parsing")
+    end
 end
 
 # $Id$
