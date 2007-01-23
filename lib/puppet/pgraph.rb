@@ -50,6 +50,21 @@ class Puppet::PGraph < GRATR::Digraph
         end
     end
 
+    # Fail in a somewhat informative way if the graph has become cyclic.
+    def check_cycle
+        sorted = topsort()
+        return true if sorted.size == size()
+
+        bad = []
+        vertices.each do |v|
+            bad << v unless sorted.include?(v)
+        end
+
+        raise Puppet::Error, "Found cycle involving %s" % bad.collect do |v|
+            v.to_s
+        end.join(", ")
+    end
+
     # Which resources a given resource depends upon.
     def dependents(resource)
         tree_from_vertex2(resource).keys

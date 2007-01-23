@@ -192,6 +192,29 @@ class TestPGraph < Test::Unit::TestCase
         assert_equal({:callback => :yay},
             graph.edge_label(:a, :b), "lost label")
     end
+
+    def test_check_cycle
+        {
+            {:a => :b, :b => :a} => true,
+            {:a => :b, :b => :c, :c => :a} => true,
+            {:a => :b, :b => :c} => false,
+        }.each do |hash, result|
+            graph = Puppet::PGraph.new
+            hash.each do |a,b|
+                graph.add_edge!(a, b)
+            end
+
+            if result
+                assert_raise(Puppet::Error, "%s did not fail" % hash.inspect) do
+                    graph.check_cycle
+                end
+            else
+                assert_nothing_raised("%s failed" % hash.inspect) do
+                    graph.check_cycle
+                end
+            end
+        end
+    end
 end
 
 # $Id$

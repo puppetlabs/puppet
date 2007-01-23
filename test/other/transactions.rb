@@ -972,6 +972,19 @@ class TestTransactions < Test::Unit::TestCase
         
         assert(! $called.include?(:refresh), "Called refresh when it wasn't set as a method")
     end
+
+    # Testing #437 - cyclic graphs should throw failures.
+    def test_fail_on_cycle
+        one = Puppet::Type.type(:exec).create(:name => "/bin/echo one")
+        two = Puppet::Type.type(:exec).create(:name => "/bin/echo two")
+        one[:require] = two
+        two[:require] = one
+
+        trans = newcomp(one, two).evaluate
+        assert_raise(Puppet::Error) do
+            trans.relationship_graph
+        end
+    end
 end
 
 # $Id$
