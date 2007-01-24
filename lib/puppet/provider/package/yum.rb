@@ -2,7 +2,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm do
     desc "Support via ``yum``."
     commands :yum => "yum", :rpm => "rpm"
 
-    defaultfor :operatingsystem => :fedora
+    defaultfor :operatingsystem => [:fedora, :centos]
 
     # Install a package using 'yum'.
     def install
