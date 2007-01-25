@@ -20,17 +20,17 @@ Puppet::Type.type(:package).provide :pkgdmg do
     confine :exists => "/Library/Receipts"
     commands :installer => "/usr/sbin/installer"
     commands :hdiutil => "/usr/bin/hdiutil"
+    commands :curl => "/usr/bin/curl"
 
     # JJM We store a cookie for each installed .pkg.dmg in /var/db
     def self.listbyname
         Dir.entries("/var/db").find_all { |f|
             f =~ /^\.puppet_pkgdmg_installed_/
-        }.collect { |f|
+        }.collect do |f|
             name = f.sub(/^\.puppet_pkgdmg_installed_/, '')
             yield name if block_given?
-
             name
-        }
+        end
     end
 
     def self.list
@@ -44,11 +44,15 @@ Puppet::Type.type(:package).provide :pkgdmg do
     end
 
     def self.installpkg(source, name, orig_source)
-      installer "-pkg", source, "-target", "/"
+      begin
+          installer "-pkg", source, "-target", "/"
+      rescue Puppet::ExecutionFailure
+          return nil
+      end
       File.open("/var/db/.puppet_pkgdmg_installed_#{name}", "w") do |t|
           t.print "name: '#{name}'\n"
           t.print "source: '#{orig_source}'\n"
-      end      
+      end
     end
     
     def self.installpkgdmg(source, name)
@@ -57,26 +61,46 @@ Puppet::Type.type(:package).provide :pkgdmg do
         end
         require 'open-uri'
         require 'puppet/util/plist'
-        open(source) do |dmg|
-            cmd = "#{command(:hdiutil)} mount -plist -nobrowse -readonly -mountrandom /tmp #{dmg.path}"
-            IO.popen(cmd) do |pipe|
-                xml_str = pipe.read
-                ptable = Plist::parse_xml xml_str
-                # JJM Filter out all mount-paths into a single array, discard the rest.
-                mounts = ptable['system-entities'].collect { |entity|
-                    entity['mount-point']
-                }.select { |mountloc|; mountloc }
-                mounts.each do |fspath|
-                    Dir.entries(fspath).select { |f|
-                        f =~ /\.m{0,1}pkg$/i
-                    }.each { |pkg|
-                        installpkg("#{fspath}/#{pkg}", name, source)
-                    }
-                end
-            hdiutil "eject", mounts[0]
+        cached_source = source
+        if %r{\A[A-Za-z][A-Za-z0-9+\-\.]*://} =~ cached_source
+            cached_source = "/tmp/#{name}"
+            begin
+                curl "-o", cached_source, "-C", "-", "-k", "--retry", "3", "--retry-delay", "15", "-s", "--url", source
+                Puppet.debug "Success: curl transfered [#{name}]"
+            rescue Puppet::ExecutionFailure
+                Puppet.debug "curl did not transfer [#{name}].  Falling back to slower open-uri transfer methods."
+                cached_source = source
             end
         end
-    end
+        
+        begin
+            open(cached_source) do |dmg|
+                cmd = "#{command(:hdiutil)} mount -plist -nobrowse -readonly -mountrandom /tmp #{dmg.path}"
+                IO.popen(cmd) do |pipe|
+                    xml_str = pipe.read
+                    ptable = Plist::parse_xml xml_str
+                    # JJM Filter out all mount-paths into a single array, discard the rest.
+                    mounts = ptable['system-entities'].collect { |entity|
+                        entity['mount-point']
+                    }.select { |mountloc|; mountloc }
+                    begin
+                        mounts.each do |fspath|
+                            Dir.entries(fspath).select { |f|
+                                f =~ /\.m{0,1}pkg$/i
+                                }.each do |pkg|
+                                    installpkg("#{fspath}/#{pkg}", name, source)
+                                end
+                        end # mounts.each do
+                    ensure
+                        hdiutil "eject", mounts[0]
+                    end # begin
+                end # IO.popen() do
+            end # open() do
+        ensure
+            # JJM Remove the file if open-uri didn't already do so.
+            File.unlink(cached_source) if File.exist?(cached_source)
+        end # begin
+    end # def self.installpkgdmg
 
     def query
         if FileTest.exists?("/var/db/.puppet_pkgdmg_installed_#{@model[:name]}")
