@@ -28,6 +28,10 @@ class TestParser < Test::Unit::TestCase
         check_parseable "'svn.23.nu'"
         check_parseable "'HOST'"
     end
+    
+    def test_inherits_from_default
+        check_parseable(["default", "host1"], "node default {}\nnode host1 inherits default {}")
+    end
 
     def test_reject_hostname
         check_nonparseable "host.example.com"
@@ -40,13 +44,14 @@ class TestParser < Test::Unit::TestCase
 
     AST = Puppet::Parser::AST
 
-    def check_parseable(hostnames)
+    def check_parseable(hostnames, code = nil)
         unless hostnames.is_a?(Array)
             hostnames = [ hostnames ]
         end
         interp = nil
+        code ||= "node #{hostnames.join(", ")} { }"
         assert_nothing_raised {
-            interp = mkinterp :Code => "node #{hostnames.join(", ")} { }"
+            interp = mkinterp :Code => code
         }
         # Strip quotes
         hostnames.map! { |s| s.sub(/^'(.*)'$/, "\\1") }

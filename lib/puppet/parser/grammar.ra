@@ -583,9 +583,11 @@ argument:     NAME EQUALS rvalue {
 }
 
 parent:       nil
-            | INHERITS NAME {
+            | INHERITS nameordefault {
     result = val[1]
 }
+
+nameordefault: NAME | DEFAULT
 
 variable:     VARIABLE {
     result = ast AST::Variable, :value => val[0]
