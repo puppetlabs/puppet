@@ -53,7 +53,7 @@ class Puppet::Parser::AST
                     retvalue = default.value.safeevaluate(:scope => scope)
                 else
                     self.fail Puppet::ParseError,
-                        "No value for selector param '%s'" % paramvalue
+                        "No matching value for selector param '%s'" % paramvalue
                 end
             end
 
