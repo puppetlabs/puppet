@@ -195,7 +195,7 @@ class Puppet::Client::MasterClient < Puppet::Client
         end
 
         # We're willing to give a 2 second drift
-        if @driver.freshness - @compile_time < 1
+        if @driver.freshness - @compile_time.to_i < 1
             return true
         else
             return false
@@ -549,7 +549,7 @@ class Puppet::Client::MasterClient < Puppet::Client
         # If we're local, we don't have to do any of the conversion
         # stuff.
         objects = @driver.getconfig(facts, "yaml")
-        @compile_time = Time.now.to_i
+        @compile_time = Time.now
 
         if objects == ""
             raise Puppet::Error, "Could not retrieve configuration"
@@ -590,8 +590,7 @@ class Puppet::Client::MasterClient < Puppet::Client
             Puppet.warning "Could not get config; using cached copy"
             fromcache = true
         else
-            @compile_time = Time.now.to_i
-            Puppet.warning "Caching compile time %s" % @compile_time.inspect
+            @compile_time = Time.now
             Puppet::Storage.cache(:configuration)[:compile_time] = @compile_time
         end
 
