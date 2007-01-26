@@ -189,7 +189,7 @@ module Functions
     end
 
     newfunction(:template, :type => :rvalue, :doc => "Evaluate a template and
-    return its value.  See [the templating docs](../advanced/templating.html)
+    return its value.  See [the templating docs](/trac/puppet/wiki/PuppetTemplating)
     for more information.  Note that if multiple templates are specified, their
     output is all concatenated and returned as the output of the function.") do |vals|
         require 'erb'

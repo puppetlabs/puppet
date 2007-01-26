@@ -18,7 +18,7 @@ module Puppet
                 }
             
                 This attribute is especially useful when used with
-                [templating](templating.html)."
+                [templating](/trac/puppet/wiki/PuppetTemplating)."
 
         def change_to_s
             "synced"
