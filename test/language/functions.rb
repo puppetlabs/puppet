@@ -382,6 +382,17 @@ class TestLangFunctions < Test::Unit::TestCase
         # and make sure multiple falses are still false
         assert(! scope.function_defined(%w{no otherno stillno}),
             "Multiple falses were somehow true")
+        
+        # Now make sure we can test resources
+        scope.setresource mkresource(:type => "file", :title => "/tmp/rahness",
+            :scope => scope, :source => scope.source,
+            :params => {:owner => "root"})
+        
+        yep = Puppet::Parser::Resource::Reference.new(:type => "file", :title => "/tmp/rahness")
+        nope = Puppet::Parser::Resource::Reference.new(:type => "file", :title => "/tmp/fooness")
+        
+        assert(scope.function_defined([yep]), "valid resource was not considered defined")
+        assert(! scope.function_defined([nope]), "invalid resource was considered defined")
     end
 end
 

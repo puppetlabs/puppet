@@ -151,14 +151,28 @@ module Functions
 
     # Test whether a given class or definition is defined
     newfunction(:defined, :type => :rvalue, :doc => "Determine whether a given
-    type is defined, either as a native type or a defined type.") do |vals|
-        # For some reason, it doesn't want me to return from here.
-        if vals.detect do |val| Puppet::Type.type(val) or finddefine(val) or findclass(val) end
-            true
-        else
-            false
+    type is defined, either as a native type or a defined type, or whether a resource has been
+    specified.  If you are checking with a resource is defined, use the normal resource
+    reference syntax, e.g., ``File['/etc/passwd']``.") do |vals|
+        result = false
+        vals.each do |val|
+            case val
+            when String:
+                # For some reason, it doesn't want me to return from here.
+                if Puppet::Type.type(val) or finddefine(val) or findclass(val)
+                    result = true
+                    break
+                end
+            when Puppet::Parser::Resource::Reference:
+                if findresource(val.to_s)
+                    result = true
+                    break
+                end
+            else
+                raise ArgumentError, "Invalid argument of type %s to 'defined'" % val.class
+            end
         end
-
+        result
     end
 
     newfunction(:fail, :doc => "Fail with a parse error.") do |vals|
