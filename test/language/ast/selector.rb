@@ -14,39 +14,45 @@ class TestSelector < Test::Unit::TestCase
 	AST = Puppet::Parser::AST
     
     def test_evaluate
-        sel = nil
         scope = mkscope
-        param = nameobj("MyParam")
-
-        hash = {
-            "myparam" => FakeAST.new("lower"),
-            "MyParam" => FakeAST.new("upper")
-        }
-        values = ["myparam", "MyParam"].collect do |p|
-            AST::ResourceParam.new(:param => FakeAST.new(p), :value => hash[p])
-        end
-        assert_nothing_raised do
-            sel = AST::Selector.new(:param => param, :values => values)
+        upperparam = nameobj("MYPARAM")
+        lowerparam = nameobj("myparam")
+        
+        should = {"MYPARAM" => "upper", "myparam" => "lower"}
+        
+        maker = Proc.new do
+            {
+            :default => AST::ResourceParam.new(:param => AST::Default.new(:value => "default"), :value => FakeAST.new("default")),
+            :lower => AST::ResourceParam.new(:param => FakeAST.new("myparam"), :value => FakeAST.new("lower")),
+            :upper => AST::ResourceParam.new(:param => FakeAST.new("MYPARAM"), :value => FakeAST.new("upper")),
+            }
+            
         end
         
         # Start out case-sensitive
         Puppet[:casesensitive] = true
         
-        result = nil
-        assert_nothing_raised do
-            result = sel.evaluate :scope => scope
+        %w{MYPARAM myparam}.each do |str|
+            param = nameobj(str)
+            params = maker.call()
+            sel = AST::Selector.new(:param => param, :values => params.values)
+            result = nil
+            assert_nothing_raised { result = sel.evaluate(:scope => scope) }
+            assert_equal(should[str], result, "did not case-sensitively match %s" % str)
         end
-        assert_equal("upper", result, "Did not match case-sensitively")
-        assert(! hash["myparam"].evaluated?, "lower value was evaluated even though it did not match")
         
-        # Now try it case-insensitive
+        # then insensitive
         Puppet[:casesensitive] = false
-        hash["MyParam"].reset
-        assert_nothing_raised do
-            result = sel.evaluate :scope => scope
+        
+        %w{MYPARAM myparam}.each do |str|
+            param = nameobj(str)
+            params = maker.call()
+            sel = AST::Selector.new(:param => param, :values => params.values)
+            result = nil
+            assert_nothing_raised { result = sel.evaluate(:scope => scope) }
+            assert_equal("lower", result, "did not case-insensitively match %s" % str)
         end
-        assert_equal("lower", result, "Did not match case-insensitively")
-        assert(! hash["MyParam"].evaluated?, "upper value was evaluated even though it did not match")
+        
     end
 end
 
