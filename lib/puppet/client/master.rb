@@ -191,7 +191,6 @@ class Puppet::Client::MasterClient < Puppet::Client
     # Check whether our configuration is up to date
     def fresh?
         unless self.compile_time
-            Puppet.warning "No compile time"
             return false
         end
 
@@ -199,7 +198,6 @@ class Puppet::Client::MasterClient < Puppet::Client
         if @driver.freshness - @compile_time < 1
             return true
         else
-            Puppet.warning "%s vs %s" % [@driver.freshness, @compile_time]
             return false
         end
     end
@@ -245,7 +243,10 @@ class Puppet::Client::MasterClient < Puppet::Client
             )
         end
 
-        objects = get_actual_config(facts)
+        unless objects = get_actual_config(facts)
+            @objects = nil
+            return
+        end
 
         unless objects.is_a?(Puppet::TransBucket)
             raise NetworkClientError,
