@@ -1924,6 +1924,14 @@ class TestFile < Test::Unit::TestCase
         assert_apply(file)
         assert(! FileTest.exists?(path), "File was not removed")
     end
+    
+    # Testing #434
+    def test_stripping_extra_slashes_during_lookup
+        file = Puppet::Type.newfile(:path => "/one/two")
+        %w{/one/two/ /one/two /one//two //one//two//}.each do |path|
+            assert(Puppet::Type.type(:file)[path], "could not look up file via path %s" % path)
+        end
+    end
 end
 
 # $Id$

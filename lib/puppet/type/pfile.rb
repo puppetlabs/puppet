@@ -230,6 +230,10 @@ module Puppet
                 self.fail "You cannot specify both content and a source"
             end
         end
+        
+        def self.[](path)
+            super(path.gsub(/\/+/, '/').sub(/\/$/, ''))
+        end
 
         # List files, but only one level deep.
         def self.list(base = "/")
