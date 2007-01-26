@@ -140,7 +140,7 @@ class Server
 
             reports().each do |name|
                 if mod = self.class.report(name)
-                    Puppet.info "Processing report %s" % name
+                    Puppet.info "Processing report %s for %s" % [name, client]
 
                     # We have to use a dup because we're including a module in the
                     # report.
