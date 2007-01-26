@@ -239,7 +239,10 @@ module Puppet
         # Remove the pid file
         def rmpidfile
             threadlock(:pidfile) do
-                Puppet::Util::Pidlock.new(pidfile).unlock or Puppet.err "Could not remove PID file %s" % [pidfile]
+                locker = Puppet::Util::Pidlock.new(pidfile)
+                if locker.locked?
+                    locker.unlock or Puppet.err "Could not remove PID file %s" % [pidfile]
+                end
             end
         end
 
