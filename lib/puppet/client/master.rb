@@ -1,5 +1,6 @@
 # The client for interacting with the puppetmaster config server.
 require 'sync'
+require 'timeout'
 
 class Puppet::Client::MasterClient < Puppet::Client
     unless defined? @@sync
@@ -22,6 +23,11 @@ class Puppet::Client::MasterClient < Puppet::Client
     )
 
     Puppet.setdefaults(:puppetd,
+        :configtimeout => [30,
+            "How long the client should wait for the configuration to be retrieved
+            before considering it a failure.  This can help reduce flapping if too
+            many clients contact the server at one time."
+        ],
         :reportserver => ["$server",
             "The server to which to send transaction reports."
         ],
@@ -298,6 +304,19 @@ class Puppet::Client::MasterClient < Puppet::Client
 
         self.class.instance = self
         @running = false
+
+        @timeout = Puppet[:configtimeout]
+        case @timeout
+        when String:
+            if @timeout =~ /^\d+$/
+                @timeout = Integer(@timeout)
+            else
+                raise ArgumentError, "Configuration timeout must be an integer"
+            end
+        when Integer: # nothing
+        else
+            raise ArgumentError, "Configuration timeout must be an integer"
+        end
     end
 
     # Mark that we should restart.  The Puppet module checks whether we're running,
@@ -540,7 +559,14 @@ class Puppet::Client::MasterClient < Puppet::Client
         if @local
             return get_local_config(facts)
         else
-            return get_remote_config(facts)
+            begin
+                Timeout::timeout(@timeout) do
+                    return get_remote_config(facts)
+                end
+            rescue Timeout::Error
+                Puppet.err "Configuration retrieval timed out"
+                return nil
+            end
         end
     end
     
