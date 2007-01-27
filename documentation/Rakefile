@@ -38,14 +38,14 @@ docs.each do |doc|
     task doc do
         docs = %x{puppetdoc --mode #{doc}}
 
-        header = "documentation/reference/%s.header" % doc
+        header = "reference/%s.header" % doc
         if FileTest.exists?(header)
             headertext = File.read(header)
         else
             headertext = ""
         end
 
-        file = "documentation/reference/%s.page" % doc
+        file = "reference/%s.page" % doc
 
         puts "Creating %s" % file
         File.open(file, "w") do |f|

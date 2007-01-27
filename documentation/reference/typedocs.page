@@ -566,7 +566,7 @@ for file copying, but it can also be used to monitor files somewhat
 like Tripwire without managing the file contents in any way.  You can
 specify that a file's checksum should be monitored and then subscribe to
 the file from another object and receive events to signify
-checksum changes, for instance.  Valid values are ``time``, ``timestamp``, ``md5lite``, ``md5``, ``mtime``, ``nosum``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
+checksum changes, for instance.  Valid values are ``time``, ``md5lite``, ``nosum``, ``timestamp``, ``md5``, ``mtime``.  Values can also match ``(?-mix:^\{md5|md5lite|timestamp|mtime|time\})``.
 
 #### content
 Specify the contents of a file as a string.  Newlines, tabs, and
@@ -587,7 +587,7 @@ kind of limited templating:
     }
 
     This attribute is especially useful when used with
-    [templating](templating.html).
+    [templating](/trac/puppet/wiki/PuppetTemplating).
 
 #### ensure
 Whether to create files that don't currently exist.
@@ -823,7 +823,7 @@ seldom need to specify this -- Puppet will usually discover the
 appropriate provider for your platform.  Available providers are:
 
 * **groupadd**: Group management via ``groupadd`` and its ilk.  The default
-        for most platforms    Required binaries: ``groupadd``, ``groupdel``, ``groupmod``.
+        for most platforms    Required binaries: ``groupadd``, ``groupmod``, ``groupdel``.
 * **netinfo**: Group management using NetInfo.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``nireport``, ``niutil``.
 * **pw**: Group management via ``pw``.  Only works on FreeBSD.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``/usr/sbin/pw``.
 
@@ -862,7 +862,7 @@ seldom need to specify this -- Puppet will usually discover the
 appropriate provider for your platform.  Available providers are:
 
 * **netinfo**: Host management in NetInfo.  This provider is highly experimental and is known
-        not to work currently.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``nireport``, ``mount``, ``niutil``, ``umount``, ``df``.
+        not to work currently.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``nireport``, ``mount``, ``niutil``, ``df``, ``umount``.
 * **parsed**:   
 
 #### target
@@ -932,8 +932,8 @@ seldom need to specify this -- Puppet will usually discover the
 appropriate provider for your platform.  Available providers are:
 
 * **netinfo**: Mount management in NetInfo.  This provider is highly experimental and is known
-        not to work currently.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``nireport``, ``mount``, ``niutil``, ``umount``, ``df``.
-* **parsed**:     Required binaries: ``mount``, ``umount``, ``df``.
+        not to work currently.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``nireport``, ``mount``, ``niutil``, ``df``, ``umount``.
+* **parsed**:     Required binaries: ``mount``, ``df``, ``umount``.
 
 #### target
 The file in which to store the mount table.  Only used by
@@ -1070,24 +1070,24 @@ appropriate provider for your platform.  Available providers are:
         extremely quirky packaging system, in that it freely mixes between
         ports and packages.  Apparently all of the tools are written in Ruby,
         so there are plans to rewrite this support to directly use those
-        libraries.    Required binaries: ``/usr/sbin/pkg_add``, ``/usr/sbin/pkg_delete``, ``/usr/sbin/pkg_info``.
+        libraries.    Required binaries: ``/usr/sbin/pkg_info``, ``/usr/sbin/pkg_add``, ``/usr/sbin/pkg_delete``.
 * **gem**: Ruby Gem support.  By default uses remote gems, but you can specify
         the path to a local gem via ``source``.    Required binaries: ``gem``.
-* **openbsd**: OpenBSD's form of ``pkg_add`` support.  Default for ``operatingsystem`` == ``openbsd``.    Required binaries: ``pkg_add``, ``pkg_delete``, ``pkg_info``.
-* **pkgdmg**: Package management based on Apple's Installer.app and DiskUtility.app    Required binaries: ``/usr/sbin/installer``, ``/usr/bin/hdiutil``.
+* **openbsd**: OpenBSD's form of ``pkg_add`` support.  Default for ``operatingsystem`` == ``openbsd``.    Required binaries: ``pkg_info``, ``pkg_add``, ``pkg_delete``.
+* **pkgdmg**: Package management based on Apple's Installer.app and DiskUtility.app    Required binaries: ``/usr/sbin/installer``, ``/usr/bin/hdiutil``, ``/usr/bin/curl``.
 * **portage**: Provides packaging support for Gentoo's portage system.  Default for ``operatingsystem`` == ``gentoo``.    Required binaries: ``/usr/bin/emerge``, ``/usr/bin/eix``.
 * **ports**: Support for FreeBSD's ports.  Again, this still mixes packages
-        and ports.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``/usr/local/sbin/portversion``, ``/usr/local/sbin/pkg_deinstall``, ``/usr/sbin/pkg_info``, ``/usr/local/sbin/portupgrade``.
+        and ports.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``/usr/local/sbin/portupgrade``, ``/usr/local/sbin/portversion``, ``/usr/local/sbin/pkg_deinstall``, ``/usr/sbin/pkg_info``.
 * **rpm**: RPM packaging support; should work anywhere with a working ``rpm``
         binary.    Required binaries: ``rpm``.
 * **sun**: Sun's packaging system.  Requires that you specify the source for
-        the packages you're managing.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/sbin/pkgadd``, ``/usr/bin/pkginfo``, ``/usr/sbin/pkgrm``.
+        the packages you're managing.  Default for ``operatingsystem`` == ``solaris``.    Required binaries: ``/usr/bin/pkginfo``, ``/usr/sbin/pkgrm``, ``/usr/sbin/pkgadd``.
 * **sunfreeware**: Package management using sunfreeware.com's ``pkg-get`` command on Solaris.
         At this point, support is exactly the same as ``blastwave`` support and
         has not actually been tested.    Required binaries: ``pkg-get``.
 * **up2date**: Support for Red Hat's proprietary ``up2date`` package update
         mechanism.  Default for ``operatingsystem`` == ``redhat``.    Required binaries: ``/usr/sbin/up2date-nox``.
-* **yum**: Support via ``yum``.  Default for ``operatingsystem`` == ``fedora``.    Required binaries: ``yum``, ``rpm``.
+* **yum**: Support via ``yum``.  Default for ``operatingsystem`` == ``fedoracentos``.    Required binaries: ``yum``, ``rpm``.
 
 #### responsefile
 A file containing any necessary answers to questions asked by
@@ -1568,7 +1568,7 @@ appropriate provider for your platform.  Available providers are:
 
 * **netinfo**: User management in NetInfo.  Default for ``operatingsystem`` == ``darwin``.    Required binaries: ``nireport``, ``niutil``.
 * **pw**: User management via ``pw`` on FreeBSD.  Default for ``operatingsystem`` == ``freebsd``.    Required binaries: ``pw``.
-* **useradd**: User management via ``useradd`` and its ilk.    Required binaries: ``useradd``, ``userdel``, ``usermod``.
+* **useradd**: User management via ``useradd`` and its ilk.    Required binaries: ``useradd``, ``usermod``, ``userdel``.
 
 #### shell
 The user's login shell.  The shell must exist and be
@@ -1772,4 +1772,4 @@ so Puppet only checks for it at that time.
 ----------------
 
 
-*This page autogenerated on Fri Jan 05 16:38:59 CST 2007*
+*This page autogenerated on Fri Jan 26 16:40:46 CST 2007*
