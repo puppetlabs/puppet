@@ -364,8 +364,8 @@ module Puppet
                 }
             end
 
-            if @states.include?(:groups) and groups = @states[:groups].should.split(",")
-                autos += groups
+            if @states.include?(:groups) and groups = @states[:groups].should
+                autos += groups.split(",")
             end
 
             autos

@@ -446,6 +446,15 @@ class TestUser < Test::Unit::TestCase
         user[:ensure] = :absent
         assert_apply(user)
     end
+    
+    # Testing #455
+    def test_autorequire_with_no_group_should
+        user = Puppet::Type.type(:user).create(:name => "user", :check => :all)
+        
+        assert_nothing_raised do
+            user.autorequire
+        end
+    end
 end
 
 # $Id$
