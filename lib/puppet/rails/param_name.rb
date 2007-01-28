@@ -10,6 +10,9 @@ class Puppet::Rails::ParamName < ActiveRecord::Base
         hash[:name] = self.name.to_sym
         hash[:source] = source
         hash[:value] = self.param_values.find(:all).collect { |v| v.value }
+        if hash[:value].length == 1
+            hash[:value] = hash[:value].shift
+        end
         if hash[:value].empty?
             hash[:value] = nil
         end
