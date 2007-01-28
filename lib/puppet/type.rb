@@ -337,6 +337,10 @@ class Type < Puppet::Element
     def ref
         "%s[%s]" % [self.class.name.to_s.capitalize, self.title]
     end
+    
+    def self_refresh?
+        self.class.self_refresh
+    end
 
     # Retrieve the title of an object.  If no title was set separately,
     # then use the object's name.

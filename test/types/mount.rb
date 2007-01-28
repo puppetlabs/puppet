@@ -94,10 +94,7 @@ class TestMounts < Test::Unit::TestCase
         }
 
         [@mount.validstates, @mount.parameters].flatten.each do |field|
-            next if field == :path
-            next if field == :provider
-            next if field == :target
-            next if field == :ensure
+            next if [:path, :provider, :target, :ensure, :remounts].include?(field)
             unless args.include? field
                 args[field] = "fake%s" % @pcount
             end
@@ -265,6 +262,29 @@ class TestMounts < Test::Unit::TestCase
         end
 
         assert_equal("mount_path", mount[:name], "Name did not get copied over")
+    end
+    
+    def test_refresh
+        mount = mkmount
+        
+        remounted = false
+        mount.provider.meta_def(:remount) do
+            remounted = true
+        end
+        
+        # First make sure we correctly call the provider
+        assert_nothing_raised do
+            mount.refresh
+        end
+        assert(remounted, "did not call remount on provider")
+        
+        # then make sure it gets called during transactions
+        remounted = false
+        mount[:device] = "/dev/yayness"
+        
+        assert_apply(mount)
+        
+        assert(remounted, "did not remount when mount changed")
     end
 end
 

@@ -1,7 +1,8 @@
 require 'puppet/type/parsedtype'
 
 module Puppet
-    newtype(:mount) do
+    # We want the mount to refresh when it changes.
+    newtype(:mount, :self_refresh => true) do
         # Use the normal parent class, because we actually want to
         # call code when sync() is called.
         newstate(:ensure) do
@@ -152,10 +153,28 @@ module Puppet
                 super
             end
         end
+        
+        newparam(:remounts) do
+            desc "Whether the mount can be remounted  ``mount -o remount``.  If this is false,
+                then the filesystem will be unmounted and remounted manually, which is prone to failure."
+            
+            newvalues(:true, :false)
+            defaultto do
+                case Facter.value(:operatingsystem)
+                when "Darwin": false
+                else
+                    true
+                end
+            end
+        end
 
         @doc = "Manages mounted mounts, including putting mount
             information into the mount table. The actual behavior depends 
             on the value of the 'ensure' parameter."
+        
+        def refresh
+            provider.remount
+        end
 
         def value(name)
             name = symbolize(name)

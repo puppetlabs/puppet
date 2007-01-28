@@ -1002,6 +1002,31 @@ class TestTransactions < Test::Unit::TestCase
 
         assert_apply(obj)
     end
+    
+    def test_self_refresh_causes_triggering
+        type = Puppet::Type.newtype(:refresher, :self_refresh => true) do
+            attr_accessor :refreshed, :testing
+            newparam(:name) {}
+            newstate(:testing) do
+                def sync
+                    self.is = self.should
+                    :ran_testing
+                end
+            end
+            def refresh
+                @refreshed = true
+            end
+        end
+        cleanup { Puppet::Type.rmtype(:refresher)}
+        
+        obj = type.create(:name => "yay", :testing => "cool")
+        
+        assert(! obj.insync?, "fake object is already in sync")
+        
+        # Now make sure it gets refreshed when the change happens
+        assert_apply(obj)
+        assert(obj.refreshed, "object was not refreshed during transaction")
+    end
 end
 
 # $Id$

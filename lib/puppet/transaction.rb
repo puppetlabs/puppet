@@ -83,6 +83,13 @@ class Transaction
             if resource.respond_to?(:flush)
                 resource.flush
             end
+            
+            # And set a trigger for refreshing this resource if it's a self-refresher
+            if resource.self_refresh?
+                # Create an edge with this resource as both the source and target.  The triggering
+                # method treats these specially for logging.
+                set_trigger(Puppet::Relationship.new(resource, resource, :callback => :refresh, :event => :ALL_EVENTS))
+            end
         end
 
         resourceevents
@@ -567,7 +574,9 @@ class Transaction
         return unless method = edge.callback
         return unless edge.target.respond_to?(method)
         if edge.target.respond_to?(:ref)
-            edge.source.info "Scheduling %s of %s" % [edge.callback, edge.target.ref]
+            unless edge.source == edge.target
+                edge.source.info "Scheduling %s of %s" % [edge.callback, edge.target.ref]
+            end
         end
         @targets[edge.target] << edge
     end
@@ -634,9 +643,14 @@ class Transaction
         end
 
         callbacks.each do |callback, subs|
-            message = "Triggering '%s' from %s dependencies" %
-                [callback, subs.length]
+            if subs.length == 1 and subs[0].source == resource
+                message = "Refreshing self"
+            else
+                message = "Triggering '%s' from %s dependencies" %
+                    [callback, subs.length]
+            end
             resource.notice message
+            
             # At this point, just log failures, don't try to react
             # to them in any way.
             begin

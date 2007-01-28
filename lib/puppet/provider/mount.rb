@@ -11,6 +11,16 @@ module Puppet::Provider::Mount
         mountcmd @model[:name]
     end
 
+    def remount
+        info "Remounting"
+        if @model[:remounts] == :true
+            mountcmd "-o", "remount", @model[:name]
+        else
+            unmount()
+            mount()
+        end
+    end
+
     # This only works when the mount point is synced to the fstab.
     def unmount
         umount @model[:name]
