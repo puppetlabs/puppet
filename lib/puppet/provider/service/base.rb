@@ -116,7 +116,7 @@ Puppet::Type.type(:service).provide :base do
         begin
             output = execute(command, fof)
         rescue Puppet::ExecutionFailure => detail
-            warning "Could not %s %s: %s" % [type, @model.ref, detail]
+            @model.fail "Could not %s %s: %s" % [type, @model.ref, detail]
         end
 
         return output

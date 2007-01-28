@@ -47,6 +47,29 @@ class TestBaseServiceProvider < Test::Unit::TestCase
             assert_equal(:stopped, provider.status, "status was not returned correctly")
         end
     end
+    
+    # Testing #454
+    def test_that_failures_propagate
+        nope = "/no/such/command"
+	    service = Puppet::Type.type(:service).create(
+	        :name => "yaytest", :provider => :base,
+	        :start => nope,
+	        :status => nope,
+	        :stop => nope,
+	        :restart => nope
+	    )
+
+	    provider = service.provider
+	    assert(provider, "did not get base provider")
+
+        # We can't fail well when status is messed up, because we depend on the return code
+        # of the command for data.
+        %w{start stop restart}.each do |command|
+            assert_raise(Puppet::Error, "did not throw error when %s failed" % command) do
+                provider.send(command)
+            end
+        end
+    end
 end
 
 # $Id$
