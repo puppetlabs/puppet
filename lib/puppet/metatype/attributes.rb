@@ -412,6 +412,11 @@ class Puppet::Type
             self.devfail "Invalid set type %s" % [type]
         end
     end
+    
+    # Are we deleting this resource?
+    def deleting?
+        obj = @states[:ensure] and obj.should == :absent
+    end
 
     # Allow an outside party to specify the 'is' value for a state.  The
     # arguments are an array because you can't use parens with 'is=' calls.

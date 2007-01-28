@@ -57,7 +57,7 @@ class Transaction
         
         # If a resource is going to be deleted but it still has dependencies, then
         # don't delete it unless it's implicit.
-        if ! resource.implicit? and deleting?(changes)
+        if ! resource.implicit? and resource.deleting?
             if deps = @relgraph.dependents(resource) and ! deps.empty?
                 resource.warning "%s still depend%s on me -- not deleting" %
                     [deps.collect { |r| r.ref }.join(","), if deps.length > 1; ""; else "s"; end] 
@@ -456,8 +456,6 @@ class Transaction
                 graph.add_edge!(edge)
             end
         end
-
-        graph(graph, :relationships)
         
         # Lastly, add in any autorequires
         graph.vertices.each do |vertex|
@@ -467,6 +465,8 @@ class Transaction
                 end
             end
         end
+        
+        graph(graph, :relationships)
         
         # Then splice in the container information
         graph.splice!(@resources, Puppet::Type::Component)
