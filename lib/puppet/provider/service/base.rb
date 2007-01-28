@@ -93,10 +93,8 @@ Puppet::Type.type(:service).provide :base do
     # for the process in the process table.
     # This method will generally not be overridden by submodules.
     def stop
-        if @model[:stop]
-            return @model[:stop]
-        elsif self.respond_to?(:stopcmd)
-            texecute(:stop, self.stopcmd)
+        if @model[:stop] or self.respond_to?(:stopcmd)
+            ucommand(:stop)
         else
             pid = getpid
             unless pid
