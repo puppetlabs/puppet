@@ -54,7 +54,13 @@ module Manager
     end
 
     # Define a new type.
-    def newtype(name, parent = nil, &block)
+    def newtype(name, options = {}, &block)
+        # Handle backward compatibility
+        unless options.is_a?(Hash)
+            Puppet.warning "Puppet::Type.newtype now accepts a hash as the second argument"
+            options = {:parent => options}
+        end
+
         # First make sure we don't have a method sitting around
         name = symbolize(name)
         newmethod = "new#{name.to_s}"
@@ -71,11 +77,18 @@ module Manager
             end
         end
 
+        options = symbolize_options(options)
+
+        if parent = options[:parent]
+            options.delete(:parent)
+        end
+
         # Then create the class.
         klass = genclass(name,
             :parent => (parent || Puppet::Type),
             :overwrite => true,
             :hash => @types,
+            :attributes => options,
             &block
         )
 

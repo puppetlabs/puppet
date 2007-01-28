@@ -50,6 +50,7 @@ class Type < Puppet::Element
     # the Type class attribute accessors
     class << self
         attr_reader :name
+        attr_accessor :self_refresh
         include Enumerable, Puppet::Util::ClassGen
         include Puppet::MetaType::Manager
     end
