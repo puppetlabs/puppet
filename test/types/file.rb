@@ -1932,6 +1932,22 @@ class TestFile < Test::Unit::TestCase
             assert(Puppet::Type.type(:file)[path], "could not look up file via path %s" % path)
         end
     end
+    
+    # Testing #438
+    def test_creating_states_conflict
+        file = tempfile()
+        first = tempfile()
+        second = tempfile()
+        params = [:content, :source, :target]
+        params.each do |param|
+            params.each do |other|
+                next if other == param
+                assert_raise(Puppet::Error, "%s and %s did not conflict" % [param, other]) do
+                    Puppet::Type.newfile(:path => file, other => first, param => second)
+                end
+            end
+        end
+    end
 end
 
 # $Id$

@@ -224,10 +224,16 @@ module Puppet
                 end
             end
         end
+        
+        CREATORS = [:content, :source, :target]
 
         validate do
-            if self[:content] and self[:source]
-                self.fail "You cannot specify both content and a source"
+            count = 0
+            CREATORS.each do |param|
+                count += 1 if self.should(param)
+            end
+            if count > 1
+                self.fail "You cannot specify more than one of %s" % CREATORS.collect { |p| p.to_s}.join(", ")
             end
         end
         
@@ -1088,7 +1094,7 @@ module Puppet
     require 'puppet/type/pfile/checksum'
     require 'puppet/type/pfile/content'     # can create the file
     require 'puppet/type/pfile/source'      # can create the file
-    require 'puppet/type/pfile/target'
+    require 'puppet/type/pfile/target'      # creates a different type of file
     require 'puppet/type/pfile/ensure'      # can create the file
     require 'puppet/type/pfile/owner'
     require 'puppet/type/pfile/group'
