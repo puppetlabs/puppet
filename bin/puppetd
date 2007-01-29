@@ -357,7 +357,7 @@ objects = []
 # This has to go after the certs are dealt with.
 if Puppet[:listen]
     unless FileTest.exists?(Puppet[:authconfig])
-        $stderr.puts "Will not start without authorization file %s" %
+        Puppet.err "Will not start without authorization file %s" %
             Puppet[:authconfig]
         exit(14)
     end
