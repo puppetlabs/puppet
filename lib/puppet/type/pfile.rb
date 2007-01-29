@@ -845,6 +845,7 @@ module Puppet
 
             result = []
             found = []
+            
             @states[:source].should.each do |source|
                 sourceobj, path = uri2obj(source)
 
@@ -869,7 +870,15 @@ module Puppet
                     # for conflicting files.
                     next if found.include?(name)
 
-                    args = {:source => source + file}
+                    # For directories, keep all of the sources, so that sourceselect still works as planned.
+                    if type == "directory"
+                        newsource = @states[:source].should.collect do |source|
+                            source + file
+                        end
+                    else
+                        newsource = source + file
+                    end
+                    args = {:source => newsource}
                     if type == file
                         args[:recurse] = nil
                     end

@@ -984,6 +984,30 @@ class TestFileSources < Test::Unit::TestCase
         assert(FileTest.exists?(file3), "File from source 1 was not copied")
         assert_equal("0", File.read(file3), "file3 got wrong contents")
     end
+    
+    def test_recursive_sourceselect
+        dest = tempfile()
+        source1 = tempfile()
+        source2 = tempfile()
+        files = []
+        [source1, source2, File.join(source1, "subdir"), File.join(source2, "subdir")].each_with_index do |dir, i|
+            Dir.mkdir(dir)
+            file = File.join(dir, "file%s" % i)
+            File.open(file, "w") { |f| f.puts "yay%s" % i}
+            files << file
+        end
+        
+        obj = Puppet::Type.newfile(:path => dest, :source => [source1, source2], :sourceselect => :all, :recurse => true)
+        
+        assert_apply(obj)
+        
+        ["file0", "file1", "subdir/file2", "subdir/file3"].each do |file|
+            path = File.join(dest, file)
+            assert(FileTest.exists?(path), "did not create %s" % file)
+            
+            assert_equal("yay%s\n" % File.basename(file).sub("file", ''), File.read(path), "file was not copied correctly")
+        end
+    end
 end
 
 # $Id$
