@@ -270,12 +270,6 @@ class Puppet::Client::MasterClient < Puppet::Client
         end
         @objects = nil
 
-        # First create the default scheduling objects
-        Puppet::Type.type(:schedule).mkdefaultschedules
-        
-        # And filebuckets
-        Puppet::Type.type(:filebucket).mkdefaultbucket
-
         # Now convert the objects to real Puppet objects
         @objects = objects.to_type
 
@@ -317,6 +311,17 @@ class Puppet::Client::MasterClient < Puppet::Client
         else
             raise ArgumentError, "Configuration timeout must be an integer"
         end
+
+        mkdefault_objects
+    end
+
+    # Make the default objects necessary for function.
+    def mkdefault_objects
+        # First create the default scheduling objects
+        Puppet::Type.type(:schedule).mkdefaultschedules
+        
+        # And filebuckets
+        Puppet::Type.type(:filebucket).mkdefaultbucket
     end
 
     # Mark that we should restart.  The Puppet module checks whether we're running,
