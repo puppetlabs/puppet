@@ -126,7 +126,7 @@ Puppet::Type.newtype(:resources) do
         resource[:check] = :uid
         resource.retrieve
         
-        if %w{root nobody bin noaccess daemon sys}.include?(resource[:name])
+        if system_users().include?(resource[:name])
             return false
         end
         
@@ -135,6 +135,10 @@ Puppet::Type.newtype(:resources) do
         else
             return true
         end
+    end
+
+    def system_users
+        %w{root nobody bin noaccess daemon sys}
     end
 end
 

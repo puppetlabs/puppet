@@ -232,6 +232,7 @@ module Puppet
         end
         
         def self.[](path)
+            return nil unless path
             super(path.gsub(/\/+/, '/').sub(/\/$/, ''))
         end
 
