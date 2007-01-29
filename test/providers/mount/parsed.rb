@@ -147,7 +147,7 @@ class TestParsedMounts < Test::Unit::TestCase
         end
     end
 
-    if Puppet::SUIDManager.uid == 0
+    if Puppet::SUIDManager.uid == 0 and Facter.value(:operatingsystem) != "Darwin"
     def test_mountfs
         fs = nil
         case Facter.value(:hostname)
@@ -197,6 +197,10 @@ class TestParsedMounts < Test::Unit::TestCase
         assert(obj.mounted?, "FS not mounted")
         assert(obj.df().include?(fs), "%s is not listed in df" % fs)
 
+        # Now try remounting
+        assert_nothing_raised("Could not remount filesystem") do
+            obj.remount
+        end
     end
     end
 

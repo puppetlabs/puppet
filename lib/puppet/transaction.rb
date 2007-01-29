@@ -84,10 +84,12 @@ class Transaction
                 resource.flush
             end
             
-            # And set a trigger for refreshing this resource if it's a self-refresher
-            if resource.self_refresh?
-                # Create an edge with this resource as both the source and target.  The triggering
-                # method treats these specially for logging.
+            # And set a trigger for refreshing this resource if it's a
+            # self-refresher
+            if resource.self_refresh? and ! resource.deleting?
+                # Create an edge with this resource as both the source and
+                # target.  The triggering method treats these specially for
+                # logging.
                 set_trigger(Puppet::Relationship.new(resource, resource, :callback => :refresh, :event => :ALL_EVENTS))
             end
         end

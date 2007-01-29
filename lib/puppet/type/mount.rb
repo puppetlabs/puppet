@@ -155,13 +155,14 @@ module Puppet
         end
         
         newparam(:remounts) do
-            desc "Whether the mount can be remounted  ``mount -o remount``.  If this is false,
-                then the filesystem will be unmounted and remounted manually, which is prone to failure."
+            desc "Whether the mount can be remounted  ``mount -o remount``.  If
+                this is false, then the filesystem will be unmounted and remounted
+                manually, which is prone to failure."
             
             newvalues(:true, :false)
             defaultto do
                 case Facter.value(:operatingsystem)
-                when "Darwin": false
+                when "Darwin", "FreeBSD": false
                 else
                     true
                 end
@@ -173,7 +174,10 @@ module Puppet
             on the value of the 'ensure' parameter."
         
         def refresh
-            provider.remount
+            # Only remount if we're supposed to be mounted.
+            if ens = @states[:ensure] and ens.should == :mounted
+                provider.remount
+            end
         end
 
         def value(name)

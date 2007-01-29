@@ -517,7 +517,9 @@ module Puppet
         # we retrieve any tags we can.
         def source=(source)
             # We can't store the actual source, we just store the path.
-            if source.respond_to?(:path)
+            # We can't just check for whether it responds to :path, because
+            # plenty of providers respond to that in their normal function.
+            if source.is_a?(Puppet::Element) and source.respond_to?(:path)
                 @objectsource = true
                 @source = source.path
             else

@@ -14,7 +14,12 @@ module Puppet::Provider::Mount
     def remount
         info "Remounting"
         if @model[:remounts] == :true
-            mountcmd "-o", "remount", @model[:name]
+            if Facter.value(:operatingsystem) == "FreeBSD"
+                # Thanks FreeBSD
+                mountcmd @model[:name]
+            else
+                mountcmd "-o", "remount", @model[:name]
+            end
         else
             unmount()
             mount()

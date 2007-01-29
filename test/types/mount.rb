@@ -47,6 +47,9 @@ class TestMounts < Test::Unit::TestCase
             @ensure = :mounted
         end
 
+        def remount
+        end
+
         def unmount
             @ensure = :present
         end
@@ -121,7 +124,7 @@ class TestMounts < Test::Unit::TestCase
         mount[:dump] = 2
         mount[:options] = "defaults,ro"
 
-        assert_events([:mount_changed,:mount_changed], mount)
+        assert_events([:mount_changed,:mount_changed, :triggered], mount)
         assert_equal(2, mount.provider.dump, "Changes did not get flushed")
         assert_equal("defaults,ro", mount.provider.options, "Changes did not get flushed")
 
@@ -164,7 +167,7 @@ class TestMounts < Test::Unit::TestCase
             obj[:ensure] = :present
         }
 
-        assert_events([:mount_created], obj)
+        assert_events([:mount_created, :triggered], obj)
         assert_events([], obj)
 
         assert(! obj.provider.mounted?, "Object is mounted incorrectly")
@@ -173,7 +176,7 @@ class TestMounts < Test::Unit::TestCase
             obj[:ensure] = :mounted
         }
 
-        assert_events([:mount_mounted], obj)
+        assert_events([:mount_mounted, :triggered], obj)
         assert_events([], obj)
 
         obj.retrieve
@@ -235,7 +238,7 @@ class TestMounts < Test::Unit::TestCase
 
         mount[:ensure] = :present
 
-        assert_events([:mount_created], mount)
+        assert_events([:mount_created, :triggered], mount)
         assert_events([], mount)
 
         mount[:ensure] = :absent
@@ -285,6 +288,14 @@ class TestMounts < Test::Unit::TestCase
         assert_apply(mount)
         
         assert(remounted, "did not remount when mount changed")
+
+        # Now make sure it doesn't remount if the mount is just 'present'
+        mount[:ensure] = :present
+        mount[:device] = "/dev/funtest"
+        remounted = false
+        assert_apply(mount)
+
+        assert(! remounted, "remounted even though not supposed to be mounted")
     end
 end
 

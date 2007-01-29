@@ -287,15 +287,6 @@ module Puppet
 
         # return the full path to us, for logging and rollback; not currently
         # used
-        def path
-            unless defined? @path
-                @path = pathbuilder
-            end
-            return @path.join("/")
-        end
-
-        # return the full path to us, for logging and rollback; not currently
-        # used
         def pathbuilder
             if defined? @parent and @parent
                 return [@parent.pathbuilder, self.name]
