@@ -377,8 +377,8 @@ module Puppet
     end
 
     # Create a new type.  Just proxy to the Type class.
-    def self.newtype(name, parent = nil, &block)
-        Puppet::Type.newtype(name, parent, &block)
+    def self.newtype(name, options = {}, &block)
+        Puppet::Type.newtype(name, options, &block)
     end
 
     # Retrieve a type by name.  Just proxy to the Type class.

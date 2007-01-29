@@ -57,7 +57,7 @@ module Manager
     def newtype(name, options = {}, &block)
         # Handle backward compatibility
         unless options.is_a?(Hash)
-            Puppet.warning "Puppet::Type.newtype now accepts a hash as the second argument"
+            Puppet.warning "Puppet::Type.newtype(%s) now expects a hash as the second argument, not %s" % [name, options.inspect]
             options = {:parent => options}
         end
 
