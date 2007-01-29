@@ -3,12 +3,23 @@
 require 'puppet/provider/nameservice/netinfo'
 
 Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameService::NetInfo do
-    desc "User management in NetInfo."
+    desc "User management in NetInfo.  Note that NetInfo is not smart enough to fill in default information
+        for users, so this provider will use default settings for home (``/var/empty``), shell (``/usr/bin/false``),
+        and comment (the user name, capitalized).  These defaults are only used when the user is created."
     commands :nireport => "nireport", :niutil => "niutil"
 
     options :comment, :key => "realname"
 
     defaultfor :operatingsystem => :darwin
+    
+    AUTOGEN_DEFAULTS = {
+        :home => "/var/empty",
+        :shell => "/usr/bin/false"
+    }
+
+    def autogen_comment
+        return @model[:name].capitalize
+    end
     
     def gid=(value)
         unless value.is_a?(Integer)
@@ -43,7 +54,14 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
     # This is really lame.  We have to iterate over each
     # of the groups and add us to them.
     def groups=(groups)
-        groups = groups.split(/\s*,\s*/)
+        case groups
+        when Fixnum:
+            groups = [groups.to_s]
+        when String
+            groups = groups.split(/\s*,\s*/)
+        else
+            raise Puppet::DevError, "got invalid groups value %s of type %s" % [groups.class, groups]
+        end
         # Get just the groups we need to modify
         diff = groups - (@is || [])
 

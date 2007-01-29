@@ -108,7 +108,7 @@ class NetInfo < Puppet::Provider::NameService
             line2hash(line, params)
         }
     end
-
+    
     # How to add an object.
     def addcmd
         creatorcmd("-create")
@@ -136,18 +136,9 @@ class NetInfo < Puppet::Provider::NameService
         # Because our stupid type can't create the whole thing at once,
         # we have to do this hackishness.  Yay.
         if arg == :present
-            # We need to generate the id if it's missing.
             @model.class.validstates.each do |name|
                 next if name == :ensure
-                unless val = @model.should(name)
-                    if  (@model.class.name == :user and name == :uid) or
-                        (@model.class.name == :group and name == :gid)
-                        val = autogen()
-                    else
-                        # No value, and it's not required, so skip it.
-                        next
-                    end
-                end
+                next unless val = @model.should(name) || autogen(name)
                 self.send(name.to_s + "=", val)
             end
         end

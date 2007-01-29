@@ -100,27 +100,6 @@ module Puppet
                 differences across systems and thus is not recommended.  The
                 GID is picked according to local system standards."
 
-            def autogen
-                highest = 0
-
-                # Make sure we don't use the same value multiple times
-                if defined? @@prevauto
-                    @@prevauto += 1
-                else
-                    Etc.group { |group|
-                        if group.gid > highest
-                            unless group.gid > 65000
-                                highest = group.gid
-                            end
-                        end
-                    }
-
-                    @@prevauto = highest + 1
-                end
-
-                return @@prevauto
-            end
-
             def retrieve
                 @is = provider.gid
             end

@@ -519,6 +519,33 @@ class TestUserProvider < Test::Unit::TestCase
         assert_equal("-s", user.send(:flag, :shell),
                     "Incorrect shell flag")
     end
+    
+    def test_autogen
+        provider = nil
+        user = Puppet::Type.type(:user).create(:name => nonrootuser.name)
+        provider = user.provider
+        assert(provider, "did not get provider")
+        
+        # Everyone should be able to autogenerate a uid
+        assert_instance_of(Fixnum, provider.autogen(:uid))
+        
+        # If we're Darwin, then we should get results, but everyone else should get nil
+        darwin = (Facter.value(:operatingsystem) == "Darwin")
+        
+        should = {
+            :comment => user[:name].capitalize,
+            :home => "/var/empty",
+            :shell => "/usr/bin/false"
+        }
+        
+        should.each do |param, value|
+            if darwin
+                assert_equal(value, provider.autogen(param), "did not autogen %s for darwin correctly" % param)
+            else
+                assert_nil(provider.autogen(param), "autogenned %s for non-darwin os" % param)
+            end
+        end
+    end
 end
 
 # $Id$

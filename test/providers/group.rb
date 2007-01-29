@@ -238,6 +238,16 @@ class TestGroupProvider < Test::Unit::TestCase
     else
         $stderr.puts "Not running as root; skipping group creation tests."
     end
+    
+    def test_autogen
+        provider = nil
+        group = Puppet::Type.type(:group).create(:name => nonrootgroup.name)
+        provider = group.provider
+        assert(provider, "did not get provider")
+
+        # Everyone should be able to autogenerate a uid
+        assert_instance_of(Fixnum, provider.autogen(:gid))
+    end
 end
 
 # $Id$

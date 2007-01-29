@@ -98,21 +98,15 @@ module Puppet
                 being created, if no user ID is specified then one will be
                 chosen automatically, which will likely result in the same user
                 having different IDs on different systems, which is not
-                recommended."
+                recommended.  This is especially noteworthy if you use Puppet to manage
+                the same user on both Darwin and other platforms, since Puppet does the
+                ID generation for you on Darwin, but the tools do so on other platforms."
 
             munge do |value|
                 case value
                 when String
                     if value =~ /^[-0-9]+$/
                         value = Integer(value)
-                    end
-                when Symbol
-                    unless value == :absent or value == :auto
-                        self.devfail "Invalid UID %s" % value
-                    end
-
-                    if value == :auto
-                        value = autogen()
                     end
                 end
 
@@ -172,40 +166,16 @@ module Puppet
 
         newstate(:comment) do
             desc "A description of the user.  Generally is a user's full name."
-            
-            defaultto do
-                if @parent.managed?
-                    "%s User" % @parent.title.capitalize
-                end
-            end
         end
 
         newstate(:home) do
             desc "The home directory of the user.  The directory must be created
                 separately and is not currently checked for existence."
-            
-            defaultto do
-                unless defined? @@os
-                    @@os = Facter.value(:operatingsystem)
-                end
-                if @parent.managed? and @@os == "Darwin"
-                    "/var/empty"
-                end
-            end
         end
 
         newstate(:shell) do
             desc "The user's login shell.  The shell must exist and be
                 executable."
-            
-            defaultto do
-                unless defined? @@os
-                    @@os = Facter.value(:operatingsystem)
-                end
-                if @@os == "Darwin" and @parent.managed?
-                    "/usr/bin/false"
-                end
-            end
         end
 
         newstate(:groups) do

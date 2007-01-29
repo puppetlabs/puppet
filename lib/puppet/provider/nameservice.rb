@@ -109,10 +109,27 @@ class Puppet::Provider::NameService < Puppet::Provider
             @ops[state.name] || ("-" + state.name)
         end
     end
+    
+    # Autogenerate a value.  Mostly used for uid/gid, but also used heavily with netinfo, because netinfo is stupid.
+    def autogen(field)
+        field = symbolize(field)
+        id_generators = {:user => :uid, :group => :gid}
+        if id_generators[@model.class.name] == field
+            return autogen_id(field)
+        else
+            if defined?(AUTOGEN_DEFAULTS) and value = AUTOGEN_DEFAULTS[field]
+                return value
+            elsif respond_to?("autogen_%s" % [field])
+                return send("autogen_%s" % field)
+            else
+                return nil
+            end
+        end
+    end
 
     # Autogenerate either a uid or a gid.  This is hard-coded: we can only
     # generate one field type per class.
-    def autogen
+    def autogen_id(field)
         highest = 0
 
         group = method = nil
@@ -139,14 +156,6 @@ class Puppet::Provider::NameService < Puppet::Provider
         end
 
         return @@prevauto
-    end
-
-    def autogen_gid
-        autogen(@model.class.name)
-    end
-
-    def autogen_uid
-        autogen(@model.class.name)
     end
 
     def create
