@@ -398,6 +398,14 @@ file { "/tmp/yayness":
         sub = interp.findclass("", "container::deep::sub")
         assert(sub, "Could not find sub")
         assert_equal("base", sub.parentclass.type)
+        
+        # Now try it with a parent class being a fq class
+        assert_nothing_raised {
+            parser.parse "class container::one inherits container::deep::sub {}"
+        }
+        sub = interp.findclass("", "container::one")
+        assert(sub, "Could not find one")
+        assert_equal("sub", sub.parentclass.type)
     end
 
     def test_topnamespace

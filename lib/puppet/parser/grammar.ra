@@ -509,22 +509,22 @@ definition: DEFINE fqname argumentlist LBRACE statements RBRACE {
 }
 
 #hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
-hostclass: CLASS fqname parent LBRACE statements RBRACE {
+hostclass: CLASS fqname classparent LBRACE statements RBRACE {
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
     interp.newclass fqname(val[1]), :code => val[4], :parent => val[2]
     result = nil
-}           | CLASS fqname parent LBRACE RBRACE {
+}           | CLASS fqname classparent LBRACE RBRACE {
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
     interp.newclass fqname(val[1]), :parent => val[2]
     result = nil
 }
 
-nodedef: NODE hostnames parent LBRACE statements RBRACE {
+nodedef: NODE hostnames nodeparent LBRACE statements RBRACE {
     interp.newnode val[1], :parent => val[2], :code => val[4]
     result = nil
-}       |  NODE hostnames parent LBRACE RBRACE {
+}       |  NODE hostnames nodeparent LBRACE RBRACE {
     interp.newnode val[1], :parent => val[2]
     result = nil
 }
@@ -582,12 +582,18 @@ argument:     NAME EQUALS rvalue {
     result = [val[0]]
 }
 
-parent:       nil
+nodeparent:       nil
             | INHERITS nameordefault {
     result = val[1]
 }
 
+classparent:       nil
+            | INHERITS fqnameordefault {
+    result = val[1]
+}
+
 nameordefault: NAME | DEFAULT
+fqnameordefault: fqname | DEFAULT
 
 variable:     VARIABLE {
     result = ast AST::Variable, :value => val[0]
