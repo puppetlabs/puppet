@@ -102,10 +102,7 @@ resourcerefs:     resourceref
     result = val[0]
 }
 
-resource:       NAME LBRACE resourceinstances endsemi RBRACE {
-    if val[0].instance_of?(AST::ASTArray)
-        error "Invalid name"
-    end
+resource:       fqname LBRACE resourceinstances endsemi RBRACE {
     array = val[2]
     if array.instance_of?(AST::ResourceInst)
         array = [array]
@@ -124,14 +121,11 @@ resource:       NAME LBRACE resourceinstances endsemi RBRACE {
             :title => instance[0],
             :params => instance[1])
     }
-}           | NAME LBRACE params endcomma RBRACE {
+}           | fqname LBRACE params endcomma RBRACE {
     # This is a deprecated syntax.
     error "All resource specifications require names"
 }           | TYPE LBRACE params endcomma RBRACE {
-    # a template setting for a type
-    if val[0].instance_of?(AST::ASTArray)
-        error "Invalid type"
-    end
+    # a defaults setting for a type
     result = ast(AST::ResourceDefaults, :type => val[0], :params => val[2])
 }
 

@@ -626,6 +626,22 @@ file { "/tmp/yayness":
         assert(code.length == 1, "Did not get the file")
         assert_instance_of(Puppet::TransObject, code[0])
     end
+    
+    def test_fully_qualified_definitions
+        parser = mkparser
+        interp = parser.interp
+
+        assert_nothing_raised("Could not parse fully-qualified definition") {
+            parser.parse %{define one::two { }}
+        }
+        assert(interp.finddefine("", "one::two"), "Could not find one::two with no namespace")
+        assert(interp.finddefine("one", "two"), "Could not find two in namespace one")
+        
+        # Now try using the definition
+        assert_nothing_raised("Could not parse fully-qualified definition usage") {
+            parser.parse %{one::two { yayness: }}
+        }
+    end
 end
 
 # $Id$

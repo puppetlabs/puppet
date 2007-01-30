@@ -454,6 +454,18 @@ class TestSnippets < Test::Unit::TestCase
             "Did not make file from realized file inside defined type")
     end
 
+    def snippet_fqparents
+        assert(FileTest.exists?("/tmp/fqparent1"),
+            "Did not make file from parent class")
+        assert(FileTest.exists?("/tmp/fqparent2"),
+            "Did not make file from subclass")
+    end
+
+    def snippet_fqdefinition
+        assert(FileTest.exists?("/tmp/fqdefinition"),
+            "Did not make file from fully-qualified definition")
+    end
+
     def snippet_dirchmod
         dirs = %w{a b}.collect { |letter|
             "/tmp/dirchmodtest%s" % letter
