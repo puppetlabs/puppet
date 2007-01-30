@@ -158,7 +158,11 @@ Puppet.genmanifest
 if code
     master[:Code] = code
 else
-    master[:Manifest] = ARGV.shift
+    if ARGV.length > 0
+        master[:Manifest] = ARGV.shift
+    else
+        master[:Code] = STDIN.read
+    end
 end
 
 # Allow users to load the classes that puppetd creates.
