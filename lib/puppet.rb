@@ -2,7 +2,7 @@
 require 'singleton'
 require 'facter'
 require 'puppet/error'
-require 'puppet/event-loop'
+require 'puppet/external/event-loop'
 require 'puppet/util'
 require 'puppet/log'
 require 'puppet/autoload'

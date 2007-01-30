@@ -26,8 +26,8 @@
 #++
 
 
-require 'puppet/gratr/edge'
-require 'puppet/gratr/graph'
+require 'puppet/external/gratr/edge'
+require 'puppet/external/gratr/graph'
 
 module GRATR
   # This class defines a cycle graph of size n

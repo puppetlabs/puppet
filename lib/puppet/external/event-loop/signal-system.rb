@@ -17,7 +17,7 @@
 # Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
-require "puppet/event-loop/better-definers"
+require "puppet/external/event-loop/better-definers"
 
 module SignalEmitterModule
   def self.extended (object)

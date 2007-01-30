@@ -27,8 +27,8 @@
 #++
 
 
-require 'puppet/gratr/edge'
-require 'puppet/gratr/graph'
+require 'puppet/external/gratr/edge'
+require 'puppet/external/gratr/graph'
 require 'set'
 
 module GRATR

@@ -27,9 +27,9 @@
 #++
 
 
-require 'puppet/gratr/edge'
-require 'puppet/gratr/labels'
-require 'puppet/gratr/graph_api'
+require 'puppet/external/gratr/edge'
+require 'puppet/external/gratr/labels'
+require 'puppet/external/gratr/graph_api'
 
 module GRATR
   

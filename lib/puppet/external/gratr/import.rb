@@ -1,6 +1,5 @@
 #--
 # Copyright (c) 2006 Shawn Patrick Garbett
-# Copyright (c) 2002,2004,2005 by Horst Duchene
 # 
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -27,7 +26,19 @@
 #++
 
 
-require 'puppet/gratr/base'
-require 'puppet/gratr/digraph'
-require 'puppet/gratr/undirected_graph'
-require 'puppet/gratr/common'
+require 'puppet/external/gratr'
+
+# Pull all GRATR classes up into the current namespace
+Edge                  = GRATR::Edge
+UndirectedEdge        = GRATR::UndirectedEdge
+MultiEdge             = GRATR::MultiEdge
+MultiUndirectedEdge   = GRATR::MultiUndirectedEdge
+Graph                 = GRATR::Graph
+Digraph               = GRATR::Digraph
+DirectedGraph         = GRATR::DirectedGraph
+DirectedPseudoGraph   = GRATR::DirectedPseudoGraph
+DirectedMultiGraph    = GRATR::DirectedMultiGraph
+UndirectedGraph       = GRATR::UndirectedGraph
+UndirectedPseudoGraph = GRATR::UndirectedPseudoGraph
+UndirectedMultiGraph  = GRATR::UndirectedMultiGraph
+Complete              = GRATR::Complete

@@ -26,13 +26,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #++
 
-require 'puppet/gratr/edge'
-require 'puppet/gratr/graph'
-require 'puppet/gratr/search'
-require 'puppet/gratr/adjacency_graph'
-require 'puppet/gratr/strong_components'
-require 'puppet/gratr/digraph_distance'
-require 'puppet/gratr/chinese_postman'
+require 'puppet/external/gratr/edge'
+require 'puppet/external/gratr/graph'
+require 'puppet/external/gratr/search'
+require 'puppet/external/gratr/adjacency_graph'
+require 'puppet/external/gratr/strong_components'
+require 'puppet/external/gratr/digraph_distance'
+require 'puppet/external/gratr/chinese_postman'
 
 module GRATR
   #

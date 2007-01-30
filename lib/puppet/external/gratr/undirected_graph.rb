@@ -27,10 +27,10 @@
 #++
 
 
-require 'puppet/gratr/adjacency_graph'
-require 'puppet/gratr/search'
-require 'puppet/gratr/biconnected'
-require 'puppet/gratr/comparability'
+require 'puppet/external/gratr/adjacency_graph'
+require 'puppet/external/gratr/search'
+require 'puppet/external/gratr/biconnected'
+require 'puppet/external/gratr/comparability'
 require 'set'
 
 module GRATR

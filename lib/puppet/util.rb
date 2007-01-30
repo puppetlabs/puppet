@@ -1,7 +1,7 @@
 # A module to collect utility functions.
 
 require 'sync'
-require 'puppet/lock'
+require 'puppet/external/lock'
 
 module Puppet
     # A command failed to execute.

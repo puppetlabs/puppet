@@ -7,7 +7,7 @@ require 'xmlrpc/server'
 require 'xmlrpc/client'
 require 'facter'
 require 'digest/md5'
-require 'puppet/base64'
+require 'puppet/external/base64'
 
 module Puppet
 class Server

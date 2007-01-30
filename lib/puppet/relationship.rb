@@ -3,7 +3,7 @@
 #  Created by Luke A. Kanies on 2006-11-24.
 #  Copyright (c) 2006. All rights reserved.
 
-require 'puppet/gratr'
+require 'puppet/external/gratr'
 
 # subscriptions are permanent associations determining how different
 # objects react to an event

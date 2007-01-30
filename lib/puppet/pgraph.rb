@@ -3,9 +3,9 @@
 #  Created by Luke A. Kanies on 2006-11-24.
 #  Copyright (c) 2006. All rights reserved.
 
-require 'puppet/gratr/digraph'
-require 'puppet/gratr/import'
-require 'puppet/gratr/dot'
+require 'puppet/external/gratr/digraph'
+require 'puppet/external/gratr/import'
+require 'puppet/external/gratr/dot'
 require 'puppet/relationship'
 
 # This class subclasses a graph class in order to handle relationships

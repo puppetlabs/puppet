@@ -30,7 +30,7 @@
 # rdot.rb is a modified version which also contains support for undirected
 # graphs.
 
-require 'puppet/gratr/rdot'
+require 'puppet/external/gratr/rdot'
 
 module GRATR
   module Graph

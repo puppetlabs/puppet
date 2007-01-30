@@ -26,7 +26,7 @@
 #++
 
 
-require 'puppet/gratr/digraph_distance'
+require 'puppet/external/gratr/digraph_distance'
 
 module GRATR
   module Graph
