@@ -5,6 +5,8 @@ class Puppet::SSLCertificates::CA
     attr_accessor :keyfile, :file, :config, :dir, :cert, :crl
 
     Puppet.setdefaults(:ca,
+        :ca => [true,
+            "Whether a CA should be started in puppetmasterd."],
         :cadir => {  :default => "$ssldir/ca",
             :owner => "$user",
             :group => "$group",

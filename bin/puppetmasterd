@@ -46,7 +46,8 @@
 #   Do not function as a file bucket.
 #
 # noca::
-#   Do not function as a certificate authority.
+#   Do not function as a certificate authority.  This is deprecated.  Use '--no-ca'
+#   now.
 #
 # nonodes::
 #   Do not use individual node designations; each node will receive the result
@@ -111,7 +112,6 @@ bucket = {}
 args = {}
 
 options = {
-    :haveca => true,
     :havereport => true,
     :havebucket => true,
     :havemaster => true,
@@ -137,7 +137,8 @@ begin
             when "--noreports"
                 options[:havereport] = false
             when "--noca"
-                options[:haveca] = false
+                Puppet[:ca] = false
+                Puppet.warning "--noca is deprecated.  Please use --no-ca."
             when "--nomaster"
                 options[:havemaster] = false
             when "--nobucket"
@@ -219,7 +220,7 @@ if options[:havereport]
     handlers[:Report] = report
 end
 
-if options[:haveca]
+if Puppet[:ca]
     handlers[:CA] = ca
 end
 
