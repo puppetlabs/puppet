@@ -277,11 +277,9 @@ class Puppet::Type
                     self.fail "Could not retrieve dependency '%s[%s]'" %
                         [tname.to_s.capitalize, name]
                 end
-                
-                self.debug("subscribes to %s" % [object.ref])
 
-                # Are we requiring them, or vice versa?  See the builddepends
-                # method for further docs on this.
+                # Are we requiring them, or vice versa?  See the method docs
+                # for futher info on this.
                 if self.class.direction == :in
                     source = object
                     target = @parent
@@ -295,11 +293,14 @@ class Puppet::Type
                         :event => self.class.events,
                         :callback => method
                     }
+                    self.debug("subscribes to %s" % [object.ref])
                 else
                     # If there's no callback, there's no point in even adding
                     # a label.
                     subargs = nil
+                    self.debug("requires %s" % [object.ref])
                 end
+                
                 rel = Puppet::Relationship.new(source, target, subargs)
             end
         end

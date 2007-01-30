@@ -60,7 +60,7 @@ class Puppet::PGraph < GRATR::Digraph
             bad << v unless sorted.include?(v)
         end
 
-        raise Puppet::Error, "Found cycle involving %s" % bad.collect do |v|
+        raise Puppet::Error, "Found dependency cycle involving %s" % bad.collect do |v|
             v.to_s
         end.join(", ")
     end

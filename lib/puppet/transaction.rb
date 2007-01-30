@@ -161,9 +161,15 @@ class Transaction
         
         children.each do |gen_child|
             if depthfirst
-                @relgraph.add_edge!(gen_child, resource)
+                edge = [gen_child, resource]
             else
-                @relgraph.add_edge!(resource, gen_child)
+                edge = [resource, gen_child]
+            end
+            unless @relgraph.edge?(edge[1], edge[0])
+                @relgraph.add_edge!(*edge)
+            else
+                @relgraph.add_vertex!(gen_child)
+                resource.debug "Skipping automatic relationship to %s" % gen_child
             end
         end
     end
@@ -185,11 +191,14 @@ class Transaction
                     detail
                 return nil
             end
-
+            
             if children
-                copy_relationships(resource, children)
+                children.each do |child|
+                    child.finish
+                    # Make sure that the vertex is in the relationship graph.
+                    @relgraph.add_vertex!(child)
+                end
                 @generated += children
-                children.each { |child| child.finish }
                 return children
             end
         end
@@ -231,6 +240,13 @@ class Transaction
                     events += eval_resource(child, false)
                 end
             end
+
+            # Create a child/parent relationship.  We do this after everything else because
+            # we want explicit relationships to be able to override automatic relationships,
+            # including this one.
+            if children
+                copy_relationships(resource, children)
+            end
             
             # A bit of hackery here -- if skipcheck is true, then we're the
             # top-level resource.  If that's the case, then make sure all of
@@ -254,6 +270,9 @@ class Transaction
         # the parent resource in so it will override the source in the events,
         # since eval_generated children can't have direct relationships.
         @relgraph.matching_edges(events, resource).each do |edge|
+            unless edge
+                raise "wtf?"
+            end
             set_trigger(edge)
         end
 
@@ -470,7 +489,12 @@ class Transaction
         graph.vertices.each do |vertex|
             vertex.autorequire.each do |edge|
                 unless graph.edge?(edge)
-                    graph.add_edge!(edge)
+                    unless graph.edge?(edge.target, edge.source)
+                        vertex.debug "Autorequiring %s" % [edge.source]
+                        graph.add_edge!(edge)
+                    else
+                        vertex.debug "Skipping automatic relationship with %s" % (edge.source == vertex ? edge.target : edge.source)
+                    end
                 end
             end
         end

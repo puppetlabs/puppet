@@ -1027,6 +1027,39 @@ class TestTransactions < Test::Unit::TestCase
         assert_apply(obj)
         assert(obj.refreshed, "object was not refreshed during transaction")
     end
+    
+    # Testing #433
+    def test_explicit_dependencies_beat_automatic
+        # Create a couple of different resource sets that have automatic relationships and make sure the manual relationships win
+        rels = {}
+        # First users and groups
+        group = Puppet::Type.type(:group).create(:name => nonrootgroup.name, :ensure => :present)
+        user = Puppet::Type.type(:user).create(:name => nonrootuser.name, :ensure => :present, :gid => group.title)
+        
+        # Now add the explicit relationship
+        group[:require] = user
+        rels[group] = user
+        # Now files
+        d = tempfile()
+        f = File.join(d, "file")
+        file = Puppet::Type.newfile(:path => f, :content => "yay")
+        dir = Puppet::Type.newfile(:path => d, :ensure => :directory, :require => file)
+        
+        rels[dir] = file
+        rels.each do |after, before|
+            comp = newcomp(before, after)
+            trans = comp.evaluate
+            str = "from %s to %s" % [before, after]
+        
+            assert_nothing_raised("Failed to create graph %s" % str) do
+                trans.prepare
+            end
+        
+            graph = trans.relgraph
+            assert(graph.edge?(before, after), "did not create manual relationship %s" % str)
+            assert(! graph.edge?(after, before), "created automatic relationship %s" % str)
+        end
+    end
 end
 
 # $Id$

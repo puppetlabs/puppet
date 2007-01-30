@@ -40,7 +40,6 @@ class Puppet::Type
                     end
                 end
                 
-                debug "Autorequiring %s" % [dep.ref]
                 reqs << Puppet::Relationship[dep, self]
             }
         }
