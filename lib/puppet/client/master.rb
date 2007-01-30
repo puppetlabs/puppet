@@ -299,19 +299,6 @@ class Puppet::Client::MasterClient < Puppet::Client
         self.class.instance = self
         @running = false
 
-        @timeout = Puppet[:configtimeout]
-        case @timeout
-        when String:
-            if @timeout =~ /^\d+$/
-                @timeout = Integer(@timeout)
-            else
-                raise ArgumentError, "Configuration timeout must be an integer"
-            end
-        when Integer: # nothing
-        else
-            raise ArgumentError, "Configuration timeout must be an integer"
-        end
-
         mkdefault_objects
     end
 
@@ -430,14 +417,16 @@ class Puppet::Client::MasterClient < Puppet::Client
             hash[:ignore] = args[:ignore].split(/\s+/)
         end
         objects.push Puppet::Type.type(:file).create(hash)
-
+        
         Puppet.info "Retrieving #{args[:name]}s"
 
         begin
             trans = objects.evaluate
             trans.ignoretags = true
-            trans.evaluate
-        rescue Puppet::Error => detail
+            Timeout::timeout(self.timeout) do
+                trans.evaluate
+            end
+        rescue Puppet::Error, Timeout::Error => detail
             if Puppet[:debug]
                 puts detail.backtrace
             end
@@ -474,7 +463,6 @@ class Puppet::Client::MasterClient < Puppet::Client
             files << object[:path]
 
         end
-
     ensure
         # Reload everything.
         if Facter.respond_to? :loadfacts
@@ -517,9 +505,10 @@ class Puppet::Client::MasterClient < Puppet::Client
         Dir.entries(dir).find_all { |e| e =~ /\.rb$/ }.each do |file|
             fqfile = File.join(dir, file)
             begin
-                Puppet.info "Loading #{type} %s" %
-                    File.basename(file.sub(".rb",''))
-                load fqfile
+                Puppet.info "Loading #{type} %s" % File.basename(file.sub(".rb",''))
+                Timeout::timeout(self.timeout) do
+                    load fqfile
+                end
             rescue => detail
                 Puppet.warning "Could not load #{type} %s: %s" % [fqfile, detail]
             end
@@ -529,6 +518,21 @@ class Puppet::Client::MasterClient < Puppet::Client
     def self.loadfacts
         Puppet[:factpath].split(":").each do |dir|
             loaddir(dir, "fact")
+        end
+    end
+    
+    def self.timeout
+        @timeout = Puppet[:configtimeout]
+        case @timeout
+        when String:
+            if @timeout =~ /^\d+$/
+                @timeout = Integer(@timeout)
+            else
+                raise ArgumentError, "Configuration timeout must be an integer"
+            end
+        when Integer: # nothing
+        else
+            raise ArgumentError, "Configuration timeout must be an integer"
         end
     end
     
@@ -565,7 +569,7 @@ class Puppet::Client::MasterClient < Puppet::Client
             return get_local_config(facts)
         else
             begin
-                Timeout::timeout(@timeout) do
+                Timeout::timeout(self.class.timeout) do
                     return get_remote_config(facts)
                 end
             rescue Timeout::Error
