@@ -1,3 +1,29 @@
+0.22.1 (kermit) -- Mostly a bugfix release
+    Compile times now persist between restarts of puppetd.
+
+    Timeouts have been added to many parts of Puppet, reducing the likelihood
+    if it hanging forever on broken scripts or servers.
+
+    All of the documentation and recipes have been moved to the wiki by Peter
+    Abrahamsen and Ben Kite has moved the FAQ to the wiki.
+
+    Explicit relationships now override automatic relationships, allowing you
+    to manually specify deletion order when removing resources.
+
+    Resources with dependencies can now be deleted as long as all of their
+    dependencies are also being deleted.
+
+    Namespaces for both classes and definitions now work much more consistently.
+    You should now be able to specify a class or definition with a namespace
+    everywhere you would normally expect to be able to specify one without.
+
+    Downcasing of facts can be selectively disabled.
+
+    Cyclic dependency graphs are now checked for and forbidden.
+
+    Otherwise, lots and lots of bugfixes.  Check the tickets associated with the
+    'kermit' milestone.
+
 0.22.0
     Integrated the GRATR graph library into Puppet, for handling resource
     relationships.
