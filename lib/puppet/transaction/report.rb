@@ -6,6 +6,11 @@ require 'puppet'
 # in the transaction.
 class Puppet::Transaction::Report
     attr_accessor :logs, :metrics, :time, :host
+    
+    def <<(msg)
+        @logs << msg
+        return self
+    end
 
     def initialize
         @metrics = {}

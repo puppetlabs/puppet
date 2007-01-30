@@ -41,48 +41,10 @@ Puppet::Server::Report.newreport(:tagmail) do
         webservers that are not also from mailservers to ``httpadmins@domain.com``.
         "
 
-    def process
-        unless FileTest.exists?(Puppet[:tagmap])
-            Puppet.notice "Cannot send tagmail report; no tagmap file %s" %
-                Puppet[:tagmap]
-            return
-        end
-
-        # Load the config file
-        taglists = {}
-        File.readlines(Puppet[:tagmap]).each do |line|
-            taglist = emails = nil
-            case line.chomp
-            when /^\s*#/: next
-            when /^\s*$/: next
-            when /^\s*(.+)\s*:\s*(.+)\s*$/:
-                taglist = $1
-                emails = $2
-            else
-                raise ArgumentError, "Invalid tagmail config file"
-            end
-
-            pos = []
-            neg = []
-            taglist.split(/\s*,\s*/).each do |tag|
-                case tag
-                when /^\w+/: pos << tag
-                when /^!\w+/: neg << tag.sub("!", '')
-                else
-                    raise Puppet::Error, "Invalid tag '%s'" % tag
-                end
-            end
-
-            # Now split the emails
-            emails = emails.split(/\s*,\s*/)
-            taglists[emails] = [pos, neg]
-        end
-
-        # Now find any appropriately tagged messages.
-        reports = {}
-        taglists.each do |emails, tags|
-            pos, neg = tags
-
+    # Find all matching messages.
+    def match(taglists)
+        reports = []
+        taglists.each do |emails, pos, neg|
             # First find all of the messages matched by our positive tags
             messages = nil
             if pos.include?("all")
@@ -96,7 +58,7 @@ Puppet::Server::Report.newreport(:tagmail) do
             end
 
             # Now go through and remove any messages that match our negative tags
-            messages.reject! do |log|
+            messages = messages.reject do |log|
                 if neg.detect do |tag| log.tagged?(tag) end
                     true
                 end
@@ -106,12 +68,67 @@ Puppet::Server::Report.newreport(:tagmail) do
                 Puppet.info "No messages to report to %s" % emails.join(",")
                 next
             else
-                reports[emails] = messages.collect { |m| m.to_report }.join("\n")
+                reports << [emails, messages.collect { |m| m.to_report }.join("\n")]
             end
         end
+        
+        return reports
+    end
+    
+    # Load the config file
+    def parse(text)
+        taglists = []
+        text.split("\n").each do |line|
+            taglist = emails = nil
+            case line.chomp
+            when /^\s*#/: next
+            when /^\s*$/: next
+            when /^\s*(.+)\s*:\s*(.+)\s*$/:
+                taglist = $1
+                emails = $2.sub(/#.*$/,'')
+            else
+                raise ArgumentError, "Invalid tagmail config file"
+            end
 
-        # Let's fork for the sending of the email, since you never know what might
-        # happen.
+            pos = []
+            neg = []
+            taglist.sub(/\s+$/,'').split(/\s*,\s*/).each do |tag|
+                unless tag =~ /^!?[-\w]+$/
+                    raise ArgumentError, "Invalid tag %s" % tag.inspect
+                end
+                case tag
+                when /^\w+/: pos << tag
+                when /^!\w+/: neg << tag.sub("!", '')
+                else
+                    raise Puppet::Error, "Invalid tag '%s'" % tag
+                end
+            end
+
+            # Now split the emails
+            emails = emails.sub(/\s+$/,'').split(/\s*,\s*/)
+            taglists << [emails, pos, neg]
+        end
+        return taglists
+    end
+
+    # Process the report.  This just calls the other associated messages.
+    def process
+        unless FileTest.exists?(Puppet[:tagmap])
+            Puppet.notice "Cannot send tagmail report; no tagmap file %s" %
+                Puppet[:tagmap]
+            return
+        end
+
+        taglists = parse(File.read(Puppet[:tagmap]))
+        
+        # Now find any appropriately tagged messages.
+        reports = match(taglists)
+
+        send(reports)
+    end
+    
+    # Send the email reports.
+    def send(reports)
         pid = fork do
             if Puppet[:smtpserver] != "none"
                 begin
@@ -137,7 +154,7 @@ Puppet::Server::Report.newreport(:tagmail) do
                             p.puts "From: #{Puppet[:reportfrom]}"
                             p.puts "To: %s" % emails.join(', ')
                             p.puts "Subject: Puppet Report for %s" % self.host
-                           p.puts "To: " + emails.join(", ")
+                            p.puts "To: " + emails.join(", ")
 
                             p.puts messages
                         end
@@ -154,6 +171,7 @@ Puppet::Server::Report.newreport(:tagmail) do
             end
         end
 
+        # Don't bother waiting for the pid to return.
         Process.detach(pid)
     end
 end
