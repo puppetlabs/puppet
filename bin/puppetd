@@ -355,7 +355,7 @@ end
 objects = []
 
 # This has to go after the certs are dealt with.
-if Puppet[:listen]
+if Puppet[:listen] and ! options[:onetime]
     unless FileTest.exists?(Puppet[:authconfig])
         Puppet.err "Will not start without authorization file %s" %
             Puppet[:authconfig]
@@ -395,6 +395,8 @@ if Puppet[:listen]
     end
 
     objects << server
+elsif options[:onetime]
+    Puppet.notice "Ignoring --listen on onetime run"
 end
 
 # now set up the network client with the certs, now that we have them
@@ -413,10 +415,6 @@ if options[:onetime]
     unless options[:client]
         $stderr.puts "onetime is specified but there is no client"
         exit(43)
-    end
-
-    if server
-        Puppet.notice "Ignoring --listen on onetime run"
     end
 
     # Add the service, so the traps work correctly.
