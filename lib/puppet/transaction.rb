@@ -56,9 +56,10 @@ class Transaction
         changes = [changes] unless changes.is_a?(Array)
         
         # If a resource is going to be deleted but it still has dependencies, then
-        # don't delete it unless it's implicit.
+        # don't delete it unless it's implicit or the dependency is itself being
+        # deleted.
         if ! resource.implicit? and resource.deleting?
-            if deps = @relgraph.dependents(resource) and ! deps.empty?
+            if deps = @relgraph.dependents(resource) and ! deps.empty? and deps.detect { |d| ! d.deleting? }
                 resource.warning "%s still depend%s on me -- not deleting" %
                     [deps.collect { |r| r.ref }.join(","), if deps.length > 1; ""; else "s"; end] 
                 return []
