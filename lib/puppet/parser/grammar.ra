@@ -90,6 +90,9 @@ namestrings:       namestring
 namestring:        name
                 | variable
                 | quotedtext
+                | CLASSNAME {
+                    result = ast AST::Name, :value => val[0]
+                }
 
 resourcerefs:     resourceref
                 | resourcerefs COMMA resourceref {

@@ -406,6 +406,11 @@ file { "/tmp/yayness":
         sub = interp.findclass("", "container::one")
         assert(sub, "Could not find one")
         assert_equal("sub", sub.parentclass.type)
+        
+        # Finally, try including a qualified class
+        assert_nothing_raised("Could not include fully qualified class") {
+            parser.parse "include container::deep::sub"
+        }
     end
 
     def test_topnamespace

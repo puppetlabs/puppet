@@ -4,8 +4,8 @@ class base {
     }   
 }   
 
-class two inherits base::one {
+class two::three inherits base::one {
     file { "/tmp/fqparent2": ensure => file }
 }
 
-include two
+include two::three
