@@ -338,7 +338,7 @@ module Util
 
         if failonfail
             unless $? == 0
-                raise ExecutionFailure, "Execution of '%s' returned %s: %s" % [str, $?, output]
+                raise ExecutionFailure, "Execution of '%s' returned %s: %s" % [str, $?.exitstatus, output]
             end
         end
 
