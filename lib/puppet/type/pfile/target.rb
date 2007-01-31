@@ -1,7 +1,5 @@
 module Puppet
     Puppet.type(:file).newstate(:target) do
-        attr_accessor :linkmaker
-
         desc "The target for creating a link.  Currently, symlinks are the
             only type supported."
 
@@ -47,32 +45,14 @@ module Puppet
         end
 
         def retrieve
-            if @parent.state(:ensure).should == :directory
-                @is = self.should
-                @linkmaker = true
-            else
-                if stat = @parent.stat
-                    # If we're just checking the value
-                    if (should = self.should) and
-                            (should != :notlink) and
-                            File.exists?(should) and
-                            (tstat = File.lstat(should)) and
-                            (tstat.ftype == "directory") and
-                            @parent.recurse?
-                        @parent[:ensure] = :directory
-                        @is = should
-                        @linkmaker = true
-                    else
-                        if stat.ftype == "link"
-                            @is = File.readlink(@parent[:path])
-                            @linkmaker = false
-                        else
-                            @is = :notlink
-                        end
-                    end
+            if stat = @parent.stat
+                if stat.ftype == "link"
+                    @is = File.readlink(@parent[:path])
                 else
-                    @is = :absent
+                    @is = :notlink
                 end
+            else
+                @is = :absent
             end
         end
     end

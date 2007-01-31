@@ -85,12 +85,7 @@ module Puppet
             if state = @parent.state(:target)
                 state.retrieve
 
-                if state.linkmaker
-                    self.set_directory
-                    return :directory_created
-                else
-                    return state.mklink
-                end
+                return state.mklink
             else
                 self.fail "Cannot create a symlink without a target"
             end

@@ -109,11 +109,6 @@ module Puppet
             end
         end
 
-        newparam(:linkmaker) do
-            desc "An internal parameter used by the *symlink*
-                type to do recursive link creation."
-        end
-
         newparam(:recurse) do
             desc "Whether and how deeply to do recursive
                 management."
@@ -594,24 +589,7 @@ module Puppet
             }
 
             child = nil
-            klass = nil
-
-            # We specifically look in @parameters here, because 'linkmaker' isn't
-            # a valid attribute for subclasses, so using 'self[:linkmaker]' throws
-            # an error.
-            if @parameters.include?(:linkmaker) and 
-                args.include?(:source) and ! FileTest.directory?(args[:source])
-                klass = Puppet.type(:symlink)
-
-                # clean up the args a lot for links
-                old = args.dup
-                args = {
-                    :ensure => old[:source],
-                    :path => path
-                }
-            else
-                klass = self.class
-            end
+            klass = self.class
             
             # The child might already exist because 'localrecurse' runs
             # before 'sourcerecurse'.  I could push the override stuff into
