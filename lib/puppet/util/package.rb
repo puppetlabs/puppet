@@ -2,9 +2,6 @@ require 'puppet'
 
 module Puppet::Util::Package
     def versioncmp(version_a, version_b)
-        # Invert the sort order, so higher versions always end up first.
-        version_a, version_b = version_b, version_a
-
         vre = /[-.]|\d+|[^-.\d]+/
         ax = version_a.scan(vre)
         bx = version_b.scan(vre)

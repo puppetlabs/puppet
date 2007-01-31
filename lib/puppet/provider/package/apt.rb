@@ -84,7 +84,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
 
         if output =~ /Versions:\s*\n((\n|.)+)^$/
             versions = $1
-            version = versions.split(/\n/).collect { |version|
+            available_versions = versions.split(/\n/).collect { |version|
                 if version =~ /^([^\(]+)\(/
                     $1
                 else
@@ -95,14 +95,15 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
                 versioncmp(a,b)
             }
 
-            unless version.length > 0
+            if available_versions.length == 0
                 self.debug "No latest version"
                 if Puppet[:debug]
                     print output
                 end
             end
 
-            return version.shift
+            # Get the latest and greatest version number
+            return available_versions.pop
         else
             self.err "Could not match string"
         end
