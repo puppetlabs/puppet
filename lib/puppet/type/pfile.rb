@@ -925,6 +925,17 @@ module Puppet
             return @stat
         end
 
+        # We have to hack this just a little bit, because otherwise we'll get
+        # an error when the target and the contents are created as states on
+        # the far side.
+        def to_trans
+            obj = super
+            if obj[:target] == :notlink
+                obj.delete(:target)
+            end
+            obj
+        end
+
         def uri2obj(source)
             sourceobj = FileSource.new
             path = nil
