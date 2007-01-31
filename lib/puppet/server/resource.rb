@@ -4,10 +4,10 @@ require 'puppet/server'
 module Puppet
 
 # Serve Puppet elements.  Useful for querying, copying, and, um, other stuff.
-class Server::PElement < Server::Handler
+class Server::Resource < Server::Handler
     attr_accessor :local
 
-    @interface = XMLRPC::Service::Interface.new("pelementserver") { |iface|
+    @interface = XMLRPC::Service::Interface.new("resource") { |iface|
         iface.add_method("string apply(string, string)")
         iface.add_method("string describe(string, string, array, array)")
         iface.add_method("string list(string, array, string)")
@@ -183,7 +183,7 @@ class Server::PElement < Server::Handler
     end  
 
     def to_s
-        "pelementserver"
+        "resource"
     end
 end
 end

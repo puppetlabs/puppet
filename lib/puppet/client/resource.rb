@@ -1,7 +1,7 @@
-class Puppet::Client::PElement < Puppet::Client
-    @drivername = :PElementServer
+class Puppet::Client::Resource < Puppet::Client
+    @drivername = :ResourceServer
 
-    @handler = Puppet::Server::PElement
+    @handler = Puppet::Server::Resource
 
     def apply(bucket)
 
@@ -11,7 +11,7 @@ class Puppet::Client::PElement < Puppet::Client
             tmp.push bucket
             bucket = tmp
             bucket.name = Facter["hostname"].value
-            bucket.type = "pelement"
+            bucket.type = "resource"
         when Puppet::TransBucket
             # nothing
         else
@@ -42,8 +42,8 @@ class Puppet::Client::PElement < Puppet::Client
     end
 
     def initialize(hash = {})
-        if hash.include?(:PElementServer)
-            unless hash[:PElementServer].is_a?(Puppet::Server::PElement)
+        if hash.include?(:ResourceServer)
+            unless hash[:ResourceServer].is_a?(Puppet::Server::Resource)
                 raise Puppet::DevError, "Must pass an actual PElement server object"
             end
         end

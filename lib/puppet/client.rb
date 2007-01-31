@@ -187,7 +187,7 @@ module Puppet
         require 'puppet/client/runner'
         require 'puppet/client/status'
         require 'puppet/client/reporter'
-        require 'puppet/client/pelement'
+        require 'puppet/client/resource'
     end
 end
 

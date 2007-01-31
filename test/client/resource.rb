@@ -3,19 +3,19 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
-require 'puppet/client/pelement'
+require 'puppet/client/resource'
 require 'puppet/server'
 require 'puppettest'
 
 # $Id$
 
-class TestPElementClient < Test::Unit::TestCase
+class TestResourceClient < Test::Unit::TestCase
     include PuppetTest::ServerTest
 
-    def mkpelementserver
+    def mkresourceserver
         handlers = {
             :CA => {}, # so that certs autogenerate
-            :PElement => {},
+            :Resource => {},
         }
 
         return mkserver(handlers)
@@ -24,19 +24,19 @@ class TestPElementClient < Test::Unit::TestCase
     def mkclient
         client = nil
         assert_nothing_raised {
-            client = Puppet::Client::PElement.new(:Server => "localhost",
+            client = Puppet::Client::Resource.new(:Server => "localhost",
                 :Port => @@port)
         }
 
         return client
     end
 
-    def test_pelements
+    def test_resources
         file = tempfile()
         text = "yayness\n"
         File.open(file, "w") { |f| f.print text }
 
-        mkpelementserver()
+        mkresourceserver()
 
         client = mkclient()
 
