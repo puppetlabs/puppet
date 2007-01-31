@@ -30,7 +30,9 @@ module Puppet
     end
     setdefaults(:puppet, :logdir => logopts)
     
-    if Process.uid == 0
+    # This name hackery is necessary so that the rundir is set reasonably during
+    # unit tests.
+    if Process.uid == 0 and %w{puppetd puppetmasterd}.include?(self.name)
         rundir = "/var/run/puppet"
     else
         rundir = "$vardir/run"
