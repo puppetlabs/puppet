@@ -996,6 +996,8 @@ class TestFile < Test::Unit::TestCase
     end
 
     def test_followlinks
+        File.umask(0022)
+      
         basedir = tempfile()
         Dir.mkdir(basedir)
         file = File.join(basedir, "file")
@@ -1274,6 +1276,8 @@ class TestFile < Test::Unit::TestCase
     end
 
     def test_backupmodes
+        File.umask(0022)
+        
         file = tempfile()
         newfile = tempfile()
 

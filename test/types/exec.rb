@@ -335,6 +335,8 @@ class TestExec < Test::Unit::TestCase
     if Puppet::SUIDManager.uid == 0
         # Verify that we can execute commands as a special user
         def mknverify(file, user, group = nil, id = true)
+            File.umask(0022)
+                
             args = {
                 :command => "touch %s" % file,
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",

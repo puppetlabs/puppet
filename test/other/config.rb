@@ -534,6 +534,8 @@ yay = /a/path
     # provide a method to modify and create files w/out specifying the info
     # already stored in a config
     def test_writingfiles
+        File.umask(0022)
+      
         path = tempfile()
         mode = 0644
 
@@ -572,6 +574,8 @@ yay = /a/path
     end
 
     def test_mkdir
+        File.umask(0022)
+        
         path = tempfile()
         mode = 0755
 
