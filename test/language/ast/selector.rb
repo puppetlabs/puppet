@@ -47,12 +47,15 @@ class TestSelector < Test::Unit::TestCase
         %w{MYPARAM myparam}.each do |str|
             param = nameobj(str)
             params = maker.call()
+
+            # Delete the upper value, since we don't want it to match
+            # and it introduces a hash-ordering bug in testing.
+            params.delete(:upper)
             sel = AST::Selector.new(:param => param, :values => params.values)
             result = nil
             assert_nothing_raised { result = sel.evaluate(:scope => scope) }
             assert_equal("lower", result, "did not case-insensitively match %s" % str)
         end
-        
     end
 end
 

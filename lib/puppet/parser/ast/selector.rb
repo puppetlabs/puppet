@@ -43,6 +43,7 @@ class Puppet::Parser::AST
                     found = true
                     break
                 elsif obj.param.is_a?(Default)
+                    # Store the default, in case it's necessary.
                     default = obj
                 end
             }
