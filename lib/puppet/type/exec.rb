@@ -179,7 +179,7 @@ module Puppet
 
             # Support both arrays and colon-separated fields.
             def value=(*values)
-                @value = values.collect { |val|
+                @value = values.flatten.collect { |val|
                     val.split(":")
                 }.flatten
             end

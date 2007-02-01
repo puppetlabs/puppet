@@ -641,6 +641,27 @@ and stuff"
             )
         end
     end
+
+    # make sure paths work both as arrays and strings
+    def test_paths_as_arrays
+        path = %w{/usr/bin /usr/sbin /sbin}
+        exec = nil
+        assert_nothing_raised("Could not use an array for the path") do
+            exec = Puppet::Type.type(:exec).create(:command => "echo yay",
+                :path => path)
+        end
+        assert_equal(path, exec[:path], "array-based path did not match")
+        assert_nothing_raised("Could not use a string for the path") do
+            exec = Puppet::Type.type(:exec).create(:command => "echo yay",
+                :path => path.join(":"))
+        end
+        assert_equal(path, exec[:path], "string-based path did not match")
+        assert_nothing_raised("Could not use a colon-separated strings in an array for the path") do
+            exec = Puppet::Type.type(:exec).create(:command => "echo yay",
+                :path => ["/usr/bin", "/usr/sbin:/sbin"])
+        end
+        assert_equal(path, exec[:path], "colon-separated array path did not match")
+    end
 end
 
 # $Id$
