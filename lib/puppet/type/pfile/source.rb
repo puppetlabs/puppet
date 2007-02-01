@@ -173,7 +173,9 @@ module Puppet
             
             case @stats[:type]
             when "directory", "file":
-                @parent[:ensure] = @stats[:type]
+                unless @parent.deleting?
+                    @parent[:ensure] = @stats[:type]
+                end
             else
                 self.info @stats.inspect
                 self.err "Cannot use files of type %s as sources" %

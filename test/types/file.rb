@@ -950,6 +950,32 @@ class TestFile < Test::Unit::TestCase
         assert_events([], file)
     end
 
+    # Make sure that content gets used before ensure
+    def test_deletion_beats_source
+        dest = tempfile()
+        source = tempfile()
+        File.open(source, "w") { |f| f.puts "yay" }
+
+        file = nil
+        assert_nothing_raised {
+            file = Puppet.type(:file).create(
+                :name => dest,
+                :ensure => :absent,
+                :source => source
+            )
+        }
+
+        file.retrieve
+
+        assert_events([], file)
+        assert(! FileTest.exists?(dest), "file was copied during deletion")
+
+        # Now create the dest, and make sure it gets deleted
+        File.open(dest, "w") { |f| f.puts "boo" }
+        assert_events([:file_removed], file)
+        assert(! FileTest.exists?(dest), "file was not deleted during deletion")
+    end
+
     def test_nameandpath
         path = tempfile()
 
