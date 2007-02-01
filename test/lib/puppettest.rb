@@ -17,17 +17,6 @@ module PuppetTest
     def self.munge_argv
         require 'getoptlong'
 
-        def resolve(dir, method)
-        end
-
-        def ruby_files(dir)
-            files = []
-            # First collect the entire file list.
-            find(dir) { |f| files << f if f =~ /\.rb$/ }
-            files
-        end
-
-            #[ "--size",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
         result = GetoptLong.new(
             [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
             [ "--resolve",	"-r",			GetoptLong::REQUIRED_ARGUMENT ],
@@ -35,7 +24,7 @@ module PuppetTest
             [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
         )
 
-        usage = "USAGE: %s [--help] <testsuite> <testsuite> .." % $0
+        usage = "USAGE: TESTOPTS='[-n <method> -n <method> ...] [-d]' rake [target] [target] ..."
 
         opts = []
 

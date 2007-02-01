@@ -6,51 +6,143 @@
 # easily.
 
 require 'find'
+require 'getoptlong'
 include Find
 
-basedir = File.dirname(__FILE__)
-$:.unshift(File.join(basedir, "lib"))
+result = GetoptLong.new(
+    [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+    [ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
+    [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+)
 
-require 'puppettest'
+usage = "USAGE: %s [--help] suite method" % $0
+
+$options = {}
+
+result.each { |opt,arg|
+    case opt
+    when "--verbose"
+        $options[:verbose] = true
+    when "--debug"
+        $options[:debug] = true
+    when "--help"
+        puts usage
+        exit
+    else
+        raise "no such option %s" % opt
+    end
+}
+
+def dirs
+    Dir.glob("*").find_all { |d| FileTest.directory?(d) }.reject { |d|
+        ["lib", "data"].include?(d)
+    }
+end
+
+def rake(*args)
+    print "trying %s..." % args.join(" ")
+    output = %x{rake %s} % args.join(" ")
+
+    if $?.exitstatus == 0
+        puts "succeeded"
+        return true
+    else
+        puts "failed"
+        return false
+    end
+end
 
 def resolve(dir, method)
+    dirs = dirs()
+
+    failed = nil
+    dirs.each do |d|
+        next if d == dir
+        unless run(d, dir)
+            failed = d
+            break
+        end
+    end
+    puts "%s failed" % failed
+
+    files = ruby_files(failed)
+
+    files.each do |file|
+        unless run(file, dir)
+            puts file
+            exit(0)
+        end
+    end
+
+    exit(1)
 end
 
 def ruby_files(dir)
     files = []
     # First collect the entire file list.
-    find(dir) { |f| files << f if f =~ /\.rb$/ }
+    begin
+        find(dir) { |f| files << f if f =~ /\.rb$/ }
+    rescue => detail
+        puts "could not find on %s: %s" % [dir.inspect, detail]
+    end
     files
 end
-suites = nil
 
-args = PuppetTest.munge_argv
+def run(*files)
+    args = %w{ruby}
+    args << "-Ilib:../lib"
+    args += ARGV
+    args << "lib/rake/puppet_test_loader.rb"
 
-unless args.length != 0
-    Dir.glob("*").find_all { |d| FileTest.directory?(d) }.reject { |d|
-        d == "lib"
-    }.each do |d|
-        args << d
+    print files.join(" ") + "... "
+    $stdout.flush
+
+    files.each do |file|
+        case File.stat(file).ftype
+        when "file": args << file
+        when "directory": args += ruby_files(file)
+        else
+            $stderr.puts "Skipping %s; can't handle %s" %
+                [file, File.stat(file).ftype]
+        end
+    end
+    args = args.join(" ")
+    if $options[:verbose]
+        p args
+    end
+    output = %x{#{args} 2>&1}
+    if $options[:debug]
+        print output
+    end
+
+    if $?.exitstatus == 0
+        puts "succeeded"
+        return true
+    else
+        puts "failed"
+        puts output
+        return false
     end
 end
 
+dir = ARGV.shift
+method = ARGV.shift
 
-exit
-files = []
-
-args.each do |test|
-    if FileTest.directory?(test)
-        files += ruby_files(test)
-    end
+unless dir and method
+    $stderr.puts usage
+    exit(1)
 end
 
-args = %w{ruby}
-args << "-Ilib:../lib"
-args += ARGV
-args << "lib/rake/puppet_test_loader.rb"
-args += files
-p args
-system(*files)
+resolve(dir, method)
+#
+#
+#files = []
+#
+#args.each do |test|
+#    if FileTest.directory?(test)
+#        files += ruby_files(test)
+#    end
+#end
 
 ## Now load all of our files.
 #files.each do |file|
@@ -60,5 +152,3 @@ system(*files)
 #runner = Test::Unit::AutoRunner.new(false) 
 #runner.process_args
 #runner.run
-
-# $Id$
