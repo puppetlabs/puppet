@@ -1,14 +1,13 @@
 
 require 'test/unit/autorunner'
 require 'getoptlong'
+require 'puppettest'
 
-result = GetoptLong.new(
-    [ "--debug",    "-d",           GetoptLong::NO_ARGUMENT ],
-    [ "-n",                         GetoptLong::REQUIRED_ARGUMENT ],
-    [ "--help",     "-h",           GetoptLong::NO_ARGUMENT ]
-)
+args = PuppetTest.munge_argv
 
-ARGV.each { |f| require f unless f =~ /^-/  }
+p $puppet_debug
+
+args.each { |f| require f unless f =~ /^-/  }
 
 runner = Test::Unit::AutoRunner.new(false)
 runner.process_args

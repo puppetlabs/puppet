@@ -34,6 +34,8 @@ unless args.length != 0
     end
 end
 
+
+exit
 files = []
 
 args.each do |test|
@@ -42,13 +44,21 @@ args.each do |test|
     end
 end
 
-# Now load all of our files.
-files.each do |file|
-    load file unless file =~ /^-/
-end
+args = %w{ruby}
+args << "-Ilib:../lib"
+args += ARGV
+args << "lib/rake/puppet_test_loader.rb"
+args += files
+p args
+system(*files)
 
-runner = Test::Unit::AutoRunner.new(false) 
-runner.process_args
-runner.run
+## Now load all of our files.
+#files.each do |file|
+#    load file unless file =~ /^-/
+#end
+#
+#runner = Test::Unit::AutoRunner.new(false) 
+#runner.process_args
+#runner.run
 
 # $Id$

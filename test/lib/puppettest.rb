@@ -163,11 +163,7 @@ module PuppetTest
 
         # If we're running under rake, then disable debugging and such.
         #if rake? or ! Puppet[:debug]
-        if rake? or ! defined?($puppet_debug)
-            Puppet::Log.close
-            Puppet::Log.newdestination tempfile()
-            Puppet[:httplog] = tempfile()
-        else    
+        if defined?($puppet_debug) or ! rake?
             if textmate?
                 Puppet[:color] = false
             end
@@ -176,6 +172,10 @@ module PuppetTest
             #$VERBOSE = 1
             Puppet.info @method_name
             Puppet[:trace] = true
+        else    
+            Puppet::Log.close
+            Puppet::Log.newdestination tempfile()
+            Puppet[:httplog] = tempfile()
         end
 
         Puppet[:ignoreschedules] = true
