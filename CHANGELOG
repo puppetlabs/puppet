@@ -21,6 +21,10 @@
 
     Cyclic dependency graphs are now checked for and forbidden.
 
+    The netinfo mounts provider was commented out, because it really doesn't
+    work at all.  Stupid NetInfo stores mount information with the device as
+    the key, which doesn't work with my current NetInfo code.
+
     Otherwise, lots and lots of bugfixes.  Check the tickets associated with the
     'kermit' milestone.
 
