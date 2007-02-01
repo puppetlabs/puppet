@@ -1,3 +1,4 @@
+# let Emacs know it's -*- ruby -*-
 begin
     require 'rake/testtask'
 rescue LoadError
@@ -38,7 +39,7 @@ find(".") do |f|
     next if dir == "."
 
     # If we're a ruby script, then add it to the list of files for that dir
-    if file =~ /\.rb/
+    if file =~ /\.rb$/
         allfiles << f
         # Add it to all of the parent dirs, not just our own
         parts = File.split(dir)
