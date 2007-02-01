@@ -1,11 +1,10 @@
-#!/usr/bin/env ruby
 
 require 'test/unit/autorunner'
 
+ARGV.each { |f| require f unless f =~ /^-/  }
+
 runner = Test::Unit::AutoRunner.new(false)
 runner.process_args
-
-ARGV.each { |f| load f unless f =~ /^-/  }
 
 runner.run
 
