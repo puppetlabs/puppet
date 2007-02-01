@@ -529,9 +529,10 @@ class TestUserProvider < Test::Unit::TestCase
         # Everyone should be able to autogenerate a uid
         assert_instance_of(Fixnum, provider.autogen(:uid))
         
-        # If we're Darwin, then we should get results, but everyone else should get nil
+        # If we're Darwin, then we should get results, but everyone else should
+        # get nil
         darwin = (Facter.value(:operatingsystem) == "Darwin")
-        
+
         should = {
             :comment => user[:name].capitalize,
             :home => "/var/empty",

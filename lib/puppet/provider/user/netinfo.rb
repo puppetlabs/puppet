@@ -11,11 +11,8 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
     options :comment, :key => "realname"
 
     defaultfor :operatingsystem => :darwin
-    
-    AUTOGEN_DEFAULTS = {
-        :home => "/var/empty",
-        :shell => "/usr/bin/false"
-    }
+
+    autogen_defaults :home => "/var/empty", :shell => "/usr/bin/false"
 
     def autogen_comment
         return @model[:name].capitalize

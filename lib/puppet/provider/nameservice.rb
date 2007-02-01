@@ -5,6 +5,20 @@ require 'puppet'
 # provides a way for them all to be as similar as possible.
 class Puppet::Provider::NameService < Puppet::Provider
     class << self
+        def autogen_default(param)
+            if defined? @autogen_defaults
+                return @autogen_defaults[symbolize(param)]
+            else
+                return nil
+            end
+        end
+
+        def autogen_defaults(hash)
+            @autogen_defaults ||= {}
+            hash.each do |param, value|
+                @autogen_defaults[symbolize(param)] = value
+            end
+        end
 
         def list
             objects = []
@@ -110,14 +124,15 @@ class Puppet::Provider::NameService < Puppet::Provider
         end
     end
     
-    # Autogenerate a value.  Mostly used for uid/gid, but also used heavily with netinfo, because netinfo is stupid.
+    # Autogenerate a value.  Mostly used for uid/gid, but also used heavily
+    # with netinfo, because netinfo is stupid.
     def autogen(field)
         field = symbolize(field)
         id_generators = {:user => :uid, :group => :gid}
         if id_generators[@model.class.name] == field
             return autogen_id(field)
         else
-            if defined?(AUTOGEN_DEFAULTS) and value = AUTOGEN_DEFAULTS[field]
+            if value = self.class.autogen_default(field)
                 return value
             elsif respond_to?("autogen_%s" % [field])
                 return send("autogen_%s" % field)
