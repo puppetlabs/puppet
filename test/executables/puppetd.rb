@@ -23,9 +23,9 @@ class TestPuppetDExe < Test::Unit::TestCase
         cmd = "puppetd"
         cmd += " --verbose"
         cmd += " --onetime"
-        #cmd += " --fqdn %s" % fqdn
         cmd += " --masterport %s" % @@port
         cmd += " --confdir %s" % Puppet[:confdir]
+        cmd += " --rundir %s" % File.join(Puppet[:vardir], "run")
         cmd += " --vardir %s" % Puppet[:vardir]
         cmd += " --server localhost"
 

@@ -45,6 +45,7 @@ module PuppetTest::ExeTest
         manifest = mktestmanifest()
         args += " --manifest %s" % manifest
         args += " --confdir %s" % Puppet[:confdir]
+        args += " --rundir %s" % File.join(Puppet[:vardir], "run")
         args += " --vardir %s" % Puppet[:vardir]
         args += " --masterport %s" % @@port
         args += " --user %s" % Puppet::SUIDManager.uid

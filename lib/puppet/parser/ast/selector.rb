@@ -69,5 +69,6 @@ class Puppet::Parser::AST
             ].join("\n")
         end
     end
-
 end
+
+# $Id$
