@@ -618,6 +618,29 @@ and stuff"
         
         assert_apply(exec)
     end
+
+    # Testing #470
+    def test_run_as_created_user
+        exec = nil
+        if Process.uid == 0
+            user = "nosuchuser"
+            assert_nothing_raised("Could not create exec with non-existent user") do
+                exec = Puppet::Type.type(:exec).create(
+                    :command => "/bin/echo yay",
+                    :user => user
+                )
+            end
+        end
+
+        # Now try the group
+        group = "nosuchgroup"
+        assert_nothing_raised("Could not create exec with non-existent user") do
+            exec = Puppet::Type.type(:exec).create(
+                :command => "/bin/echo yay",
+                :group => group
+            )
+        end
+    end
 end
 
 # $Id$

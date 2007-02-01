@@ -190,27 +190,11 @@ module Puppet
                 use this then any error output is not currently captured.  This
                 is because of a bug within Ruby."
 
-            munge do |user|
+            # Most validation is handled by the SUIDManager class.
+            validate do |user|
                 unless Puppet::SUIDManager.uid == 0
                     self.fail "Only root can execute commands as other users"
                 end
-                require 'etc'
-
-                method = :getpwnam
-                case user
-                when Integer
-                    method = :getpwuid
-                when /^\d+$/
-                    user = user.to_i
-                    method = :getpwuid
-                end
-                begin
-                    Etc.send(method, user)
-                rescue ArgumentError
-                    self.fail "No such user %s" % user
-                end
-
-                return user
             end
         end
 
@@ -219,26 +203,7 @@ module Puppet
                 haphazardly on different platforms -- it is a platform issue
                 not a Ruby or Puppet one, since the same variety exists when
                 running commnands as different users in the shell."
-
-            # Execute the command as the specified group
-            munge do |group|
-                require 'etc'
-                method = :getgrnam
-                case group
-                when Integer: method = :getgrgid
-                when /^\d+$/
-                    group = group.to_i
-                    method = :getgrgid
-                end
-
-                begin
-                    Etc.send(method, group)
-                rescue ArgumentError
-                    self.fail "No such group %s" % group
-                end
-
-                group
-            end
+            # Validation is handled by the SUIDManager class.
         end
 
         newparam(:cwd) do
@@ -578,7 +543,9 @@ module Puppet
 
                     withenv env do
                         Timeout::timeout(self[:timeout]) do
-                            output, status = Puppet::SUIDManager.run_and_capture([command], self[:user], self[:group])
+                            output, status = Puppet::SUIDManager.run_and_capture(
+                                [command], self[:user], self[:group]
+                            )
                         end
                         # The shell returns 127 if the command is missing.
                         if status.exitstatus == 127
