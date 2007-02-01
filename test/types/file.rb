@@ -512,9 +512,6 @@ class TestFile < Test::Unit::TestCase
         assert(fileobj, "child object was not created")
         assert_equal([fileobj], ret, "child object was not returned")
         
-        # check that the file lists us as a dependency
-        assert_equal([[:file, dir.title]], fileobj[:require], "dependency was not set up")
-        
         # And that it inherited our recurse setting
         assert_equal(true, fileobj[:recurse], "file did not inherit recurse")
         
@@ -557,7 +554,6 @@ class TestFile < Test::Unit::TestCase
         
         badobj = @file[bad]
         assert(badobj, "did not create bad object")
-        assert_equal(:absent, badobj.should(:ensure), "ensure was not set to absent on bad object")
     end
     
     def test_recurse
@@ -1568,7 +1564,7 @@ class TestFile < Test::Unit::TestCase
         assert_equal("yayness", File.read(path), "Content did not get set correctly")
     end
 
-    # Make sure unmanaged files are be purged.
+    # Make sure unmanaged files are purged.
     def test_purge
         sourcedir = tempfile()
         destdir = tempfile()
@@ -1582,7 +1578,11 @@ class TestFile < Test::Unit::TestCase
         # this file should get removed
         File.open(purgee, "w") { |f| f.puts "footest" }
 
-        lfobj = Puppet::Type.newfile(:title => "localfile", :path => localfile, :content => "rahtest")
+        lfobj = Puppet::Type.newfile(
+            :title => "localfile",
+            :path => localfile,
+            :content => "rahtest"
+        )
         
 
         destobj = Puppet::Type.newfile(:title => "destdir", :path => destdir,
@@ -1599,8 +1599,8 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised { destobj[:purge] = true }
         assert_apply(comp)
 
-        assert(FileTest.exists?(dsourcefile), "File got purged")
-        assert(FileTest.exists?(localfile), "File got purged")
+        assert(FileTest.exists?(dsourcefile), "Source file got purged")
+        assert(FileTest.exists?(localfile), "Local file got purged")
         assert(! FileTest.exists?(purgee), "File did not get purged")
     end
 

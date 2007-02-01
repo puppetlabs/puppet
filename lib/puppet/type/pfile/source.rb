@@ -173,7 +173,9 @@ module Puppet
             
             case @stats[:type]
             when "directory", "file":
-                unless @parent.deleting?
+                if @parent.deleting?
+                    p @parent.should(:ensure)
+                else
                     @parent[:ensure] = @stats[:type]
                 end
             else

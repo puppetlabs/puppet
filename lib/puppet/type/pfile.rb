@@ -546,12 +546,15 @@ module Puppet
                 if child = self.newchild(file, true, options)
                     # Mark any unmanaged files for removal if purge is set.
                     # Use the array rather than [] because tidy uses this method, too.
-                    if @parameters.include?(:purge) and self.purge?
-                        info "purging %s" % child.ref
-                        child[:ensure] = :absent
-                    else
-                        child[:require] = self
-                    end
+#                    if @parameters.include?(:purge) and self.purge?
+#                        child.info "source: %s" % child.should(:source)
+#                        unless child.managed?
+#                            info "purging %s" % child.ref
+#                            child[:ensure] = :absent
+#                        end
+#                        #else
+#                        #child[:require] = self
+#                    end
                     added << child
                 end
             }
@@ -706,6 +709,13 @@ module Puppet
             end
             if @states.include?(:source) and ret = self.sourcerecurse(recurse)
                 children += ret
+            end
+
+            # The purge check needs to happen after all of the other recursion.
+            if self.purge?
+                children.each do |child|
+                    child[:ensure] = :absent unless child.managed?
+                end
             end
             
             children
