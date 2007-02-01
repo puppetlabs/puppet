@@ -1,0 +1,54 @@
+#!/usr/bin/env ruby
+
+#------------------------------------------------------------
+# Run any or all test suites.  This script is different from
+# the Rakefile because it allows one to run one or more individual test methods
+# easily.
+
+require 'find'
+include Find
+
+basedir = File.dirname(__FILE__)
+$:.unshift(File.join(basedir, "lib"))
+
+require 'puppettest'
+
+def resolve(dir, method)
+end
+
+def ruby_files(dir)
+    files = []
+    # First collect the entire file list.
+    find(dir) { |f| files << f if f =~ /\.rb$/ }
+    files
+end
+suites = nil
+
+args = PuppetTest.munge_argv
+
+unless args.length != 0
+    Dir.glob("*").find_all { |d| FileTest.directory?(d) }.reject { |d|
+        d == "lib"
+    }.each do |d|
+        args << d
+    end
+end
+
+files = []
+
+args.each do |test|
+    if FileTest.directory?(test)
+        files += ruby_files(test)
+    end
+end
+
+# Now load all of our files.
+files.each do |file|
+    load file unless file =~ /^-/
+end
+
+runner = Test::Unit::AutoRunner.new(false) 
+runner.process_args
+runner.run
+
+# $Id$

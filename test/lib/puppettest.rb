@@ -12,6 +12,60 @@ if ARGV.include?("-d")
 end
 
 module PuppetTest
+    # Munge cli arguments, so we can enable debugging if we want
+    # and so we can run just specific methods.
+    def self.munge_argv
+        require 'getoptlong'
+
+        def resolve(dir, method)
+        end
+
+        def ruby_files(dir)
+            files = []
+            # First collect the entire file list.
+            find(dir) { |f| files << f if f =~ /\.rb$/ }
+            files
+        end
+
+            #[ "--size",	"-s",			GetoptLong::REQUIRED_ARGUMENT ],
+        result = GetoptLong.new(
+            [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+            [ "--resolve",	"-r",			GetoptLong::REQUIRED_ARGUMENT ],
+            [ "-n",			                GetoptLong::REQUIRED_ARGUMENT ],
+            [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+        )
+
+        usage = "USAGE: %s [--help] <testsuite> <testsuite> .." % $0
+
+        opts = []
+
+        dir = method = nil
+        result.each { |opt,arg|
+            case opt
+            when "--resolve"
+                dir, method = arg.split(",")
+            when "--debug"
+                $puppet_debug = true
+                Puppet::Log.level = :debug
+                Puppet::Log.newdestination(:console)
+            when "--help"
+                puts usage
+                exit
+            else
+                opts << opt << arg
+            end
+        }
+        suites = nil
+
+        args = ARGV.dup
+
+        # Reset the options, so the test suite can deal with them (this is
+        # what makes things like '-n' work).
+        opts.each { |o| ARGV << o }
+
+        return args
+    end
+
     # Find the root of the Puppet tree; this is not the test directory, but
     # the parent of that dir.
     def basedir(*list)
@@ -109,7 +163,7 @@ module PuppetTest
 
         # If we're running under rake, then disable debugging and such.
         #if rake? or ! Puppet[:debug]
-        if rake?
+        if rake? or ! defined?($puppet_debug)
             Puppet::Log.close
             Puppet::Log.newdestination tempfile()
             Puppet[:httplog] = tempfile()
