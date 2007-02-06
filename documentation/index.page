@@ -32,10 +32,9 @@ Puppet's primary author, Luke Kanies, is usually online there.
 
     A CPAN-like site for sharing and downloading Puppet recipes.
 
-* [Cookbook](/cookbook/)
+* [Cookbook](/trac/puppet/tags/puppet%2Crecipe/)
 
-    A Cookbook wiki containing [recipes](/cookbook/PuppetRecipes) for Puppet
-    and Facter.
+    All of the cookbook recipes on the Puppet wiki.
 
 * [Downloads](/downloads/)
 
