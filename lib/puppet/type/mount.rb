@@ -43,14 +43,6 @@ module Puppet
                 provider.mount
             end
 
-            defaultto do
-                if @parent.managed?
-                    :mounted
-                else
-                    nil
-                end
-            end
-
             def retrieve
                 if provider.mounted?
                     @is = :mounted

@@ -108,6 +108,7 @@ class TestMounts < Test::Unit::TestCase
 
     def test_simplemount
         mount = mkmount
+        mount[:ensure] = :mounted
 
         assert_apply(mount)
         mount.send(:states).each do |state|
@@ -117,8 +118,6 @@ class TestMounts < Test::Unit::TestCase
         assert_events([], mount)
 
         assert_nothing_raised { mount.retrieve }
-
-        assert_equal(:mounted, mount.is(:ensure))
 
         # Now modify a field
         mount[:dump] = 2
@@ -269,6 +268,7 @@ class TestMounts < Test::Unit::TestCase
     
     def test_refresh
         mount = mkmount
+        mount[:ensure] = :mounted
         
         remounted = false
         mount.provider.meta_def(:remount) do
@@ -296,6 +296,13 @@ class TestMounts < Test::Unit::TestCase
         assert_apply(mount)
 
         assert(! remounted, "remounted even though not supposed to be mounted")
+    end
+
+    def test_no_default_for_ensure
+        mount = mkmount
+        mount.finish
+
+        assert_nil(mount.should(:ensure), "Found default for ensure")
     end
 end
 
