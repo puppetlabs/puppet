@@ -94,6 +94,20 @@ module Puppet
             :hook => proc do |value|
                 ENV["PATH"] = value unless value == "none"
             end
+        },
+        :libdir => {:default => "$vardir/lib",
+            :desc => "An extra search path for Puppet.  This is only useful
+                for those files that Puppet will load on demand, and is only
+                guaranteed to work for those cases.  In fact, the autoload
+                mechanism is responsible for making sure this directory
+                is in Ruby's search path",
+            :hook => proc do |value|
+                if defined? @oldlibdir and $:.include?(@oldlibdir)
+                    $:.delete(@oldlibdir)
+                end
+                @oldlibdir = value
+                $: << value
+            end
         }
     )
 

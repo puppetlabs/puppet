@@ -18,6 +18,12 @@ class Puppet::Autoload
 
     Puppet::Util.proxy self, :loaded, :clear
 
+    def handle_libdir
+        dir = Puppet[:libdir]
+
+        $: << dir unless $:.include?(dir)
+    end
+
     def initialize(obj, path, options = {})
         @path = path.to_s
         @object = obj
@@ -42,6 +48,7 @@ class Puppet::Autoload
 
     def load(name)
         name = symbolize(name)
+        handle_libdir()
 
         path = File.join(@path, name.to_s + ".rb")
 
@@ -68,6 +75,7 @@ class Puppet::Autoload
     end
 
     def loadall
+        handle_libdir()
         # Load every instance of everything we can find.
         $:.each do |dir|
             fdir = File.join(dir, @path)
