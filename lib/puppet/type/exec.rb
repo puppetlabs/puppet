@@ -486,7 +486,9 @@ module Puppet
 
         # this might be a very, very bad idea...
         def refresh
-            self.property(:returns).sync
+            if self.check
+                self.property(:returns).sync
+            end
         end
 
         # Run a command.

@@ -662,6 +662,46 @@ and stuff"
         end
         assert_equal(path, exec[:path], "colon-separated array path did not match")
     end
+
+    def test_checks_apply_to_refresh
+        file = tempfile()
+        maker = tempfile()
+        exec = Puppet::Type.type(:exec).create(
+            :title => "maker",
+            :command => "touch #{maker}",
+            :path => ENV["PATH"]
+        )
+
+        # Make sure it runs normally
+        assert_apply(exec)
+        assert(FileTest.exists?(maker), "exec did not run")
+        File.unlink(maker)
+
+        # Now make sure it refreshes
+        assert_nothing_raised("Failed to refresh exec") do
+            exec.refresh
+        end
+        assert(FileTest.exists?(maker), "exec did not run refresh")
+        File.unlink(maker)
+
+        # Now add the checks
+        exec[:creates] = file
+
+        # Make sure it runs when the file doesn't exist
+        assert_nothing_raised("Failed to refresh exec") do
+            exec.refresh
+        end
+        assert(FileTest.exists?(maker), "exec did not refresh when checks passed")
+        File.unlink(maker)
+
+        # Now create the file and make sure it doesn't refresh
+        File.open(file, "w") { |f| f.puts "" }
+        assert_nothing_raised("Failed to refresh exec") do
+            exec.refresh
+        end
+        assert(! FileTest.exists?(maker), "exec refreshed with failing checks")
+
+    end
 end
 
 # $Id$
