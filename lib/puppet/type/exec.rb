@@ -37,15 +37,18 @@ module Puppet
             obviously different images, so ``exec`` had to be treated specially.
 
             It is recommended to avoid duplicate names whenever possible.
+
+            Note that if an ``exec`` receives an event from another resource,
+            it will get executed again (or execute the command specified in
+            ``refresh``, if there is one).
             
             There is a strong tendency to use ``exec`` to do whatever work Puppet
             can't already do; while this is obviously acceptable (and unavoidable)
             in the short term, it is highly recommended to migrate work from ``exec``
-            to real Puppet element types as quickly as possible.  If you find that
+            to native Puppet types as quickly as possible.  If you find that
             you are doing a lot of work with ``exec``, please at least notify
             us at Reductive Labs what you are doing, and hopefully we can work with
-            you to get a native element type for the work you are doing.  In general,
-            it is a Puppet bug if you need ``exec`` to do your work."
+            you to get a native element type for the work you are doing."
 
         require 'open3'
         require 'puppet/type/property'
@@ -234,6 +237,17 @@ module Puppet
             # And all of the log levels
             Puppet::Log.eachlevel { |level| values << level }
             newvalues(*values)
+        end
+
+        newparam(:refresh) do
+            desc "How to refresh this command.  By default, the exec is just
+                called again when it receives an event from another resource,
+                but this parameter allows you to define a different command
+                for refreshing."
+
+            validate do |command|
+                @parent.validatecmd(command)
+            end
         end
 
         newparam(:env) do
@@ -487,7 +501,11 @@ module Puppet
         # this might be a very, very bad idea...
         def refresh
             if self.check
-                self.property(:returns).sync
+                if cmd = self[:refresh]
+                    self.run(cmd)
+                else
+                    self.property(:returns).sync
+                end
             end
         end
 

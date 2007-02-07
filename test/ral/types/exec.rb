@@ -700,7 +700,37 @@ and stuff"
             exec.refresh
         end
         assert(! FileTest.exists?(maker), "exec refreshed with failing checks")
+    end
 
+    def test_explicit_refresh
+        refresher = tempfile()
+        maker = tempfile()
+        exec = Puppet::Type.type(:exec).create(
+            :title => "maker",
+            :command => "touch #{maker}",
+            :path => ENV["PATH"]
+        )
+
+        # Call refresh normally
+        assert_nothing_raised do
+            exec.refresh
+        end
+
+        # Make sure it created the normal file
+        assert(FileTest.exists?(maker), "normal refresh did not work")
+        File.unlink(maker)
+
+        # Now reset refresh, and make sure it wins
+        assert_nothing_raised("Could not set refresh parameter") do
+            exec[:refresh] = "touch #{refresher}"
+        end
+        assert_nothing_raised do
+            exec.refresh
+        end
+
+        # Make sure it created the normal file
+        assert(FileTest.exists?(refresher), "refresh param was ignored")
+        assert(! FileTest.exists?(maker), "refresh param also ran command")
     end
 end
 
