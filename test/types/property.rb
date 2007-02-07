@@ -5,37 +5,47 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppet/type'
 require 'puppettest'
 
-class TestState < Test::Unit::TestCase
+class TestProperty < Test::Unit::TestCase
 	include PuppetTest
 
-    def newinst(state, parent = nil)
+    def newinst(property, parent = nil)
         inst = nil
         unless parent
             parent = "fakeparent"
-            parent.meta_def(:path) do self.to_s end
+            parent.meta_def(:pathbuilder) do [self.to_s] end
         end
         assert_nothing_raised {
-            return state.new(:parent => parent)
+            return property.new(:parent => parent)
         }
     end
     
-    def newstate(name = :fakestate)
-        assert_nothing_raised {
-            state = Class.new(Puppet::State) do
-                @name = name
-            end
-            state.initvars
+    def newproperty(name = :fakeproperty)
+        property = Class.new(Puppet::Property) do
+            @name = name
+        end
+        Object.const_set("FakeProperty", property)
+        property.initvars
+        cleanup do
+            Object.send(:remove_const, "FakeProperty")
+        end
 
-            return state
-        }
+        return property
     end
 
     def newmodel(name)
-        # Create an object that responds to mystate as an attr
-        provklass = Class.new { attr_accessor name }
+        # Create an object that responds to myproperty as an attr
+        provklass = Class.new { attr_accessor name
+            def pathbuilder
+                ["provklass"]
+            end
+        }
         prov = provklass.new
 
-        klass = Class.new { attr_accessor :provider, :path }
+        klass = Class.new { attr_accessor :provider, :path
+            def pathbuilder
+                ["instklass"]
+            end
+        }
         klassinst = klass.new
         klassinst.path = "instpath"
         klassinst.provider = prov
@@ -45,27 +55,27 @@ class TestState < Test::Unit::TestCase
 
     # Make sure we correctly look up names.
     def test_value_name
-        state = newstate()
+        property = newproperty()
 
-        state.newvalue(:one)
-        state.newvalue(/\d+/)
+        property.newvalue(:one)
+        property.newvalue(/\d+/)
 
         name = nil
         ["one", :one].each do |value|
             assert_nothing_raised do
-                name = state.value_name(value)
+                name = property.value_name(value)
             end
             assert_equal(:one, name)
         end
         ["42"].each do |value|
             assert_nothing_raised do
-                name = state.value_name(value)
+                name = property.value_name(value)
             end
             assert_equal(/\d+/, name)
         end
         ["two", :three].each do |value|
             assert_nothing_raised do
-                name = state.value_name(value)
+                name = property.value_name(value)
             end
             assert_nil(name)
         end
@@ -73,43 +83,43 @@ class TestState < Test::Unit::TestCase
 
     # Test that we correctly look up options for values.
     def test_value_option
-        state = newstate()
+        property = newproperty()
 
         options = {
             :one => {:event => :yay, :call => :before},
             /\d+/ => {:event => :fun, :call => :instead}
         }
-        state.newvalue(:one, options[:one])
-        state.newvalue(/\d+/, options[/\d+/])
+        property.newvalue(:one, options[:one])
+        property.newvalue(/\d+/, options[/\d+/])
 
         options.each do |name, opts|
             opts.each do |param, value|
-                assert_equal(value, state.value_option(name, param))
+                assert_equal(value, property.value_option(name, param))
             end
         end
     end
 
     def test_newvalue
-        state = newstate()
+        property = newproperty()
 
         # These are bogus because they don't define events. :/
         assert_nothing_raised {
-            state.newvalue(:one) do
+            property.newvalue(:one) do
                 @is = 1
             end
         }
 
         assert_nothing_raised {
-            state.newvalue("two") do
+            property.newvalue("two") do
                 @is = 2
             end
         }
 
         # Make sure we default to using the block instead
-        assert_equal(:instead, state.value_option(:one, :call),
+        assert_equal(:instead, property.value_option(:one, :call),
             ":call was not set to :instead when a block was provided")
 
-        inst = newinst(state)
+        inst = newinst(property)
 
         assert_nothing_raised {
             inst.should = "one"
@@ -129,17 +139,17 @@ class TestState < Test::Unit::TestCase
         assert_equal(2, inst.is)
     end
 
-    def test_newstatevaluewithregexes
-        state = newstate()
+    def test_newpropertyvaluewithregexes
+        property = newproperty()
 
         assert_nothing_raised {
-            state.newvalue(/^\w+$/) do
+            property.newvalue(/^\w+$/) do
                 @is = self.should.upcase
                 return :regex_matched
             end
         }
 
-        inst = newinst(state)
+        inst = newinst(property)
 
         assert_nothing_raised {
             inst.should = "yayness"
@@ -155,17 +165,17 @@ class TestState < Test::Unit::TestCase
     end
 
     def test_newvalue_event_option
-        state = newstate()
+        property = newproperty()
 
         assert_nothing_raised do
-            state.newvalue(:myvalue, :event => :fake_valued) do
+            property.newvalue(:myvalue, :event => :fake_valued) do
                 @is = :valued
             end
-            state.newvalue(:other, :event => "fake_other") do
+            property.newvalue(:other, :event => "fake_other") do
                 @is = :valued
             end
         end
-        inst = newinst(state)
+        inst = newinst(property)
 
         assert_nothing_raised {
             inst.should = :myvalue
@@ -195,21 +205,21 @@ class TestState < Test::Unit::TestCase
     # If there's no block provided, then we should call the provider mechanism
     # like we would normally.
     def test_newvalue_with_no_block
-        state = newstate(:mystate)
+        property = newproperty(:myproperty)
 
         assert_nothing_raised {
-            state.newvalue(:value, :event => :matched_value)
+            property.newvalue(:value, :event => :matched_value)
         }
         assert_nothing_raised {
-            state.newvalue(/^\d+$/, :event => :matched_number)
+            property.newvalue(/^\d+$/, :event => :matched_number)
         }
 
-        assert_equal(:none, state.value_option(:value, :call),
+        assert_equal(:none, property.value_option(:value, :call),
             ":call was not set to none when no block is provided")
 
-        prov, klassinst = newmodel(:mystate)
+        prov, klassinst = newmodel(:myproperty)
 
-        inst = newinst(state, klassinst)
+        inst = newinst(property, klassinst)
 
         # Now make sure we can set the values, they get validated as normal,
         # and they set the values on the parent rathe than trying to call
@@ -223,7 +233,7 @@ class TestState < Test::Unit::TestCase
                 ret = inst.sync
             end
             assert_equal(event, ret, "Did not return correct event for %s" % value)
-            assert_equal(value, prov.mystate, "%s was not set right" % value)
+            assert_equal(value, prov.myproperty, "%s was not set right" % value)
         end
 
         # And make sure we still fail validations
@@ -241,11 +251,11 @@ class TestState < Test::Unit::TestCase
         tags = [:some, :tags, :for, :testing]
         obj.tags = tags
 
-        stateklass = newstate
+        propertyklass = newproperty
  
         inst = nil
         assert_nothing_raised do
-            inst = stateklass.new(:parent => obj)
+            inst = propertyklass.new(:parent => obj)
         end
 
         assert_nothing_raised do
@@ -254,25 +264,25 @@ class TestState < Test::Unit::TestCase
     end
 
     def test_failure
-        s = Struct.new(:line, :file, :path)
-        p = s.new(1, "yay", "rah")
-        mystate = Class.new(Puppet::State)
-        mystate.initvars
+        s = Struct.new(:line, :file, :path, :pathbuilder)
+        p = s.new(1, "yay", "rah", "struct")
+        myproperty = Class.new(Puppet::Property)
+        myproperty.initvars
 
-        mystate.newvalue :mkfailure do
+        myproperty.newvalue :mkfailure do
             raise "It's all broken"
         end
-        state = mystate.new(:parent => p)
+        property = myproperty.new(:parent => p)
 
         assert_raise(Puppet::Error) do
-            state.set(:mkfailure)
+            property.set(:mkfailure)
         end
     end
 
     # Make sure 'set' behaves correctly WRT to call order.  This tests that the
     # :call value is handled correctly in all cases.
     def test_set
-        state = newstate(:mystate)
+        property = newproperty(:myproperty)
 
         $setting = []
 
@@ -284,9 +294,9 @@ class TestState < Test::Unit::TestCase
             end
             assert_nothing_raised("Could not create %s value" % name) {
                 if block
-                    state.newvalue(name, options, &block)
+                    property.newvalue(name, options, &block)
                 else
-                    state.newvalue(name, options)
+                    property.newvalue(name, options)
                 end
             }
         end
@@ -304,17 +314,17 @@ class TestState < Test::Unit::TestCase
 
         # And one with an implicit instead
         assert_nothing_raised do
-            state.newvalue(:implicit) do
+            property.newvalue(:implicit) do
                 $setting << :implicit
             end
         end
 
         # Now create a provider
-        prov, model = newmodel(:mystate)
-        inst = newinst(state, model)
+        prov, model = newmodel(:myproperty)
+        inst = newinst(property, model)
 
         # Mark when we're called
-        prov.meta_def(:mystate=) do |value| $setting << :provider end
+        prov.meta_def(:myproperty=) do |value| $setting << :provider end
 
         # Now run through the list and make sure everything is correct
         {:before => [:before, :provider],

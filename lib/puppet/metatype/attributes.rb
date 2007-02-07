@@ -4,11 +4,17 @@ require 'puppet/type'
 class Puppet::Type
     class << self
         include Puppet::Util::ClassGen
-        attr_reader :states
+        include Puppet::Util::Warnings
+        attr_reader :properties
+    end
+
+    def self.states
+        warnonce "The states method is deprecated; use properties"
+        properties()
     end
 
     # All parameters, in the appropriate order.  The namevar comes first,
-    # then the states, then the params and metaparams in the order they
+    # then the properties, then the params and metaparams in the order they
     # were specified in the files.
     def self.allattrs
         # now get all of the arguments, in a specific order
@@ -16,7 +22,7 @@ class Puppet::Type
         namevar = self.namevar
 
         order = [namevar]
-        order << [self.states.collect { |state| state.name },
+        order << [self.properties.collect { |property| property.name },
             self.parameters,
             self.metaparams].flatten.reject { |param|
                 # we don't want our namevar in there multiple times
@@ -36,7 +42,7 @@ class Puppet::Type
         # of times (as in, hundreds of thousands in a given run).
         unless @attrclasses.include?(name)
             @attrclasses[name] = case self.attrtype(name)
-            when :state: @validstates[name]
+            when :property: @validproperties[name]
             when :meta: @@metaparamhash[name]
             when :param: @paramhash[name]
             end
@@ -50,9 +56,9 @@ class Puppet::Type
         @attrtypes ||= {}
         unless @attrtypes.include?(attr)
             @attrtypes[attr] = case
-                when @validstates.include?(attr): :state
-                when @@metaparamhash.include?(attr): :meta
+                when @validproperties.include?(attr): :property
                 when @paramhash.include?(attr): :param
+                when @@metaparamhash.include?(attr): :meta
                 else
                     raise Puppet::DevError,
                         "Invalid attribute '%s' for class '%s'" %
@@ -89,8 +95,8 @@ class Puppet::Type
         if ary.empty?
             ary = nil
         end
-        self.states.each { |state|
-            yield(state, :state) if ary.nil? or ary.include?(state.name)
+        self.properties.each { |property|
+            yield(property, :property) if ary.nil? or ary.include?(property.name)
         }
 
         @parameters.each { |param|
@@ -110,24 +116,21 @@ class Puppet::Type
     # can easily call it and create their own 'ensure' values.
     def self.ensurable(&block)
         if block_given?
-            self.newstate(:ensure, :parent => Puppet::State::Ensure, &block)
+            self.newproperty(:ensure, :parent => Puppet::Property::Ensure, &block)
         else
-            self.newstate(:ensure, :parent => Puppet::State::Ensure) do
+            self.newproperty(:ensure, :parent => Puppet::Property::Ensure) do
                 self.defaultvalues
             end
         end
     end
 
-    # Should we add the 'ensure' state to this class?
+    # Should we add the 'ensure' property to this class?
     def self.ensurable?
         # If the class has all three of these methods defined, then it's
         # ensurable.
-        #ens = [:create, :destroy].inject { |set, method|
         ens = [:exists?, :create, :destroy].inject { |set, method|
             set &&= self.public_method_defined?(method)
         }
-
-        #puts "%s ensurability: %s" % [self.name, ens]
 
         return ens
     end
@@ -149,8 +152,7 @@ class Puppet::Type
 
     # Is the parameter in question a meta-parameter?
     def self.metaparam?(param)
-        param = symbolize(param)
-        @@metaparamhash.include?(param)
+        @@metaparamhash.include?(symbolize(param))
     end
 
     # Find the metaparameter class associated with a given metaparameter name.
@@ -184,7 +186,7 @@ class Puppet::Type
         
         handle_param_options(name, options)
 
-        param.ismetaparameter
+        param.metaparam = true
 
         return param
     end
@@ -239,13 +241,19 @@ class Puppet::Type
         return param
     end
 
-    # Create a new state. The first parameter must be the name of the state;
-    # this is how users will refer to the state when creating new instances.
+    def self.newstate(name, options = {}, &block)
+        Puppet.warning "newstate() has been deprecrated; use newproperty(%s)" %
+            name
+        newproperty(name, options, &block)
+    end
+
+    # Create a new property. The first parameter must be the name of the property;
+    # this is how users will refer to the property when creating new instances.
     # The second parameter is a hash of options; the options are:
-    # * <tt>:parent</tt>: The parent class for the state.  Defaults to Puppet::State.
+    # * <tt>:parent</tt>: The parent class for the property.  Defaults to Puppet::Property.
     # * <tt>:retrieve</tt>: The method to call on the provider or @parent object (if
     #   the provider is not set) to retrieve the current value.
-    def self.newstate(name, options = {}, &block)
+    def self.newproperty(name, options = {}, &block)
         name = symbolize(name)
 
         # This is here for types that might still have the old method of defining
@@ -255,8 +263,8 @@ class Puppet::Type
                 "Options must be a hash, not %s" % options.inspect
         end
 
-        if @validstates.include?(name) 
-            raise Puppet::DevError, "Class %s already has a state named %s" %
+        if @validproperties.include?(name) 
+            raise Puppet::DevError, "Class %s already has a property named %s" %
                 [self.name, name]
         end
 
@@ -264,8 +272,8 @@ class Puppet::Type
         # an initial :retrieve method, if told to, and then eval the passed
         # block if available.
         s = genclass(name,
-            :parent => options[:parent] || Puppet::State,
-            :hash => @validstates
+            :parent => options[:parent] || Puppet::Property,
+            :hash => @validproperties
         ) do
             # If they've passed a retrieve method, then override the retrieve
             # method on the class.
@@ -282,11 +290,11 @@ class Puppet::Type
             end
         end
 
-        # If it's the 'ensure' state, always put it first.
+        # If it's the 'ensure' property, always put it first.
         if name == :ensure
-            @states.unshift s
+            @properties.unshift s
         else
-            @states << s
+            @properties << s
         end
 
         if options[:event]
@@ -294,11 +302,11 @@ class Puppet::Type
         end
 
 #        define_method(name) do
-#            @states[name].should
+#            @parameters[name].should
 #        end
 #
 #        define_method(name.to_s + "=") do |value|
-#            newstate(name, :should => value)
+#            newproperty(name, :should => value)
 #        end
 
         return s
@@ -319,9 +327,9 @@ class Puppet::Type
         @paramhash[name]
     end
 
-    # Return the state class associated with a name
-    def self.statebyname(name)
-        @validstates[name]
+    # Return the property class associated with a name
+    def self.propertybyname(name)
+        @validproperties[name]
     end
 
     def self.validattr?(name)
@@ -330,7 +338,7 @@ class Puppet::Type
         @validattrs ||= {}
 
         unless @validattrs.include?(name)
-            if self.validstate?(name) or self.validparameter?(name) or self.metaparam?(name)
+            if self.validproperty?(name) or self.validparameter?(name) or self.metaparam?(name)
                 @validattrs[name] = true
             else
                 @validattrs[name] = false
@@ -340,21 +348,21 @@ class Puppet::Type
         @validattrs[name]
     end
 
-    # does the name reflect a valid state?
-    def self.validstate?(name)
+    # does the name reflect a valid property?
+    def self.validproperty?(name)
         name = symbolize(name)
-        if @validstates.include?(name)
-            return @validstates[name]
+        if @validproperties.include?(name)
+            return @validproperties[name]
         else
             return false
         end
     end
 
-    # Return the list of validstates
-    def self.validstates
-        return {} unless defined? @states
+    # Return the list of validproperties
+    def self.validproperties
+        return {} unless defined? @parameters
 
-        return @validstates.keys
+        return @validproperties.keys
     end
 
     # does the name reflect a valid parameter?
@@ -401,24 +409,13 @@ class Puppet::Type
 
         return hash
     end
-
-    # Is the specified parameter set?
-    def attrset?(type, attr)
-        case type
-        when :state: return @states.include?(attr)
-        when :param: return @parameters.include?(attr)
-        when :meta: return @metaparams.include?(attr)
-        else
-            self.devfail "Invalid set type %s" % [type]
-        end
-    end
     
     # Are we deleting this resource?
     def deleting?
-        obj = @states[:ensure] and obj.should == :absent
+        obj = @parameters[:ensure] and obj.should == :absent
     end
 
-    # Allow an outside party to specify the 'is' value for a state.  The
+    # Allow an outside party to specify the 'is' value for a property.  The
     # arguments are an array because you can't use parens with 'is=' calls.
     # Most classes won't use this.
     def is=(ary)
@@ -426,21 +423,21 @@ class Puppet::Type
         if param.is_a?(String)
             param = param.intern
         end
-        if self.class.validstate?(param)
-            unless @states.include?(param)
-                self.newstate(param)
+        if self.class.validproperty?(param)
+            unless prop = @parameters[param]
+                prop = self.newattr(param)
             end
-            @states[param].is = value
+            prop.is = value
         else
             self[param] = value
         end
     end
 
-    # abstract accessing parameters and states, and normalize
+    # abstract accessing parameters and properties, and normalize
     # access to always be symbols, not strings
     # This returns a value, not an object.  It returns the 'is'
     # value, but you can also specifically return 'is' and 'should'
-    # values using 'object.is(:state)' or 'object.should(:state)'.
+    # values using 'object.is(:property)' or 'object.should(:property)'.
     def [](name)
         if name.is_a?(String)
             name = name.intern
@@ -449,45 +446,30 @@ class Puppet::Type
         if name == :name
             name = self.class.namevar
         end
-        case self.class.attrtype(name)
-        when :state
-            if @states.include?(name)
-                return @states[name].is
+
+        unless self.class.validattr?(name)
+            raise TypeError.new("Invalid parameter %s(%s)" % [name, name.inspect])
+        end
+
+        if obj = @parameters[name]
+            if obj.is_a?(Puppet::Type::Property)
+                return obj.is
             else
-                return nil
-            end
-        when :meta
-            if @metaparams.include?(name)
-                return @metaparams[name].value
-            else
-                if default = self.class.metaparamclass(name).default
-                    return default
-                else
-                    return nil
-                end
-            end
-        when :param
-            if @parameters.include?(name)
-                return @parameters[name].value
-            else
-                if default = self.class.paramclass(name).default
-                    return default
-                else
-                    return nil
-                end
+                return obj.value
             end
         else
-            raise TypeError.new("Invalid parameter %s(%s)" % [name, name.inspect])
+            return nil
         end
     end
 
-    # Abstract setting parameters and states, and normalize
+    # Abstract setting parameters and properties, and normalize
     # access to always be symbols, not strings.  This sets the 'should'
-    # value on states, and otherwise just sets the appropriate parameter.
+    # value on properties, and otherwise just sets the appropriate parameter.
     def []=(name,value)
-        if name.is_a?(String)
-            name = name.intern
+        unless self.class.validattr?(name)
+            raise TypeError.new("Invalid parameter %s" % [name])
         end
+        name = symbolize(name)
 
         if name == :name
             name = self.class.namevar
@@ -496,158 +478,89 @@ class Puppet::Type
             raise Puppet::Error.new("Got nil value for %s" % name)
         end
 
-        case self.class.attrtype(name)
-        when :state
-            if value.is_a?(Puppet::State)
-                self.debug "'%s' got handed a state for '%s'" % [self,name]
-                @states[name] = value
-            else
-                if @states.include?(name)
-                    @states[name].should = value
-                else
-                    # newstate returns true if it successfully created the state,
-                    # false otherwise; I just don't know what to do with that
-                    # fact.
-                    unless newstate(name, :should => value)
-                        #self.info "%s failed" % name
-                    end
-                end
-            end
-        when :meta
-            self.newmetaparam(self.class.metaparamclass(name), value)
-        when :param
-            klass = self.class.attrclass(name)
-            # if they've got a method to handle the parameter, then do it that way
-            self.newparam(klass, value)
+        if obj = @parameters[name]
+            obj.value = value
+            return nil
         else
-            raise Puppet::Error, "Invalid parameter %s" % [name]
+            self.newattr(name, :value => value)
         end
+
+        nil
     end
 
-    # remove a state from the object; useful in testing or in cleanup
+    # remove a property from the object; useful in testing or in cleanup
     # when an error has been encountered
     def delete(attr)
+        attr = symbolize(attr)
         case attr
         when Puppet::Type
             if @children.include?(attr)
                 @children.delete(attr)
             end
         else
-            if @states.has_key?(attr)
-                @states.delete(attr)
-            elsif @parameters.has_key?(attr)
+            if @parameters.has_key?(attr)
                 @parameters.delete(attr)
-            elsif @metaparams.has_key?(attr)
-                @metaparams.delete(attr)
             else
                 raise Puppet::DevError.new("Undefined attribute '#{attr}' in #{self}")
             end
         end
     end
 
-    # iterate across the existing states
-    def eachstate
-        # states() is a private method
-        states().each { |state|
-            yield state
+    # iterate across the existing properties
+    def eachproperty
+        # properties() is a private method
+        properties().each { |property|
+            yield property
         }
     end
 
-    # retrieve the 'is' value for a specified state
-    def is(state)
-        if @states.include?(state)
-            return @states[state].is
+    # retrieve the 'is' value for a specified property
+    def is(name)
+        if prop = @parameters[symbolize(name)] and prop.is_a?(Puppet::Type::Property)
+            return prop.is
         else
             return nil
         end
     end
 
-    # retrieve the 'should' value for a specified state
-    def should(state)
-        if @states.include?(state)
-            return @states[state].should
+    # retrieve the 'should' value for a specified property
+    def should(name)
+        if prop = @parameters[symbolize(name)] and prop.is_a?(Puppet::Type::Property)
+            return prop.should
         else
             return nil
         end
     end
 
-    # Create a new parameter.
-    def newparam(klass, value = nil)
-        newattr(:param, klass, value)
-    end
-
-    # Create a new parameter or metaparameter.  We'll leave the calling
-    # method to store it appropriately.
-    def newmetaparam(klass, value = nil)
-        newattr(:meta, klass, value)
-    end
-
-    # The base function that the others wrap.
-    def newattr(type, klass, value = nil)
-        # This should probably be a bit, um, different, but...
-        if type == :state
-            return newstate(klass)
-        end
-        param = klass.new
-        param.parent = self
-
-        unless value.nil?
-            param.value = value
-        end
-
-        case type
-        when :meta
-            @metaparams[klass.name] = param
-        when :param
-            @parameters[klass.name] = param
-        else
-            self.devfail("Invalid param type %s" % type)
-        end
-
-        return param
-    end
-
-    # create a new state
-    def newstate(name, hash = {})
-        stateklass = nil
+    # Create the actual attribute instance.  Requires either the attribute
+    # name or class as the first argument, then an optional hash of
+    # attributes to set during initialization.
+    def newattr(name, options = {})
         if name.is_a?(Class)
-            stateklass = name
-            name = stateklass.name
-        else
-            stateklass = self.class.validstate?(name) 
-            unless stateklass
-                self.fail("Invalid state %s" % name)
-            end
+            klass = name
+            name = klass.name
         end
-        if @states.include?(name)
-            hash.each { |var,value|
-                @states[name].send(var.to_s + "=", value)
-            }
-        else
-            #Puppet.warning "Creating state %s for %s" %
-            #    [stateklass.name,self.name]
-            begin
-                hash[:parent] = self
-                # make sure the state doesn't have any errors
-                newstate = stateklass.new(hash)
-                @states[name] = newstate
-                return newstate
-            rescue Puppet::Error => detail
-                # the state failed, so just ignore it
-                self.warning "State %s failed: %s" %
-                    [name, detail]
-                return false
-            rescue Puppet::DevError => detail
-                # the state failed, so just ignore it
-                self.err "State %s failed: %s" %
-                    [name, detail]
-                return false
-            rescue => detail
-                # the state failed, so just ignore it
-                self.err "State %s failed: %s (%s)" %
-                    [name, detail, detail.class]
-                return false
-            end
+
+        unless klass = self.class.attrclass(name)
+            raise Puppet::Error, "Invalid parameter %s" % name
+        end
+
+        if @parameters.include?(name)
+            raise Puppet::Error, "Parameter '%s' is already defined in %s" %
+                [name, self.ref]
+        end
+
+        # Add parent information at creation time, so it's available
+        # during validation.
+        options[:parent] = self
+        begin
+            # make sure the parameter doesn't have any errors
+            return @parameters[name] = klass.new(options)
+        rescue => detail
+            error = Puppet::Error.new("Parameter %s failed: %s" %
+                [name, detail])
+            error.set_backtrace(detail.backtrace)
+            raise error
         end
     end
 
@@ -659,21 +572,22 @@ class Puppet::Type
         return @parameters[name].value
     end
 
-    # Is the named state defined?
-    def statedefined?(name)
+    # Is the named property defined?
+    def propertydefined?(name)
         unless name.is_a? Symbol
             name = name.intern
         end
-        return @states.include?(name)
+        return @parameters.include?(name)
     end
 
     # return an actual type by name; to return the value, use 'inst[name]'
     # FIXME this method should go away
-    def state(name)
-        unless name.is_a? Symbol
-            name = name.intern
+    def property(name)
+        if obj = @parameters[symbolize(name)] and obj.is_a?(Puppet::Type::Property)
+            return obj
+        else
+            return nil
         end
-        return @states[name]
     end
 
 #    def set(name, value)
@@ -684,40 +598,48 @@ class Puppet::Type
 #        send(name)
 #    end
 
-    # For any parameters or states that have defaults and have not yet been
-    # set, set them now.
+    # For any parameters or properties that have defaults and have not yet been
+    # set, set them now.  This method can be handed a list of attributes,
+    # and if so it will only set defaults for those attributes.
     def setdefaults(*ary)
         self.class.eachattr(*ary) { |klass, type|
             # not many attributes will have defaults defined, so we short-circuit
             # those away
             next unless klass.method_defined?(:default)
-            next if self.attrset?(type, klass.name)
+            next if @parameters[klass.name]
 
-            obj = self.newattr(type, klass)
-            value = obj.default
-            unless value.nil?
-                #self.debug "defaulting %s to %s" % [obj.name, obj.default]
+            next unless obj = self.newattr(klass)
+
+            # We have to check for nil values, not "truth", so we allow defaults
+            # to false.
+            value = obj.default and ! value.nil?
+            if ! value.nil?
                 obj.value = value
             else
-                #self.debug "No default for %s" % obj.name
-                # "obj" is a Parameter.
-                self.delete(obj.name)
+                @parameters.delete(obj.name)
             end
         }
-
     end
 
-    # Convert our object to a hash.  This just includes states.
+    # Convert our object to a hash.  This just includes properties.
     def to_hash
         rethash = {}
     
-        [@parameters, @metaparams, @states].each do |hash|
-            hash.each do |name, obj|
-                rethash[name] = obj.value
-            end
+        @parameters.each do |name, obj|
+            rethash[name] = obj.value
         end
 
         rethash
+    end
+
+    # Return a specific value for an attribute.
+    def value(name)
+        name = symbolize(name)
+        if obj = @parameters[name] and obj.respond_to?(:value)
+            return obj.value
+        else
+            return nil
+        end
     end
 
     # Meta-parameter methods:  These methods deal with the results
@@ -725,20 +647,22 @@ class Puppet::Type
 
     private
 
-    def states
-        #debug "%s has %s states" % [self,@states.length]
-        tmpstates = []
-        self.class.states.each { |state|
-            if @states.include?(state.name)
-                tmpstates.push(@states[state.name])
+    # Return all of the property objects, in the order specified in the
+    # class.
+    def properties
+        #debug "%s has %s properties" % [self,@parameters.length]
+        props = self.class.properties.collect { |prop|
+            @parameters[prop.name]
+        }.find_all { |p|
+            ! p.nil?
+        }.each do |prop|
+            unless prop.is_a?(Puppet::Type::Property)
+                raise Puppet::DevError, "got a non-property %s(%s)" %
+                    [prop.class, prop.class.name]
             end
-        }
-        unless tmpstates.length == @states.length
-            self.devfail(
-                "Something went very wrong with tmpstates creation"
-            )
         end
-        return tmpstates
+
+        props
     end
 end
 

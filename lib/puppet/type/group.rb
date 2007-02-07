@@ -8,7 +8,7 @@
 
 require 'etc'
 require 'facter'
-require 'puppet/type/state'
+require 'puppet/type/property'
 
 module Puppet
     newtype(:group) do
@@ -22,7 +22,7 @@ module Puppet
             for Mac OS X, NetInfo is used.  This is currently unconfigurable,
             but if you desperately need it to be so, please contact us."
 
-        newstate(:ensure) do
+        newproperty(:ensure) do
             desc "The basic state that the object should be in."
 
             newvalue(:present) do
@@ -94,7 +94,7 @@ module Puppet
 
         end
 
-        newstate(:gid) do
+        newproperty(:gid) do
             desc "The group ID.  Must be specified numerically.  If not
                 specified, a number will be picked, which can result in ID
                 differences across systems and thus is not recommended.  The
@@ -169,13 +169,8 @@ module Puppet
             if self.provider and @provider.exists?
                 super
             else
-                # the group does not exist
-                #unless @states.include?(:gid)
-                #    self[:gid] = :auto
-                #end
-
-                @states.each { |name, state|
-                    state.is = :absent
+                properties().each { |property|
+                    property.is = :absent
                 }
 
                 return

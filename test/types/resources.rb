@@ -35,7 +35,7 @@ class TestResources < Test::Unit::TestCase
         $purgemembers = {}
         @purgetype = Puppet::Type.newtype(:purgetest) do
             newparam(:name, :namevar => true) {}
-            newstate(:ensure) do
+            newproperty(:ensure) do
                 newvalue(:absent) do
                     $purgemembers[@parent[:name]] = @parent
                 end
@@ -43,7 +43,7 @@ class TestResources < Test::Unit::TestCase
                     $purgemembers.delete(@parent[:name])
                 end
             end
-            newstate(:fake) do
+            newproperty(:fake) do
                 def sync
                     :faked
                 end
@@ -62,7 +62,7 @@ class TestResources < Test::Unit::TestCase
 	def test_initialize
 	    assert(@type, "Could not retrieve resources type")
 	    # Make sure we can't create them for types that don't exist
-	    assert_raise(ArgumentError) do
+	    assert_raise(Puppet::Error) do
 	        @type.create :name => "thereisnotypewiththisname"
         end
         

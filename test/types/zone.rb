@@ -79,11 +79,11 @@ class TestZone < Test::Unit::TestCase
     def test_valueslice
         zone = mkzone("slicetest")
 
-        state = zone.state(:ensure)
+        property = zone.property(:ensure)
 
         slice = nil
         assert_nothing_raised {
-            slice = state.class.valueslice(:absent, :installed).collect do |o|
+            slice = property.class.valueslice(:absent, :installed).collect do |o|
                 o[:name]
             end
         }
@@ -92,7 +92,7 @@ class TestZone < Test::Unit::TestCase
         assert_equal([:configured, :installed], slice)
 
         assert_nothing_raised {
-            slice = state.class.valueslice(:running, :installed).collect do |o|
+            slice = property.class.valueslice(:running, :installed).collect do |o|
                 o[:name]
             end
         }
@@ -106,23 +106,23 @@ class TestZone < Test::Unit::TestCase
     def test_zoneensure
         zone = mkzone("ensurezone")
 
-        state = zone.state(:ensure)
+        property = zone.property(:ensure)
 
-        assert(state, "Did not get ensure state")
+        assert(property, "Did not get ensure property")
 
         assert_nothing_raised {
             zone.retrieve
         }
 
-        assert(! state.insync?, "State is somehow in sync")
+        assert(! property.insync?, "Property is somehow in sync")
 
-        assert(state.up?, "State incorrectly thinks it is not moving up")
+        assert(property.up?, "Property incorrectly thinks it is not moving up")
 
         zone.is = [:ensure, :configured]
         zone[:ensure] = :installed
-        assert(state.up?, "State incorrectly thinks it is not moving up")
+        assert(property.up?, "Property incorrectly thinks it is not moving up")
         zone[:ensure] = :absent
-        assert(! state.up?, "State incorrectly thinks it is moving up")
+        assert(! property.up?, "Property incorrectly thinks it is moving up")
     end
 
     # Make sure all mentioned methods actually exist.
@@ -130,9 +130,9 @@ class TestZone < Test::Unit::TestCase
         methods = []
         zone = mkzone("methodtest")
 
-        state = zone.state(:ensure)
+        property = zone.property(:ensure)
         assert_nothing_raised {
-            state.class.valueslice(:absent, :running).each do |st|
+            property.class.valueslice(:absent, :running).each do |st|
                 [:up, :down].each do |m|
                     if st[m]
                         methods << st[m]
@@ -151,27 +151,27 @@ class TestZone < Test::Unit::TestCase
 
     end
 
-    # Make sure our state generates the correct text.
-    def test_inherit_state
+    # Make sure our property generates the correct text.
+    def test_inherit_property
         zone = mkzone("configtesting")
         zone[:ensure] = :configured
 
         assert_nothing_raised {
             zone[:inherit] = "/usr"
         }
-        state = zone.state(:inherit)
-        assert(zone, "Did not get 'inherit' state")
+        property = zone.property(:inherit)
+        assert(zone, "Did not get 'inherit' property")
 
-        assert_equal("add inherit-pkg-dir\nset dir=/usr\nend", state.configtext,
+        assert_equal("add inherit-pkg-dir\nset dir=/usr\nend", property.configtext,
             "Got incorrect config text")
 
-        state.is = "/usr"
+        property.is = "/usr"
 
-        assert_equal("", state.configtext,
+        assert_equal("", property.configtext,
             "Got incorrect config text")
 
         # Now we want multiple directories
-        state.should = %w{/usr /sbin /lib}
+        property.should = %w{/usr /sbin /lib}
 
         # The statements are sorted
         text = "add inherit-pkg-dir
@@ -181,15 +181,15 @@ add inherit-pkg-dir
 set dir=/sbin
 end"
 
-        assert_equal(text, state.configtext,
+        assert_equal(text, property.configtext,
             "Got incorrect config text")
 
-        state.is = %w{/usr /sbin /lib}
-        state.should = %w{/usr /sbin}
+        property.is = %w{/usr /sbin /lib}
+        property.should = %w{/usr /sbin}
 
         text = "remove inherit-pkg-dir dir=/lib"
 
-        assert_equal(text, state.configtext,
+        assert_equal(text, property.configtext,
             "Got incorrect config text")
     end
 
@@ -336,7 +336,7 @@ end
             "ip was not removed")
     end
 
-    # Test creating and removing a zone, but only up to the configured state,
+    # Test creating and removing a zone, but only up to the configured property,
     # so it's faster.
     def test_smallcreate
         zone = mkzone("smallcreate")
@@ -386,7 +386,7 @@ end
             [:stop, :installed],
             [:uninstall, :configured],
             [:unconfigure, :absent]
-        ].each do |method, state|
+        ].each do |method, property|
             Puppet.info "Testing %s" % method
             assert_nothing_raised {
                 zone.retrieve
@@ -397,9 +397,9 @@ end
             assert_nothing_raised {
                 zone.retrieve
             }
-            assert_equal(state, zone.is(:ensure),
-                "Method %s did not correctly set state %s" %
-                    [method, state])
+            assert_equal(property, zone.is(:ensure),
+                "Method %s did not correctly set property %s" %
+                    [method, property])
         end
     end
 

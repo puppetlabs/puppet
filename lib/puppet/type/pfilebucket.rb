@@ -101,7 +101,9 @@ module Puppet
                         :Path => self[:path]
                     )
                 rescue => detail
-                    puts detail.backtrace
+                    if Puppet[:trace]
+                        puts detail.backtrace
+                    end
                     self.fail(
                         "Could not create local filebucket: %s" % detail
                     )

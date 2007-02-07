@@ -1,7 +1,7 @@
 # included so we can test object types
 require 'puppet'
 
-# the base class for both types and states
+# the base class for both types and parameters.
 # very little functionality; basically just defines the interface
 # and provides a few simple across-the-board functions like 'noop'
 class Puppet::Element
@@ -23,8 +23,8 @@ class Puppet::Element
     # so raise an error if a method that isn't overridden gets called
     @@interface_methods.each { |method|
         self.send(:define_method,method) {
-            raise Puppet::DevError, "%s has not overridden %s" %
-                [self.class.name,method]
+            raise Puppet::DevError, "%s(%s) has not overridden %s" %
+                [self.class, self.class.name,method]
         }
     }
 

@@ -123,12 +123,12 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 #        assert_events([], port)
 #    end
 #
-#    def test_addingstates
+#    def test_addingproperties
 #        port = mkport()
 #        assert_events([:port_created], port)
 #
 #        port.delete(:alias)
-#        assert(! port.state(:alias))
+#        assert(! port.property(:alias))
 #        assert_events([:port_changed], port)
 #
 #        assert_nothing_raised {
@@ -142,7 +142,7 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 #        port[:alias] = "yaytest"
 #        assert_events([:port_changed], port)
 #        port.retrieve
-#        assert(port.state(:alias).is == ["yaytest"])
+#        assert(port.property(:alias).is == ["yaytest"])
 #    end
 #end
 

@@ -1,8 +1,7 @@
 #!/usr/bin/env ruby
 
-$:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
+$:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet/type'
 require 'puppettest'
 
 class TestType < Test::Unit::TestCase
@@ -23,8 +22,8 @@ class TestType < Test::Unit::TestCase
                 "Failed to retrieve %s by name" % name
             )
 
-            # Skip types with no parameters or valid states
-            #unless ! type.parameters.empty? or ! type.validstates.empty?
+            # Skip types with no parameters or valid properties
+            #unless ! type.parameters.empty? or ! type.validproperties.empty?
             #    next
             #end
 
@@ -35,13 +34,13 @@ class TestType < Test::Unit::TestCase
                 )
 
                 assert_not_nil(
-                    type.states,
-                    "States for %s are nil" % name
+                    type.properties,
+                    "Properties for %s are nil" % name
                 )
 
                 assert_not_nil(
-                    type.validstates,
-                    "Valid states for %s are nil" % name
+                    type.validproperties,
+                    "Valid properties for %s are nil" % name
                 )
             }
         }
@@ -95,11 +94,11 @@ class TestType < Test::Unit::TestCase
         }
     end
 
-    # This was supposed to test objects whose name was a state, but that
+    # This was supposed to test objects whose name was a property, but that
     # fundamentally doesn't make much sense, and we now don't have any such
     # types.
-    def disabled_test_nameasstate
-        # currently groups are the only objects with the namevar as a state
+    def disabled_test_nameasproperty
+        # currently groups are the only objects with the namevar as a property
         group = nil
         assert_nothing_raised {
             group = Puppet.type(:group).create(
@@ -111,7 +110,7 @@ class TestType < Test::Unit::TestCase
     end
 
     # Verify that values get merged correctly
-    def test_mergestatevalues
+    def test_mergepropertyvalues
         file = tempfile()
 
         # Create the first version
@@ -225,7 +224,7 @@ class TestType < Test::Unit::TestCase
         }
 
         # make sure we don't get :ensure for unmanaged files
-        assert(! user.state(:ensure), "User got an ensure state")
+        assert(! user.property(:ensure), "User got an ensure property")
 
         assert_nothing_raised {
             user = Puppet.type(:user).create(
@@ -234,7 +233,7 @@ class TestType < Test::Unit::TestCase
             )
         }
         # but make sure it gets added once we manage them
-        assert(user.state(:ensure), "User did not add ensure state")
+        assert(user.property(:ensure), "User did not add ensure property")
 
         assert_nothing_raised {
             user = Puppet.type(:user).create(
@@ -244,7 +243,7 @@ class TestType < Test::Unit::TestCase
         }
 
         # and make sure managed objects start with them
-        assert(user.state(:ensure), "User did not get an ensure state")
+        assert(user.property(:ensure), "User did not get an ensure property")
     end
 
     # Make sure removal works
@@ -411,7 +410,7 @@ end
             "newparam method got replaced by newtype")
     end
 
-    def test_newstate_options
+    def test_newproperty_options
         # Create a type with a fake provider
         providerclass = Class.new do
             def method_missing(method, *args)
@@ -431,17 +430,17 @@ end
             end
         end
 
-        # Now make a state with no options.
-        state = nil
+        # Now make a property with no options.
+        property = nil
         assert_nothing_raised do
-            state = type.newstate(:noopts) do
+            property = type.newproperty(:noopts) do
             end
         end
 
         # Now create an instance
         obj = type.create(:name => :myobj)
 
-        inst = state.new(:parent => obj)
+        inst = property.new(:parent => obj)
 
         # And make sure it's correctly setting @is
         ret = nil
@@ -451,13 +450,13 @@ end
 
         assert_equal(:noopts, inst.is)
 
-        # Now create a state with a different way of doing it
-        state = nil
+        # Now create a property with a different way of doing it
+        property = nil
         assert_nothing_raised do
-            state = type.newstate(:setretrieve, :retrieve => :yayness)
+            property = type.newproperty(:setretrieve, :retrieve => :yayness)
         end
 
-        inst = state.new(:parent => obj)
+        inst = property.new(:parent => obj)
 
         # And make sure it's correctly setting @is
         ret = nil

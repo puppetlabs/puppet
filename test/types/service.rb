@@ -236,13 +236,13 @@ class TestLocalService < Test::Unit::TestCase
     else
         def test_servicestartstop
             mktestsvcs.each { |svc|
-                startstate = nil
+                startproperty = nil
                 assert_nothing_raised("Could not get status") {
-                    startstate = svc.provider.status
+                    startproperty = svc.provider.status
                 }
                 cycleservice(svc)
 
-                svc[:ensure] = startstate
+                svc[:ensure] = startproperty
                 assert_apply(svc)
                 Puppet.type(:component).clear
             }
@@ -251,14 +251,14 @@ class TestLocalService < Test::Unit::TestCase
         def test_serviceenabledisable
             mktestsvcs.each { |svc|
                 assert(svc[:name], "Service has no name")
-                startstate = nil
+                startproperty = nil
                 svc[:check] = :enable
                 assert_nothing_raised("Could not get status") {
-                    startstate = svc.provider.enabled?
+                    startproperty = svc.provider.enabled?
                 }
                 cycleenable(svc)
 
-                svc[:enable] = startstate
+                svc[:enable] = startproperty
                 assert_apply(svc)
                 Puppet.type(:component).clear
             }
@@ -271,8 +271,8 @@ class TestLocalService < Test::Unit::TestCase
                 svc[:check] = [:ensure, :enable]
                 svc.retrieve
                 assert_nothing_raised("Could not get status") {
-                    startenable = svc.state(:enable).is
-                    startensure = svc.state(:ensure).is
+                    startenable = svc.property(:enable).is
+                    startensure = svc.property(:ensure).is
                 }
 
                 svc[:enable] = false
@@ -281,7 +281,7 @@ class TestLocalService < Test::Unit::TestCase
 
                 sleep 1
                 svc.retrieve
-                assert(svc.insync?, "Service did not sync both states")
+                assert(svc.insync?, "Service did not sync both properties")
 
                 svc[:enable] = true
                 svc[:ensure] = :running
@@ -289,7 +289,7 @@ class TestLocalService < Test::Unit::TestCase
 
                 sleep 1
                 svc.retrieve
-                assert(svc.insync?, "Service did not sync both states")
+                assert(svc.insync?, "Service did not sync both properties")
 
                 svc[:enable] = startenable
                 svc[:ensure] = startensure

@@ -15,11 +15,11 @@ class TestParsedFile < Test::Unit::TestCase
 
     Puppet::Type.newtype(:testparsedfiletype) do
         ensurable
-        newstate(:one) do
+        newproperty(:one) do
             newvalue(:a)
             newvalue(:b)
         end
-        newstate(:two) do
+        newproperty(:two) do
             newvalue(:c)
             newvalue(:d)
         end
@@ -455,7 +455,7 @@ class TestParsedFile < Test::Unit::TestCase
             "Mover was not removed from first file")
     end
 
-    # Make sure that 'ensure' correctly calls 'sync' on all states.
+    # Make sure that 'ensure' correctly calls 'sync' on all properties.
     def test_ensure
         prov = mkprovider
 
@@ -476,9 +476,9 @@ class TestParsedFile < Test::Unit::TestCase
         assert_nothing_raised { notdisk.provider.create() }
 
         # Now make sure all of the data is copied over correctly.
-        notdisk.class.validstates.each do |state|
-            assert_equal(notdisk.should(state), notdisk.provider.state_hash[state],
-                "%s was not copied over during creation" % state)
+        notdisk.class.validproperties.each do |property|
+            assert_equal(notdisk.should(property), notdisk.provider.property_hash[property],
+                "%s was not copied over during creation" % property)
         end
 
         # Flush it to disk and make sure it got copied down

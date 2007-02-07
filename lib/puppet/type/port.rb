@@ -8,7 +8,7 @@ require 'puppet/type/parsedtype'
 #
 #        ensurable
 #
-#        newstate(:protocols) do
+#        newproperty(:protocols) do
 #            desc "The protocols the port uses.  Valid values are *udp* and *tcp*.
 #                Most services have both protocols, but not all.  If you want
 #                both protocols, you must specify that; Puppet replaces the
@@ -51,18 +51,18 @@ require 'puppet/type/parsedtype'
 #            end
 #        end
 #
-#        newstate(:number) do
+#        newproperty(:number) do
 #            desc "The port number."
 #        end
 #
-#        newstate(:description) do
+#        newproperty(:description) do
 #            desc "The port description."
 #        end
 #
-#        newstate(:alias) do
+#        newproperty(:alias) do
 #            desc "Any aliases the port might have.  Multiple values must be
-#                specified as an array.  Note that this state has the same name as
-#                one of the metaparams; using this state to set aliases will make
+#                specified as an array.  Note that this property has the same name as
+#                one of the metaparams; using this property to set aliases will make
 #                those aliases available in your Puppet scripts and also on disk."
 #
 #            # We actually want to return the whole array here, not just the first
@@ -89,7 +89,7 @@ require 'puppet/type/parsedtype'
 #
 #            munge do |value|
 #                unless value == "absent" or value == :absent
-#                    # Add the :alias metaparam in addition to the state
+#                    # Add the :alias metaparam in addition to the property
 #                    @parent.newmetaparam(
 #                        @parent.class.metaparamclass(:alias), value
 #                    )
@@ -98,7 +98,7 @@ require 'puppet/type/parsedtype'
 #            end
 #        end
 #
-#        newstate(:target) do
+#        newproperty(:target) do
 #            desc "The file in which to store service information.  Only used by
 #                those providers that write to disk (i.e., not NetInfo)."
 #

@@ -62,7 +62,7 @@ class NetInfo < Puppet::Provider::NameService
     end
     
     def self.list
-        report(@model.validstates).collect do |hash|
+        report(@model.validproperties).collect do |hash|
             @model.hash2obj(hash)
         end
     end
@@ -92,7 +92,7 @@ class NetInfo < Puppet::Provider::NameService
                 cmd << key.to_s
             else
                 raise Puppet::DevError,
-                    "Could not find netinfokey for state %s" %
+                    "Could not find netinfokey for property %s" %
                     self.class.name
             end
         end
@@ -136,7 +136,7 @@ class NetInfo < Puppet::Provider::NameService
         # Because our stupid type can't create the whole thing at once,
         # we have to do this hackishness.  Yay.
         if arg == :present
-            @model.class.validstates.each do |name|
+            @model.class.validproperties.each do |name|
                 next if name == :ensure
                 next unless val = @model.should(name) || autogen(name)
                 self.send(name.to_s + "=", val)
@@ -157,9 +157,9 @@ class NetInfo < Puppet::Provider::NameService
     # Retrieve everything about this object at once, instead of separately.
     def getinfo(refresh = false)
         if refresh or (! defined? @infohash or ! @infohash)
-            states = [:name] + self.class.model.validstates
-            states.delete(:ensure) if states.include? :ensure
-            @infohash = single_report(*states)
+            properties = [:name] + self.class.model.validproperties
+            properties.delete(:ensure) if properties.include? :ensure
+            @infohash = single_report(*properties)
         end
 
         return @infohash
@@ -179,7 +179,7 @@ class NetInfo < Puppet::Provider::NameService
             cmd += value
         else
             raise Puppet::DevError,
-                "Could not find netinfokey for state %s" %
+                "Could not find netinfokey for property %s" %
                 self.class.name
         end
         cmd
@@ -191,8 +191,8 @@ class NetInfo < Puppet::Provider::NameService
     end
     
     # Get a report for a single resource, not the whole table
-    def single_report(*states)
-        self.class.report(*states).find do |hash| hash[:name] == @model[:name] end
+    def single_report(*properties)
+        self.class.report(*properties).find do |hash| hash[:name] == @model[:name] end
     end
 
     def setuserlist(group, list)

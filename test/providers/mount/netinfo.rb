@@ -44,7 +44,7 @@ require 'puppettest'
 #     def test_simple
 #         root = nil
 #         assert_nothing_raised do
-#             root = @mount.create :name => "/", :check => @mount.validstates
+#             root = @mount.create :name => "/", :check => @mount.validproperties
 #         end
 #         
 #         assert_nothing_raised do

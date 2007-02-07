@@ -1,5 +1,5 @@
 module Puppet
-    Puppet.type(:file).newstate(:target) do
+    Puppet.type(:file).newproperty(:target) do
         desc "The target for creating a link.  Currently, symlinks are the
             only type supported."
 
@@ -12,11 +12,10 @@ module Puppet
         newvalue(/./) do
             if ! @parent.should(:ensure)
                 @parent[:ensure] = :link
-            elsif @parent.should(:ensure) != :link
-                raise Puppet::Error,
-                    "You cannot specify a target unless 'ensure' is set to 'link'"
             end
-            if @parent.state(:ensure).insync?
+
+            # Only call mklink if ensure() didn't call us in the first place.
+            if @parent.property(:ensure).insync?
                 mklink()
             end
         end
@@ -41,6 +40,14 @@ module Puppet
                 end
 
                 :link_created
+            end
+        end
+
+        def insync?
+            if [:nochange, :notlink].include?(self.should) or @parent.should(:ensure) != :link
+                return true
+            else
+                return super
             end
         end
 

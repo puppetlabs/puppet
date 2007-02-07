@@ -43,8 +43,6 @@ module Puppet
             This will cause elements to be applied every 30 minutes by default.
             "
 
-        @states = []
-
         newparam(:name) do
             desc "The name of the schedule.  This name is used to retrieve the
                 schedule when assigning it to an object:
@@ -76,7 +74,7 @@ module Puppet
                 This is mostly useful for restricting certain elements to being
                 applied in maintenance windows or during off-peak hours."
 
-            # This is lame; states all use arrays as values, but parameters don't.
+            # This is lame; properties all use arrays as values, but parameters don't.
             # That's going to hurt eventually.
             validate do |values|
                 values = [values] unless values.is_a?(Array)

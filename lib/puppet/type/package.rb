@@ -3,7 +3,7 @@
 # This allows packages to exist on the same machine using different packaging
 # systems.
 
-require 'puppet/type/state'
+require 'puppet/type/property'
 
 module Puppet
     class PackageError < Puppet::Error; end
@@ -349,7 +349,9 @@ module Puppet
 
         # This only exists for testing.
         def clear
-            @states[:ensure].latest = nil
+            if obj = @parameters[:ensure]
+                obj.latest = nil
+            end
         end
 
         # The 'query' method returns a hash of info if the package
@@ -379,11 +381,6 @@ module Puppet
 
             super
 
-            #unless @states.include?(:ensure)
-            #    self.debug "Defaulting to installing a package"
-            #    self[:ensure] = true
-            #end
-
             unless @parameters.include?(:provider)
                 raise Puppet::DevError, "No package type set"
             end
@@ -392,7 +389,6 @@ module Puppet
         def retrieve
             # If the package is installed, then retrieve all of the information
             # about it and set it appropriately.
-            #@states[:ensure].retrieve
             if hash = @provider.query
                 if hash == :listed # Mmmm, hackalicious
                     return
@@ -405,19 +401,19 @@ module Puppet
 
                 setparams(hash)
             else
-                # Else just mark all of the states absent.
-                self.class.validstates.each { |name|
+                # Else just mark all of the properties absent.
+                self.class.validproperties.each { |name|
                     self.is = [name, :absent]
                 }
             end
         end
 
         # Set all of the params' "is" value.  Most are parameters, but some
-        # are states.
+        # are properties.
         def setparams(hash)
             # Everything on packages is a parameter except :ensure
             hash.each { |param, value|
-                if self.class.attrtype(param) == :state
+                if self.class.attrtype(param) == :property
                     self.is = [param, value]
                 else
                     self[param] = value

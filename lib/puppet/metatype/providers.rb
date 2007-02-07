@@ -59,8 +59,8 @@ class Puppet::Type
             # Mark found objects as present
             obj.is = [:ensure, :present]
             hash.each { |param, value|
-                if state = obj.state(param)
-                    state.is = value
+                if property = obj.property(param)
+                    property.is = value
                 elsif val = obj[param]
                     obj[param] = val
                 else

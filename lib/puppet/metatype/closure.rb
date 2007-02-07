@@ -45,9 +45,9 @@ class Puppet::Type
             return @managed
         else
             @managed = false
-            states.each { |state|
-                s = state.should
-                if s and ! state.class.unmanaged
+            properties.each { |property|
+                s = property.should
+                if s and ! property.class.unmanaged
                     @managed = true
                     break
                 end
@@ -59,8 +59,8 @@ class Puppet::Type
     # Merge new information with an existing object, checking for conflicts
     # and such.  This allows for two specifications of the same object and
     # the same values, but it's pretty limited right now.  The result of merging
-    # states is very different from the result of merging parameters or metaparams.
-    # This is currently unused.
+    # properties is very different from the result of merging parameters or
+    # metaparams.  This is currently unused.
     def merge(hash)
         hash.each { |param, value|
             if param.is_a?(String)
@@ -74,7 +74,7 @@ class Puppet::Type
                 value = [value]
             end
 
-            if @states.include?(param) and oldvals = @states[param].shouldorig
+            if @parameters.include?(param) and oldvals = @parameters[param].shouldorig
                 unless oldvals.is_a?(Array)
                     oldvals = [oldvals]
                 end
@@ -94,7 +94,7 @@ class Puppet::Type
                 else
                     self.debug "Reduced old values %s and new values %s to %s" %
                         [oldvals.inspect, value.inspect, newvals.inspect]
-                    @states[param].should = newvals
+                    @parameters[param].should = newvals
                     #self.should = newvals
                     return true
                 end

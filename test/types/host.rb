@@ -130,8 +130,8 @@ class TestHost < Test::Unit::TestCase
     end
     end
 
-    def test_aliasisstate
-        assert_equal(:state, @hosttype.attrtype(:alias))
+    def test_aliasisproperty
+        assert_equal(:property, @hosttype.attrtype(:alias))
     end
 
     def test_multivalues

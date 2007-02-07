@@ -9,8 +9,6 @@ Puppet.type(:package).provide :up2date, :parent => :rpm do
     def install
         up2date "-u", @model[:name]
 
-        #@states[:ensure].retrieve
-        #if @states[:ensure].is == :absent
         unless self.query
             raise Puppet::ExecutionFailure.new(
                 "Could not find package %s" % self.name

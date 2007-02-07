@@ -3,9 +3,8 @@
 #  Created by Luke A. Kanies on 2006-11-29.
 #  Copyright (c) 2006. All rights reserved.
 
-$:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
+$:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
 require 'puppettest'
 
 class TestTypeManager < Test::Unit::TestCase

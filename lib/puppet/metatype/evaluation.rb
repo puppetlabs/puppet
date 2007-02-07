@@ -1,9 +1,8 @@
 class Puppet::Type
-    # this method is responsible for collecting state changes
-    # we always descend into the children before we evaluate our current
-    # states
-    # this returns any changes resulting from testing, thus 'collect'
-    # rather than 'each'
+    # This method is responsible for collecting property changes we always
+    # descend into the children before we evaluate our current properties.
+    # This returns any changes resulting from testing, thus 'collect' rather
+    # than 'each'.
     def evaluate
         #Puppet.err "Evaluating %s" % self.path.join(":")
         unless defined? @evalcount
@@ -15,15 +14,15 @@ class Puppet::Type
 
         changes = []
 
-        # this only operates on states, not states + children
+        # this only operates on properties, not properties + children
         # it's important that we call retrieve() on the type instance,
-        # not directly on the state, because it allows the type to override
+        # not directly on the property, because it allows the type to override
         # the method, like pfile does
         self.retrieve
 
-        # states() is a private method, returning an ordered list
+        # properties() is a private method, returning an ordered list
         unless self.class.depthfirst?
-            changes += statechanges()
+            changes += propertychanges()
         end
 
         changes << @children.collect { |child|
@@ -33,7 +32,7 @@ class Puppet::Type
         }
 
         if self.class.depthfirst?
-            changes += statechanges()
+            changes += propertychanges()
         end
 
         changes.flatten!
@@ -60,19 +59,19 @@ class Puppet::Type
     def insync?
         insync = true
 
-        if state = @states[:ensure]
-            if state.insync? and state.should == :absent
+        if property = @parameters[:ensure]
+            if property.insync? and property.should == :absent
                 return true
             end
         end
 
-        states.each { |state|
-            unless state.insync?
-                state.debug("Not in sync: %s vs %s" %
-                    [state.is.inspect, state.should.inspect])
+        properties.each { |property|
+            unless property.insync?
+                property.debug("Not in sync: %s vs %s" %
+                    [property.is.inspect, property.should.inspect])
                 insync = false
             #else
-            #    state.debug("In sync")
+            #    property.debug("In sync")
             end
         }
 
@@ -80,46 +79,46 @@ class Puppet::Type
         return insync
     end
 
-    # retrieve the current value of all contained states
+    # retrieve the current value of all contained properties
     def retrieve
         # it's important to use the method here, as it follows the order
         # in which they're defined in the object
-        states().each { |state|
-            state.retrieve
+        properties().each { |property|
+            property.retrieve
         }
     end
 
-    # Retrieve the changes associated with all of the states.
-    def statechanges
+    # Retrieve the changes associated with all of the properties.
+    def propertychanges
         # If we are changing the existence of the object, then none of
-        # the other states matter.
+        # the other properties matter.
         changes = []
-        if @states.include?(:ensure) and ! @states[:ensure].insync?
-            #self.info "ensuring %s from %s" %
-            #    [@states[:ensure].should, @states[:ensure].is]
-            changes = [Puppet::StateChange.new(@states[:ensure])]
-        # Else, if the 'ensure' state is correctly absent, then do
+        if @parameters.include?(:ensure) and ! @parameters[:ensure].insync?
+#            self.info "ensuring %s from %s" %
+#                [@parameters[:ensure].should, @parameters[:ensure].is]
+            changes = [Puppet::PropertyChange.new(@parameters[:ensure])]
+        # Else, if the 'ensure' property is correctly absent, then do
         # nothing
-        elsif @states.include?(:ensure) and @states[:ensure].is == :absent
-            #self.info "Object is correctly absent"
+        elsif @parameters.include?(:ensure) and @parameters[:ensure].is == :absent
+            #            self.info "Object is correctly absent"
             return []
         else
-            #if @states.include?(:ensure)
-            #    self.info "ensure: Is: %s, Should: %s" %
-            #        [@states[:ensure].is, @states[:ensure].should]
-            #else
-            #    self.info "no ensure state"
-            #end
-            changes = states().find_all { |state|
-                ! state.insync?
-            }.collect { |state|
-                Puppet::StateChange.new(state)
+#            if @parameters.include?(:ensure)
+#                self.info "ensure: Is: %s, Should: %s" %
+#                    [@parameters[:ensure].is, @parameters[:ensure].should]
+#            else
+#                self.info "no ensure property"
+#            end
+            changes = properties().find_all { |property|
+                ! property.insync?
+            }.collect { |property|
+                Puppet::PropertyChange.new(property)
             }
         end
 
         if Puppet[:debug] and changes.length > 0
             self.debug("Changing " + changes.collect { |ch|
-                    ch.state.name
+                    ch.property.name
                 }.join(",")
             )
         end

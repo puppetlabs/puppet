@@ -4,11 +4,11 @@ module Puppet
     newtype(:host) do
         ensurable
 
-        newstate(:ip) do
+        newproperty(:ip) do
             desc "The host's IP address, IPv4 or IPv6."
         end
 
-        newstate(:alias) do
+        newproperty(:alias) do
             desc "Any alias the host might have.  Multiple values must be
                 specified as an array.  Note that this state has the same name
                 as one of the metaparams; using this state to set aliases will
@@ -81,19 +81,9 @@ module Puppet
                     raise Puppet::Error, "Aliases cannot include whitespace"
                 end
             end
-
-            munge do |value|
-                if value == :absent or value == "absent"
-                    :absent
-                else
-                    # Add the :alias metaparam in addition to the state
-                    @parent.newmetaparam(@parent.class.metaparamclass(:alias), value)
-                    value
-                end
-            end
         end
 
-        newstate(:target) do
+        newproperty(:target) do
             desc "The file in which to store service information.  Only used by
                 those providers that write to disk (i.e., not NetInfo)."
 

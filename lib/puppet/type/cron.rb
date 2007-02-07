@@ -1,12 +1,12 @@
 require 'etc'
 require 'facter'
-require 'puppet/type/state'
+require 'puppet/type/property'
 require 'puppet/filetype'
 require 'puppet/type/parsedtype'
 
 module Puppet
     # Model the actual cron jobs.  Supports all of the normal cron job fields
-    # as parameters, with the 'command' as the single state.  Also requires a
+    # as parameters, with the 'command' as the single property.  Also requires a
     # completely symbolic 'name' paremeter, which gets written to the file
     # and is used to manage the job.
     newtype(:cron) do
@@ -14,12 +14,12 @@ module Puppet
         # A stupid hack because Cron is the only parsed type that I haven't
         # converted to using providers.  This whole stupid type needs to
         # be rewritten.
-        class CronHackParam < Puppet::State::ParsedParam
-            # Normally this would retrieve the current value, but our state is not
+        class CronHackParam < Puppet::Property::ParsedParam
+            # Normally this would retrieve the current value, but our property is not
             # actually capable of doing so.
             def retrieve
                 # If we've synced, then just copy the values over and return.
-                # This allows this state to behave like any other state.
+                # This allows this property to behave like any other property.
                 if defined? @synced and @synced
                     # by default, we only copy over the first value.
                     @is = @synced
@@ -32,7 +32,7 @@ module Puppet
                 end
             end
 
-            # If the ensure state is out of sync, it will always be called
+            # If the ensure property is out of sync, it will always be called
             # first, so I don't need to worry about that.
             def sync(nostore = false)
                 ebase = @parent.class.name.to_s
@@ -44,13 +44,13 @@ module Puppet
                         #@is = self.should
                         tail = "created"
 
-                        # If we're creating it, then sync all of the other states
+                        # If we're creating it, then sync all of the other properties
                         # but tell them not to store (we'll store just once,
                         # at the end).
                         unless nostore
-                            @parent.eachstate { |state|
-                                next if state == self or state.name == :ensure
-                                state.sync(true)
+                            @parent.eachproperty { |property|
+                                next if property == self or property.name == :ensure
+                                property.sync(true)
                             }
                         end
                     elsif self.should == :absent
@@ -216,21 +216,21 @@ module Puppet
         end
 
 
-        # Override 'newstate' so that all states default to having the
+        # Override 'newproperty' so that all properties default to having the
         # correct parent type
-        def self.newstate(name, options = {}, &block)
-            options[:parent] ||= Puppet::State::CronParam
+        def self.newproperty(name, options = {}, &block)
+            options[:parent] ||= Puppet::Property::CronParam
             super(name, options, &block)
         end
 
-        # Somewhat uniquely, this state does not actually change anything -- it
+        # Somewhat uniquely, this property does not actually change anything -- it
         # just calls +@parent.sync+, which writes out the whole cron tab for
         # the user in question.  There is no real way to change individual cron
         # jobs without rewriting the entire cron file.
         #
         # Note that this means that managing many cron jobs for a given user
         # could currently result in multiple write sessions for that user.
-        newstate(:command, :parent => CronParam) do
+        newproperty(:command, :parent => CronParam) do
             desc "The command to execute in the cron job.  The environment
                 provided to the command varies by local system rules, and it is
                 best to always provide a fully qualified command.  The user's
@@ -253,7 +253,7 @@ module Puppet
             end
         end
 
-        newstate(:special, :parent => CronHackParam) do
+        newproperty(:special, :parent => CronHackParam) do
             desc "Special schedules only supported on FreeBSD."
 
             def specials
@@ -268,19 +268,19 @@ module Puppet
             end
         end
 
-        newstate(:minute) do
+        newproperty(:minute) do
             self.boundaries = [0, 59]
             desc "The minute at which to run the cron job.
                 Optional; if specified, must be between 0 and 59, inclusive."
         end
 
-        newstate(:hour) do
+        newproperty(:hour) do
             self.boundaries = [0, 23]
             desc "The hour at which to run the cron job. Optional;
                 if specified, must be between 0 and 23, inclusive."
         end
 
-        newstate(:weekday) do
+        newproperty(:weekday) do
             def alpha
                 %w{sunday monday tuesday wednesday thursday friday saturday}
             end
@@ -290,7 +290,7 @@ module Puppet
                 0 being Sunday, or must be the name of the day (e.g., Tuesday)."
         end
 
-        newstate(:month) do
+        newproperty(:month) do
             def alpha
                 %w{january february march april may june july
                     august september october november december}
@@ -300,13 +300,13 @@ module Puppet
                 must be between 1 and 12 or the month name (e.g., December)."
         end
 
-        newstate(:monthday) do
+        newproperty(:monthday) do
             self.boundaries = [1, 31]
             desc "The day of the month on which to run the
                 command.  Optional; if specified, must be between 1 and 31."
         end
 
-        newstate(:environment, :parent => CronHackParam) do
+        newproperty(:environment, :parent => CronHackParam) do
             desc "Any environment settings associated with this cron job.  They
                 will be stored between the header and the job in the crontab.  There
                 can be no guarantees that other, earlier settings will not also
@@ -476,8 +476,8 @@ module Puppet
 
                 # Mark all of the values appropriately
                 hash.each { |param, value|
-                    if state = obj.state(param)
-                        state.is = value
+                    if property = obj.property(param)
+                        property.is = value
                     elsif val = obj[param]
                         obj[param] = val
                     else    
@@ -785,7 +785,7 @@ module Puppet
         end
 
         def exists?
-            @states.include?(:ensure) and @states[:ensure].is == :present
+            obj = @parameters[:ensure] and obj.is == :present
         end
 
         # Override the default Puppet::Type method because we need to call
@@ -796,15 +796,9 @@ module Puppet
             end
 
             self.class.retrieve(self[:user])
-            if withtab = self.class["testwithtab"]
-                Puppet.info withtab.is(:ensure).inspect
-            end
-            self.eachstate { |st|
+            self.eachproperty { |st|
                 st.retrieve
             }
-            if withtab = self.class["testwithtab"]
-                Puppet.info withtab.is(:ensure).inspect
-            end
         end
 
         # Write the entire user's cron tab out.
@@ -830,14 +824,13 @@ module Puppet
 
             str = "# Puppet Name: %s\n" % self.name
 
-            if @states.include?(:environment) and
-                @states[:environment].should != :absent
-                    envs = @states[:environment].should
-                    unless envs.is_a? Array
-                        envs = [envs]
-                    end
+            if env = @parameters[:environment] and env.should != :absent
+                envs = env.should
+                unless envs.is_a? Array
+                    envs = [envs]
+                end
 
-                    envs.each do |line| str += (line + "\n") end
+                envs.each do |line| str += (line + "\n") end
             end
 
             line = nil
@@ -858,13 +851,13 @@ module Puppet
         end
 
         def value(name)
-            name = name.intern if name.is_a? String
+            name = symbolize(name)
             ret = nil
-            if @states.include?(name)
-                ret = @states[name].should_to_s
+            if obj = @parameters[name]
+                ret = obj.should_to_s
 
                 if ret.nil?
-                    ret = @states[name].is_to_s
+                    ret = obj.is_to_s
                 end
 
                 if ret == :absent
@@ -879,7 +872,7 @@ module Puppet
                 when :special
                     # nothing
                 else
-                    #ret = (self.class.validstate?(name).default || "*").to_s
+                    #ret = (self.class.validproperty?(name).default || "*").to_s
                     ret = "*"
                 end
             end

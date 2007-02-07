@@ -58,7 +58,7 @@ class TestParsedMounts < Test::Unit::TestCase
         assert(mount, "Could not create provider mount")
         hash[:record_type] = :parsed
         hash[:ensure] = :present
-        mount.state_hash = hash
+        mount.property_hash = hash
 
         return mount
     end
@@ -104,7 +104,7 @@ class TestParsedMounts < Test::Unit::TestCase
         # Make sure it's now in the file.  The file format is validated in
         # the isomorphic methods.
         assert(@provider.target_object(target).read.include?("\t%s\t" %
-            mount.state_hash[:name]), "Mount was not written to disk")
+            mount.property_hash[:name]), "Mount was not written to disk")
 
         # now make a change
         assert_nothing_raised { mount.dump = 5 }
@@ -138,7 +138,7 @@ class TestParsedMounts < Test::Unit::TestCase
                 @provider.prefetch
             end
 
-            assert_equal(:present, provider.state_hash[:ensure],
+            assert_equal(:present, provider.property_hash[:ensure],
                 "Could not find root fs with provider %s" % provider.name)
 
             assert_nothing_raised {

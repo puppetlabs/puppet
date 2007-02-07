@@ -34,7 +34,7 @@ Puppet::Type.newtype(:resources) do
                 unless @parent.resource_type.respond_to?(:list)
                     raise ArgumentError, "Purging resources of type %s is not supported, since they cannot be listed" % @parent[:name]
                 end
-                unless @parent.resource_type.validstate?(:ensure)
+                unless @parent.resource_type.validproperty?(:ensure)
                     raise ArgumentError, "Purging is only supported on types that accept 'ensure'"
                 end
             end
@@ -103,7 +103,8 @@ Puppet::Type.newtype(:resources) do
                     [self[:name]]
                 return []
             end
-            @metaparams.each do |name, param|
+            @parameters.each do |name, param|
+                next unless param.metaparam?
                 resource[name] = param.value
             end
         end

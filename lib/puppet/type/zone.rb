@@ -1,18 +1,18 @@
 Puppet::Type.newtype(:zone) do
     @doc = "Solaris zones."
 
-    # These states modify the zone configuration, and they need to provide
+    # These properties modify the zone configuration, and they need to provide
     # the text separately from syncing it, so all config statements can be rolled
     # into a single creation statement.
-    class ZoneConfigState < Puppet::State
+    class ZoneConfigProperty < Puppet::Property
         # Perform the config operation.
         def sync
             provider.setconfig self.configtext
         end
     end
 
-    # Those states that can have multiple instances.
-    class ZoneMultiConfigState < ZoneConfigState
+    # Those properties that can have multiple instances.
+    class ZoneMultiConfigProperty < ZoneConfigProperty
         def configtext
             list = @should
 
@@ -72,7 +72,7 @@ Puppet::Type.newtype(:zone) do
             only then can be ``running``.  Note also that ``halt`` is currently
             used to stop zones."
 
-        @states = {}
+        @properties = {}
 
         def self.newvalue(name, hash)
             if @parametervalues.is_a? Hash
@@ -81,7 +81,7 @@ Puppet::Type.newtype(:zone) do
 
             @parametervalues << name
 
-            @states[name] = hash
+            @properties[name] = hash
             hash[:name] = name
         end
 
@@ -112,11 +112,11 @@ Puppet::Type.newtype(:zone) do
             # the range op twice.
             if findex > sindex
                 list = @parametervalues[sindex..findex].collect do |name|
-                    @states[name]
+                    @properties[name]
                 end.reverse
             else
                 list = @parametervalues[findex..sindex].collect do |name|
-                    @states[name]
+                    @properties[name]
                 end
             end
 
@@ -141,8 +141,8 @@ Puppet::Type.newtype(:zone) do
             # everything between it and us.
             states = self.class.valueslice(self.is, self.should)
 
-            states.each do |st|
-                if method = st[dir]
+            properties.each do |prop|
+                if method = prop[dir]
                     warned = false
                     while @parent.processing?
                         unless warned
@@ -161,7 +161,7 @@ Puppet::Type.newtype(:zone) do
             return ("zone_" + self.should.to_s).intern
         end
 
-        # Are we moving up the state tree?
+        # Are we moving up the property tree?
         def up?
             self.class.valueindex(self.is) < self.class.valueindex(self.should)
         end
@@ -178,7 +178,7 @@ Puppet::Type.newtype(:zone) do
             and cannot be changed."
     end
 
-    newstate(:ip, :parent => ZoneMultiConfigState) do
+    newproperty(:ip, :parent => ZoneMultiConfigProperty) do
         require 'ipaddr'
 
         desc "The IP address of the zone.  IP addresses must be specified
@@ -225,7 +225,7 @@ end
         end
     end
 
-    newstate(:autoboot, :parent => ZoneConfigState) do
+    newproperty(:autoboot, :parent => ZoneConfigProperty) do
         desc "Whether the zone should automatically boot."
 
         defaultto true
@@ -238,7 +238,7 @@ end
         end
     end
 
-    newstate(:pool, :parent => ZoneConfigState) do
+    newproperty(:pool, :parent => ZoneConfigProperty) do
         desc "The resource pool for this zone." 
 
         def configtext
@@ -246,7 +246,7 @@ end
         end
     end
 
-    newstate(:shares, :parent => ZoneConfigState) do
+    newproperty(:shares, :parent => ZoneConfigProperty) do
         desc "Number of FSS CPU shares allocated to the zone."
 
         def configtext
@@ -254,7 +254,7 @@ end
         end
     end
 
-    newstate(:inherit, :parent => ZoneMultiConfigState) do
+    newproperty(:inherit, :parent => ZoneMultiConfigProperty) do
         desc "The list of directories that the zone inherits from the global
             zone.  All directories must be fully qualified."
 
@@ -362,9 +362,9 @@ set zonepath=%s
 } % self[:path]
 
         # Then perform all of our configuration steps.
-        @states.each do |name, state|
-            if state.is_a? ZoneConfigState and ! state.insync?
-                str += state.configtext + "\n"
+        properties().each do |property|
+            if property.is_a? ZoneConfigProperty and ! property.insync?
+                str += property.configtext + "\n"
             end
         end
 
@@ -373,7 +373,7 @@ set zonepath=%s
     end
 
     # We need a way to test whether a zone is in process.  Our 'ensure'
-    # state models the static states, but we need to handle the temporary ones.
+    # property models the static states, but we need to handle the temporary ones.
     def processing?
         if hash = provider.statushash()
             case hash[:ensure]
@@ -394,8 +394,8 @@ set zonepath=%s
             # Now retrieve the configuration itself and set appropriately.
             config2status(provider.getconfig())
         else
-            @states.each do |name, state|
-                state.is = :absent
+            properties().each do |pr|
+                pr.is = :absent
             end
         end
     end
@@ -405,7 +405,7 @@ set zonepath=%s
         hash.each do |param, value|
             next if param == :name
             case self.class.attrtype(param)
-            when :state:
+            when :pr:
                 self.is = [param, value]
             else
                 self[param] = value

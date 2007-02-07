@@ -7,9 +7,9 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
 
-class TestStateChange < Test::Unit::TestCase
+class TestPropertyChange < Test::Unit::TestCase
 	include PuppetTest
-	class FakeState
+	class FakeProperty
 	    attr_accessor :is, :should, :parent
 	    def change_to_s
 	        "fake change"
@@ -44,13 +44,13 @@ class TestStateChange < Test::Unit::TestCase
     end
     
     def mkchange
-        state = FakeState.new
-        state.is = :start
-        state.should = :finish
-        state.parent = :parent
+        property = FakeProperty.new
+        property.is = :start
+        property.should = :finish
+        property.parent = :parent
         change = nil
         assert_nothing_raised do
-            change = Puppet::StateChange.new(state)
+            change = Puppet::PropertyChange.new(property)
         end
         change.transaction = :trans
         
@@ -83,14 +83,14 @@ class TestStateChange < Test::Unit::TestCase
 	    
         # Disabled, because it fails when running the whole suite at once.
         #assert(coll.detect { |l| l.message == "fake change" }, "Did not log change")
-	    assert_equal(change.state.is, change.state.should, "did not call sync method")
+	    assert_equal(change.property.is, change.property.should, "did not call sync method")
 	    
 	    # Now make sure that proxy sources can be set.
 	    assert_nothing_raised do
     	    change.proxy = :other
 	    end
 	    # Reset, so we change again
-	    change.state.is = :start
+	    change.property.is = :start
 	    change.is = :start
 	    assert_nothing_raised do
 	        events = change.go
@@ -105,7 +105,7 @@ class TestStateChange < Test::Unit::TestCase
         end
 	    
 	    #assert(coll.detect { |l| l.message == "fake change" }, "Did not log change")
-	    assert_equal(change.state.is, change.state.should, "did not call sync method")
+	    assert_equal(change.property.is, change.property.should, "did not call sync method")
     end
 end
 

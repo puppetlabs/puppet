@@ -79,12 +79,12 @@ class TestResourceServer < Test::Unit::TestCase
 
                 assert(object, "Could not create type")
 
-                retrieve.each do |state|
-                    assert(object.should(state), "Did not retrieve %s" % state)
+                retrieve.each do |property|
+                    assert(object.should(property), "Did not retrieve %s" % property)
                 end
 
-                ignore.each do |state|
-                    assert(! object.should(state), "Incorrectly retrieved %s" % state)
+                ignore.each do |property|
+                    assert(! object.should(property), "Incorrectly retrieved %s" % property)
                 end
 
                 if i == 0
@@ -154,12 +154,12 @@ class TestResourceServer < Test::Unit::TestCase
 
             assert(object, "Could not create type")
 
-            retrieve.each do |state|
-                assert(object.should(state), "Did not retrieve %s" % state)
+            retrieve.each do |property|
+                assert(object.should(property), "Did not retrieve %s" % property)
             end
 
-            ignore.each do |state|
-                assert(! object.should(state), "Incorrectly retrieved %s" % state)
+            ignore.each do |property|
+                assert(! object.should(property), "Incorrectly retrieved %s" % property)
             end
 
             assert_events([:directory_created], object)

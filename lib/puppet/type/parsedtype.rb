@@ -1,13 +1,13 @@
 require 'etc'
 require 'facter'
 require 'puppet/filetype'
-require 'puppet/type/state'
+require 'puppet/type/property'
 
 module Puppet
     # The base parameter for all of these types.  Its only job is to copy
     # the 'should' value to the 'is' value and to do support the right logging
     # and such.
-    class State::ParsedParam < Puppet::State
+    class Property::ParsedParam < Puppet::Property
         # This is the info retrieved from disk.
         attr_accessor :found
 
@@ -47,7 +47,7 @@ module Puppet
             self.is == self.should
         end
 
-        # Normally this would retrieve the current value, but our state is not
+        # Normally this would retrieve the current value, but our property is not
         # actually capable of doing so.  So, we retrieve the whole object and
         # just collect our current state.  Note that this method is not called
         # during a transaction, since transactions call the parent object method.
@@ -96,10 +96,10 @@ module Puppet
 
                 # Mark found objects as present
                 obj.is = [:ensure, :present]
-                obj.state(:ensure).found = :present
+                obj.property(:ensure).found = :present
                 hash.each { |param, value|
-                    if state = obj.state(param)
-                        state.is = value
+                    if property = obj.property(param)
+                        property.is = value
                     elsif val = obj[param]
                         obj[param] = val
                     else
@@ -124,10 +124,10 @@ module Puppet
             return obj
         end
 
-        # Override 'newstate' so that all states default to having the
+        # Override 'newproperty' so that all properties default to having the
         # correct parent type
-        def self.newstate(name, options = {}, &block)
-            options[:parent] ||= Puppet::State::ParsedParam
+        def self.newproperty(name, options = {}, &block)
+            options[:parent] ||= Puppet::Property::ParsedParam
             super(name, options, &block)
         end
 
@@ -145,8 +145,8 @@ module Puppet
 
         # Make sure they've got an explicit :ensure class.
         def self.postinit
-            unless validstate? :ensure
-                newstate(:ensure) do
+            unless validproperty? :ensure
+                newproperty(:ensure) do
                     newvalue(:present) do
                         # The value will get flushed appropriately
                         return nil
@@ -191,24 +191,24 @@ module Puppet
                 # If they passed back info we don't have, then mark it to
                 # be deleted.
                 h.each do |name, value|
-                    next unless self.class.validstate?(name)
-                    unless @states.has_key? name
-                        self.newstate(name, :should => :absent)
+                    next unless self.class.validproperty?(name)
+                    unless @parameters[name]
+                        self.newproperty(name, :should => :absent)
                     end
                 end
 
-                @states.each do |name, state|
-                    if h.has_key? name
-                        state.is = h[name]
+                properties().each do |property|
+                    if h.has_key? property.name
+                        property.is = h[property.name]
                     else
-                        state.is = :absent
+                        property.is = :absent
                     end
                 end
 
                 return h
             else
-                @states.each do |name, state|
-                    state.is = :absent
+                properties().each do |property|
+                    property.is = :absent
                 end
                 return nil
             end

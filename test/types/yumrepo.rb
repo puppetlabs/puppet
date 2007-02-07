@@ -29,9 +29,9 @@ class TestYumRepo < Test::Unit::TestCase
         devel.retrieve
         assert_equal("development", devel[:name])
         assert_equal('Fedora Core $releasever - Development Tree', 
-                     devel.state(:descr).is)
+                     devel.property(:descr).is)
         assert_equal('New description', 
-                     devel.state(:descr).should)
+                     devel.property(:descr).should)
         assert_apply(devel)
         inifile = Puppet.type(:yumrepo).read()
         assert_equal('New description', inifile['development']['name'])
@@ -53,6 +53,7 @@ class TestYumRepo < Test::Unit::TestCase
             :gpgkey => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora"
         }
         repo = make_repo("base", values)
+
         assert_apply(repo)
         inifile = Puppet.type(:yumrepo).read()
         sections = all_sections(inifile)

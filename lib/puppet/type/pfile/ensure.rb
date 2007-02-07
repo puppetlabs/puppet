@@ -32,7 +32,7 @@ module Puppet
             with directories corresponding to each directory
             and links corresponding to each file."
 
-        # Most 'ensure' states have a default, but with files we, um, don't.
+        # Most 'ensure' properties have a default, but with files we, um, don't.
         nodefault
 
         newvalue(:absent) do
@@ -43,8 +43,8 @@ module Puppet
 
         newvalue(:file) do
             # Make sure we're not managing the content some other way
-            if state = @parent.state(:content) or state = @parent.state(:source)
-                state.sync
+            if property = (@parent.property(:content) || @parent.property(:source))
+                property.sync
             else
                 @parent.write(false) { |f| f.flush }
                 mode = @parent.should(:mode)
@@ -82,10 +82,10 @@ module Puppet
 
 
         newvalue(:link) do
-            if state = @parent.state(:target)
-                state.retrieve
+            if property = @parent.property(:target)
+                property.retrieve
 
-                return state.mklink
+                return property.mklink
             else
                 self.fail "Cannot create a symlink without a target"
             end
@@ -159,7 +159,7 @@ module Puppet
             # There are some cases where all of the work does not get done on
             # file creation, so we have to do some extra checking.
             @parent.each do |thing|
-                next unless thing.is_a? Puppet::State
+                next unless thing.is_a? Puppet::Property
                 next if thing == self
 
                 thing.retrieve

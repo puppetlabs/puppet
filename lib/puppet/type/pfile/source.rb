@@ -6,7 +6,7 @@ module Puppet
     # the file down.  If the remote file is a dir or a link or whatever, then
     # this state, during retrieval, modifies the appropriate other states
     # so that things get taken care of appropriately.
-    Puppet.type(:file).newstate(:source) do
+    Puppet.type(:file).newproperty(:source) do
         PINPARAMS = Puppet::Server::FileServer::CHECKPARAMS
 
         attr_accessor :source, :local
@@ -173,9 +173,7 @@ module Puppet
             
             case @stats[:type]
             when "directory", "file":
-                if @parent.deleting?
-                    p @parent.should(:ensure)
-                else
+                unless @parent.deleting?
                     @parent[:ensure] = @stats[:type]
                 end
             else
@@ -196,7 +194,7 @@ module Puppet
                 # be inherited from the source?
                 unless @parent.argument?(stat)
                     @parent[stat] = value
-                    @parent.state(stat).retrieve
+                    @parent.property(stat).retrieve
                 end
             }
             
@@ -215,7 +213,7 @@ module Puppet
             checks.delete(:checksum)
             
             @parent[:check] = checks
-            unless @parent.state(:checksum)
+            unless @parent.property(:checksum)
                 @parent[:checksum] = :md5
             end
         end

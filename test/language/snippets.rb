@@ -70,8 +70,8 @@ class TestSnippets < Test::Unit::TestCase
         objs = scope2objs(scope)
     end
 
-    def states(type)
-        states = type.validstates
+    def properties(type)
+        properties = type.validproperties
     end
 
     def metaparams(type)
@@ -85,7 +85,7 @@ class TestSnippets < Test::Unit::TestCase
 
     def params(type)
         params = []
-        type.parameters.each { |name,state|
+        type.parameters.each { |name,property|
             params.push name
         }
 
@@ -98,7 +98,7 @@ class TestSnippets < Test::Unit::TestCase
     end
 
     def randeach(type)
-        [:states, :metaparams, :params].collect { |thing|
+        [:properties, :metaparams, :params].collect { |thing|
             randthing(thing,type)
         }
     end

@@ -18,7 +18,7 @@ module Manager
     def eachtype
         @types.each do |name, type|
             # Only consider types that have names
-            #if ! type.parameters.empty? or ! type.validstates.empty?
+            #if ! type.parameters.empty? or ! type.validproperties.empty?
                 yield type 
             #end
         end
@@ -103,8 +103,8 @@ module Manager
         end
 
         # If they've got all the necessary methods defined and they haven't
-        # already added the state, then do so now.
-        if klass.ensurable? and ! klass.validstate?(:ensure)
+        # already added the property, then do so now.
+        if klass.ensurable? and ! klass.validproperty?(:ensure)
             klass.ensurable
         end
 

@@ -75,13 +75,10 @@ class Puppet::Type
 
         # This is hackish (mmm, cut and paste), but it works for now, and it's
         # better than warnings.
-        [@states, @parameters, @metaparams].each do |hash|
-            hash.each do |name, obj|
-                obj.remove
-            end
-
-            hash.clear
+        @parameters.each do |name, obj|
+            obj.remove
         end
+        @parameters.clear
         self.class.delete(self)
 
         @parent = nil

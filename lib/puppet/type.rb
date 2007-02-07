@@ -3,7 +3,7 @@ require 'puppet/log'
 require 'puppet/element'
 require 'puppet/event'
 require 'puppet/metric'
-require 'puppet/type/state'
+require 'puppet/type/property'
 require 'puppet/parameter'
 require 'puppet/util'
 require 'puppet/autoload'
@@ -31,7 +31,7 @@ class Type < Puppet::Element
     # Types (which map to elements in the languages) are entirely composed of
     # attribute value pairs.  Generally, Puppet calls any of these things an
     # 'attribute', but these attributes always take one of three specific
-    # forms:  parameters, metaparams, or states.
+    # forms:  parameters, metaparams, or properties.
 
     # In naming methods, I have tried to consistently name the method so
     # that it is clear whether it operates on all attributes (thus has 'attr' in
@@ -68,8 +68,8 @@ class Type < Puppet::Element
             @parameters = []
         end
 
-        @validstates = {}
-        @states = []
+        @validproperties = {}
+        @properties = []
         @parameters = []
         @paramhash = {}
 
@@ -86,10 +86,6 @@ class Type < Puppet::Element
 
         unless defined? @doc
             @doc = ""
-        end
-
-        unless defined? @states
-            @states = []
         end
 
     end
@@ -109,13 +105,13 @@ class Type < Puppet::Element
         #@validate = block
     end
 
-    # iterate across all children, and then iterate across states
+    # iterate across all children, and then iterate across properties
     # we do children first so we're sure that all dependent objects
     # are checked first
     # we ignore parameters here, because they only modify how work gets
     # done, they don't ever actually result in work specifically
     def each
-        # we want to return the states in the order that each type
+        # we want to return the properties in the order that each type
         # specifies it, because it may (as in the case of File#create)
         # be important
         if self.class.depthfirst?
@@ -123,8 +119,8 @@ class Type < Puppet::Element
                 yield child
             }
         end
-        self.eachstate { |state|
-            yield state
+        self.eachproperty { |property|
+            yield property
         }
         unless self.class.depthfirst?
             @children.each { |child|
@@ -133,7 +129,7 @@ class Type < Puppet::Element
         end
     end
 
-    # Recurse deeply through the tree, but only yield types, not states.
+    # Recurse deeply through the tree, but only yield types, not properties.
     def delve(&block)
         self.each do |obj|
             if obj.is_a? Puppet::Type
@@ -146,7 +142,7 @@ class Type < Puppet::Element
     # create a log at specified level
     def log(msg)
         Puppet::Log.create(
-            :level => @metaparams[:loglevel].value,
+            :level => @parameters[:loglevel].value,
             :message => msg,
             :source => self
         )
@@ -168,20 +164,14 @@ class Type < Puppet::Element
             chash[key] = {}
         }
 
-        # states and parameters are treated equivalently from the outside:
+        # properties and parameters are treated equivalently from the outside:
         # as name-value pairs (using [] and []=)
-        # internally, however, parameters are merely a hash, while states
-        # point to State objects
-        # further, the lists of valid states and parameters are defined
+        # internally, however, parameters are merely a hash, while properties
+        # point to Property objects
+        # further, the lists of valid properties and parameters are defined
         # at the class level
-        unless defined? @states
-            @states = Hash.new(false)
-        end
         unless defined? @parameters
-            @parameters = Hash.new(false)
-        end
-        unless defined? @metaparams
-            @metaparams = Hash.new(false)
+            @parameters = {}
         end
 
         # set defalts
@@ -349,7 +339,7 @@ class Type < Puppet::Element
             namevar = self.class.namevar
             if self.class.validparameter?(namevar)
                 @title = self[:name]
-            elsif self.class.validstate?(namevar)
+            elsif self.class.validproperty?(namevar)
                 @title = self.should(namevar)
             else
                 self.devfail "Could not find namevar %s for %s" %
@@ -374,17 +364,13 @@ class Type < Puppet::Element
 
         trans = TransObject.new(self.title, self.class.name)
 
-        states().each do |state|
-            trans[state.name] = state.is
+        properties().each do |property|
+            trans[property.name] = property.is
         end
 
         @parameters.each do |name, param|
             # Avoid adding each instance name as both the name and the namevar
             next if param.class.isnamevar? and param.value == self.title
-            trans[name] = param.value
-        end
-
-        @metaparams.each do |name, param|
             trans[name] = param.value
         end
 
@@ -398,7 +384,7 @@ class Type < Puppet::Element
 end # Puppet::Type
 end
 
-require 'puppet/statechange'
+require 'puppet/propertychange'
 require 'puppet/provider'
 require 'puppet/type/component'
 require 'puppet/type/pfile'

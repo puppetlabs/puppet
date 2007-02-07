@@ -31,6 +31,7 @@ class TestFile < Test::Unit::TestCase
     def setup
         super
         @file = Puppet::Type.type(:file)
+        $method = @method_name
         begin
             initstorage
         rescue
@@ -103,8 +104,8 @@ class TestFile < Test::Unit::TestCase
             assert_nothing_raised() {
                 file[:group] = group
             }
-            assert(file.state(:group))
-            assert(file.state(:group).should)
+            assert(file.property(:group))
+            assert(file.property(:group).should)
         }
     end
 
@@ -271,8 +272,8 @@ class TestFile < Test::Unit::TestCase
                 assert_nothing_raised() {
                     file[:group] = group
                 }
-                assert(file.state(:group))
-                assert(file.state(:group).should)
+                assert(file.property(:group))
+                assert(file.property(:group).should)
                 assert_apply(file)
                 file.retrieve
                 assert(file.insync?())
@@ -395,7 +396,7 @@ class TestFile < Test::Unit::TestCase
                 file.retrieve
 
                 if file.title !~ /nonexists/
-                    sum = file.state(:checksum)
+                    sum = file.property(:checksum)
                     assert(sum.insync?, "file is not in sync")
                 end
 
@@ -430,9 +431,9 @@ class TestFile < Test::Unit::TestCase
                 # Run it a few times to make sure we aren't getting
                 # spurious changes.
                 assert_nothing_raised do
-                    file.state(:checksum).retrieve
+                    file.property(:checksum).retrieve
                 end
-                assert(file.state(:checksum).insync?,
+                assert(file.property(:checksum).insync?,
                     "checksum is not in sync")
 
                 sleep 1.1 if type =~ /time/
@@ -708,7 +709,7 @@ class TestFile < Test::Unit::TestCase
             file.evaluate
         }
 
-        assert_equal("directory", file.state(:type).is)
+        assert_equal("directory", file.property(:type).is)
 
         # And then check files
         assert_nothing_raised {
@@ -722,7 +723,7 @@ class TestFile < Test::Unit::TestCase
         file[:check] = "type"
         assert_apply(file)
 
-        assert_equal("file", file.state(:type).is)
+        assert_equal("file", file.property(:type).is)
 
         file[:type] = "directory"
 
@@ -999,7 +1000,7 @@ class TestFile < Test::Unit::TestCase
             )
         }
 
-        assert(file.state(:group), "Group state failed")
+        assert(file.property(:group), "Group property failed")
     end
 
     def test_modecreation
@@ -1078,7 +1079,7 @@ class TestFile < Test::Unit::TestCase
     end
 
     # If both 'ensure' and 'content' are used, make sure that all of the other
-    # states are handled correctly.
+    # properties are handled correctly.
     def test_contentwithmode
         path = tempfile()
 
@@ -1746,7 +1747,7 @@ class TestFile < Test::Unit::TestCase
                     if should == :link
                         obj[:target] = linkdest
                     else
-                        if obj.state(:target)
+                        if obj.property(:target)
                             obj.delete(:target)
                         end
                     end
@@ -1767,12 +1768,12 @@ class TestFile < Test::Unit::TestCase
                     # Now make it again
                     creators[is].call
 
-                    state = obj.state(:ensure)
+                    property = obj.property(:ensure)
 
-                    state.retrieve
-                    unless state.insync?
+                    property.retrieve
+                    unless property.insync?
                         assert_nothing_raised do
-                            state.sync
+                            property.sync
                         end
                     end
                     FileUtils.rmtree(dir)
@@ -1964,7 +1965,7 @@ class TestFile < Test::Unit::TestCase
     end
     
     # Testing #438
-    def test_creating_states_conflict
+    def test_creating_properties_conflict
         file = tempfile()
         first = tempfile()
         second = tempfile()

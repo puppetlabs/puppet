@@ -49,7 +49,7 @@ class Server::Resource < Server::Handler
         return "success"
     end
 
-    # Describe a given object.  This returns the 'is' values for every state
+    # Describe a given object.  This returns the 'is' values for every property
     # available on the object type.
     def describe(type, name, retrieve = nil, ignore = [], format = "yaml", client = nil, clientip = nil)
         Puppet.info "Describing %s[%s]" % [type.to_s.capitalize, name]

@@ -5,7 +5,7 @@ module Puppet
     newtype(:mount, :self_refresh => true) do
         # Use the normal parent class, because we actually want to
         # call code when sync() is called.
-        newstate(:ensure) do
+        newproperty(:ensure) do
             desc "Control what to do with this mount. If the value is 
                   ``present``, the mount is entered into the mount table, 
                   but not mounted, if it is ``absent``, the entry is removed 
@@ -53,20 +53,20 @@ module Puppet
 
             def syncothers
                 # We have to flush any changes to disk.
-                oos = @parent.send(:states).find_all do |st|
-                    if st.name == :ensure
+                oos = @parent.send(:properties).find_all do |prop|
+                    if prop.name == :ensure
                         false
                     else
-                        ! st.insync?
+                        ! prop.insync?
                     end
-                end.each { |st| st.sync }.length
+                end.each { |prop| prop.sync }.length
                 if oos > 0
                     @parent.flush
                 end
             end
         end
 
-        newstate(:device) do
+        newproperty(:device) do
             desc "The device providing the mount.  This can be whatever
                 device is supporting by the mount, including network
                 devices or devices specified by UUID rather than device
@@ -74,8 +74,8 @@ module Puppet
         end
 
         # Solaris specifies two devices, not just one.
-        newstate(:blockdevice) do
-            desc "The the device to fsck.  This is state is only valid
+        newproperty(:blockdevice) do
+            desc "The the device to fsck.  This is property is only valid
                 on Solaris, and in most cases will default to the correct
                 value."
 
@@ -94,31 +94,31 @@ module Puppet
             end
         end
 
-        newstate(:fstype) do
+        newproperty(:fstype) do
             desc "The mount type.  Valid values depend on the
                 operating system."
         end
 
-        newstate(:options) do
+        newproperty(:options) do
             desc "Mount options for the mounts, as they would
                 appear in the fstab."
         end
 
-        newstate(:pass) do
+        newproperty(:pass) do
             desc "The pass in which the mount is checked."
         end
 
-        newstate(:atboot) do
+        newproperty(:atboot) do
             desc "Whether to mount the mount at boot.  Not all platforms
                 support this."
         end
 
-        newstate(:dump) do
+        newproperty(:dump) do
             desc "Whether to dump the mount.  Not all platforms
                 support this."
         end
 
-        newstate(:target) do
+        newproperty(:target) do
             desc "The file in which to store the mount table.  Only used by
                 those providers that write to disk (i.e., not NetInfo)."
 
@@ -167,7 +167,7 @@ module Puppet
         
         def refresh
             # Only remount if we're supposed to be mounted.
-            if ens = @states[:ensure] and ens.should == :mounted
+            if ens = @parameters[:ensure] and ens.should == :mounted
                 provider.remount
             end
         end
@@ -175,8 +175,8 @@ module Puppet
         def value(name)
             name = symbolize(name)
             ret = nil
-            if state = @states[name]
-                return state.value
+            if property = @parameters[name]
+                return property.value
             end
         end
     end

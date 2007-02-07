@@ -136,13 +136,13 @@ class TestLog < Test::Unit::TestCase
         )
         file.tags = %w{this is a test}
 
-        state = file.state(:ensure)
-        assert(state, "Did not get state")
+        property = file.property(:ensure)
+        assert(property, "Did not get property")
         log = nil
         assert_nothing_raised {
             log = Puppet::Log.new(
                 :level => :info,
-                :source => state,
+                :source => property,
                 :message => "A test message"
             )
         }
@@ -157,8 +157,8 @@ class TestLog < Test::Unit::TestCase
                 assert(msg.tagged?(tag), "Was not tagged with %s" % tag)
             end
 
-            assert_equal(msg.tags, state.tags, "Tags were not equal")
-            assert_equal(msg.source, state.path, "Source was not set correctly")
+            assert_equal(msg.tags, property.tags, "Tags were not equal")
+            assert_equal(msg.source, property.path, "Source was not set correctly")
         end
 
     end

@@ -325,7 +325,7 @@ class TestCron < Test::Unit::TestCase
         cron = mkcron("valtesting")
         values.each { |param, hash|
             # We have to test the valid ones first, because otherwise the
-            # state will fail to create at all.
+            # property will fail to create at all.
             [:valid, :invalid].each { |type|
                 hash[type].each { |value|
                     case type
@@ -564,15 +564,15 @@ class TestCron < Test::Unit::TestCase
     def test_value
         cron = mkcron("valuetesting", false)
 
-        # First, test the normal states
+        # First, test the normal properties
         [:minute, :hour, :month].each do |param|
-            cron.newstate(param)
-            state = cron.state(param)
+            cron.newattr(param)
+            property = cron.property(param)
 
-            assert(state, "Did not get %s state" % param)
+            assert(property, "Did not get %s property" % param)
 
             assert_nothing_raised {
-                state.is = :absent
+                property.is = :absent
             }
 
             # Make sure our minute default is 0, not *
@@ -611,14 +611,14 @@ class TestCron < Test::Unit::TestCase
 
         # Now make sure that :command works correctly
         cron.delete(:command)
-        cron.newstate(:command)
-        state = cron.state(:command)
+        cron.newattr(:command)
+        property = cron.property(:command)
 
         assert_nothing_raised {
-            state.is = :absent
+            property.is = :absent
         }
 
-        assert(state, "Did not get command state")
+        assert(property, "Did not get command property")
         assert_raise(Puppet::DevError) do
             cron.value(:command)
         end

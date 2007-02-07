@@ -43,14 +43,14 @@ class Server
 
             desc = []
             CHECKPARAMS.each { |check|
-                if state = obj.state(check)
-                    unless state.is
+                if property = obj.property(check)
+                    unless property.is
                         mount.debug "Manually retrieving info for %s" % check
-                        state.retrieve
+                        property.retrieve
                     end
-                    desc << state.is
+                    desc << property.is
                 else
-                    if check == "checksum" and obj.state(:type).is == "file"
+                    if check == "checksum" and obj.property(:type).is == "file"
                         mount.notice "File %s does not have data for %s" %
                             [obj.name, check]
                     end

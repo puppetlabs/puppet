@@ -17,7 +17,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         attr_accessor :default_target, :target
     end
 
-    attr_accessor :state_hash
+    attr_accessor :property_hash
 
     def self.clean(hash)
         newhash = hash.dup
@@ -119,14 +119,14 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     # Create attribute methods for each of the model's non-metaparam attributes.
     def self.model=(model)
-        [model.validstates, model.parameters].flatten.each do |attr|
+        [model.validproperties, model.parameters].flatten.each do |attr|
             attr = symbolize(attr)
             define_method(attr) do
                 # If it's not a valid field for this record type (which can happen
                 # when different platforms support different fields), then just
                 # return the should value, so the model shuts up.
-                if @state_hash[attr] or self.class.valid_attr?(self.class.name, attr)
-                    @state_hash[attr] || :absent
+                if @property_hash[attr] or self.class.valid_attr?(self.class.name, attr)
+                    @property_hash[attr] || :absent
                 else
                     @model.should(attr)
                 end
@@ -137,19 +137,19 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
                 modeltarget = @model[:target] || self.class.default_target
 
                 # If they're the same, then just mark that one as modified
-                if @state_hash[:target] and @state_hash[:target] == modeltarget
+                if @property_hash[:target] and @property_hash[:target] == modeltarget
                     self.class.modified(modeltarget)
                 else
                     # Always mark the modeltarget as modified, and if there's
-                    # and old state_hash target, mark it as modified and replace
+                    # and old property_hash target, mark it as modified and replace
                     # it.
                     self.class.modified(modeltarget)
-                    if @state_hash[:target]
-                        self.class.modified(@state_hash[:target])
+                    if @property_hash[:target]
+                        self.class.modified(@property_hash[:target])
                     end
-                    @state_hash[:target] = modeltarget
+                    @property_hash[:target] = modeltarget
                 end
-                @state_hash[attr] = val
+                @property_hash[attr] = val
             end
         end
         @model = model
@@ -185,16 +185,16 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             r[:ensure] = :present
         end
 
-        # Set current state on any existing resource instances.
+        # Set current property on any existing resource instances.
         target_records(target).find_all { |i| i.is_a?(Hash) }.each do |record|
             # Find any model instances whose names match our instances.
             if instance = self.model[record[:name]]
                 next unless instance.provider.is_a?(self)
-                instance.provider.state_hash = record
+                instance.provider.property_hash = record
             elsif self.respond_to?(:match)
                 if instance = self.match(record)
                     record[:name] = instance[:name]
-                    instance.provider.state_hash = record
+                    instance.provider.property_hash = record
                 end
             end
         end
@@ -260,12 +260,12 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     end
 
     def create
-        @model.class.validstates.each do |state|
-            if value = @model.should(state)
-                @state_hash[state] = value
+        @model.class.validproperties.each do |property|
+            if value = @model.should(property)
+                @property_hash[property] = value
             end
         end
-        self.class.modified(@state_hash[:target] || self.class.default_target)
+        self.class.modified(@property_hash[:target] || self.class.default_target)
         return (@model.class.name.to_s + "_created").intern
     end
 
@@ -276,7 +276,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     end
 
     def exists?
-        if @state_hash[:ensure] == :absent or @state_hash[:ensure].nil?
+        if @property_hash[:ensure] == :absent or @property_hash[:ensure].nil?
             return false
         else
             return true
@@ -289,24 +289,24 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
         # If the target isn't set, then this is our first modification, so
         # mark it for flushing.
-        unless @state_hash[:target]
-            @state_hash[:target] = @model[:target] || self.class.default_target
-            self.class.modified(@state_hash[:target])
+        unless @property_hash[:target]
+            @property_hash[:target] = @model[:target] || self.class.default_target
+            self.class.modified(@property_hash[:target])
         end
-        @state_hash[:name] ||= @model.name
+        @property_hash[:name] ||= @model.name
 
-        self.class.flush(@state_hash)
+        self.class.flush(@property_hash)
     end
 
     def initialize(model)
         super
 
-        # See if there's already a matching state_hash in the records list;
+        # See if there's already a matching property_hash in the records list;
         # else, use a default value.
         # We provide a default for 'ensure' here, because the provider will
         # override it if the thing exists, but it won't touch it if it doesn't
         # exist.
-        @state_hash = self.class.record?(model[:name]) ||
+        @property_hash = self.class.record?(model[:name]) ||
             {:record_type => self.class.name, :ensure => :absent}
     end
 end

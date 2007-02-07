@@ -77,19 +77,19 @@ class TestFileSources < Test::Unit::TestCase
         file = Puppet::Type.newfile :path => dest, :source => source,
             :title => "copier"
         
-        state = file.state(:source)
+        property = file.property(:source)
         
         # First try describing with a normal source
         result = nil
         assert_nothing_raised do
-            result = state.describe(source)
+            result = property.describe(source)
         end
         assert_nil(result, "Got a result back when source is missing")
         
         # Now make a remote directory
         Dir.mkdir(source)
         assert_nothing_raised do
-            result = state.describe(source)
+            result = property.describe(source)
         end
         assert_equal("directory", result[:type])
         
@@ -97,7 +97,7 @@ class TestFileSources < Test::Unit::TestCase
         Dir.rmdir(source)
         File.open(source, "w") { |f| f.puts "yay" }
         assert_nothing_raised do
-            result = state.describe(source)
+            result = property.describe(source)
         end
         assert_equal("file", result[:type])
         assert(result[:checksum], "did not get value for checksum")
@@ -115,18 +115,18 @@ class TestFileSources < Test::Unit::TestCase
         File.symlink(target, source)
         
         file[:links] = :ignore
-        assert_nil(state.describe(source),
+        assert_nil(property.describe(source),
             "Links were not ignored")
         
         file[:links] = :manage
         # We can't manage links at this point
         assert_raise(Puppet::FileServerError) do
-            state.describe(source)
+            property.describe(source)
         end
         
         # And then make sure links get followed, otherwise
         file[:links] = :follow
-        assert_equal("file", state.describe(source)[:type])
+        assert_equal("file", property.describe(source)[:type])
     end
     
     def test_source_retrieve
@@ -136,38 +136,39 @@ class TestFileSources < Test::Unit::TestCase
         file = Puppet::Type.newfile :path => dest, :source => source,
             :title => "copier"
         
-        assert(file.state(:checksum), "source state did not create checksum state")
-        state = file.state(:source)
-        assert(state, "did not get source state")
+        assert(file.property(:checksum), "source property did not create checksum property")
+        property = file.property(:source)
+        assert(property, "did not get source property")
         
         # Make sure the munge didn't actually change the source
-        assert_equal([source], state.should, "munging changed the source")
+        assert_equal([source], property.should, "munging changed the source")
         
         # First try it with a missing source
         assert_nothing_raised do
-            state.retrieve
+            property.retrieve
         end
         
-        # And make sure the state considers itself in sync, since there's nothing
+        # And make sure the property considers itself in sync, since there's nothing
         # to do
-        assert(state.insync?, "source thinks there's work to do with no file or dest")
+        assert(property.insync?, "source thinks there's work to do with no file or dest")
         
-        # Now make the dest a directory, and make sure the object sets :ensure up to
-        # create a directory
+        # Now make the dest a directory, and make sure the object sets :ensure
+        # up to create a directory
         Dir.mkdir(source)
         assert_nothing_raised do
-            state.retrieve
+            property.retrieve
         end
         assert_equal(:directory, file.should(:ensure),
             "Did not set to create directory")
         
-        # And make sure the source state won't try to do anything with a remote dir
-        assert(state.insync?, "Source was out of sync even tho remote is dir")
+        # And make sure the source property won't try to do anything with a
+        # remote dir
+        assert(property.insync?, "Source was out of sync even tho remote is dir")
         
         # Now remove the source, and make sure :ensure was not modified
         Dir.rmdir(source)
         assert_nothing_raised do
-            state.retrieve
+            property.retrieve
         end
         assert_equal(:directory, file.should(:ensure),
             "Did not keep :ensure setting")
@@ -177,7 +178,7 @@ class TestFileSources < Test::Unit::TestCase
         File.chmod(0755, source)
         
         assert_nothing_raised do
-            state.retrieve
+            property.retrieve
         end
         assert_equal(:file, file.should(:ensure),
             "Did not make correct :ensure setting")
@@ -186,11 +187,11 @@ class TestFileSources < Test::Unit::TestCase
         
         # Now let's make sure that we get the first found source
         fake = tempfile()
-        state.should = [fake, source]
+        property.should = [fake, source]
         assert_nothing_raised do
-            state.retrieve
+            property.retrieve
         end
-        assert_equal(Digest::MD5.hexdigest(File.read(source)), state.checksum.sub(/^\{\w+\}/, ''), 
+        assert_equal(Digest::MD5.hexdigest(File.read(source)), property.checksum.sub(/^\{\w+\}/, ''), 
             "Did not catch later source")
     end
     
@@ -201,33 +202,33 @@ class TestFileSources < Test::Unit::TestCase
         file = Puppet::Type.newfile :path => dest, :source => source,
             :title => "copier"
         
-        state = file.state(:source)
-        assert(state, "did not get source state")
+        property = file.property(:source)
+        assert(property, "did not get source property")
         
         # Try it with no source at all
         file.retrieve
-        assert(state.insync?, "source state not in sync with missing source")
+        assert(property.insync?, "source property not in sync with missing source")
 
         # with a directory
         Dir.mkdir(source)
         file.retrieve
-        assert(state.insync?, "source state not in sync with directory as source")
+        assert(property.insync?, "source property not in sync with directory as source")
         Dir.rmdir(source)
         
         # with a file
         File.open(source, "w") { |f| f.puts "yay" }
         file.retrieve
-        assert(!state.insync?, "source state was in sync when file was missing")
+        assert(!property.insync?, "source property was in sync when file was missing")
         
         # With a different file
         File.open(dest, "w") { |f| f.puts "foo" }
         file.retrieve
-        assert(!state.insync?, "source state was in sync with different file")
+        assert(!property.insync?, "source property was in sync with different file")
         
         # with matching files
         File.open(dest, "w") { |f| f.puts "yay" }
         file.retrieve
-        assert(state.insync?, "source state was not in sync with matching file")
+        assert(property.insync?, "source property was not in sync with matching file")
     end
     
     def test_source_sync
@@ -236,16 +237,16 @@ class TestFileSources < Test::Unit::TestCase
 
         file = Puppet::Type.newfile :path => dest, :source => source,
             :title => "copier"
-        state = file.state(:source)
+        property = file.property(:source)
         
         File.open(source, "w") { |f| f.puts "yay" }
         
         file.retrieve
-        assert(! state.insync?, "source thinks it's in sync")
+        assert(! property.insync?, "source thinks it's in sync")
         
         event = nil
         assert_nothing_raised do
-            event = state.sync
+            event = property.sync
         end
         assert_equal(:file_created, event)
         assert_equal(File.read(source), File.read(dest),
@@ -254,9 +255,9 @@ class TestFileSources < Test::Unit::TestCase
         # Now write something different
         File.open(source, "w") { |f| f.puts "rah" }
         file.retrieve
-        assert(! state.insync?, "source should be out of sync")
+        assert(! property.insync?, "source should be out of sync")
         assert_nothing_raised do
-            event = state.sync
+            event = property.sync
         end
         assert_equal(:file_changed, event)
         assert_equal(File.read(source), File.read(dest),
@@ -688,7 +689,7 @@ class TestFileSources < Test::Unit::TestCase
 
         file.retrieve
 
-        assert(file.is(:checksum), "File does not have a checksum state")
+        assert(file.is(:checksum), "File does not have a checksum property")
 
         assert_equal(0, file.evaluate.length, "File produced changes")
 

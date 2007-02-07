@@ -104,13 +104,20 @@ class TestSSHKey < Test::Unit::TestCase
 
         key.retrieve
 
-        key[:alias] = %w{madstop kirby yayness}
+        aliases = %w{madstop kirby yayness}
+        key[:alias] = aliases
 
+        params = key.instance_variable_get("@parameters")
         assert_events([:sshkey_changed], key)
+
+        aliases.each do |name|
+            assert_equal(key, key.class[name],
+                "alias was not set")
+        end
     end
 
-    def test_aliasisstate
-        assert_equal(:state, @sshkeytype.attrtype(:alias))
+    def test_aliasisproperty
+        assert_equal(:property, @sshkeytype.attrtype(:alias))
     end
 
     def test_multivalues

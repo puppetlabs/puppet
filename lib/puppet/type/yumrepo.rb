@@ -1,16 +1,14 @@
 # Description of yum repositories
 
-require 'puppet/statechange'
+require 'puppet/propertychange'
 require 'puppet/inifile'
 require 'puppet/type/parsedtype'
 
 module Puppet
-
-    # A state for one entry in a .ini-style file
-    class IniState < Puppet::State
-
+    # A property for one entry in a .ini-style file
+    class IniProperty < Puppet::Property
         def insync?
-            # A should state of :absent is the same as nil
+            # A should property of :absent is the same as nil
             if is.nil? && (should.nil? || should == :absent)
                 return true
             end
@@ -39,8 +37,8 @@ module Puppet
             name.to_s
         end
 
-        # Set the key associated with this state to KEY, instead
-        # of using the state's NAME
+        # Set the key associated with this property to KEY, instead
+        # of using the property's NAME
         def self.inikey(key)
             # Override the inikey instance method
             # Is there a way to do this without resorting to strings ?
@@ -51,7 +49,7 @@ module Puppet
 
     end
 
-    # Doc string for states that can be made 'absent'
+    # Doc string for properties that can be made 'absent'
     ABSENT_DOC="Set this to 'absent' to remove it from the file completely"
 
     newtype(:yumrepo) do
@@ -85,17 +83,17 @@ module Puppet
 
         def self.list
             l = []
-            check = validstates
+            check = validproperties
             clear
             inifile.each_section do |s|
                 next if s.name == "main"
                 obj = create(:name => s.name, :check => check)
                 obj.retrieve
-                obj.eachstate do |state|
-                    if state.is.nil?
-                        obj.delete(state.name)
+                obj.eachproperty do |property|
+                    if property.is.nil?
+                        obj.delete(property.name)
                     else
-                        state.should = state.is
+                        property.should = property.is
                     end
                 end
                 obj.delete(:check)
@@ -203,16 +201,16 @@ module Puppet
             # writing the whole file
             # A cleaner solution would be to either use the composite
             # pattern and encapsulate all changes into a change that does
-            # not depend on a state and triggers storing, or insert another
+            # not depend on a property and triggers storing, or insert another
             # change at the end of changes to trigger storing Both
-            # solutions require that the StateChange interface be
+            # solutions require that the PropertyChange interface be
             # abstracted so that it can work with a change that is not
-            # directly backed by a State
+            # directly backed by a Property
             unless changes.empty?
                 class << changes[-1]
                     def go
                         result = super
-                        self.state.parent.store
+                        self.property.parent.store
                         return result
                     end
                 end
@@ -230,7 +228,7 @@ module Puppet
             isnamevar
         end
 
-        newstate(:descr, :parent => Puppet::IniState) do
+        newproperty(:descr, :parent => Puppet::IniProperty) do
             desc "A human readable description of the repository. 
                   #{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
@@ -238,7 +236,7 @@ module Puppet
             inikey "name"
         end
         
-        newstate(:mirrorlist, :parent => Puppet::IniState) do
+        newproperty(:mirrorlist, :parent => Puppet::IniProperty) do
             desc "The URL that holds the list of mirrors for this repository.
                   #{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
@@ -246,21 +244,21 @@ module Puppet
             newvalue(/.*/) { }
         end
 
-        newstate(:baseurl, :parent => Puppet::IniState) do
+        newproperty(:baseurl, :parent => Puppet::IniProperty) do
             desc "The URL for this repository.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
             # Should really check that it's a valid URL
             newvalue(/.*/) { }
         end
         
-        newstate(:enabled, :parent => Puppet::IniState) do
+        newproperty(:enabled, :parent => Puppet::IniProperty) do
             desc "Whether this repository is enabled or disabled. Possible 
                   values are '0', and '1'.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
             newvalue(%r{(0|1)}) { }
         end
 
-        newstate(:gpgcheck, :parent => Puppet::IniState) do
+        newproperty(:gpgcheck, :parent => Puppet::IniProperty) do
             desc "Whether to check the GPG signature on packages installed
                   from this repository. Possible values are '0', and '1'.
                   \n#{ABSENT_DOC}"
@@ -268,7 +266,7 @@ module Puppet
             newvalue(%r{(0|1)}) { }
         end
 
-        newstate(:gpgkey, :parent => Puppet::IniState) do
+        newproperty(:gpgkey, :parent => Puppet::IniProperty) do
             desc "The URL for the GPG key with which packages from this
                   repository are signed.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
@@ -276,14 +274,14 @@ module Puppet
             newvalue(/.*/) { }
         end
 
-        newstate(:include, :parent => Puppet::IniState) do
+        newproperty(:include, :parent => Puppet::IniProperty) do
             desc "A URL from which to include the config.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
             # Should really check that it's a valid URL
             newvalue(/.*/) { }
         end
 
-        newstate(:exclude, :parent => Puppet::IniState) do
+        newproperty(:exclude, :parent => Puppet::IniProperty) do
             desc "List of shell globs. Matching packages will never be
                   considered in updates or installs for this repo.
                   #{ABSENT_DOC}"
@@ -291,7 +289,7 @@ module Puppet
             newvalue(/.*/) { }
         end
 
-        newstate(:includepkgs, :parent => Puppet::IniState) do
+        newproperty(:includepkgs, :parent => Puppet::IniProperty) do
             desc "List of shell globs. If this is set, only packages
                   matching one of the globs will be considered for
                   update or install.\n#{ABSENT_DOC}"
@@ -299,7 +297,7 @@ module Puppet
             newvalue(/.*/) { }
         end
 
-        newstate(:enablegroups, :parent => Puppet::IniState) do
+        newproperty(:enablegroups, :parent => Puppet::IniProperty) do
             desc "Determines whether yum will allow the use of
               package groups for this  repository. Possible 
               values are '0', and '1'.\n#{ABSENT_DOC}"
@@ -307,27 +305,27 @@ module Puppet
             newvalue(%r{(0|1)}) { }
         end
 
-        newstate(:failovermethod, :parent => Puppet::IniState) do
+        newproperty(:failovermethod, :parent => Puppet::IniProperty) do
             desc "Either 'roundrobin' or 'priority'.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
             newvalue(%r(roundrobin|priority)) { }
         end
 
-        newstate(:keepalive, :parent => Puppet::IniState) do
+        newproperty(:keepalive, :parent => Puppet::IniProperty) do
             desc "Either '1' or '0'. This tells yum whether or not HTTP/1.1 
               keepalive  should  be  used with this repository.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
             newvalue(%r{(0|1)}) { }
         end
 
-        newstate(:timeout, :parent => Puppet::IniState) do
+        newproperty(:timeout, :parent => Puppet::IniProperty) do
             desc "Number of seconds to wait for a connection before timing 
                   out.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
             newvalue(%r{[0-9]+}) { }
         end
 
-        newstate(:metadata_expire, :parent => Puppet::IniState) do
+        newproperty(:metadata_expire, :parent => Puppet::IniProperty) do
             desc "Number of seconds after which the metadata will expire.
                   #{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }

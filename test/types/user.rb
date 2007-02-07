@@ -14,16 +14,16 @@ class TestUser < Test::Unit::TestCase
         apimethods
         def create
             @ensure = :present
-            @model.eachstate do |state|
-                next if state.name == :ensure
-                state.sync
+            @model.eachproperty do |property|
+                next if property.name == :ensure
+                property.sync
             end
         end
 
         def delete
             @ensure = :absent
-            @model.eachstate do |state|
-                send(state.name.to_s + "=", :absent)
+            @model.eachproperty do |property|
+                send(property.name.to_s + "=", :absent)
             end
         end
 
@@ -287,7 +287,7 @@ class TestUser < Test::Unit::TestCase
             user.retrieve
         }
 
-        assert_instance_of(String, user.state(:groups).should)
+        assert_instance_of(String, user.property(:groups).should)
 
         # Some tests to verify that groups work correctly startig from nothing
         # Remove our user
@@ -308,9 +308,9 @@ class TestUser < Test::Unit::TestCase
 
         user.retrieve
 
-        assert(user.state(:groups).is, "Did not retrieve group list")
+        assert(user.property(:groups).is, "Did not retrieve group list")
 
-        list = user.state(:groups).is
+        list = user.property(:groups).is
         assert_equal(extra.sort, list.sort, "Group list is not equal")
 
         # Now set to our main list of groups
@@ -318,7 +318,7 @@ class TestUser < Test::Unit::TestCase
             user[:groups] = main
         }
 
-        assert_equal((main + extra).sort, user.state(:groups).should.split(",").sort)
+        assert_equal((main + extra).sort, user.property(:groups).should.split(",").sort)
 
         assert_nothing_raised {
             user.retrieve
@@ -334,7 +334,7 @@ class TestUser < Test::Unit::TestCase
 
         # We're not managing inclusively, so it should keep the old group
         # memberships and add the new ones
-        list = user.state(:groups).is
+        list = user.property(:groups).is
         assert_equal((main + extra).sort, list.sort, "Group list is not equal")
 
         assert_nothing_raised {
@@ -351,14 +351,14 @@ class TestUser < Test::Unit::TestCase
             user.retrieve
         }
 
-        list = user.state(:groups).is
+        list = user.property(:groups).is
         assert_equal(main.sort, list.sort, "Group list is not equal")
 
         # Set the values a bit differently.
-        user.state(:groups).should = list.sort { |a,b| b <=> a }
-        user.state(:groups).is = list.sort
+        user.property(:groups).should = list.sort { |a,b| b <=> a }
+        user.property(:groups).is = list.sort
 
-        assert(user.state(:groups).insync?, "Groups state did not sort groups")
+        assert(user.property(:groups).insync?, "Groups property did not sort groups")
 
         user.delete(:groups)
     end
@@ -417,7 +417,7 @@ class TestUser < Test::Unit::TestCase
         assert(! user.provider.exists?, "User did not get deleted")
     end
 
-    def test_allusermodelstates
+    def test_allusermodelproperties
         user = nil
         name = "pptest"
 
@@ -433,7 +433,7 @@ class TestUser < Test::Unit::TestCase
         assert_equal("Puppet Testing User", user.provider.comment,
             "Comment was not set")
 
-        tests = Puppet.type(:user).validstates
+        tests = Puppet.type(:user).validproperties
 
         tests.each { |test|
             if self.respond_to?("attrtest_%s" % test)

@@ -5,6 +5,7 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppettest'
 require 'puppet'
 
+unless Facter.value(:operatingsystem) == "Darwin"
 class TestMounts < Test::Unit::TestCase
 	include PuppetTest
 
@@ -20,9 +21,9 @@ class TestMounts < Test::Unit::TestCase
 
         def create
             @ensure = :present
-            @model.class.validstates.each do |state|
-                if value = @model.should(state)
-                    self.send(state.to_s + "=", value)
+            @model.class.validproperties.each do |property|
+                if value = @model.should(property)
+                    self.send(property.to_s + "=", value)
                 end
             end
         end
@@ -96,7 +97,7 @@ class TestMounts < Test::Unit::TestCase
             :device => "/dev/dsk%s" % @pcount,
         }
 
-        [@mount.validstates, @mount.parameters].flatten.each do |field|
+        [@mount.validproperties, @mount.parameters].flatten.each do |field|
             next if [:path, :provider, :target, :ensure, :remounts].include?(field)
             unless args.include? field
                 args[field] = "fake%s" % @pcount
@@ -111,9 +112,9 @@ class TestMounts < Test::Unit::TestCase
         mount[:ensure] = :mounted
 
         assert_apply(mount)
-        mount.send(:states).each do |state|
-            assert_equal(state.should, mount.provider.send(state.name),
-                "%s was not set to %s" % [state.name, state.should])
+        mount.send(:properties).each do |property|
+            assert_equal(property.should, mount.provider.send(property.name),
+                "%s was not set to %s" % [property.name, property.should])
         end
         assert_events([], mount)
 
@@ -202,14 +203,14 @@ class TestMounts < Test::Unit::TestCase
         assert(root, "Could not find root root filesystem in list results")
 
         assert(root.is(:device), "Device was not set")
-        assert(root.state(:device).value, "Device was not returned by value method")
+        assert(root.property(:device).value, "Device was not returned by value method")
 
         assert_nothing_raised do
             root.retrieve
         end
 
         assert(root.is(:device), "Device was not set")
-        assert(root.state(:device).value, "Device was not returned by value method")
+        assert(root.property(:device).value, "Device was not returned by value method")
     end
     end
 
@@ -304,6 +305,7 @@ class TestMounts < Test::Unit::TestCase
 
         assert_nil(mount.should(:ensure), "Found default for ensure")
     end
+end
 end
 
 # $Id$

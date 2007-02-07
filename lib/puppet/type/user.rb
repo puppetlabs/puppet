@@ -1,29 +1,29 @@
 require 'etc'
 require 'facter'
-require 'puppet/type/state'
+require 'puppet/type/property'
 
 module Puppet
     newtype(:user) do
-        newstate(:ensure) do
+        newproperty(:ensure) do
             newvalue(:present, :event => :user_created) do
                 # Verify that they have provided everything necessary, if we
                 # are trying to manage the user
 #                if @parent.managed?
-#                    @parent.class.states.each { |state|
-#                        next if stateobj = @parent.state(state.name)
-#                        next if state.name == :ensure
+#                    @parent.class.properties.each { |property|
+#                        next if propertyobj = @parent.property(property.name)
+#                        next if property.name == :ensure
 #
-#                        unless state.autogen? or state.isoptional?
-#                            if state.method_defined?(:autogen)
-#                                @parent[state.name] = :auto
+#                        unless property.autogen? or property.isoptional?
+#                            if property.method_defined?(:autogen)
+#                                @parent[property.name] = :auto
 #                            else
 #                                @parent.fail "Users require a value for %s" %
-#                                    state.name
+#                                    property.name
 #                            end
 #                        end
 #                    }
 #
-#                    #if @states.empty?
+#                    #if @properties.empty?
 #                    #    @parent[:comment] = @parent[:name]
 #                    #end
 #                end
@@ -93,7 +93,7 @@ module Puppet
 
         end
 
-        newstate(:uid) do
+        newproperty(:uid) do
             desc "The user ID.  Must be specified numerically.  For new users
                 being created, if no user ID is specified then one will be
                 chosen automatically, which will likely result in the same user
@@ -114,7 +114,7 @@ module Puppet
             end
         end
 
-        newstate(:gid) do
+        newproperty(:gid) do
             desc "The user's primary group.  Can be specified numerically or
                 by name."
             
@@ -164,21 +164,21 @@ module Puppet
             end
         end
 
-        newstate(:comment) do
+        newproperty(:comment) do
             desc "A description of the user.  Generally is a user's full name."
         end
 
-        newstate(:home) do
+        newproperty(:home) do
             desc "The home directory of the user.  The directory must be created
                 separately and is not currently checked for existence."
         end
 
-        newstate(:shell) do
+        newproperty(:shell) do
             desc "The user's login shell.  The shell must exist and be
                 executable."
         end
 
-        newstate(:groups) do
+        newproperty(:groups) do
             desc "The groups of which the user is a member.  The primary
                 group should not be listed.  Multiple groups should be
                 specified as an array."
@@ -243,24 +243,24 @@ module Puppet
             end
         end
 
-        # these three states are all implemented differently on each platform,
+        # these three properties are all implemented differently on each platform,
         # so i'm disabling them for now
 
-        # FIXME Puppet::State::UserLocked is currently non-functional
-        #newstate(:locked) do
+        # FIXME Puppet::Property::UserLocked is currently non-functional
+        #newproperty(:locked) do
         #    desc "The expected return code.  An error will be returned if the
         #        executed command returns something else."
         #end
 
-        # FIXME Puppet::State::UserExpire is currently non-functional
-        #newstate(:expire) do
+        # FIXME Puppet::Property::UserExpire is currently non-functional
+        #newproperty(:expire) do
         #    desc "The expected return code.  An error will be returned if the
         #        executed command returns something else."
         #    @objectaddflag = "-e"
         #end
 
-        # FIXME Puppet::State::UserInactive is currently non-functional
-        #newstate(:inactive) do
+        # FIXME Puppet::Property::UserInactive is currently non-functional
+        #newproperty(:inactive) do
         #    desc "The expected return code.  An error will be returned if the
         #        executed command returns something else."
         #    @objectaddflag = "-f"
@@ -307,11 +307,9 @@ module Puppet
 
         # Autorequire the group, if it's around
         autorequire(:group) do
-            #return nil unless @states.include?(:gid)
-            #return nil unless groups = @states[:gid].shouldorig
             autos = []
 
-            if @states.include?(:gid) and groups = @states[:gid].shouldorig
+            if obj = @parameters[:gid] and groups = obj.shouldorig
                 groups = groups.collect { |group|
                     if group =~ /^\d+$/
                         Integer(group)
@@ -334,7 +332,7 @@ module Puppet
                 }
             end
 
-            if @states.include?(:groups) and groups = @states[:groups].should
+            if obj = @parameters[:groups] and groups = obj.should
                 autos += groups.split(",")
             end
 
@@ -359,27 +357,18 @@ module Puppet
 
         def retrieve
             absent = false
-            states().each { |state|
+            properties().each { |property|
                 if absent
-                    state.is = :absent
+                    property.is = :absent
                 else
-                    state.retrieve
+                    property.retrieve
                 end
 
-                if state.name == :ensure and state.is == :absent
+                if property.name == :ensure and property.is == :absent
                     absent = true
                     next
                 end
             }
-            #if provider.exists?
-            #    super
-            #else
-            #    # the user does not exist
-            #    @states.each { |name, state|
-            #        state.is = :absent
-            #    }
-            #    return
-            #end
         end
     end
 end

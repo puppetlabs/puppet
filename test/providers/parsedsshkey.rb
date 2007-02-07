@@ -72,7 +72,7 @@ class TestParsedSSHKey < Test::Unit::TestCase
         
         assert(key.alias, "No alias set for key")
         
-        hash = key.state_hash.dup
+        hash = key.property_hash.dup
         text = @provider.target_object(file).read
         names = [key.name, key.alias].flatten.join(",")
         

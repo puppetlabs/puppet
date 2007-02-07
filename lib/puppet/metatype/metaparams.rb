@@ -49,7 +49,7 @@ class Puppet::Type
     end
 
     newmetaparam(:check) do
-        desc "States which should have their values retrieved
+        desc "Propertys which should have their values retrieved
             but which should not actually be modified.  This is currently used
             internally, but will eventually be used for querying, so that you
             could specify that you wanted to check the install state of all
@@ -57,10 +57,10 @@ class Puppet::Type
             on all packages."
 
         munge do |args|
-            # If they've specified all, collect all known states
+            # If they've specified all, collect all known properties
             if args == :all
-                args = @parent.class.states.collect do |state|
-                    state.name
+                args = @parent.class.properties.collect do |property|
+                    property.name
                 end
             end
 
@@ -73,20 +73,18 @@ class Puppet::Type
                     [self.class, self.name]
             end
 
-            args.each { |state|
-                unless state.is_a?(Symbol)
-                    state = state.intern
+            args.each { |property|
+                unless property.is_a?(Symbol)
+                    property = property.intern
                 end
-                next if @parent.statedefined?(state)
+                next if @parent.propertydefined?(property)
 
-                stateklass = @parent.class.validstate?(state)
-
-                unless stateklass
+                unless propertyklass = @parent.class.validproperty?(property)
                     raise Puppet::Error, "%s is not a valid attribute for %s" %
-                        [state, self.class.name]
+                        [property, self.class.name]
                 end
-                next unless stateklass.checkable?
-                @parent.newstate(state)
+                next unless propertyklass.checkable?
+                @parent.newattr(property)
             }
         end
     end

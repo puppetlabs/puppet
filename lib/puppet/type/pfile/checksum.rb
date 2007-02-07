@@ -3,7 +3,7 @@
 # This state never actually modifies the system, it only notices when the system
 # changes on its own.
 module Puppet
-    Puppet.type(:file).newstate(:checksum) do
+    Puppet.type(:file).newproperty(:checksum) do
         desc "How to check whether a file has changed.  This state is used internally
             for file copying, but it can also be used to monitor files somewhat
             like Tripwire without managing the file contents in any way.  You can
@@ -229,7 +229,7 @@ module Puppet
                 if @is == :absent
                     # if they're copying, then we won't worry about the file
                     # not existing yet
-                    unless @parent.state(:source)
+                    unless @parent.property(:source)
                         self.warning(
                             "File %s does not exist -- cannot checksum" %
                             @parent[:path]

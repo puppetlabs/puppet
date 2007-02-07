@@ -1,6 +1,6 @@
 
 require 'etc'
-require 'puppet/type/state'
+require 'puppet/type/property'
 require 'puppet/type/pfile'
 
 module Puppet
@@ -17,7 +17,7 @@ module Puppet
 
         copyparam(Puppet.type(:file), :backup)
         
-        newstate(:ensure) do
+        newproperty(:ensure) do
             desc "An internal attribute used to determine which files should be removed."
             require 'etc'
 
@@ -25,7 +25,7 @@ module Puppet
             
             TATTRS = [:age, :size]
             
-            defaultto :anything # just so we always get this state
+            defaultto :anything # just so we always get this property
 
             def change_to_s
                 start = "Tidying"
@@ -49,8 +49,8 @@ module Puppet
                 else
                     @out = []
                     TATTRS.each do |param|
-                        if state = @parent.state(param)
-                            unless state.insync?
+                        if property = @parent.property(param)
+                            unless property.insync?
                                 @out << param
                             end
                         end
@@ -76,8 +76,8 @@ module Puppet
                 end
 
                 TATTRS.each { |param|
-                    if state = @parent.state(param)
-                        state.is = state.assess(stat)
+                    if property = @parent.property(param)
+                        property.is = property.assess(stat)
                     end
                 }
             end
@@ -115,7 +115,7 @@ module Puppet
             end
         end
 
-        newstate(:age) do
+        newproperty(:age) do
             desc "Tidy files whose age is equal to or greater than
                 the specified time.  You can choose seconds, minutes,
                 hours, days, or weeks by specifying the first letter of any
@@ -175,7 +175,7 @@ module Puppet
             end
         end
 
-        newstate(:size) do
+        newproperty(:size) do
             desc "Tidy files whose size is equal to or greater than
                 the specified size.  Unqualified values are in kilobytes, but
                 *b*, *k*, and *m* can be appended to specify *bytes*, *kilobytes*,
@@ -261,8 +261,8 @@ module Puppet
         def initialize(hash)
             super
 
-            unless  @states.include?(:age) or
-                    @states.include?(:size)
+            unless  @parameters.include?(:age) or
+                    @parameters.include?(:size)
                 unless FileTest.directory?(self[:path])
                     # don't do size comparisons for directories
                     self.fail "Tidy must specify size, age, or both"
@@ -276,12 +276,12 @@ module Puppet
         end
         
         def retrieve
-            # Our ensure state knows how to retrieve everything for us.
-            @states[:ensure].retrieve
+            # Our ensure property knows how to retrieve everything for us.
+            obj = @parameters[:ensure] and obj.retrieve
         end
         
-        # Hack things a bit so we only ever check the ensure state.
-        def states
+        # Hack things a bit so we only ever check the ensure property.
+        def properties
             []
         end
     end

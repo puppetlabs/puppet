@@ -19,10 +19,10 @@ module Puppet
         
         attr_reader :stat
 
-        newstate(:enable) do
+        newproperty(:enable) do
             attr_reader :runlevel
             desc "Whether a service should be enabled to start at boot.
-                This state behaves quite differently depending on the platform;
+                This property behaves quite differently depending on the platform;
                 wherever possible, it relies on local tools to enable or disable
                 a given service.  *true*/*false*/*runlevels*"
 
@@ -93,7 +93,7 @@ module Puppet
         end
 
         # Handle whether the service should actually be running right now.
-        newstate(:ensure) do
+        newproperty(:ensure) do
             desc "Whether a service should be running.  **true**/*false*"
 
             newvalue(:stopped, :event => :service_stopped) do
@@ -125,10 +125,10 @@ module Puppet
 #                        self
 #                end
 
-                if state = @parent.state(:enable)
-                    state.retrieve
-                    unless state.insync?
-                        state.sync
+                if property = @parent.property(:enable)
+                    property.retrieve
+                    unless property.insync?
+                        property.sync
                     end
                 end
 

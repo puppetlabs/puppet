@@ -51,7 +51,7 @@ class Puppet::Type
     def builddepends
         # Handle the requires
         self.class.relationship_params.collect do |klass|
-            if param = @metaparams[klass.name]
+            if param = @parameters[klass.name]
                 param.to_edges
             end
         end.flatten.reject { |r| r.nil? }

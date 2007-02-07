@@ -3,7 +3,7 @@ require 'cgi'
 require 'etc'
 require 'uri'
 require 'fileutils'
-require 'puppet/type/state'
+require 'puppet/type/property'
 require 'puppet/server/fileserver'
 
 module Puppet
@@ -205,11 +205,11 @@ module Puppet
         end
 
         # Autorequire the owner and group of the file.
-        {:user => :owner, :group => :group}.each do |type, state|
+        {:user => :owner, :group => :group}.each do |type, property|
             autorequire(type) do
-                if @states.include?(state)
-                    # The user/group states automatically converts to IDs
-                    next unless should = @states[state].shouldorig
+                if @parameters.include?(property)
+                    # The user/group property automatically converts to IDs
+                    next unless should = @parameters[property].shouldorig
                     val = should[0]
                     if val.is_a?(Integer) or val =~ /^\d+$/
                         nil
@@ -276,7 +276,7 @@ module Puppet
 
                 # If the parent directory is writeable, then we execute
                 # as the user in question.  Otherwise we'll rely on
-                # the 'owner' state to do things.
+                # the 'owner' property to do things.
                 if writeable
                     asuser = self.should(:owner)
                 end
@@ -462,7 +462,7 @@ module Puppet
 
         # Build a recursive map of a link source
         def linkrecurse(recurse)
-            target = @states[:target].should
+            target = @parameters[:target].should
 
             method = :lstat
             if self[:links] == :follow
@@ -481,7 +481,6 @@ module Puppet
 
             # Now that we know our corresponding target is a directory,
             # change our type
-            info "setting ensure to target"
             self[:ensure] = :directory
 
             unless FileTest.readable? target
@@ -544,17 +543,6 @@ module Puppet
                 options = {:recurse => recurse}
 
                 if child = self.newchild(file, true, options)
-                    # Mark any unmanaged files for removal if purge is set.
-                    # Use the array rather than [] because tidy uses this method, too.
-#                    if @parameters.include?(:purge) and self.purge?
-#                        child.info "source: %s" % child.should(:source)
-#                        unless child.managed?
-#                            info "purging %s" % child.ref
-#                            child[:ensure] = :absent
-#                        end
-#                        #else
-#                        #child[:require] = self
-#                    end
                     added << child
                 end
             }
@@ -701,13 +689,13 @@ module Puppet
             
             # We want to do link-recursing before normal recursion so that all
             # of the target stuff gets copied over correctly.
-            if @states.include? :target and ret = self.linkrecurse(recurse)
+            if @parameters.include? :target and ret = self.linkrecurse(recurse)
                 children += ret
             end
             if ret = self.localrecurse(recurse)
                 children += ret
             end
-            if @states.include?(:source) and ret = self.sourcerecurse(recurse)
+            if @parameters.include?(:source) and ret = self.sourcerecurse(recurse)
                 children += ret
             end
 
@@ -799,21 +787,21 @@ module Puppet
         def retrieve
             unless stat = self.stat(true)
                 self.debug "File does not exist"
-                @states.each { |name,state|
-                    state.is = :absent
+                properties().each { |property|
+                    property.is = :absent
                 }
                 
                 # If the file doesn't exist but we have a source, then call
-                # retrieve on that state
-                if @states.include?(:source)
-                    @states[:source].retrieve
+                # retrieve on that property
+                if @parameters.include?(:source)
+                    @parameters[:source].retrieve
                 end
 
                 return
             end
 
-            states().each { |state|
-                state.retrieve
+            properties().each { |property|
+                property.retrieve
             }
         end
 
@@ -840,7 +828,7 @@ module Puppet
             result = []
             found = []
             
-            @states[:source].should.each do |source|
+            @parameters[:source].should.each do |source|
                 sourceobj, path = uri2obj(source)
 
                 # okay, we've got our source object; now we need to
@@ -864,9 +852,10 @@ module Puppet
                     # for conflicting files.
                     next if found.include?(name)
 
-                    # For directories, keep all of the sources, so that sourceselect still works as planned.
+                    # For directories, keep all of the sources, so that
+                    # sourceselect still works as planned.
                     if type == "directory"
-                        newsource = @states[:source].should.collect do |source|
+                        newsource = @parameters[:source].should.collect do |source|
                             source + file
                         end
                     else
@@ -889,25 +878,26 @@ module Puppet
             return result
         end
 
-        # Set the checksum, from another state.  There are multiple states that
-        # modify the contents of a file, and they need the ability to make sure
-        # that the checksum value is in sync.
+        # Set the checksum, from another property.  There are multiple
+        # properties that modify the contents of a file, and they need the
+        # ability to make sure that the checksum value is in sync.
         def setchecksum(sum = nil)
-            if @states.include? :checksum
+            if @parameters.include? :checksum
                 if sum
-                    @states[:checksum].checksum = sum
+                    @parameters[:checksum].checksum = sum
                 else
                     # If they didn't pass in a sum, then tell checksum to
                     # figure it out.
-                    @states[:checksum].retrieve
-                    @states[:checksum].checksum = @states[:checksum].is
+                    @parameters[:checksum].retrieve
+                    @parameters[:checksum].checksum = @parameters[:checksum].is
                 end
             end
         end
 
-        # Stat our file.  Depending on the value of the 'links' attribute, we use
-        # either 'stat' or 'lstat', and we expect the states to use the resulting
-        # stat object accordingly (mostly by testing the 'ftype' value).
+        # Stat our file.  Depending on the value of the 'links' attribute, we
+        # use either 'stat' or 'lstat', and we expect the properties to use the
+        # resulting stat object accordingly (mostly by testing the 'ftype'
+        # value).
         def stat(refresh = false)
             method = :stat
 
@@ -936,7 +926,7 @@ module Puppet
         end
 
         # We have to hack this just a little bit, because otherwise we'll get
-        # an error when the target and the contents are created as states on
+        # an error when the target and the contents are created as properties on
         # the far side.
         def to_trans
             obj = super
@@ -1087,9 +1077,9 @@ module Puppet
         attr_accessor :mount, :root, :server, :local
     end
 
-    # We put all of the states in separate files, because there are so many
+    # We put all of the properties in separate files, because there are so many
     # of them.  The order these are loaded is important, because it determines
-    # the order they are in the state list.
+    # the order they are in the property list.
     require 'puppet/type/pfile/checksum'
     require 'puppet/type/pfile/content'     # can create the file
     require 'puppet/type/pfile/source'      # can create the file

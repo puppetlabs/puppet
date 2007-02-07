@@ -1,13 +1,13 @@
-# The virtual base class for states, which are the self-contained building
+# The virtual base class for properties, which are the self-contained building
 # blocks for actually doing work on the system.
 
 require 'puppet'
 require 'puppet/element'
-require 'puppet/statechange'
+require 'puppet/propertychange'
 require 'puppet/parameter'
 
 module Puppet
-class State < Puppet::Parameter
+class Property < Puppet::Parameter
     attr_accessor :is
 
     # Because 'should' uses an array, we have a special method for handling
@@ -68,7 +68,7 @@ class State < Puppet::Parameter
         @parameteroptions = {}
     end
 
-    # Define a new valid value for a state.  You must provide the value itself,
+    # Define a new valid value for a property.  You must provide the value itself,
     # usually as a symbol, or a regex to match the value.
     #
     # The first argument to the method is either the value itself or a regex.
@@ -168,7 +168,7 @@ class State < Puppet::Parameter
         return event, name
     end
 
-    # How should a state change be printed as a string?
+    # How should a property change be printed as a string?
     def change_to_s
         begin
             if @is == :absent
@@ -213,27 +213,14 @@ class State < Puppet::Parameter
         return event
     end
     
-    # initialize our state
-    def initialize(hash)
-        super()
+    # initialize our property
+    def initialize(hash = {})
         @is = nil
-
-        unless hash.include?(:parent)
-            self.devfail "State %s was not passed a parent" % self
-        end
-        @parent = hash[:parent]
-
-        if hash.include?(:should)
-            self.should = hash[:should]
-        end
-
-        if hash.include?(:is)
-            self.is = hash[:is]
-        end
+        super
     end
 
     def inspect
-        str = "State('%s', " % self.name
+        str = "Property('%s', " % self.name
         if self.is
             str += "@is = '%s', " % [self.is]
         else
@@ -247,9 +234,9 @@ class State < Puppet::Parameter
         end
     end
 
-    # Determine whether the state is in-sync or not.  If @should is
+    # Determine whether the property is in-sync or not.  If @should is
     # not defined or is set to a non-true value, then we do not have
-    # a valid value for it and thus consider the state to be in-sync
+    # a valid value for it and thus consider the property to be in-sync
     # since we cannot fix it.  Otherwise, we expect our should value
     # to be an array, and if @is matches any of those values, then
     # we consider it to be in-sync.
@@ -282,7 +269,7 @@ class State < Puppet::Parameter
 
     # because the @should and @is vars might be in weird formats,
     # we need to set up a mechanism for pretty printing of the values
-    # default to just the values, but this way individual states can
+    # default to just the values, but this way individual properties can
     # override these methods
     def is_to_s
         @is
@@ -301,10 +288,10 @@ class State < Puppet::Parameter
         )
     end
 
-    # each state class must define the name() method, and state instances
+    # each property class must define the name() method, and property instances
     # do not change that name
-    # this implicitly means that a given object can only have one state
-    # instance of a given state class
+    # this implicitly means that a given object can only have one property
+    # instance of a given property class
     def name
         return self.class.name
     end
@@ -325,8 +312,8 @@ class State < Puppet::Parameter
         @parent.provider || @parent
     end
 
-    # By default, call the method associated with the state name on our
-    # provider.  In other words, if the state name is 'gid', we'll call
+    # By default, call the method associated with the property name on our
+    # provider.  In other words, if the property name is 'gid', we'll call
     # 'provider.gid' to retrieve the current value.
     def retrieve
         @is = provider.send(self.class.name)
@@ -422,7 +409,7 @@ class State < Puppet::Parameter
         end
     end
 
-    # The states need to return tags so that logs correctly collect them.
+    # The properties need to return tags so that logs correctly collect them.
     def tags
         unless defined? @tags
             @tags = []
@@ -439,9 +426,14 @@ class State < Puppet::Parameter
         return "%s(%s)" % [@parent.name,self.name]
     end
 
-    # This state will get automatically added to any type that responds
+    # Provide a common hook for setting @should, just like params.
+    def value=(value)
+        self.should = value
+    end
+
+    # This property will get automatically added to any type that responds
     # to the methods 'exists?', 'create', and 'destroy'.
-    class Ensure < Puppet::State
+    class Ensure < Puppet::Property
         @name = :ensure
 
         def self.defaultvalues
@@ -472,11 +464,11 @@ class State < Puppet::Parameter
             end
 
             # This doc will probably get overridden
-            @doc ||= "The basic state that the object should be in."
+            @doc ||= "The basic property that the object should be in."
         end
 
         def self.inherited(sub)
-            # Add in the two states that everyone will have.
+            # Add in the two properties that everyone will have.
             sub.class_eval do
             end
         end
@@ -501,8 +493,8 @@ class State < Puppet::Parameter
 
         def retrieve
             # XXX This is a problem -- whether the object exists or not often
-            # depends on the results of other states, yet we're the first state
-            # to get checked, which means that those other states do not have
+            # depends on the results of other properties, yet we're the first property
+            # to get checked, which means that those other properties do not have
             # @is values set.  This seems to be the source of quite a few bugs,
             # although they're mostly logging bugs, not functional ones.
             if prov = @parent.provider and prov.respond_to?(:exists?)

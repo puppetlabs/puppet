@@ -217,7 +217,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
         hosts.each { |host|
             name = host.model[:name]
             assert(text.include?(name), "Host %s is not in file" % name)
-            hash = host.state_hash
+            hash = host.property_hash
             assert(! hash.empty?, "Could not find host %s" % name)
             assert(hash[:ip], "Could not find ip for host %s" % name)
         }

@@ -1,5 +1,5 @@
 module Puppet
-    Puppet.type(:file).newstate(:content) do
+    Puppet.type(:file).newproperty(:content) do
         desc "Specify the contents of a file as a string.  Newlines, tabs, and
             spaces can be specified using the escaped syntax (e.g., \\n for a
             newline).  The primary purpose of this parameter is to provide a

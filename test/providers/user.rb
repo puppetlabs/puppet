@@ -46,7 +46,7 @@ class TestUserProvider < Test::Unit::TestCase
         end
 
         def current?(param, user)
-            state = Puppet.type(:user).states.find { |st|
+            property = Puppet.type(:user).properties.find { |st|
                 st.name == param
             }
 
@@ -81,7 +81,7 @@ class TestUserProvider < Test::Unit::TestCase
         end
 
         def current?(param, user)
-            state = Puppet.type(:user).states.find { |st|
+            property = Puppet.type(:user).properties.find { |st|
                 st.name == param
             }
 
@@ -99,9 +99,9 @@ class TestUserProvider < Test::Unit::TestCase
     end
 
 
-    def eachstate
-        Puppet::Type.type(:user).validstates.each do |state|
-            yield state
+    def eachproperty
+        Puppet::Type.type(:user).validproperties.each do |property|
+            yield property
         end
     end
 
@@ -170,17 +170,17 @@ class TestUserProvider < Test::Unit::TestCase
         }
         assert(user, "Could not create user provider")
 
-        Puppet::Type.type(:user).validstates.each do |state|
-            next if state == :ensure
+        Puppet::Type.type(:user).validproperties.each do |property|
+            next if property == :ensure
             val = nil
             assert_nothing_raised {
-                val = user.send(state)
+                val = user.send(property)
             }
 
             assert(val != :absent,
-                   "State %s is missing" % state)
+                   "Property %s is missing" % property)
 
-            assert(val, "Did not get value for %s" % state)
+            assert(val, "Did not get value for %s" % property)
         end
     end
 
@@ -411,9 +411,9 @@ class TestUserProvider < Test::Unit::TestCase
 
             user = mkuser(name)
 
-            eachstate do |state|
-                if val = fakedata(user.name, state)
-                    user.model[state] = val
+            eachproperty do |property|
+                if val = fakedata(user.name, property)
+                    user.model[property] = val
                 end
             end
 
@@ -434,7 +434,7 @@ class TestUserProvider < Test::Unit::TestCase
             assert(missing?(user.name), "User was not deleted")
         end
 
-        def test_alluserstates
+        def test_alluserproperties
             user = nil
             name = "pptest"
 
@@ -442,9 +442,9 @@ class TestUserProvider < Test::Unit::TestCase
 
             user = mkuser(name)
 
-            eachstate do |state|
-                if val = fakedata(user.name, state)
-                    user.model[state] = val
+            eachproperty do |property|
+                if val = fakedata(user.name, property)
+                    user.model[property] = val
                 end
             end
 
@@ -456,7 +456,7 @@ class TestUserProvider < Test::Unit::TestCase
             assert_equal("Puppet's Testing User pptest", user.comment,
                 "Comment was not set")
 
-            tests = Puppet::Type.type(:user).validstates
+            tests = Puppet::Type.type(:user).validproperties
 
             just = nil
             tests.each { |test|

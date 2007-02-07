@@ -1,8 +1,8 @@
-# the class that actually walks our resource/state tree, collects the changes,
+# the class that actually walks our resource/property tree, collects the changes,
 # and performs them
 
 require 'puppet'
-require 'puppet/statechange'
+require 'puppet/propertychange'
 
 module Puppet
 class Transaction
@@ -113,9 +113,8 @@ class Transaction
                 if Puppet[:trace]
                     puts detail.backtrace
                 end
-                puts detail
-                change.state.err "change from %s to %s failed: %s" %
-                    [change.state.is_to_s, change.state.should_to_s, detail]
+                change.property.err "change from %s to %s failed: %s" %
+                    [change.property.is_to_s, change.property.should_to_s, detail]
                 @failures[resource] += 1
                 next
                 # FIXME this should support using onerror to determine
@@ -137,7 +136,7 @@ class Transaction
     # Find all of the changed resources.
     def changed?
         @changes.find_all { |change| change.changed }.collect { |change|
-            change.state.parent
+            change.property.parent
         }.uniq
     end
     
@@ -178,7 +177,7 @@ class Transaction
     # Are we deleting this resource?
     def deleting?(changes)
         changes.detect { |change|
-            change.state.name == :ensure and change.should == :absent
+            change.property.name == :ensure and change.should == :absent
         }
     end
 
@@ -188,6 +187,9 @@ class Transaction
             begin
                 children = resource.eval_generate
             rescue => detail
+                if Puppet[:trace]
+                    puts detail.backtrace
+                end
                 resource.err "Failed to generate additional resources during transaction: %s" %
                     detail
                 return nil
@@ -571,7 +573,7 @@ class Transaction
                 # at this point, we would normally do error handling
                 # but i haven't decided what to do for that yet
                 # so just record that a sync failed for a given resource
-                #@@failures[change.state.parent] += 1
+                #@@failures[change.property.parent] += 1
                 # this still could get hairy; what if file contents changed,
                 # but a chmod failed?  how would i handle that error? dern
             end
@@ -584,7 +586,7 @@ class Transaction
             # Now check to see if there are any events for this child.
             # Kind of hackish, since going backwards goes a change at a
             # time, not a child at a time.
-            trigger(change.state.parent)
+            trigger(change.property.parent)
 
             # And return the events for collection
             events

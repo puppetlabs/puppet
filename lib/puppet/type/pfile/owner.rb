@@ -1,5 +1,5 @@
 module Puppet
-    Puppet.type(:file).newstate(:owner) do
+    Puppet.type(:file).newproperty(:owner) do
         require 'etc'
         desc "To whom the file should belong.  Argument can be user name or
             user ID."

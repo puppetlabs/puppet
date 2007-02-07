@@ -48,7 +48,7 @@ module Puppet
             it is a Puppet bug if you need ``exec`` to do your work."
 
         require 'open3'
-        require 'puppet/type/state'
+        require 'puppet/type/property'
 
         # Create a new check mechanism.  It's basically just a parameter that
         # provides one extra 'check' method.
@@ -63,7 +63,7 @@ module Puppet
             @checks.keys
         end
 
-        newstate(:returns) do |state|
+        newproperty(:returns) do |property|
             include Puppet::Util::Execution
             munge do |value|
                 value.to_s
@@ -477,16 +477,16 @@ module Puppet
         end
 
         def output
-            if self.state(:returns).nil?
+            if self.property(:returns).nil?
                 return nil
             else
-                return self.state(:returns).output
+                return self.property(:returns).output
             end
         end
 
         # this might be a very, very bad idea...
         def refresh
-            self.state(:returns).sync
+            self.property(:returns).sync
         end
 
         # Run a command.
@@ -564,7 +564,7 @@ module Puppet
             # if we're not fully qualified, require a path
             if cmd !~ /^\//
                 if self[:path].nil?
-                    self.fail "both unqualifed and specified no search path"
+                    self.fail "'%s' is both unqualifed and specified no search path" % cmd
                 end
             end
         end

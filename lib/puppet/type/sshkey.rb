@@ -6,7 +6,7 @@ module Puppet
         
         ensurable
 
-        newstate(:type) do
+        newproperty(:type) do
             desc "The encryption type used.  Probably ssh-dss or ssh-rsa."
             
             newvalue("ssh-dss")
@@ -15,17 +15,19 @@ module Puppet
             aliasvalue(:rsa, "ssh-rsa")
         end
 
-        newstate(:key) do
+        newproperty(:key) do
             desc "The key itself; generally a long string of hex digits."
         end
 
         # FIXME This should automagically check for aliases to the hosts, just
         # to see if we can automatically glean any aliases.
-        newstate(:alias) do
+        newproperty(:alias) do
             desc "Any alias the host might have.  Multiple values must be
-                specified as an array.  Note that this state has the same name
-                as one of the metaparams; using this state to set aliases will
+                specified as an array.  Note that this parameter has the same name
+                as one of the metaparams; using this parameter to set aliases will
                 make those aliases available in your Puppet scripts."
+
+            attr_accessor :meta
             
             def insync?
                 @is == @should
@@ -49,15 +51,6 @@ module Puppet
                     raise Puppet::Error, "Aliases cannot include whitespace"
                 end
             end
-
-            # Make a puppet alias in addition.
-            munge do |value|
-                unless value == :absent
-                    # Add the :alias metaparam in addition to the state
-                    @parent.newmetaparam(@parent.class.metaparamclass(:alias), value)
-                end
-                value
-            end
         end
 
         newparam(:name) do
@@ -66,7 +59,7 @@ module Puppet
             isnamevar
         end
 
-        newstate(:target) do
+        newproperty(:target) do
             desc "The file in which to store the mount table.  Only used by
                 those providers that write to disk (i.e., not NetInfo)."
 

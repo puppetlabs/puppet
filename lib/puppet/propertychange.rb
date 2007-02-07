@@ -4,29 +4,29 @@
 
 module Puppet
     # Handle all of the work around performing an actual change,
-    # including calling 'sync' on the states and producing events.
-	class StateChange
-        attr_accessor :is, :should, :type, :path, :state, :transaction, :changed, :proxy
+    # including calling 'sync' on the properties and producing events.
+	class PropertyChange
+        attr_accessor :is, :should, :type, :path, :property, :transaction, :changed, :proxy
         
         # The log file generated when this object was changed.
         attr_reader :report
         
-        # Switch the goals of the state, thus running the change in reverse.
+        # Switch the goals of the property, thus running the change in reverse.
         def backward
-            @state.should = @is
-            @state.retrieve
+            @property.should = @is
+            @property.retrieve
 
             unless defined? @transaction
                 raise Puppet::Error,
-                    "StateChange '%s' tried to be executed outside of transaction" %
+                    "PropertyChange '%s' tried to be executed outside of transaction" %
                     self
             end
-            unless @state.insync?
-                @state.info "Backing %s" % self
+            unless @property.insync?
+                @property.info "Backing %s" % self
                 return self.go
             else
-                @state.debug "rollback is already in sync: %s vs. %s" %
-                    [@state.is.inspect, @state.should.inspect]
+                @property.debug "rollback is already in sync: %s vs. %s" %
+                    [@property.is.inspect, @property.should.inspect]
                 return nil
             end
         end
@@ -35,12 +35,16 @@ module Puppet
             self.changed
         end
 
-        def initialize(state)
-            @state = state
-            @path = [state.path,"change"].flatten
-            @is = state.is
+        def initialize(property)
+            unless property.is_a?(Puppet::Type::Property)
+                raise Puppet::DevError, "Got a %s instead of a property" %
+                    property.class
+            end
+            @property = property
+            @path = [property.path,"change"].flatten
+            @is = property.is
 
-            @should = state.should
+            @should = property.should
 
             @changed = false
         end
@@ -51,7 +55,7 @@ module Puppet
             return nil if skip?
 
             # The transaction catches any exceptions here.
-            events = @state.sync
+            events = @property.sync
             if events.nil?
                 return nil
             end
@@ -67,13 +71,13 @@ module Puppet
             return events.collect { |event|
                 # default to a simple event type
                 unless event.is_a?(Symbol)
-                    @state.warning("State '%s' returned invalid event '%s'; resetting to default" %
-                        [@state.class,event])
+                    @property.warning("Property '%s' returned invalid event '%s'; resetting to default" %
+                        [@property.class,event])
 
-                    event = @state.parent.class.name.id2name + "_changed"
+                    event = @property.parent.class.name.id2name + "_changed"
                 end
                 
-                @report = @state.log(@state.change_to_s)
+                @report = @property.log(@property.change_to_s)
                 Puppet::Event.new(
                     :event => event,
                     :transaction => @transaction,
@@ -83,11 +87,11 @@ module Puppet
         end
 
         def forward
-            #@state.debug "moving change forward"
+            #@property.debug "moving change forward"
 
             unless defined? @transaction
                 raise Puppet::Error,
-                    "StateChange '%s' tried to be executed outside of transaction" %
+                    "PropertyChange '%s' tried to be executed outside of transaction" %
                     self
             end
 
@@ -95,31 +99,31 @@ module Puppet
         end
         
         def noop
-            return @state.noop
+            return @property.noop
         end
         
         def skip?
-            if @state.insync?
-                @state.info "Already in sync"
+            if @property.insync?
+                @property.info "Already in sync"
                 return true
             end
 
-            if @state.noop
-                @state.log "is %s, should be %s (noop)" %
-                    [state.is_to_s, state.should_to_s]
-                #@state.debug "%s is noop" % @state
+            if @property.noop
+                @property.log "is %s, should be %s (noop)" %
+                    [property.is_to_s, property.should_to_s]
+                #@property.debug "%s is noop" % @property
                 return true
             end
             return false
         end
         
         def source
-            self.proxy || @state.parent
+            self.proxy || @property.parent
         end
 
         def to_s
             return "change %s.%s(%s)" %
-                [@transaction.object_id, self.object_id, @state.change_to_s]
+                [@transaction.object_id, self.object_id, @property.change_to_s]
             #return "change %s.%s" % [@transaction.object_id, self.object_id]
         end
 	end

@@ -13,12 +13,12 @@ module PuppetTest
             @realmodel.namevar
         end
 
-        def self.validstates
-            Puppet::Type.type(@name).validstates
+        def self.validproperties
+            Puppet::Type.type(@name).validproperties
         end
 
-        def self.validstate?(name)
-            Puppet::Type.type(@name).validstate?(name)
+        def self.validproperty?(name)
+            Puppet::Type.type(@name).validproperty?(name)
         end
 
         def self.to_s
@@ -26,7 +26,7 @@ module PuppetTest
         end
 
         def [](param)
-            if @realmodel.attrtype(param) == :state
+            if @realmodel.attrtype(param) == :property
                 @is[param]
             else
                 @params[param]
@@ -39,7 +39,7 @@ module PuppetTest
                 raise Puppet::DevError, "Invalid attribute %s for %s" %
                     [param, @realmodel.name]
             end
-            if @realmodel.attrtype(param) == :state
+            if @realmodel.attrtype(param) == :property
                 @should[param] = value
             else
                 @params[param] = value
@@ -96,8 +96,8 @@ module PuppetTest
 
         # Set up methods to fake things
         def self.apimethods(*ary)
-            @model.validstates.each do |state|
-                ary << state unless ary.include? state
+            @model.validproperties.each do |property|
+                ary << property unless ary.include? property
             end
             attr_accessor(*ary)
 

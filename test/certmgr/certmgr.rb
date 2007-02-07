@@ -119,7 +119,7 @@ class TestCertMgr < Test::Unit::TestCase
         assert_nothing_raised {
             cert = Puppet::SSLCertificates::Certificate.new(
                 :name => "signedcertest",
-                :state => "TN",
+                :property => "TN",
                 :city => "Nashville",
                 :country => "US",
                 :email => "luke@madstop.com",

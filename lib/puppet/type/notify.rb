@@ -6,7 +6,7 @@ module Puppet
     newtype(:notify) do
     @doc = "Sends an arbitrary message to the puppetd run-time log."
 
-    newstate(:message) do
+    newproperty(:message) do
         desc "The message to be sent to the log."
         def sync
             case @parent["withpath"]
@@ -42,4 +42,4 @@ module Puppet
     end
 end
 
-# $Id:$
+# $Id$

@@ -149,7 +149,7 @@ class TestTidy < Test::Unit::TestCase
     def test_agetest
         tidy = Puppet::Type.newtidy :path => tempfile(), :age => "1m"
 
-        age = tidy.state(:age)
+        age = tidy.property(:age)
 
         # Set it to something that should be fine
         age.is = Time.now.to_i - 5
@@ -165,7 +165,7 @@ class TestTidy < Test::Unit::TestCase
     def test_sizetest
         tidy = Puppet::Type.newtidy :path => tempfile(), :size => "1k"
 
-        size = tidy.state(:size)
+        size = tidy.property(:size)
 
         # Set it to something that should be fine
         size.is = 50
@@ -219,7 +219,7 @@ class TestTidy < Test::Unit::TestCase
         File.open(path, "w") { |f| 10.times { f.puts "yayness " } }
         tidy = Puppet::Type.type(:tidy).create :path => path, :age => "5s"
         
-        tidy.state(:age).is = "0s"
+        tidy.property(:age).is = "0s"
         assert_apply(tidy)
         assert(! FileTest.exists?(path), "file did not get tidied")
     end

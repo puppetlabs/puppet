@@ -19,12 +19,12 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
     def addcmd
         cmd = [command(:add)]
-        @model.class.validstates.each do |state|
-            next if state == :ensure
+        @model.class.validproperties.each do |property|
+            next if property == :ensure
             # the value needs to be quoted, mostly because -c might
             # have spaces in it
-            if value = @model.should(state) and value != ""
-                cmd << flag(state) << value
+            if value = @model.should(property) and value != ""
+                cmd << flag(property) << value
             end
         end
         # stupid fedora

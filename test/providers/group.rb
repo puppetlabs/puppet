@@ -193,7 +193,7 @@ class TestGroupProvider < Test::Unit::TestCase
             }
             assert(!missing?(name), "Group %s is missing" % name)
 
-            tests = Puppet.type(:group).validstates
+            tests = Puppet.type(:group).validproperties
 
             tests.each { |test|
                 if self.respond_to?("attrtest_%s" % test)

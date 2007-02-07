@@ -45,9 +45,9 @@ set zonepath=%s
 
         # Then perform all of our configuration steps.  It's annoying
         # that we need this much internal info on the model.
-        @model.send(:states).each do |state|
-            if state.is_a? ZoneConfigState and ! state.insync?
-                str += state.configtext + "\n"
+        @model.send(:properties).each do |property|
+            if property.is_a? ZoneConfigProperty and ! property.insync?
+                str += property.configtext + "\n"
             end
         end
 
@@ -64,7 +64,7 @@ set zonepath=%s
     end
 
     # We need a way to test whether a zone is in process.  Our 'ensure'
-    # state models the static states, but we need to handle the temporary ones.
+    # property models the static states, but we need to handle the temporary ones.
     def processing?
         if hash = statushash()
             case hash[:ensure]
@@ -121,14 +121,14 @@ set zonepath=%s
             # Now retrieve the configuration itself and set appropriately.
             getconfig()
         else
-            @states.each do |name, state|
-                state.is = :absent
+            @properties.each do |name, property|
+                property.is = :absent
             end
         end
     end
 
     # Execute a configuration string.  Can't be private because it's called
-    # by the states.
+    # by the properties.
     def setconfig(str)
         command = "#{command(:cfg)} -z %s -f -" % @model[:name]
         debug "Executing '%s' in zone %s with '%s'" % [command, @model[:name], str]

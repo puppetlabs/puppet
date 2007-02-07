@@ -49,6 +49,14 @@ class TestBasic < Test::Unit::TestCase
         stopservices
     end
 
+    def test_values
+        [:ensure, :checksum].each do |param|
+            prop = @configfile.property(param)
+            assert(prop, "got no property for %s" % param)
+            assert(prop.value, "got no value for %s" % param)
+        end
+    end
+
     def test_name_calls
         [@command, @configfile].each { |obj|
             Puppet.debug "obj is %s" % obj

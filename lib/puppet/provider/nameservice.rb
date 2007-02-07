@@ -24,7 +24,7 @@ class Puppet::Provider::NameService < Puppet::Provider
             objects = []
             listbyname do |name|
                 obj = nil
-                check = model.validstates
+                check = model.validproperties
                 if obj = model[name]
                     obj[:check] = check
                 else
@@ -119,8 +119,8 @@ class Puppet::Provider::NameService < Puppet::Provider
 
         private
 
-        def op(state)
-            @ops[state.name] || ("-" + state.name)
+        def op(property)
+            @ops[property.name] || ("-" + property.name)
         end
     end
     
@@ -202,7 +202,7 @@ class Puppet::Provider::NameService < Puppet::Provider
                 return nil
             end
 
-            # again, needs to be set by the ind. state or its
+            # again, needs to be set by the ind. property or its
             # parent
             cmd = self.deletecmd
             type = "delete"
@@ -293,7 +293,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     # Convert the Etc struct into a hash.
     def info2hash(info)
         hash = {}
-        self.class.model.validstates.each do |param|
+        self.class.model.validproperties.each do |param|
             method = posixmethod(param)
             if info.respond_to? method
                 hash[param] = info.send(posixmethod(param))
@@ -313,10 +313,10 @@ class Puppet::Provider::NameService < Puppet::Provider
     def method_missing(name, *args)
         name = name.to_s
 
-        # Make sure it's a valid state.  We go up our class structure instead of
+        # Make sure it's a valid property.  We go up our class structure instead of
         # our model's because the model is fake during testing.
-        unless self.class.model.validstate?(name.sub("=",''))
-            raise Puppet::DevError, "%s is not a valid %s state" %
+        unless self.class.model.validproperty?(name.sub("=",''))
+            raise Puppet::DevError, "%s is not a valid %s property" %
                 [name, @model.class.name]
         end
 

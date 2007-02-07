@@ -1,6 +1,6 @@
 # Manage file group ownership.
 module Puppet
-    Puppet.type(:file).newstate(:group) do
+    Puppet.type(:file).newproperty(:group) do
         require 'etc'
         desc "Which group should own the file.  Argument can be either group
             name or group ID."

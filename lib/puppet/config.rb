@@ -422,7 +422,7 @@ class Config
                                 done[type][name].tags = tags << section
                             end
                         elsif newobj = Puppet::Type.type(type)[name]
-                            unless newobj.state(:ensure)
+                            unless newobj.property(:ensure)
                                 newobj[:ensure] = "present"
                             end
                             newobj.tag(section)

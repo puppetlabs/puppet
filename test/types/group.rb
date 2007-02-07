@@ -151,7 +151,7 @@ class TestGroup < Test::Unit::TestCase
         assert(gobj.provider.exists?,
                 "Did not create group")
 
-        tests = Puppet.type(:group).validstates
+        tests = Puppet.type(:group).validproperties
 
         gobj.retrieve
         tests.each { |test|

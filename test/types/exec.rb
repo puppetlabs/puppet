@@ -127,7 +127,7 @@ class TestExec < Test::Unit::TestCase
             cmd = Puppet.type(:exec).create(
                 :command => "pwd",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
-                :subscribe => [[file.class.name,file.name]],
+                :subscribe => file,
                 :refreshonly => true
             )
         }
@@ -143,7 +143,7 @@ class TestExec < Test::Unit::TestCase
             trans = comp.evaluate
             file.retrieve
 
-            sum = file.state(:checksum)
+            sum = file.property(:checksum)
             assert(sum.insync?, "checksum is not in sync")
             events = trans.evaluate.collect { |event|
                 event.event
@@ -158,7 +158,7 @@ class TestExec < Test::Unit::TestCase
         }
         assert_nothing_raised {
             trans = comp.evaluate
-            sum = file.state(:checksum)
+            sum = file.property(:checksum)
             events = trans.evaluate.collect { |event| event.event }
         }
         
@@ -454,6 +454,7 @@ class TestExec < Test::Unit::TestCase
         assert(File.stat(path).mode & 007777 == 0755)
     end
 
+    # Make sure all checks need to be fully qualified.
     def test_falsevals
         exec = nil
         assert_nothing_raised do
@@ -465,7 +466,7 @@ class TestExec < Test::Unit::TestCase
         Puppet.type(:exec).checks.each do |check|
             klass = Puppet.type(:exec).paramclass(check)
             next if klass.values.include? :false
-            assert_raise(Puppet::Error, "Check %s did not fail on false" % check) do
+            assert_raise(Puppet::Error, "Check '%s' did not fail on false" % check) do
                 exec[check] = false
             end
         end
@@ -478,6 +479,7 @@ class TestExec < Test::Unit::TestCase
 
         assert_nothing_raised {
             exec1 = Puppet.type(:exec).create(
+                :title => "one",
                 :path => ENV["PATH"],
                 :command => "mkdir #{dir}"
             )
@@ -485,6 +487,7 @@ class TestExec < Test::Unit::TestCase
 
         assert_nothing_raised("Could not create exec w/out existing cwd") {
             exec2 = Puppet.type(:exec).create(
+                :title => "two",
                 :path => ENV["PATH"],
                 :command => "touch #{file}",
                 :cwd => dir
@@ -498,12 +501,11 @@ class TestExec < Test::Unit::TestCase
         end
 
         assert_raise(Puppet::Error) do
-            exec2.state(:returns).sync
+            exec2.property(:returns).sync
         end
 
         assert_nothing_raised do
-            exec2[:require] = ["exec", exec1.name]
-            exec2.finish
+            exec2[:require] = exec1
         end
 
         assert_apply(exec1, exec2)
