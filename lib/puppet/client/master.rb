@@ -137,7 +137,7 @@ class Puppet::Client::MasterClient < Puppet::Client
                 puts detail.backtrace
             end
         ensure
-            Puppet::Storage.store
+            Puppet::Util::Storage.store
         end
         
         if Puppet[:report]
@@ -177,8 +177,8 @@ class Puppet::Client::MasterClient < Puppet::Client
     # Initialize and load storage
     def dostorage
         begin
-            Puppet::Storage.load
-            @compile_time ||= Puppet::Storage.cache(:configuration)[:compile_time]
+            Puppet::Util::Storage.load
+            @compile_time ||= Puppet::Util::Storage.cache(:configuration)[:compile_time]
         rescue => detail
             if Puppet[:trace]
                 puts detail.backtrace
@@ -626,7 +626,7 @@ class Puppet::Client::MasterClient < Puppet::Client
             fromcache = true
         else
             @compile_time = Time.now
-            Puppet::Storage.cache(:configuration)[:compile_time] = @compile_time
+            Puppet::Util::Storage.cache(:configuration)[:compile_time] = @compile_time
         end
 
         begin

@@ -1,5 +1,5 @@
 require 'puppet'
-require 'puppet/filetype'
+require 'puppet/util/filetype'
 require 'puppet/util/fileparsing'
 
 # This provider can be used as the parent class for a provider that
@@ -37,7 +37,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     def self.filetype
         unless defined? @filetype
-            @filetype = Puppet::FileType.filetype(:flat)
+            @filetype = Puppet::Util::FileType.filetype(:flat)
         end
         return @filetype
     end
@@ -45,7 +45,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     def self.filetype=(type)
         if type.is_a?(Class)
             @filetype = type
-        elsif klass = Puppet::FileType.filetype(type)
+        elsif klass = Puppet::Util::FileType.filetype(type)
             @filetype = klass
         else
             raise ArgumentError, "Invalid filetype %s" % type
@@ -101,7 +101,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         @target = nil
 
         # Default to flat files
-        @filetype = Puppet::FileType.filetype(:flat)
+        @filetype = Puppet::Util::FileType.filetype(:flat)
         super
     end
 

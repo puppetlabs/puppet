@@ -195,7 +195,7 @@ module Puppet
 
             # Most validation is handled by the SUIDManager class.
             validate do |user|
-                unless Puppet::SUIDManager.uid == 0
+                unless Puppet::Util::SUIDManager.uid == 0
                     self.fail "Only root can execute commands as other users"
                 end
             end
@@ -235,7 +235,7 @@ module Puppet
 
             values = [:true, :false]
             # And all of the log levels
-            Puppet::Log.eachlevel { |level| values << level }
+            Puppet::Util::Log.eachlevel { |level| values << level }
             newvalues(*values)
         end
 
@@ -473,9 +473,12 @@ module Puppet
             self.collect { |i| i }
         end
 
-        # Verify that we pass all of the checks.
-        def check
+        # Verify that we pass all of the checks.  The argument determines whether
+        # we skip the :refreshonly check, which is necessary because we now check
+        # within refresh()
+        def check(refreshing = false)
             self.class.checks.each { |check|
+                next if refreshing and check == :refreshonly
                 if @parameters.include?(check)
                     val = @parameters[check].value
                     val = [val] unless val.is_a? Array
@@ -498,9 +501,9 @@ module Puppet
             end
         end
 
-        # this might be a very, very bad idea...
+        # Run the command, or optionally run a separately-specified command.
         def refresh
-            if self.check
+            if self.check(true)
                 if cmd = self[:refresh]
                     self.run(cmd)
                 else
@@ -563,7 +566,7 @@ module Puppet
 
                     withenv env do
                         Timeout::timeout(self[:timeout]) do
-                            output, status = Puppet::SUIDManager.run_and_capture(
+                            output, status = Puppet::Util::SUIDManager.run_and_capture(
                                 [command], self[:user], self[:group]
                             )
                         end

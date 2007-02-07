@@ -75,7 +75,7 @@ class Server
             if hash[:Config] == false
                 @noreadconfig = true
             else
-                @config = Puppet::LoadedFile.new(
+                @config = Puppet::Util::LoadedFile.new(
                     hash[:Config] || Puppet[:fileserverconfig]
                 )
                 @noreadconfig = false

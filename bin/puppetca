@@ -116,7 +116,7 @@ begin
             when "--clean"
                 mode = :clean
             when "--debug"
-                Puppet::Log.level = :debug
+                Puppet::Util::Log.level = :debug
             when "--generate"
                 generate = arg
                 mode = :generate
@@ -134,7 +134,7 @@ begin
             when "--sign"
                 mode = :sign
             when "--verbose"
-                Puppet::Log.level = :info
+                Puppet::Util::Log.level = :info
             else
                 Puppet.config.handlearg(opt, arg)
         end

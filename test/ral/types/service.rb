@@ -230,7 +230,7 @@ class TestLocalService < Test::Unit::TestCase
         }
     end
 
-    unless Puppet::SUIDManager.uid == 0
+    unless Puppet::Util::SUIDManager.uid == 0
         puts "run as root to test service start/stop"
     else
         def test_servicestartstop

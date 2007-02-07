@@ -3,7 +3,7 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
-require 'puppet/loadedfile'
+require 'puppet/util/loadedfile'
 require 'puppettest'
 
 class TestLoadedFile < Test::Unit::TestCase
@@ -14,7 +14,7 @@ class TestLoadedFile < Test::Unit::TestCase
         path = tempfile()
         File.open(path, "w") { |f| f.puts "yayness" }
         assert_nothing_raised {
-            file = Puppet::LoadedFile.new(path)
+            file = Puppet::Util::LoadedFile.new(path)
         }
 
         assert(!file.changed?, "File incorrectly returned changed")
@@ -34,7 +34,7 @@ class TestLoadedFile < Test::Unit::TestCase
         File.open(path, "w") { |f| f.puts "yay" }
         file = nil
         assert_nothing_raised {
-            file = Puppet::LoadedFile.new(path)
+            file = Puppet::Util::LoadedFile.new(path)
         }
 
         assert_nothing_raised {
@@ -59,7 +59,7 @@ class TestLoadedFile < Test::Unit::TestCase
         File.open(file, "w") { |f| f.puts "" }
         obj = nil
         assert_nothing_raised {
-            obj = Puppet::LoadedFile.new(file)
+            obj = Puppet::Util::LoadedFile.new(file)
         }
 
         # Make sure we don't refresh
@@ -86,7 +86,7 @@ class TestLoadedFile < Test::Unit::TestCase
         File.open(file, "w") { |f| f.puts "" }
         obj = nil
         assert_nothing_raised {
-            obj = Puppet::LoadedFile.new(file)
+            obj = Puppet::Util::LoadedFile.new(file)
         }
         Puppet[:filetimeout] = -10
 

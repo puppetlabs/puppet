@@ -5,7 +5,7 @@ Puppet::Server::Report.newreport(:log) do
 
     def process
         self.logs.each do |log|
-            Puppet::Log.newmessage(log)
+            Puppet::Util::Log.newmessage(log)
         end
     end
 end

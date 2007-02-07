@@ -25,7 +25,7 @@ class Puppet::Transaction::Report
 
     # Create a new metric.
     def newmetric(name, hash)
-        metric = Puppet::Metric.new(name)
+        metric = Puppet::Util::Metric.new(name)
 
         hash.each do |name, value|
             metric.newvalue(name, value)

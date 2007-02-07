@@ -1,7 +1,7 @@
 # the parent class for all of our syntactical objects
 
 require 'puppet'
-require 'puppet/autoload'
+require 'puppet/util/autoload'
 
 # The base class for all of the objects that make up the parse trees.
 # Handles things like file name, line #, and also does the initialization
@@ -114,7 +114,7 @@ class Puppet::Parser::AST
     end
     #---------------------------------------------------------------
     # Now autoload everything.
-    @autoloader = Puppet::Autoload.new(self,
+    @autoloader = Puppet::Util::Autoload.new(self,
         "puppet/parser/ast"
     )
     @autoloader.loadall

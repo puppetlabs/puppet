@@ -16,7 +16,7 @@ class TestReports < Test::Unit::TestCase
         report = fakereport
 
         assert_nothing_raised {
-            Puppet::Log.newdestination(report)
+            Puppet::Util::Log.newdestination(report)
         }
 
         # Now make a file for testing logging
@@ -35,7 +35,7 @@ class TestReports < Test::Unit::TestCase
         assert(! report.logs.include?(log), "Report got log message")
 
         assert_nothing_raised {
-            Puppet::Log.close(report)
+            Puppet::Util::Log.close(report)
         }
 
         log = file.log "This is another message, yo"
@@ -197,9 +197,9 @@ class TestReports < Test::Unit::TestCase
     
     def test_tagmail_matching
         report = Puppet::Transaction::Report.new
-        Puppet::Log.close
+        Puppet::Util::Log.close
         [%w{one}, %w{one two}, %w{one two three}, %w{one two three four}].each do |tags|
-            log = Puppet::Log.new(:level => :notice, :message => tags.join(" "), :tags => tags)
+            log = Puppet::Util::Log.new(:level => :notice, :message => tags.join(" "), :tags => tags)
             
             report << log
         end

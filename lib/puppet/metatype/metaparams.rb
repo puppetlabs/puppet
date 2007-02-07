@@ -136,7 +136,7 @@ class Puppet::Type
              syslog (which is currently the default)."
         defaultto :notice
 
-        newvalues(*Puppet::Log.levels)
+        newvalues(*Puppet::Util::Log.levels)
         newvalues(:verbose)
 
         munge do |loglevel|

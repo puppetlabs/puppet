@@ -51,13 +51,13 @@ class TestFileBucket < Test::Unit::TestCase
     end
 
     def initstorage
-        Puppet::Storage.init
-        Puppet::Storage.load
+        Puppet::Util::Storage.init
+        Puppet::Util::Storage.load
     end
 
     def clearstorage
-        Puppet::Storage.store
-        Puppet::Storage.clear
+        Puppet::Util::Storage.store
+        Puppet::Util::Storage.clear
     end
 
     def test_simplebucket

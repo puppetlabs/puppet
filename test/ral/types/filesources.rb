@@ -27,8 +27,8 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def initstorage
-        Puppet::Storage.init
-        Puppet::Storage.load
+        Puppet::Util::Storage.init
+        Puppet::Util::Storage.load
     end
     
     # Make a simple recursive tree.
@@ -100,7 +100,7 @@ class TestFileSources < Test::Unit::TestCase
         end
         assert_equal("file", result[:type])
         assert(result[:checksum], "did not get value for checksum")
-        if Puppet::SUIDManager.uid == 0
+        if Puppet::Util::SUIDManager.uid == 0
             assert(result.has_key?(:owner), "Lost owner in describe")
         else
             assert(! result.has_key?(:owner),

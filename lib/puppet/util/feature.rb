@@ -1,7 +1,7 @@
 #  Created by Luke Kanies on 2006-11-07.
 #  Copyright (c) 2006. All rights reserved.
 
-class Puppet::Feature
+class Puppet::Util::Feature
     attr_reader :path
 
     # Create a new feature test.  You have to pass the feature name,
@@ -52,7 +52,7 @@ class Puppet::Feature
     # Create a new feature collection.
     def initialize(path)
         @path = path
-        @loader = Puppet::Autoload.new(self, @path)
+        @loader = Puppet::Util::Autoload.new(self, @path)
     end
     
     def load

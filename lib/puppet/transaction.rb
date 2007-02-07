@@ -292,7 +292,7 @@ class Transaction
         graph(@resources, :resources)
         
         # Start logging.
-        Puppet::Log.newdestination(@report)
+        Puppet::Util::Log.newdestination(@report)
         
         prepare()
 
@@ -314,7 +314,7 @@ class Transaction
             }.flatten.reject { |e| e.nil? }
         ensure
             # And then close the transaction log.
-            Puppet::Log.close(@report)
+            Puppet::Util::Log.close(@report)
         end
 
         Puppet.debug "Finishing transaction %s with %s changes" %

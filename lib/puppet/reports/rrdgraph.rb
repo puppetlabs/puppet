@@ -96,7 +96,7 @@ Puppet::Server::Report.newreport(:rrdgraph) do
 
         unless File.directory?(hostdir)
             # Some hackishness to create the dir
-            config = Puppet::Config.new
+            config = Puppet::Util::Config.new
             config.setdefaults(:reports, :hostdir => [hostdir, "eh"])
 
             # This creates the dir.

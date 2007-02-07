@@ -9,7 +9,7 @@ require 'puppettest'
 
 class TestPropertyChange < Test::Unit::TestCase
 	include PuppetTest
-	class FakeProperty
+	class FakeProperty < Puppet::Type::Property
 	    attr_accessor :is, :should, :parent
 	    def change_to_s
 	        "fake change"
@@ -18,7 +18,7 @@ class TestPropertyChange < Test::Unit::TestCase
 	        @is == @should
         end
         def log(msg)
-            Puppet::Log.create(
+            Puppet::Util::Log.create(
                 :level => :info,
                 :source => self,
                 :message => msg
@@ -44,7 +44,7 @@ class TestPropertyChange < Test::Unit::TestCase
     end
     
     def mkchange
-        property = FakeProperty.new
+        property = FakeProperty.new :parent => "fakeparent"
         property.is = :start
         property.should = :finish
         property.parent = :parent

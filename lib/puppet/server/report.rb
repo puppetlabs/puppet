@@ -39,7 +39,7 @@ class Server
         )
 
         @reports = {}
-        @reportloader = Puppet::Autoload.new(self, "puppet/reports")
+        @reportloader = Puppet::Util::Autoload.new(self, "puppet/reports")
 
         class << self
             attr_reader :hooks

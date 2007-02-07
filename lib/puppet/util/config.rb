@@ -2,9 +2,8 @@ require 'puppet'
 require 'sync'
 require 'puppet/transportable'
 
-module Puppet
 # The class for handling configuration files.
-class Config
+class Puppet::Util::Config
     include Enumerable
     include Puppet::Util
 
@@ -216,7 +215,7 @@ class Config
             raise ArgumentError, "Default %s is not a file" % default
         end
 
-        Puppet::SUIDManager.asuser(obj.owner, obj.group) do
+        Puppet::Util::SUIDManager.asuser(obj.owner, obj.group) do
             mode = obj.mode || 0750
             Dir.mkdir(obj.value, mode)
         end
@@ -248,10 +247,10 @@ class Config
     def parse(file)
         text = nil
 
-        if file.is_a? Puppet::LoadedFile
+        if file.is_a? Puppet::Util::LoadedFile
             @file = file
         else
-            @file = Puppet::LoadedFile.new(file)
+            @file = Puppet::Util::LoadedFile.new(file)
         end
 
         # Create a timer so that this.
@@ -430,7 +429,7 @@ class Config
                                 newobj[:comment] ||= "%s user" % name
                             end
                         else
-                            newobj = TransObject.new(name, type.to_s)
+                            newobj = Puppet::TransObject.new(name, type.to_s)
                             newobj.tags = ["puppet", "configuration", section]
                             newobj[:ensure] = "present"
                             if type == :user
@@ -643,12 +642,12 @@ Generated on #{Time.now}.
         end
 
         chown = nil
-        if Puppet::SUIDManager.uid == 0
+        if Puppet::Util::SUIDManager.uid == 0
             chown = [obj.owner, obj.group]
         else
             chown = [nil, nil]
         end
-        Puppet::SUIDManager.asuser(*chown) do
+        Puppet::Util::SUIDManager.asuser(*chown) do
             mode = obj.mode || 0640
 
             if args.empty?
@@ -676,13 +675,13 @@ Generated on #{Time.now}.
         end
 
         chown = nil
-        if Puppet::SUIDManager.uid == 0
+        if Puppet::Util::SUIDManager.uid == 0
             chown = [obj.owner, obj.group]
         else
             chown = [nil, nil]
         end
 
-        Puppet::SUIDManager.asuser(*chown) do
+        Puppet::Util::SUIDManager.asuser(*chown) do
             mode = obj.mode || 0640
             if args.empty?
                 args << "w"
@@ -906,7 +905,7 @@ Generated on #{Time.now}.
             }
 
             # Only chown or chgrp when root
-            if Puppet::SUIDManager.uid == 0
+            if Puppet::Util::SUIDManager.uid == 0
                 [:group, :owner].each { |var|
                     if value = self.send(var)
                         obj[var] = value
@@ -955,7 +954,6 @@ Generated on #{Time.now}.
             end
         end
     end
-end
 end
 
 # $Id$

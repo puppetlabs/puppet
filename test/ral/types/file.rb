@@ -39,19 +39,19 @@ class TestFile < Test::Unit::TestCase
     end
 
     def teardown
-        Puppet::Storage.clear
+        Puppet::Util::Storage.clear
         system("rm -rf %s" % Puppet[:statefile])
         super
     end
 
     def initstorage
-        Puppet::Storage.init
-        Puppet::Storage.load
+        Puppet::Util::Storage.init
+        Puppet::Util::Storage.load
     end
 
     def clearstorage
-        Puppet::Storage.store
-        Puppet::Storage.clear
+        Puppet::Util::Storage.store
+        Puppet::Util::Storage.clear
     end
 
     def test_owner
@@ -108,7 +108,7 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    if Puppet::SUIDManager.uid == 0
+    if Puppet::Util::SUIDManager.uid == 0
         def test_createasuser
             dir = tmpdir()
 

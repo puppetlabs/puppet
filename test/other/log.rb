@@ -3,7 +3,7 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
-require 'puppet/log'
+require 'puppet/util/log'
 require 'puppettest'
 
 class TestLog < Test::Unit::TestCase
@@ -11,22 +11,22 @@ class TestLog < Test::Unit::TestCase
 
     def setup
         super
-        @oldloglevel = Puppet::Log.level
-        Puppet::Log.close
+        @oldloglevel = Puppet::Util::Log.level
+        Puppet::Util::Log.close
     end
 
     def teardown
         super
-        Puppet::Log.close
-        Puppet::Log.level = @oldloglevel
-        Puppet::Log.newdestination(:console)
+        Puppet::Util::Log.close
+        Puppet::Util::Log.level = @oldloglevel
+        Puppet::Util::Log.newdestination(:console)
     end
 
     def getlevels
         levels = nil
         assert_nothing_raised() {
             levels = []
-            Puppet::Log.eachlevel { |level| levels << level }
+            Puppet::Util::Log.eachlevel { |level| levels << level }
         }
         # Don't test the top levels; too annoying
         return levels.reject { |level| level == :emerg or level == :crit }
@@ -36,7 +36,7 @@ class TestLog < Test::Unit::TestCase
         levels.collect { |level|
             next if level == :alert
             assert_nothing_raised() {
-                Puppet::Log.new(
+                Puppet::Util::Log.new(
                     :level => level,
                     :source => "Test",
                     :message => "Unit test for %s" % level
@@ -48,16 +48,16 @@ class TestLog < Test::Unit::TestCase
     def test_logfile
         fact = nil
         levels = nil
-        Puppet::Log.level = :debug
+        Puppet::Util::Log.level = :debug
         levels = getlevels
         logfile = tempfile()
         fact = nil
         assert_nothing_raised() {
-            Puppet::Log.newdestination(logfile)
+            Puppet::Util::Log.newdestination(logfile)
         }
         msgs = mkmsgs(levels)
         assert(msgs.length == levels.length)
-        Puppet::Log.close
+        Puppet::Util::Log.close
         count = 0
 
         assert(FileTest.exists?(logfile), "Did not create logfile")
@@ -78,7 +78,7 @@ class TestLog < Test::Unit::TestCase
             }
         }
         assert_nothing_raised() {
-            Puppet::Log.newdestination("syslog")
+            Puppet::Util::Log.newdestination("syslog")
         }
         # there's really no way to verify that we got syslog messages...
         msgs = mkmsgs(levels)
@@ -89,16 +89,16 @@ class TestLog < Test::Unit::TestCase
         fact = nil
         levels = getlevels
         assert_nothing_raised() {
-            Puppet::Log.newdestination(:console)
+            Puppet::Util::Log.newdestination(:console)
         }
         msgs = mkmsgs(levels)
         assert(msgs.length == levels.length)
-        Puppet::Log.close
+        Puppet::Util::Log.close
     end
 
     def test_levelmethods
         assert_nothing_raised() {
-            Puppet::Log.newdestination("/dev/null")
+            Puppet::Util::Log.newdestination("/dev/null")
         }
         getlevels.each { |level|
             assert_nothing_raised() {
@@ -108,18 +108,18 @@ class TestLog < Test::Unit::TestCase
     end
 
     def test_output
-        Puppet::Log.level = :notice
-        assert(Puppet.err("This is an error").is_a?(Puppet::Log))
+        Puppet::Util::Log.level = :notice
+        assert(Puppet.err("This is an error").is_a?(Puppet::Util::Log))
         assert(Puppet.debug("This is debugging").nil?)
-        Puppet::Log.level = :debug
-        assert(Puppet.err("This is an error").is_a?(Puppet::Log))
-        assert(Puppet.debug("This is debugging").is_a?(Puppet::Log))
+        Puppet::Util::Log.level = :debug
+        assert(Puppet.err("This is an error").is_a?(Puppet::Util::Log))
+        assert(Puppet.debug("This is debugging").is_a?(Puppet::Util::Log))
     end
 
     def test_creatingdirs
         dir = tempfile()
         file = File.join(dir, "logfile")
-        Puppet::Log.newdestination file
+        Puppet::Util::Log.newdestination file
         Puppet.info "testing logs"
         assert(FileTest.directory?(dir))
         assert(FileTest.file?(file))
@@ -140,7 +140,7 @@ class TestLog < Test::Unit::TestCase
         assert(property, "Did not get property")
         log = nil
         assert_nothing_raised {
-            log = Puppet::Log.new(
+            log = Puppet::Util::Log.new(
                 :level => :info,
                 :source => property,
                 :message => "A test message"
@@ -165,10 +165,10 @@ class TestLog < Test::Unit::TestCase
 
     # Verify that we can pass strings that match printf args
     def test_percentlogs
-        Puppet::Log.newdestination :syslog
+        Puppet::Util::Log.newdestination :syslog
 
         assert_nothing_raised {
-            Puppet::Log.new(
+            Puppet::Util::Log.new(
                 :level => :info,
                 :message => "A message with %s in it"
             )
@@ -183,7 +183,7 @@ class TestLog < Test::Unit::TestCase
             :check => %w{owner group}
         )
         assert_nothing_raised {
-            msg = Puppet::Log.new(:level => :info, :message => "This is a message")
+            msg = Puppet::Util::Log.new(:level => :info, :message => "This is a message")
         }
         assert_nothing_raised {
             msg.source = file
@@ -217,7 +217,7 @@ class TestLog < Test::Unit::TestCase
     def test_destination_matching
         dest = nil
         assert_nothing_raised {
-            dest = Puppet::Log.newdesttype("Destine") do
+            dest = Puppet::Util::Log.newdesttype("Destine") do
                 def handle(msg)
                     puts msg
                 end
@@ -232,36 +232,36 @@ class TestLog < Test::Unit::TestCase
             dest.match(:yayness)
         }
         assert(dest.match("Yayness"), "Did not match yayness")
-        Puppet::Log.close(dest)
+        Puppet::Util::Log.close(dest)
     end
 
     def test_autoflush
         file = tempfile
-        Puppet::Log.close(:console)
-        Puppet::Log.newdestination(file)
+        Puppet::Util::Log.close(:console)
+        Puppet::Util::Log.newdestination(file)
         Puppet.warning "A test"
         assert(File.read(file) !~ /A test/,
             "File defualted to autoflush")
-        Puppet::Log.flush
+        Puppet::Util::Log.flush
         assert(File.read(file) =~ /A test/,
             "File did not flush")
-        Puppet::Log.close(file)
+        Puppet::Util::Log.close(file)
 
         # Now try one with autoflush enabled
         Puppet[:autoflush] = true
         file = tempfile
-        Puppet::Log.newdestination(file)
+        Puppet::Util::Log.newdestination(file)
         Puppet.warning "A test"
         assert(File.read(file) =~ /A test/,
             "File did not autoflush")
-        Puppet::Log.close(file)
+        Puppet::Util::Log.close(file)
     end
 
     def test_reopen
         Puppet[:autoflush] = true
         file = tempfile
-        Puppet::Log.close(:console)
-        Puppet::Log.newdestination(file)
+        Puppet::Util::Log.close(:console)
+        Puppet::Util::Log.newdestination(file)
         Puppet.warning "A test"
         assert(File.read(file) =~ /A test/,
             "File did not flush")
@@ -275,11 +275,11 @@ class TestLog < Test::Unit::TestCase
             "File did not rename")
 
         # Now reopen the log
-        Puppet::Log.reopen
+        Puppet::Util::Log.reopen
         Puppet.warning "Reopen test"
         assert(File.read(file) =~ /Reopen test/,
             "File did not reopen")
-        Puppet::Log.close(file)
+        Puppet::Util::Log.close(file)
     end
 end
 

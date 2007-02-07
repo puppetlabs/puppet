@@ -118,7 +118,7 @@ begin
                 loadclasses = true
             when "--logdest"
                 begin
-                    Puppet::Log.newdestination(arg)
+                    Puppet::Util::Log.newdestination(arg)
                     logset = true
                 rescue => detail
                     $stderr.puts detail.to_s
@@ -133,7 +133,7 @@ rescue GetoptLong::InvalidOption => detail
 end
 
 unless logset
-    Puppet::Log.newdestination(:console)
+    Puppet::Util::Log.newdestination(:console)
 end
 
 client = nil
@@ -142,9 +142,9 @@ server = nil
 Puppet.settraps
 
 if debug
-    Puppet::Log.level = :debug
+    Puppet::Util::Log.level = :debug
 elsif verbose
-    Puppet::Log.level = :info
+    Puppet::Util::Log.level = :info
 end
 
 # Now parse the config

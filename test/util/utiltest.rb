@@ -84,7 +84,7 @@ class TestPuppetUtil < Test::Unit::TestCase
         end
     end
 
-    unless Puppet::SUIDManager.uid == 0
+    unless Puppet::Util::SUIDManager.uid == 0
         $stderr.puts "Run as root to perform Utility tests"
         def test_nothing
         end
@@ -118,23 +118,23 @@ class TestPuppetUtil < Test::Unit::TestCase
         if group
             gid = group.gid
         else
-            gid = Puppet::SUIDManager.gid
+            gid = Puppet::Util::SUIDManager.gid
         end
 
         uid = nil
         if user
             uid = user.uid
         else
-            uid = Puppet::SUIDManager.uid
+            uid = Puppet::Util::SUIDManager.uid
         end
 
         assert_nothing_raised {
-            Puppet::SUIDManager.asuser(*args) {
-                assert_equal(Puppet::SUIDManager.euid, uid, "UID is %s instead of %s" %
-                    [Puppet::SUIDManager.euid, uid]
+            Puppet::Util::SUIDManager.asuser(*args) {
+                assert_equal(Puppet::Util::SUIDManager.euid, uid, "UID is %s instead of %s" %
+                    [Puppet::Util::SUIDManager.euid, uid]
                 )
-                assert_equal(Puppet::SUIDManager.egid, gid, "GID is %s instead of %s" %
-                    [Puppet::SUIDManager.egid, gid]
+                assert_equal(Puppet::Util::SUIDManager.egid, gid, "GID is %s instead of %s" %
+                    [Puppet::Util::SUIDManager.egid, gid]
                 )
                 system("touch %s" % file)
             }
@@ -189,7 +189,7 @@ class TestPuppetUtil < Test::Unit::TestCase
         rescue
         end
 
-        assert(Puppet::SUIDManager.euid == 0, "UID did not get reset")
+        assert(Puppet::Util::SUIDManager.euid == 0, "UID did not get reset")
     end
     end
 

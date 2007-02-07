@@ -33,10 +33,10 @@ module Util
             unless group
                 raise Puppet::Error, "No such group %s" % Puppet[:group]
             end
-            unless Puppet::SUIDManager.gid == group
+            unless Puppet::Util::SUIDManager.gid == group
                 begin
-                    Puppet::SUIDManager.egid = group 
-                    Puppet::SUIDManager.gid = group 
+                    Puppet::Util::SUIDManager.egid = group 
+                    Puppet::Util::SUIDManager.gid = group 
                 rescue => detail
                     Puppet.warning "could not change to group %s: %s" %
                         [group.inspect, detail]
@@ -54,10 +54,10 @@ module Util
             unless user
                 raise Puppet::Error, "No such user %s" % Puppet[:user]
             end
-            unless Puppet::SUIDManager.uid == user
+            unless Puppet::Util::SUIDManager.uid == user
                 begin
-                    Puppet::SUIDManager.uid = user 
-                    Puppet::SUIDManager.euid = user 
+                    Puppet::Util::SUIDManager.uid = user 
+                    Puppet::Util::SUIDManager.euid = user 
                 rescue
                     $stderr.puts "could not change to user %s" % user
                     exit(74)
@@ -104,19 +104,19 @@ module Util
     # the messages to be a little richer.  Most classes will be calling this
     # method.
     def self.logmethods(klass, useself = true)
-        Puppet::Log.eachlevel { |level|
+        Puppet::Util::Log.eachlevel { |level|
             klass.send(:define_method, level, proc { |args|
                 if args.is_a?(Array)
                     args = args.join(" ")
                 end
                 if useself
-                    Puppet::Log.create(
+                    Puppet::Util::Log.create(
                         :level => level,
                         :source => self,
                         :message => args
                     )
                 else
-                    Puppet::Log.create(
+                    Puppet::Util::Log.create(
                         :level => level,
                         :message => args
                     )
@@ -206,7 +206,7 @@ module Util
         end
 
         # Only benchmark if our log level is high enough
-        if level != :none and Puppet::Log.sendlevel?(level)
+        if level != :none and Puppet::Util::Log.sendlevel?(level)
             result = nil
             seconds = Benchmark.realtime {
                 yield
@@ -285,10 +285,10 @@ module Util
         end
         
         if uid
-            uid = Puppet::SUIDManager.convert_xid(:uid, uid)
+            uid = Puppet::Util::SUIDManager.convert_xid(:uid, uid)
         end
         if gid
-            gid = Puppet::SUIDManager.convert_xid(:gid, gid)
+            gid = Puppet::Util::SUIDManager.convert_xid(:gid, gid)
         end
         
         @@os ||= Facter.value(:operatingsystem)

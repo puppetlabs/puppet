@@ -113,59 +113,37 @@ class TestExec < Test::Unit::TestCase
         tmpfile = tempfile()
         @@tmpfiles.push tmpfile
         trans = nil
-        File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
-            of.puts rand(100)
-        }
         file = Puppet.type(:file).create(
             :path => tmpfile,
-            :checksum => "md5"
+            :content => "yay"
         )
-        assert_instance_of(Puppet.type(:file), file)
+        # Get the file in sync
+        assert_apply(file)
+
+        # Now make an exec
+        maker = tempfile()
         assert_nothing_raised {
             cmd = Puppet.type(:exec).create(
-                :command => "pwd",
+                :command => "touch %s" % maker,
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :subscribe => file,
                 :refreshonly => true
             )
         }
 
-        assert_instance_of(Puppet.type(:exec), cmd)
+        assert(cmd, "did not make exec")
 
-        comp = Puppet.type(:component).create(:name => "RefreshTest")
-        [file,cmd].each { |obj|
-            comp.push obj
-        }
-        events = nil
-        assert_nothing_raised {
-            trans = comp.evaluate
-            file.retrieve
+        assert_nothing_raised do
+            assert(! cmd.check, "Check passed when refreshonly is set")
+        end
 
-            sum = file.property(:checksum)
-            assert(sum.insync?, "checksum is not in sync")
-            events = trans.evaluate.collect { |event|
-                event.event
-            }
-        }
-        # the first checksum shouldn't result in a changed file
-        assert_equal([],events)
-        File.open(tmpfile, File::WRONLY|File::CREAT|File::TRUNC) { |of|
-            of.puts rand(100)
-            of.puts rand(100)
-            of.puts rand(100)
-        }
-        assert_nothing_raised {
-            trans = comp.evaluate
-            sum = file.property(:checksum)
-            events = trans.evaluate.collect { |event| event.event }
-        }
-        
-        # verify that only the file_changed event was kicked off, not the
-        # command_executed
-        assert_equal(
-            [:file_changed, :triggered],
-            events
-        )
+        assert_events([], file, cmd)
+        assert(! FileTest.exists?(maker), "made file without refreshing")
+
+        # Now change our content, so we throw a refresh
+        file[:content] = "yayness"
+        assert_events([:file_changed, :triggered], file, cmd)
+        assert(FileTest.exists?(maker), "file was not made in refresh")
     end
 
     def test_refreshonly
@@ -180,6 +158,9 @@ class TestExec < Test::Unit::TestCase
 
         # Checks should always fail when refreshonly is enabled
         assert(!cmd.check, "Check passed with refreshonly true")
+
+        # Now make sure it passes if we pass in "true"
+        assert(cmd.check(true), "Check failed with refreshonly true while refreshing")
 
         # Now set it to false
         cmd[:refreshonly] = false
@@ -330,7 +311,7 @@ class TestExec < Test::Unit::TestCase
         assert_events([:executed_command], comp)
     end
 
-    if Puppet::SUIDManager.uid == 0
+    if Puppet::Util::SUIDManager.uid == 0
         # Verify that we can execute commands as a special user
         def mknverify(file, user, group = nil, id = true)
             File.umask(0022)

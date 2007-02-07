@@ -6,7 +6,7 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
-require 'puppet/feature'
+require 'puppet/util/feature'
 
 class TestFeatures < Test::Unit::TestCase
 	include PuppetTest
@@ -14,7 +14,7 @@ class TestFeatures < Test::Unit::TestCase
 	def setup
 	    super
 	    libdir = tempfile()
-	    @features = Puppet::Feature.new(libdir)
+	    @features = Puppet::Util::Feature.new(libdir)
     end
 	
 	def test_new

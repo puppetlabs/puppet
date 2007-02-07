@@ -106,7 +106,7 @@ class TestPosixUtil < Test::Unit::TestCase
     # know them
     def test_gidbyunknownid
         gid = nil
-        group = Puppet::SUIDManager.gid
+        group = Puppet::Util::SUIDManager.gid
         assert_nothing_raised {
             gid = Puppet::Util.gid(group)
         }
@@ -118,7 +118,7 @@ class TestPosixUtil < Test::Unit::TestCase
     def user
         require 'etc'
         unless defined? @user
-            obj = Etc.getpwuid(Puppet::SUIDManager.uid)
+            obj = Etc.getpwuid(Puppet::Util::SUIDManager.uid)
             @user = obj.name
         end
         return @user
@@ -134,7 +134,7 @@ class TestPosixUtil < Test::Unit::TestCase
         }
 
         assert(uid, "Could not retrieve uid for %s" % user)
-        assert_equal(Puppet::SUIDManager.uid, uid, "UIDs did not match")
+        assert_equal(Puppet::Util::SUIDManager.uid, uid, "UIDs did not match")
     end
 
     # Then verify we can retrieve a known user by uid
@@ -160,7 +160,7 @@ class TestPosixUtil < Test::Unit::TestCase
     # know them
     def test_uidbyunknownid
         uid = nil
-        user = Puppet::SUIDManager.uid
+        user = Puppet::Util::SUIDManager.uid
         assert_nothing_raised {
             uid = Puppet::Util.uid(user)
         }

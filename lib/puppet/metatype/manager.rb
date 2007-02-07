@@ -109,7 +109,7 @@ module Manager
         end
 
         # Now set up autoload any providers that might exist for this type.
-        klass.providerloader = Puppet::Autoload.new(klass,
+        klass.providerloader = Puppet::Util::Autoload.new(klass,
             "puppet/provider/#{klass.name.to_s}"
         )
 
@@ -156,7 +156,7 @@ module Manager
     # Create a loader for Puppet types.
     def typeloader
         unless defined? @typeloader
-            @typeloader = Puppet::Autoload.new(self,
+            @typeloader = Puppet::Util::Autoload.new(self,
                 "puppet/type", :wrap => false
             )
         end

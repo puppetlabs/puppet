@@ -18,7 +18,7 @@ class TestParsedSSHKey < Test::Unit::TestCase
     end
 
     def teardown
-        Puppet::FileType.filetype(:ram).clear
+        Puppet::Util::FileType.filetype(:ram).clear
         @provider.filetype = @oldfiletype
         @provider.clear
         super

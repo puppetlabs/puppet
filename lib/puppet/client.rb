@@ -153,7 +153,7 @@ module Puppet
             else
                 self.stopping = true
                 if self.respond_to? :running? and self.running?
-                    Puppet::Storage.store
+                    Puppet::Util::Storage.store
                 end
                 rmpidfile()
             end

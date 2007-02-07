@@ -48,8 +48,8 @@ module PuppetTest::ExeTest
         args += " --rundir %s" % File.join(Puppet[:vardir], "run")
         args += " --vardir %s" % Puppet[:vardir]
         args += " --masterport %s" % @@port
-        args += " --user %s" % Puppet::SUIDManager.uid
-        args += " --group %s" % Puppet::SUIDManager.gid
+        args += " --user %s" % Puppet::Util::SUIDManager.uid
+        args += " --group %s" % Puppet::Util::SUIDManager.gid
         args += " --nonodes"
         args += " --autosign true"
 

@@ -16,13 +16,13 @@ class TestCron < Test::Unit::TestCase
         # god i'm lazy
         @crontype = Puppet.type(:cron)
         @oldfiletype = @crontype.filetype
-        @fakefiletype = Puppet::FileType.filetype(:ram)
+        @fakefiletype = Puppet::Util::FileType.filetype(:ram)
         @crontype.filetype = @fakefiletype
     end
 
     def teardown
         @crontype.filetype = @oldfiletype
-        Puppet::FileType.filetype(:ram).clear
+        Puppet::Util::FileType.filetype(:ram).clear
         super
     end
 
@@ -138,7 +138,7 @@ class TestCron < Test::Unit::TestCase
     end
 
     def test_simpleparsing
-        @fakefiletype = Puppet::FileType.filetype(:ram)
+        @fakefiletype = Puppet::Util::FileType.filetype(:ram)
         @crontype.filetype = @fakefiletype
 
         @crontype.retrieve(@me)
@@ -362,7 +362,7 @@ class TestCron < Test::Unit::TestCase
 
         obj = nil
         assert_nothing_raised {
-            obj = type.new(Puppet::SUIDManager.uid)
+            obj = type.new(Puppet::Util::SUIDManager.uid)
         }
 
         txt = nil
@@ -522,7 +522,7 @@ class TestCron < Test::Unit::TestCase
     end
 
     def test_data
-        @fakefiletype = Puppet::FileType.filetype(:ram)
+        @fakefiletype = Puppet::Util::FileType.filetype(:ram)
         @crontype.filetype = @fakefiletype
 
         @crontype.retrieve(@me)

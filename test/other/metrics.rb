@@ -2,8 +2,8 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet/metric'
 require 'puppet'
+require 'puppet/util/metric'
 require 'puppettest'
 require 'puppet/type'
 

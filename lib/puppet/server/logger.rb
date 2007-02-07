@@ -42,7 +42,7 @@ class Server
                 end
             end
 
-            Puppet::Log.newmessage(message)
+            Puppet::Util::Log.newmessage(message)
 
             # This is necessary or XMLRPC gets all pukey
             return ""

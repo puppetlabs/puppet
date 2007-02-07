@@ -198,7 +198,7 @@ class TestInterpreter < Test::Unit::TestCase
         end
     end
 
-    if Puppet::SUIDManager.uid == 0 and Facter["hostname"].value == "culain"
+    if Puppet::Util::SUIDManager.uid == 0 and Facter["hostname"].value == "culain"
     def test_ldapreconnect
         Puppet[:ldapbase] = "ou=hosts, dc=madstop, dc=com"
         Puppet[:ldapnodes] = true

@@ -2,9 +2,8 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/config'
 require 'puppettest'
+require 'puppet/util/config'
 
 class TestConfFiles < Test::Unit::TestCase
     include PuppetTest
@@ -73,7 +72,7 @@ class TestConfFiles < Test::Unit::TestCase
         path = tempfile()
 
         sampledata { |data|
-            config = Puppet::Config.new
+            config = Puppet::Util::Config.new
             data.each { |section, hash|
                 hash.each { |param, value|
                     config.setdefaults(section, param => [value, value])

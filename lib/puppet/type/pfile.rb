@@ -270,7 +270,7 @@ module Puppet
         # Determine the user to write files as.
         def asuser
             if self.should(:owner) and ! self.should(:owner).is_a?(Symbol)
-                writeable = Puppet::SUIDManager.asuser(self.should(:owner)) {
+                writeable = Puppet::Util::SUIDManager.asuser(self.should(:owner)) {
                     FileTest.writable?(File.dirname(self[:path]))
                 }
 
@@ -1058,7 +1058,7 @@ module Puppet
             yield
             # We're getting different behaviors from different versions of ruby, so...
             # asroot = true
-            # Puppet::SUIDManager.asuser(asuser(), self.should(:group)) do
+            # Puppet::Util::SUIDManager.asuser(asuser(), self.should(:group)) do
             #     if FileTest.writable?(dir)
             #         asroot = false
             #         yield

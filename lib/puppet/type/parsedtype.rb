@@ -1,6 +1,6 @@
 require 'etc'
 require 'facter'
-require 'puppet/filetype'
+require 'puppet/util/filetype'
 require 'puppet/type/property'
 
 module Puppet

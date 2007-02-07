@@ -216,7 +216,7 @@ hosts = []
 classes = []
 tags = []
 
-Puppet::Log.newdestination(:console)
+Puppet::Util::Log.newdestination(:console)
 
 begin
     result.each { |opt,arg|
@@ -266,9 +266,9 @@ rescue GetoptLong::InvalidOption => detail
 end
 
 if options[:debug]
-    Puppet::Log.level = :debug
+    Puppet::Util::Log.level = :debug
 else
-    Puppet::Log.level = :info
+    Puppet::Util::Log.level = :info
 end
 
 # Now parse the config

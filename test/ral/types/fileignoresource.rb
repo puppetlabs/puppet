@@ -20,13 +20,13 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
 #This is not needed unless using md5 (correct me if I'm wrong)
     def initstorage
-        Puppet::Storage.init
-        Puppet::Storage.load
+        Puppet::Util::Storage.init
+        Puppet::Util::Storage.load
     end
 
     def clearstorage
-        Puppet::Storage.store
-        Puppet::Storage.clear
+        Puppet::Util::Storage.store
+        Puppet::Util::Storage.clear
     end
 
     def test_ignore_simple_source

@@ -284,7 +284,7 @@ class Puppet::Parameter < Puppet::Element
             self.devfail "Parent %s has no loglevel" %
                 @parent.name
         end
-        Puppet::Log.create(
+        Puppet::Util::Log.create(
             :level => @parent[:loglevel],
             :message => msg,
             :source => self

@@ -4,11 +4,11 @@ require 'facter'
 require 'puppet/error'
 require 'puppet/external/event-loop'
 require 'puppet/util'
-require 'puppet/log'
-require 'puppet/autoload'
-require 'puppet/config'
-require 'puppet/feature'
-require 'puppet/suidmanager'
+require 'puppet/util/log'
+require 'puppet/util/autoload'
+require 'puppet/util/config'
+require 'puppet/util/feature'
+require 'puppet/util/suidmanager'
 
 #------------------------------------------------------------
 # the top-level module
@@ -47,18 +47,18 @@ module Puppet
     end
 
     # the hash that determines how our system behaves
-    @@config = Puppet::Config.new
+    @@config = Puppet::Util::Config.new
 
     # The services running in this process.
     @services ||= []
 
     # define helper messages for each of the message levels
-    Puppet::Log.eachlevel { |level|
+    Puppet::Util::Log.eachlevel { |level|
         define_method(level,proc { |args|
             if args.is_a?(Array)
                 args = args.join(" ")
             end
-            Puppet::Log.create(
+            Puppet::Util::Log.create(
                 :level => level,
                 :message => args
             )
@@ -71,7 +71,7 @@ module Puppet
     alias :error :err
     
     # The feature collection
-    @features = Puppet::Feature.new('puppet/feature')
+    @features = Puppet::Util::Feature.new('puppet/feature')
 
     # Store a new default value.
     def self.setdefaults(section, hash)
@@ -85,7 +85,7 @@ module Puppet
 	def self.[](param)
         case param
         when :debug:
-            if Puppet::Log.level == :debug
+            if Puppet::Util::Log.level == :debug
                 return true
             else
                 return false
@@ -106,9 +106,9 @@ module Puppet
 
     def self.debug=(value)
         if value
-            Puppet::Log.level=(:debug)
+            Puppet::Util::Log.level=(:debug)
         else
-            Puppet::Log.level=(:notice)
+            Puppet::Util::Log.level=(:notice)
         end
     end
 
@@ -194,7 +194,7 @@ module Puppet
         command = $0 + " " + self.args.join(" ")
         Puppet.notice "Restarting with '%s'" % command
         Puppet.shutdown(false)
-        Puppet::Log.reopen
+        Puppet::Util::Log.reopen
         exec(command)
     end
 
@@ -245,7 +245,7 @@ module Puppet
         end
 
         trap(:USR2) do
-            Puppet::Log.reopen
+            Puppet::Util::Log.reopen
         end
     end
 
@@ -389,7 +389,7 @@ end
 
 require 'puppet/server'
 require 'puppet/type'
-require 'puppet/storage'
+require 'puppet/util/storage'
 if Puppet[:storeconfigs]
     require 'puppet/rails'
 end

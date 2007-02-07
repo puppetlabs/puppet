@@ -13,7 +13,7 @@ class TestLogger < Test::Unit::TestCase
     def setup
         super
         #Puppet[:debug] = true
-        Puppet::Log.newdestination :console
+        Puppet::Util::Log.newdestination :console
     end
 
     # Test the log driver manually
@@ -25,7 +25,7 @@ class TestLogger < Test::Unit::TestCase
 
         msg = nil
         assert_nothing_raised {
-            msg = Puppet::Log.create(
+            msg = Puppet::Util::Log.create(
                 :level => :warning,
                 :message => "This is a message"
             )
@@ -45,7 +45,7 @@ class TestLogger < Test::Unit::TestCase
 
         msg = nil
         assert_nothing_raised {
-            msg = Puppet::Log.create(
+            msg = Puppet::Util::Log.create(
                 :level => :warning,
                 :message => "This is a remote message"
             )
@@ -68,7 +68,7 @@ class TestLogger < Test::Unit::TestCase
 
         msg = nil
         assert_nothing_raised {
-            msg = Puppet::Log.create(
+            msg = Puppet::Util::Log.create(
                 :level => :warning,
                 :message => "This is a logclient message"
             )
@@ -89,8 +89,8 @@ class TestLogger < Test::Unit::TestCase
         clientlog = tempfile()
         serverlog = tempfile()
         Puppet.warning "serverlog is %s" % serverlog
-        Puppet::Log.newdestination clientlog
-        Puppet::Log.close(:syslog)
+        Puppet::Util::Log.newdestination clientlog
+        Puppet::Util::Log.close(:syslog)
 
         # For testing
         Puppet[:autosign] = true
@@ -109,8 +109,8 @@ class TestLogger < Test::Unit::TestCase
 
         # Start our server
         serverpid = fork {
-            Puppet::Log.close(clientlog)
-            Puppet::Log.newdestination serverlog
+            Puppet::Util::Log.close(clientlog)
+            Puppet::Util::Log.newdestination serverlog
             assert_nothing_raised() {
                 trap(:INT) { logger.shutdown }
                 logger.start
@@ -137,7 +137,7 @@ class TestLogger < Test::Unit::TestCase
             :warning => "XMLRPC2",
             :err => "XMLRPC3"
         }.each { |level, str|
-            msg = CGI.escape(YAML.dump(Puppet::Log.create(
+            msg = CGI.escape(YAML.dump(Puppet::Util::Log.create(
                 :level => level,
                 :message => str
             )))
@@ -149,7 +149,7 @@ class TestLogger < Test::Unit::TestCase
         # and now use the normal client action
 
         # Set the log destination to be the server
-        Puppet::Log.newdestination "localhost:%s" % @@port
+        Puppet::Util::Log.newdestination "localhost:%s" % @@port
 
         # And now do some logging
         assert_nothing_raised {

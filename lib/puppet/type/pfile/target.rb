@@ -28,7 +28,7 @@ module Puppet
             @parent.remove_existing(target)
 
             Dir.chdir(File.dirname(@parent[:path])) do
-                Puppet::SUIDManager.asuser(@parent.asuser()) do
+                Puppet::Util::SUIDManager.asuser(@parent.asuser()) do
                     mode = @parent.should(:mode)
                     if mode
                         Puppet::Util.withumask(000) do

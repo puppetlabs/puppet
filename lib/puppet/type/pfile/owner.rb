@@ -121,7 +121,7 @@ module Puppet
         end
 
         def sync
-            unless Puppet::SUIDManager.uid == 0
+            unless Puppet::Util::SUIDManager.uid == 0
                 unless defined? @@notifieduid
                     self.notice "Cannot manage ownership unless running as root"
                     #@parent.delete(self.name)

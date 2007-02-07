@@ -3,7 +3,7 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
-require 'puppet/autoload'
+require 'puppet/util/autoload'
 require 'puppettest'
 
 class TestAutoload < Test::Unit::TestCase
@@ -53,10 +53,10 @@ TestAutoload.newthing(:#{name.to_s})
 
         loader = nil
         assert_nothing_raised {
-            loader = Puppet::Autoload.new(klass, :yayness)
+            loader = Puppet::Util::Autoload.new(klass, :yayness)
         }
 
-        assert_equal(loader.object_id, Puppet::Autoload[klass].object_id,
+        assert_equal(loader.object_id, Puppet::Util::Autoload[klass].object_id,
                     "Did not retrieve loader object by class")
 
         # Make sure we don't fail on missing files
@@ -117,7 +117,7 @@ TestAutoload.newthing(:#{name.to_s})
             f.puts "$loaded = true"
         end
 
-        auto = Puppet::Autoload.new(self, "test")
+        auto = Puppet::Util::Autoload.new(self, "test")
 
         # Now make sure autoloading modifies $: as necessary
         assert(! $:.include?(dir), "search path already includes libdir")

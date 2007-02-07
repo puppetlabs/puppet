@@ -5,7 +5,7 @@ module PuppetTest
     # UID of nobody.
     def nonrootuser
         Etc.passwd { |user|
-            if user.uid != Puppet::SUIDManager.uid and user.uid > 0 and user.uid < 255
+            if user.uid != Puppet::Util::SUIDManager.uid and user.uid > 0 and user.uid < 255
                 return user
             end
         }
@@ -13,7 +13,7 @@ module PuppetTest
 
     def nonrootgroup
         Etc.group { |group|
-            if group.gid != Puppet::SUIDManager.gid and group.gid > 0 and group.gid < 255
+            if group.gid != Puppet::Util::SUIDManager.gid and group.gid > 0 and group.gid < 255
                 return group
             end
         }

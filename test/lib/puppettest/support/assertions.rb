@@ -7,12 +7,12 @@ module PuppetTest
         flunk "Must be uid 0 to run these tests" unless Process.uid == 0
 
         fork do 
-            Puppet::SUIDManager.gid = gid
-            Puppet::SUIDManager.uid = uid
+            Puppet::Util::SUIDManager.gid = gid
+            Puppet::Util::SUIDManager.uid = uid
             # FIXME: use the tempfile method from puppettest.rb
             system("mkfifo "+filename)
             f = File.open(filename, "w")
-            f << "#{Puppet::SUIDManager.uid}\n#{Puppet::SUIDManager.gid}\n"
+            f << "#{Puppet::Util::SUIDManager.uid}\n#{Puppet::Util::SUIDManager.gid}\n"
             yield if block_given?
         end
 

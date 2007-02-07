@@ -35,8 +35,8 @@ module PuppetTest
                 dir, method = arg.split(",")
             when "--debug"
                 $puppet_debug = true
-                Puppet::Log.level = :debug
-                Puppet::Log.newdestination(:console)
+                Puppet::Util::Log.level = :debug
+                Puppet::Util::Log.newdestination(:console)
             when "--help"
                 puts usage
                 exit
@@ -106,9 +106,9 @@ module PuppetTest
     
     def logcollector
         collector = []
-        Puppet::Log.newdestination(collector)
+        Puppet::Util::Log.newdestination(collector)
         cleanup do
-            Puppet::Log.close(collector)
+            Puppet::Util::Log.close(collector)
         end
         collector
     end
@@ -156,14 +156,14 @@ module PuppetTest
             if textmate?
                 Puppet[:color] = false
             end
-            Puppet::Log.newdestination :console
-            Puppet::Log.level = :debug
+            Puppet::Util::Log.newdestination :console
+            Puppet::Util::Log.level = :debug
             #$VERBOSE = 1
             Puppet.info @method_name
             Puppet[:trace] = true
         else    
-            Puppet::Log.close
-            Puppet::Log.newdestination tempfile()
+            Puppet::Util::Log.close
+            Puppet::Util::Log.newdestination tempfile()
             Puppet[:httplog] = tempfile()
         end
 
@@ -238,7 +238,7 @@ module PuppetTest
 
         @@tmppids.clear
         Puppet::Type.allclear
-        Puppet::Storage.clear
+        Puppet::Util::Storage.clear
         Puppet.clear
 
         @memoryatend = Puppet::Util.memory
@@ -250,7 +250,7 @@ module PuppetTest
         end
 
         # reset all of the logs
-        Puppet::Log.close
+        Puppet::Util::Log.close
 
         # Just in case there are processes waiting to die...
         require 'timeout'

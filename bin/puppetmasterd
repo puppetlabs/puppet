@@ -97,7 +97,7 @@ options = [
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
 ]
-#Puppet::Log.newdestination(:syslog)
+#Puppet::Util::Log.newdestination(:syslog)
 
 # Add all of the config parameters as valid options.
 Puppet.config.addargs(options)
@@ -147,7 +147,7 @@ begin
                 master[:UseNodes] = false
             when "--logdest"
                 begin
-                    Puppet::Log.newdestination(arg)
+                    Puppet::Util::Log.newdestination(arg)
                     options[:setdest] = true
                 rescue => detail
                     if Puppet[:debug]
@@ -173,19 +173,19 @@ end
 # Handle the logging settings.
 if options[:debug] or options[:verbose]
     if options[:debug]
-        Puppet::Log.level = :debug
+        Puppet::Util::Log.level = :debug
     else
-        Puppet::Log.level = :info
+        Puppet::Util::Log.level = :info
     end
 
     unless options[:daemonize]
-        Puppet::Log.newdestination(:console)
+        Puppet::Util::Log.newdestination(:console)
         options[:setdest] = true
     end
 end
 
 unless options[:setdest]
-    Puppet::Log.newdestination(:syslog)
+    Puppet::Util::Log.newdestination(:syslog)
 end
 
 # Now parse the config
@@ -201,7 +201,7 @@ require 'etc'
 # Default to daemonizing, but if verbose or debug is specified,
 # default to staying in the foreground.
 unless options.include?(:daemonize)
-    if Puppet::Log.level == :debug or Puppet::Log.level == :info
+    if Puppet::Util::Log.level == :debug or Puppet::Util::Log.level == :info
         options[:daemonize] = false
     else
         options[:daemonize] = true

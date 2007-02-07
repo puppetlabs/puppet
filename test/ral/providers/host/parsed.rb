@@ -19,7 +19,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
     end
 
     def teardown
-        Puppet::FileType.filetype(:ram).clear
+        Puppet::Util::FileType.filetype(:ram).clear
         @provider.filetype = @oldfiletype
         @provider.clear
         super
@@ -32,7 +32,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
     # Here we just create a fake host type that answers to all of the methods
     # but does not modify our actual system.
     def mkfaketype
-        @provider.filetype = Puppet::FileType.filetype(:ram)
+        @provider.filetype = Puppet::Util::FileType.filetype(:ram)
     end
 
     def mkhosthash

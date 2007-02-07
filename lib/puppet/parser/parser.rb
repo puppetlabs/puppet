@@ -8,7 +8,7 @@ require 'racc/parser'
 
 
 require 'puppet'
-require 'puppet/loadedfile'
+require 'puppet/util/loadedfile'
 require 'puppet/parser/lexer'
 require 'puppet/parser/ast'
 #require 'puppet/parser/interpreter'
@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id0df015d0a0', 'grammar.ra', 633
+module_eval <<'..end grammar.ra modeval..id05c09a2dac', 'grammar.ra', 633
 require 'puppet/parser/functions'
 
 attr_reader :file, :interp
@@ -101,7 +101,7 @@ def file=(file)
     if @files.detect { |f| f.file == file }
         raise Puppet::ImportError.new("Import loop detected")
     else
-        @files << Puppet::LoadedFile.new(file)
+        @files << Puppet::Util::LoadedFile.new(file)
         @lexer.file = file
     end
 end
@@ -199,7 +199,7 @@ end
 
 # $Id$
 
-..end grammar.ra modeval..id0df015d0a0
+..end grammar.ra modeval..id05c09a2dac
 
 ##### racc 1.4.5 generates ###
 

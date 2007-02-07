@@ -3,7 +3,7 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
-require 'puppet/inifile'
+require 'puppet/util/inifile'
 require 'puppettest'
 
 class TestFileType < Test::Unit::TestCase
@@ -11,7 +11,7 @@ class TestFileType < Test::Unit::TestCase
 
     def setup
         super
-        @file = Puppet::IniConfig::File.new
+        @file = Puppet::Util::IniConfig::File.new
     end
     
     def teardown

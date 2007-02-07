@@ -615,7 +615,7 @@ endcomma:     # nothing
 end
 ---- header ----
 require 'puppet'
-require 'puppet/loadedfile'
+require 'puppet/util/loadedfile'
 require 'puppet/parser/lexer'
 require 'puppet/parser/ast'
 #require 'puppet/parser/interpreter'

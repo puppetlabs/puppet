@@ -4,7 +4,7 @@ module Puppet
     # use basedirs that are in the user's home directory.
     conf = nil
     var = nil
-    if self.name != "puppetmasterd" and Puppet::SUIDManager.uid != 0
+    if self.name != "puppetmasterd" and Puppet::Util::SUIDManager.uid != 0
         conf = File.expand_path("~/.puppet")
         var = File.expand_path("~/.puppet/var")
     else

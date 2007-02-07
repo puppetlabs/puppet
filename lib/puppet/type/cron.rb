@@ -1,7 +1,7 @@
 require 'etc'
 require 'facter'
 require 'puppet/type/property'
-require 'puppet/filetype'
+require 'puppet/util/filetype'
 require 'puppet/type/parsedtype'
 
 module Puppet
@@ -433,9 +433,9 @@ module Puppet
         def self.defaulttype
             case Facter["operatingsystem"].value
             when "Solaris":
-                return Puppet::FileType.filetype(:suntab)
+                return Puppet::Util::FileType.filetype(:suntab)
             else
-                return Puppet::FileType.filetype(:crontab)
+                return Puppet::Util::FileType.filetype(:crontab)
             end
         end
 

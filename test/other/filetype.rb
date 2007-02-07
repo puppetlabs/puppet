@@ -3,7 +3,7 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
-require 'puppet/filetype'
+require 'puppet/util/filetype'
 require 'puppettest'
 
 class TestFileType < Test::Unit::TestCase
@@ -15,7 +15,7 @@ class TestFileType < Test::Unit::TestCase
         type = nil
 
         assert_nothing_raised {
-            type = Puppet::FileType.filetype(:flat)
+            type = Puppet::Util::FileType.filetype(:flat)
         }
 
         assert(type, "Could not retrieve flat filetype")
@@ -59,7 +59,7 @@ class TestFileType < Test::Unit::TestCase
         type = nil
 
         assert_nothing_raised {
-            type = Puppet::FileType.filetype(:netinfo)
+            type = Puppet::Util::FileType.filetype(:netinfo)
         }
 
         assert(type, "Could not retrieve netinfo filetype")

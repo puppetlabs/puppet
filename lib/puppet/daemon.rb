@@ -29,7 +29,7 @@ module Puppet
             end
 
             # Get rid of console logging
-            Puppet::Log.close(:console)
+            Puppet::Util::Log.close(:console)
 
             Process.setsid
             Dir.chdir("/")
@@ -37,7 +37,7 @@ module Puppet
                 $stdin.reopen "/dev/null"
                 $stdout.reopen "/dev/null", "a"
                 $stderr.reopen $stdout
-                Puppet::Log.reopen
+                Puppet::Util::Log.reopen
             rescue => detail
                 File.open("/tmp/daemonout", "w") { |f|
                     f.puts "Could not start %s: %s" % [Puppet.name, detail]
@@ -264,8 +264,8 @@ module Puppet
             rmpidfile()
 
             # And close all logs except the console.
-            Puppet::Log.destinations.reject { |d| d == :console }.each do |dest|
-                Puppet::Log.close(dest)
+            Puppet::Util::Log.destinations.reject { |d| d == :console }.each do |dest|
+                Puppet::Util::Log.close(dest)
             end
 
             super

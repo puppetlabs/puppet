@@ -19,7 +19,7 @@ class TestParsedMounts < Test::Unit::TestCase
     end
 
     def teardown
-        Puppet::FileType.filetype(:ram).clear
+        Puppet::Util::FileType.filetype(:ram).clear
         @provider.filetype = @oldfiletype
         @provider.clear
         super
@@ -65,7 +65,7 @@ class TestParsedMounts < Test::Unit::TestCase
     # Here we just create a fake host type that answers to all of the methods
     # but does not modify our actual system.
     def mkfaketype
-        @provider.filetype = Puppet::FileType.filetype(:ram)
+        @provider.filetype = Puppet::Util::FileType.filetype(:ram)
     end
 
     def test_default_target
@@ -146,7 +146,7 @@ class TestParsedMounts < Test::Unit::TestCase
         end
     end
 
-    if Puppet::SUIDManager.uid == 0 and Facter.value(:operatingsystem) != "Darwin"
+    if Puppet::Util::SUIDManager.uid == 0 and Facter.value(:operatingsystem) != "Darwin"
     def test_mountfs
         fs = nil
         case Facter.value(:hostname)

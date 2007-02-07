@@ -105,7 +105,7 @@ module Puppet
             }
 
             # we can't manage ownership as root, so don't even try
-            unless Puppet::SUIDManager.uid == 0
+            unless Puppet::Util::SUIDManager.uid == 0
                 args.delete(:owner)
             end
 

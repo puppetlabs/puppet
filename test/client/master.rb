@@ -482,14 +482,14 @@ end
         
         # Now make sure the config time is cached
         assert(master.compile_time, "No stored config time")
-        assert_equal(master.compile_time, Puppet::Storage.cache(:configuration)[:compile_time], "times did not match")
+        assert_equal(master.compile_time, Puppet::Util::Storage.cache(:configuration)[:compile_time], "times did not match")
         time = master.compile_time
         master.clear
         File.unlink(file)
-        Puppet::Storage.store
+        Puppet::Util::Storage.store
         
         # Now make a new master
-        Puppet::Storage.clear
+        Puppet::Util::Storage.clear
         master = mkclient(driver)
         master.run
         assert_equal(time, master.compile_time, "time was not retrieved from cache")

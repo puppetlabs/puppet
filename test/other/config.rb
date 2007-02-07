@@ -3,7 +3,7 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
-require 'puppet/config'
+require 'puppet/util/config'
 require 'puppettest'
 require 'puppettest/parsertesting'
 
@@ -87,7 +87,7 @@ class TestConfig < Test::Unit::TestCase
     def mkconfig
         c = nil
         assert_nothing_raised {
-            c = Puppet::Config.new
+            c = Puppet::Util::Config.new
         }
         return c
     end
@@ -546,7 +546,7 @@ yay = /a/path
         user = nonrootuser()
         group = nonrootgroup()
 
-        if Puppet::SUIDManager.uid == 0
+        if Puppet::Util::SUIDManager.uid == 0
             args[:owner] = user.name
             args[:group] = group.name
         end
@@ -562,7 +562,7 @@ yay = /a/path
         assert_equal(mode, filemode(path), "Modes are not equal")
 
         # OS X is broken in how it chgrps files 
-        if Puppet::SUIDManager.uid == 0
+        if Puppet::Util::SUIDManager.uid == 0
             assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
 
             case Facter["operatingsystem"].value
@@ -586,7 +586,7 @@ yay = /a/path
         user = nonrootuser()
         group = nonrootgroup()
 
-        if Puppet::SUIDManager.uid == 0
+        if Puppet::Util::SUIDManager.uid == 0
             args[:owner] = user.name
             args[:group] = group.name
         end
@@ -601,7 +601,7 @@ yay = /a/path
 
 
         # OS X and *BSD is broken in how it chgrps files 
-        if Puppet::SUIDManager.uid == 0
+        if Puppet::Util::SUIDManager.uid == 0
             assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
 
             case Facter["operatingsystem"].value
@@ -682,9 +682,9 @@ inttest = 27
     def test_correct_type_assumptions
         config = mkconfig
 
-        file = Puppet::Config::CFile
-        element = Puppet::Config::CElement
-        bool = Puppet::Config::CBoolean
+        file = Puppet::Util::Config::CFile
+        element = Puppet::Util::Config::CElement
+        bool = Puppet::Util::Config::CBoolean
 
         # We have to keep these ordered, unfortunately.
         [

@@ -25,8 +25,8 @@ class TestSUIDManager < Test::Unit::TestCase
         # modification of a closure. Should the bug rear itself again, this
         # test will fail.
         assert_nothing_raised do
-            Puppet::SUIDManager.uid
-            Puppet::SUIDManager.uid
+            Puppet::Util::SUIDManager.uid
+            Puppet::Util::SUIDManager.uid
         end
     end
 
@@ -34,16 +34,16 @@ class TestSUIDManager < Test::Unit::TestCase
         if @run
             user = nonrootuser
             assert_nothing_raised do
-                Puppet::SUIDManager.egid = user.gid
-                Puppet::SUIDManager.euid = user.uid
+                Puppet::Util::SUIDManager.egid = user.gid
+                Puppet::Util::SUIDManager.euid = user.uid
             end
             
-            assert_equal(Puppet::SUIDManager.euid, Process.euid)
-            assert_equal(Puppet::SUIDManager.egid, Process.egid)
+            assert_equal(Puppet::Util::SUIDManager.euid, Process.euid)
+            assert_equal(Puppet::Util::SUIDManager.egid, Process.egid)
 
             assert_nothing_raised do
-                Puppet::SUIDManager.euid = 0
-                Puppet::SUIDManager.egid = 0
+                Puppet::Util::SUIDManager.euid = 0
+                Puppet::Util::SUIDManager.egid = 0
             end
         end
     end
@@ -61,7 +61,7 @@ class TestSUIDManager < Test::Unit::TestCase
             uid, gid = [nil, nil]
 
             assert_nothing_raised do
-                Puppet::SUIDManager.asuser(user.uid, user.gid) do 
+                Puppet::Util::SUIDManager.asuser(user.uid, user.gid) do 
                     uid = Process.euid
                     gid = Process.egid
                 end
@@ -75,7 +75,7 @@ class TestSUIDManager < Test::Unit::TestCase
         # NOTE: not sure what shells this will work on..
         if @run 
             user = nonrootuser
-            status = Puppet::SUIDManager.system("exit $EUID", user.uid, user.gid)
+            status = Puppet::Util::SUIDManager.system("exit $EUID", user.uid, user.gid)
             assert_equal(user.uid, status.exitstatus)
         end
     end
@@ -90,7 +90,7 @@ class TestSUIDManager < Test::Unit::TestCase
             # way that run_and_capture works.
             user = nil
             uid = nil
-            if Puppet::SUIDManager.uid == 0
+            if Puppet::Util::SUIDManager.uid == 0
                 userobj = nonrootuser()
                 user = userobj.name
                 uid = userobj.uid
@@ -98,7 +98,7 @@ class TestSUIDManager < Test::Unit::TestCase
                 uid = Process.uid
             end
             cmd = [%{/bin/echo $EUID}]
-            output = Puppet::SUIDManager.run_and_capture(cmd, uid)[0].chomp
+            output = Puppet::Util::SUIDManager.run_and_capture(cmd, uid)[0].chomp
             assert_equal(uid.to_s, output)
         end
     end

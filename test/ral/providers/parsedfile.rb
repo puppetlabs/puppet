@@ -4,7 +4,7 @@ $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
 require 'puppettest/fileparsing'
-require 'puppet/filetype'
+require 'puppet/util/filetype'
 require 'puppet/provider/parsedfile'
 require 'facter'
 
@@ -100,8 +100,8 @@ class TestParsedFile < Test::Unit::TestCase
     def test_filetype
         prov = mkprovider
 
-        flat = Puppet::FileType.filetype(:flat)
-        ram = Puppet::FileType.filetype(:ram)
+        flat = Puppet::Util::FileType.filetype(:flat)
+        ram = Puppet::Util::FileType.filetype(:ram)
         assert_nothing_raised do
             prov.filetype = :flat
         end
@@ -126,7 +126,7 @@ class TestParsedFile < Test::Unit::TestCase
         end
 
         # The default filetype is 'ram'
-        assert_instance_of(Puppet::FileType.filetype(:ram), obj)
+        assert_instance_of(Puppet::Util::FileType.filetype(:ram), obj)
 
         newobj = nil
         assert_nothing_raised do

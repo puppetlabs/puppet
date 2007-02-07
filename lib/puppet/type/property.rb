@@ -281,7 +281,7 @@ class Property < Puppet::Parameter
             self.devfail "Parent %s has no loglevel" %
                 @parent.name
         end
-        Puppet::Log.create(
+        Puppet::Util::Log.create(
             :level => @parent[:loglevel],
             :message => msg,
             :source => self

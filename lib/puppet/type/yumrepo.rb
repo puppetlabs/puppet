@@ -1,7 +1,7 @@
 # Description of yum repositories
 
 require 'puppet/propertychange'
-require 'puppet/inifile'
+require 'puppet/util/inifile'
 require 'puppet/type/parsedtype'
 
 module Puppet
@@ -72,7 +72,7 @@ module Puppet
             attr_accessor :yumconf
         end
 
-        self.filetype = Puppet::FileType.filetype(:flat)
+        self.filetype = Puppet::Util::FileType.filetype(:flat)
 
         @inifile = nil
         
@@ -102,7 +102,7 @@ module Puppet
             l
         end
 
-        # Return the Puppet::IniConfig::File for the whole yum config
+        # Return the Puppet::Util::IniConfig::File for the whole yum config
         def self.inifile
             if @inifile.nil?
                 @inifile = read()
@@ -134,7 +134,7 @@ module Puppet
         # Non-test code should use self.inifile to get at the
         # underlying file
         def self.read
-            result = Puppet::IniConfig::File.new()
+            result = Puppet::Util::IniConfig::File.new()
             result.read(yumconf)
             main = result['main']
             if main.nil?
@@ -161,7 +161,7 @@ module Puppet
             return result
         end
 
-        # Return the Puppet::IniConfig::Section with name NAME
+        # Return the Puppet::Util::IniConfig::Section with name NAME
         # from the yum config
         def self.section(name)
             result = inifile[name]
@@ -189,7 +189,7 @@ module Puppet
             super
         end
 
-        # Return the Puppet::IniConfig::Section for this yumrepo element
+        # Return the Puppet::Util::IniConfig::Section for this yumrepo element
         def section
             self.class.section(self[:name])
         end

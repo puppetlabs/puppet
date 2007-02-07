@@ -75,7 +75,7 @@ class TestPuppetCA < Test::Unit::TestCase
 
             uid = Puppet::Util.uid(Puppet[:user])
 
-            if Puppet::SUIDManager.uid == 0
+            if Puppet::Util::SUIDManager.uid == 0
                 assert(! FileTest.owned?(signedfile), "cert is owned by root")
             end
             assert_nothing_raised {

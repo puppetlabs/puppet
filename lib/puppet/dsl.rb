@@ -95,8 +95,8 @@ module Puppet
             end
             Puppet[:user] = Process.uid
             Puppet[:group] = Process.gid
-            Puppet::Log.newdestination(:console)
-            Puppet::Log.level = :info
+            Puppet::Util::Log.newdestination(:console)
+            Puppet::Util::Log.level = :info
         end
 
         private

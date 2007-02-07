@@ -1,5 +1,5 @@
 # Grr
-require 'puppet/autoload'
+require 'puppet/util/autoload'
 require 'puppet/parser/scope'
 
 module Puppet::Parser
@@ -13,7 +13,7 @@ module Functions
 
     def self.autoloader
         unless defined? @autoloader
-            @autoloader = Puppet::Autoload.new(self,
+            @autoloader = Puppet::Util::Autoload.new(self,
                 "puppet/parser/functions",
                 :wrap => false
             )
@@ -181,7 +181,7 @@ module Functions
     end
 
     # Runs a newfunction to create a function for each of the log levels
-    Puppet::Log.levels.each do |level|      
+    Puppet::Util::Log.levels.each do |level|      
         newfunction(level, :doc => "Log a message on the server at level
         #{level.to_s}.") do |vals| 
             send(level, vals.join(" ")) 

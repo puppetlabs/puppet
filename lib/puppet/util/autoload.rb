@@ -1,5 +1,5 @@
 # Autoload paths, either based on names or all at once.
-class Puppet::Autoload
+class Puppet::Util::Autoload
     include Puppet::Util
 
     @autoloaders = {}

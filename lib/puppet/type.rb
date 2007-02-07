@@ -1,12 +1,12 @@
 require 'puppet'
-require 'puppet/log'
+require 'puppet/util/log'
 require 'puppet/element'
 require 'puppet/event'
-require 'puppet/metric'
+require 'puppet/util/metric'
 require 'puppet/type/property'
 require 'puppet/parameter'
 require 'puppet/util'
-require 'puppet/autoload'
+require 'puppet/util/autoload'
 require 'puppet/metatype/manager'
 
 # see the bottom of the file for the rest of the inclusions
@@ -141,7 +141,7 @@ class Type < Puppet::Element
     
     # create a log at specified level
     def log(msg)
-        Puppet::Log.create(
+        Puppet::Util::Log.create(
             :level => @parameters[:loglevel].value,
             :message => msg,
             :source => self
@@ -299,13 +299,13 @@ class Type < Puppet::Element
 
     # Return a cached value
     def cached(name)
-        Puppet::Storage.cache(self)[name]
+        Puppet::Util::Storage.cache(self)[name]
         #@cache[name] ||= nil
     end
 
     # Cache a value
     def cache(name, value)
-        Puppet::Storage.cache(self)[name] = value
+        Puppet::Util::Storage.cache(self)[name] = value
         #@cache[name] = value
     end
 

@@ -611,8 +611,8 @@ class Puppet::Parser::Interpreter
     # reparsed.
     def newfile(*files)
         files.each do |file|
-            unless file.is_a? Puppet::LoadedFile
-                file = Puppet::LoadedFile.new(file)
+            unless file.is_a? Puppet::Util::LoadedFile
+                file = Puppet::Util::LoadedFile.new(file)
             end
             @files << file
         end
