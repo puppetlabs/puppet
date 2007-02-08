@@ -39,7 +39,7 @@ class Puppet::Util::Config
             param = symbolize(param)
             unless @config.include?(param)
                 raise Puppet::Error,
-                    "Unknown configuration parameter %s" % param.inspect
+                    "Attempt to assign a value to unknown configuration parameter %s" % param.inspect
             end
             unless @order.include?(param)
                 @order << param
@@ -282,6 +282,13 @@ class Puppet::Util::Config
             when /^\s*(\w+)\s*=\s*(.+)$/: # settings
                 var = $1.intern
                 value = mungearg($2)
+
+                # Only warn if we don't know what this config var is.  This
+                # prevents exceptions later on.
+                unless @config.include?(var) or metas.include?(var.to_s)
+                    Puppet.warning "Discarded unknown configuration parameter %s" % var.inspect
+                    next # Skip this line.
+                end
 
                 # Mmm, "special" attributes
                 if metas.include?(var.to_s)

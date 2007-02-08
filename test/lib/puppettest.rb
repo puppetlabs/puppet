@@ -269,6 +269,11 @@ module PuppetTest
             exit(74)
         end
     end
+
+    def logstore
+        @logs = []
+        Puppet::Util::Log.newdestination(@logs)
+    end
 end
 
 require 'puppettest/support'

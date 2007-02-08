@@ -932,6 +932,27 @@ inttest = 27
         assert_nothing_raised { config.parse(file) }
         assert_equal("something", config[:rah], "did not remove trailing whitespace in parsing")
     end
+
+    # #484
+    def test_parsing_unknown_variables
+        logstore()
+        config = mkconfig()
+        config.setdefaults(:mysection, :one => ["yay", "yay"])
+        file = tempfile()
+        File.open(file, "w") { |f|
+            f.puts %{[mysection]\n
+                one = one
+                two = yay
+            }
+        }
+
+        assert_nothing_raised("Unknown parameter threw an exception") do
+            config.parse(file)
+        end
+
+        assert(@logs.detect { |l| l.message =~ /unknown configuration/ and l.level == :warning },
+            "Did not generate warning message")
+    end
 end
 
 # $Id$
