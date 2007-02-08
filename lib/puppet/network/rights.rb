@@ -1,5 +1,5 @@
 require 'ipaddr'
-require 'puppet/network/server/authstore'
+require 'puppet/network/authstore'
 
 # Define a set of rights and who has access to them.
 class Puppet::Network::Rights < Hash

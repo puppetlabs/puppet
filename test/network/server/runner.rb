@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-$:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
+$:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet/network/server/runner'
 require 'puppettest'

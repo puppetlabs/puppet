@@ -191,8 +191,9 @@ module Puppet
     end
 end
 
-require 'puppet/network/server/authstore'
-require 'puppet/network/server/authconfig'
+require 'puppet/network/authstore'
+require 'puppet/network/authconfig'
+require 'puppet/network/rights'
 require 'puppet/network/server/servlet'
 require 'puppet/network/server/master'
 require 'puppet/network/server/ca'

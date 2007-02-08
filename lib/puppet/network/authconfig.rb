@@ -1,5 +1,5 @@
 require 'puppet/util/loadedfile'
-require 'puppet/network/server/rights'
+require 'puppet/network/rights'
 
 module Puppet
     class ConfigurationError < Puppet::Error; end
