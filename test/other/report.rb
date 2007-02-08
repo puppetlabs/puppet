@@ -74,7 +74,7 @@ class TestReports < Test::Unit::TestCase
         }
 
         assert_nothing_raised do
-            report.extend(Puppet::Server::Report.report(:store))
+            report.extend(Puppet::Network::Server::Report.report(:store))
         end
 
         yaml = YAML.dump(report)
@@ -119,7 +119,7 @@ class TestReports < Test::Unit::TestCase
         report = trans.report
 
         assert_nothing_raised do
-            report.extend(Puppet::Server::Report.report(:rrdgraph))
+            report.extend(Puppet::Network::Server::Report.report(:rrdgraph))
         end
 
         assert_nothing_raised {
@@ -154,7 +154,7 @@ class TestReports < Test::Unit::TestCase
     
     def test_tagmail_parsing
         report = Object.new
-        report.extend(Puppet::Server::Report.report(:tagmail))
+        report.extend(Puppet::Network::Server::Report.report(:tagmail))
         
         passers = File.join(datadir, "reports", "tagmail_passers.conf")
         assert(FileTest.exists?(passers), "no passers file %s" % passers)
@@ -178,7 +178,7 @@ class TestReports < Test::Unit::TestCase
     
     def test_tagmail_parsing_results
         report = Object.new
-        report.extend(Puppet::Server::Report.report(:tagmail))
+        report.extend(Puppet::Network::Server::Report.report(:tagmail))
         # Now test a few specific lines to make sure we get the results we want
         {
             "tag: abuse@domain.com" => [%w{abuse@domain.com}, %w{tag}, []],
@@ -206,7 +206,7 @@ class TestReports < Test::Unit::TestCase
         
         list = report.logs.collect { |l| l.to_report }
         
-        report.extend(Puppet::Server::Report.report(:tagmail))
+        report.extend(Puppet::Network::Server::Report.report(:tagmail))
         
         {
             [%w{abuse@domain.com}, %w{all}, []] => list,

@@ -3,9 +3,8 @@ require 'webrick/httpstatus'
 require 'cgi'
 require 'delegate'
 
-module Puppet
-class FileServerError < Puppet::Error; end
-class Server
+class Puppet::Network::Server
+    class FileServerError < Puppet::Error; end
     class FileServer < Handler
         attr_accessor :local
 
@@ -27,7 +26,7 @@ class Server
             links = links.intern if links.is_a? String
 
             if links == :manage
-                raise Puppet::FileServerError, "Cannot currently copy links"
+                raise Puppet::Network::Server::FileServerError, "Cannot currently copy links"
             end
 
             mount, path = convert(url, client, clientip)
@@ -200,7 +199,7 @@ class Server
             unless mount.allowed?(client, clientip)
                 mount.warning "%s cannot access %s" %
                     [client, file]
-                raise Puppet::Server::AuthorizationError, "Cannot access %s" % mount
+                raise Puppet::AuthorizationError, "Cannot access %s" % mount
             end
         end
 
@@ -399,7 +398,7 @@ class Server
         # A simple class for wrapping mount points.  Instances of this class
         # don't know about the enclosing object; they're mainly just used for
         # authorization.
-        class Mount < AuthStore
+        class Mount < Puppet::Network::AuthStore
             attr_reader :name
 
             Puppet::Util.logmethods(self, true)
@@ -585,7 +584,6 @@ class Server
             end
         end
     end
-end
 end
 
 # $Id$

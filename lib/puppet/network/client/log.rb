@@ -1,13 +1,13 @@
-class Puppet::Client::LogClient < Puppet::Client::ProxyClient
+class Puppet::Network::Client::LogClient < Puppet::Network::Client::ProxyClient
     @drivername = :Logger
 
     # set up the appropriate interface methods
-    @handler = Puppet::Server::Logger
+    @handler = Puppet::Network::Server::Logger
     self.mkmethods
 
     def initialize(hash = {})
         if hash.include?(:Logger)
-            hash[:Logger] = Puppet::Server::Logger.new()
+            hash[:Logger] = Puppet::Network::Server::Logger.new()
         end
 
         super(hash)

@@ -1,14 +1,14 @@
-class Puppet::Client::FileClient < Puppet::Client::ProxyClient
+class Puppet::Network::Client::FileClient < Puppet::Network::Client::ProxyClient
     @drivername = :FileServer
 
     # set up the appropriate interface methods
-    @handler = Puppet::Server::FileServer
+    @handler = Puppet::Network::Server::FileServer
 
     self.mkmethods
 
     def initialize(hash = {})
         if hash.include?(:FileServer)
-            unless hash[:FileServer].is_a?(Puppet::Server::FileServer)
+            unless hash[:FileServer].is_a?(Puppet::Network::Server::FileServer)
                 raise Puppet::DevError, "Must pass an actual FS object"
             end
         end

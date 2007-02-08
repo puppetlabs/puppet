@@ -1,13 +1,13 @@
-class Puppet::Client::Runner < Puppet::Client::ProxyClient
+class Puppet::Network::Client::Runner < Puppet::Network::Client::ProxyClient
     @drivername = :Runner
 
     # set up the appropriate interface methods
-    @handler = Puppet::Server::Runner
+    @handler = Puppet::Network::Server::Runner
     self.mkmethods
 
     def initialize(hash = {})
         if hash.include?(:Runner)
-            hash[:Runner] = Puppet::Server::Runner.new()
+            hash[:Runner] = Puppet::Network::Server::Runner.new()
         end
 
         super(hash)

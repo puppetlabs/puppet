@@ -1,33 +1,19 @@
-require 'puppet'
 require 'puppet/sslcertificates'
-require 'puppet/type'
-require 'facter'
 require 'openssl'
-require 'puppet/transaction'
-require 'puppet/transportable'
 require 'puppet/daemon'
-require 'puppet/server'
+require 'puppet/network/server'
 require 'puppet/external/base64'
 
-$noclientnetworking = false
-begin
-    require 'webrick'
-    require 'cgi'
-    require 'xmlrpc/client'
-    require 'xmlrpc/server'
-    require 'yaml'
-rescue LoadError => detail
-    $noclientnetworking = detail
-    raise Puppet::Error, "You must have the Ruby XMLRPC, CGI, and Webrick libraries installed"
-end
+require 'webrick'
+require 'cgi'
+require 'xmlrpc/client'
+require 'xmlrpc/server'
+require 'yaml'
 
 module Puppet
-    class NetworkClientError < Puppet::Error; end
-    class ClientError < Puppet::Error; end
-    #---------------------------------------------------------------
-    if $noclientnetworking
-        Puppet.err "Could not load client network libs: %s" % $noclientnetworking
-    else
+    module Network
+        class ClientError < Puppet::Error; end
+        class NetworkClientError < Puppet::Error; end
         class NetworkClient < XMLRPC::Client
             attr_accessor :puppet_server, :puppet_port
             @clients = {}
@@ -40,7 +26,7 @@ module Puppet
             # Create a netclient for each handler
             def self.mkclients
                 # add the methods associated with each namespace
-                Puppet::Server::Handler.each { |handler|
+                Puppet::Network::Server::Handler.each { |handler|
                     interface = handler.interface
                     namespace = interface.prefix
 

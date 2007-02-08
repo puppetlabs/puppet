@@ -5,7 +5,7 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppet'
 require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
-require 'puppet/client'
+require 'puppet/network/client'
 require 'puppettest'
 require 'puppettest/resourcetesting'
 

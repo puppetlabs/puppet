@@ -2,12 +2,8 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/client/resource'
-require 'puppet/server'
 require 'puppettest'
-
-# $Id$
+require 'puppet/network/client/resource'
 
 class TestResourceClient < Test::Unit::TestCase
     include PuppetTest::ServerTest
@@ -24,7 +20,7 @@ class TestResourceClient < Test::Unit::TestCase
     def mkclient
         client = nil
         assert_nothing_raised {
-            client = Puppet::Client::Resource.new(:Server => "localhost",
+            client = Puppet::Network::Client::Resource.new(:Server => "localhost",
                 :Port => @@port)
         }
 
@@ -94,3 +90,5 @@ class TestResourceClient < Test::Unit::TestCase
         end
     end
 end
+
+# $Id$

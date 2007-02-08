@@ -9,8 +9,7 @@ require 'facter'
 require 'digest/md5'
 require 'puppet/external/base64'
 
-module Puppet
-class Server
+class Puppet::Network::Server
     class BucketError < RuntimeError; end
     class FileBucket < Handler
         Puppet.config.setdefaults("puppetmasterd",
@@ -164,6 +163,5 @@ class Server
         end
     end
 end
-end
-#
+
 # $Id$

@@ -1,6 +1,6 @@
 require 'puppet'
 
-Puppet::Server::Report.newreport(:rrdgraph) do
+Puppet::Network::Server::Report.newreport(:rrdgraph) do
     desc "Graph all available data about hosts using the RRD library.  You
         must have the RRD binary library installed to use this report, which
         you can get from [Tobias Oetiker's site](http://people.ee.ethz.ch/~oetiker/webtools/rrdtool/pub/contrib/).

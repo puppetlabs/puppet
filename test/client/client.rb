@@ -2,10 +2,8 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/client'
-require 'puppet/server'
 require 'puppettest'
+require 'puppet/network/client'
 
 class TestClient < Test::Unit::TestCase
     include PuppetTest::ServerTest
@@ -20,7 +18,7 @@ class TestClient < Test::Unit::TestCase
         # create our client
         client = nil
         assert_nothing_raised {
-            client = Puppet::Client::MasterClient.new(
+            client = Puppet::Network::Client::MasterClient.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -63,7 +61,7 @@ class TestClient < Test::Unit::TestCase
         # create a pair of clients with no certs
         nonemaster = nil
         assert_nothing_raised {
-            nonemaster = Puppet::Client::MasterClient.new(
+            nonemaster = Puppet::Network::Client::MasterClient.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -71,7 +69,7 @@ class TestClient < Test::Unit::TestCase
 
         nonebucket = nil
         assert_nothing_raised {
-            nonebucket = Puppet::Client::Dipper.new(
+            nonebucket = Puppet::Network::Client::Dipper.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -81,7 +79,7 @@ class TestClient < Test::Unit::TestCase
         # make a new ssldir for it
         ca = nil
         assert_nothing_raised {
-            ca = Puppet::Client::CA.new(
+            ca = Puppet::Network::Client::CA.new(
                 :CA => true, :Local => true
             )
             ca.requestcert
@@ -90,7 +88,7 @@ class TestClient < Test::Unit::TestCase
         # initialize our clients with this set of certs
         certmaster = nil
         assert_nothing_raised {
-            certmaster = Puppet::Client::MasterClient.new(
+            certmaster = Puppet::Network::Client::MasterClient.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -98,7 +96,7 @@ class TestClient < Test::Unit::TestCase
 
         certbucket = nil
         assert_nothing_raised {
-            certbucket = Puppet::Client::Dipper.new(
+            certbucket = Puppet::Network::Client::Dipper.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -124,11 +122,11 @@ class TestClient < Test::Unit::TestCase
             certmaster.getconfig
         }
 
-        assert_raise(Puppet::NetworkClientError,
+        assert_raise(Puppet::Network::NetworkClientError,
             "Client was allowed to call backup with no certs") {
             nonebucket.backup("/etc/passwd")
         }
-        assert_raise(Puppet::NetworkClientError,
+        assert_raise(Puppet::Network::NetworkClientError,
             "Client was allowed to call backup with untrusted certs") {
             certbucket.backup("/etc/passwd")
         }
@@ -143,14 +141,14 @@ class TestClient < Test::Unit::TestCase
 
         master = client = nil
         assert_nothing_raised() {
-            master = Puppet::Server::Master.new(
+            master = Puppet::Network::Server::Master.new(
                 :Manifest => manifest,
                 :UseNodes => false,
                 :Local => false
             )
         }
         assert_nothing_raised() {
-            client = Puppet::Client::MasterClient.new(
+            client = Puppet::Network::Client::MasterClient.new(
                 :Master => master
             )
         }
@@ -172,7 +170,7 @@ class TestClient < Test::Unit::TestCase
     def test_setpidfile
         FileUtils.mkdir_p(Puppet[:rundir])
         $clientrun = false
-        newclass = Class.new(Puppet::Client) do
+        newclass = Class.new(Puppet::Network::Client) do
             def run
                 $clientrun = true
             end

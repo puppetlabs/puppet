@@ -2,10 +2,8 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/server'
-require 'puppet/client'
 require 'puppettest'
+require 'puppet/network/server'
 
 class TestMaster < Test::Unit::TestCase
     include PuppetTest::ServerTest
@@ -26,7 +24,7 @@ class TestMaster < Test::Unit::TestCase
             # create our master
             assert_nothing_raised() {
                 # this is the default server setup
-                master = Puppet::Server::Master.new(
+                master = Puppet::Network::Server::Master.new(
                     :Manifest => file,
                     :UseNodes => false,
                     :Local => true
@@ -35,7 +33,7 @@ class TestMaster < Test::Unit::TestCase
 
             # and our client
             assert_nothing_raised() {
-                client = Puppet::Client::MasterClient.new(
+                client = Puppet::Network::Client::MasterClient.new(
                     :Master => master
                 )
             }
@@ -71,14 +69,14 @@ class TestMaster < Test::Unit::TestCase
             master = nil
             assert_nothing_raised() {
                 # this is the default server setup
-                master = Puppet::Server::Master.new(
+                master = Puppet::Network::Server::Master.new(
                     :Manifest => file,
                     :UseNodes => false,
                     :Local => true
                 )
             }
             assert_nothing_raised() {
-                client = Puppet::Client::MasterClient.new(
+                client = Puppet::Network::Client::MasterClient.new(
                     :Master => master
                 )
             }
@@ -105,14 +103,14 @@ class TestMaster < Test::Unit::TestCase
         client = master = nil
         assert_nothing_raised() {
             # this is the default server setup
-            master = Puppet::Server::Master.new(
+            master = Puppet::Network::Server::Master.new(
                 :Manifest => manifest,
                 :UseNodes => false,
                 :Local => true
             )
         }
         assert_nothing_raised() {
-            client = Puppet::Client::MasterClient.new(
+            client = Puppet::Network::Client::MasterClient.new(
                 :Master => master
             )
         }
@@ -172,7 +170,7 @@ class TestMaster < Test::Unit::TestCase
         # create our master
         assert_nothing_raised() {
             # this is the default server setup
-            master = Puppet::Server::Master.new(
+            master = Puppet::Network::Server::Master.new(
                 :Manifest => file,
                 :UseNodes => false,
                 :Local => true
@@ -211,7 +209,7 @@ class TestMaster < Test::Unit::TestCase
         # create our master
         assert_nothing_raised() {
             # this is the default server setup
-            master = Puppet::Server::Master.new(
+            master = Puppet::Network::Server::Master.new(
                 :Manifest => file,
                 :UseNodes => true,
                 :Local => true
@@ -261,7 +259,7 @@ class TestMaster < Test::Unit::TestCase
         # create our master
         assert_nothing_raised() {
             # this is the default server setup
-            master = Puppet::Server::Master.new(
+            master = Puppet::Network::Server::Master.new(
                 :Manifest => file,
                 :UseNodes => true,
                 :Local => true
@@ -306,7 +304,7 @@ class TestMaster < Test::Unit::TestCase
         Puppet[:storeconfigs] = true
 
         # this is the default server setup
-        master = Puppet::Server::Master.new(
+        master = Puppet::Network::Server::Master.new(
             :Code => "",
             :UseNodes => true,
             :Local => true

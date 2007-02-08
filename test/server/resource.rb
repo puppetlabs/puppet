@@ -2,9 +2,8 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/server/resource'
 require 'puppettest'
+require 'puppet/network/server/resource'
 require 'base64'
 require 'cgi'
 
@@ -39,7 +38,7 @@ class TestResourceServer < Test::Unit::TestCase
         server = nil
 
         assert_nothing_raised do
-            server = Puppet::Server::Resource.new()
+            server = Puppet::Network::Server::Resource.new()
         end
 
         # The first run we create the file on the copy, the second run
@@ -119,7 +118,7 @@ class TestResourceServer < Test::Unit::TestCase
         server = nil
 
         assert_nothing_raised do
-            server = Puppet::Server::Resource.new()
+            server = Puppet::Network::Server::Resource.new()
         end
 
         [   [nil],
@@ -177,7 +176,7 @@ class TestResourceServer < Test::Unit::TestCase
         #Puppet.err Puppet::Type::ParsedType::Port.path
         server = nil
         assert_nothing_raised do
-            server = Puppet::Server::Resource.new()
+            server = Puppet::Network::Server::Resource.new()
         end
 
         require 'etc'
@@ -239,7 +238,7 @@ class TestResourceServer < Test::Unit::TestCase
     def test_apply
         server = nil
         assert_nothing_raised do
-            server = Puppet::Server::Resource.new()
+            server = Puppet::Network::Server::Resource.new()
         end
 
         file = tempfile()

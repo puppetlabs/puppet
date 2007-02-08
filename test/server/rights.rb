@@ -2,9 +2,8 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/server/rights'
 require 'puppettest'
+require 'puppet/network/server/rights'
 
 class TestRights < Test::Unit::TestCase
 	include PuppetTest
@@ -12,7 +11,7 @@ class TestRights < Test::Unit::TestCase
     def test_rights
         store = nil
         assert_nothing_raised {
-            store = Puppet::Server::Rights.new
+            store = Puppet::Network::Rights.new
         }
 
         assert(store, "Did not create store")

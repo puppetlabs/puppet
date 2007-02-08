@@ -1,12 +1,12 @@
-class Puppet::Client::Reporter < Puppet::Client
+class Puppet::Network::Client::Reporter < Puppet::Network::Client
     @drivername = :Report
 
     # set up the appropriate interface methods
-    @handler = Puppet::Server::Report
+    @handler = Puppet::Network::Server::Report
 
     def initialize(hash = {})
         if hash.include?(:Report)
-            hash[:Report] = Puppet::Server::Report.new()
+            hash[:Report] = Puppet::Network::Server::Report.new()
         end
 
         super(hash)

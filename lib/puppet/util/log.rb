@@ -306,7 +306,7 @@ class Puppet::Util::Log
 
             @name = host
 
-            @driver = Puppet::Client::LogClient.new(args)
+            @driver = Puppet::Network::Client::LogClient.new(args)
         end
 
         def handle(msg)

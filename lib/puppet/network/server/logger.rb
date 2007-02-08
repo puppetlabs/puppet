@@ -1,7 +1,6 @@
 require 'yaml'
 
-module Puppet
-class Server
+class Puppet::Network::Server
     class LoggerError < RuntimeError; end
 
     # Receive logs from remote hosts.
@@ -48,7 +47,6 @@ class Server
             return ""
         end
     end
-end
 end
 
 # $Id$

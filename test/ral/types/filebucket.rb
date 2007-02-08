@@ -70,7 +70,7 @@ class TestFileBucket < Test::Unit::TestCase
             bucket = Puppet.type(:filebucket).bucket(name)
         }
 
-        assert_instance_of(Puppet::Client::Dipper, bucket)
+        assert_instance_of(Puppet::Network::Client::Dipper, bucket)
 
         md5 = nil
         newpath = tempfile()

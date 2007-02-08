@@ -1,7 +1,7 @@
-class Puppet::Client::Resource < Puppet::Client
+class Puppet::Network::Client::Resource < Puppet::Network::Client
     @drivername = :ResourceServer
 
-    @handler = Puppet::Server::Resource
+    @handler = Puppet::Network::Server::Resource
 
     def apply(bucket)
 
@@ -43,7 +43,7 @@ class Puppet::Client::Resource < Puppet::Client
 
     def initialize(hash = {})
         if hash.include?(:ResourceServer)
-            unless hash[:ResourceServer].is_a?(Puppet::Server::Resource)
+            unless hash[:ResourceServer].is_a?(Puppet::Network::Server::Resource)
                 raise Puppet::DevError, "Must pass an actual PElement server object"
             end
         end

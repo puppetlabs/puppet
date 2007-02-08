@@ -83,7 +83,7 @@ end
 
 require 'getoptlong'
 require 'puppet'
-require 'puppet/server'
+require 'puppet/network/server'
 
 options = [
 	[ "--daemonize", "-D",			GetoptLong::NO_ARGUMENT ],
@@ -230,7 +230,7 @@ end
 
 if Puppet[:parseonly]
     begin
-        Puppet::Server::Master.new(master)
+        Puppet::Network::Server::Master.new(master)
     rescue => detail
         if Puppet[:trace]
             puts detail.backtrace
@@ -256,8 +256,8 @@ args[:Handlers] = handlers
 
 begin
     # use the default, um, everything
-    #server = Puppet::Server.new(:CA => ca)
-    server = Puppet::Server.new(args)
+    #server = Puppet::Network::Server.new(:CA => ca)
+    server = Puppet::Network::Server.new(args)
 rescue => detail
     if Puppet[:trace]
         puts detail.backtrace

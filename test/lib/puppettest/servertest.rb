@@ -45,7 +45,7 @@ module PuppetTest::ServerTest
         # then create the actual server
         server = nil
         assert_nothing_raised {
-            server = Puppet::Server.new(
+            server = Puppet::Network::Server.new(
                 :Port => @@port,
                 :Handlers => handlers
             )

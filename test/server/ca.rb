@@ -2,11 +2,8 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/server/ca'
+require 'puppet/network/server/ca'
 require 'puppet/sslcertificates'
-require 'openssl'
-require 'puppettest'
 
 # $Id$
 
@@ -25,7 +22,7 @@ class TestCA < Test::Unit::TestCase
 
         # create our ca
         assert_nothing_raised {
-            ca = Puppet::Server::CA.new(:autosign => true)
+            ca = Puppet::Network::Server::CA.new(:autosign => true)
         }
 
         # create a cert with a fake name
@@ -81,7 +78,7 @@ class TestCA < Test::Unit::TestCase
 
         # make our CA server
         assert_nothing_raised {
-            caserv = Puppet::Server::CA.new(:autosign => false)
+            caserv = Puppet::Network::Server::CA.new(:autosign => false)
         }
 
         # retrieve the actual ca object
@@ -159,7 +156,7 @@ class TestCA < Test::Unit::TestCase
 
         caserv = nil
         assert_nothing_raised {
-            caserv = Puppet::Server::CA.new(:autosign => autosign)
+            caserv = Puppet::Network::Server::CA.new(:autosign => autosign)
         }
 
         # make sure we know what's going on
@@ -173,7 +170,7 @@ class TestCA < Test::Unit::TestCase
     def test_nodefaultautosign
         caserv = nil
         assert_nothing_raised {
-            caserv = Puppet::Server::CA.new()
+            caserv = Puppet::Network::Server::CA.new()
         }
 
         # make sure we know what's going on
@@ -188,7 +185,7 @@ class TestCA < Test::Unit::TestCase
     def test_caautosign
         server = nil
         assert_nothing_raised {
-            server = Puppet::Server.new(
+            server = Puppet::Network::Server.new(
                 :Port => @@port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
@@ -202,7 +199,7 @@ class TestCA < Test::Unit::TestCase
     def test_autosign_true_beats_file
         caserv = nil
         assert_nothing_raised {
-            caserv = Puppet::Server::CA.new()
+            caserv = Puppet::Network::Server::CA.new()
         }
 
         host = "hostname.domain.com"

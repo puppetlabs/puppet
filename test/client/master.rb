@@ -2,9 +2,6 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/client'
-require 'puppet/server'
 require 'puppettest'
 
 class TestMasterClient < Test::Unit::TestCase
@@ -49,7 +46,7 @@ class TestMasterClient < Test::Unit::TestCase
         # create our master
         assert_nothing_raised() {
             # this is the default server setup
-            master = Puppet::Server::Master.new(
+            master = Puppet::Network::Server::Master.new(
                 :Manifest => file,
                 :UseNodes => false,
                 :Local => true
@@ -62,7 +59,7 @@ class TestMasterClient < Test::Unit::TestCase
         master ||= mkmaster()
         client = nil
         assert_nothing_raised() {
-            client = Puppet::Client::MasterClient.new(
+            client = Puppet::Network::Client::MasterClient.new(
                 :Master => master
             )
         }
@@ -71,8 +68,8 @@ class TestMasterClient < Test::Unit::TestCase
     end
     
     def mk_fake_client
-        server = Puppet::Server::Master.new :Code => ""
-        master = Puppet::Client::MasterClient.new :Server => server, :Local => true
+        server = Puppet::Network::Server::Master.new :Code => ""
+        master = Puppet::Network::Client::MasterClient.new :Server => server, :Local => true
 
         # Now create some objects
         objects = FakeComponent.new
@@ -211,7 +208,7 @@ class TestMasterClient < Test::Unit::TestCase
     def test_clientversionfact
         facts = nil
         assert_nothing_raised {
-            facts = Puppet::Client::MasterClient.facts
+            facts = Puppet::Network::Client::MasterClient.facts
         }
 
         assert_equal(Puppet.version.to_s, facts["clientversion"])
@@ -248,7 +245,7 @@ class TestMasterClient < Test::Unit::TestCase
         
         files = []
         assert_nothing_raised do
-            files = Puppet::Client::MasterClient.download(:dest => dest, :source => source, :name => "testing")
+            files = Puppet::Network::Client::MasterClient.download(:dest => dest, :source => source, :name => "testing")
         end
         
         assert(FileTest.directory?(dest), "dest dir was not created")
@@ -272,7 +269,7 @@ end
         end
 
         assert_nothing_raised {
-            Puppet::Client::MasterClient.getplugins
+            Puppet::Network::Client::MasterClient.getplugins
         }
 
         destfile = File.join(Puppet[:plugindest], "myplugin.rb")
@@ -300,7 +297,7 @@ end
         end
 
         assert_nothing_raised {
-            Puppet::Client::MasterClient.getplugins
+            Puppet::Network::Client::MasterClient.getplugins
         }
 
         destfile = File.join(Puppet[:pluginpath], "myplugin.rb")
@@ -320,7 +317,7 @@ end
 
         # Now try it again, to make sure we don't have any objects lying around
         assert_nothing_raised {
-            Puppet::Client::MasterClient.getplugins
+            Puppet::Network::Client::MasterClient.getplugins
         }
     end
 
@@ -338,7 +335,7 @@ end
         end
 
         assert_nothing_raised {
-            Puppet::Client::MasterClient.getfacts
+            Puppet::Network::Client::MasterClient.getfacts
         }
 
         destfile = File.join(Puppet[:factdest], "myfact.rb")
@@ -359,7 +356,7 @@ end
         end
 
         assert_nothing_raised {
-            Puppet::Client::MasterClient.getfacts
+            Puppet::Network::Client::MasterClient.getfacts
         }
 
         assert_equal("funtest", Facter.value(:myfact),
@@ -369,7 +366,7 @@ end
 
         # Now run it again and make sure the fact still loads
         assert_nothing_raised {
-            Puppet::Client::MasterClient.getfacts
+            Puppet::Network::Client::MasterClient.getfacts
         }
 
         assert_equal("funtest", Facter.value(:myfact),
@@ -403,7 +400,7 @@ end
         end
 
         assert_nothing_raised {
-            Puppet::Client::MasterClient.loadfacts
+            Puppet::Network::Client::MasterClient.loadfacts
         }
 
         names.each do |name|
@@ -432,7 +429,7 @@ end
 
 
         assert_nothing_raised {
-            Puppet::Client::MasterClient.download(:dest => dest, :source => dir,
+            Puppet::Network::Client::MasterClient.download(:dest => dest, :source => dir,
                 :name => "testing"
             ) {}
         }
@@ -449,7 +446,7 @@ end
     def test_facts
         facts = nil
         assert_nothing_raised do
-            facts = Puppet::Client::MasterClient.facts
+            facts = Puppet::Network::Client::MasterClient.facts
         end
         Facter.to_hash.each do |fact, value|
             assert_equal(facts[fact.downcase], value, "%s is not equal" % fact.inspect)

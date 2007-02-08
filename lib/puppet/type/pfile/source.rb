@@ -1,4 +1,4 @@
-require 'puppet/server/fileserver'
+require 'puppet/network/server/fileserver'
 
 module Puppet
     # Copy files from a local or remote source.  This state *only* does any work
@@ -7,7 +7,7 @@ module Puppet
     # this state, during retrieval, modifies the appropriate other states
     # so that things get taken care of appropriately.
     Puppet.type(:file).newproperty(:source) do
-        PINPARAMS = Puppet::Server::FileServer::CHECKPARAMS
+        PINPARAMS = Puppet::Network::Server::FileServer::CHECKPARAMS
 
         attr_accessor :source, :local
         desc "Copy a file over the current file.  Uses ``checksum`` to
@@ -86,7 +86,7 @@ module Puppet
 
             begin
                 desc = server.describe(path, @parent[:links])
-            rescue NetworkClientError => detail
+            rescue Puppet::Network::NetworkClientError => detail
                 self.err "Could not describe %s: %s" %
                     [path, detail]
                 return nil
@@ -231,7 +231,7 @@ module Puppet
 
             begin
                 contents = sourceobj.server.retrieve(path, @parent[:links])
-            rescue NetworkClientError => detail
+            rescue Puppet::Network::NetworkClientError => detail
                 self.err "Could not retrieve %s: %s" %
                     [path, detail]
                 return nil

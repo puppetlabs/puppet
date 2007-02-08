@@ -2,11 +2,8 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/server'
 require 'puppettest'
-
-# $Id$
+require 'puppet/network/server'
 
 if ARGV.length > 0 and ARGV[0] == "short"
     $short = true
@@ -44,7 +41,7 @@ class TestServer < Test::Unit::TestCase
         server = nil
         # make our server again
         assert_nothing_raised() {
-            server = Puppet::Server.new(
+            server = Puppet::Network::Server.new(
                 :Port => @@port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
@@ -70,7 +67,7 @@ class TestServer < Test::Unit::TestCase
 
         # and then start a masterclient
         assert_nothing_raised() {
-            client = Puppet::Client::MasterClient.new(
+            client = Puppet::Network::Client::MasterClient.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -92,7 +89,7 @@ class TestServer < Test::Unit::TestCase
         Puppet[:setpidfile] = false
         server = nil
         assert_nothing_raised() {
-            server = Puppet::Server.new(
+            server = Puppet::Network::Server.new(
                 :Port => @@port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
@@ -144,7 +141,7 @@ class TestServer < Test::Unit::TestCase
 
         client = mk_status_client
         # This time the client should be denied
-        assert_raise(Puppet::NetworkClientError) {
+        assert_raise(Puppet::Network::NetworkClientError) {
             client.status
         }
     end
@@ -156,7 +153,7 @@ class TestServer < Test::Unit::TestCase
         Puppet::Type::allclear
 
         assert_nothing_raised() {
-            client = Puppet::Client::StatusClient.new(
+            client = Puppet::Network::Client::StatusClient.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -167,7 +164,7 @@ class TestServer < Test::Unit::TestCase
     def mk_status_server
         server = nil
         assert_nothing_raised() {
-            server = Puppet::Server.new(
+            server = Puppet::Network::Server.new(
                 :Port => @@port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
@@ -196,3 +193,5 @@ class TestServer < Test::Unit::TestCase
         assert(count < 30, "Killing server #{pid} failed")
     end
 end
+
+# $Id$

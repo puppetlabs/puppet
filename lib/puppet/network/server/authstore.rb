@@ -4,11 +4,10 @@
 require 'ipaddr'
 
 module Puppet
-class Server
     class AuthStoreError < Puppet::Error; end
     class AuthorizationError < Puppet::Error; end
 
-    class AuthStore
+    class Network::AuthStore
         # This has to be an array, not a hash, else it loses its ordering.
         ORDER = [
             [:ip, [:ip]],
@@ -224,6 +223,5 @@ class Server
         end
     end
 end
-end
-#
+
 # $Id$

@@ -2,9 +2,9 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/server/authconfig'
 require 'puppettest'
+
+require 'puppet/network/server/authconfig'
 
 class TestAuthConfig < Test::Unit::TestCase
 	include PuppetTest
@@ -31,7 +31,7 @@ class TestAuthConfig < Test::Unit::TestCase
 
         config = nil
         assert_nothing_raised {
-            config = Puppet::Server::AuthConfig.new(file)
+            config = Puppet::Network::AuthConfig.new(file)
         }
 
         assert_nothing_raised {

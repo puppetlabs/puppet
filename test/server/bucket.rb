@@ -2,7 +2,6 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
 require 'puppettest'
 require 'base64'
 
@@ -149,7 +148,7 @@ class TestBucket < Test::Unit::TestCase
         files = filelist()
         server = nil
         assert_nothing_raised {
-            server = Puppet::Server::FileBucket.new(
+            server = Puppet::Network::Server::FileBucket.new(
                 :Bucket => @bucket
             )
         }
@@ -188,14 +187,14 @@ class TestBucket < Test::Unit::TestCase
         client = nil
         threads = []
         assert_nothing_raised {
-            bucket = Puppet::Server::FileBucket.new(
+            bucket = Puppet::Network::Server::FileBucket.new(
                 :Bucket => @bucket
             )
         }
 
         #sleep(30)
         assert_nothing_raised {
-            client = Puppet::Client::Dipper.new(
+            client = Puppet::Network::Client::Dipper.new(
                 :Bucket => bucket
             )
         }
@@ -219,7 +218,7 @@ class TestBucket < Test::Unit::TestCase
         pid = mkserver(:CA => {}, :FileBucket => { :Bucket => @bucket})
 
         assert_nothing_raised {
-            client = Puppet::Client::Dipper.new(
+            client = Puppet::Network::Client::Dipper.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -236,7 +235,7 @@ class TestBucket < Test::Unit::TestCase
     def test_no_path_duplicates
         bucket = nil
         assert_nothing_raised {
-            bucket = Puppet::Server::FileBucket.new(
+            bucket = Puppet::Network::Server::FileBucket.new(
                 :Bucket => @bucket
             )
         }

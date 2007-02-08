@@ -3,7 +3,7 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
-require 'puppet/server'
+require 'puppet/network/server'
 require 'puppet/sslcertificates'
 require 'puppettest'
 

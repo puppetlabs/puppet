@@ -6,9 +6,7 @@ require 'xmlrpc/server'
 # Much of this was taken from QuickCert:
 #   http://segment7.net/projects/ruby/QuickCert/
 
-module Puppet
-class Server
-    class CAError < Puppet::Error; end
+class Puppet::Network::Server
     class CA < Handler
         attr_reader :ca
 
@@ -44,7 +42,7 @@ class Server
                 end
                 return false
             end
-            auth = Puppet::Server::AuthStore.new
+            auth = Puppet::Network::AuthStore.new
             File.open(autosign) { |f|
                 f.each { |line|
                     next if line =~ /^\s*#/
@@ -149,7 +147,6 @@ class Server
             end
         end
     end
-end
 end
 
 # $Id$

@@ -3,7 +3,7 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
-require 'puppet/server'
+require 'puppet/network/server'
 require 'puppet/daemon'
 require 'puppettest'
 require 'socket'
@@ -35,7 +35,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
 
         client = nil
         assert_nothing_raised() {
-            client = Puppet::Client::StatusClient.new(
+            client = Puppet::Network::Client::StatusClient.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -65,7 +65,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
 
         # this client shoulduse the same certs
         assert_nothing_raised() {
-            client = Puppet::Client::MasterClient.new(
+            client = Puppet::Network::Client::MasterClient.new(
                 :Server => "localhost",
                 :Port => @@port
             )

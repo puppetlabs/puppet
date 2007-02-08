@@ -4,26 +4,15 @@
 
 require 'puppet'
 require 'puppet/daemon'
-
-$noservernetworking = false
-
-begin
-    require 'webrick'
-    require 'webrick/https'
-    require 'cgi'
-    require 'xmlrpc/server'
-    require 'xmlrpc/client'
-rescue LoadError => detail
-    $noservernetworking = detail
-end
+require 'webrick'
+require 'webrick/https'
+require 'cgi'
+require 'xmlrpc/server'
+require 'xmlrpc/client'
 
 module Puppet
     class ServerError < RuntimeError; end
-    #---------------------------------------------------------------
-    if $noservernetworking
-        Puppet.err "Could not create server: %s" % $noservernetworking
-        class Server; end
-    else
+    module Network
         class Server < WEBrick::HTTPServer
             include Puppet::Daemon
 
@@ -39,7 +28,7 @@ module Puppet
             # there's no configuration file.
             def authconfig
                 unless defined? @authconfig
-                    @authconfig = Puppet::Server::AuthConfig.new()
+                    @authconfig = Puppet::Network::AuthConfig.new()
                 end
 
                 @authconfig
@@ -99,7 +88,7 @@ module Puppet
 
                 # okay, i need to retrieve my cert and set it up, somehow
                 # the default case will be that i'm also the ca
-                if ca = @handlers.find { |handler| handler.is_a?(Puppet::Server::CA) }
+                if ca = @handlers.find { |handler| handler.is_a?(Puppet::Network::Server::CA) }
                     @driver = ca
                     @secureinit = true
                     self.fqdn
@@ -137,7 +126,7 @@ module Puppet
                 # have a global state
 
                 # mount has to be called after the server is initialized
-                self.mount("/RPC2", Puppet::Server::Servlet, @handlers)
+                self.mount("/RPC2", Puppet::Network::Server::Servlet, @handlers)
             end
 
             # the base class for the different handlers
@@ -198,24 +187,21 @@ module Puppet
                     return 1
                 end
             end
-
         end
     end
-
-    #---------------------------------------------------------------
 end
 
-require 'puppet/server/authstore'
-require 'puppet/server/authconfig'
-require 'puppet/server/servlet'
-require 'puppet/server/master'
-require 'puppet/server/ca'
-require 'puppet/server/fileserver'
-require 'puppet/server/filebucket'
-require 'puppet/server/resource'
-require 'puppet/server/runner'
-require 'puppet/server/logger'
-require 'puppet/server/report'
-require 'puppet/client'
+require 'puppet/network/server/authstore'
+require 'puppet/network/server/authconfig'
+require 'puppet/network/server/servlet'
+require 'puppet/network/server/master'
+require 'puppet/network/server/ca'
+require 'puppet/network/server/fileserver'
+require 'puppet/network/server/filebucket'
+require 'puppet/network/server/resource'
+require 'puppet/network/server/runner'
+require 'puppet/network/server/logger'
+require 'puppet/network/server/report'
+require 'puppet/network/client'
 
 # $Id$

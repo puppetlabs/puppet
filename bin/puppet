@@ -60,8 +60,8 @@
 # Licensed under the GNU Public License
 
 require 'puppet'
-require 'puppet/server'
-require 'puppet/client'
+require 'puppet/network/server'
+require 'puppet/network/client'
 require 'getoptlong'
 
 options = [
@@ -179,8 +179,8 @@ if loadclasses
 end
 
 begin
-    server = Puppet::Server::Master.new(master)
-    client = Puppet::Client::MasterClient.new(
+    server = Puppet::Network::Server::Master.new(master)
+    client = Puppet::Network::Client::MasterClient.new(
         :Master => server,
         :Cache => false
     )

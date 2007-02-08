@@ -1,6 +1,5 @@
-module Puppet
-class Server
-    # A simple server for triggering a new run on a Puppet client.
+# A simple server for triggering a new run on a Puppet client.
+class Puppet::Network::Server
     class Report < Handler
         class << self
             include Puppet::Util::ClassGen
@@ -170,7 +169,6 @@ class Server
             Puppet[:reports].gsub(/(^\s+)|(\s+$)/, '').split(/\s*,\s*/)
         end
     end
-end
 end
 
 # $Id$

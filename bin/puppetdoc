@@ -265,7 +265,7 @@ path.
 end
 
 def self.reports
-    puts Puppet::Server::Report.reportdocs
+    puts Puppet::Network::Server::Report.reportdocs
 end
 
 def self.functions

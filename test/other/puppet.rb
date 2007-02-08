@@ -11,7 +11,7 @@ class TestPuppetModule < Test::Unit::TestCase
     include SignalObserver
     
     def mkfakeclient
-        Class.new(Puppet::Client) do
+        Class.new(Puppet::Network::Client) do
             def initialize
             end
 

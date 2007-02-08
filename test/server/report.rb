@@ -2,23 +2,21 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/server/report'
-require 'puppet/client/reporter'
 require 'puppettest'
+require 'puppet/network/server/report'
 require 'puppettest/reporttesting'
 
 class TestReportServer < Test::Unit::TestCase
 	include PuppetTest
 	include PuppetTest::Reporttesting
 
-    Report = Puppet::Server::Report
+    Report = Puppet::Network::Server::Report
 	Puppet::Util.logmethods(self)
 
     def mkserver
         server = nil
         assert_nothing_raised {
-            server = Puppet::Server::Report.new()
+            server = Puppet::Network::Server::Report.new()
         }
         server
     end
@@ -27,7 +25,7 @@ class TestReportServer < Test::Unit::TestCase
         server ||= mkserver()
         client = nil
         assert_nothing_raised {
-            client = Puppet::Client::Reporter.new(:Report => server)
+            client = Puppet::Network::Client::Reporter.new(:Report => server)
         }
 
         client
@@ -45,7 +43,7 @@ class TestReportServer < Test::Unit::TestCase
         $myreportrun = false
         file = File.join(libdir, "myreport.rb")
         File.open(file, "w") { |f| f.puts %{
-                Puppet::Server::Report.newreport(:myreport) do
+                Puppet::Network::Server::Report.newreport(:myreport) do
                     def process(report)
                         $myreportrun = true
                         return report
@@ -56,18 +54,18 @@ class TestReportServer < Test::Unit::TestCase
         Puppet[:reports] = "myreport"
 
         # Create a server
-        server = Puppet::Server::Report.new
+        server = Puppet::Network::Server::Report.new
 
         report = nil
         assert_nothing_raised {
-            report = Puppet::Server::Report.report(:myreport)
+            report = Puppet::Network::Server::Report.report(:myreport)
         }
         assert(report, "Did not get report")
 
     end
 
     def test_process
-        server = Puppet::Server::Report.new
+        server = Puppet::Network::Server::Report.new
 
         # We have to run multiple reports to make sure there's no conflict
         reports = []
@@ -104,7 +102,7 @@ class TestReportServer < Test::Unit::TestCase
 
     # Make sure reports can specify whether to use yaml or not
     def test_useyaml
-        server = Puppet::Server::Report.new
+        server = Puppet::Network::Server::Report.new
 
         Report.newreport(:yamlyes, :useyaml => true) do
             def process(report)
@@ -135,7 +133,7 @@ class TestReportServer < Test::Unit::TestCase
         Puppet[:reports] = "myreport"
 
         # Create a server
-        server = Puppet::Server::Report.new
+        server = Puppet::Network::Server::Report.new
 
         {"myreport" => ["myreport"],
             " fake, another, yay " => ["fake", "another", "yay"]
@@ -174,7 +172,7 @@ class TestReportServer < Test::Unit::TestCase
     def test_report_list
         list = nil
         assert_nothing_raised do
-            list = Puppet::Server::Report.reports
+            list = Puppet::Network::Server::Report.reports
         end
 
         [:rrdgraph, :store, :tagmail].each do |name|

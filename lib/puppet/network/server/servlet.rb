@@ -1,7 +1,6 @@
 require 'xmlrpc/server'
 
-module Puppet
-class Server
+class Puppet::Network::Server
     class ServletError < RuntimeError; end
     class Servlet < XMLRPC::WEBrickServlet
         ERR_UNAUTHORIZED = 30
@@ -127,7 +126,7 @@ class Server
                     obj.call(*args)
                 rescue XMLRPC::FaultException
                     raise
-                rescue Puppet::Server::AuthorizationError => detail
+                rescue Puppet::AuthorizationError => detail
                     #Puppet.warning obj.inspect
                     #Puppet.warning args.inspect
                     Puppet.err "Permission denied: %s" % detail.to_s
@@ -274,4 +273,5 @@ class Server
         end
     end
 end
-end
+
+# $Id$

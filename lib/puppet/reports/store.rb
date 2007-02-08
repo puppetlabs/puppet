@@ -1,6 +1,6 @@
 require 'puppet'
 
-Puppet::Server::Report.newreport(:store, :useyaml => true) do
+Puppet::Network::Server::Report.newreport(:store, :useyaml => true) do
     Puppet.config.use(:reporting)
 
     desc "Store the yaml report on disk.  Each host sends its report as a YAML dump

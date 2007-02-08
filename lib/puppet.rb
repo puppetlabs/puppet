@@ -210,7 +210,7 @@ module Puppet
 
         # Handle restarting.
         trap(:HUP) do
-            if client = @services.find { |s| s.is_a? Puppet::Client::MasterClient } and client.running?
+            if client = @services.find { |s| s.is_a? Puppet::Network::Client::MasterClient } and client.running?
                 client.restart
             else
                 Puppet.restart
@@ -221,7 +221,7 @@ module Puppet
         trap(:USR1) do
             done = 0
             Puppet.notice "Caught USR1; triggering client run"
-            @services.find_all { |s| s.is_a? Puppet::Client }.each do |client|
+            @services.find_all { |s| s.is_a? Puppet::Network::Client }.each do |client|
                 if client.respond_to? :running?
                     if client.running?
                         Puppet.info "Ignoring running %s" % client.class
@@ -387,7 +387,7 @@ module Puppet
     end
 end
 
-require 'puppet/server'
+require 'puppet/network/server'
 require 'puppet/type'
 require 'puppet/util/storage'
 if Puppet[:storeconfigs]

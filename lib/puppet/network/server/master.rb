@@ -5,8 +5,7 @@ require 'puppet/sslcertificates'
 require 'xmlrpc/server'
 require 'yaml'
 
-module Puppet
-class Server
+class Puppet::Network::Server
     class MasterError < Puppet::Error; end
     class Master < Handler
         include Puppet::Util
@@ -208,7 +207,6 @@ class Server
             end
         end
     end
-end
 end
 
 # $Id$

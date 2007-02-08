@@ -1,7 +1,5 @@
-module Puppet
-class Server
-    class MissingMasterError < RuntimeError # Cannot find the master client
-    end
+class Puppet::Network::Server
+    class MissingMasterError < RuntimeError; end # Cannot find the master client
     # A simple server for triggering a new run on a Puppet client.
     class Runner < Handler
         @interface = XMLRPC::Service::Interface.new("puppetrunner") { |iface|
@@ -12,7 +10,7 @@ class Server
         # tags and whether to ignore schedules
         def run(tags = nil, ignoreschedules = false, fg = true, client = nil, clientip = nil)
             # We need to retrieve the client
-            master = Puppet::Client::MasterClient.instance
+            master = Puppet::Network::Client::MasterClient.instance
 
             unless master
                 raise MissingMasterError, "Could not find the master client"
@@ -58,7 +56,6 @@ class Server
             return "success"
         end
     end
-end
 end
 
 # $Id$

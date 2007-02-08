@@ -2,8 +2,7 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/server/runner'
+require 'puppet/network/server/runner'
 require 'puppettest'
 
 class TestServerRunner < Test::Unit::TestCase
@@ -15,7 +14,7 @@ class TestServerRunner < Test::Unit::TestCase
         # create our master
         assert_nothing_raised() {
             # this is the default server setup
-            master = Puppet::Server::Master.new(
+            master = Puppet::Network::Server::Master.new(
                 :Manifest => file,
                 :UseNodes => false,
                 :Local => true
@@ -24,7 +23,7 @@ class TestServerRunner < Test::Unit::TestCase
 
         # and our client
         assert_nothing_raised() {
-            client = Puppet::Client::MasterClient.new(
+            client = Puppet::Network::Client::MasterClient.new(
                 :Master => master
             )
         }
@@ -52,7 +51,7 @@ class TestServerRunner < Test::Unit::TestCase
 
         runner = nil
         assert_nothing_raised {
-            runner = Puppet::Server::Runner.new
+            runner = Puppet::Network::Server::Runner.new
         }
         # First: tags
         # Second: ignore schedules true/false

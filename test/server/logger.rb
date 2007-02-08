@@ -2,7 +2,6 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
 require 'puppettest'
 require 'base64'
 require 'cgi'
@@ -20,7 +19,7 @@ class TestLogger < Test::Unit::TestCase
     def test_localaddlog
         logger = nil
         assert_nothing_raised {
-            logger = Puppet::Server::Logger.new
+            logger = Puppet::Network::Server::Logger.new
         }
 
         msg = nil
@@ -40,7 +39,7 @@ class TestLogger < Test::Unit::TestCase
     def test_remoteaddlog
         logger = nil
         assert_nothing_raised {
-            logger = Puppet::Server::Logger.new
+            logger = Puppet::Network::Server::Logger.new
         }
 
         msg = nil
@@ -63,7 +62,7 @@ class TestLogger < Test::Unit::TestCase
     def test_localclient
         client = nil
         assert_nothing_raised {
-            client = Puppet::Client::LogClient.new(:Logger => true)
+            client = Puppet::Network::Client::LogClient.new(:Logger => true)
         }
 
         msg = nil
@@ -98,7 +97,7 @@ class TestLogger < Test::Unit::TestCase
         logger = nil
         # Create our server
         assert_nothing_raised {
-            logger = Puppet::Server.new(
+            logger = Puppet::Network::Server.new(
                 :Port => @@port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
@@ -122,7 +121,7 @@ class TestLogger < Test::Unit::TestCase
         # Start a raw xmlrpc client
         client = nil
         assert_nothing_raised() {
-            client = Puppet::Client::LogClient.new(
+            client = Puppet::Network::Client::LogClient.new(
                 :Server => "localhost",
                 :Port => @@port
             )

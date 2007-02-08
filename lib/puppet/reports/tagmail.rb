@@ -14,7 +14,7 @@ Puppet.config.setdefaults(:reporting,
 
 require 'net/smtp'
 
-Puppet::Server::Report.newreport(:tagmail) do
+Puppet::Network::Server::Report.newreport(:tagmail) do
     desc "This report sends specific log messages to specific email addresses
         based on the tags in the log messages.  See the
         [tag documentation](/trac/puppet/wiki/UsingTags) for more information

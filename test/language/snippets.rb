@@ -5,8 +5,8 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppet'
 require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
-require 'puppet/client'
-require 'puppet/server'
+require 'puppet/network/client'
+require 'puppet/network/server'
 require 'puppettest'
 
 class TestSnippets < Test::Unit::TestCase
@@ -41,7 +41,7 @@ class TestSnippets < Test::Unit::TestCase
         args = {
             :Listen => false
         }
-        Puppet::Client.new(args)
+        Puppet::Network::Client.new(args)
     end
 
     def ast2scope(ast)
@@ -492,11 +492,11 @@ class TestSnippets < Test::Unit::TestCase
             testname = ("test_" + mname).intern
             self.send(:define_method, testname) {
                 # first parse the file
-                server = Puppet::Server::Master.new(
+                server = Puppet::Network::Server::Master.new(
                     :Manifest => snippet(file),
                     :Local => true
                 )
-                client = Puppet::Client::MasterClient.new(
+                client = Puppet::Network::Client::MasterClient.new(
                     :Master => server,
                     :Cache => false
                 )
@@ -506,7 +506,7 @@ class TestSnippets < Test::Unit::TestCase
                     client.getconfig()
                 }
 
-                client = Puppet::Client::MasterClient.new(
+                client = Puppet::Network::Client::MasterClient.new(
                     :Master => server,
                     :Cache => false
                 )

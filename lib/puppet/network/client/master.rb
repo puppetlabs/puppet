@@ -2,12 +2,12 @@
 require 'sync'
 require 'timeout'
 
-class Puppet::Client::MasterClient < Puppet::Client
+class Puppet::Network::Client::MasterClient < Puppet::Network::Client
     unless defined? @@sync
         @@sync = Sync.new
     end
 
-    @handler = Puppet::Server::Master
+    @handler = Puppet::Network::Server::Master
 
     Puppet.setdefaults("puppetd",
         :puppetdlockfile => [ "$statedir/puppetdlock",
@@ -244,7 +244,7 @@ class Puppet::Client::MasterClient < Puppet::Client
         facts = self.class.facts
 
         unless facts.length > 0
-            raise Puppet::ClientError.new(
+            raise Puppet::Network::ClientError.new(
                 "Could not retrieve any facts"
             )
         end
@@ -551,7 +551,7 @@ class Puppet::Client::MasterClient < Puppet::Client
 
     def reportclient
         unless defined? @reportclient
-            @reportclient = Puppet::Client::Reporter.new(
+            @reportclient = Puppet::Network::Client::Reporter.new(
                 :Server => Puppet[:reportserver]
             )
         end

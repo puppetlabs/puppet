@@ -189,7 +189,7 @@ module Puppet
             # to create one if we don't already have one (or if we're not a CA
             # server).
             caclient = nil
-            if @driver.is_a? Puppet::Client::CA or @driver.is_a? Puppet::Server::CA
+            if @driver.is_a? Puppet::Network::Client::CA or @driver.is_a? Puppet::Network::Server::CA
                 caclient = @driver
             else
                 # Create a CA client with which to request the cert.
@@ -197,7 +197,7 @@ module Puppet
                     raise Puppet::DevError,
                         "Incorrect setup for a local CA request"
                 end
-                caclient = Puppet::Client::CA.new(
+                caclient = Puppet::Network::Client::CA.new(
                     :Port => @driver.puppet_port,
                     :Server => @driver.puppet_server
                 )

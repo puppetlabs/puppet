@@ -155,8 +155,8 @@ trap(:INT) do
 end
 
 require 'puppet'
-require 'puppet/server'
-require 'puppet/client'
+require 'puppet/network/server'
+require 'puppet/network/client'
 require 'getoptlong'
 
 options = [
@@ -205,7 +205,7 @@ begin
             when "--disable"
                 options[:disable] = true
             when "--serve"
-                if klass = Puppet::Server::Handler.handler(arg)
+                if klass = Puppet::Network::Server::Handler.handler(arg)
                     options[:serve][klass.name] = klass
                 end
             when "--enable"
@@ -305,7 +305,7 @@ end
 
 # We need tomake the client either way, we just don't start it
 # if --no-client is set.
-client = Puppet::Client::MasterClient.new(args)
+client = Puppet::Network::Client::MasterClient.new(args)
 if options[:enable]
     client.enable
 elsif options[:disable]
@@ -327,7 +327,7 @@ end
 unless client.readcert
     # If we don't already have the certificate, then create a client to
     # request one.
-    caclient = Puppet::Client::CA.new(args)
+    caclient = Puppet::Network::Client::CA.new(args)
     if options[:waitforcert] > 0
         begin
             while ! caclient.requestcert do
@@ -387,7 +387,7 @@ if Puppet[:listen] and ! options[:onetime]
     args[:Port] = Puppet[:puppetport]
 
     begin
-        server = Puppet::Server.new(args)
+        server = Puppet::Network::Server.new(args)
     rescue => detail
         $stderr.puts detail
         puts detail.backtrace

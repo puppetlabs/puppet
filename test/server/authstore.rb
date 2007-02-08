@@ -2,16 +2,16 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/server/authstore'
 require 'puppettest'
+
+require 'puppet/network/server/authstore'
 
 class TestAuthStore < Test::Unit::TestCase
 	include PuppetTest
     def mkstore
         store = nil
         assert_nothing_raised {
-            store = Puppet::Server::AuthStore.new
+            store = Puppet::Network::AuthStore.new
         }
 
         return store
@@ -53,7 +53,7 @@ class TestAuthStore < Test::Unit::TestCase
             inval$id
         
         }.each { |pat|
-            assert_raise(Puppet::Server::AuthStoreError,
+            assert_raise(Puppet::AuthStoreError,
                 "name '%s' was allowed" % pat) {
                 store.allow(pat)
             }
@@ -81,14 +81,14 @@ class TestAuthStore < Test::Unit::TestCase
             assert(store.allowed?(name, "192.168.0.1"), "Host %s not allowed" % name)
         }
 
-        assert_raise(Puppet::Server::AuthStoreError) {
+        assert_raise(Puppet::AuthStoreError) {
             store.allow("domain.*.com")
         }
 
         assert(!store.allowed?("very.long.domain.name.com", "1.2.3.4"),
             "Long hostname allowed")
 
-        assert_raise(Puppet::Server::AuthStoreError) {
+        assert_raise(Puppet::AuthStoreError) {
             store.allow("domain.*.other.com")
         }
     end
@@ -107,11 +107,11 @@ class TestAuthStore < Test::Unit::TestCase
             assert(store.allowed?("hosttest.com", ip), "IP %s not allowed" % ip)
         }
 
-        #assert_raise(Puppet::Server::AuthStoreError) {
+        #assert_raise(Puppet::AuthStoreError) {
         #    store.allow("192.168.674.0")
         #}
 
-        assert_raise(Puppet::Server::AuthStoreError) {
+        assert_raise(Puppet::AuthStoreError) {
             store.allow("192.168.0")
         }
     end

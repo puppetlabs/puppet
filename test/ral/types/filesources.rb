@@ -119,7 +119,7 @@ class TestFileSources < Test::Unit::TestCase
         
         file[:links] = :manage
         # We can't manage links at this point
-        assert_raise(Puppet::FileServerError) do
+        assert_raise(Puppet::Network::Server::FileServerError) do
             property.describe(source)
         end
         
@@ -536,7 +536,7 @@ class TestFileSources < Test::Unit::TestCase
 
         serverpid = nil
         assert_nothing_raised() {
-            server = Puppet::Server.new(
+            server = Puppet::Network::Server.new(
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
                     :FileServer => {
@@ -575,7 +575,7 @@ class TestFileSources < Test::Unit::TestCase
 
         serverpid = nil
         assert_nothing_raised() {
-            server = Puppet::Server.new(
+            server = Puppet::Network::Server.new(
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
                 }
@@ -626,7 +626,7 @@ class TestFileSources < Test::Unit::TestCase
 
         serverpid = nil
         assert_nothing_raised("Could not start on port %s" % @port) {
-            server = Puppet::Server.new(
+            server = Puppet::Network::Server.new(
                 :Port => @port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
@@ -794,7 +794,7 @@ class TestFileSources < Test::Unit::TestCase
         assert(FileTest.file?(dest), "Destination is not a file")
 
         # Now copy the links
-        #assert_raise(Puppet::FileServerError) {
+        #assert_raise(Puppet::Network::Server::FileServerError) {
         trans = nil
         assert_nothing_raised {
             file[:links] = :manage

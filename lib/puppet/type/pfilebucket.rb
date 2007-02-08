@@ -1,4 +1,4 @@
-require 'puppet/server/filebucket'
+require 'puppet/network/server/filebucket'
 
 module Puppet
     newtype(:filebucket) do
@@ -86,7 +86,7 @@ module Puppet
         def mkbucket
             if self[:server]
                 begin
-                    @bucket = Puppet::Client::Dipper.new( 
+                    @bucket = Puppet::Network::Client::Dipper.new( 
                         :Server => self[:server],
                         :Port => self[:port]
                     )
@@ -97,7 +97,7 @@ module Puppet
                 end
             else
                 begin
-                    @bucket = Puppet::Client::Dipper.new(
+                    @bucket = Puppet::Network::Client::Dipper.new(
                         :Path => self[:path]
                     )
                 rescue => detail
