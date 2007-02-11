@@ -3,6 +3,14 @@ require 'puppet/type/parsedtype'
 module Puppet
     # We want the mount to refresh when it changes.
     newtype(:mount, :self_refresh => true) do
+        @doc = "Manages mounted filesystems, including putting mount
+            information into the mount table. The actual behavior depends 
+            on the value of the 'ensure' parameter.
+	    
+            Note that if a ``mount`` receives an event from another resource,
+            it will try to remount the filesystems if ``ensure => mounted`` is
+            set."
+        
         # Use the normal parent class, because we actually want to
         # call code when sync() is called.
         newproperty(:ensure) do
@@ -161,10 +169,6 @@ module Puppet
             end
         end
 
-        @doc = "Manages mounted mounts, including putting mount
-            information into the mount table. The actual behavior depends 
-            on the value of the 'ensure' parameter."
-        
         def refresh
             # Only remount if we're supposed to be mounted.
             if ens = @parameters[:ensure] and ens.should == :mounted

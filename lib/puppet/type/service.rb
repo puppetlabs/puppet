@@ -15,7 +15,12 @@ module Puppet
             'status' command, then Puppet will look in the process table for a
             command matching the service name), but the more information you
             can provide the better behaviour you will get.  Or, you can just
-            use a platform that has very good service support."
+            use a platform that has very good service support.
+	    
+            Note that if a ``service`` receives an event from another resource,
+            the service will get restarted. The actual command to restart the
+            service depends on the platform. You can provide a special command
+            for restarting with the ``restart`` attribute."
         
         attr_reader :stat
 

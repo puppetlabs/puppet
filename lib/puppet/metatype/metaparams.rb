@@ -363,6 +363,9 @@ class Puppet::Type
                         subscribe => file[nagconf]
                     }
                 }
+	 		
+            Currently the ``exec``, ``mount`` and ``service`` type support
+            refreshing.
             "
     end
     
