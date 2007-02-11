@@ -348,7 +348,10 @@ module Puppet
         # Basically just a synonym for restarting.  Used to respond
         # to events.
         def refresh
-            provider.restart
+            # Only restart if we're supposed to be running
+            if ens = @parameters[:ensure] and ens.should == :running
+                provider.restart
+            end
         end
     end
 end
