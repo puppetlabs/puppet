@@ -44,11 +44,8 @@ Puppet::Type.type(:package).provide :pkgdmg do
     end
 
     def self.installpkg(source, name, orig_source)
-      begin
-          installer "-pkg", source, "-target", "/"
-      rescue Puppet::ExecutionFailure
-          return nil
-      end
+      installer "-pkg", source, "-target", "/"
+      # Non-zero exit status will throw an exception.
       File.open("/var/db/.puppet_pkgdmg_installed_#{name}", "w") do |t|
           t.print "name: '#{name}'\n"
           t.print "source: '#{orig_source}'\n"
@@ -65,7 +62,7 @@ Puppet::Type.type(:package).provide :pkgdmg do
         if %r{\A[A-Za-z][A-Za-z0-9+\-\.]*://} =~ cached_source
             cached_source = "/tmp/#{name}"
             begin
-                curl "-o", cached_source, "-C", "-", "-k", "--retry", "3", "--retry-delay", "15", "-s", "--url", source
+                curl "-o", cached_source, "-C", "-", "-k", "-s", "--url", source
                 Puppet.debug "Success: curl transfered [#{name}]"
             rescue Puppet::ExecutionFailure
                 Puppet.debug "curl did not transfer [#{name}].  Falling back to slower open-uri transfer methods."
@@ -75,26 +72,23 @@ Puppet::Type.type(:package).provide :pkgdmg do
         
         begin
             open(cached_source) do |dmg|
-                cmd = "#{command(:hdiutil)} mount -plist -nobrowse -readonly -mountrandom /tmp #{dmg.path}"
-                IO.popen(cmd) do |pipe|
-                    xml_str = pipe.read
-                    ptable = Plist::parse_xml xml_str
-                    # JJM Filter out all mount-paths into a single array, discard the rest.
-                    mounts = ptable['system-entities'].collect { |entity|
-                        entity['mount-point']
-                    }.select { |mountloc|; mountloc }
-                    begin
-                        mounts.each do |fspath|
-                            Dir.entries(fspath).select { |f|
-                                f =~ /\.m{0,1}pkg$/i
-                                }.each do |pkg|
-                                    installpkg("#{fspath}/#{pkg}", name, source)
-                                end
-                        end # mounts.each do
-                    ensure
-                        hdiutil "eject", mounts[0]
-                    end # begin
-                end # IO.popen() do
+                xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-mountrandom", "/tmp", dmg.path
+                ptable = Plist::parse_xml xml_str
+                # JJM Filter out all mount-paths into a single array, discard the rest.
+                mounts = ptable['system-entities'].collect { |entity|
+                    entity['mount-point']
+                }.select { |mountloc|; mountloc }
+                begin
+                    mounts.each do |fspath|
+                        Dir.entries(fspath).select { |f|
+                            f =~ /\.m{0,1}pkg$/i
+                            }.each do |pkg|
+                                installpkg("#{fspath}/#{pkg}", name, source)
+                            end
+                    end # mounts.each do
+                ensure
+                    hdiutil "eject", mounts[0]
+                end # begin
             end # open() do
         ensure
             # JJM Remove the file if open-uri didn't already do so.
