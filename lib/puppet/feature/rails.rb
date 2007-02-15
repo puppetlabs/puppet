@@ -21,6 +21,10 @@ Puppet.features.add(:rails) do
                 if count > 0
                     retry
                 end
+        else
+            #If ActiveRecord was installed only via rubygems this is required
+            require 'rubygems'
+            require 'active_record'
         end
     end
 
