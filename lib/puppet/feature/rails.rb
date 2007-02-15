@@ -28,7 +28,7 @@ Puppet.features.add(:rails) do
     unless defined? ActiveRecord
         begin
             require 'rubygems'
-            gem 'rails'
+            require 'rails'
         rescue LoadError
             # Nothing
         end
