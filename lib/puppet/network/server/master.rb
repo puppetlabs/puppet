@@ -24,7 +24,7 @@ class Puppet::Network::Server
             facts["serverversion"] = Puppet.version.to_s
 
             # And then add the server name and IP
-            {"servername" => "hostname",
+            {"servername" => "fqdn",
                 "serverip" => "ipaddress"
             }.each do |var, fact|
                 if obj = Facter[fact]
