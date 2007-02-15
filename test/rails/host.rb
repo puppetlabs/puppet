@@ -153,20 +153,20 @@ class TestRailsHost < Test::Unit::TestCase
 
         # This actually works in real life, but I can't get it to work in testing.
         # I expect it's a caching problem.
-#        count = 0
-#        host.resources.find(:all).find_all { |r| r.title =~ /file2/ }.each do |r|
-#            puts "%s => %s" % [r.ref, r.parameters.inspect]
-#            assert_equal("notice", r.parameter("loglevel"),
-#                "loglevel was not added")
-#            case r.restype
-#            when "file":
-#                assert_equal("fake", r.parameter("owner"), "owner was not modified")
-#            when "exec":
-#                assert_equal("fake", r.parameter("user"), "user was not modified")
-#            else
-#                raise "invalid resource type %s" % r.restype
-#            end
-#        end
+        count = 0
+        host.resources.find(:all).find_all { |r| r.title =~ /file2/ }.each do |r|
+            puts "%s => %s" % [r.ref, r.parameters.inspect]
+            assert_equal("notice", r.parameter("loglevel"),
+                "loglevel was not added")
+            case r.restype
+            when "file":
+                assert_equal("fake", r.parameter("owner"), "owner was not modified")
+            when "exec":
+                assert_equal("fake", r.parameter("user"), "user was not modified")
+            else
+                raise "invalid resource type %s" % r.restype
+            end
+        end
     end
     else
         $stderr.puts "Install Rails for Rails and Caching tests"

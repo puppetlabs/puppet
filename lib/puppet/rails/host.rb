@@ -4,12 +4,11 @@ require 'puppet/util/rails/collection_merger'
 class Puppet::Rails::Host < ActiveRecord::Base
     include Puppet::Util::CollectionMerger
 
-    has_many :fact_values, :through => :fact_names 
-    has_many :fact_names, :dependent => :destroy
+    has_many :facts, :dependent => :destroy
     belongs_to :puppet_classes
     has_many :source_files
     has_many :resources,
-        :include => [ :param_names, :param_values ],
+        :include => [ :params ],
         :dependent => :destroy
 
     acts_as_taggable
@@ -63,23 +62,18 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     # Return the value of a fact.
     def fact(name)
-        if fv = self.fact_values.find(:first, :conditions => "fact_names.name = '#{name}'") 
-            return fv.value
+        if f = self.facts.find_by_name(name)
+            return f.value
         else
             return nil
         end
     end
 
     def setfacts(facts)
-        collection_merge(:fact_names, facts) do |name, value|
-            fn = fact_names.find_by_name(name) || fact_names.build(:name => name)
+        collection_merge(:facts, facts) do |name, value|
+            f = facts.find_by_name(name) || facts.build(:name => name)
             # We're only ever going to have one fact value, at this point.
-            unless fv = fn.fact_values.find_by_value(value)
-                fv = fn.fact_values.build(:value => value)
-            end
-            fn.fact_values = [fv]
-
-            fn
+            f
         end
     end
 

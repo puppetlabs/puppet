@@ -923,11 +923,11 @@ class TestInterpreter < Test::Unit::TestCase
 
         assert(res, "Did not get resource from rails")
 
-        param = res.param_names.find_by_name("owner", :include => :param_values)
+        param = res.params.find_by_name("owner")
 
         assert(param, "Did not find owner param")
 
-        pvalue = param.param_values.find_by_value("root")
+        pvalue = param.value
         assert_equal("root", pvalue[:value])
     end
     end

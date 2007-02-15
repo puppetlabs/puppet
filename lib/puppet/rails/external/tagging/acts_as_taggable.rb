@@ -14,7 +14,7 @@ module ActiveRecord
           
           class_inheritable_reader :acts_as_taggable_options
 
-          has_many :taggings, :as => :taggable, :dependent => true
+          has_many :taggings, :as => :taggable, :dependent => :destroy
           has_many :tags, :through => :taggings
 
           include ActiveRecord::Acts::Taggable::InstanceMethods

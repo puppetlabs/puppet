@@ -36,9 +36,8 @@ class TestRailsResource < Test::Unit::TestCase
 
         # Now add some params
         params.each do |param, value|
-            pn = resource.param_names.find_or_create_by_name(param)
-            pv = pn.param_values.find_or_create_by_value(value)
-            resource.param_names << pn
+            pn = resource.params.find_or_create_by_name_and_value(param, value)
+            resource.params << pn
         end
 
         host.save
@@ -58,7 +57,7 @@ class TestRailsResource < Test::Unit::TestCase
         interp, scope, source = mkclassframing
 
         # Find the new resource and include all it's parameters.
-        resource = Puppet::Rails::Resource.find_by_id(resource.id, :include => [ :param_names, :param_values ])
+        resource = Puppet::Rails::Resource.find_by_id(resource.id, :include => [ :params ])
 
         # Now, try to convert our resource to a real resource
         res = nil

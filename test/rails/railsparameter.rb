@@ -25,17 +25,11 @@ class TestRailsParameter < Test::Unit::TestCase
         # Use array and non-array values, to make sure we get things back in
         # the same form.
         {"myname" => "myval", "multiple" => %w{one two three}}.each do |name, value|
-            param = Puppet::Rails::ParamName.new(:name => name)
+            param = Puppet::Rails::ParamName.new(:name => name, :value => value)
             if value.is_a? Array
                 values = value
             else
                 values = [value]
-            end
-            valueobjects = values.collect do |v|
-                obj = Puppet::Rails::ParamValue.new(:value => v)
-                assert_nothing_raised do
-                    param.param_values << obj
-                end
             end
 
             assert(param, "Did not create rails parameter")

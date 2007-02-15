@@ -1,15 +1,14 @@
 require 'puppet/util/rails/collection_merger'
 
-class Puppet::Rails::ParamName < ActiveRecord::Base
+class Puppet::Rails::Param < ActiveRecord::Base
     include Puppet::Util::CollectionMerger
-    has_many :param_values, :dependent => :destroy
     belongs_to :resource
 
     def to_resourceparam(source)
         hash = {}
         hash[:name] = self.name.to_sym
         hash[:source] = source
-        hash[:value] = self.param_values.find(:all).collect { |v| v.value }
+        hash[:value] = self.param.value.find(:all).collect { |v| v.value }
         if hash[:value].length == 1
             hash[:value] = hash[:value].shift
         end
@@ -20,4 +19,3 @@ class Puppet::Rails::ParamName < ActiveRecord::Base
     end
 end
 
-# $Id$
