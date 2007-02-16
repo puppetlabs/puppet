@@ -341,6 +341,7 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
     def run(tags = nil, ignoreschedules = false)
         lockfile = Puppet::Util::Pidlock.new(Puppet[:puppetdlockfile])
         
+        locked = false
         Puppet::Util.sync(:puppetrun).synchronize(Sync::EX) do
             if !lockfile.lock
                 Puppet.notice "Lock file %s exists; skipping configuration run" %
@@ -370,6 +371,9 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
                 Process.kill(:HUP, $$)
             end
         end
+    ensure
+        # Just make sure we remove the lock file if we set it.
+        lockfile.unlock if locked and lockfile.lock
     end
 
     def running?
