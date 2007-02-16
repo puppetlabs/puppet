@@ -118,6 +118,8 @@ class Puppet::Network::Server
                     puts detail.backtrace
                 end
             end
+
+            update_timestamp(client)
         end
 
         private
@@ -167,6 +169,17 @@ class Puppet::Network::Server
         # Handle the parsing of the reports attribute.
         def reports
             Puppet[:reports].gsub(/(^\s+)|(\s+$)/, '').split(/\s*,\s*/)
+        end
+
+        def update_timestamp(client)
+            return unless Puppet[:storeconfigs]
+
+            if host = Puppet::Rails::Host.find_by_name(client)
+                host.last_report = Time.now
+                host.save
+            else
+                Puppet.warning "Could not find Rails host for %s" % client
+            end
         end
     end
 end
