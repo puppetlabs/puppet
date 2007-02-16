@@ -744,6 +744,9 @@ class TestInterpreter < Test::Unit::TestCase
         assert_instance_of(Puppet::TransBucket, objects)
     end
 
+    # Test evaliterate.  It's a very simple method, but it's pretty tough
+    # to test.  It iterates over collections and instances of defined types
+    # until there's no more work to do.
     def test_evaliterate
         interp, scope, source = mkclassframing
 
@@ -774,13 +777,46 @@ class TestInterpreter < Test::Unit::TestCase
             ])
         )
 
+        # And create a definition that creates a virtual resource
+        interp.newdefine("virtualizer", :arguments => [%w{owner}],
+            :code => AST::ASTArray.new(:children => [
+                virt_resourcedef("one", varref("name"),
+                    "owner" => varref("owner")
+                )
+            ])
+        )
+
+        # Now create an instance of three
         three = Puppet::Parser::Resource.new(
-            :type => "three", :title => "/tmp/yayness",
+            :type => "three", :title => "one",
             :scope => scope, :source => source,
             :params => paramify(source, :owner => "root")
         )
-
         scope.setresource(three)
+
+        # An instance of the virtualizer
+        virt = Puppet::Parser::Resource.new(
+            :type => "virtualizer", :title => "two",
+            :scope => scope, :source => source,
+            :params => paramify(source, :owner => "root")
+        )
+        scope.setresource(virt)
+
+        # And a virtual instance of three
+        virt_three = Puppet::Parser::Resource.new(
+            :type => "three", :title => "three",
+            :scope => scope, :source => source,
+            :params => paramify(source, :owner => "root")
+        )
+        virt_three.virtual = true
+        scope.setresource(virt_three)
+
+        # Now create some collections for our virtual resources
+        %w{Three[three] One[two]}.each do |ref|
+            coll = Puppet::Parser::Collector.new(scope, "file", nil, nil, :virtual)
+            coll.resources = [ref]
+            scope.newcollection(coll)
+        end
 
         ret = nil
         assert_nothing_raised do
@@ -789,22 +825,22 @@ class TestInterpreter < Test::Unit::TestCase
 
 
         assert_instance_of(Array, ret)
-        assert(1, ret.length)
-        assert_equal([three], ret)
-
-        assert(ret.detect { |r| r.ref == "Three[/tmp/yayness]"},
-            "Did not get three back as unevaluated")
+        assert_equal(3, ret.length,
+            "did not get the correct number of unevaled resources")
 
         # Now translate the whole tree
         assert_nothing_raised do
             interp.evaliterate(scope)
         end
 
-        # Now make sure we've got our file
-        file = scope.findresource "File[/tmp/yayness]"
-        assert(file, "Could not find file")
+        # Now make sure we've got all of our files
+        %w{one two three}.each do |name|
+            file = scope.findresource("File[%s]" % name)
+            assert(file, "Could not find file %s" % name)
 
-        assert_equal("root", file[:owner])
+            assert_equal("root", file[:owner])
+            assert(! file.virtual?, "file %s is still virtual" % name)
+        end
     end
 
     # Make sure we fail if there are any leftover overrides to perform.
@@ -828,6 +864,15 @@ class TestInterpreter < Test::Unit::TestCase
             interp.failonleftovers(scope)
         end
 
+        # Make a new scope to test leftover collections
+        scope = mkscope :interp => interp
+        interp.meta_def(:check_resource_collections) do
+            raise ArgumentError, "yep"
+        end
+
+        assert_raise(ArgumentError, "did not call check_resource_colls") do
+            interp.failonleftovers(scope)
+        end
     end
 
     def test_evalnode
@@ -1008,6 +1053,18 @@ class TestInterpreter < Test::Unit::TestCase
             node = interp.nodesearch("apple")
         end
         assert_instance_of(Puppet::Parser::AST::Node, node, "did not create node")
+    end
+
+    def test_check_resource_collections
+        interp = mkinterp
+        scope = mkscope :interp => interp
+        coll = Puppet::Parser::Collector.new(scope, "file", nil, nil, :virtual)
+        coll.resources = ["File[/tmp/virtual1]", "File[/tmp/virtual2]"]
+        scope.newcollection(coll)
+
+        assert_raise(Puppet::ParseError, "Did not fail on remaining resource colls") do
+            interp.check_resource_collections(scope)
+        end
     end
 end
 

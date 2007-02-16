@@ -97,6 +97,12 @@ module PuppetTest::ParserTesting
         }
     end
 
+    def virt_resourcedef(*args)
+        res = resourcedef(*args)
+        res.virtual = true
+        res
+    end
+
     def resourceoverride(type, title, params)
         assert_nothing_raised("Could not create %s %s" % [type, name]) {
             return AST::ResourceOverride.new(

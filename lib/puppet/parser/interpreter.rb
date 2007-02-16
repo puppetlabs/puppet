@@ -97,12 +97,32 @@ class Puppet::Parser::Interpreter
         return @ldap
     end
 
+    # Make sure we don't have any remaining collections that specifically
+    # look for resources, because we want to consider those to be
+    # parse errors.
+    def check_resource_collections(scope)
+        remaining = []
+        scope.collections.each do |coll|
+            if r = coll.resources
+                if r.is_a?(Array)
+                    remaining += r
+                else
+                    remaining << r
+                end
+            end
+        end
+        unless remaining.empty?
+            raise Puppet::ParseError, "Failed to find virtual resources %s" %
+                remaining.join(', ')
+        end
+    end
+
     def clear
         initparsevars
     end
 
-    # Iteratively evaluate all of the objects.  This finds all of the
-    # objects that represent definitions and evaluates the definitions appropriately.
+    # Iteratively evaluate all of the objects.  This finds all of the objects
+    # that represent definitions and evaluates the definitions appropriately.
     # It also adds defaults and overrides as appropriate.
     def evaliterate(scope)
         count = 0
@@ -113,10 +133,13 @@ class Puppet::Parser::Interpreter
             if coll = scope.collections and ! coll.empty?
                 exceptwrap do
                     coll.each do |c|
-                        c.evaluate
+                        # Only keep the loop going if we actually successfully
+                        # collected something.
+                        if c.evaluate
+                            done = false
+                        end
                     end
                 end
-                done = false
             end
             
             # Then evaluate any defined types.
@@ -124,6 +147,7 @@ class Puppet::Parser::Interpreter
                 ary.each do |resource|
                     resource.evaluate
                 end
+                # If we evaluated, then loop through again.
                 done = false
             end
             break if done
@@ -240,14 +264,15 @@ class Puppet::Parser::Interpreter
     # Fail if there any overrides left to perform.
     def failonleftovers(scope)
         overrides = scope.overrides
-        if overrides.empty?
-            return nil
-        else
+        unless overrides.empty?
             fail Puppet::ParseError,
                 "Could not find object(s) %s" % overrides.collect { |o|
                     o.ref
                 }.join(", ")
         end
+
+        # Now check that there aren't any extra resource collections.
+        check_resource_collections(scope)
     end
 
     # Find a class definition, relative to the current namespace.

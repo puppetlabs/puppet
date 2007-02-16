@@ -62,16 +62,25 @@ class Puppet::Parser::Collector
             "realize() is not yet implemented for exported resources"
     end
 
+    # Collect resources directly; this is the result of using 'realize',
+    # which specifies resources, rather than using a normal collection.
     def collect_virtual_resources
-        @resources.collect do |ref|
+        result = @resources.dup.collect do |ref|
             if res = @scope.findresource(ref.to_s)
+                @resources.delete(ref)
                 res
-            else
-                raise Puppet::ParseError, "Could not find resource %s" % ref
             end
-        end.each do |res|
+        end.reject { |r| r.nil? }.each do |res|
             res.virtual = false
         end
+
+        # If there are no more resources to find, delete this from the list
+        # of collections.
+        if @resources.empty?
+            @scope.collections.delete(self)
+        end
+
+        return result
     end
 
     # Collect just virtual objects, from our local configuration.
@@ -90,24 +99,20 @@ class Puppet::Parser::Collector
     # and then delete this object from the list of collections to evaluate.
     def evaluate
         if self.resources
-            # We don't want to get rid of the collection unless it actually
-            # finds something, so that the collection will keep trying until
-            # all of the definitions are evaluated.
-            unless objects = collect_resources
-                return
+            if objects = collect_resources and ! objects.empty?
+                return objects
+            else
+                return false
             end
         else
             method = "collect_#{@form.to_s}"
-            objects = send(method).each do |obj|
-                obj.virtual = false
+            objects = send(method).each { |obj| obj.virtual = false }
+            if objects.empty?
+                return false
+            else
+                return objects
             end
         end
-
-        # And then remove us from the list of collections, since we've
-        # now been evaluated.
-        @scope.collections.delete(self)
-
-        objects
     end
 
     def initialize(scope, type, equery, vquery, form)

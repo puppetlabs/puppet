@@ -348,17 +348,16 @@ class TestLangFunctions < Test::Unit::TestCase
 
         # The function works
         assert_nothing_raised do
-            @scope.function_realize(none)
+            @scope.function_realize(none.to_s)
         end
 
         # Make sure it created a collection
         assert_equal(1, @scope.collections.length,
             "Did not set collection")
 
-        # But the collection fails
-        assert_raise(Puppet::ParseError) do
-            @scope.collections.each do |coll| coll.evaluate end
-        end
+        # And the collection has our resource in it
+        assert_equal([none.to_s], @scope.collections[0].resources,
+            "Did not set resources in collection")
     end
     
     def test_defined
