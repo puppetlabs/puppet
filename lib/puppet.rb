@@ -38,7 +38,7 @@ module Puppet
     end
 
 
-    def self.name
+    def Puppet.execname
         unless defined? @name
             @name = $0.gsub(/.+#{File::SEPARATOR}/,'').sub(/\.rb$/, '')
         end

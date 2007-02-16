@@ -59,13 +59,13 @@ class Puppet::Network::Server
                     # This means we can't actually test this method at this point.
                     # The next release of Puppet will almost definitely require
                     # this file to exist or will default to denying all access.
-                    if Puppet.name == "puppetmasterd" or defined? Test::Unit::TestCase
+                    if Puppet.execname == "puppetmasterd" or defined? Test::Unit::TestCase
                         Puppet.debug "Allowing %s(%s) trusted access to %s" %
                             [client, ip, method]
                         return true
                     else
                         Puppet.debug "Denying %s(%s) trusted access to %s on %s" %
-                            [client, ip, method, Puppet.name]
+                            [client, ip, method, Puppet.execname]
                         return false
                     end
                 end

@@ -97,7 +97,7 @@ class Puppet::SSLCertificates::CA
 
             if FileTest.exists?(file)
                 begin
-                    if Puppet.name == "puppetca"
+                    if Puppet.execname == "puppetca"
                         puts "Removing %s" % file
                     else
                         Puppet.info "Removing %s" % file
