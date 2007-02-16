@@ -1,10 +1,11 @@
 require 'puppet/rails/resource'
+require 'puppet/rails/fact'
 require 'puppet/util/rails/collection_merger'
 
 class Puppet::Rails::Host < ActiveRecord::Base
     include Puppet::Util::CollectionMerger
 
-    has_many :facts, :dependent => :destroy
+    has_many :facts
     belongs_to :puppet_classes
     has_many :source_files
     has_many :resources,
@@ -71,7 +72,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     def setfacts(facts)
         collection_merge(:facts, facts) do |name, value|
-            f = facts.find_by_name(name) || facts.build(:name => name)
+            f = self.facts.find_by_name(name) || self.facts.build(:name => name, :value => value)
             # We're only ever going to have one fact value, at this point.
             f
         end

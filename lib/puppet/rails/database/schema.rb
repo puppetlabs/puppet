@@ -40,31 +40,21 @@ class Puppet::Rails::Schema
                     t.column :source_file_id, :integer
                 end
 
-                create_table :fact_names do |t| 
+                create_table :facts do |t| 
                     t.column :name, :string, :null => false
+                    t.column :value, :text, :null => false
                     t.column :host_id, :integer, :null => false
                     t.column :updated_at, :date
                 end
 
-                create_table :fact_values do |t| 
-                    t.column :value, :text, :null => false
-                    t.column :fact_name_id, :integer, :null => false
-                    t.column :updated_at, :date
-                end 
-
-                create_table :param_values do |t|
-                    t.column :value,  :text, :null => false
-                    t.column :param_name_id, :integer, :null => false
-                    t.column :updated_at, :date
-                end
-         
-                create_table :param_names do |t| 
+                create_table :params do |t|
                     t.column :name, :string, :null => false
-                    t.column :resource_id, :integer
+                    t.column :value,  :text, :null => false
                     t.column :line, :integer
                     t.column :updated_at, :date
+                    t.column :resource_id, :integer
                 end
-
+         
                 create_table :tags do |t| 
                     t.column :name, :string
                     t.column :updated_at, :date

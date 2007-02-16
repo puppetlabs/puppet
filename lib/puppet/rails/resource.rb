@@ -1,4 +1,5 @@
 require 'puppet'
+require 'puppet/rails/source_file'
 require 'puppet/rails/external/tagging/init'
 require 'puppet/rails/param'
 require 'puppet/util/rails/collection_merger'
@@ -12,11 +13,6 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
     acts_as_taggable
 
-    Puppet::Type.eachtype do |type|
-        klass = Class.new(Puppet::Rails::Resource)
-        Object.const_set("Puppet%s" % type.name.to_s.capitalize, klass)
-    end
-    
     def tags=(tags)
         tags.each do |tag|   
             self.tag_with tag
@@ -32,7 +28,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def parameter(param)
-        if p = params.find_by_name(param)
+        if p = self.params.find_by_name(param)
             return p.value
         end
     end

@@ -8,7 +8,7 @@ class Puppet::Rails::Param < ActiveRecord::Base
         hash = {}
         hash[:name] = self.name.to_sym
         hash[:source] = source
-        hash[:value] = self.param.value.find(:all).collect { |v| v.value }
+        hash[:value] = self.value
         if hash[:value].length == 1
             hash[:value] = hash[:value].shift
         end
