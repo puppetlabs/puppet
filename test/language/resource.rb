@@ -395,32 +395,34 @@ class TestResource < Test::Unit::TestCase
         # Now make sure we can find it again
         assert_nothing_raised do
             obj = Puppet::Rails::Resource.find_by_restype_and_title(
-                res.type, res.title, :include => :params
+                res.type, res.title, :include => :param_names
             )
         end
         assert_instance_of(Puppet::Rails::Resource, obj)
 
         # Make sure we get the parameters back
-        params = options[:params] || [obj.params.collect { |p| p.name },
+        params = options[:params] || [obj.param_names.collect { |p| p.name },
             res.to_hash.keys].flatten.collect { |n| n.to_s }.uniq
 
         params.each do |name|
-            param = obj.params.find_by_name(name)
+            param = obj.param_names.find_by_name(name)
             if res[name]
                 assert(param, "resource did not keep %s" % name)
             else
                 assert(! param, "resource did not delete %s" % name)
             end
             if param
+                values = param.param_values.collect { |pv| pv.value }
                 should = res[param.name]
                 should = [should] unless should.is_a?(Array)
-                assert_equal(should, param.value,
+                assert_equal(should, values,
                     "%s was different" % param.name)
             end
         end
     end
 
     def test_to_rails
+        railsteardown
         railsinit
         res = mkresource :type => "file", :title => "/tmp/testing",
             :source => @source, :scope => @scope,
