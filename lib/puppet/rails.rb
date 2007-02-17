@@ -12,7 +12,7 @@ module Puppet::Rails
             :desc => "The database cache for client configurations.  Used for
                 querying within the language."
         },
-        :dbadapter => [ "mysql", "The type of database to use." ],
+        :dbadapter => [ "sqlite3", "The type of database to use." ],
         :dbmigrate => [ false, "Whether to automatically migrate the database." ],
         :dbname => [ "puppet", "The name of the database to use." ],
         :dbserver => [ "localhost", "The database server for Client caching. Only
