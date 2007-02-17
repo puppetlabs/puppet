@@ -13,7 +13,7 @@ module Puppet
             "Whether to store a PID file for the daemon."])
         def daemonname
             #$0.sub(/.+#{File::SEPARATOR}/,'')
-            Puppet.name
+            Puppet.execname
         end
 
         # The path to the pid file for this server
@@ -40,9 +40,9 @@ module Puppet
                 Puppet::Util::Log.reopen
             rescue => detail
                 File.open("/tmp/daemonout", "w") { |f|
-                    f.puts "Could not start %s: %s" % [Puppet.name, detail]
+                    f.puts "Could not start %s: %s" % [Puppet.execname, detail]
                 }
-                Puppet.err "Could not start %s: %s" % [Puppet.name, detail]
+                Puppet.err "Could not start %s: %s" % [Puppet.execname, detail]
                 exit(12)
             end
         end
@@ -61,8 +61,8 @@ module Puppet
 
             # yuck; separate http logs
             file = nil
-            Puppet.config.use(:puppet, :certificates, Puppet.name)
-            if Puppet.name == "puppetmasterd"
+            Puppet.config.use(:puppet, :certificates, Puppet.execname)
+            if Puppet.execname == "puppetmasterd"
                 file = Puppet[:masterhttplog]
             else
                 file = Puppet[:httplog]
