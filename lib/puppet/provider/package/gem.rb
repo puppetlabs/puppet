@@ -3,10 +3,10 @@ Puppet::Type.type(:package).provide :gem do
     desc "Ruby Gem support.  By default uses remote gems, but you can specify
         the path to a local gem via ``source``."
 
-    commands :gem => "gem"
+    commands :gemcmd => "gem"
 
     def self.gemlist(hash)
-        command = [command(:gem), "list"]
+        command = [command(:gemcmd), "list"]
 
         if hash[:local]
             command << "--local"
@@ -71,7 +71,7 @@ Puppet::Type.type(:package).provide :gem do
             command << @model[:name]
         end
 
-        gem(*command)
+        gemcmd(*command)
     end
 
     def latest
@@ -86,7 +86,7 @@ Puppet::Type.type(:package).provide :gem do
     end
 
     def uninstall
-        gem "uninstall", "-x", "-a", @model[:name]
+        gemcmd "uninstall", "-x", "-a", @model[:name]
     end
 
     def update
