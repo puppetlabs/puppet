@@ -1,18 +1,18 @@
 require 'puppet'
-require 'puppet/rails/source_file'
 require 'puppet/rails/external/tagging/init'
-require 'puppet/rails/param'
+require 'puppet/rails/param_name'
 require 'puppet/util/rails/collection_merger'
 
 class Puppet::Rails::Resource < ActiveRecord::Base
     include Puppet::Util::CollectionMerger
 
-    has_many :params, :dependent => :destroy
+    has_many :param_values, :through => :param_names
+    has_many :param_names, :dependent => :destroy
     belongs_to :source_file
     belongs_to :host
 
     acts_as_taggable
-
+    
     def tags=(tags)
         tags.each do |tag|   
             self.tag_with tag
@@ -28,15 +28,20 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def parameter(param)
-        if p = self.params.find_by_name(param)
-            return p.value
+        if pn = param_names.find_by_name(param)
+            if pv = pn.param_values.find(:first)
+                return pv.value
+            else
+                return nil
+            end
         end
     end
 
     def parameters
         hash = {}
-        self.params.find(:all).each do |p|
-            hash.store(p.name, p.value)
+        self.param_values.find(:all).each do |pvalue|
+            pname = pvalue.param_name.name
+            hash.store(pname, pvalue.value)
         end
         return hash
     end
@@ -65,8 +70,8 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         hash[:scope] = scope
         hash[:source] = scope.source
         obj = Puppet::Parser::Resource.new(hash)
-        self.params.each do |p|
-            obj.set(p.to_resourceparam(scope.source))
+        self.param_names.each do |pname|
+            obj.set(pname.to_resourceparam(scope.source))
         end
 
         # Store the ID, so we can check if we're re-collecting the same resource.

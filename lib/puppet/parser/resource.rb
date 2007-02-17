@@ -287,8 +287,6 @@ class Puppet::Parser::Resource
         obj.collection_merge(:param_names, @params) do |name, param|
             param.to_rails(obj)
         end
-        
-        obj.save
 
         return obj
     end
