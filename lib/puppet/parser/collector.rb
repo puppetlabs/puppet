@@ -43,7 +43,7 @@ class Puppet::Parser::Collector
             end
         end
 
-        scope.info("Collected %s %s resource%s in %.2f seconds" %
+        scope.debug("Collected %s %s resource%s in %.2f seconds" %
             [count, @type, count == 1 ? "" : "s", time])
 
         return resources

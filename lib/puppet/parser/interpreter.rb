@@ -136,10 +136,6 @@ class Puppet::Parser::Interpreter
                         # Only keep the loop going if we actually successfully
                         # collected something.
                         if o = c.evaluate
-                            o.each do |r|
-                                Puppet.info "Resource %s: v: %s, e: %s" %
-                                    [r.ref, r.virtual?.inspect, r.exported.inspect]
-                            end
                             done = false
                         end
                     end
@@ -149,7 +145,6 @@ class Puppet::Parser::Interpreter
             # Then evaluate any defined types.
             if ary = scope.unevaluated
                 ary.each do |resource|
-                    Puppet.info "Evaluated %s" % resource.ref
                     resource.evaluate
                 end
                 # If we evaluated, then loop through again.
