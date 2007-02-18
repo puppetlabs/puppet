@@ -7,7 +7,7 @@ class Puppet::Parser::Collector
     def collect_exported
         # First get everything from the export table.  Just reuse our
         # collect_virtual method but tell it to use 'exported? for the test.
-        resources = collect_virtual(true)
+        resources = collect_virtual(true).reject { |r| ! r.virtual? }
 
         count = 0
 
@@ -43,7 +43,7 @@ class Puppet::Parser::Collector
             end
         end
 
-        scope.debug("Collected %s %s resource%s in %.2f seconds" %
+        scope.info("Collected %s %s resource%s in %.2f seconds" %
             [count, @type, count == 1 ? "" : "s", time])
 
         return resources
@@ -113,6 +113,13 @@ class Puppet::Parser::Collector
                 return objects
             end
         end
+
+#        if objects and ! objects.empty?
+#            objects.each { |r| r.virtual = false }
+#            return objects
+#        else
+#            return false
+#        end
     end
 
     def initialize(scope, type, equery, vquery, form)

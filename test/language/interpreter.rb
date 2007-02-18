@@ -811,12 +811,25 @@ class TestInterpreter < Test::Unit::TestCase
         virt_three.virtual = true
         scope.setresource(virt_three)
 
+        # Create a normal, virtual resource
+        plainvirt = Puppet::Parser::Resource.new(
+            :type => "user", :title => "five",
+            :scope => scope, :source => source,
+            :params => paramify(source, :uid => "root")
+        )
+        plainvirt.virtual = true
+        scope.setresource(plainvirt)
+
         # Now create some collections for our virtual resources
         %w{Three[three] One[two]}.each do |ref|
             coll = Puppet::Parser::Collector.new(scope, "file", nil, nil, :virtual)
             coll.resources = [ref]
             scope.newcollection(coll)
         end
+
+        # And create a generic user collector for our plain resource
+        coll = Puppet::Parser::Collector.new(scope, "user", nil, nil, :virtual)
+        scope.newcollection(coll)
 
         ret = nil
         assert_nothing_raised do
@@ -830,7 +843,9 @@ class TestInterpreter < Test::Unit::TestCase
 
         # Now translate the whole tree
         assert_nothing_raised do
-            interp.evaliterate(scope)
+            Timeout::timeout(2) do
+                interp.evaliterate(scope)
+            end
         end
 
         # Now make sure we've got all of our files
@@ -841,6 +856,9 @@ class TestInterpreter < Test::Unit::TestCase
             assert_equal("root", file[:owner])
             assert(! file.virtual?, "file %s is still virtual" % name)
         end
+
+        # Now make sure we found the user
+        assert(! plainvirt.virtual?, "user was not realized")
     end
 
     # Make sure we fail if there are any leftover overrides to perform.

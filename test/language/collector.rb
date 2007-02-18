@@ -187,8 +187,15 @@ class TestCollector < Test::Unit::TestCase
             ret = coll.evaluate
         end
 
-        # Make sure it got deleted from the collection list
-        assert_equal([], @scope.collections)
+        # Make sure that the collection does not find the resource on the
+        # next run.
+        ret = nil
+        assert_nothing_raised do
+            ret = coll.collect_exported
+        end
+
+        assert(ret.empty?, "Exported resource was collected on the second run")
+
 
         # And make sure our exported object is no longer exported
         assert(! exported.virtual?, "Virtual object did not get realized")
@@ -209,7 +216,7 @@ class TestCollector < Test::Unit::TestCase
             ret = coll.evaluate
         end
 
-        assert_equal([], ret)
+        assert(! ret, "got resources back")
 
         # Now create a whole new scope and make sure we can actually retrieve
         # the resource from the database, not just from the scope.
@@ -261,9 +268,6 @@ class TestCollector < Test::Unit::TestCase
         assert_nothing_raised("Collection found same resource twice") do
             ret = coll.evaluate
         end
-
-        # Make sure it got deleted from the collection list
-        assert_equal([], scope.collections)
     end
 
     def test_collection_conflicts
