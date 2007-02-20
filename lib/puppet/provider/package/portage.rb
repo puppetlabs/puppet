@@ -5,20 +5,18 @@ Puppet::Type.type(:package).provide :portage do
 
     defaultfor :operatingsystem => :gentoo
 
-    def self.format
-        "{installedversionsshort}<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>{}"
-    end
-
     def self.list
-        search_format = /(\S+) (\S+) \[(.*)\] \[[^0-9]*([^\s:]*)(:\S*)?\] ([\S]*) (.*)/
+        result_format = /(\S+) (\S+) \[(.*)\] \[[^0-9]*([^\s:]*)(:\S*)?\] ([\S]*) (.*)/
         result_fields = [:category, :name, :ensure, :version_available, :slot, :vendor, :description]
 
+        search_format = "{installedversionsshort}<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>{}"
+
         begin
-            search_output = eix "--format", format()
+            search_output = eix "--nocolor", "--format", search_format
 
             packages = []
             search_output.each do |search_result|
-                match = search_format.match( search_result )
+                match = result_format.match( search_result )
 
                 if match
                     package = {}
@@ -62,18 +60,19 @@ Puppet::Type.type(:package).provide :portage do
     end
 
     def query
-        search_format = /(\S+) (\S+) \[(.*)\] \[[^0-9]*([^\s:]*)(:\S*)?\] ([\S]*) (.*)/
+        result_format = /(\S+) (\S+) \[(.*)\] \[[^0-9]*([^\s:]*)(:\S*)?\] ([\S]*) (.*)/
         result_fields = [:category, :name, :ensure, :version_available, :slot, :vendor, :description]
 
-        search_field = @model[:name].include?( '/' ) ? "--category-name" : "--name"
-        format = "<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>"
+        search_field = @model[:category] ? "--category-name" : "--name"
+        search_value = @model[:category] ? package_name : @model[:name]
+        search_format = "<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>"
 
         begin
-            search_output = eix "--format", format, "--exact", search_field, @model[:name]
+            search_output = eix "--nocolor", "--format", search_format, "--exact", search_field, search_value
 
             packages = []
             search_output.each do |search_result|
-                match = search_format.match( search_result )
+                match = result_format.match( search_result )
 
                 if( match )
                     package = {}
@@ -89,11 +88,12 @@ Puppet::Type.type(:package).provide :portage do
 
             case packages.size
                 when 0
-                    raise Puppet::PackageError.new("No package found with the specified name [#{@model[:name]}]")
+		    not_found_value = "%s/%s" % [@model[:category] ? @model[:category] : "<unspecified category>", @model[:name]]
+                    raise Puppet::PackageError.new("No package found with the specified name [#{not_found_value}]")
                 when 1
                     return packages[0]
                 else
-                    raise Puppet::PackageError.new("More than one package with the specified name [#{@model[:name]}], please use category/name to disambiguate")
+                    raise Puppet::PackageError.new("More than one package with the specified name [#{search_value}], please use the category parameter to disambiguate")
             end
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::PackageError.new(detail)
