@@ -93,7 +93,7 @@ class TestFileType < Test::Unit::TestCase
     end
 
     def test_continuation
-        cont = "[main]\nkey1=v1\nkey2=v2a\n v2b\n"
+        cont = "[main]\nkey1=v1\nkey2=v2a\n v2b\nkey3=\n\tv3a\n v3b\n"
         fname = mkfile(cont)
         assert_nothing_raised {
             @file.read(fname)
@@ -101,6 +101,7 @@ class TestFileType < Test::Unit::TestCase
         s = get_section('main')
         assert_equal('v1', s['key1'])
         assert_equal("v2a\n v2b", s['key2'])
+        assert_equal("\n\tv3a\n v3b", s['key3'])
         assert_equal(cont, s.format)
     end
 

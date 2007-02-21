@@ -129,7 +129,7 @@ module Puppet::Util::IniConfig
                     section.mark_clean unless section.nil?
                     section = add_section($1, file)
                     optname = nil
-                elsif l =~ /^\s*([^\s=]+)\s*\=(.+)$/
+                elsif l =~ /^\s*([^\s=]+)\s*\=(.*)$/
                     # We allow space around the keys, but not the values
                     # For the values, we don't know if space is significant
                     if section.nil?
