@@ -39,7 +39,7 @@ class Puppet::Parser::AST
             if exported or origscope.exported?
                 scope.exported = true
             end
-            scope = scope
+
             # Additionally, add a tag for whatever kind of class
             # we are
             if @type != "" and ! @type.nil?

@@ -108,6 +108,17 @@ class Puppet::Parser::Scope
         return true
     end
 
+    # Return the scope associated with a class.  This is just here so
+    # that subclasses can set their parent scopes to be the scope of
+    # their parent class.
+    def class_scope(klass)
+        if klass.respond_to?(:fqname)
+            @classtable[klass.fqname]
+        else
+            @classtable[klass]
+        end
+    end
+
     # Return the list of collections.
     def collections
         @collecttable
@@ -411,7 +422,7 @@ class Puppet::Parser::Scope
                 raise Puppet::DevError, "Got a %s with no fully qualified name" %
                     obj.class
             end
-            @classtable[obj.fqname] = obj
+            @classtable[obj.fqname] = self
         else
             raise Puppet::DevError, "Invalid class %s" % obj.inspect
         end

@@ -449,6 +449,44 @@ class TestResource < Test::Unit::TestCase
         compare_resources(host, res, :params => %w{owner source mode check})
     end
     end
+
+    # #472.  Really, this still isn't the best behaviour, but at least
+    # it's consistent with what we have elsewhere.
+    def test_defaults_from_parent_classes
+        # Make a parent class with some defaults in it
+        @interp.newclass("base",
+            :code => defaultobj("file", :owner => "root", :group => "root")
+        )
+
+        # Now a mid-level class with some different values
+        @interp.newclass("middle", :parent => "base",
+            :code => defaultobj("file", :owner => "bin", :mode => "755")
+        )
+
+        # Now a lower class with its own defaults plus a resource
+        @interp.newclass("bottom", :parent => "middle",
+            :code => AST::ASTArray.new(:children => [
+                defaultobj("file", :owner => "adm", :recurse => "true"),
+                resourcedef("file", "/tmp/yayness", {})
+            ])
+        )
+
+        # Now evaluate the class.
+        assert_nothing_raised("Failed to evaluate class tree") do
+            @scope.evalclasses("bottom")
+        end
+
+        # Make sure our resource got created.
+        res = @scope.findresource("File[/tmp/yayness]")
+        assert_nothing_raised("Could not add defaults") do
+            res.adddefaults
+        end
+        assert(res, "could not find resource")
+        {:owner => "adm", :recurse => "true", :group => "root", :mode => "755"}.each do |param, value|
+            assert_equal(value, res[param], "%s => %s did not inherit correctly" %
+                [param, value])
+        end
+    end
 end
 
 # $Id$

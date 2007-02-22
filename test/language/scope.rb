@@ -242,7 +242,12 @@ class TestScope < Test::Unit::TestCase
         assert(scope.setclass?(base), "Class incorrectly unset")
         assert(scope.classlist.include?("base"), "Class not in classlist")
 
+        # Make sure we can retrieve the scope.
+        assert_equal(scope, scope.class_scope(base),
+            "class scope was not set correctly")
+
         # Now try it with a normal string
+        Puppet[:trace] = false
         assert_raise(Puppet::DevError) do
             scope.setclass "string"
         end

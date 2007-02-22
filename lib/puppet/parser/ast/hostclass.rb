@@ -33,18 +33,20 @@ class Puppet::Parser::AST
             if @parentclass
                 if pklass = self.parentclass
                     pklass.safeevaluate :scope => scope
+
+                    scope = parent_scope(scope, pklass)
                 else
                     parsefail "Could not find class %s" % @parentclass
                 end
             end
 
-            # Set the class before we do anything else, so that it's set
-            # during the evaluation and can be inspected.
-            scope.setclass(self)
-
             unless hash[:nosubscope]
                 scope = subscope(scope)
             end
+
+            # Set the class before we do anything else, so that it's set
+            # during the evaluation and can be inspected.
+            scope.setclass(self)
 
             # Now evaluate our code, yo.
             if self.code
@@ -57,6 +59,14 @@ class Puppet::Parser::AST
         def initialize(hash)
             @parentclass = nil
             super
+        end
+
+        def parent_scope(scope, klass)
+            if s = scope.class_scope(klass)
+                return s
+            else
+                raise Puppet::DevError, "Could not find scope for %s" % klass.fqname
+            end
         end
     end
 end
