@@ -1978,6 +1978,89 @@ class TestFile < Test::Unit::TestCase
             end
         end
     end
+
+    # Testing #508
+    if Process.uid == 0
+    def test_files_replace_with_right_attrs
+        source = tempfile()
+        File.open(source, "w") { |f|
+            f.puts "some text"
+        }
+        File.chmod(0755, source)
+        user = nonrootuser
+        group = nonrootgroup
+        path = tempfile()
+        good = {:uid => user.uid, :gid => group.gid, :mode => 0640}
+
+        run = Proc.new do |obj, msg|
+            assert_apply(obj)
+            stat = File.stat(obj[:path])
+            good.each do |should, sval|
+                if should == :mode
+                    current = filemode(obj[:path])
+                else
+                    current = stat.send(should)
+                end
+                assert_equal(sval, current,
+                    "Attr %s was not correct %s" % [should, msg])
+            end
+        end
+
+        file = Puppet::Type.newfile(:path => path, :owner => user.name,
+            :group => group.name, :mode => 0640, :backup => false)
+        {:source => source, :content => "some content"}.each do |attr, value|
+            file[attr] = value
+            # First create the file
+            run.call(file, "upon creation with %s" % attr)
+
+            # Now change something so that we replace the file
+            case attr
+            when :source:
+                    File.open(source, "w") { |f| f.puts "some different text" }
+            when :content: file[:content] = "something completely different"
+            else
+                raise "invalid attr %s" % attr
+            end
+            
+            # Run it again
+            run.call(file, "after modification with %s" % attr)
+
+            # Now remove the file and the attr
+            file.delete(attr)
+            File.unlink(path)
+        end
+    end
+    end
+
+    # #505
+    def test_numeric_recurse
+        dir = tempfile()
+        subdir = File.join(dir, "subdir")
+        other = File.join(subdir, "deeper")
+        file = File.join(other, "file")
+        [dir, subdir, other].each { |d| Dir.mkdir(d) }
+        File.open(file, "w") { |f| f.puts "yay" }
+        File.chmod(0644, file)
+        obj = Puppet::Type.newfile(:path => dir, :mode => 0750, :recurse => "2")
+
+        children = nil
+        assert_nothing_raised("Failure when recursing") do
+            children = obj.eval_generate
+        end
+        assert(obj.class[subdir], "did not create subdir object")
+        children.each do |c|
+            assert_nothing_raised("Failure when recursing on %s" % c) do
+                others = c.eval_generate
+            end
+        end
+        oobj = obj.class[other]
+        assert(oobj, "did not create other object")
+
+        assert_nothing_raised do
+            assert_nil(oobj.eval_generate, "recursed too far")
+        end
+
+    end
 end
 
 # $Id$

@@ -36,10 +36,12 @@ module Puppet
                 a ``filebucket``, which stores files by their MD5 sums and allows
                 easy retrieval without littering directories with backups.  You
                 can specify a local filebucket or a network-accessible
-                server-based filebucket.  Alternatively, if you specify any
-                value that begins with a ``.`` (e.g., ``.puppet-bak``), then
-                Puppet will use copy the file in the same directory with that
-                value as the extension of the backup.
+                server-based filebucket by setting ``backup => bucket-name``.
+                Alternatively, if you specify any value that begins with a ``.``
+                (e.g., ``.puppet-bak``), then Puppet will use copy the file in
+                the same directory with that value as the extension of the
+                backup. Setting ``backup => false`` disables all backups of the
+                file in question.
                 
                 Puppet automatically creates a local filebucket named ``puppet`` and
                 defaults to backing up there.  To use a server-based filebucket,
@@ -114,13 +116,19 @@ module Puppet
                 management."
 
             newvalues(:true, :false, :inf, /^[0-9]+$/)
+
+            # Replace the validation so that we allow numbers in
+            # addition to string representations of them.
+            validate { |arg| }
             munge do |value|
                 newval = super(value)
                 case newval
                 when :true, :inf: true
                 when :false: false
+                when Integer, Fixnum, Bignum: value
+                when /^\d+$/: Integer(value)
                 else
-                    newval
+                    raise ArgumentError, "Invalid recurse value %s" % value.inspect
                 end
             end
         end
@@ -1045,6 +1053,9 @@ module Puppet
                 end
             end
 
+            # make sure all of the modes are actually correct
+            property_fix
+
             # And then update our checksum, so the next run doesn't find it.
             # FIXME This is extra work, because it's going to read the whole
             # file back in again.
@@ -1068,6 +1079,23 @@ module Puppet
             # if asroot
             #     yield
             # end
+        end
+
+        private
+        # There are some cases where all of the work does not get done on
+        # file creation/modification, so we have to do some extra checking.
+        def property_fix
+            self.each do |thing|
+                next unless thing.is_a? Puppet::Property
+                next unless [:mode, :owner, :group].include?(thing.name)
+
+                # Make sure we get a new stat objct
+                self.stat(true)
+                thing.retrieve
+                unless thing.insync?
+                    thing.sync
+                end
+            end
         end
     end # Puppet.type(:pfile)
 

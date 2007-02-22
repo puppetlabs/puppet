@@ -76,6 +76,7 @@ module Puppet
                     Dir.mkdir(@parent[:path])
                 end
             end
+            @parent.send(:property_fix)
             @parent.setchecksum
             return :directory_created
         end
@@ -155,18 +156,6 @@ module Puppet
             end
 
             event = super
-
-            # There are some cases where all of the work does not get done on
-            # file creation, so we have to do some extra checking.
-            @parent.each do |thing|
-                next unless thing.is_a? Puppet::Property
-                next if thing == self
-
-                thing.retrieve
-                unless thing.insync?
-                    thing.sync
-                end
-            end
 
             return event
         end
