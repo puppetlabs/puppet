@@ -204,6 +204,8 @@ module Puppet
         [:INT, :TERM].each do |signal|
             trap(signal) do
                 Puppet.notice "Caught #{signal}; shutting down"
+                Puppet.debug "Signal caught here:"
+                caller.each { |l| Puppet.debug l }
                 Puppet.shutdown
             end
         end
