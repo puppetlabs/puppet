@@ -607,6 +607,12 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
             # error handling for this is done in the network client
             begin
                 textobjects = @driver.getconfig(textfacts, "yaml")
+                begin
+                    textobjects = CGI.unescape(textobjects)
+                rescue => detail
+                    raise Puppet::Error, "Could not CGI.unescape configuration"
+                end
+
             rescue => detail
                 Puppet.err "Could not retrieve configuration: %s" % detail
 
@@ -631,12 +637,6 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
         else
             @compile_time = Time.now
             Puppet::Util::Storage.cache(:configuration)[:compile_time] = @compile_time
-        end
-
-        begin
-            textobjects = CGI.unescape(textobjects)
-        rescue => detail
-            raise Puppet::Error, "Could not CGI.unescape configuration"
         end
 
         if @cache and ! fromcache
