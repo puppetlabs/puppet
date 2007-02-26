@@ -16,10 +16,6 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     # Debian boxes, and the only thing that differs is that it can
     # install packages from remote sites.
 
-    def aptcmd(*args)
-        aptget(*args)
-    end
-
     def checkforcdrom
         unless defined? @@checkedforcdrom
             if FileTest.exists? "/etc/apt/sources.list"
@@ -73,9 +69,9 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
             end
         end
 
-        cmd << :install << str
+        cmd << 'install' << str
         
-        aptcmd(cmd)
+        aptget(*cmd)
     end
 
     # What's the latest package version available?
@@ -127,8 +123,12 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     end
 
     def uninstall
-        aptcmd "-y", "-q", :remove, @model[:name]
+        aptget "-y", "-q", :remove, @model[:name]
     end
+
+    def purge
+        aptget '-y', '-q', 'remove', '--purge', @model[:name]
+     end
 
     def versionable?
         true

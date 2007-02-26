@@ -100,6 +100,10 @@ Puppet::Type.type(:package).provide :dpkg do
     def uninstall
         dpkg "-r", @model[:name]
     end
+
+    def purge
+        dpkg "--purge", @model[:name]
+	 end
 end
 
 # $Id$

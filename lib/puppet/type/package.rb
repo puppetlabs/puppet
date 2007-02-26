@@ -25,7 +25,11 @@ module Puppet
                 *latest* only makes sense for those packaging formats that can
                 retrieve new packages on their own and will throw an error on
                 those that cannot.  For those packaging systems that allow you
-                to specify package versions, specify them here."
+                to specify package versions, specify them here.  Similarly,
+                *purged* is only useful for packaging systems that support
+                the notion of managing configuration files separately from
+                'normal' system files.  At present, only the Debian-related
+                providers (dpkg, apt, and aptitude) support *purged*."
 
             attr_accessor :latest
 
@@ -35,6 +39,10 @@ module Puppet
 
             newvalue(:absent, :event => :package_removed) do
                 provider.uninstall
+            end
+            
+            newvalue(:purged, :event => :package_purged) do
+                provider.purge
             end
 
             # Alias the 'present' value.

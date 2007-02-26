@@ -6,7 +6,7 @@ Puppet::Type.type(:package).provide :aptitude, :parent => :apt do
 
     ENV['DEBIAN_FRONTEND'] = "noninteractive"
 
-    def aptcmd(*args)
+    def aptget(*args)
         args.flatten!
         # Apparently aptitude hasn't always supported a -q flag.
         if args.include?("-q")
@@ -21,6 +21,10 @@ Puppet::Type.type(:package).provide :aptitude, :parent => :apt do
             )
         end
     end
+
+    def purge
+        aptitude '-y', 'purge', @model[:name]
+	 end
 end
 
 # $Id$
