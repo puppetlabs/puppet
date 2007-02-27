@@ -1000,7 +1000,7 @@ class TestTransactions < Test::Unit::TestCase
 
         trans = newcomp(one, two).evaluate
         assert_raise(Puppet::Error) do
-            trans.relationship_graph
+            trans.prepare
         end
     end
 

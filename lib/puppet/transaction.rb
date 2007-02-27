@@ -474,6 +474,9 @@ class Transaction
         @relgraph = relationship_graph
         
         @sorted_resources = @relgraph.topsort
+
+        # Now make sure no cycles crept into our graph.
+        @relgraph.check_cycle(@sorted_resources)
     end
     
     # Create a graph of all of the relationships in our resource graph.
@@ -506,8 +509,6 @@ class Transaction
         
         # Then splice in the container information
         graph.splice!(@resources, Puppet::Type::Component)
-
-        graph.check_cycle
 
         graph(graph, :expanded_relationships)
         

@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 #  Created by Luke A. Kanies on 2006-11-24.
 #  Copyright (c) 2006. All rights reserved.
 
@@ -51,8 +49,7 @@ class Puppet::PGraph < GRATR::Digraph
     end
 
     # Fail in a somewhat informative way if the graph has become cyclic.
-    def check_cycle
-        sorted = topsort()
+    def check_cycle(sorted)
         return true if sorted.size == size()
 
         bad = []
@@ -120,20 +117,19 @@ class Puppet::PGraph < GRATR::Digraph
     # This creates direct relationships where there were previously
     # indirect relationships through the containers. 
     def splice!(other, type)
-        vertices.find_all { |v| v.is_a?(type) }.each do |vertex|
+        vertices.find_all { |v| v.is_a?(type) }.each do |container|
             # Get the list of children from the other graph.
-            #children = other.adjacent(vertex, :direction => :out)
-            children = other.leaves(vertex)
+            children = other.adjacent(container, :direction => :out)
 
             # Just remove the container if it's empty.
             if children.empty?
-                remove_vertex!(vertex)
+                remove_vertex!(container)
                 next
             end
             
             # First create new edges for each of the :in edges
             [:in, :out].each do |dir|
-                adjacent(vertex, :direction => dir, :type => :edges).each do |edge|
+                adjacent(container, :direction => dir, :type => :edges).each do |edge|
                     children.each do |child|
                         if dir == :in
                             s = edge.source
@@ -160,9 +156,12 @@ class Puppet::PGraph < GRATR::Digraph
                                 [s, t]
                         end
                     end
+
+                    # Now get rid of the edge, so remove_vertex! works correctly.
+                    remove_edge!(edge)
                 end
             end
-            remove_vertex!(vertex)
+            remove_vertex!(container)
         end
     end
     

@@ -75,37 +75,33 @@ class TestPGraph < Test::Unit::TestCase
         empty = Container.new("empty", [])
         # Also, add an empty container to top
         top.push empty
-        
+
         contgraph = top.to_graph
-        
+
         # Now add a couple of child files, so that we can test whether all
         # containers get spliced, rather than just components.
-        
+
         # Now make a dependency graph
         deps = Puppet::PGraph.new
-        
+
         contgraph.vertices.each do |v|
             deps.add_vertex(v)
         end
-        
+
         # We have to specify a relationship to our empty container, else it
         # never makes it into the dep graph in the first place.
-        #{one => two, three => [middle, two, "c"], "f" => "c", "h" => middle, "c" => empty}.each do |source, targets|
         {one => two, "f" => "c", "h" => middle, "c" => empty}.each do |source, target|
             deps.add_edge!(source, target, :callback => :refresh)
         end
-
-        #num = 6
-        #contgraph.to_jpg(File.expand_path("~/tmp/graphs"), "containers#{num}")
-        #contgraph.reversal.to_jpg(File.expand_path("~/tmp/graphs"), "reversal#{num}")
-        #deps.to_jpg(File.expand_path("~/tmp/graphs"), "relationships#{num}")
         
+        #contgraph.to_jpg(File.expand_path("~/Desktop/pics"), "main")
+        #deps.to_jpg(File.expand_path("~/Desktop/pics"), "before")
         assert_nothing_raised { deps.splice!(contgraph, Container) }
-        #deps.to_jpg(File.expand_path("~/tmp/graphs"), "after_relationships#{num}")
         
         assert(! deps.cyclic?, "Created a cyclic graph")
 
         # Make sure there are no container objects remaining
+        #deps.to_jpg(File.expand_path("~/Desktop/pics"), "after")
         c = deps.vertices.find_all { |v| v.is_a?(Container) }
         assert(c.empty?, "Still have containers %s" % c.inspect)
         
@@ -206,13 +202,86 @@ class TestPGraph < Test::Unit::TestCase
 
             if result
                 assert_raise(Puppet::Error, "%s did not fail" % hash.inspect) do
-                    graph.check_cycle
+                    graph.check_cycle(graph.topsort)
                 end
             else
                 assert_nothing_raised("%s failed" % hash.inspect) do
-                    graph.check_cycle
+                    graph.check_cycle(graph.topsort)
                 end
             end
+        end
+    end
+
+    # This isn't really a unit test, it's just a way to do some graphing with
+    # tons of relationships so we can see how it performs.
+    def disabled_test_lots_of_relationships
+        containers = Puppet::PGraph.new
+        relationships = Puppet::PGraph.new
+        labels = %w{a b c d e}
+        conts = {}
+        vertices = {}
+        labels.each do |label|
+            vertices[label] = []
+        end
+        num = 100
+        num.times do |i|
+            labels.each do |label|
+                vertices[label] << ("%s%s" % [label, i])
+            end
+        end
+        labels.each do |label|
+            conts[label] = Container.new(label, vertices[label])
+        end
+
+        conts.each do |label, cont|
+            cont.each do |child|
+                containers.add_edge!(cont, child)
+            end
+        end
+        prev = nil
+        labels.inject(nil) do |prev, label|
+            if prev
+                containers.add_edge!(conts[prev], conts[label])
+            end
+            label
+        end
+
+        containers.to_jpg(File.expand_path("~/Desktop/pics/lots"), "start")
+
+        # Now create the relationship graph
+
+        # Make everything in both b and c require d1
+        %w{b c}.each do |label|
+            conts[label].each do |v|
+                relationships.add_edge!(v, "d1")
+                #relationships.add_edge!(v, conts["d"])
+            end
+        end
+
+        # Make most in b also require the appropriate thing in c
+        conts["b"].each do |v|
+            i = v.split('')[1]
+
+            relationships.add_edge!(v, "c%s" % i)
+        end
+
+        # And make d1 require most of e
+        num.times do |i|
+            relationships.add_edge!("d1", "e%s" % i)
+        end
+
+        containers.vertices.each do |v|
+            relationships.add_vertex!(v)
+        end
+        relationships.to_jpg(File.expand_path("~/Desktop/pics/lots"), "relationships")
+
+        time = Benchmark.realtime do
+            relationships.splice!(containers, Container)
+        end
+        relationships.to_jpg(File.expand_path("~/Desktop/pics/lots"), "final")
+        puts time
+        time = Benchmark.realtime do
+            relationships.topsort
         end
     end
 end
