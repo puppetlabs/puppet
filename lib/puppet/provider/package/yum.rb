@@ -4,9 +4,22 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm do
 
     defaultfor :operatingsystem => [:fedora, :centos, :redhat]
 
-    # Install a package using 'yum'.
     def install
-        output = yum "-d", "0", "-e", "0", "-y", :install, @model[:name]
+
+        should = @model.should(:ensure)
+	self.debug "Ensuring => #{should}"
+	wanted = @model[:name]
+
+	# XXX: We don't actually deal with epochs here.
+        case should
+        when true, false, Symbol
+            # pass
+        else
+            # Add the package version
+            wanted += "-%s" % should
+        end
+
+        output = yum "-d", "0", "-e", "0", "-y", :install, wanted
 
         unless self.query
             raise Puppet::Error.new(
@@ -34,7 +47,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm do
     end
 
     def versionable?
-        false
+	true
     end
 end
 
