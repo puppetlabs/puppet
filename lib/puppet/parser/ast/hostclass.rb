@@ -30,11 +30,13 @@ class Puppet::Parser::AST
                 return nil
             end
 
+            pnames = nil
             if @parentclass
                 if pklass = self.parentclass
                     pklass.safeevaluate :scope => scope
 
                     scope = parent_scope(scope, pklass)
+                    pnames = scope.namespaces
                 else
                     parsefail "Could not find class %s" % @parentclass
                 end
@@ -42,6 +44,12 @@ class Puppet::Parser::AST
 
             unless hash[:nosubscope]
                 scope = subscope(scope)
+            end
+
+            if pnames
+                pnames.each do |ns|
+                    scope.add_namespace(ns)
+                end
             end
 
             # Set the class before we do anything else, so that it's set

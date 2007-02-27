@@ -592,6 +592,67 @@ Host <<||>>"
         assert_equal("root", testing["owner"])
 
     end
+
+    def test_namespaces
+        interp, scope, source = mkclassframing
+
+        assert_equal([""], scope.namespaces,
+            "Started out with incorrect namespaces")
+        assert_nothing_raised { scope.add_namespace("fun::test") }
+        assert_equal(["fun::test"], scope.namespaces,
+            "Did not add namespace correctly")
+        assert_nothing_raised { scope.add_namespace("yay::test") }
+        assert_equal(["fun::test", "yay::test"], scope.namespaces,
+            "Did not add extra namespace correctly")
+    end
+
+    def test_findclass_and_finddefine
+        interp = mkinterp
+
+        # Make sure our scope calls the interp findclass method with
+        # the right namespaces
+        scope = mkscope :interp => interp
+
+        interp.metaclass.send(:attr_accessor, :last)
+
+        methods = [:findclass, :finddefine]
+        methods.each do |m|
+            interp.meta_def(m) do |namespace, name|
+                @checked ||= []
+                @checked << [namespace, name]
+
+                # Only return a value on the last call.
+                if @last == namespace
+                    ret = @checked.dup
+                    @checked.clear
+                    return ret
+                else
+                    return nil
+                end
+            end
+        end
+
+        test = proc do |should|
+            interp.last = scope.namespaces[-1]
+            methods.each do |method|
+                result = scope.send(method, "testing")
+                assert_equal(should, result,
+                    "did not get correct value from %s with namespaces %s" %
+                    [method, scope.namespaces.inspect])
+            end
+        end
+
+        # Start with the empty namespace
+        assert_nothing_raised { test.call([["", "testing"]]) }
+
+        # Now add a namespace
+        scope.add_namespace("a")
+        assert_nothing_raised { test.call([["a", "testing"]]) }
+
+        # And another
+        scope.add_namespace("b")
+        assert_nothing_raised { test.call([["a", "testing"], ["b", "testing"]]) }
+    end
 end
 
 # $Id$

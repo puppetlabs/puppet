@@ -123,11 +123,15 @@ class TestASTHostClass < Test::Unit::TestCase
     end
 
     # Make sure that our scope is a subscope of the parentclass's scope.
+    # At the same time, make sure definitions in the parent class can be
+    # found within the subclass (#517).
     def test_parent_scope_from_parentclass
         interp = mkinterp
 
         interp.newclass("base")
-        interp.newclass("sub", :parent => "base")
+        fun = interp.newdefine("base::fun")
+        interp.newclass("middle", :parent => "base")
+        interp.newclass("sub", :parent => "middle")
         scope = mkscope :interp => interp
 
         ret = nil
@@ -137,10 +141,21 @@ class TestASTHostClass < Test::Unit::TestCase
 
         subscope = scope.class_scope(scope.findclass("sub"))
         assert(subscope, "could not find sub scope")
+        mscope = scope.class_scope(scope.findclass("middle"))
+        assert(mscope, "could not find middle scope")
         pscope = scope.class_scope(scope.findclass("base"))
         assert(pscope, "could not find parent scope")
 
-        assert(pscope == subscope.parent, "parent scope was not set correctly")
+        assert(pscope == mscope.parent, "parent scope of middle was not set correctly")
+        assert(mscope == subscope.parent, "parent scope of sub was not set correctly")
+
+        result = mscope.finddefine("fun")
+        assert(result, "could not find parent-defined definition from middle")
+        assert(fun == result, "found incorrect parent-defined definition from middle")
+
+        result = subscope.finddefine("fun")
+        assert(result, "could not find parent-defined definition from sub")
+        assert(fun == result, "found incorrect parent-defined definition from sub")
     end
 end
 

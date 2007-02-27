@@ -393,6 +393,28 @@ class TestLangFunctions < Test::Unit::TestCase
         assert(scope.function_defined([yep]), "valid resource was not considered defined")
         assert(! scope.function_defined([nope]), "invalid resource was considered defined")
     end
+
+    def test_search
+        interp = mkinterp
+        scope = mkscope(:interp => interp)
+        
+        fun = interp.newdefine("fun::test")
+        foo = interp.newdefine("foo::bar")
+
+        search = Puppet::Parser::Functions.function(:search)
+        assert_nothing_raised do
+            scope.function_search(["foo", "fun"])
+        end
+
+        ffun = ffoo = nil
+        assert_nothing_raised do
+            ffun = scope.finddefine("test")
+            ffoo = scope.finddefine('bar')
+        end
+
+        assert(ffun, "Could not find definition in 'fun' namespace")
+        assert(ffoo, "Could not find definition in 'foo' namespace")
+    end
 end
 
 # $Id$
