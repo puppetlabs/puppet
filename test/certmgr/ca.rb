@@ -67,6 +67,15 @@ class TestCA < Test::Unit::TestCase
         
         assert_equal(list.sort, ca.list.sort, "list was not correct")
     end
+
+    # #142 - test storing the public key
+    def test_store_public_key
+        ca = mkca
+        assert_nothing_raised do
+            ca.mkrootcert
+        end
+        assert(FileTest.exists?(Puppet[:capub]), "did not store public key")
+    end
 end
 
 # $Id$

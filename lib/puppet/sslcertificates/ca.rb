@@ -243,6 +243,9 @@ class Puppet::SSLCertificates::CA
         Puppet.config.write(:cacert) do |f|
             f.puts @cert.to_pem
         end
+        Puppet.config.write(:capub) do |f|
+            f.puts @cert.public_key
+        end
         return cert
     end
 
