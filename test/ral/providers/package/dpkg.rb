@@ -1,12 +1,13 @@
+#!/usr/bin/env ruby
+
 require File.dirname(__FILE__) + '/../../../lib/puppettest'
 
 require 'mocha'
 
 class DpkgPackageProviderTest < Test::Unit::TestCase
 	def setup
+        super
 		@type = Puppet::Type.type(:package)
-		# This is hideous, but absent a 'reset' button on types...
-		@type.instance_eval("@objects = {}")
 	end
 	
 	def test_install
