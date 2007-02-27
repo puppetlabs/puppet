@@ -44,18 +44,10 @@ class Puppet::Parser::AST
         def eachvalue(scope)
             if @value.is_a?(AST::ASTArray)
                 @value.each { |subval|
-                    if scope
-                        yield subval.evaluate(:scope => scope)
-                    elsif subval.is_a? AST::Leaf
-                        yield subval.value
-                    end
+                    yield subval.evaluate(:scope => scope)
                 }
             else
-                if scope
-                    yield @value.evaluate(:scope => scope)
-                elsif @value.is_a? AST::Leaf
-                    yield @value.value
-                end
+                yield @value.evaluate(:scope => scope)
             end
         end
 
@@ -76,3 +68,5 @@ class Puppet::Parser::AST
         end
     end
 end
+
+# $Id$

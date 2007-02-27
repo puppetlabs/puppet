@@ -19,16 +19,17 @@ class Puppet::Parser::AST
             
             # Iterate across the options looking for a match.
             @options.each { |option|
-                if option.eachvalue(scope) { |opval|
-                        opval = opval.downcase if ! sensitive and opval.respond_to?(:downcase)
-                        # break true if opval == value
-                        if opval == value
-                            break true
-                        end
-                    }
+                option.eachvalue(scope) { |opval|
+                    opval = opval.downcase if ! sensitive and opval.respond_to?(:downcase)
+                    if opval == value
+                        found = true
+                        break
+                    end
+                }
+
+                if found
                     # we found a matching option
                     retvalue = option.safeevaluate(:scope => scope)
-                    found = true
                     break
                 end
             }

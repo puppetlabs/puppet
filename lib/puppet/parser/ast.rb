@@ -120,25 +120,6 @@ class Puppet::Parser::AST
     @autoloader.loadall
 end
 
-#require 'puppet/parser/ast/astarray'
-#require 'puppet/parser/ast/branch'
-#require 'puppet/parser/ast/collection'
-#require 'puppet/parser/ast/caseopt'
-#require 'puppet/parser/ast/casestatement'
-#require 'puppet/parser/ast/component'
-#require 'puppet/parser/ast/else'
-#require 'puppet/parser/ast/hostclass'
-#require 'puppet/parser/ast/ifstatement'
-#require 'puppet/parser/ast/leaf'
-#require 'puppet/parser/ast/node'
-#require 'puppet/parser/ast/resourcedef'
-#require 'puppet/parser/ast/resourceparam'
-#require 'puppet/parser/ast/resourceref'
-#require 'puppet/parser/ast/resourceoverride'
-#require 'puppet/parser/ast/selector'
-#require 'puppet/parser/ast/resourcedefaults'
-#require 'puppet/parser/ast/vardef'
-#require 'puppet/parser/ast/tag'
-#require 'puppet/parser/ast/function'
+require 'puppet/parser/ast/leaf'
 
 # $Id$
