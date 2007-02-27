@@ -69,6 +69,12 @@ fstatement:   NAME LPAREN funcvalues RPAREN {
         :arguments => args,
         :ftype => :statement
 }
+            | NAME LPAREN RPAREN {
+    result = ast AST::Function,
+        :name => val[0],
+        :arguments => AST::ASTArray.new({}),
+        :ftype => :statement
+}
             | NAME funcvalues {
     args = aryfy(val[1])
     result = ast AST::Function,
@@ -326,6 +332,11 @@ funcrvalue:   NAME LPAREN namestrings RPAREN {
     result = ast AST::Function,
         :name => val[0],
         :arguments => args,
+        :ftype => :rvalue
+}           | NAME LPAREN RPAREN {
+    result = ast AST::Function,
+        :name => val[0],
+        :arguments => AST::ASTArray.new({}),
         :ftype => :rvalue
 }
 

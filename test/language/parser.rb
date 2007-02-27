@@ -647,6 +647,17 @@ file { "/tmp/yayness":
             parser.parse %{one::two { yayness: }}
         }
     end
+
+    # #524
+    def test_functions_with_no_arguments
+        parser = mkparser
+        assert_nothing_raised("Could not parse statement function with no args") {
+            parser.parse %{tag()}
+        }
+        assert_nothing_raised("Could not parse rvalue function with no args") {
+            parser.parse %{$testing = template()}
+        }
+    end
 end
 
 # $Id$
