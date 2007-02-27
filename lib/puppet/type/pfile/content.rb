@@ -21,7 +21,13 @@ module Puppet
                 [templating](/trac/puppet/wiki/PuppetTemplating)."
 
         def change_to_s
-            "synced"
+            should = "{md5}" + Digest::MD5.hexdigest(self.should)
+            if @is == :absent
+                return "created file with contents %s" % should
+            else
+                is = "{md5}" + Digest::MD5.hexdigest(@is)
+                return "changed file contents from %s to %s" % [is, should]
+            end
         end
 
         # We should probably take advantage of existing md5 sums if they're there,

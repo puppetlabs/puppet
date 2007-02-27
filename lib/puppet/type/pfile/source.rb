@@ -68,7 +68,7 @@ module Puppet
         end
         
         def change_to_s
-            "replacing from source %s" % @source
+            return "replacing from source %s with contents %s" % [@source, @stats[:checksum]]
         end
         
         def checksum
