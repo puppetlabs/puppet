@@ -103,7 +103,9 @@ module Puppet
                         @parent.bucket = value
                         value
                     end
-                when Puppet::Network::Client::Dipper: value.name
+                when Puppet::Network::Client::Dipper:
+                    @parent.bucket = value
+                    value.name
                 else
                     self.fail "Invalid backup type %s" %
                         value.inspect

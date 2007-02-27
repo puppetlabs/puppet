@@ -2059,7 +2059,18 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised do
             assert_nil(oobj.eval_generate, "recursed too far")
         end
+    end
 
+    # Make sure we default to the "puppet" filebucket, rather than a string
+    def test_backup_defaults_to_bucket
+        path = tempfile
+        file = Puppet::Type.newfile(:path => path, :content => 'some content')
+        file.finish
+
+        assert_instance_of(Puppet::Network::Client::Dipper, file.bucket,
+            "did not default to a filebucket for backups")
+        assert_equal(Puppet::Type.type(:filebucket)["puppet"].bucket, file.bucket,
+            "did not default to the 'puppet' filebucket")
     end
 end
 
