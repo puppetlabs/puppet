@@ -23,7 +23,7 @@ class Puppet::Parser::Scope
     include Enumerable
     include Puppet::Util::Errors
     attr_accessor :parent, :level, :interp, :source, :host
-    attr_accessor :name, :type, :topscope, :base, :keyword, :namespace
+    attr_accessor :name, :type, :topscope, :base, :keyword
     attr_accessor :top, :translated, :exported
 
     # Whether we behave declaratively.  Note that it's a class variable,
@@ -59,6 +59,16 @@ class Puppet::Parser::Scope
             return false
         else
             return true
+        end
+    end
+
+    # Add to our list of namespaces.
+    def add_namespace(ns)
+        return false if @namespaces.include?(ns)
+        if @namespaces == [""]
+            @namespaces = [ns]
+        else
+            @namespaces << ns
         end
     end
 
@@ -191,11 +201,21 @@ class Puppet::Parser::Scope
     end
 
     def findclass(name)
-        interp.findclass(namespace, name)
+        @namespaces.each do |namespace|
+            if r = interp.findclass(namespace, name)
+                return r
+            end
+        end
+        return nil
     end
 
     def finddefine(name)
-        interp.finddefine(namespace, name)
+        @namespaces.each do |namespace|
+            if r = interp.finddefine(namespace, name)
+                return r
+            end
+        end
+        return nil
     end
 
     def findresource(string, name = nil)
@@ -221,6 +241,10 @@ class Puppet::Parser::Scope
         @type = nil
         @name = nil
         @finished = false
+        if n = hash[:namespace]
+            @namespaces = [n]
+            hash.delete(:namespace)
+        end
         hash.each { |name, val|
             method = name.to_s + "="
             if self.respond_to? method
@@ -311,7 +335,7 @@ class Puppet::Parser::Scope
         # the top-level scope is always the only site scope.
         @sitescope = true
 
-        @namespace = ""
+        @namespaces = [""]
 
         # The list of collections that have been created.  This is a global list,
         # but they each refer back to the scope that created them.
@@ -380,6 +404,10 @@ class Puppet::Parser::Scope
         else
             return :undefined
         end
+    end
+
+    def namespaces
+        @namespaces.dup
     end
 
     # Add a collection to the global list.
