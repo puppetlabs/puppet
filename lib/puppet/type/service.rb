@@ -349,7 +349,7 @@ module Puppet
         # to events.
         def refresh
             # Only restart if we're supposed to be running
-            if ens = @parameters[:ensure] and ens.should == :running
+            if ens = @parameters[:ensure] and ens.should == :running and ens.is == :running
                 provider.restart
             end
         end
