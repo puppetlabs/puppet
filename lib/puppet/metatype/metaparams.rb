@@ -308,8 +308,12 @@ class Puppet::Type
         RelationshipMetaparam.subclasses
     end
 
-    # For each object we require, subscribe to all events that it generates. We
-    # might reduce the level of subscription eventually, but for now...
+
+    # Note that the order in which the relationships params is defined
+    # matters.  The labelled params (notify and subcribe) must be later,
+    # so that if both params are used, those ones win.  It's a hackish
+    # solution, but it works.
+
     newmetaparam(:require, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :NONE}) do
         desc "One or more objects that this object depends on.
             This is used purely for guaranteeing that changes to required objects
@@ -346,8 +350,6 @@ class Puppet::Type
             "
     end
 
-    # For each object we require, subscribe to all events that it generates.
-    # We might reduce the level of subscription eventually, but for now...
     newmetaparam(:subscribe, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :ALL_EVENTS, :callback => :refresh}) do
         desc "One or more objects that this object depends on.  Changes in the
             subscribed to objects result in the dependent objects being
@@ -368,22 +370,6 @@ class Puppet::Type
             refreshing.
             "
     end
-    
-    newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :ALL_EVENTS, :callback => :refresh}) do
-        desc %{This parameter is the opposite of **subscribe** -- it sends events
-            to the specified object:
-
-                file { "/etc/sshd_config":
-                    source => "....",
-                    notify => service[sshd]
-                }
-
-                service { sshd:
-                    ensure => running
-                }
-            
-            This will restart the sshd service if the sshd config file changes.}
-    end
 
     newmetaparam(:before, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :NONE}) do
         desc %{This parameter is the opposite of **require** -- it guarantees
@@ -403,6 +389,22 @@ class Puppet::Type
             
             This will make sure all of the files are up to date before the
             make command is run.}
+    end
+    
+    newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :ALL_EVENTS, :callback => :refresh}) do
+        desc %{This parameter is the opposite of **subscribe** -- it sends events
+            to the specified object:
+
+                file { "/etc/sshd_config":
+                    source => "....",
+                    notify => service[sshd]
+                }
+
+                service { sshd:
+                    ensure => running
+                }
+            
+            This will restart the sshd service if the sshd config file changes.}
     end
 end # Puppet::Type
 

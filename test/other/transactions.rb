@@ -1078,6 +1078,37 @@ class TestTransactions < Test::Unit::TestCase
             assert(! graph.edge?(after, before), "created automatic relationship %s" % str)
         end
     end
+
+    def test_labeled_deps_beat_unlabeled
+        one = Puppet::Type.type(:exec).create :command => "/bin/echo one"
+        two = Puppet::Type.type(:exec).create :command => "/bin/echo two"
+
+        one[:require] = two
+        one[:subscribe] = two
+
+        comp = newcomp(one, two)
+        trans = Puppet::Transaction.new(comp)
+        graph = trans.relationship_graph
+
+        label = graph.edge_label(two, one)
+        assert(label, "require beat subscribe")
+        assert_equal(:refresh, label[:callback],
+            "did not get correct callback from subscribe")
+
+        one.delete(:require)
+        one.delete(:subscribe)
+
+        two[:before] = one
+        two[:notify] = one
+
+        trans = Puppet::Transaction.new(comp)
+        graph = trans.relationship_graph
+
+        label = graph.edge_label(two, one)
+        assert(label, "before beat notify")
+        assert_equal(:refresh, label[:callback],
+            "did not get correct callback from notify")
+    end
 end
 
 # $Id$
