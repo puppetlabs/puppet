@@ -51,7 +51,11 @@ module Puppet
             unless defined? @fqdn and @fqdn
                 hostname = Facter.value("hostname")
                 domain = Facter.value("domain")
-                @fqdn = [hostname, domain].join(".")
+                if !domain || domain.empty? then
+                    @fqdn = hostname
+                else
+                    @fqdn = [hostname, domain].join(".")
+                end
             end
             return @fqdn
         end

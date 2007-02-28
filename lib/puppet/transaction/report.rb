@@ -20,7 +20,13 @@ class Puppet::Transaction::Report
             hash[key] = []
         end
 
-        @host = [Facter.value("hostname"), Facter.value("domain")].join(".")
+        domain = Facter.value("domain")
+        hostname = Facter.value("hostname")
+        if !domain || domain.empty? then
+            @host = hostname
+        else
+            @host = [hostname, domain].join(".")
+        end
     end
 
     # Create a new metric.

@@ -11,7 +11,11 @@ end
 module Puppet::SSLCertificates
     hostname = Facter["hostname"].value
     domain = Facter["domain"].value
-    fqdn = [hostname, domain].join(".")
+    if !domain || domain.empty? then
+        fqdn = hostname
+    else
+        fqdn = [hostname, domain].join(".")
+    end
 
     Puppet.setdefaults("certificates",
         :certdir => ["$ssldir/certs", "The certificate directory."],
