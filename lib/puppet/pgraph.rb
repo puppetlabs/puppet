@@ -117,7 +117,14 @@ class Puppet::PGraph < GRATR::Digraph
     # This creates direct relationships where there were previously
     # indirect relationships through the containers. 
     def splice!(other, type)
-        vertices.find_all { |v| v.is_a?(type) }.each do |container|
+        # We have to get the container list via a topological sort on the
+        # configuration graph, because otherwise containers that contain
+        # other containers will add those containers back into the
+        # graph.  We could get a similar affect by only setting relationships
+        # to container leaves, but that would result in many more
+        # relationships.
+        containers = other.topsort.find_all { |v| v.is_a?(type) and vertex?(v) }
+        containers.each do |container|
             # Get the list of children from the other graph.
             children = other.adjacent(container, :direction => :out)
 
@@ -129,7 +136,8 @@ class Puppet::PGraph < GRATR::Digraph
             
             # First create new edges for each of the :in edges
             [:in, :out].each do |dir|
-                adjacent(container, :direction => dir, :type => :edges).each do |edge|
+                edges = adjacent(container, :direction => dir, :type => :edges)
+                edges.each do |edge|
                     children.each do |child|
                         if dir == :in
                             s = edge.source
@@ -159,6 +167,8 @@ class Puppet::PGraph < GRATR::Digraph
 
                     # Now get rid of the edge, so remove_vertex! works correctly.
                     remove_edge!(edge)
+                    Puppet.debug "%s: %s => %s: %s" % [container,
+                        edge.source, edge.target, edge?(edge)]
                 end
             end
             remove_vertex!(container)
