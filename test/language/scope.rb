@@ -201,31 +201,44 @@ class TestScope < Test::Unit::TestCase
         assert_nothing_raised {
             scope.setvar("test","value")
         }
-        val = nil
-        assert_nothing_raised {
-            val = scope.strinterp("string ${test}")
+        tests = {
+            "string ${test}" => "string value",
+            "string ${test} ${test} ${test}" => "string value value value",
+            "string $test ${test} $test" => "string value value value",
+            "string \\$test" => "string $test",
+            '\\$test string' => "$test string",
+            '$test string' => "value string",
+            'a testing $' => "a testing $",
+            'a testing \$' => "a testing $",
+            '\$' => "$",
+            '\s' => "\s",
+            '\t' => "\t",
+            '\n' => "\n"
         }
-        assert_equal("string value", val)
 
-        assert_nothing_raised {
-            val = scope.strinterp("string ${test} ${test} ${test}")
-        }
-        assert_equal("string value value value", val)
+        tests.each do |input, output|
+            assert_nothing_raised("Failed to scan %s" % input.inspect) do
+                assert_equal(output, scope.strinterp(input),
+                    'did not interpret %s correctly' % input)
+            end
+        end
 
-        assert_nothing_raised {
-            val = scope.strinterp("string $test ${test} $test")
-        }
-        assert_equal("string value value value", val)
+        logs = []
+        Puppet::Util::Log.close
+        Puppet::Util::Log.newdestination(logs)
 
-        assert_nothing_raised {
-            val = scope.strinterp("string \\$test")
-        }
-        assert_equal("string $test", val)
+        # #523
+        %w{d f h l w z}.each do |l|
+            string = "\\" + l
+            assert_nothing_raised do
+                assert_equal(string, scope.strinterp(string),
+                    'did not interpret %s correctly' % string)
+            end
 
-        assert_nothing_raised {
-            val = scope.strinterp("\\$test string")
-        }
-        assert_equal("$test string", val)
+            assert(logs.detect { |m| m.message =~ /Unrecognised escape/ },
+                "Did not get warning about escape sequence with %s" % string)
+            logs.clear
+        end
     end
 
     def test_setclass

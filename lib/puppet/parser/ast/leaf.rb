@@ -41,14 +41,12 @@ class Puppet::Parser::AST
         # Interpolate the string looking for variables, and then return
         # the result.
         def evaluate(hash)
-            return hash[:scope].strinterp(@value)
+            return hash[:scope].strinterp(@value, @file, @line)
         end
     end
 
-    # The base string class.
+    # An uninterpreted string.
     class FlatString < AST::Leaf
-        # Interpolate the string looking for variables, and then return
-        # the result.
         def evaluate(hash)
             return @value
         end

@@ -4,6 +4,7 @@
 require 'puppet/parser/parser'
 require 'puppet/parser/templatewrapper'
 require 'puppet/transportable'
+require 'strscan'
 
 class Puppet::Parser::Scope
     require 'puppet/parser/resource'
@@ -540,25 +541,53 @@ class Puppet::Parser::Scope
     end
 
     # Return an interpolated string.
-    def strinterp(string)
+    def strinterp(string, file = nil, line = nil)
         # Most strings won't have variables in them.
-        if string =~ /\$/
-            string = string.gsub(/\\\$|\$\{(\w+)\}|\$(\w+)/) do |value|
+        ss = StringScanner.new(string)
+        out = ""
+        while not ss.eos?
+            if ss.scan(/^\$\{(\w+)\}|^\$(\w+)/) 
                 # If it matches the backslash, then just retun the dollar sign.
-                if value == '\\$'
-                    '$'
+                if ss.matched == '\\$'
+                    out << '$'
                 else # look the variable up
-                    lookupvar($1 || $2)
+                    out << lookupvar(ss[1] || ss[2]) || ""
                 end
+            elsif ss.scan(/^\\(.)/)
+                # Puppet.debug("Got escape: pos:%d; m:%s" % [ss.pos, ss.matched])
+                case ss[1]
+                when 'n'
+                    out << "\n"
+                when 't'
+                    out << "\t"
+                when 's'
+                    out << " "
+                when '\\'
+                    out << '\\'
+                when '$'
+                    out << '$'
+                else
+                    Puppet.warning "Unrecognised escape sequence '#{ss.matched}'"
+                    out << ss.matched
+                end
+            elsif ss.scan(/^\$/)
+                out << '$'
+            else 
+                tmp = ss.scan(/[^\\$]+/)
+                # Puppet.debug("Got other: pos:%d; m:%s" % [ss.pos, tmp])
+                unless tmp
+                    error = Puppet::ParseError.new("Could not parse string %s" %
+                        string.inspect)
+                    {:file= => file, :line= => line}.each do |m,v|
+                        error.send(m, v) if v
+                    end
+                    raise error
+                end
+                out << tmp
             end
         end
 
-        # And most won't have whitespace replacements.
-        if string =~ /\\/
-            return string.gsub(/\\t/, "\t").gsub(/\\n/, "\n").gsub(/\\s/, "\s")
-        else
-            return string
-        end
+        return out
     end
 
     # Add a tag to our current list.  These tags will be added to all
