@@ -519,12 +519,19 @@ class Puppet::Parser::Scope
     # Set a variable in the current scope.  This will override settings
     # in scopes above, but will not allow variables in the current scope
     # to be reassigned if we're declarative (which is the default).
-    def setvar(name,value)
+    def setvar(name,value, file = nil, line = nil)
         #Puppet.debug "Setting %s to '%s' at level %s" %
         #    [name.inspect,value,self.level]
         if @symtable.include?(name)
             if @@declarative
-                raise Puppet::ParseError, "Cannot reassign variable %s" % name
+                error = Puppet::ParseError.new("Cannot reassign variable %s" % name)
+                if file
+                    error.file = file
+                end
+                if line
+                    error.line = line
+                end
+                raise error
             else
                 Puppet.warning "Reassigning %s to %s" % [name,value]
             end
