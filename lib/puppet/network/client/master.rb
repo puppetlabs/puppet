@@ -18,6 +18,12 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
             new configurations, where you want to fix the broken configuration
             rather than reverting to a known-good one."
         ],
+        :ignorecache => [false,
+            "Ignore cache and always recompile the configuration.  This is
+            useful for testing new configurations, where the local cache may in
+            fact be stale even if the timestamps are up to date - if the facts
+            change or if the server changes."
+        ],
         :downcasefacts => [false,
             "Whether facts should be made all lowercase when sent to the server."]
     )
@@ -196,9 +202,8 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
 
     # Check whether our configuration is up to date
     def fresh?
-        unless self.compile_time
-            return false
-        end
+        return false if Puppet[:ignorecache]
+        return false unless self.compile_time
 
         # We're willing to give a 2 second drift
         if @driver.freshness - @compile_time.to_i < 1

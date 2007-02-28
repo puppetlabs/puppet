@@ -119,7 +119,7 @@
 #
 # test::
 #   Enable the most common options used for testing.  These are +onetime+,
-#   +verbose+, and +no-usecacheonfailure+.
+#   +verbose+, +ignorecache, and +no-usecacheonfailure+.
 #
 # verbose::
 #   Turn on verbose reporting.
@@ -212,6 +212,7 @@ begin
                 options[:enable] = true
             when "--test"
                 # Enable all of the most common test options.
+                Puppet.config.handlearg("--ignorecache")
                 Puppet.config.handlearg("--no-usecacheonfailure")
                 options[:onetime] = true
                 unless Puppet::Util::Log.level == :debug
