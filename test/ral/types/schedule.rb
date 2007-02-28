@@ -340,6 +340,18 @@ class TestSchedule < Test::Unit::TestCase
         assert(! s.match?(min("-", 15)), "matched minus 15 minutes with half-hourly")
         assert(s.match?(min("-", 25)), "Did not match minus 25 with half-hourly")
     end
+
+    # #526
+    def test_never_period
+        schedule = nil
+        assert_nothing_raised do
+            schedule = Puppet::Type.type(:schedule).create(
+                :name => "test", :period => :never
+            )
+        end
+
+        assert(! schedule.match?, "schedule matched with period == never")
+    end
 end
 
 # $Id$

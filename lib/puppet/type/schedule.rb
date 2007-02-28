@@ -228,7 +228,7 @@ module Puppet
                 See the ``periodmatch`` attribute for tuning whether to match
                 times by their distance apart or by their specific value."
 
-            newvalues(:hourly, :daily, :weekly, :monthly)
+            newvalues(:hourly, :daily, :weekly, :monthly, :never)
 
             @@scale = {
                 :hourly => 3600,
@@ -246,6 +246,8 @@ module Puppet
             }
 
             def match?(previous, now)
+                return false if value == :never
+
                 value = self.value
                 case @parent[:periodmatch]
                 when :number
