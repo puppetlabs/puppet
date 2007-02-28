@@ -35,6 +35,22 @@ class Transaction
         end
     end
 
+    # Check to see if we should actually allow deleition.
+    def allow_processing?(resource, changes)
+        # If a resource is going to be deleted but it still has
+        # dependencies, then don't delete it unless it's implicit or the
+        # dependency is itself being deleted.
+        if ! resource.implicit? and resource.deleting?
+            if deps = @relgraph.dependents(resource) and ! deps.empty? and deps.detect { |d| ! d.deleting? }
+                resource.warning "%s still depend%s on me -- not deleting" %
+                    [deps.collect { |r| r.ref }.join(","), deps.length > 1 ? "":"s"] 
+                return false
+            end
+        end
+
+        return true
+    end
+
     # Apply all changes for a resource, returning a list of the events
     # generated.
     def apply(resource)
@@ -54,17 +70,6 @@ class Transaction
             return []
         end
         changes = [changes] unless changes.is_a?(Array)
-        
-        # If a resource is going to be deleted but it still has dependencies, then
-        # don't delete it unless it's implicit or the dependency is itself being
-        # deleted.
-        if ! resource.implicit? and resource.deleting?
-            if deps = @relgraph.dependents(resource) and ! deps.empty? and deps.detect { |d| ! d.deleting? }
-                resource.warning "%s still depend%s on me -- not deleting" %
-                    [deps.collect { |r| r.ref }.join(","), if deps.length > 1; ""; else "s"; end] 
-                return []
-            end
-        end
 
         unless changes.is_a? Array
             changes = [changes]
@@ -73,6 +78,8 @@ class Transaction
         if changes.length > 0
             @resourcemetrics[:out_of_sync] += 1
         end
+
+        return [] if changes.empty? or ! allow_processing?(resource, changes)
 
         resourceevents = apply_changes(resource, changes)
 
