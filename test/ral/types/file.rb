@@ -1452,7 +1452,7 @@ class TestFile < Test::Unit::TestCase
 
         file = File.join(dirs["other"], "file")
         sourcefile = File.join(dirs["source"], "sourcefile")
-        link = File.join(dirs["target"], "link")
+        link = File.join(dirs["target"], "sourcefile")
 
         File.open(file, "w") { |f| f.puts "other" }
         File.open(sourcefile, "w") { |f| f.puts "source" }
@@ -1460,17 +1460,18 @@ class TestFile < Test::Unit::TestCase
 
         obj = Puppet::Type.type(:file).create(
             :path => dirs["target"],
-            :ensure => "file",
+            :ensure => :file,
             :source => dirs["source"],
             :recurse => true
         )
 
 
-        trans = assert_events([:file_created, :file_created], obj)
+        trans = assert_apply(obj)
 
         newfile = File.join(dirs["target"], "sourcefile")
 
-        assert(File.exists?(newfile), "File did not get copied")
+        assert(File.directory?(dirs["target"]), "Dir did not get created")
+        assert(File.file?(newfile), "File did not get copied")
 
         assert_equal(File.read(sourcefile), File.read(newfile),
             "File did not get copied correctly.")
@@ -2071,6 +2072,25 @@ class TestFile < Test::Unit::TestCase
             "did not default to a filebucket for backups")
         assert_equal(Puppet::Type.type(:filebucket)["puppet"].bucket, file.bucket,
             "did not default to the 'puppet' filebucket")
+    end
+
+    # #515 - make sure 'ensure' other than "link" is deleted during recursion
+    def test_ensure_deleted_during_recursion
+        dir = tempfile()
+        Dir.mkdir(dir)
+        file = File.join(dir, "file")
+        File.open(file, "w") { |f| f.puts "asdfasdf" }
+
+        obj = Puppet::Type.newfile(:path => dir, :ensure => :directory,
+            :recurse => true)
+
+        children = nil
+        assert_nothing_raised do
+            children = obj.eval_generate
+        end
+        fobj = obj.class[file]
+        assert(fobj, "did not create file object")
+        assert(fobj.should(:ensure) != :directory, "ensure was passed to child")
     end
 end
 

@@ -44,7 +44,7 @@ module Puppet
         end
 
         def insync?
-            if [:nochange, :notlink].include?(self.should) or @parent.should(:ensure) != :link
+            if [:nochange, :notlink].include?(self.should)
                 return true
             else
                 return super

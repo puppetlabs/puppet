@@ -8,6 +8,7 @@ require 'puppet/network/server/fileserver'
 
 module Puppet
     newtype(:file) do
+        include Puppet::Util::MethodHelper
         @doc = "Manages local files, including setting ownership and
             permissions, creation of both files and directories, and
             retrieving entire files from remote servers.  As Puppet matures, it
@@ -564,7 +565,14 @@ module Puppet
         # object.
         def newchild(path, local, hash = {})
             # make local copy of arguments
-            args = @arghash.dup
+            args = symbolize_options(@arghash)
+
+            # There's probably a better way to do this, but we don't want
+            # to pass this info on.
+            if v = args[:ensure]
+                v = symbolize(v)
+                args.delete(:ensure)
+            end
 
             if path =~ %r{^#{File::SEPARATOR}}
                 self.devfail(
