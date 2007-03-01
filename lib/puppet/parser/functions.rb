@@ -110,7 +110,7 @@ module Functions
         klasses = evalclasses(*vals)
 
         missing = vals.find_all do |klass|
-            ! klass.include?(klass)
+            ! klasses.include?(klass)
         end
 
         # Throw an error if we didn't evaluate all of the classes.

@@ -415,6 +415,36 @@ class TestLangFunctions < Test::Unit::TestCase
         assert(ffun, "Could not find definition in 'fun' namespace")
         assert(ffoo, "Could not find definition in 'foo' namespace")
     end
+
+    def test_include
+        interp = mkinterp
+        scope = mkscope(:interp => interp)
+
+        assert_raise(Puppet::ParseError, "did not throw error on missing class") do
+            scope.function_include("nosuchclass")
+        end
+
+        interp.newclass("myclass")
+
+        assert_nothing_raised do
+            scope.function_include "myclass"
+        end
+
+        assert(scope.classlist.include?("myclass"),
+            "class was not evaluated")
+
+        # Now try multiple classes at once
+        classes = %w{one two three}.each { |c| interp.newclass(c) }
+
+        assert_nothing_raised do
+            scope.function_include classes
+        end
+
+        classes.each do |c|
+            assert(scope.classlist.include?(c),
+                "class %s was not evaluated" % c)
+        end
+    end
 end
 
 # $Id$

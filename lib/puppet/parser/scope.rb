@@ -195,6 +195,7 @@ class Puppet::Parser::Scope
                 retval << klass
             end
         end
+        retval
     end
 
     def exported?
