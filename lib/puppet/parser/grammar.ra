@@ -421,7 +421,7 @@ selector:     selectlhand QMARK svalues {
 }
 
 svalues:      selectval
-            | LBRACE sintvalues RBRACE { result = val[1] }
+            | LBRACE sintvalues endcomma RBRACE { result = val[1] }
 
 sintvalues:   selectval
             | sintvalues comma selectval {
