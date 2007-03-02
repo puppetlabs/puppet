@@ -8,12 +8,13 @@
 Summary: A network tool for managing many disparate systems
 Name: puppet
 Version: 0.22.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPL
 Group: System Environment/Base
 
 URL: http://reductivelabs.com/projects/puppet/
 Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
+Patch0: no-lockdir.patch
 
 Requires: ruby >= 1.8.1
 %if %has_ruby_abi
@@ -43,6 +44,7 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
+%patch0 -p1
 
 %build
 for f in bin/* ; do 
@@ -134,6 +136,12 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Mon Feb 12 2007 David Lutterkort <dlutter@redhat.com> - 0.22.1-2
+- Fix bogus config parameter in puppetd.conf
+
+* Sat Feb  3 2007 David Lutterkort <dlutter@redhat.com> - 0.22.1-1
+- New version
+
 * Fri Jan  5 2007 David Lutterkort <dlutter@redhat.com> - 0.22.0-1
 - New version
 

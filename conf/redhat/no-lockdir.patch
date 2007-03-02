@@ -1,0 +1,13 @@
+--- puppet-0.22.1/conf/redhat/puppetd.conf.orig	2006-09-27 10:30:35.000000000 -0700
++++ puppet-0.22.1/conf/redhat/puppetd.conf	2007-02-11 13:27:04.000000000 -0800
+@@ -11,10 +11,6 @@
+     # The default value is '$vardir/run'.
+     rundir = /var/run/puppet
+ 
+-    # Where lock files are kept.
+-    # The default value is '$vardir/locks'.
+-    lockdir = /var/lock
+-
+     # Where SSL certificates are kept.
+     # The default value is '$confdir/ssl'.
+     ssldir = $vardir/ssl
