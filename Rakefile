@@ -1,4 +1,4 @@
-# Rakefile for Puppet
+# Rakefile for Puppet -*- ruby -*-
 
 $: << File.expand_path(File.join(File.dirname(__FILE__), 'lib'))
 
@@ -28,6 +28,7 @@ project = Rake::RedLabProject.new("puppet") do |p|
         'examples/**/*',
         'conf/**/*'
     ]
+    p.filelist.exclude("bin/pi")
 
     p.add_dependency('facter', '1.1.0')
 
