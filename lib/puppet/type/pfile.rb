@@ -4,7 +4,7 @@ require 'etc'
 require 'uri'
 require 'fileutils'
 require 'puppet/type/property'
-require 'puppet/network/server/fileserver'
+require 'puppet/network/handler'
 
 module Puppet
     newtype(:file) do
@@ -104,7 +104,7 @@ module Puppet
                         @parent.bucket = value
                         value
                     end
-                when Puppet::Network::Client::Dipper:
+                when Puppet::Network::Client.client(:Dipper):
                     @parent.bucket = value
                     value.name
                 else
@@ -311,7 +311,7 @@ module Puppet
                         # This sets the @value on :backup, too
                         self.bucket = obj
                     elsif bucket == "puppet"
-                        obj = Puppet::Network::Client::Dipper.new(
+                        obj = Puppet::Network::Client.client(:Dipper).new(
                             :Path => Puppet[:clientbucketdir]
                         )
                         self.bucket = obj
@@ -322,7 +322,7 @@ module Puppet
                     else
                         self.fail "Could not find filebucket %s" % bucket
                     end
-                when Puppet::Network::Client::Dipper: # things are hunky-dorey
+                when Puppet::Network::Client.client(:Dipper): # things are hunky-dorey
                 else
                     self.fail "Invalid bucket type %s" % bucket.class
                 end
@@ -357,7 +357,7 @@ module Puppet
                 else
                     backup = self.bucket || self[:backup]
                     case backup
-                    when Puppet::Network::Client::Dipper:
+                    when Puppet::Network::Client.client(:Dipper):
                         notice "Recursively backing up to filebucket"
                         require 'find'
                         Find.find(self[:path]) do |f|
@@ -396,7 +396,7 @@ module Puppet
             when "file":
                 backup = self.bucket || self[:backup]
                 case backup
-                when Puppet::Network::Client::Dipper:
+                when Puppet::Network::Client.client(:Dipper):
                     sum = backup.backup(file)
                     self.info "Filebucketed to %s with sum %s" %
                         [backup.name, sum]
@@ -975,7 +975,7 @@ module Puppet
             case uri.scheme
             when "file":
                 unless defined? @@localfileserver
-                    @@localfileserver = Puppet::Network::Server::FileServer.new(
+                    @@localfileserver = Puppet::Network::Handler.handler(:fileserver).new(
                         :Local => true,
                         :Mount => { "/" => "localhost" },
                         :Config => false
@@ -992,7 +992,7 @@ module Puppet
                 # FIXME We should cache a copy of this server
                 #sourceobj.server = Puppet::Network::NetworkClient.new(args)
                 unless @clients.include?(source)
-                    @clients[source] = Puppet::Network::Client::FileClient.new(args)
+                    @clients[source] = Puppet::Network::Client.file.new(args)
                 end
                 sourceobj.server = @clients[source]
 

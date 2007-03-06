@@ -155,7 +155,6 @@ trap(:INT) do
 end
 
 require 'puppet'
-require 'puppet/network/server'
 require 'puppet/network/client'
 require 'getoptlong'
 
@@ -300,13 +299,9 @@ if options[:centrallogs]
     Puppet::Util::Log.newdestination(logdest)
 end
 
-if options[:onetime]
-    Puppet[:setpidfile] = false
-end
-
 # We need tomake the client either way, we just don't start it
 # if --no-client is set.
-client = Puppet::Network::Client::MasterClient.new(args)
+client = Puppet::Network::Client.master.new(args)
 if options[:enable]
     client.enable
 elsif options[:disable]
@@ -325,13 +320,13 @@ if options[:daemonize]
     client.daemonize
 end
 
-unless client.readcert
+unless client.cert
     # If we don't already have the certificate, then create a client to
-    # request one.
-    caclient = Puppet::Network::Client::CA.new(args)
+    # request one.  Use the special ca stuff, don't use the normal server and port.
+    caclient = Puppet::Network::Client.ca.new()
     if options[:waitforcert] > 0
         begin
-            while ! caclient.requestcert do
+            while ! caclient.request_cert do
                 Puppet.notice "Did not receive certificate"
                 sleep options[:waitforcert]
             end
@@ -340,7 +335,7 @@ unless client.readcert
             exit(23)
         end
     else
-        unless caclient.requestcert
+        unless caclient.request_cert
             Puppet.notice "No certificates; exiting"
             exit(1)
         end
@@ -387,8 +382,10 @@ if Puppet[:listen] and ! options[:onetime]
     args[:Handlers] = handlers
     args[:Port] = Puppet[:puppetport]
 
+    require 'puppet/network/server/webrick'
+
     begin
-        server = Puppet::Network::Server.new(args)
+        server = Puppet::Network::Server::WEBrick.new(args)
     rescue => detail
         $stderr.puts detail
         puts detail.backtrace
@@ -399,9 +396,6 @@ if Puppet[:listen] and ! options[:onetime]
 elsif options[:onetime]
     Puppet.notice "Ignoring --listen on onetime run"
 end
-
-# now set up the network client with the certs, now that we have them
-client.setcerts
 
 if options[:client]
     objects << client
@@ -424,10 +418,10 @@ if options[:onetime]
     begin
         client.run
     rescue => detail
-        Puppet.err detail.to_s
-        if Puppet[:debug]
+        if Puppet[:trace]
             puts detail.backtrace
         end
+        Puppet.err detail.to_s
     end
     exit(0)
 else
@@ -444,6 +438,5 @@ else
 
     Puppet.start
 end
-
 
 # $Id$

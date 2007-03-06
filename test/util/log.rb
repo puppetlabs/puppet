@@ -85,17 +85,6 @@ class TestLog < Test::Unit::TestCase
         assert(msgs.length == levels.length)
     end
 
-    def test_consolelog
-        fact = nil
-        levels = getlevels
-        assert_nothing_raised() {
-            Puppet::Util::Log.newdestination(:console)
-        }
-        msgs = mkmsgs(levels)
-        assert(msgs.length == levels.length)
-        Puppet::Util::Log.close
-    end
-
     def test_levelmethods
         assert_nothing_raised() {
             Puppet::Util::Log.newdestination("/dev/null")

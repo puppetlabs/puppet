@@ -4,7 +4,8 @@ module Puppet
     # use basedirs that are in the user's home directory.
     conf = nil
     var = nil
-    if self.name != "puppetmasterd" and Puppet::Util::SUIDManager.uid != 0
+    name = $0.gsub(/.+#{File::SEPARATOR}/,'').sub(/\.rb$/, '')
+    if name != "puppetmasterd" and Puppet::Util::SUIDManager.uid != 0
         conf = File.expand_path("~/.puppet")
         var = File.expand_path("~/.puppet/var")
     else
@@ -15,10 +16,12 @@ module Puppet
 
     self.setdefaults(:puppet,
         :confdir => [conf, "The main Puppet configuration directory."],
-        :vardir => [var, "Where Puppet stores dynamic and growing data."]
+        :vardir => [var, "Where Puppet stores dynamic and growing data."],
+        :name => [name, "The name of the service, if we are running as one.  The
+            default is essentially $0 without the path or '.rb'."]
     )
 
-    if self.name == "puppetmasterd"
+    if name == "puppetmasterd"
         logopts = {:default => "$vardir/log",
             :mode => 0750,
             :owner => "$user",
@@ -114,7 +117,14 @@ module Puppet
     # Define the config default.
     self.setdefaults(self.name,
         :config => ["$confdir/#{self.name}.conf",
-            "The configuration file for #{self.name}."]
+            "The configuration file for #{self.name}."],
+        :pidfile => ["", "The pid file"],
+        :bindaddress => ["", "The address to bind to.  Mongrel servers
+            default to 127.0.0.1 and WEBrick defaults to 0.0.0.0."],
+        :servertype => ["webrick", "The type of server to use.  Currently supported
+            options are webrick and mongrel.  If you use mongrel, you will need
+            a proxy in front of the process or processes, since Mongrel cannot
+            speak SSL."]
     )
 
     self.setdefaults("puppetmasterd",
@@ -145,7 +155,15 @@ module Puppet
            for determining which 'node' statement applies to the client. 
            Possible values are 'cert' (use the subject's CN in the client's 
            certificate) and 'facter' (use the hostname that the client 
-           reported in its facts)"]
+           reported in its facts)"],
+        :bucketdir => {
+            :default => "$vardir/bucket",
+            :mode => 0750,
+            :owner => "$user",
+            :group => "$group",
+            :desc => "Where FileBucket files are stored."
+        },
+        :ca => [true, "Wether the master should function as a certificate authority."]
     )
 
     self.setdefaults("puppetd",
@@ -179,7 +197,121 @@ module Puppet
         :puppetport => [8139, "Which port puppetd listens on."],
         :noop => [false, "Whether puppetd should be run in noop mode."],
         :runinterval => [1800, # 30 minutes
-            "How often puppetd applies the client configuration; in seconds"]
+            "How often puppetd applies the client configuration; in seconds"],
+        :listen => [false, "Whether puppetd should listen for
+            connections.  If this is true, then by default only the
+            ``runner`` server is started, which allows remote authorized
+            and authenticated nodes to connect and trigger ``puppetd``
+            runs."],
+        :ca_server => ["$server", "The server to use for certificate
+            authority requests.  It's a separate server because it cannot
+            and does not need to horizontally scale."],
+        :ca_port => ["$master_port", "The port to use for the certificate authority."]
+    )
+        
+    self.setdefaults("filebucket",
+        :clientbucketdir => {
+            :default => "$vardir/clientbucket",
+            :mode => 0750,
+            :desc => "Where FileBucket files are stored locally."
+        }
+    )
+    self.setdefaults("fileserver",
+        :fileserverconfig => ["$confdir/fileserver.conf",
+            "Where the fileserver configuration is stored."]
+    )
+    self.setdefaults(:reporting,
+        :reports => ["store",
+            "The list of reports to generate.  All reports are looked for
+            in puppet/reports/<name>.rb, and multiple report names should be
+            comma-separated (whitespace is okay)."
+        ],
+        :reportdir => {:default => "$vardir/reports",
+                :mode => 0750,
+                :owner => "$user",
+                :group => "$group",
+                :desc => "The directory in which to store reports
+                    received from the client.  Each client gets a separate
+                    subdirectory."}
+    )
+    self.setdefaults("puppetd",
+        :puppetdlockfile => [ "$statedir/puppetdlock",
+            "A lock file to temporarily stop puppetd from doing anything."],
+        :usecacheonfailure => [true,
+            "Whether to use the cached configuration when the remote
+            configuration will not compile.  This option is useful for testing
+            new configurations, where you want to fix the broken configuration
+            rather than reverting to a known-good one."
+        ],
+        :ignorecache => [false,
+            "Ignore cache and always recompile the configuration.  This is
+            useful for testing new configurations, where the local cache may in
+            fact be stale even if the timestamps are up to date - if the facts
+            change or if the server changes."
+        ],
+        :downcasefacts => [false,
+            "Whether facts should be made all lowercase when sent to the server."]
+    )
+
+    self.setdefaults(:puppetd,
+        :configtimeout => [120,
+            "How long the client should wait for the configuration to be retrieved
+            before considering it a failure.  This can help reduce flapping if too
+            many clients contact the server at one time."
+        ],
+        :reportserver => ["$server",
+            "The server to which to send transaction reports."
+        ],
+        :report => [false,
+            "Whether to send reports after every transaction."
+        ]
+    )
+
+    # Plugin information.
+    self.setdefaults("puppet",
+        :pluginpath => ["$vardir/plugins",
+            "Where Puppet should look for plugins.  Multiple directories should
+            be colon-separated, like normal PATH variables."],
+        :plugindest => ["$vardir/plugins",
+            "Where Puppet should store plugins that it pulls down from the central
+            server."],
+        :pluginsource => ["puppet://$server/plugins",
+            "From where to retrieve plugins.  The standard Puppet ``file`` type
+             is used for retrieval, so anything that is a valid file source can
+             be used here."],
+        :pluginsync => [false,
+            "Whether plugins should be synced with the central server."],
+        :pluginsignore => [".svn CVS",
+            "What files to ignore when pulling down plugins."]
+    )
+
+    # Central fact information.
+    self.setdefaults("puppet",
+        :factpath => ["$vardir/facts",
+            "Where Puppet should look for facts.  Multiple directories should
+            be colon-separated, like normal PATH variables."],
+        :factdest => ["$vardir/facts",
+            "Where Puppet should store facts that it pulls down from the central
+            server."],
+        :factsource => ["puppet://$server/facts",
+            "From where to retrieve facts.  The standard Puppet ``file`` type
+             is used for retrieval, so anything that is a valid file source can
+             be used here."],
+        :factsync => [false,
+            "Whether facts should be synced with the central server."],
+        :factsignore => [".svn CVS",
+            "What files to ignore when pulling down facts."]
+    )
+
+    self.setdefaults(:reporting,
+        :tagmap => ["$confdir/tagmail.conf",
+            "The mapping between reporting tags and email addresses."],
+        :sendmail => [%x{which sendmail 2>/dev/null}.chomp,
+            "Where to find the sendmail binary with which to send email."],
+        :reportfrom => ["report@" + [Facter["hostname"].value, Facter["domain"].value].join("."),
+            "The 'from' email address for the reports."],
+        :smtpserver => ["none",
+            "The server through which to send email reports."]
     )
 end
 

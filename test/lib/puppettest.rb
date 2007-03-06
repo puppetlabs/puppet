@@ -8,7 +8,8 @@ require 'test/unit'
 
 # Yay; hackish but it works
 if ARGV.include?("-d")
-    Puppet.debug = true
+    ARGV.delete("-d")
+    $console = true
 end
 
 module PuppetTest
@@ -150,20 +151,25 @@ module PuppetTest
 
         @@cleaners = []
 
+        @logs = []
+
         # If we're running under rake, then disable debugging and such.
         #if rake? or ! Puppet[:debug]
         if defined?($puppet_debug) or ! rake?
             if textmate?
                 Puppet[:color] = false
             end
-            Puppet::Util::Log.newdestination :console
+            Puppet::Util::Log.newdestination(@logs)
+            if defined? $console
+                Puppet.info @method_name
+                Puppet::Util::Log.newdestination(:console)
+            end
             Puppet::Util::Log.level = :debug
             #$VERBOSE = 1
-            Puppet.info @method_name
             Puppet[:trace] = true
         else    
             Puppet::Util::Log.close
-            Puppet::Util::Log.newdestination tempfile()
+            Puppet::Util::Log.newdestination(@logs)
             Puppet[:httplog] = tempfile()
         end
 
@@ -251,6 +257,7 @@ module PuppetTest
 
         # reset all of the logs
         Puppet::Util::Log.close
+        @logs.clear
 
         # Just in case there are processes waiting to die...
         require 'timeout'
@@ -282,5 +289,6 @@ require 'puppettest/fakes'
 require 'puppettest/exetest'
 require 'puppettest/parsertesting'
 require 'puppettest/servertest'
+require 'puppettest/testcase'
 
 # $Id$

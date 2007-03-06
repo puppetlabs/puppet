@@ -2,9 +2,6 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/network/server'
-require 'puppet/sslcertificates'
 require 'puppettest'
 
 class TestPuppetModule < Test::Unit::TestCase

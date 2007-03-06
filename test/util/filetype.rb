@@ -74,7 +74,7 @@ class TestFileType < Test::Unit::TestCase
 
             array = nil
 
-            assert_nothing_raised {
+            assert_nothing_raised("Failed to parse %s map" % map) {
                 array = obj.to_array
             }
 

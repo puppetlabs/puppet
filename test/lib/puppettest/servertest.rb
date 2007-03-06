@@ -1,4 +1,5 @@
 require 'puppettest'
+require 'puppet/network/server/webrick'
 
 module PuppetTest::ServerTest
     include PuppetTest
@@ -31,6 +32,7 @@ module PuppetTest::ServerTest
 
     # create a server, forked into the background
     def mkserver(handlers = nil)
+        Puppet[:name] = "puppetmasterd"
         # our default handlers
         unless handlers
             handlers = {
@@ -45,7 +47,7 @@ module PuppetTest::ServerTest
         # then create the actual server
         server = nil
         assert_nothing_raised {
-            server = Puppet::Network::Server.new(
+            server = Puppet::Network::Server::WEBrick.new(
                 :Port => @@port,
                 :Handlers => handlers
             )

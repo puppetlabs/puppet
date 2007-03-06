@@ -167,7 +167,7 @@ class Puppet::Util::Log
             if Syslog.opened?
                 Syslog.close
             end
-            name = Puppet.execname
+            name = Puppet[:name]
             name = "puppet-#{name}" unless name =~ /puppet/
 
             options = Syslog::LOG_PID | Syslog::LOG_NDELAY

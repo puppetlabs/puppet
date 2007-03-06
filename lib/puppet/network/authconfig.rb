@@ -12,6 +12,13 @@ module Puppet
             ]
         )
 
+        def self.main
+            unless defined? @main
+                @main = self.new()
+            end
+            @main
+        end
+
         # Just proxy the setting methods to our rights stuff
         [:allow, :deny].each do |method|
             define_method(method) do |*args|
@@ -19,24 +26,19 @@ module Puppet
             end         
         end
 
-        # Here we add a little bit of semantics.  They can set auth on a whole namespace
-        # or on just a single method in the namespace.
-        def allowed?(name, host, ip)
-            namespace, method = name.to_s.split(".")
-            unless namespace and method
-                raise ArgumentError, "Invalid method name %s" % name
-            end
-
-            name        = name.intern if name.is_a? String
-            namespace   = namespace.intern
-            method      = method.intern
+        # Here we add a little bit of semantics.  They can set auth on a whole
+        # namespace or on just a single method in the namespace.
+        def allowed?(request)
+            name        = request.call.intern
+            namespace   = request.handler.intern
+            method      = request.method.intern
 
             read()
 
             if @rights.include?(name)
-                return @rights[name].allowed?(host, ip)
+                return @rights[name].allowed?(request.name, request.ip)
             elsif @rights.include?(namespace)
-                return @rights[namespace].allowed?(host, ip)
+                return @rights[namespace].allowed?(request.name, request.ip)
             else
                 return false
             end

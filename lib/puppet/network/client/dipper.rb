@@ -1,17 +1,14 @@
 # The client class for filebuckets.
 class Puppet::Network::Client::Dipper < Puppet::Network::Client
+    @handler = Puppet::Network::Handler.handler(:filebucket)
     @drivername = :Bucket
-
-    @handler = Puppet::Network::Server::FileBucket
     
     attr_accessor :name
 
     # Create our bucket client
     def initialize(hash = {})
         if hash.include?(:Path)
-            bucket = Puppet::Network::Server::FileBucket.new(
-                :Path => hash[:Path]
-            )
+            bucket = self.class.handler.new(:Path => hash[:Path])
             hash.delete(:Path)
             hash[:Bucket] = bucket
         end
@@ -24,7 +21,7 @@ class Puppet::Network::Client::Dipper < Puppet::Network::Client
         unless FileTest.exists?(file)
             raise(BucketError, "File %s does not exist" % file)
         end
-        contents = File.read(file)
+        contents = ::File.read(file)
         unless local?
             contents = Base64.encode64(contents)
         end
@@ -35,7 +32,7 @@ class Puppet::Network::Client::Dipper < Puppet::Network::Client
     def restore(file,sum)
         restore = true
         if FileTest.exists?(file)
-            cursum = Digest::MD5.hexdigest(File.read(file))
+            cursum = Digest::MD5.hexdigest(::File.read(file))
 
             # if the checksum has changed...
             # this might be extra effort
@@ -53,14 +50,14 @@ class Puppet::Network::Client::Dipper < Puppet::Network::Client
                 newsum = Digest::MD5.hexdigest(newcontents)
                 changed = nil
                 unless FileTest.writable?(file)
-                    changed = File.stat(file).mode
-                    File.chmod(changed | 0200, file)
+                    changed = ::File.stat(file).mode
+                    ::File.chmod(changed | 0200, file)
                 end
-                File.open(file,File::WRONLY|File::TRUNC) { |of|
+                ::File.open(file,::File::WRONLY|::File::TRUNC) { |of|
                     of.print(newcontents)
                 }
                 if changed
-                    File.chmod(changed, file)
+                    ::File.chmod(changed, file)
                 end
             else
                 Puppet.err "Could not find file with checksum %s" % sum

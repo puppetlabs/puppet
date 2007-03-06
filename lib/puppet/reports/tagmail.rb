@@ -1,20 +1,9 @@
 require 'puppet'
 require 'pp'
 
-Puppet.config.setdefaults(:reporting,
-    :tagmap => ["$confdir/tagmail.conf",
-        "The mapping between reporting tags and email addresses."],
-    :sendmail => [%x{which sendmail 2>/dev/null}.chomp,
-        "Where to find the sendmail binary with which to send email."],
-    :reportfrom => ["report@" + [Facter["hostname"].value, Facter["domain"].value].join("."),
-        "The 'from' email address for the reports."],
-    :smtpserver => ["none",
-        "The server through which to send email reports."]
-)
-
 require 'net/smtp'
 
-Puppet::Network::Server::Report.newreport(:tagmail) do
+Puppet::Network::Handler.report.newreport(:tagmail) do
     desc "This report sends specific log messages to specific email addresses
         based on the tags in the log messages.  See the
         [tag documentation](/trac/puppet/wiki/UsingTags) for more information

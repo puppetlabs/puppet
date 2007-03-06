@@ -4,7 +4,10 @@ require File.dirname(__FILE__) + '/../../../lib/puppettest'
 
 require 'mocha'
 
-class AptitudePackageProviderTest < Test::Unit::TestCase
+class AptitudePackageProviderTest < PuppetTest::TestCase
+    confine "Aptitude package provider missing" =>
+        Puppet::Type.type(:package).provider(:aptitude).suitable?
+
 	def setup
         super
 		@type = Puppet::Type.type(:package)

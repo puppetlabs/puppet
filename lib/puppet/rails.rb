@@ -29,6 +29,27 @@ module Puppet::Rails
         }
     )
 
+    def self.connect
+        # This global init does not work for testing, because we remove
+        # the state dir on every test.
+        unless ActiveRecord::Base.connected?
+            Puppet.config.use(:puppet)
+
+            ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
+            ActiveRecord::Base.allow_concurrency = true
+            ActiveRecord::Base.verify_active_connections!
+
+            begin
+                ActiveRecord::Base.establish_connection(database_arguments())
+            rescue => detail
+                if Puppet[:trace]
+                    puts detail.backtrace
+                end
+                raise Puppet::Error, "Could not connect to database: %s" % detail
+            end 
+        end
+    end
+
     # The arguments for initializing the database connection.
     def self.database_arguments
         args = {:adapter => Puppet[:dbadapter]}
@@ -54,24 +75,7 @@ module Puppet::Rails
             raise Puppet::DevError, "No activerecord, cannot init Puppet::Rails"
         end
 
-        # This global init does not work for testing, because we remove
-        # the state dir on every test.
-        unless ActiveRecord::Base.connected?
-            Puppet.config.use(:puppet)
-
-            ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
-            ActiveRecord::Base.allow_concurrency = true
-            ActiveRecord::Base.verify_active_connections!
-
-            begin
-                ActiveRecord::Base.establish_connection(database_arguments())
-            rescue => detail
-                if Puppet[:trace]
-                    puts detail.backtrace
-                end
-                raise Puppet::Error, "Could not connect to database: %s" % detail
-            end 
-        end
+        connect()
 
         unless ActiveRecord::Base.connection.tables.include?("resources")
             require 'puppet/rails/database/schema'

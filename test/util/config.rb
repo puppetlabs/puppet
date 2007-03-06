@@ -516,13 +516,13 @@ yay = /a/path
         group = "yayness"
 
         File.open(cfile, "w") do |f|
-            f.puts "[#{Puppet.name}]
+            f.puts "[#{Puppet[:name]}]
             group = #{group}
             "
         end
 
         config = mkconfig
-        config.setdefaults(Puppet.name, :group => ["puppet", "a group"])
+        config.setdefaults(Puppet[:name], :group => ["puppet", "a group"])
 
         assert_nothing_raised {
             config.parse(cfile)
@@ -952,6 +952,33 @@ inttest = 27
 
         assert(@logs.detect { |l| l.message =~ /unknown configuration/ and l.level == :warning },
             "Did not generate warning message")
+    end
+
+    def test_multiple_interpolations
+        config = mkconfig
+
+        config.setdefaults(:section,
+            :one => ["oneval", "yay"],
+            :two => ["twoval", "yay"],
+            :three => ["$one/$two", "yay"]
+        )
+
+        assert_equal("oneval/twoval", config[:three],
+            "Did not interpolate multiple variables")
+    end
+
+    # Make sure we can replace ${style} var names
+    def test_curly_replacements
+        config = mkconfig
+
+        config.setdefaults(:section,
+            :one => ["oneval", "yay"],
+            :two => ["twoval", "yay"],
+            :three => ["$one/${two}/${one}/$two", "yay"]
+        )
+
+        assert_equal("oneval/twoval/oneval/twoval", config[:three],
+            "Did not interpolate curlied variables")
     end
 end
 

@@ -1,6 +1,4 @@
-class Puppet::Network::Client::StatusClient < Puppet::Network::Client::ProxyClient
-    # set up the appropriate interface methods
-    @handler = Puppet::Network::Server::ServerStatus
+class Puppet::Network::Client::Status < Puppet::Network::Client::ProxyClient
     self.mkmethods
 end
 

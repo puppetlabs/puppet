@@ -114,6 +114,19 @@ class TestPuppetModule < Test::Unit::TestCase
         assert($:.include?(two), "libdir was not added")
         assert(! $:.include?(one), "old libdir was not removed")
     end
+
+    def test_name
+        # Make sure it defaults to $0 without the rb
+        should = $0.gsub(/.+#{File::SEPARATOR}/,'').sub(/\.rb$/, '')
+
+        assert_equal(should, Puppet[:name], "default name was not right")
+
+        assert_nothing_raised("Could not reset name") do
+            Puppet[:name] = "puppetca"
+        end
+
+        assert_equal("puppetca", Puppet[:name], "name reset did not take")
+    end
 end
 
 # $Id$

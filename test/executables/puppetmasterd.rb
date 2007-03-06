@@ -3,11 +3,9 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
-require 'puppet/network/server'
-require 'puppet/daemon'
+require 'puppet/network/client'
 require 'puppettest'
 require 'socket'
-require 'facter'
 
 class TestPuppetMasterD < Test::Unit::TestCase
     include PuppetTest::ExeTest
@@ -35,7 +33,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
 
         client = nil
         assert_nothing_raised() {
-            client = Puppet::Network::Client::StatusClient.new(
+            client = Puppet::Network::Client.status.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -47,14 +45,14 @@ class TestPuppetMasterD < Test::Unit::TestCase
 
         FileUtils.mkdir_p(File.dirname(Puppet[:autosign]))
         File.open(Puppet[:autosign], "w") { |f|
-            f.puts client.fqdn
+            f.puts Puppet[:certname]
         }
 
         retval = nil
 
         # init the client certs
         assert_nothing_raised() {
-            client.initcerts
+            client.cert
         }
 
         # call status
@@ -65,7 +63,7 @@ class TestPuppetMasterD < Test::Unit::TestCase
 
         # this client shoulduse the same certs
         assert_nothing_raised() {
-            client = Puppet::Network::Client::MasterClient.new(
+            client = Puppet::Network::Client.master.new(
                 :Server => "localhost",
                 :Port => @@port
             )

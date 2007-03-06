@@ -552,7 +552,7 @@ class Puppet::Parser::Scope
                 if ss.matched == '\\$'
                     out << '$'
                 else # look the variable up
-                    out << lookupvar(ss[1] || ss[2]) || ""
+                    out << lookupvar(ss[1] || ss[2]).to_s || ""
                 end
             elsif ss.scan(/^\\(.)/)
                 # Puppet.debug("Got escape: pos:%d; m:%s" % [ss.pos, ss.matched])

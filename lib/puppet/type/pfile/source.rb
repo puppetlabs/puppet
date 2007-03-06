@@ -1,5 +1,3 @@
-require 'puppet/network/server/fileserver'
-
 module Puppet
     # Copy files from a local or remote source.  This state *only* does any work
     # when the remote file is an actual file; in that case, this state copies
@@ -7,7 +5,6 @@ module Puppet
     # this state, during retrieval, modifies the appropriate other states
     # so that things get taken care of appropriately.
     Puppet.type(:file).newproperty(:source) do
-        PINPARAMS = Puppet::Network::Server::FileServer::CHECKPARAMS
 
         attr_accessor :source, :local
         desc "Copy a file over the current file.  Uses ``checksum`` to
@@ -86,14 +83,14 @@ module Puppet
 
             begin
                 desc = server.describe(path, @parent[:links])
-            rescue Puppet::Network::NetworkClientError => detail
+            rescue Puppet::Network::XMLRPCClientError => detail
                 self.err "Could not describe %s: %s" %
                     [path, detail]
                 return nil
             end
 
             args = {}
-            PINPARAMS.zip(
+            pinparams.zip(
                 desc.split("\t")
             ).each { |param, value|
                 if value =~ /^[0-9]+$/
@@ -143,6 +140,10 @@ module Puppet
             end
             # Now, we just check to see if the checksums are the same
             return @parent.is(:checksum) == @stats[:checksum]
+        end
+
+        def pinparams
+            Puppet::Network::Handler.handler(:fileserver).params
         end
         
         # This basically calls describe() on our file, and then sets all
@@ -209,7 +210,7 @@ module Puppet
         def should=(value)
             super
 
-            checks = (PINPARAMS + [:ensure])
+            checks = (pinparams + [:ensure])
             checks.delete(:checksum)
             
             @parent[:check] = checks
@@ -231,7 +232,7 @@ module Puppet
 
             begin
                 contents = sourceobj.server.retrieve(path, @parent[:links])
-            rescue Puppet::Network::NetworkClientError => detail
+            rescue Puppet::Network::XMLRPCClientError => detail
                 self.err "Could not retrieve %s: %s" %
                     [path, detail]
                 return nil

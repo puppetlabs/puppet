@@ -1851,7 +1851,7 @@ class TestFile < Test::Unit::TestCase
         bpath = tempfile
         bucket = Puppet::Type.type(:filebucket).create :name => "rtest", :path => bpath
         dipper = bucket.bucket
-        dipper = Puppet::Network::Server::FileBucket.new(
+        dipper = Puppet::Network::Handler.filebucket.new(
             :Path => bpath
         )
         assert(dipper, "did not receive bucket client")

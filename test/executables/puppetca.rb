@@ -2,9 +2,6 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/network/server'
-require 'puppet/sslcertificates'
 require 'puppettest'
 
 class TestPuppetCA < Test::Unit::TestCase
@@ -16,7 +13,7 @@ class TestPuppetCA < Test::Unit::TestCase
     end
     
     def mkca
-        Puppet::Network::Server::CA.new()
+        Puppet::Network::Handler.ca.new()
     end
     
     def mkcert(hostname)

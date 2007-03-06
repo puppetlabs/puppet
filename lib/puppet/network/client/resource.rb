@@ -1,10 +1,7 @@
+# The client for interacting with remote Puppet agents to query and modify
+# remote system state.
 class Puppet::Network::Client::Resource < Puppet::Network::Client
-    @drivername = :ResourceServer
-
-    @handler = Puppet::Network::Server::Resource
-
     def apply(bucket)
-
         case bucket
         when Puppet::TransObject
             tmp = Puppet::TransBucket.new
@@ -39,16 +36,6 @@ class Puppet::Network::Client::Resource < Puppet::Network::Client
         end
 
         return object
-    end
-
-    def initialize(hash = {})
-        if hash.include?(:ResourceServer)
-            unless hash[:ResourceServer].is_a?(Puppet::Network::Server::Resource)
-                raise Puppet::DevError, "Must pass an actual PElement server object"
-            end
-        end
-
-        super(hash)
     end
 
     def list(type, ignore = false, base = false)

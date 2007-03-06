@@ -2,6 +2,13 @@ require 'puppettest'
 require 'fileutils'
 
 module PuppetTest
+    def assert_logged(level, regex, msg = nil)
+        # Skip verifying logs that we're not supposed to send.
+        return unless Puppet::Util::Log.sendlevel?(level)
+        r = @logs.detect { |l| l.level == level and l.message =~ regex }
+        @logs.clear
+        assert(r, msg)
+    end
 
     def assert_uid_gid(uid, gid, filename)
         flunk "Must be uid 0 to run these tests" unless Process.uid == 0

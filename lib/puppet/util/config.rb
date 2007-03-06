@@ -301,7 +301,7 @@ class Puppet::Util::Config
                     # the group can be set in the config file.  The problem
                     # is that we're using the word 'group' twice, which is
                     # confusing.
-                    if var == :group and section == Puppet.execname and @config.include?(:group)
+                    if var == :group and section == Puppet[:name] and @config.include?(:group)
                         @config[:group].value = value
                     end
                     next
@@ -519,7 +519,7 @@ class Puppet::Util::Config
 
     # Convert our list of objects into a configuration file.
     def to_config
-        str = %{The configuration file for #{Puppet.execname}.  Note that this file
+        str = %{The configuration file for #{Puppet[:name]}.  Note that this file
 is likely to have unused configuration parameters in it; any parameter that's
 valid anywhere in Puppet can be in any config file, even if it's not used.
 
@@ -719,18 +719,16 @@ Generated on #{Time.now}.
         def convert(value)
             return value unless value
             return value unless value.is_a? String
-            if value =~ /\$(\w+)/
-                parent = $1
-                if pval = @parent[parent]
-                    newval = value.to_s.sub(/\$#{parent.to_s}/, pval.to_s)
-                    #return File.join(newval.split("/"))
-                    return newval
+            newval = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
+                varname = $2 || $1
+                if pval = @parent[varname]
+                    pval
                 else
                     raise Puppet::DevError, "Could not find value for %s" % parent
                 end
-            else
-                return value
             end
+
+            return newval
         end
 
         def desc=(value)

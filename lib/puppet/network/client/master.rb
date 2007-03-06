@@ -2,83 +2,10 @@
 require 'sync'
 require 'timeout'
 
-class Puppet::Network::Client::MasterClient < Puppet::Network::Client
+class Puppet::Network::Client::Master < Puppet::Network::Client
     unless defined? @@sync
         @@sync = Sync.new
     end
-
-    @handler = Puppet::Network::Server::Master
-
-    Puppet.setdefaults("puppetd",
-        :puppetdlockfile => [ "$statedir/puppetdlock",
-            "A lock file to temporarily stop puppetd from doing anything."],
-        :usecacheonfailure => [true,
-            "Whether to use the cached configuration when the remote
-            configuration will not compile.  This option is useful for testing
-            new configurations, where you want to fix the broken configuration
-            rather than reverting to a known-good one."
-        ],
-        :ignorecache => [false,
-            "Ignore cache and always recompile the configuration.  This is
-            useful for testing new configurations, where the local cache may in
-            fact be stale even if the timestamps are up to date - if the facts
-            change or if the server changes."
-        ],
-        :downcasefacts => [false,
-            "Whether facts should be made all lowercase when sent to the server."]
-    )
-
-    Puppet.setdefaults(:puppetd,
-        :configtimeout => [30,
-            "How long the client should wait for the configuration to be retrieved
-            before considering it a failure.  This can help reduce flapping if too
-            many clients contact the server at one time."
-        ],
-        :reportserver => ["$server",
-            "The server to which to send transaction reports."
-        ],
-        :report => [false,
-            "Whether to send reports after every transaction."
-        ]
-    )
-
-    # Plugin information.
-    Puppet.setdefaults("puppet",
-        :pluginpath => ["$vardir/plugins",
-            "Where Puppet should look for plugins.  Multiple directories should
-            be colon-separated, like normal PATH variables."],
-        :plugindest => ["$vardir/plugins",
-            "Where Puppet should store plugins that it pulls down from the central
-            server."],
-        :pluginsource => ["puppet://$server/plugins",
-            "From where to retrieve plugins.  The standard Puppet ``file`` type
-             is used for retrieval, so anything that is a valid file source can
-             be used here."],
-        :pluginsync => [false,
-            "Whether plugins should be synced with the central server."],
-        :pluginsignore => [".svn CVS",
-            "What files to ignore when pulling down plugins."]
-    )
-
-    # Central fact information.
-    Puppet.setdefaults("puppet",
-        :factpath => ["$vardir/facts",
-            "Where Puppet should look for facts.  Multiple directories should
-            be colon-separated, like normal PATH variables."],
-        :factdest => ["$vardir/facts",
-            "Where Puppet should store facts that it pulls down from the central
-            server."],
-        :factsource => ["puppet://$server/facts",
-            "From where to retrieve facts.  The standard Puppet ``file`` type
-             is used for retrieval, so anything that is a valid file source can
-             be used here."],
-        :factsync => [false,
-            "Whether facts should be synced with the central server."],
-        :factsignore => [".svn CVS",
-            "What files to ignore when pulling down facts."]
-    )
-
-    @drivername = :Master
 
     attr_accessor :objects
     attr_reader :compile_time
@@ -160,11 +87,11 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
     # Cache the config
     def cache(text)
         Puppet.info "Caching configuration at %s" % self.cachefile
-        confdir = File.dirname(Puppet[:localconfig])
-        File.open(self.cachefile + ".tmp", "w", 0660) { |f|
+        confdir = ::File.dirname(Puppet[:localconfig])
+        ::File.open(self.cachefile + ".tmp", "w", 0660) { |f|
             f.print text
         }
-        File.rename(self.cachefile + ".tmp", self.cachefile)
+        ::File.rename(self.cachefile + ".tmp", self.cachefile)
     end
 
     def cachefile
@@ -191,7 +118,7 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
             end
             Puppet.err "Corrupt state file %s: %s" % [Puppet[:statefile], detail]
             begin
-                File.unlink(Puppet[:statefile])
+                ::File.unlink(Puppet[:statefile])
                 retry
             rescue => detail
                 raise Puppet::Error.new("Cannot remove %s: %s" %
@@ -336,7 +263,7 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
     # Retrieve the cached config
     def retrievecache
         if FileTest.exists?(self.cachefile)
-            return File.read(self.cachefile)
+            return ::File.read(self.cachefile)
         else
             return ""
         end
@@ -395,7 +322,7 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
             return
         end
         begin
-            File.open(Puppet[:classfile], "w") { |f|
+            ::File.open(Puppet[:classfile], "w") { |f|
                 f.puts ary.join("\n")
             }
         rescue => detail
@@ -467,7 +394,7 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
         download(:dest => Puppet[:factdest], :source => Puppet[:factsource],
             :ignore => Puppet[:factsignore], :name => "fact") do |object|
 
-            next unless path.include?(File.dirname(object[:path]))
+            next unless path.include?(::File.dirname(object[:path]))
 
             files << object[:path]
 
@@ -495,11 +422,11 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
         download(:dest => Puppet[:plugindest], :source => Puppet[:pluginsource],
             :ignore => Puppet[:pluginsignore], :name => "plugin") do |object|
 
-            next unless path.include?(File.dirname(object[:path]))
+            next unless path.include?(::File.dirname(object[:path]))
 
             begin
                 Puppet.info "Reloading plugin %s" %
-                    File.basename(File.basename(object[:path])).sub(".rb",'')
+                    ::File.basename(::File.basename(object[:path])).sub(".rb",'')
                 load object[:path]
             rescue => detail
                 Puppet.warning "Could not reload plugin %s: %s" %
@@ -512,9 +439,9 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
         return unless FileTest.directory?(dir)
 
         Dir.entries(dir).find_all { |e| e =~ /\.rb$/ }.each do |file|
-            fqfile = File.join(dir, file)
+            fqfile = ::File.join(dir, file)
             begin
-                Puppet.info "Loading #{type} %s" % File.basename(file.sub(".rb",''))
+                Puppet.info "Loading #{type} %s" % ::File.basename(file.sub(".rb",''))
                 Timeout::timeout(self.timeout) do
                     load fqfile
                 end
@@ -560,7 +487,7 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
 
     def reportclient
         unless defined? @reportclient
-            @reportclient = Puppet::Network::Client::Reporter.new(
+            @reportclient = Puppet::Network::Client.report.new(
                 :Server => Puppet[:reportserver]
             )
         end
@@ -572,7 +499,8 @@ class Puppet::Network::Client::MasterClient < Puppet::Network::Client
     
     private
     
-    # Actually retrieve the configuration, either from the server or from a local master.
+    # Actually retrieve the configuration, either from the server or from a
+    # local master.
     def get_actual_config(facts)
         if @local
             return get_local_config(facts)

@@ -3,7 +3,7 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
-require 'puppet/network/server'
+require 'puppet/network/client'
 require 'puppettest'
 require 'socket'
 require 'facter'
@@ -15,10 +15,10 @@ class TestPuppetDExe < Test::Unit::TestCase
         file = startmasterd
 
         # create the client
-        client = Puppet::Network::Client::MasterClient.new(:Server => "localhost", :Port => @@port)
+        client = Puppet::Network::Client.master.new(:Server => "localhost", :Port => @@port)
 
         # make a new fqdn
-        fqdn = client.fqdn.sub(/^\w+\./, "testing.")
+        fqdn = Puppet[:certname].sub(/^\w+\./, "testing.")
 
         cmd = "puppetd"
         cmd += " --verbose"

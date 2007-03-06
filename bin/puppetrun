@@ -137,7 +137,6 @@ rescue LoadError
     $stderr.puts "Failed to load ruby LDAP library. LDAP functionality will not be available"
 end
 require 'puppet'
-require 'puppet/network/server'
 require 'puppet/network/client'
 require 'getoptlong'
 

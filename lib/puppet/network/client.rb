@@ -1,60 +1,73 @@
 # the available clients
 
 require 'puppet'
-require 'puppet/network/networkclient'
+require 'puppet/daemon'
+require 'puppet/network/xmlrpc/client'
+require 'puppet/util/subclass_loader'
+require 'puppet/util/methodhelper'
+require 'puppet/sslcertificates/support'
 
-# FIXME this still isn't a good design, because none of the handlers overlap
-# so i could just as easily include them all in the main module
-# but at least it's better organized for now
+require 'net/http'
+
+# Some versions of ruby don't have this method defined, which basically causes
+# us to never use ssl.  Yay.
+class Net::HTTP
+    def use_ssl?
+        if defined? @use_ssl
+            @use_ssl
+        else
+            false
+        end
+    end
+end
+
+# The base class for all of the clients.  Many clients just directly
+# call methods, but some of them need to do some extra work or
+# provide a different interface.
 class Puppet::Network::Client
+    Client = self
     include Puppet::Daemon
     include Puppet::Util
+    extend Puppet::Util::SubclassLoader
+    include Puppet::Util::MethodHelper
 
-    # FIXME The cert stuff should only come up with networking, so it
-    # should be in the network client, not the normal client.  But if i do
-    # that, it's hard to tell whether the certs have been initialized.
-    include Puppet::Daemon
-    attr_reader :secureinit
+    # This handles reading in the key and such-like.
+    include Puppet::SSLCertificates::Support
+
     attr_accessor :schedule, :lastrun, :local, :stopping
 
-    class << self
-        attr_reader :drivername, :handler
-        attr_accessor :netclient
+    # Set up subclass loading
+    handle_subclasses :client, "puppet/network/client"
+
+    # Determine what clients look for when being passed an object for local
+    # client/server stuff.  E.g., you could call Client::CA.new(:CA => ca).
+    def self.drivername
+        unless defined? @drivername
+            @drivername = self.name
+        end
+        @drivername
     end
 
-    def initcerts
-        unless self.readcert
-            #if self.is_a? Puppet::Network::Client::CA
-                unless self.requestcert
-                    return nil
-                end
-            #else
-            #    return nil
-            #end
-            #unless self.requestcert
-            #end
+    # Figure out the handler for our client.
+    def self.handler
+        unless defined? @handler
+            @handler = Puppet::Network::Handler.handler(self.name)
         end
-
-        # unless we have a driver, we're a local client and we can't add
-        # certs anyway, so it doesn't matter
-        unless @driver
-            return true
-        end
-
-        self.setcerts
+        @handler
     end
 
+    # The class that handles xmlrpc interaction for us.
+    def self.xmlrpc_client
+        unless defined? @xmlrpc_client
+            @xmlrpc_client = Puppet::Network::XMLRPCClient.handler_class(self.handler)
+        end
+        @xmlrpc_client
+    end
+
+    # Create our client.
     def initialize(hash)
         # to whom do we connect?
         @server = nil
-        @nil = nil
-        @secureinit = hash[:NoSecureInit] || true
-
-        if hash.include?(:FQDN)
-            @fqdn = hash[:FQDN]
-        else
-            self.fqdn
-        end
 
         if hash.include?(:Cache)
             @cache = hash[:Cache]
@@ -64,37 +77,24 @@ class Puppet::Network::Client
 
         driverparam = self.class.drivername
         if hash.include?(:Server)
-            if $noclientnetworking
-                raise NetworkClientError.new("Networking not available: %s" %
-                    $nonetworking)
-            end
-
             args = {:Server => hash[:Server]}
             args[:Port] = hash[:Port] || Puppet[:masterport]
 
-            if self.readcert
-                args[:Certificate] = @cert
-                args[:Key] = @key
-                args[:CAFile] = @cacertfile
+            @driver = self.class.xmlrpc_client.new(args)
+
+            if self.read_cert
+                @driver.cert_setup(self)
             end
 
-            netclient = nil
-            unless netclient = self.class.netclient
-                unless handler = self.class.handler
-                    raise Puppet::DevError,
-                        "Class %s has no handler defined" % self.class
-                end
-                namespace = self.class.handler.interface.prefix
-                netclient = Puppet::Network::NetworkClient.netclient(namespace)
-                self.class.netclient = netclient
-            end
-            @driver = netclient.new(args)
             @local = false
         elsif hash.include?(driverparam)
             @driver = hash[driverparam]
+            if @driver == true
+                @driver = self.class.handler.new
+            end
             @local = true
         else
-            raise ClientError, "%s must be passed a Server or %s" %
+            raise Puppet::Network::ClientError, "%s must be passed a Server or %s" %
                 [self.class, driverparam]
         end
     end
@@ -138,12 +138,6 @@ class Puppet::Network::Client
         end
     end
 
-    def setcerts
-        @driver.cert = @cert
-        @driver.key = @key
-        @driver.ca_file = @cacertfile
-    end
-
     def shutdown
         if self.stopping
             Puppet.notice "Already in shutdown"
@@ -159,7 +153,6 @@ class Puppet::Network::Client
     # Start listening for events.  We're pretty much just listening for
     # timer events here.
     def start
-        setpidfile()
         # Create our timer.  Puppet will handle observing it and such.
         timer = Puppet.newtimer(
             :interval => Puppet[:runinterval],
@@ -176,15 +169,6 @@ class Puppet::Network::Client
     end
 
     require 'puppet/network/client/proxy'
-    require 'puppet/network/client/ca'
-    require 'puppet/network/client/dipper'
-    require 'puppet/network/client/file'
-    require 'puppet/network/client/log'
-    require 'puppet/network/client/master'
-    require 'puppet/network/client/runner'
-    require 'puppet/network/client/status'
-    require 'puppet/network/client/reporter'
-    require 'puppet/network/client/resource'
 end
 
 # $Id$

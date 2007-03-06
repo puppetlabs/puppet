@@ -3,12 +3,12 @@
 #
 # = Synopsis
 #
-# The central puppet server.  Can also function as a certificate authority.
+# The central puppet server.  Functions as a certificate authority by default.
 #
 # = Usage
 #
 #   puppetmasterd [-D|--daemonize] [-d|--debug] [-h|--help]
-#       [-l|--logdest <file>|console|syslog] [--noca] [--nobucket] [--nonodes]
+#       [-l|--logdest <file>|console|syslog] [--nobucket] [--nonodes]
 #       [-v|--verbose] [-V|--version]
 #
 # = Description
@@ -45,10 +45,6 @@
 # nobucket::
 #   Do not function as a file bucket.
 #
-# noca::
-#   Do not function as a certificate authority.  This is deprecated.  Use '--no-ca'
-#   now.
-#
 # nonodes::
 #   Do not use individual node designations; each node will receive the result
 #   of evaluating the entire configuration.
@@ -83,7 +79,7 @@ end
 
 require 'getoptlong'
 require 'puppet'
-require 'puppet/network/server'
+require 'puppet/sslcertificates'
 
 options = [
 	[ "--daemonize", "-D",			GetoptLong::NO_ARGUMENT ],
@@ -97,7 +93,6 @@ options = [
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
 ]
-#Puppet::Util::Log.newdestination(:syslog)
 
 # Add all of the config parameters as valid options.
 Puppet.config.addargs(options)
@@ -109,7 +104,6 @@ ca = {}
 report = {}
 fs = {}
 bucket = {}
-args = {}
 
 options = {
     :havereport => true,
@@ -136,9 +130,6 @@ begin
                 end
             when "--noreports"
                 options[:havereport] = false
-            when "--noca"
-                Puppet[:ca] = false
-                Puppet.warning "--noca is deprecated.  Please use --no-ca."
             when "--nomaster"
                 options[:havemaster] = false
             when "--nobucket"
@@ -230,7 +221,7 @@ end
 
 if Puppet[:parseonly]
     begin
-        Puppet::Network::Server::Master.new(master)
+        Puppet::Network::Handler.master.new(master)
     rescue => detail
         if Puppet[:trace]
             puts detail.backtrace
@@ -252,12 +243,21 @@ if fs.include?(:Config)
     handlers[:FileServer] = fs
 end
 
-args[:Handlers] = handlers
-
 begin
-    # use the default, um, everything
-    #server = Puppet::Network::Server.new(:CA => ca)
-    server = Puppet::Network::Server.new(args)
+    case Puppet[:servertype]
+    when "webrick"
+        # use the default, um, everything
+        require 'puppet/network/server/webrick'
+        server = Puppet::Network::Server::WEBrick.new(:Handlers => handlers)
+    when "mongrel":
+        require 'puppet/network/server/mongrel'
+        handler = Puppet::Network::Server::MongrelHandler.new(handlers)
+        server = Mongrel::HttpServer.new("0.0.0.0", Puppet[:masterport])
+        server.register("/", handler)
+    else
+        Puppet.err "Invalid server type %s" % Puppet[:servertype]
+        exit(45)
+    end
 rescue => detail
     if Puppet[:trace]
         puts detail.backtrace
@@ -278,7 +278,10 @@ if Process.uid == 0
     end
 end
 
-Puppet.newservice(server)
+# Mongrel doesn't shut down like webrick; we really need to write plugins for it.
+if Puppet[:servertype] == "webrick"
+    Puppet.newservice(server)
+end
 Puppet.settraps
 
 if options[:daemonize]
@@ -286,6 +289,11 @@ if options[:daemonize]
 end
 
 Puppet.notice "Starting Puppet server version %s" % [Puppet.version]
-Puppet.start
+case Puppet[:servertype]
+when "webrick"
+    Puppet.start
+when "mongrel":
+    server.run.join
+end
 
 # $Id$

@@ -22,8 +22,8 @@ module Mocha
               add_failure(e.message, e.backtrace)
             rescue Test::Unit::AssertionFailedError => e
               add_failure(e.message, e.backtrace)
-            rescue StandardError, ScriptError
-              add_error($!)
+            rescue StandardError, ScriptError => e
+              add_error(e)
             ensure
               begin
                 teardown

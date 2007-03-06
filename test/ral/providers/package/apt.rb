@@ -4,7 +4,10 @@ require File.dirname(__FILE__) + '/../../../lib/puppettest'
 
 require 'mocha'
 
-class AptPackageProviderTest < Test::Unit::TestCase
+class AptPackageProviderTest < PuppetTest::TestCase
+    confine "Apt package provider missing" =>
+        Puppet::Type.type(:package).provider(:apt).suitable?
+
 	def setup
         super
 		@type = Puppet::Type.type(:package)

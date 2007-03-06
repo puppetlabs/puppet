@@ -114,7 +114,7 @@ class TestASTHostClass < Test::Unit::TestCase
 
         newscope = klass.subscope(scope)
 
-        assert_equal("funtest", newscope.namespace,
+        assert_equal(["funtest"], newscope.namespaces,
             "Scope did not inherit namespace")
 
         # Now make sure we can find the define

@@ -35,15 +35,7 @@ module Puppet
         # lazy.
         attr_accessor :args
         attr_reader :features
-    end
-
-
-    def Puppet.execname
-        unless defined? @name
-            @name = $0.gsub(/.+#{File::SEPARATOR}/,'').sub(/\.rb$/, '')
-        end
-
-        return @name
+        attr_writer :name
     end
 
     # the hash that determines how our system behaves
@@ -77,9 +69,6 @@ module Puppet
     def self.setdefaults(section, hash)
         @@config.setdefaults(section, hash)
     end
-
-    # Load all of the configuration parameters.
-    require 'puppet/configuration'
 
 	# configuration parameter access and stuff
 	def self.[](param)
@@ -115,6 +104,9 @@ module Puppet
     def self.config
         @@config
     end
+
+    # Load all of the configuration parameters.
+    require 'puppet/configuration'
 
     def self.genconfig
         if Puppet[:configprint] != ""
@@ -268,6 +260,7 @@ module Puppet
 
         # Stop our services
         defined? @services and @services.each do |svc|
+            next unless svc.respond_to?(:shutdown)
             begin
                 timeout(20) do
                     svc.shutdown
@@ -389,9 +382,9 @@ module Puppet
     end
 end
 
-require 'puppet/network/server'
 require 'puppet/type'
 require 'puppet/util/storage'
+require 'puppet/parser/interpreter'
 if Puppet[:storeconfigs]
     require 'puppet/rails'
 end

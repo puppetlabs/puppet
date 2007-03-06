@@ -18,6 +18,7 @@ class Puppet::Parser::AST
             found = false
             
             # Iterate across the options looking for a match.
+            default = nil
             @options.each { |option|
                 option.eachvalue(scope) { |opval|
                     opval = opval.downcase if ! sensitive and opval.respond_to?(:downcase)
@@ -32,45 +33,22 @@ class Puppet::Parser::AST
                     retvalue = option.safeevaluate(:scope => scope)
                     break
                 end
+
+                if option.default?
+                    default = option
+                end
             }
 
             # Unless we found something, look for the default.
             unless found
-                if defined? @default
-                    retvalue = @default.safeevaluate(:scope => scope)
+                if default
+                    retvalue = default.safeevaluate(:scope => scope)
                 else
                     Puppet.debug "No true answers and no default"
                     retvalue = nil
                 end
             end
             return retvalue
-        end
-
-        # Do some input validation on our options.
-        def initialize(hash)
-            values = {}
-
-            super
-
-            # This won't work if we move away from only allowing
-            # constants here, but for now, it's fine and useful.
-            @options.each { |option|
-                unless option.is_a?(CaseOpt)
-                    raise Puppet::DevError, "Option is not a CaseOpt"
-                end
-                if option.default?
-                    @default = option
-                end
-                option.eachvalue(nil) { |val|
-                    if values.include?(val)
-                        raise Puppet::ParseError,
-                            "Value %s appears twice in case statement" %
-                                val
-                    else
-                        values[val] = true
-                    end
-                }
-            }
         end
 
         def tree(indent = 0)
@@ -87,5 +65,6 @@ class Puppet::Parser::AST
             [@test,@options].each { |child| yield child }
         end
     end
-
 end
+
+# $Id$

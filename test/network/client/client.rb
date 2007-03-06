@@ -8,7 +8,7 @@ require 'puppet/network/client'
 class TestClient < Test::Unit::TestCase
     include PuppetTest::ServerTest
     # a single run through of connect, auth, etc.
-    def test_sslInitWithAutosigningLocalServer
+    def disabled_test_sslInitWithAutosigningLocalServer
         # autosign everything, for simplicity
         Puppet[:autosign] = true
 
@@ -18,7 +18,7 @@ class TestClient < Test::Unit::TestCase
         # create our client
         client = nil
         assert_nothing_raised {
-            client = Puppet::Network::Client::MasterClient.new(
+            client = Puppet::Network::Client.master.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -55,13 +55,13 @@ class TestClient < Test::Unit::TestCase
 
 
     # here we create two servers; we 
-    def test_failureWithUntrustedCerts
+    def disabled_test_failureWithUntrustedCerts
         Puppet[:autosign] = true
 
         # create a pair of clients with no certs
         nonemaster = nil
         assert_nothing_raised {
-            nonemaster = Puppet::Network::Client::MasterClient.new(
+            nonemaster = Puppet::Network::Client.master.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -69,7 +69,7 @@ class TestClient < Test::Unit::TestCase
 
         nonebucket = nil
         assert_nothing_raised {
-            nonebucket = Puppet::Network::Client::Dipper.new(
+            nonebucket = Puppet::Network::Client.dipper.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -79,7 +79,7 @@ class TestClient < Test::Unit::TestCase
         # make a new ssldir for it
         ca = nil
         assert_nothing_raised {
-            ca = Puppet::Network::Client::CA.new(
+            ca = Puppet::Network::Client.ca.new(
                 :CA => true, :Local => true
             )
             ca.requestcert
@@ -88,7 +88,7 @@ class TestClient < Test::Unit::TestCase
         # initialize our clients with this set of certs
         certmaster = nil
         assert_nothing_raised {
-            certmaster = Puppet::Network::Client::MasterClient.new(
+            certmaster = Puppet::Network::Client.master.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -96,7 +96,7 @@ class TestClient < Test::Unit::TestCase
 
         certbucket = nil
         assert_nothing_raised {
-            certbucket = Puppet::Network::Client::Dipper.new(
+            certbucket = Puppet::Network::Client.dipper.new(
                 :Server => "localhost",
                 :Port => @@port
             )
@@ -122,11 +122,11 @@ class TestClient < Test::Unit::TestCase
             certmaster.getconfig
         }
 
-        assert_raise(Puppet::Network::NetworkClientError,
+        assert_raise(Puppet::Network::XMLRPCClientError,
             "Client was allowed to call backup with no certs") {
             nonebucket.backup("/etc/passwd")
         }
-        assert_raise(Puppet::Network::NetworkClientError,
+        assert_raise(Puppet::Network::XMLRPCClientError,
             "Client was allowed to call backup with untrusted certs") {
             certbucket.backup("/etc/passwd")
         }
@@ -141,14 +141,14 @@ class TestClient < Test::Unit::TestCase
 
         master = client = nil
         assert_nothing_raised() {
-            master = Puppet::Network::Server::Master.new(
+            master = Puppet::Network::Handler.master.new(
                 :Manifest => manifest,
                 :UseNodes => false,
                 :Local => false
             )
         }
         assert_nothing_raised() {
-            client = Puppet::Network::Client::MasterClient.new(
+            client = Puppet::Network::Client.master.new(
                 :Master => master
             )
         }
@@ -167,26 +167,57 @@ class TestClient < Test::Unit::TestCase
         assert_equal(%w{bootest yaytest}, classes.sort)
     end
 
-    def test_setpidfile
-        FileUtils.mkdir_p(Puppet[:rundir])
-        $clientrun = false
-        newclass = Class.new(Puppet::Network::Client) do
-            def run
-                $clientrun = true
-            end
+    def test_client_loading
+        # Make sure we don't get a failure but that we also get nothing back
+        assert_nothing_raised do
+            assert_nil(Puppet::Network::Client.client(:fake),
+                "Got something back from a missing client")
+            assert_nil(Puppet::Network::Client.fake,
+                "Got something back from missing client method")
+        end
+        # Make a fake client
+        dir = tempfile()
+        libdir = File.join([dir, %w{puppet network client}].flatten)
+        FileUtils.mkdir_p(libdir)
 
-            def initialize
+        file = File.join(libdir, "fake.rb")
+        File.open(file, "w") do |f|
+            f.puts %{class Puppet::Network::Client
+                class Fake < Client
+                end
             end
+            }
         end
 
-        inst = newclass.new
+        $: << dir
+        cleanup { $:.delete(dir) if $:.include?(dir) }
 
-        assert_nothing_raised {
-            inst.start
-        }
+        client = nil
+        assert_nothing_raised do
+            client = Puppet::Network::Client.client(:fake)
+        end
+        assert_nothing_raised do
+            assert_equal(client, Puppet::Network::Client.fake,
+                "Did not get client back from client method")
+        end
+        assert(client, "did not load client")
 
-        assert(FileTest.exists?(inst.pidfile),
-               "PID file was not created")
+        # Now make sure the client behaves correctly
+        assert_equal(:Fake, client.name, "name was not calculated correctly")
+    end
+
+    # Make sure we get a client class for each handler type.
+    def test_loading_all_clients
+        %w{ca dipper file logger master report resource runner status}.each do |name|
+            client = nil
+            assert_nothing_raised do
+                client = Puppet::Network::Client.client(name)
+            end
+            assert(client, "did not get client for %s" % name)
+            [:name, :handler, :drivername].each do |thing|
+                assert(client.send(thing), "did not get %s for %s" % [thing, name])
+            end
+        end
     end
 end
 

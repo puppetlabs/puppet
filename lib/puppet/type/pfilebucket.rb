@@ -1,5 +1,3 @@
-require 'puppet/network/server/filebucket'
-
 module Puppet
     newtype(:filebucket) do
         @doc = "A repository for backing up files.  If no filebucket is
@@ -86,7 +84,7 @@ module Puppet
         def mkbucket
             if self[:server]
                 begin
-                    @bucket = Puppet::Network::Client::Dipper.new( 
+                    @bucket = Puppet::Network::Client.client(:Dipper).new( 
                         :Server => self[:server],
                         :Port => self[:port]
                     )
@@ -97,7 +95,7 @@ module Puppet
                 end
             else
                 begin
-                    @bucket = Puppet::Network::Client::Dipper.new(
+                    @bucket = Puppet::Network::Client.client(:Dipper).new(
                         :Path => self[:path]
                     )
                 rescue => detail

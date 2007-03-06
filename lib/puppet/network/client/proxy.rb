@@ -3,7 +3,7 @@
 # and that's about it
 class Puppet::Network::Client::ProxyClient < Puppet::Network::Client
     def self.mkmethods
-        interface = @handler.interface
+        interface = self.handler.interface
         namespace = interface.prefix
 
 

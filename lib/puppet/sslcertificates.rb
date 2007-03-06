@@ -11,13 +11,15 @@ end
 module Puppet::SSLCertificates
     hostname = Facter["hostname"].value
     domain = Facter["domain"].value
-    if !domain || domain.empty? then
-        fqdn = hostname
-    else
+    if domain and domain != ""
         fqdn = [hostname, domain].join(".")
+    else
+        fqdn = hostname
     end
 
     Puppet.setdefaults("certificates",
+        :certname => [fqdn, "The name to use when handling certificates.  Defaults
+            to the fully qualified domain name."],
         :certdir => ["$ssldir/certs", "The certificate directory."],
         :publickeydir => ["$ssldir/public_keys", "The public key directory."],
         :privatekeydir => { :default => "$ssldir/private_keys",
@@ -33,15 +35,19 @@ module Puppet::SSLCertificates
             :desc => "Where puppetd stores the password for its private key.
                 Generally unused."
         },
-        :hostcert => { :default => "$certdir/#{fqdn}.pem",
+        :hostcsr => { :default => "$ssldir/csr_$certname.pem",
             :mode => 0644,
             :desc => "Where individual hosts store and look for their certificates."
         },
-        :hostprivkey => { :default => "$privatekeydir/#{fqdn}.pem",
+        :hostcert => { :default => "$certdir/$certname.pem",
+            :mode => 0644,
+            :desc => "Where individual hosts store and look for their certificates."
+        },
+        :hostprivkey => { :default => "$privatekeydir/$certname.pem",
             :mode => 0600,
             :desc => "Where individual hosts store and look for their private key."
         },
-        :hostpubkey => { :default => "$publickeydir/#{fqdn}.pem",
+        :hostpubkey => { :default => "$publickeydir/$certname.pem",
             :mode => 0644,
             :desc => "Where individual hosts store and look for their public key."
         },

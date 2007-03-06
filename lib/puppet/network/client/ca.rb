@@ -1,22 +1,55 @@
-require 'puppet/network/client/proxy'
+require 'puppet/network/client'
 
-class Puppet::Network::Client::CA < Puppet::Network::Client::ProxyClient
-    @drivername = :CA
+# Request a certificate from the remote system.
+class Puppet::Network::Client::CA < Puppet::Network::Client
+    class InvalidCertificate < Puppet::Error; end
 
-    # set up the appropriate interface methods
-    @handler = Puppet::Network::Server::CA
-    self.mkmethods
+    def initialize(options = {})
+        options = symbolize_options(options)
+        unless options.include?(:Server) or options.include?(:CA)
+            options[:Server] = Puppet[:ca_server]
+            options[:Port] = Puppet[:ca_port]
+        end
+        super(options)
+    end
 
-    def initialize(hash = {})
-        if hash.include?(:CA)
-            if hash[:CA].is_a? Hash
-                hash[:CA] = Puppet::Network::Server::CA.new(hash[:CA])
-            else
-                hash[:CA] = Puppet::Network::Server::CA.new()
-            end
+    # This client is really only able to request certificates for the
+    # current host.  It uses the Puppet.config settings to figure everything out.
+    def request_cert
+        Puppet.config.use(:puppet, :certificates)
+
+        if cert = read_cert
+            return cert
         end
 
-        super(hash)
+        begin
+            cert, cacert = @driver.getcert(csr.to_pem)
+        rescue => detail
+            if Puppet[:trace]
+                puts detail.backtrace
+            end
+            raise Puppet::Error.new("Certificate retrieval failed: %s" % detail)
+        end
+
+        if cert.nil? or cert == ""
+            return nil
+        end
+        Puppet.config.write(:hostcert) do |f| f.print cert end
+        Puppet.config.write(:localcacert) do |f| f.print cacert end
+
+        begin
+            @cert = OpenSSL::X509::Certificate.new(cert)
+            @cacert = OpenSSL::X509::Certificate.new(cacert)
+        rescue => detail
+            raise InvalidCertificate.new(
+                "Invalid certificate: %s" % detail
+            )
+        end
+
+        unless @cert.check_private_key(key)
+            raise InvalidCertificate, "Certificate does not match private key"
+        end
+        return @cert
     end
 end
 

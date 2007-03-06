@@ -13,12 +13,15 @@ result = GetoptLong.new(
     [ "--build",    "-b",			GetoptLong::NO_ARGUMENT ],
     [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
     [ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
+    [ "-n",			                GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--files",    "-f",           GetoptLong::NO_ARGUMENT ],
     [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
 )
 
-usage = "USAGE: %s [--help] suite method" % $0
+usage = "USAGE: %s [--help] suite" % $0
 
 $options = {}
+keep = []
 
 result.each { |opt,arg|
     case opt
@@ -26,15 +29,23 @@ result.each { |opt,arg|
         $options[:build] = true
     when "--verbose"
         $options[:verbose] = true
+    when "--files"
+        $options[:files] = true
     when "--debug"
         $options[:debug] = true
     when "--help"
         puts usage
         exit
     else
-        raise "no such option %s" % opt
+        keep << opt
+        keep << arg if arg
     end
 }
+p $options
+
+keep.each do |i|
+    ARGV << i
+end
 
 def dirs
     Dir.glob("*").find_all { |d| FileTest.directory?(d) }.reject { |d|
@@ -55,7 +66,7 @@ def rake(*args)
     end
 end
 
-def resolve(dir, method)
+def resolve(dir)
     dirs = dirs()
 
     failed = nil
@@ -94,8 +105,8 @@ end
 def run(*files)
     args = %w{ruby}
     args << "-Ilib:../lib"
-    args += ARGV
     args << "lib/rake/puppet_test_loader.rb"
+    args += ARGV
 
     print files.join(" ") + "... "
     $stdout.flush
@@ -128,15 +139,18 @@ def run(*files)
     end
 end
 
-dir = ARGV.shift
-method = ARGV.shift
+if $options[:files]
+    puts "files"
+    run(*ARGV)
+else
+    dir = ARGV.shift
 
-unless dir and method
-    $stderr.puts usage
-    exit(1)
+    unless dir
+        $stderr.puts usage
+        exit(1)
+    end
+    resolve(dir)
 end
-
-resolve(dir, method)
 #
 #
 #files = []

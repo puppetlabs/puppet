@@ -12,7 +12,6 @@
 #            present the various pieces of info to user
 
 require 'puppet'
-require 'puppet/type'
 require 'optparse'
 
 class Formatter

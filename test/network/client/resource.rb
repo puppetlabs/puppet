@@ -9,22 +9,11 @@ class TestResourceClient < Test::Unit::TestCase
     include PuppetTest::ServerTest
 
     def mkresourceserver
-        handlers = {
-            :CA => {}, # so that certs autogenerate
-            :Resource => {},
-        }
-
-        return mkserver(handlers)
+        Puppet::Network::Handler.resource.new
     end
 
     def mkclient
-        client = nil
-        assert_nothing_raised {
-            client = Puppet::Network::Client::Resource.new(:Server => "localhost",
-                :Port => @@port)
-        }
-
-        return client
+        client = Puppet::Network::Client.resource.new(:Resource => mkresourceserver)
     end
 
     def test_resources

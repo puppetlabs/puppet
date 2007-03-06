@@ -47,8 +47,8 @@
 # Licensed under the GNU Public License
 
 require 'puppet'
-require 'puppet/server'
-require 'puppet/client'
+require 'puppet/network/handler'
+require 'puppet/network/client'
 require 'getoptlong'
 
 options = [
@@ -93,16 +93,16 @@ begin
             when "--use-nodes"
                 master[:UseNodes] = true
             when "--verbose"
-                Puppet::Log.level = :info
-                Puppet::Log.newdestination(:console)
+                Puppet::Util::Log.level = :info
+                Puppet::Util::Log.newdestination(:console)
                 verbose = true
             when "--debug"
-                Puppet::Log.level = :debug
-                Puppet::Log.newdestination(:console)
+                Puppet::Util::Log.level = :debug
+                Puppet::Util::Log.newdestination(:console)
                 debug = true
             when "--logdest"
                 begin
-                    Puppet::Log.newdestination arg
+                    Puppet::Util::Log.newdestination arg
                     setdest=true
                 rescue => detail
                     $stderr.puts detail.to_s
@@ -147,7 +147,7 @@ unless ARGV.length > 0
 end
 
 unless setdest
-    Puppet::Log.newdestination(:syslog)
+    Puppet::Util::Log.newdestination(:syslog)
 end
 
 master[:Manifest] = ARGV.shift
@@ -169,14 +169,14 @@ end
 master[:Classes] = classes
 
 begin
-    server = Puppet::Server::Master.new(master)
+    server = Puppet::Network::Handler.master.new(master)
 rescue => detail
     $stderr.puts detail
     exit(1)
 end
 
 begin
-    client = Puppet::Client::MasterClient.new(
+    client = Puppet::Network::Client.master.new(
         :Master => server,
         :Cache => false
     )

@@ -6,7 +6,7 @@ require 'puppet'
 require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppet/network/client'
-require 'puppet/network/server'
+require 'puppet/network/handler'
 require 'puppettest'
 
 class TestSnippets < Test::Unit::TestCase
@@ -492,11 +492,11 @@ class TestSnippets < Test::Unit::TestCase
             testname = ("test_" + mname).intern
             self.send(:define_method, testname) {
                 # first parse the file
-                server = Puppet::Network::Server::Master.new(
+                server = Puppet::Network::Handler.master.new(
                     :Manifest => snippet(file),
                     :Local => true
                 )
-                client = Puppet::Network::Client::MasterClient.new(
+                client = Puppet::Network::Client.master.new(
                     :Master => server,
                     :Cache => false
                 )
@@ -506,7 +506,7 @@ class TestSnippets < Test::Unit::TestCase
                     client.getconfig()
                 }
 
-                client = Puppet::Network::Client::MasterClient.new(
+                client = Puppet::Network::Client.master.new(
                     :Master => server,
                     :Cache => false
                 )
