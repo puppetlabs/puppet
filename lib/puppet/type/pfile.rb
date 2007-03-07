@@ -209,10 +209,12 @@ module Puppet
 
         # Autorequire any parent directories.
         autorequire(:file) do
-            unless self[:path]
-                raise "no path for %s" % self.ref
+            if self[:path]
+                File.dirname(self[:path])
+            else
+                Puppet.err "no path for %s, somehow; cannot setup autorequires" % self.ref
+                nil
             end
-            File.dirname(self[:path])
         end
 
         # Autorequire the owner and group of the file.
