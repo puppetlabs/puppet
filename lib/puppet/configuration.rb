@@ -206,7 +206,7 @@ module Puppet
         :ca_server => ["$server", "The server to use for certificate
             authority requests.  It's a separate server because it cannot
             and does not need to horizontally scale."],
-        :ca_port => ["$master_port", "The port to use for the certificate authority."]
+        :ca_port => ["$masterport", "The port to use for the certificate authority."]
     )
         
     self.setdefaults("filebucket",

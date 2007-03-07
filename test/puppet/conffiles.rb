@@ -95,6 +95,15 @@ class TestConfFiles < Test::Unit::TestCase
             }
         }
     end
+
+    # Make sure that basic config generation works; this also ensures
+    # that the default config is free of simple typos etc.
+    def test_genconfig
+        assert_nothing_raised {
+            Puppet::config::to_config
+        }
+    end
+
 end
 
 # $Id$
