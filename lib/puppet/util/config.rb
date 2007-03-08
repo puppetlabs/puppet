@@ -281,7 +281,11 @@ class Puppet::Util::Config
             when /^\s*$/: next # Skip blanks
             when /^\s*(\w+)\s*=\s*(.+)$/: # settings
                 var = $1.intern
-                value = mungearg($2)
+                if var == :mode
+                    value = $2
+                else
+                    value = mungearg($2)
+                end
 
                 # Only warn if we don't know what this config var is.  This
                 # prevents exceptions later on.
@@ -304,7 +308,6 @@ class Puppet::Util::Config
                     if var == :group and section == Puppet[:name] and @config.include?(:group)
                         @config[:group].value = value
                     end
-                    next
                 end
 
                 # Don't override set parameters, since the file is parsed
@@ -905,9 +908,9 @@ Generated on #{Time.now}.
             end
             [:mode].each { |var|
                 if value = self.send(var)
-                    # Convert it to a string, and the object will correctly
-                    # convert it to octal.
-                    obj[var] = value.to_s
+                    # Don't both converting the mode, since the file type
+                    # can handle it any old way.
+                    obj[var] = value
                 end
             }
 

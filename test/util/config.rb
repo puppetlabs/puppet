@@ -981,22 +981,50 @@ inttest = 27
     # #489
     def test_modes
         Puppet[:name] = "puppet"
-        file = tempfile
         config = tempfile()
+
+        check = Proc.new do |string, int|
+            trans = @config.section_to_transportable(:puppet)
+            ssldir = trans.find { |o| o.type == "file"  }
+            assert(ssldir, "could not find trans object")
+
+            if ssldir[:mode].is_a?(Fixnum)
+                assert_equal(int, ssldir[:mode], "mode not set correctly")
+            else
+                assert_equal(string, ssldir[:mode], "mode not set correctly")
+            end
+
+            obj = nil
+            assert_nothing_raised { obj = ssldir.to_type }
+
+            assert(obj, "did not create object")
+            assert_equal(int, obj.should(:mode),
+                "did not pass mode correctly to file")
+
+            obj.class.clear
+        end
+
+        file = tempfile
         @config.setdefaults(:puppet, :mode => ["644", "yay"])
-        @config.setdefaults(:puppet, :ssldir => ["/some/file", "yay"])
+        @config.setdefaults(:puppet, :ssldir => {
+            :mode => 0644,
+            :desc => "yay",
+            :default => "/some/file"})
+
+        # Convert it first using the number
+        check.call("644", 0644)
+
         File.open(config, "w") { |f| f.puts "[puppet]
-        mode = 755
+        mode = 750
         ssldir = #{file}
         "}
 
         @config.parse(config)
 
-        trans = @config.section_to_transportable(:puppet)
-        ssldir = trans.find { |o| o.type == "file" and o.name == file }
-        assert(ssldir, "could not find trans object")
+        assert_equal("750", @config[:mode],
+            "Did not parse mode correctly")
 
-        assert_equal("755", ssldir[:mode], "mode got munged in parsing")
+        check.call("750", 0750)
     end
 end
 

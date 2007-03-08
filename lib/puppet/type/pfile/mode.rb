@@ -43,6 +43,7 @@ module Puppet
                     raise Puppet::Error, "File modes can only be numbers, not %s" %
                         value.inspect
                 end
+                # Make sure our number looks like octal.
                 unless value =~ /^0/
                     value = "0" + value
                 end

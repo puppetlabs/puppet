@@ -31,11 +31,11 @@ class TestFile < Test::Unit::TestCase
         super
         @file = Puppet::Type.type(:file)
         $method = @method_name
-        begin
-            initstorage
-        rescue
-            system("rm -rf %s" % Puppet[:statefile])
-        end
+#        begin
+#            initstorage
+#        rescue
+#            system("rm -rf %s" % Puppet[:statefile])
+#        end
     end
 
     def teardown
@@ -1009,12 +1009,16 @@ class TestFile < Test::Unit::TestCase
             :ensure => "file",
             :mode => "0777"
         )
+        assert_equal(0777, file.should(:mode),
+            "Mode did not get set correctly")
         assert_apply(file)
-        assert_equal(0777, File.stat(path).mode & 007777)
+        assert_equal(0777, File.stat(path).mode & 007777,
+            "file mode is incorrect")
         File.unlink(path)
         file[:ensure] = "directory"
         assert_apply(file)
-        assert_equal(0777, File.stat(path).mode & 007777)
+        assert_equal(0777, File.stat(path).mode & 007777,
+            "directory mode is incorrect")
     end
 
     def test_followlinks
