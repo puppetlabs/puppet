@@ -65,7 +65,12 @@ module Puppet
         end
         
         def change_to_s
-            return "replacing from source %s with contents %s" % [@source, @stats[:checksum]]
+            should = "{md5}" + @stats[:checksum]
+            if @parent.is(:ensure) == :absent
+                return "creating from source %s with contents %s" % [@source, @stats[:checksum]]
+            else
+                return "replacing from source %s with contents %s" % [@source, @stats[:checksum]]
+            end
         end
         
         def checksum

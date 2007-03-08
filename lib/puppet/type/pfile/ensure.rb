@@ -108,6 +108,14 @@ module Puppet
             return :link
         end
 
+        def change_to_s
+            if property = (@parent.property(:content) || @parent.property(:source))
+                return property.change_to_s
+            else
+                super
+            end
+        end
+
         # Check that we can actually create anything
         def check
             basedir = File.dirname(@parent[:path])
