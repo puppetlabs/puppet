@@ -39,7 +39,7 @@ module Puppet
             # octal, yet the number can only be specified as a string right now
             value = should
             if value.is_a?(String)
-                unless value =~ /^[0-9]+$/
+                unless value =~ /^\d+$/
                     raise Puppet::Error, "File modes can only be numbers, not %s" %
                         value.inspect
                 end
@@ -47,11 +47,12 @@ module Puppet
                 unless value =~ /^0/
                     value = "0" + value
                 end
+                old = value
                 begin
                     value = Integer(value)
                 rescue ArgumentError => detail
                     raise Puppet::DevError, "Could not convert %s to integer" %
-                        value.inspect
+                        old.inspect
                 end
             end
 

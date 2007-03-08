@@ -1037,7 +1037,7 @@ inttest = 27
             :default => "/some/file"})
 
         File.open(config, "w") { |f| f.puts "[#{Puppet[:name]}]
-        mode = 750
+        mode = 755
         group = foo
         ssldir = #{file}
         "}
@@ -1055,7 +1055,16 @@ inttest = 27
 
         # Now make them valid params
         @config.setdefaults(Puppet[:name], :group => ["blah", "yay"])
-        @config.setdefaults(Puppet[:name], :mode => ["755", "yay"])
+        @config.setdefaults(Puppet[:name], :mode => ["750", "yay"])
+
+        assert_nothing_raised do
+            @config.parse(config)
+        end
+
+        assert_equal("foo", @config[:group],
+            "Did not store group when it is a valid config")
+        assert_equal("755", @config[:mode],
+            "Did not store mode when it is a valid config")
 
     end
 end
