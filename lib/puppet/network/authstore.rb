@@ -2,29 +2,30 @@
 # the requested resource
 
 require 'ipaddr'
+require 'puppet/util/logging'
 
 module Puppet
     class AuthStoreError < Puppet::Error; end
     class AuthorizationError < Puppet::Error; end
 
     class Network::AuthStore
-        # This has to be an array, not a hash, else it loses its ordering.
-        ORDER = [
-            [:ip, [:ip]],
-            [:name, [:hostname, :domain]]
-        ]
+        include Puppet::Util::Logging
 
-        Puppet::Util.logmethods(self, true)
-
+        # Mark a given pattern as allowed.
         def allow(pattern)
             # a simple way to allow anyone at all to connect
             if pattern == "*"
                 @globalallow = true
             else
-                store(pattern, @allow)
+                store(:allow, pattern)
             end
+
+            return nil
         end
 
+        # Is a given combination of name and ip address allowed?  If either input
+        # is non-nil, then both inputs must be provided.  If neither input
+        # is provided, then the authstore is considered local and defaults to "true".
         def allowed?(name, ip)
             if name or ip
                 # This is probably unnecessary, and can cause some weirdnesses in
@@ -40,186 +41,251 @@ module Puppet
             end
 
             # yay insecure overrides
-            if @globalallow
+            if globalallow?
                 return true
             end
 
-            value = nil
-            ORDER.each { |nametype, array|
-                if nametype == :ip
-                    value = IPAddr.new(ip)
-                else
-                    value = name.split(".").reverse
-                end
-
-
-                array.each { |type|
-                    [[@deny, false], [@allow, true]].each { |ary|
-                        hash, retval = ary
-                        if hash.include?(type)
-                            hash[type].each { |pattern|
-                                if match?(nametype, value, pattern)
-                                    return retval
-                                end
-                            }
-                        end
-                    }
-                }
-            }
+            if decl = @declarations.find { |d| d.match?(name, ip) }
+                return decl.result
+            end
 
             self.info "defaulting to no access for %s" % name
-            # default to false
             return false
         end
 
+        # Deny a given pattern.
         def deny(pattern)
-            store(pattern, @deny)
+            store(:deny, pattern)
+        end
+
+        # Is global allow enabled?
+        def globalallow?
+            @globalallow
         end
 
         def initialize
             @globalallow = nil
-            @allow = Hash.new { |hash, key|
-                hash[key] = []
-            }
-            @deny = Hash.new { |hash, key|
-                hash[key] = []
-            }
+            @declarations = []
         end
 
         private
 
-        def match?(nametype, value, pattern)
-            if value == pattern # simplest shortcut
-                return true
-            end
+        # Store the results of a pattern into our hash.  Basically just
+        # converts the pattern and sticks it into the hash.
+        def store(type, pattern)
+            @declarations << Declaration.new(type, pattern)
+            @declarations.sort!
 
-            case nametype
-            when :ip: matchip?(value, pattern)
-            when :name: matchname?(value, pattern)
-            else
-                raise Puppet::DevError, "Invalid match type %s" % nametype
-            end
+            return nil
         end
 
-        def matchip?(value, pattern)
-            # we're just using builtin stuff for this, thankfully
-            if pattern.include?(value)
-                return true
-            else
-                return false
-            end
-        end
+        # A single declaration.  Stores the info for a given declaration,
+        # provides the methods for determining whether a declaration matches,
+        # and handles sorting the declarations appropriately.
+        class Declaration
+            include Puppet::Util
+            include Comparable
 
-        def matchname?(value, pattern)
-            # yay, horribly inefficient
-            if pattern[-1] != '*' # the pattern has no metachars and is not equal
-                                    # thus, no match
-                #Puppet.info "%s is not equal with no * in %s" % [value, pattern]
-                return false
-            else
-                # we know the last field of the pattern is '*'
-                # if everything up to that doesn't match, we're definitely false
-                if pattern[0..-2] != value[0..pattern.length-2]
-                    #Puppet.notice "subpatterns didn't match; %s vs %s" %
-                    #    [pattern[0..-2], value[0..pattern.length-2]]
+            # The type of declaration: either :allow or :deny
+            attr_reader :type
+
+            # The name: :ip or :domain
+            attr_accessor :name
+
+            # The pattern we're matching against.  Can be an IPAddr instance,
+            # or an array of strings, resulting from reversing a hostname
+            # or domain name.
+            attr_reader :pattern
+
+            # The length.  Only used for iprange and domain.
+            attr_accessor :length
+
+            # Sort the declarations specially.
+            def <=>(other)
+                # Sort first based on whether the matches are exact.
+                if r = compare(exact?, other.exact?)
+                    return r
+                end
+
+                # Then by type
+                if r = compare(self.ip?, other.ip?)
+                    return r
+                end
+
+                # Next sort based on length
+                unless self.length == other.length
+                    # Longer names/ips should go first, because they're more
+                    # specific.
+                    return other.length <=> self.length
+                end
+
+                # Then sort deny before allow
+                if r = compare(self.deny?, other.deny?)
+                    return r
+                end
+
+                # We've already sorted by name and length, so all that's left
+                # is the pattern
+                if ip?
+                    return self.pattern.to_s <=> other.pattern.to_s
+                else
+                    return self.pattern <=> other.pattern
+                end
+            end
+
+            def deny?
+                self.type == :deny
+            end
+
+            # Are we an exact match?
+            def exact?
+                self.length.nil?
+            end
+
+            def initialize(type, pattern)
+                self.type = type
+                self.pattern = pattern
+            end
+
+            # Are we an IP type?
+            def ip?
+                self.name == :ip
+            end
+
+            # Does this declaration match the name/ip combo?
+            def match?(name, ip)
+                if self.ip?
+                    return pattern.include?(IPAddr.new(ip))
+                else
+                    return matchname?(name)
+                end
+            end
+
+            # Set the pattern appropriately.  Also sets the name and length.
+            def pattern=(pattern)
+                parse(pattern)
+                @orig = pattern
+            end
+
+            # Mapping a type of statement into a return value.
+            def result
+                case @type
+                when :allow: true
+                else
+                    false
+                end
+            end
+
+            def to_s
+                "%s: %s" % [self.type, self.pattern]
+            end
+
+            # Set the declaration type.  Either :allow or :deny.
+            def type=(type)
+                type = symbolize(type)
+                unless [:allow, :deny].include?(type)
+                    raise ArgumentError, "Invalid declaration type %s" % type
+                end
+                @type = type
+            end
+
+            private
+
+            # Returns nil if both values are true or both are false, returns
+            # -1 if the first is true, and 1 if the second is true.  Used
+            # in the <=> operator.
+            def compare(me, them)
+                unless me and them
+                    if me
+                        return -1
+                    elsif them
+                        return 1
+                    else
+                        return false
+                    end
+                end
+                return nil
+            end
+
+            # Does the name match our pattern?
+            def matchname?(name)
+                name = munge_name(name)
+                return true if self.pattern == name
+
+                # If it's an exact match, then just return false, since the
+                # exact didn't match.
+                if exact?
                     return false
                 end
 
-                case value.length <=> pattern.length
-                when -1: # value is shorter than pattern
-                    if pattern.length - value.length == 1
-                        # only ever allowed when the value is the domain of a
-                        # splatted pattern
-                        #Puppet.info "allowing splatted domain %s" % [value]
-                        return true
-                    else
+                # If every field in the pattern matches, then we consider it
+                # a match.
+                pattern.zip(name) do |p,n|
+                    unless p == n
                         return false
                     end
-                when 0: # value is the same length as pattern
-                    if pattern[-1] == "*"
-                        #Puppet.notice "same length with *"
-                        return true
+                end
+
+                return true
+            end
+
+            # Convert the name to a common pattern.
+            def munge_name(name)
+                name.downcase.split(".").reverse
+            end
+
+            # Parse our input pattern and figure out what kind of allowal
+            # statement it is.  The output of this is used for later matching.
+            def parse(value)
+                case value
+                when /^(\d+\.){1,3}\*$/: # an ip address with a '*' at the end
+                    @name = :ip
+                    match = $1
+                    match.sub!(".", '')
+                    ary = value.split(".")
+
+                    mask = case ary.index(match)
+                    when 0: 8
+                    when 1: 16
+                    when 2: 24
                     else
-                        return false
+                        raise AuthStoreError, "Invalid IP pattern %s" % value
                     end
-                when 1: # value is longer than pattern
-                    # at this point we've already verified that everything up to
-                    # the '*' in the pattern matches, so we are true
-                    return true
-                end
-            end
-        end
 
-        def store(pattern, hash)
-            type, value = type(pattern)
+                    @length = mask
 
-            if type and value
-                # this won't work once we get beyond simple stuff...
-                hash[type] << value
-            else
-                raise AuthStoreError, "Invalid pattern %s" % pattern
-            end
-        end
+                    ary.pop
+                    while ary.length < 4
+                        ary.push("0")
+                    end
 
-        def type(pattern)
-            type = value = nil
-            case pattern
-            when /^(\d+\.){3}\d+$/:
-                type = :ip
-                begin
-                    value = IPAddr.new(pattern)
-                rescue ArgumentError => detail
-                    raise AuthStoreError, "Invalid IP address pattern %s" % pattern
-                end
-            when /^(\d+\.){3}\d+\/(\d+)$/:
-                mask = Integer($2)
-                if mask < 1 or mask > 32
-                    raise AuthStoreError, "Invalid IP mask %s" % mask
-                end
-                type = :ip
-                begin
-                    value = IPAddr.new(pattern)
-                rescue ArgumentError => detail
-                    raise AuthStoreError, "Invalid IP address pattern %s" % pattern
-                end
-            when /^(\d+\.){1,3}\*$/: # an ip address with a '*' at the end
-                type = :ip
-                match = $1
-                match.sub!(".", '')
-                ary = pattern.split(".")
-
-                mask = case ary.index(match)
-                when 0: 8
-                when 1: 16
-                when 2: 24
+                    begin
+                        @pattern = IPAddr.new(ary.join(".") + "/" + mask.to_s)
+                    rescue ArgumentError => detail
+                        raise AuthStoreError, "Invalid IP address pattern %s" % value
+                    end
+                when /^([a-zA-Z][-\w]*\.)+[-\w]+$/: # a full hostname
+                    @name = :domain
+                    @pattern = munge_name(value)
+                when /^\*(\.([a-zA-Z][-\w]*)){1,}$/: # *.domain.com
+                    @name = :domain
+                    @pattern = munge_name(value)
+                    @pattern.pop # take off the '*'
+                    @length = @pattern.length
                 else
-                    raise AuthStoreError, "Invalid IP pattern %s" % pattern
+                    # Else, use the IPAddr class to determine if we've got a
+                    # valid IP address.
+                    if value =~ /\/(\d+)$/
+                        @length = Integer($1)
+                    end
+                    begin
+                        @pattern = IPAddr.new(value)
+                    rescue ArgumentError => detail
+                        raise AuthStoreError, "Invalid pattern %s" % value
+                    end
+                    @name = :ip
                 end
-
-                ary.pop
-                while ary.length < 4
-                    ary.push("0")
-                end
-
-                begin
-                    value = IPAddr.new(ary.join(".") + "/" + mask.to_s)
-                rescue ArgumentError => detail
-                    raise AuthStoreError, "Invalid IP address pattern %s" % pattern
-                end
-            when /^[\d.]+$/: # necessary so incomplete IP addresses can't look
-                             # like hostnames
-                raise AuthStoreError, "Invalid IP address pattern %s" % pattern
-            when /^([a-zA-Z][-\w]*\.)+[-\w]+$/: # a full hostname
-                type = :hostname
-                value = pattern.split(".").reverse
-            when /^\*(\.([a-zA-Z][-\w]*)){1,}$/:
-                type = :domain
-                value = pattern.split(".").reverse
-            else
-                raise AuthStoreError, "Invalid pattern %s" % pattern
             end
-
-            return [type, value]
         end
     end
 end
