@@ -69,11 +69,8 @@ class Transaction
             # And then return
             return []
         end
-        changes = [changes] unless changes.is_a?(Array)
 
-        unless changes.is_a? Array
-            changes = [changes]
-        end
+        changes = [changes] unless changes.is_a?(Array)
 
         if changes.length > 0
             @resourcemetrics[:out_of_sync] += 1

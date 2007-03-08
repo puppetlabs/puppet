@@ -1,11 +1,12 @@
 #!/usr/bin/env ruby
 #
-#  Created by Luke A. Kanies on 2006-11-24.
-#  Copyright (c) 2006. All rights reserved.
+#  Created by Luke A. Kanies on 2007-03-05.
+#  Copyright (c) 2007. All rights reserved.
 
 require 'puppettest'
 
 class PuppetTest::TestCase < Test::Unit::TestCase
+	include PuppetTest
     def self.confine(hash)
         @confines ||= {}
         hash.each do |message, result|

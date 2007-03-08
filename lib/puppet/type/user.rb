@@ -6,27 +6,6 @@ module Puppet
     newtype(:user) do
         newproperty(:ensure) do
             newvalue(:present, :event => :user_created) do
-                # Verify that they have provided everything necessary, if we
-                # are trying to manage the user
-#                if @parent.managed?
-#                    @parent.class.properties.each { |property|
-#                        next if propertyobj = @parent.property(property.name)
-#                        next if property.name == :ensure
-#
-#                        unless property.autogen? or property.isoptional?
-#                            if property.method_defined?(:autogen)
-#                                @parent[property.name] = :auto
-#                            else
-#                                @parent.fail "Users require a value for %s" %
-#                                    property.name
-#                            end
-#                        end
-#                    }
-#
-#                    #if @properties.empty?
-#                    #    @parent[:comment] = @parent[:name]
-#                    #end
-#                end
                 provider.create
             end
 
@@ -223,10 +202,10 @@ module Puppet
 
             def insync?
                 unless defined? @should and @should
-                    return false
+                    return true
                 end
                 unless defined? @is and @is
-                    return false
+                    return true
                 end
                 tmp = @is
                 if @is.is_a? Array
