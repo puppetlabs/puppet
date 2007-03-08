@@ -11,6 +11,12 @@ class TestConfig < Test::Unit::TestCase
 	include PuppetTest
 	include PuppetTest::ParserTesting
 
+    def setup
+        super
+        @config = mkconfig
+    end
+
+
     def check_for_users
         count = Puppet::Type.type(:user).inject(0) { |c,o|
             c + 1
@@ -93,57 +99,54 @@ class TestConfig < Test::Unit::TestCase
     end
 
     def test_addbools
-        c = mkconfig
-
         assert_nothing_raised {
-            c.setdefaults(:testing, :booltest => [true, "testing"])
+            @config.setdefaults(:testing, :booltest => [true, "testing"])
         }
 
-        assert(c[:booltest])
-        c = mkconfig
+        assert(@config[:booltest])
+        @config = mkconfig
 
         assert_nothing_raised {
-            c.setdefaults(:testing, :booltest => ["true", "testing"])
+            @config.setdefaults(:testing, :booltest => ["true", "testing"])
         }
 
-        assert(c[:booltest])
+        assert(@config[:booltest])
 
         assert_nothing_raised {
-            c[:booltest] = false
+            @config[:booltest] = false
         }
 
-        assert(! c[:booltest], "Booltest is not false")
+        assert(! @config[:booltest], "Booltest is not false")
 
         assert_nothing_raised {
-            c[:booltest] = "false"
+            @config[:booltest] = "false"
         }
 
-        assert(! c[:booltest], "Booltest is not false")
+        assert(! @config[:booltest], "Booltest is not false")
 
         assert_raise(Puppet::Error) {
-            c[:booltest] = "yayness"
+            @config[:booltest] = "yayness"
         }
 
         assert_raise(Puppet::Error) {
-            c[:booltest] = "/some/file"
+            @config[:booltest] = "/some/file"
         }
     end
 
     def test_strings
-        c = mkconfig
         val = "this is a string"
         assert_nothing_raised {
-            c.setdefaults(:testing, :strtest => [val, "testing"])
+            @config.setdefaults(:testing, :strtest => [val, "testing"])
         }
 
-        assert_equal(val, c[:strtest])
+        assert_equal(val, @config[:strtest])
 
         # Verify that variables are interpolated
         assert_nothing_raised {
-            c.setdefaults(:testing, :another => ["another $strtest", "testing"])
+            @config.setdefaults(:testing, :another => ["another $strtest", "testing"])
         }
 
-        assert_equal("another #{val}", c[:another])
+        assert_equal("another #{val}", @config[:another])
     end
 
     def test_files
@@ -151,47 +154,46 @@ class TestConfig < Test::Unit::TestCase
 
         parent = "/puppet"
         assert_nothing_raised {
-            c.setdefaults(:testing, :parentdir => [parent, "booh"])
+            @config.setdefaults(:testing, :parentdir => [parent, "booh"])
         }
 
         assert_nothing_raised {
-            c.setdefaults(:testing, :child => ["$parent/child", "rah"])
+            @config.setdefaults(:testing, :child => ["$parent/child", "rah"])
         }
 
-        assert_equal(parent, c[:parentdir])
-        assert_equal("/puppet/child", File.join(c[:parentdir], "child"))
+        assert_equal(parent, @config[:parentdir])
+        assert_equal("/puppet/child", File.join(@config[:parentdir], "child"))
     end
 
     def test_getset
-        c = mkconfig
         initial = "an initial value"
         assert_raise(Puppet::Error) {
-            c[:yayness] = initial
+            @config[:yayness] = initial
         }
 
         default = "this is a default"
         assert_nothing_raised {
-            c.setdefaults(:testing, :yayness => [default, "rah"])
+            @config.setdefaults(:testing, :yayness => [default, "rah"])
         }
 
-        assert_equal(default, c[:yayness])
+        assert_equal(default, @config[:yayness])
 
         assert_nothing_raised {
-            c[:yayness] = initial
+            @config[:yayness] = initial
         }
 
-        assert_equal(initial, c[:yayness])
+        assert_equal(initial, @config[:yayness])
 
         assert_nothing_raised {
-            c.clear
+            @config.clear
         }
 
-        assert_equal(default, c[:yayness])
+        assert_equal(default, @config[:yayness])
 
         assert_nothing_raised {
-            c[:yayness] = "not default"
+            @config[:yayness] = "not default"
         }
-        assert_equal("not default", c[:yayness])
+        assert_equal("not default", @config[:yayness])
     end
 
     def test_parse
@@ -213,9 +215,8 @@ yay = /a/path
         file = tempfile()
         File.open(file, "w") { |f| f.puts text }
 
-        c = mkconfig
         assert_nothing_raised {
-            c.setdefaults("puppet",
+            @config.setdefaults("puppet",
                 :one => ["a", "one"],
                 :two => ["a", "two"],
                 :yay => ["/default/path", "boo"],
@@ -224,7 +225,7 @@ yay = /a/path
         }
 
         assert_nothing_raised {
-            c.setdefaults("section1",
+            @config.setdefaults("section1",
                 :attr => ["a", "one"],
                 :attrdir => ["/another/dir", "two"],
                 :attr3 => ["$attrdir/maybe", "boo"]
@@ -232,17 +233,17 @@ yay = /a/path
         }
         
         assert_nothing_raised {
-            c.parse(file)
+            @config.parse(file)
         }
 
-        assert_equal("value", c[:attr])
-        assert_equal("/some/dir", c[:attrdir])
-        assert_equal(:directory, c.element(:attrdir).type)
-        assert_equal("/some/dir/other", c[:attr3])
+        assert_equal("value", @config[:attr])
+        assert_equal("/some/dir", @config[:attrdir])
+        assert_equal(:directory, @config.element(:attrdir).type)
+        assert_equal("/some/dir/other", @config[:attr3])
 
         elem = nil
         assert_nothing_raised {
-            elem = c.element(:attr3)
+            elem = @config.element(:attr3)
         }
 
         assert(elem)
@@ -250,27 +251,27 @@ yay = /a/path
 
         config = nil
         assert_nothing_raised {
-            config = c.to_config
+            config = @config.to_config
         }
 
         assert_nothing_raised("Could not create transportable config") {
-            c.to_transportable
+            @config.to_transportable
         }
 
-        check_to_comp(c)
+        check_to_comp(@config)
         Puppet::Type.allclear
-        check_to_manifest(c)
+        check_to_manifest(@config)
         Puppet::Type.allclear
-        check_to_config(c)
+        check_to_config(@config)
         Puppet::Type.allclear
-        check_to_transportable(c)
+        check_to_transportable(@config)
     end
 
     def test_arghandling
         c = mkconfig
 
         assert_nothing_raised {
-            c.setdefaults("testing",
+            @config.setdefaults("testing",
                 :onboolean => [true, "An on bool"],
                 :offboolean => [false, "An off bool"],
                 :string => ["a string", "A string arg"],
@@ -288,7 +289,7 @@ yay = /a/path
             values.each { |val|
                 opt = nil
                 arg = nil
-                if c.boolean?(param)
+                if @config.boolean?(param)
                     if val
                         opt = "--%s" % param
                     else
@@ -302,7 +303,7 @@ yay = /a/path
                 assert_nothing_raised("Could not handle arg %s with value %s" %
                     [opt, val]) {
 
-                    c.handlearg(opt, arg)
+                    @config.handlearg(opt, arg)
                 }
             }
         }
@@ -312,7 +313,7 @@ yay = /a/path
         c = mkconfig
 
         assert_nothing_raised {
-            c.setdefaults("testing",
+            @config.setdefaults("testing",
                 :onboolean => [true, "An on bool"],
                 :offboolean => [false, "An off bool"],
                 :string => ["a string", "A string arg"],
@@ -321,15 +322,15 @@ yay = /a/path
         }
         options = []
 
-        c.addargs(options)
+        @config.addargs(options)
 
-        c.each { |param, obj|
+        @config.each { |param, obj|
             opt = "--%s" % param
             assert(options.find { |ary|
                 ary[0] == opt
             }, "Argument %s was not added" % opt)
 
-            if c.boolean?(param)
+            if @config.boolean?(param)
                 o = "--no-%s" % param
                 assert(options.find { |ary|
                 ary[0] == o
@@ -351,7 +352,7 @@ yay = /a/path
         otherfile = File.join(dir, "otherfile")
         section = "testing"
         assert_nothing_raised {
-            c.setdefaults(section,
+            @config.setdefaults(section,
                 :mydir => [dir, "A dir arg"],
                 :otherfile => {
                     :default => "$mydir/otherfile",
@@ -363,11 +364,11 @@ yay = /a/path
         }
 
         assert_nothing_raised("Could not use a section") {
-            c.use(section)
+            @config.use(section)
         }
 
         assert_nothing_raised("Could not reuse a section") {
-            c.use(section)
+            @config.use(section)
         }
         
         # Make sure it didn't graph anything, which is the only real way
@@ -383,28 +384,28 @@ yay = /a/path
         c = mkconfig
 
         assert_nothing_raised {
-            c.setdefaults("yay",
+            @config.setdefaults("yay",
                 :a => [false, "some value"],
                 :b => ["/my/file", "a file"]
             )
         }
 
-        assert_equal(false, c[:a], "Values are not equal")
-        assert_equal("/my/file", c[:b], "Values are not equal")
+        assert_equal(false, @config[:a], "Values are not equal")
+        assert_equal("/my/file", @config[:b], "Values are not equal")
     end
 
     def test_setdefaultshash
         c = mkconfig
 
         assert_nothing_raised {
-            c.setdefaults("yay",
+            @config.setdefaults("yay",
                 :a => {:default => false, :desc => "some value"},
                 :b => {:default => "/my/file", :desc => "a file"}
             )
         }
 
-        assert_equal(false, c[:a], "Values are not equal")
-        assert_equal("/my/file", c[:b], "Values are not equal")
+        assert_equal(false, @config[:a], "Values are not equal")
+        assert_equal("/my/file", @config[:b], "Values are not equal")
     end
 
     def test_reuse
@@ -413,13 +414,13 @@ yay = /a/path
         file = tempfile()
         section = "testing"
         assert_nothing_raised {
-            c.setdefaults(section,
+            @config.setdefaults(section,
                 :myfile => {:default => file, :create => true, :desc => "yay"}
             )
         }
 
         assert_nothing_raised("Could not use a section") {
-            c.use(section)
+            @config.use(section)
         }
 
         assert(FileTest.exists?(file), "Did not create file")
@@ -428,7 +429,7 @@ yay = /a/path
 
         File.unlink(file)
 
-        c.reuse
+        @config.reuse
         assert(FileTest.exists?(file), "Did not create file")
     end
 
@@ -438,7 +439,7 @@ yay = /a/path
         file = tempfile()
         section = "testing"
         assert_nothing_raised {
-            c.setdefaults(section,
+            @config.setdefaults(section,
                 :mkusers => [false, "yay"],
                 :myfile => {
                     :default => file,
@@ -452,7 +453,7 @@ yay = /a/path
 
         comp = nil
         assert_nothing_raised {
-            comp = c.to_component
+            comp = @config.to_component
         }
 
         [:user, :group].each do |type|
@@ -464,10 +465,10 @@ yay = /a/path
         end
         comp.each { |o| o.remove }
 
-        c[:mkusers] = true
+        @config[:mkusers] = true
 
         assert_nothing_raised {
-            c.to_component
+            @config.to_component
         }
 
         user = Puppet.type(:user)["pptest"]
@@ -495,7 +496,7 @@ yay = /a/path
     def test_notmanagingdev
         c = mkconfig
         path = "/dev/testing"
-        c.setdefaults(:test,
+        @config.setdefaults(:test,
             :file => {
                 :default => path,
                 :mode => 0640,
@@ -504,7 +505,7 @@ yay = /a/path
         )
 
         assert_nothing_raised {
-            c.to_component
+            @config.to_component
         }
 
         assert(! Puppet.type(:file)["/dev/testing"], "Created dev file")
@@ -913,7 +914,7 @@ inttest = 27
 
 #        assert(yay, "Did not find yay component")
 #        yay.each do |c|
-#            puts c.ref
+#            puts @config.ref
 #        end
 #        assert(! yay.find { |o| o.class.name == :user and o.name == "root" },
 #            "Found root user")
@@ -955,30 +956,47 @@ inttest = 27
     end
 
     def test_multiple_interpolations
-        config = mkconfig
-
-        config.setdefaults(:section,
+        @config.setdefaults(:section,
             :one => ["oneval", "yay"],
             :two => ["twoval", "yay"],
             :three => ["$one/$two", "yay"]
         )
 
-        assert_equal("oneval/twoval", config[:three],
+        assert_equal("oneval/twoval", @config[:three],
             "Did not interpolate multiple variables")
     end
 
     # Make sure we can replace ${style} var names
     def test_curly_replacements
-        config = mkconfig
-
-        config.setdefaults(:section,
+        @config.setdefaults(:section,
             :one => ["oneval", "yay"],
             :two => ["twoval", "yay"],
             :three => ["$one/${two}/${one}/$two", "yay"]
         )
 
-        assert_equal("oneval/twoval/oneval/twoval", config[:three],
+        assert_equal("oneval/twoval/oneval/twoval", @config[:three],
             "Did not interpolate curlied variables")
+    end
+
+    # #489
+    def test_modes
+        Puppet[:name] = "puppet"
+        file = tempfile
+        config = tempfile()
+        @config.setdefaults(:puppet, :mode => ["644", "yay"])
+        @config.setdefaults(:puppet, :ssldir => ["/some/file", "yay"])
+        File.open(config, "w") { |f| f.puts "[puppet]
+        mode = 755
+        ssldir = #{file}
+        "}
+
+        @config.parse(config)
+
+        trans = @config.section_to_transportable(:puppet)
+        ssldir = trans.find { |o| o.type == "file" and o.name == file }
+        assert(ssldir, "could not find trans object")
+
+        assert_equal("755", ssldir[:mode], "mode got munged in parsing")
     end
 end
 

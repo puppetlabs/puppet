@@ -905,7 +905,9 @@ Generated on #{Time.now}.
             end
             [:mode].each { |var|
                 if value = self.send(var)
-                    obj[var] = "%o" % value
+                    # Convert it to a string, and the object will correctly
+                    # convert it to octal.
+                    obj[var] = value.to_s
                 end
             }
 
