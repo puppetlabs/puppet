@@ -12,7 +12,9 @@ class Puppet::Type
         end
         @evalcount += 1
 
-        changes = []
+        if p = self.provider and p.respond_to?(:prefetch)
+            p.prefetch
+        end
 
         # this only operates on properties, not properties + children
         # it's important that we call retrieve() on the type instance,
@@ -20,22 +22,7 @@ class Puppet::Type
         # the method, like pfile does
         self.retrieve
 
-        # properties() is a private method, returning an ordered list
-        unless self.class.depthfirst?
-            changes += propertychanges()
-        end
-
-        changes << @children.collect { |child|
-            ch = child.evaluate
-            child.cache(:checked, Time.now)
-            ch
-        }
-
-        if self.class.depthfirst?
-            changes += propertychanges()
-        end
-
-        changes.flatten!
+        changes = propertychanges().flatten
 
         # now record how many changes we've resulted in
         if changes.length > 0
@@ -46,7 +33,8 @@ class Puppet::Type
         return changes.flatten
     end
 
-    # By default, try flushing the provider.
+    # Flush the provider, if it supports it.  This is called by the
+    # transaction.
     def flush
         if self.provider and self.provider.respond_to?(:flush)
             self.provider.flush

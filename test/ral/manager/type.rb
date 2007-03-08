@@ -3,6 +3,7 @@
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
+require 'mocha'
 
 class TestType < Test::Unit::TestCase
 	include PuppetTest
@@ -809,6 +810,27 @@ end
         comp = Puppet::Type.newcomponent :type => "yay", :name => "Good[bad]", :parent => comp
         exec = mk.call(6, :parent => comp)
         assert_equal("//Good[bad]/Exec[exec6]", exec.path)
+    end
+
+    def test_evaluate
+        faketype = Puppet::Type.newtype(:faketype) do
+            newparam(:name) {}
+        end
+        cleanup { Puppet::Type.rmtype(:faketype) }
+        faketype.provide(:fake) do
+            def prefetch
+            end
+        end
+
+        obj = faketype.create :name => "yayness", :provider => :fake
+        assert(obj, "did not create object")
+
+        obj.provider.expects(:prefetch)
+        obj.expects(:retrieve)
+        obj.expects(:propertychanges).returns([])
+        obj.expects(:cache)
+
+        obj.evaluate
     end
 end
 
