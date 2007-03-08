@@ -1,4 +1,7 @@
 0.22.2 (grover)
+    Fixing a bug related to link recursion that caused link directories
+    to always be considered out of sync.
+
     The bind address for puppetmasterd can now be specified with 
     --bindaddress.
 

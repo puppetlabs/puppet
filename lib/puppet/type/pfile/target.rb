@@ -24,8 +24,13 @@ module Puppet
         def mklink
             target = self.should
 
-            # Clean up any existing objects.
+            # Clean up any existing objects.  The argument is just for logging,
+            # it doesn't determine what's removed.
             @parent.remove_existing(target)
+
+            if FileTest.exists?(@parent[:path])
+                raise Puppet::Error, "Could not remove existing file"
+            end
 
             Dir.chdir(File.dirname(@parent[:path])) do
                 Puppet::Util::SUIDManager.asuser(@parent.asuser()) do
@@ -44,7 +49,7 @@ module Puppet
         end
 
         def insync?
-            if [:nochange, :notlink].include?(self.should)
+            if [:nochange, :notlink].include?(self.should) or @parent.recurse?
                 return true
             else
                 return super

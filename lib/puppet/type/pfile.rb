@@ -792,7 +792,7 @@ module Puppet
                         should
                     FileUtils.rmtree(self[:path])
                 else
-                    notice "Not replacing directory; use 'force' to override"
+                    notice "Not removing directory; use 'force' to override"
                 end
             when "link", "file":
                 debug "Removing existing %s for replacement with %s" %
