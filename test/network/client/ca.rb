@@ -28,6 +28,10 @@ class TestClientCA < Test::Unit::TestCase
 
     # Make sure the ca defaults to specific ports and names
     def test_ca_server
+        client = nil
+        assert_nothing_raised do
+            client = Puppet::Network::Client.ca.new
+        end
     end
 end
 
