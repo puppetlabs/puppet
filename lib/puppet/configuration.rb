@@ -116,8 +116,8 @@ module Puppet
 
     # Define the config default.
     self.setdefaults(self.name,
-        :config => ["$confdir/#{self.name}.conf",
-            "The configuration file for #{self.name}."],
+        :config => ["$confdir/#{Puppet[:name]}.conf",
+            "The configuration file for #{Puppet[:name]}."],
         :pidfile => ["", "The pid file"],
         :bindaddress => ["", "The address to bind to.  Mongrel servers
             default to 127.0.0.1 and WEBrick defaults to 0.0.0.0."],
