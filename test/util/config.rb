@@ -1026,6 +1026,38 @@ inttest = 27
 
         check.call("750", 0750)
     end
+
+    def test_only_set_metas_when_valid
+        file = tempfile
+        config = tempfile
+        @config.setdefaults(Puppet[:name], :ssldir => {
+            :mode => 0644,
+            :group => "yayness",
+            :desc => "yay",
+            :default => "/some/file"})
+
+        File.open(config, "w") { |f| f.puts "[#{Puppet[:name]}]
+        mode = 750
+        group = foo
+        ssldir = #{file}
+        "}
+
+        assert_nothing_raised do
+            @config.parse(config)
+        end
+
+        assert_raise(ArgumentError) do
+            @config[:mode]
+        end
+        assert_raise(ArgumentError) do
+            @config[:group]
+        end
+
+        # Now make them valid params
+        @config.setdefaults(Puppet[:name], :group => ["blah", "yay"])
+        @config.setdefaults(Puppet[:name], :mode => ["755", "yay"])
+
+    end
 end
 
 # $Id$

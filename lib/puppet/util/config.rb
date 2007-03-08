@@ -301,13 +301,11 @@ class Puppet::Util::Config
                     end
                     values[section][var.to_s] = value
 
-                    # Do some annoying skullduggery here.  This is so that
-                    # the group can be set in the config file.  The problem
-                    # is that we're using the word 'group' twice, which is
-                    # confusing.
-                    if var == :group and section == Puppet[:name] and @config.include?(:group)
-                        @config[:group].value = value
+                    # If the parameter is valid, then set it.
+                    if section == Puppet[:name] and @config.include?(var)
+                        @config[var].value = value
                     end
+                    next
                 end
 
                 # Don't override set parameters, since the file is parsed
