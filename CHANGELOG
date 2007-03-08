@@ -1,3 +1,40 @@
+0.22.2 (grover)
+    Added (probably experimental) mongrel support.  At this point you're
+    still responsible for starting each individual process, and you have to
+    set up a proxy in front of it.
+
+    Redesigned the 'network' tree to support multiple web servers, including
+    refactoring most of the structural code so it's much clearer and more
+    reusable now.
+
+    Set up the CA client to default to ca_server and ca_port, so you can
+    easily run a separate CA.
+
+    Supporting hosts with no domain name, thanks to a patch from
+    Dennis Jacobfeuerborn.
+
+    Added an 'ignorecache' option to tell puppetd to force a recompile.
+
+    Made up2date the default for RHEL < 4 and yum the default for the rest.
+
+    The yum provider now supports versions.
+
+    Case statements correctly match when multiple values are provided,
+    thanks to a patch by David Schmidt.
+
+    Functions can now be called with no arguments.
+
+    String escapes parse correctly in all cases now, thanks to a patch by
+    cstorey.
+
+    Subclasses again search parent classes for defaults.
+
+    You can now purge apt and dpkg packages.
+
+    When doing file recursion, 'ensure' only affects the top-level directory.
+
+    States have been renamed to Properties.
+
 0.22.1 (kermit) -- Mostly a bugfix release
     Compile times now persist between restarts of puppetd.
 
