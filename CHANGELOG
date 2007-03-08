@@ -1,4 +1,7 @@
 0.22.2 (grover)
+    The bind address for puppetmasterd can now be specified with 
+    --bindaddress.
+
     Added (probably experimental) mongrel support.  At this point you're
     still responsible for starting each individual process, and you have to
     set up a proxy in front of it.

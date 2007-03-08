@@ -252,7 +252,11 @@ begin
     when "mongrel":
         require 'puppet/network/server/mongrel'
         handler = Puppet::Network::Server::MongrelHandler.new(handlers)
-        server = Mongrel::HttpServer.new("0.0.0.0", Puppet[:masterport])
+        addr = Puppet[:bindaddress]
+        if addr == ""
+            addr =  "127.0.0.1"
+        end
+        server = Mongrel::HttpServer.new(addr, Puppet[:masterport])
         server.register("/", handler)
     else
         Puppet.err "Invalid server type %s" % Puppet[:servertype]
