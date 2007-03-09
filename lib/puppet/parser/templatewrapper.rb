@@ -7,11 +7,7 @@ class Puppet::Parser::TemplateWrapper
 
     def initialize(scope, file)
         @scope = scope
-        if file =~ /^#{File::SEPARATOR}/
-            @file = file
-        else
-            @file = File.join(Puppet[:templatedir], file)
-        end
+        @file = Puppet::Module::find_template(file)
 
         unless FileTest.exists?(@file)
             raise Puppet::ParseError,

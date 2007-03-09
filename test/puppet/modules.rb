@@ -38,4 +38,21 @@ class TestModules < Test::Unit::TestCase
         assert_equal("testmod", mod.name)
         assert_equal(path, mod.path)
     end
+
+    def test_find_template
+        templ = "testmod/templ.erb"
+        assert_equal(File::join(Puppet[:templatedir], templ),
+                     Puppet::Module::find_template(templ))
+
+        templ_path = File::join(@varmods, "testmod",
+                                Puppet::Module::TEMPLATES, "templ.erb")
+        FileUtils::mkdir_p(File::dirname(templ_path))
+        File::open(templ_path, "w") { |f| f.puts "Howdy" }
+
+        assert_equal(templ_path, Puppet::Module::find_template(templ))
+
+        mod = Puppet::Module::find(templ)
+        assert_not_nil(mod)
+        assert_equal(templ_path, mod.template(templ))
+    end
 end
