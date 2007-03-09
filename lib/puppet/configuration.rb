@@ -163,7 +163,10 @@ module Puppet
             :group => "$group",
             :desc => "Where FileBucket files are stored."
         },
-        :ca => [true, "Wether the master should function as a certificate authority."]
+        :ca => [true, "Wether the master should function as a certificate authority."],
+        :modulepath => [ "$confdir/modules:/usr/share/puppet/modules",
+           "The search path for modules as a colon-separated list of
+            directories." ]
     )
 
     self.setdefaults("puppetd",

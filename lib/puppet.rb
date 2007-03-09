@@ -383,6 +383,7 @@ module Puppet
 end
 
 require 'puppet/type'
+require 'puppet/modules'
 require 'puppet/util/storage'
 require 'puppet/parser/interpreter'
 if Puppet[:storeconfigs]
