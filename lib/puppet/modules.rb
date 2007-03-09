@@ -9,7 +9,10 @@ class Puppet::Module
     # parameter. Only consider paths that are absolute and existing
     # directories
     def self.modulepath
-        dirs = ENV["PUPPETLIB"].split(":") + Puppet[:modulepath].split(":")
+        dirs = Puppet[:modulepath].split(":")
+        if ENV["PUPPETLIB"]
+            dirs = ENV["PUPPETLIB"].split(":") + dirs
+        end
         dirs.select do |p|
             p =~ /^#{File::SEPARATOR}/ && File::directory?(p)
         end
