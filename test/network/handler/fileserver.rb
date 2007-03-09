@@ -1018,6 +1018,122 @@ allow *
             File.unlink(file)
         end
     end
+
+    # Test the default modules fileserving
+    def test_modules_default
+        moddir = tempfile
+        Dir.mkdir(moddir)
+        mounts = {}
+        Puppet[:modulepath] = moddir
+
+        mods = %w{green red}.collect do |name|
+            path = File::join(moddir, name, Puppet::Module::FILES)
+            FileUtils::mkdir_p(path)
+            if name == "green"
+                file = File::join(path, "test.txt")
+                File::open(file, "w") { |f| f.print name }
+            end
+
+           Puppet::Module::find(name)
+        end
+
+        conffile = tempfile
+        @@tmpfiles << conffile
+
+        File.open(conffile, "w") { |f| f.puts "# a test config file" }
+
+        # create a server with the file
+        server = nil
+        assert_nothing_raised {
+            server = Puppet::Network::Handler::FileServer.new(
+                :Local => false ,
+                :Config => conffile
+            )
+        }
+
+        mods.each do |mod|
+            mount = "/#{mod.name}/"
+            list = nil
+            assert_nothing_raised {
+                list = server.list(mount, :ignore, true, false)
+            }
+            list = list.split("\n")
+            if mod.name == "green"
+                assert_equal(2, list.size)
+                assert_equal("/\tdirectory", list[0])
+                assert_equal("/test.txt\tfile", list[1])
+            else
+                assert_equal(1, list.size)
+                assert_equal("/\tdirectory", list[0])
+            end
+
+            assert_nothing_raised("Host 'allow' denied #{mount}") {
+                server.list(mount, :ignore, true, false,
+                            'allow.example.com', "192.168.0.1")
+            }
+        end
+    end
+
+    # Test that configuring deny/allow for modules works
+    def test_modules_config
+        moddir = tempfile
+        Dir.mkdir(moddir)
+        mounts = {}
+        Puppet[:modulepath] = moddir
+
+        path = File::join(moddir, "amod", Puppet::Module::FILES)
+        file = File::join(path, "test.txt")
+        FileUtils::mkdir_p(path)
+        File::open(file, "w") { |f| f.print "Howdy" }
+
+        mod = Puppet::Module::find("amod")
+
+        conffile = tempfile
+        @@tmpfiles << conffile
+
+        File.open(conffile, "w") { |f|
+            f.print "# a test config file
+[modules]
+    path #{basedir}/thing
+    allow 192.168.0.*
+"
+        }
+
+        # create a server with the file
+        server = nil
+        assert_nothing_raised {
+            server = Puppet::Network::Handler::FileServer.new(
+                :Local => false,
+                :Config => conffile
+            )
+        }
+
+        list = nil
+        mount = "/#{mod.name}/"
+        assert_nothing_raised {
+            list = server.list(mount, :ignore, true, false)
+        }
+
+        assert_nothing_raised {
+            list.split("\n").each { |line|
+                file, type = line.split("\t")
+                server.describe(mount + file)
+            }
+        }
+
+        assert_describe(mount, file, server)
+
+        # now let's check that things are being correctly forbidden
+        assert_raise(Puppet::AuthorizationError,
+                     "Host 'deny' allowed #{mount}") {
+            server.list(mount, :ignore, true, false,
+                        'deny.example.com', "192.168.1.1")
+        }
+        assert_nothing_raised("Host 'allow' denied #{mount}") {
+            server.list(mount, :ignore, true, false,
+                        'allow.example.com', "192.168.0.1")
+        }
+    end
 end
 
 # $Id$

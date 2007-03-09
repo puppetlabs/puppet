@@ -11,6 +11,9 @@ class Puppet::Network::Handler
 
         CHECKPARAMS = [:mode, :type, :owner, :group, :checksum]
 
+        # Special filserver module for puppet's module system
+        MODULES = "modules"
+
         @interface = XMLRPC::Service::Interface.new("fileserver") { |iface|
             iface.add_method("string describe(string, string)")
             iface.add_method("string list(string, string, boolean, array)")
@@ -263,12 +266,16 @@ class Puppet::Network::Handler
                             value = $2
                             case var
                             when "path":
-                                begin
-                                    mount.path = value
-                                rescue FileServerError => detail
-                                    Puppet.err "Removing mount %s: %s" %
-                                        [mount.name, detail]
-                                    newmounts.delete(mount.name)
+                                if mount.name == MODULES
+                                    Puppet.warning "The '#{MODULES}' module can not have a path. Ignoring attempt to set it"
+                                else
+                                    begin
+                                        mount.path = value
+                                    rescue FileServerError => detail
+                                        Puppet.err "Removing mount %s: %s" %
+                                            [mount.name, detail]
+                                        newmounts.delete(mount.name)
+                                    end
                                 end
                             when "allow":
                                 value.split(/\s*,\s*/).each { |val|
@@ -310,6 +317,12 @@ class Puppet::Network::Handler
                 #raise Puppet::Error, "%s does not exit" % @config
             #rescue FileServerError => detail
             #    Puppet.err "FileServer error: %s" % detail
+            end
+
+            unless newmounts[MODULES]
+                mount = Mount.new(MODULES)
+                mount.allow("*")
+                newmounts[MODULES] = mount
             end
 
             # Verify each of the mounts are valid.
@@ -375,8 +388,13 @@ class Puppet::Network::Handler
                 tmp = $1
                 path = dir.sub(%r{/#{tmp}/?}, '')
 
-                unless mount = @mounts[tmp]
-                    raise FileServerError, "Fileserver module '%s' not mounted" % tmp
+                mod = Puppet::Module::find(tmp)
+                if mod
+                    mount = @mounts[MODULES].copy(mod, mod.files)
+                else
+                    unless mount = @mounts[tmp]
+                        raise FileServerError, "Fileserver module '%s' not mounted" % tmp
+                    end
                 end
             else
                 raise FileServerError, "Fileserver error: Invalid path '%s'" % dir
@@ -579,9 +597,20 @@ class Puppet::Network::Handler
             # Verify our configuration is valid.  This should really check to
             # make sure at least someone will be allowed, but, eh.
             def valid?
-                return false unless @path
+                if name == MODULES
+                    return @path.nil?
+                else
+                    return ! @path.nil?
+                end
+            end
 
-                return true
+            # Return a new mount with the same properties as +self+, except
+            # with a different name and path.
+            def copy(name, path)
+                result = self.clone
+                result.path = path
+                result.instance_variable_set(:@name, name)
+                return result
             end
         end
     end

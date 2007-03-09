@@ -2,6 +2,7 @@
 class Puppet::Module
 
     TEMPLATES = "templates"
+    FILES = "files"
 
     # Return an array of paths by splitting the +modulepath+ config
     # parameter. Only consider paths that are absolute and existing
@@ -66,6 +67,10 @@ class Puppet::Module
 
     def template(file)
         return File::join(path, TEMPLATES, strip(file))
+    end
+
+    def files
+        return File::join(path, FILES)
     end
 
     private :initialize
