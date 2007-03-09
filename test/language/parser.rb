@@ -658,6 +658,50 @@ file { "/tmp/yayness":
             parser.parse %{$testing = template()}
         }
     end
+
+    def test_module_import
+        basedir = File.join(tmpdir(), "module-import")
+        @@tmpfiles << basedir
+        Dir.mkdir(basedir)
+        modfiles = [ "init.pp", "mani1.pp", "mani2.pp",
+                     "sub/smani1.pp", "sub/smani2.pp" ]
+
+        modpath = File.join(basedir, "modules")
+        Puppet[:modulepath] = modpath
+
+        modname = "amod"
+        manipath = File::join(modpath, modname, Puppet::Module::MANIFESTS)
+        FileUtils::mkdir_p(File::join(manipath, "sub"))
+        targets = []
+        modfiles.each do |fname|
+            target = File::join(basedir, File::basename(fname, '.pp'))
+            targets << target
+            txt = %[ file { '#{target}': content => "#{fname}" } ]
+            if fname == "init.pp"
+                txt = %[import 'mani1' \nimport '#{modname}/mani2'\nimport '#{modname}/sub/*.pp' ] + txt
+            end
+            File::open(File::join(manipath, fname), "w") do |f|
+                f.puts txt
+            end
+        end
+
+        manifest_texts = [ "import '#{modname}'",
+                           "import '#{modname}/init'",
+                           "import '#{modname}/init.pp'" ]
+
+        manifest = File.join(modpath, "manifest.pp")
+        manifest_texts.each do |txt|
+            File.open(manifest, "w") { |f| f.puts txt }
+
+            assert_nothing_raised {
+                parser = mkparser
+                parser.file = manifest
+                parser.parse
+            }
+            assert_creates(manifest, *targets)
+        end
+    end
+
 end
 
 # $Id$

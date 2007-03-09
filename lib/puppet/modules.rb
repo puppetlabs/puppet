@@ -3,6 +3,7 @@ class Puppet::Module
 
     TEMPLATES = "templates"
     FILES = "files"
+    MANIFESTS = "manifests"
 
     # Return an array of paths by splitting the +modulepath+ config
     # parameter. Only consider paths that are absolute and existing
@@ -54,6 +55,26 @@ class Puppet::Module
         end
     end
 
+    # Return a list of manifests (as absolute filenames) that match +pat+
+    # with the current directory set to +cwd+. If the first component of
+    # +pat+ does not contain any wildcards and is an existing module, return
+    # a list of manifests in that module matching the rest of +pat+
+    # Otherwise, try to find manifests matching +pat+ relative to +cwd+
+    def self.find_manifests(pat, cwd = nil)
+        cwd ||= Dir.getwd
+        mod = find(pat)
+        if mod
+            return mod.manifests(pat)
+        else
+            abspat = File::expand_path(pat, cwd)
+            files = Dir.glob(abspat)
+            if files.size == 0
+                files = Dir.glob(abspat + ".pp")
+            end
+            return files
+        end
+    end
+
     attr_reader :name, :path
     def initialize(name, path)
         @name = name
@@ -62,6 +83,7 @@ class Puppet::Module
 
     def strip(file)
         n, rest = file.split(File::SEPARATOR, 2)
+        rest = nil if rest && rest.empty?
         return rest
     end
 
@@ -71,6 +93,17 @@ class Puppet::Module
 
     def files
         return File::join(path, FILES)
+    end
+
+    def manifests(pat)
+        rest = strip(pat)
+        rest ||= "init.pp"
+        p = File::join(path, MANIFESTS, rest)
+        files = Dir.glob(p)
+        if files.size == 0
+            files = Dir.glob(p + ".pp")
+        end
+        return files
     end
 
     private :initialize

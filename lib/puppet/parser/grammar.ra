@@ -458,47 +458,42 @@ import: IMPORT quotedtext {
     end
     result = ast AST::ASTArray
 
-    Dir.chdir(dir) {
-        # We can't interpolate at this point since we don't have any 
-        # scopes set up. Warn the user if they use a variable reference
-        pat = val[1].value
-        if pat.index("$")
-             Puppet.warning(
-                 "The import of #{pat} contains a variable reference;" +
-                 " variables are not interpolated for imports " +
-                 "in file #{@lexer.file} at line #{@lexer.line}"
-             )
+    # We can't interpolate at this point since we don't have any
+    # scopes set up. Warn the user if they use a variable reference
+    pat = val[1].value
+    if pat.index("$")
+        Puppet.warning(
+           "The import of #{pat} contains a variable reference;" +
+           " variables are not interpolated for imports " +
+           "in file #{@lexer.file} at line #{@lexer.line}"
+        )
+    end
+    files = Puppet::Module::find_manifests(pat, dir)
+    if files.size == 0
+        raise Puppet::ImportError.new("No file(s) found for import " +
+                                      "of '#{pat}'")
+    end
+
+    files.each { |file|
+        parser = Puppet::Parser::Parser.new(interp)
+        parser.files = self.files
+        Puppet.debug("importing '%s'" % file)
+
+        unless file =~ /^#{File::SEPARATOR}/
+            file = File.join(dir, file)
         end
-        files = Dir.glob(pat)
-        if files.size == 0
-            files = Dir.glob(pat + ".pp")
-            if files.size == 0
-                raise Puppet::ImportError.new("No file(s) found for import " + 
-                                              "of '#{pat}'")
-            end
+        begin
+            parser.file = file
+        rescue Puppet::ImportError
+            Puppet.warning(
+                "Importing %s would result in an import loop" %
+                    File.join(dir, file)
+            )
+            next
         end
 
-        files.each { |file|
-            parser = Puppet::Parser::Parser.new(interp)
-            parser.files = self.files
-            Puppet.debug("importing '%s'" % file)
-
-            unless file =~ /^#{File::SEPARATOR}/
-                file = File.join(dir, file)
-            end
-            begin
-                parser.file = file
-            rescue Puppet::ImportError
-                Puppet.warning(
-                    "Importing %s would result in an import loop" %
-                        File.join(dir, file)
-                )
-                next
-            end
-
-            # This will normally add code to the 'main' class.
-            parser.parse
-        }
+        # This will normally add code to the 'main' class.
+        parser.parse
     }
 }
 
