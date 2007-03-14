@@ -15,15 +15,6 @@ class TestCron < Test::Unit::TestCase
 
         # god i'm lazy
         @crontype = Puppet.type(:cron)
-        @oldfiletype = @crontype.filetype
-        @fakefiletype = Puppet::Util::FileType.filetype(:ram)
-        @crontype.filetype = @fakefiletype
-    end
-
-    def teardown
-        @crontype.filetype = @oldfiletype
-        Puppet::Util::FileType.filetype(:ram).clear
-        super
     end
 
     # Back up the user's existing cron tab if they have one.
@@ -105,13 +96,6 @@ class TestCron < Test::Unit::TestCase
 
         assert(cron.insync?, "Cron is not in sync")
         assert_events([], comp)
-    end
-
-    # A simple test to see if we can load the cron from disk.
-    def test_load
-        assert_nothing_raised {
-            @crontype.retrieve(@me)
-        }
     end
 
     # Test that a cron job turns out as expected, by creating one and generating

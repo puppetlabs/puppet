@@ -1,4 +1,7 @@
 0.22.2 (grover)
+    Redid some of the internals of the ParsedFile provider base class.
+    It now passes a FileRecord around instead of a hash.
+
     Fixing a bug related to link recursion that caused link directories
     to always be considered out of sync.
 

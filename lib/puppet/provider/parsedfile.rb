@@ -117,8 +117,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         list.collect { |r| r[:name] }
     end
 
-    # Create attribute methods for each of the model's non-metaparam attributes.
-    def self.model=(model)
+    # Override the default method with a lot more functionality.
+    def self.mkmodelmethods
         [model.validproperties, model.parameters].flatten.each do |attr|
             attr = symbolize(attr)
             define_method(attr) do
@@ -152,7 +152,12 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
                 @property_hash[attr] = val
             end
         end
-        @model = model
+    end
+
+    # Always make the model methods.
+    def self.model=(model)
+        super
+        mkmodelmethods()
     end
 
     # Mark a target as modified so we know to flush it.  This only gets
@@ -179,11 +184,17 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     # Prefetch an individual target.
     def self.prefetch_target(target)
-        @records += retrieve(target).each do |r|
+        target_records = retrieve(target).each do |r|
             r[:on_disk] = true
             r[:target] = target
             r[:ensure] = :present
         end
+
+        if respond_to?(:prefetch_hook)
+            prefetch_hook(target_records)
+        end
+
+        @records += target_records
 
         # Set current property on any existing resource instances.
         target_records(target).find_all { |i| i.is_a?(Hash) }.each do |record|
@@ -222,7 +233,6 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             ensure
                 @target = old
             end
-
         end
     end
 

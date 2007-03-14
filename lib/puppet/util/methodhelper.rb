@@ -15,7 +15,7 @@ module Puppet::Util::MethodHelper
             begin
                 self.send(method, value)
             rescue NoMethodError
-                self.fail "Invalid parameter %s to object class %s" %
+                raise ArgumentError, "Invalid parameter %s to object class %s" %
                         [param,self.class.to_s]
             end
         end

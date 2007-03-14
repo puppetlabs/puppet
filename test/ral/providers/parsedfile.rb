@@ -3,6 +3,7 @@
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
+require 'mocha'
 require 'puppettest/fileparsing'
 require 'puppet/util/filetype'
 require 'puppet/provider/parsedfile'
@@ -513,11 +514,20 @@ class TestParsedFile < Test::Unit::TestCase
         end
         cleanup { @type.unprovide(:record) }
 
-        records = prov.parse("a  d")
+        line = prov.parse_line("a  d")
 
-        line = records.find { |r| r[:name] == "a" }
-        assert(line, "Could not find line")
+        assert_equal("a", line[:name], "field name was not set")
+        assert_equal(:absent, line[:one], "field one was not set to absent")
 
+        # Now use a different provider with a non-blank "absent"
+        prov = @type.provide(:cronstyle, :parent => Puppet::Provider::ParsedFile) do
+            record_line :cronstyle, :fields => %w{name one two},
+                :separator => "\s", :absent => "*"
+        end
+        cleanup { @type.unprovide(:cronstyle) }
+        line = prov.parse_line("a * d")
+
+        assert_equal("a", line[:name], "field name was not set")
         assert_equal(:absent, line[:one], "field one was not set to absent")
     end
 
@@ -594,6 +604,31 @@ class TestParsedFile < Test::Unit::TestCase
 
         assert(bill.insync?,
             "An invalid field marked the record out of sync")
+    end
+
+    # Make sure we call the prefetch hook at the right place.
+    def test_prefetch_hook
+        prov = @type.provide(:test, :parent => Puppet::Provider::ParsedFile,
+            :filetype => :ram, :default_target => :yayness) do
+
+            def self.prefetch_hook(records)
+            end
+
+            record_line :test, :fields => %w{name two}
+        end
+        cleanup do @type.unprovide(:test) end
+
+        target = "target"
+
+        records = [{:target => "nope"}]
+        targeted = {:target => "target"}
+        prov.send(:instance_variable_set, "@records", records)
+        prov.expects(:retrieve).with(target).returns([targeted])
+        prov.expects(:target_records).with(target).returns([targeted])
+
+        prov.expects(:prefetch_hook).with([targeted])
+
+        prov.prefetch_target(target)
     end
 end
 

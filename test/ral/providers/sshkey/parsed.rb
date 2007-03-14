@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-$:.unshift("../../lib") if __FILE__ =~ /\.rb$/
+$:.unshift("../../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
 require 'puppettest/fileparsing'
@@ -87,6 +87,24 @@ class TestParsedSSHKey < Test::Unit::TestCase
         end
         
         assert(key.name !~ /,/, "Aliases were not split out during parsing")
+    end
+
+    def test_hooks
+        result = nil
+        assert_nothing_raised("Could not call post hook") do
+            result = @provider.parse_line("one,two type key")
+        end
+        assert_equal("one", result[:name], "Did not call post hook")
+        assert_equal(%w{two}, result[:alias], "Did not call post hook")
+
+        assert_equal("one,two type key",
+            @provider.to_line(:record_type => :parsed,
+            :name => "one",
+            :alias => %w{two},
+            :type => "type",
+            :key => "key"),
+            "Did not use pre-hook when generating line"
+        )
     end
 end
 

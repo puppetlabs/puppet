@@ -106,6 +106,7 @@ class TestProvider < Test::Unit::TestCase
             provider.command(:fake)
         end
 
+        Puppet[:trace] = false
         assert_raise(Puppet::DevError) do
             provider.command(:nosuchcmd)
         end
@@ -181,6 +182,33 @@ class TestProvider < Test::Unit::TestCase
 
         assert(out =~ /Execution of/,
                "Did not receive info wrapper on failure")
+    end
+
+    def test_mkmodelmethods
+        prov = newprovider
+        modeltype = Struct.new(:validproperties, :parameters)
+        m = modeltype.new([:prop1, :prop2], [:param1, :param2])
+        prov.model = m
+
+        assert_nothing_raised("could not call mkmodelmethods") do
+            prov.mkmodelmethods
+        end
+
+        obj = prov.new(nil)
+
+        %w{prop1 prop2 param1 param2}.each do |param|
+            assert(prov.public_method_defined?(param), "no getter for %s" % param)
+            assert(prov.public_method_defined?(param + "="), "no setter for %s" % param)
+
+            assert_equal(:absent, obj.send(param),
+                "%s did not default to :absent")
+            val = "testing %s" % param
+            assert_nothing_raised("Could not call setter for %s" % param) do
+                obj.send(param + "=", val)
+            end
+            assert_equal(val, obj.send(param),
+                "did not get correct value for %s" % param)
+        end
     end
 end
 

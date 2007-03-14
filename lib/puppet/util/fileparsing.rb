@@ -24,9 +24,74 @@
 # You could then call 'parser.to_line(hash)' on any of those hashes to generate
 # the text line again.
 
+require 'puppet/util/methodhelper'
+
 module Puppet::Util::FileParsing
     include Puppet::Util
     attr_writer :line_separator, :trailing_separator
+
+    class FileRecord
+        include Puppet::Util
+        include Puppet::Util::MethodHelper
+        attr_accessor :absent, :joiner, :rts,
+            :separator, :rollup, :name, :match
+
+        attr_reader :fields, :optional, :type
+
+        INVALID_FIELDS = [:record_type, :target, :on_disk]
+
+        # Customize this so we can do a bit of validation.
+        def fields=(fields)
+            @fields = fields.collect do |field|
+                r = symbolize(field)
+                if INVALID_FIELDS.include?(r)
+                    raise ArgumentError.new("Cannot have fields named %s" % r)
+                end
+                r
+            end
+        end
+
+        def initialize(type, options = {}, &block)
+            @type = symbolize(type)
+            unless [:record, :text].include?(@type)
+                raise ArgumentError, "Invalid record type %s" % @type
+            end
+
+            set_options(options)
+
+            if self.type == :record
+                # Now set defaults.
+                self.absent ||= ""
+                self.separator ||= /\s+/
+                self.joiner ||= " "
+                self.optional ||= []
+                unless defined? @rollup
+                    @rollup = true
+                end
+            end
+
+            if block_given?
+                meta_def(:process, &block)
+            end
+        end
+
+        # Customize this so we can do a bit of validation.
+        def optional=(optional)
+            @optional = optional.collect do |field|
+                symbolize(field)
+            end
+        end
+
+        # Create a hook that modifies the hash resulting from parsing.
+        def post_parse=(block)
+            meta_def(:post_parse, &block)
+        end
+
+        # Create a hook that modifies the hash just prior to generation.
+        def pre_gen=(block)
+            meta_def(:pre_gen, &block)
+        end
+    end
 
     # Clear all existing record definitions.  Only used for testing.
     def clear_records
@@ -35,44 +100,45 @@ module Puppet::Util::FileParsing
     end
 
     def fields(type)
-        type = symbolize(type)
-        if @record_types.include?(type)
-            @record_types[type][:fields].dup
+        if record = record_type(type)
+            record.fields.dup
         else
             nil
         end
     end
 
     # Try to match a specific text line.
-    def handle_text_line(line, hash)
-        if line =~ hash[:match]
-            return {:record_type => hash[:name], :line => line}
+    def handle_text_line(line, record)
+        if line =~ record.match
+            return {:record_type => record.name, :line => line}
         else
             return nil
         end
     end
 
     # Try to match a record.
-    def handle_record_line(line, hash)
-        if method = hash[:method]
-            if ret = send(method, line.dup)
-                ret[:record_type] = hash[:name]
+    def handle_record_line(line, record)
+        if record.respond_to?(:process)
+            if ret = record.send(:process, line.dup)
+                unless ret.is_a?(Hash)
+                    raise Puppet::DevError,
+                        "Process record type %s returned non-hash" % record.name
+                end
+                ret[:record_type] = record.name
                 return ret
             else
                 return nil
             end
-        elsif regex = hash[:match]
+        elsif regex = record.match
             raise "Cannot use matches to handle records yet"
             # In this case, we try to match the whole line and then use the
             # match captures to get our fields.
             if match = regex.match(line)
                 fields = []
-                ignore = hash[:ignore] || []
-                p match.captures
+                ignore = record.ignore || []
                 match.captures.each_with_index do |value, i|
                     fields << value unless ignore.include? i
                 end
-                p fields
                 nil
             else
                 Puppet.info "Did not match %s" % line
@@ -80,21 +146,29 @@ module Puppet::Util::FileParsing
             end
         else
             ret = {}
-            sep = hash[:separator]
+            sep = record.separator
 
             # String "helpfully" replaces ' ' with /\s+/ in splitting, so we
             # have to work around it.
             if sep == " "
                 sep = / /
             end
-            hash[:fields].zip(line.split(sep)) do |param, value|
-                if value and value != ""
+            line_fields = line.split(sep)
+            record.fields.each do |param|
+                value = line_fields.shift
+                if value and value != record.absent
                     ret[param] = value
                 else
                     ret[param] = :absent
                 end
             end
-            ret[:record_type] = hash[:name]
+
+            unless line_fields.empty? or ! record.rollup
+                last_field = record.fields[-1]
+                val = ([ret[last_field]] + line_fields).join(record.joiner)
+                ret[last_field] = val
+            end
+            ret[:record_type] = record.name
             return ret
         end
     end
@@ -127,18 +201,24 @@ module Puppet::Util::FileParsing
         end
 
         @record_order.each do |name|
-            hash = @record_types[name]
-            unless hash
-                raise Puppet::DevError, "Did not get hash for %s: %s" %
+            record = record_type(name)
+            unless record
+                raise Puppet::DevError, "Did not get record type for %s: %s" %
                     [name, @record_types.inspect]
             end
-            method = "handle_%s_line" % hash[:type]
+
+            # These are basically either text or record lines.
+            method = "handle_%s_line" % record.type
             if respond_to?(method)
-                if result = send(method, line, hash)
+                if result = send(method, line, record)
+                    if record.respond_to?(:post_parse)
+                        record.send(:post_parse, result)
+                    end
                     return result
                 end
             else
-                raise Puppet::DevError, "Somehow got invalid line type %s" % hash[:type]
+                raise Puppet::DevError,
+                    "Somehow got invalid line type %s" % record.type
             end
         end
 
@@ -162,42 +242,10 @@ module Puppet::Util::FileParsing
             raise ArgumentError, "Must include a list of fields"
         end
 
-        invalidfields = [:record_type, :target, :on_disk]
-        options[:fields] = options[:fields].collect do |field|
-            r = symbolize(field)
-            if invalidfields.include?(r)
-                raise ArgumentError.new("Cannot have fields named %s" % r)
-            end
-            r
-        end
+        record = FileRecord.new(:record, options, &block)
+        record.name = symbolize(name)
 
-        options[:absent] ||= ""
-
-        if options[:optional]
-            options[:optional] = options[:optional].collect { |f| symbolize(f) }
-        else
-            options[:optional] = []
-        end
-
-        options[:separator] ||= /\s+/
-
-        # Unless they specified a string-based joiner, just use a single
-        # space as the join value.
-        unless options[:separator].is_a?(String) or options[:joiner]
-            options[:joiner] = " "
-        end
-        
-
-        if block_given?
-            method = "handle_record_line_%s" % name
-            if respond_to?(method)
-                raise "Already have a method defined for this record"
-            end
-            meta_def(method, &block)
-            options[:method] = method
-        end
-
-        new_line_type(name, :record, options)
+        new_line_type(record)
     end
 
     # Are there any record types defined?
@@ -206,12 +254,15 @@ module Puppet::Util::FileParsing
     end
 
     # Define a new type of text record.
-    def text_line(name, options)
+    def text_line(name, options, &block)
         unless options.include?(:match)
             raise ArgumentError, "You must provide a :match regex for text lines"
         end
 
-        new_line_type(name, :text, options)
+        record = FileRecord.new(:text, options, &block)
+        record.name = symbolize(name)
+
+        new_line_type(record)
     end
 
     # Generate a file from a bunch of hash records.
@@ -227,20 +278,25 @@ module Puppet::Util::FileParsing
 
     # Convert our parsed record into a text record.
     def to_line(details)
-        unless type = @record_types[details[:record_type]]
+        unless record = record_type(details[:record_type])
             raise ArgumentError, "Invalid record type %s" % details[:record_type]
         end
 
-        case type[:type]
+        if record.respond_to?(:pre_gen)
+            details = details.dup
+            record.send(:pre_gen, details)
+        end
+
+        case record.type
         when :text: return details[:line]
         else
-            joinchar = type[:joiner] || type[:separator]
+            joinchar = record.joiner
 
-            line = type[:fields].collect { |field|
+            line = record.fields.collect { |field|
                 # If the field is marked absent, use the appropriate replacement
                 if details[field] == :absent or details[field].nil?
-                    if type[:optional].include?(field)
-                        type[:absent]
+                    if record.optional.include?(field)
+                        record.absent
                     else
                         raise ArgumentError, "Field %s is required" % field
                     end
@@ -249,7 +305,7 @@ module Puppet::Util::FileParsing
                 end
             }.reject { |c| c.nil?}.join(joinchar)
 
-            if regex = type[:rts]
+            if regex = record.rts
                 # If they say true, then use whitespace; else, use their regex.
                 if regex == true
                     regex = /\s+$/
@@ -272,7 +328,7 @@ module Puppet::Util::FileParsing
 
     def valid_attr?(type, attr)
         type = symbolize(type)
-        if @record_types[type] and @record_types[type][:fields].include?(symbolize(attr))
+        if record = record_type(type) and record.fields.include?(symbolize(attr))
             return true
         else
             if symbolize(attr) == :ensure
@@ -285,22 +341,23 @@ module Puppet::Util::FileParsing
 
     private
     # Define a new type of record.
-    def new_line_type(name, type, options)
+    def new_line_type(record)
         @record_types ||= {}
         @record_order ||= []
 
-        name = symbolize(name)
-
-        if @record_types.include?(name)
-            raise ArgumentError, "Line type %s is already defined" % name
+        if @record_types.include?(record.name)
+            raise ArgumentError, "Line type %s is already defined" % record.name
         end
 
-        options[:name] = name
-        options[:type] = type
-        @record_types[name] = options
-        @record_order << name
+        @record_types[record.name] = record
+        @record_order << record.name
 
-        return options
+        return record
+    end
+
+    # Retrive the record object.
+    def record_type(type)
+        @record_types[symbolize(type)]
     end
 end
 

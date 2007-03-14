@@ -123,6 +123,22 @@ class Puppet::Provider
         end
     end
 
+    # Create getter/setter methods for each property our model supports.
+    # They all get stored in @property_hash.  This method is useful
+    # for those providers that use prefetch and flush.
+    def self.mkmodelmethods
+        [model.validproperties, model.parameters].flatten.each do |attr|
+            attr = symbolize(attr)
+            define_method(attr) do
+                @property_hash[attr] || :absent
+            end
+
+            define_method(attr.to_s + "=") do |val|
+                @property_hash[attr] = val
+            end
+        end
+    end
+
     self.initvars
 
     # Check whether this implementation is suitable for our platform.
@@ -208,6 +224,7 @@ class Puppet::Provider
 
     def initialize(model)
         @model = model
+        @property_hash = {}
     end
 
     def name

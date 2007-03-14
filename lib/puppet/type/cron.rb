@@ -11,75 +11,11 @@ module Puppet
     # and is used to manage the job.
     newtype(:cron) do
 
-        # A stupid hack because Cron is the only parsed type that I haven't
-        # converted to using providers.  This whole stupid type needs to
-        # be rewritten.
-        class CronHackParam < Puppet::Property::ParsedParam
-            # Normally this would retrieve the current value, but our property is not
-            # actually capable of doing so.
-            def retrieve
-                # If we've synced, then just copy the values over and return.
-                # This allows this property to behave like any other property.
-                if defined? @synced and @synced
-                    # by default, we only copy over the first value.
-                    @is = @synced
-                    @synced = false
-                    return
-                end
-
-                unless defined? @is and ! @is.nil?
-                    @is = :absent
-                end
-            end
-
-            # If the ensure property is out of sync, it will always be called
-            # first, so I don't need to worry about that.
-            def sync(nostore = false)
-                ebase = @parent.class.name.to_s
-
-                tail = nil
-                if self.class.name == :ensure
-                    # We're either creating or destroying the object
-                    if @is == :absent
-                        #@is = self.should
-                        tail = "created"
-
-                        # If we're creating it, then sync all of the other properties
-                        # but tell them not to store (we'll store just once,
-                        # at the end).
-                        unless nostore
-                            @parent.eachproperty { |property|
-                                next if property == self or property.name == :ensure
-                                property.sync(true)
-                            }
-                        end
-                    elsif self.should == :absent
-                        @parent.remove(true)
-                        tail = "deleted"
-                    end
-                else
-                    # We don't do the work here, it gets done in 'store'
-                    tail = "changed"
-                end
-                @synced = self.should
-
-                # This should really only be done once per run, rather than
-                # every time.  I guess we need some kind of 'flush' mechanism.
-                if nostore
-                    self.retrieve
-                else
-                    @parent.store
-                end
-                
-                return (ebase + "_" + tail).intern
-            end
-        end
-
         # A base class for all of the Cron parameters, since they all have
         # similar argument checking going on.  We're stealing the base class
         # from parsedtype, and we should probably subclass Cron from there,
         # but it was just too annoying to do.
-        class CronParam < CronHackParam
+        class CronParam < Puppet::Property
             class << self
                 attr_accessor :boundaries, :default
             end
@@ -215,14 +151,6 @@ module Puppet
             end
         end
 
-
-        # Override 'newproperty' so that all properties default to having the
-        # correct parent type
-        def self.newproperty(name, options = {}, &block)
-            options[:parent] ||= Puppet::Property::CronParam
-            super(name, options, &block)
-        end
-
         # Somewhat uniquely, this property does not actually change anything -- it
         # just calls +@parent.sync+, which writes out the whole cron tab for
         # the user in question.  There is no real way to change individual cron
@@ -253,7 +181,7 @@ module Puppet
             end
         end
 
-        newproperty(:special, :parent => CronHackParam) do
+        newproperty(:special) do
             desc "Special schedules only supported on FreeBSD."
 
             def specials
@@ -268,19 +196,19 @@ module Puppet
             end
         end
 
-        newproperty(:minute) do
+        newproperty(:minute, :parent => CronParam) do
             self.boundaries = [0, 59]
             desc "The minute at which to run the cron job.
                 Optional; if specified, must be between 0 and 59, inclusive."
         end
 
-        newproperty(:hour) do
+        newproperty(:hour, :parent => CronParam) do
             self.boundaries = [0, 23]
             desc "The hour at which to run the cron job. Optional;
                 if specified, must be between 0 and 23, inclusive."
         end
 
-        newproperty(:weekday) do
+        newproperty(:weekday, :parent => CronParam) do
             def alpha
                 %w{sunday monday tuesday wednesday thursday friday saturday}
             end
@@ -290,7 +218,7 @@ module Puppet
                 0 being Sunday, or must be the name of the day (e.g., Tuesday)."
         end
 
-        newproperty(:month) do
+        newproperty(:month, :parent => CronParam) do
             def alpha
                 %w{january february march april may june july
                     august september october november december}
@@ -300,13 +228,13 @@ module Puppet
                 must be between 1 and 12 or the month name (e.g., December)."
         end
 
-        newproperty(:monthday) do
+        newproperty(:monthday, :parent => CronParam) do
             self.boundaries = [1, 31]
             desc "The day of the month on which to run the
                 command.  Optional; if specified, must be between 1 and 31."
         end
 
-        newproperty(:environment, :parent => CronHackParam) do
+        newproperty(:environment) do
             desc "Any environment settings associated with this cron job.  They
                 will be stored between the header and the job in the crontab.  There
                 can be no guarantees that other, earlier settings will not also
@@ -364,7 +292,7 @@ module Puppet
             end
         end
 
-        newparam(:user) do
+        newproperty(:user) do
             desc "The user to run the command as.  This user must
                 be allowed to run cron jobs, which is not currently checked by
                 Puppet.
@@ -372,15 +300,6 @@ module Puppet
                 The user defaults to whomever Puppet is running as."
 
             defaultto { ENV["USER"] }
-
-            def value=(value)
-                super
-
-                # Make sure the user is not an array
-                if @value.is_a? Array
-                    @value = @value[0]
-                end
-            end
         end
 
         @doc = "Installs and manages cron jobs.  All fields except the command 
@@ -405,57 +324,7 @@ module Puppet
                 }
             "
 
-        @instances = {}
-        @tabs = {}
-
-        class << self
-            attr_accessor :filetype
-
-            def cronobj(name)
-                if defined? @tabs
-                    return @tabs[name]
-                else
-                    return nil
-                end
-            end
-        end
-
         attr_accessor :uid
-
-        # In addition to removing the instances in @objects, Cron has to remove
-        # per-user cron tab information.
-        def self.clear
-            @instances = {}
-            @tabs = {}
-            super
-        end
-
-        def self.defaulttype
-            case Facter["operatingsystem"].value
-            when "Solaris":
-                return Puppet::Util::FileType.filetype(:suntab)
-            else
-                return Puppet::Util::FileType.filetype(:crontab)
-            end
-        end
-
-        self.filetype = self.defaulttype()
-
-        # Override the default Puppet::Type method, because instances
-        # also need to be deleted from the @instances hash
-        def self.delete(child)
-            if @instances.include?(child[:user])
-                if @instances[child[:user]].include?(child)
-                    @instances[child[:user]].delete(child)
-                end
-            end
-            super
-        end
-
-        # Return the fields found in the cron tab.
-        def self.fields
-            return [:minute, :hour, :monthday, :month, :weekday, :command]
-        end
 
         # Convert our hash to an object
         def self.hash2obj(hash)
@@ -506,33 +375,6 @@ module Puppet
             instance(obj)
         end
 
-        # Return the header placed at the top of each generated file, warning
-        # users that modifying this file manually is probably a bad idea.
-        def self.header
-%{# HEADER This file was autogenerated at #{Time.now} by puppet.  While it
-# HEADER can still be managed manually, it is definitely not recommended.
-# HEADER Note particularly that the comments starting with 'Puppet Name' should
-# HEADER not be deleted, as doing so could cause duplicate cron jobs.\n}
-        end
-
-        def self.instance(obj)
-            user = obj[:user]
-            unless @instances.include?(user)
-                @instances[user] = []
-            end
-
-            @instances[user] << obj
-        end
-
-        def self.list
-            # Look for cron jobs for each user
-            Puppet::Type.type(:user).list_by_name.each { |user|
-                self.retrieve(user, false)
-            }
-
-            self.collect { |c| c }
-        end
-
         # See if we can match the hash against an existing cron job.
         def self.match(hash)
             self.find_all { |obj|
@@ -578,276 +420,6 @@ module Puppet
             end
 
             return false
-        end
-
-        # Parse a user's cron job into individual cron objects.
-        #
-        # Autogenerates names for any jobs that don't already have one; these
-        # names will get written back to the file.
-        #
-        # This method also stores existing comments, and it stores all cron
-        # jobs in order, mostly so that comments are retained in the order
-        # they were written and in proximity to the same jobs.
-        def self.parse(user, text)
-            count = 0
-            hash = {}
-
-            envs = []
-            text.chomp.split("\n").each { |line|
-                case line
-                when /^# Puppet Name: (.+)$/
-                    hash[:name] = $1
-                    next
-                when /^#/:
-                    # add other comments to the list as they are
-                    @instances[user] << line 
-                    next
-                when /^\s*(\w+)\s*=\s*(.+)\s*$/:
-                    # Match env settings.
-                    if hash[:name]
-                        envs << line
-                    else
-                        @instances[user] << line 
-                    end
-                    next
-                when /^@(\w+)\s+(.+)/ # FreeBSD special cron crap
-                    fields().each do |field|
-                        next if field == :command
-                        hash[field] = :absent
-                    end
-                    hash[:special] = $1
-                    hash[:command] = $2
-                else
-                    if match = /^(\S+) (\S+) (\S+) (\S+) (\S+) (.+)$/.match(line)
-                        fields().zip(match.captures).each { |param, value|
-                            if value == "*"
-                                hash[param] = [:absent]
-                            else
-                                if param == :command
-                                    hash[param] = [value]
-                                else
-                                    # We always want the 'is' value to be an
-                                    # array
-                                    hash[param] = value.split(",")
-                                end
-                            end
-                        }
-                    else
-                        # Don't fail on unmatched lines, just warn on them
-                        # and skip them.
-                        Puppet.warning "Could not match '%s'" % line
-                        next
-                    end
-                end
-
-                unless envs.empty?
-                    # We have to dup here so that we don't remove the settings
-                    # in @is on the object.
-                    hash[:environment] = envs.dup
-                end
-
-                hash[:user] = user
-
-                # Now convert our hash to an object.
-                hash2obj(hash)
-
-                hash = {}
-                envs.clear
-                count += 1
-            }
-        end
-
-        # Retrieve a given user's cron job, using the @filetype's +retrieve+
-        # method.  Returns nil if there was no cron job; else, returns the
-        # number of cron instances found.
-        def self.retrieve(user, checkuser = true)
-            # First make sure the user exists, unless told not to
-            if checkuser
-                begin
-                    Puppet::Util.uid(user)
-                rescue ArgumentError
-                    raise Puppet::Error,  "User %s not found" % user
-                end
-            end
-
-            @tabs[user] ||= @filetype.new(user)
-            text = @tabs[user].read
-            if $? != 0
-                # there is no cron file
-                return nil
-            else
-                # Preemptively mark everything absent, so that retrieving it
-                # can mark it present again.
-                self.find_all { |obj|
-                    obj[:user] == user
-                }.each { |obj|
-                    obj.is = [:ensure, :absent]
-                }
-
-                # Get rid of the old instances, so we don't get duplicates
-                if @instances.include?(user)
-                    @instances[user].clear
-                else
-                    @instances[user] = []
-                end
-
-                self.parse(user, text)
-            end
-        end
-
-        # Remove a user's cron tab.
-        def self.remove(user)
-            @tabs[user] ||= @filetype.new(user)
-            @tabs[user].remove
-        end
-
-        # Store the user's cron tab.  Collects the text of the new tab and
-        # sends it to the +@filetype+ module's +write+ function.  Also adds
-        # header, warning users not to modify the file directly.
-        def self.store(user)
-            unless @instances.include?(user) or @objects.find do |n,o|
-                o[:user] == user
-            end
-                Puppet.notice "No cron instances for %s" % user
-                return
-            end
-
-            @tabs[user] ||= @filetype.new(user)
-
-            self.each do |inst|
-                next unless inst[:user] == user
-                unless (@instances[user] and @instances[user].include? inst)
-                    @instances[user] ||= []
-                    @instances[user] << inst
-                end
-            end
-            @tabs[user].write(self.tab(user))
-        end
-
-        # Collect all Cron instances for a given user and convert them
-        # into literal text.
-        def self.tab(user)
-            Puppet.info "Writing cron tab for %s" % user
-            if @instances.include?(user)
-                tab = @instances[user].reject { |obj|
-                    if obj.is_a?(self) and obj.should(:ensure) == :absent
-                        true
-                    else
-                        false
-                    end
-                }.collect { |obj|
-                    if obj.is_a? self
-                        obj.to_record
-                    else
-                        obj.to_s
-                    end
-                }.join("\n") + "\n"
-
-                # Apparently Freebsd will "helpfully" add a new TZ line to every
-                # single cron line, but not in all cases (e.g., it doesn't do it
-                # on my machine.  This is my attempt to fix it so the TZ lines don't
-                # multiply.
-                if tab =~ /^TZ=.+$/
-                    return tab.sub(/\n/, "\n" + self.header)
-                else
-                    return self.header() + tab
-                end
-
-            else
-                Puppet.notice "No cron instances for %s" % user
-            end
-        end
-
-        # Return the tab object itself.  Pretty much just used for testing.
-        def self.tabobj(user)
-            @tabs[user]
-        end
-
-        # Return the last time a given user's cron tab was loaded.  Could
-        # be used for reducing writes, but currently is not.
-        def self.loaded?(user)
-            if @tabs.include?(user)
-                return @loaded[user].loaded
-            else
-                return nil
-            end
-        end
-
-        def create
-            # nothing
-            self.store
-        end
-
-        def destroy
-            # nothing, since the 'Cron.tab' method just doesn't write out
-            # crons whose 'ensure' states are set to 'absent'.
-            self.store
-        end
-
-        def exists?
-            obj = @parameters[:ensure] and obj.is == :present
-        end
-
-        # Override the default Puppet::Type method because we need to call
-        # the +@filetype+ retrieve method.
-        def retrieve
-            unless @parameters.include?(:user)
-                self.fail "You must specify the cron user"
-            end
-
-            self.class.retrieve(self[:user])
-            self.eachproperty { |st|
-                st.retrieve
-            }
-        end
-
-        # Write the entire user's cron tab out.
-        def store
-            self.class.store(self[:user])
-        end
-
-        # Convert the current object a cron-style string.  Adds the cron name
-        # as a comment above the cron job, in the form '# Puppet Name: <name>'.
-        def to_record
-            hash = {}
-
-            # Collect all of the values that we have
-            self.class.fields().each { |param|
-                hash[param] = self.value(param)
-
-                unless hash[param]
-                    devfail "Got no value for %s" % param
-                end
-            }
-
-            str = ""
-
-            str = "# Puppet Name: %s\n" % self.name
-
-            if env = @parameters[:environment] and env.should != :absent
-                envs = env.should
-                unless envs.is_a? Array
-                    envs = [envs]
-                end
-
-                envs.each do |line| str += (line + "\n") end
-            end
-
-            line = nil
-            if special = self.value(:special)
-                line = str + "@%s %s" %
-                    [special, self.value(:command)]
-            else
-                line = str + self.class.fields.collect { |f|
-                    if hash[f] and hash[f] != :absent
-                        hash[f]
-                    else
-                        "*"
-                    end
-                }.join(" ")
-            end
-
-            return line
         end
 
         def value(name)
