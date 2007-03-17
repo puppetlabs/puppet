@@ -39,6 +39,11 @@ class TestMasterClient < Test::Unit::TestCase
         end
     end
 
+    def setup
+        super
+        @master = Puppet::Network::Client.master
+    end
+
     def mkmaster(file = nil)
         master = nil
 
@@ -524,6 +529,21 @@ end
         # Make sure we've got schedules
         assert(Puppet::Type.type(:schedule)["hourly"], "Could not retrieve hourly schedule")
         assert(Puppet::Type.type(:filebucket)["puppet"], "Could not retrieve default bucket")
+    end
+
+    # #540 - make sure downloads aren't affected by noop
+    def test_download_in_noop
+        source = tempfile
+        File.open(source, "w") { |f| f.puts "something" }
+        dest = tempfile
+        Puppet[:noop] = true
+        assert_nothing_raised("Could not download in noop") do
+            @master.download(:dest => dest, :source => source, :tag => "yay")
+        end
+
+        assert(FileTest.exists?(dest), "did not download in noop mode")
+
+        assert(Puppet[:noop], "noop got disabled in run")
     end
 end
 

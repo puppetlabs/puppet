@@ -356,6 +356,9 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         
         Puppet.info "Retrieving #{args[:name]}s"
 
+        noop = Puppet[:noop]
+        Puppet[:noop] = false
+
         begin
             trans = objects.evaluate
             trans.ignoretags = true
@@ -381,6 +384,8 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         # Now clean up after ourselves
         objects.remove
         files
+    ensure
+        Puppet[:noop] = noop
     end
 
     # Retrieve facts from the central server.
