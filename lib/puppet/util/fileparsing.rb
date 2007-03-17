@@ -75,6 +75,25 @@ module Puppet::Util::FileParsing
             end
         end
 
+        # Convert a record into a line by joining the fields together appropriately.
+        # This is pulled into a separate method so it can be called by the hooks.
+        def join(details)
+            joinchar = self.joiner
+
+            fields.collect { |field|
+                # If the field is marked absent, use the appropriate replacement
+                if details[field] == :absent or details[field].nil?
+                    if self.optional.include?(field)
+                        self.absent
+                    else
+                        raise ArgumentError, "Field %s is required" % field
+                    end
+                else
+                    details[field].to_s
+                end
+            }.reject { |c| c.nil?}.join(joinchar)
+        end
+
         # Customize this so we can do a bit of validation.
         def optional=(optional)
             @optional = optional.collect do |field|
@@ -90,6 +109,10 @@ module Puppet::Util::FileParsing
         # Create a hook that modifies the hash just prior to generation.
         def pre_gen=(block)
             meta_def(:pre_gen, &block)
+        end
+
+        def to_line=(block)
+            meta_def(:to_line, &block)
         end
     end
 
@@ -118,28 +141,25 @@ module Puppet::Util::FileParsing
 
     # Try to match a record.
     def handle_record_line(line, record)
+        ret = nil
         if record.respond_to?(:process)
             if ret = record.send(:process, line.dup)
                 unless ret.is_a?(Hash)
                     raise Puppet::DevError,
                         "Process record type %s returned non-hash" % record.name
                 end
-                ret[:record_type] = record.name
-                return ret
             else
                 return nil
             end
         elsif regex = record.match
-            raise "Cannot use matches to handle records yet"
             # In this case, we try to match the whole line and then use the
             # match captures to get our fields.
             if match = regex.match(line)
                 fields = []
-                ignore = record.ignore || []
-                match.captures.each_with_index do |value, i|
-                    fields << value unless ignore.include? i
+                ret = {}
+                record.fields.zip(match.captures).each do |f, v|
+                    ret[f] = v
                 end
-                nil
             else
                 Puppet.info "Did not match %s" % line
                 nil
@@ -168,8 +188,13 @@ module Puppet::Util::FileParsing
                 val = ([ret[last_field]] + line_fields).join(record.joiner)
                 ret[last_field] = val
             end
+        end
+
+        if ret
             ret[:record_type] = record.name
             return ret
+        else
+            return nil
         end
     end
 
@@ -200,13 +225,7 @@ module Puppet::Util::FileParsing
             raise Puppet::DevError, "No record types defined; cannot parse lines"
         end
 
-        @record_order.each do |name|
-            record = record_type(name)
-            unless record
-                raise Puppet::DevError, "Did not get record type for %s: %s" %
-                    [name, @record_types.inspect]
-            end
-
+        @record_order.each do |record|
             # These are basically either text or record lines.
             method = "handle_%s_line" % record.type
             if respond_to?(method)
@@ -290,20 +309,11 @@ module Puppet::Util::FileParsing
         case record.type
         when :text: return details[:line]
         else
-            joinchar = record.joiner
+            if record.respond_to?(:to_line)
+                return record.to_line(details)
+            end
 
-            line = record.fields.collect { |field|
-                # If the field is marked absent, use the appropriate replacement
-                if details[field] == :absent or details[field].nil?
-                    if record.optional.include?(field)
-                        record.absent
-                    else
-                        raise ArgumentError, "Field %s is required" % field
-                    end
-                else
-                    details[field].to_s
-                end
-            }.reject { |c| c.nil?}.join(joinchar)
+            line = record.join(details)
 
             if regex = record.rts
                 # If they say true, then use whitespace; else, use their regex.
@@ -340,6 +350,7 @@ module Puppet::Util::FileParsing
     end
 
     private
+
     # Define a new type of record.
     def new_line_type(record)
         @record_types ||= {}
@@ -350,7 +361,7 @@ module Puppet::Util::FileParsing
         end
 
         @record_types[record.name] = record
-        @record_order << record.name
+        @record_order << record
 
         return record
     end

@@ -564,7 +564,8 @@ billy three four\n"
         assert_nothing_raised("Could not set hooks") do
             record = @parser.record_line :yay, :fields => %w{one two},
                 :post_parse => proc { |hash| hash[:posted] = true },
-                :pre_gen => proc { |hash| hash[:one] = hash[:one].upcase }
+                :pre_gen => proc { |hash| hash[:one] = hash[:one].upcase },
+                :to_line => proc { |hash| "# Line\n" + join(hash) }
         end
 
         assert(record.respond_to?(:post_parse), "did not create method for post-hook")
@@ -582,7 +583,7 @@ billy three four\n"
         assert_nothing_raised("Could not generate line with hooks") do
             result = @parser.to_line(result)
         end
-        assert_equal("ONE two", result, "did not call pre-gen hook")
+        assert_equal("# Line\nONE two", result, "did not call pre-gen hook")
         assert_equal("one", old_result[:one], "passed original hash to pre hook")
     end
 end

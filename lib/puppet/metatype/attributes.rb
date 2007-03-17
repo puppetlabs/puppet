@@ -22,8 +22,11 @@ class Puppet::Type
         namevar = self.namevar
 
         order = [namevar]
+        if self.parameters.include?(:provider)
+            order << :provider
+        end
         order << [self.properties.collect { |property| property.name },
-            self.parameters,
+            self.parameters - [:provider],
             self.metaparams].flatten.reject { |param|
                 # we don't want our namevar in there multiple times
                 param == namevar
@@ -32,6 +35,19 @@ class Puppet::Type
         order.flatten!
 
         return order
+    end
+
+    # Retrieve an attribute alias, if there is one.
+    def self.attr_alias(param)
+        @attr_aliases[symbolize(param)]
+    end
+
+    # Create an alias to an existing attribute.  This will cause the aliased
+    # attribute to be valid when setting and retrieving values on the instance.
+    def self.set_attr_alias(hash)
+        hash.each do |new, old|
+            @attr_aliases[symbolize(new)] = symbolize(old)
+        end
     end
 
     # Find the class associated with any given attribute.
@@ -409,6 +425,16 @@ class Puppet::Type
 
         return hash
     end
+
+    # Return either the attribute alias or the attribute.
+    def attr_alias(name)
+        name = symbolize(name)
+        if synonym = self.class.attr_alias(name)
+            return synonym
+        else
+            return name
+        end
+    end
     
     # Are we deleting this resource?
     def deleting?
@@ -420,9 +446,7 @@ class Puppet::Type
     # Most classes won't use this.
     def is=(ary)
         param, value = ary
-        if param.is_a?(String)
-            param = param.intern
-        end
+        param = attr_alias(param)
         if self.class.validproperty?(param)
             unless prop = @parameters[param]
                 prop = self.newattr(param)
@@ -439,16 +463,14 @@ class Puppet::Type
     # value, but you can also specifically return 'is' and 'should'
     # values using 'object.is(:property)' or 'object.should(:property)'.
     def [](name)
-        if name.is_a?(String)
-            name = name.intern
+        name = attr_alias(name)
+
+        unless self.class.validattr?(name)
+            raise TypeError.new("Invalid parameter %s(%s)" % [name, name.inspect])
         end
 
         if name == :name
             name = self.class.namevar
-        end
-
-        unless self.class.validattr?(name)
-            raise TypeError.new("Invalid parameter %s(%s)" % [name, name.inspect])
         end
 
         if obj = @parameters[name]
@@ -466,10 +488,11 @@ class Puppet::Type
     # access to always be symbols, not strings.  This sets the 'should'
     # value on properties, and otherwise just sets the appropriate parameter.
     def []=(name,value)
+        name = attr_alias(name)
+
         unless self.class.validattr?(name)
             raise TypeError.new("Invalid parameter %s" % [name])
         end
-        name = symbolize(name)
 
         if name == :name
             name = self.class.namevar
@@ -516,7 +539,8 @@ class Puppet::Type
 
     # retrieve the 'is' value for a specified property
     def is(name)
-        if prop = @parameters[symbolize(name)] and prop.is_a?(Puppet::Type::Property)
+        name = attr_alias(name)
+        if prop = @parameters[name] and prop.is_a?(Puppet::Type::Property)
             return prop.is
         else
             return nil
@@ -525,7 +549,8 @@ class Puppet::Type
 
     # retrieve the 'should' value for a specified property
     def should(name)
-        if prop = @parameters[symbolize(name)] and prop.is_a?(Puppet::Type::Property)
+        name = attr_alias(name)
+        if prop = @parameters[name] and prop.is_a?(Puppet::Type::Property)
             return prop.should
         else
             return nil
@@ -634,7 +659,8 @@ class Puppet::Type
 
     # Return a specific value for an attribute.
     def value(name)
-        name = symbolize(name)
+        name = attr_alias(name)
+
         if obj = @parameters[name] and obj.respond_to?(:value)
             return obj.value
         else

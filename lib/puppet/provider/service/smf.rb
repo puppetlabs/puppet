@@ -54,6 +54,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
                 value = $2
             else
                 Puppet.err "Could not match %s" % line.inspect
+                next
             end
             case var
             when "state":

@@ -1,4 +1,13 @@
 0.22.2 (grover)
+    Refactored cron support entirely.  Cron now uses providers, and there
+    is a single 'crontab' provider that handles user crontabs.  While this
+    refactor does not include providers for /etc/crontab or cron.d, it should
+    now be straightforward to write those providers.
+
+    Changed the parameter sorting so that the provider parameter comes
+    right after name, so the provider is available when the other parameters
+    and properties are being created.
+
     Redid some of the internals of the ParsedFile provider base class.
     It now passes a FileRecord around instead of a hash.
 

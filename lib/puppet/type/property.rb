@@ -201,11 +201,15 @@ class Property < Puppet::Parameter
                     return event
                 end
             else
-                event = case self.should
-                when :present: (@parent.class.name.to_s + "_created").intern
-                when :absent: (@parent.class.name.to_s + "_removed").intern
+                if self.class.name == :ensure
+                    event = case self.should
+                    when :present: (@parent.class.name.to_s + "_created").intern
+                    when :absent: (@parent.class.name.to_s + "_removed").intern
+                    else
+                        (@parent.class.name.to_s + "_changed").intern
+                    end
                 else
-                    (@parent.class.name.to_s + "_changed").intern
+                    event = (@parent.class.name.to_s + "_changed").intern
                 end
             end
         end

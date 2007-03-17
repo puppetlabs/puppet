@@ -324,9 +324,9 @@ module Util
                         Process.uid = uid unless @@os == "Darwin"
                     end
                     if command.is_a?(Array)
-                        system(*command)
+                        Kernel.exec(*command)
                     else
-                        system(command)
+                        Kernel.exec(command)
                     end
                     exit!($?.exitstatus)
                 rescue => detail

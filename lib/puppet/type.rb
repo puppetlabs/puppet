@@ -73,6 +73,8 @@ class Type < Puppet::Element
         @parameters = []
         @paramhash = {}
 
+        @attr_aliases = {}
+
         @paramdoc = Hash.new { |hash,key|
           if key.is_a?(String)
             key = key.intern

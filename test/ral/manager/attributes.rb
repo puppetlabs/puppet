@@ -182,6 +182,51 @@ class TestTypeAttributes < Test::Unit::TestCase
         end
         assert_equal(false, inst[:falsetest], "false default was not set")
     end
+
+    def test_alias_parameter
+        type = mktype
+        type.newparam(:name) {}
+        type.newparam(:one) {}
+        type.newproperty(:two) {}
+        
+        aliases = {
+            :three => :one,
+            :four => :two
+        }
+        aliases.each do |new, old|
+            assert_nothing_raised("Could not create alias parameter %s" % new) do
+                type.set_attr_alias new => old
+            end
+        end
+
+        aliases.each do |new, old|
+            assert_equal(old, type.attr_alias(new), "did not return alias info for %s" %
+                new)
+        end
+
+        assert_nil(type.attr_alias(:name), "got invalid alias info for name")
+
+        inst = type.create(:name => "my name")
+        assert(inst, "could not create instance")
+
+        aliases.each do |new, old|
+            val = "value %s" % new
+            assert_nothing_raised do
+                inst[new] = val
+            end
+
+            case old
+            when :one: # param
+                assert_equal(val, inst[new],
+                    "Incorrect alias value for %s in []" % new)
+            else
+                assert_equal(val, inst.should(new),
+                    "Incorrect alias value for %s in should" % new)
+            end
+            assert_equal(val, inst.value(new), "Incorrect alias value for %s" % new)
+            assert_equal(val, inst.value(old), "Incorrect orig value for %s" % old)
+        end
+    end
 end
 
 # $Id$

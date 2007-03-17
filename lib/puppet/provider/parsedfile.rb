@@ -80,9 +80,10 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     # Flush all of the records relating to a specific target.
     def self.flush_target(target)
-        target_object(target).write(to_file(target_records(target).reject { |r|
+        records = target_records(target).reject { |r|
             r[:ensure] == :absent
-        }))
+        }
+        target_object(target).write(to_file(records))
     end
 
     # Return the header placed at the top of each generated file, warning
@@ -101,7 +102,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         @target = nil
 
         # Default to flat files
-        @filetype = Puppet::Util::FileType.filetype(:flat)
+        @filetype ||= Puppet::Util::FileType.filetype(:flat)
         super
     end
 
@@ -191,7 +192,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         end
 
         if respond_to?(:prefetch_hook)
-            prefetch_hook(target_records)
+            target_records = prefetch_hook(target_records)
         end
 
         @records += target_records
@@ -202,8 +203,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             if instance = self.model[record[:name]]
                 next unless instance.provider.is_a?(self)
                 instance.provider.property_hash = record
-            elsif self.respond_to?(:match)
-                if instance = self.match(record)
+            elsif respond_to?(:match)
+                if instance = match(record)
                     record[:name] = instance[:name]
                     instance.provider.property_hash = record
                 end
@@ -268,6 +269,12 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
         targets.uniq.reject { |t| t.nil? }
     end
+
+    def self.to_file(records)
+        text = super
+        header + text
+    end
+
 
     def create
         @model.class.validproperties.each do |property|

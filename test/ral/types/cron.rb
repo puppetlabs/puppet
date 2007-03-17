@@ -3,18 +3,38 @@
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
+require 'spec'
 
 # Test cron job creation, modification, and destruction
 
 class TestCron < Test::Unit::TestCase
 	include PuppetTest
+
     def setup
         super
 
         setme()
 
-        # god i'm lazy
-        @crontype = Puppet.type(:cron)
+        @crontype = Puppet::Type.type(:cron)
+        @provider = @crontype.defaultprovider
+        if @provider.respond_to?(:filetype=)
+            @oldfiletype = @provider.filetype
+            @provider.filetype = :ram
+        end
+        @crontype = Puppet::Type.type(:cron)
+    end
+
+    def teardown
+        @crontype.defaultprovider = nil
+        if defined? @oldfiletype
+            @provider.filetype = @oldfiletype
+        end
+    end
+
+    def eachprovider
+        @crontype.suitableprovider.each do |provider|
+            yield provider
+        end
     end
 
     # Back up the user's existing cron tab if they have one.
@@ -76,6 +96,7 @@ class TestCron < Test::Unit::TestCase
         comp = newcomp(name, cron)
 
         assert_events([:cron_created], comp)
+        cron.provider.class.prefetch
         cron.retrieve
 
         assert(cron.insync?, "Cron is not in sync")
@@ -92,186 +113,46 @@ class TestCron < Test::Unit::TestCase
 
         assert_events([:cron_removed], comp)
 
+        cron.provider.class.prefetch
         cron.retrieve
 
         assert(cron.insync?, "Cron is not in sync")
         assert_events([], comp)
     end
 
-    # Test that a cron job turns out as expected, by creating one and generating
-    # it directly
-    def test_simple_to_cron
-        cron = nil
-        # make the cron
-        name = "yaytest"
-        assert_nothing_raised {
-            cron = @crontype.create(
-                :name => name,
-                :command => "date > /dev/null",
-                :user => @me
-            )
-        }
-        str = nil
-        # generate the text
-        assert_nothing_raised {
-            str = cron.to_record
-        }
-
-        assert_equal(str, "# Puppet Name: #{name}\n* * * * * date > /dev/null",
-            "Cron did not generate correctly")
-    end
-
-    def test_simpleparsing
-        @fakefiletype = Puppet::Util::FileType.filetype(:ram)
-        @crontype.filetype = @fakefiletype
-
-        @crontype.retrieve(@me)
-        obj = Puppet::Type::Cron.cronobj(@me)
-
-        text = "5 1,2 * 1 0 /bin/echo funtest"
-
-        assert_nothing_raised {
-            @crontype.parse(@me, text)
-        }
-
-        @crontype.each do |obj|
-            assert_equal(["5"], obj.is(:minute), "Minute was not parsed correctly")
-            assert_equal(["1", "2"], obj.is(:hour), "Hour was not parsed correctly")
-            assert_equal([:absent], obj.is(:monthday), "Monthday was not parsed correctly")
-            assert_equal(["1"], obj.is(:month), "Month was not parsed correctly")
-            assert_equal(["0"], obj.is(:weekday), "Weekday was not parsed correctly")
-            assert_equal(["/bin/echo funtest"], obj.is(:command), "Command was not parsed correctly")
-        end
-    end
-
-    # Test that changing any field results in the cron tab being rewritten.
-    # it directly
-    def test_any_field_changes
-        cron = nil
-        # make the cron
-        name = "yaytest"
-        assert_nothing_raised {
-            cron = @crontype.create(
-                :name => name,
-                :command => "date > /dev/null",
-                :month => "May",
-                :user => @me
-            )
-        }
-        assert(cron, "Cron did not get created")
-        comp = newcomp(cron)
-        assert_events([:cron_created], comp)
-
-        assert_nothing_raised {
-            cron[:month] = "June"
-        }
-
-        cron.retrieve
-
-        assert_events([:cron_changed], comp)
-    end
-
     # Test that a cron job with spaces at the end doesn't get rewritten
     def test_trailingspaces
-        cron = nil
-        # make the cron
-        name = "yaytest"
-        assert_nothing_raised {
-            cron = @crontype.create(
-                :name => name,
-                :command => "date > /dev/null ",
-                :month => "May",
-                :user => @me
-            )
-        }
-        comp = newcomp(cron)
+        eachprovider do |provider|
+            cron = nil
+            # make the cron
+            name = "yaytest"
+            command = "date > /dev/null "
+            assert_nothing_raised {
+                cron = @crontype.create(
+                    :name => name,
+                    :command => "date > /dev/null ",
+                    :month => "May",
+                    :user => @me
+                )
+            }
+            property = cron.send(:property, :command)
+            cron.provider.command = command
+            cron.provider.class.prefetch
+            cron.retrieve
 
-        assert_events([:cron_created], comp, "did not create cron job")
-        cron.retrieve
-        assert_events([], comp, "cron job got rewritten")
-    end
-    
-    # Test that comments are correctly retained
-    def test_retain_comments
-        str = "# this is a comment\n#and another comment\n"
-        user = "fakeuser"
-        @crontype.retrieve(@me)
-        assert_nothing_raised {
-            @crontype.parse(@me, str)
-        }
-
-        assert_nothing_raised {
-            newstr = @crontype.tab(@me)
-            assert(newstr.include?(str), "Comments were lost")
-        }
-    end
-
-    # Test that a specified cron job will be matched against an existing job
-    # with no name, as long as all fields match
-    def test_matchcron
-        str = "0,30 * * * * date\n"
-
-        assert_nothing_raised {
-            cron = @crontype.create(
-                :name => "yaycron",
-                :minute => [0, 30],
-                :command => "date",
-                :user => @me
-            )
-        }
-
-        assert_nothing_raised {
-            @crontype.parse(@me, str)
-        }
-
-        count = @crontype.inject(0) do |c, obj|
-            c + 1
+            assert(property.insync?, "command parsing removes trailing whitespace")
+            @crontype.clear
         end
-
-        assert_equal(1, count, "Did not match cron job")
-
-        modstr = "# Puppet Name: yaycron\n%s" % str
-
-        assert_nothing_raised {
-            newstr = @crontype.tab(@me)
-            assert(newstr.include?(modstr),
-                "Cron was not correctly matched")
-        }
-    end
-
-    # Test adding a cron when there is currently no file.
-    def test_mkcronwithnotab
-        tab = @fakefiletype.new(@me)
-        tab.remove
-
-        @crontype.retrieve(@me)
-        cron = mkcron("testwithnotab")
-        cyclecron(cron)
-    end
-
-    def test_mkcronwithtab
-        @crontype.retrieve(@me)
-        obj = Puppet::Type::Cron.cronobj(@me)
-        obj.write(
-"1 1 1 1 * date > %s/crontesting\n" % tstdir()
-        )
-
-        cron = mkcron("testwithtab")
-        cyclecron(cron)
     end
 
     def test_makeandretrievecron
-        tab = @fakefiletype.new(@me)
-        tab.remove
-
         %w{storeandretrieve a-name another-name more_naming SomeName}.each do |name|
             cron = mkcron(name)
             comp = newcomp(name, cron)
             trans = assert_events([:cron_created], comp, name)
             
+            cron.provider.class.prefetch
             cron = nil
-
-            Puppet.type(:cron).retrieve(@me)
 
             assert(cron = Puppet.type(:cron)[name], "Could not retrieve named cron")
             assert_instance_of(Puppet.type(:cron), cron)
@@ -336,78 +217,80 @@ class TestCron < Test::Unit::TestCase
         }
     end
 
-    # Test that we can read and write cron tabs
-    def test_crontab
-        Puppet.type(:cron).filetype = Puppet.type(:cron).defaulttype
-        type = nil
-        unless type = Puppet.type(:cron).filetype
-            $stderr.puts "No crontab type; skipping test"
-        end
-
-        obj = nil
-        assert_nothing_raised {
-            obj = type.new(Puppet::Util::SUIDManager.uid)
-        }
-
-        txt = nil
-        assert_nothing_raised {
-            txt = obj.read
-        }
-
-        assert_nothing_raised {
-            obj.write(txt)
-        }
-    end
-
     # Verify that comma-separated numbers are not resulting in rewrites
-    def test_norewrite
-        cron = nil
-        assert_nothing_raised {
-            cron = Puppet.type(:cron).create(
-                :command => "/bin/date > /dev/null",
-                :minute => [0, 30],
-                :name => "crontest"
-            )
-        }
+    def test_comma_separated_vals_work
+        eachprovider do |provider|
+            cron = nil
+            assert_nothing_raised {
+                cron = @crontype.create(
+                    :command => "/bin/date > /dev/null",
+                    :minute => [0, 30],
+                    :name => "crontest",
+                    :provider => provider.name
+                )
+            }
 
-        assert_events([:cron_created], cron)
-        cron.retrieve
-        assert_events([], cron)
+            minute = cron.send(:property, :minute)
+            cron.provider.minute = %w{0 30}
+            cron.provider.class.prefetch
+            cron.retrieve
+
+            assert(minute.insync?, "minute is out of sync with %s" % provider.name)
+            @crontype.clear
+        end
     end
 
     def test_fieldremoval
         cron = nil
         assert_nothing_raised {
-            cron = Puppet.type(:cron).create(
+            cron = @crontype.create(
                 :command => "/bin/date > /dev/null",
                 :minute => [0, 30],
-                :name => "crontest"
+                :name => "crontest",
+                :provider => :crontab
             )
         }
 
         assert_events([:cron_created], cron)
+        cron.provider.class.prefetch
 
         cron[:minute] = :absent
         assert_events([:cron_changed], cron)
         assert_nothing_raised {
+            cron.provider.class.prefetch
             cron.retrieve
         }
         assert_equal(:absent, cron.is(:minute))
     end
 
     def test_listing
-        @crontype.filetype = @oldfiletype
+        # Make a crontab cron for testing
+        provider = @crontype.provider(:crontab)
+        return unless provider.suitable?
+
+        ft = provider.filetype
+        provider.filetype = :ram
+        cleanup { provider.filetype = ft }
+
+        setme
+        cron = @crontype.create(:name => "testing",
+            :minute => [0, 30],
+            :command => "/bin/testing",
+            :user => @me
+        )
+        # Write it to our file
+        assert_apply(cron)
 
         crons = []
         assert_nothing_raised {
-            Puppet::Type.type(:cron).list.each do |cron|
+            @crontype.list.each do |cron|
                 crons << cron
             end
         }
 
         crons.each do |cron|
-            assert(cron, "Did not receive a real cron object")
-            assert_instance_of(String, cron[:user],
+            assert_instance_of(@crontype, cron, "Did not receive a real cron object")
+            assert_instance_of(String, cron.value(:user),
                 "Cron user is not a string")
         end
     end
@@ -434,61 +317,13 @@ class TestCron < Test::Unit::TestCase
         end
     end
 
-    # Make sure we don't puke on env settings
-    def test_envsettings
-        cron = mkcron("envtst")
-
-        assert_apply(cron)
-
-        obj = Puppet::Type::Cron.cronobj(@me)
-
-        assert(obj)
-
-        text = obj.read
-
-        text = "SHELL = /path/to/some/thing\n" + text
-
-        obj.write(text)
-
-        assert_nothing_raised {
-            cron.retrieve
-        }
-
-        cron[:command] = "/some/other/command"
-
-        assert_apply(cron)
-
-        assert(obj.read =~ /SHELL/, "lost env setting")
-
-        env1 = "TEST = /bin/true"
-        env2 = "YAY = fooness"
-        assert_nothing_raised {
-            cron[:environment] = [env1, env2]
-        }
-
-        assert_apply(cron)
-
-        cron.retrieve
-
-        vals = cron.is(:environment)
-        assert(vals, "Did not get environment settings")
-        assert(vals != :absent, "Env is incorrectly absent")
-        assert_instance_of(Array, vals)
-
-        assert(vals.include?(env1), "Missing first env setting")
-        assert(vals.include?(env2), "Missing second env setting")
-
-        # Now do it again and make sure there are no changes
-        assert_events([], cron)
-
-    end
-
     def test_divisionnumbers
         cron = mkcron("divtest")
         cron[:minute] = "*/5"
 
         assert_apply(cron)
 
+        cron.provider.class.prefetch
         cron.retrieve
 
         assert_equal(["*/5"], cron.is(:minute))
@@ -500,47 +335,10 @@ class TestCron < Test::Unit::TestCase
 
         assert_apply(cron)
 
+        cron.provider.class.prefetch
         cron.retrieve
 
         assert_equal(["2-4"], cron.is(:minute))
-    end
-
-    def test_data
-        @fakefiletype = Puppet::Util::FileType.filetype(:ram)
-        @crontype.filetype = @fakefiletype
-
-        @crontype.retrieve(@me)
-        obj = Puppet::Type::Cron.cronobj(@me)
-
-        fakedata("data/types/cron").each do |file|
-            names = []
-            text = File.read(file)
-            obj.write(File.read(file))
-
-            @crontype.retrieve(@me)
-
-            @crontype.each do |cron|
-                names << cron.name
-            end
-
-            name = File.basename(file)
-            cron = mkcron("filetest-#{name}")
-
-            assert_apply(cron)
-
-            @crontype.retrieve(@me)
-
-            names.each do |name|
-                assert(@crontype[name], "Could not retrieve %s" % name)
-            end
-
-            tablines = @crontype.tab(@me).split("\n")
-
-            text.split("\n").each do |line|
-                assert(tablines.include?(line),
-                    "Did not get %s back out" % line.inspect)
-            end
-        end
     end
 
     def test_value
@@ -591,6 +389,8 @@ class TestCron < Test::Unit::TestCase
             assert_equal("4,5", cron.value(param))
         end
 
+        Puppet[:trace] = false
+
         # Now make sure that :command works correctly
         cron.delete(:command)
         cron.newattr(:command)
@@ -632,71 +432,6 @@ class TestCron < Test::Unit::TestCase
         assert_equal("4", cron.value(param))
     end
 
-    # Make sure we can successfully list all cron jobs on all users
-    def test_cron_listing
-        crons = []
-        %w{fake1 fake2 fake3 fake4 fake5}.each do |user|
-            crons << @crontype.create(
-                :name => "#{user}-1",
-                :command => "/usr/bin/#{user}",
-                :minute => "0",
-                :user => user,
-                :hour => user.sub("fake",'')
-            )
-
-            crons << @crontype.create(
-                :name => "#{user}-2",
-                :command => "/usr/sbin/#{user}",
-                :minute => "0",
-                :user => user,
-                :weekday => user.sub("fake",'')
-            )
-
-            assert_apply(*crons)
-        end
-
-        list = @crontype.list.collect { |c| c.name }
-
-        crons.each do |cron|
-            assert(list.include?(cron.name), "Did not match cron %s" % name)
-        end
-    end
-
-    # Make sure we can create a cron in an empty tab
-    def test_mkcron_if_empty
-        @crontype.filetype = @oldfiletype
-
-        @crontype.retrieve(@me)
-
-        # Backup our tab
-        text = @crontype.tabobj(@me).read
-
-        cleanup do
-            if text == ""
-                @crontype.tabobj(@me).remove
-            else
-                @crontype.tabobj(@me).write(text)
-            end
-        end
-
-        # Now get rid of it
-        @crontype.tabobj(@me).remove
-        @crontype.clear
-
-        cron = mkcron("emptycron")
-
-        assert_apply(cron)
-
-        # Clear the type, but don't clear the filetype
-        @crontype.clear
-
-        # Get the stuff again
-        @crontype.retrieve(@me)
-
-        assert(@crontype["emptycron"],
-            "Did not retrieve cron")
-    end
-
     def test_multiple_users
         crons = []
         users = ["root", nonrootuser.name]
@@ -708,18 +443,43 @@ class TestCron < Test::Unit::TestCase
                 :minute => [0,30]
             )
         end
+        provider = crons[0].provider.class
 
         assert_apply(*crons)
 
         users.each do |user|
             users.each do |other|
                 next if user == other
-                assert(Puppet::Type.type(:cron).tabobj(other).read !~ /testcron-#{user}/,
+                text = provider.target_object(other).read
+
+                assert(text !~ /testcron-#{user}/,
                        "%s's cron job is in %s's tab" %
                        [user, other])
             end
         end
     end
+
+    # Make sure the user stuff defaults correctly.
+    def test_default_user
+        crontab = @crontype.provider(:crontab)
+        if crontab.suitable?
+            inst = @crontype.create(
+                :name => "something", :command => "/some/thing",
+                :provider => :crontab)
+            assert_equal(ENV["USER"], inst.should(:user),
+                "user did not default to current user with crontab")
+            assert_equal(ENV["USER"], inst.should(:target),
+                "target did not default to current user with crontab")
+
+            # Now make a new cron with a user, and make sure it gets copied
+            # over
+            inst = @crontype.create(:name => "yay", :command => "/some/thing",
+                :user => "bin", :provider => :crontab)
+            assert_equal("bin", inst.should(:target),
+                "target did not default to user with crontab")
+        end
+    end
 end
+
 
 # $Id$
