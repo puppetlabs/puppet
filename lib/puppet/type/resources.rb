@@ -107,6 +107,10 @@ Puppet::Type.newtype(:resources) do
                 next unless param.metaparam?
                 resource[name] = param.value
             end
+
+            # Mark that we're purging, so transactions can handle relationships
+            # correctly
+            resource.purging
         end
     end
     

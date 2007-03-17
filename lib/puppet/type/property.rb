@@ -305,8 +305,11 @@ class Property < Puppet::Parameter
         unless defined? @noop
             @noop = false
         end
-        tmp = @noop || self.parent.noop || Puppet[:noop] || false
-        #debug "noop is %s" % tmp
+        if self.parent.respond_to?(:noop)
+            tmp = @noop || self.parent.noop || Puppet[:noop] || false
+        else
+            tmp = @noop || Puppet[:noop] || false
+        end
         return tmp
     end
 

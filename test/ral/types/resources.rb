@@ -134,6 +134,10 @@ class TestResources < Test::Unit::TestCase
             genned = purger.generate
         end
         assert(genned, "Did not get any generated resources")
+
+        genned.each do |res|
+            assert(res.purging, "did not mark resource for purging")
+        end
         assert(! genned.empty?, "generated resource list was empty")
         
         # Now make sure the generate method only finds the unmanaged resources

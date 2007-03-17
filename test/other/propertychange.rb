@@ -11,6 +11,7 @@ class TestPropertyChange < Test::Unit::TestCase
 	include PuppetTest
 	class FakeProperty < Puppet::Type::Property
 	    attr_accessor :is, :should, :parent
+	    attr_reader :noop
 	    def change_to_s
 	        "fake change"
         end
@@ -25,10 +26,17 @@ class TestPropertyChange < Test::Unit::TestCase
             )
         end
         def noop
-            false
+            if defined? @noop
+                @noop
+            else
+                false
+            end
         end
         def path
             "fakechange"
+        end
+        def should_to_s
+            @should.to_s
         end
         def sync
             if insync?
@@ -106,6 +114,28 @@ class TestPropertyChange < Test::Unit::TestCase
 	    
 	    #assert(coll.detect { |l| l.message == "fake change" }, "Did not log change")
 	    assert_equal(change.property.is, change.property.should, "did not call sync method")
+    end
+
+    # Related to #542.  Make sure changes in noop mode produce the :noop event.
+    def test_noop_event
+        change = mkchange
+
+        assert(! change.skip?, "Change is already being skipped")
+
+        Puppet[:noop] = true
+
+        change.property.noop = true
+        p change.property.noop
+        assert(change.noop, "did not set noop")
+        assert(change.skip?, "setting noop did not mark change for skipping")
+
+        event = nil
+        assert_nothing_raised("Could not generate noop event") do
+            event = change.forward
+        end
+
+        assert_equal(1, event.length, "got wrong number of events")
+        assert_equal(:noop, event[0].event, "did not generate noop mode when in noop")
     end
 end
 

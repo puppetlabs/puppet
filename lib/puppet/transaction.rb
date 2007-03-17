@@ -40,9 +40,9 @@ class Transaction
         # If a resource is going to be deleted but it still has
         # dependencies, then don't delete it unless it's implicit or the
         # dependency is itself being deleted.
-        if ! resource.implicit? and resource.deleting?
+        if resource.purging? and resource.deleting?
             if deps = @relgraph.dependents(resource) and ! deps.empty? and deps.detect { |d| ! d.deleting? }
-                resource.warning "%s still depend%s on me -- not deleting" %
+                resource.warning "%s still depend%s on me -- not purging" %
                     [deps.collect { |r| r.ref }.join(","), deps.length > 1 ? "":"s"] 
                 return false
             end
@@ -80,7 +80,8 @@ class Transaction
 
         resourceevents = apply_changes(resource, changes)
 
-        unless changes.empty?
+        # If there were changes and the resource isn't in noop mode...
+        unless changes.empty? or changes.include?(:noop)
             # Record when we last synced
             resource.cache(:synced, Time.now)
 
@@ -95,7 +96,8 @@ class Transaction
                 # Create an edge with this resource as both the source and
                 # target.  The triggering method treats these specially for
                 # logging.
-                set_trigger(Puppet::Relationship.new(resource, resource, :callback => :refresh, :event => :ALL_EVENTS))
+                events = resourceevents.collect { |e| e.event }
+                set_trigger(Puppet::Relationship.new(resource, resource, :callback => :refresh, :event => events))
             end
         end
 
@@ -128,7 +130,7 @@ class Transaction
 
             # Mark that our change happened, so it can be reversed
             # if we ever get to that point
-            unless events.nil? or (events.is_a?(Array) and events.empty?)
+            unless events.nil? or (events.is_a?(Array) and (events.empty?) or events.include?(:noop))
                 change.changed = true
                 @resourcemetrics[:applied] += 1
             end
@@ -277,9 +279,10 @@ class Transaction
         # the parent resource in so it will override the source in the events,
         # since eval_generated children can't have direct relationships.
         @relgraph.matching_edges(events, resource).each do |edge|
-            unless edge
-                raise "wtf?"
-            end
+            edge = edge.dup
+            label = edge.label
+            label[:event] = events.collect { |e| e.event }
+            edge.label = label
             set_trigger(edge)
         end
 
@@ -677,6 +680,19 @@ class Transaction
         end
 
         callbacks.each do |callback, subs|
+            noop = true
+            subs.each do |edge|
+                if edge.event.nil? or ! edge.event.include?(:noop)
+                    noop = false
+                end
+            end
+
+            if noop
+                resource.notice "Would have triggered %s from %s dependencies" %
+                    [callback, subs.length]
+                return nil
+            end
+
             if subs.length == 1 and subs[0].source == resource
                 message = "Refreshing self"
             else

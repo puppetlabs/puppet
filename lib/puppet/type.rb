@@ -334,6 +334,21 @@ class Type < Puppet::Element
         self.class.self_refresh
     end
 
+    # Mark that we're purging.
+    def purging
+        @purging = true
+    end
+
+    # Is this resource being purged?  Used by transactions to forbid
+    # deletion when there are dependencies.
+    def purging?
+        if defined? @purging
+            @purging
+        else
+            false
+        end
+    end
+
     # Retrieve the title of an object.  If no title was set separately,
     # then use the object's name.
     def title

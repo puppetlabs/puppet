@@ -163,10 +163,10 @@ module PuppetTest
             if defined? $console
                 Puppet.info @method_name
                 Puppet::Util::Log.newdestination(:console)
+                Puppet[:trace] = true
             end
             Puppet::Util::Log.level = :debug
             #$VERBOSE = 1
-            Puppet[:trace] = true
         else    
             Puppet::Util::Log.close
             Puppet::Util::Log.newdestination(@logs)

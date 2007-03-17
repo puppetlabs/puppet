@@ -35,6 +35,23 @@ module Puppet
             self.changed
         end
 
+        # Create our event object.
+        def event(name)
+            # default to a simple event type
+            unless name.is_a?(Symbol)
+                @property.warning("Property '%s' returned invalid event '%s'; resetting to default" %
+                    [@property.class,event])
+
+                event = @property.parent.class.name.id2name + "_changed"
+            end
+            
+            Puppet::Event.new(
+                :event => name,
+                :transaction => @transaction,
+                :source => self.source
+            )
+        end
+
         def initialize(property)
             unless property.is_a?(Puppet::Type::Property)
                 raise Puppet::DevError, "Got a %s instead of a property" %
@@ -52,7 +69,13 @@ module Puppet
         # Perform the actual change.  This method can go either forward or
         # backward, and produces an event.
         def go
-            return nil if skip?
+            if skip?
+                if self.noop
+                    return [event(:noop)]
+                else
+                    return nil
+                end
+            end
 
             # The transaction catches any exceptions here.
             events = @property.sync
@@ -68,21 +91,9 @@ module Puppet
                 events = [events]
             end
             
-            return events.collect { |event|
-                # default to a simple event type
-                unless event.is_a?(Symbol)
-                    @property.warning("Property '%s' returned invalid event '%s'; resetting to default" %
-                        [@property.class,event])
-
-                    event = @property.parent.class.name.id2name + "_changed"
-                end
-                
+            return events.collect { |name|
                 @report = @property.log(@property.change_to_s)
-                Puppet::Event.new(
-                    :event => event,
-                    :transaction => @transaction,
-                    :source => self.source
-                )
+                event(name)
             }
         end
 

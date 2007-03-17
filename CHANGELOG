@@ -1,4 +1,12 @@
 0.22.2 (grover)
+    Resources can now be freely deleted, thus fixing many problems introduced
+    when deletion of required resources was forbidden when purging was introduced.
+    Only resources being purged will not be deleted.
+
+    Facts and plugins now download even in noop mode (#540).
+
+    Resources in noop mode now log when they would have responded to an event (#542).
+
     Refactored cron support entirely.  Cron now uses providers, and there
     is a single 'crontab' provider that handles user crontabs.  While this
     refactor does not include providers for /etc/crontab or cron.d, it should
