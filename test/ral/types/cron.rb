@@ -198,7 +198,7 @@ class TestCron < Test::Unit::TestCase
                         }
 
                         if value.is_a?(Integer)
-                            assert_equal(value.to_s, cron.should(param),
+                            assert_equal([value.to_s], cron.should(param),
                                 "Cron value was not set correctly")
                         end
                     when :invalid:
@@ -355,38 +355,33 @@ class TestCron < Test::Unit::TestCase
                 property.is = :absent
             }
 
-            # Make sure our minute default is 0, not *
-            val = if param == :minute
-                "*" # the "0" thing is disabled for now
-            else
-                "*"
-            end
+            val = [:absent]
             assert_equal(val, cron.value(param))
 
             # Make sure we correctly get the "is" value if that's all there is
             cron.is = [param, "1"]
-            assert_equal("1", cron.value(param))
+            assert_equal(%w{1}, cron.value(param))
 
             # Make sure arrays work, too
             cron.is = [param, ["1"]]
-            assert_equal("1", cron.value(param))
+            assert_equal(%w{1}, cron.value(param))
 
             # Make sure values get comma-joined
-            cron.is = [param, ["2", "3"]]
-            assert_equal("2,3", cron.value(param))
+            cron.is = [param, %w{2 3}]
+            assert_equal(%w{2 3}, cron.value(param))
 
             # Make sure "should" values work, too
             cron[param] = "4"
-            assert_equal("4", cron.value(param))
+            assert_equal(%w{4}, cron.value(param))
 
             cron[param] = ["4"]
-            assert_equal("4", cron.value(param))
+            assert_equal(%w{4}, cron.value(param))
 
             cron[param] = ["4", "5"]
-            assert_equal("4,5", cron.value(param))
+            assert_equal(%w{4 5}, cron.value(param))
 
             cron.is = [param, :absent]
-            assert_equal("4,5", cron.value(param))
+            assert_equal(%w{4 5}, cron.value(param))
         end
 
         Puppet[:trace] = false
@@ -400,36 +395,31 @@ class TestCron < Test::Unit::TestCase
             property.is = :absent
         }
 
-        assert(property, "Did not get command property")
-        assert_raise(Puppet::DevError) do
-            cron.value(:command)
-        end
-
         param = :command
         # Make sure we correctly get the "is" value if that's all there is
-        cron.is = [param, "1"]
-        assert_equal("1", cron.value(param))
+        cron.is = [param, "/bin/echo"]
+        assert_equal("/bin/echo", cron.value(param))
 
         # Make sure arrays work, too
-        cron.is = [param, ["1"]]
-        assert_equal("1", cron.value(param))
+        cron.is = [param, ["/bin/echo"]]
+        assert_equal("/bin/echo", cron.value(param))
 
         # Make sure values are not comma-joined
-        cron.is = [param, ["2", "3"]]
-        assert_equal("2", cron.value(param))
+        cron.is = [param, %w{/bin/echo /bin/test}]
+        assert_equal("/bin/echo", cron.value(param))
 
         # Make sure "should" values work, too
-        cron[param] = "4"
-        assert_equal("4", cron.value(param))
+        cron[param] = "/bin/echo"
+        assert_equal("/bin/echo", cron.value(param))
 
-        cron[param] = ["4"]
-        assert_equal("4", cron.value(param))
+        cron[param] = ["/bin/echo"]
+        assert_equal("/bin/echo", cron.value(param))
 
-        cron[param] = ["4", "5"]
-        assert_equal("4", cron.value(param))
+        cron[param] = %w{/bin/echo /bin/test}
+        assert_equal("/bin/echo", cron.value(param))
 
         cron.is = [param, :absent]
-        assert_equal("4", cron.value(param))
+        assert_equal("/bin/echo", cron.value(param))
     end
 
     def test_multiple_users

@@ -290,7 +290,7 @@ class TestAST < Test::Unit::TestCase
             end
             assert_nothing_raised("Could not find resource") do
                 retval = Puppet::Rails::Resource.find(:all,
-                    :include => :params,
+                    :include => :param_values,
                     :conditions => str) 
             end
 

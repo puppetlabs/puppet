@@ -536,7 +536,7 @@ class TestExec < Test::Unit::TestCase
     def test_missing_checks_cause_failures
         # Solaris's sh exits with 1 here instead of 127
         return if Facter.value(:operatingsystem) == "Solaris"
-        exec = Puppet::Type.newexec(
+        exec = Puppet::Type.type(:exec).create(
                                     :command => "echo true",
                                     :path => ENV["PATH"],
                                     :onlyif => "/bin/nosuchthingexists"

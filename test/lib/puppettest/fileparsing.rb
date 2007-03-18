@@ -16,6 +16,7 @@ module PuppetTest::FileParsing
             assert_nothing_raised("failed to generate %s" % file) do 
                 text = @provider.to_file(@provider.target_records(file))
             end
+            text.gsub!(/^# HEADER.+\n/, '')
 
             yield if block_given?
 

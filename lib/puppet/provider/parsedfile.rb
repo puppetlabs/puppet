@@ -135,7 +135,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
             define_method(attr.to_s + "=") do |val|
                 # Mark that this target was modified.
-                modeltarget = @model[:target] || self.class.default_target
+                modeltarget = @model.should(:target) || self.class.default_target
 
                 # If they're the same, then just mark that one as modified
                 if @property_hash[:target] and @property_hash[:target] == modeltarget

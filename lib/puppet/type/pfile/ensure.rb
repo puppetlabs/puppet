@@ -109,7 +109,7 @@ module Puppet
         end
 
         def change_to_s
-            if property = (@parent.property(:content) || @parent.property(:source))
+            if property = (@parent.property(:content) || @parent.property(:source)) and ! property.insync?
                 return property.change_to_s
             else
                 super

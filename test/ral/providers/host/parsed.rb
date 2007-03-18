@@ -111,7 +111,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
 
         newtext = nil
         assert_nothing_raised do
-            newtext = @provider.to_file(instances)
+            newtext = @provider.to_file(instances).gsub(/^# HEADER.+\n/, '')
         end
 
         assert_equal(text, newtext)
@@ -220,11 +220,6 @@ class TestParsedHostProvider < Test::Unit::TestCase
             assert(! hash.empty?, "Could not find host %s" % name)
             assert(hash[:ip], "Could not find ip for host %s" % name)
         }
-    end
-
-    def test_mountsparse
-        files = fakedata("data/types/hosts")
-        fakedataparse(*files)
     end
 end
 

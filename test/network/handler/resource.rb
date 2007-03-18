@@ -160,8 +160,8 @@ class TestResourceServer < Test::Unit::TestCase
                 assert(! object.should(property), "Incorrectly retrieved %s" % property)
             end
 
+            #assert_apply(object)
             assert_events([:directory_created], object)
-
             assert(FileTest.directory?(file), "Directory did not get recreated")
             Dir.rmdir(file)
         end

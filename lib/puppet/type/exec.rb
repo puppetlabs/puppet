@@ -83,39 +83,6 @@ module Puppet
                 return "executed successfully"
             end
 
-            # Verify that we have the executable
-            def checkexe
-                cmd = self.parent[:command]
-                if cmd =~ /^\//
-                    exe = cmd.split(/ /)[0]
-                    unless FileTest.exists?(exe)
-                        self.fail(
-                            "Could not find executable %s" % exe
-                        )
-                    end
-                    unless FileTest.executable?(exe)
-                        self.fail(
-                            "%s is not executable" % exe
-                        )
-                    end
-                elsif path = self.parent[:path]
-                    exe = cmd.split(/ /)[0]
-                    withenv :PATH => self.parent[:path].join(":") do
-                        path = %{which #{exe}}.chomp
-                        if path == ""
-                            self.fail(
-                                "Could not find command '%s'" % exe
-                            )
-                        end
-                    end
-                else
-                    self.fail(
-                        "%s is somehow not qualified with no search path" %
-                            self.parent[:command]
-                    )
-                end
-            end
-
             # First verify that all of our checks pass.
             def retrieve
                 # Default to somethinng
@@ -130,8 +97,6 @@ module Puppet
             # Actually execute the command.
             def sync
                 olddir = nil
-
-                self.checkexe
 
                 # We need a dir to change to, even if it's just the cwd
                 dir = self.parent[:cwd] || Dir.pwd
@@ -493,6 +458,33 @@ module Puppet
             return true
         end
 
+        # Verify that we have the executable
+        def checkexe(cmd)
+            if cmd =~ /^\//
+                exe = cmd.split(/ /)[0]
+                unless FileTest.exists?(exe)
+                    raise ArgumentError, "Could not find executable %s" % exe
+                end
+                unless FileTest.executable?(exe)
+                    raise ArgumentError,
+                        "%s is not executable" % exe
+                end
+            elsif path = self[:path]
+                exe = cmd.split(/ /)[0]
+                withenv :PATH => self[:path].join(":") do
+                    path = %{which #{exe}}.chomp
+                    if path == ""
+                        raise ArgumentError,
+                            "Could not find command '%s'" % exe
+                    end
+                end
+            else
+                raise ArgumentError,
+                    "%s is somehow not qualified with no search path" %
+                        self[:command]
+            end
+        end
+
         def output
             if self.property(:returns).nil?
                 return nil
@@ -518,6 +510,8 @@ module Puppet
             status = nil
 
             dir = nil
+
+            checkexe(command)
 
             if dir = self[:cwd]
                 unless File.directory?(dir)

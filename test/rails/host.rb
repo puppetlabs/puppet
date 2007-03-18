@@ -155,6 +155,7 @@ class TestRailsHost < Test::Unit::TestCase
         # I expect it's a caching problem.
         count = 0
         host.resources.find(:all).find_all { |r| r.title =~ /file2/ }.each do |r|
+            r.save
             puts "%s => %s" % [r.ref, r.parameters.inspect]
             assert_equal("notice", r.parameter("loglevel"),
                 "loglevel was not added")

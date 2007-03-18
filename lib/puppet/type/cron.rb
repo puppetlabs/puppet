@@ -105,6 +105,14 @@ Puppet::Type.newtype(:cron) do
             end
         end
 
+        def is=(val)
+            if val.is_a?(Array)
+                @is = val
+            else
+                @is = [val]
+            end
+        end
+
         def is_to_s
             if @is
                 unless @is.is_a?(Array)
@@ -122,7 +130,16 @@ Puppet::Type.newtype(:cron) do
         end
 
         def should
-            @should
+            if @should and @should[0] == :absent
+                :absent
+            else
+                @should
+            end
+        end
+
+        def should=(ary)
+            super
+            @should.flatten!
         end
 
         # The method that does all of the actual parameter value
@@ -188,6 +205,14 @@ Puppet::Type.newtype(:cron) do
             
             All cron parameters support ``absent`` as a value; this will
             remove any existing values for that field."
+
+        def is
+            if @is
+                @is[0]
+            else
+                nil
+            end
+        end
 
         def should
             if @should
@@ -352,10 +377,10 @@ Puppet::Type.newtype(:cron) do
         name = symbolize(name)
         ret = nil
         if obj = @parameters[name]
-            ret = obj.should_to_s
+            ret = obj.should
 
             if ret.nil?
-                ret = obj.is_to_s
+                ret = obj.is
             end
 
             if ret == :absent
