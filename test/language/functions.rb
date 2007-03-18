@@ -445,6 +445,34 @@ class TestLangFunctions < Test::Unit::TestCase
                 "class %s was not evaluated" % c)
         end
     end
+
+    def test_file
+        interp = mkinterp
+        scope = mkscope(:interp => interp)
+
+        file1 = tempfile
+        file2 = tempfile
+        file3 = tempfile
+
+        File.open(file2, "w") { |f| f.puts "yaytest" }
+
+        val = nil
+        assert_nothing_raised("Failed to call file with one arg") do
+            val = scope.function_file([file2])
+        end
+
+        assert_equal("yaytest\n", val, "file() failed")
+
+        assert_nothing_raised("Failed to call file with two args") do
+            val = scope.function_file([file1, file2])
+        end
+
+        assert_equal("yaytest\n", val, "file() failed")
+
+        assert_raise(Puppet::ParseError, "did not fail when files are missing") do
+            val = scope.function_file([file1, file3])
+        end
+    end
 end
 
 # $Id$

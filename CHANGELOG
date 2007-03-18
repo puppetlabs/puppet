@@ -1,4 +1,7 @@
 0.22.2 (grover)
+    Added a file() command to read in files with no interpolation.  The first
+    found file has its content returned.
+
     puppetd now exits if no cert is present in onetime mode. (#533)
 
     The client configuration cache can be safely removed and the client
