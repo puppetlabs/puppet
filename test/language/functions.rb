@@ -473,6 +473,53 @@ class TestLangFunctions < Test::Unit::TestCase
             val = scope.function_file([file1, file3])
         end
     end
+
+    def test_generate
+        command = tempfile
+        sh = %x{which sh}
+        File.open(command, "w") do |f|
+            f.puts %{#!#{sh}
+            if [ -n "$1" ]; then
+                echo "yay-$1"
+            else
+                echo yay
+            fi
+            }
+        end
+        File.chmod(0755, command)
+        assert_equal("yay\n", %x{#{command}}, "command did not work")
+        assert_equal("yay-foo\n", %x{#{command} foo}, "command did not work")
+
+        interp = mkinterp
+        scope = mkscope(:interp => interp)
+
+        val = nil
+        assert_nothing_raised("Could not call generator with no args") do
+            val = scope.function_generate([command])
+        end
+        assert_equal("yay\n", val, "generator returned wrong results")
+
+        assert_nothing_raised("Could not call generator with args") do
+            val = scope.function_generate([command, "foo"])
+        end
+        assert_equal("yay-foo\n", val, "generator returned wrong results")
+
+        assert_raise(Puppet::ParseError, "Did not fail with an unqualified path") do
+            val = scope.function_generate([File.basename(command), "foo"])
+        end
+
+        assert_raise(Puppet::ParseError, "Did not fail when command failed") do
+            val = scope.function_generate([%x{which touch}.chomp, "/this/dir/does/not/exist"])
+        end
+
+        fake = File.join(File.dirname(command), "..")
+        dir = File.dirname(command)
+        dirname = File.basename(dir)
+        bad = File.join(dir, "..", dirname, File.basename(command))
+        assert_raise(Puppet::ParseError, "Did not fail when command failed") do
+            val = scope.function_generate([bad])
+        end
+    end
 end
 
 # $Id$

@@ -1,4 +1,7 @@
 0.22.2 (grover)
+    Added a generate() command, which sets values to the result of an external
+    command. (#541)
+
     Added a file() command to read in files with no interpolation.  The first
     found file has its content returned.
 
