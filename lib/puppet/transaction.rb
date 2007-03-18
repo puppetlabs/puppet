@@ -61,7 +61,7 @@ class Transaction
                 puts detail.backtrace
             end
 
-            resource.err "Failed to retrieve current state: %s" % detail
+            resource.err "Failed to retrieve current state of resource: %s" % detail
 
             # Mark that it failed
             @failures[resource] += 1
