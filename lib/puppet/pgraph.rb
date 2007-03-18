@@ -158,11 +158,6 @@ class Puppet::PGraph < GRATR::Digraph
                             next
                         end
                         add_edge!(s, t, edge.label)
-                        if cyclic?
-                            raise ArgumentError,
-                                "%s => %s results in a loop" %
-                                [s, t]
-                        end
                     end
 
                     # Now get rid of the edge, so remove_vertex! works correctly.
