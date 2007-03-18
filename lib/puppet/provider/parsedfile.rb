@@ -195,6 +195,11 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             target_records = prefetch_hook(target_records)
         end
 
+        unless target_records
+            raise Puppet::DevError, "Prefetch hook for provider %s returned nil" %
+                self.name
+        end
+
         @records += target_records
 
         # Set current property on any existing resource instances.
@@ -264,7 +269,13 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
         # Lastly, check the file from any model instances
         self.model.each do |model|
-            targets << model[:target]
+            targets << model.value(:target)
+
+            # This is only the case for properties, and targets should always
+            # be properties.
+            if model.respond_to?(:is)
+                targets << model.is(:target)
+            end
         end
 
         targets.uniq.reject { |t| t.nil? }

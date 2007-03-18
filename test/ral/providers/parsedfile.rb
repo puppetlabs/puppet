@@ -27,7 +27,8 @@ class TestParsedFile < Test::Unit::TestCase
         newparam(:name) do
         end
 
-        newparam(:target) do
+        # The target should always be a property, not a parameter.
+        newproperty(:target) do
             defaultto { @parent.class.defaultprovider.default_target }
         end
     end
@@ -51,7 +52,7 @@ class TestParsedFile < Test::Unit::TestCase
 
     def mkprovider(name = :parsed)
         @provider = @type.provide(name, :parent => Puppet::Provider::ParsedFile,
-            :filetype => :ram) do
+            :filetype => :ram, :default_target => "yayness") do
             record_line name, :fields => %w{name one two}
         end
     end
@@ -298,12 +299,16 @@ class TestParsedFile < Test::Unit::TestCase
         files[:inmemory] = inmem
         prov.target_object(inmem).write("inmem yay ness")
 
-        # Lastly, create a model
+        # Lastly, create a model with separate is and should values
         mtarget = tempfile()
+        istarget = tempfile()
         files[:models] = mtarget
+        files[:ismodels] = istarget
         model = mkmodel "yay", :target => mtarget
+        model.is = [:target, istarget]
 
-        assert(model[:target], "Did not get a value for target")
+        assert(model.should(:target), "Did not get a value for target")
+        assert(model.is(:target), "Did not get a value for target")
 
         list = nil
         assert_nothing_raised do
@@ -612,6 +617,7 @@ class TestParsedFile < Test::Unit::TestCase
             :filetype => :ram, :default_target => :yayness) do
 
             def self.prefetch_hook(records)
+                records
             end
 
             record_line :test, :fields => %w{name two}
@@ -626,9 +632,35 @@ class TestParsedFile < Test::Unit::TestCase
         prov.expects(:retrieve).with(target).returns([targeted])
         prov.expects(:target_records).with(target).returns([targeted])
 
-        prov.expects(:prefetch_hook).with([targeted])
+        prov.expects(:prefetch_hook).with([targeted]).returns([targeted])
 
         prov.prefetch_target(target)
+    end
+
+    # #529
+    def test_keep_content_with_target
+        mkprovider
+        @provider.filetype = :flat
+        dpath = tempfile
+        opath = tempfile
+        @provider.default_target = dpath
+
+        dtarget = @provider.target_object(dpath)
+        otarget = @provider.target_object(opath)
+
+        dtarget.write("dname a c\n")
+        otarget.write("oname b d\n")
+
+        # Now make a resource that targets elsewhat.
+        res = @type.create(:name => "test", :one => "a", :two => "c",
+            :target => opath)
+
+        assert(res.property(:target), "Target is a parameter, not a property")
+
+        assert_apply(res)
+
+        assert_equal("oname b d\ntest a c\n", otarget.read,
+            "did not get correct results in specified target")
     end
 end
 
