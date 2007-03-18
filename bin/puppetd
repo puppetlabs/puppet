@@ -214,6 +214,7 @@ begin
                 Puppet.config.handlearg("--ignorecache")
                 Puppet.config.handlearg("--no-usecacheonfailure")
                 options[:onetime] = true
+                options[:waitforcert] = 0
                 unless Puppet::Util::Log.level == :debug
                     Puppet::Util::Log.level = :info
                 end
@@ -242,6 +243,7 @@ begin
                 options[:client] = false
             when "--onetime"
                 options[:onetime] = true
+                options[:waitforcert] = 0
             when "--port"
                 args[:Port] = arg
             when "--logdest"
@@ -320,7 +322,7 @@ if options[:daemonize]
     client.daemonize
 end
 
-unless client.cert
+unless client.read_cert
     # If we don't already have the certificate, then create a client to
     # request one.  Use the special ca stuff, don't use the normal server and port.
     caclient = Puppet::Network::Client.ca.new()

@@ -1,4 +1,6 @@
 0.22.2 (grover)
+    puppetd now exits if no cert is present in onetime mode. (#533)
+
     The client configuration cache can be safely removed and the client
     will correctly realize the client is not in sync.
 
