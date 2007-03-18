@@ -161,7 +161,6 @@ module Puppet::Util::FileParsing
                     ret[f] = v
                 end
             else
-                Puppet.info "Did not match %s" % line
                 nil
             end
         else
