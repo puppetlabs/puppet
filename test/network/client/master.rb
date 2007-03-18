@@ -545,6 +545,28 @@ end
 
         assert(Puppet[:noop], "noop got disabled in run")
     end
+
+    # #491 - make sure a missing config doesn't kill us
+    def test_missing_localconfig
+        master = mkclient
+        master.local = false
+        driver = master.send(:instance_variable_get, "@driver")
+        driver.local = false
+        # Retrieve the configuration
+        master.getconfig
+
+        # Now the config is up to date, so get rid of the @objects var and
+        # the cached config
+        master.clear
+        File.unlink(master.cachefile)
+
+        assert_nothing_raised("Missing cache file threw error") do
+            master.getconfig
+        end
+
+        assert(! @logs.detect { |l| l.message =~ /Could not load/},
+            "Tried to load cache when it is non-existent")
+    end
 end
 
 # $Id$

@@ -102,9 +102,9 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
 
     def clear
-        #@objects = nil
         @objects.remove(true)
         Puppet::Type.allclear
+        @objects = nil
     end
 
     # Initialize and load storage
@@ -155,16 +155,16 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     # use the cached copy.
     def getconfig
         dostorage()
-        if self.fresh?
-            Puppet.info "Config is up to date"
-            unless defined? @objects
+        if self.objects or FileTest.exists?(self.cachefile)
+            if self.fresh?
+                Puppet.info "Config is up to date"
                 begin
                     @objects = YAML.load(self.retrievecache).to_type
                 rescue => detail
                     Puppet.warning "Could not load cached configuration: %s" % detail
                 end
+                return
             end
-            return
         end
         Puppet.debug("getting config")
 
@@ -194,13 +194,9 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         self.setclasses(objects.classes)
 
         # Clear all existing objects, so we can recreate our stack.
-        if defined? @objects
-            Puppet::Type.allclear
-
-            # Make sure all of the objects are really gone.
-            @objects.remove(true)
+        if self.objects
+            clear()
         end
-        @objects = nil
 
         # Now convert the objects to real Puppet objects
         @objects = objects.to_type

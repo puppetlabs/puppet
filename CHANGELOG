@@ -1,4 +1,7 @@
 0.22.2 (grover)
+    The client configuration cache can be safely removed and the client
+    will correctly realize the client is not in sync.
+
     Resources can now be freely deleted, thus fixing many problems introduced
     when deletion of required resources was forbidden when purging was introduced.
     Only resources being purged will not be deleted.
