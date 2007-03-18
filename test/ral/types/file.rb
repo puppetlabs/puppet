@@ -1649,6 +1649,10 @@ class TestFile < Test::Unit::TestCase
         second = tempfile()
         params = [:content, :source, :target]
         params.each do |param|
+            assert_nothing_raised("%s conflicted with ensure" % [param]) do
+                Puppet::Type.newfile(:path => file, param => first, :ensure => :file)
+            end
+            Puppet::Type.type(:file).clear
             params.each do |other|
                 next if other == param
                 assert_raise(Puppet::Error, "%s and %s did not conflict" % [param, other]) do
