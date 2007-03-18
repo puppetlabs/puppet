@@ -690,7 +690,13 @@ class Transaction
             if noop
                 resource.notice "Would have triggered %s from %s dependencies" %
                     [callback, subs.length]
-                return nil
+
+                # And then add an event for it.
+                return [Puppet::Event.new(
+                    :event => :noop,
+                    :transaction => self,
+                    :source => resource
+                )]
             end
 
             if subs.length == 1 and subs[0].source == resource

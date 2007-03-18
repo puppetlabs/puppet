@@ -4,6 +4,7 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
 require 'puppettest'
+require 'mocha'
 require 'puppettest/support/resources'
 
 # $Id$
@@ -1090,24 +1091,37 @@ class TestTransactions < Test::Unit::TestCase
     def test_noop_with_notify
         path = tempfile
         epath = tempfile
-        file = Puppet::Type.newfile(:path => path, :ensure => :file)
+        spath = tempfile
+        file = Puppet::Type.newfile(:path => path, :ensure => :file,
+            :title => "file")
         exec = Puppet::Type.type(:exec).create(:command => "touch %s" % epath,
-            :path => ENV["PATH"], :subscribe => file, :refreshonly => true)
+            :path => ENV["PATH"], :subscribe => file, :refreshonly => true,
+            :title => 'exec1')
+        exec2 = Puppet::Type.type(:exec).create(:command => "touch %s" % spath,
+            :path => ENV["PATH"], :subscribe => exec, :refreshonly => true,
+            :title => 'exec2')
 
         Puppet[:noop] = true
 
         assert(file.noop, "file not in noop")
         assert(exec.noop, "exec not in noop")
 
-        assert_apply(file, exec)
+        @logs.clear
+        assert_apply(file, exec, exec2)
 
         assert(! FileTest.exists?(path), "Created file in noop")
         assert(! FileTest.exists?(epath), "Executed exec in noop")
+        assert(! FileTest.exists?(spath), "Executed second exec in noop")
 
-        logs = @logs.dup
-        assert_logged(:notice, /should be/, "did not log file change")
-        @logs = logs
-        assert_logged(:notice, /Would have triggered/, "did not log exec trigger")
+        assert(@logs.detect { |l|
+            l.message =~ /should be/  and l.source == file.property(:ensure).path},
+                "did not log file change")
+        assert(@logs.detect { |l|
+            l.message =~ /Would have/ and l.source == exec.path },
+                "did not log first exec trigger")
+        assert(@logs.detect { |l|
+            l.message =~ /Would have/ and l.source == exec2.path },
+                "did not log second exec trigger")
     end
 
     def test_only_stop_purging_with_relations
