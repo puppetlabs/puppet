@@ -50,7 +50,7 @@ Puppet::Type.type(:package).provide :rpm do
         cmd = ["-q", @model[:name], "--nosignature", "--nodigest", "--qf", "#{NVRFORMAT} #{VERSIONSTRING}\n"]
 
         begin
-            output = rpm *cmd
+            output = rpm(*cmd)
         rescue Puppet::ExecutionFailure
             return nil
         end
