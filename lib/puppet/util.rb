@@ -297,21 +297,6 @@ module Util
             if f
                 output = f.read
             else
-                # FIXME There really should be a better way to do this,
-                # but it looks like webrick is already setting close_on_exec,
-                # and setting it myself doesn't seem to do anything.  So,
-                # not the best, but it'll have to do.
-                if Puppet[:listen]
-                    ObjectSpace.each_object do |object|
-                        if object.is_a?(TCPServer) and ! object.closed?
-                            begin
-                                object.close
-                            rescue
-                                # Just ignore these, I guess
-                            end
-                        end
-                    end
-                end
                 begin
                     $stderr.close
                     $stderr = $stdout.dup
@@ -328,7 +313,6 @@ module Util
                     else
                         Kernel.exec(command)
                     end
-                    exit!($?.exitstatus)
                 rescue => detail
                     puts detail.to_s
                     exit!(1)
