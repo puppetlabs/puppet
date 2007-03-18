@@ -281,7 +281,10 @@ class TestCronParsedProvider < Test::Unit::TestCase
                 @provider.flush_target(@me)
             end
 
-            assert_equal(text, target.read,
+            # Ignore whitespace differences, since those don't affect function.
+            modtext = text.gsub(/[ \t]+/, " ")
+            modtarget = target.read.gsub(/[ \t]+/, " ")
+            assert_equal(modtext, modtarget,
                 "File was not rewritten the same")
 
             @provider.clear
