@@ -78,7 +78,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     def latest
         output = aptcache :policy,  @model[:name]
 
-        if output =~ /\*\*\*\s+(\S+)\s/
+        if output =~ /Candidate:\s+(\S+)\s/
             return $1
         else
             self.err "Could not find latest version"
