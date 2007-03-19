@@ -1,4 +1,8 @@
 0.22.2 (grover)
+    FileBuckets now use a deeply nested structure for storing files, so
+    you do not end up with hundreds or thousands of files in the same
+    directory. (#447)
+
     Facts are now cached in the state file, and when they change the configuration
     is always recompiled. (#519)
 

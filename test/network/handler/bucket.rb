@@ -148,7 +148,7 @@ class TestBucket < Test::Unit::TestCase
         server = nil
         assert_nothing_raised {
             server = Puppet::Network::Handler.filebucket.new(
-                :Bucket => @bucket
+                :Path => @bucket
             )
         }
 
@@ -187,7 +187,7 @@ class TestBucket < Test::Unit::TestCase
         threads = []
         assert_nothing_raised {
             bucket = Puppet::Network::Handler.filebucket.new(
-                :Bucket => @bucket
+                :Path => @bucket
             )
         }
 
@@ -214,7 +214,7 @@ class TestBucket < Test::Unit::TestCase
         client = nil
         port = Puppet[:masterport]
 
-        pid = mkserver(:CA => {}, :FileBucket => { :Bucket => @bucket})
+        pid = mkserver(:CA => {}, :FileBucket => { :Path => @bucket})
 
         assert_nothing_raised {
             client = Puppet::Network::Client.dipper.new(
@@ -235,7 +235,7 @@ class TestBucket < Test::Unit::TestCase
         bucket = nil
         assert_nothing_raised {
             bucket = Puppet::Network::Handler.filebucket.new(
-                :Bucket => @bucket
+                :Path => @bucket
             )
         }
 
@@ -247,11 +247,95 @@ class TestBucket < Test::Unit::TestCase
             bucket.addfile("yayness", "/my/file")
         }
 
-        pathfile = File.join(bucket.path, sum, "paths")
+        a, b, pathfile = bucket.class.paths(bucket.path, sum)
 
         assert(FileTest.exists?(pathfile), "No path file at %s" % pathfile)
 
         assert_equal("/my/file\n", File.read(pathfile))
+    end
+
+    # #447 -- a flat file structure just won't suffice.
+    def test_deeper_filestructure
+        bucket = Puppet::Network::Handler.filebucket.new(:Path => @bucket)
+
+        text = "this is some text"
+        md5 = Digest::MD5.hexdigest(text)
+
+        olddir = File.join(@bucket, md5)
+        FileUtils.mkdir_p(olddir)
+        oldcontent = File.join(olddir, "contents")
+        File.open(oldcontent, "w") { |f| f.print text }
+
+        result = nil
+        assert_nothing_raised("Could not retrieve content from old structure") do
+            result = bucket.getfile(md5)
+        end
+        assert_equal(text, result, "old-style content is wrong")
+
+        text = "and this is some new text"
+        md5 = Digest::MD5.hexdigest(text)
+
+        dirs = File.join(md5[0..7].split(""))
+        dir = File.join(@bucket, dirs)
+        filedir, contents, paths = bucket.class.paths(@bucket, md5)
+
+        assert_equal(dir, filedir, "did not use a deeper file structure") 
+        assert_equal(File.join(dir, "contents"), contents,
+            "content path is not the deeper version")
+        assert_equal(File.join(dir, "paths"), paths,
+            "paths file path is not the deeper version")
+
+        # Store our new text and make sure it gets stored in the new location
+        path = "/some/fake/path"
+        assert_nothing_raised("Could not store text") do
+            bucket.addfile(text, path)
+        end
+        assert(FileTest.exists?(contents), "did not create content file")
+        assert_equal(text, File.read(contents), "content is not right")
+        assert(FileTest.exists?(paths), "did not create paths file")
+        assert(File.read(paths).include?(path), "paths file does not contain path")
+
+        # And make sure we get it back out again
+        assert_nothing_raised("Could not retrieve new-style content") do
+            result = bucket.getfile(md5)
+        end
+        assert_equal(text, result, "did not retrieve new content correctly")
+    end
+
+    def test_add_path
+        bucket = Puppet::Network::Handler.filebucket.new(:Path => @bucket)
+
+        file = tempfile()
+
+        assert(! FileTest.exists?(file), "file already exists")
+
+        path = "/some/thing"
+        assert_nothing_raised("Could not add path") do
+            bucket.send(:add_path, path, file)
+        end
+        assert_equal(path + "\n", File.read(file), "path was not added")
+
+        assert_nothing_raised("Could not add path second time") do
+            bucket.send(:add_path, path, file)
+        end
+        assert_equal(path + "\n", File.read(file), "path was duplicated")
+
+        # Now try a new path
+        newpath = "/another/path"
+        assert_nothing_raised("Could not add path second time") do
+            bucket.send(:add_path, newpath, file)
+        end
+        text = [path, newpath].join("\n") + "\n"
+        assert_equal(text, File.read(file), "path was duplicated")
+
+        assert_nothing_raised("Could not add path third time") do
+            bucket.send(:add_path, path, file)
+        end
+        assert_equal(text, File.read(file), "path was duplicated")
+        assert_nothing_raised("Could not add second path second time") do
+            bucket.send(:add_path, newpath, file)
+        end
+        assert_equal(text, File.read(file), "path was duplicated")
     end
 end
 
