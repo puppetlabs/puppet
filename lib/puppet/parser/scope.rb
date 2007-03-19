@@ -568,7 +568,14 @@ class Puppet::Parser::Scope
                 when '$'
                     out << '$'
                 else
-                    Puppet.warning "Unrecognised escape sequence '#{ss.matched}'"
+                    str = "Unrecognised escape sequence '#{ss.matched}'"
+                    if file
+                        str += " in file %s" % file
+                    end
+                    if line
+                        str += " at line %s" % line
+                    end
+                    Puppet.warning str
                     out << ss.matched
                 end
             elsif ss.scan(/^\$/)
