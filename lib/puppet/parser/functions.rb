@@ -113,13 +113,19 @@ module Functions
             ! klasses.include?(klass)
         end
 
-        # Throw an error if we didn't evaluate all of the classes.
-        if missing.length == 1
-            self.fail Puppet::ParseError,
-                "Could not find class %s" % missing
-        elsif missing.length > 1
-            self.fail Puppet::ParseError,
-                "Could not find classes %s" % missing.join(", ")
+        unless missing.empty?
+            # Throw an error if we didn't evaluate all of the classes.
+            str = "Could not find class"
+            if missing.length > 1
+                str += "es"
+            end
+
+            str += " " + missing.join(", ")
+
+            if n = namespaces and ! n.empty? and n != [""]
+                str += " in namespaces %s" % @namespaces.join(", ")
+            end
+            self.fail Puppet::ParseError, str
         end
     end
 

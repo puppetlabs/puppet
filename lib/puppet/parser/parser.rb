@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id729500608d', 'grammar.ra', 603
+module_eval <<'..end grammar.ra modeval..idde6e0009a9', 'grammar.ra', 603
 require 'puppet/parser/functions'
 
 attr_reader :file, :interp
@@ -65,11 +65,11 @@ end
 # available.
 def ast(klass, hash = nil)
     hash ||= {}
-    unless hash[:line]
+    unless hash.include?(:line)
         hash[:line] = @lexer.line
     end
 
-    unless hash[:file]
+    unless hash.include?(:file)
         if file = @lexer.file
             hash[:file] = file
         end
@@ -254,7 +254,7 @@ end
 
 # $Id$
 
-..end grammar.ra modeval..id729500608d
+..end grammar.ra modeval..idde6e0009a9
 
 ##### racc 1.4.5 generates ###
 

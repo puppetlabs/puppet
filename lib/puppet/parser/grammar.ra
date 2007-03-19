@@ -635,11 +635,11 @@ end
 # available.
 def ast(klass, hash = nil)
     hash ||= {}
-    unless hash[:line]
+    unless hash.include?(:line)
         hash[:line] = @lexer.line
     end
 
-    unless hash[:file]
+    unless hash.include?(:file)
         if file = @lexer.file
             hash[:file] = file
         end

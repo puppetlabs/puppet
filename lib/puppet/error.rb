@@ -22,12 +22,14 @@ module Puppet # :nodoc:
 
         def to_s
             str = nil
-            if defined? @file and defined? @line and @file and @line
+            if self.file and self.line
                 str = "%s at %s:%s" %
                     [@message.to_s, @file, @line]
-            elsif defined? @line and @line
+            elsif self.line
                 str = "%s at line %s" %
                     [@message.to_s, @line]
+            elsif self.file
+                str = "%s in %s" % [@message.to_s, self.file]
             else
                 str = @message.to_s
             end

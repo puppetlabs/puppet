@@ -314,7 +314,7 @@ class Puppet::Parser::Interpreter
     end
 
     # Create a new node, just from a list of names, classes, and an optional parent.
-    def gennode(name, hash)
+    def gennode(name, hash, source = nil)
         facts = hash[:facts]
         classes = hash[:classes]
         parent = hash[:parentnode]
@@ -348,7 +348,14 @@ class Puppet::Parser::Interpreter
         end
 
         # Create the node
-        return @parser.ast(AST::Node, arghash)
+        if source
+            arghash[:file] = source
+        else
+            arghash[:file] = nil
+        end
+        arghash[:line] = nil
+        node = @parser.ast(AST::Node, arghash)
+        return node
     end
 
     # create our interpreter
@@ -716,7 +723,7 @@ class Puppet::Parser::Interpreter
             Puppet.warning "Somehow got a node with no information"
             return nil
         else
-            return gennode(name, args)
+            return gennode(name, args, Puppet[:external_nodes])
         end
     end
 
@@ -727,7 +734,7 @@ class Puppet::Parser::Interpreter
             args = {}
             args[:classes] = classes if classes
             args[:parentnode] = parent if parent
-            return gennode(node, args)
+            return gennode(node, args, "ldap")
         else
             return nil
         end

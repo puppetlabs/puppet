@@ -444,6 +444,13 @@ class TestLangFunctions < Test::Unit::TestCase
             assert(scope.classlist.include?(c),
                 "class %s was not evaluated" % c)
         end
+
+        # Now try a scoped class
+        interp.newclass("os::redhat")
+
+        assert_nothing_raised("Could not include qualified class name") do
+            scope.function_include("os::redhat")
+        end
     end
 
     def test_file
