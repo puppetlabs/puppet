@@ -106,8 +106,10 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %
 %pre
 /usr/sbin/groupadd -r puppet 2>/dev/null || :
 /usr/sbin/useradd -g puppet -c "Puppet" \
-    -s /sbin/nologin -r -d /var/puppet puppet 2> /dev/null || :
-
+    -s /sbin/nologin -r -d /var/lib/puppet puppet 2> /dev/null || :
+if [ $1 -gt 1 ] ; then
+  /usr/sbin/usermod -d /var/lib/puppet puppet || :
+fi
 %post
 /sbin/chkconfig --add puppet
 exit 0
@@ -136,6 +138,10 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Thu Feb 15 2007 David Lutterkort <dlutter@redhat.com> - 0.22.2
+- Set puppet's homedir to /var/lib/puppet, not /var/puppet (no migration
+  of existing homedirs though)
+
 * Mon Feb 12 2007 David Lutterkort <dlutter@redhat.com> - 0.22.1-2
 - Fix bogus config parameter in puppetd.conf
 
