@@ -65,7 +65,8 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             Puppet.err "Could not apply complete configuration: %s" %
                 detail
         rescue => detail
-            Puppet.err "Found a bug: %s" % detail
+            Puppet.err "Got an uncaught exception of type %s: %s" %
+                [detail.class, detail]
             if Puppet[:trace]
                 puts detail.backtrace
             end
