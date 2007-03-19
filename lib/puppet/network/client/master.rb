@@ -105,6 +105,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     def clear
         @objects.remove(true)
         Puppet::Type.allclear
+        mkdefault_objects
         @objects = nil
     end
 
@@ -156,12 +157,12 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     # Let the daemon run again, freely in the filesystem.  Frolick, little
     # daemon!
     def enable
-        Puppet::Util::Pidlock.new(Puppet[:puppetdlockfile]).unlock(:anonymous => true)
+        lockfile.unlock(:anonymous => true)
     end
 
     # Stop the daemon from making any configuration runs.
     def disable
-        Puppet::Util::Pidlock.new(Puppet[:puppetdlockfile]).lock(:anonymous => true)
+        lockfile.lock(:anonymous => true)
     end
 
     # Retrieve the config from a remote server.  If this fails, then
@@ -286,15 +287,13 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
     # The code that actually runs the configuration.  
     def run(tags = nil, ignoreschedules = false)
-        lockfile = Puppet::Util::Pidlock.new(Puppet[:puppetdlockfile])
-        
-        locked = false
+        got_lock = false
         Puppet::Util.sync(:puppetrun).synchronize(Sync::EX) do
             if !lockfile.lock
                 Puppet.notice "Lock file %s exists; skipping configuration run" %
                     lockfile.lockfile
             else
-                @running = true
+                got_lock = true
                 @configtime = thinmark do
                     self.getconfig
                 end
@@ -307,7 +306,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
                         self.apply(tags, ignoreschedules)
                     end
                 end
-                @running = false
             end
             
             lockfile.unlock
@@ -320,11 +318,11 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         end
     ensure
         # Just make sure we remove the lock file if we set it.
-        lockfile.unlock if locked and lockfile.locked?
+        lockfile.unlock if got_lock and lockfile.locked?
     end
 
     def running?
-        @running
+        lockfile.locked?
     end
 
     # Store the classes in the classfile, but only if we're not local.
@@ -625,6 +623,14 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         end
         
         return objects
+    end
+
+    def lockfile
+        unless defined?(@lockfile)
+            @lockfile = Puppet::Util::Pidlock.new(Puppet[:puppetdlockfile])
+        end
+
+        @lockfile
     end
 end
 

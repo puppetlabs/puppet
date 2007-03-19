@@ -605,6 +605,23 @@ end
         end
 
     end
+
+    def test_locking
+        master = mkclient
+
+        class << master
+            def getconfig
+                raise ArgumentError, "Just testing"
+            end
+        end
+
+        assert_raise(ArgumentError, "did not fail") do
+            master.run
+        end
+
+        assert(! master.send(:lockfile).locked?,
+            "Master is still locked after failure")
+    end
 end
 
 # $Id$
