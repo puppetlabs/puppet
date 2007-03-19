@@ -163,6 +163,15 @@ module Puppet
             def retrieve
                 @is = @parent.retrieve
             end
+
+            # Provide a bit more information when logging upgrades.
+            def should_to_s
+                if @latest
+                    @latest.to_s
+                else
+                    super
+                end
+            end
         end
 
         newparam(:name) do

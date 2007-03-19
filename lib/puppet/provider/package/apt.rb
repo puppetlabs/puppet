@@ -76,32 +76,13 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
 
     # What's the latest package version available?
     def latest
-        output = aptcache :showpkg,  @model[:name]
+        output = aptcache :policy,  @model[:name]
 
-        if output =~ /Versions:\s*\n((\n|.)+)^$/
-            versions = $1
-            available_versions = versions.split(/\n/).collect { |version|
-                if version =~ /^([^\(]+)\(/
-                    $1
-                else
-                    self.warning "Could not match version '%s'" % version
-                    nil
-                end
-            }.reject { |vers| vers.nil? }.sort { |a,b|
-                versioncmp(a,b)
-            }
-
-            if available_versions.length == 0
-                self.debug "No latest version"
-                if Puppet[:debug]
-                    print output
-                end
-            end
-
-            # Get the latest and greatest version number
-            return available_versions.pop
+        if output =~ /\*\*\*\s+(\S+)\s/
+            return $1
         else
-            self.err "Could not match string"
+            self.err "Could not find latest version"
+            return nil
         end
     end
 

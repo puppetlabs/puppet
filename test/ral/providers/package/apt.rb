@@ -69,4 +69,21 @@ class AptPackageProviderTest < PuppetTest::TestCase
 		
 		pkg.evaluate.each { |state| state.transaction = self; state.forward }
 	end
+
+    def test_latest
+		pkg = @type.create :name => 'ssh', :provider => :apt
+
+        assert(pkg, "did not create pkg")
+        status = pkg.provider.query
+        assert(status, "ssh is not installed")
+        assert(status[:ensure] != :absent, "ssh is not installed")
+
+        latest = nil
+        assert_nothing_raised("Could not call latest") do
+            latest = pkg.provider.latest
+        end
+        assert(latest, "Could not get latest value from apt")
+    end
 end
+
+# $Id$
