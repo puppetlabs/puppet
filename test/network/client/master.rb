@@ -567,6 +567,35 @@ end
         assert(! @logs.detect { |l| l.message =~ /Could not load/},
             "Tried to load cache when it is non-existent")
     end
+
+    # #519 - cache the facts so that we notice if they change.
+    def test_factchanges_cause_recompile
+        $value = "one"
+        Facter.add(:testfact) do
+            setcode { $value }
+        end
+        assert_equal("one", Facter.value(:testfact), "fact was not set correctly")
+        master = mkclient
+        master.local = false
+        driver = master.send(:instance_variable_get, "@driver")
+        driver.local = false
+
+        assert_nothing_raised("Could not compile config") do
+            master.getconfig
+        end
+
+        $value = "two"
+        Facter.clear
+        Facter.loadfacts
+        Facter.add(:testfact) do
+            setcode { $value }
+        end
+        assert_equal("two", Facter.value(:testfact), "fact did not change")
+
+        assert(master.facts_changed?, "master does not think facts changed")
+        assert(! master.fresh?, "master is considered fresh after facts changed")
+
+    end
 end
 
 # $Id$

@@ -127,10 +127,22 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         end
     end
 
+    # Have the facts changed since we last compiled?
+    def facts_changed?
+        oldfacts = Puppet::Util::Storage.cache(:configuration)[:facts]
+        newfacts = self.class.facts
+        if oldfacts == newfacts
+            return false
+        else
+            return true
+        end
+    end
+
     # Check whether our configuration is up to date
     def fresh?
         return false if Puppet[:ignorecache]
         return false unless self.compile_time
+        return false if self.facts_changed?
 
         # We're willing to give a 2 second drift
         if @driver.freshness - @compile_time.to_i < 1
@@ -570,6 +582,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             fromcache = true
         else
             @compile_time = Time.now
+            Puppet::Util::Storage.cache(:configuration)[:facts] = facts
             Puppet::Util::Storage.cache(:configuration)[:compile_time] = @compile_time
         end
 

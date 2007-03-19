@@ -1,4 +1,7 @@
 0.22.2 (grover)
+    Facts are now cached in the state file, and when they change the configuration
+    is always recompiled. (#519)
+
     Added 'ignoreimport' setting for use in commit hooks.  This causes the
     parser to ignore import statements so a single file can be parse-checked.  (#544)
 
