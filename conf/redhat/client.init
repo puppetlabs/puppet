@@ -49,12 +49,17 @@ stop() {
 	[ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
 }
 
-restart() {
+reload() {
 	echo -n $"Restarting puppet: "
         killproc $puppetd -HUP
 	RETVAL=$?
 	echo
 	return $RETVAL
+}
+
+restart() {
+    stop
+    start
 }
 
 case "$1" in
@@ -64,13 +69,13 @@ case "$1" in
   stop) 
 	stop
 	;;
-  restart|force-reload)
+  restart)
 	restart
 	;;
-  reload)
-        restart
+  reload|force-reload)
+        reload
 	;;
-  condrestart)
+  condrestart|try-restart)
 	[ -f "$pidfile" ] && restart
 	;;
   status)
