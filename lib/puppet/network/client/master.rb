@@ -315,7 +315,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         end
     ensure
         # Just make sure we remove the lock file if we set it.
-        lockfile.unlock if locked and lockfile.lock
+        lockfile.unlock if locked and lockfile.locked?
     end
 
     def running?
