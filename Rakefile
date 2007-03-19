@@ -28,7 +28,7 @@ project = Rake::RedLabProject.new("puppet") do |p|
         'examples/**/*',
         'conf/**/*'
     ]
-    p.filelist.exclude("bin/pi")
+    p.filelist.exclude("bin/pi", "bin/ralsh")
 
     p.add_dependency('facter', '1.1.0')
 

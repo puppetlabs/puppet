@@ -1,4 +1,7 @@
 0.22.2 (grover)
+    Added 'ralsh' (formerly x2puppet) to the svn tree.  When possible it
+    should be added to the packages.
+
     The 'notify' type now defaults to its message being the same as its name.
 
     Reopening $stdin to read from /dev/null during execution, in hopes that

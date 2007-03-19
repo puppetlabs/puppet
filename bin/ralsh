@@ -1,0 +1,149 @@
+#!/usr/bin/env ruby
+#
+# = Synopsis
+#
+# Use the Puppet RAL to directly interact with the system.
+#
+# = Usage
+#
+#   ralsh [-h|--help] [-e|--edit] type <name>
+#
+# = Description
+#
+# This command provides simple facilities for converting current system state
+# into Puppet code, along with some ability to use Puppet to affect the current
+# state.
+#
+# By default, you must at least provide a type to list, which case ralsh
+# will tell you everything it knows about all instances of that type.  You can
+# optionally specify an instance name, and ralsh will only describe that single
+# instance.
+#
+# You can also add +--edit+ as an argument, and ralsh will write its output
+# to a file, open that file in an editor, and then apply the file as a Puppet
+# transaction.  You can easily use this to use Puppet to make simple changes to
+# a system.
+#
+# = Options
+#
+# edit:
+#   Write the results of the query to a file, open the file in an editor,
+#   and read the file back in as an executable Puppet manifest.
+#
+# help:
+#   Print this help message.
+#
+# types:
+#   List all available types.
+#
+# = Example
+#
+#   $ ralsh user luke
+#   user { 'luke':
+#       home => '/home/luke',
+#       uid => '100',
+#       ensure => 'present',
+#       comment => 'Luke Kanies,,,',
+#       gid => '1000',
+#       shell => '/bin/bash',
+#       groups => ['sysadmin','audio','video','puppet']
+#   }
+#   $
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005-2007 Reductive Labs, LLC
+# Licensed under the GNU Public License
+
+
+require 'getoptlong'
+require 'puppet'
+
+result = GetoptLong.new(
+	[ "--types",	"-t",			GetoptLong::NO_ARGUMENT ],
+	[ "--edit",		"-e",			GetoptLong::NO_ARGUMENT ],
+	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+)
+
+edit = false
+
+result.each { |opt,arg|
+	case opt
+    when "--types"
+        types = []
+        Puppet::Type.loadall
+        Puppet::Type.eachtype do |t|
+            next if t.name == :component
+            types << t.name.to_s 
+        end
+        puts types.sort
+        exit
+    when "--edit"
+        edit = true
+    when "--help"
+        if Puppet.features.usage?
+            RDoc::usage
+        else
+            puts "install RDoc:usage for help"
+        end
+        exit
+    else
+        raise "Invalid option '#{opt}'"
+	end
+}
+
+type = nil
+if ARGV.length > 0
+    type = ARGV.shift
+else
+    raise "You must specify the type to display"
+end
+
+
+typeobj = nil
+
+unless typeobj = Puppet::Type.type(type)
+    raise "Could not find type %s" % type
+end
+
+states = typeobj.states.collect { |s| s.name }
+
+text = typeobj.list.collect do |obj|
+    next if ARGV.length > 0 and ! ARGV.include? obj.name
+    trans = obj.to_trans(true)
+
+    trans.dup.each do |param, value|
+        if value == "" or value == []
+            trans.delete(param)
+        end
+
+        unless states.include?(param)
+            trans.delete(param)
+        end
+    end
+
+    trans.to_manifest
+end.reject { |t| t.nil? }.join("\n")
+
+if edit
+    file = "/tmp/x2puppet-#{$$}.pp"
+    begin
+        File.open(file, "w") do |f|
+            f.puts text
+        end
+        system(ENV["EDITOR"], file)
+        system("puppet -v " + file)
+    ensure
+        #if FileTest.exists? file
+        #    File.unlink(file)
+        #end
+    end
+else
+    puts text
+end
+
+# $Id$
