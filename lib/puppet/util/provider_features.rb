@@ -39,9 +39,30 @@ module Puppet::Util::ProviderFeatures
         str = ""
         @features ||= {}
         return nil if @features.empty?
-        @features.each do |name, feature|
-            doc = feature.docs.gsub(/\n\s+/, " ")
+        names = @features.keys.sort { |a,b| a.to_s <=> b.to_s }
+        names.each do |name|
+            doc = @features[name].docs.gsub(/\n\s+/, " ")
             str += " - **%s**: %s\n" % [name, doc]
+        end
+        if providers.length > 0
+            str += "<table><tr><th></th>\n"
+            names.each do |name|
+                str += "<th>%s</th>" % name
+            end
+            str += "</tr>\n"
+            providers.each do |provname|
+                prov = provider(provname)
+                str += "<tr><td>%s</td>" % provname
+                names.each do |feature|
+                    have = ""
+                    if prov.feature?(feature)
+                        have = "<strong>X</strong>"
+                    end
+                    str += "<td>%s</td>" % have
+                end
+                str += "</tr>\n"
+            end
+            str += "</table>\n"
         end
         str
     end
