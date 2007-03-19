@@ -261,6 +261,13 @@ class Type < Puppet::Element
             end
         end
 
+        if hash.include?(:provider)
+            self[:provider] = hash[:provider]
+            hash.delete(:provider)
+        else
+            setdefaults(:provider)
+        end
+
         # This is all of our attributes except the namevar.
         attrs.each { |attr|
             if hash.include?(attr)

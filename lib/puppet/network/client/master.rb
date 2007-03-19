@@ -140,7 +140,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             return false
         end
         if facts_changed?(facts)
-            Puppet.info "Facts have changed; recompiling"
+            Puppet.info "Facts have changed; recompiling" unless local?
             return false
         end
 
