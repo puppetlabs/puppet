@@ -74,14 +74,15 @@
     Supporting hosts with no domain name, thanks to a patch from
     Dennis Jacobfeuerborn.
 
-    Added an 'ignorecache' option to tell puppetd to force a recompile.
+    Added an 'ignorecache' option to tell puppetd to force a recompile, thanks to
+    a patch by Chris McEniry.
 
     Made up2date the default for RHEL < 4 and yum the default for the rest.
 
     The yum provider now supports versions.
 
     Case statements correctly match when multiple values are provided,
-    thanks to a patch by David Schmidt.
+    thanks to a patch by David Schmitt.
 
     Functions can now be called with no arguments.
 
