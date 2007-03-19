@@ -84,6 +84,19 @@ class Puppet::Provider::NameService < Puppet::Provider
             return names
         end
 
+        def model=(model)
+            super
+            @model.validproperties.each do |prop|
+                next if prop == :ensure
+                unless public_method_defined?(prop)
+                    define_method(prop) { get(prop) || :absent}
+                end
+                unless public_method_defined?(prop.to_s + "+")
+                    define_method(prop.to_s + "=") { |*vals| set(prop, *vals) }
+                end
+            end
+        end
+
         # This is annoying, but there really aren't that many options,
         # and this *is* built into Ruby.
         def section
@@ -307,25 +320,6 @@ class Puppet::Provider::NameService < Puppet::Provider
         super
 
         @objectinfo = nil
-    end
-
-    # 
-    def method_missing(name, *args)
-        name = name.to_s
-
-        # Make sure it's a valid property.  We go up our class structure instead of
-        # our model's because the model is fake during testing.
-        unless self.class.model.validproperty?(name.sub("=",''))
-            raise Puppet::DevError, "%s is not a valid %s property" %
-                [name, @model.class.name]
-        end
-
-        # Each class has to override this manually
-        if name =~ /=/
-            set(name.to_s.sub("=", ''), *args)
-        else
-            return get(name.intern) || :absent
-        end
     end
 
     def set(param, value)

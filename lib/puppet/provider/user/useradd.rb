@@ -17,6 +17,8 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
         value !~ /\s/
     end
 
+    has_features :manages_homedir, :allows_duplicates
+
     def addcmd
         cmd = [command(:add)]
         @model.class.validproperties.each do |property|
@@ -33,8 +35,15 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
             cmd << "-M"
         else
         end
-        if @model[:allowdupe]  == :true
+
+        if @model.allowdupe?
             cmd << "-o"
+        end
+
+        if @model.managehome?
+            cmd << "-m"
+        elsif %w{Fedora RedHat}.include?(Facter.value("operatingsystem"))
+            cmd << "-M"
         end
 
         cmd << @model[:name]

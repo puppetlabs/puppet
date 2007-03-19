@@ -313,12 +313,6 @@ class Property < Puppet::Parameter
         return tmp
     end
 
-    # Retrieve the parent's provider.  Some types don't have providers, in which
-    # case we return the parent object itself.
-    def provider
-        @parent.provider || @parent
-    end
-
     # By default, call the method associated with the property name on our
     # provider.  In other words, if the property name is 'gid', we'll call
     # 'provider.gid' to retrieve the current value.

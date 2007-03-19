@@ -4,6 +4,28 @@ require 'puppet/type/property'
 
 module Puppet
     newtype(:user) do
+        @doc = "Manage users.  This type is mostly built to manage system
+            users, so it is lacking some features useful for managing normal
+            users.
+            
+            This element type uses the prescribed native tools for creating
+            groups and generally uses POSIX APIs for retrieving information
+            about them.  It does not directly modify /etc/passwd or anything.
+            
+            For most platforms, the tools used are ``useradd`` and its ilk;
+            for Mac OS X, NetInfo is used.  This is currently unconfigurable,
+            but if you desperately need it to be so, please contact us."
+
+        feature :allows_duplicates,
+            "The provider supports duplicate users with the same UID."
+
+        feature :manages_homedir,
+            "The provider can create and remove home directories."
+
+        feature :manages_passwords,
+            "The provider can modify user passwords, by accepting a password
+            hash."
+
         newproperty(:ensure) do
             newvalue(:present, :event => :user_created) do
                 provider.create
@@ -77,9 +99,10 @@ module Puppet
                 being created, if no user ID is specified then one will be
                 chosen automatically, which will likely result in the same user
                 having different IDs on different systems, which is not
-                recommended.  This is especially noteworthy if you use Puppet to manage
-                the same user on both Darwin and other platforms, since Puppet does the
-                ID generation for you on Darwin, but the tools do so on other platforms."
+                recommended.  This is especially noteworthy if you use Puppet
+                to manage the same user on both Darwin and other platforms,
+                since Puppet does the ID generation for you on Darwin, but the
+                tools do so on other platforms."
 
             munge do |value|
                 case value
@@ -262,7 +285,7 @@ module Puppet
             defaultto :minimum
         end
 
-        newparam(:allowdupe) do
+        newparam(:allowdupe, :boolean => true) do
             desc "Whether to allow duplicate UIDs."
                 
             newvalues(:true, :false)
@@ -270,19 +293,21 @@ module Puppet
             defaultto false
         end
 
-        @doc = "Manage users.  Currently can create and modify users, but
-            cannot delete them.  Theoretically all of the parameters are
-            optional, but if no parameters are specified the comment will
-            be set to the user name in order to make the internals work out
-            correctly.
-            
-            This element type uses the prescribed native tools for creating
-            groups and generally uses POSIX APIs for retrieving information
-            about them.  It does not directly modify /etc/passwd or anything.
-            
-            For most platforms, the tools used are ``useradd`` and its ilk;
-            for Mac OS X, NetInfo is used.  This is currently unconfigurable,
-            but if you desperately need it to be so, please contact us."
+        newparam(:managehome, :boolean => true) do
+            desc "Whether to manage the home directory when managing the user."
+
+            newvalues(:true, :false)
+
+            defaultto false
+
+            validate do |val|
+                if val.to_s == "true"
+                    unless provider.class.manages_homedir?
+                        raise ArgumentError, "User provider %s can not manage home directories" % provider.class.name
+                    end
+                end
+            end
+        end
 
         # Autorequire the group, if it's around
         autorequire(:group) do

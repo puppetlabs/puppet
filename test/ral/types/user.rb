@@ -463,6 +463,31 @@ class TestUser < Test::Unit::TestCase
         assert(user.send(:property, :groups).insync?,
             "Groups state considered out of sync with no :should value")
     end
+
+    # Make sure the 'managehome' param can only be set when the provider
+    # has that feature.  Uses a patch from #432.
+    def test_managehome
+        user = Puppet::Type.type(:user).create(:name => "yaytest", :check => :all)
+
+        prov = user.provider
+
+        home = false
+        prov.class.meta_def(:manages_homedir?) { home }
+
+        assert_nothing_raised("failed on false managehome") do
+            user[:managehome] = false
+        end
+
+        assert_raise(ArgumentError, "did not fail when managehome? is false") do
+            user[:managehome] = true
+        end
+
+        home = true
+        assert(prov.class.manages_homedir?, "provider did not enable homedir")
+        assert_nothing_raised("failed when managehome is true") do
+            user[:managehome] = true
+        end
+    end
 end
 
 # $Id$

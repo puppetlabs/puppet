@@ -12,11 +12,18 @@ module Puppet::Util::ProviderFeatures
 
         # Are all of the requirements met?
         def available?(obj)
-            if self.methods and ! methods_available?(obj)
+            if self.methods 
+                if methods_available?(obj)
+                    return true
+                else
+                    return false
+                end
+            else
+                # In this case, the provider has to declare support for this
+                # feature, and that's been checked before we ever get to the
+                # method checks.
                 return false
             end
-
-            true
         end
 
         def initialize(name, docs, hash)
@@ -44,7 +51,7 @@ module Puppet::Util::ProviderFeatures
     # Define one or more features.  At a minimum, features require a name
     # and docs, and at this point they should also specify a list of methods
     # required to determine if the feature is present.
-    def feature(name, docs, hash)
+    def feature(name, docs, hash = {})
         @features ||= {}
         if @features.include?(name)
             raise Puppet::DevError, "Feature %s is already defined" % name

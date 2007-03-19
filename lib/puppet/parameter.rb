@@ -445,6 +445,12 @@ class Puppet::Parameter < Puppet::Element
         end
     end
 
+    # Retrieve the parent's provider.  Some types don't have providers, in which
+    # case we return the parent object itself.
+    def provider
+        @parent.provider || @parent
+    end
+
     # If there's a shadowing metaparam, instantiate it now.
     # This allows us to create a property or parameter with the
     # same name as a metaparameter, and the metaparam will only be

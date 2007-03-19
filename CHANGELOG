@@ -1,4 +1,8 @@
 0.22.2 (grover)
+    Users can now manage their home directories, using the managehome
+    parameter, partially using patches provided by Tim Stoop and
+    Matt Palmer. (#432)
+
     Added 'ralsh' (formerly x2puppet) to the svn tree.  When possible it
     should be added to the packages.
 

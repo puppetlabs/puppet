@@ -138,6 +138,9 @@ class TestProviderFeatures < Test::Unit::TestCase
     end
 
     def test_has_feature
+        # Define a new feature that has no methods
+        @type.feature(:nomeths, "desc")
+
         # Define a provider with nothing
         provider = @type.provide(:nothing) {}
 
@@ -163,8 +166,14 @@ class TestProviderFeatures < Test::Unit::TestCase
             has_features :alpha
         end
 
+        # And a provider that declares it has our methodless feature.
+        @type.provide(:none) do
+            has_features :nomeths
+        end
+
         should = {:nothing => [], :both => [:numeric, :alpha],
-            :letters => [:alpha], :numbers => [:numeric]}
+            :letters => [:alpha], :numbers => [:numeric],
+            :none => [:nomeths]}
 
         should.each do |name, features|
             provider = @type.provider(name)
