@@ -1,4 +1,7 @@
 0.22.2 (grover)
+    Definitions now support both 'name' and 'title', just like any other
+    resource type. (#539)
+
     Added a generate() command, which sets values to the result of an external
     command. (#541)
 

@@ -487,6 +487,45 @@ class TestResource < Test::Unit::TestCase
                 [param, value])
         end
     end
+
+    # The second part of #539 - make sure resources pass the arguments
+    # correctly.
+    def test_title_with_definitions
+        define = @interp.newdefine "yayness",
+            :code => resourcedef("file", "/tmp",
+                "owner" => varref("name"), "mode" => varref("title"))
+
+        klass = @interp.findclass("", "")
+        should = {:name => :owner, :title => :mode}
+        [
+        {:name => "one", :title => "two"},
+        {:title => "three"},
+        ].each do |hash|
+            scope = mkscope :interp => @interp
+            args = {:type => "yayness", :title => hash[:title],
+                :source => klass, :scope => scope}
+            if hash[:name]
+                args[:params] = {:name => hash[:name]}
+            else
+                args[:params] = {} # override the defaults
+            end
+
+            res = nil
+            assert_nothing_raised("Could not create res with %s" % hash.inspect) do
+                res = mkresource(args)
+            end
+            assert_nothing_raised("Could not eval res with %s" % hash.inspect) do
+                res.evaluate
+            end
+
+            made = scope.findresource("File[/tmp]")
+            assert(made, "Did not create resource with %s" % hash.inspect)
+            should.each do |orig, param|
+                assert_equal(hash[orig] || hash[:title], made[param],
+                    "%s was not set correctly with %s" % [param, hash.inspect])
+            end
+        end
+    end
 end
 
 # $Id$

@@ -6,6 +6,7 @@
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
+require 'mocha'
 require 'puppettest/parsertesting'
 require 'puppettest/resourcetesting'
 
@@ -49,7 +50,7 @@ class TestASTComponent < Test::Unit::TestCase
 
         assert_nothing_raised do
             klass.evaluate(:scope => scope,
-                :name => "first",
+                :title => "first",
                 :arguments => {"mode" => "755"}
             )
         end
@@ -65,7 +66,7 @@ class TestASTComponent < Test::Unit::TestCase
         # Make sure we can't evaluate it with the same args
         assert_raise(Puppet::ParseError) do
             klass.evaluate(:scope => scope,
-                :name => "first",
+                :title => "first",
                 :arguments => {"mode" => "755"}
             )
         end
@@ -73,7 +74,7 @@ class TestASTComponent < Test::Unit::TestCase
         # Now create another with different args
         assert_nothing_raised do
             klass.evaluate(:scope => scope,
-                :name => "second",
+                :title => "second",
                 :arguments => {"mode" => "755", "owner" => "daemon"}
             )
         end
@@ -85,6 +86,48 @@ class TestASTComponent < Test::Unit::TestCase
         assert_equal("/tmp/second", secondobj.title)
         assert_equal("daemon", secondobj[:owner])
         assert_equal("755", secondobj[:mode])
+    end
+
+    # #539 - definitions should support both names and titles
+    def test_names_and_titles
+        interp, scope, source = mkclassframing
+
+        [
+        {:name => "one", :title => "two"},
+        {:title => "mytitle"},
+        ].each_with_index do |hash, i|
+
+            # Create a definition that uses both name and title
+            klass = interp.newdefine "yayness%s" % i
+
+            subscope = klass.subscope(scope, "yayness%s" % i)
+
+            klass.expects(:subscope).returns(subscope)
+
+            args = {:title => hash[:title]}
+            if hash[:name]
+                args[:arguments] = {:name => hash[:name]}
+            end
+            args[:scope] = scope
+            assert_nothing_raised("Could not evaluate definition with %s" % hash.inspect) do
+                klass.evaluate(args)
+            end
+
+            name = hash[:name] || hash[:title]
+            title = hash[:title]
+            args[:name] ||= name
+
+            assert_equal(name, subscope.lookupvar("name"),
+                "Name did not get set correctly")
+            assert_equal(title, subscope.lookupvar("title"),
+                "title did not get set correctly")
+
+            [:name, :title].each do |param|
+                val = args[param]
+                assert(subscope.tags.include?(val),
+                    "Scope was not tagged with %s" % val)
+            end
+        end
     end
 end
 # $Id$

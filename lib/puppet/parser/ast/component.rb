@@ -28,13 +28,15 @@ class Puppet::Parser::AST
         def evaluate(hash)
             origscope = hash[:scope]
             objtype = hash[:type]
-            name = hash[:name]
+            title = hash[:title]
             args = symbolize_options(hash[:arguments] || {})
+
+            name = args[:name] || title
 
             exported = hash[:exported]
 
             pscope = origscope
-            scope = subscope(pscope, name)
+            scope = subscope(pscope, title)
 
             if exported or origscope.exported?
                 scope.exported = true
@@ -46,8 +48,10 @@ class Puppet::Parser::AST
                 scope.tag(@type)
             end
 
-            unless name.nil? or name =~ /[^\w]/ or name == ""
-                scope.tag(name)
+            [name, title].each do |str|
+                unless str.nil? or str =~ /[^\w]/ or str == ""
+                    scope.tag(str)
+                end
             end
 
             # define all of the arguments in our local scope
@@ -66,7 +70,7 @@ class Puppet::Parser::AST
                             #    [default.inspect, arg.inspect, @name.inspect]
                         else
                             parsefail "Must pass %s to %s of type %s" %
-                                    [arg,name,@type]
+                                    [arg,title,@type]
                         end
                     end
                 }
@@ -84,7 +88,11 @@ class Puppet::Parser::AST
                 end
             }
 
-            unless args.include? "name"
+            unless args.include? :title
+                scope.setvar("title",title)
+            end
+
+            unless args.include? :name
                 scope.setvar("name",name)
             end
 
@@ -191,6 +199,8 @@ class Puppet::Parser::AST
 
             if @arguments.include?(param)
                 # It's a valid arg for us
+                return true
+            elsif param == "name"
                 return true
 #            elsif defined? @parentclass and @parentclass
 #                # Else, check any existing parent

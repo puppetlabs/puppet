@@ -91,7 +91,7 @@ class Puppet::Parser::Resource
             scope.deleteresource(self)
             return klass.evaluate(:scope => scope,
                                   :type => self.type,
-                                  :name => self.title,
+                                  :title => self.title,
                                   :arguments => self.to_hash,
                                   :scope => self.scope,
                                   :exported => self.exported
@@ -182,16 +182,17 @@ class Puppet::Parser::Resource
     # Verify that all passed parameters are valid.  This throws an error if there's
     # a problem, so we don't have to worry about the return value.
     def paramcheck(param)
+        param = param.to_s
         # Now make sure it's a valid argument to our class.  These checks
         # are organized in order of commonhood -- most types, it's a valid argument
         # and paramcheck is enabled.
         if @ref.typeclass.validattr?(param)
             true
-        elsif (param == "name" or param == "title") # always allow these
+        elsif %w{name title}.include?(param) # always allow these
             true
         elsif paramcheck?
             self.fail Puppet::ParseError, "Invalid parameter '%s' for type '%s'" %
-                    [param, @ref.type]
+                    [param.inspect, @ref.type]
         end
     end
 
