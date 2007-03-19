@@ -1,4 +1,9 @@
 0.22.2 (grover)
+    Added 'ignoreimport' setting for use in commit hooks.  This causes the
+    parser to ignore import statements so a single file can be parse-checked.  (#544)
+
+    Import statements can now specify multiple comma-separated arguments.
+
     Definitions now support both 'name' and 'title', just like any other
     resource type. (#539)
 

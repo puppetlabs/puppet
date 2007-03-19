@@ -702,6 +702,44 @@ file { "/tmp/yayness":
         end
     end
 
+    # #544
+    def test_ignoreimports
+        parser = mkparser
+
+        assert(! Puppet[:ignoreimport], ":ignoreimport defaulted to true")
+        assert_raise(Puppet::ParseError, "Did not fail on missing import") do
+            parser.parse("import 'nosuchfile'")
+        end
+        assert_nothing_raised("could not set :ignoreimport") do
+            Puppet[:ignoreimport] = true
+        end
+        assert_nothing_raised("Parser did not follow :ignoreimports") do
+            parser.parse("import 'nosuchfile'")
+        end
+    end
+
+    def test_multiple_imports_on_one_line
+        one = tempfile
+        two = tempfile
+        base = tempfile
+        File.open(one, "w") { |f| f.puts "$var = value" }
+        File.open(two, "w") { |f| f.puts "$var = value" }
+        File.open(base, "w") { |f| f.puts "import '#{one}', '#{two}'" }
+
+        parser = mkparser
+        parser.file = base
+
+        # Importing is logged at debug time.
+        Puppet::Util::Log.level = :debug
+        assert_nothing_raised("Parser could not import multiple files at once") do
+            parser.parse
+        end
+
+        [one, two].each do |file|
+            assert(@logs.detect { |l| l.message =~ /importing '#{file}'/},
+                "did not import %s" % file)
+        end
+    end
 end
 
 # $Id$

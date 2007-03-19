@@ -447,54 +447,18 @@ selectlhand:  name
     result = ast AST::Default, :value => val[0]
 }
 
-import: IMPORT quotedtext {
-    # importing files
-    # yuk, i hate keywords
-    # we'll probably have to have some kind of search path eventually
-    # but for now, just use a path relative to the file doing the importing
-    dir = @lexer.file.sub(%r{[^/]+$},'').sub(/\/$/, '')
-    if dir == ""
-        dir = "."
-    end
-    result = ast AST::ASTArray
+# These are only used for importing, and we don't interpolate there.
+qtexts:       quotedtext { result = [val[0].value] }
+            | qtexts COMMA quotedtext {
+    results = val[0] << val[2].value
+}
 
-    # We can't interpolate at this point since we don't have any
-    # scopes set up. Warn the user if they use a variable reference
-    pat = val[1].value
-    if pat.index("$")
-        Puppet.warning(
-           "The import of #{pat} contains a variable reference;" +
-           " variables are not interpolated for imports " +
-           "in file #{@lexer.file} at line #{@lexer.line}"
-        )
-    end
-    files = Puppet::Module::find_manifests(pat, dir)
-    if files.size == 0
-        raise Puppet::ImportError.new("No file(s) found for import " +
-                                      "of '#{pat}'")
+import: IMPORT qtexts {
+    val[1].each do |file|
+        import(file)
     end
 
-    files.each { |file|
-        parser = Puppet::Parser::Parser.new(interp)
-        parser.files = self.files
-        Puppet.debug("importing '%s'" % file)
-
-        unless file =~ /^#{File::SEPARATOR}/
-            file = File.join(dir, file)
-        end
-        begin
-            parser.file = file
-        rescue Puppet::ImportError
-            Puppet.warning(
-                "Importing %s would result in an import loop" %
-                    File.join(dir, file)
-            )
-            next
-        end
-
-        # This will normally add code to the 'main' class.
-        parser.parse
-    }
+    result = AST::ASTArray.new(:children => [])
 }
 
 # Disable definition inheritance for now. 8/27/06, luke
@@ -710,6 +674,61 @@ def file=(file)
         @files << Puppet::Util::LoadedFile.new(file)
         @lexer.file = file
     end
+end
+
+# Import our files.
+def import(file)
+    if Puppet[:ignoreimport]
+        return AST::ASTArray.new(:children => [])
+    end
+    # use a path relative to the file doing the importing
+    if @lexer.file
+        dir = @lexer.file.sub(%r{[^/]+$},'').sub(/\/$/, '')
+    else
+        dir = "."
+    end
+    if dir == ""
+        dir = "."
+    end
+    result = ast AST::ASTArray
+
+    # We can't interpolate at this point since we don't have any
+    # scopes set up. Warn the user if they use a variable reference
+    pat = file
+    if pat.index("$")
+        Puppet.warning(
+           "The import of #{pat} contains a variable reference;" +
+           " variables are not interpolated for imports " +
+           "in file #{@lexer.file} at line #{@lexer.line}"
+        )
+    end
+    files = Puppet::Module::find_manifests(pat, dir)
+    if files.size == 0
+        raise Puppet::ImportError.new("No file(s) found for import " +
+                                      "of '#{pat}'")
+    end
+
+    files.collect { |file|
+        parser = Puppet::Parser::Parser.new(interp)
+        parser.files = self.files
+        Puppet.debug("importing '%s'" % file)
+
+        unless file =~ /^#{File::SEPARATOR}/
+            file = File.join(dir, file)
+        end
+        begin
+            parser.file = file
+        rescue Puppet::ImportError
+            Puppet.warning(
+                "Importing %s would result in an import loop" %
+                    File.join(dir, file)
+            )
+            next
+        end
+
+        # This will normally add code to the 'main' class.
+        parser.parse
+    }
 end
 
 def initialize(interpreter)

@@ -111,7 +111,10 @@ module Puppet
                 @oldlibdir = value
                 $: << value
             end
-        }
+        },
+        :ignoreimport => [false, "A parameter that can be used in commit
+            hooks, since it enables you to parse-check a single file rather
+            than requiring that all files exist."]
     )
 
     # Define the config default.
