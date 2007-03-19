@@ -477,10 +477,12 @@ end
         # We have to make everything thinks it's remote, because there's no local caching info
         master.local = false
         
-        assert(! master.fresh?, "Considered fresh with no compile at all")
+        assert(! master.fresh?(master.class.facts),
+            "Considered fresh with no compile at all")
         
         assert_nothing_raised { master.run }
-        assert(master.fresh?, "not considered fresh after compile")
+        assert(master.fresh?(master.class.facts),
+            "not considered fresh after compile")
         
         # Now make sure the config time is cached
         assert(master.compile_time, "No stored config time")
