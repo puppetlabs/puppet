@@ -212,6 +212,14 @@ class Puppet::Provider
         end
     end
 
+    dochook(:features) do
+        if features().length > 0
+            return "  Supported features: " + features().collect do |f|
+                "``#{f}``"
+            end.join(", ") + "."
+        end
+    end
+
     # Remove the reference to the model, so GC can clean up.
     def clear
         @model = nil

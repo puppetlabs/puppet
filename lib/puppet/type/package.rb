@@ -17,8 +17,23 @@ module Puppet
 
             Puppet will automatically guess the packaging format that you are
             using based on the platform you are on, but you can override it
-            using the ``type`` parameter; obviously, if you specify that you
-            want to use ``rpm`` then the ``rpm`` tools must be available."
+            using the ``provider`` parameter; each provider defines what it
+            requires in order to function, and you must meet those requirements
+            to use a given provider."
+
+        feature :installable, "The provider can install packages.",
+            :methods => [:install]
+        feature :uninstallable, "The provider can uninstall packages.",
+            :methods => [:uninstall]
+        feature :upgradeable, "The provider can upgrade to the latest version of a
+                package.  This feature is used by specifying ``latest`` as the
+                desired value for the package.",
+            :methods => [:update, :latest]
+        feature :purgeable, "The provider can purge packages.  This generally means
+                that all traces of the package are removed, including
+                existing configuration files.  This feature is thus destructive
+                and should be used with the utmost care.",
+            :methods => [:purge]
 
         ensurable do
             desc "What state the package should be in.
@@ -42,6 +57,12 @@ module Puppet
             end
             
             newvalue(:purged, :event => :package_purged) do
+                unless provider.purgeable?
+                    self.fail(
+                        "Package provider %s does not purging" %
+                        @parent[:provider]
+                    )
+                end
                 provider.purge
             end
 
@@ -49,7 +70,7 @@ module Puppet
             aliasvalue(:installed, :present)
 
             newvalue(:latest) do
-                unless provider.respond_to?(:latest)
+                unless provider.upgradeable?
                     self.fail(
                         "Package provider %s does not support specifying 'latest'" %
                         @parent[:provider]

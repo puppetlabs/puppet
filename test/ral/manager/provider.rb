@@ -47,6 +47,87 @@ class TestTypeProviders < Test::Unit::TestCase
         assert_equal(should, type.allattrs.reject { |p| ! should.include?(p) },
             "Providify did not reorder parameters")
     end
+
+    def test_features
+        type = Puppet::Type.newtype(:feature_test) do
+            newparam(:name) {}
+            ensurable
+        end
+        cleanup { Puppet::Type.rmtype(:feature_test) }
+
+        features = {:numeric => [:one, :two], :alpha => [:a, :b]}
+
+        features.each do |name, methods|
+            assert_nothing_raised("Could not define features") do
+                type.feature(name, "boo", :methods => methods)
+            end
+        end
+
+        providers = {:numbers => features[:numeric], :letters => features[:alpha]}
+        providers[:both] = features[:numeric] + features[:alpha]
+        providers[:mixed] = [:one, :b]
+        providers[:neither] = [:something, :else]
+
+        providers.each do |name, methods|
+            assert_nothing_raised("Could not create provider %s" % name) do
+                type.provide(name) do
+                    methods.each do |name|
+                        define_method(name) {}
+                    end
+                end
+            end
+        end
+
+        model = type.create(:name => "foo")
+        {:numbers => [:numeric], :letters => [:alpha], :both => [:numeric, :alpha],
+            :mixed => [], :neither => []}.each do |name, should|
+                should.sort! { |a,b| a.to_s <=> b.to_s }
+                provider = type.provider(name)
+                assert(provider, "Could not find provider %s" % name)
+                assert_equal(should, provider.features,
+                    "Provider %s has incorrect features" % name)
+
+                inst = provider.new(model)
+                # Make sure the boolean methods work on both the provider and
+                # instance.
+                features.keys.each do |feature|
+                    method = feature.to_s + "?"
+                    assert(inst.respond_to?(method),
+                        "No boolean instance method for %s on %s" %
+                        [name, feature])
+                    assert(provider.respond_to?(method),
+                        "No boolean class method for %s on %s" % [name, feature])
+
+                    if should.include?(feature)
+                        assert(provider.feature?(feature),
+                            "class missing feature? %s" % feature)
+                        assert(inst.feature?(feature),
+                            "instance missing feature? %s" % feature)
+                        assert(provider.send(method),
+                            "class missing feature %s" % feature)
+                        assert(inst.send(method),
+                            "instance missing feature %s" % feature)
+                    else
+                        assert(! provider.feature?(feature),
+                            "class has feature? %s" % feature)
+                        assert(! inst.feature?(feature),
+                            "instance has feature? %s" % feature)
+                        assert(! provider.send(method),
+                            "class has feature %s" % feature)
+                        assert(! inst.send(method),
+                            "instance has feature %s" % feature)
+                    end
+                end
+
+            end
+
+        Puppet[:trace] = true
+        Puppet::Type.loadall
+        Puppet::Type.eachtype do |type|
+            assert(type.respond_to?(:feature),
+                "No features method defined for %s" % type.name)
+        end
+    end
 end
 
 # $Id$

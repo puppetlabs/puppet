@@ -1,4 +1,10 @@
 0.22.2 (grover)
+    Added the concept of provider features.  Eventually these should be able
+    to express the full range of provider functionality, but for now they can
+    test a provider to see what methods it has set and determine what features it
+    provides as a result.  These features are integrated into the doc generation
+    system so that you get feature documentation automatically.
+
     Switched apt/aptitide to using "apt-cache policy" instead of "apt-cache showpkg"
     for determining the latest available version. (#487)
 

@@ -1,4 +1,8 @@
+require 'puppet/util/provider_features'
 class Puppet::Type
+    # Add the feature handling module.
+    extend Puppet::Util::ProviderFeatures
+
     attr_reader :provider
 
     # the Type class attribute accessors
@@ -39,6 +43,74 @@ class Puppet::Type
         end
 
         return @defaultprovider
+    end
+
+    # Define one or more features.  Currently, features are just a list of
+    # methods; if all methods are defined as instance methods on the provider,
+    # then the provider has that feature, otherwise it does not.
+    def self.dis_features(hash)
+        @features ||= {}
+        hash.each do |name, methods|
+            name = symbolize(name)
+            methods = methods.collect { |m| symbolize(m) }
+            if @features.include?(name)
+                raise Puppet::DevError, "Feature %s is already defined" % name
+            end
+            @features[name] = methods
+        end
+    end
+
+    # Generate a module that sets up the boolean methods to test for given
+    # features.
+    def self.dis_feature_module
+        unless defined? @feature_module
+            @features ||= {}
+            @feature_module = ::Module.new
+            const_set("FeatureModule", @feature_module)
+            features = @features
+            @feature_module.send(:define_method, :feature?) do |name|
+                method = name.to_s + "?"
+                if respond_to?(method) and send(method)
+                    return true
+                else
+                    return false
+                end
+            end
+            @feature_module.send(:define_method, :features) do
+                return false unless defined?(features)
+                features.keys.find_all { |n| feature?(n) }.sort { |a,b| 
+                    a.to_s <=> b.to_s 
+                }
+            end
+            #if defined?(@features)
+                @features.each do |name, methods|
+                    method = name.to_s + "?"
+                    @feature_module.send(:define_method, method) do
+                        set = nil
+                        methods.each do |m|
+                            if is_a?(Class)
+                                unless public_method_defined?(m)
+                                    set = false
+                                    break
+                                end
+                            else
+                                unless respond_to?(m)
+                                    set = false
+                                    break
+                                end
+                            end
+                        end
+
+                        if set.nil?
+                            true
+                        else
+                            false
+                        end
+                    end
+                end
+            #end
+        end
+        @feature_module
     end
 
     # Convert a hash, as provided by, um, a provider, into an instance of self.
@@ -160,6 +232,10 @@ class Puppet::Type
             :block => block,
             :attributes => options
         )
+
+        # Add the feature module to both the instances and classes.
+        provider.send(:include, feature_module)
+        provider.send(:extend, feature_module)
 
         return provider
     end

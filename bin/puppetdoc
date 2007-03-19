@@ -8,7 +8,7 @@
 #
 # = Usage
 #
-#   puppetdoc [-h|--help] [-a|--arguments] [-t|--types]
+#   puppetdoc [-h|--help] [-m|--mode <typedocs|configref>
 #
 # = Description
 #
@@ -19,14 +19,13 @@
 #
 # = Options
 #
-# arguments::
-#   Print the documentation for arguments.
-#
 # help::
 #   Print this help message
 #
-# types::
-#   Print the argumenst for Puppet types.  This is the default.
+# mode::
+#   Print documentation of a given type.  Valid optinos are 'typedocs', for
+#   resource type documentation, and 'configref', for documentation on all
+#   of the configuration parameters.
 #
 # = Example
 #
@@ -53,7 +52,7 @@ debug = false
 
 $tab = "    "
 
-mode = :types
+mode = :typedocs
 
 begin
     result.each { |opt,arg|
@@ -194,14 +193,20 @@ in your manifest, including defined components.
   string is assigned to the ``path`` parameter.
 
 - *parameters* determine the specific configuration of the instance.  They either
-  directly modify the system (internally, these are called states) or they affect
+  directly modify the system (internally, these are called properties) or they affect
   how the instance behaves (e.g., adding a search path for ``exec`` instances
   or determining recursion on ``file`` instances).
 
-When required binaries are specified for providers, fully qualifed paths
-indicate that the binary must exist at that specific path and unqualified
-binaries indicate that Puppet will search for the binary using the shell
-path.
+- *providers* provide low-level functionality for a given resource type.  This is
+  usually in the form of calling out to external commands.
+
+  When required binaries are specified for providers, fully qualifed paths
+  indicate that the binary must exist at that specific path and unqualified
+  binaries indicate that Puppet will search for the binary using the shell
+  path.
+
+  Resource types define features they can use, and providers can be tested to see
+  which features they provide.
 
     }
 
@@ -219,22 +224,28 @@ path.
 <h2><a name='%s'>%s</a></h2>" % [name, name]
         puts scrub(type.doc) + "\n\n"
 
+        # Handle the feature docs.
+        if featuredocs = type.featuredocs
+            puts "<h3><a name='%s_features'>%s Features</a></h3>" % [name, name.to_s.capitalize]
+            puts featuredocs
+        end
+
         docs = {}
-        type.validstates.sort { |a,b|
+        type.validproperties.sort { |a,b|
             a.to_s <=> b.to_s
         }.reject { |sname|
-            state = type.statebyname(sname)
-            state.nodoc
+            property = type.propertybyname(sname)
+            property.nodoc
         }.each { |sname|
-            state = type.statebyname(sname)
+            property = type.propertybyname(sname)
 
-            unless state
-                raise "Could not retrieve state %s on type %s" % [sname, type.name]
+            unless property
+                raise "Could not retrieve property %s on type %s" % [sname, type.name]
             end
 
             doc = nil
             str = nil
-            unless doc = state.doc
+            unless doc = property.doc
                 $stderr.puts "No docs for %s[%s]" % [type, sname]
                 next
             end
