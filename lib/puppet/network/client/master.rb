@@ -174,8 +174,10 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         if self.objects or FileTest.exists?(self.cachefile)
             if self.fresh?(facts)
                 Puppet.info "Config is up to date"
-                unless self.objects
-                    oldtext = self.retrievecache
+                if self.objects
+                    return
+                end
+                if oldtext = self.retrievecache
                     begin
                         @objects = YAML.load(oldtext).to_type
                     rescue => detail
@@ -278,7 +280,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         if FileTest.exists?(self.cachefile)
             return ::File.read(self.cachefile)
         else
-            return ""
+            return nil
         end
     end
 
@@ -597,8 +599,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
         fromcache = false
         if textobjects == ""
-            textobjects = self.retrievecache
-            if textobjects == ""
+            unless textobjects = self.retrievecache
                 raise Puppet::Error.new(
                     "Cannot connect to server and there is no cached configuration"
                 )

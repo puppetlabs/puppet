@@ -1,4 +1,15 @@
 0.22.2 (grover)
+    The 'notify' type now defaults to its message being the same as its name.
+
+    Reopening $stdin to read from /dev/null during execution, in hopes that
+    init scripts will stop hanging.
+
+    Changed the 'servername' fact set on the server to use the server's fqdn,
+    instead of the short-name.
+
+    Changing the location of the configuration cache.  It now defaults to being
+    in the state directory, rather than in the configuration directory.
+
     All parameter instances are stored in a single @parameters instance variable
     hash within resource type instances.  We used to use separate hashes for
     each parameter type.

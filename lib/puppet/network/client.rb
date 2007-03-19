@@ -78,6 +78,7 @@ class Puppet::Network::Client
         driverparam = self.class.drivername
         if hash.include?(:Server)
             args = {:Server => hash[:Server]}
+            @server = hash[:Server]
             args[:Port] = hash[:Port] || Puppet[:masterport]
 
             @driver = self.class.xmlrpc_client.new(args)

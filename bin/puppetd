@@ -34,19 +34,19 @@
 # configuration every 30 minutes.
 #
 # Some flags are meant specifically for interactive use -- in particular,
-# +test+ and +tag+ are useful.  +test+ enables verobse logging, causes
+# +test+ and +tags+ are useful.  +test+ enables verobse logging, causes
 # the daemon to stay in the foreground, exits if the server's configuration is
 # invalid (this happens if, for instance, you've left a syntax error on the
 # server), and exits after running the configuration once (rather than hanging
 # around as a long-running process).
 #
-# +tag+ allows you to specify what portions of a configuration you want to apply.
+# +tags+ allows you to specify what portions of a configuration you want to apply.
 # Puppet elements are tagged with all of the class or definition names that
-# contain them, and you can use the +tag+ flag to specify one of these names,
+# contain them, and you can use the +tags+ flag to specify one of these names,
 # causing only configuration elements contained within that class or definition
 # to be applied.  This is very useful when you are testing new configurations --
 # for instance, if you are just starting to manage +ntpd+, you would put all of
-# the new elements into an +ntpd+ class, and call puppet with +--tag ntpd+,
+# the new elements into an +ntpd+ class, and call puppet with +--tags ntpd+,
 # which would only apply that small portion of the configuration during your
 # testing, rather than applying the whole thing.
 #
