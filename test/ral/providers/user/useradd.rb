@@ -136,7 +136,7 @@ class UserAddProviderTest < PuppetTest::TestCase
         @vals[:allowdupe] = true
         setup_user
 
-        assert(@user.provider.respond_to?(:manages_homedir?),
+        assert(@user.provider.respond_to?(:allows_duplicates?),
             "provider did not get allowdupe test set")
 
         assert(@user.allowdupe?, "provider did not get allowdupe")
@@ -173,6 +173,69 @@ class UserAddProviderTest < PuppetTest::TestCase
         end
 
         @user.provider.create
+    end
+
+    def disabled_test_manages_password
+        if Facter.value(:kernel) != "Linux"
+            assert(! @provider.feature?(:manages_passwords),
+                "Defaulted to managing passwords on %s" %
+                Facter.value(:kernel))
+
+            # Now just make sure it's not allowed, and return
+            setup_user
+            assert_raise(Puppet::Error, "allowed passwd mgmt on failing host") do
+                @user[:password] = "yayness"
+            end
+            return
+        end
+
+        # Now, test that it works correctly.
+        assert(@provider.manages_passwords?,
+            "Defaulted to not managing passwords on %s" %
+            Facter.value(:kernel))
+        @vals[:password] = "somethingorother"
+        setup_user
+
+		@user.provider.expects(:execute).with do |params|
+            assert_equal(params[0], @provider.command(:add),
+                "useradd was not called")
+            params.shift
+            options = {}
+            params.each_with_index do |p, i|
+                if p =~ /^-/ and p != "-M"
+                    options[p] = params[i + 1]
+                end
+            end
+            assert_equal(options["-p"], @vals[:password],
+                "Did not set password in useradd call")
+            true
+        end
+
+        @user.provider.create
+        @user.class.clear
+
+        # Now mark the user made, and make sure the right command is called
+        setup_user
+        @user.is = [:ensure, :present]
+        @user.is = [:password, :present]
+        @vals[:password] = "somethingelse"
+
+		@user.provider.expects(:execute).with do |params|
+            assert_equal(params[0], @provider.command(:modify),
+                "usermod was not called")
+
+            options = {}
+            params.each_with_index do |p, i|
+                if p =~ /^-/ and p != "-M"
+                    options[p] = params[i + 1]
+                end
+            end
+            assert_equal(options["-p"], @vals[:password],
+                "Did not set password in useradd call")
+            true
+        end
+
+        @user.provider.password = @vals[:password]
     end
 end
 

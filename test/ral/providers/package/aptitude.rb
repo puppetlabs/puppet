@@ -36,7 +36,7 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
 		                 '-y',
 		                 '-o',
 		                 'DPkg::Options::=--force-confold',
-		                 'install',
+		                 :install,
 		                 'faff'
 					  ).returns(0)
 		

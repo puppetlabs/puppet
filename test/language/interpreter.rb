@@ -1024,7 +1024,7 @@ class TestInterpreter < Test::Unit::TestCase
         
         # Make a fake gennode method
         class << interp
-            def gennode(name, args)
+            def gennode(name, args, source)
                 args[:name] = name
                 return args
             end

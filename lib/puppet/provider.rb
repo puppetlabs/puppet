@@ -19,7 +19,7 @@ class Puppet::Provider
     def self.command(name)
         name = symbolize(name)
 
-        if command = @commands[name]
+        if defined?(@commands) and command = @commands[name]
             # nothing
         elsif superclass.respond_to? :command and command = superclass.command(name)
             # nothing
@@ -89,7 +89,11 @@ class Puppet::Provider
         return false if @defaults.empty?
         if @defaults.find do |fact, values|
                 values = [values] unless values.is_a? Array
-                fval = Facter.value(fact).to_s.downcase.intern
+                if fval = Facter.value(fact).to_s and fval != ""
+                    fval = fval.to_s.downcase.intern
+                else
+                    return false
+                end
 
                 # If any of the values match, we're a default.
                 if values.find do |value| fval == value.to_s.downcase.intern end

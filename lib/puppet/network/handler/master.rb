@@ -33,6 +33,15 @@ class Puppet::Network::Handler
                     Puppet.warning "Could not retrieve fact %s" % fact
                 end
             end
+
+            if facts["servername"].nil?
+                host = Facter.value(:hostname)
+                if domain = Facter.value(:domain)
+                    facts["servername"] = [host, domain].join(".")
+                else
+                    facts["servername"] = host
+                end
+            end
         end
 
         # Manipulate the client name as appropriate.

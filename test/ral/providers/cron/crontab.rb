@@ -64,6 +64,22 @@ class TestCronParsedProvider < Test::Unit::TestCase
             assert_nothing_raised("could not load %s" % file) do
                 str, args = YAML.load(File.read(file))
             end
+            
+            # Stupid old yaml
+            args.each do |hash|
+                hash.each do |param, value|
+                    if param.is_a?(String) and param =~ /^:/
+                        hash.delete(param)
+                        param = param.sub(/^:/,'').intern
+                        hash[param] = value
+                    end
+
+                    if value.is_a?(String) and value =~ /^:/
+                        value = value.sub(/^:/,'').intern
+                        hash[param] = value
+                    end
+                end
+            end
             target.write(str)
             assert_nothing_raised("could not parse %s" % file) do
                 @provider.prefetch_target(@me)

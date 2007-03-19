@@ -22,9 +22,9 @@ module Puppet
         feature :manages_homedir,
             "The provider can create and remove home directories."
 
-        feature :manages_passwords,
-            "The provider can modify user passwords, by accepting a password
-            hash."
+#        feature :manages_passwords,
+#            "The provider can modify user passwords, by accepting a password
+#            hash."
 
         newproperty(:ensure) do
             newvalue(:present, :event => :user_created) do
@@ -179,6 +179,21 @@ module Puppet
             desc "The user's login shell.  The shell must exist and be
                 executable."
         end
+
+#        newproperty(:password) do
+#            desc "The user's password, in whatever format the local machine requires
+#                (usually crypt)."
+#
+#            validate do |val|
+#                unless val.to_s == "absent"
+#                    unless provider.class.feature?(:manages_passwords)
+#                        raise ArgumentError,
+#                            "The %s provider can not manage passwords on %s" %
+#                            [provider.class.name, Facter.value(:operatingsystem)]
+#                    end
+#                end
+#            end
+#        end
 
         newproperty(:groups) do
             desc "The groups of which the user is a member.  The primary

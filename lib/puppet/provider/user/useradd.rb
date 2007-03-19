@@ -19,6 +19,15 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
     has_features :manages_homedir, :allows_duplicates
 
+#    if case Facter.value(:kernel)
+#        when "Linux": true
+#        else
+#            false
+#        end
+#
+#        has_features :manages_passwords
+#    end
+
     def addcmd
         cmd = [command(:add)]
         @model.class.validproperties.each do |property|

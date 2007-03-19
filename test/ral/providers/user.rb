@@ -128,6 +128,21 @@ class TestUserProvider < Test::Unit::TestCase
         end
     end
 
+    def fakemodel(*args)
+        model = super
+
+        # Set boolean methods as necessary.
+        class << model
+            def allowdupe?
+                self[:allowdupe]
+            end
+            def managehome?
+                self[:managehome]
+            end
+        end
+        model
+    end
+
     def mkuser(name)
         fakemodel = fakemodel(:user, name)
         user = nil
