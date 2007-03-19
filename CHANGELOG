@@ -1,4 +1,7 @@
 0.22.2 (grover)
+    Switched apt/aptitide to using "apt-cache policy" instead of "apt-cache showpkg"
+    for determining the latest available version. (#487)
+
     FileBuckets now use a deeply nested structure for storing files, so
     you do not end up with hundreds or thousands of files in the same
     directory. (#447)
