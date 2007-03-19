@@ -11,14 +11,9 @@ class TestTypeAttributes < Test::Unit::TestCase
     include PuppetTest
 
     def mktype
-        Puppet::Type.newtype(:faketype) {}
-    end
-
-    def teardown
-        super
-        if Puppet::Type.type(:faketype)
-            Puppet::Type.rmtype(:faketype)
-        end
+        type = Puppet::Type.newtype(:faketype) {}
+        cleanup { Puppet::Type.rmtype(:faketype) }
+        type
     end
 
     def test_bracket_methods
@@ -226,6 +221,28 @@ class TestTypeAttributes < Test::Unit::TestCase
             assert_equal(val, inst.value(new), "Incorrect alias value for %s" % new)
             assert_equal(val, inst.value(old), "Incorrect orig value for %s" % old)
         end
+    end
+
+    # Make sure eachattr is called in the parameter order.
+    def test_eachattr
+        type = mktype
+        name = type.newparam(:name) {}
+        one = type.newparam(:one) {}
+        two = type.newproperty(:two) {}
+        type.provide(:testing) {}
+        provider = type.attrclass(:provider)
+        should = [[name, :param], [provider, :param], [two, :property], [one, :param]]
+
+        assert_nothing_raised do
+            result = nil
+            type.eachattr do |obj, name|
+                result = [obj, name]
+                shouldary = should.shift
+                assert_equal(shouldary, result, "Did not get correct parameter")
+                break if should.empty?
+            end
+        end
+        assert(should.empty?, "Did not get all of the parameters.")
     end
 end
 

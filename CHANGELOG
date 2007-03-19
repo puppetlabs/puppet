@@ -1,4 +1,8 @@
 0.22.2 (grover)
+    All parameter instances are stored in a single @parameters instance variable
+    hash within resource type instances.  We used to use separate hashes for
+    each parameter type.
+
     Added the concept of provider features.  Eventually these should be able
     to express the full range of provider functionality, but for now they can
     test a provider to see what methods it has set and determine what features it

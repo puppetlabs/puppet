@@ -97,6 +97,10 @@ class TestMaster < Test::Unit::TestCase
         Puppet[:filetimeout] = 15
         manifest = mktestmanifest()
 
+        facts = Puppet::Network::Client.master.facts
+        # Store them, so we don't determine frshness based on facts.
+        Puppet::Util::Storage.cache(:configuration)[:facts] = facts
+
         file2 = @createdfile + "2"
         @@tmpfiles << file2
 
@@ -117,7 +121,8 @@ class TestMaster < Test::Unit::TestCase
 
         assert(client, "did not create master client")
         # The client doesn't have a config, so it can't be up to date
-        assert(! client.fresh?, "Client is incorrectly up to date")
+        assert(! client.fresh?(facts),
+            "Client is incorrectly up to date")
 
         Puppet.config.use(:puppet)
         assert_nothing_raised {
@@ -126,7 +131,7 @@ class TestMaster < Test::Unit::TestCase
         }
 
         # Now it should be up to date
-        assert(client.fresh?, "Client is not up to date")
+        assert(client.fresh?(facts), "Client is not up to date")
 
         # Cache this value for later
         parse1 = master.freshness
@@ -145,7 +150,7 @@ class TestMaster < Test::Unit::TestCase
         # Verify that the master doesn't immediately reparse the file; we
         # want to wait through the timeout
         assert_equal(parse1, master.freshness, "Master did not wait through timeout")
-        assert(client.fresh?, "Client is not up to date")
+        assert(client.fresh?(facts), "Client is not up to date")
 
         # Then eliminate it
         Puppet[:filetimeout] = 0
@@ -153,14 +158,14 @@ class TestMaster < Test::Unit::TestCase
         # Now make sure the master does reparse
         #Puppet.notice "%s vs %s" % [parse1, master.freshness]
         assert(parse1 != master.freshness, "Master did not reparse file")
-        assert(! client.fresh?, "Client is incorrectly up to date")
+        assert(! client.fresh?(facts), "Client is incorrectly up to date")
 
         # Retrieve and apply the new config
         assert_nothing_raised {
             client.getconfig
             client.apply
         }
-        assert(client.fresh?, "Client is not up to date")
+        assert(client.fresh?(facts), "Client is not up to date")
 
         assert(FileTest.exists?(file2), "Second file %s does not exist" % file2)
     end

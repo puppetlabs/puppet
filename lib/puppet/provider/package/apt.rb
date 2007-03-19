@@ -69,7 +69,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
             end
         end
 
-        cmd << 'install' << str
+        cmd << :install << str
         
         aptget(*cmd)
     end

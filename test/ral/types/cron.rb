@@ -426,12 +426,16 @@ class TestCron < Test::Unit::TestCase
         crons = []
         users = ["root", nonrootuser.name]
         users.each do |user|
-            crons << Puppet::Type.type(:cron).create(
+            cron = Puppet::Type.type(:cron).create(
                 :name => "testcron-#{user}",
                 :user => user,
                 :command => "/bin/echo",
                 :minute => [0,30]
             )
+            crons << cron
+
+            assert_equal(cron.should(:user), cron.should(:target),
+                "Target was not set correctly for %s" % user)
         end
         provider = crons[0].provider.class
 

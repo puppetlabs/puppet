@@ -1131,9 +1131,10 @@ class TestFile < Test::Unit::TestCase
         obj[:content] = "New content"
         assert_apply(obj)
 
-        bucketedpath = File.join(bpath, "18cc17fa3047fcc691fdf49c0a7f539a", "contents")
+        md5 = "18cc17fa3047fcc691fdf49c0a7f539a"
+        dir, file, pathfile = Puppet::Network::Handler.filebucket.paths(bpath, md5)
 
-        assert_equal(0440, filemode(bucketedpath))
+        assert_equal(0440, filemode(file))
     end
 
     def test_largefilechanges

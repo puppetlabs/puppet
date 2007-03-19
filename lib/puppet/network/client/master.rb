@@ -128,27 +128,27 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         end
     end
 
-    # Have the facts changed since we last compiled?
-    def facts_changed?(facts)
-        oldfacts = Puppet::Util::Storage.cache(:configuration)[:facts]
-        newfacts = self.class.facts
-        if oldfacts == newfacts
-            return false
-        else
-            return true
-        end
-    end
-
     # Check whether our configuration is up to date
     def fresh?(facts)
-        return false if Puppet[:ignorecache]
-        return false unless self.compile_time
-        return false if self.facts_changed?(facts)
+        if Puppet[:ignorecache]
+            Puppet.notice "Ignoring cache"
+            return false
+        end
+        unless self.compile_time
+            Puppet.debug "No cached compile time"
+            return false
+        end
+        if facts_changed?(facts)
+            Puppet.info "Facts have changed; recompiling"
+            return false
+        end
 
         # We're willing to give a 2 second drift
-        if @driver.freshness - @compile_time.to_i < 1
+        newcompile = @driver.freshness
+        if newcompile - @compile_time.to_i < 1
             return true
         else
+            Puppet.debug "Server compile time is %s vs %s" % [newcompile, @compile_time]
             return false
         end
     end
@@ -174,12 +174,15 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         if self.objects or FileTest.exists?(self.cachefile)
             if self.fresh?(facts)
                 Puppet.info "Config is up to date"
-                begin
-                    @objects = YAML.load(self.retrievecache).to_type
-                rescue => detail
-                    Puppet.warning "Could not load cached configuration: %s" % detail
+                unless self.objects
+                    oldtext = self.retrievecache
+                    begin
+                        @objects = YAML.load(oldtext).to_type
+                    rescue => detail
+                        Puppet.warning "Could not load cached configuration: %s" % detail
+                    end
+                    return
                 end
-                return
             end
         end
         Puppet.debug("getting config")
@@ -513,6 +516,26 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     loadfacts()
     
     private
+
+    # Have the facts changed since we last compiled?
+    def facts_changed?(facts)
+        oldfacts = Puppet::Util::Storage.cache(:configuration)[:facts]
+        newfacts = facts
+        if oldfacts == newfacts
+            return false
+        else
+#            unless oldfacts
+#                puts "no old facts"
+#                return true
+#            end
+#            newfacts.keys.each do |k|
+#                unless newfacts[k] == oldfacts[k]
+#                    puts "%s: %s vs %s" % [k, newfacts[k], oldfacts[k]]
+#                end
+#            end
+            return true
+        end
+    end
     
     # Actually retrieve the configuration, either from the server or from a
     # local master.

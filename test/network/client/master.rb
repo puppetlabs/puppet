@@ -595,8 +595,10 @@ end
         facts = master.class.facts
         assert_equal("two", Facter.value(:testfact), "fact did not change")
 
-        assert(master.facts_changed?(facts), "master does not think facts changed")
-        assert(! master.fresh?(facts), "master is considered fresh after facts changed")
+        assert(master.send(:facts_changed?, facts),
+            "master does not think facts changed")
+        assert(! master.fresh?(facts),
+            "master is considered fresh after facts changed")
 
         assert_nothing_raised("Could not recompile when facts changed") do
             master.getconfig

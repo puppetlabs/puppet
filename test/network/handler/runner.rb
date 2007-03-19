@@ -36,10 +36,13 @@ class TestHandlerRunner < Test::Unit::TestCase
         # Okay, make our manifest
         file = tempfile()
         created = tempfile()
+        # We specify the schedule here, because I was having problems with
+        # using default schedules.
         File.open(file, "w") do |f|
             f.puts %{
                 class yayness {
-                    file { "#{created}": ensure => file, schedule => weekly }
+                    schedule { "yayness": period => weekly }
+                    file { "#{created}": ensure => file, schedule => yayness }
                 }
 
                 include yayness

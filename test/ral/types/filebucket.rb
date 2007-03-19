@@ -82,7 +82,9 @@ class TestFileBucket < Test::Unit::TestCase
 
         assert(md5)
 
-        assert(FileTest.directory?(File.join(bucketpath, md5)),
+        dir, file, pathfile = Puppet::Network::Handler.filebucket.paths(bucketpath, md5)
+
+        assert(FileTest.directory?(dir),
             "MD5 directory does not exist")
 
         newmd5 = nil

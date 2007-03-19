@@ -114,10 +114,11 @@ Puppet::Type.type(:cron).provide(:crontab,
                     break
                 end
 
-                # FIXME It'd be great if I could somehow reuse how the
-                # fields are turned into text, but....
+                # Yay differing definitions of absent.
                 next if (hash[field] == :absent and obj.value(field) == "*")
-                next if (hash[field].join(",") == obj.value(field))
+
+                # Everything should be in the form of arrays, not the normal text.
+                next if (hash[field] == obj.value(field))
                 Puppet.info "Did not match %s: %s vs %s" %
                     [field, obj.value(field).inspect, hash[field].inspect]
                 matched = false 

@@ -15,7 +15,7 @@ Puppet::Type.type(:package).provide :aptitude, :parent => :apt do
         output = aptitude(*args)
 
         # Yay, stupid aptitude doesn't throw an error when the package is missing.
-        if args.include?(:install) and output =~ /0 newly installed/
+        if args.include?(:install) and output =~ /Couldn't find any package/
             raise Puppet::Error.new(
                 "Could not find package %s" % self.name
             )
@@ -24,7 +24,7 @@ Puppet::Type.type(:package).provide :aptitude, :parent => :apt do
 
     def purge
         aptitude '-y', 'purge', @model[:name]
-	 end
+	end
 end
 
 # $Id$

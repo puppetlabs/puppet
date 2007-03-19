@@ -102,26 +102,28 @@ class Puppet::Type
         end
     end
 
-    # A similar function but one that yields the name, type, and class.
+    # A similar function but one that yields the class and type.
     # This is mainly so that setdefaults doesn't call quite so many functions.
     def self.eachattr(*ary)
-        # now get all of the arguments, in a specific order
-        # Cache this, since it gets called so many times
-
         if ary.empty?
             ary = nil
         end
-        self.properties.each { |property|
-            yield(property, :property) if ary.nil? or ary.include?(property.name)
-        }
 
-        @parameters.each { |param|
-            yield(param, :param) if ary.nil? or ary.include?(param.name)
-        }
-
-        @@metaparams.each { |param|
-            yield(param, :meta) if ary.nil? or ary.include?(param.name)
-        }
+        # We have to do this in a specific order, so that defaults are
+        # created in that order (e.g., providers should be set up before
+        # anything else).
+        allattrs.each do |name|
+            next unless ary.nil? or ary.include?(name)
+            if obj = @properties.find { |p| p.name == name }
+                yield obj, :property
+            elsif obj = @parameters.find { |p| p.name == name }
+                yield obj, :param
+            elsif obj = @@metaparams.find { |p| p.name == name }
+                yield obj, :meta
+            else
+                raise Puppet::DevError, "Could not find parameter %s" % name
+            end
+        end
     end
 
     def self.eachmetaparam
@@ -627,6 +629,7 @@ class Puppet::Type
     # set, set them now.  This method can be handed a list of attributes,
     # and if so it will only set defaults for those attributes.
     def setdefaults(*ary)
+        #self.class.eachattr(*ary) { |klass, type|
         self.class.eachattr(*ary) { |klass, type|
             # not many attributes will have defaults defined, so we short-circuit
             # those away

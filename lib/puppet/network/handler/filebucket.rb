@@ -98,9 +98,11 @@ class Puppet::Network::Handler # :nodoc:
             self.info msg
 
             # ...then just create the file
-            File.open(bfile, File::WRONLY|File::CREAT, 0440) { |of|
-                of.print contents
-            }
+            Puppet::Util.withumask(0007) do
+                File.open(bfile, File::WRONLY|File::CREAT, 0440) { |of|
+                    of.print contents
+                }
+            end
 
             # Write the path to the paths file.
             add_path(path, pathpath)
@@ -130,6 +132,10 @@ class Puppet::Network::Handler # :nodoc:
             else
                 return contents
             end
+        end
+
+        def paths(md5)
+            self.class(@path, md5)
         end
 
         def to_s
