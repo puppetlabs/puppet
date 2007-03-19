@@ -9,7 +9,8 @@ class Puppet::Provider
         # Include the util module so we have access to things like 'binary'
         include Puppet::Util, Puppet::Util::Docs
         include Puppet::Util::Logging
-        attr_accessor :name, :model
+        attr_accessor :name
+        attr_reader :model
         attr_writer :doc
     end
 
@@ -137,6 +138,16 @@ class Puppet::Provider
                 @property_hash[attr] = val
             end
         end
+    end
+
+    # Add the feature module immediately, so its methods are available to the
+    # providers.
+    def self.model=(model)
+        @model = model
+        #if mod = model.feature_module
+        #    extend(mod)
+        #    include(mod)
+        #end
     end
 
     self.initvars

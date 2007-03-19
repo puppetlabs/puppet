@@ -47,30 +47,38 @@ class TestTypeProviders < Test::Unit::TestCase
         assert_equal(should, type.allattrs.reject { |p| ! should.include?(p) },
             "Providify did not reorder parameters")
     end
+end
 
-    def test_features
-        type = Puppet::Type.newtype(:feature_test) do
+class TestProviderFeatures < Test::Unit::TestCase
+	include PuppetTest
+
+    def setup
+        super
+        @type = Puppet::Type.newtype(:feature_test) do
             newparam(:name) {}
             ensurable
         end
         cleanup { Puppet::Type.rmtype(:feature_test) }
 
-        features = {:numeric => [:one, :two], :alpha => [:a, :b]}
+        @features = {:numeric => [:one, :two], :alpha => [:a, :b]}
 
-        features.each do |name, methods|
+        @features.each do |name, methods|
             assert_nothing_raised("Could not define features") do
-                type.feature(name, "boo", :methods => methods)
+                @type.feature(name, "boo", :methods => methods)
             end
         end
+    end
 
-        providers = {:numbers => features[:numeric], :letters => features[:alpha]}
-        providers[:both] = features[:numeric] + features[:alpha]
-        providers[:mixed] = [:one, :b]
-        providers[:neither] = [:something, :else]
+    # Give them the basic run-through.
+    def test_method_features
+        @providers = {:numbers => @features[:numeric], :letters => @features[:alpha]}
+        @providers[:both] = @features[:numeric] + @features[:alpha]
+        @providers[:mixed] = [:one, :b]
+        @providers[:neither] = [:something, :else]
 
-        providers.each do |name, methods|
+        @providers.each do |name, methods|
             assert_nothing_raised("Could not create provider %s" % name) do
-                type.provide(name) do
+                @type.provide(name) do
                     methods.each do |name|
                         define_method(name) {}
                     end
@@ -78,11 +86,11 @@ class TestTypeProviders < Test::Unit::TestCase
             end
         end
 
-        model = type.create(:name => "foo")
+        model = @type.create(:name => "foo")
         {:numbers => [:numeric], :letters => [:alpha], :both => [:numeric, :alpha],
             :mixed => [], :neither => []}.each do |name, should|
                 should.sort! { |a,b| a.to_s <=> b.to_s }
-                provider = type.provider(name)
+                provider = @type.provider(name)
                 assert(provider, "Could not find provider %s" % name)
                 assert_equal(should, provider.features,
                     "Provider %s has incorrect features" % name)
@@ -90,7 +98,7 @@ class TestTypeProviders < Test::Unit::TestCase
                 inst = provider.new(model)
                 # Make sure the boolean methods work on both the provider and
                 # instance.
-                features.keys.each do |feature|
+                @features.keys.each do |feature|
                     method = feature.to_s + "?"
                     assert(inst.respond_to?(method),
                         "No boolean instance method for %s on %s" %
@@ -126,6 +134,44 @@ class TestTypeProviders < Test::Unit::TestCase
         Puppet::Type.eachtype do |type|
             assert(type.respond_to?(:feature),
                 "No features method defined for %s" % type.name)
+        end
+    end
+
+    def test_has_feature
+        # Define a provider with nothing
+        provider = @type.provide(:nothing) {}
+
+        assert(provider.respond_to?(:has_features),
+            "Provider did not get 'has_features' method added")
+
+        # One with the numeric methods and nothing else
+        @type.provide(:numbers) do
+            define_method(:one) {}
+            define_method(:two) {}
+        end
+        
+        # Another with the numbers and a declaration
+        @type.provide(:both) do
+            define_method(:one) {}
+            define_method(:two) {}
+
+            has_features :alpha
+        end
+        
+        # And just the declaration
+        @type.provide(:letters) do
+            has_features :alpha
+        end
+
+        should = {:nothing => [], :both => [:numeric, :alpha],
+            :letters => [:alpha], :numbers => [:numeric]}
+
+        should.each do |name, features|
+            provider = @type.provider(name)
+            assert(provider, "did not get provider named %s" % name)
+            features.sort! { |a,b| a.to_s <=> b.to_s }
+            assert_equal(features, provider.features,
+                "Got incorrect feature list for %s" % name)
         end
     end
 end

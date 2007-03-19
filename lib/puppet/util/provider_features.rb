@@ -1,16 +1,43 @@
 # Provides feature definitions.
 module Puppet::Util::ProviderFeatures
+
+    # The class that models the features and handles checking whether the features
+    # are present.
     class ProviderFeature
         require 'puppet/util/methodhelper'
         require 'puppet/util'
         include Puppet::Util
         include Puppet::Util::MethodHelper
         attr_accessor :name, :docs, :methods
+
+        # Are all of the requirements met?
+        def available?(obj)
+            if self.methods and ! methods_available?(obj)
+                return false
+            end
+
+            true
+        end
+
         def initialize(name, docs, hash)
             self.name = symbolize(name)
             self.docs = docs
             hash = symbolize_options(hash)
             set_options(hash)
+        end
+
+        private
+
+        # Are all of the required methods available?
+        def methods_available?(obj)
+            methods.each do |m|
+                if obj.is_a?(Class)
+                    return false unless obj.public_method_defined?(m)
+                else
+                    return false unless obj.respond_to?(m)
+                end
+            end
+            return true
         end
     end
 
@@ -99,26 +126,22 @@ module Puppet::Util::ProviderFeatures
             @features.each do |name, feature|
                 method = name.to_s + "?"
                 @feature_module.send(:define_method, method) do
-                    set = nil
-                    feature.methods.each do |m|
-                        if is_a?(Class)
-                            unless public_method_defined?(m)
-                                set = false
-                                break
-                            end
-                        else
-                            unless respond_to?(m)
-                                set = false
-                                break
-                            end
-                        end
-                    end
-
-                    if set.nil?
+                    if defined? @declared_features and @declared_features.include?(name)
+                        true
+                    elsif feature.available?(self)
                         true
                     else
                         false
                     end
+                end
+            end
+
+            # Allow the provider to declare that it has a given feature.
+            @feature_module.send(:define_method, :has_features) do |*names|
+                @declared_features ||= []
+                names.each do |name|
+                    name = symbolize(name)
+                    @declared_features << name
                 end
             end
         end

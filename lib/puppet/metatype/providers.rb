@@ -162,12 +162,10 @@ class Puppet::Type
             :hash => @providers,
             :prefix => "Provider",
             :block => block,
+            :include => feature_module,
+            :extend => feature_module,
             :attributes => options
         )
-
-        # Add the feature module to both the instances and classes.
-        provider.send(:include, feature_module)
-        provider.send(:extend, feature_module)
 
         return provider
     end
