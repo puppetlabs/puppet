@@ -195,6 +195,7 @@ options = {
 }
 
 begin
+    explicit_waitforcert = false
     result.each { |opt,arg|
         case opt
             # First check to see if the argument is a valid configuration parameter;
@@ -243,7 +244,7 @@ begin
                 options[:client] = false
             when "--onetime"
                 options[:onetime] = true
-                options[:waitforcert] = 0
+                options[:waitforcert] = 0 unless explicit_waitforcert
             when "--port"
                 args[:Port] = arg
             when "--logdest"
@@ -255,6 +256,7 @@ begin
                 end
             when "--waitforcert"
                 options[:waitforcert] = arg.to_i
+                explicit_waitforcert = true
             else
                 Puppet.config.handlearg(opt, arg)
         end
