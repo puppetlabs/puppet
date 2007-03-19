@@ -298,6 +298,7 @@ module Util
                 output = f.read
             else
                 begin
+                    $stdin.reopen("/dev/null")
                     $stderr.close
                     $stderr = $stdout.dup
                     if gid
