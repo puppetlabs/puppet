@@ -48,7 +48,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
     def enable
         begin
             output = chkconfig("--add", @model[:name])
-            output += chkconfig(@model[:name], :reset)
+            output += chkconfig(@model[:name], :on)
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error, "Could not enable %s: %s" %
                 [self.name, detail]
