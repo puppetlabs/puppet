@@ -86,7 +86,7 @@ module Puppet::Util::FileParsing
                     if self.optional.include?(field)
                         self.absent
                     else
-                        raise ArgumentError, "Field %s is required" % field
+                        raise ArgumentError, "Field '%s' is required" % field
                     end
                 else
                     details[field].to_s
