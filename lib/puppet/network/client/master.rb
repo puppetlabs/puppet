@@ -128,7 +128,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
 
     # Have the facts changed since we last compiled?
-    def facts_changed?
+    def facts_changed?(facts)
         oldfacts = Puppet::Util::Storage.cache(:configuration)[:facts]
         newfacts = self.class.facts
         if oldfacts == newfacts
@@ -139,10 +139,10 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
 
     # Check whether our configuration is up to date
-    def fresh?
+    def fresh?(facts)
         return false if Puppet[:ignorecache]
         return false unless self.compile_time
-        return false if self.facts_changed?
+        return false if self.facts_changed?(facts)
 
         # We're willing to give a 2 second drift
         if @driver.freshness - @compile_time.to_i < 1
@@ -167,8 +167,11 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     # use the cached copy.
     def getconfig
         dostorage()
+
+        facts = self.class.facts
+
         if self.objects or FileTest.exists?(self.cachefile)
-            if self.fresh?
+            if self.fresh?(facts)
                 Puppet.info "Config is up to date"
                 begin
                     @objects = YAML.load(self.retrievecache).to_type
@@ -184,8 +187,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         if Puppet[:pluginsync]
             getplugins()
         end
-
-        facts = self.class.facts
 
         unless facts.length > 0
             raise Puppet::Network::ClientError.new(
