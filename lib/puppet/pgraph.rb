@@ -57,9 +57,15 @@ class Puppet::PGraph < GRATR::Digraph
             bad << v unless sorted.include?(v)
         end
 
-        raise Puppet::Error, "Found dependency cycle involving %s" % bad.collect do |v|
-            v.to_s
-        end.join(", ")
+        if bad.length > 0
+            raise Puppet::Error,
+                "Found dependency cycle involving %s" % bad.collect do |v|
+                    v.to_s
+            end.join(", ")
+        else
+            raise Puppet::Error,
+                "Found dependency cycle but could not find the cause"
+        end
     end
 
     # Which resources a given resource depends upon.
