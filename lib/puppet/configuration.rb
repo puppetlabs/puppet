@@ -173,7 +173,7 @@ module Puppet
     )
 
     self.setdefaults("puppetd",
-        :localconfig => { :default => "$confdir/localconfig",
+        :localconfig => { :default => "$statedir/localconfig",
             :owner => "root",
             :mode => 0660,
             :desc => "Where puppetd caches the local configuration.  An
