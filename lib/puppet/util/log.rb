@@ -544,5 +544,6 @@ class Puppet::Util::Log
         return @message
     end
 end
+Puppet::Log = Puppet::Util::Log
 
 # $Id$
