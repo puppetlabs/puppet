@@ -1,3 +1,7 @@
+(elmo)
+    Fixing #553; -M is no longer added when home directories are being
+    managed.
+
 0.22.2 (grover)
     Users can now manage their home directories, using the managehome
     parameter, partially using patches provided by Tim Stoop and

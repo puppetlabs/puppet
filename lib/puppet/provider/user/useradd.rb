@@ -38,12 +38,6 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
                 cmd << flag(property) << value
             end
         end
-        # stupid fedora
-        case Facter["operatingsystem"].value
-        when "Fedora", "RedHat":
-            cmd << "-M"
-        else
-        end
 
         if @model.allowdupe?
             cmd << "-o"

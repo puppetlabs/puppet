@@ -102,6 +102,8 @@ class UserAddProviderTest < PuppetTest::TestCase
                 "useradd was not called")
             assert(params.include?("-m"),
                 "Did not add -m when managehome was in affect")
+            assert(! params.include?("-M"),
+                "Added -M when managehome was in affect")
 
             true
         end
@@ -123,8 +125,8 @@ class UserAddProviderTest < PuppetTest::TestCase
                 assert(params.include?("-M"),
                     "Did not add -M on Red Hat")
             end
-                assert(! params.include?("-m"),
-                    "Added -m when managehome was disabled")
+            assert(! params.include?("-m"),
+                "Added -m when managehome was disabled")
 
             true
         end
