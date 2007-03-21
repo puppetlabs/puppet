@@ -155,4 +155,6 @@ class Puppet::Util::Metric
     end
 end
 
+Puppet::Metric = Puppet::Util::Metric
+
 # $Id$
