@@ -863,7 +863,7 @@ class Puppet::Parser::Interpreter
         end
 
         unless ActiveRecord::Base.connected?
-            Puppet::Rails.init
+            Puppet::Rails.connect
         end
 
         # Fork the storage, since we don't need the client waiting

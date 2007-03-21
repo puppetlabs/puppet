@@ -109,6 +109,8 @@ module Puppet::Rails
             raise Puppet::Error, "Could not find Puppet::Rails database dir"
         end
 
+        Puppet.notice "Migrating"
+
         begin
             ActiveRecord::Migrator.migrate(dbdir)
         rescue => detail
