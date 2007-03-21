@@ -91,7 +91,7 @@ class Puppet::Provider::NameService < Puppet::Provider
                 unless public_method_defined?(prop)
                     define_method(prop) { get(prop) || :absent}
                 end
-                unless public_method_defined?(prop.to_s + "+")
+                unless public_method_defined?(prop.to_s + "=")
                     define_method(prop.to_s + "=") { |*vals| set(prop, *vals) }
                 end
             end
