@@ -5,8 +5,8 @@ class AddIndexes < ActiveRecord::Migration
         :puppet_classes => [:name, :host_id],
         :hosts => [:name, :ip, :updated_at],
         :fact_names => [:name, :host_id],
-        #:fact_values => [:value, :fact_name_id],
-        #:param_values => [:value, :param_name_id],
+        :fact_values => [:fact_name_id],
+        :param_values => [:param_name_id],
         :param_names => [:name, :resource_id],
         :tags => [:name, :updated_at],
         :taggings => [:tag_id, :taggable_id, :taggable_type]

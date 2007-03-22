@@ -47,7 +47,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def ref
-        "%s[%s]" % [self[:restype], self[:title]]
+        "%s[%s]" % [self[:restype].capitalize, self[:title]]
     end
 
     # Convert our object to a resource.  Do not retain whether the object

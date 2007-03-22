@@ -4,6 +4,7 @@ require 'puppet/rails/source_file'
 require 'puppet/util/rails/collection_merger'
 
 class Puppet::Rails::Host < ActiveRecord::Base
+    include Puppet::Util
     include Puppet::Util::CollectionMerger
 
     has_many :fact_values, :through => :fact_names 
@@ -34,25 +35,33 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
         args = {}
 
-        unless host = find_by_name(name)
-            host = new(:name => name)
+        host = nil
+        transaction do
+            #unless host = find_by_name(name)
+            seconds = Benchmark.realtime {
+                #unless host = find_by_name(name, :include => {:resources => {:param_names => :param_values}, :fact_names => :fact_values})
+                unless host = find_by_name(name)
+                    host = new(:name => name)
+                end
+            }
+            Puppet.notice("Searched for host in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+            if ip = hash[:facts]["ipaddress"]
+                host.ip = ip
+            end
+
+            # Store the facts into the database.
+            host.setfacts(hash[:facts])
+
+            unless hash[:resources]
+                raise ArgumentError, "You must pass resources"
+            end
+
+            host.setresources(hash[:resources])
+
+            host.last_compile = Time.now
+
+            host.save
         end
-        if ip = hash[:facts]["ipaddress"]
-            host.ip = ip
-        end
-
-        # Store the facts into the database.
-        host.setfacts(hash[:facts])
-
-        unless hash[:resources]
-            raise ArgumentError, "You must pass resources"
-        end
-
-        host.setresources(hash[:resources])
-
-        host.last_compile = Time.now
-
-        host.save
 
         return host
     end
@@ -73,22 +82,67 @@ class Puppet::Rails::Host < ActiveRecord::Base
     end
 
     def setfacts(facts)
-        collection_merge(:fact_names, facts) do |name, value|
-            fn = fact_names.find_by_name(name) || fact_names.build(:name => name)
-            # We're only ever going to have one fact value, at this point.
-            unless fv = fn.fact_values.find_by_value(value)
-                fv = fn.fact_values.build(:value => value)
-            end
-            fn.fact_values = [fv]
+        facts = facts.dup
+        remove = []
 
-            fn
+        existing = nil
+        seconds = Benchmark.realtime {
+            existing = fact_names.find(:all, :include => :fact_values)
+        }
+        Puppet.debug("Searched for facts in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+
+        existing.each do |fn|
+            if value = facts[fn.name]
+                facts.delete(fn.name)
+                fn.fact_values.each do |fv|
+                    unless value == fv.value
+                        fv.value = value
+                    end
+                end
+            else
+                remove << fn
+            end
+        end
+
+        # Make a new fact for the rest of them
+        facts.each do |fact, value|
+            fn = fact_names.build(:name => fact)
+            fn.fact_values = [fn.fact_values.build(:value => value)]
+        end
+
+        # Now remove anything necessary.
+        remove.each do |fn|
+            fact_names.delete(fn)
         end
     end
 
     # Set our resources.
     def setresources(list)
-        collection_merge(:resources, list) do |resource|
+        compiled = {}
+        remove = []
+        existing = nil
+        seconds = Benchmark.realtime {
+            existing = resources.find(:all, :include => {:param_names => :param_values})
+        }
+        Puppet.notice("Searched for resources in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+        list.each do |resource|
+            compiled[resource.ref] = resource
+        end
+        existing.each do |resource|
+            if comp = compiled[resource.ref]
+                compiled.delete(comp.ref)
+                comp.to_rails(self, resource)
+            else
+                remove << resource
+            end
+        end
+
+        compiled.each do |name, resource|
             resource.to_rails(self)
+        end
+
+        remove.each do |resource|
+            resources.delete(resource)
         end
     end
 

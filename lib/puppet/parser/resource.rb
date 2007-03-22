@@ -256,40 +256,59 @@ class Puppet::Parser::Resource
     end
 
     # Turn our parser resource into a Rails resource.
-    def to_rails(host)
+    def to_rails(host, resource = nil)
         args = {}
-        %w{type title tags file line exported}.each do |param|
+        [:type, :title, :tags, :file, :line, :exported].each do |param|
+            # 'type' isn't a valid column name, so we have to use something else.
+            if param == :type
+                to = :restype
+            else
+                to = param
+            end
             if value = self.send(param)
-                args[param] = value
+                args[to] = value
             end
         end
 
-        # 'type' isn't a valid column name, so we have to use something else.
-        args = symbolize_options(args)
-        args[:restype] = args[:type]
-        args.delete(:type)
-
-        # Let's see if the object exists
-        if obj = host.resources.find_by_restype_and_title(self.type, self.title)
+        # If we were passed an object, just make sure all of the attributes are correct.
+        if resource
             # We exist
             args.each do |param, value|
-                obj[param] = value
+                unless resource[param] == value
+                    resource[param] = value
+                end
             end
         else
             # Else create it anew
-            obj = host.resources.build(args)
-        end
-
-        if l = self.line
-            obj.line = l
+            resource = host.resources.build(args)
         end
 
         # Either way, now add our parameters
-        obj.collection_merge(:param_names, @params) do |name, param|
-            param.to_rails(obj)
+        newparams = @params.dup
+        remove = []
+        resource.param_names.each do |pn|
+            name = pn.name.intern
+            if param = newparams[name]
+                # Mark that we found this in the db
+                newparams.delete(name)
+                param.to_rails(resource, pn)
+            else
+                remove << pn
+            end
         end
 
-        return obj
+        newparams.each do |name, param|
+            param.to_rails(resource)
+        end
+
+        remove.each do |param|
+            resource.param_names.delete(param)
+        end
+        #obj.collection_merge(:param_names, @params) do |name, param|
+        #    param.to_rails(obj)
+        #end
+
+        return resource
     end
 
     def to_s
