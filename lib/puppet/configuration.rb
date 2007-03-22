@@ -114,7 +114,12 @@ module Puppet
         },
         :ignoreimport => [false, "A parameter that can be used in commit
             hooks, since it enables you to parse-check a single file rather
-            than requiring that all files exist."]
+            than requiring that all files exist."],
+        :authconfig => [ "$confdir/namespaceauth.conf",
+            "The configuration file that defines the rights to the different
+            namespaces and methods.  This can be used as a coarse-grained
+            authorization system for both ``puppetd`` and ``puppetmasterd``."
+        ]
     )
 
     # Define the config default.

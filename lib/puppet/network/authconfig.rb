@@ -4,13 +4,6 @@ require 'puppet/network/rights'
 module Puppet
     class ConfigurationError < Puppet::Error; end
     class Network::AuthConfig < Puppet::Util::LoadedFile
-        Puppet.config.setdefaults(:puppet,
-            :authconfig => [ "$confdir/namespaceauth.conf",
-                "The configuration file that defines the rights to the different
-                namespaces and methods.  This can be used as a coarse-grained
-                authorization system for both ``puppetd`` and ``puppetmasterd``."
-            ]
-        )
 
         def self.main
             unless defined? @main
