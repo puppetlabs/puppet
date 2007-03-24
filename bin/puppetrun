@@ -339,7 +339,7 @@ while go
                 $stderr.print "Could not contact %s\n" % host
                 next
             end
-            client = Puppet::Network::Client::Runner.new(
+            client = Puppet::Network::Client.runner.new(
                 :Server => host,
                 :Port => Puppet[:puppetport]
             )
