@@ -8,7 +8,7 @@ require 'puppettest'
 require 'socket'
 require 'facter'
 
-class TestPBucket < Test::Unit::TestCase
+class TestFileBucketExe < Test::Unit::TestCase
     include PuppetTest::ExeTest
 
     def test_local
@@ -17,11 +17,11 @@ class TestPBucket < Test::Unit::TestCase
         text = "somet ext"
         md5 = Digest::MD5.hexdigest(text)
         File.open(file, "w") { |f| f.print text }
-        out = %x{pbucket --bucket #{bucket} backup #{file}}
+        out = %x{filebucket --bucket #{bucket} backup #{file}}
 
         outfile, outmd5 = out.chomp.split(": ")
 
-        assert_equal(0, $?, "pbucket did not run successfully")
+        assert_equal(0, $?, "filebucket did not run successfully")
 
         assert_equal(file, outfile, "did not output correct file name")
         assert_equal(md5, outmd5, "did not output correct md5 sum")
@@ -35,13 +35,13 @@ class TestPBucket < Test::Unit::TestCase
 
         assert_equal(text, newtext, "did not get correct file from md5 sum")
 
-        out = %x{pbucket --bucket #{bucket} get #{md5}}
-        assert_equal(0, $?, "pbucket did not run successfully")
-        assert_equal(text, out, "did not get correct text back from pbucket")
+        out = %x{filebucket --bucket #{bucket} get #{md5}}
+        assert_equal(0, $?, "filebucket did not run successfully")
+        assert_equal(text, out, "did not get correct text back from filebucket")
 
         File.open(file, "w") { |f| f.puts "some other txt" }
-        out = %x{pbucket --bucket #{bucket} restore #{file} #{md5}}
-        assert_equal(0, $?, "pbucket did not run successfully")
+        out = %x{filebucket --bucket #{bucket} restore #{file} #{md5}}
+        assert_equal(0, $?, "filebucket did not run successfully")
         assert_equal(text, File.read(file), "file was not restored")
     end
 end
