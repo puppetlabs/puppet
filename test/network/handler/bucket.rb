@@ -276,7 +276,7 @@ class TestBucket < Test::Unit::TestCase
         md5 = Digest::MD5.hexdigest(text)
 
         dirs = File.join(md5[0..7].split(""))
-        dir = File.join(@bucket, dirs)
+        dir = File.join(@bucket, dirs, md5)
         filedir, contents, paths = bucket.class.paths(@bucket, md5)
 
         assert_equal(dir, filedir, "did not use a deeper file structure") 

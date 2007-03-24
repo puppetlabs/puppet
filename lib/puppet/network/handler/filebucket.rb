@@ -28,7 +28,7 @@ class Puppet::Network::Handler # :nodoc:
         # this doesn't work for relative paths
         def self.paths(base,md5)
             dir = File.join(md5[0..7].split(""))
-            basedir = File.join(base, dir)
+            basedir = File.join(base, dir, md5)
             return [
                 basedir,
                 File.join(basedir, "contents"),

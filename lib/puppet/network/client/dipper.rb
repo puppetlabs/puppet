@@ -28,6 +28,17 @@ class Puppet::Network::Client::Dipper < Puppet::Network::Client
         return @driver.addfile(contents,file)
     end
 
+    # Retrieve a file by sum.
+    def getfile(sum)
+        if newcontents = @driver.getfile(sum)
+            unless local?
+                newcontents = Base64.decode64(newcontents)
+            end
+            return newcontents
+        end
+        return nil
+    end
+
     # Restore the file
     def restore(file,sum)
         restore = true
@@ -42,18 +53,15 @@ class Puppet::Network::Client::Dipper < Puppet::Network::Client
         end
 
         if restore
-            if newcontents = @driver.getfile(sum)
-                unless local?
-                    newcontents = Base64.decode64(newcontents)
-                end
+            if newcontents = getfile(sum)
                 tmp = ""
                 newsum = Digest::MD5.hexdigest(newcontents)
                 changed = nil
-                unless FileTest.writable?(file)
+                if FileTest.exists?(file) and ! FileTest.writable?(file)
                     changed = ::File.stat(file).mode
                     ::File.chmod(changed | 0200, file)
                 end
-                ::File.open(file,::File::WRONLY|::File::TRUNC) { |of|
+                ::File.open(file, ::File::WRONLY|::File::TRUNC|::File::CREAT) { |of|
                     of.print(newcontents)
                 }
                 if changed

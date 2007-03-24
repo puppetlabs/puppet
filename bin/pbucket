@@ -16,6 +16,36 @@
 # This is a stand-alone filebucket client for sending files to a local
 # or central filebucket.
 #
+# = Usage
+#
+# This client can operate in three modes, with only one mode per call:
+#
+# backup::
+#   Send one or more files to the specified file bucket.  Each sent file
+#   is printed with its resulting md5 sum.
+#
+# get::
+#   Return the text associated with an md5 sum.  The text is printed to
+#   stdout, and only one file can be retrieved at a time.
+#
+# restore::
+#   Given a file path and an md5 sum, store the content associated with the
+#   sum into the specified file path.  You can specify an entirely new path
+#   to this argument; you are not restricted to restoring the content to its
+#   original location.
+#
+# Note that +pbucket+ defaults to using a network-based filebucket available on
+# the server named +puppet+.  To use this, you'll have to be running as a user
+# with valid Puppet certificates.  Alternatively, you can use your local file bucket
+# by specifying +--local+.
+#
+# = Example
+#
+#   $ pbucket backup /etc/passwd
+#   /etc/passwd: 429b225650b912a2ee067b0a4cf1e949
+#   $ pbucket restore /tmp/passwd 429b225650b912a2ee067b0a4cf1e949
+#   $
+# 
 # = Options
 #
 # Note that any configuration parameter that's valid in the configuration file
@@ -65,8 +95,7 @@
 # Licensed under the GNU Public License
 
 require 'puppet'
-require 'puppet/server'
-require 'puppet/client'
+require 'puppet/network/client'
 require 'getoptlong'
 
 options = [
@@ -140,11 +169,12 @@ Puppet.genconfig
 Puppet.genmanifest
 
 begin
-    if options[:local]
+    if options[:local] or options[:bucket]
         path = options[:bucket] || Puppet[:bucketdir]
-        client = Puppet::Client::Dipper.new(:Path => path)
+        client = Puppet::Network::Client.dipper.new(:Path => path)
     else
-        client = Puppet::Client::Dipper.new(:Server => Puppet[:server])
+        require 'puppet/network/handler'
+        client = Puppet::Network::Client.dipper.new(:Server => Puppet[:server])
     end
 rescue => detail
     $stderr.puts detail
@@ -157,7 +187,10 @@ end
 mode = ARGV.shift
 case mode
 when "get":
-when "send":
+    md5 = ARGV.shift
+    out = client.getfile(md5)
+    print out
+when "backup":
     ARGV.each do |file|
         unless FileTest.exists?(file)
             $stderr.puts "%s: no such file" % file
@@ -167,8 +200,13 @@ when "send":
             $stderr.puts "%s: cannot read file" % file
             next
         end
-        client.backup(file)
+        md5 = client.backup(file)
+        puts "%s: %s" % [file, md5]
     end
+when "restore":
+    file = ARGV.shift
+    md5 = ARGV.shift
+    client.restore(file, md5)
 else
     raise "Invalid mode %s" % mode
 end
