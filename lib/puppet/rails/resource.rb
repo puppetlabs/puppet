@@ -14,17 +14,28 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     acts_as_taggable
     
     def tags=(tags)
-        tags.each do |tag|   
-            self.tag_with tag
+        #puts "setting tags %s" % tags.inspect
+        self.tag_with(tags.join(","))
+    end
+
+    def file
+        if f = self.source_file
+            return f.filename
+        else
+            return nil
         end
     end
 
     def file=(file)
-       self.source_file = Puppet::Rails::SourceFile.new(:filename => file)
+        self.source_file = Puppet::Rails::SourceFile.new(:filename => file)
     end
 
     def [](param)
         return super || parameter(param)
+    end
+
+    def name
+        ref()
     end
 
     def parameter(param)

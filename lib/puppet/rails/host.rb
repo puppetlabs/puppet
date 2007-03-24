@@ -3,6 +3,8 @@ require 'puppet/rails/fact_name'
 require 'puppet/rails/source_file'
 require 'puppet/util/rails/collection_merger'
 
+# Puppet::TIME_DEBUG = true
+
 class Puppet::Rails::Host < ActiveRecord::Base
     include Puppet::Util
     include Puppet::Util::CollectionMerger
@@ -40,7 +42,8 @@ class Puppet::Rails::Host < ActiveRecord::Base
             #unless host = find_by_name(name)
             seconds = Benchmark.realtime {
                 #unless host = find_by_name(name, :include => {:resources => {:param_names => :param_values}, :fact_names => :fact_values})
-                unless host = find_by_name(name)
+                unless host = find_by_name(name, :include => {:fact_names => :fact_values})
+                #unless host = find_by_name(name)
                     host = new(:name => name)
                 end
             }
@@ -56,7 +59,11 @@ class Puppet::Rails::Host < ActiveRecord::Base
                 raise ArgumentError, "You must pass resources"
             end
 
-            host.setresources(hash[:resources])
+
+            seconds = Benchmark.realtime {
+                host.setresources(hash[:resources])
+            }
+            Puppet.notice("Handled resources in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
 
             host.last_compile = Time.now
 
@@ -85,35 +92,17 @@ class Puppet::Rails::Host < ActiveRecord::Base
         facts = facts.dup
         remove = []
 
-        existing = nil
-        seconds = Benchmark.realtime {
-            existing = fact_names.find(:all, :include => :fact_values)
-        }
-        Puppet.debug("Searched for facts in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
-
-        existing.each do |fn|
-            if value = facts[fn.name]
-                facts.delete(fn.name)
-                fn.fact_values.each do |fv|
-                    unless value == fv.value
-                        fv.value = value
-                    end
+        collection_merge :fact_names, :updates => facts, :modify => Proc.new { |fn, name, value|
+            fn.fact_values.each do |fv|
+                unless value == fv.value
+                    fv.value = value
                 end
-            else
-                remove << fn
+                break
             end
-        end
-
-        # Make a new fact for the rest of them
-        facts.each do |fact, value|
-            fn = fact_names.build(:name => fact)
+        }, :create => Proc.new { |name, value|
+            fn = fact_names.build(:name => name)
             fn.fact_values = [fn.fact_values.build(:value => value)]
-        end
-
-        # Now remove anything necessary.
-        remove.each do |fn|
-            fact_names.delete(fn)
-        end
+        }
     end
 
     # Set our resources.
@@ -122,28 +111,16 @@ class Puppet::Rails::Host < ActiveRecord::Base
         remove = []
         existing = nil
         seconds = Benchmark.realtime {
+            #existing = resources.find(:all)
             existing = resources.find(:all, :include => {:param_names => :param_values})
+            #existing = resources
         }
         Puppet.notice("Searched for resources in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
         list.each do |resource|
             compiled[resource.ref] = resource
         end
-        existing.each do |resource|
-            if comp = compiled[resource.ref]
-                compiled.delete(comp.ref)
-                comp.to_rails(self, resource)
-            else
-                remove << resource
-            end
-        end
 
-        compiled.each do |name, resource|
-            resource.to_rails(self)
-        end
-
-        remove.each do |resource|
-            resources.delete(resource)
-        end
+        collection_merge :resources, :existing => existing, :updates => compiled
     end
 
     def update_connect_time

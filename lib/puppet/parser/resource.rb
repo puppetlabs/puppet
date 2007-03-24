@@ -258,7 +258,7 @@ class Puppet::Parser::Resource
     # Turn our parser resource into a Rails resource.
     def to_rails(host, resource = nil)
         args = {}
-        [:type, :title, :tags, :file, :line, :exported].each do |param|
+        [:type, :title, :line, :exported].each do |param|
             # 'type' isn't a valid column name, so we have to use something else.
             if param == :type
                 to = :restype
@@ -274,7 +274,8 @@ class Puppet::Parser::Resource
         if resource
             # We exist
             args.each do |param, value|
-                unless resource[param] == value
+                v = resource[param]
+                unless v == value
                     resource[param] = value
                 end
             end
@@ -283,30 +284,17 @@ class Puppet::Parser::Resource
             resource = host.resources.build(args)
         end
 
-        # Either way, now add our parameters
-        newparams = @params.dup
-        remove = []
-        resource.param_names.each do |pn|
-            name = pn.name.intern
-            if param = newparams[name]
-                # Mark that we found this in the db
-                newparams.delete(name)
-                param.to_rails(resource, pn)
-            else
-                remove << pn
+        # Handle file and tags specially
+        [:file, :tags].each do |param|
+            if self.send(param) and (!resource.send(param) or resource.send(param) != self.send(param))
+                resource.send(param.to_s + "=", self.send(param))
             end
         end
 
-        newparams.each do |name, param|
-            param.to_rails(resource)
-        end
-
-        remove.each do |param|
-            resource.param_names.delete(param)
-        end
-        #obj.collection_merge(:param_names, @params) do |name, param|
-        #    param.to_rails(obj)
-        #end
+        # Either way, now add our parameters
+        newparams = {}
+        @params.each { |name, p| newparams[name.to_s] = p }
+        resource.collection_merge :param_names, :existing => resource.param_names, :updates => newparams
 
         return resource
     end

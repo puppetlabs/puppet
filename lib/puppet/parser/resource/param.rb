@@ -46,15 +46,7 @@ class Puppet::Parser::Resource::Param
                 pn.param_values.build(:value => v.to_s)
             end
             pn.param_values = objects
-            #pn.save
         end
-
-#        pn.collection_merge(:param_values, values) do |value|
-#            unless pv = pn.param_values.find_by_value(value)
-#                pv = pn.param_values.build(:value => value)
-#            end
-#            pv
-#        end
 
         return pn
     end
