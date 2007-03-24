@@ -397,7 +397,7 @@ if Puppet[:listen] and ! options[:onetime]
     end
 
     objects << server
-elsif options[:onetime]
+elsif options[:onetime] and Puppet[:listen]
     Puppet.notice "Ignoring --listen on onetime run"
 end
 
