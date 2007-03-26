@@ -1,4 +1,9 @@
-(elmo)
+0.22.3
+    Added a stand-alone filebucket client, named 'filebucket'.
+
+    Fixed the new nested paths for filebuckets; the entire md5 sum was
+    not being stored.
+
     Fixing #553; -M is no longer added when home directories are being
     managed.
 
