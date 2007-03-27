@@ -398,7 +398,13 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         objects.remove
         files
     ensure
-        Puppet[:noop] = noop
+        # I can't imagine why this is necessary, but apparently at last one person has had problems with noop
+        # being nil here.
+        if noop.nil?
+            Puppet[:noop] = false
+        else
+            Puppet[:noop] = noop
+        end
     end
 
     # Retrieve facts from the central server.

@@ -1,4 +1,6 @@
 module Puppet
+    require 'puppet/network/client'
+
     newtype(:filebucket) do
         @doc = "A repository for backing up files.  If no filebucket is
             defined, then files will be backed up in their current directory,
