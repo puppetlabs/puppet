@@ -65,6 +65,9 @@ Puppet::Type.type(:package).provide :gem do
         if (! @model.should(:ensure).is_a? Symbol) and useversion
             command << "-v" << @model.should(:ensure)
         end
+        # Always include dependencies
+        command << "--include-dependencies"
+
         if source = @model[:source]
             command << source
         else
