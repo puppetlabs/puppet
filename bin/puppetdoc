@@ -41,6 +41,7 @@
 # Licensed under the GNU Public License
 
 require 'puppet'
+require 'puppet/network/handler'
 require 'getoptlong'
 
 result = GetoptLong.new(
@@ -276,7 +277,7 @@ in your manifest, including defined components.
 end
 
 def self.reports
-    puts Puppet::Network::Server::Report.reportdocs
+    puts Puppet::Network::Handler.report.reportdocs
 end
 
 def self.functions
