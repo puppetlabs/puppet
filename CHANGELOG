@@ -1,4 +1,9 @@
 0.22.3
+    Fixed backward compatibility for logs and metrics from older clients.
+
+    Fixed the location of the authconfig parameters so there aren't
+    loading order issues.
+
     Enabling attribute validation on the providers that subclass
     'nameservice', so we can verify that an integer is passed to
     UID and GID.
@@ -9,7 +14,7 @@
     not being stored.
 
     Fixing #553; -M is no longer added when home directories are being
-    managed.
+    managed on Red Hat.
 
 0.22.2 (grover)
     Users can now manage their home directories, using the managehome
