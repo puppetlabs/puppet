@@ -157,9 +157,8 @@ module Functions
 
     # Test whether a given class or definition is defined
     newfunction(:defined, :type => :rvalue, :doc => "Determine whether a given
-    type is defined, either as a native type or a defined type, or whether a resource has been
-    specified.  If you are checking with a resource is defined, use the normal resource
-    reference syntax, e.g., ``File['/etc/passwd']``.") do |vals|
+    type is defined, either as a native type or a defined type, or whether a class is defined.
+    This is useful for checking whether a class is defined and only including it if it is.") do |vals|
         result = false
         vals.each do |val|
             case val
