@@ -20,6 +20,11 @@ class Puppet::Provider::NameService < Puppet::Provider
             end
         end
 
+        def initvars
+            @checks = {}
+            super
+        end
+
         def list
             objects = []
             listbyname do |name|
@@ -113,7 +118,7 @@ class Puppet::Provider::NameService < Puppet::Provider
             end
         end
 
-        def disabled_validate(name, value)
+        def validate(name, value)
             name = name.intern if name.is_a? String
             if @checks.include? name
                 block = @checks[name][:block]
@@ -126,7 +131,6 @@ class Puppet::Provider::NameService < Puppet::Provider
 
         def verify(name, error, &block)
             name = name.intern if name.is_a? String
-            @checks ||= {}
             @checks[name] = {:error => error, :block => block}
         end
 
@@ -323,7 +327,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     def set(param, value)
-        #self.class.validate(param, value)
+        self.class.validate(param, value)
         cmd = modifycmd(param, value)
         unless cmd.is_a?(Array)
             raise Puppet::DevError, "Nameservice command must be an array"

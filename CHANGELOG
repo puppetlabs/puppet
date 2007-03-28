@@ -1,4 +1,8 @@
 0.22.3
+    Enabling attribute validation on the providers that subclass
+    'nameservice', so we can verify that an integer is passed to
+    UID and GID.
+
     Added a stand-alone filebucket client, named 'filebucket'.
 
     Fixed the new nested paths for filebuckets; the entire md5 sum was

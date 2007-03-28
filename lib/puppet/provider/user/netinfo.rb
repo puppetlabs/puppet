@@ -14,15 +14,16 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
 
     autogen_defaults :home => "/var/empty", :shell => "/usr/bin/false"
 
+    verify :gid, "GID must be an integer" do |value|
+        value.is_a? Integer
+    end
+
+    verify :uid, "UID must be an integer" do |value|
+        value.is_a? Integer
+    end
+
     def autogen_comment
         return @model[:name].capitalize
-    end
-    
-    def gid=(value)
-        unless value.is_a?(Integer)
-            raise ArgumentError, "gid= only accepts integers, not %s(%s)" % [value.class, value.inspect]
-        end
-        super
     end
 
     # The list of all groups the user is a member of.  Different
@@ -92,13 +93,6 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
                 next
             end
         end
-    end
-    
-    def uid=(value)
-        unless value.is_a?(Integer)
-            raise ArgumentError, "uid= only accepts integers"
-        end
-        super
     end
 end
 
