@@ -3,7 +3,7 @@ require 'puppet'
 Puppet::Network::Handler.report.newreport(:rrdgraph) do
     desc "Graph all available data about hosts using the RRD library.  You
         must have the RRD binary ruby library installed to use this report, which
-        you can get from [Tobias Oetiker's site](http://people.ee.ethz.ch/~oetiker/webtools/rrdtool/pub/contrib/).
+        you can get from [Tobias Oetiker's site](http://oss.oetiker.ch/rrdtool/pub/contrib/).
         
         This report will create, manage, and graph RRD database files for each
         of the metrics generated during transactions, and it will create a
@@ -13,7 +13,10 @@ Puppet::Network::Handler.report.newreport(:rrdgraph) do
         
         All RRD files and graphs get created in the ``rrddir`` directory.  If
         you want to serve these publicly, you should be able to just alias that
-        directory in a web server."
+        directory in a web server.
+    
+        If you really know what you're doing, you can tune the ``rrdinterval``,
+        which defaults to the ``runinterval``."
 
     def hostdir
         unless defined? @hostdir
