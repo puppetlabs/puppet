@@ -1,3 +1,6 @@
+    Certificates are now valid starting one day before they are
+    created, to help handle small amounts of clock skew.
+
     Files are no longer considered out of sync if some properties
     are out of sync but they have no properties that can create
     the file.

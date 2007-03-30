@@ -66,7 +66,9 @@ module Puppet::SSLCertificates
         }
 
         cert = OpenSSL::X509::Certificate.new
-        from = Time.now
+        # Make the certificate valid as of yesterday, because
+        # so many people's clocks are out of sync.
+        from = Time.now - (60*60*24)
 
         cert.subject = hash[:name]
         if hash[:issuer]
