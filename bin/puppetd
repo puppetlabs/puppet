@@ -346,7 +346,9 @@ unless client.read_cert
     end
 
     # Now read the new cert in.
-    unless client.read_cert
+    if client.read_cert
+        Puppet.notice "Got signed certificate"
+    else
         Puppet.err "Could not read certificates after retrieving them"
         exit(34)
     end

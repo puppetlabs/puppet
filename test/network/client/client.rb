@@ -3,10 +3,18 @@
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
+require 'mocha'
 require 'puppet/network/client'
 
 class TestClient < Test::Unit::TestCase
     include PuppetTest::ServerTest
+    class FakeClient < Puppet::Network::Client
+        @drivername = :Test
+    end
+
+    class FakeDriver
+    end
+
     # a single run through of connect, auth, etc.
     def disabled_test_sslInitWithAutosigningLocalServer
         # autosign everything, for simplicity
@@ -180,10 +188,10 @@ class TestClient < Test::Unit::TestCase
         libdir = File.join([dir, %w{puppet network client}].flatten)
         FileUtils.mkdir_p(libdir)
 
-        file = File.join(libdir, "fake.rb")
+        file = File.join(libdir, "faker.rb")
         File.open(file, "w") do |f|
             f.puts %{class Puppet::Network::Client
-                class Fake < Client
+                class Faker < Client
                 end
             end
             }
@@ -194,16 +202,16 @@ class TestClient < Test::Unit::TestCase
 
         client = nil
         assert_nothing_raised do
-            client = Puppet::Network::Client.client(:fake)
-        end
-        assert_nothing_raised do
-            assert_equal(client, Puppet::Network::Client.fake,
-                "Did not get client back from client method")
+            client = Puppet::Network::Client.client(:faker)
         end
         assert(client, "did not load client")
+        assert_nothing_raised do
+            assert_equal(client, Puppet::Network::Client.faker,
+                "Did not get client back from client method")
+        end
 
         # Now make sure the client behaves correctly
-        assert_equal(:Fake, client.name, "name was not calculated correctly")
+        assert_equal(:Faker, client.name, "name was not calculated correctly")
     end
 
     # Make sure we get a client class for each handler type.
@@ -217,6 +225,33 @@ class TestClient < Test::Unit::TestCase
             [:name, :handler, :drivername].each do |thing|
                 assert(client.send(thing), "did not get %s for %s" % [thing, name])
             end
+        end
+    end
+
+    # Make sure that reading the cert in also sets up the cert stuff for the driver
+    def test_read_cert
+        ca = Puppet::Network::Handler.ca.new
+        caclient = Puppet::Network::Client.ca.new :CA => ca
+
+        caclient.request_cert
+
+        # First make sure it doesn't get called when the driver doesn't support :cert_setup
+        client = FakeClient.new :Test => FakeDriver.new
+        driver = client.driver
+
+        assert_nothing_raised("Could not read cert") do
+            client.read_cert
+        end
+
+        # And then that it does when the driver supports it
+        client = FakeClient.new :Test => FakeDriver.new
+
+        driver = client.driver
+        driver.meta_def(:cert_setup) { |c| }
+        driver.expects(:cert_setup).with(client)
+
+        assert_nothing_raised("Could not read cert") do
+            client.read_cert
         end
     end
 end

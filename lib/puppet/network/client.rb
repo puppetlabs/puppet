@@ -36,6 +36,8 @@ class Puppet::Network::Client
 
     attr_accessor :schedule, :lastrun, :local, :stopping
 
+    attr_reader :driver
+
     # Set up subclass loading
     handle_subclasses :client, "puppet/network/client"
 
@@ -106,6 +108,16 @@ class Puppet::Network::Client
             true
         else
             false
+        end
+    end
+
+    # Make sure we set the driver up when we read the cert in.
+    def read_cert
+        if super
+            @driver.cert_setup(self) if @driver.respond_to?(:cert_setup)
+            return true
+        else
+            return false
         end
     end
 
