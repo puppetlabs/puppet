@@ -198,7 +198,12 @@ module Puppet
         end
 
         newparam(:sourceselect) do
-            desc "Whether to copy all valid sources, or just the first one."
+            desc "Whether to copy all valid sources, or just the first one.  This parameter
+                is only used in recursive copies; by default, the first valid source is the
+                only one used as a recursive source, but if this parameter is set to ``all``,
+                then all valid sources will have all of their contents copied to the local host,
+                and for sources that have the same file, the source earlier in the list will
+                be used."
 
             defaultto :first
 
