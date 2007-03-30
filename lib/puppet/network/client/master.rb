@@ -499,7 +499,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     # Send off the transaction report.
     def report(transaction)
         begin
-            report = transaction.report()
+            report = transaction.generate_report()
             if Puppet[:rrdgraph] == true
                 report.graph()
             end

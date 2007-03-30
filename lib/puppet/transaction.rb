@@ -8,6 +8,8 @@ module Puppet
 class Transaction
     attr_accessor :component, :resources, :ignoreschedules, :ignoretags
     attr_accessor :relgraph, :sorted_resources, :configurator
+
+    attr_reader :report
     
     attr_writer :tags
 
@@ -395,6 +397,44 @@ class Transaction
         end
     end
 
+    # Generate a transaction report.
+    def generate_report
+        @resourcemetrics[:failed] = @failures.find_all do |name, num|
+            num > 0
+        end.length
+
+        # Get the total time spent
+        @timemetrics[:total] = @timemetrics.inject(0) do |total, vals|
+            total += vals[1]
+            total
+        end
+
+        # Unfortunately, RRD does not deal well with changing lists of values,
+        # so we have to pick a list of values and stick with it.  In this case,
+        # that means we record the total time, the config time, and that's about
+        # it.  We should probably send each type's time as a separate metric.
+        @timemetrics.dup.each do |name, value|
+            if Puppet::Type.type(name)
+                @timemetrics.delete(name)
+            end
+        end
+
+        # Add all of the metrics related to resource count and status
+        @report.newmetric(:resources, @resourcemetrics)
+
+        # Record the relative time spent in each resource.
+        @report.newmetric(:time, @timemetrics)
+
+        # Then all of the change-related metrics
+        @report.newmetric(:changes,
+            :total => @changes.length
+        )
+
+        @report.time = Time.now
+
+        return @report
+    end
+
     # Produce the graph files if requested.
     def graph(gr, name)
         # We don't want to graph the configuration process.
@@ -520,44 +560,6 @@ class Transaction
         graph(graph, :expanded_relationships)
         
         return graph
-    end
-
-    # Generate a transaction report.
-    def report
-        @resourcemetrics[:failed] = @failures.find_all do |name, num|
-            num > 0
-        end.length
-
-        # Get the total time spent
-        @timemetrics[:total] = @timemetrics.inject(0) do |total, vals|
-            total += vals[1]
-            total
-        end
-
-        # Unfortunately, RRD does not deal well with changing lists of values,
-        # so we have to pick a list of values and stick with it.  In this case,
-        # that means we record the total time, the config time, and that's about
-        # it.  We should probably send each type's time as a separate metric.
-        @timemetrics.dup.each do |name, value|
-            if Puppet::Type.type(name)
-                @timemetrics.delete(name)
-            end
-        end
-
-        # Add all of the metrics related to resource count and status
-        @report.newmetric(:resources, @resourcemetrics)
-
-        # Record the relative time spent in each resource.
-        @report.newmetric(:time, @timemetrics)
-
-        # Then all of the change-related metrics
-        @report.newmetric(:changes,
-            :total => @changes.length
-        )
-
-        @report.time = Time.now
-
-        return @report
     end
 
     # Roll all completed changes back.

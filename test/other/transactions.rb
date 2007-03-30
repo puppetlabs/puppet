@@ -86,7 +86,7 @@ class TestTransactions < Test::Unit::TestCase
         report = nil
 
         assert_nothing_raised {
-            report = trans.report
+            report = trans.generate_report
         }
 
         # First test the report logs

@@ -1,3 +1,7 @@
+    Files are no longer considered out of sync if some properties
+    are out of sync but they have no properties that can create
+    the file.
+
 0.22.3
     Fixed backward compatibility for logs and metrics from older clients.
 
