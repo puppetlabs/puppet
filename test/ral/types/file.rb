@@ -1775,6 +1775,15 @@ class TestFile < Test::Unit::TestCase
         assert(fobj, "did not create file object")
         assert(fobj.should(:ensure) != :directory, "ensure was passed to child")
     end
+
+    # #567
+    def test_missing_files_are_in_sync
+        file = tempfile
+        obj = Puppet::Type.newfile(:path => file, :mode => 0755)
+
+        changes = obj.evaluate
+        assert(changes.empty?, "Missing file with no ensure resulted in changes")
+    end
 end
 
 # $Id$

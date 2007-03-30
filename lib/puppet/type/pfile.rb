@@ -1094,6 +1094,25 @@ module Puppet
         end
 
         private
+
+        # Override the parent method, because we don't want to generate changes
+        # when the file is missing and there is no 'ensure' state.
+        def propertychanges
+            unless self.stat
+                found = false
+                ([:ensure] + CREATORS).each do |prop|
+                    if @parameters.include?(prop)
+                        found = true
+                        break
+                    end
+                end
+                unless found
+                    return []
+                end
+            end
+            super
+        end
+
         # There are some cases where all of the work does not get done on
         # file creation/modification, so we have to do some extra checking.
         def property_fix
