@@ -10,6 +10,8 @@ args.each { |f| require f unless f =~ /^-/  }
 runner = Test::Unit::AutoRunner.new(false)
 runner.process_args
 
-runner.run
+unless runner.run
+    exit 14
+end
 
 # $Id$

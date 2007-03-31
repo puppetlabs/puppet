@@ -9,44 +9,6 @@ require 'find'
 require 'getoptlong'
 include Find
 
-result = GetoptLong.new(
-    [ "--build",    "-b",			GetoptLong::NO_ARGUMENT ],
-    [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
-    [ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
-    [ "-n",			                GetoptLong::REQUIRED_ARGUMENT ],
-    [ "--files",    "-f",           GetoptLong::NO_ARGUMENT ],
-    [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
-)
-
-usage = "USAGE: %s [--help] suite" % $0
-
-$options = {}
-keep = []
-
-result.each { |opt,arg|
-    case opt
-    when "--build"
-        $options[:build] = true
-    when "--verbose"
-        $options[:verbose] = true
-    when "--files"
-        $options[:files] = true
-    when "--debug"
-        $options[:debug] = true
-    when "--help"
-        puts usage
-        exit
-    else
-        keep << opt
-        keep << arg if arg
-    end
-}
-p $options
-
-keep.each do |i|
-    ARGV << i
-end
-
 def dirs
     Dir.glob("*").find_all { |d| FileTest.directory?(d) }.reject { |d|
         ["lib", "data"].include?(d)
@@ -72,7 +34,7 @@ def resolve(dir)
     failed = nil
     dirs.each do |d|
         next if d == dir
-        unless run(d, dir)
+        unless run([d, dir])
             failed = d
             break
         end
@@ -82,7 +44,7 @@ def resolve(dir)
     files = ruby_files(failed)
 
     files.each do |file|
-        unless run(file, dir)
+        unless run([file, dir])
             puts file
             exit(0)
         end
@@ -102,10 +64,13 @@ def ruby_files(dir)
     files
 end
 
-def run(*files)
+def run(files, flags = nil)
     args = %w{ruby}
     args << "-Ilib:../lib"
     args << "lib/rake/puppet_test_loader.rb"
+    if flags
+        args += flags
+    end
     args += ARGV
 
     print files.join(" ") + "... "
@@ -139,9 +104,42 @@ def run(*files)
     end
 end
 
+result = GetoptLong.new(
+    [ "--build",    "-b",			GetoptLong::NO_ARGUMENT ],
+    [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
+    [ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
+    [ "-n",			                GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--files",    "-f",           GetoptLong::NO_ARGUMENT ],
+    [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+)
+
+usage = "USAGE: %s [--help] suite" % $0
+
+$options = {}
+keep = []
+
+result.each { |opt,arg|
+    case opt
+    when "--build"
+        $options[:build] = true
+    when "--verbose"
+        $options[:verbose] = true
+    when "--files"
+        $options[:files] = true
+    when "--debug"
+        $options[:debug] = true
+        $options[:verbose] = true
+    when "--help"
+        puts usage
+        exit
+    else
+        keep << opt
+        keep << arg if arg
+    end
+}
+
 if $options[:files]
-    puts "files"
-    run(*ARGV)
+    run(ARGV, keep)
 else
     dir = ARGV.shift
 

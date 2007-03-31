@@ -229,7 +229,9 @@ class TestMounts < Test::Unit::TestCase
                 "FSTab %s does not exist" % file)
 
             # Now switch to ram, so we're just doing this there, not really on disk.
+            oldtype = provider.filetype
             provider.filetype = :ram
+            cleanup { provider.filetype = oldtype }
             #provider.target_object(file).write text
         end
 
