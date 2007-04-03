@@ -1,3 +1,6 @@
+    STDIN, STDOUT, STDERR are now redirected to /dev/null in
+    service providers descending from base.
+
     Certificates are now valid starting one day before they are
     created, to help handle small amounts of clock skew.
 

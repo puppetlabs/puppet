@@ -277,11 +277,15 @@ class TestPuppetUtil < Test::Unit::TestCase
         # Now try it with a single quote
         assert_nothing_raised do
             output = Puppet::Util.execute([command, "yay'test", "funtest"])
-            # output = Puppet::Util.execute(command)
-            
         end
         assert_equal("yay'test\nfuntest\n", output)
         
+        # Now make sure we can squelch output (#565)
+        assert_nothing_raised do
+            output = Puppet::Util.execute([command, "yay'test", "funtest"], :squelch => true)
+        end
+        assert_equal(nil, output)
+
         # Now test that we correctly fail if the command returns non-zero
         assert_raise(Puppet::ExecutionFailure) do
             out = Puppet::Util.execute(["touch", "/no/such/file/could/exist"])
@@ -289,7 +293,7 @@ class TestPuppetUtil < Test::Unit::TestCase
         
         # And that we can tell it not to fail
         assert_nothing_raised() do
-            out = Puppet::Util.execute(["touch", "/no/such/file/could/exist"], false)
+            out = Puppet::Util.execute(["touch", "/no/such/file/could/exist"], :failonfail => false)
         end
         
         if Process.uid == 0
@@ -298,7 +302,7 @@ class TestPuppetUtil < Test::Unit::TestCase
             group = nonrootgroup
             file = tempfile()
             assert_nothing_raised do
-                Puppet::Util.execute(["touch", file], true, user.name, group.name)
+                Puppet::Util.execute(["touch", file], :uid => user.name, :gid => group.name)
             end
             assert(FileTest.exists?(file), "file was not created")
             assert_equal(user.uid, File.stat(file).uid, "uid was not set correctly")
@@ -307,6 +311,24 @@ class TestPuppetUtil < Test::Unit::TestCase
             # inconsistently everywhere.
             # assert_equal(group.gid, File.stat(file).gid,
             #    "gid was not set correctly")
+        end
+        
+        # (#565) Test the case of patricide.
+        patricidecommand = tempfile()
+        File.open(patricidecommand, "w") { |f|
+            f.puts %{#!/bin/bash\n/bin/bash -c 'kill -TERM \$PPID' &;\n while [ 1 ]; do echo -n ''; done;\n}
+        }
+        File.chmod(0755, patricidecommand)
+        assert_nothing_raised do
+            output = Puppet::Util.execute([patricidecommand], :squelch => true)
+        end
+        assert_equal(nil, output)
+        # See what happens if we try and read the pipe to the command...
+        assert_raise(Puppet::ExecutionFailure) do
+            output = Puppet::Util.execute([patricidecommand])
+        end
+        assert_nothing_raised do
+            output = Puppet::Util.execute([patricidecommand], :failonfail => false)
         end
     end
     

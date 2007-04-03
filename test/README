@@ -1,5 +1,15 @@
 $Id$
 
+To run all tests, run: 'rake test'.  To run an individual suite, run the file
+directly.  e.g. cd test/util; ./utiltest.rb
+
+You might need to run some tests as root.
+
+If you do not have rake installed:
+  gem install rake
+
+## The following information is possibly out of date?
+
 Tests are organized into a dual hierarchy: each subdirectory is
 considered a test suite, and each file in the subdirectory is considered
 a test case.  You can use any test case as an example of how to write
@@ -12,8 +22,3 @@ if __FILE__ == $0
     $:.unshift '../../lib'
     $blinkbase = "../.."
 end
-
-To run all tests, just type './test'.  To run an individual suite, run
-'./test <suite>'.  To run an individual case, cd into the suite
-subdirectory and run './tc_<case>.rb'.  Tests are basically guaranteed
-not to work without cd'ing into the subdirectory.

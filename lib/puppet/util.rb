@@ -267,7 +267,8 @@ module Util
     end
 
     # Execute the desired command, and return the status and output.
-    def execute(command, failonfail = true, uid = nil, gid = nil)
+    # def execute(command, failonfail = true, uid = nil, gid = nil)
+    def execute(command, arguments = {:failonfail => true})
         if command.is_a?(Array)
             command = command.flatten.collect { |i| i.to_s }
             str = command.join(" ")
@@ -284,30 +285,35 @@ module Util
             Puppet.debug "Executing '%s'" % str
         end
         
-        if uid
-            uid = Puppet::Util::SUIDManager.convert_xid(:uid, uid)
+        if arguments[:uid]
+            arguments[:uid] = Puppet::Util::SUIDManager.convert_xid(:uid, arguments[:uid])
         end
-        if gid
-            gid = Puppet::Util::SUIDManager.convert_xid(:gid, gid)
+        if arguments[:gid]
+            arguments[:gid] = Puppet::Util::SUIDManager.convert_xid(:gid, arguments[:gid])
         end
         
         @@os ||= Facter.value(:operatingsystem)
         output = nil
-        IO.popen("-") do |f|
-            if f
-                output = f.read
+        child_pid, child_status = nil
+        # The idea here is to avoid IO#read whenever possible.
+        if arguments[:squelch]
+            child_pid = Kernel.fork
+            if child_pid
+                # Parent process executes this
+                child_status = Process.waitpid2(child_pid)[1]
             else
+                # Child process executes this
                 begin
                     $stdin.reopen("/dev/null")
-                    $stderr.close
-                    $stderr = $stdout.dup
-                    if gid
-                        Process.egid = gid
-                        Process.gid = gid unless @@os == "Darwin"
+                    $stdout.reopen("/dev/null")
+                    $stderr.reopen("/dev/null")
+                    if arguments[:gid]
+                        Process.egid = arguments[:gid]
+                        Process.gid = arguments[:gid] unless @@os == "Darwin"
                     end
-                    if uid
-                        Process.euid = uid
-                        Process.uid = uid unless @@os == "Darwin"
+                    if arguments[:uid]
+                        Process.euid = arguments[:uid]
+                        Process.uid = arguments[:uid] unless @@os == "Darwin"
                     end
                     if command.is_a?(Array)
                         Kernel.exec(*command)
@@ -317,13 +323,44 @@ module Util
                 rescue => detail
                     puts detail.to_s
                     exit!(1)
-                end
-            end
-        end
+                end # begin; rescue
+            end # if child_pid; else
+        else
+            IO.popen("-") do |f|
+                if f
+                    # Parent process executes this
+                    output = f.read
+                else
+                    # Parent process executes this
+                    begin
+                        $stdin.reopen("/dev/null")
+                        $stderr.close
+                        $stderr = $stdout.dup
+                        if arguments[:gid]
+                            Process.egid = arguments[:gid]
+                            Process.gid = arguments[:gid] unless @@os == "Darwin"
+                        end
+                        if arguments[:uid]
+                            Process.euid = arguments[:uid]
+                            Process.uid = arguments[:uid] unless @@os == "Darwin"
+                        end
+                        if command.is_a?(Array)
+                            Kernel.exec(*command)
+                        else
+                            Kernel.exec(command)
+                        end
+                    rescue => detail
+                        puts detail.to_s
+                        exit!(1)
+                    end # begin; rescue
+                end # if f; else
+            end # IO.popen do |f|
+            child_status = $?
+        end # if arguments[:squelch]; else
 
-        if failonfail
-            unless $? == 0
-                raise ExecutionFailure, "Execution of '%s' returned %s: %s" % [str, $?.exitstatus, output]
+        if arguments[:failonfail]
+            unless child_status == 0
+                raise ExecutionFailure, "Execution of '%s' returned %s: %s" % [str, child_status.inspect, output]
             end
         end
 

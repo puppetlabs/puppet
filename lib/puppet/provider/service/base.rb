@@ -114,12 +114,12 @@ Puppet::Type.type(:service).provide :base do
     # A simple wrapper so execution failures are a bit more informative.
     def texecute(type, command, fof = true)
         begin
-            output = execute(command, fof)
+            # #565: Services generally produce no output, so squelch them.
+            execute(command, :failonfail => fof, :squelch => true)
         rescue Puppet::ExecutionFailure => detail
             @model.fail "Could not %s %s: %s" % [type, @model.ref, detail]
         end
-
-        return output
+        return nil
     end
 
     # Use either a specified command or the default for our provider.
