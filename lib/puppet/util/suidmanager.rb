@@ -64,7 +64,7 @@ module Puppet::Util::SUIDManager
     def run_and_capture(command, new_uid=nil, new_gid=nil)
         output = nil
         
-        output = Puppet::Util.execute(command, false, new_uid, new_gid)
+        output = Puppet::Util.execute(command, :failonfail => false, :uid => new_uid, :gid => new_gid)
 
         [output, $?.dup]
     end
