@@ -71,12 +71,12 @@ class AptPackageProviderTest < PuppetTest::TestCase
 	end
 
     def test_latest
-		pkg = @type.create :name => 'ssh', :provider => :apt
+		pkg = @type.create :name => 'base-files', :provider => :apt
 
         assert(pkg, "did not create pkg")
         status = pkg.provider.query
-        assert(status, "ssh is not installed")
-        assert(status[:ensure] != :absent, "ssh is not installed")
+        assert(status, "base-files is not installed")
+        assert(status[:ensure] != :absent, "base-files is not installed")
 
         latest = nil
         assert_nothing_raised("Could not call latest") do
