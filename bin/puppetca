@@ -68,6 +68,9 @@
 # verbose::
 #   Enable verbosity.
 #
+# version::
+#   Print the puppet version number and exit.
+#
 # = Example
 #
 #   $ puppetca -l
@@ -96,6 +99,7 @@ options = [
     [ "--list",     "-l",  GetoptLong::NO_ARGUMENT ],
     [ "--revoke",   "-r",  GetoptLong::NO_ARGUMENT ],
     [ "--sign",     "-s",  GetoptLong::NO_ARGUMENT ],
+	[ "--version",	"-V",  GetoptLong::NO_ARGUMENT ],
     [ "--verbose",  "-v",  GetoptLong::NO_ARGUMENT ]
 ]
 
@@ -133,6 +137,9 @@ begin
                 mode = :revoke
             when "--sign"
                 mode = :sign
+            when "--version"
+                puts "%s" % Puppet.version
+                exit
             when "--verbose"
                 Puppet::Util::Log.level = :info
             else
