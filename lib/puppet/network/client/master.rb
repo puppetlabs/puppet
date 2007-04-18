@@ -616,16 +616,16 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             Puppet::Util::Storage.cache(:configuration)[:compile_time] = @compile_time
         end
 
-        if @cache and ! fromcache
-            self.cache(textobjects)
-        end
-
         begin
             objects = YAML.load(textobjects)
         rescue => detail
             raise Puppet::Error,
                 "Could not understand configuration: %s" %
                 detail.to_s
+        end
+
+        if @cache and ! fromcache
+            self.cache(textobjects)
         end
         
         return objects
