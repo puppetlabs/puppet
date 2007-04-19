@@ -43,7 +43,7 @@ module Puppet
             You cannot currently copy links using this mechanism; set ``links``
             to ``follow`` if any remote sources are links.
 
-            [fileserver docs]: ../installing/fsconfigref.html
+            [fileserver docs]: /trac/puppet/wiki/FileServingConfiguration
 
             "
 
