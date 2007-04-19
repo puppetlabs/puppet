@@ -277,6 +277,9 @@ resourcename:   quotedtext
             | array
 
 assignment:     VARIABLE EQUALS rvalue {
+    if val[0] =~ /::/
+        raise Puppet::ParseError, "Cannot assign to variables in other namespaces"
+    end
     # this is distinct from referencing a variable
     variable = ast AST::Name, :value => val[0]
     result = ast AST::VarDef, :name => variable, :value => val[2]

@@ -243,9 +243,13 @@ class Puppet::Parser::Scope
         @type = nil
         @name = nil
         @finished = false
-        if n = hash[:namespace]
-            @namespaces = [n]
+        if hash.include?(:namespace)
+            if n = hash[:namespace]
+                @namespaces = [n]
+            end
             hash.delete(:namespace)
+        else
+            @namespaces = [""]
         end
         hash.each { |name, val|
             method = name.to_s + "="
@@ -393,9 +397,29 @@ class Puppet::Parser::Scope
         finddefine(name) || findclass(name)
     end
 
+    def lookup_qualified_var(name, usestring)
+        parts = name.split(/::/)
+        shortname = parts.pop
+        klassname = parts.join("::")
+        klass = findclass(klassname)
+        unless klass
+            raise Puppet::ParseError, "Could not find class %s" % klassname
+        end
+        unless kscope = class_scope(klass)
+            raise Puppet::ParseError, "Class %s has not been evaluated so its variables cannot be referenced" % klass.fqname
+        end
+        return kscope.lookupvar(shortname, usestring)
+    end
+
+    private :lookup_qualified_var
+
     # Look up a variable.  The simplest value search we do.  Default to returning
     # an empty string for missing values, but support returning a constant.
     def lookupvar(name, usestring = true)
+        # If the variable is qualified, then find the specified scope and look the variable up there instead.
+        if name =~ /::/
+            return lookup_qualified_var(name, usestring)
+        end
         # We can't use "if @symtable[name]" here because the value might be false
         if @symtable.include?(name)
             return @symtable[name]
@@ -547,12 +571,12 @@ class Puppet::Parser::Scope
         ss = StringScanner.new(string)
         out = ""
         while not ss.eos?
-            if ss.scan(/^\$\{(\w+)\}|^\$(\w+)/) 
+            if ss.scan(/^\$\{((\w*::)*\w+)\}|^\$((\w*::)*\w+)/) 
                 # If it matches the backslash, then just retun the dollar sign.
                 if ss.matched == '\\$'
                     out << '$'
                 else # look the variable up
-                    out << lookupvar(ss[1] || ss[2]).to_s || ""
+                    out << lookupvar(ss[1] || ss[3]).to_s || ""
                 end
             elsif ss.scan(/^\\(.)/)
                 # Puppet.debug("Got escape: pos:%d; m:%s" % [ss.pos, ss.matched])

@@ -227,6 +227,21 @@ class TestLexer < Test::Unit::TestCase
 
         assert(! @lexer.indefine?, "Lexer still considered in define")
     end
+
+    # Make sure the different qualified variables work.
+    def test_variable
+        ["$variable", "$::variable", "$qualified::variable", "$further::qualified::variable"].each do |string|
+            @lexer.string = string
+
+            assert_nothing_raised("Could not lex %s" % string) do
+                @lexer.scan do |t, s|
+                    assert_equal(:VARIABLE, t, "did not get variable as token")
+                    assert_equal(string.sub(/^\$/, ''), s, "did not get correct string back")
+                    break
+                end
+            end
+        end
+    end
 end
 
 # $Id$

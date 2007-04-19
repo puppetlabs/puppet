@@ -51,7 +51,7 @@ module Puppet
                 %r{([A-Z][-\w]*::)+[A-Z][-\w]*} => :CLASSREF,
                 %r{[A-Z][-\w]*} => :TYPE,
                 %r{[0-9]+} => :NUMBER,
-                %r{\$\w+} => :VARIABLE
+                %r{\$(\w*::)*\w+} => :VARIABLE
             }
 
             @@keywords = {

@@ -58,8 +58,6 @@ class Puppet::Parser::AST
             if self.arguments
                 # Verify that all required arguments are either present or
                 # have been provided with defaults.
-                # FIXME This should probably also require each parent
-                # class's arguments...
                 self.arguments.each { |arg, default|
                     arg = symbolize(arg)
                     unless args.include?(arg)

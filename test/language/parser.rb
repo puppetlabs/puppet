@@ -740,6 +740,13 @@ file { "/tmp/yayness":
                 "did not import %s" % file)
         end
     end
+
+    def test_cannot_assign_qualified_variables
+        parser = mkparser
+        assert_raise(Puppet::ParseError, "successfully assigned a qualified variable") do
+            parser.parse("$one::two = yay")
+        end
+    end
 end
 
 # $Id$

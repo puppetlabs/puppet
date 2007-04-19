@@ -2,10 +2,7 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/parser/interpreter'
-require 'puppet/parser/parser'
-require 'puppet/network/client'
+require 'mocha'
 require 'puppettest'
 require 'puppettest/parsertesting'
 require 'puppettest/resourcetesting'
@@ -98,6 +95,56 @@ class TestScope < Test::Unit::TestCase
                 i += 1
             }
         }
+    end
+
+    def test_lookupvar
+        interp = mkinterp
+        scope = mkscope :interp => interp
+
+        # first do the plain lookups
+        assert_equal("", scope.lookupvar("var"), "scope did not default to string")
+        assert_equal("", scope.lookupvar("var", true), "scope ignored usestring setting")
+        assert_equal(:undefined, scope.lookupvar("var", false), "scope ignored usestring setting when false")
+
+        # Now set the var
+        scope.setvar("var", "yep")
+        assert_equal("yep", scope.lookupvar("var"), "did not retrieve value correctly")
+
+        # Now test the parent lookups 
+        subscope = mkscope :interp => interp
+        subscope.parent = scope
+        assert_equal("", subscope.lookupvar("nope"), "scope did not default to string with parent")
+        assert_equal("", subscope.lookupvar("nope", true), "scope ignored usestring setting with parent")
+        assert_equal(:undefined, subscope.lookupvar("nope", false), "scope ignored usestring setting when false with parent")
+
+        assert_equal("yep", subscope.lookupvar("var"), "did not retrieve value correctly from parent")
+
+        # Now override the value in the subscope
+        subscope.setvar("var", "sub")
+        assert_equal("sub", subscope.lookupvar("var"), "did not retrieve overridden value correctly")
+
+        # Make sure we punt when the var is qualified.  Specify the usestring value, so we know it propagates.
+        scope.expects(:lookup_qualified_var).with("one::two", false).returns(:punted)
+        assert_equal(:punted, scope.lookupvar("one::two", false), "did not return the value of lookup_qualified_var")
+    end
+
+    def test_lookup_qualified_var
+        interp = mkinterp
+        scope = mkscope :interp => interp
+
+        scopes = {}
+        classes = ["", "one", "one::two", "one::two::three"].each do |name|
+            klass = interp.newclass(name)
+            klass.evaluate(:scope => scope)
+            scopes[name] = scope.class_scope(klass)
+        end
+
+        classes.each do |name|
+            var = [name, "var"].join("::")
+            scopes[name].expects(:lookupvar).with("var", false).returns(name)
+
+            assert_equal(name, scope.send(:lookup_qualified_var, var, false), "did not get correct value from lookupvar")
+        end
     end
 
     def test_declarative
@@ -196,13 +243,44 @@ class TestScope < Test::Unit::TestCase
     end
     
     def test_strinterp
-        scope = mkscope()
+        # Make and evaluate our classes so the qualified lookups work
+        interp = mkinterp
+        klass = interp.newclass("")
+        scope = mkscope(:interp => interp)
+        klass.evaluate(:scope => scope)
 
+        klass = interp.newclass("one")
+        klass.evaluate(:scope => scope)
+
+        klass = interp.newclass("one::two")
+        klass.evaluate(:scope => scope)
+
+
+        scope = scope.class_scope("")
         assert_nothing_raised {
             scope.setvar("test","value")
         }
+
+        scopes = {"" => scope}
+
+        %w{one one::two one::two::three}.each do |name|
+            klass = interp.newclass(name)
+            klass.evaluate(:scope => scope)
+            scopes[name] = scope.class_scope(klass)
+            scopes[name].setvar("test", "value-%s" % name.sub(/.+::/,''))
+        end
+
+        assert_equal("value", scope.lookupvar("::test"), "did not look up qualified value correctly")
         tests = {
             "string ${test}" => "string value",
+            "string ${one::two::three::test}" => "string value-three",
+            "string $one::two::three::test" => "string value-three",
+            "string ${one::two::test}" => "string value-two",
+            "string $one::two::test" => "string value-two",
+            "string ${one::test}" => "string value-one",
+            "string $one::test" => "string value-one",
+            "string ${::test}" => "string value",
+            "string $::test" => "string value",
             "string ${test} ${test} ${test}" => "string value value value",
             "string $test ${test} $test" => "string value value value",
             "string \\$test" => "string $test",
@@ -219,7 +297,7 @@ class TestScope < Test::Unit::TestCase
         tests.each do |input, output|
             assert_nothing_raised("Failed to scan %s" % input.inspect) do
                 assert_equal(output, scope.strinterp(input),
-                    'did not interpret %s correctly' % input)
+                    'did not interpret %s correctly' % input.inspect)
             end
         end
 
