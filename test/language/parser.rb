@@ -747,6 +747,22 @@ file { "/tmp/yayness":
             parser.parse("$one::two = yay")
         end
     end
+
+    # #588
+    def test_globbing_with_directories
+        dir = tempfile
+        Dir.mkdir(dir)
+        subdir = File.join(dir, "subdir")
+        Dir.mkdir(subdir)
+        file = File.join(dir, "file.pp")
+        maker = tempfile
+        File.open(file, "w") { |f| f.puts "file { '#{maker}': ensure => file }" }
+
+        parser = mkparser
+        assert_nothing_raised("Globbing failed when it matched a directory") do
+            parser.import("%s/*" % dir)
+        end
+    end
 end
 
 # $Id$

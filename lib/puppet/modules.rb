@@ -70,9 +70,9 @@ class Puppet::Module
             return mod.manifests(pat)
         else
             abspat = File::expand_path(pat, cwd)
-            files = Dir.glob(abspat)
+            files = Dir.glob(abspat).reject { |f| FileTest.directory?(f) }
             if files.size == 0
-                files = Dir.glob(abspat + ".pp")
+                files = Dir.glob(abspat + ".pp").reject { |f| FileTest.directory?(f) }
             end
             return files
         end

@@ -1,3 +1,6 @@
+    Modules no longer return directories in the list of found
+    manifests (#588).
+
     The crontab provider now defaults to root when there is no
     USER set in the environment.
 
