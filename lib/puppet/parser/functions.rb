@@ -292,10 +292,6 @@ module Functions
             end
             output
     end
-
-    newfunction(:nodevar, :type = :rvalue,
-        :doc => "") do
-    end
 end
 end
 

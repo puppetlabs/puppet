@@ -527,9 +527,6 @@ class TestLangFunctions < Test::Unit::TestCase
             val = scope.function_generate([bad])
         end
     end
-
-    def test_nodevar
-    end
 end
 
 # $Id$
