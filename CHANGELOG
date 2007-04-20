@@ -1,3 +1,6 @@
+    Added a syntax for referring to variables defined in
+    other classes (e.g., $puppet::server).
+
     STDIN, STDOUT, STDERR are now redirected to /dev/null in
     service providers descending from base.
 
