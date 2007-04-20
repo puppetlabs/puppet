@@ -1,3 +1,6 @@
+    The crontab provider now defaults to root when there is no
+    USER set in the environment.
+
     Puppetd once again correctly responds to HUP.
 
     Added a syntax for referring to variables defined in
