@@ -330,12 +330,6 @@ Puppet::Type.newtype(:cron) do
             character."
 
         isnamevar
-
-        validate do |value|
-            unless value =~ /^[-\w]+$/
-                raise ArgumentError, "Invalid name format '%s'" % value
-            end
-        end
     end
 
     newproperty(:user) do
