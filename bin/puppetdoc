@@ -27,6 +27,9 @@
 #   resource type documentation, and 'configref', for documentation on all
 #   of the configuration parameters.
 #
+# trac::
+#   Write the reference docs to trac.  Only works on servers at Reductive Labs.
+#
 # = Example
 #
 #   $ puppetdoc > /tmp/reference.rst
@@ -45,6 +48,7 @@ require 'puppet/network/handler'
 require 'getoptlong'
 
 result = GetoptLong.new(
+	[ "--trac",	"-t",			GetoptLong::NO_ARGUMENT ],
 	[ "--mode",	"-m",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
 )
@@ -52,12 +56,15 @@ result = GetoptLong.new(
 debug = false
 
 $tab = "    "
+$trac = false
 
 mode = :typedocs
 
 begin
     result.each { |opt,arg|
         case opt
+            when "--trac"
+                $trac = true
             when "--mode"
                 mode = arg.intern
             when "--help"
@@ -75,6 +82,134 @@ rescue GetoptLong::InvalidOption => detail
 end
 
 include Puppet::Util::Docs
+
+TRACMAP = {
+    :configref => "ConfigurationReference",
+    :reports => "ReportReference",
+    :functions => "FunctionReference",
+    :types => "TypeReference"
+}
+
+HEADERS = {
+    :configref => "Puppet Configuration Reference
+==============================
+
+Specifying Configuration Parameters
+-----------------------------------
+
+Every Puppet executable (with the exception of ``puppetdoc``) accepts all of
+the arguments below, but not all of the arguments make sense for every executable.
+Each argument has a section listed with it in parentheses; often, that section
+will map to an executable (e.g., ``puppetd``), in which case it probably only
+makes sense for that one executable.  If ``puppet`` is listed as the section,
+it is most likely an option that is valid for everyone.
+
+This will not always be the case.  I have tried to be as thorough as possible
+in the descriptions of the arguments, so it should be obvious whether an
+argument is appropriate or not.
+
+These arguments can be supplied to the executables either as command-line 
+arugments or in the configuration file for the appropriate executable.  For 
+instance, the command-line invocation below would set the configuration directory
+to ``/private/puppet``::
+  
+    $ puppetd --confdir=/private/puppet
+  
+Note that boolean options are turned on and off with a slightly different syntax
+on the command line::
+
+    $ puppetd --storeconfigs
+      
+    $ puppetd --no-storeconfigs
+
+The invocations above will enable and disable, respectively, the storage of 
+the client configuration.
+
+As mentioned above, the configuration parameters can also be stored in a 
+configuration file located in the configuration directory (`/etc/puppet` 
+by default).  The file is named for the executable it is intended for, for
+example `/etc/puppetd.conf` is the configuration file for `puppetd`.
+
+The file, which follows INI-style formatting, should contain a bracketed
+heading named for the executable, followed by pairs of parameters with their
+values.  Here is an example of a very simple ``puppetd.conf`` file::
+
+    [puppetd]
+        confdir = /private/puppet
+        storeconfigs = true
+    
+Note that boolean parameters must be explicitly specified as `true` or
+`false` as seen above.
+
+If you're starting out with a fresh configuration, you may wish to let
+the executable generate a template configuration file for you by invoking
+the executable in question with the `--genconfig` command.  The executable
+will print a template configuration to standard output, which can be
+redirected to a file like so::
+
+    $ puppetd --genconfig > /etc/puppet/puppetd.conf
+  
+Note that this invocation will \"clobber\" (throw away) the contents of any
+pre-existing `puppetd.conf` file, so make a backup of your present config
+if it contains valuable information.
+  
+Like the `--genconfig` argument, the executables also accept a `--genmanifest`
+argument, which will generate a manifest that can be used to manage all of 
+Puppet's directories and files and prints it to standard output.  This can
+likewise be redirected to a file::
+
+    $ puppetd --genmanifest > /etc/puppet/manifests/site.pp
+
+Puppet can also create user and group accounts for itself (one `puppet` group
+and one `puppet` user) if it is invoked as `root` with the `--mkusers` argument::
+
+    $ puppetd --mkusers
+  
+Signals
+-------
+
+The `puppetd` and `puppetmasterd` executables catch some signals for special 
+handling.  Both daemons catch (`SIGHUP`), which forces the server to restart 
+tself.  Predictably, interrupt and terminate (`SIGINT` and `SIGHUP`) will shut 
+down the server, whether it be an instance of `puppetd` or `puppetmasterd`.
+
+Sending the `SIGUSR1` signal to an instance of `puppetd` will cause it to 
+immediately begin a new configuration transaction with the server.  This 
+signal has no effect on `puppetmasterd`.
+
+Configuration Parameter Reference
+---------------------------------
+
+Below is a list of all documented parameters.  Any default values are in ``block type`` at the end of the description.
+
+",
+:reports => "Puppet clients can report back to the server after each transaction.  This
+transaction report is sent as a YAML dump of the
+``Puppet::Transaction::Report`` class and includes every log message that was
+generated during the transaction along with as many metrics as Puppet knows how
+to collect.  See `ReportsAndReporting Reports and Reporting`:trac:
+for more information on how to use reports.
+
+Currently, clients default to not sending in reports; you can enable reporting
+by setting the ``report`` parameter to true.
+
+To use a report, set the ``reports`` parameter on the server; multiple
+reports must be comma-separated.  You can also specify ``none`` to disable
+reports entirely.
+
+Puppet provides multiple report handlers that will process client reports:
+
+",
+:functions => "There are two types of functions in Puppet: Statements and rvalues.
+Statements stand on their own and do not return arguments; they are used for
+performing stand-alone work like importing.  Rvalues return values and can
+only be used in a statement requiring a value, such as an assignment or a case
+statement. 
+
+Here are the functions available in Puppet:
+                        
+"
+}
 
 # Indent every line in the chunk except those which begin with '..'.
 def indent(text, tab)
@@ -103,19 +238,32 @@ def self.configref
         a[0].to_s <=> b[0].to_s
     }.each do |name, object|
         # Make each name an anchor
-        puts %{#### <a name="#{name.to_s}">#{name.to_s}</a> (<em>#{object.section.to_s}</em>)}
+        #header = %{#{name.to_s} (*#{object.section.to_s}*)\n}
+        header = name.to_s
+        puts header
+        puts "+" * header.length
 
-        puts ""
-        default = ""
-        if val = object.value and val != ""
-            default = "  ``%s``" % val
-        end
+        # Print the doc string itself
         begin
-            puts object.desc.gsub(/\n/, " ") + default
+            #puts object.desc.gsub(/\n/, " ") + default
+            puts object.desc.gsub(/\n/, " ")
         rescue => detail
             puts detail.backtrace
             puts detail
         end
+        puts ""
+
+        # Now print the data about the item.
+        puts ""
+        default = ""
+        val = object.value
+        puts "- **Section**: %s" % object.section
+        unless val == ""
+            puts "- **Default**: %s" % val
+        end
+        #if val = object.value and val != ""
+        #    default = "  ``%s``" % val
+        #end
         puts ""
     end
 
@@ -288,6 +436,14 @@ unless respond_to?(mode)
     raise "Invalid mode %s" % mode
 end
 
+if $trac
+    STDOUT.close
+    STDOUT.reopen("/tmp/puppetdoc.out")
+end
+
+puts "{{{
+#!rst\n"
+puts HEADERS[mode]
 send(mode)
 
 puts "
@@ -295,6 +451,20 @@ puts "
 ----------------
 
 "
-puts "\n*This page autogenerated on %s*" % Time.now
+puts "\n*This page autogenerated on %s*
+}}}" % Time.now
+
+
+if $trac
+    STDOUT.flush
+    cmd = %{sudo trac-admin /export/svn/trac/puppet wiki import %s /tmp/puppetdoc.out} % TRACMAP[mode]
+    output = %x{#{cmd}}
+    unless $? == 0
+        $stderr.puts "trac-admin failed"
+        $stderr.puts output
+        exit(1)
+    end
+    $stderr.puts output
+end
 
 # $Id$

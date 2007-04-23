@@ -18,7 +18,7 @@ module Puppet
         :confdir => [conf, "The main Puppet configuration directory."],
         :vardir => [var, "Where Puppet stores dynamic and growing data."],
         :name => [name, "The name of the service, if we are running as one.  The
-            default is essentially $0 without the path or '.rb'."]
+            default is essentially $0 without the path or ``.rb``."]
     )
 
     if name == "puppetmasterd"
@@ -208,7 +208,7 @@ module Puppet
         :puppetport => [8139, "Which port puppetd listens on."],
         :noop => [false, "Whether puppetd should be run in noop mode."],
         :runinterval => [1800, # 30 minutes
-            "How often puppetd applies the client configuration; in seconds"],
+            "How often puppetd applies the client configuration; in seconds."],
         :listen => [false, "Whether puppetd should listen for
             connections.  If this is true, then by default only the
             ``runner`` server is started, which allows remote authorized

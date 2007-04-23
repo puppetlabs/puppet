@@ -75,13 +75,15 @@ module Functions
         ret = ""
 
         @functions.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
-            ret += "* **%s** (*%s*)" % [name, hash[:type]]
+            #ret += "%s\n%s\n" % [name, hash[:type]]
+            ret += "%s\n%s\n" % [name, "-" * name.to_s.length]
             if hash[:doc]
-                ret += ":  " + hash[:doc].gsub(/\n\s*/, ' ')
+                ret += hash[:doc].gsub(/\n\s*/, ' ')
             else
-                ret += ":  ``undocumented``"
+                ret += "Undocumented.\n"
             end
-            ret += "\n\n"
+
+            ret += "\n\n- **Type**: %s\n\n" % hash[:type]
         end
 
         return ret

@@ -68,7 +68,7 @@ class Puppet::Network::Handler
             # Use this method so they all get loaded
             reports.sort { |a,b| a.to_s <=> b.to_s }.each do |name|
                 mod = self.report(name)
-                docs += "## %s\n\n" % name
+                docs += "%s\n%s\n" % [name, "-" * name.to_s.length]
 
                 docs += Puppet::Util::Docs.scrub(mod.doc) + "\n\n"
             end

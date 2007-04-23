@@ -3,7 +3,9 @@ require 'puppet'
 Puppet::Network::Handler.report.newreport(:rrdgraph) do
     desc "Graph all available data about hosts using the RRD library.  You
         must have the RRD binary ruby library installed to use this report, which
-        you can get from [Tobias Oetiker's site](http://oss.oetiker.ch/rrdtool/pub/contrib/).
+        you can get from `Tobias Oetiker's site`_.
+
+        .. _tobias oetiker's site: http://oss.oetiker.ch/rrdtool/pub/contrib/
         
         This report will create, manage, and graph RRD database files for each
         of the metrics generated during transactions, and it will create a
