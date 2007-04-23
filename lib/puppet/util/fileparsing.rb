@@ -33,8 +33,7 @@ module Puppet::Util::FileParsing
     class FileRecord
         include Puppet::Util
         include Puppet::Util::MethodHelper
-        attr_accessor :absent, :joiner, :rts,
-            :separator, :rollup, :name, :match
+        attr_accessor :absent, :joiner, :rts, :separator, :rollup, :name, :match, :block_eval
 
         attr_reader :fields, :optional, :type
 
@@ -71,7 +70,14 @@ module Puppet::Util::FileParsing
             end
 
             if block_given?
-                meta_def(:process, &block)
+                @block_eval ||= :process
+
+                # Allow the developer to specify that a block should be instance-eval'ed.
+                if @block_eval == :instance
+                    instance_eval(&block)
+                else
+                    meta_def(@block_eval, &block)
+                end
             end
         end
 

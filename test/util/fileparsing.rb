@@ -647,6 +647,30 @@ class TestUtilFileRecord < Test::Unit::TestCase
         assert_equal(line.upcase, record.process(line),
             "Record did not process line correctly")
     end
+
+    # Make sure we can declare that we want the block to be instance-eval'ed instead of
+    # defining the 'process' method.
+    def test_instance_block
+        record = nil
+        assert_nothing_raised("Could not pass a block when creating record") do
+            record = Record.new(:record, :block_eval => :instance, :fields => %w{one}) do
+                def process(line)
+                    line.upcase
+                end
+
+                def to_line(details)
+                    details.upcase
+                end
+            end
+        end
+
+        assert(record.respond_to?(:process), "Block was not instance-eval'ed and process was not defined")
+        assert(record.respond_to?(:to_line), "Block was not instance-eval'ed and to_line was not defined")
+
+        line = "some text"
+        assert_equal(line.upcase, record.process(line), "Instance-eval'ed record did not call :process correctly")
+        assert_equal(line.upcase, record.to_line(line), "Instance-eval'ed record did not call :to_line correctly")
+    end
 end
 
 # $Id$
