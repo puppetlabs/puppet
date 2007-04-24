@@ -285,9 +285,8 @@ end
     # only used to boot the zone the very first time.
     newparam(:sysidcfg) do
         desc %{The text to go into the sysidcfg file when the zone is first
-            booted.  The best way is to use a template:
+            booted.  The best way is to use a template::
                 
-            <pre><code>
                 # $templatedir/sysidcfg
                 system_locale=en_US
                 timezone=GMT
@@ -303,9 +302,8 @@ end
                         protocol_ipv6=no
                         default_route=&lt;%= defaultroute %>}
                 nfs4_domain=dynamic
-            </code></pre>
 
-            And then call that:
+            And then call that::
 
                 zone { myzone:
                     ip => "bge0:192.168.0.23",
@@ -315,8 +313,7 @@ end
                 }
 
             The sysidcfg only matters on the first booting of the zone,
-            so Puppet only checks for it at that time.
-        }
+            so Puppet only checks for it at that time.}
     end
 
     newparam(:path) do

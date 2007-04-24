@@ -17,7 +17,7 @@ Puppet::Type.newtype(:cron) do
         association is made and synced to disk, you can then manage the job
         normally (e.g., change the schedule of the job).
         
-        Example:
+        Example::
             
             cron { logrotate:
                 command => \"/usr/sbin/logrotate\",
@@ -293,8 +293,7 @@ Puppet::Type.newtype(:cron) do
             but will not associate them with a specific job.
             
             Settings should be specified exactly as they should appear in
-            the crontab, e.g., 'PATH=/bin:/usr/bin:/usr/sbin'.  Multiple
-            settings should be specified as an array."
+            the crontab, e.g., ``PATH=/bin:/usr/bin:/usr/sbin``."
 
         validate do |value|
             unless value =~ /^\s*(\w+)\s*=\s*(.+)\s*$/
@@ -324,10 +323,7 @@ Puppet::Type.newtype(:cron) do
             against specified jobs (and Puppet adds a comment to cron jobs it
             adds), but it is at least possible that converting from
             unmanaged jobs to managed jobs might require manual
-            intervention.
-            
-            The names can only have alphanumeric characters plus the '-'
-            character."
+            intervention."
 
         isnamevar
     end
@@ -339,7 +335,7 @@ Puppet::Type.newtype(:cron) do
             
             The user defaults to whomever Puppet is running as."
 
-        defaultto { ENV["USER"] }
+        defaultto { ENV["USER"] || "root" }
     end
 
     newproperty(:target) do

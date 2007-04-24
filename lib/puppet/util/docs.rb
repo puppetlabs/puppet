@@ -27,6 +27,51 @@ module Puppet::Util::Docs
         end
     end
 
+    # Build a table
+    def doctable(headers, data)
+        str = "\n\n"
+
+        lengths = []
+        # Figure out the longest field for all columns
+        data.each do |name, values|
+            [name, values].flatten.each_with_index do |value, i|
+                lengths[i] ||= 0
+                lengths[i] = value.to_s.length if value.to_s.length > lengths[i]
+            end
+        end
+
+        # The headers could also be longest
+        headers.each_with_index do |value, i|
+            lengths[i] = value.to_s.length if value.to_s.length > lengths[i]
+        end
+
+        # Add the top header row
+        str += lengths.collect { |num| "=" * num }.join(" ") + "\n"
+
+        # And the header names
+        str += headers.zip(lengths).collect { |value, num| pad(value, num) }.join(" ") + "\n"
+
+        # And the second header row
+        str += lengths.collect { |num| "=" * num }.join(" ") + "\n"
+
+        # Now each data row
+        data.sort { |a, b| a[0].to_s <=> b[0].to_s }.each do |name, rows|
+            str += [name, rows].flatten.zip(lengths).collect do |value, length|
+                pad(value, length)
+            end.join(" ") + "\n"
+        end
+
+        # And the bottom line row
+        str += lengths.collect { |num| "=" * num }.join(" ") + "\n"
+
+        str + "\n"
+    end
+
+    # Pad a field with spaces
+    def pad(value, length)
+        value.to_s + (" " * (length - value.to_s.length))
+    end
+
     # Handle the inline indentation in the docs.
     def scrub(text)
         # Stupid markdown

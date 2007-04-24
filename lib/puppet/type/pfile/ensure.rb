@@ -9,14 +9,14 @@ module Puppet
             currently this will not recursively delete directories.
 
             Anything other than those values will be considered to be a symlink.
-            For instance, the following text creates a link:
+            For instance, the following text creates a link::
                 
                 # Useful on solaris
                 file { \"/etc/inetd.conf\":
                     ensure => \"/etc/inet/inetd.conf\"
                 }
             
-            You can make relative links:
+            You can make relative links::
                 
                 # Useful on solaris
                 file { \"/etc/inetd.conf\":

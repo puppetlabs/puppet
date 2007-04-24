@@ -87,7 +87,7 @@ TRACMAP = {
     :configref => "ConfigurationReference",
     :reports => "ReportReference",
     :functions => "FunctionReference",
-    :types => "TypeReference"
+    :typedocs => "TypeReferenceTest"
 }
 
 HEADERS = {
@@ -167,7 +167,6 @@ and one `puppet` user) if it is invoked as `root` with the `--mkusers` argument:
   
 Signals
 -------
-
 The `puppetd` and `puppetmasterd` executables catch some signals for special 
 handling.  Both daemons catch (`SIGHUP`), which forces the server to restart 
 tself.  Predictably, interrupt and terminate (`SIGINT` and `SIGHUP`) will shut 
@@ -183,7 +182,10 @@ Configuration Parameter Reference
 Below is a list of all documented parameters.  Any default values are in ``block type`` at the end of the description.
 
 ",
-:reports => "Puppet clients can report back to the server after each transaction.  This
+:reports => "
+Reports Reference
+=================
+Puppet clients can report back to the server after each transaction.  This
 transaction report is sent as a YAML dump of the
 ``Puppet::Transaction::Report`` class and includes every log message that was
 generated during the transaction along with as many metrics as Puppet knows how
@@ -200,7 +202,10 @@ reports entirely.
 Puppet provides multiple report handlers that will process client reports:
 
 ",
-:functions => "There are two types of functions in Puppet: Statements and rvalues.
+:functions => "
+Function Reference
+==================
+There are two types of functions in Puppet: Statements and rvalues.
 Statements stand on their own and do not return arguments; they are used for
 performing stand-alone work like importing.  Rvalues return values and can
 only be used in a statement requiring a value, such as an assignment or a case
@@ -208,8 +213,20 @@ statement.
 
 Here are the functions available in Puppet:
                         
+",
+:typedocs => "
+Resource Type Reference
+=======================
+
+.. contents::
+
 "
 }
+
+def h(name, level)
+    levels = [nil, "=", "-", "+", "'"]
+    return "%s\n%s\n" % [name, levels[level] * name.to_s.length]
+end
 
 # Indent every line in the chunk except those which begin with '..'.
 def indent(text, tab)
@@ -217,14 +234,15 @@ def indent(text, tab)
 end
 
 def paramwrap(name, text, namevar = false)
+    str = "%s : " % name
     if namevar
-        name = name.to_s + " (*namevar*)"
+        str += "namevar"
     end
+    str += "\n    "
+    str += text.gsub(/\n/, "\n    ")
 
-    puts "#### %s" % name
-    puts text
-
-    puts ""
+    str += "\n\n"
+    return str
 end
 
 # Print the docs for arguments
@@ -234,39 +252,38 @@ def self.configref
         docs[name] = object
     end
 
+    str = ""
     docs.sort { |a, b|
         a[0].to_s <=> b[0].to_s
     }.each do |name, object|
         # Make each name an anchor
-        #header = %{#{name.to_s} (*#{object.section.to_s}*)\n}
         header = name.to_s
-        puts header
-        puts "+" * header.length
+        str += h(header, 3)
 
         # Print the doc string itself
         begin
-            #puts object.desc.gsub(/\n/, " ") + default
-            puts object.desc.gsub(/\n/, " ")
+            str += object.desc.gsub(/\n/, " ")
         rescue => detail
             puts detail.backtrace
             puts detail
         end
-        puts ""
+        str += "\n"
 
         # Now print the data about the item.
-        puts ""
+        str += ""
         default = ""
         val = object.value
-        puts "- **Section**: %s" % object.section
+        str += "- **Section**: %s\n" % object.section
         unless val == ""
-            puts "- **Default**: %s" % val
+            str += "- **Default**: %s\n" % val
         end
         #if val = object.value and val != ""
         #    default = "  ``%s``" % val
         #end
-        puts ""
+        str += "\n"
     end
 
+    return str
 end
 
 # Print the docs for types
@@ -280,22 +297,15 @@ def self.typedocs
         types[type.name] = type
     }
 
-    # Build a simple TOC
-    puts "## Table of Contents"
-    puts "1. <a href='#meta-parameters'>Meta-Parameters</a>"
-    types.sort { |a, b| a[0].to_s <=> b[0].to_s }.each do |name, type|
-        puts "1. <a href='#%s'>%s</a>" % [type.name, type.name.to_s.capitalize]
-    end
-
-    puts %{
-<h2><a name="meta-parameters">Meta-Parameters</a></h2>
-
+    str = %{
+Meta-Parameters
+---------------
 Metaparameters are parameters that work with any element; they are part of the
 Puppet framework itself rather than being part of the implementation of any
 given instance.  Thus, any defined metaparameter can be used with any instance
 in your manifest, including defined components.
 
-    }
+}
     begin
         params = []
         Puppet::Type.eachmetaparam { |param|
@@ -305,7 +315,7 @@ in your manifest, including defined components.
         params.sort { |a,b|
             a.to_s <=> b.to_s
         }.each { |param|
-            paramwrap(param.to_s, scrub(Puppet::Type.metaparamdoc(param)))
+            str += paramwrap(param.to_s, scrub(Puppet::Type.metaparamdoc(param)))
             #puts "<dt>" + param.to_s + "</dt>"
             #puts tab(1) + Puppet::Type.metaparamdoc(param).scrub.indent($tab)gsub(/\n\s*/,' ')
             #puts "<dd>"
@@ -321,15 +331,17 @@ in your manifest, including defined components.
         exit(1)
     end
 
-    puts %{
-## Types
+    str += %{
+
+Resource Types
+--------------
 
 - *namevar* is the parameter used to uniquely identify a type instance.
   This is the parameter that gets assigned when a string is provided before
   the colon in a type declaration.  In general, only developers will need to
   worry about which parameter is the ``namevar``.
   
-  In the following code:
+  In the following code::
 
       file { "/etc/passwd":
           owner => root,
@@ -337,7 +349,7 @@ in your manifest, including defined components.
           mode => 644
       }
 
-  "/etc/passwd" is considered the name of the file object (used for things like
+  ``/etc/passwd`` is considered the title of the file object (used for things like
   dependency handling), and because ``path`` is the namevar for ``file``, that
   string is assigned to the ``path`` parameter.
 
@@ -363,20 +375,19 @@ in your manifest, including defined components.
         a.to_s <=> b.to_s
     }.each { |name,type|
 
-        puts "
+        str += "
 
 ----------------
 
 "
 
-        puts "
-<h2><a name='%s'>%s</a></h2>" % [name, name]
-        puts scrub(type.doc) + "\n\n"
+        str += h(name, 2)
+        str += scrub(type.doc) + "\n\n"
 
         # Handle the feature docs.
         if featuredocs = type.featuredocs
-            puts "<h3><a name='%s_features'>%s Features</a></h3>" % [name, name.to_s.capitalize]
-            puts featuredocs
+            str += h("%s Features" % name.to_s.capitalize, 3)
+            str += featuredocs
         end
 
         docs = {}
@@ -393,20 +404,18 @@ in your manifest, including defined components.
             end
 
             doc = nil
-            str = nil
             unless doc = property.doc
                 $stderr.puts "No docs for %s[%s]" % [type, sname]
                 next
             end
             doc = doc.dup
-            str = doc
-            str = scrub(str)
+            tmp = doc
+            tmp = scrub(tmp)
 
-            #str = indent(str, $tab)
-            docs[sname]  = str
+            docs[sname]  = tmp
         }
 
-        puts "\n### %s Parameters\n" % name.to_s.capitalize
+        str += h("%s Parameters" % name.to_s.capitalize, 3) + "\n"
         type.parameters.sort { |a,b|
             a.to_s <=> b.to_s
         }.each { |name,param|
@@ -418,18 +427,20 @@ in your manifest, including defined components.
             a[0].to_s <=> b[0].to_s
         }.each { |name, doc|
             namevar = type.namevar == name and name != :name
-            paramwrap(name, doc, namevar)
+            str += paramwrap(name, doc, namevar)
         }
-        puts "\n"
+        str += "\n"
     }
+
+    str
 end
 
 def self.reports
-    puts Puppet::Network::Handler.report.reportdocs
+    Puppet::Network::Handler.report.reportdocs
 end
 
 def self.functions
-    puts Puppet::Parser::Functions.functiondocs
+    Puppet::Parser::Functions.functiondocs
 end
 
 unless respond_to?(mode)
@@ -439,23 +450,23 @@ end
 if $trac
     STDOUT.close
     STDOUT.reopen("/tmp/puppetdoc.out")
-end
 
-puts "{{{
-#!rst\n"
+    puts "{{{
+    #!rst\n"
+end
 puts HEADERS[mode]
-send(mode)
+puts send(mode)
 
 puts "
 
 ----------------
 
 "
-puts "\n*This page autogenerated on %s*
-}}}" % Time.now
+puts "\n*This page autogenerated on %s*" % Time.now
 
 
 if $trac
+    puts "}}}"
     STDOUT.flush
     cmd = %{sudo trac-admin /export/svn/trac/puppet wiki import %s /tmp/puppetdoc.out} % TRACMAP[mode]
     output = %x{#{cmd}}

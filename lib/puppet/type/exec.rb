@@ -16,7 +16,7 @@ module Puppet
             share their commands with other instances as a dependency, since
             Puppet has no way of knowing which instance you mean.
 
-            For example:
+            For example::
 
                 # defined in the production class
                 exec { \"make\":
@@ -255,7 +255,7 @@ module Puppet
             desc "The command should only be run as a
                 refresh mechanism for when a dependent object is changed.  It only
                 makes sense to use this option when this command depends on some
-                other object; it is useful for triggering an action:
+                other object; it is useful for triggering an action::
                     
                     # Pull down the main aliases file
                     file { \"/etc/aliases\":
@@ -289,7 +289,7 @@ module Puppet
         newcheck(:creates) do 
             desc "A file that this command creates.  If this
                 parameter is provided, then the command will only be run
-                if the specified file does not exist.
+                if the specified file does not exist::
 
                     exec { \"tar xf /my/tar/file.tar\":
                         cwd => \"/var/tmp\",
@@ -322,7 +322,7 @@ module Puppet
 
         newcheck(:unless) do
             desc "If this parameter is set, then this ``exec`` will run unless
-                the command returns 0.  For example:
+                the command returns 0.  For example::
                     
                     exec { \"/bin/echo root >> /usr/lib/cron/cron.allow\":
                         path => \"/usr/bin:/usr/sbin:/bin\",
@@ -359,7 +359,7 @@ module Puppet
 
         newcheck(:onlyif) do
             desc "If this parameter is set, then this ``exec`` will only run if
-                the command returns 0.  For example:
+                the command returns 0.  For example::
                     
                     exec { \"logrotate\":
                         path => \"/usr/bin:/usr/sbin:/bin\",

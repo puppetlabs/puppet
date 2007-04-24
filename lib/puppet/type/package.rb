@@ -43,8 +43,7 @@ module Puppet
                 to specify package versions, specify them here.  Similarly,
                 *purged* is only useful for packaging systems that support
                 the notion of managing configuration files separately from
-                'normal' system files.  At present, only the Debian-related
-                providers (dpkg, apt, and aptitude) support *purged*."
+                'normal' system files."
 
             attr_accessor :latest
 
@@ -200,7 +199,7 @@ module Puppet
             system uses internally, which is sometimes (especially on Solaris)
             a name that is basically useless to humans.  If you want to
             abstract package installation, then you can use aliases to provide
-            a common name to packages:
+            a common name to packages::
 
                 # In the 'openssl' class
                 $ssl = $operationgsystem ? {

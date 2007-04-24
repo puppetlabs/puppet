@@ -10,11 +10,7 @@ module Puppet
             
             This element type uses the prescribed native tools for creating
             groups and generally uses POSIX APIs for retrieving information
-            about them.  It does not directly modify /etc/passwd or anything.
-            
-            For most platforms, the tools used are ``useradd`` and its ilk;
-            for Mac OS X, NetInfo is used.  This is currently unconfigurable,
-            but if you desperately need it to be so, please contact us."
+            about them.  It does not directly modify /etc/passwd or anything."
 
         feature :allows_duplicates,
             "The provider supports duplicate users with the same UID."

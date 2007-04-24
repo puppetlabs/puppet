@@ -1,10 +1,10 @@
 # Provides feature definitions.
 module Puppet::Util::ProviderFeatures
-
     # The class that models the features and handles checking whether the features
     # are present.
     class ProviderFeature
         require 'puppet/util/methodhelper'
+        require 'puppet/util/docs'
         require 'puppet/util'
         include Puppet::Util
         include Puppet::Util::MethodHelper
@@ -76,27 +76,24 @@ module Puppet::Util::ProviderFeatures
         names = @features.keys.sort { |a,b| a.to_s <=> b.to_s }
         names.each do |name|
             doc = @features[name].docs.gsub(/\n\s+/, " ")
-            str += " - **%s**: %s\n" % [name, doc]
+            str += "- **%s**: %s\n" % [name, doc]
         end
+
         if providers.length > 0
-            str += "<table><tr><th></th>\n"
-            names.each do |name|
-                str += "<th>%s</th>" % name
-            end
-            str += "</tr>\n"
+            headers = ["Provider", names].flatten
+            data = {}
             providers.each do |provname|
+                data[provname] = []
                 prov = provider(provname)
-                str += "<tr><td>%s</td>" % provname
-                names.each do |feature|
-                    have = ""
-                    if prov.feature?(feature)
-                        have = "<strong>X</strong>"
+                names.each do |name|
+                    if prov.feature?(name)
+                        data[provname] << "**X**"
+                    else
+                        data[provname] << ""
                     end
-                    str += "<td>%s</td>" % have
                 end
-                str += "</tr>\n"
             end
-            str += "</table>\n"
+            str += doctable(headers, data)
         end
         str
     end

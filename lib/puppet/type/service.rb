@@ -32,7 +32,7 @@ module Puppet
             desc "Whether a service should be enabled to start at boot.
                 This property behaves quite differently depending on the platform;
                 wherever possible, it relies on local tools to enable or disable
-                a given service.  *true*/*false*/*runlevels*"
+                a given service."
 
             newvalue(:true, :event => :service_enabled) do
                 unless provider.respond_to?(:enable)
@@ -102,7 +102,7 @@ module Puppet
 
         # Handle whether the service should actually be running right now.
         newproperty(:ensure) do
-            desc "Whether a service should be running.  **true**/*false*"
+            desc "Whether a service should be running."
 
             newvalue(:stopped, :event => :service_stopped) do
                 provider.stop
@@ -184,7 +184,7 @@ module Puppet
         end
 
         newparam(:type) do
-            desc "Deprecated form of ``provder``."
+            desc "Deprecated form of ``provider``."
 
             munge do |value|
                 warning "'type' is deprecated; use 'provider' instead"
@@ -263,45 +263,6 @@ module Puppet
             desc "Specify that an init script has a ``restart`` option.  Otherwise,
                 the init script's ``stop`` and ``start`` methods are used."
             newvalues(:true, :false)
-        end
-
-        # Retrieve the default type for the current platform.
-        def self.disableddefaulttype
-            unless defined? @defsvctype
-                @defsvctype = nil
-                os = Facter["operatingsystem"].value
-                case os
-                when "Debian":
-                    @defsvctype = self.svctype(:debian)
-                when "Solaris":
-                    release = Facter["operatingsystemrelease"].value
-                    if release.sub(/5\./,'').to_i < 10
-                        @defsvctype = self.svctype(:init)
-                    else
-                        @defsvctype = self.svctype(:smf)
-                    end
-                when "CentOS", "RedHat", "Fedora":
-                    @defsvctype = self.svctype(:redhat)
-                else
-                    if Facter["kernel"] == "Linux"
-                        Puppet.notice "Using service type %s for %s" %
-                            ["init", Facter["operatingsystem"].value]
-                        @defsvctype = self.svctype(:init)
-                    end
-                end
-
-                unless @defsvctype
-                    Puppet.info "Defaulting to base service type"
-                    @defsvctype = self.svctype(:base)
-                end
-            end
-
-            unless defined? @notifieddefault
-                Puppet.debug "Default service type is %s" % @defsvctype.name
-                @notifieddefault = true
-            end
-
-            return @defsvctype.name
         end
 
         # List all available services

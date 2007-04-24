@@ -25,7 +25,7 @@ class Puppet::Type
     newmetaparam(:schedule) do
         desc "On what schedule the object should be managed.  You must create a
             schedule object, and then reference the name of that object to use
-            that for your schedule:
+            that for your schedule::
 
                 schedule { daily:
                     period => daily,
@@ -150,7 +150,7 @@ class Puppet::Type
 
     newmetaparam(:alias) do
         desc "Creates an alias for the object.  Puppet uses this internally when you
-            provide a symbolic name:
+            provide a symbolic name::
             
                 file { sshdconfig:
                     path => $operatingsystem ? {
@@ -168,7 +168,7 @@ class Puppet::Type
             and the library sets that as an alias for the file so the dependency
             lookup for ``sshd`` works.  You can use this parameter yourself,
             but note that only the library can use these aliases; for instance,
-            the following code will not work:
+            the following code will not work::
 
                 file { \"/etc/ssh/sshd_config\":
                     owner => root,
@@ -183,9 +183,7 @@ class Puppet::Type
             There's no way here for the Puppet parser to know that these two stanzas
             should be affecting the same file.
 
-            See the [language tutorial][] for more information.
-
-            [language tutorial]: languagetutorial.html
+            See the `LanguageTutorial language tutorial`:trac: for more information.
             
             "
 
@@ -218,7 +216,7 @@ class Puppet::Type
             be useful to add your own tags to a given element.
 
             Tags are currently useful for things like applying a subset of a
-            host's configuration:
+            host's configuration::
                 
                 puppetd --test --tag mytag
 
@@ -317,7 +315,7 @@ class Puppet::Type
     newmetaparam(:require, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :NONE}) do
         desc "One or more objects that this object depends on.
             This is used purely for guaranteeing that changes to required objects
-            happen before the dependent object.  For instance:
+            happen before the dependent object.  For instance::
             
                 # Create the destination directory before you copy things down
                 file { \"/usr/local/scripts\":
@@ -353,7 +351,7 @@ class Puppet::Type
     newmetaparam(:subscribe, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :ALL_EVENTS, :callback => :refresh}) do
         desc "One or more objects that this object depends on.  Changes in the
             subscribed to objects result in the dependent objects being
-            refreshed (e.g., a service will get restarted).  For instance:
+            refreshed (e.g., a service will get restarted).  For instance::
             
                 class nagios {
                     file { \"/etc/nagios/nagios.conf\":
@@ -374,7 +372,7 @@ class Puppet::Type
     newmetaparam(:before, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :NONE}) do
         desc %{This parameter is the opposite of **require** -- it guarantees
             that the specified object is applied later than the specifying
-            object:
+            object::
 
                 file { "/var/nagios/configuration":
                     source  => "...",
@@ -393,7 +391,7 @@ class Puppet::Type
     
     newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :ALL_EVENTS, :callback => :refresh}) do
         desc %{This parameter is the opposite of **subscribe** -- it sends events
-            to the specified object:
+            to the specified object::
 
                 file { "/etc/sshd_config":
                     source => "....",

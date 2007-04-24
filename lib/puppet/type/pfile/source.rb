@@ -15,7 +15,7 @@ module Puppet
             This is one of the primary mechanisms for getting content into
             applications that Puppet does not directly support and is very
             useful for those configuration files that don't change much across
-            sytems.  For instance:
+            sytems.  For instance::
 
                 class sendmail {
                     file { \"/etc/mail/sendmail.cf\":
@@ -23,12 +23,12 @@ module Puppet
                     }
                 }
             
-            See the [fileserver docs][] for information on how to configure
+            See the `FileServingConfiguration`:trac: for information on how to configure
             and use file services within Puppet.
 
             If you specify multiple file sources for a file, then the first
             source that exists will be used.  This allows you to specify
-            what amount to search paths for files:
+            what amount to search paths for files::
 
                 file { \"/path/to/my/file\":
                     source => [
@@ -41,11 +41,7 @@ module Puppet
             This will use the first found file as the source.
             
             You cannot currently copy links using this mechanism; set ``links``
-            to ``follow`` if any remote sources are links.
-
-            [fileserver docs]: /trac/puppet/wiki/FileServingConfiguration
-
-            "
+            to ``follow`` if any remote sources are links."
 
         uncheckable
         
