@@ -218,7 +218,7 @@ class Puppet::Type
             Tags are currently useful for things like applying a subset of a
             host's configuration::
                 
-                puppetd --test --tag mytag
+                puppetd --test --tags mytag
 
             This way, when you're testing a configuration you can run just the
             portion you're testing."
