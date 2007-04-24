@@ -1,13 +1,15 @@
 # Provides feature definitions.
+require 'puppet/util/methodhelper'
+require 'puppet/util/docs'
+require 'puppet/util'
 module Puppet::Util::ProviderFeatures
+    include Puppet::Util::Docs
     # The class that models the features and handles checking whether the features
     # are present.
     class ProviderFeature
-        require 'puppet/util/methodhelper'
-        require 'puppet/util/docs'
-        require 'puppet/util'
         include Puppet::Util
         include Puppet::Util::MethodHelper
+        include Puppet::Util::Docs
         attr_accessor :name, :docs, :methods
 
         # Are all of the requirements met?

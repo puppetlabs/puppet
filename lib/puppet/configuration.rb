@@ -15,8 +15,10 @@ module Puppet
     end
 
     self.setdefaults(:puppet,
-        :confdir => [conf, "The main Puppet configuration directory."],
-        :vardir => [var, "Where Puppet stores dynamic and growing data."],
+        :confdir => [conf, "The main Puppet configuration directory.  The default for this parameter is calculated based on the user.  If the process
+        is runnig as root or the user that ``puppetmasterd`` is supposed to run as, it defaults to a system directory, but if it's running as any other user,
+        it defaults to being in ``~``."],
+        :vardir => [var, "Where Puppet stores dynamic and growing data.  The default for this parameter is calculated specially, like `confdir`_."],
         :name => [name, "The name of the service, if we are running as one.  The
             default is essentially $0 without the path or ``.rb``."]
     )
