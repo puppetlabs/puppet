@@ -23,7 +23,7 @@ module Puppet
                     }
                 }
             
-            See the `FileServingConfiguration`:trac: for information on how to configure
+            See the `FileServingConfiguration fileserver configuration documentation`:trac: for information on how to configure
             and use file services within Puppet.
 
             If you specify multiple file sources for a file, then the first

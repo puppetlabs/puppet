@@ -19,6 +19,9 @@
 #
 # = Options
 #
+# all::
+#   Output the docs for all of the reference types.
+#
 # help::
 #   Print this help message
 #
@@ -26,6 +29,9 @@
 #   Print documentation of a given type.  Valid optinos are 'typedocs', for
 #   resource type documentation, and 'configref', for documentation on all
 #   of the configuration parameters.
+#
+# pdf::
+#   Create a PDF of the output.
 #
 # trac::
 #   Write the reference docs to trac.  Only works on servers at Reductive Labs.
@@ -48,6 +54,8 @@ require 'puppet/network/handler'
 require 'getoptlong'
 
 result = GetoptLong.new(
+	[ "--pdf",	"-p",			GetoptLong::NO_ARGUMENT ],
+	[ "--all",	"-a",			GetoptLong::NO_ARGUMENT ],
 	[ "--trac",	"-t",			GetoptLong::NO_ARGUMENT ],
 	[ "--mode",	"-m",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
@@ -56,17 +64,19 @@ result = GetoptLong.new(
 debug = false
 
 $tab = "    "
-$trac = false
-
-mode = :typedocs
+options = {:modes => []}
 
 begin
     result.each { |opt,arg|
         case opt
+            when "--all"
+                options[:all] = true
             when "--trac"
-                $trac = true
+                options[:trac] = true
+            when "--pdf"
+                options[:pdf] = true
             when "--mode"
-                mode = arg.intern
+                options[:modes] << arg.intern
             when "--help"
                 if Puppet.features.usage?
                     RDoc::usage && exit
@@ -79,6 +89,10 @@ begin
 rescue GetoptLong::InvalidOption => detail
     $stderr.puts "Try '#{$0} --help'"
     exit(1)
+end
+
+if options[:modes].empty?
+    options[:modes] << :typedocs
 end
 
 include Puppet::Util::Docs
@@ -218,13 +232,11 @@ Here are the functions available in Puppet:
 Resource Type Reference
 =======================
 
-.. contents::
-
 "
 }
 
 def h(name, level)
-    levels = [nil, "=", "-", "+", "'"]
+    levels = [nil, "=", "-", "+", "'", "~"]
     return "%s\n%s\n" % [name, levels[level] * name.to_s.length]
 end
 
@@ -233,13 +245,15 @@ def indent(text, tab)
     return text.gsub(/(^|\A)/, tab).gsub(/^ +\.\./, "..")
 end
 
-def paramwrap(name, text, namevar = false)
-    str = "%s : " % name
-    if namevar
-        str += "namevar"
+def paramwrap(name, text, options = {})
+    options[:level] ||= 5
+    #str = "%s : " % name
+    str = h(name, options[:level])
+    if options[:namevar]
+        str += "- **namevar**\n\n"
     end
-    str += "\n    "
-    str += text.gsub(/\n/, "\n    ")
+    str += text
+    #str += text.gsub(/\n/, "\n    ")
 
     str += "\n\n"
     return str
@@ -298,13 +312,15 @@ def self.typedocs
     }
 
     str = %{
-Meta-Parameters
----------------
+Metaparameters
+--------------
 Metaparameters are parameters that work with any element; they are part of the
 Puppet framework itself rather than being part of the implementation of any
 given instance.  Thus, any defined metaparameter can be used with any instance
 in your manifest, including defined components.
 
+Available Metaparameters
+++++++++++++++++++++++++
 }
     begin
         params = []
@@ -315,7 +331,7 @@ in your manifest, including defined components.
         params.sort { |a,b|
             a.to_s <=> b.to_s
         }.each { |param|
-            str += paramwrap(param.to_s, scrub(Puppet::Type.metaparamdoc(param)))
+            str += paramwrap(param.to_s, scrub(Puppet::Type.metaparamdoc(param)), :level => 4)
             #puts "<dt>" + param.to_s + "</dt>"
             #puts tab(1) + Puppet::Type.metaparamdoc(param).scrub.indent($tab)gsub(/\n\s*/,' ')
             #puts "<dd>"
@@ -381,12 +397,12 @@ Resource Types
 
 "
 
-        str += h(name, 2)
+        str += h(name, 3)
         str += scrub(type.doc) + "\n\n"
 
         # Handle the feature docs.
         if featuredocs = type.featuredocs
-            str += h("%s Features" % name.to_s.capitalize, 3)
+            str += h("Features", 4)
             str += featuredocs
         end
 
@@ -415,7 +431,7 @@ Resource Types
             docs[sname]  = tmp
         }
 
-        str += h("%s Parameters" % name.to_s.capitalize, 3) + "\n"
+        str += h("Parameters", 4) + "\n"
         type.parameters.sort { |a,b|
             a.to_s <=> b.to_s
         }.each { |name,param|
@@ -427,7 +443,7 @@ Resource Types
             a[0].to_s <=> b[0].to_s
         }.each { |name, doc|
             namevar = type.namevar == name and name != :name
-            str += paramwrap(name, doc, namevar)
+            str += paramwrap(name, doc, :namevar => namevar)
         }
         str += "\n"
     }
@@ -443,39 +459,79 @@ def self.functions
     Puppet::Parser::Functions.functiondocs
 end
 
-unless respond_to?(mode)
-    raise "Invalid mode %s" % mode
+if options[:all]
+    options[:modes] = HEADERS.keys
 end
 
-if $trac
-    STDOUT.close
-    STDOUT.reopen("/tmp/puppetdoc.out")
+text = ".. contents::\n\n"
 
-    puts "{{{
-    #!rst\n"
+options[:modes].sort { |a, b| a.to_s <=> b.to_s }.each do |mode|
+    unless respond_to?(mode)
+        raise "Invalid mode %s" % mode
+    end
+
+    text += HEADERS[mode]
+    text += send(mode)
 end
-puts HEADERS[mode]
-puts send(mode)
 
-puts "
+text += "
 
 ----------------
 
 "
-puts "\n*This page autogenerated on %s*" % Time.now
+text += "\n*This page autogenerated on %s*" % Time.now
 
+if options[:trac]
+    File.open("/tmp/puppetdoc.txt") do |f|
 
-if $trac
-    puts "}}}"
-    STDOUT.flush
-    cmd = %{sudo trac-admin /export/svn/trac/puppet wiki import %s /tmp/puppetdoc.out} % TRACMAP[mode]
+        f.puts "{{{
+#!rst\n
+#{text}
+}}}"
+    end
+    cmd = %{sudo trac-admin /export/svn/trac/puppet wiki import %s /tmp/puppetdoc.txt} % TRACMAP[mode]
     output = %x{#{cmd}}
     unless $? == 0
         $stderr.puts "trac-admin failed"
         $stderr.puts output
         exit(1)
     end
-    $stderr.puts output
+    unless output =~ /^\s+/
+        $stderr.puts output
+    end
+else
+    # Replace the trac links, since they're invalid everywhere else
+    text.gsub!(/`\w+\s+([^`]+)`:trac/) { |m| $1 }
+
+    if options[:pdf]
+        File.open("/tmp/puppetdoc.txt", "w") do |f|
+            f.puts text
+        end
+        rst2latex = %x{which rst2latex}
+        if $? != 0 or rst2latex =~ /no /
+            rst2latex = %x{which rst2latex.py}
+        end
+        if $? != 0 or rst2latex =~ /no /
+            raise "Could not find rst2latex"
+        end
+        rst2latex.chomp!
+        cmd = %{#{rst2latex} /tmp/puppetdoc.txt > /tmp/puppetdoc.tex}
+        output = %x{#{cmd}}
+        unless $? == 0
+            $stderr.puts "trac-admin failed"
+            $stderr.puts output
+            exit(1)
+        end
+        $stderr.puts output
+
+        # Now convert to pdf
+        puts "handling pdf"
+        Dir.chdir("/tmp") do
+            %x{texi2pdf puppetdoc.tex >/dev/null 2>/dev/null}
+        end
+    else
+        puts text
+    end
 end
 
 # $Id$
