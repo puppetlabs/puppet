@@ -155,6 +155,18 @@ class TestParameter < Test::Unit::TestCase
         assert(obj.is_a?(Puppet::Type::Property),
             "alias instance is now not a property")
     end
+
+    # Make sure properties can correctly require features and behave appropriately when
+    # those features are missing.
+    def test_requires_features
+        param = newparam(:feature_tests)
+
+        assert_nothing_raised("could not add feature requirements to property") do
+            param.required_features = "testing"
+        end
+
+        assert_equal([:testing], param.required_features, "required features value was not arrayfied and interned")
+    end
 end
 
 # $Id$

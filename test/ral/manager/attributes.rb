@@ -244,6 +244,51 @@ class TestTypeAttributes < Test::Unit::TestCase
         end
         assert(should.empty?, "Did not get all of the parameters.")
     end
+
+    # Make sure newattr handles required features correctly.
+    def test_newattr_and_required_features
+        # Make a type with some features
+        type = mktype
+        type.feature :fone, "Something"
+        type.feature :ftwo, "Something else"
+        type.newparam(:name) {}
+
+        # Make three properties: one with no requirements, one with one, and one with two
+        none = type.newproperty(:none) {}
+        one = type.newproperty(:one, :required_features => :fone) {}
+        two = type.newproperty(:two, :required_features => [:fone, :ftwo]) {}
+
+        # Now make similar providers
+        nope = type.provide(:nope) {}
+        maybe = type.provide(:maybe) { has_features :fone}
+        yep = type.provide(:yep) { has_features :fone, :ftwo}
+
+        attrs = [:none, :one, :two]
+
+        # Now make sure that we get warnings and no properties in those cases where our providers do not support the features requested
+        [nope, maybe, yep].each_with_index do |prov, i|
+            resource = type.create(:provider => prov.name, :name => "test%s" % i, :none => "a", :one => "b", :two => "c")
+
+            case prov.name
+            when :nope:
+                yes = [:none]
+                no = [:one, :two]
+            when :maybe:
+                yes = [:none, :one]
+                no = [:two]
+            when :yep:
+                yes = [:none, :one, :two]
+                no = []
+            end
+            yes.each { |a| assert(resource.should(a), "Did not get value for %s in %s" % [a, prov.name]) }
+            no.each do |a|
+                assert_nil(resource.should(a), "Got value for unsupported %s in %s" % [a, prov.name])
+                assert(@logs.find { |l| l.message =~ /not managing attribute #{a}/ and l.level == :info }, "No warning about failed %s" % a)
+            end
+
+            @logs.clear
+        end
+    end
 end
 
 # $Id$

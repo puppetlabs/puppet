@@ -3,7 +3,7 @@ require 'puppet/util/methodhelper'
 class Puppet::Parameter < Puppet::Element
     include Puppet::Util::MethodHelper
     class << self
-        attr_reader :validater, :munger, :name, :default
+        attr_reader :validater, :munger, :name, :default, :required_features
         attr_accessor :metaparam, :element
 
         # Define the default value for a given parameter or parameter.  This
@@ -204,6 +204,10 @@ class Puppet::Parameter < Puppet::Element
 
         def regexes
             return @parameterregexes.dup
+        end
+
+        def required_features=(*args)
+            @required_features = args.flatten.collect { |a| a.to_s.downcase.intern }
         end
 
         # Return the list of valid values.

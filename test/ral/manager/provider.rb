@@ -115,6 +115,8 @@ class TestProviderFeatures < Test::Unit::TestCase
                             "class missing feature %s" % feature)
                         assert(inst.send(method),
                             "instance missing feature %s" % feature)
+                        assert(inst.satisfies?(feature),
+                            "instance.satisfy %s returned false" % feature)
                     else
                         assert(! provider.feature?(feature),
                             "class has feature? %s" % feature)
@@ -124,6 +126,8 @@ class TestProviderFeatures < Test::Unit::TestCase
                             "class has feature %s" % feature)
                         assert(! inst.send(method),
                             "instance has feature %s" % feature)
+                        assert(! inst.satisfies?(feature),
+                            "instance.satisfy %s returned true" % feature)
                     end
                 end
 

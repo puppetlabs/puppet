@@ -127,6 +127,18 @@ module Puppet::Util::ProviderFeatures
                 }
             end
 
+            # Create a method that will list all functional features.
+            @feature_module.send(:define_method, :satisfies?) do |*needed|
+                ret = true
+                needed.flatten.each do |feature|
+                    unless feature?(feature)
+                        ret = false
+                        break
+                    end
+                end
+                ret
+            end
+
             # Create a boolean method for each feature so you can test them
             # individually as you might need.
             @features.each do |name, feature|

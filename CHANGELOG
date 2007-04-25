@@ -1,3 +1,8 @@
+    Parameters can now declare a dependency on specific
+    features, and parameters that require missing features
+    will not be instantiated.  This is most useful for
+    properties.
+
     FileParsing classes can now use instance_eval to add
     many methods at once to a record type.
 

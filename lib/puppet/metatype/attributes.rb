@@ -201,6 +201,11 @@ class Puppet::Type
             :attributes => options[:attributes],
             &block
         )
+
+        # Grr.
+        if options[:required_features]
+            s.required_features = options[:required_features]
+        end
         
         handle_param_options(name, options)
 
@@ -242,6 +247,11 @@ class Puppet::Type
         )
         
         handle_param_options(name, options)
+
+        # Grr.
+        if options[:required_features]
+            s.required_features = options[:required_features]
+        end
 
         # These might be enabled later.
 #        define_method(name) do
@@ -317,6 +327,11 @@ class Puppet::Type
 
         if options[:event]
             s.event = options[:event]
+        end
+
+        # Grr.
+        if options[:required_features]
+            s.required_features = options[:required_features]
         end
 
 #        define_method(name) do
@@ -575,6 +590,14 @@ class Puppet::Type
         if @parameters.include?(name)
             raise Puppet::Error, "Parameter '%s' is already defined in %s" %
                 [name, self.ref]
+        end
+
+        if provider and features = klass.required_features
+            unless provider.class.satisfies?(features)
+                missing = features.find_all { |f| ! provider.class.feature?(f) }
+                info "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
+                return nil
+            end
         end
 
         # Add parent information at creation time, so it's available
