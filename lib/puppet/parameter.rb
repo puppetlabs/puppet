@@ -57,6 +57,10 @@ class Puppet::Parameter < Puppet::Element
                             regs.join("``, ``") + "``."
                     end
                 end
+
+                if f = self.required_features
+                    @doc += "  Requires features %s." % f.flatten.collect { |f| f.to_s }.join(" ")
+                end
                 @addeddocvals = true
             end
 

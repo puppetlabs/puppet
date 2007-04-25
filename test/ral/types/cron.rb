@@ -301,7 +301,8 @@ class TestCron < Test::Unit::TestCase
         end
     end
 
-    def test_names
+    # Disabled, since we no longer have naming requirements.
+    def disabled_test_names
         cron = mkcron("nametest")
 
         ["bad name", "bad.name"].each do |name|

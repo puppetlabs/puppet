@@ -177,7 +177,7 @@ class UserAddProviderTest < PuppetTest::TestCase
         @user.provider.create
     end
 
-    def disabled_test_manages_password
+    def test_manages_password
         if Facter.value(:kernel) != "Linux"
             assert(! @provider.feature?(:manages_passwords),
                 "Defaulted to managing passwords on %s" %
@@ -239,6 +239,25 @@ class UserAddProviderTest < PuppetTest::TestCase
 
         @user.provider.password = @vals[:password]
     end
+
 end
+
+class UserRootAddProviderTest < PuppetTest::TestCase
+    confine "useradd user provider missing" => Puppet::Type.type(:user).provider(:useradd).suitable?
+    confine "not running as root" => (Process.uid == 0)
+
+    def test_password
+        user = Puppet::Type.type(:user).create(:name => "root", :check => [:password], :provider => :useradd)
+
+        provider = user.provider
+
+        assert_nothing_raised("Could not check password") do
+            pass = provider.password
+            assert(pass, "Did not get password for root")
+            assert(pass!= "x", "Password was retrieved from /etc/passwd instead of /etc/shadow")
+        end
+    end
+end
+
 
 # $Id$

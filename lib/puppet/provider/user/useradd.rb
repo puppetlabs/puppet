@@ -1,7 +1,7 @@
 require 'puppet/provider/nameservice/objectadd'
 
 Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameService::ObjectAdd do
-    desc "User management via ``useradd`` and its ilk."
+    desc "User management via ``useradd`` and its ilk.  Note that you'll have to install the ``Shadow Password`` library to manage user passwords."
 
     commands :add => "useradd", :delete => "userdel", :modify => "usermod"
 
@@ -19,14 +19,14 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
     has_features :manages_homedir, :allows_duplicates
 
-#    if case Facter.value(:kernel)
-#        when "Linux": true
-#        else
-#            false
-#        end
-#
-#        has_features :manages_passwords
-#    end
+    if Puppet.features.libshadow? and case Facter.value(:kernel)
+        when "Linux": true
+        else
+            false
+        end
+
+        has_features :manages_passwords
+    end
 
     def addcmd
         cmd = [command(:add)]
@@ -52,6 +52,15 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
         cmd << @model[:name]
 
         cmd
+    end
+
+    # Retrieve the password using the Shadow Password library
+    def password
+        if ent = Shadow::Passwd.getspnam(@model.name)
+            return ent.sp_pwdp
+        else
+            return :absent
+        end
     end
 end
 
