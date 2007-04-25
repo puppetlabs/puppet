@@ -5,14 +5,21 @@ require 'puppet/provider/nameservice/netinfo'
 Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameService::NetInfo do
     desc "User management in NetInfo.  Note that NetInfo is not smart enough to fill in default information
         for users, so this provider will use default settings for home (``/var/empty``), shell (``/usr/bin/false``),
-        and comment (the user name, capitalized).  These defaults are only used when the user is created."
+        comment (the user name, capitalized), and password ('********').  These defaults are only used when the user is created.
+        Note that password management probably does not really work -- OS X does not store the password in NetInfo itself,
+        yet we cannot figure out how to store the encrypted password where OS X will look for it.  The main reason the password
+        support is even there is so that a default password is created, which effectively locks people out, even if it does not
+        enable us to set a password."
     commands :nireport => "nireport", :niutil => "niutil"
 
     options :comment, :key => "realname"
+    options :password, :key => "passwd"
 
     defaultfor :operatingsystem => :darwin
 
-    autogen_defaults :home => "/var/empty", :shell => "/usr/bin/false"
+    autogen_defaults :home => "/var/empty", :shell => "/usr/bin/false", :password => '********'
+
+    has_features :manages_passwords
 
     verify :gid, "GID must be an integer" do |value|
         value.is_a? Integer
