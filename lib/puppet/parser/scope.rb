@@ -604,6 +604,8 @@ class Puppet::Parser::Scope
                 end
             elsif ss.scan(/^\$/)
                 out << '$'
+            elsif ss.scan(/^\\\n/) # an escaped carriage return
+                next
             else 
                 tmp = ss.scan(/[^\\$]+/)
                 # Puppet.debug("Got other: pos:%d; m:%s" % [ss.pos, tmp])

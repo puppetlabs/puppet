@@ -288,6 +288,7 @@ class TestScope < Test::Unit::TestCase
             '$test string' => "value string",
             'a testing $' => "a testing $",
             'a testing \$' => "a testing $",
+            "an escaped \\\n carriage return" => "an escaped  carriage return",
             '\$' => "$",
             '\s' => "\s",
             '\t' => "\t",
