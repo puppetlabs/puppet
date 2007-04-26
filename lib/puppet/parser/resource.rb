@@ -227,8 +227,18 @@ class Puppet::Parser::Resource
                 if Puppet[:trace]
                     puts caller
                 end
-                fail Puppet::ParseError, "Parameter %s is already set on %s by %s" %
-                    [param.name, self.to_s, param.source]
+                msg = "Parameter '%s' is already set on %s" % [param.name, self.to_s]
+                if param.source.to_s != ""
+                    msg += " by %s" % param.source
+                end
+                if param.file or param.line
+                    fields = []
+                    fields << param.file if param.file
+                    fields << param.line.to_s if param.line
+                    msg += " at %s" % fields.join(":")
+                end
+                msg += "; cannot redefine"
+                fail Puppet::ParseError, msg
             end
         else
             if self.source == param.source or param.source.child_of?(self.source)
