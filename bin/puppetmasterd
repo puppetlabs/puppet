@@ -227,6 +227,7 @@ if Puppet[:parseonly]
             puts detail.backtrace
         end
         $stderr.puts detail
+        exit(32)
     end
     # we would have already exited if the file weren't syntactically correct
     exit(0)
