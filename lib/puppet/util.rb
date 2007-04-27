@@ -221,7 +221,7 @@ module Util
     def binary(bin)
         if bin =~ /^\//
             if FileTest.exists? bin
-                return true
+                return bin
             else
                 return nil
             end

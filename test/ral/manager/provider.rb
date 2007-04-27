@@ -56,7 +56,7 @@ class TestTypeProviders < Test::Unit::TestCase
         cleanup { Puppet::Type.rmtype(:commands) }
 
         echo = %x{which echo}.chomp
-        {:echo => echo, :echo => "echo", :missing => "nosuchcommand", :missing => "/path/to/nosuchcommand"}.each do |name, command|
+        {:echo_plain => "echo", :echo_with_path => echo, :missing_unqualified => "nosuchcommand", :missing_qualified => "/path/to/nosuchcommand"}.each do |name, command|
             # Define a provider with mandatory commands
             provider = type.provide(:testing) {}
 
@@ -64,12 +64,12 @@ class TestTypeProviders < Test::Unit::TestCase
                 provider.commands(name => command)
             end
 
-            case name
-            when :echo:
-                assert_equal(echo, provider.command(:echo), "Did not get correct path for echo")
+            case name.to_s
+            when /echo/
+                assert_equal(echo, provider.command(name), "Did not get correct path for echo")
                 assert(provider.suitable?, "Provider was not considered suitable with 'echo'")
-            when :missing:
-                assert_nil(provider.command(:missing), "Somehow got a response for missing commands")
+            when /missing/
+                assert_nil(provider.command(name), "Somehow got a response for missing commands")
                 assert(! provider.suitable?, "Provider was considered suitable with missing command")
             else
                 raise "Invalid name %s" % name
