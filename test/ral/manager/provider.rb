@@ -15,6 +15,8 @@ class TestTypeProviders < Test::Unit::TestCase
             newparam(:name) do end
         end
 
+        cleanup { Puppet::Type.rmtype(:defaultprovidertest) }
+
         basic = type.provide(:basic) do
             defaultfor :operatingsystem => :somethingelse,
                 :operatingsystemrelease => :yayness
@@ -46,6 +48,33 @@ class TestTypeProviders < Test::Unit::TestCase
         should = [:name, :provider, :ensure]
         assert_equal(should, type.allattrs.reject { |p| ! should.include?(p) },
             "Providify did not reorder parameters")
+    end
+
+    # Make sure optional commands get looked up but don't affect suitability.
+    def test_optional_commands
+        type = Puppet::Type.newtype(:optional_commands) {}
+
+        cleanup { Puppet::Type.rmtype(:optional_commands) }
+
+        # Define a provider with mandatory commands
+        required = type.provide(:required) {
+            commands :missing => "/no/such/binary/definitely"
+        }
+
+        # And another with optional commands
+        optional = type.provide(:optional) {
+            optional_commands :missing => "/no/such/binary/definitely"
+        }
+
+        assert(! required.suitable?, "Provider with missing commands considered suitable")
+        assert_nil(required.command(:missing), "Provider returned non-nil from missing command")
+
+        assert(optional.suitable?, "Provider with optional commands considered unsuitable")
+        assert_nil(optional.command(:missing), "Provider returned non-nil from missing command")
+
+        assert_raise(Puppet::Error, "Provider did not fail when missing command was called") do
+            optional.missing
+        end
     end
 end
 

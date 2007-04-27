@@ -1,3 +1,8 @@
+    Providers can now specify that some commands are optional (#585).
+    Also, the 'command' method returns nil on missing commands,
+    rather than throwing an error, so the presence of commands
+    be tested.
+
     The 'useradd' provider for Users can now manage passwords.
     No other providers can, at this point.
 

@@ -28,48 +28,17 @@ class Puppet::Provider
                 [name, self.name]
         end
 
-        unless command =~ /^\//
-            raise Puppet::Error, "Command #{command} could not be found"
+        if command == :missing
+            return nil
         end
 
         command
     end
 
-    # Define one or more binaries we'll be using
+    # Define commands that are not optional.
     def self.commands(hash)
-        hash.each do |name, path|
-            name = symbolize(name)
-            @origcommands[name] = path
-            # Keep the short name if we couldn't find it.
-            unless path =~ /^\//
-                if tmp = binary(path)
-                    path = tmp
-                end
-            end
-            @commands[name] = path
+        optional_commands(hash) do |name, path|
             confine :exists => path
-
-            # Now define a method for that command
-            unless metaclass.method_defined? name
-                meta_def(name) do |*args|
-                    if args.empty?
-                        cmd = [command(name)]
-                    else
-                        cmd = [command(name)] + args
-                    end
-                    # This might throw an ExecutionFailure, but the system above
-                    # will catch it, if so.
-                    return execute(cmd)
-                end
-                
-                # And then define an instance method that just calls the class method.
-                # We need both, so both instances and classes can easily run the commands.
-                unless method_defined? name
-                    define_method(name) do |*args|
-                        self.class.send(name, *args)
-                    end
-                end
-            end
         end
     end
 
@@ -128,6 +97,34 @@ class Puppet::Provider
         end
     end
 
+    # Create the methods for a given command.
+    def self.make_command_methods(name)
+        # Now define a method for that command
+        unless metaclass.method_defined? name
+            meta_def(name) do |*args|
+                unless command(name)
+                    raise Puppet::Error, "Command %s is missing" % name
+                end
+                if args.empty?
+                    cmd = [command(name)]
+                else
+                    cmd = [command(name)] + args
+                end
+                # This might throw an ExecutionFailure, but the system above
+                # will catch it, if so.
+                return execute(cmd)
+            end
+            
+            # And then define an instance method that just calls the class method.
+            # We need both, so both instances and classes can easily run the commands.
+            unless method_defined? name
+                define_method(name) do |*args|
+                    self.class.send(name, *args)
+                end
+            end
+        end
+    end
+
     # Create getter/setter methods for each property our model supports.
     # They all get stored in @property_hash.  This method is useful
     # for those providers that use prefetch and flush.
@@ -155,6 +152,30 @@ class Puppet::Provider
     end
 
     self.initvars
+
+    # Define one or more binaries we'll be using.  If a block is passed, yield the name
+    # and path to the block (really only used by 'commands').
+    def self.optional_commands(hash)
+        hash.each do |name, path|
+            name = symbolize(name)
+            @origcommands[name] = path
+
+            # Try to find the full path (or verify already-full paths); otherwise
+            # store that the command is missing so we know it's defined but absent.
+            if tmp = binary(path)
+                @commands[name] = path
+            else
+                @commands[name] = :missing
+            end
+
+            if block_given?
+                yield(name, path)
+            end
+
+            # Now define the class and instance methods.
+            make_command_methods(name)
+        end
+    end
 
     # Check whether this implementation is suitable for our platform.
     def self.suitable?
