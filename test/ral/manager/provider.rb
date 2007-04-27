@@ -50,6 +50,35 @@ class TestTypeProviders < Test::Unit::TestCase
             "Providify did not reorder parameters")
     end
 
+    def test_commands
+        type = Puppet::Type.newtype(:commands) {}
+
+        cleanup { Puppet::Type.rmtype(:commands) }
+
+        echo = %x{which echo}.chomp
+        {:echo => echo, :echo => "echo", :missing => "nosuchcommand", :missing => "/path/to/nosuchcommand"}.each do |name, command|
+            # Define a provider with mandatory commands
+            provider = type.provide(:testing) {}
+
+            assert_nothing_raised("Could not define command %s with argument %s for provider" % [name, command]) do
+                provider.commands(name => command)
+            end
+
+            case name
+            when :echo:
+                assert_equal(echo, provider.command(:echo), "Did not get correct path for echo")
+                assert(provider.suitable?, "Provider was not considered suitable with 'echo'")
+            when :missing:
+                assert_nil(provider.command(:missing), "Somehow got a response for missing commands")
+                assert(! provider.suitable?, "Provider was considered suitable with missing command")
+            else
+                raise "Invalid name %s" % name
+            end
+
+            type.unprovide(:testing)
+        end
+    end
+
     # Make sure optional commands get looked up but don't affect suitability.
     def test_optional_commands
         type = Puppet::Type.newtype(:optional_commands) {}

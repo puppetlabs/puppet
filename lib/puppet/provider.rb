@@ -38,6 +38,7 @@ class Puppet::Provider
     # Define commands that are not optional.
     def self.commands(hash)
         optional_commands(hash) do |name, path|
+            Puppet.info "%s => %s" % [name, path]
             confine :exists => path
         end
     end
@@ -163,6 +164,7 @@ class Puppet::Provider
             # Try to find the full path (or verify already-full paths); otherwise
             # store that the command is missing so we know it's defined but absent.
             if tmp = binary(path)
+                path = tmp
                 @commands[name] = path
             else
                 @commands[name] = :missing
