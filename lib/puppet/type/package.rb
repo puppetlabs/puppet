@@ -179,7 +179,7 @@ module Puppet
                 return false
             end
 
-            # This retrieves the current state
+            # This retrieves the current state. LAK: I think this method is unused.
             def retrieve
                 @is = @parent.retrieve
             end
