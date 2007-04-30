@@ -20,7 +20,7 @@ Puppet::Type.type(:cron).provide(:crontab,
         end
     }
 
-    text_line :blank, :match => %r{^\s+}
+    text_line :blank, :match => %r{^\s*$}
 
     text_line :environment, :match => %r{^\w+=}
 
