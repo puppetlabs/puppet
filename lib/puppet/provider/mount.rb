@@ -7,19 +7,31 @@ require 'puppet'
 # still need to add the mount commands manually.
 module Puppet::Provider::Mount
     # This only works when the mount point is synced to the fstab.
-    def mount
-        mountcmd @model[:name]
+    def mount(remount = false)
+        # Manually pass the mount options in, since some OSes *cough*OS X*cough* don't
+        # read from /etc/fstab but still want to use this type.
+        opts = nil
+        if self.options and self.options != :absent
+            opts = self.options
+        end
+
+        if remount and Facter.value(:operatingsystem) != "FreeBSD"
+            if opts
+                opts = [opts, "remount"].join(",")
+            else
+                opts = "remount"
+            end
+        end
+        args = []
+        args << "-o" << opts
+        args << @model[:name]
+        mountcmd(*args)
     end
 
     def remount
         info "Remounting"
         if @model[:remounts] == :true
-            if Facter.value(:operatingsystem) == "FreeBSD"
-                # Thanks FreeBSD
-                mountcmd @model[:name]
-            else
-                mountcmd "-o", "remount", @model[:name]
-            end
+            mount(true)
         else
             unmount()
             mount()
