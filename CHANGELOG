@@ -1,3 +1,6 @@
+    Files on the local machine but not on the remote server during
+    a source copy are now purged if purge => true. (#594)
+
     Providers can now specify that some commands are optional (#585).
     Also, the 'command' method returns nil on missing commands,
     rather than throwing an error, so the presence of commands
