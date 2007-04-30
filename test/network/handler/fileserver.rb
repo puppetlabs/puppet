@@ -78,21 +78,11 @@ class TestFileServer < Test::Unit::TestCase
             )
         }
 
-        assert_raise(Puppet::Network::Handler::FileServerError) {
-            server.mount("/tmp", "invalid+name")
-        }
-
-        assert_raise(Puppet::Network::Handler::FileServerError) {
-            server.mount("/tmp", "invalid-name")
-        }
-
-        assert_raise(Puppet::Network::Handler::FileServerError) {
-            server.mount("/tmp", "invalid name")
-        }
-
-        assert_raise(Puppet::Network::Handler::FileServerError) {
-            server.mount("/tmp", "")
-        }
+        [" ", "=" "+", "&", "#", "*"].each do |char|
+            assert_raise(Puppet::Network::Handler::FileServerError, "'%s' did not throw a failure in fileserver module names" % char) {
+                server.mount("/tmp", "invalid%sname" % char)
+            }
+        end
     end
 
     # verify that listing the root behaves as expected
