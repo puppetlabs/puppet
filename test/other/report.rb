@@ -93,7 +93,7 @@ class TestReports < Test::Unit::TestCase
         Puppet.config.use(:metrics)
         # First do some work
         objects = []
-        25.times do |i|
+        6.times do |i|
             file = tempfile()
 
             # Make every third file
@@ -116,7 +116,9 @@ class TestReports < Test::Unit::TestCase
             trans.evaluate
         }
 
-        report = trans.report
+        report = trans.generate_report
+
+        assert(! report.metrics.empty?, "Did not receive any metrics")
 
         assert_nothing_raised do
             report.extend(Puppet::Network::Handler.report.report(:rrdgraph))

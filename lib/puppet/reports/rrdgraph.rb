@@ -66,7 +66,7 @@ Puppet::Network::Handler.report.newreport(:rrdgraph) do
         # Make the period html files
         periodorder.each do |period|
             unless ary = periods[period]
-                raise "Could not find graphs for %s" % period
+                raise Puppet::Error, "Could not find graphs for %s" % period
             end
             files << htmlfile(period, ary, :first)
         end
