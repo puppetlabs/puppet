@@ -190,7 +190,10 @@ module Puppet
                 configured the purged files will be uploaded, but if you do not,
                 this will destroy data.  Only use this option for generated
                 files unless you really know what you are doing.  This option only
-                makes sense when recursively managing directories."
+                makes sense when recursively managing directories.
+                
+                Note that when using ``purge`` with ``source``, Puppet will purge any files
+                that are not on the remote system."
 
             defaultto :false
 
@@ -720,14 +723,22 @@ module Puppet
             if ret = self.localrecurse(recurse)
                 children += ret
             end
-            if @parameters.include?(:source) and ret = self.sourcerecurse(recurse)
-                children += ret
+
+            # These will be files pulled in by the file source
+            sourced = false
+            if @parameters.include?(:source)
+                ret, sourced = self.sourcerecurse(recurse)
+                if ret
+                    children += ret
+                end
             end
 
             # The purge check needs to happen after all of the other recursion.
             if self.purge?
                 children.each do |child|
-                    child[:ensure] = :absent unless child.managed?
+                    if (sourced and ! sourced.include?(child[:path])) or ! child.managed?
+                        child[:ensure] = :absent
+                    end
                 end
             end
             
@@ -852,6 +863,10 @@ module Puppet
 
             result = []
             found = []
+
+            # Keep track of all the files we found in the source, so we can purge
+            # appropriately.
+            sourced = []
             
             @parameters[:source].should.each do |source|
                 sourceobj, path = uri2obj(source)
@@ -892,15 +907,16 @@ module Puppet
                     end
 
                     found << name
+                    sourced << File.join(self[:path], name)
 
                     self.newchild(name, false, args)
                 }.reject {|c| c.nil? }
 
                 if self[:sourceselect] == :first
-                    return result
+                    return [result, sourced]
                 end
             end
-            return result
+            return [result, sourced]
         end
 
         # Set the checksum, from another property.  There are multiple

@@ -273,9 +273,12 @@ class TestFileSources < Test::Unit::TestCase
         obj = Puppet::Type.newfile :source => source, :path => dest, :recurse => true
 
         result = nil
+        sourced = nil
         assert_nothing_raised do
-            result = obj.sourcerecurse(true)
+            result, sourced = obj.sourcerecurse(true)
         end
+
+        assert_equal([destfile], sourced, "Did not get correct list of sourced objects")
         dfileobj = @file[destfile]
         assert(dfileobj, "Did not create destfile object")
         assert_equal([dfileobj], result)
@@ -289,8 +292,9 @@ class TestFileSources < Test::Unit::TestCase
 
         result = nil
         assert_nothing_raised do
-            result = obj.sourcerecurse(true)
+            result, sourced = obj.sourcerecurse(true)
         end
+        assert_equal([destfile], sourced, "Did not get correct list of sourced objects")
         dfileobj = @file[destfile]
         assert(dfileobj, "Did not create destfile object with a missing source")
         assert_equal([dfileobj], result)
@@ -300,8 +304,9 @@ class TestFileSources < Test::Unit::TestCase
         obj[:source] = [nosource, tempfile()]
         
         assert_nothing_raised do
-            result = obj.sourcerecurse(true)
+            result, sourced = obj.sourcerecurse(true)
         end
+        assert_equal([], sourced, "Did not get correct list of sourced objects")
         assert_equal([], result, "Sourcerecurse failed when all sources are missing")
     end
 
@@ -1008,6 +1013,33 @@ class TestFileSources < Test::Unit::TestCase
             
             assert_equal("yay%s\n" % File.basename(file).sub("file", ''), File.read(path), "file was not copied correctly")
         end
+    end
+
+    # #594
+    def test_purging_missing_remote_files
+        source = tempfile()
+        dest = tempfile()
+        s1 = File.join(source, "file1")
+        s2 = File.join(source, "file2")
+        d1 = File.join(dest, "file1")
+        d2 = File.join(dest, "file2")
+        Dir.mkdir(source)
+        [s1, s2].each { |name| File.open(name, "w") { |file| file.puts "something" } }
+
+        # We have to add a second parameter, because that's the only way to expose the "bug".
+        file = Puppet::Type.newfile(:path => dest, :source => source, :recurse => true, :purge => true, :mode => "755")
+
+        assert_apply(file)
+
+        assert(FileTest.exists?(d1), "File1 was not copied")
+        assert(FileTest.exists?(d2), "File2 was not copied")
+
+        File.unlink(s2)
+
+        assert_apply(file)
+
+        assert(FileTest.exists?(d1), "File1 was not kept")
+        assert(! FileTest.exists?(d2), "File2 was not purged")
     end
 end
 

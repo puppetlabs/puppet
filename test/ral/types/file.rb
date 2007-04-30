@@ -567,13 +567,23 @@ class TestFile < Test::Unit::TestCase
         return_nil = false
         
         # and monkey-patch it
-        [:localrecurse, :sourcerecurse, :linkrecurse].each do |m|
+        [:localrecurse, :linkrecurse].each do |m|
             dir.meta_def(m) do |recurse|
                 if return_nil # for testing nil return, of course
                     return nil
                 else
                     return [recurse]
                 end
+            end
+        end
+
+        # We have to special-case this, because it returns a list of
+        # found files.
+        dir.meta_def(:sourcerecurse) do |recurse|
+            if return_nil # for testing nil return, of course
+                return nil
+            else
+                return [recurse], []
             end
         end
         
