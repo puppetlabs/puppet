@@ -136,8 +136,8 @@ class Puppet::Network::Handler
             typeklass.list.each do |obj|
                 next if ignore.include? obj.name
 
-                object = Puppet::TransObject.new(obj.name, typeklass.name)
-                bucket << object
+                #object = Puppet::TransObject.new(obj.name, typeklass.name)
+                bucket << obj.to_trans
             end
 
             unless @local
