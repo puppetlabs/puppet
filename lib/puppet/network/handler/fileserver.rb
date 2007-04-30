@@ -253,7 +253,7 @@ class Puppet::Network::Handler
                         case line
                         when /^\s*#/: next # skip comments
                         when /^\s*$/: next # skip blank lines
-                        when /\[(\w+)\]/:
+                        when /\[([-\w]+)\]/:
                             name = $1
                             if newmounts.include?(name)
                                 raise FileServerError, "%s is already mounted at %s" %
@@ -384,7 +384,7 @@ class Puppet::Network::Handler
             # so first retrieve the mount path
             mount = nil
             path = nil
-            if dir =~ %r{/(\w+)/?}
+            if dir =~ %r{/([-\w]+)/?}
                 tmp = $1
                 path = dir.sub(%r{/#{tmp}/?}, '')
 
@@ -490,7 +490,7 @@ class Puppet::Network::Handler
 
             # Create out object.  It must have a name.
             def initialize(name, path = nil)
-                unless name =~ %r{^\w+$}
+                unless name =~ %r{^[-\w]+$}
                     raise FileServerError, "Invalid name format '%s'" % name
                 end
                 @name = name

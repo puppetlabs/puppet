@@ -232,7 +232,7 @@ class TestFileServer < Test::Unit::TestCase
 
     # verify we can mount /, which is what local file servers will
     # normally do
-    def test_zmountroot
+    def test_mountroot
         server = nil
         assert_nothing_raised {
             server = Puppet::Network::Handler.fileserver.new(
@@ -456,7 +456,7 @@ class TestFileServer < Test::Unit::TestCase
         # make some dirs for mounting
         Dir.mkdir(basedir)
         mounts = {}
-        %w{thing thus these those}.each { |dir|
+        %w{thing thus the-se those}.each { |dir|
             path = File.join(basedir, dir)
             Dir.mkdir(path)
             mounts[dir] = mktestfiles(path)
@@ -479,8 +479,8 @@ class TestFileServer < Test::Unit::TestCase
     allow *.madstop.com, *.kanies.com
     deny *.sub.madstop.com
 
-[these]
-    path #{basedir}/these
+[the-se]
+    path #{basedir}/the-se
 
 [those]
     path #{basedir}/those
