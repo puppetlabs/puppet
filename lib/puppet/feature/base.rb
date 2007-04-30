@@ -1,0 +1,20 @@
+#  Created by Luke Kanies on 2006-04-30.
+#  Copyright (c) 2006. All rights reserved.
+
+require 'puppet/util/feature'
+
+# Add the simple features, all in one file.
+
+# We've got LDAP available.
+Puppet.features.add(:ldap, :libs => ["ldap"])
+
+# We have the Rdoc::Usage library.
+Puppet.features.add(:usage, :libs => %w{rdoc/ri/ri_paths rdoc/usage})
+
+# We have libshadow, useful for managing passwords.
+Puppet.features.add(:libshadow, :libs => ["shadow"])
+
+# We're running as root.
+Puppet.features.add(:root) { require 'puppet/util/suidmanager'; Puppet::Util::SUIDManager.uid == 0 }
+
+# $Id$

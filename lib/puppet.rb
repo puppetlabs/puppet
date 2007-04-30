@@ -65,6 +65,9 @@ module Puppet
     # The feature collection
     @features = Puppet::Util::Feature.new('puppet/feature')
 
+    # Load the base features.
+    require 'puppet/feature/base'
+
     # Store a new default value.
     def self.setdefaults(section, hash)
         @@config.setdefaults(section, hash)
