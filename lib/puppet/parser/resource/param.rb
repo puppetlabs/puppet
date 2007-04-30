@@ -35,9 +35,7 @@ class Puppet::Parser::Resource::Param
         oldvals = []
 
         if pv = pn.param_values
-            newvals = pv.each do |val|
-                oldvals << val.value
-            end
+            oldvals = pv.collect { |val| val.value }
         end
 
         if oldvals != values

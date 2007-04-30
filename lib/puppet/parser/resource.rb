@@ -302,9 +302,9 @@ class Puppet::Parser::Resource
         end
 
         # Either way, now add our parameters
-        newparams = {}
-        @params.each { |name, p| newparams[name.to_s] = p }
-        resource.collection_merge :param_names, :existing => resource.param_names, :updates => newparams
+        updated_params = {}
+        @params.each { |name, p| updated_params[name.to_s] = p }
+        resource.collection_merge :param_names, :existing => resource.param_names, :updates => updated_params
 
         return resource
     end
