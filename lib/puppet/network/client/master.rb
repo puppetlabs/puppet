@@ -359,6 +359,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             :tag => "#{args[:name]}s",
             :owner => Process.uid,
             :group => Process.gid,
+            :purge => true,
             :backup => false
         }
 

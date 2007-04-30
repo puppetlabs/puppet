@@ -38,7 +38,6 @@ class Puppet::Provider
     # Define commands that are not optional.
     def self.commands(hash)
         optional_commands(hash) do |name, path|
-            Puppet.info "%s => %s" % [name, path]
             confine :exists => path
         end
     end
