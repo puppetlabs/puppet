@@ -208,7 +208,7 @@ class TestExec < Test::Unit::TestCase
     end
 
     # Verify that we auto-require any managed scripts.
-    def test_autorequire
+    def test_autorequire_files
         exe = tempfile()
         oexe = tempfile()
         sh = %x{which sh}
@@ -712,6 +712,19 @@ and stuff"
         # Make sure it created the normal file
         assert(FileTest.exists?(refresher), "refresh param was ignored")
         assert(! FileTest.exists?(maker), "refresh param also ran command")
+    end
+
+    if Puppet.features.root?
+        def test_autorequire_user
+            user = Puppet::Type.type(:user).create(:name => "yay")
+            exec = Puppet::Type.type(:exec).create(:command => "/bin/echo fun", :user => "yay")
+
+            rels = nil
+            assert_nothing_raised("Could not evaluate autorequire") do
+                rels = exec.autorequire
+            end
+            assert(rels.find { |r| r.source == user and r.target == exec }, "Exec did not autorequire user")
+        end
     end
 end
 

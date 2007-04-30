@@ -156,11 +156,13 @@ module Puppet
         newparam(:user) do
             desc "The user to run the command as.  Note that if you
                 use this then any error output is not currently captured.  This
-                is because of a bug within Ruby."
+                is because of a bug within Ruby.  If you are using Puppet to
+                create this user, the exec will automatically require the user,
+                as long as it is specified by name."
 
             # Most validation is handled by the SUIDManager class.
             validate do |user|
-                unless Puppet::Util::SUIDManager.uid == 0
+                unless Puppet.features.root?
                     self.fail "Only root can execute commands as other users"
                 end
             end
@@ -432,6 +434,13 @@ module Puppet
             reqs.flatten!
 
             reqs
+        end
+
+        autorequire(:user) do
+            # Autorequire users if they are specified by name
+            if user = self[:user] and user !~ /^\d+$/
+                user
+            end
         end
 
         def self.list

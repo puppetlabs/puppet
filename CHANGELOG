@@ -1,3 +1,6 @@
+    Execs now autorequire the user they run as, as long as the user
+    is specified by name. (#430)
+
     Files on the local machine but not on the remote server during
     a source copy are now purged if purge => true. (#594)
 
