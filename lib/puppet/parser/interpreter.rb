@@ -455,10 +455,6 @@ class Puppet::Parser::Interpreter
             end
         end
 
-        if node =~ /\./
-            node = node.sub(/\..+/, '')
-        end
-
         filter = Puppet[:ldapstring]
         attrs = Puppet[:ldapattrs].split("\s*,\s*")
         sattrs = attrs.dup
