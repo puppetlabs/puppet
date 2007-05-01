@@ -206,7 +206,7 @@ begin
             when "--disable"
                 options[:disable] = true
             when "--serve"
-                if klass = Puppet::Network::Server::Handler.handler(arg)
+                if klass = Puppet::Network::Handler.handler(arg)
                     options[:serve][klass.name] = klass
                 else
                     raise "Could not find handler for %s" % arg
