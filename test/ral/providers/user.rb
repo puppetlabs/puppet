@@ -185,6 +185,8 @@ class TestUserProvider < Test::Unit::TestCase
 
         Puppet::Type.type(:user).validproperties.each do |property|
             next if property == :ensure
+            # This is mostly in place for the 'password' stuff.
+            next unless user.class.supports_parameter?(property)
             val = nil
             assert_nothing_raised {
                 val = user.send(property)

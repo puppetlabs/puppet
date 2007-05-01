@@ -114,6 +114,10 @@ module PuppetTest
             end
         end
 
+        def self.supports_parameter?(param)
+            true
+        end
+
         def self.suitable?
             true
         end

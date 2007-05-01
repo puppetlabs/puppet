@@ -222,6 +222,24 @@ class Puppet::Provider
         return true
     end
 
+    # Does this provider support the specified parameter?
+    def self.supports_parameter?(param)
+        if param.is_a?(Class)
+            klass = param
+        else
+            unless klass = @model.attrclass(param)
+                raise Puppet::DevError, "'%s' is not a valid parameter for %s" % [param, @model.name]
+            end
+        end
+        return true unless features = klass.required_features
+
+        if satisfies?(*features)
+            return true
+        else
+            return false
+        end
+    end
+
     def self.to_s
         unless defined? @str
             if self.model

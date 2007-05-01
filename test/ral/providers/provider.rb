@@ -383,6 +383,41 @@ class TestProviderFeatures < Test::Unit::TestCase
                 "Got incorrect feature list for %s" % name)
         end
     end
+
+    def test_supports_parameter?
+        # Make some parameters for each setting
+        @type.newparam(:neither) {}
+        @type.newparam(:some, :required_features => :alpha)
+        @type.newparam(:both, :required_features => [:alpha, :numeric])
+
+        # and appropriate providers
+        nope = @type.provide(:nope) {}
+        maybe = @type.provide(:maybe) { has_features(:alpha) }
+        yep = @type.provide(:yep) { has_features(:alpha, :numeric) }
+
+        # Now make sure our providers answer correctly.
+        [nope, maybe, yep].each do |prov|
+            assert(prov.respond_to?(:supports_parameter?), "%s does not respond to :supports_parameter?" % prov.name)
+            case prov.name
+            when :nope:
+                supported = [:neither]
+                un = [:some, :both]
+            when :maybe:
+                supported = [:neither, :some]
+                un = [:both]
+            when :yep:
+                supported = [:neither, :some, :both]
+                un = []
+            end
+
+            supported.each do |param|
+                assert(prov.supports_parameter?(param), "%s was not supported by %s" % [param, prov.name])
+            end
+            un.each do |param|
+                assert(! prov.supports_parameter?(param), "%s was incorrectly supported by %s" % [param, prov.name])
+            end
+        end
+    end
 end
 
 # $Id$

@@ -204,7 +204,7 @@ class Puppet::Type
 
         # Grr.
         if options[:required_features]
-            s.required_features = options[:required_features]
+            param.required_features = options[:required_features]
         end
         
         handle_param_options(name, options)
@@ -250,7 +250,7 @@ class Puppet::Type
 
         # Grr.
         if options[:required_features]
-            s.required_features = options[:required_features]
+            param.required_features = options[:required_features]
         end
 
         # These might be enabled later.
@@ -299,7 +299,7 @@ class Puppet::Type
         # We have to create our own, new block here because we want to define
         # an initial :retrieve method, if told to, and then eval the passed
         # block if available.
-        s = genclass(name,
+        prop = genclass(name,
             :parent => options[:parent] || Puppet::Property,
             :hash => @validproperties
         ) do
@@ -320,18 +320,18 @@ class Puppet::Type
 
         # If it's the 'ensure' property, always put it first.
         if name == :ensure
-            @properties.unshift s
+            @properties.unshift prop
         else
-            @properties << s
+            @properties << prop
         end
 
         if options[:event]
-            s.event = options[:event]
+            prop.event = options[:event]
         end
 
         # Grr.
         if options[:required_features]
-            s.required_features = options[:required_features]
+            prop.required_features = options[:required_features]
         end
 
 #        define_method(name) do
@@ -342,7 +342,7 @@ class Puppet::Type
 #            newproperty(name, :should => value)
 #        end
 
-        return s
+        return prop
     end
 
     def self.paramdoc(param)
@@ -584,7 +584,7 @@ class Puppet::Type
         end
 
         unless klass = self.class.attrclass(name)
-            raise Puppet::Error, "Invalid parameter %s" % name
+            raise Puppet::Error, "Resource type %s does not support parameter %s" % [self.class.name, name]
         end
 
         if @parameters.include?(name)
@@ -592,12 +592,10 @@ class Puppet::Type
                 [name, self.ref]
         end
 
-        if provider and features = klass.required_features
-            unless provider.class.satisfies?(features)
-                missing = features.find_all { |f| ! provider.class.feature?(f) }
-                info "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
-                return nil
-            end
+        if provider and ! provider.class.supports_parameter?(klass)
+            missing = klass.required_features.find_all { |f| ! provider.class.feature?(f) }
+            info "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
+            return nil
         end
 
         # Add parent information at creation time, so it's available

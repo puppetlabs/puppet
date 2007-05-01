@@ -178,23 +178,9 @@ class UserAddProviderTest < PuppetTest::TestCase
     end
 
     def test_manages_password
-        if Facter.value(:kernel) != "Linux"
-            assert(! @provider.feature?(:manages_passwords),
-                "Defaulted to managing passwords on %s" %
-                Facter.value(:kernel))
-
-            # Now just make sure it's not allowed, and return
-            setup_user
-            assert_raise(Puppet::Error, "allowed passwd mgmt on failing host") do
-                @user[:password] = "yayness"
-            end
+        unless @provider.feature?(:manages_passwords)
             return
         end
-
-        # Now, test that it works correctly.
-        assert(@provider.manages_passwords?,
-            "Defaulted to not managing passwords on %s" %
-            Facter.value(:kernel))
         @vals[:password] = "somethingorother"
         setup_user
 
@@ -244,6 +230,7 @@ end
 
 class UserRootAddProviderTest < PuppetTest::TestCase
     confine "useradd user provider missing" => Puppet::Type.type(:user).provider(:useradd).suitable?
+    confine "useradd does not manage passwords" => Puppet::Type.type(:user).provider(:useradd).manages_passwords?
     confine "not running as root" => (Process.uid == 0)
 
     def test_password
