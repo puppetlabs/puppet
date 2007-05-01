@@ -169,6 +169,7 @@ options = [
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--onetime",  "-o",			GetoptLong::NO_ARGUMENT ],
 	[ "--test",	    "-t",			GetoptLong::NO_ARGUMENT ],
+	[ "--serve",    "-s",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--no-client",       			GetoptLong::NO_ARGUMENT ],
 	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
 	[ "--version",	"-V",			GetoptLong::NO_ARGUMENT ],
@@ -207,6 +208,8 @@ begin
             when "--serve"
                 if klass = Puppet::Network::Server::Handler.handler(arg)
                     options[:serve][klass.name] = klass
+                else
+                    raise "Could not find handler for %s" % arg
                 end
             when "--enable"
                 options[:enable] = true
