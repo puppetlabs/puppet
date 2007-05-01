@@ -146,7 +146,7 @@ class TestParsedMounts < Test::Unit::TestCase
         end
     end
 
-    if Puppet::Util::SUIDManager.uid == 0 and Facter.value(:operatingsystem) != "Darwin"
+    if Puppet.features.root? and Facter.value(:operatingsystem) != "Darwin"
     def test_mountfs
         fs = nil
         case Facter.value(:hostname)
@@ -183,6 +183,8 @@ class TestParsedMounts < Test::Unit::TestCase
                 obj.mount
             }
         end
+
+        assert(obj.mounted?, "filesystem is not mounted")
 
         assert_nothing_raised {
             obj.unmount
