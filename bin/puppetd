@@ -112,10 +112,11 @@
 #
 # serve::
 #   Start another type of server.  By default default, +puppetd+ will start
-#   a server that allows authenticated and authorized remote nodes to trigger
-#   the configuration to be pulled down and applied.  You can specify
-#   any other type of service here that does not require configuration,
-#   e.g., filebucket, ca, or pelement.
+#   a service handler that allows authenticated and authorized remote nodes to
+#   trigger the configuration to be pulled down and applied.  You can specify
+#   any handler here that does not require configuration, e.g., filebucket, ca,
+#   or resource.  The handlers are in +lib/puppet/network/handler+, and the names
+#   must match exactly, both in the call to +serve+ and in +namespaceauth.conf+.
 #
 # test::
 #   Enable the most common options used for testing.  These are +onetime+,
@@ -206,8 +207,8 @@ begin
             when "--disable"
                 options[:disable] = true
             when "--serve"
-                if klass = Puppet::Network::Handler.handler(arg)
-                    options[:serve][klass.name] = klass
+                if Puppet::Network::Handler.handler(arg)
+                    options[:serve][arg.to_sym] = {}
                 else
                     raise "Could not find handler for %s" % arg
                 end
@@ -379,9 +380,7 @@ if Puppet[:listen] and ! options[:onetime]
     if options[:serve].empty?
         handlers = {:Runner => {}}
     else
-        handlers = options[:serve].inject({}) do |hash, name, klass|
-            hash[name] = {}
-        end
+        handlers = options[:serve]
     end
 
     handlers.each do |name, hash|
