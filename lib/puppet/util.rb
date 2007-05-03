@@ -344,6 +344,7 @@ module Util
                             Process.euid = arguments[:uid]
                             Process.uid = arguments[:uid] unless @@os == "Darwin"
                         end
+								ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
                         if command.is_a?(Array)
                             Kernel.exec(*command)
                         else
