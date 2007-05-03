@@ -123,8 +123,8 @@ class Puppet::Parser::Scope
     # that subclasses can set their parent scopes to be the scope of
     # their parent class.
     def class_scope(klass)
-        if klass.respond_to?(:fqname)
-            @classtable[klass.fqname]
+        if klass.respond_to?(:classname)
+            @classtable[klass.classname]
         else
             @classtable[klass]
         end
@@ -406,7 +406,7 @@ class Puppet::Parser::Scope
             raise Puppet::ParseError, "Could not find class %s" % klassname
         end
         unless kscope = class_scope(klass)
-            raise Puppet::ParseError, "Class %s has not been evaluated so its variables cannot be referenced" % klass.fqname
+            raise Puppet::ParseError, "Class %s has not been evaluated so its variables cannot be referenced" % klass.classname
         end
         return kscope.lookupvar(shortname, usestring)
     end
@@ -459,8 +459,8 @@ class Puppet::Parser::Scope
     end
 
     def setclass?(obj)
-        if obj.respond_to?(:fqname)
-            @classtable.has_key?(obj.fqname)
+        if obj.respond_to?(:classname)
+            @classtable.has_key?(obj.classname)
         else
             @classtable[obj]
         end
@@ -472,11 +472,11 @@ class Puppet::Parser::Scope
     # can support multiple unrelated classes with the same name.
     def setclass(obj)
         if obj.is_a?(AST::HostClass)
-            unless obj.fqname
+            unless obj.classname
                 raise Puppet::DevError, "Got a %s with no fully qualified name" %
                     obj.class
             end
-            @classtable[obj.fqname] = self
+            @classtable[obj.classname] = self
         else
             raise Puppet::DevError, "Invalid class %s" % obj.inspect
         end

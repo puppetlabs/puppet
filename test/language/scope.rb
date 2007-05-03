@@ -412,7 +412,7 @@ class TestScope < Test::Unit::TestCase
 
         [myclass, otherclass].each do |klass|
             assert(scope.setclass?(klass),
-                "%s was not set" % klass.fqname)
+                "%s was not set" % klass.classname)
         end
     end
 

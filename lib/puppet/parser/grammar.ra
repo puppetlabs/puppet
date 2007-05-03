@@ -111,7 +111,7 @@ resourcerefs:     resourceref
     result = val[0]
 }
 
-resource:       fqname LBRACE resourceinstances endsemi RBRACE {
+resource:       classname LBRACE resourceinstances endsemi RBRACE {
     array = val[2]
     if array.instance_of?(AST::ResourceInst)
         array = [array]
@@ -130,7 +130,7 @@ resource:       fqname LBRACE resourceinstances endsemi RBRACE {
             :title => instance[0],
             :params => instance[1])
     }
-}           | fqname LBRACE params endcomma RBRACE {
+}           | classname LBRACE params endcomma RBRACE {
     # This is a deprecated syntax.
     error "All resource specifications require names"
 }           | TYPE LBRACE params endcomma RBRACE {
@@ -466,28 +466,28 @@ import: IMPORT qtexts {
 
 # Disable definition inheritance for now. 8/27/06, luke
 #definition: DEFINE NAME argumentlist parent LBRACE statements RBRACE {
-definition: DEFINE fqname argumentlist LBRACE statements RBRACE {
-    interp.newdefine fqname(val[1]), :arguments => val[2], :code => val[4]
+definition: DEFINE classname argumentlist LBRACE statements RBRACE {
+    interp.newdefine classname(val[1]), :arguments => val[2], :code => val[4]
     @lexer.indefine = false
     result = nil
 
 #}           | DEFINE NAME argumentlist parent LBRACE RBRACE {
-}           | DEFINE fqname argumentlist LBRACE RBRACE {
-    interp.newdefine fqname(val[1]), :arguments => val[2]
+}           | DEFINE classname argumentlist LBRACE RBRACE {
+    interp.newdefine classname(val[1]), :arguments => val[2]
     @lexer.indefine = false
     result = nil
 }
 
 #hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
-hostclass: CLASS fqname classparent LBRACE statements RBRACE {
+hostclass: CLASS classname classparent LBRACE statements RBRACE {
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
-    interp.newclass fqname(val[1]), :code => val[4], :parent => val[2]
+    interp.newclass classname(val[1]), :code => val[4], :parent => val[2]
     result = nil
-}           | CLASS fqname classparent LBRACE RBRACE {
+}           | CLASS classname classparent LBRACE RBRACE {
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
-    interp.newclass fqname(val[1]), :parent => val[2]
+    interp.newclass classname(val[1]), :parent => val[2]
     result = nil
 }
 
@@ -499,7 +499,7 @@ nodedef: NODE hostnames nodeparent LBRACE statements RBRACE {
     result = nil
 }
 
-fqname:       NAME
+classname:       NAME
             | CLASSNAME
 
 # Multiple hostnames, as used for node names.  These are all literal
@@ -558,12 +558,12 @@ nodeparent:       nil
 }
 
 classparent:       nil
-            | INHERITS fqnameordefault {
+            | INHERITS classnameordefault {
     result = val[1]
 }
 
 nameordefault: NAME | DEFAULT
-fqnameordefault: fqname | DEFAULT
+classnameordefault: classname | DEFAULT
 
 variable:     VARIABLE {
     result = ast AST::Variable, :value => val[0]
@@ -746,7 +746,7 @@ def initvars
 end
 
 # The fully qualifed name, with the full namespace.
-def fqname(name)
+def classname(name)
     [@lexer.namespace, name].join("::").sub(/^::/, '')
 end
 

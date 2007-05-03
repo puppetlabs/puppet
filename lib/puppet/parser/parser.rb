@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id2ea020a302', 'grammar.ra', 606
+module_eval <<'..end grammar.ra modeval..id70ce3bc052', 'grammar.ra', 606
 require 'puppet/parser/functions'
 
 attr_reader :file, :interp
@@ -173,7 +173,7 @@ def initvars
 end
 
 # The fully qualifed name, with the full namespace.
-def fqname(name)
+def classname(name)
     [@lexer.namespace, name].join("::").sub(/^::/, '')
 end
 
@@ -254,7 +254,7 @@ end
 
 # $Id$
 
-..end grammar.ra modeval..id2ea020a302
+..end grammar.ra modeval..id70ce3bc052
 
 ##### racc 1.4.5 generates ###
 
@@ -829,7 +829,7 @@ Racc_token_to_s_table = [
 'variable',
 'quotedtext',
 'resourceref',
-'fqname',
+'classname',
 'resourceinstances',
 'endsemi',
 'params',
@@ -873,7 +873,7 @@ Racc_token_to_s_table = [
 'arguments',
 'argument',
 'nameordefault',
-'fqnameordefault']
+'classnameordefault']
 
 Racc_debug_parser = false
 
@@ -1570,7 +1570,7 @@ module_eval <<'.,.,', 'grammar.ra', 465
 
 module_eval <<'.,.,', 'grammar.ra', 475
   def _reduce_122( val, _values, result )
-    interp.newdefine fqname(val[1]), :arguments => val[2], :code => val[4]
+    interp.newdefine classname(val[1]), :arguments => val[2], :code => val[4]
     @lexer.indefine = false
     result = nil
 
@@ -1581,7 +1581,7 @@ module_eval <<'.,.,', 'grammar.ra', 475
 
 module_eval <<'.,.,', 'grammar.ra', 479
   def _reduce_123( val, _values, result )
-    interp.newdefine fqname(val[1]), :arguments => val[2]
+    interp.newdefine classname(val[1]), :arguments => val[2]
     @lexer.indefine = false
     result = nil
    result
@@ -1592,7 +1592,7 @@ module_eval <<'.,.,', 'grammar.ra', 487
   def _reduce_124( val, _values, result )
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
-    interp.newclass fqname(val[1]), :code => val[4], :parent => val[2]
+    interp.newclass classname(val[1]), :code => val[4], :parent => val[2]
     result = nil
    result
   end
@@ -1602,7 +1602,7 @@ module_eval <<'.,.,', 'grammar.ra', 492
   def _reduce_125( val, _values, result )
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
-    interp.newclass fqname(val[1]), :parent => val[2]
+    interp.newclass classname(val[1]), :parent => val[2]
     result = nil
    result
   end

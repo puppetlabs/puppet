@@ -13,8 +13,31 @@ class TestSnippets < Test::Unit::TestCase
 	include PuppetTest
     include ObjectSpace
 
+    def setup
+        require 'profile'
+        super
+        @file = Puppet::Type.type(:file)
+    end
+
     def self.snippetdir
         PuppetTest.datadir "snippets"
+    end
+
+    def assert_file(path, msg = nil)
+        unless file = @file[path]
+            msg ||= "Could not find file %s" % path
+            raise msg
+        end
+    end
+
+    def assert_mode_equal(mode, path)
+        unless file = @file[path]
+            raise "Could not find file %s" % path
+        end
+
+        unless mode == file.should(:mode)
+            raise "Mode for %s is incorrect: %o vs %o" % [path, mode, file.should(:mode)]
+        end
     end
 
     def snippet(name)
@@ -151,73 +174,57 @@ class TestSnippets < Test::Unit::TestCase
 
     def snippet_filecreate
         %w{a b c d}.each { |letter|
-            file = "/tmp/create%stest" % letter
-            Puppet.info "testing %s" % file
-            assert(Puppet.type(:file)[file], "File %s does not exist" % file)
-            assert(FileTest.exists?(file))
-            @@tmpfiles << file
-        }
-        %w{a b}.each { |letter|
-            file = "/tmp/create%stest" % letter
-            assert(File.stat(file).mode & 007777 == 0755)
+            path = "/tmp/create%stest" % letter
+            assert_file(path)
+            if %w{a b}.include?(letter)
+                assert_mode_equal(0755, path)
+            end
         }
     end
 
     def snippet_simpledefaults
-        file = "/tmp/defaulttest"
-        @@tmpfiles << file
-        assert(FileTest.exists?(file), "File %s does not exist" % file)
-        assert(File.stat(file).mode & 007777 == 0755)
+        path = "/tmp/defaulttest"
+        assert_file(path)
+        assert_mode_equal(0755, path)
     end
 
     def snippet_simpleselector
         files = %w{a b c d}.collect { |letter|
-            "/tmp/snippetselect%stest" % letter
-        }
-        @@tmpfiles += files
-
-        files.each { |file|
-            assert(FileTest.exists?(file), "File %s does not exist" % file)
-            assert(File.stat(file).mode & 007777 == 0755,
-                "File %s is the incorrect mode" % file)
-            @@tmpfiles << file
+            path = "/tmp/snippetselect%stest" % letter
+            assert_file(path)
+            assert_mode_equal(0755, path)
         }
     end
 
     def snippet_classpathtest
-        file = "/tmp/classtest"
-        @@tmpfiles << file
+        path = "/tmp/classtest"
 
-        assert(FileTest.exists?(file))
-
-        obj = nil
-        assert_nothing_raised {
-            obj = Puppet.type(:file)[file]
-        }
+        file = @file[path]
+        assert(file, "did not create file %s" % path)
 
         assert_nothing_raised {
             assert_equal(
                 "//testing/component[componentname]/File[/tmp/classtest]",
-                obj.path)
-            #Puppet.err obj.path
+                file.path)
         }
     end
 
     def snippet_argumentdefaults
-        file1 = "/tmp/argumenttest1"
-        file2 = "/tmp/argumenttest2"
-        @@tmpfiles << file1
-        @@tmpfiles << file2
+        path1 = "/tmp/argumenttest1"
+        path2 = "/tmp/argumenttest2"
 
-        assert(FileTest.exists?(file1))
-        assert(File.stat(file1).mode & 007777 == 0755)
-        
-        assert(FileTest.exists?(file2))
-        assert(File.stat(file2).mode & 007777 == 0644)
+        file1 = @file[path1]
+        file2 = @file[path2]
+
+        assert_file(path1)
+        assert_mode_equal(0755, path1)
+
+        assert_file(path2)
+        assert_mode_equal(0644, path2)
     end
 
     def snippet_casestatement
-        files = %w{
+        paths = %w{
             /tmp/existsfile
             /tmp/existsfile2
             /tmp/existsfile3
@@ -225,32 +232,29 @@ class TestSnippets < Test::Unit::TestCase
             /tmp/existsfile5
         }
 
-        files.each { |file|
-            assert(FileTest.exists?(file), "File %s is missing" % file)
-            assert(File.stat(file).mode & 007777 == 0755, "File %s is not 755" % file)
+        paths.each { |path|
+            file = @file[path]
+            assert(file, "File %s is missing" % path)
+            assert_mode_equal(0755, path)
         }
     end
 
     def snippet_implicititeration
-        files = %w{a b c d e f g h}.collect { |l| "/tmp/iteration%stest" % l }
+        paths = %w{a b c d e f g h}.collect { |l| "/tmp/iteration%stest" % l }
 
-        files.each { |file|
-            @@tmpfiles << file
-            assert(FileTest.exists?(file), "File %s does not exist" % file)
-            assert(File.stat(file).mode & 007777 == 0755,
-                "File %s is not 755" % file)
-
+        paths.each { |path|
+            file = @file[path]
+            assert_file(path)
+            assert_mode_equal(0755, path)
         }
     end
 
     def snippet_multipleinstances
-        files = %w{a b c}.collect { |l| "/tmp/multipleinstances%s" % l }
+        paths = %w{a b c}.collect { |l| "/tmp/multipleinstances%s" % l }
 
-        files.each { |file|
-            @@tmpfiles << file
-            assert(FileTest.exists?(file), "File %s does not exist" % file)
-            assert(File.stat(file).mode & 007777 == 0755,
-                "File %s is not 755" % file)
+        paths.each { |path|
+            assert_file(path)
+            assert_mode_equal(0755, path)
 
         }
     end
@@ -258,26 +262,23 @@ class TestSnippets < Test::Unit::TestCase
     def snippet_namevartest
         file = "/tmp/testfiletest"
         dir = "/tmp/testdirtest"
-        @@tmpfiles << file
-        @@tmpfiles << dir
-        assert(FileTest.file?(file), "File %s does not exist" % file)
-        assert(FileTest.directory?(dir), "Directory %s does not exist" % dir)
+        assert_file(file)
+        assert_file(dir)
+        assert_equal(:directory, @file[dir].should(:ensure), "Directory is not set to be a directory")
     end
 
     def snippet_scopetest
         file = "/tmp/scopetest"
-        @@tmpfiles << file
-        assert(FileTest.file?(file), "File %s does not exist" % file)
-        assert(File.stat(file).mode & 007777 == 0755,
-            "File %s is not 755" % file)
+        assert_file(file)
+        assert_mode_equal(0755, file)
     end
 
     def snippet_failmissingexecpath
         file = "/tmp/exectesting1"
         execfile = "/tmp/execdisttesting"
-        @@tmpfiles << file
-        @@tmpfiles << execfile
-        assert(!FileTest.exists?(execfile), "File %s exists" % execfile)
+        assert_file(file)
+
+        assert_nil(Puppet::Type.type(:exec)["exectest"], "invalid exec was created")
     end
 
     def snippet_selectorvalues
@@ -287,10 +288,8 @@ class TestSnippets < Test::Unit::TestCase
         }
 
         files.each { |f|
-            @@tmpfiles << f
-            assert(FileTest.exists?(f), "File %s does not exist" % f)
-            assert(File.stat(f).mode & 007777 == 0755,
-                "File %s is not 755" % f)
+            assert_file(f)
+            assert_mode_equal(0755, f)
         }
     end
 
@@ -301,66 +300,56 @@ class TestSnippets < Test::Unit::TestCase
         }
 
         files.each { |f|
-            @@tmpfiles << f
-            assert(FileTest.exists?(f), "File %s does not exist" % f)
-            assert(File.stat(f).mode & 007777 == 0755,
-                "File %s is not 755" % f)
+            assert_file(f)
+            assert_mode_equal(0755, f)
         }
     end
 
     def snippet_falsevalues
         file = "/tmp/falsevaluesfalse"
-        @@tmpfiles << file
-        assert(FileTest.exists?(file), "File %s does not exist" % file)
+        assert_file(file)
     end
 
     def disabled_snippet_classargtest
         [1,2].each { |num|
             file = "/tmp/classargtest%s" % num
-            @@tmpfiles << file
-            assert(FileTest.file?(file), "File %s does not exist" % file)
-            assert(File.stat(file).mode & 007777 == 0755,
-                "File %s is not 755" % file)
+            assert_file(file)
+            assert_mode_equal(0755, file)
         }
     end
 
     def snippet_classheirarchy
         [1,2,3].each { |num|
             file = "/tmp/classheir%s" % num
-            @@tmpfiles << file
-            assert(FileTest.file?(file), "File %s does not exist" % file)
-            assert(File.stat(file).mode & 007777 == 0755,
-                "File %s is not 755" % file)
+            assert_file(file)
+            assert_mode_equal(0755, file)
         }
     end
 
     def snippet_singleary
         [1,2,3,4].each { |num|
             file = "/tmp/singleary%s" % num
-            @@tmpfiles << file
-            assert(FileTest.file?(file), "File %s does not exist" % file)
+            assert_file(file)
         }
     end
 
     def snippet_classincludes
         [1,2,3].each { |num|
             file = "/tmp/classincludes%s" % num
-            @@tmpfiles << file
-            assert(FileTest.file?(file), "File %s does not exist" % file)
-            assert(File.stat(file).mode & 007777 == 0755,
-                "File %s is not 755" % file)
+            assert_file(file)
+            assert_mode_equal(0755, file)
         }
     end
 
     def snippet_componentmetaparams
         ["/tmp/component1", "/tmp/component2"].each { |file|
-            assert(FileTest.file?(file), "File %s does not exist" % file)
+            assert_file(file)
         }
     end
 
     def snippet_aliastest
         %w{/tmp/aliastest /tmp/aliastest2 /tmp/aliastest3}.each { |file|
-            assert(FileTest.file?(file), "File %s does not exist" % file)
+            assert_file(file)
         }
     end
 
@@ -369,17 +358,14 @@ class TestSnippets < Test::Unit::TestCase
             2 => 'some "\yayness\"'
         }.each { |count, str|
             path = "/tmp/singlequote%s" % count
-            assert(FileTest.exists?(path), "File %s is missing" % path)
-            text = File.read(path)
-
-            assert_equal(str, text)
+            assert_file(path)
+            assert_equal(str, @file[path].should(:content))
         }
     end
 
     # There's no way to actually retrieve the list of classes from the
     # transaction.
     def snippet_tag
-        @@tmpfiles << "/tmp/settestingness"
     end
 
     # Make sure that set tags are correctly in place, yo.
@@ -388,25 +374,21 @@ class TestSnippets < Test::Unit::TestCase
             "both" => false, "bothtrue" => true, "define" => true}
 
         tags.each do |tag, retval|
-            @@tmpfiles << "/tmp/tagged#{tag}true"
-            @@tmpfiles << "/tmp/tagged#{tag}false"
-
-            assert(FileTest.exists?("/tmp/tagged#{tag}#{retval.to_s}"),
-                "'tagged' did not return %s with %s" % [retval, tag])
+            assert_file("/tmp/tagged#{tag}#{retval.to_s}")
         end
     end
 
     def snippet_defineoverrides
         file = "/tmp/defineoverrides1"
-        assert(FileTest.exists?(file), "File does not exist")
-        assert_equal(0755, filemode(file))
+        assert_file(file)
+        assert_mode_equal(0755, file)
     end
 
     def snippet_deepclassheirarchy
         5.times { |i|
             i += 1
             file = "/tmp/deepclassheir%s" % i
-            assert(FileTest.exists?(file), "File %s does not exist" % file)
+            assert_file(file)
         }
     end
 
@@ -415,70 +397,56 @@ class TestSnippets < Test::Unit::TestCase
     end
 
     def snippet_emptyexec
-        assert(FileTest.exists?("/tmp/emptyexectest"),
-            "Empty exec was ignored")
-
-        @@tmpfiles << "/tmp/emptyexextest"
+        assert(Puppet::Type.type(:exec)["touch /tmp/emptyexectest"],
+            "Did not create exec")
     end
 
     def snippet_multisubs
         path = "/tmp/multisubtest"
-        assert(FileTest.exists?(path), "Did not create file")
-        assert_equal("sub2", File.read(path), "sub2 did not override content")
-        assert_equal(0755, filemode(path), "sub1 did not override mode")
+        assert_file(path)
+        file = @file[path]
+        assert_equal("sub2", file.should(:content), "sub2 did not override content")
+        assert_mode_equal(0755, path)
     end
 
     def snippet_collection
-        assert(FileTest.exists?("/tmp/colltest1"), "Did not collect file")
-        assert(! FileTest.exists?("/tmp/colltest2"), "Incorrectly collected file")
+        assert_file("/tmp/colltest1")
+        assert_nil(@file["/tmp/colltest2"], "Incorrectly collected file")
     end
 
     def snippet_virtualresources
         %w{1 2 3 4}.each do |num|
-            assert(FileTest.exists?("/tmp/virtualtest#{num}"),
-                "Did not collect file #{num}")
+            assert_file("/tmp/virtualtest#{num}")
         end
     end
     
     def snippet_componentrequire
         %w{1 2}.each do |num|
-            assert(FileTest.exists?("/tmp/testing_component_requires#{num}"),
+            assert_file("/tmp/testing_component_requires#{num}",
                 "#{num} does not exist")
-            end
+        end
     end
 
     def snippet_realize_defined_types
-        assert(FileTest.exists?("/tmp/realize_defined_test1"),
-            "Did not make file from realized defined type")
-        assert(FileTest.exists?("/tmp/realize_defined_test2"),
-            "Did not make file from realized file inside defined type")
+        assert_file("/tmp/realize_defined_test1")
+        assert_file("/tmp/realize_defined_test2")
     end
 
     def snippet_fqparents
-        assert(FileTest.exists?("/tmp/fqparent1"),
-            "Did not make file from parent class")
-        assert(FileTest.exists?("/tmp/fqparent2"),
-            "Did not make file from subclass")
+        assert_file("/tmp/fqparent1", "Did not make file from parent class")
+        assert_file("/tmp/fqparent2", "Did not make file from subclass")
     end
 
     def snippet_fqdefinition
-        assert(FileTest.exists?("/tmp/fqdefinition"),
+        assert_file("/tmp/fqdefinition",
             "Did not make file from fully-qualified definition")
     end
 
-    def snippet_dirchmod
-        dirs = %w{a b}.collect { |letter|
-            "/tmp/dirchmodtest%s" % letter
-        }
-
-        @@tmpfiles << dirs
-
-        dirs.each { |dir|
-            assert(FileTest.directory?(dir))
-        }
-
-        assert(File.stat("/tmp/dirchmodtesta").mode & 007777 == 0755)
-        assert(File.stat("/tmp/dirchmodtestb").mode & 007777 == 0700)
+    def snippet_subclass_name_duplication
+        assert_file("/tmp/subclass_name_duplication1",
+            "Did not make first file from duplicate subclass names")
+        assert_file("/tmp/subclass_name_duplication2",
+            "Did not make second file from duplicate subclass names")
     end
 
     # Iterate across each of the snippets and create a test.
@@ -517,9 +485,9 @@ class TestSnippets < Test::Unit::TestCase
                 assert_nothing_raised {
                     client.getconfig()
                 }
-                assert_nothing_raised {
-                    trans = client.apply()
-                }
+                #assert_nothing_raised {
+                #    trans = client.apply()
+                #}
 
                 Puppet::Type.eachtype { |type|
                     type.each { |obj|
@@ -529,10 +497,6 @@ class TestSnippets < Test::Unit::TestCase
                         #    assert(obj.parent, "%s has no parent" % obj.name)
                         #end
                         assert(obj.name)
-
-                        if obj.is_a?(Puppet.type(:file))
-                            @@tmpfiles << obj[:path]
-                        end
                     }
                 }
                 assert_nothing_raised {

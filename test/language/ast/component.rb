@@ -129,5 +129,14 @@ class TestASTComponent < Test::Unit::TestCase
             end
         end
     end
+
+    # Testing the root cause of #615.  We should be using the fqname for the type, instead
+    # of just the short name.
+    def test_fully_qualified_types
+        interp = mkinterp
+        klass = interp.newclass("one::two")
+
+        assert_equal("one::two", klass.classname, "Class did not get fully qualified class name")
+    end
 end
 # $Id$

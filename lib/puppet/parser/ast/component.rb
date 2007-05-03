@@ -15,8 +15,8 @@ class Puppet::Parser::AST
         # The class name
         @name = :definition
 
-        attr_accessor :type, :arguments, :code, :scope, :keyword
-        attr_accessor :exported, :namespace, :fqname, :interp
+        attr_accessor :classname, :arguments, :code, :scope, :keyword
+        attr_accessor :exported, :namespace, :interp
 
         # These are retrieved when looking up the superclass
         attr_accessor :name
@@ -27,7 +27,6 @@ class Puppet::Parser::AST
 
         def evaluate(hash)
             origscope = hash[:scope]
-            objtype = hash[:type]
             title = hash[:title]
             args = symbolize_options(hash[:arguments] || {})
 
@@ -44,8 +43,8 @@ class Puppet::Parser::AST
 
             # Additionally, add a tag for whatever kind of class
             # we are
-            if @type != "" and ! @type.nil?
-                scope.tag(@type)
+            if @classname != "" and ! @classname.nil?
+                @classname.split(/::/).each { |tag| scope.tag(tag) }
             end
 
             [name, title].each do |str|
@@ -68,7 +67,7 @@ class Puppet::Parser::AST
                             #    [default.inspect, arg.inspect, @name.inspect]
                         else
                             parsefail "Must pass %s to %s of type %s" %
-                                    [arg,title,@type]
+                                    [arg,title,@classname]
                         end
                     end
                 }
@@ -78,7 +77,7 @@ class Puppet::Parser::AST
             # component's scope.
             args.each { |arg,value|
                 unless validattr?(arg)
-                    parsefail "%s does not accept attribute %s" % [@type, arg]
+                    parsefail "%s does not accept attribute %s" % [@classname, arg]
                 end
 
                 exceptwrap do
@@ -142,7 +141,7 @@ class Puppet::Parser::AST
         # Set our parent class, with a little check to avoid some potential
         # weirdness.
         def parentclass=(name)
-            if name == self.type
+            if name == self.classname
                 parsefail "Parent classes must have dissimilar names"
             end
 
@@ -173,13 +172,12 @@ class Puppet::Parser::AST
         # Create a new subscope in which to evaluate our code.
         def subscope(scope, name = nil)
             args = {
-                :type => @type,
+                :type => self.classname,
                 :keyword => self.keyword,
                 :namespace => self.namespace
             }
 
             args[:name] = name if name
-            args[:type] = self.type if self.type
             scope = scope.newscope(args)
             scope.source = self
 
@@ -187,7 +185,7 @@ class Puppet::Parser::AST
         end
 
         def to_s
-            fqname
+            classname
         end
 
         # Check whether a given argument is valid.  Searches up through

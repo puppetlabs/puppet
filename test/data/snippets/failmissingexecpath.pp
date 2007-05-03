@@ -2,7 +2,8 @@ define distloc($path) {
     file { "/tmp/exectesting1":
         ensure => file
     }
-    exec { "touch $path":
+    exec { "exectest":
+        command => "touch $path",
         subscribe => File["/tmp/exectesting1"],
         refreshonly => true
     }

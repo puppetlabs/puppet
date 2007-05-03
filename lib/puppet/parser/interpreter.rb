@@ -321,7 +321,7 @@ class Puppet::Parser::Interpreter
         arghash = {
             :name => name,
             :interp => self,
-            :fqname => name
+            :classname => name
         }
 
         if (classes.is_a?(Array) and classes.empty?) or classes.nil?
@@ -528,20 +528,20 @@ class Puppet::Parser::Interpreter
     end
 
     # Create a new class, or merge with an existing class.
-    def newclass(fqname, options = {})
-        fqname = fqname.downcase
-        if @definetable.include?(fqname)
+    def newclass(name, options = {})
+        name = name.downcase
+        if @definetable.include?(name)
             raise Puppet::ParseError, "Cannot redefine class %s as a definition" %
-                fqname
+                name
         end
         code = options[:code]
         parent = options[:parent]
 
         # If the class is already defined, then add code to it.
-        if other = @classtable[fqname]
+        if other = @classtable[name]
             # Make sure the parents match
             if parent and other.parentclass and (parent != other.parentclass)
-                @parser.error("Class %s is already defined at %s:%s; cannot redefine" % [fqname, other.file, other.line])
+                @parser.error("Class %s is already defined at %s:%s; cannot redefine" % [name, other.file, other.line])
             end
 
             # This might be dangerous...
@@ -551,7 +551,7 @@ class Puppet::Parser::Interpreter
 
             # This might just be an empty, stub class.
             if code
-                tmp = fqname
+                tmp = name
                 if tmp == ""
                     tmp = "main"
                 end
@@ -566,46 +566,43 @@ class Puppet::Parser::Interpreter
             end
         else
             # Define it anew.
-            ns, name = namesplit(fqname)
-
             # Note we're doing something somewhat weird here -- we're setting
             # the class's namespace to its fully qualified name.  This means
             # anything inside that class starts looking in that namespace first.
-            args = {:type => name, :namespace => fqname, :fqname => fqname, :interp => self}
+            args = {:namespace => name, :classname => name, :interp => self}
             args[:code] = code if code
             args[:parentclass] = parent if parent
-            @classtable[fqname] = @parser.ast AST::HostClass, args
+            @classtable[name] = @parser.ast AST::HostClass, args
         end
 
-        return @classtable[fqname]
+        return @classtable[name]
     end
 
     # Create a new definition.
-    def newdefine(fqname, options = {})
-        fqname = fqname.downcase
-        if @classtable.include?(fqname)
+    def newdefine(name, options = {})
+        name = name.downcase
+        if @classtable.include?(name)
             raise Puppet::ParseError, "Cannot redefine class %s as a definition" %
-                fqname
+                name
         end
         # Make sure our definition doesn't already exist
-        if other = @definetable[fqname]
-            @parser.error("%s is already defined at %s:%s; cannot redefine" % [fqname, other.file, other.line])
+        if other = @definetable[name]
+            @parser.error("%s is already defined at %s:%s; cannot redefine" % [name, other.file, other.line])
         end
 
-        ns, name = namesplit(fqname)
+        ns, whatever = namesplit(name)
         args = {
-            :type => name,
             :namespace => ns,
             :arguments => options[:arguments],
             :code => options[:code],
-            :fqname => fqname
+            :classname => name
         }
 
         [:code, :arguments].each do |param|
             args[param] = options[param] if options[param]
         end
 
-        @definetable[fqname] = @parser.ast AST::Component, args
+        @definetable[name] = @parser.ast AST::Component, args
     end
 
     # Create a new node.  Nodes are special, because they're stored in a global
@@ -628,8 +625,7 @@ class Puppet::Parser::Interpreter
                 args[:parentclass] = options[:parent]
             end
             @nodetable[name] = @parser.ast(AST::Node, args)
-            @nodetable[name].fqname = name
-            @nodetable[name]
+            @nodetable[name].classname = name
             @nodetable[name].interp = self
             @nodetable[name]
         end
@@ -700,7 +696,7 @@ class Puppet::Parser::Interpreter
         end
         
         if output =~ /\A\s+\Z/ # all whitespace
-            puts "empty response for %s" % name
+            Puppet.debug "Empty response for %s from external node source" % name
             return nil
         end
         

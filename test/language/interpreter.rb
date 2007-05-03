@@ -193,7 +193,7 @@ class TestInterpreter < Test::Unit::TestCase
         assert(culain, "Did not find culain in ldap")
 
         assert_nothing_raised do
-            assert_equal(basenode.fqname.to_s, culain.parentclass.fqname.to_s,
+            assert_equal(basenode.classname.to_s, culain.parentclass.classname.to_s,
                 "Did not get parent class")
         end
     end
@@ -266,7 +266,7 @@ class TestInterpreter < Test::Unit::TestCase
             obj = interp.nodesearch("node")
         end
         assert(obj, "Did not find node")
-        assert_equal("node", obj.fqname)
+        assert_equal("node", obj.classname)
     end
 
     # Make sure searchnode behaves as we expect.
@@ -298,14 +298,14 @@ class TestInterpreter < Test::Unit::TestCase
         assert_nothing_raised do
             default = interp.nodesearch("nosuchnode")
             assert(default, "Did not find default node")
-            assert_equal("default", default.fqname)
+            assert_equal("default", default.classname)
         end
 
         # Now make sure the longest match always wins
         node = interp.nodesearch(*%w{node2 node2.domain.com})
 
         assert(node, "Did not find node2")
-        assert_equal("node2.domain.com", node.fqname,
+        assert_equal("node2.domain.com", node.classname,
             "Did not get longest match")
     end
 
@@ -386,7 +386,7 @@ class TestInterpreter < Test::Unit::TestCase
         interp.newnode(:foo)
 
         # And make sure we get things back correctly
-        assert_equal("foo", interp.nodesearch_code("simplenode").parentclass.fqname)
+        assert_equal("foo", interp.nodesearch_code("simplenode").parentclass.classname)
         assert_nil(interp.nodesearch_code("simplenode").code)
 
         # Now make sure that trying to redefine it throws an error.
@@ -497,9 +497,9 @@ class TestInterpreter < Test::Unit::TestCase
 
         mydefine = interp.finddefine("", "mydefine")
         assert(mydefine, "Could not find definition")
-        assert_equal("mydefine", interp.finddefine("", "mydefine").type)
+        assert_equal("mydefine", interp.finddefine("", "mydefine").classname)
         assert_equal("", mydefine.namespace)
-        assert_equal("mydefine", mydefine.type)
+        assert_equal("mydefine", mydefine.classname)
 
         assert_raise(Puppet::ParseError) do
             interp.newdefine("mydefine", :code => :yay,
@@ -517,8 +517,7 @@ class TestInterpreter < Test::Unit::TestCase
             "Could not find other::mydefine")
         assert_equal(:other, other.code)
         assert_equal("other", other.namespace)
-        assert_equal("mydefine", other.type)
-        assert_equal("other::mydefine", other.fqname)
+        assert_equal("other::mydefine", other.classname)
     end
 
     def test_newclass
@@ -543,7 +542,7 @@ class TestInterpreter < Test::Unit::TestCase
         assert(klass, "Did not return class")
 
         assert(interp.findclass("", "myclass"), "Could not find definition")
-        assert_equal("myclass", interp.findclass("", "myclass").type)
+        assert_equal("myclass", interp.findclass("", "myclass").classname)
         assert_equal(%w{original code},
              interp.findclass("", "myclass").code.evaluate(:scope => scope))
 
@@ -556,9 +555,8 @@ class TestInterpreter < Test::Unit::TestCase
         other = interp.findclass("other", "myclass")
         assert(other, "Could not find class")
         assert(interp.findclass("", "other::myclass"), "Could not find class")
-        assert_equal("other::myclass", other.fqname)
+        assert_equal("other::myclass", other.classname)
         assert_equal("other::myclass", other.namespace)
-        assert_equal("myclass", other.type)
         assert_equal(%w{something diff},
              interp.findclass("other", "myclass").code.evaluate(:scope => scope))
 

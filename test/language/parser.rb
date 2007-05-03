@@ -397,7 +397,7 @@ file { "/tmp/yayness":
         }
         sub = interp.findclass("", "container::deep::sub")
         assert(sub, "Could not find sub")
-        assert_equal("base", sub.parentclass.type)
+        assert_equal("base", sub.parentclass.classname)
         
         # Now try it with a parent class being a fq class
         assert_nothing_raised {
@@ -405,7 +405,7 @@ file { "/tmp/yayness":
         }
         sub = interp.findclass("", "container::one")
         assert(sub, "Could not find one")
-        assert_equal("sub", sub.parentclass.type)
+        assert_equal("container::deep::sub", sub.parentclass.classname)
         
         # Finally, try including a qualified class
         assert_nothing_raised("Could not include fully qualified class") {
@@ -431,7 +431,7 @@ file { "/tmp/yayness":
         assert_nothing_raised do
             out = parser.parse "Exec { path => '/usr/bin:/usr/sbin' }"
             assert_instance_of(AST::ASTArray, out)
-            assert_equal("", parser.interp.findclass("", "").type)
+            assert_equal("", parser.interp.findclass("", "").classname)
             assert_equal("", parser.interp.findclass("", "").namespace)
             assert_equal(out.object_id, parser.interp.findclass("", "").code.object_id)
         end

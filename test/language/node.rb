@@ -110,6 +110,6 @@ node default {
         assert(default,
             "Did not find default node")
 
-        assert_equal("default", default.fqname)
+        assert_equal("default", default.classname)
     end
 end
