@@ -326,6 +326,16 @@ module Puppet
         :smtpserver => ["none",
             "The server through which to send email reports."]
     )
+
+    self.setdefaults(:facts,
+        :factstore => ["yaml",
+            "The backend store to use for client facts."]
+    )
+
+    self.setdefaults(:yamlfacts,
+        :yamlfactdir => ["$vardir/facts",
+            "The directory in which client facts are stored when the yaml fact store is used."]
+    )
 end
 
 # $Id$
