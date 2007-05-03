@@ -81,6 +81,7 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %
 %{_sbindir}/puppetd
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
+%dir %{_sysconfdir}/puppet
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppetd.conf
 %doc CHANGELOG COPYING LICENSE README TODO examples
@@ -136,6 +137,12 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Wed May  2 2007 David Lutterkort <dlutter@redhat.com> - 0.22.4-1
+- New version
+
+* Thu Mar 29 2007 David Lutterkort <dlutter@redhat.com> - 0.22.3-1
+- Claim ownership of _sysconfdir/puppet (bz 233908)
+
 * Mon Mar 19 2007 David Lutterkort <dlutter@redhat.com> - 0.22.2-1
 - Set puppet's homedir to /var/lib/puppet, not /var/puppet
 - Remove no-lockdir patch, not needed anymore
