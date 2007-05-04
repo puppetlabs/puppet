@@ -1,3 +1,7 @@
+    Added transaction summaries (available with the --summarize option),
+    useful for getting a quick idea of what happened in a transaction.
+    Currently only useful on the client or with the puppet interpreter.
+
 0.22.4
     Execs now autorequire the user they run as, as long as the user
     is specified by name. (#430)
