@@ -27,7 +27,10 @@ class Transaction
             Values must be comma-separated."],
         :evaltrace => [false, "Whether each resource should log when it is
             being evaluated.  This allows you to interactively see exactly
-            what is being done."]
+            what is being done."],
+        :summarize => [false,
+            "Whether to print a transaction summary."
+        ]
     )
 
     # Add some additional times for reporting
@@ -407,16 +410,6 @@ class Transaction
         @timemetrics[:total] = @timemetrics.inject(0) do |total, vals|
             total += vals[1]
             total
-        end
-
-        # Unfortunately, RRD does not deal well with changing lists of values,
-        # so we have to pick a list of values and stick with it.  In this case,
-        # that means we record the total time, the config time, and that's about
-        # it.  We should probably send each type's time as a separate metric.
-        @timemetrics.dup.each do |name, value|
-            if Puppet::Type.type(name)
-                @timemetrics.delete(name)
-            end
         end
 
         # Add all of the metrics related to resource count and status

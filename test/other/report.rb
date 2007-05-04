@@ -11,6 +11,35 @@ class TestReports < Test::Unit::TestCase
 	include PuppetTest
 	include PuppetTest::Reporttesting
 
+    def mkreport
+        # First do some work
+        objects = []
+        6.times do |i|
+            file = tempfile()
+
+            # Make every third file
+            File.open(file, "w") { |f| f.puts "" } if i % 3 == 0
+
+            objects << Puppet::Type.newfile(
+                :path => file,
+                :ensure => "file"
+            )
+        end
+
+        comp = newcomp(*objects)
+
+        trans = nil
+        assert_nothing_raised("Failed to create transaction") {
+            trans = comp.evaluate
+        }
+
+        assert_nothing_raised("Failed to evaluate transaction") {
+            trans.evaluate
+        }
+
+        return trans.generate_report
+    end
+
     # Make sure we can use reports as log destinations.
     def test_reports_as_log_destinations
         report = fakereport
@@ -91,32 +120,7 @@ class TestReports < Test::Unit::TestCase
     if Puppet.features.rrd?
     def test_rrdgraph_report
         Puppet.config.use(:metrics)
-        # First do some work
-        objects = []
-        6.times do |i|
-            file = tempfile()
-
-            # Make every third file
-            File.open(file, "w") { |f| f.puts "" } if i % 3 == 0
-
-            objects << Puppet::Type.newfile(
-                :path => file,
-                :ensure => "file"
-            )
-        end
-
-        comp = newcomp(*objects)
-
-        trans = nil
-        assert_nothing_raised("Failed to create transaction") {
-            trans = comp.evaluate
-        }
-
-        assert_nothing_raised("Failed to evaluate transaction") {
-            trans.evaluate
-        }
-
-        report = trans.generate_report
+        report = mkreport
 
         assert(! report.metrics.empty?, "Did not receive any metrics")
 
@@ -228,6 +232,19 @@ class TestReports < Test::Unit::TestCase
             else
                 assert_nil(results[0], "got a report for %s" % args.inspect)
             end
+        end
+    end
+
+    def test_summary
+        report = mkreport
+
+        summary = nil
+        assert_nothing_raised("Could not create report summary") do
+            summary = report.summary
+        end
+
+        %w{Changes Total Resources}.each do |main|
+            assert(summary.include?(main), "Summary did not include info for %s" % main)
         end
     end
 end

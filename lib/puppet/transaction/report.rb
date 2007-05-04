@@ -48,6 +48,32 @@ class Puppet::Transaction::Report
     def record(metric, object)
         @records[metric] << object
     end
+
+    # Provide a summary of this report.
+    def summary
+        ret = ""
+
+        @metrics.sort { |a,b| a[1].label <=> b[1].label }.each do |name, metric|
+            ret += "%s:\n" % metric.label
+            metric.values.sort { |a,b|
+                # sort by label
+                if a[0] == :total
+                    1
+                elsif b[0] == :total
+                    -1
+                else
+                    a[1] <=> b[1]
+                end
+            }.each do |name, label, value|
+                next if value == 0
+                if value.is_a?(Float)
+                    value = "%0.2f" % value
+                end
+                ret += "   %15s %s\n" % [label + ":", value]
+            end
+        end
+        return ret
+    end
 end
 
 # $Id$

@@ -74,7 +74,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             Puppet::Util::Storage.store
         end
         
-        if Puppet[:report]
+        if Puppet[:report] or Puppet[:summarize]
             report(transaction)
         end
 
@@ -501,12 +501,25 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     def report(transaction)
         begin
             report = transaction.generate_report()
-            if Puppet[:rrdgraph] == true
-                report.graph()
-            end
-            reportclient().report(report)
         rescue => detail
-            Puppet.err "Reporting failed: %s" % detail
+            Puppet.err "Could not generate report: %s" % detail
+            return
+        end
+
+        if Puppet[:rrdgraph] == true
+            report.graph()
+        end
+
+        if Puppet[:summarize]
+            puts report.summary
+        end
+        
+        if Puppet[:report]
+            begin
+                reportclient().report(report)
+            rescue => detail
+                Puppet.err "Reporting failed: %s" % detail
+            end
         end
     end
 

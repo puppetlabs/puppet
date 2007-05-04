@@ -110,6 +110,11 @@ Puppet::Network::Handler.report.newreport(:rrdgraph) do
 
         self.metrics.each do |name, metric|
             metric.basedir = hostdir
+
+            if name == :time
+                timeclean(metric)
+            end
+
             metric.store(time)
 
             metric.graph
@@ -118,6 +123,14 @@ Puppet::Network::Handler.report.newreport(:rrdgraph) do
         unless FileTest.exists?(File.join(hostdir, "index.html"))
             mkhtml()
         end
+    end
+
+    # Unfortunately, RRD does not deal well with changing lists of values,
+    # so we have to pick a list of values and stick with it.  In this case,
+    # that means we record the total time, the config time, and that's about
+    # it.  We should probably send each type's time as a separate metric.
+    def timeclean(metric)
+        metric.values = metric.values.find_all { |name, label, value| name == :total }
     end
 end
 
