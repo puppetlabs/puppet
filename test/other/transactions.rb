@@ -884,7 +884,7 @@ class TestTransactions < Test::Unit::TestCase
     end
 
     def test_graph
-        Puppet.config.use(:puppet)
+        Puppet.config.use(:main)
         # Make a graph
         graph = Puppet::PGraph.new
         graph.add_edge!("a", "b")

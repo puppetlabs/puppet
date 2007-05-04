@@ -30,6 +30,9 @@ Puppet::Network::Handler.report.newreport(:tagmail) do
         webservers that are not also from mailservers to ``httpadmins@domain.com``.
         "
 
+
+    Puppet.config.use(:tagmail)
+
     # Find all matching messages.
     def match(taglists)
         reports = []

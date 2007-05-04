@@ -238,7 +238,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     
     # Just so we can specify that we are "the" instance.
     def initialize(*args)
-        Puppet.config.use(:puppet, :sslcertificates, :puppetd)
+        Puppet.config.use(:main, :ssl, :puppetd)
         super
 
         # This might be nil

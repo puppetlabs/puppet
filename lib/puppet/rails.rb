@@ -4,36 +4,12 @@ require 'facter'
 require 'puppet'
 
 module Puppet::Rails
-    Puppet.config.setdefaults(:puppetmaster,
-        :dblocation => { :default => "$statedir/clientconfigs.sqlite3",
-            :mode => 0660,
-            :owner => "$user",
-            :group => "$group",
-            :desc => "The database cache for client configurations.  Used for
-                querying within the language."
-        },
-        :dbadapter => [ "sqlite3", "The type of database to use." ],
-        :dbmigrate => [ false, "Whether to automatically migrate the database." ],
-        :dbname => [ "puppet", "The name of the database to use." ],
-        :dbserver => [ "localhost", "The database server for Client caching. Only
-            used when networked databases are used."],
-        :dbuser => [ "puppet", "The database user for Client caching. Only
-            used when networked databases are used."],
-        :dbpassword => [ "puppet", "The database password for Client caching. Only
-            used when networked databases are used."],
-        :railslog => {:default => "$logdir/rails.log",
-            :mode => 0600,
-            :owner => "$user",
-            :group => "$group",
-            :desc => "Where Rails-specific logs are sent"
-        }
-    )
 
     def self.connect
         # This global init does not work for testing, because we remove
         # the state dir on every test.
         unless ActiveRecord::Base.connected?
-            Puppet.config.use(:puppet)
+            Puppet.config.use(:main)
 
             ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
             ActiveRecord::Base.allow_concurrency = true
@@ -88,7 +64,7 @@ module Puppet::Rails
 
         # For now, we have to use :puppet, too, since non-puppetmasterd processes
         # (including testing) put the logdir in :puppet, not in :puppetmasterd.
-        Puppet.config.use(:puppetmaster, :puppet)
+        Puppet.config.use(:rails, :main, :puppetmasterd)
 
         # This has to come after we create the logdir with the :use above.
         ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
@@ -127,7 +103,7 @@ module Puppet::Rails
             raise Puppet::DevError, "No activerecord, cannot init Puppet::Rails"
         end
 
-        Puppet.config.use(:puppetmaster)
+        Puppet.config.use(:puppetmasterd, :rails)
 
         begin
             ActiveRecord::Base.establish_connection(database_arguments())

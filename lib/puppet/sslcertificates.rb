@@ -9,54 +9,6 @@ rescue LoadError
 end
 
 module Puppet::SSLCertificates
-    hostname = Facter["hostname"].value
-    domain = Facter["domain"].value
-    if domain and domain != ""
-        fqdn = [hostname, domain].join(".")
-    else
-        fqdn = hostname
-    end
-
-    Puppet.setdefaults("certificates",
-        :certname => [fqdn, "The name to use when handling certificates.  Defaults
-            to the fully qualified domain name."],
-        :certdir => ["$ssldir/certs", "The certificate directory."],
-        :publickeydir => ["$ssldir/public_keys", "The public key directory."],
-        :privatekeydir => { :default => "$ssldir/private_keys",
-            :mode => 0750,
-            :desc => "The private key directory."
-        },
-        :privatedir => { :default => "$ssldir/private",
-            :mode => 0750,
-            :desc => "Where the client stores private certificate information."
-        },
-        :passfile => { :default => "$privatedir/password",
-            :mode => 0640,
-            :desc => "Where puppetd stores the password for its private key.
-                Generally unused."
-        },
-        :hostcsr => { :default => "$ssldir/csr_$certname.pem",
-            :mode => 0644,
-            :desc => "Where individual hosts store and look for their certificates."
-        },
-        :hostcert => { :default => "$certdir/$certname.pem",
-            :mode => 0644,
-            :desc => "Where individual hosts store and look for their certificates."
-        },
-        :hostprivkey => { :default => "$privatekeydir/$certname.pem",
-            :mode => 0600,
-            :desc => "Where individual hosts store and look for their private key."
-        },
-        :hostpubkey => { :default => "$publickeydir/$certname.pem",
-            :mode => 0644,
-            :desc => "Where individual hosts store and look for their public key."
-        },
-        :localcacert => { :default => "$certdir/ca.pem",
-            :mode => 0644,
-            :desc => "Where each client stores the CA certificate."
-        }
-    )
-
     #def self.mkcert(type, name, ttl, issuercert, issuername, serial, publickey)
     def self.mkcert(hash)
         [:type, :name, :ttl, :issuer, :serial, :publickey].each { |param|

@@ -14,7 +14,6 @@ class TestSnippets < Test::Unit::TestCase
     include ObjectSpace
 
     def setup
-        require 'profile'
         super
         @file = Puppet::Type.type(:file)
     end

@@ -115,7 +115,7 @@ class TestClient < Test::Unit::TestCase
         Puppet[:ssldir] = confdir
         Puppet.config.mkdir(:ssldir)
         Puppet.config.clearused
-        Puppet.config.use(:certificates, :ca)
+        Puppet.config.use(:ssl, :ca)
 
         mkserver
 

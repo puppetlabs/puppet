@@ -10,61 +10,6 @@ require 'puppet/parser/scope'
 
 class Puppet::Parser::Interpreter
     include Puppet::Util
-    
-    Puppet.setdefaults(:puppet,
-        :casesensitive => [false,
-            "Whether matching in case statements and selectors
-            should be case-sensitive.  Case insensitivity is
-            handled by downcasing all values before comparison."],
-        :external_nodes => ["none",
-            "An external command that can produce node information.  The
-            first line of output must be either the parent node or blank,
-            and if there is a second line of output it should be a list of
-            whitespace-separated classes to include on that node.  This command
-            makes it straightforward to store your node mapping information
-            in other data sources like databases.
-            
-            For unknown nodes, the commands should exit with an exit code of 1."])
-
-    Puppet.setdefaults("ldap",
-        :ldapnodes => [false,
-            "Whether to search for node configurations in LDAP."],
-        :ldapssl => [false,
-            "Whether SSL should be used when searching for nodes.
-            Defaults to false because SSL usually requires certificates
-            to be set up on the client side."],
-        :ldaptls => [false,
-            "Whether TLS should be used when searching for nodes.
-            Defaults to false because TLS usually requires certificates
-            to be set up on the client side."],
-        :ldapserver => ["ldap",
-            "The LDAP server.  Only used if ``ldapnodes`` is enabled."],
-        :ldapport => [389,
-            "The LDAP port.  Only used if ``ldapnodes`` is enabled."],
-        :ldapstring => ["(&(objectclass=puppetClient)(cn=%s))",
-            "The search string used to find an LDAP node."],
-        :ldapattrs => ["puppetclass",
-            "The LDAP attributes to use to define Puppet classes.  Values
-            should be comma-separated."],
-        :ldapparentattr => ["parentnode",
-            "The attribute to use to define the parent node."],
-        :ldapuser => ["",
-            "The user to use to connect to LDAP.  Must be specified as a
-            full DN."],
-        :ldappassword => ["",
-            "The password to use to connect to LDAP."],
-        :ldapbase => ["",
-            "The search base for LDAP searches.  It's impossible to provide
-            a meaningful default here, although the LDAP libraries might
-            have one already set.  Generally, it should be the 'ou=Hosts'
-            branch under your main directory."]
-    )
-
-    Puppet.setdefaults(:puppetmaster,
-        :storeconfigs => [false,
-            "Whether to store each client's configuration.  This
-             requires ActiveRecord from Ruby on Rails."]
-    )
 
     attr_accessor :usenodes
 

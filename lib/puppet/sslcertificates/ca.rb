@@ -4,83 +4,6 @@ class Puppet::SSLCertificates::CA
     Certificate = Puppet::SSLCertificates::Certificate
     attr_accessor :keyfile, :file, :config, :dir, :cert, :crl
 
-    Puppet.setdefaults(:ca,
-        :cadir => {  :default => "$ssldir/ca",
-            :owner => "$user",
-            :group => "$group",
-            :mode => 0770,
-            :desc => "The root directory for the certificate authority."
-        },
-        :cacert => { :default => "$cadir/ca_crt.pem",
-            :owner => "$user",
-            :group => "$group",
-            :mode => 0660,
-            :desc => "The CA certificate."
-        },
-        :cakey => { :default => "$cadir/ca_key.pem",
-            :owner => "$user",
-            :group => "$group",
-            :mode => 0660,
-            :desc => "The CA private key."
-        },
-        :capub => { :default => "$cadir/ca_pub.pem",
-            :owner => "$user",
-            :group => "$group",
-            :desc => "The CA public key."
-        },
-        :cacrl => { :default => "$cadir/ca_crl.pem",
-            :owner => "$user",
-            :group => "$group",
-            :mode => 0664,
-            :desc => "The certificate revocation list (CRL) for the CA. Set this to 'none' if you do not want to use a CRL."
-        },
-        :caprivatedir => { :default => "$cadir/private",
-            :owner => "$user",
-            :group => "$group",
-            :mode => 0770,
-            :desc => "Where the CA stores private certificate information."
-        },
-        :csrdir => { :default => "$cadir/requests",
-            :owner => "$user",
-            :group => "$group",
-            :desc => "Where the CA stores certificate requests"
-        },
-        :signeddir => { :default => "$cadir/signed",
-            :owner => "$user",
-            :group => "$group",
-            :mode => 0770,
-            :desc => "Where the CA stores signed certificates."
-        },
-        :capass => { :default => "$caprivatedir/ca.pass",
-            :owner => "$user",
-            :group => "$group",
-            :mode => 0660,
-            :desc => "Where the CA stores the password for the private key"
-        },
-        :serial => { :default => "$cadir/serial",
-            :owner => "$user",
-            :group => "$group",
-            :desc => "Where the serial number for certificates is stored."
-        },
-        :autosign => { :default => "$confdir/autosign.conf",
-            :mode => 0644,
-            :desc => "Whether to enable autosign.  Valid values are true (which
-                autosigns any key request, and is a very bad idea), false (which
-                never autosigns any key request), and the path to a file, which
-                uses that configuration file to determine which keys to sign."},
-        :ca_days => ["", "How long a certificate should be valid. 
-                 This parameter is deprecated, use ca_ttl instead"],
-        :ca_ttl => ["5y", "The default TTL for new certificates; valid values 
-                must be an integer, optionally followed by one of the units 
-                'y' (years of 365 days), 'd' (days), 'h' (hours), or 
-                's' (seconds). The unit defaults to seconds. If this parameter
-                is set, ca_days is ignored. Examples are '3600' (one hour) 
-                and '1825d', which is the same as '5y' (5 years) "],
-        :ca_md => ["md5", "The type of hash used in certificates."],
-        :req_bits => [2048, "The bit length of the certificates."],
-        :keylength => [1024, "The bit length of keys."]
-    )
-
     def certfile
         @config[:cacert]
     end
@@ -128,7 +51,7 @@ class Puppet::SSLCertificates::CA
     end
 
     def initialize(hash = {})
-        Puppet.config.use(:puppet, :certificates, :ca)
+        Puppet.config.use(:main, :ca, :ssl)
         self.setconfig(hash)
 
         if Puppet[:capass]

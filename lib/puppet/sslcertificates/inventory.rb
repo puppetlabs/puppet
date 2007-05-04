@@ -3,16 +3,6 @@
 module Puppet::SSLCertificates
     module Inventory
 
-        Puppet.config.setdefaults(:ca,
-            :cert_inventory => {
-                :default => "$cadir/inventory.txt",
-                :mode => 0644,
-                :owner => "$user",
-                :group => "$group",
-                :desc => "A Complete listing of all certificates"
-            }
-        )
-
         # Add CERT to the inventory of issued certs in '$cadir/inventory.txt'
         # If no inventory exists yet, build an inventory and list all the 
         # certificates that have been signed so far

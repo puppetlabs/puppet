@@ -3,18 +3,6 @@ require 'puppet'
 
 # A class for handling metrics.  This is currently ridiculously hackish.
 class Puppet::Util::Metric
-    Puppet.config.setdefaults("metrics",
-        :rrddir => {:default => "$vardir/rrd",
-            :owner => "$user",
-            :group => "$group",
-            :desc => "The directory where RRD database files are stored.
-                Directories for each reporting host will be created under
-                this directory."
-        },
-        :rrdgraph => [false, "Whether RRD information should be graphed."],
-        :rrdinterval => ["$runinterval", "How often RRD should expect data.
-            This should match how often the hosts report back to the server."]
-    )
     
     # Load the library as a feature, so we can test its presence.
     Puppet.features.add :rrd, :libs => 'RRD'

@@ -16,7 +16,7 @@ class Puppet::Network::Client::CA < Puppet::Network::Client
     # This client is really only able to request certificates for the
     # current host.  It uses the Puppet.config settings to figure everything out.
     def request_cert
-        Puppet.config.use(:puppet, :certificates)
+        Puppet.config.use(:main, :ssl)
 
         if cert = read_cert
             return cert

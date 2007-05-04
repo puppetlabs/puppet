@@ -47,7 +47,7 @@ module Puppet
 
                 # yuck; separate http logs
                 file = nil
-                Puppet.config.use(:puppet, :certificates, Puppet.name)
+                Puppet.config.use(:main, :ssl, Puppet[:name])
                 if Puppet[:name] == "puppetmasterd"
                     file = Puppet[:masterhttplog]
                 else

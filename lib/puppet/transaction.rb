@@ -15,24 +15,6 @@ class Transaction
 
     include Puppet::Util
 
-    Puppet.config.setdefaults(:puppet,
-        :graph => [false, "Whether to create dot graph files for the different
-            configuration graphs.  These dot files can be interpreted by tools
-            like OmniGraffle or dot (which is part of ImageMagick)."],
-        :graphdir => ["$statedir/graphs", "Where to store dot-outputted graphs."]
-    )
-    Puppet.config.setdefaults(:transaction,
-        :tags => ["", "Tags to use to find resources.  If this is set, then
-            only resources tagged with the specified tags will be applied.
-            Values must be comma-separated."],
-        :evaltrace => [false, "Whether each resource should log when it is
-            being evaluated.  This allows you to interactively see exactly
-            what is being done."],
-        :summarize => [false,
-            "Whether to print a transaction summary."
-        ]
-    )
-
     # Add some additional times for reporting
     def addtimes(hash)
         hash.each do |name, num|
@@ -434,6 +416,8 @@ class Transaction
         return if self.configurator
         
         return unless Puppet[:graph]
+
+        Puppet.config.use(:graphing)
 
         file = File.join(Puppet[:graphdir], "%s.dot" % name.to_s)
         File.open(file, "w") { |f|

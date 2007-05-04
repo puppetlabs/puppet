@@ -11,14 +11,6 @@ class Puppet::Parser::Scope
 
     AST = Puppet::Parser::AST
 
-    # This doesn't actually work right now.
-    Puppet.config.setdefaults(:puppet,
-        :lexical => [false, "Whether to use lexical scoping (vs. dynamic)."],
-        :templatedir => ["$vardir/templates",
-            "Where Puppet looks for template files."
-        ]
-    )
-
     Puppet::Util.logmethods(self)
 
     include Enumerable

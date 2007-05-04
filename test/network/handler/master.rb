@@ -124,7 +124,7 @@ class TestMaster < Test::Unit::TestCase
         assert(! client.fresh?(facts),
             "Client is incorrectly up to date")
 
-        Puppet.config.use(:puppet)
+        Puppet.config.use(:main)
         assert_nothing_raised {
             client.getconfig
             client.apply

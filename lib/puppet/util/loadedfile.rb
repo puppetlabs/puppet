@@ -12,13 +12,6 @@ module Puppet
         # have to depend on the granularity of the filesystem.
         attr_writer :tstamp
 
-        Puppet.config.setdefaults(:puppet,
-            :filetimeout => [ 15,
-                "The minimum time to wait between checking for updates in
-                configuration files."
-            ]
-        )
-
         # Determine whether the file has changed and thus whether it should
         # be reparsed.
         def changed?

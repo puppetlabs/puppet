@@ -5,6 +5,7 @@ module Puppet
     conf = nil
     var = nil
     name = $0.gsub(/.+#{File::SEPARATOR}/,'').sub(/\.rb$/, '')
+
     if name != "puppetmasterd" and Puppet::Util::SUIDManager.uid != 0
         conf = File.expand_path("~/.puppet")
         var = File.expand_path("~/.puppet/var")
@@ -14,7 +15,7 @@ module Puppet
         var = "/var/puppet"
     end
 
-    self.setdefaults(:puppet,
+    self.setdefaults(:main,
         :confdir => [conf, "The main Puppet configuration directory.  The default for this parameter is calculated based on the user.  If the process
         is runnig as root or the user that ``puppetmasterd`` is supposed to run as, it defaults to a system directory, but if it's running as any other user,
         it defaults to being in ``~``."],
@@ -33,7 +34,7 @@ module Puppet
     else
         logopts = ["$vardir/log", "The Puppet log directory."]
     end
-    setdefaults(:puppet, :logdir => logopts)
+    setdefaults(:main, :logdir => logopts)
     
     # This name hackery is necessary so that the rundir is set reasonably during
     # unit tests.
@@ -43,7 +44,7 @@ module Puppet
         rundir = "$vardir/run"
     end
 
-    self.setdefaults(:puppet,
+    self.setdefaults(:main,
         :trace => [false, "Whether to print stack traces on some errors"],
         :autoflush => [false, "Whether log files should always flush to disk."],
         :syslogfacility => ["daemon", "What syslog facility to use when logging to
@@ -124,8 +125,140 @@ module Puppet
         ]
     )
 
+    hostname = Facter["hostname"].value
+    domain = Facter["domain"].value
+    if domain and domain != ""
+        fqdn = [hostname, domain].join(".")
+    else
+        fqdn = hostname
+    end
+
+    Puppet.setdefaults(:ssl,
+        :certname => [fqdn, "The name to use when handling certificates.  Defaults
+            to the fully qualified domain name."],
+        :certdir => ["$ssldir/certs", "The certificate directory."],
+        :publickeydir => ["$ssldir/public_keys", "The public key directory."],
+        :privatekeydir => { :default => "$ssldir/private_keys",
+            :mode => 0750,
+            :desc => "The private key directory."
+        },
+        :privatedir => { :default => "$ssldir/private",
+            :mode => 0750,
+            :desc => "Where the client stores private certificate information."
+        },
+        :passfile => { :default => "$privatedir/password",
+            :mode => 0640,
+            :desc => "Where puppetd stores the password for its private key.
+                Generally unused."
+        },
+        :hostcsr => { :default => "$ssldir/csr_$certname.pem",
+            :mode => 0644,
+            :desc => "Where individual hosts store and look for their certificates."
+        },
+        :hostcert => { :default => "$certdir/$certname.pem",
+            :mode => 0644,
+            :desc => "Where individual hosts store and look for their certificates."
+        },
+        :hostprivkey => { :default => "$privatekeydir/$certname.pem",
+            :mode => 0600,
+            :desc => "Where individual hosts store and look for their private key."
+        },
+        :hostpubkey => { :default => "$publickeydir/$certname.pem",
+            :mode => 0644,
+            :desc => "Where individual hosts store and look for their public key."
+        },
+        :localcacert => { :default => "$certdir/ca.pem",
+            :mode => 0644,
+            :desc => "Where each client stores the CA certificate."
+        }
+    )
+
+    setdefaults(:ca,
+        :cadir => {  :default => "$ssldir/ca",
+            :owner => "$user",
+            :group => "$group",
+            :mode => 0770,
+            :desc => "The root directory for the certificate authority."
+        },
+        :cacert => { :default => "$cadir/ca_crt.pem",
+            :owner => "$user",
+            :group => "$group",
+            :mode => 0660,
+            :desc => "The CA certificate."
+        },
+        :cakey => { :default => "$cadir/ca_key.pem",
+            :owner => "$user",
+            :group => "$group",
+            :mode => 0660,
+            :desc => "The CA private key."
+        },
+        :capub => { :default => "$cadir/ca_pub.pem",
+            :owner => "$user",
+            :group => "$group",
+            :desc => "The CA public key."
+        },
+        :cacrl => { :default => "$cadir/ca_crl.pem",
+            :owner => "$user",
+            :group => "$group",
+            :mode => 0664,
+            :desc => "The certificate revocation list (CRL) for the CA. Set this to 'none' if you do not want to use a CRL."
+        },
+        :caprivatedir => { :default => "$cadir/private",
+            :owner => "$user",
+            :group => "$group",
+            :mode => 0770,
+            :desc => "Where the CA stores private certificate information."
+        },
+        :csrdir => { :default => "$cadir/requests",
+            :owner => "$user",
+            :group => "$group",
+            :desc => "Where the CA stores certificate requests"
+        },
+        :signeddir => { :default => "$cadir/signed",
+            :owner => "$user",
+            :group => "$group",
+            :mode => 0770,
+            :desc => "Where the CA stores signed certificates."
+        },
+        :capass => { :default => "$caprivatedir/ca.pass",
+            :owner => "$user",
+            :group => "$group",
+            :mode => 0660,
+            :desc => "Where the CA stores the password for the private key"
+        },
+        :serial => { :default => "$cadir/serial",
+            :owner => "$user",
+            :group => "$group",
+            :desc => "Where the serial number for certificates is stored."
+        },
+        :autosign => { :default => "$confdir/autosign.conf",
+            :mode => 0644,
+            :desc => "Whether to enable autosign.  Valid values are true (which
+                autosigns any key request, and is a very bad idea), false (which
+                never autosigns any key request), and the path to a file, which
+                uses that configuration file to determine which keys to sign."},
+        :ca_days => ["", "How long a certificate should be valid. 
+                 This parameter is deprecated, use ca_ttl instead"],
+        :ca_ttl => ["5y", "The default TTL for new certificates; valid values 
+                must be an integer, optionally followed by one of the units 
+                'y' (years of 365 days), 'd' (days), 'h' (hours), or 
+                's' (seconds). The unit defaults to seconds. If this parameter
+                is set, ca_days is ignored. Examples are '3600' (one hour) 
+                and '1825d', which is the same as '5y' (5 years) "],
+        :ca_md => ["md5", "The type of hash used in certificates."],
+        :req_bits => [2048, "The bit length of the certificates."],
+        :keylength => [1024, "The bit length of keys."],
+        :cert_inventory => {
+            :default => "$cadir/inventory.txt",
+            :mode => 0644,
+            :owner => "$user",
+            :group => "$group",
+            :desc => "A Complete listing of all certificates"
+        }
+    )
+
     # Define the config default.
-    self.setdefaults(self.name,
+    self.setdefaults(self.config[:name],
         :config => ["$confdir/#{Puppet[:name]}.conf",
             "The configuration file for #{Puppet[:name]}."],
         :pidfile => ["", "The pid file"],
@@ -137,7 +270,7 @@ module Puppet
             speak SSL."]
     )
 
-    self.setdefaults("puppetmasterd",
+    self.setdefaults(:puppetmasterd,
         :user => ["puppet", "The user puppetmasterd should run as."],
         :group => ["puppet", "The group puppetmasterd should run as."],
         :manifestdir => ["$confdir/manifests",
@@ -179,7 +312,7 @@ module Puppet
             directories." ]
     )
 
-    self.setdefaults("puppetd",
+    self.setdefaults(:puppetd,
         :localconfig => { :default => "$statedir/localconfig",
             :owner => "root",
             :mode => 0660,
@@ -222,14 +355,14 @@ module Puppet
         :ca_port => ["$masterport", "The port to use for the certificate authority."]
     )
         
-    self.setdefaults("filebucket",
+    self.setdefaults(:filebucket,
         :clientbucketdir => {
             :default => "$vardir/clientbucket",
             :mode => 0750,
             :desc => "Where FileBucket files are stored locally."
         }
     )
-    self.setdefaults("fileserver",
+    self.setdefaults(:fileserver,
         :fileserverconfig => ["$confdir/fileserver.conf",
             "Where the fileserver configuration is stored."]
     )
@@ -247,7 +380,7 @@ module Puppet
                     received from the client.  Each client gets a separate
                     subdirectory."}
     )
-    self.setdefaults("puppetd",
+    self.setdefaults(:puppetd,
         :puppetdlockfile => [ "$statedir/puppetdlock",
             "A lock file to temporarily stop puppetd from doing anything."],
         :usecacheonfailure => [true,
@@ -281,7 +414,7 @@ module Puppet
     )
 
     # Plugin information.
-    self.setdefaults("puppet",
+    self.setdefaults(:main,
         :pluginpath => ["$vardir/plugins",
             "Where Puppet should look for plugins.  Multiple directories should
             be colon-separated, like normal PATH variables."],
@@ -299,7 +432,7 @@ module Puppet
     )
 
     # Central fact information.
-    self.setdefaults("puppet",
+    self.setdefaults(:main,
         :factpath => ["$vardir/facts",
             "Where Puppet should look for facts.  Multiple directories should
             be colon-separated, like normal PATH variables."],
@@ -316,7 +449,7 @@ module Puppet
             "What files to ignore when pulling down facts."]
     )
 
-    self.setdefaults(:reporting,
+    self.setdefaults(:tagmail,
         :tagmap => ["$confdir/tagmail.conf",
             "The mapping between reporting tags and email addresses."],
         :sendmail => [%x{which sendmail 2>/dev/null}.chomp,
@@ -335,6 +468,139 @@ module Puppet
     self.setdefaults(:yamlfacts,
         :yamlfactdir => ["$vardir/facts",
             "The directory in which client facts are stored when the yaml fact store is used."]
+    )
+
+    self.setdefaults(:rails,
+        :dblocation => { :default => "$statedir/clientconfigs.sqlite3",
+            :mode => 0660,
+            :owner => "$user",
+            :group => "$group",
+            :desc => "The database cache for client configurations.  Used for
+                querying within the language."
+        },
+        :dbadapter => [ "sqlite3", "The type of database to use." ],
+        :dbmigrate => [ false, "Whether to automatically migrate the database." ],
+        :dbname => [ "puppet", "The name of the database to use." ],
+        :dbserver => [ "localhost", "The database server for Client caching. Only
+            used when networked databases are used."],
+        :dbuser => [ "puppet", "The database user for Client caching. Only
+            used when networked databases are used."],
+        :dbpassword => [ "puppet", "The database password for Client caching. Only
+            used when networked databases are used."],
+        :railslog => {:default => "$logdir/rails.log",
+            :mode => 0600,
+            :owner => "$user",
+            :group => "$group",
+            :desc => "Where Rails-specific logs are sent"
+        }
+    )
+
+    setdefaults(:graphing,
+        :graph => [false, "Whether to create dot graph files for the different
+            configuration graphs.  These dot files can be interpreted by tools
+            like OmniGraffle or dot (which is part of ImageMagick)."],
+        :graphdir => ["$statedir/graphs", "Where to store dot-outputted graphs."]
+    )
+
+    setdefaults(:transaction,
+        :tags => ["", "Tags to use to find resources.  If this is set, then
+            only resources tagged with the specified tags will be applied.
+            Values must be comma-separated."],
+        :evaltrace => [false, "Whether each resource should log when it is
+            being evaluated.  This allows you to interactively see exactly
+            what is being done."],
+        :summarize => [false,
+            "Whether to print a transaction summary."
+        ]
+    )
+
+    setdefaults(:parser,
+        :typecheck => [true, "Whether to validate types during parsing."],
+        :paramcheck => [true, "Whether to validate parameters during parsing."]
+    )
+    
+    setdefaults(:main,
+        :casesensitive => [false,
+            "Whether matching in case statements and selectors
+            should be case-sensitive.  Case insensitivity is
+            handled by downcasing all values before comparison."],
+        :external_nodes => ["none",
+            "An external command that can produce node information.  The
+            first line of output must be either the parent node or blank,
+            and if there is a second line of output it should be a list of
+            whitespace-separated classes to include on that node.  This command
+            makes it straightforward to store your node mapping information
+            in other data sources like databases.
+            
+            For unknown nodes, the commands should exit with an exit code of 1."])
+
+    setdefaults(:ldap,
+        :ldapnodes => [false,
+            "Whether to search for node configurations in LDAP."],
+        :ldapssl => [false,
+            "Whether SSL should be used when searching for nodes.
+            Defaults to false because SSL usually requires certificates
+            to be set up on the client side."],
+        :ldaptls => [false,
+            "Whether TLS should be used when searching for nodes.
+            Defaults to false because TLS usually requires certificates
+            to be set up on the client side."],
+        :ldapserver => ["ldap",
+            "The LDAP server.  Only used if ``ldapnodes`` is enabled."],
+        :ldapport => [389,
+            "The LDAP port.  Only used if ``ldapnodes`` is enabled."],
+        :ldapstring => ["(&(objectclass=puppetClient)(cn=%s))",
+            "The search string used to find an LDAP node."],
+        :ldapattrs => ["puppetclass",
+            "The LDAP attributes to use to define Puppet classes.  Values
+            should be comma-separated."],
+        :ldapparentattr => ["parentnode",
+            "The attribute to use to define the parent node."],
+        :ldapuser => ["",
+            "The user to use to connect to LDAP.  Must be specified as a
+            full DN."],
+        :ldappassword => ["",
+            "The password to use to connect to LDAP."],
+        :ldapbase => ["",
+            "The search base for LDAP searches.  It's impossible to provide
+            a meaningful default here, although the LDAP libraries might
+            have one already set.  Generally, it should be the 'ou=Hosts'
+            branch under your main directory."]
+    )
+
+    setdefaults(:puppetmasterd,
+        :storeconfigs => [false,
+            "Whether to store each client's configuration.  This
+             requires ActiveRecord from Ruby on Rails."]
+    )
+
+    # This doesn't actually work right now.
+    setdefaults(:parser,
+        :lexical => [false, "Whether to use lexical scoping (vs. dynamic)."],
+        :templatedir => ["$vardir/templates",
+            "Where Puppet looks for template files."
+        ]
+    )
+
+    setdefaults(:main,
+        :filetimeout => [ 15,
+            "The minimum time to wait (in seconds) between checking for updates in
+            configuration files.  This timeout determines how quickly Puppet checks whether
+            a file (such as manifests or templates) has changed on disk."
+        ]
+    )
+
+    setdefaults(:metrics,
+        :rrddir => {:default => "$vardir/rrd",
+            :owner => "$user",
+            :group => "$group",
+            :desc => "The directory where RRD database files are stored.
+                Directories for each reporting host will be created under
+                this directory."
+        },
+        :rrdgraph => [false, "Whether RRD information should be graphed."],
+        :rrdinterval => ["$runinterval", "How often RRD should expect data.
+            This should match how often the hosts report back to the server."]
     )
 end
 
