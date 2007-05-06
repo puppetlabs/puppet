@@ -167,7 +167,7 @@ class Puppet::Util::Config
 
     # Handle a command-line argument.
     def handlearg(opt, value = nil)
-        value = mungearg(value) if value
+        value = munge_value(value) if value
         str = opt.sub(/^--/,'')
         bool = true
         newstr = str.sub(/^no-/, '')
@@ -221,18 +221,6 @@ class Puppet::Util::Config
         end
     end
 
-    # Convert arguments appropriately.
-    def mungearg(value)
-        # Handle different data types correctly
-        return case value
-            when /^false$/i: false
-            when /^true$/i: true
-            when /^\d+$/i: Integer(value)
-            else
-                value.gsub(/^["']|["']$/,'').sub(/\s+$/, '')
-        end
-    end
-
     # Return all of the parameters associated with a given section.
     def params(section)
         section = section.intern if section.is_a? String
@@ -243,8 +231,24 @@ class Puppet::Util::Config
         }
     end
 
-    # Parse a configuration file.
+    # Parse the configuration file.
     def parse(file)
+        configmap = parse_file(file)
+
+        # We know we want the 'main' section
+        if main = configmap[:main]
+            set_parameter_hash(main)
+        end
+
+        # Otherwise, we only want our named section
+        if @config.include?(:name) and named = configmap[symbolize(self[:name])]
+            set_parameter_hash(named)
+        end
+    end
+
+    # Parse the configuration file.  As of May 2007, this is a backward-compatibility method and
+    # will be deprecated soon.
+    def old_parse(file)
         text = nil
 
         if file.is_a? Puppet::Util::LoadedFile
@@ -253,8 +257,8 @@ class Puppet::Util::Config
             @file = Puppet::Util::LoadedFile.new(file)
         end
 
-        # Create a timer so that this.
-        settimer()
+        # Don't create a timer for the old style parsing.
+        # settimer()
 
         begin
             text = File.read(@file.file)
@@ -284,7 +288,7 @@ class Puppet::Util::Config
                 if var == :mode
                     value = $2
                 else
-                    value = mungearg($2)
+                    value = munge_value($2)
                 end
 
                 # Only warn if we don't know what this config var is.  This
@@ -701,6 +705,144 @@ Generated on #{Time.now}.
             Puppet::Util.withumask(File.umask ^ 0111) do
                 File.open(file, *args) do |file|
                     yield file
+                end
+            end
+        end
+    end
+
+    private
+
+    # Extra extra setting information for files.
+    def extract_fileinfo(string)
+        paramregex = %r{(\w+)\s*=\s*([\w\d]+)}
+        result = {}
+        string.scan(/\{\s*([^}]+)\s*\}/) do
+            params = $1
+            params.split(/\s*,\s*/).each do |str|
+                if str =~ /^\s*(\w+)\s*=\s*([\w\w]+)\s*$/
+                    param, value = $1.intern, $2
+                    result[param] = value
+                    unless [:owner, :mode, :group].include?(param)
+                        raise Puppet::Error, "Invalid file option '%s'" % param
+                    end
+
+                    if param == :mode and value !~ /^\d+$/
+                        raise Puppet::Error, "File modes must be numbers"
+                    end
+                else
+                    raise Puppet::Error, "Could not parse '%s'" % string
+                end
+            end
+
+            return result
+        end
+
+        return nil
+    end
+
+    # Convert arguments into booleans, integers, or whatever.
+    def munge_value(value)
+        # Handle different data types correctly
+        return case value
+            when /^false$/i: false
+            when /^true$/i: true
+            when /^\d+$/i: Integer(value)
+            else
+                value.gsub(/^["']|["']$/,'').sub(/\s+$/, '')
+        end
+    end
+
+    # This is an abstract method that just turns a file in to a hash of hashes.
+    # We mostly need this for backward compatibility -- as of May 2007 we need to
+    # support parsing old files with any section, or new files with just two
+    # valid sections.
+    def parse_file(file)
+        text = nil
+
+        if file.is_a? Puppet::Util::LoadedFile
+            @file = file
+        else
+            @file = Puppet::Util::LoadedFile.new(file)
+        end
+
+        # Create a timer so that this file will get checked automatically
+        # and reparsed if necessary.
+        settimer()
+
+        begin
+            text = File.read(@file.file)
+        rescue Errno::ENOENT
+            raise Puppet::Error, "No such file %s" % file
+        rescue Errno::EACCES
+            raise Puppet::Error, "Permission denied to file %s" % file
+        end
+
+        result = Hash.new { |names, name|
+            names[name] = {}
+        }
+
+        count = 0
+
+        # Default to 'main' for the section.
+        section = :main
+        result[section][:_meta] = {}
+        text.split(/\n/).each { |line|
+            count += 1
+            case line
+            when /^\[(\w+)\]$/:
+                section = $1.intern # Section names
+                # Add a meta section
+                result[section][:_meta] ||= {}
+            when /^\s*#/: next # Skip comments
+            when /^\s*$/: next # Skip blanks
+            when /^\s*(\w+)\s*=\s*(.+)$/: # settings
+                var = $1.intern
+
+                # We don't want to munge modes, because they're specified in octal, so we'll
+                # just leave them as a String, since Puppet handles that case correctly.
+                if var == :mode
+                    value = $2
+                else
+                    value = munge_value($2)
+                end
+
+                # Check to see if this is a file argument and it has extra options
+                begin
+                    if value.is_a?(String) and options = extract_fileinfo(value)
+                        result[section][:_meta][var] = options
+                    end
+                    result[section][var] = value
+                rescue Puppet::Error => detail
+                    detail.file = file
+                    detail.line = line
+                    raise
+                end
+            else
+                error = Puppet::Error.new("Could not match line %s" % line)
+                error.file = file
+                error.line = line
+                raise error
+            end
+        }
+
+        return result
+    end
+
+    # Take all members of a hash and assign their values appropriately.
+    def set_parameter_hash(params)
+        params.each do |param, value|
+            next if param == :_meta
+            unless @config.include?(param)
+                Puppet.warning "Discarded unknown configuration parameter %s" % param
+                next
+            end
+            self[param] = value
+        end
+
+        if meta = params[:_meta]
+            meta.each do |var, values|
+                values.each do |param, value|
+                    @config[var].send(param.to_s + "=", value)
                 end
             end
         end

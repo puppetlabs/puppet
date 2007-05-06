@@ -275,6 +275,8 @@ end
 
 # Now parse the config
 config = File.join(Puppet[:confdir], "puppetmasterd.conf")
+Puppet.parse_config(config)
+
 if File.exists? config
     Puppet.config.parse(config)
 end

@@ -132,6 +132,8 @@ rescue GetoptLong::InvalidOption => detail
     exit(1)
 end
 
+Puppet.parse_config
+
 unless logset
     Puppet::Util::Log.newdestination(:console)
 end

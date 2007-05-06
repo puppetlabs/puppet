@@ -1,3 +1,9 @@
+    Significantly reworking configuration parsing.  Executables all now
+    look for 'puppet.conf' (#206), although they will parse the old-style
+    configuration files if they are present, although they throw a deprecation
+    warning.  Also, file parameters (owner, mode, group) are now set on the
+    same line as the parameter, in brackets. (#422)
+
     Added transaction summaries (available with the --summarize option),
     useful for getting a quick idea of what happened in a transaction.
     Currently only useful on the client or with the puppet interpreter.

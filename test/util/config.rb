@@ -2,6 +2,7 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
+require 'mocha'
 require 'puppet'
 require 'puppet/util/config'
 require 'puppettest'
@@ -196,7 +197,65 @@ class TestConfig < Test::Unit::TestCase
         assert_equal("not default", @config[:yayness])
     end
 
-    def test_parse
+    def test_parse_file
+        text = %{
+one = this is a test
+two = another test
+owner = root
+group = root
+yay = /a/path
+
+[main]
+    four = five
+    six = seven
+
+[section1]
+    attr = value
+    owner = puppet
+    group = puppet
+    attrdir = /some/dir
+    attr3 = $attrdir/other
+        }
+
+        file = tempfile()
+        File.open(file, "w") { |f| f.puts text }
+
+        @config.expects(:settimer)
+        
+        result = nil
+        assert_nothing_raised {
+            result = @config.send(:parse_file, file)
+        }
+
+        main = result[:main]
+        assert(main, "Did not get section for main")
+        {
+            :one => "this is a test",
+            :two => "another test",
+            :owner => "root",
+            :group => "root",
+            :yay => "/a/path",
+            :four => "five",
+            :six => "seven"
+        }.each do |param, value|
+            assert_equal(value, main[param], "Param %s was not set correctly in main" % param)
+        end
+
+        section1 = result[:section1]
+        assert(section1, "Did not get section1")
+
+        {
+            :attr => "value",
+            :owner => "puppet",
+            :group => "puppet",
+            :attrdir => "/some/dir",
+            :attr3 => "$attrdir/other"
+        }.each do |param, value|
+            assert_equal(value, section1[param], "Param %s was not set correctly in section1" % param)
+        end
+    end
+
+    def test_old_parse
         text = %{
 one = this is a test
 two = another test
@@ -233,7 +292,7 @@ yay = /a/path
         }
         
         assert_nothing_raised {
-            @config.parse(file)
+            @config.old_parse(file)
         }
 
         assert_equal("value", @config[:attr])
@@ -265,6 +324,137 @@ yay = /a/path
         check_to_config(@config)
         Puppet::Type.allclear
         check_to_transportable(@config)
+    end
+
+    def test_parse
+        result = {
+            :main => {:main => "main", :bad => "invalid"},
+            :puppet => {:other => "puppet"},
+            :puppetd => {:other => "puppetd"}
+        }
+        # Set our defaults, so they're valid. Don't define 'bad', since we want to test for failures.
+        @config.setdefaults(:main,
+            :main => ["whatever", "a"],
+            :other => ["a", "b"],
+            :name => ["puppet", "b"] # our default name
+        )
+        @config.expects(:parse_file).returns(result).times(2)
+
+        # First do it with our name being 'puppet'
+        assert_nothing_raised("Could not handle parse results") do
+            @config.parse(tempfile)
+        end
+
+        assert_logged(:warning, /unknown configuration parameter bad/, "Did not log invalid config param")
+
+        assert_equal("main", @config[:main], "Did not get main value")
+        assert_equal("puppet", @config[:other], "Did not get name value")
+
+        # Now switch names and make sure the parsing switches, too.
+        @config.clear
+        @config[:name] = :puppetd
+        assert_nothing_raised("Could not handle parse results") do
+            @config.parse(tempfile)
+        end
+        assert_logged(:warning, /unknown configuration parameter bad/, "Did not log invalid config param")
+
+        assert_equal("main", @config[:main], "Did not get main value")
+        assert_equal("puppetd", @config[:other], "Did not get name value")
+    end
+
+    # Make sure we can extract file options correctly.
+    def test_parsing_file_options
+        @config.setdefaults(:whev,
+            :file => {
+                :desc => "whev",
+                :default => "/default",
+                :owner => "me",
+                :group => "me",
+                :mode => "755"
+            }
+        )
+
+        file = tempfile
+
+        {
+            :pass => {
+                " {owner = you}" => {:owner => "you"},
+                " {owner = you, group = you}" => {:owner => "you", :group => "you"},
+                " {owner = you, group = you, mode = 755}" => {:owner => "you", :group => "you", :mode => "755"},
+                " { owner = you, group = you } " => {:owner => "you", :group => "you"},
+                "{owner=you,group=you} " => {:owner => "you", :group => "you"},
+                "{owner=you,} " => {:owner => "you"}
+            },
+            :fail => [
+                %{{owner = you group = you}},
+                %{{owner => you, group => you}},
+                %{{user => you}},
+                %{{random => you}},
+                %{{mode => you}}, # make sure modes are numbers
+                %{{owner => you}}
+            ]
+        }.each do |type, list|
+            list.each do |value|
+                if type == :pass
+                    value, should = value[0], value[1]
+                end
+                # Write our file out
+                File.open(file, "w") do |f|
+                    f.puts %{[main]\nfile = /other%s} % value
+                end
+
+                if type == :fail
+                    assert_raise(Puppet::Error, "Did not fail on %s" % value.inspect) do
+                        @config.send(:parse_file, file)
+                    end
+                else
+                    result = nil
+                    assert_nothing_raised("Failed to parse %s" % value.inspect) do
+                        result = @config.send(:parse_file, file)
+                    end
+                    assert_equal(should, result[:main][:_meta][:file], "Got incorrect return for %s" % value.inspect)
+                end
+            end
+        end
+    end
+
+    # Make sure file options returned from parse_file are handled correctly.
+    def test_parsed_file_options
+        @config.setdefaults(:whev,
+            :file => {
+                :desc => "whev",
+                :default => "/default",
+                :owner => "me",
+                :group => "me",
+                :mode => "755"
+            }
+        )
+
+        result = {
+            :main => {
+                :file => "/other",
+                :_meta => {
+                    :file => {
+                        :owner => "you",
+                        :group => "you",
+                        :mode => "644"
+                    }
+                }
+            }
+        }
+
+        @config.expects(:parse_file).returns(result)
+
+        assert_nothing_raised("Could not handle file options") do
+            @config.parse("/whatever")
+        end
+
+        # Get the actual object, so we can verify metadata
+        file = @config.element(:file)
+
+        assert_equal("you", file.owner, "Did not pass on user")
+        assert_equal("you", file.group, "Did not pass on group")
+        assert_equal("644", file.mode, "Did not pass on mode")
     end
 
     def test_arghandling
@@ -517,7 +707,7 @@ yay = /a/path
         group = "yayness"
 
         File.open(cfile, "w") do |f|
-            f.puts "[#{Puppet[:name]}]
+            f.puts "[main]
             group = #{group}
             "
         end
@@ -624,7 +814,7 @@ yay = /a/path
 
         File.open(file, "w") do |f|
             f.puts %{
-[mysection]
+[main]
 booltest = true
 inttest = 27
 }
@@ -726,7 +916,7 @@ inttest = 27
         file = tempfile()
         # Set one parameter in the file
         File.open(file, "w") { |f|
-            f.puts %{[mysection]\nfilechange = filevalue}
+            f.puts %{[main]\nfilechange = filevalue}
         }
         assert_nothing_raised {
             config.parse(file)
@@ -744,7 +934,7 @@ inttest = 27
 
         # Now rewrite the file
         File.open(file, "w") { |f|
-            f.puts %{[mysection]\nfilechange = newvalue}
+            f.puts %{[main]\nfilechange = newvalue}
         }
 
         cfile = config.file
@@ -766,7 +956,7 @@ inttest = 27
         file = tempfile()
         # Set one parameter in the file
         File.open(file, "w") { |f|
-            f.puts %{[mysection]\n
+            f.puts %{[main]\n
     singleq = 'one'
     doubleq = "one"
     none = one
@@ -793,7 +983,7 @@ inttest = 27
         file = tempfile()
         # Set one parameter in the file
         File.open(file, "w") { |f|
-            f.puts %{[mysection]\n
+            f.puts %{[main]\n
     paramdir = #{origpath}
 }
         }
@@ -813,7 +1003,7 @@ inttest = 27
         newpath = tempfile()
 
         File.open(file, "w") { |f|
-            f.puts %{[mysection]\n
+            f.puts %{[main]\n
     paramdir = #{newpath}
 }
         }
@@ -941,7 +1131,7 @@ inttest = 27
         config.setdefaults(:mysection, :one => ["yay", "yay"])
         file = tempfile()
         File.open(file, "w") { |f|
-            f.puts %{[mysection]\n
+            f.puts %{[main]\n
                 one = one
                 two = yay
             }
@@ -976,96 +1166,6 @@ inttest = 27
 
         assert_equal("oneval/twoval/oneval/twoval", @config[:three],
             "Did not interpolate curlied variables")
-    end
-
-    # #489
-    def test_modes
-        Puppet[:name] = "puppet"
-        config = tempfile()
-
-        check = Proc.new do |string, int|
-            trans = @config.section_to_transportable(:puppet)
-            ssldir = trans.find { |o| o.type == "file"  }
-            assert(ssldir, "could not find trans object")
-
-            if ssldir[:mode].is_a?(Fixnum)
-                assert_equal(int, ssldir[:mode], "mode not set correctly")
-            else
-                assert_equal(string, ssldir[:mode], "mode not set correctly")
-            end
-
-            obj = nil
-            assert_nothing_raised { obj = ssldir.to_type }
-
-            assert(obj, "did not create object")
-            assert_equal(int, obj.should(:mode),
-                "did not pass mode correctly to file")
-
-            obj.class.clear
-        end
-
-        file = tempfile
-        @config.setdefaults(:puppet, :mode => ["644", "yay"])
-        @config.setdefaults(:puppet, :ssldir => {
-            :mode => 0644,
-            :desc => "yay",
-            :default => "/some/file"})
-
-        # Convert it first using the number
-        check.call("644", 0644)
-
-        File.open(config, "w") { |f| f.puts "[puppet]
-        mode = 750
-        ssldir = #{file}
-        "}
-
-        @config.parse(config)
-
-        assert_equal("750", @config[:mode],
-            "Did not parse mode correctly")
-
-        check.call("750", 0750)
-    end
-
-    def test_only_set_metas_when_valid
-        file = tempfile
-        config = tempfile
-        @config.setdefaults(Puppet[:name], :ssldir => {
-            :mode => 0644,
-            :group => "yayness",
-            :desc => "yay",
-            :default => "/some/file"})
-
-        File.open(config, "w") { |f| f.puts "[#{Puppet[:name]}]
-        mode = 755
-        group = foo
-        ssldir = #{file}
-        "}
-
-        assert_nothing_raised do
-            @config.parse(config)
-        end
-
-        assert_raise(ArgumentError) do
-            @config[:mode]
-        end
-        assert_raise(ArgumentError) do
-            @config[:group]
-        end
-
-        # Now make them valid params
-        @config.setdefaults(Puppet[:name], :group => ["blah", "yay"])
-        @config.setdefaults(Puppet[:name], :mode => ["750", "yay"])
-
-        assert_nothing_raised do
-            @config.parse(config)
-        end
-
-        assert_equal("foo", @config[:group],
-            "Did not store group when it is a valid config")
-        assert_equal("755", @config[:mode],
-            "Did not store mode when it is a valid config")
-
     end
 end
 

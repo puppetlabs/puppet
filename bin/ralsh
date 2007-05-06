@@ -133,9 +133,7 @@ if edit and host
 end
 
 # Now parse the config
-if Puppet[:config] and File.exists? Puppet[:config]
-    Puppet.config.parse(Puppet[:config])
-end
+Puppet.parse_config
 
 typeobj = nil
 

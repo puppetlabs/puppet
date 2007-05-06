@@ -293,6 +293,8 @@ config.header = "
 Specifying Configuration Parameters
 -----------------------------------
 
+On The Command-Line
++++++++++++++++++++
 Every Puppet executable (with the exception of ``puppetdoc``) accepts all of
 the arguments below, but not all of the arguments make sense for every executable.
 Each argument has a section listed with it in parentheses; often, that section
@@ -321,21 +323,37 @@ on the command line::
 The invocations above will enable and disable, respectively, the storage of 
 the client configuration.
 
+Configuration Files
++++++++++++++++++++
 As mentioned above, the configuration parameters can also be stored in a 
 configuration file located in the configuration directory (`/etc/puppet` 
-by default).  The file is named for the executable it is intended for, for
-example `/etc/puppetd.conf` is the configuration file for `puppetd`.
+by default).  All executables look for ``puppet.conf`` in their
+configuration directory (although they used to each look to separate files).
 
-The file, which follows INI-style formatting, should contain a bracketed
-heading named for the executable, followed by pairs of parameters with their
-values.  Here is an example of a very simple ``puppetd.conf`` file::
+All executables will set any parameters set within the ``main`` section,
+while each executable will also look for a section named for the executable
+and load those parameters.  For example, ``puppetd`` will look for a
+section named ``puppetd`, and ``puppetmasterd`` looks for a section
+named ``puppetmasterd``.  This allows you to use a single configuration file
+to customize the settings for all of your executables.
 
-    [puppetd]
+File Format
+'''''''''''
+The file follows INI-style formatting.  Here is an example of a very simple
+``puppet.conf`` file::
+
+    [main]
         confdir = /private/puppet
         storeconfigs = true
     
 Note that boolean parameters must be explicitly specified as `true` or
 `false` as seen above.
+
+If you need to change file parameters (e.g., reset the mode or owner), do
+so within curly braces on the same line::
+
+    [main]
+        myfile = /tmp/whatever {owner = root, mode = 644}
 
 If you're starting out with a fresh configuration, you may wish to let
 the executable generate a template configuration file for you by invoking

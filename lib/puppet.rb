@@ -184,6 +184,23 @@ module Puppet
         timer
     end
 
+    # Parse the config file for this process.
+    def self.parse_config(oldconfig = nil)
+        # First look for the old configuration file.
+        oldconfig ||= File.join(Puppet[:confdir], Puppet[:name].to_s + ".conf")
+        if FileTest.exists?(oldconfig)
+            Puppet.warning "Individual config files are deprecated; remove %s and use puppet.conf" % oldconfig
+            Puppet.config.old_parse(oldconfig)
+            return
+        end
+
+        # Now check for the normal config.
+        if Puppet[:config] and File.exists? Puppet[:config]
+            Puppet.debug "Parsing %s" % Puppet[:config]
+            Puppet.config.parse(Puppet[:config])
+        end
+    end
+
     # Relaunch the executable.
     def self.restart
         command = $0 + " " + self.args.join(" ")
