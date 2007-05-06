@@ -8,6 +8,7 @@ class Puppet::Util::Metric
     Puppet.features.add :rrd, :libs => 'RRD'
 
     attr_accessor :type, :name, :value, :label
+    attr_writer :values
 
     attr_writer :basedir
 

@@ -111,7 +111,7 @@ Puppet::Network::Handler.report.newreport(:rrdgraph) do
         self.metrics.each do |name, metric|
             metric.basedir = hostdir
 
-            if name == :time
+            if name == "time"
                 timeclean(metric)
             end
 
@@ -130,7 +130,7 @@ Puppet::Network::Handler.report.newreport(:rrdgraph) do
     # that means we record the total time, the config time, and that's about
     # it.  We should probably send each type's time as a separate metric.
     def timeclean(metric)
-        metric.values = metric.values.find_all { |name, label, value| name == :total }
+        metric.values = metric.values.find_all { |name, label, value| [:total, :config_retrieval].include?(name) }
     end
 end
 
