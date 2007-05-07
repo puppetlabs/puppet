@@ -1,4 +1,5 @@
-providers = Puppet::Util::Reference.newreference :providers, :doc => "Which providers are valid for this machine" do
+# This doesn't get stored in trac, since it changes every time.
+providers = Puppet::Util::Reference.newreference :providers, :dynamic => true, :doc => "Which providers are valid for this machine" do
     types = []
     Puppet::Type.loadall
     Puppet::Type.eachtype do |klass|

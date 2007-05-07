@@ -30,4 +30,8 @@ Most handlers are meant to be started on the server, usually within
 ``puppetmasterd``, and the clients are mostly started on the client,
 usually within ``puppetd``.
 
+You can find the server-side handler for each interface at
+``puppet/network/handler/<name>.rb`` and the client class at
+``puppet/network/client/<name>.rb``.
+
 "

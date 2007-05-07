@@ -74,7 +74,7 @@ class Puppet::Util::Reference
 
     HEADER_LEVELS = [nil, "=", "-", "+", "'", "~"]
 
-    attr_accessor :page, :depth, :header, :title
+    attr_accessor :page, :depth, :header, :title, :dynamic
     attr_writer :doc
 
     def doc
@@ -83,6 +83,10 @@ class Puppet::Util::Reference
         else
             return @title
         end
+    end
+
+    def dynamic?
+        self.dynamic
     end
 
     def h(name, level)
@@ -171,7 +175,6 @@ class Puppet::Util::Reference
             $stderr.puts output
         end
     end
-
 end
 
 # $Id$

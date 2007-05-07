@@ -95,7 +95,10 @@ rescue GetoptLong::InvalidOption => detail
 end
 
 if options[:all]
-    options[:references] = Puppet::Util::Reference.loaded_instances(:reference)
+    # Don't add dynamic references to the "all" list.
+    options[:references] = Reference.references.reject do |ref|
+        Reference.reference(ref).dynamic?
+    end
 end
 
 if options[:references].empty?
