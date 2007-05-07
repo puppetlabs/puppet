@@ -4,6 +4,9 @@ require 'puppet/util/fact_store'
 class Puppet::Network::Handler
     # Receive logs from remote hosts.
     class Facts < Handler
+        desc "An interface for storing and retrieving client facts.  Currently only
+        used internally by Puppet."
+
         @interface = XMLRPC::Service::Interface.new("facts") { |iface|
             iface.add_method("void set(string, string)")
             iface.add_method("string get(string)")

@@ -4,6 +4,16 @@ require 'puppet/network/handler'
 # Serve Puppet elements.  Useful for querying, copying, and, um, other stuff.
 class Puppet::Network::Handler
     class Resource < Handler
+        desc "An interface for interacting with client-based resources that can
+        be used for querying or managing remote machines without using Puppet's
+        central server tools.
+        
+        The ``describe`` and ``list`` methods return TransBuckets containing
+        TransObject instances (``describe`` returns a single TransBucket),
+        and the ``apply`` method accepts a TransBucket of TransObjects and
+        applies them locally.
+        "
+
         attr_accessor :local
 
         @interface = XMLRPC::Service::Interface.new("resource") { |iface|
@@ -11,6 +21,8 @@ class Puppet::Network::Handler
             iface.add_method("string describe(string, string, array, array)")
             iface.add_method("string list(string, array, string)")
         }
+
+        side :client
 
         # Apply a TransBucket as a transaction.
         def apply(bucket, format = "yaml", client = nil, clientip = nil)

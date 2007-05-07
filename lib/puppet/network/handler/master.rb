@@ -8,6 +8,9 @@ require 'yaml'
 class Puppet::Network::Handler
     class MasterError < Puppet::Error; end
     class Master < Handler
+        desc "Puppet's configuration interface.  Used for all interactions related to
+        generating client configurations."
+
         include Puppet::Util
 
         attr_accessor :ast, :local

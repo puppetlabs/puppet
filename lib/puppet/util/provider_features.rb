@@ -100,6 +100,12 @@ module Puppet::Util::ProviderFeatures
         str
     end
 
+    # Return a list of features.
+    def features
+        @features ||= {}
+        @features.keys
+    end
+
     # Generate a module that sets up the boolean methods to test for given
     # features.
     def feature_module

@@ -3,6 +3,8 @@ require 'puppet/util/instance_loader'
 # A simple server for triggering a new run on a Puppet client.
 class Puppet::Network::Handler
     class Report < Handler
+        desc "Accepts a Puppet transaction report and processes it."
+
         extend Puppet::Util::ClassGen
         extend Puppet::Util::InstanceLoader
 

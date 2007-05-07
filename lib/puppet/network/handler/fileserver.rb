@@ -7,6 +7,8 @@ require 'delegate'
 class Puppet::Network::Handler
     class FileServerError < Puppet::Error; end
     class FileServer < Handler
+        desc "The interface to Puppet's fileserving abilities."
+
         attr_accessor :local
 
         CHECKPARAMS = [:mode, :type, :owner, :group, :checksum]

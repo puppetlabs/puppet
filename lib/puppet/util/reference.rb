@@ -3,6 +3,7 @@ require 'puppet/util/instance_loader'
 # Manage Reference Documentation.
 class Puppet::Util::Reference
     include Puppet::Util
+    include Puppet::Util::Docs
 
     extend Puppet::Util::InstanceLoader
 
@@ -85,7 +86,7 @@ class Puppet::Util::Reference
     end
 
     def h(name, level)
-        return "%s\n%s\n" % [name, HEADER_LEVELS[level] * name.to_s.length]
+        return "%s\n%s\n\n" % [name, HEADER_LEVELS[level] * name.to_s.length]
     end
 
     def initialize(name, options = {}, &block)
@@ -106,6 +107,10 @@ class Puppet::Util::Reference
     # Indent every line in the chunk except those which begin with '..'.
     def indent(text, tab)
         return text.gsub(/(^|\A)/, tab).gsub(/^ +\.\./, "..")
+    end
+
+    def option(name, value)
+        ":%s: %s\n" % [name.to_s.capitalize, value]
     end
 
     def paramwrap(name, text, options = {})

@@ -8,6 +8,9 @@ class Puppet::Network::Handler # :nodoc:
     # to the client.  Alternatively, accept an md5 sum and return the
     # associated content.
     class FileBucket < Handler
+        desc "The interface to Puppet's FileBucket system.  Can be used to store
+        files in and retrieve files from a filebucket."
+
         @interface = XMLRPC::Service::Interface.new("puppetbucket") { |iface|
             iface.add_method("string addfile(string, string)")
             iface.add_method("string getfile(string)")

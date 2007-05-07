@@ -1,6 +1,8 @@
 # A module for loading subclasses into an array and retrieving
 # them by name.  Also sets up a method for each class so
 # that you can just do Klass.subclass, rather than Klass.subclass(:subclass).
+#
+# This module is currently used by network handlers and clients.
 module Puppet::Util::SubclassLoader
     attr_accessor :loader, :classloader
 
@@ -48,7 +50,6 @@ module Puppet::Util::SubclassLoader
     # subclasses, thus the reason we're keeping track of the @@classloader.
     def inherited(sub)
         @subclasses ||= []
-        @subclasses << sub
         sub.classloader = self.classloader
         if self.classloader == self
             @subclasses << sub
@@ -77,6 +78,12 @@ module Puppet::Util::SubclassLoader
         end
 
         return @name
+    end
+
+    # Provide a list of all subclasses.
+    def subclasses
+        @loader.loadall
+        @subclasses.collect { |klass| klass.name }
     end
 end
 

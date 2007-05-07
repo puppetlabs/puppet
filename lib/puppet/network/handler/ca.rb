@@ -10,6 +10,10 @@ class Puppet::Network::Handler
     class CA < Handler
         attr_reader :ca
 
+        desc "Provides an interface for signing CSRs.  Accepts a CSR and returns
+        the CA certificate and the signed certificate, or returns nil if
+        the cert is not signed."
+
         @interface = XMLRPC::Service::Interface.new("puppetca") { |iface|
             iface.add_method("array getcert(csr)")
         }
