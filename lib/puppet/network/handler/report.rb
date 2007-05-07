@@ -1,7 +1,10 @@
+require 'puppet/util/instance_loader'
+
 # A simple server for triggering a new run on a Puppet client.
 class Puppet::Network::Handler
     class Report < Handler
         extend Puppet::Util::ClassGen
+        extend Puppet::Util::InstanceLoader
 
         module ReportBase
             include Puppet::Util::Docs
@@ -20,8 +23,8 @@ class Puppet::Network::Handler
             iface.add_method("string report(array)")
         }
 
-        @reports = {}
-        @reportloader = Puppet::Util::Autoload.new(self, "puppet/reports")
+        # Set up autoloading and retrieving of reports.
+        autoload :report, 'puppet/reports'
 
         class << self
             attr_reader :hooks
@@ -31,7 +34,7 @@ class Puppet::Network::Handler
         def self.newreport(name, options = {}, &block)
             name = symbolize(name)
 
-            mod = genmodule(name, :extend => ReportBase, :hash => @reports, :block => block)
+            mod = genmodule(name, :extend => ReportBase, :hash => instance_hash(:report), :block => block)
 
             if options[:useyaml]
                 mod.useyaml = true
@@ -42,31 +45,12 @@ class Puppet::Network::Handler
             end
         end
 
-        # Load a report.
-        def self.report(name)
-            name = name.intern if name.is_a? String
-            unless @reports.include? name
-                if @reportloader.load(name)
-                    unless @reports.include? name
-                        Puppet.warning(
-                            "Loaded report file for %s but report was not defined" %
-                            name
-                        )
-                        return nil
-                    end
-                else
-                    return nil
-                end
-            end
-            @reports[symbolize(name)]
-        end
-
         # Collect the docs for all of our reports.
         def self.reportdocs
             docs = ""
 
             # Use this method so they all get loaded
-            reports.sort { |a,b| a.to_s <=> b.to_s }.each do |name|
+            loaded_instances(:report).sort { |a,b| a.to_s <=> b.to_s }.each do |name|
                 mod = self.report(name)
                 docs += "%s\n%s\n" % [name, "-" * name.to_s.length]
 
@@ -78,7 +62,7 @@ class Puppet::Network::Handler
 
         # List each of the reports.
         def self.reports
-            @reportloader.loadall
+            instance_loader(:report).loadall
             @reports.keys
         end
 
