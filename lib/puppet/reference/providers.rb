@@ -1,5 +1,5 @@
 # This doesn't get stored in trac, since it changes every time.
-providers = Puppet::Util::Reference.newreference :providers, :depth => 1, :dynamic => true, :doc => "Which providers are valid for this machine" do
+providers = Puppet::Util::Reference.newreference :providers, :title => "Provider Suitability Report", :depth => 1, :dynamic => true, :doc => "Which providers are valid for this machine" do
     types = []
     Puppet::Type.loadall
     Puppet::Type.eachtype do |klass|
@@ -21,43 +21,77 @@ providers = Puppet::Util::Reference.newreference :providers, :depth => 1, :dynam
         ret += option(label, value)
     end
     ret += "\n"
-    types.each do |type|
-        ret += h(type.name.to_s + "_", 2)
-        ret += ".. _%s: %s\n\n" % [type.name, "http://reductivelabs.com/trac/puppet/wiki/TypeReference#%s" % type.name]
-        features = type.features
-        unless features.empty?
-            ret += option("Available Features", features.collect { |f| f.to_s }.sort.join(", "))
-        end
-        ret += "\n" # add a trailing newline
-        type.providers.sort { |a,b| a.to_s <=> b.to_s }.each do |pname|
-            provider = type.provider(pname)
-            ret += h(provider.name, 3)
 
-            unless features.empty?
-                ret += option(:features, provider.features.collect { |a| a.to_s }.sort.join(", "))
-            end
+    count = 1
+
+    # Produce output for each type.
+    types.each do |type|
+        features = type.features
+        ret += "\n" # add a trailing newline
+
+        # Now build up a table of provider suitability.
+        headers = %w{Provider Suitable?} + features.collect { |f| f.to_s }.sort
+
+        table_data = {}
+
+        functional = false
+        notes = []
+        type.providers.sort { |a,b| a.to_s <=> b.to_s }.each do |pname|
+            data = []
+            table_data[pname] = data
+            provider = type.provider(pname)
+
+            # Add the suitability note
             if missing = provider.suitable?(false) and missing.empty?
-                ret += option(:suitable?, "true")
+                data << "**X**"
+                suit = true
+                functional = true
             else
-                ret += option(:suitable?, "false")
-                ret += "\n" # must add a blank line before the list
+                data << "[%s]_" % [count] # A pointer to the appropriate footnote
+                suit = false
+            end
+
+            # Add a footnote with the details about why this provider is unsuitable, if that's the case
+            unless suit
+                details = ".. [%s]\n" % count
                 missing.each do |test, values|
                     case test
                     when :exists:
-                        ret += "- Missing files %s\n" % values.join(", ")
+                        details += "  - Missing files %s\n" % values.join(", ")
                     when :facter:
                         values.each do |name, facts|
-                            ret += "- Fact %s (currently %s) not in list %s\n" % [name, Facter.value(name).inspect, facts.join(", ")]
+                            details += "  - Fact %s (currently %s) not in list %s\n" % [name, Facter.value(name).inspect, facts.join(", ")]
                         end
                     when :true:
-                        ret += "- Got %s true tests that should have been false\n" % values
+                        details += "  - Got %s true tests that should have been false\n" % values
                     when :false:
-                        ret += "- Got %s false tests that should have been true\n" % values
+                        details += "  - Got %s false tests that should have been true\n" % values
                     end
                 end
+                notes << details
+                
+                count += 1
             end
-            ret += "\n" # add a trailing newline
+
+            # Add a note for every feature
+            features.each do |feature|
+                if provider.features.include?(feature)
+                    data << "**X**"
+                else
+                    data << ""
+                end
+            end
         end
+
+        ret += h(type.name.to_s + "_", 2)
+
+        ret += ".. _%s: %s\n\n" % [type.name, "http://reductivelabs.com/trac/puppet/wiki/TypeReference#%s" % type.name]
+        ret += doctable(headers, table_data)
+
+        notes.each do |note|
+            ret += note + "\n"
+        end
+
         ret += "\n"
     end
 
