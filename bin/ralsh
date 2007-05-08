@@ -156,7 +156,7 @@ format = proc {|trans|
     trans.to_manifest
 }
 
-if host
+text = if host
     client = Puppet::Network::Client.resource.new(:Server => host, :Port => Puppet[:puppetport])
     unless client.read_cert
         raise "client.read_cert failed"
@@ -172,9 +172,9 @@ if host
     rescue Puppet::Network::XMLRPCClientError => exc
         raise "client.list(#{type}) failed: #{exc.message}"
     end
-    text = transbucket.sort { |a,b| a.name <=> b.name }.collect(&format)
+    transbucket.sort { |a,b| a.name <=> b.name }.collect(&format)
 else
-    text = typeobj.list.collect do |obj|
+    typeobj.list.collect do |obj|
         next if ARGV.length > 0 and ! ARGV.include? obj.name
         trans = obj.to_trans(true)
         format.call(trans)
