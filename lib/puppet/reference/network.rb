@@ -1,6 +1,6 @@
 network = Puppet::Util::Reference.newreference :network, :depth => 2, :doc => "Available network handlers and clients" do
     ret = ""
-    Puppet::Network::Handler.subclasses.each do |name|
+    Puppet::Network::Handler.subclasses.sort { |a,b| a.to_s <=> b.to_s }.each do |name|
         handler = Puppet::Network::Handler.handler(name)
 
         next if ! handler.doc or handler.doc == ""
