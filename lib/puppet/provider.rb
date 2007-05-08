@@ -179,28 +179,39 @@ class Puppet::Provider
     end
 
     # Check whether this implementation is suitable for our platform.
-    def self.suitable?
+    def self.suitable?(short = true)
         # A single false result is sufficient to turn the whole thing down.
         # We don't return 'true' until the very end, though, so that every
         # confine is tested.
+        missing = {}
         @confines.each do |check, values|
             case check
             when :exists:
                 values.each do |value|
                     unless value and FileTest.exists? value
                         debug "Not suitable: missing %s" % value
-                        return false
+                        return false if short
+                        missing[:exists] ||= []
+                        missing[:exists] << value
                     end
                 end
             when :true:
                 values.each do |v|
                     debug "Not suitable: false value"
-                    return false unless v
+                    unless v
+                        return false if short
+                        missing[:true] ||= 0
+                        missing[:true] += 1
+                    end
                 end
             when :false:
                 values.each do |v|
                     debug "Not suitable: true value"
-                    return false if v
+                    if v and short
+                        return false if short
+                        missing[:false] ||= 0
+                        missing[:false] += 1
+                    end
                 end
             else # Just delegate everything else to facter
                 if result = Facter.value(check)
@@ -211,15 +222,23 @@ class Puppet::Provider
                     end
                     unless found
                         debug "Not suitable: %s not in %s" % [check, values]
-                        return false
+                        return false if short
+                        missing[:facter] ||= {}
+                        missing[:facter][check] = values
                     end
                 else
-                    return false
+                    return false if short
+                    missing[:facter] ||= {}
+                    missing[:facter][check] = values
                 end
             end
         end
 
-        return true
+        if short
+            return true
+        else
+            return missing
+        end
     end
 
     # Does this provider support the specified parameter?
