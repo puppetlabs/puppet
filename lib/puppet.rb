@@ -128,10 +128,22 @@ module Puppet
                 end
             elsif val =~ /,/
                 val.split(/\s*,\s*/).sort.each do |v|
-                    puts "%s = %s" % [v, Puppet[v]]
+                    if Puppet.config.include?(v)
+                        puts "%s = %s" % [v, Puppet[v]]
+                    else
+                        puts "invalid parameter: %s" % v
+                        exit(1)
+                    end
                 end
             else
-                puts Puppet[val]
+                val.split(/\s*,\s*/).sort.each do |v|
+                    if Puppet.config.include?(v)
+                        puts Puppet[val]
+                    else
+                        puts "invalid parameter: %s" % v
+                        exit(1)
+                    end
+                end
             end
             exit(0)
         end
