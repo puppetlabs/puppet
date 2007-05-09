@@ -256,9 +256,6 @@ module Puppet
         # Even though they can specify multiple checksums, the insync?
         # mechanism can really only test against one, so we'll just retrieve
         # the first specified sum type.
-        # FIXARB: THere is a cache but it seems inconsistent when it 
-        #          uses the cache vs, when it uses @is.  This will
-        #          need more attention.
         def retrieve(usecache = false)
             # When the 'source' is retrieving, it passes "true" here so
             # that we aren't reading the file twice in quick succession, yo.

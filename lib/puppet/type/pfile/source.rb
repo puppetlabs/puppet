@@ -198,7 +198,6 @@ module Puppet
                 # be inherited from the source?
                 unless @parent.argument?(stat)
                     @parent[stat] = value
-                    @parent.property(stat).retrieve  # FIXARB: This is calling retrieve on all propertis of File.  What are we gonna do with the return values?
                 end
             }
             
