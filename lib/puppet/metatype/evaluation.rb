@@ -142,21 +142,6 @@ class Puppet::Type
 
         changes
     end
-    
-    private 
-    # FIXARB: This can go away
-    def checknewinsync(currentvalues)
-        currentvalues.each { |prop, val|
-           if prop.respond_to? :new_insync? and prop.new_insync?(val) != prop.insync?
-                           puts "#{prop.name} new_insync? != insync?"
-              self.devfail "#{prop.name} new_insync? != insync?"
-           end
-        }
-                
-        properties().each { |prop|
-            puts "#{prop.name} is missing from current values" if (!currentvalues.include?(prop))
-        }
-    end
 end
 
 # $Id$
