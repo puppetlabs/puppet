@@ -129,7 +129,7 @@ class Transaction
     # Find all of the changed resources.
     def changed?
         @changes.find_all { |change| change.changed }.collect { |change|
-            change.property.parent
+            change.property.resource
         }.uniq
     end
     
@@ -573,7 +573,7 @@ class Transaction
             # Now check to see if there are any events for this child.
             # Kind of hackish, since going backwards goes a change at a
             # time, not a child at a time.
-            trigger(change.property.parent)
+            trigger(change.property.resource)
 
             # And return the events for collection
             events

@@ -413,8 +413,8 @@ class Puppet::Type
         # This duplication is here because it might be a transobject.
         hash = oldhash.dup.to_hash
 
-        if hash.include?(:parent)
-            hash.delete(:parent)
+        if hash.include?(:resource)
+            hash.delete(:resource)
         end
         namevar = self.class.namevar
 
@@ -573,9 +573,9 @@ class Puppet::Type
             return nil
         end
 
-        # Add parent information at creation time, so it's available
+        # Add resource information at creation time, so it's available
         # during validation.
-        options[:parent] = self
+        options[:resource] = self
         begin
             # make sure the parameter doesn't have any errors
             return @parameters[name] = klass.new(options)

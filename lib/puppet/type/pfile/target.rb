@@ -10,13 +10,13 @@ module Puppet
 
         # Anything else, basically
         newvalue(/./) do
-            if ! @parent.should(:ensure)
-                @parent[:ensure] = :link
+            if ! @resource.should(:ensure)
+                @resource[:ensure] = :link
             end
 
             # Only call mklink if ensure() didn't call us in the first place.
-            currentensure  = @parent.property(:ensure).retrieve
-            if @parent.property(:ensure).insync?(currentensure)
+            currentensure  = @resource.property(:ensure).retrieve
+            if @resource.property(:ensure).insync?(currentensure)
                 mklink()
             end
         end
@@ -27,21 +27,21 @@ module Puppet
 
             # Clean up any existing objects.  The argument is just for logging,
             # it doesn't determine what's removed.
-            @parent.remove_existing(target)
+            @resource.remove_existing(target)
 
-            if FileTest.exists?(@parent[:path])
+            if FileTest.exists?(@resource[:path])
                 raise Puppet::Error, "Could not remove existing file"
             end
 
-            Dir.chdir(File.dirname(@parent[:path])) do
-                Puppet::Util::SUIDManager.asuser(@parent.asuser()) do
-                    mode = @parent.should(:mode)
+            Dir.chdir(File.dirname(@resource[:path])) do
+                Puppet::Util::SUIDManager.asuser(@resource.asuser()) do
+                    mode = @resource.should(:mode)
                     if mode
                         Puppet::Util.withumask(000) do
-                            File.symlink(target, @parent[:path])
+                            File.symlink(target, @resource[:path])
                         end
                     else
-                        File.symlink(target, @parent[:path])
+                        File.symlink(target, @resource[:path])
                     end
                 end
 
@@ -50,7 +50,7 @@ module Puppet
         end
 
         def insync?(currentvalue)
-            if [:nochange, :notlink].include?(self.should) or @parent.recurse?
+            if [:nochange, :notlink].include?(self.should) or @resource.recurse?
                 return true
             else
                 return super(currentvalue)
@@ -59,9 +59,9 @@ module Puppet
 
 
         def retrieve
-            if stat = @parent.stat
+            if stat = @resource.stat
                 if stat.ftype == "link"
-                    return File.readlink(@parent[:path])
+                    return File.readlink(@resource[:path])
                 else
                     return :notlink
                 end

@@ -68,8 +68,8 @@ module Puppet
             desc "The file in which to store service information.  Only used by
                 those providers that write to disk (i.e., not NetInfo)."
 
-            defaultto { if @parent.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
-                    @parent.class.defaultprovider.default_target
+            defaultto { if @resource.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
+                    @resource.class.defaultprovider.default_target
                 else
                     nil
                 end

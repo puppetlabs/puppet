@@ -139,7 +139,7 @@ Puppet::Type.newtype(:zone) do
             properties.each do |prop|
                 if method = prop[dir]
                     warned = false
-                    while @parent.processing?
+                    while @resource.processing?
                         unless warned
                             info "Waiting for zone to finish processing"
                             warned = true
@@ -326,7 +326,7 @@ end
 
         munge do |value|
             if value =~ /%s/
-                value % @parent[:name]
+                value % @resource[:name]
             else
                 value
             end

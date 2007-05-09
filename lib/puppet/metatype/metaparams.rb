@@ -16,8 +16,8 @@ class Puppet::Type
         newvalues(:true, :false)
         munge do |value|
             case value
-            when true, :true, "true": @parent.noop = true
-            when false, :false, "false": @parent.noop = false
+            when true, :true, "true": @resource.noop = true
+            when false, :false, "false": @resource.noop = false
             end
         end
     end
@@ -59,7 +59,7 @@ class Puppet::Type
         munge do |args|
             # If they've specified all, collect all known properties
             if args == :all
-                args = @parent.class.properties.collect do |property|
+                args = @resource.class.properties.collect do |property|
                     property.name
                 end
             end
@@ -68,7 +68,7 @@ class Puppet::Type
                 args = [args]
             end
 
-            unless defined? @parent
+            unless defined? @resource
                 self.devfail "No parent for %s, %s?" %
                     [self.class, self.name]
             end
@@ -77,14 +77,14 @@ class Puppet::Type
                 unless property.is_a?(Symbol)
                     property = property.intern
                 end
-                next if @parent.propertydefined?(property)
+                next if @resource.propertydefined?(property)
 
-                unless propertyklass = @parent.class.validproperty?(property)
+                unless propertyklass = @resource.class.validproperty?(property)
                     raise Puppet::Error, "%s is not a valid attribute for %s" %
                         [property, self.class.name]
                 end
                 next unless propertyklass.checkable?
-                @parent.newattr(property)
+                @resource.newattr(property)
             }
         end
     end
@@ -191,20 +191,20 @@ class Puppet::Type
             unless aliases.is_a?(Array)
                 aliases = [aliases]
             end
-            @parent.info "Adding aliases %s" % aliases.collect { |a|
+            @resource.info "Adding aliases %s" % aliases.collect { |a|
                     a.inspect
             }.join(", ")
             aliases.each do |other|
-                if obj = @parent.class[other]
-                    unless obj == @parent
+                if obj = @resource.class[other]
+                    unless obj == @resource
                         self.fail(
                             "%s can not create alias %s: object already exists" %
-                            [@parent.title, other]
+                            [@resource.title, other]
                         )
                     end
                     next
                 end
-                @parent.class.alias(other, @parent)
+                @resource.class.alias(other, @resource)
             end
         end
     end
@@ -227,7 +227,7 @@ class Puppet::Type
             tags = [tags] unless tags.is_a? Array
 
             tags.each do |tag|
-                @parent.tag(tag)
+                @resource.tag(tag)
             end
         end
     end
@@ -244,7 +244,7 @@ class Puppet::Type
         end
         
         def munge(rels)
-            @parent.store_relationship(self.class.name, rels)
+            @resource.store_relationship(self.class.name, rels)
         end
         
         # Create edges from each of our relationships.    :in
@@ -278,9 +278,9 @@ class Puppet::Type
                 # for futher info on this.
                 if self.class.direction == :in
                     source = object
-                    target = @parent
+                    target = @resource
                 else
-                    source = @parent
+                    source = @resource
                     target = object
                 end
 

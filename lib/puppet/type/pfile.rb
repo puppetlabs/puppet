@@ -96,16 +96,16 @@ module Puppet
                     # we have to do it after all of the objects
                     # have been instantiated.
                     if bucketobj = Puppet::Type.type(:filebucket)[value]
-                        @parent.bucket = bucketobj.bucket
+                        @resource.bucket = bucketobj.bucket
                         bucketobj.title
                     else
                         # Set it to the string; finish() turns it into a
                         # filebucket.
-                        @parent.bucket = value
+                        @resource.bucket = value
                         value
                     end
                 when Puppet::Network::Client.client(:Dipper):
-                    @parent.bucket = value
+                    @resource.bucket = value
                     value.name
                 else
                     self.fail "Invalid backup type %s" %
@@ -669,12 +669,12 @@ module Puppet
         # path names, rather than including the full parent's title each
         # time.
         def pathbuilder
-            if defined? @parent
+            if defined? @resource
                 # We only need to behave specially when our parent is also
                 # a file
-                if @parent.is_a?(self.class)
+                if @resource.is_a?(self.class)
                     # Remove the parent file name
-                    list = @parent.pathbuilder
+                    list = @resource.pathbuilder
                     list.pop # remove the parent's path info
                     return list << self.ref
                 else

@@ -52,7 +52,7 @@ module Puppet
         # just collect our current state.  Note that this method is not called
         # during a transaction, since transactions call the parent object method.
         def retrieve
-            return @parent.retrieve
+            return @resource.retrieve
         end
 
         # All this does is return an event; all of the work gets done
@@ -63,12 +63,12 @@ module Puppet
             else
                 if self.class.name == :ensure
                     if self.should == :absent
-                        return (@parent.class.name.to_s + "_removed").intern
+                        return (@resource.class.name.to_s + "_removed").intern
                     else
-                        return (@parent.class.name.to_s + "_created").intern
+                        return (@resource.class.name.to_s + "_created").intern
                     end
                 else
-                    return (@parent.class.name.to_s + "_changed").intern
+                    return (@resource.class.name.to_s + "_changed").intern
                 end
             end
         end
@@ -158,7 +158,7 @@ module Puppet
                     end
 
                     defaultto do
-                        if @parent.managed?
+                        if @resource.managed?
                             :present
                         else
                             nil

@@ -40,7 +40,7 @@ module Puppet
             # If they're talking about the thing at all, they generally want to
             # say it should exist.
             defaultto do
-                if @parent.managed?
+                if @resource.managed?
                     :present
                 else
                     nil

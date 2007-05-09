@@ -49,7 +49,7 @@ module Puppet
                 cache(type, sum)
                 return type
             else
-                if FileTest.directory?(@parent[:path])
+                if FileTest.directory?(@resource[:path])
                     return :time
                 else
                     return symbolize(value)
@@ -64,10 +64,10 @@ module Puppet
                 raise ArgumentError, "A type must be specified to cache a checksum"
             end
             type = symbolize(type)
-            unless state = @parent.cached(:checksums) 
+            unless state = @resource.cached(:checksums) 
                 self.debug "Initializing checksum hash"
                 state = {}
-                @parent.cache(:checksums, state)
+                @resource.cache(:checksums, state)
             end
 
             if sum
@@ -125,16 +125,16 @@ module Puppet
         # Retrieve the cached sum
         def getcachedsum
             hash = nil
-            unless hash = @parent.cached(:checksums) 
+            unless hash = @resource.cached(:checksums) 
                 hash = {}
-                @parent.cache(:checksums, hash)
+                @resource.cache(:checksums, hash)
             end
 
             sumtype = self.should
 
             if hash.include?(sumtype)
                 #self.notice "Found checksum %s for %s" %
-                #    [hash[sumtype] ,@parent[:path]]
+                #    [hash[sumtype] ,@resource[:path]]
                 sum = hash[sumtype]
 
                 unless sum =~ /^\{\w+\}/
@@ -146,7 +146,7 @@ module Puppet
                 return :nosum
             else
                 #self.notice "Found checksum for %s but not of type %s" %
-                #    [@parent[:path],sumtype]
+                #    [@resource[:path],sumtype]
                 return :nosum
             end
         end
@@ -158,13 +158,13 @@ module Puppet
             checktype = checktype.intern if checktype.is_a? String
             case checktype
             when :md5, :md5lite:
-                if ! FileTest.file?(@parent[:path])
-                    @parent.debug "Cannot MD5 sum %s; using mtime" %
-                        [@parent.stat.ftype]
-                    sum = @parent.stat.mtime.to_s
+                if ! FileTest.file?(@resource[:path])
+                    @resource.debug "Cannot MD5 sum %s; using mtime" %
+                        [@resource.stat.ftype]
+                    sum = @resource.stat.mtime.to_s
                 else
                     begin
-                        File.open(@parent[:path]) { |file|
+                        File.open(@resource[:path]) { |file|
                             text = nil
                             case checktype
                             when :md5
@@ -175,7 +175,7 @@ module Puppet
 
                             if text.nil?
                                 self.debug "Not checksumming empty file %s" %
-                                    @parent[:path]
+                                    @resource[:path]
                                 sum = 0
                             else
                                 sum = Digest::MD5.hexdigest(text)
@@ -183,20 +183,20 @@ module Puppet
                         }
                     rescue Errno::EACCES => detail
                         self.notice "Cannot checksum %s: permission denied" %
-                            @parent[:path]
-                        @parent.delete(self.class.name)
+                            @resource[:path]
+                        @resource.delete(self.class.name)
                     rescue => detail
                         self.notice "Cannot checksum: %s" %
                             detail
-                        @parent.delete(self.class.name)
+                        @resource.delete(self.class.name)
                     end
                 end
             when :timestamp, :mtime:
-                sum = @parent.stat.mtime.to_s
-                #sum = File.stat(@parent[:path]).mtime.to_s
+                sum = @resource.stat.mtime.to_s
+                #sum = File.stat(@resource[:path]).mtime.to_s
             when :time:
-                sum = @parent.stat.ctime.to_s
-                #sum = File.stat(@parent[:path]).ctime.to_s
+                sum = @resource.stat.ctime.to_s
+                #sum = File.stat(@resource[:path]).ctime.to_s
             else
                 raise Puppet::Error, "Invalid sum type %s" % checktype
             end
@@ -211,24 +211,24 @@ module Puppet
             currentvalue = self.retrieve
             if currentvalue.nil?
                 raise Puppet::Error, "Checksum state for %s is somehow nil" %
-                    @parent.title
+                    @resource.title
             end
 
             if self.insync?(currentvalue)
                 self.debug "Checksum is already in sync"
                 return nil
             end
-            # @parent.debug "%s(%s): after refresh, is '%s'" %
-                #    [self.class.name,@parent.name,@is]
+            # @resource.debug "%s(%s): after refresh, is '%s'" %
+                #    [self.class.name,@resource.name,@is]
 
                 # If we still can't retrieve a checksum, it means that
                 # the file still doesn't exist
             if currentvalue == :absent
                 # if they're copying, then we won't worry about the file
                 # not existing yet
-                unless @parent.property(:source)
+                unless @resource.property(:source)
                     self.warning("File %s does not exist -- cannot checksum" %
-                                     @parent[:path]
+                                     @resource[:path]
                                  )
                 end
                 return nil
@@ -265,13 +265,13 @@ module Puppet
             end
 
             stat = nil
-            unless stat = @parent.stat
+            unless stat = @resource.stat
                 return :absent
             end
 
-            if stat.ftype == "link" and @parent[:links] != :follow
+            if stat.ftype == "link" and @resource[:links] != :follow
                 self.debug "Not checksumming symlink"
-                # @parent.delete(:checksum)
+                # @resource.delete(:checksum)
                 return currentvalue
             end
 
@@ -287,7 +287,7 @@ module Puppet
                 self.updatesum(currentvalue)
             end
             
-            # @parent.debug "checksum state is %s" % self.is
+            # @resource.debug "checksum state is %s" % self.is
             return currentvalue
         end
 
@@ -296,7 +296,7 @@ module Puppet
             result = false
 
             if newvalue.is_a?(Symbol)
-                raise Puppet::Error, "%s has invalid checksum" % @parent.title
+                raise Puppet::Error, "%s has invalid checksum" % @resource.title
             end
 
             # if we're replacing, vs. updating
@@ -304,7 +304,7 @@ module Puppet
                 # unless defined? @should
                 #     raise Puppet::Error.new(
                 #         ("@should is not initialized for %s, even though we " +
-                #         "found a checksum") % @parent[:path]
+                #         "found a checksum") % @resource[:path]
                 #     )
                 # end
                 
@@ -313,12 +313,12 @@ module Puppet
                 end
 
                 self.debug "Replacing %s checksum %s with %s" %
-                    [@parent.title, sum, newvalue]
-                # @parent.debug "currentvalue: %s; @should: %s" % 
+                    [@resource.title, sum, newvalue]
+                # @resource.debug "currentvalue: %s; @should: %s" % 
                 #    [newvalue,@should]
                 result = true
             else
-                @parent.debug "Creating checksum %s" % newvalue
+                @resource.debug "Creating checksum %s" % newvalue
                 result = false
             end
 

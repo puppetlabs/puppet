@@ -240,6 +240,8 @@ class Puppet::Parameter < Puppet::Element
     # ParamHandler class.
     proxymethods("required?", "isnamevar?")
 
+    attr_accessor :resource
+    # LAK 2007-05-09: Keep the @parent around for backward compatibility.
     attr_accessor :parent
     attr_reader :shadow
 
@@ -257,12 +259,12 @@ class Puppet::Parameter < Puppet::Element
 
         error = type.new(args.join(" "))
 
-        if defined? @parent and @parent and @parent.line
-            error.line = @parent.line
+        if defined? @resource and @resource and @resource.line
+            error.line = @resource.line
         end
 
-        if defined? @parent and @parent and @parent.file
-            error.file = @parent.file
+        if defined? @resource and @resource and @resource.file
+            error.file = @resource.file
         end
 
         raise error
@@ -271,12 +273,15 @@ class Puppet::Parameter < Puppet::Element
     # Basic parameter initialization.
     def initialize(options = {})
         options = symbolize_options(options)
-        if parent = options[:parent]
-            self.parent = parent
-            options.delete(:parent)
+        if resource = options[:resource]
+            self.resource = resource
+            options.delete(:resource)
         else
-            raise Puppet::DevError, "No parent set for %s" % self.class.name
+            raise Puppet::DevError, "No resource set for %s" % self.class.name
         end
+
+        # LAK 2007-05-09: Keep the @parent around for backward compatibility.
+        #@parent = @resource
 
         if ! self.metaparam? and klass = Puppet::Type.metaparamclass(self.class.name)
             setup_shadow(klass)
@@ -285,15 +290,15 @@ class Puppet::Parameter < Puppet::Element
         set_options(options)
     end
 
-    # Log a message using the parent's log level.
+    # Log a message using the resource's log level.
     def log(msg)
-        unless @parent[:loglevel]
-            p @parent
+        unless @resource[:loglevel]
+            p @resource
             self.devfail "Parent %s has no loglevel" %
-                @parent.name
+                @resource.name
         end
         Puppet::Util::Log.create(
-            :level => @parent[:loglevel],
+            :level => @resource[:loglevel],
             :message => msg,
             :source => self
         )
@@ -317,16 +322,21 @@ class Puppet::Parameter < Puppet::Element
         unless defined? @noop
             @noop = false
         end
-        tmp = @noop || self.parent.noop || Puppet[:noop] || false
+        tmp = @noop || self.resource.noop || Puppet[:noop] || false
         #debug "noop is %s" % tmp
         return tmp
+    end
+
+    def parent
+        puts caller
+        raise "called parent"
     end
 
     # return the full path to us, for logging and rollback; not currently
     # used
     def pathbuilder
-        if defined? @parent and @parent
-            return [@parent.pathbuilder, self.name]
+        if defined? @resource and @resource
+            return [@resource.pathbuilder, self.name]
         else
             return [self.name]
         end
@@ -397,7 +407,7 @@ class Puppet::Parameter < Puppet::Element
     end
 
     def remove
-        @parent = nil
+        @resource = nil
         @shadow = nil
     end
 
@@ -446,17 +456,17 @@ class Puppet::Parameter < Puppet::Element
 
     def inspect
         s = "Parameter(%s = %s" % [self.name, self.value || "nil"]
-        if defined? @parent
-            s += ", @parent = %s)" % @parent
+        if defined? @resource
+            s += ", @resource = %s)" % @resource
         else
             s += ")"
         end
     end
 
-    # Retrieve the parent's provider.  Some types don't have providers, in which
-    # case we return the parent object itself.
+    # Retrieve the resource's provider.  Some types don't have providers, in which
+    # case we return the resource object itself.
     def provider
-        @parent.provider || @parent
+        @resource.provider || @resource
     end
 
     # If there's a shadowing metaparam, instantiate it now.
@@ -464,7 +474,7 @@ class Puppet::Parameter < Puppet::Element
     # same name as a metaparameter, and the metaparam will only be
     # stored as a shadow.
     def setup_shadow(klass)
-        @shadow = klass.new(:parent => self.parent)
+        @shadow = klass.new(:resource => self.resource)
     end
 
     def to_s

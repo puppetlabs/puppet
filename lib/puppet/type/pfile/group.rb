@@ -56,14 +56,14 @@ module Puppet
                     end
                 end
             end
-            stat = @parent.stat(false)
+            stat = @resource.stat(false)
 
             unless stat
                 return :absent
             end
 
             # Set our method appropriately, depending on links.
-            if stat.ftype == "link" and @parent[:links] != :follow
+            if stat.ftype == "link" and @resource[:links] != :follow
                 @method = :lchown
             else
                 @method = :chown
@@ -89,13 +89,13 @@ module Puppet
         # we'll just let it fail, but we should probably set things up so
         # that users get warned if they try to change to an unacceptable group.
         def sync
-            unless @parent.stat(false)
-                stat = @parent.stat(true)
+            unless @resource.stat(false)
+                stat = @resource.stat(true)
                 currentvalue = self.retrieve
 
                 unless stat
                     self.debug "File '%s' does not exist; cannot chgrp" %
-                        @parent[:path]
+                        @resource[:path]
                     return nil
                 end
             end
@@ -107,10 +107,10 @@ module Puppet
 
             begin
                 # set owner to nil so it's ignored
-                File.send(@method,nil,gid,@parent[:path])
+                File.send(@method,nil,gid,@resource[:path])
             rescue => detail
                 error = Puppet::Error.new( "failed to chgrp %s to %s: %s" %
-                    [@parent[:path], self.should, detail.message])
+                    [@resource[:path], self.should, detail.message])
                 raise error
             end
             return :file_changed

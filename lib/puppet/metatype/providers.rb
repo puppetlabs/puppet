@@ -195,12 +195,12 @@ class Puppet::Type
             end
 
             defaultto {
-                @parent.class.defaultprovider.name
+                @resource.class.defaultprovider.name
             }
 
             validate do |value|
                 value = value[0] if value.is_a? Array
-                if provider = @parent.class.provider(value)
+                if provider = @resource.class.provider(value)
                     unless provider.suitable?
                         raise ArgumentError,
                             "Provider '%s' is not functional on this platform" %
@@ -208,7 +208,7 @@ class Puppet::Type
                     end
                 else
                     raise ArgumentError, "Invalid %s provider '%s'" %
-                        [@parent.class.name, value]
+                        [@resource.class.name, value]
                 end
             end
 
@@ -217,7 +217,7 @@ class Puppet::Type
                 if provider.is_a? String
                     provider = provider.intern
                 end
-                @parent.provider = provider
+                @resource.provider = provider
                 provider
             end
         end.parenttype = self

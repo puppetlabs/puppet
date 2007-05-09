@@ -36,18 +36,18 @@ module Puppet
         nodefault
 
         newvalue(:absent) do
-            File.unlink(@parent[:path])
+            File.unlink(@resource[:path])
         end
 
         aliasvalue(:false, :absent)
 
         newvalue(:file) do
             # Make sure we're not managing the content some other way
-            if property = (@parent.property(:content) || @parent.property(:source))
+            if property = (@resource.property(:content) || @resource.property(:source))
                 property.sync
             else
-                @parent.write(false) { |f| f.flush }
-                mode = @parent.should(:mode)
+                @resource.write(false) { |f| f.flush }
+                mode = @resource.should(:mode)
             end
             return :file_created
         end
@@ -60,30 +60,30 @@ module Puppet
         end
 
         newvalue(:directory) do
-            mode = @parent.should(:mode)
-            parent = File.dirname(@parent[:path])
+            mode = @resource.should(:mode)
+            parent = File.dirname(@resource[:path])
             unless FileTest.exists? parent
                 raise Puppet::Error,
                     "Cannot create %s; parent directory %s does not exist" %
-                        [@parent[:path], parent]
+                        [@resource[:path], parent]
             end
-            @parent.write_if_writable(parent) do
+            @resource.write_if_writable(parent) do
                 if mode
                     Puppet::Util.withumask(000) do
-                        Dir.mkdir(@parent[:path],mode)
+                        Dir.mkdir(@resource[:path],mode)
                     end
                 else
-                    Dir.mkdir(@parent[:path])
+                    Dir.mkdir(@resource[:path])
                 end
             end
-            @parent.send(:property_fix)
-            @parent.setchecksum
+            @resource.send(:property_fix)
+            @resource.setchecksum
             return :directory_created
         end
 
 
         newvalue(:link) do
-            if property = @parent.property(:target)
+            if property = @resource.property(:target)
                 property.retrieve
 
                 return property.mklink
@@ -103,13 +103,13 @@ module Puppet
 
             return value if value.is_a? Symbol
 
-            @parent[:target] = value
+            @resource[:target] = value
 
             return :link
         end
 
         def change_to_s(currentvalue, newvalue)
-            if property = (@parent.property(:content) || @parent.property(:source)) and ! property.insync?(currentvalue)
+            if property = (@resource.property(:content) || @resource.property(:source)) and ! property.insync?(currentvalue)
                 currentvalue = property.retrieve
                 
                 return property.change_to_s(property.retrieve, property.should)
@@ -120,16 +120,16 @@ module Puppet
 
         # Check that we can actually create anything
         def check
-            basedir = File.dirname(@parent[:path])
+            basedir = File.dirname(@resource[:path])
 
             if ! FileTest.exists?(basedir)
                 raise Puppet::Error,
                     "Can not create %s; parent directory does not exist" %
-                    @parent.title
+                    @resource.title
             elsif ! FileTest.directory?(basedir)
                 raise Puppet::Error,
                     "Can not create %s; %s is not a directory" %
-                    [@parent.title, dirname]
+                    [@resource.title, dirname]
             end
         end
 
@@ -148,7 +148,7 @@ module Puppet
         end
 
         def retrieve
-            if stat = @parent.stat(false)
+            if stat = @resource.stat(false)
                 return stat.ftype.intern
             else
                 if self.should == :false
@@ -160,7 +160,7 @@ module Puppet
         end
 
         def sync
-            @parent.remove_existing(self.should)
+            @resource.remove_existing(self.should)
             if self.should == :absent
                 return :file_removed
             end

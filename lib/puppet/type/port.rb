@@ -90,8 +90,8 @@ require 'puppet/type/parsedtype'
 #            munge do |value|
 #                unless value == "absent" or value == :absent
 #                    # Add the :alias metaparam in addition to the property
-#                    @parent.newmetaparam(
-#                        @parent.class.metaparamclass(:alias), value
+#                    @resource.newmetaparam(
+#                        @resource.class.metaparamclass(:alias), value
 #                    )
 #                end
 #                value
@@ -102,8 +102,8 @@ require 'puppet/type/parsedtype'
 #            desc "The file in which to store service information.  Only used by
 #                those providers that write to disk (i.e., not NetInfo)."
 #
-#            defaultto { if @parent.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
-#                    @parent.class.defaultprovider.default_target
+#            defaultto { if @resource.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
+#                    @resource.class.defaultprovider.default_target
 #                else
 #                    nil
 #                end

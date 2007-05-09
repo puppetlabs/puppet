@@ -87,7 +87,7 @@ module Puppet
             def retrieve
                 # Default to somethinng
 
-                if @parent.check
+                if @resource.check
                     return :notrun
                 else
                     return self.should
@@ -99,25 +99,25 @@ module Puppet
                 olddir = nil
 
                 # We need a dir to change to, even if it's just the cwd
-                dir = self.parent[:cwd] || Dir.pwd
+                dir = self.resource[:cwd] || Dir.pwd
 
                 event = :executed_command
 
                 begin
-                    @output, status = @parent.run(self.parent[:command])
+                    @output, status = @resource.run(self.resource[:command])
                 rescue Timeout::Error
                     self.fail "Command exceeded timeout" % value.inspect
                 end
 
-                loglevel = @parent[:loglevel]
+                loglevel = @resource[:loglevel]
                 if status.exitstatus.to_s != self.should.to_s
                     self.fail("%s returned %s instead of %s" %
-                        [self.parent[:command], status.exitstatus, self.should.to_s])
+                        [self.resource[:command], status.exitstatus, self.should.to_s])
                 end
 
-                if log = @parent[:logoutput]
+                if log = @resource[:logoutput]
                     if log == :true
-                        log = @parent[:loglevel]
+                        log = @resource[:loglevel]
                     end
                     unless log == :false
                         @output.split(/\n/).each { |line|
@@ -213,7 +213,7 @@ module Puppet
                 for refreshing."
 
             validate do |command|
-                @parent.validatecmd(command)
+                @resource.validatecmd(command)
             end
         end
 
@@ -342,14 +342,14 @@ module Puppet
                 cmds = [cmds] unless cmds.is_a? Array
 
                 cmds.each do |cmd|
-                    @parent.validatecmd(cmd)
+                    @resource.validatecmd(cmd)
                 end
             end
 
             # Return true if the command does not return 0.
             def check(value)
                 begin
-                    output, status = @parent.run(value, true)
+                    output, status = @resource.run(value, true)
                 rescue Timeout::Error
                     err "Check %s exceeded timeout" % value.inspect
                     return false
@@ -378,14 +378,14 @@ module Puppet
                 cmds = [cmds] unless cmds.is_a? Array
 
                 cmds.each do |cmd|
-                    @parent.validatecmd(cmd)
+                    @resource.validatecmd(cmd)
                 end
             end
 
             # Return true if the command returns 0.
             def check(value)
                 begin
-                    output, status = @parent.run(value, true)
+                    output, status = @resource.run(value, true)
                 rescue Timeout::Error
                     err "Check %s exceeded timeout" % value.inspect
                     return false

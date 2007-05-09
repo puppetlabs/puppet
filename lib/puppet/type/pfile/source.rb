@@ -46,7 +46,7 @@ module Puppet
         uncheckable
         
         validate do |source|
-            unless @parent.uri2obj(source)
+            unless @resource.uri2obj(source)
                 raise Puppet::Error, "Invalid source %s" % source
             end
         end
@@ -62,7 +62,7 @@ module Puppet
         
         def change_to_s(currentvalue, newvalue)
             # newvalue = "{md5}" + @stats[:checksum]
-            if @parent.property(:ensure).retrieve == :absent
+            if @resource.property(:ensure).retrieve == :absent
                 return "creating from source %s with contents %s" % [@source, @stats[:checksum]]
             else
                 return "replacing from source %s with contents %s" % [@source, @stats[:checksum]]
@@ -79,11 +79,11 @@ module Puppet
 
         # Ask the file server to describe our file.
         def describe(source)
-            sourceobj, path = @parent.uri2obj(source)
+            sourceobj, path = @resource.uri2obj(source)
             server = sourceobj.server
 
             begin
-                desc = server.describe(path, @parent[:links])
+                desc = server.describe(path, @resource[:links])
             rescue Puppet::Network::XMLRPCClientError => detail
                 self.err "Could not describe %s: %s" %
                     [path, detail]
@@ -107,7 +107,7 @@ module Puppet
                 args.delete(:owner)
             end
 
-            if args.empty? or (args[:type] == "link" and @parent[:links] == :ignore)
+            if args.empty? or (args[:type] == "link" and @resource[:links] == :ignore)
                 return nil
             else
                 return args
@@ -137,13 +137,12 @@ module Puppet
             end
             
             #FIXARB: Inefficient?  Needed to call retrieve on parent's ensure and checksum
-            parentensure = @parent.property(:ensure).retrieve
-            if parentensure != :absent and ! @parent.replace?
+            parentensure = @resource.property(:ensure).retrieve
+            if parentensure != :absent and ! @resource.replace?
                 return true
             end
             # Now, we just check to see if the checksums are the same
-            parentchecksum = @parent.property(:checksum).retrieve
-            a = (!parentchecksum.nil? and (parentchecksum == @stats[:checksum]))
+            parentchecksum = @resource.property(:checksum).retrieve
             return (!parentchecksum.nil? and (parentchecksum == @stats[:checksum]))
         end
 
@@ -178,8 +177,8 @@ module Puppet
             
             case @stats[:type]
             when "directory", "file":
-                unless @parent.deleting?
-                    @parent[:ensure] = @stats[:type]
+                unless @resource.deleting?
+                    @resource[:ensure] = @stats[:type]
                 end
             else
                 self.info @stats.inspect
@@ -196,8 +195,8 @@ module Puppet
 
                 # was the stat already specified, or should the value
                 # be inherited from the source?
-                unless @parent.argument?(stat)
-                    @parent[stat] = value
+                unless @resource.argument?(stat)
+                    @resource[stat] = value
                 end
             }
             
@@ -215,25 +214,25 @@ module Puppet
             checks = (pinparams + [:ensure])
             checks.delete(:checksum)
             
-            @parent[:check] = checks
-            unless @parent.property(:checksum)
-                @parent[:checksum] = :md5
+            @resource[:check] = checks
+            unless @resource.property(:checksum)
+                @resource[:checksum] = :md5
             end
         end
 
         def sync
             unless @stats[:type] == "file"
                 #if @stats[:type] == "directory"
-                        #[@parent.name, @should.inspect]
+                        #[@resource.name, @should.inspect]
                 #end
                 raise Puppet::DevError, "Got told to copy non-file %s" %
-                    @parent[:path]
+                    @resource[:path]
             end
 
-            sourceobj, path = @parent.uri2obj(@source)
+            sourceobj, path = @resource.uri2obj(@source)
 
             begin
-                contents = sourceobj.server.retrieve(path, @parent[:links])
+                contents = sourceobj.server.retrieve(path, @resource[:links])
             rescue Puppet::Network::XMLRPCClientError => detail
                 self.err "Could not retrieve %s: %s" %
                     [path, detail]
@@ -250,9 +249,9 @@ module Puppet
                 self.notice "Could not retrieve contents for %s" %
                     @source
             end
-            exists = File.exists?(@parent[:path])
+            exists = File.exists?(@resource[:path])
 
-            @parent.write { |f| f.print contents }
+            @resource.write { |f| f.print contents }
 
             if exists
                 return :file_changed

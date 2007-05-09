@@ -97,12 +97,12 @@ module Puppet
                 end
             end
             
-            unless stat = @parent.stat(false)
+            unless stat = @resource.stat(false)
                 return :absent
             end
 
             # Set our method appropriately, depending on links.
-            if stat.ftype == "link" and @parent[:links] != :follow
+            if stat.ftype == "link" and @resource[:links] != :follow
                 @method = :lchown
             else
                 @method = :chown
@@ -125,7 +125,7 @@ module Puppet
             unless Puppet::Util::SUIDManager.uid == 0
                 unless defined? @@notifieduid
                     self.notice "Cannot manage ownership unless running as root"
-                    #@parent.delete(self.name)
+                    #@resource.delete(self.name)
                     @@notifieduid = true
                 end
                 return nil
@@ -147,8 +147,8 @@ module Puppet
                 return nil
             end
 
-            unless @parent.stat(false)
-                unless @parent.stat(true)
+            unless @resource.stat(false)
+                unless @resource.stat(true)
                     self.debug "File does not exist; cannot set owner"
                     return nil
                 end
@@ -156,7 +156,7 @@ module Puppet
             end
 
             begin
-                File.send(@method, user, nil, @parent[:path])
+                File.send(@method, user, nil, @resource[:path])
             rescue => detail
                 raise Puppet::Error, "Failed to set owner to '%s': %s" %
                     [user, detail]

@@ -182,7 +182,7 @@ Puppet::Type.newtype(:cron) do
     end
 
     # Somewhat uniquely, this property does not actually change anything -- it
-    # just calls +@parent.sync+, which writes out the whole cron tab for
+    # just calls +@resource.sync+, which writes out the whole cron tab for
     # the user in question.  There is no real way to change individual cron
     # jobs without rewriting the entire cron file.
     #
@@ -338,8 +338,8 @@ Puppet::Type.newtype(:cron) do
             Other providers default accordingly."
 
         defaultto {
-            if provider.is_a?(@parent.class.provider(:crontab))
-                if val = @parent.should(:user)
+            if provider.is_a?(@resource.class.provider(:crontab))
+                if val = @resource.should(:user)
                     val
                 else
                     raise ArgumentError,

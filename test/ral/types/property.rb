@@ -7,16 +7,16 @@ require 'puppettest'
 class TestProperty < Test::Unit::TestCase
 	include PuppetTest
 
-    def newinst(property, parent = nil)
+    def newinst(property, resource = nil)
         inst = nil
-        unless parent
-            parent = "fakeparent"
-            parent.meta_def(:pathbuilder) do [self.to_s] end
-            parent.meta_def(:provider) do nil end
-            parent.meta_def(:fakeproperty) do '' end
+        unless resource
+            resource = "fakeresource"
+            resource.meta_def(:pathbuilder) do [self.to_s] end
+            resource.meta_def(:provider) do nil end
+            resource.meta_def(:fakeproperty) do '' end
         end
         assert_nothing_raised {
-            newinst = property.new(:parent => parent)
+            newinst = property.new(:resource => resource)
             def newinst.retrieve(); return @fakeprovidervalue; end;
             return newinst
         }
@@ -222,7 +222,7 @@ class TestProperty < Test::Unit::TestCase
         inst = newinst(property, klassinst)
 
         # Now make sure we can set the values, they get validated as normal,
-        # and they set the values on the parent rathe than trying to call
+        # and they set the values on the resource rather than trying to call
         # a method
         {:value => :matched_value, "27" => :matched_number}.each do |value, event|
             assert_nothing_raised do
@@ -255,7 +255,7 @@ class TestProperty < Test::Unit::TestCase
  
         inst = nil
         assert_nothing_raised do
-            inst = propertyklass.new(:parent => obj)
+            inst = propertyklass.new(:resource => obj)
         end
 
         assert_nothing_raised do
@@ -278,7 +278,7 @@ class TestProperty < Test::Unit::TestCase
         myproperty.newvalue :mkfailure do
             raise "It's all broken"
         end
-        property = myproperty.new(:parent => p)
+        property = myproperty.new(:resource => p)
 
         assert_raise(Puppet::Error) do
             property.set(:mkfailure)

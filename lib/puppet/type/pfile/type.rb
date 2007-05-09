@@ -9,7 +9,7 @@ module Puppet
         
         def retrieve
             currentvalue = :absent
-            if stat = @parent.stat(false)
+            if stat = @resource.stat(false)
                 currentvalue = stat.ftype
             end
             # so this state is never marked out of sync

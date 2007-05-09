@@ -20,7 +20,7 @@ class TestParameter < Test::Unit::TestCase
 
     def newinst(param)
         assert_nothing_raised {
-            return param.new(:parent => "yay")
+            return param.new(:resource => "yay")
         }
     end
 

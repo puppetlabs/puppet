@@ -21,16 +21,16 @@ module Puppet
             else
                 result = set(self.should)
                 if should == :absent
-                    parent.section[inikey] = nil
+                    resource.section[inikey] = nil
                 else
-                    parent.section[inikey] = should
+                    resource.section[inikey] = should
                 end
             end
             return result
         end
 
         def retrieve
-            return parent.section[inikey]
+            return resource.section[inikey]
         end
         
         def inikey
@@ -210,7 +210,7 @@ module Puppet
                 class << changes[-1]
                     def go
                         result = super
-                        self.property.parent.store
+                        self.property.resource.store
                         return result
                     end
                 end

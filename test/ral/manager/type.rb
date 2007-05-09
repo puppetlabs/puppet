@@ -444,7 +444,7 @@ end
         # Now create an instance
         obj = type.create(:name => :myobj)
 
-        inst = property.new(:parent => obj)
+        inst = property.new(:resource => obj)
 
         # And make sure it's correctly setting @is
         ret = nil
@@ -460,7 +460,7 @@ end
             property = type.newproperty(:setretrieve, :retrieve => :yayness)
         end
 
-        inst = property.new(:parent => obj)
+        inst = property.new(:resource => obj)
 
         # And make sure it's correctly setting @is
         ret = nil

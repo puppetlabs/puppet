@@ -318,7 +318,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         # If the target isn't set, then this is our first modification, so
         # mark it for flushing.
         unless @property_hash[:target]
-            @property_hash[:target] = @model[:target] || self.class.default_target
+            @property_hash[:target] = @model.should(:target) || self.class.default_target
             self.class.modified(@property_hash[:target])
         end
         @property_hash[:name] ||= @model.name

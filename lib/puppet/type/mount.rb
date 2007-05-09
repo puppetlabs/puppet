@@ -58,8 +58,8 @@ module Puppet
 
             def syncothers
                 # We have to flush any changes to disk.
-                currentvalues = @parent.retrieve
-                oos = @parent.send(:properties).find_all do |prop|
+                currentvalues = @resource.retrieve
+                oos = @resource.send(:properties).find_all do |prop|
                     unless currentvalues.include?(prop)
                         raise Puppet::DevError, 
                           "Parent has property %s but it doesn't appear in the current vallues",
@@ -72,7 +72,7 @@ module Puppet
                     end
                 end.each { |prop| prop.sync }.length
                 if oos > 0
-                    @parent.flush
+                    @resource.flush
                 end
             end
         end
@@ -93,7 +93,7 @@ module Puppet
             # Default to the device but with "dsk" replaced with "rdsk".
             defaultto do
                 if Facter["operatingsystem"].value == "Solaris"
-                    device = @parent.value(:device)
+                    device = @resource.value(:device)
                     if device =~ %r{/dsk/}
                         device.sub(%r{/dsk/}, "/rdsk/")
                     else
@@ -133,8 +133,8 @@ module Puppet
             desc "The file in which to store the mount table.  Only used by
                 those providers that write to disk (i.e., not NetInfo)."
 
-            defaultto { if @parent.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
-                    @parent.class.defaultprovider.default_target
+            defaultto { if @resource.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
+                    @resource.class.defaultprovider.default_target
                 else
                     nil
                 end
@@ -152,7 +152,7 @@ module Puppet
 
             def value=(value)
                 warning "'path' is deprecated for mounts.  Please use 'name'."
-                @parent[:name] = value
+                @resource[:name] = value
                 super
             end
         end

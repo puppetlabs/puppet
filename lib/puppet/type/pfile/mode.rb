@@ -62,7 +62,7 @@ module Puppet
         # If we're a directory, we need to be executable for all cases
         # that are readable.  This should probably be selectable, but eh.
         def dirmask(value)
-            if FileTest.directory?(@parent[:path])
+            if FileTest.directory?(@resource[:path])
                 if value & 0400 != 0
                     value |= 0100
                 end
@@ -78,7 +78,7 @@ module Puppet
         end
 
         def insync?(currentvalue)
-            if stat = @parent.stat and stat.ftype == "link" and @parent[:links] != :follow
+            if stat = @resource.stat and stat.ftype == "link" and @resource[:links] != :follow
                 self.debug "Not managing symlink mode"
                 return true
             else
@@ -90,7 +90,7 @@ module Puppet
             # If we're not following links and we're a link, then we just turn
             # off mode management entirely.
 
-            if stat = @parent.stat(false)
+            if stat = @resource.stat(false)
                 unless defined? @fixed
                     if defined? @should and @should
                         @should = @should.collect { |s| self.dirmask(s) }
@@ -103,8 +103,8 @@ module Puppet
         end
 
         def sync
-            unless @parent.stat(false)
-                stat = @parent.stat(true)
+            unless @resource.stat(false)
+                stat = @resource.stat(true)
 
                 unless stat
                     self.debug "File does not exist; cannot set mode"
@@ -120,10 +120,10 @@ module Puppet
             end
 
             begin
-                File.chmod(mode, @parent[:path])
+                File.chmod(mode, @resource[:path])
             rescue => detail
                 error = Puppet::Error.new("failed to chmod %s: %s" %
-                    [@parent[:path], detail.message])
+                    [@resource[:path], detail.message])
                 error.set_backtrace detail.backtrace
                 raise error
             end

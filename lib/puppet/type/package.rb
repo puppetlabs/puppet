@@ -59,7 +59,7 @@ module Puppet
                 unless provider.purgeable?
                     self.fail(
                         "Package provider %s does not purging" %
-                        @parent[:provider]
+                        @resource[:provider]
                     )
                 end
                 provider.purge
@@ -72,7 +72,7 @@ module Puppet
                 unless provider.upgradeable?
                     self.fail(
                         "Package provider %s does not support specifying 'latest'" %
-                        @parent[:provider]
+                        @resource[:provider]
                     )
                 end
 
@@ -97,7 +97,7 @@ module Puppet
                 unless provider.versionable?
                     self.fail(
                         "Package provider %s does not support specifying versions" %
-                        @parent[:provider]
+                        @resource[:provider]
                      )
                 end
                 begin
@@ -140,7 +140,7 @@ module Puppet
                         unless provider.respond_to?(:latest)
                             self.fail(
                                 "Package type %s does not support specifying 'latest'" %
-                                @parent[:provider]
+                                @resource[:provider]
                             )
                         end
 
@@ -165,7 +165,7 @@ module Puppet
                             return true
                         else
                             self.debug "is is %s, latest %s is %s" %
-                                [is.inspect, @parent.name, @latest.inspect]
+                                [is.inspect, @resource.name, @latest.inspect]
                         end
                     when :absent
                         if is == :absent
@@ -181,7 +181,7 @@ module Puppet
 
             # This retrieves the current state. LAK: I think this method is unused.
             def retrieve
-                return @parent.retrieve
+                return @resource.retrieve
             end
 
             # Provide a bit more information when logging upgrades.
@@ -258,9 +258,9 @@ module Puppet
 
             munge do |value|
                 warning "'type' is deprecated; use 'provider' instead"
-                @parent[:provider] = value
+                @resource[:provider] = value
 
-                @parent[:provider]
+                @resource[:provider]
             end
         end
 

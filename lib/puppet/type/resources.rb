@@ -31,10 +31,10 @@ Puppet::Type.newtype(:resources) do
         
         validate do |value|
             if [:true, true, "true"].include?(value)
-                unless @parent.resource_type.respond_to?(:list)
-                    raise ArgumentError, "Purging resources of type %s is not supported, since they cannot be listed" % @parent[:name]
+                unless @resource.resource_type.respond_to?(:list)
+                    raise ArgumentError, "Purging resources of type %s is not supported, since they cannot be listed" % @resource[:name]
                 end
-                unless @parent.resource_type.validproperty?(:ensure)
+                unless @resource.resource_type.validproperty?(:ensure)
                     raise ArgumentError, "Purging is only supported on types that accept 'ensure'"
                 end
             end
@@ -63,7 +63,7 @@ Puppet::Type.newtype(:resources) do
         end
         
         defaultto {
-            if @parent[:name] == "user"
+            if @resource[:name] == "user"
                 500
             else
                 nil

@@ -34,35 +34,35 @@ module Puppet
         # but I really don't feel like dealing with the complexity right now.
         def retrieve
             stat = nil
-            unless stat = @parent.stat
+            unless stat = @resource.stat
                 return :absent
             end
 
-            if stat.ftype == "link" and @parent[:links] == :ignore
+            if stat.ftype == "link" and @resource[:links] == :ignore
                 return self.should
             end
 
             # Don't even try to manage the content on directories
-            if stat.ftype == "directory" and @parent[:links] == :ignore
-                @parent.delete(:content)
+            if stat.ftype == "directory" and @resource[:links] == :ignore
+                @resource.delete(:content)
                 return nil
             end
 
             begin
-                currentvalue = File.read(@parent[:path])
+                currentvalue = File.read(@resource[:path])
                 return currentvalue
             rescue => detail
                 raise Puppet::Error, "Could not read %s: %s" %
-                    [@parent.title, detail]
+                    [@resource.title, detail]
             end
         end
 
 
         # Just write our content out to disk.
         def sync
-            return_event = @parent.stat ? :file_changed : :file_created
+            return_event = @resource.stat ? :file_changed : :file_created
             
-            @parent.write { |f| f.print self.should }
+            @resource.write { |f| f.print self.should }
 
             return return_event
         end

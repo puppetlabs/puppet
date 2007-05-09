@@ -37,7 +37,7 @@ module Puppet
             newvalue(:true, :event => :service_enabled) do
                 unless provider.respond_to?(:enable)
                     raise Puppet::Error, "Service %s does not support enabling" %
-                        @parent.name
+                        @resource.name
                 end
                 provider.enable
             end
@@ -45,7 +45,7 @@ module Puppet
             newvalue(:false, :event => :service_disabled) do
                 unless provider.respond_to?(:disable)
                     raise Puppet::Error, "Service %s does not support enabling" %
-                        @parent.name
+                        @resource.name
                 end
                 provider.disable
             end
@@ -53,7 +53,7 @@ module Puppet
             def retrieve
                 unless provider.respond_to?(:enabled?)
                     raise Puppet::Error, "Service %s does not support enabling" %
-                        @parent.name
+                        @resource.name
                 end
                 return provider.enabled?
             end
@@ -67,15 +67,15 @@ module Puppet
             munge do |should|
                 @runlevel = nil
                 if should =~ /^\d+$/
-                    arity = @parent.method(:enable)
+                    arity = @resource.method(:enable)
                     if @runlevel and arity != 1
                         raise Puppet::Error,
                             "Services on %s do not accept runlevel specs" %
-                                @parent.type
+                                @resource.type
                     elsif arity != 0
                         raise Puppet::Error,
                             "Services on %s must specify runlevels" %
-                                @parent.type
+                                @resource.type
                     end
                     @runlevel = should
                     return :true
@@ -133,7 +133,7 @@ module Puppet
 #                        self
 #                end
 
-                if property = @parent.property(:enable)
+                if property = @resource.property(:enable)
                     property.retrieve
                     unless property.insync?
                         property.sync
@@ -152,8 +152,8 @@ module Puppet
                 warning."
 
             munge do |value|
-                @parent.warning "'running' is deprecated; please use 'ensure'"
-                @parent[:ensure] = value
+                @resource.warning "'running' is deprecated; please use 'ensure'"
+                @resource[:ensure] = value
             end
         end
 
@@ -188,7 +188,7 @@ module Puppet
 
             munge do |value|
                 warning "'type' is deprecated; use 'provider' instead"
-                @parent[:provider] = value
+                @resource[:provider] = value
             end
         end
 
@@ -211,11 +211,11 @@ module Puppet
                     end
                     if FileTest.exists?(path)
                         unless FileTest.directory?(path)
-                            @parent.debug "Search path %s is not a directory" %
+                            @resource.debug "Search path %s is not a directory" %
                                 [path]
                         end
                     else
-                        @parent.debug("Search path %s does not exist" % [path])
+                        @resource.debug("Search path %s does not exist" % [path])
                     end
                     paths.delete(path)
                 end
@@ -236,7 +236,7 @@ module Puppet
                 The pattern can be a simple string or any legal Ruby pattern."
 
             defaultto {
-                @parent[:binary] || @parent[:name]
+                @resource[:binary] || @resource[:name]
             }
         end
         newparam(:restart) do

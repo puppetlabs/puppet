@@ -249,7 +249,7 @@ module Puppet
                 return false if value == :never
 
                 value = self.value
-                case @parent[:periodmatch]
+                case @resource[:periodmatch]
                 when :number
                     method = @@methods[value]
                     if method.is_a?(Proc)
@@ -266,7 +266,7 @@ module Puppet
                     # than the unit of time, we match.  We divide the scale
                     # by the repeat, so that we'll repeat that often within
                     # the scale.
-                    return (now.to_i - previous.to_i) >= (scale / @parent[:repeat])
+                    return (now.to_i - previous.to_i) >= (scale / @resource[:repeat])
                 end
             end
         end
@@ -285,12 +285,12 @@ module Puppet
 
                 # This implicitly assumes that 'periodmatch' is distance -- that
                 # is, if there's no value, we assume it's a valid value.
-                return unless @parent[:periodmatch]
+                return unless @resource[:periodmatch]
 
-                if value != 1 and @parent[:periodmatch] != :distance
+                if value != 1 and @resource[:periodmatch] != :distance
                     raise Puppet::Error,
                         "Repeat must be 1 unless periodmatch is 'distance', not '%s'" %
-                            @parent[:periodmatch]
+                            @resource[:periodmatch]
                 end
             end
 

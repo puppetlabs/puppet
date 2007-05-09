@@ -29,7 +29,7 @@ class TestParsedFile < Test::Unit::TestCase
 
         # The target should always be a property, not a parameter.
         newproperty(:target) do
-            defaultto { @parent.class.defaultprovider.default_target }
+            defaultto { @resource.class.defaultprovider.default_target }
         end
     end
 

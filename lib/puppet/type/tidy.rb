@@ -30,10 +30,10 @@ module Puppet
             def change_to_s(currentvalue, newvalue)
                 start = "Tidying"
                 if @out.include?(:age)
-                    start += ", older than %s seconds" % @parent.should(:age)
+                    start += ", older than %s seconds" % @resource.should(:age)
                 end
                 if @out.include?(:size)
-                    start += ", larger than %s bytes" % @parent.should(:size)
+                    start += ", larger than %s bytes" % @resource.should(:size)
                 end
 
                 start
@@ -49,7 +49,7 @@ module Puppet
                 else
                     @out = []
                     TATTRS.each do |param|
-                        if property = @parent.property(param)
+                        if property = @resource.property(param)
                             self.debug "No is value for %s", [param] if is[property].nil?
                             unless property.insync?(is[property])
                                 @out << param
@@ -67,16 +67,16 @@ module Puppet
             
             def retrieve
                 stat = nil
-                unless stat = @parent.stat
+                unless stat = @resource.stat
                     return { self => :absent}
                 end
                 
-                if stat.ftype == "directory" and ! @parent[:rmdirs]
+                if stat.ftype == "directory" and ! @resource[:rmdirs]
                     return {self => :notidy}
                 end
 
                 allprops = TATTRS.inject({}) { |prophash, param|
-                    if property = @parent.property(param)
+                    if property = @resource.property(param)
                         prophash[property] = property.assess(stat)
                     end
                     prophash
@@ -85,26 +85,26 @@ module Puppet
             end
 
             def sync
-                file = @parent[:path]
+                file = @resource[:path]
                 case File.lstat(file).ftype
                 when "directory":
-                    if @parent[:rmdirs]
-                        subs = Dir.entries(@parent[:path]).reject { |d|
+                    if @resource[:rmdirs]
+                        subs = Dir.entries(@resource[:path]).reject { |d|
                             d == "." or d == ".."
                         }.length
                         if subs > 0
                             self.info "%s has %s children; not tidying" %
-                                [@parent[:path], subs]
-                            self.info Dir.entries(@parent[:path]).inspect
+                                [@resource[:path], subs]
+                            self.info Dir.entries(@resource[:path]).inspect
                         else
-                            Dir.rmdir(@parent[:path])
+                            Dir.rmdir(@resource[:path])
                         end
                     else
                         self.debug "Not tidying directories"
                         return nil
                     end
                 when "file":
-                    @parent.handlebackup(file)
+                    @resource.handlebackup(file)
                     File.unlink(file)
                 when "link":
                     File.unlink(file)
@@ -137,7 +137,7 @@ module Puppet
                 if stat.ftype == "directory"
                     type = :mtime
                 else
-                    type = @parent[:type] || :atime
+                    type = @resource[:type] || :atime
                 end
                 
                 #return Integer(Time.now - stat.send(type))

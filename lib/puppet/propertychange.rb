@@ -42,7 +42,7 @@ module Puppet
                 @property.warning("Property '%s' returned invalid event '%s'; resetting to default" %
                     [@property.class,event])
 
-                event = @property.parent.class.name.id2name + "_changed"
+                event = @property.resource.class.name.id2name + "_changed"
             end
             
             Puppet::Event.new(
@@ -129,7 +129,7 @@ module Puppet
         end
         
         def source
-            self.proxy || @property.parent
+            self.proxy || @property.resource
         end
 
         def to_s

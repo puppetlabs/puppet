@@ -9,11 +9,11 @@ module Puppet
         newproperty(:message) do
             desc "The message to be sent to the log."
             def sync
-                case @parent["withpath"]
+                case @resource["withpath"]
                 when :true:
                     log(self.should)
                 else  
-                    Puppet.send(@parent[:loglevel], self.should)
+                    Puppet.send(@resource[:loglevel], self.should)
                 end
                 return
             end
@@ -26,7 +26,7 @@ module Puppet
                 false
             end
 
-            defaultto { @parent[:name] }
+            defaultto { @resource[:name] }
         end
 
         newparam(:withpath) do 
