@@ -48,7 +48,7 @@ class TestHandler < Test::Unit::TestCase
     end
 
     def test_handlers_by_name
-        %w{ca filebucket fileserver logger master report resource runner status}.each do |name|
+        %w{ca filebucket fileserver master report resource runner status}.each do |name|
             handler = nil
             assert_nothing_raised do
                 handler = Puppet::Network::Handler.handler(name)

@@ -216,7 +216,7 @@ class TestClient < Test::Unit::TestCase
 
     # Make sure we get a client class for each handler type.
     def test_loading_all_clients
-        %w{ca dipper file logger master report resource runner status}.each do |name|
+        %w{ca dipper file master report resource runner status}.each do |name|
             client = nil
             assert_nothing_raised do
                 client = Puppet::Network::Client.client(name)
