@@ -47,26 +47,6 @@ module Puppet
                 end
             end
 
-            # FIXARB:  Check this... I think it may be the same as in Ensure class.
-            def change_to_s(currentvalue, newvalue)
-                begin
-                    if currentvalue == :absent
-                        return "created"
-                    elsif newvalue == :absent
-                        return "removed"
-                    else
-                        return "%s changed '%s' to '%s'" %
-                            [self.name, self.is_to_s(currentvalue), self.should_to_s(newvalue)]
-                    end
-                rescue Puppet::Error, Puppet::DevError
-                    raise
-                rescue => detail
-                    raise Puppet::DevError,
-                        "Could not convert change %s to string: %s" %
-                        [self.name, detail]
-                end
-            end
-
             def retrieve
                 return provider.exists? ? :present : :absent
             end
