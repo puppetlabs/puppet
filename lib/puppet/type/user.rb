@@ -43,26 +43,6 @@ module Puppet
                 end
             end
 
-            # FIXARB:  Check this... I think it is exactly the same as the Ensure classes. 
-            def change_to_s(currentvalue, newvalue)
-                begin
-                    if currentvalue == :absent
-                        return "created"
-                    elsif newvalue == :absent
-                        return "removed"
-                    else
-                        return "%s changed '%s' to '%s'" %
-                            [self.name, self.is_to_s(currentvalue), self.should_to_s(newvalue)]
-                    end
-                rescue Puppet::Error, Puppet::DevError
-                    raise
-                rescue => detail
-                    raise Puppet::DevError,
-                        "Could not convert change %s to string: %s" %
-                        [self.name, detail]
-                end
-            end
-
             def retrieve
                 if provider.exists?
                     return :present
@@ -186,8 +166,7 @@ module Puppet
                 group should not be listed.  Multiple groups should be
                 specified as an array."
 
-            # FIXARB: Whoa...  That should method requires is?  
-            def should_to_s(newvalue = @should)
+            def should_to_s(newvalue)
                 self.should
             end
 
