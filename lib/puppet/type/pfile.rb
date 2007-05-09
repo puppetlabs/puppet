@@ -1136,8 +1136,7 @@ module Puppet
         # There are some cases where all of the work does not get done on
         # file creation/modification, so we have to do some extra checking.
         def property_fix
-            self.each do |thing|
-                next unless thing.is_a? Puppet::Property
+            properties.each do |thing|
                 next unless [:mode, :owner, :group].include?(thing.name)
 
                 # Make sure we get a new stat objct

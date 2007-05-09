@@ -285,7 +285,7 @@ class TestType < Test::Unit::TestCase
     def test_object_recursion
         comp = Puppet.type(:component).create(:name => "top")
 
-        file = Puppet.type(:file).create(:path => tempfile, :ensure => :file)
+        file = Puppet.type(:component).create(:name => "middle")
 
         assert_raise(Puppet::DevError) do
             comp.push(comp)

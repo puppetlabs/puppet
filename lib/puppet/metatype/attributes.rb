@@ -524,17 +524,10 @@ class Puppet::Type
     # when an error has been encountered
     def delete(attr)
         attr = symbolize(attr)
-        case attr
-        when Puppet::Type
-            if @children.include?(attr)
-                @children.delete(attr)
-            end
+        if @parameters.has_key?(attr)
+            @parameters.delete(attr)
         else
-            if @parameters.has_key?(attr)
-                @parameters.delete(attr)
-            else
-                raise Puppet::DevError.new("Undefined attribute '#{attr}' in #{self}")
-            end
+            raise Puppet::DevError.new("Undefined attribute '#{attr}' in #{self}")
         end
     end
 

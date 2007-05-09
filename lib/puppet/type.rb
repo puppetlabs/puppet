@@ -106,40 +106,6 @@ class Type < Puppet::Element
         define_method(:validate, &block)
         #@validate = block
     end
-
-    # iterate across all children, and then iterate across properties
-    # we do children first so we're sure that all dependent objects
-    # are checked first
-    # we ignore parameters here, because they only modify how work gets
-    # done, they don't ever actually result in work specifically
-    def each
-        # we want to return the properties in the order that each type
-        # specifies it, because it may (as in the case of File#create)
-        # be important
-        if self.class.depthfirst?
-            @children.each { |child|
-                yield child
-            }
-        end
-        self.eachproperty { |property|
-            yield property
-        }
-        unless self.class.depthfirst?
-            @children.each { |child|
-                yield child
-            }
-        end
-    end
-
-    # Recurse deeply through the tree, but only yield types, not properties.
-    def delve(&block)
-        self.each do |obj|
-            if obj.is_a? Puppet::Type
-                obj.delve(&block)
-            end
-        end
-        block.call(self)
-    end
     
     # create a log at specified level
     def log(msg)
@@ -157,7 +123,6 @@ class Type < Puppet::Element
     public
 
     def initvars
-        @children = []
         @evalcount = 0
         @tags = []
 
