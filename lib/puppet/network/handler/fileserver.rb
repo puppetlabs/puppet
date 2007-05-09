@@ -5,6 +5,7 @@ require 'cgi'
 require 'delegate'
 
 class Puppet::Network::Handler
+    AuthStoreError = Puppet::AuthStoreError
     class FileServerError < Puppet::Error; end
     class FileServer < Handler
         desc "The interface to Puppet's fileserving abilities."

@@ -1124,6 +1124,28 @@ allow *
                         'allow.example.com', "192.168.0.1")
         }
     end
+
+    # Make sure we successfully throw errors -- someone ran into this with
+    # 0.22.4.
+    def test_failures
+        # create a server with the file
+        server = nil
+
+        config = tempfile
+        [
+        "[this is invalid]\nallow one.two.com", # invalid name
+        "[valid]\nallow *.testing something.com", # invalid allow
+        "[valid]\nallow one.two.com\ndeny *.testing something.com", # invalid deny
+        ].each do |failer|
+            File.open(config, "w") { |f| f.puts failer }
+            assert_raise(Puppet::Network::Handler::FileServerError, "Did not fail on %s" % failer.inspect) {
+                server = Puppet::Network::Handler::FileServer.new(
+                    :Local => false,
+                    :Config => config
+                )
+            }
+        end
+    end
 end
 
 # $Id$
