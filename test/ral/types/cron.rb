@@ -97,9 +97,9 @@ class TestCron < Test::Unit::TestCase
 
         assert_events([:cron_created], comp)
         cron.provider.class.prefetch
-        cron.retrieve
+        currentvalue = cron.retrieve
 
-        assert(cron.insync?, "Cron is not in sync")
+        assert(cron.insync?(currentvalue), "Cron is not in sync")
 
         assert_events([], comp)
 
@@ -114,9 +114,9 @@ class TestCron < Test::Unit::TestCase
         assert_events([:cron_removed], comp)
 
         cron.provider.class.prefetch
-        cron.retrieve
+        currentvalue = cron.retrieve
 
-        assert(cron.insync?, "Cron is not in sync")
+        assert(cron.insync?(currentvalue), "Cron is not in sync")
         assert_events([], comp)
     end
 
@@ -137,10 +137,12 @@ class TestCron < Test::Unit::TestCase
             }
             property = cron.send(:property, :command)
             cron.provider.command = command
+            cron.provider.ensure = :present
+            cron.provider.month = ["4"]
             cron.provider.class.prefetch
-            cron.retrieve
+            currentvalue = cron.retrieve
 
-            assert(property.insync?, "command parsing removes trailing whitespace")
+            assert(cron.insync?(currentvalue), "command parsing removes trailing whitespace")
             @crontype.clear
         end
     end
@@ -230,12 +232,14 @@ class TestCron < Test::Unit::TestCase
                 )
             }
 
-            minute = cron.send(:property, :minute)
+            #minute = cron.send(:property, :minute)
+            cron.provider.ensure = :present
+            cron.provider.command = '/bin/date > /dev/null'
             cron.provider.minute = %w{0 30}
             cron.provider.class.prefetch
-            cron.retrieve
+            currentvalue = cron.retrieve
 
-            assert(minute.insync?, "minute is out of sync with %s" % provider.name)
+            assert(cron.insync?(currentvalue), "minute is out of sync with %s" % provider.name)
             @crontype.clear
         end
     end
@@ -256,11 +260,13 @@ class TestCron < Test::Unit::TestCase
 
         cron[:minute] = :absent
         assert_events([:cron_changed], cron)
+
+        current_values = nil
         assert_nothing_raised {
             cron.provider.class.prefetch
-            cron.retrieve
+            current_values = cron.retrieve
         }
-        assert_equal(:absent, cron.is(:minute))
+        assert_equal(:absent, current_values[cron.property(:minute)])
     end
 
     def test_listing
@@ -325,9 +331,9 @@ class TestCron < Test::Unit::TestCase
         assert_apply(cron)
 
         cron.provider.class.prefetch
-        cron.retrieve
+        currentvalue = cron.retrieve
 
-        assert_equal(["*/5"], cron.is(:minute))
+        assert_equal(["*/5"], currentvalue[cron.property(:minute)])
     end
 
     def test_ranges
@@ -336,10 +342,22 @@ class TestCron < Test::Unit::TestCase
 
         assert_apply(cron)
 
-        cron.provider.class.prefetch
-        cron.retrieve
+        current_values = nil
+        assert_nothing_raised {
+            cron.provider.class.prefetch
+            current_values = cron.retrieve
+        }
 
-        assert_equal(["2-4"], cron.is(:minute))
+        assert_equal(["2-4"], current_values[cron.property(:minute)])
+    end
+
+
+    def provider_set(cron, param, value)
+      unless param =~ /=$/
+        param = "%s=" % param
+      end
+    
+      cron.provider.send(param, value)
     end
 
     def test_value
@@ -353,22 +371,19 @@ class TestCron < Test::Unit::TestCase
             assert(property, "Did not get %s property" % param)
 
             assert_nothing_raised {
-                property.is = :absent
+#                property.is = :absent
+                 provider_set(cron, param, :absent)
             }
 
-            val = [:absent]
+            val = "*"
             assert_equal(val, cron.value(param))
 
-            # Make sure we correctly get the "is" value if that's all there is
-            cron.is = [param, "1"]
-            assert_equal(%w{1}, cron.value(param))
-
             # Make sure arrays work, too
-            cron.is = [param, ["1"]]
+            provider_set(cron, param, ["1"])
             assert_equal(%w{1}, cron.value(param))
 
             # Make sure values get comma-joined
-            cron.is = [param, %w{2 3}]
+            provider_set(cron, param, %w{2 3})
             assert_equal(%w{2 3}, cron.value(param))
 
             # Make sure "should" values work, too
@@ -381,7 +396,7 @@ class TestCron < Test::Unit::TestCase
             cron[param] = ["4", "5"]
             assert_equal(%w{4 5}, cron.value(param))
 
-            cron.is = [param, :absent]
+            provider_set(cron, param, :absent)
             assert_equal(%w{4 5}, cron.value(param))
         end
 
@@ -393,20 +408,16 @@ class TestCron < Test::Unit::TestCase
         property = cron.property(:command)
 
         assert_nothing_raised {
-            property.is = :absent
+            provider_set(cron, :command, :absent)
         }
 
         param = :command
-        # Make sure we correctly get the "is" value if that's all there is
-        cron.is = [param, "/bin/echo"]
-        assert_equal("/bin/echo", cron.value(param))
-
         # Make sure arrays work, too
-        cron.is = [param, ["/bin/echo"]]
+        provider_set(cron, param, ["/bin/echo"])
         assert_equal("/bin/echo", cron.value(param))
 
         # Make sure values are not comma-joined
-        cron.is = [param, %w{/bin/echo /bin/test}]
+        provider_set(cron, param, %w{/bin/echo /bin/test})
         assert_equal("/bin/echo", cron.value(param))
 
         # Make sure "should" values work, too
@@ -419,7 +430,7 @@ class TestCron < Test::Unit::TestCase
         cron[param] = %w{/bin/echo /bin/test}
         assert_equal("/bin/echo", cron.value(param))
 
-        cron.is = [param, :absent]
+        provider_set(cron, param, :absent)
         assert_equal("/bin/echo", cron.value(param))
     end
 
@@ -455,7 +466,7 @@ class TestCron < Test::Unit::TestCase
     end
 
     # Make sure the user stuff defaults correctly.
-    def test_default_user
+    def  test_default_user
         crontab = @crontype.provider(:crontab)
         if crontab.suitable?
             inst = @crontype.create(

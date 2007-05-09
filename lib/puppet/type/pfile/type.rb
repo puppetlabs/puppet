@@ -8,14 +8,13 @@ module Puppet
         #end
         
         def retrieve
+            currentvalue = :absent
             if stat = @parent.stat(false)
-                @is = stat.ftype
-            else
-                @is = :absent
+                currentvalue = stat.ftype
             end
-
             # so this state is never marked out of sync
-            @should = [@is]
+            @should = [currentvalue]
+            return currentvalue
         end
 
 

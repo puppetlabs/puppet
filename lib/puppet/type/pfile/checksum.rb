@@ -83,9 +83,8 @@ module Puppet
         # Because source and content and whomever else need to set the checksum
         # and do the updating, we provide a simple mechanism for doing so.
         def checksum=(value)
-            @is = value
             munge(@should)
-            self.updatesum
+            self.updatesum(value)
         end
 
         def checktype
@@ -93,21 +92,21 @@ module Puppet
         end
 
         # Checksums need to invert how changes are printed.
-        def change_to_s
+        def change_to_s(currentvalue, newvalue)
             begin
-                if @is == :absent
+                if currentvalue == :absent
                     return "defined '%s' as '%s'" %
                         [self.name, self.currentsum]
-                elsif self.should == :absent
+                elsif newvalue == :absent
                     return "undefined %s from '%s'" %
-                        [self.name, self.is_to_s]
+                        [self.name, self.is_to_s(currentvalue)]
                 else
                     if defined? @cached and @cached
                         return "%s changed '%s' to '%s'" %
-                            [self.name, @cached, self.is_to_s]
+                            [self.name, @cached, self.is_to_s(currentvalue)]
                     else
                         return "%s changed '%s' to '%s'" %
-                            [self.name, self.currentsum, self.is_to_s]
+                            [self.name, self.currentsum, self.is_to_s(currentvalue)]
                     end
                 end
             rescue Puppet::Error, Puppet::DevError
@@ -209,80 +208,78 @@ module Puppet
         # the stored state to reflect the current state, and then kick
         # off an event to mark any changes.
         def handlesum
-            if @is.nil?
+            currentvalue = self.retrieve
+            if currentvalue.nil?
                 raise Puppet::Error, "Checksum state for %s is somehow nil" %
                     @parent.title
             end
 
-            if @is == :absent
-                self.retrieve
-
-                if self.insync?
-                    self.debug "Checksum is already in sync"
-                    return nil
-                end
-                #@parent.debug "%s(%s): after refresh, is '%s'" %
+            if self.insync?(currentvalue)
+                self.debug "Checksum is already in sync"
+                return nil
+            end
+            # @parent.debug "%s(%s): after refresh, is '%s'" %
                 #    [self.class.name,@parent.name,@is]
 
                 # If we still can't retrieve a checksum, it means that
                 # the file still doesn't exist
-                if @is == :absent
-                    # if they're copying, then we won't worry about the file
-                    # not existing yet
-                    unless @parent.property(:source)
-                        self.warning(
-                            "File %s does not exist -- cannot checksum" %
-                            @parent[:path]
-                        )
-                    end
-                    return nil
+            if currentvalue == :absent
+                # if they're copying, then we won't worry about the file
+                # not existing yet
+                unless @parent.property(:source)
+                    self.warning("File %s does not exist -- cannot checksum" %
+                                     @parent[:path]
+                                 )
                 end
+                return nil
             end
-
+            
             # If the sums are different, then return an event.
-            if self.updatesum
+            if self.updatesum(currentvalue)
                 return :file_changed
             else
                 return nil
             end
         end
 
-        def insync?
-            @should = [checktype]
+        def insync?(currentvalue)
+            @should = [checktype()]
             if cache(checktype())
-                return @is == currentsum()
+                return currentvalue == currentsum()
             else
                 # If there's no cached sum, then we don't want to generate
                 # an event.
                 return true
             end
         end
-
+        
         # Even though they can specify multiple checksums, the insync?
         # mechanism can really only test against one, so we'll just retrieve
         # the first specified sum type.
+        # FIXARB: THere is a cache but it seems inconsistent when it 
+        #          uses the cache vs, when it uses @is.  This will
+        #          need more attention.
         def retrieve(usecache = false)
             # When the 'source' is retrieving, it passes "true" here so
             # that we aren't reading the file twice in quick succession, yo.
-            if usecache and @is
-                return @is
+            currentvalue = currentsum()
+            if usecache and currentvalue
+               return currentvalue
             end
 
             stat = nil
             unless stat = @parent.stat
-                self.is = :absent
-                return
+                return :absent
             end
 
             if stat.ftype == "link" and @parent[:links] != :follow
                 self.debug "Not checksumming symlink"
-                #@parent.delete(:checksum)
-                self.is = self.currentsum
-                return
+                # @parent.delete(:checksum)
+                return currentvalue
             end
 
             # Just use the first allowed check type
-            @is = getsum(checktype())
+            currentvalue = getsum(checktype())
 
             # If there is no sum defined, then store the current value
             # into the cache, so that we're not marked as being
@@ -290,17 +287,18 @@ module Puppet
             # time we get a sum.
             unless cache(checktype())
                 # FIXME we should support an updatechecksums-like mechanism
-                self.updatesum
+                self.updatesum(currentvalue)
             end
-
-            #@parent.debug "checksum state is %s" % self.is
+            
+            # @parent.debug "checksum state is %s" % self.is
+            return currentvalue
         end
 
         # Store the new sum to the state db.
-        def updatesum
+        def updatesum(newvalue)
             result = false
 
-            if @is.is_a?(Symbol)
+            if newvalue.is_a?(Symbol)
                 raise Puppet::Error, "%s has invalid checksum" % @parent.title
             end
 
@@ -313,25 +311,23 @@ module Puppet
                 #     )
                 # end
                 
-                if @is == sum
+                if newvalue == sum
                     return false
                 end
 
-                #if cache(self.should) == @is
-                #    raise Puppet::Error, "Got told to update same sum twice"
-                #end
                 self.debug "Replacing %s checksum %s with %s" %
-                    [@parent.title, sum, @is]
-                #@parent.debug "@is: %s; @should: %s" % [@is,@should]
+                    [@parent.title, sum, newvalue]
+                # @parent.debug "currentvalue: %s; @should: %s" % 
+                #    [newvalue,@should]
                 result = true
             else
-                @parent.debug "Creating checksum %s" % @is
+                @parent.debug "Creating checksum %s" % newvalue
                 result = false
             end
 
             # Cache the sum so the log message can be right if possible.
             @cached = sum
-            cache(checktype(), @is)
+            cache(checktype(), newvalue)
             return result
         end
     end

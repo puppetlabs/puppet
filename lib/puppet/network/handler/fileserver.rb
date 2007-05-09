@@ -42,20 +42,23 @@ class Puppet::Network::Handler
             end
 
             obj = nil
-            unless obj = mount.check(path, links)
+            unless obj = mount.getfileobject(path, links)
                 return ""
             end
 
+            currentvalues = mount.check(obj)
+    
             desc = []
             CHECKPARAMS.each { |check|
                 if property = obj.property(check)
-                    unless property.is
+                    if currentvalues[property]
+                        desc << currentvalues[property]
+                    else
                         mount.debug "Manually retrieving info for %s" % check
-                        property.retrieve
+                        desc << property.retrieve
                     end
-                    desc << property.is
                 else
-                    if check == "checksum" and obj.property(:type).is == "file"
+                    if check == "checksum" and currentvalues[obj.property(:type)] == "file"
                         mount.notice "File %s does not have data for %s" %
                             [obj.name, check]
                     end
@@ -424,16 +427,18 @@ class Puppet::Network::Handler
 
             Puppet::Util.logmethods(self, true)
 
-            # Run 'retrieve' on a file.  This gets the actual parameters, so
-            # we can pass them to the client.
-            def check(dir, links)
+            def getfileobject(dir, links)
                 unless FileTest.exists?(dir)
                     self.notice "File source %s does not exist" % dir
                     return nil
                 end
 
-                obj = fileobj(dir, links)
-
+                return fileobj(dir, links)
+            end
+             
+            # Run 'retrieve' on a file.  This gets the actual parameters, so
+            # we can pass them to the client.
+            def check(obj)
                 # FIXME we should really have a timeout here -- we don't
                 # want to actually check on every connection, maybe no more
                 # than every 60 seconds or something.  It'd be nice if we
@@ -444,9 +449,7 @@ class Puppet::Network::Handler
                 # any state changes or anything.  We don't even need to sync
                 # the checksum, because we're always going to hit the disk
                 # directly.
-                obj.retrieve
-
-                return obj
+                return obj.retrieve
             end
 
             # Create a map for a specific client.

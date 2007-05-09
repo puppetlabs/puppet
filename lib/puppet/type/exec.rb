@@ -79,7 +79,7 @@ module Puppet
                 executed command returns something else.  Defaults to 0."
 
             # Make output a bit prettier
-            def change_to_s
+            def change_to_s(currentvalue, newvalue)
                 return "executed successfully"
             end
 
@@ -88,9 +88,9 @@ module Puppet
                 # Default to somethinng
 
                 if @parent.check
-                    self.is = :notrun
+                    return :notrun
                 else
-                    self.is = self.should
+                    return self.should
                 end
             end
 

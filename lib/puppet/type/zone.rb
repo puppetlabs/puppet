@@ -15,23 +15,25 @@ Puppet::Type.newtype(:zone) do
     class ZoneMultiConfigProperty < ZoneConfigProperty
         def configtext
             list = @should
+            
+            current_value = self.retrieve
 
-            unless @is.is_a? Symbol
-                if @is.is_a? Array
-                    list += @is
+            unless current_value.is_a? Symbol
+                if current_value.is_a? Array
+                    list += current_vlue
                 else
-                    if @is
-                        list << @is
+                    if current_value
+                        list << current_value
                     end
                 end
             end
 
-            # Some hackery so we can test whether @is is an array or a symbol
-            if @is.is_a? Array
-                tmpis = @is
+            # Some hackery so we can test whether current_value is an array or a symbol
+            if current_value.is_a? Array
+                tmpis = current_value
             else
-                if @is
-                    tmpis = [@is]
+                if current_value
+                    tmpis = [current_value]
                 else
                     tmpis = []
                 end
@@ -56,11 +58,11 @@ Puppet::Type.newtype(:zone) do
         end
 
         # We want all specified directories to be included.
-        def insync?
-            if @is.is_a? Array and @should.is_a? Array
-                @is.sort == @should.sort
+        def insync?(current_value)
+            if current_value.is_a? Array and @should.is_a? Array
+                current_value.sort == @should.sort
             else
-                @is == @should
+                current_value == @should
             end
         end
     end
@@ -124,11 +126,6 @@ Puppet::Type.newtype(:zone) do
             list[1..-1]
         end
 
-        def is=(value)
-            value = value.intern if value.is_a? String
-            @is = value
-        end
-
         def sync
             method = nil
             if up?
@@ -139,8 +136,6 @@ Puppet::Type.newtype(:zone) do
 
             # We need to get the state we're currently in and just call
             # everything between it and us.
-            states = self.class.valueslice(self.is, self.should)
-
             properties.each do |prop|
                 if method = prop[dir]
                     warned = false
@@ -163,7 +158,8 @@ Puppet::Type.newtype(:zone) do
 
         # Are we moving up the property tree?
         def up?
-            self.class.valueindex(self.is) < self.class.valueindex(self.should)
+            current_value = self.retrieve
+            self.class.valueindex(current_value) < self.class.valueindex(self.should)
         end
     end
 
@@ -386,56 +382,58 @@ set zonepath=%s
 
     def retrieve
         if hash = provider.statushash()
-            setstatus(hash)
+            prophash = setstatus(hash)
 
             # Now retrieve the configuration itself and set appropriately.
-            config2status(provider.getconfig())
+            return config2status(provider.getconfig(), prophash)
         else
-            properties().each do |pr|
-                pr.is = :absent
-            end
+            return currentpropvalues(:absent)
         end
     end
 
     # Take the results of a listing and set everything appropriately.
     def setstatus(hash)
+        prophash = {}
         hash.each do |param, value|
             next if param == :name
             case self.class.attrtype(param)
-            when :pr:
-                self.is = [param, value]
+            when :property:
+                prophash[self.property(param)] = value
             else
                 self[param] = value
             end
         end
+        return prophash
     end
 
     private
     # Turn the results of getconfig into status information.
-    def config2status(config)
+    def config2status(config, prophash)
         config.each do |name, value|
             case name
             when :autoboot:
-                self.is = [:autoboot, value.intern]
+                prophash[self.property(:autoboot)] = value.intern
             when :zonepath:
                 # Nothing; this is set in the zoneadm list command
             when :pool:
-                self.is = [:pool, value]
+                prophash[self.property(:pool)] = value
             when :shares:
-                self.is = [:shares, value]
+                prophash[self.property(:shares)] = value
             when "inherit-pkg-dir":
                 dirs = value.collect do |hash|
                     hash[:dir]
                 end
 
-                self.is = [:inherit, dirs]
+                prophash[self.property(:inherit)] = dirs
             when "net":
                 vals = value.collect do |hash|
                     "%s:%s" % [hash[:physical], hash[:address]]
                 end
-                self.is = [:ip, vals]
+                prophash[self.proeprty(:ip)] = vals
             end
         end
+        
+        return prophash
     end
 end
 

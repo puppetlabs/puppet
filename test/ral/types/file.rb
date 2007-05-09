@@ -237,15 +237,15 @@ class TestFile < Test::Unit::TestCase
                 }
                 assert(changes.length > 0)
                 assert_apply(file)
-                file.retrieve
-                assert(file.insync?())
+                currentvalue = file.retrieve
+                assert(file.insync?(currentvalue))
                 assert_nothing_raised() {
                     file[:owner] = uid
                 }
                 assert_apply(file)
-                file.retrieve
+                currentvalue = file.retrieve
                 # make sure changing to number doesn't cause a sync
-                assert(file.insync?())
+                assert(file.insync?(currentvalue))
             }
 
             # We no longer raise an error here, because we check at run time
@@ -269,8 +269,8 @@ class TestFile < Test::Unit::TestCase
                 assert(file.property(:group))
                 assert(file.property(:group).should)
                 assert_apply(file)
-                file.retrieve
-                assert(file.insync?())
+                currentvalue = file.retrieve
+                assert(file.insync?(currentvalue))
                 assert_nothing_raised() {
                     file.delete(:group)
                 }
@@ -311,7 +311,7 @@ class TestFile < Test::Unit::TestCase
             assert_events([:file_created], file)
             assert_events([], file)
             assert(FileTest.file?(path), "File does not exist")
-            assert(file.insync?())
+            assert(file.insync?(file.retrieve))
             @@tmpfiles.push path
         }
     end
@@ -331,7 +331,7 @@ class TestFile < Test::Unit::TestCase
                 [path])
             assert_events([:directory_created], file)
             assert_events([], file)
-            assert(file.insync?())
+            assert(file.insync?(file.retrieve))
             assert(FileTest.directory?(path))
             @@tmpfiles.push path
         }
@@ -348,7 +348,7 @@ class TestFile < Test::Unit::TestCase
             assert_events([:file_changed], file)
             assert_events([], file)
 
-            assert(file.insync?())
+            assert(file.insync?(file.retrieve))
 
             assert_nothing_raised() {
                 file.delete(:mode)
@@ -387,11 +387,11 @@ class TestFile < Test::Unit::TestCase
                 }
                 trans = nil
 
-                file.retrieve
+                currentvalues = file.retrieve
 
                 if file.title !~ /nonexists/
                     sum = file.property(:checksum)
-                    assert(sum.insync?, "file is not in sync")
+                    assert(sum.insync?(currentvalues[sum]), "file is not in sync")
                 end
 
                 events = assert_apply(file)
@@ -424,10 +424,11 @@ class TestFile < Test::Unit::TestCase
 
                 # Run it a few times to make sure we aren't getting
                 # spurious changes.
+                sum = nil
                 assert_nothing_raised do
-                    file.property(:checksum).retrieve
+                    sum = file.property(:checksum).retrieve
                 end
-                assert(file.property(:checksum).insync?,
+                assert(file.property(:checksum).insync?(sum),
                     "checksum is not in sync")
 
                 sleep 1.1 if type =~ /time/
@@ -713,7 +714,7 @@ class TestFile < Test::Unit::TestCase
             file.evaluate
         }
 
-        assert_equal("directory", file.property(:type).is)
+        assert_equal("directory", file.property(:type).retrieve)
 
         # And then check files
         assert_nothing_raised {
@@ -727,15 +728,16 @@ class TestFile < Test::Unit::TestCase
         file[:check] = "type"
         assert_apply(file)
 
-        assert_equal("file", file.property(:type).is)
+        assert_equal("file", file.property(:type).retrieve)
 
         file[:type] = "directory"
 
-        assert_nothing_raised { file.retrieve }
+        currentvalues = {}
+        assert_nothing_raised { currentvalues = file.retrieve }
 
         # The 'retrieve' method sets @should to @is, so they're never
         # out of sync.  It's a read-only class.
-        assert(file.insync?)
+        assert(file.insync?(currentvalues))
     end
 
     def test_remove
@@ -840,13 +842,13 @@ class TestFile < Test::Unit::TestCase
             )
         }
 
-        assert(!obj.insync?, "Object is incorrectly in sync")
+        assert(!obj.insync?(obj.retrieve), "Object is incorrectly in sync")
 
         assert_events([:file_created], obj)
 
-        obj.retrieve
+        currentvalues = obj.retrieve
 
-        assert(obj.insync?, "Object is not in sync")
+        assert(obj.insync?(currentvalues), "Object is not in sync")
 
         text = File.read(file)
 
@@ -856,7 +858,7 @@ class TestFile < Test::Unit::TestCase
 
         obj[:content] = newstr
 
-        assert(!obj.insync?, "Object is incorrectly in sync")
+        assert(!obj.insync?(obj.retrieve), "Object is incorrectly in sync")
 
         assert_events([:file_changed], obj)
 
@@ -864,8 +866,8 @@ class TestFile < Test::Unit::TestCase
 
         assert_equal(newstr, text, "Content did not copy correctly")
 
-        obj.retrieve
-        assert(obj.insync?, "Object is not in sync")
+        currentvalues = obj.retrieve
+        assert(obj.insync?(currentvalues), "Object is not in sync")
     end
 
     # Unfortunately, I know this fails
@@ -943,7 +945,7 @@ class TestFile < Test::Unit::TestCase
             )
         }
 
-        file.retrieve
+        currentvalues = file.retrieve
 
         assert_events([:file_created], file)
         file.retrieve
@@ -1218,21 +1220,21 @@ class TestFile < Test::Unit::TestCase
 
         file = Puppet::Type.newfile(:path => path, :ensure => :present)
 
-        file.retrieve
-        assert(! file.insync?, "File incorrectly in sync")
+        currentvalues = file.retrieve
+        assert(! file.insync?(currentvalues), "File incorrectly in sync")
 
         # Now make a file
         File.open(path, "w") { |f| f.puts "yay" }
 
-        file.retrieve
-        assert(file.insync?, "File not in sync")
+        currentvalues = file.retrieve
+        assert(file.insync?(currentvalues), "File not in sync")
 
         # Now make a directory
         File.unlink(path)
         Dir.mkdir(path)
 
-        file.retrieve
-        assert(file.insync?, "Directory not considered 'present'")
+        currentvalues = file.retrieve
+        assert(file.insync?(currentvalues), "Directory not considered 'present'")
 
         Dir.rmdir(path)
 
@@ -1242,8 +1244,8 @@ class TestFile < Test::Unit::TestCase
         otherfile = tempfile()
         File.symlink(otherfile, path)
 
-        file.retrieve
-        assert(file.insync?, "Symlink not considered 'present'")
+        currentvalues = file.retrieve
+        assert(file.insync?(currentvalues), "Symlink not considered 'present'")
         File.unlink(path)
 
         # Now set some content, and make sure it works
@@ -1459,8 +1461,8 @@ class TestFile < Test::Unit::TestCase
 
                     property = obj.property(:ensure)
 
-                    property.retrieve
-                    unless property.insync?
+                    currentvalue = property.retrieve
+                    unless property.insync?(currentvalue)
                         assert_nothing_raised do
                             property.sync
                         end

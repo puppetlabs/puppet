@@ -273,9 +273,9 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
             # This is only the case for properties, and targets should always
             # be properties.
-            if model.respond_to?(:is)
-                targets << model.is(:target)
-            end
+            #if model.respond_to?(:is)
+            #    targets << model.is(:target)
+            #end
         end
 
         targets.uniq.reject { |t| t.nil? }

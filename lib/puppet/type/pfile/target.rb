@@ -15,7 +15,8 @@ module Puppet
             end
 
             # Only call mklink if ensure() didn't call us in the first place.
-            if @parent.property(:ensure).insync?
+            currentensure  = @parent.property(:ensure).retrieve
+            if @parent.property(:ensure).insync?(currentensure)
                 mklink()
             end
         end
@@ -48,23 +49,24 @@ module Puppet
             end
         end
 
-        def insync?
+        def insync?(currentvalue)
             if [:nochange, :notlink].include?(self.should) or @parent.recurse?
                 return true
             else
-                return super
+                return super(currentvalue)
             end
         end
+
 
         def retrieve
             if stat = @parent.stat
                 if stat.ftype == "link"
-                    @is = File.readlink(@parent[:path])
+                    return File.readlink(@parent[:path])
                 else
-                    @is = :notlink
+                    return :notlink
                 end
             else
-                @is = :absent
+                return :absent
             end
         end
     end

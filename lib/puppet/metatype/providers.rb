@@ -61,15 +61,12 @@ class Puppet::Type
             # we've set up our naming stuff correctly everywhere.
 
             # Mark found objects as present
-            obj.is = [:ensure, :present]
             hash.each { |param, value|
                 if property = obj.property(param)
-                    property.is = value
                 elsif val = obj[param]
                     obj[param] = val
                 else
                     # There is a value on disk, but it should go away
-                    obj.is = [param, value]
                     obj[param] = :absent
                 end
             }
@@ -82,7 +79,7 @@ class Puppet::Type
             # because it sets the should value, not the is value.
             hash.delete(namevar)
             hash.each { |param, value|
-                obj.is = [param, value]
+                obj[param] = value unless obj.add_property_parameter(param)
             }
         end
 

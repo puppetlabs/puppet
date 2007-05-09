@@ -7,16 +7,16 @@ require 'puppet/type/parsedtype'
 module Puppet
     # A property for one entry in a .ini-style file
     class IniProperty < Puppet::Property
-        def insync?
+        def insync?(is)
             # A should property of :absent is the same as nil
             if is.nil? && (should.nil? || should == :absent)
                 return true
             end
-            return super
+            return super(is)
         end
 
         def sync
-            if insync?
+            if insync?(retrieve)
                 result = nil
             else
                 result = set(self.should)
@@ -30,7 +30,7 @@ module Puppet
         end
 
         def retrieve
-            @is = parent.section[inikey]
+            return parent.section[inikey]
         end
         
         def inikey
@@ -88,12 +88,12 @@ module Puppet
             inifile.each_section do |s|
                 next if s.name == "main"
                 obj = create(:name => s.name, :check => check)
-                obj.retrieve
+                current_values = obj.retrieve
                 obj.eachproperty do |property|
-                    if property.is.nil?
+                    if current_values[property].nil?
                         obj.delete(property.name)
                     else
-                        property.should = property.is
+                        property.should = current_values[property]
                     end
                 end
                 obj.delete(:check)

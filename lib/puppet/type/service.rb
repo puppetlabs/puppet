@@ -55,7 +55,7 @@ module Puppet
                     raise Puppet::Error, "Service %s does not support enabling" %
                         @parent.name
                 end
-                @is = provider.enabled?
+                return provider.enabled?
             end
 
             validate do |value|
@@ -116,7 +116,7 @@ module Puppet
             aliasvalue(:true, :running)
 
             def retrieve
-                self.is = provider.status
+                return provider.status
             end
 
             def sync
@@ -313,8 +313,9 @@ module Puppet
         # to events.
         def refresh
             # Only restart if we're supposed to be running
-            if ens = @parameters[:ensure] and ens.should == :running and ens.is == :running
-                provider.restart
+            
+            if ens = @parameters[:ensure] and ens.should == :running and ens.retrieve == :running
+              provider.restart
             end
         end
     end

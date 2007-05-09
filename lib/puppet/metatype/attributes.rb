@@ -307,9 +307,7 @@ class Puppet::Type
             # method on the class.
             if options[:retrieve]
                 define_method(:retrieve) do
-                    instance_variable_set(
-                        "@is", provider.send(options[:retrieve])
-                    )
+                    provider.send(options[:retrieve])
                 end
             end
 
@@ -458,22 +456,16 @@ class Puppet::Type
         obj = @parameters[:ensure] and obj.should == :absent
     end
 
-    # Allow an outside party to specify the 'is' value for a property.  The
-    # arguments are an array because you can't use parens with 'is=' calls.
-    # Most classes won't use this.
-    def is=(ary)
-        param, value = ary
-        param = attr_alias(param)
-        if self.class.validproperty?(param)
-            unless prop = @parameters[param]
-                prop = self.newattr(param)
-            end
-            prop.is = value
-        else
-            self[param] = value
+    # Create a new property if it is valid but doesn't exist
+    # Returns: true if a new parameter was added, false otherwise
+    def add_property_parameter(prop_name)
+        if self.class.validproperty?(prop_name) && !@parameters[prop_name]
+            self.newattr(prop_name)
+            return true
         end
+        return false
     end
-
+    
     # abstract accessing parameters and properties, and normalize
     # access to always be symbols, not strings
     # This returns a value, not an object.  It returns the 'is'
@@ -492,7 +484,7 @@ class Puppet::Type
 
         if obj = @parameters[name]
             if obj.is_a?(Puppet::Type::Property)
-                return obj.is
+                fail "[] called on a property"
             else
                 return obj.value
             end
@@ -552,16 +544,6 @@ class Puppet::Type
         properties().each { |property|
             yield property
         }
-    end
-
-    # retrieve the 'is' value for a specified property
-    def is(name)
-        name = attr_alias(name)
-        if prop = @parameters[name] and prop.is_a?(Puppet::Type::Property)
-            return prop.is
-        else
-            return nil
-        end
     end
 
     # retrieve the 'should' value for a specified property

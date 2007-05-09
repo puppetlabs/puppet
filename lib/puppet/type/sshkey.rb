@@ -28,11 +28,10 @@ module Puppet
                 make those aliases available in your Puppet scripts."
 
             attr_accessor :meta
-            
-            def insync?
-                @is == @should
-            end
 
+            def insync?(is)
+                is == @should
+            end
             # We actually want to return the whole array here, not just the first
             # value.
             def should

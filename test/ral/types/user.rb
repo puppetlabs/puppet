@@ -305,11 +305,11 @@ class TestUser < Test::Unit::TestCase
         assert(user.provider.groups.is_a?(String),
             "Incorrectly passed an array to groups")
 
-        user.retrieve
+        currentvalue = user.retrieve
 
-        assert(user.property(:groups).is, "Did not retrieve group list")
+        assert(currentvalue[user.property(:groups)], "Did not retrieve group list")
 
-        list = user.property(:groups).is
+        list = currentvalue[user.property(:groups)]
         assert_equal(extra.sort, list.sort, "Group list is not equal")
 
         # Now set to our main list of groups
@@ -319,45 +319,45 @@ class TestUser < Test::Unit::TestCase
 
         assert_equal((main + extra).sort, user.property(:groups).should.split(",").sort)
 
+        currentvalue = nil
         assert_nothing_raised {
-            user.retrieve
+            currentvalue = user.retrieve
         }
 
-        assert(!user.insync?, "User is incorrectly in sync")
+        assert(!user.insync?(currentvalue), "User is incorrectly in sync")
 
         assert_apply(user)
 
         assert_nothing_raised {
-            user.retrieve
+            currentvalue = user.retrieve
         }
 
         # We're not managing inclusively, so it should keep the old group
         # memberships and add the new ones
-        list = user.property(:groups).is
+        list = currentvalue[user.property(:groups)]
         assert_equal((main + extra).sort, list.sort, "Group list is not equal")
 
         assert_nothing_raised {
             user[:membership] = :inclusive
         }
         assert_nothing_raised {
-            user.retrieve
+            currentvalue = user.retrieve
         }
 
-        assert(!user.insync?, "User is incorrectly in sync")
+        assert(!user.insync?(currentvalue), "User is incorrectly in sync")
 
         assert_events([:user_changed], user)
         assert_nothing_raised {
-            user.retrieve
+            currentvalue = user.retrieve
         }
 
-        list = user.property(:groups).is
+        list = currentvalue[user.property(:groups)]
         assert_equal(main.sort, list.sort, "Group list is not equal")
 
         # Set the values a bit differently.
         user.property(:groups).should = list.sort { |a,b| b <=> a }
-        user.property(:groups).is = list.sort
 
-        assert(user.property(:groups).insync?, "Groups property did not sort groups")
+        assert(user.property(:groups).insync?(list.sort), "Groups property did not sort groups")
 
         user.delete(:groups)
     end
@@ -460,7 +460,7 @@ class TestUser < Test::Unit::TestCase
             user.evaluate
         end
 
-        assert(user.send(:property, :groups).insync?,
+        assert(user.send(:property, :groups).insync?(nil),
             "Groups state considered out of sync with no :should value")
     end
 

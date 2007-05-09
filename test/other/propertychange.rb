@@ -12,11 +12,11 @@ class TestPropertyChange < Test::Unit::TestCase
 	class FakeProperty < Puppet::Type::Property
 	    attr_accessor :is, :should, :parent
 	    attr_reader :noop
-	    def change_to_s
+	    def change_to_s(currentvalue, newvalue)
 	        "fake change"
         end
-	    def insync?
-	        @is == @should
+	    def insync?(is)
+	        is == @should
         end
         def log(msg)
             Puppet::Util::Log.create(
@@ -35,11 +35,11 @@ class TestPropertyChange < Test::Unit::TestCase
         def path
             "fakechange"
         end
-        def should_to_s
-            @should.to_s
+        def should_to_s(newvalue)
+            newvalue.to_s
         end
         def sync
-            if insync?
+            if insync?(@is)
                 return nil
             else
                 @is = @should
@@ -58,7 +58,7 @@ class TestPropertyChange < Test::Unit::TestCase
         property.parent = :parent
         change = nil
         assert_nothing_raised do
-            change = Puppet::PropertyChange.new(property)
+            change = Puppet::PropertyChange.new(property, :start)
         end
         change.transaction = :trans
         

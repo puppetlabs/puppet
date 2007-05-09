@@ -301,14 +301,14 @@ class TestParsedFile < Test::Unit::TestCase
 
         # Lastly, create a model with separate is and should values
         mtarget = tempfile()
-        istarget = tempfile()
+        # istarget = tempfile()
         files[:models] = mtarget
-        files[:ismodels] = istarget
+        # files[:ismodels] = istarget
         model = mkmodel "yay", :target => mtarget
-        model.is = [:target, istarget]
+        # model.is = [:target, istarget]
 
         assert(model.should(:target), "Did not get a value for target")
-        assert(model.is(:target), "Did not get a value for target")
+        # assert(model.is(:target), "Did not get a value for target")
 
         list = nil
         assert_nothing_raised do
@@ -559,12 +559,20 @@ class TestParsedFile < Test::Unit::TestCase
 
         # First make sure we can retrieve values multiple times from the
         # provider
-        assert(bill.is(:one), "Bill does not have a value for 'one'")
-        assert(bill.is(:one), "Bill does not have a value for 'one' on second try")
+        bills_values = nil
+        assert_nothing_raised do
+            bills_values = bill.retrieve
+        end
+
+        assert(bills_values[bill.property(:one)], 
+               "Bill does not have a value for 'one'")
+        assert(bills_values[bill.property(:one)], 
+               "Bill does not have a value for 'one' on second try")
         assert_nothing_raised do
             bill.retrieve
         end
-        assert(bill.is(:one), "bill's value for 'one' disappeared")
+        assert(bills_values[bill.property(:one)], 
+               "bill's value for 'one' disappeared")
     end
 
     # Make sure that creating a new model finds existing records in memory
@@ -603,11 +611,12 @@ class TestParsedFile < Test::Unit::TestCase
         assert_apply(bill)
 
         prov.prefetch
+        current_value = nil
         assert_nothing_raised do
-            bill.retrieve
+            current_value = bill.retrieve
         end
 
-        assert(bill.insync?,
+        assert(bill.insync?(current_value),
             "An invalid field marked the record out of sync")
     end
 

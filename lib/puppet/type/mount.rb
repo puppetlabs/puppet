@@ -43,7 +43,8 @@ module Puppet
 
             newvalue(:mounted, :event => :mount_mounted) do
                 # Create the mount point if it does not already exist.
-                if self.is == :absent or self.is.nil?
+                current_value = self.retrieve
+                if current_value.nil?  or current_value == :absent 
                     provider.create
                 end
 
@@ -52,20 +53,22 @@ module Puppet
             end
 
             def retrieve
-                if provider.mounted?
-                    @is = :mounted
-                else
-                    @is = super()
-                end
+                return provider.mounted? ? :mounted : super()
             end
 
             def syncothers
                 # We have to flush any changes to disk.
+                currentvalues = @parent.retrieve
                 oos = @parent.send(:properties).find_all do |prop|
+                    unless currentvalues.include?(prop)
+                        raise Puppet::DevError, 
+                          "Parent has property %s but it doesn't appear in the current vallues",
+                          [prop.name]
+                    end
                     if prop.name == :ensure
                         false
                     else
-                        ! prop.insync?
+                        ! prop.insync?(currentvalues[prop])
                     end
                 end.each { |prop| prop.sync }.length
                 if oos > 0

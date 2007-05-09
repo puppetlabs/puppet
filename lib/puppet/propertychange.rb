@@ -14,19 +14,19 @@ module Puppet
         # Switch the goals of the property, thus running the change in reverse.
         def backward
             @property.should = @is
-            @property.retrieve
+            @is = @property.retrieve
 
             unless defined? @transaction
                 raise Puppet::Error,
                     "PropertyChange '%s' tried to be executed outside of transaction" %
                     self
             end
-            unless @property.insync?
+            unless @property.insync?(@is)
                 @property.info "Backing %s" % self
                 return self.go
             else
                 @property.debug "rollback is already in sync: %s vs. %s" %
-                    [@property.is.inspect, @property.should.inspect]
+                    [@is, @property.should.inspect]
                 return nil
             end
         end
@@ -52,14 +52,14 @@ module Puppet
             )
         end
 
-        def initialize(property)
+        def initialize(property, currentvalue)
             unless property.is_a?(Puppet::Type::Property)
                 raise Puppet::DevError, "Got a %s instead of a property" %
                     property.class
             end
             @property = property
             @path = [property.path,"change"].flatten
-            @is = property.is
+            @is = currentvalue
 
             @should = property.should
 
@@ -92,7 +92,7 @@ module Puppet
             end
             
             return events.collect { |name|
-                @report = @property.log(@property.change_to_s)
+                @report = @property.log(@property.change_to_s(@is, @should))
                 event(name)
             }
         end
@@ -114,14 +114,14 @@ module Puppet
         end
         
         def skip?
-            if @property.insync?
+            if @property.insync?(@is)
                 @property.info "Already in sync"
                 return true
             end
 
             if @property.noop
                 @property.log "is %s, should be %s (noop)" %
-                    [property.is_to_s, property.should_to_s]
+                    [property.is_to_s(@is), property.should_to_s(@should)]
                 #@property.debug "%s is noop" % @property
                 return true
             end
@@ -134,7 +134,7 @@ module Puppet
 
         def to_s
             return "change %s.%s(%s)" %
-                [@transaction.object_id, self.object_id, @property.change_to_s]
+                [@transaction.object_id, self.object_id, @property.change_to_s(@is, @should)]
             #return "change %s.%s" % [@transaction.object_id, self.object_id]
         end
 	end

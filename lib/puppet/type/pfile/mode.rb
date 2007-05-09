@@ -10,27 +10,27 @@ module Puppet
 
         # Our modes are octal, so make sure they print correctly.  Other
         # valid values are symbols, basically
-        def is_to_s
-            case @is
+        def is_to_s(currentvalue)
+            case currentvalue
             when Integer
-                return "%o" % @is
+                return "%o" % currentvalue
             when Symbol
-                return @is
+                return currentvalue
             else
-                raise Puppet::DevError, "Invalid 'is' value for mode: %s" %
-                    @is.inspect
+                raise Puppet::DevError, "Invalid current value for mode: %s" %
+                    currentvalue.inspect
             end
         end
 
-        def should_to_s
-            case self.should
+        def should_to_s(newvalue = @should)
+            case newvalue
             when Integer
-                return "%o" % self.should
+                return "%o" % newvalue
             when Symbol
-                return self.should
+                return newvalue
             else
                 raise Puppet::DevError, "Invalid 'should' value for mode: %s" %
-                    self.should.inspect
+                    newvalue.inspect
             end
         end
 
@@ -77,12 +77,12 @@ module Puppet
             return value
         end
 
-        def insync?
+        def insync?(currentvalue)
             if stat = @parent.stat and stat.ftype == "link" and @parent[:links] != :follow
                 self.debug "Not managing symlink mode"
                 return true
             else
-                return super
+                return super(currentvalue)
             end
         end
 
@@ -91,30 +91,23 @@ module Puppet
             # off mode management entirely.
 
             if stat = @parent.stat(false)
-                self.is = stat.mode & 007777
                 unless defined? @fixed
                     if defined? @should and @should
                         @should = @should.collect { |s| self.dirmask(s) }
                     end
                 end
+                return stat.mode & 007777
             else
-                self.is = :absent
+                return :absent
             end
-
-            #self.debug "chmod state is %o" % self.is
         end
 
         def sync
-            if @is == :absent
-                @parent.stat(true)
-                self.retrieve
-                if @is == :absent
-                    self.debug "File does not exist; cannot set mode"
-                    return nil
-                end
+            unless @parent.stat(false)
+                stat = @parent.stat(true)
 
-                if self.insync?
-                    # we're already in sync
+                unless stat
+                    self.debug "File does not exist; cannot set mode"
                     return nil
                 end
             end
@@ -127,7 +120,7 @@ module Puppet
             end
 
             begin
-                File.chmod(mode,@parent[:path])
+                File.chmod(mode, @parent[:path])
             rescue => detail
                 error = Puppet::Error.new("failed to chmod %s: %s" %
                     [@parent[:path], detail.message])

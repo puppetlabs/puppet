@@ -23,9 +23,8 @@ class TestServiceType < Test::Unit::TestCase
 
     def test_refresh_normally
         service = Puppet::Type.type(:service).create :name => "testing",
-            :ensure => :running, :provider => :base
+            :ensure => :running, :provider => :base, :status => "cat /dev/null"
 
-        service.is = [:ensure, :running]
         service.provider.expects(:restart)
 
         assert_nothing_raised do

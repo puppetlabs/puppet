@@ -79,7 +79,7 @@ module Puppet
                 # Because yum always exits with a 0 exit code, there's a retrieve
                 # in the "install" method.  So, check the current state now,
                 # to compare against later.
-                current = self.is
+                current = self.retrieve
                 begin
                     provider.update
                 rescue => detail
@@ -106,7 +106,7 @@ module Puppet
                     self.fail "Could not update: %s" % detail
                 end
 
-                if self.is == :absent
+                if self.retrieve == :absent
                     :package_installed
                 else
                     :package_changed
@@ -118,7 +118,7 @@ module Puppet
 
             # Override the parent method, because we've got all kinds of
             # funky definitions of 'in sync'.
-            def insync?
+            def insync?(is)
                 @should ||= []
 
                 @latest = nil unless defined? @latest
@@ -128,12 +128,12 @@ module Puppet
                 @should.each { |should|
                     case should
                     when :present
-                        unless @is == :absent
+                        unless is == :absent
                             return true
                         end
                     when :latest
                         # Short-circuit packages that are not present
-                        if @is == :absent
+                        if is == :absent
                             return false
                         end
 
@@ -156,7 +156,7 @@ module Puppet
                             end
                         end
 
-                        case @is
+                        case is
                         when @latest:
                             return true
                         when :present:
@@ -164,14 +164,14 @@ module Puppet
                             # that can't query versions.
                             return true
                         else
-                            self.debug "@is is %s, latest %s is %s" %
-                                [@is.inspect, @parent.name, @latest.inspect]
+                            self.debug "is is %s, latest %s is %s" %
+                                [is.inspect, @parent.name, @latest.inspect]
                         end
                     when :absent
-                        if @is == :absent
+                        if is == :absent
                             return true
                         end
-                    when @is
+                    when is
                         return true
                     end
                 }
@@ -181,15 +181,15 @@ module Puppet
 
             # This retrieves the current state. LAK: I think this method is unused.
             def retrieve
-                @is = @parent.retrieve
+                return @parent.retrieve
             end
 
             # Provide a bit more information when logging upgrades.
-            def should_to_s
+            def should_to_s(newvalue = @should)
                 if @latest
                     @latest.to_s
                 else
-                    super
+                    super(newvalue)
                 end
             end
         end
@@ -379,7 +379,7 @@ module Puppet
             self.each do |pkg|
                 next unless packages[:provider] == pkgtype
                 unless packages.include? pkg
-                    pkg.is = [:ensure, :absent] 
+                    pkg.provider.send(:ensure, :absent)
                 end
             end
         end
@@ -428,7 +428,7 @@ module Puppet
             # about it and set it appropriately.
             if hash = @provider.query
                 if hash == :listed # Mmmm, hackalicious
-                    return
+                    return {}
                 end
                 hash.each { |param, value|
                     unless self.class.validattr?(param)
@@ -437,11 +437,19 @@ module Puppet
                 }
 
                 setparams(hash)
+                
+                return properties().inject({}) { |prop_hash, property|
+                           prop_hash[property] = hash[property.name] if hash.has_key?(property.name)
+                           prop_hash
+                       }
             else
                 # Else just mark all of the properties absent.
-                self.class.validproperties.each { |name|
-                    self.is = [name, :absent]
-                }
+                # FIXARB: Not sure why this is using validproperties instead of
+                #         properties()?
+                return self.class.validproperties.inject({}) { |h, name|
+                          h[@parameters[name]] = :absent
+                          h
+                       }
             end
         end
 
@@ -449,9 +457,11 @@ module Puppet
         # are properties.
         def setparams(hash)
             # Everything on packages is a parameter except :ensure
-            hash.each { |param, value|
+            hash.each { |param, value| 
+                next if param == :ensure
                 if self.class.attrtype(param) == :property
-                    self.is = [param, value]
+                    add_property_parameter(param)
+                    self.provider.send("%s=" % param, value)
                 else
                     self[param] = value
                 end

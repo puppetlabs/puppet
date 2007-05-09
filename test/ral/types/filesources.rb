@@ -143,26 +143,27 @@ class TestFileSources < Test::Unit::TestCase
         assert_equal([source], property.should, "munging changed the source")
         
         # First try it with a missing source
+        currentvalue = nil
         assert_nothing_raised do
-            property.retrieve
+            currentvalue = property.retrieve
         end
         
         # And make sure the property considers itself in sync, since there's nothing
         # to do
-        assert(property.insync?, "source thinks there's work to do with no file or dest")
+        assert(property.insync?(currentvalue), "source thinks there's work to do with no file or dest")
         
         # Now make the dest a directory, and make sure the object sets :ensure
         # up to create a directory
         Dir.mkdir(source)
         assert_nothing_raised do
-            property.retrieve
+            currentvalue = property.retrieve
         end
         assert_equal(:directory, file.should(:ensure),
             "Did not set to create directory")
         
         # And make sure the source property won't try to do anything with a
         # remote dir
-        assert(property.insync?, "Source was out of sync even tho remote is dir")
+        assert(property.insync?(currentvalue), "Source was out of sync even tho remote is dir")
         
         # Now remove the source, and make sure :ensure was not modified
         Dir.rmdir(source)
@@ -205,29 +206,29 @@ class TestFileSources < Test::Unit::TestCase
         assert(property, "did not get source property")
         
         # Try it with no source at all
-        file.retrieve
-        assert(property.insync?, "source property not in sync with missing source")
+        currentvalues = file.retrieve
+        assert(property.insync?(currentvalues[property]), "source property not in sync with missing source")
 
         # with a directory
         Dir.mkdir(source)
-        file.retrieve
-        assert(property.insync?, "source property not in sync with directory as source")
+        currentvalues = file.retrieve
+        assert(property.insync?(currentvalues[property]), "source property not in sync with directory as source")
         Dir.rmdir(source)
         
         # with a file
         File.open(source, "w") { |f| f.puts "yay" }
-        file.retrieve
-        assert(!property.insync?, "source property was in sync when file was missing")
+        currentvalues = file.retrieve
+        assert(!property.insync?(currentvalues[property]), "source property was in sync when file was missing")
         
         # With a different file
         File.open(dest, "w") { |f| f.puts "foo" }
-        file.retrieve
-        assert(!property.insync?, "source property was in sync with different file")
+        currentvalues = file.retrieve
+        assert(!property.insync?(currentvalues[property]), "source property was in sync with different file")
         
         # with matching files
         File.open(dest, "w") { |f| f.puts "yay" }
-        file.retrieve
-        assert(property.insync?, "source property was not in sync with matching file")
+        currentvalues = file.retrieve
+        assert(property.insync?(currentvalues[property]), "source property was not in sync with matching file")
     end
     
     def test_source_sync
@@ -240,8 +241,8 @@ class TestFileSources < Test::Unit::TestCase
         
         File.open(source, "w") { |f| f.puts "yay" }
         
-        file.retrieve
-        assert(! property.insync?, "source thinks it's in sync")
+        currentvalues = file.retrieve
+        assert(! property.insync?(currentvalues[property]), "source thinks it's in sync")
         
         event = nil
         assert_nothing_raised do
@@ -253,8 +254,8 @@ class TestFileSources < Test::Unit::TestCase
         
         # Now write something different
         File.open(source, "w") { |f| f.puts "rah" }
-        file.retrieve
-        assert(! property.insync?, "source should be out of sync")
+        currentvalues = file.retrieve
+        assert(! property.insync?(currentvalues[property]), "source should be out of sync")
         assert_nothing_raised do
             event = property.sync
         end
@@ -692,12 +693,12 @@ class TestFileSources < Test::Unit::TestCase
             )
         }
 
-        file.retrieve
+        currentvalue = file.retrieve
 
-        assert(file.is(:checksum), "File does not have a checksum property")
+        assert(currentvalue[file.property(:checksum)], 
+               "File does not have a checksum property")
 
         assert_equal(0, file.evaluate.length, "File produced changes")
-
     end
 
     def test_sourcepaths

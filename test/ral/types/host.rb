@@ -79,20 +79,21 @@ class TestHost < Test::Unit::TestCase
             )
         }
 
-        host.retrieve
+        current_values = nil
+        assert_nothing_raised { current_values = host.retrieve }
         assert_events([:host_created], host)
 
-        assert_nothing_raised { host.retrieve }
+        assert_nothing_raised { current_values = host.retrieve }
 
-        assert_equal(:present, host.is(:ensure))
+        assert_equal(:present, current_values[host.property(:ensure)])
 
         host[:ensure] = :absent
 
         assert_events([:host_removed], host)
 
-        assert_nothing_raised { host.retrieve }
+        assert_nothing_raised { current_values = host.retrieve }
 
-        assert_equal(:absent, host.is(:ensure))
+        assert_equal(:absent, current_values[host.property(:ensure)])
     end
 
     def test_moddinghost
@@ -111,18 +112,24 @@ class TestHost < Test::Unit::TestCase
 
         assert_events([:host_created], host)
 
-        host.retrieve
+        current_values = nil 
+        assert_nothing_raised {
+            current_values = host.retrieve
+        }
 
         # This was a hard bug to track down.
-        assert_instance_of(String, host.is(:ip))
+        assert_instance_of(String, current_values[host.property(:ip)])
 
         host[:alias] = %w{madstop kirby yayness}
 
         assert_events([:host_changed], host)
 
-        host.retrieve
+        assert_nothing_raised {
+            current_values = host.retrieve
+        }
 
-        assert_equal(%w{madstop kirby yayness}, host.is(:alias))
+        assert_equal(%w{madstop kirby yayness}, 
+                     current_values[host.property(:alias)])
         
         host[:ensure] = :absent
         assert_events([:host_removed], host)

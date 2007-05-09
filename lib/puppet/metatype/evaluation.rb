@@ -20,9 +20,9 @@ class Puppet::Type
         # it's important that we call retrieve() on the type instance,
         # not directly on the property, because it allows the type to override
         # the method, like pfile does
-        self.retrieve
+        currentvalues = self.retrieve
 
-        changes = propertychanges().flatten
+        changes = propertychanges(currentvalues).flatten
 
         # now record how many changes we've resulted in
         if changes.length > 0
@@ -44,19 +44,32 @@ class Puppet::Type
     # if all contained objects are in sync, then we're in sync
     # FIXME I don't think this is used on the type instances any more,
     # it's really only used for testing
-    def insync?
+    def insync?(is)
         insync = true
-
+        
         if property = @parameters[:ensure]
-            if property.insync? and property.should == :absent
+            unless is.include? property
+               raise Puppet::DevError,
+                        "The is value is not in the is array for '%s'" %
+                        [property.name]
+            end
+            ensureis = is[property]           
+            if property.insync?(ensureis) and property.should == :absent
                 return true
             end
         end
 
         properties.each { |property|
-            unless property.insync?
+            unless is.include? property
+               raise Puppet::DevError,
+                        "The is value is not in the is array for '%s'" %
+                        [property.name]
+            end
+
+            propis = is[property]
+            unless property.insync?(propis)
                 property.debug("Not in sync: %s vs %s" %
-                    [property.is.inspect, property.should.inspect])
+                    [propis.inspect, property.should.inspect])
                 insync = false
             #else
             #    property.debug("In sync")
@@ -66,28 +79,40 @@ class Puppet::Type
         #self.debug("%s sync status is %s" % [self,insync])
         return insync
     end
-
+        
     # retrieve the current value of all contained properties
     def retrieve
+         return currentpropvalues
+    end
+    
+    # get a hash of the current properties.  
+    def currentpropvalues(override_value = nil)
         # it's important to use the method here, as it follows the order
         # in which they're defined in the object
-        properties().each { |property|
-            property.retrieve
-        }
+        return properties().inject({}) { | prophash, property|
+                   prophash[property] = override_value.nil? ? 
+                                          property.retrieve : 
+                                             override_value
+                   prophash
+               }
     end
-
+     
     # Retrieve the changes associated with all of the properties.
-    def propertychanges
+    def propertychanges(currentvalues)
         # If we are changing the existence of the object, then none of
         # the other properties matter.
         changes = []
-        if @parameters.include?(:ensure) and ! @parameters[:ensure].insync?
+        ensureparam = @parameters[:ensure]
+        if @parameters.include?(:ensure) && !currentvalues.include?(ensureparam)
+            raise Puppet::DevError, "Parameter ensure defined but missing from current values"
+        end
+        if @parameters.include?(:ensure) and ! ensureparam.insync?(currentvalues[ensureparam])
 #            self.info "ensuring %s from %s" %
 #                [@parameters[:ensure].should, @parameters[:ensure].is]
-            changes = [Puppet::PropertyChange.new(@parameters[:ensure])]
+            changes << Puppet::PropertyChange.new(ensureparam, currentvalues[ensureparam])
         # Else, if the 'ensure' property is correctly absent, then do
         # nothing
-        elsif @parameters.include?(:ensure) and @parameters[:ensure].is == :absent
+        elsif @parameters.include?(:ensure) and currentvalues[ensureparam] == :absent
             #            self.info "Object is correctly absent"
             return []
         else
@@ -98,9 +123,13 @@ class Puppet::Type
 #                self.info "no ensure property"
 #            end
             changes = properties().find_all { |property|
-                ! property.insync?
+                unless currentvalues.include?(property)
+                    raise Puppet::DevError, "Property %s does not have a current value", 
+                               [property.name]
+                end
+                ! property.insync?(currentvalues[property])
             }.collect { |property|
-                Puppet::PropertyChange.new(property)
+                Puppet::PropertyChange.new(property, currentvalues[property])
             }
         end
 
@@ -112,6 +141,21 @@ class Puppet::Type
         end
 
         changes
+    end
+    
+    private 
+    # FIXARB: This can go away
+    def checknewinsync(currentvalues)
+        currentvalues.each { |prop, val|
+           if prop.respond_to? :new_insync? and prop.new_insync?(val) != prop.insync?
+                           puts "#{prop.name} new_insync? != insync?"
+              self.devfail "#{prop.name} new_insync? != insync?"
+           end
+        }
+                
+        properties().each { |prop|
+            puts "#{prop.name} is missing from current values" if (!currentvalues.include?(prop))
+        }
     end
 end
 

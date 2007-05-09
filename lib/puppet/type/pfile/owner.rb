@@ -64,21 +64,21 @@ module Puppet
         end
 
         # We want to print names, not numbers
-        def is_to_s
-            id2name(@is) || @is
+        def is_to_s(currentvalue)
+            id2name(currentvalue) || currentvalue
         end
 
-        def should_to_s
-            case self.should
+        def should_to_s(newvalue = @should)
+            case newvalue
             when Symbol
-                self.should.to_s
+                newvalue.to_s
             when Integer
-                id2name(self.should) || self.should
+                id2name(newvalue) || newvalue
             when String
-                self.should
+                newvalue
             else
                 raise Puppet::DevError, "Invalid uid type %s(%s)" %
-                    [self.should.class, self.should]
+                    [newvalue.class, newvalue]
             end
         end
 
@@ -98,8 +98,7 @@ module Puppet
             end
             
             unless stat = @parent.stat(false)
-                @is = :absent
-                return
+                return :absent
             end
 
             # Set our method appropriately, depending on links.
@@ -109,15 +108,17 @@ module Puppet
                 @method = :chown
             end
 
-            self.is = stat.uid
-
+            currentvalue = stat.uid
+            
             # On OS X, files that are owned by -2 get returned as really
             # large UIDs instead of negative ones.  This isn't a Ruby bug,
             # it's an OS X bug, since it shows up in perl, too.
-            if @is > 120000
-                self.warning "current state is silly: %s" % @is
-                @is = :silly
+            if currentvalue > 120000
+                self.warning "current state is silly: %s" % is
+                currentvalue = :silly
             end
+
+            return currentvalue
         end
 
         def sync
@@ -146,14 +147,9 @@ module Puppet
                 return nil
             end
 
-            if @is == :absent
-                @parent.stat(true)
-                self.retrieve
-                if @is == :absent
+            unless @parent.stat(false)
+                unless @parent.stat(true)
                     self.debug "File does not exist; cannot set owner"
-                    return nil
-                end
-                if self.insync?
                     return nil
                 end
                 #self.debug "%s: after refresh, is '%s'" % [self.class.name,@is]

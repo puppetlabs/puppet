@@ -15,47 +15,28 @@ module Puppet
                 make those aliases available in your Puppet scripts and also on
                 disk."
 
-            def insync?
-                @is == @should
+           def insync?(is)
+                is == @should
             end
             
-            # Make sure our "is" value is always an array.
-            def is
-                current = super
-                current = [current] unless current.is_a? Array
-                current
+            def is_to_s(currentvalue = @is)
+                currentvalue = [currentvalue] unless currentvalue.is_a? Array
+                currentvalue.join(" ")
             end
 
-            def is_to_s
-                self.is.join(" ")
-            end
-
-            # We have to override the feeding mechanism; it might be nil or 
-            # white-space separated
-            def is=(value)
-                # If it's just whitespace, ignore it
-                case value
-                when /^\s+$/
-                    @is = nil
-                when String
-                    @is = value.split(/\s+/)
-                else
-                    @is = value
-                end
-            end
-            
             def retrieve
-                super
-                case @is
+                is = super
+                case is
                 when String
-                    @is = @is.split(/\s*,\s*/)
+                    is = is.split(/\s*,\s*/)
                 when Symbol:
-                    @is = [@is]
+                    is = [is]
                 when Array
                     # nothing
                 else
-                    raise Puppet::DevError, "Invalid @is type %s" % @is.class
+                    raise Puppet::DevError, "Invalid @is type %s" % is.class
                 end
+                return is
             end
 
             # We actually want to return the whole array here, not just the first
@@ -72,8 +53,8 @@ module Puppet
                 end
             end
 
-            def should_to_s
-                @should.join(" ")
+            def should_to_s(newvalue = @should)
+                newvalue.join(" ")
             end
 
             validate do |value|

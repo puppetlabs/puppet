@@ -108,11 +108,13 @@ module Puppet
             return :link
         end
 
-        def change_to_s
-            if property = (@parent.property(:content) || @parent.property(:source)) and ! property.insync?
-                return property.change_to_s
+        def change_to_s(currentvalue, newvalue)
+            if property = (@parent.property(:content) || @parent.property(:source)) and ! property.insync?(currentvalue)
+                currentvalue = property.retrieve
+                
+                return property.change_to_s(property.retrieve, property.should)
             else
-                super
+                super(currentvalue, newvalue)
             end
         end
 
@@ -133,26 +135,26 @@ module Puppet
 
         # We have to treat :present specially, because it works with any
         # type of file.
-        def insync?
+        def insync?(currentvalue)
             if self.should == :present
-                if @is.nil? or @is == :absent
+                if currentvalue.nil? or currentvalue == :absent
                     return false
                 else
                     return true
                 end
             else
-                return super
+                return super(currentvalue)
             end
         end
 
         def retrieve
             if stat = @parent.stat(false)
-                @is = stat.ftype.intern
+                return stat.ftype.intern
             else
                 if self.should == :false
-                    @is = :false
+                    return :false
                 else
-                    @is = :absent
+                    return :absent
                 end
             end
         end

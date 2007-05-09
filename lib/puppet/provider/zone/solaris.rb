@@ -114,6 +114,8 @@ set zonepath=%s
         return hash
     end
 
+    # FIXARB:  Not sure what this one is doing.  It is not setting @is for the
+    #          if case.
     def retrieve
         if hash = statushash()
             setstatus(hash)

@@ -47,15 +47,16 @@ module Puppet
                 end
             end
 
-            def change_to_s
+            # FIXARB:  Check this... I think it may be the same as in Ensure class.
+            def change_to_s(currentvalue, newvalue)
                 begin
-                    if @is == :absent
+                    if currentvalue == :absent
                         return "created"
-                    elsif self.should == :absent
+                    elsif newvalue == :absent
                         return "removed"
                     else
                         return "%s changed '%s' to '%s'" %
-                            [self.name, self.is_to_s, self.should_to_s]
+                            [self.name, self.is_to_s(currentvalue), self.should_to_s(newvalue)]
                     end
                 rescue Puppet::Error, Puppet::DevError
                     raise
@@ -67,22 +68,12 @@ module Puppet
             end
 
             def retrieve
-                if provider.exists?
-                    @is = :present
-                else
-                    @is = :absent
-                end
+                return provider.exists? ? :present : :absent
             end
 
             # The default 'sync' method only selects among a list of registered
             # values.
             def sync
-                if self.insync?
-                    self.info "already in sync"
-                    return nil
-                #else
-                    #self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
-                end
                 unless self.class.values
                     self.devfail "No values defined for %s" %
                         self.class.name
@@ -101,7 +92,7 @@ module Puppet
                 GID is picked according to local system standards."
 
             def retrieve
-                @is = provider.gid
+                return provider.gid
             end
 
             def sync
@@ -167,13 +158,9 @@ module Puppet
 
         def retrieve
             if self.provider and @provider.exists?
-                super
+                return super
             else
-                properties().each { |property|
-                    property.is = :absent
-                }
-
-                return
+               return currentpropvalues(:absent) 
             end
         end
     end

@@ -94,7 +94,7 @@ class TestSchedule < Test::Unit::TestCase
             #end
         end
 
-        Puppet.err @@times.inspect
+         Puppet.err @@times.inspect
 
         @@times.each { |time|
             @now = time

@@ -107,7 +107,7 @@ class Transaction
                     puts detail.backtrace
                 end
                 change.property.err "change from %s to %s failed: %s" %
-                    [change.property.is_to_s, change.property.should_to_s, detail]
+                    [change.property.is_to_s(change.is), change.property.should_to_s(change.should), detail]
                 @failures[resource] += 1
                 next
                 # FIXME this should support using onerror to determine

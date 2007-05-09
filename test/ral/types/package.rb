@@ -43,11 +43,13 @@ class TestPackages < Test::Unit::TestCase
         end
         assert(pkg, "did not create package")
 
+        current_values = nil
         assert_nothing_raised do
-            pkg.retrieve
+            current_values = pkg.retrieve
         end
 
-        assert_equal(:absent, pkg.is(:ensure), "package not considered missing")
+        assert_equal(:absent, current_values[pkg.property(:ensure)], 
+                     "package not considered missing")
         assert_equal(:present, pkg.should(:ensure),
             "package did not default to installed")
 

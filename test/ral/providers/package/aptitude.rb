@@ -19,16 +19,16 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
 		                   :ensure => :present,
 		                   :source => "/tmp/faff.deb"
 
-		pkg.provider.expects(
-		                 :dpkgquery
-					  ).with(
-							  '-W',
-							  '--showformat',
-							  '${Status} ${Package} ${Version}\n',
-							  'faff'
-					  ).returns(
-					        "deinstall ok config-files faff 1.2.3-1\n"
-					  )
+ 		pkg.provider.expects(
+ 		                 :dpkgquery
+ 					  ).with(
+ 							  '-W',
+ 							  '--showformat',
+ 							  '${Status} ${Package} ${Version}\n',
+ 							  'faff'
+ 					  ).returns(
+ 					        "deinstall ok config-files faff 1.2.3-1\n"
+ 					  ).times(2)
 
 		pkg.provider.expects(
 		                 :aptitude
@@ -40,7 +40,10 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
 		                 'faff'
 					  ).returns(0)
 		
-		pkg.evaluate.each { |state| state.transaction = self; state.forward }
+		pkg.evaluate.each { |state| 
+                    state.transaction = self 
+                    state.forward 
+          }
 	end
 	
 	def test_purge
@@ -55,7 +58,7 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
 					        'faff'
 					  ).returns(
 					        "install ok installed faff 1.2.3-1\n"
-					  )
+					  ).times(2)
 		pkg.provider.expects(
 		                 :aptitude
 					  ).with(

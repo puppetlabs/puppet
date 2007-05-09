@@ -222,19 +222,19 @@ class TestFileTarget < Test::Unit::TestCase
 
         prop = obj.send(:property, :target)
         prop.send(:instance_variable_set, "@should", [:nochange])
-        assert(prop.insync?,
+        assert(prop.insync?(prop.retrieve),
             "Property not in sync with should == :nochange")
 
         prop = obj.send(:property, :target)
         prop.send(:instance_variable_set, "@should", [:notlink])
-        assert(prop.insync?,
+        assert(prop.insync?(prop.retrieve),
             "Property not in sync with should == :nochange")
 
         # Lastly, make sure that we don't try to do anything when we're
         # recursing, since 'ensure' does the work.
         obj[:recurse] = true
         prop.should = dest
-        assert(prop.insync?,
+        assert(prop.insync?(prop.retrieve),
             "Still out of sync during recursion")
     end
 

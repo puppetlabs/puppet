@@ -125,11 +125,13 @@ class TestGroup < Test::Unit::TestCase
             # Set a fake gid
             gobj.provider.gid = rand(100)
 
+            current_values = nil
             assert_nothing_raised {
-                gobj.retrieve
+                current_values = gobj.retrieve
             }
 
-            assert(gobj.is(:gid), "Failed to retrieve gid")
+            assert(current_values[gobj.property(:gid)], 
+                   "Failed to retrieve gid")
         }
     end
 

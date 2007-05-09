@@ -452,7 +452,7 @@ end
             ret = inst.retrieve
         }
 
-        assert_equal(:noopts, inst.is)
+        assert_equal(:noopts, inst.retrieve)
 
         # Now create a property with a different way of doing it
         property = nil
@@ -468,7 +468,7 @@ end
             ret = inst.retrieve
         }
 
-        assert_equal(:yayness, inst.is)
+        assert_equal(:yayness, ret)
     end
 
     def test_name_vs_title

@@ -23,10 +23,10 @@ class TestYumRepo < Test::Unit::TestCase
     def test_modify
         copy_datafiles
         devel = make_repo("development", { :descr => "New description" })
-        devel.retrieve
+        current_values = devel.retrieve
         assert_equal("development", devel[:name])
         assert_equal('Fedora Core $releasever - Development Tree', 
-                     devel.property(:descr).is)
+                     current_values[devel.property(:descr)])
         assert_equal('New description', 
                      devel.property(:descr).should)
         assert_apply(devel)

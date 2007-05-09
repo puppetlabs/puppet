@@ -212,7 +212,7 @@ class TestResources < Test::Unit::TestCase
         assert(! list.empty?, "did not get any users")
         
         bad = list.find_all { |u|
-                %w{root bin nobody}.include?(u[:name]) or (u.retrieve and u.is(:uid) < 500)
+                %w{root bin nobody}.include?(u[:name]) or (cv = u.retrieve and cv[u.property(:uid)] < 500)
             }
         assert(bad.empty?, "incorrectly passed users %s" % bad.collect { |u| u[:name]}.join(", "))
     end

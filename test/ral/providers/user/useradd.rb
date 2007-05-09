@@ -29,7 +29,6 @@ class UserAddProviderTest < PuppetTest::TestCase
 
         @vals.each do |name, val|
             next unless @user.class.validproperty?(name)
-            @user.is = [name, :absent]
         end
         @user
     end
@@ -46,7 +45,6 @@ class UserAddProviderTest < PuppetTest::TestCase
 
         @vals.each do |name, val|
             next unless user.class.validproperty?(name)
-            user.is = [name, :absent]
         end
 
         user.expects(:allowdupe?).returns(false)
@@ -204,8 +202,6 @@ class UserAddProviderTest < PuppetTest::TestCase
 
         # Now mark the user made, and make sure the right command is called
         setup_user
-        @user.is = [:ensure, :present]
-        @user.is = [:password, :present]
         @vals[:password] = "somethingelse"
 
 		@user.provider.expects(:execute).with do |params|

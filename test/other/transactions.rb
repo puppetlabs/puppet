@@ -17,7 +17,7 @@ class TestTransactions < Test::Unit::TestCase
         def should_to_s
             @should.to_s
         end
-        def insync?
+        def insync?(foo)
             true
         end
         def info(*args)
@@ -466,7 +466,7 @@ class TestTransactions < Test::Unit::TestCase
 
         file[:content] = "totally different content"
 
-        assert(! file.insync?, "Uh, file is in sync?")
+        assert(! file.insync?(file.retrieve), "Uh, file is in sync?")
 
         assert_events([:file_changed, :triggered], comp)
         assert(FileTest.exists?(fname), "File did not get recreated")
@@ -766,7 +766,7 @@ class TestTransactions < Test::Unit::TestCase
         type = mkreducer do
             def evaluate
                 return Puppet::PropertyChange.new(Fakeprop.new(
-                    :path => :path, :is => :is, :should => :should, :name => self.name, :parent => "a parent"))
+                    :path => :path, :is => :is, :should => :should, :name => self.name, :parent => "a parent"), :is)
             end
         end
         
@@ -1015,7 +1015,7 @@ class TestTransactions < Test::Unit::TestCase
         
         obj = type.create(:name => "yay", :testing => "cool")
         
-        assert(! obj.insync?, "fake object is already in sync")
+        assert(! obj.insync?(obj.retrieve), "fake object is already in sync")
         
         # Now make sure it gets refreshed when the change happens
         assert_apply(obj)

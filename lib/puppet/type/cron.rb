@@ -39,9 +39,9 @@ Puppet::Type.newtype(:cron) do
 
         # We have to override the parent method, because we consume the entire
         # "should" array
-        def insync?
+        def insync?(is)
             if defined? @should and @should
-                self.is_to_s == self.should_to_s
+                self.is_to_s(is) == self.should_to_s
             else
                 true
             end
@@ -93,36 +93,28 @@ Puppet::Type.newtype(:cron) do
             return false
         end
 
-        def should_to_s
-            if @should
-                if self.name == :command or @should[0].is_a? Symbol
-                    @should[0]
+        def should_to_s(newvalue = @should)
+            if newvalue
+                if self.name == :command or newvalue[0].is_a? Symbol
+                    newvalue[0]
                 else
-                    @should.join(",")
+                    newvalue.join(",")
                 end
             else
                 nil
             end
         end
 
-        def is=(val)
-            if val.is_a?(Array)
-                @is = val
-            else
-                @is = [val]
-            end
-        end
-
-        def is_to_s
-            if @is
-                unless @is.is_a?(Array)
-                    return @is
+        def is_to_s(currentvalue = @is)
+            if currentvalue
+                unless currentvalue.is_a?(Array)
+                    return currentvalue
                 end
 
-                if self.name == :command or @is[0].is_a? Symbol
-                    @is[0]
+                if self.name == :command or currentvalue[0].is_a? Symbol
+                    currentvalue[0]
                 else
-                    @is.join(",")
+                    currentvalue.join(",")
                 end
             else
                 nil
@@ -206,12 +198,13 @@ Puppet::Type.newtype(:cron) do
             All cron parameters support ``absent`` as a value; this will
             remove any existing values for that field."
 
-        def is
-            if @is
-                @is[0]
-            else
-                nil
-            end
+        def retrieve 
+          return_value = super
+          if return_value && return_value.is_a?(Array)
+            return_value = return_value[0]
+          end
+            
+          return return_value
         end
 
         def should
@@ -286,6 +279,7 @@ Puppet::Type.newtype(:cron) do
             can be no guarantees that other, earlier settings will not also
             affect a given cron job.
 
+
             Also, Puppet cannot automatically determine whether an existing,
             unmanaged environment setting is associated with a given cron
             job.  If you already have cron jobs with environment settings,
@@ -302,11 +296,11 @@ Puppet::Type.newtype(:cron) do
             end
         end
 
-        def insync?
-            if @is.is_a? Array
-                return @is.sort == @should.sort
+        def insync?(is)
+            if is.is_a? Array
+                return is.sort == @should.sort
             else
-                return @is == @should
+                return is == @should
             end
         end
 
@@ -370,7 +364,7 @@ Puppet::Type.newtype(:cron) do
             ret = obj.should
 
             if ret.nil?
-                ret = obj.is
+                ret = obj.retrieve
             end
 
             if ret == :absent
@@ -394,4 +388,6 @@ Puppet::Type.newtype(:cron) do
     end
 end
 
+
 # $Id$
+

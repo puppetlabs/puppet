@@ -12,9 +12,13 @@ class TestProperty < Test::Unit::TestCase
         unless parent
             parent = "fakeparent"
             parent.meta_def(:pathbuilder) do [self.to_s] end
+            parent.meta_def(:provider) do nil end
+            parent.meta_def(:fakeproperty) do '' end
         end
         assert_nothing_raised {
-            return property.new(:parent => parent)
+            newinst = property.new(:parent => parent)
+            def newinst.retrieve(); return @fakeprovidervalue; end;
+            return newinst
         }
     end
     
@@ -104,13 +108,13 @@ class TestProperty < Test::Unit::TestCase
         # These are bogus because they don't define events. :/
         assert_nothing_raised {
             property.newvalue(:one) do
-                @is = 1
+                @fakeprovidervalue = 1
             end
         }
 
         assert_nothing_raised {
             property.newvalue("two") do
-                @is = 2
+                @fakeprovidervalue = 2
             end
         }
 
@@ -127,7 +131,7 @@ class TestProperty < Test::Unit::TestCase
         assert_equal(:one, inst.should)
         ret = nil
         assert_nothing_raised { inst.set_one }
-        assert_equal(1, inst.is)
+        assert_equal(1, inst.retrieve)
 
         assert_nothing_raised {
             inst.should = :two
@@ -135,7 +139,7 @@ class TestProperty < Test::Unit::TestCase
 
         assert_equal(:two, inst.should)
         assert_nothing_raised { inst.set_two }
-        assert_equal(2, inst.is)
+        assert_equal(2, inst.retrieve)
     end
 
     def test_newpropertyvaluewithregexes
@@ -143,7 +147,6 @@ class TestProperty < Test::Unit::TestCase
 
         assert_nothing_raised {
             property.newvalue(/^\w+$/) do
-                @is = self.should.upcase
                 return :regex_matched
             end
         }
@@ -160,7 +163,7 @@ class TestProperty < Test::Unit::TestCase
             inst.sync
         }
 
-        assert_equal("yayness".upcase, inst.is)
+        assert_equal("yayness".upcase, inst.retrieve)
     end
 
     def test_newvalue_event_option
@@ -168,10 +171,8 @@ class TestProperty < Test::Unit::TestCase
 
         assert_nothing_raised do
             property.newvalue(:myvalue, :event => :fake_valued) do
-                @is = :valued
             end
             property.newvalue(:other, :event => "fake_other") do
-                @is = :valued
             end
         end
         inst = newinst(property)
@@ -263,9 +264,15 @@ class TestProperty < Test::Unit::TestCase
     end
 
     def test_failure
-        s = Struct.new(:line, :file, :path, :pathbuilder)
-        p = s.new(1, "yay", "rah", "struct")
-        myproperty = Class.new(Puppet::Property)
+        s = Struct.new(:line, :file, :path, :pathbuilder, :name)
+        p = s.new(1, "yay", "rah", "struct", "name")
+
+        myprovider = Class.new(Puppet::Provider)
+  
+        def p.provider; nil; end;
+        myproperty = Class.new(Puppet::Property) do 
+            @name = 'name'
+        end
         myproperty.initvars
 
         myproperty.newvalue :mkfailure do

@@ -178,10 +178,11 @@ class TestMounts < Test::Unit::TestCase
         assert_events([:mount_mounted, :triggered], obj)
         assert_events([], obj)
 
-        obj.retrieve
-        assert_equal(:mounted, obj.is(:ensure))
+        current_values = nil
+        assert_nothing_raised { current_values =  obj.retrieve }
+        assert_equal(:mounted, current_values[obj.property(:ensure)])
 
-        obj.retrieve
+        assert_nothing_raised { current_values =  obj.retrieve }
         assert(obj.provider.mounted?, "Object is not mounted")
     end
     
@@ -200,16 +201,13 @@ class TestMounts < Test::Unit::TestCase
 
         root = list.find { |o| o[:name] == "/" }
         assert(root, "Could not find root root filesystem in list results")
-
-        assert(root.is(:device), "Device was not set")
-        assert(root.property(:device).value, "Device was not returned by value method")
-
+  
+        current_values = nil
         assert_nothing_raised do
-            root.retrieve
+            current_values = root.retrieve
         end
 
-        assert(root.is(:device), "Device was not set")
-        assert(root.property(:device).value, "Device was not returned by value method")
+        assert(current_values[root.property(:device)], "Device was not set")
     end
     end
 

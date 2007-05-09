@@ -27,7 +27,7 @@ module Puppet
             
             defaultto :anything # just so we always get this property
 
-            def change_to_s
+            def change_to_s(currentvalue, newvalue)
                 start = "Tidying"
                 if @out.include?(:age)
                     start += ", older than %s seconds" % @parent.should(:age)
@@ -39,9 +39,9 @@ module Puppet
                 start
             end
 
-            def insync?
-                if @is.is_a?(Symbol)
-                    if [:absent, :notidy].include?(@is)
+            def insync?(is)
+                if is.is_a?(Symbol)
+                    if [:absent, :notidy].include?(is)
                         return true
                     else
                         return false
@@ -50,11 +50,13 @@ module Puppet
                     @out = []
                     TATTRS.each do |param|
                         if property = @parent.property(param)
-                            unless property.insync?
+                            self.debug "No is value for %s", [param] if is[property].nil?
+                            unless property.insync?(is[property])
                                 @out << param
                             end
                         end
                     end
+                    
                     if @out.length > 0
                         return false
                     else
@@ -62,24 +64,24 @@ module Puppet
                     end
                 end
             end
-
+            
             def retrieve
                 stat = nil
                 unless stat = @parent.stat
-                    @is = :absent
-                    return
+                    return { self => :absent}
                 end
                 
                 if stat.ftype == "directory" and ! @parent[:rmdirs]
-                    @is = :notidy
-                    return
+                    return {self => :notidy}
                 end
 
-                TATTRS.each { |param|
+                allprops = TATTRS.inject({}) { |prophash, param|
                     if property = @parent.property(param)
-                        property.is = property.assess(stat)
+                        prophash[property] = property.assess(stat)
                     end
+                    prophash
                 }
+                return { self => allprops } 
             end
 
             def sync
@@ -150,8 +152,8 @@ module Puppet
                 end
             end
 
-            def insync?
-                if (Time.now.to_i - @is) > self.should
+            def insync?(is)
+                if (Time.now.to_i - is) > self.should
                     return false
                 end
 
@@ -204,8 +206,8 @@ module Puppet
                 end
             end
             
-            def insync?
-                if @is > self.should
+            def insync?(is)
+                if is > self.should
                     return false
                 end
 
@@ -277,7 +279,11 @@ module Puppet
         
         def retrieve
             # Our ensure property knows how to retrieve everything for us.
-            obj = @parameters[:ensure] and obj.retrieve
+            if obj = @parameters[:ensure] 
+                return obj.retrieve
+            else
+                return {}
+            end
         end
         
         # Hack things a bit so we only ever check the ensure property.

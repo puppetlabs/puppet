@@ -20,13 +20,13 @@ module Puppet
             This attribute is especially useful when used with
             `PuppetTemplating templating`:trac:."
 
-        def change_to_s
-            should = "{md5}" + Digest::MD5.hexdigest(self.should)
-            if @is == :absent
-                return "created file with contents %s" % should
+        def change_to_s(currentvalue, newvalue)
+            newvalue = "{md5}" + Digest::MD5.hexdigest(newvalue)
+            if currentvalue == :absent
+                return "created file with contents %s" % newvalue
             else
-                is = "{md5}" + Digest::MD5.hexdigest(@is)
-                return "changed file contents from %s to %s" % [is, should]
+                currentvalue = "{md5}" + Digest::MD5.hexdigest(currentvalue)
+                return "changed file contents from %s to %s" % [currentvalue, newvalue]
             end
         end
 
@@ -35,25 +35,23 @@ module Puppet
         def retrieve
             stat = nil
             unless stat = @parent.stat
-                @is = :absent
-                return
+                return :absent
             end
 
             if stat.ftype == "link" and @parent[:links] == :ignore
-                self.is = self.should
-                return
+                return self.should
             end
 
             # Don't even try to manage the content on directories
             if stat.ftype == "directory" and @parent[:links] == :ignore
                 @parent.delete(:content)
-                return
+                return nil
             end
 
             begin
-                @is = File.read(@parent[:path])
+                currentvalue = File.read(@parent[:path])
+                return currentvalue
             rescue => detail
-                @is = nil
                 raise Puppet::Error, "Could not read %s: %s" %
                     [@parent.title, detail]
             end
@@ -62,13 +60,11 @@ module Puppet
 
         # Just write our content out to disk.
         def sync
+            return_event = @parent.stat ? :file_changed : :file_created
+            
             @parent.write { |f| f.print self.should }
 
-            if @is == :absent
-                return :file_created
-            else
-                return :file_changed
-            end
+            return return_event
         end
     end
 end

@@ -60,9 +60,9 @@ module Puppet
             source.sub(/\/$/, '')
         end
         
-        def change_to_s
-            should = "{md5}" + @stats[:checksum]
-            if @parent.is(:ensure) == :absent
+        def change_to_s(currentvalue, newvalue)
+            # newvalue = "{md5}" + @stats[:checksum]
+            if @parent.property(:ensure).retrieve == :absent
                 return "creating from source %s with contents %s" % [@source, @stats[:checksum]]
             else
                 return "replacing from source %s with contents %s" % [@source, @stats[:checksum]]
@@ -116,17 +116,17 @@ module Puppet
         
         # Have we successfully described the remote source?
         def described?
-            ! @stats.nil? and ! @stats[:type].nil? and @is != :notdescribed
+            ! @stats.nil? and ! @stats[:type].nil? #and @is != :notdescribed
         end
         
         # Use the info we get from describe() to check if we're in sync.
-        def insync?
+        def insync?(currentvalue)
             unless described?
                 info "No specified sources exist"
                 return true
             end
             
-            if @is == :nocopy
+            if currentvalue == :nocopy
                 return true
             end
             
@@ -136,11 +136,15 @@ module Puppet
                 return true
             end
             
-            if @parent.is(:ensure) != :absent and ! @parent.replace?
+            #FIXARB: Inefficient?  Needed to call retrieve on parent's ensure and checksum
+            parentensure = @parent.property(:ensure).retrieve
+            if parentensure != :absent and ! @parent.replace?
                 return true
             end
             # Now, we just check to see if the checksums are the same
-            return @parent.is(:checksum) == @stats[:checksum]
+            parentchecksum = @parent.property(:checksum).retrieve
+            a = (!parentchecksum.nil? and (parentchecksum == @stats[:checksum]))
+            return (!parentchecksum.nil? and (parentchecksum == @stats[:checksum]))
         end
 
         def pinparams
@@ -169,8 +173,7 @@ module Puppet
             end
 
             if @stats.nil? or @stats[:type].nil?
-                @is = :notdescribed
-                return nil
+                return nil # :notdescribed
             end
             
             case @stats[:type]
@@ -182,8 +185,7 @@ module Puppet
                 self.info @stats.inspect
                 self.err "Cannot use files of type %s as sources" %
                     @stats[:type]
-                @is = :nocopy
-                return
+                return :nocopy
             end
 
             # Take each of the stats and set them as states on the local file
@@ -196,11 +198,11 @@ module Puppet
                 # be inherited from the source?
                 unless @parent.argument?(stat)
                     @parent[stat] = value
-                    @parent.property(stat).retrieve
+                    @parent.property(stat).retrieve  # FIXARB: This is calling retrieve on all propertis of File.  What are we gonna do with the return values?
                 end
             }
             
-            @is = @stats[:checksum]
+            return @stats[:checksum]
         end
         
         def should
@@ -223,7 +225,7 @@ module Puppet
         def sync
             unless @stats[:type] == "file"
                 #if @stats[:type] == "directory"
-                        #[@parent.name, @is.inspect, @should.inspect]
+                        #[@parent.name, @should.inspect]
                 #end
                 raise Puppet::DevError, "Got told to copy non-file %s" %
                     @parent[:path]

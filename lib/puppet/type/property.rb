@@ -1,4 +1,4 @@
-# The virtual base class for properties, which are the self-contained building
+ # The virtual base class for properties, which are the self-contained building
 # blocks for actually doing work on the system.
 
 require 'puppet'
@@ -8,7 +8,6 @@ require 'puppet/parameter'
 
 module Puppet
 class Property < Puppet::Parameter
-    attr_accessor :is
 
     # Because 'should' uses an array, we have a special method for handling
     # it.  We also want to keep copies of the original values, so that
@@ -143,7 +142,7 @@ class Property < Puppet::Parameter
     def call_valuemethod(name, value)
         event = nil
         if method = self.class.value_option(name, :method) and self.respond_to?(method)
-            self.debug "setting %s (currently %s)" % [value, self.is]
+            self.debug "setting %s (currently %s)" % [value, self.retrieve]
 
             begin
                 event = self.send(method)
@@ -169,17 +168,17 @@ class Property < Puppet::Parameter
     end
 
     # How should a property change be printed as a string?
-    def change_to_s
+    def change_to_s(currentvalue, newvalue)
         begin
-            if @is == :absent
+            if currentvalue == :absent
                 return "defined '%s' as '%s'" %
-                    [self.name, self.should_to_s]
-            elsif self.should == :absent or self.should == [:absent]
+                    [self.name, self.should_to_s(newvalue)]
+            elsif newvalue == :absent or newvalue == [:absent]
                 return "undefined %s from '%s'" %
-                    [self.name, self.is_to_s]
+                    [self.name, self.is_to_s(currentvalue)]
             else
                 return "%s changed '%s' to '%s'" %
-                    [self.name, self.is_to_s, self.should_to_s]
+                    [self.name, self.is_to_s(currentvalue), self.should_to_s(newvalue)]
             end
         rescue Puppet::Error, Puppet::DevError
             raise
@@ -219,17 +218,11 @@ class Property < Puppet::Parameter
     
     # initialize our property
     def initialize(hash = {})
-        @is = nil
         super
     end
 
     def inspect
         str = "Property('%s', " % self.name
-        if self.is
-            str += "@is = '%s', " % [self.is]
-        else
-            str += "@is = nil, "
-        end
 
         if defined? @should and @should
             str += "@should = '%s')" % @should.join(", ")
@@ -244,7 +237,7 @@ class Property < Puppet::Parameter
     # since we cannot fix it.  Otherwise, we expect our should value
     # to be an array, and if @is matches any of those values, then
     # we consider it to be in-sync.
-    def insync?
+    def insync?(is)
         #debug "%s value is '%s', should be '%s'" %
         #    [self,self.is.inspect,self.should.inspect]
         unless defined? @should and @should
@@ -262,7 +255,7 @@ class Property < Puppet::Parameter
 
         # Look for a matching value
         @should.each { |val|
-            if @is == val or @is == val.to_s
+            if is == val or is == val.to_s
                 return true
             end
         }
@@ -275,8 +268,8 @@ class Property < Puppet::Parameter
     # we need to set up a mechanism for pretty printing of the values
     # default to just the values, but this way individual properties can
     # override these methods
-    def is_to_s
-        @is
+    def is_to_s(currentvalue)
+        currentvalue
     end
 
     # Send a log message.
@@ -317,7 +310,10 @@ class Property < Puppet::Parameter
     # provider.  In other words, if the property name is 'gid', we'll call
     # 'provider.gid' to retrieve the current value.
     def retrieve
-        @is = provider.send(self.class.name)
+        is = provider.send(self.class.name)
+#        puts "IS is: " + is.to_s
+#       puts "and its an array!!!" if is.is_a? Array
+        return is
     end
 
     # Set our value, using the provider, an associated block, or both.
@@ -383,9 +379,10 @@ class Property < Puppet::Parameter
         end
     end
 
-    def should_to_s
-        if defined? @should
-            @should.join(" ")
+    def should_to_s(newvalue)
+        newvalue = [newvalue] unless newvalue.is_a? Array
+        if defined? newvalue
+            newvalue.join(" ")
         else
             return nil
         end
@@ -394,10 +391,10 @@ class Property < Puppet::Parameter
     # The default 'sync' method only selects among a list of registered
     # values.
     def sync
-        if self.insync?
-            self.info "already in sync"
-            return nil
-        end
+#        if self.insync?
+#            self.info "already in sync"
+#            return nil
+#        end
         unless self.class.values
             self.devfail "No values defined for %s" %
                 self.class.name
@@ -474,15 +471,15 @@ class Property < Puppet::Parameter
             end
         end
 
-        def change_to_s
+        def change_to_s(currentvalue, newvalue)
             begin
-                if @is == :absent or @is.nil?
+                if currentvalue == :absent or currentvalue.nil?
                     return "created"
-                elsif self.should == :absent
+                elsif newvalue == :absent
                     return "removed"
                 else
                     return "%s changed '%s' to '%s'" %
-                        [self.name, self.is_to_s, self.should_to_s]
+                        [self.name, self.is_to_s(currentvalue), self.should_to_s(newvalue)]
                 end
             rescue Puppet::Error, Puppet::DevError
                 raise
@@ -507,9 +504,9 @@ class Property < Puppet::Parameter
                     @parent.class.name
             end
             if result
-                @is = :present
+                return :present
             else
-                @is = :absent
+                return :absent
             end
         end
 

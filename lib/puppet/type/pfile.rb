@@ -823,22 +823,21 @@ module Puppet
         def retrieve
             unless stat = self.stat(true)
                 self.debug "File does not exist"
-                properties().each { |property|
-                    property.is = :absent
-                }
-                
                 # If the file doesn't exist but we have a source, then call
                 # retrieve on that property
-                if @parameters.include?(:source)
-                    @parameters[:source].retrieve
-                end
 
-                return
+                propertyvalues = properties().inject({}) { |hash, property|
+                                     hash[property] = :absent
+                                     hash
+                                  }
+
+                if @parameters.include?(:source)
+                    propertyvalues[:source] = @parameters[:source].retrieve
+                end
+                return propertyvalues
             end
 
-            properties().each { |property|
-                property.retrieve
-            }
+            return currentpropvalues()
         end
 
         # This recurses against the remote source and makes sure the local
@@ -929,8 +928,8 @@ module Puppet
                 else
                     # If they didn't pass in a sum, then tell checksum to
                     # figure it out.
-                    @parameters[:checksum].retrieve
-                    @parameters[:checksum].checksum = @parameters[:checksum].is
+                    currentvalue = @parameters[:checksum].retrieve
+                    @parameters[:checksum].checksum = currentvalue
                 end
             end
         end
@@ -1118,7 +1117,7 @@ module Puppet
 
         # Override the parent method, because we don't want to generate changes
         # when the file is missing and there is no 'ensure' state.
-        def propertychanges
+        def propertychanges(currentvalues)
             unless self.stat
                 found = false
                 ([:ensure] + CREATORS).each do |prop|
@@ -1143,8 +1142,8 @@ module Puppet
 
                 # Make sure we get a new stat objct
                 self.stat(true)
-                thing.retrieve
-                unless thing.insync?
+                currentvalue = thing.retrieve
+                unless thing.insync?(currentvalue)
                     thing.sync
                 end
             end
@@ -1159,7 +1158,7 @@ module Puppet
 
     # We put all of the properties in separate files, because there are so many
     # of them.  The order these are loaded is important, because it determines
-    # the order they are in the property list.
+    # the order they are in the property lit.
     require 'puppet/type/pfile/checksum'
     require 'puppet/type/pfile/content'     # can create the file
     require 'puppet/type/pfile/source'      # can create the file

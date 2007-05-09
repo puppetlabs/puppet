@@ -27,7 +27,7 @@ class DpkgPackageProviderTest < PuppetTest::TestCase
 							  'faff'
 					  ).returns(
 					        "deinstall ok config-files faff 1.2.3-1\n"
-					  )
+					  ).times(2)
 
 		pkg.provider.expects(
 		                 :dpkg
@@ -51,7 +51,7 @@ class DpkgPackageProviderTest < PuppetTest::TestCase
 					        'faff'
 					  ).returns(
 					        "install ok installed faff 1.2.3-1\n"
-					  )
+					  ).times(2)
 		pkg.provider.expects(
 		                 :dpkg
 					  ).with(

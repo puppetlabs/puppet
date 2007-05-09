@@ -151,14 +151,10 @@ class TestTidy < Test::Unit::TestCase
         age = tidy.property(:age)
 
         # Set it to something that should be fine
-        age.is = Time.now.to_i - 5
-
-        assert(age.insync?, "Tried to tidy a low age")
+        assert(age.insync?(Time.now.to_i - 5), "Tried to tidy a low age")
 
         # Now to something that should fail
-        age.is = Time.now.to_i - 120
-
-        assert(! age.insync?, "Incorrectly skipped tidy")
+        assert(! age.insync?(Time.now.to_i - 120), "Incorrectly skipped tidy")
     end
 
     def test_sizetest
@@ -167,14 +163,10 @@ class TestTidy < Test::Unit::TestCase
         size = tidy.property(:size)
 
         # Set it to something that should be fine
-        size.is = 50
-
-        assert(size.insync?, "Tried to tidy a low size")
+        assert(size.insync?(50), "Tried to tidy a low size")
 
         # Now to something that should fail
-        size.is = 2048
-
-        assert(! size.insync?, "Incorrectly skipped tidy")
+        assert(! size.insync?(2048), "Incorrectly skipped tidy")
     end
 
     # Make sure we can remove different types of files
@@ -197,7 +189,6 @@ class TestTidy < Test::Unit::TestCase
 
         # And a directory
         Dir.mkdir(path)
-        tidy.is = [:ensure, [Time.now - 1024, 1]]
         tidy[:rmdirs] = true
         assert_events([:file_tidied], tidy)
         assert(! FileTest.exists?(path), "File was not removed")
@@ -218,7 +209,7 @@ class TestTidy < Test::Unit::TestCase
         File.open(path, "w") { |f| 10.times { f.puts "yayness " } }
         tidy = Puppet::Type.type(:tidy).create :path => path, :age => "5s"
         
-        tidy.property(:age).is = "0s"
+
         assert_apply(tidy)
         assert(! FileTest.exists?(path), "file did not get tidied")
     end

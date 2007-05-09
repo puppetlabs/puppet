@@ -22,7 +22,7 @@ module Puppet
                 return
             end
 
-            def insync?
+            def insync?(is)
                 false
             end
 

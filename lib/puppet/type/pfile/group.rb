@@ -26,20 +26,19 @@ module Puppet
         end
 
         # We want to print names, not numbers
-        def is_to_s
-            if @is.is_a? Integer
-                id2name(@is) || @is
+        def is_to_s(currentvalue)
+            if currentvalue.is_a? Integer
+                id2name(currentvalue) || currentvalue
             else
-                return @is.to_s
+                return currentvalue.to_s
             end
         end
 
-        def should_to_s
-            should = self.should
-            if should.is_a? Integer
-                id2name(should) || should
+        def should_to_s(newvalue = @should)
+            if newvalue.is_a? Integer
+                id2name(newvalue) || newalue
             else
-                return should.to_s
+                return newvalue.to_s
             end
         end
 
@@ -60,8 +59,7 @@ module Puppet
             stat = @parent.stat(false)
 
             unless stat
-                self.is = :absent
-                return
+                return :absent
             end
 
             # Set our method appropriately, depending on links.
@@ -70,7 +68,8 @@ module Puppet
             else
                 @method = :chown
             end
-            self.is = stat.gid
+
+            return stat.gid
         end
 
         # Determine if the group is valid, and if so, return the GID
@@ -90,17 +89,13 @@ module Puppet
         # we'll just let it fail, but we should probably set things up so
         # that users get warned if they try to change to an unacceptable group.
         def sync
-            if @is == :absent
-                @parent.stat(true)
-                self.retrieve
+            unless @parent.stat(false)
+                stat = @parent.stat(true)
+                currentvalue = self.retrieve
 
-                if @is == :absent
+                unless stat
                     self.debug "File '%s' does not exist; cannot chgrp" %
                         @parent[:path]
-                    return nil
-                end
-
-                if self.insync?
                     return nil
                 end
             end

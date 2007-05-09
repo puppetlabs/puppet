@@ -52,7 +52,7 @@ module Puppet
         # just collect our current state.  Note that this method is not called
         # during a transaction, since transactions call the parent object method.
         def retrieve
-            @parent.retrieve
+            return @parent.retrieve
         end
 
         # All this does is return an event; all of the work gets done
@@ -197,20 +197,22 @@ module Puppet
                     end
                 end
 
-                properties().each do |property|
+                currentvalues = properties().inject({}) do |prophash, property|
                     if h.has_key? property.name
                         property.is = h[property.name]
+                        prophash[property] = h[property.name]
                     else
                         property.is = :absent
+                        prophash[property] = :absent
                     end
+                    prophash
                 end
 
-                return h
+                # FIXARB: This used to return h, find what broke ;)
+                return currentvalues
             else
-                properties().each do |property|
-                    property.is = :absent
-                end
-                return nil
+                # FIXARB: This used to return nil, find what broke ;)
+                return currentpropvalues(:absent)
             end
         end
     end

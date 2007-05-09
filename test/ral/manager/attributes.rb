@@ -42,19 +42,14 @@ class TestTypeAttributes < Test::Unit::TestCase
 
             if param == :property
                 assert(inst.property(param), "did not get obj for %s" % param)
-            end
-
-            if param == :property
                 assert_equal(true, inst.should(param),
                     "should value did not get set")
-                inst.is = [:property, true]
+            else
+                assert_equal(true, inst[param],
+                             "did not get correct value for %s from symbol" % param)
+                assert_equal(true, inst[param.to_s],
+                             "did not get correct value for %s from string" % param)
             end
-
-            # Now make sure we can get it back
-            assert_equal(true, inst[param],
-                "did not get correct value for %s from symbol" % param)
-            assert_equal(true, inst[param.to_s],
-                "did not get correct value for %s from string" % param)
         end
     end
 
@@ -232,7 +227,6 @@ class TestTypeAttributes < Test::Unit::TestCase
         type.provide(:testing) {}
         provider = type.attrclass(:provider)
         should = [[name, :param], [provider, :param], [two, :property], [one, :param]]
-
         assert_nothing_raised do
             result = nil
             type.eachattr do |obj, name|
