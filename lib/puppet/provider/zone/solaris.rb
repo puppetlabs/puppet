@@ -92,7 +92,6 @@ set zonepath=%s
                 current = nil # reset it
             when /^(\S+):\s*(.+)$/:
                 hash[$1.intern] = $2
-                #self.is = [$1.intern, $2]
             when /^\s+(\S+):\s*(.+)$/:
                 if name
                     unless hash.include? name
@@ -114,18 +113,12 @@ set zonepath=%s
         return hash
     end
 
-    # FIXARB:  Not sure what this one is doing.  It is not setting @is for the
-    #          if case.
     def retrieve
         if hash = statushash()
             setstatus(hash)
 
             # Now retrieve the configuration itself and set appropriately.
             getconfig()
-        else
-            @properties.each do |name, property|
-                property.is = :absent
-            end
         end
     end
 
