@@ -208,10 +208,8 @@ module Puppet
                     prophash
                 end
 
-                # FIXARB: This used to return h, find what broke ;)
                 return currentvalues
             else
-                # FIXARB: This used to return nil, find what broke ;)
                 return currentpropvalues(:absent)
             end
         end
