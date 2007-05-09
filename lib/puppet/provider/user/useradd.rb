@@ -30,33 +30,33 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
     def addcmd
         cmd = [command(:add)]
-        @model.class.validproperties.each do |property|
+        @resource.class.validproperties.each do |property|
             next if property == :ensure
             # the value needs to be quoted, mostly because -c might
             # have spaces in it
-            if value = @model.should(property) and value != ""
+            if value = @resource.should(property) and value != ""
                 cmd << flag(property) << value
             end
         end
 
-        if @model.allowdupe?
+        if @resource.allowdupe?
             cmd << "-o"
         end
 
-        if @model.managehome?
+        if @resource.managehome?
             cmd << "-m"
         elsif %w{Fedora RedHat}.include?(Facter.value("operatingsystem"))
             cmd << "-M"
         end
 
-        cmd << @model[:name]
+        cmd << @resource[:name]
 
         cmd
     end
 
     # Retrieve the password using the Shadow Password library
     def password
-        if ent = Shadow::Passwd.getspnam(@model.name)
+        if ent = Shadow::Passwd.getspnam(@resource.name)
             return ent.sp_pwdp
         else
             return :absent

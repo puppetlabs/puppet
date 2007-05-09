@@ -11,7 +11,7 @@ class TestNameServiceProvider < Test::Unit::TestCase
 
     def test_option
         klass = Class.new(Puppet::Provider::NameService)
-        klass.model = Puppet::Type.type(:user)
+        klass.resource_type = Puppet::Type.type(:user)
 
         val = nil
         assert_nothing_raised {

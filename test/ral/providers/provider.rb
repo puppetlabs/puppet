@@ -190,14 +190,14 @@ class TestProvider < Test::Unit::TestCase
                "Did not receive info wrapper on failure")
     end
 
-    def test_mkmodelmethods
+    def test_mk_resource_methods
         prov = newprovider
-        modeltype = Struct.new(:validproperties, :parameters)
-        m = modeltype.new([:prop1, :prop2], [:param1, :param2])
-        prov.model = m
+        resourcetype = Struct.new(:validproperties, :parameters)
+        m = resourcetype.new([:prop1, :prop2], [:param1, :param2])
+        prov.resource_type = m
 
-        assert_nothing_raised("could not call mkmodelmethods") do
-            prov.mkmodelmethods
+        assert_nothing_raised("could not call mk_resource_methods") do
+            prov.mk_resource_methods
         end
 
         obj = prov.new(nil)
@@ -282,7 +282,7 @@ class TestProviderFeatures < Test::Unit::TestCase
             end
         end
 
-        model = @type.create(:name => "foo")
+        resource = @type.create(:name => "foo")
         {:numbers => [:numeric], :letters => [:alpha], :both => [:numeric, :alpha],
             :mixed => [], :neither => []}.each do |name, should|
                 should.sort! { |a,b| a.to_s <=> b.to_s }
@@ -291,7 +291,7 @@ class TestProviderFeatures < Test::Unit::TestCase
                 assert_equal(should, provider.features,
                     "Provider %s has incorrect features" % name)
 
-                inst = provider.new(model)
+                inst = provider.new(resource)
                 # Make sure the boolean methods work on both the provider and
                 # instance.
                 @features.keys.each do |feature|

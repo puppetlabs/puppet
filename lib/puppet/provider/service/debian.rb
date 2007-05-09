@@ -9,11 +9,11 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
 
     # Remove the symlinks
     def disable
-        update "-f", @model[:name], "remove"
+        update "-f", @resource[:name], "remove"
     end
 
     def enabled?
-        output = update "-n", "-f", @model[:name], "remove"
+        output = update "-n", "-f", @resource[:name], "remove"
 
         # If it's enabled, then it will print output showing removal of
         # links.
@@ -25,7 +25,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
     end
 
     def enable
-        update @model[:name], "defaults"
+        update @resource[:name], "defaults"
     end
 end
 

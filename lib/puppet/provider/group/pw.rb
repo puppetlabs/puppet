@@ -11,8 +11,8 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
     end
 
     def addcmd
-        cmd = [command(:pw), "groupadd", @model[:name]]
-        if gid = @model.should(:gid)
+        cmd = [command(:pw), "groupadd", @resource[:name]]
+        if gid = @resource.should(:gid)
             unless gid == :absent
                 cmd << flag(:gid) << gid
             end

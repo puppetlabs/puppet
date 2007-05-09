@@ -2,6 +2,8 @@
 class Puppet::Provider
     include Puppet::Util
     include Puppet::Util::Errors
+    include Puppet::Util::Warnings
+    extend Puppet::Util::Warnings
 
     Puppet::Util.logmethods(self, true)
 
@@ -10,11 +12,15 @@ class Puppet::Provider
         include Puppet::Util, Puppet::Util::Docs
         include Puppet::Util::Logging
         attr_accessor :name
+        # LAK 2007-05-09: Keep the model stuff around for backward compatibility
         attr_reader :model
+        attr_accessor :resource_type
         attr_writer :doc
     end
 
-    attr_accessor :model
+    # LAK 2007-05-09: Keep the model stuff around for backward compatibility
+    attr_reader :model
+    attr_accessor :resource
     
     def self.command(name)
         name = symbolize(name)
@@ -125,11 +131,19 @@ class Puppet::Provider
         end
     end
 
-    # Create getter/setter methods for each property our model supports.
+    # Create getter/setter methods for each property our resource type supports.
     # They all get stored in @property_hash.  This method is useful
     # for those providers that use prefetch and flush.
     def self.mkmodelmethods
-        [model.validproperties, model.parameters].flatten.each do |attr|
+        warnonce "Provider.mkmodelmethods is deprecated; use Provider.mk_resource_methods"
+        mk_resource_methods
+    end
+
+    # Create getter/setter methods for each property our resource type supports.
+    # They all get stored in @property_hash.  This method is useful
+    # for those providers that use prefetch and flush.
+    def self.mk_resource_methods
+        [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
             attr = symbolize(attr)
             define_method(attr) do
                 @property_hash[attr] || :absent
@@ -139,16 +153,6 @@ class Puppet::Provider
                 @property_hash[attr] = val
             end
         end
-    end
-
-    # Add the feature module immediately, so its methods are available to the
-    # providers.
-    def self.model=(model)
-        @model = model
-        #if mod = model.feature_module
-        #    extend(mod)
-        #    include(mod)
-        #end
     end
 
     self.initvars
@@ -246,8 +250,8 @@ class Puppet::Provider
         if param.is_a?(Class)
             klass = param
         else
-            unless klass = @model.attrclass(param)
-                raise Puppet::DevError, "'%s' is not a valid parameter for %s" % [param, @model.name]
+            unless klass = resource_type.attrclass(param)
+                raise Puppet::DevError, "'%s' is not a valid parameter for %s" % [param, resource_type.name]
             end
         end
         return true unless features = klass.required_features
@@ -261,8 +265,8 @@ class Puppet::Provider
 
     def self.to_s
         unless defined? @str
-            if self.model
-                @str = "%s provider %s" % [@model.name, self.name]
+            if self.resource_type
+                @str = "%s provider %s" % [resource_type.name, self.name]
             else
                 @str = "unattached provider %s" % [self.name]
             end
@@ -294,8 +298,9 @@ class Puppet::Provider
         end
     end
 
-    # Remove the reference to the model, so GC can clean up.
+    # Remove the reference to the resource, so GC can clean up.
     def clear
+        @resource = nil
         @model = nil
     end
 
@@ -304,17 +309,20 @@ class Puppet::Provider
         self.class.command(name)
     end
 
-    def initialize(model)
-        @model = model
+    def initialize(resource)
+        @resource = resource
+
+        # LAK 2007-05-09: Keep the model stuff around for backward compatibility
+        @model = resource
         @property_hash = {}
     end
 
     def name
-        @model.name
+        @resource.name
     end
 
     def to_s
-        "%s(provider=%s)" % [@model.to_s, self.class.name]
+        "%s(provider=%s)" % [@resource.to_s, self.class.name]
     end
 end
 

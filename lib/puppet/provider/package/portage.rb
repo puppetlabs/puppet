@@ -37,7 +37,7 @@ Puppet::Type.type(:package).provide :portage do
     end
 
     def install
-        should = @model.should(:ensure)
+        should = @resource.should(:ensure)
         name = package_name
         unless should == :present or should == :latest
             # We must install a specific version
@@ -48,7 +48,7 @@ Puppet::Type.type(:package).provide :portage do
 
     # The common package name format.
     def package_name
-        "%s/%s" % [@model[:category], @model[:name]]
+        "%s/%s" % [@resource[:category], @resource[:name]]
     end
 
     def uninstall
@@ -63,8 +63,8 @@ Puppet::Type.type(:package).provide :portage do
         result_format = /(\S+) (\S+) \[(.*)\] \[[^0-9]*([^\s:]*)(:\S*)?\] ([\S]*) (.*)/
         result_fields = [:category, :name, :ensure, :version_available, :slot, :vendor, :description]
 
-        search_field = @model[:category] ? "--category-name" : "--name"
-        search_value = @model[:category] ? package_name : @model[:name]
+        search_field = @resource[:category] ? "--category-name" : "--name"
+        search_value = @resource[:category] ? package_name : @resource[:name]
         search_format = "<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>"
 
         begin
@@ -88,7 +88,7 @@ Puppet::Type.type(:package).provide :portage do
 
             case packages.size
                 when 0
-		    not_found_value = "%s/%s" % [@model[:category] ? @model[:category] : "<unspecified category>", @model[:name]]
+		    not_found_value = "%s/%s" % [@resource[:category] ? @resource[:category] : "<unspecified category>", @resource[:name]]
                     raise Puppet::PackageError.new("No package found with the specified name [#{not_found_value}]")
                 when 1
                     return packages[0]

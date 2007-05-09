@@ -7,9 +7,9 @@ Puppet.type(:package).provide :rug, :parent => :rpm do
 
     # Install a package using 'rug'.
     def install
-        should = @model.should(:ensure)
+        should = @resource.should(:ensure)
         self.debug "Ensuring => #{should}"
-        wanted = @model[:name]
+        wanted = @resource[:name]
 
         # XXX: We don't actually deal with epochs here.
         case should
@@ -33,12 +33,12 @@ Puppet.type(:package).provide :rug, :parent => :rpm do
         #rug can only get a list of *all* available packages?
         output = rug "list-updates"
 
-        if output =~ /#{@model[:name]}\s*\|\s*([0-9\.\-]+)/
+        if output =~ /#{@resource[:name]}\s*\|\s*([0-9\.\-]+)/
             return $1
         else
             # rug didn't find updates, pretend the current
             # version is the latest
-            return @model.is(:ensure)
+            return @resource.is(:ensure)
         end
     end
 

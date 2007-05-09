@@ -62,16 +62,16 @@ Puppet::Type.type(:package).provide :gem do
 
     def install(useversion = true)
         command = ["install"]
-        if (! @model.should(:ensure).is_a? Symbol) and useversion
-            command << "-v" << @model.should(:ensure)
+        if (! @resource.should(:ensure).is_a? Symbol) and useversion
+            command << "-v" << @resource.should(:ensure)
         end
         # Always include dependencies
         command << "--include-dependencies"
 
-        if source = @model[:source]
+        if source = @resource[:source]
             command << source
         else
-            command << @model[:name]
+            command << @resource[:name]
         end
 
         gemcmd(*command)
@@ -79,17 +79,17 @@ Puppet::Type.type(:package).provide :gem do
 
     def latest
         # This always gets the latest version available.
-        hash = self.class.gemlist(:justme => @model[:name])
+        hash = self.class.gemlist(:justme => @resource[:name])
 
         return hash[:ensure]
     end
 
     def query
-        self.class.gemlist(:justme => @model[:name], :local => true)
+        self.class.gemlist(:justme => @resource[:name], :local => true)
     end
 
     def uninstall
-        gemcmd "uninstall", "-x", "-a", @model[:name]
+        gemcmd "uninstall", "-x", "-a", @resource[:name]
     end
 
     def update

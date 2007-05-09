@@ -56,22 +56,22 @@ Puppet::Type.type(:package).provide :openbsd do
     end
 
     def install
-        should = @model.should(:ensure)
+        should = @resource.should(:ensure)
 
-        unless @model[:source]
+        unless @resource[:source]
             raise Puppet::Error,
                 "You must specify a package source for BSD packages"
         end
 
-        pkgadd @model[:source]
+        pkgadd @resource[:source]
     end
 
     def query
         hash = {}
-        info = pkginfo @model[:name]
+        info = pkginfo @resource[:name]
 
         # Search for the version info
-        if info =~ /Information for #{@model[:name]}-(\S+)/
+        if info =~ /Information for #{@resource[:name]}-(\S+)/
             hash[:ensure] = $1
         else
             return nil
@@ -86,7 +86,7 @@ Puppet::Type.type(:package).provide :openbsd do
     end
 
     def uninstall
-        pkgdelete @model[:name]
+        pkgdelete @resource[:name]
     end
 end
 

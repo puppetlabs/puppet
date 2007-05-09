@@ -51,9 +51,9 @@ class TestParsedMounts < Test::Unit::TestCase
         hash = mkmountargs()
         #hash[:provider] = @provider.name
 
-        fakemodel = fakemodel(:mount, hash[:name])
+        fakeresource = fakeresource(:mount, hash[:name])
 
-        mount = @provider.new(fakemodel)
+        mount = @provider.new(fakeresource)
         assert(mount, "Could not create provider mount")
         hash[:record_type] = :parsed
         hash[:ensure] = :present

@@ -26,8 +26,8 @@ Puppet::Type.type(:zone).provide(:solaris) do
             hash = line2hash(line)
 
             obj = nil
-            unless obj = @model[hash[:name]]
-                obj = @model.create(:name => hash[:name])
+            unless obj = @resource[hash[:name]]
+                obj = @resource.create(:name => hash[:name])
             end
 
             obj.setstatus(hash)
@@ -41,11 +41,11 @@ Puppet::Type.type(:zone).provide(:solaris) do
         # If the thing is entirely absent, then we need to create the config.
         str = %{create -b
 set zonepath=%s
-} % @model[:path]
+} % @resource[:path]
 
         # Then perform all of our configuration steps.  It's annoying
-        # that we need this much internal info on the model.
-        @model.send(:properties).each do |property|
+        # that we need this much internal info on the resource.
+        @resource.send(:properties).each do |property|
             if property.is_a? ZoneConfigProperty and ! property.insync?
                 str += property.configtext + "\n"
             end
@@ -125,8 +125,8 @@ set zonepath=%s
     # Execute a configuration string.  Can't be private because it's called
     # by the properties.
     def setconfig(str)
-        command = "#{command(:cfg)} -z %s -f -" % @model[:name]
-        debug "Executing '%s' in zone %s with '%s'" % [command, @model[:name], str]
+        command = "#{command(:cfg)} -z %s -f -" % @resource[:name]
+        debug "Executing '%s' in zone %s with '%s'" % [command, @resource[:name], str]
         IO.popen(command, "w") do |pipe|
             pipe.puts str
         end
@@ -138,8 +138,8 @@ set zonepath=%s
 
     def start
         # Check the sysidcfg stuff
-        if cfg = @model[:sysidcfg]
-            path = File.join(@model[:path], "root", "etc", "sysidcfg")
+        if cfg = @resource[:sysidcfg]
+            path = File.join(@resource[:path], "root", "etc", "sysidcfg")
 
             unless File.exists?(path)
                 begin
@@ -161,7 +161,7 @@ set zonepath=%s
     # Return a hash of the current status of this zone.
     def statushash
         begin
-            output = adm "-z", @model[:name], :list, "-p"
+            output = adm "-z", @resource[:name], :list, "-p"
         rescue Puppet::ExecutionFailure
             return nil
         end
@@ -185,7 +185,7 @@ set zonepath=%s
 
     def zoneadm(*cmd)
         begin
-            adm("-z", @model[:name], *cmd)
+            adm("-z", @resource[:name], *cmd)
         rescue Puppet::ExecutionFailure => detail
             self.fail "Could not %s zone: %s" % [cmd[0], detail]
         end
@@ -193,7 +193,7 @@ set zonepath=%s
 
     def zonecfg(*cmd)
         begin
-            cfg("-z", @model[:name], *cmd)
+            cfg("-z", @resource[:name], *cmd)
         rescue Puppet::ExecutionFailure => detail
             self.fail "Could not %s zone: %s" % [cmd[0], detail]
         end

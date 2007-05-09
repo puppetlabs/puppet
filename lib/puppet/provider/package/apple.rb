@@ -33,8 +33,8 @@ Puppet::Type.type(:package).provide :apple do
     end
 
     def query
-        if FileTest.exists?("/Library/Receipts/#{@model[:name]}.pkg")
-            return {:name => @model[:name], :ensure => :present}
+        if FileTest.exists?("/Library/Receipts/#{@resource[:name]}.pkg")
+            return {:name => @resource[:name], :ensure => :present}
         else
             return nil
         end
@@ -42,7 +42,7 @@ Puppet::Type.type(:package).provide :apple do
 
     def install
         source = nil
-        unless source = @model[:source]
+        unless source = @resource[:source]
             self.fail "Mac OS X packages must specify a package source"
         end
 

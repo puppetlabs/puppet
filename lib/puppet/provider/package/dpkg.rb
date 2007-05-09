@@ -41,7 +41,7 @@ Puppet::Type.type(:package).provide :dpkg do
     end
 
     def install
-        unless file = @model[:source]
+        unless file = @resource[:source]
             raise ArgumentError, "You cannot install dpkg packages without a source"
         end
         dpkg "-i", file
@@ -57,12 +57,12 @@ Puppet::Type.type(:package).provide :dpkg do
         # list out our specific package
         begin
             output = dpkgquery("-W", "--showformat",
-                '${Status} ${Package} ${Version}\\n', @model[:name]
+                '${Status} ${Package} ${Version}\\n', @resource[:name]
             )
         rescue Puppet::ExecutionFailure
             # dpkg-query exits 1 if the package is not found.
             return {:ensure => :absent, :status => 'missing',
-                :name => @model[:name], :error => 'ok'}
+                :name => @resource[:name], :error => 'ok'}
 
         end
         # Our regex for matching dpkg-query output.  We could probably just
@@ -79,7 +79,7 @@ Puppet::Type.type(:package).provide :dpkg do
         else
             notice "Failed to handle dpkg-query line %s" % line.inspect
             return {:ensure => :absent, :status => 'missing',
-                :name => @model[:name], :error => 'ok'}
+                :name => @resource[:name], :error => 'ok'}
         end
 
         if hash[:error] != "ok"
@@ -98,11 +98,11 @@ Puppet::Type.type(:package).provide :dpkg do
     end
 
     def uninstall
-        dpkg "-r", @model[:name]
+        dpkg "-r", @resource[:name]
     end
 
     def purge
-        dpkg "--purge", @model[:name]
+        dpkg "--purge", @resource[:name]
 	 end
 end
 

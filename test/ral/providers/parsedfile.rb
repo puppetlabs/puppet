@@ -34,20 +34,20 @@ class TestParsedFile < Test::Unit::TestCase
     end
 
     # A simple block to skip the complexity of a full transaction.
-    def apply(model)
+    def apply(resource)
         [:one, :two, :ensure].each do |st|
             Puppet.info "Setting %s: %s => %s" %
-                [model[:name], st, model.should(st)]
-            model.provider.send(st.to_s + "=", model.should(st))
+                [resource[:name], st, resource.should(st)]
+            resource.provider.send(st.to_s + "=", resource.should(st))
         end
     end
 
-    def mkmodel(name, options = {})
+    def mkresource(name, options = {})
         options[:one] ||= "a"
         options[:two] ||= "c"
         options[:name] ||= name
 
-        model = @type.create(options)
+        resource = @type.create(options)
     end
 
     def mkprovider(name = :parsed)
@@ -76,7 +76,7 @@ class TestParsedFile < Test::Unit::TestCase
         end
     end
 
-    def test_model_attributes
+    def test_resource_attributes
         prov = nil
         assert_nothing_raised do
             prov = mkprovider
@@ -87,9 +87,9 @@ class TestParsedFile < Test::Unit::TestCase
         end
 
         # Now make sure they stay around
-        fakemodel = fakemodel(:testparsedfiletype, "yay")
+        fakeresource = fakeresource(:testparsedfiletype, "yay")
 
-        file = prov.new(fakemodel)
+        file = prov.new(fakeresource)
 
         assert_nothing_raised do
             file.name = :yayness
@@ -202,16 +202,16 @@ class TestParsedFile < Test::Unit::TestCase
 
         prov.target_object(:default).write "will b d"
 
-        # Create some models for some of those demo files
-        model = mkmodel "bill", :target => :file1
-        default = mkmodel "will", :target => :default
+        # Create some resources for some of those demo files
+        resource = mkresource "bill", :target => :file1
+        default = mkresource "will", :target => :default
 
         assert_nothing_raised do
             prov.prefetch
         end
 
-        # Make sure we prefetched our models.
-        assert_equal("b", model.provider.one)
+        # Make sure we prefetched our resources.
+        assert_equal("b", resource.provider.one)
         assert_equal("b", default.provider.one)
         assert_equal("d", default.provider.two)
 
@@ -242,14 +242,14 @@ class TestParsedFile < Test::Unit::TestCase
         target = :yayness
         prov.target_object(target).write "yay b d"
 
-        model = mkmodel "yay", :target => :yayness
+        resource = mkresource "yay", :target => :yayness
 
         assert_nothing_raised do
             prov.prefetch_target(:yayness)
         end
 
         # Now make sure we correctly got the hash
-        mprov = model.provider
+        mprov = resource.provider
         assert_equal("b", mprov.one)
         assert_equal("d", mprov.two)
     end
@@ -259,7 +259,7 @@ class TestParsedFile < Test::Unit::TestCase
 
         prov.meta_def(:match) do |record|
             # Look for matches on :one
-            self.model.find do |m|
+            self.resource_type.find do |m|
                 m.should(:one).to_s == record[:one].to_s
             end
         end
@@ -268,22 +268,22 @@ class TestParsedFile < Test::Unit::TestCase
         target = :yayness
         prov.target_object(target).write "foo b d"
 
-        model = mkmodel "yay", :target => :yayness, :one => "b"
+        resource = mkresource "yay", :target => :yayness, :one => "b"
 
         assert_nothing_raised do
             prov.prefetch_target(:yayness)
         end
 
         # Now make sure we correctly got the hash
-        mprov = model.provider
-        assert_equal("yay", model[:name])
+        mprov = resource.provider
+        assert_equal("yay", resource[:name])
         assert_equal("b", mprov.one)
         assert_equal("d", mprov.two)
     end
 
     # We need to test that we're retrieving files from all three locations:
     # from any existing target_objects, from the default file location, and
-    # from any existing model instances.
+    # from any existing resource instances.
     def test_targets
         prov = mkprovider
 
@@ -299,16 +299,16 @@ class TestParsedFile < Test::Unit::TestCase
         files[:inmemory] = inmem
         prov.target_object(inmem).write("inmem yay ness")
 
-        # Lastly, create a model with separate is and should values
+        # Lastly, create a resource with separate is and should values
         mtarget = tempfile()
         # istarget = tempfile()
-        files[:models] = mtarget
-        # files[:ismodels] = istarget
-        model = mkmodel "yay", :target => mtarget
-        # model.is = [:target, istarget]
+        files[:resources] = mtarget
+        # files[:isresources] = istarget
+        resource = mkresource "yay", :target => mtarget
+        # resource.is = [:target, istarget]
 
-        assert(model.should(:target), "Did not get a value for target")
-        # assert(model.is(:target), "Did not get a value for target")
+        assert(resource.should(:target), "Did not get a value for target")
+        # assert(resource.is(:target), "Did not get a value for target")
 
         list = nil
         assert_nothing_raised do
@@ -328,16 +328,16 @@ class TestParsedFile < Test::Unit::TestCase
         prov.filetype = :ram
         prov.default_target = :yayness
 
-        # Create some models.
-        one = mkmodel "one", :one => "a", :two => "c", :target => :yayness
-        two = mkmodel "two", :one => "b", :two => "d", :target => :yayness
+        # Create some resources.
+        one = mkresource "one", :one => "a", :two => "c", :target => :yayness
+        two = mkresource "two", :one => "b", :two => "d", :target => :yayness
 
         # Write out a file with different data.
         prov.target_object(:yayness).write "one b d\ntwo a c"
 
         prov.prefetch
 
-        # Apply and flush the first model.
+        # Apply and flush the first resource.
         assert_nothing_raised do
             apply(one)
         end
@@ -351,20 +351,20 @@ class TestParsedFile < Test::Unit::TestCase
         assert(prov.target_object(:yayness).read.include?("one a c"),
             "Did not write out correct data")
 
-        # Make sure the second model has not been modified
+        # Make sure the second resource has not been modified
         assert_equal("a", two.provider.one, "Two was flushed early")
         assert_equal("c", two.provider.two, "Two was flushed early")
 
         # And on disk
         assert(prov.target_object(:yayness).read.include?("two a c"),
-            "Wrote out other model")
+            "Wrote out other resource")
 
         # Now fetch the data again and make sure we're still right
         assert_nothing_raised { prov.prefetch }
         assert_equal("a", one.provider.one)
         assert_equal("a", two.provider.one)
 
-        # Now flush the second model and make sure it goes well
+        # Now flush the second resource and make sure it goes well
         assert_nothing_raised { apply(two) }
         assert_nothing_raised { two.flush }
 
@@ -377,28 +377,28 @@ class TestParsedFile < Test::Unit::TestCase
 
         prov.default_target = :basic
 
-        model = mkmodel "yay", :target => :basic, :one => "a", :two => "c"
+        resource = mkresource "yay", :target => :basic, :one => "a", :two => "c"
 
-        assert_equal(:present, model.should(:ensure))
+        assert_equal(:present, resource.should(:ensure))
 
-        apply(model)
+        apply(resource)
 
         assert_nothing_raised do
-            model.flush
+            resource.flush
         end
 
         assert(prov.target_object(:basic).read.include?("yay a c"),
             "Did not create file")
 
         # Make a change
-        model.provider.one = "b"
+        resource.provider.one = "b"
 
         # Flush it
         assert_nothing_raised do
-            model.flush
+            resource.flush
         end
 
-        # And make sure our model doesn't appear twice in the file.
+        # And make sure our resource doesn't appear twice in the file.
         assert_equal("yay b c\n",
             prov.target_object(:basic).read)
     end
@@ -410,10 +410,10 @@ class TestParsedFile < Test::Unit::TestCase
         prov.filetype = :ram
         prov.default_target = :first
 
-        # Make three models, one for each target and one to switch
-        first = mkmodel "first", :target => :first
-        second = mkmodel "second", :target => :second
-        mover = mkmodel "mover", :target => :first
+        # Make three resources, one for each target and one to switch
+        first = mkresource "first", :target => :first
+        second = mkresource "second", :target => :second
+        mover = mkresource "mover", :target => :first
 
         [first, second, mover].each do |m|
             assert_nothing_raised("Could not apply %s" % m[:name]) do
@@ -467,9 +467,9 @@ class TestParsedFile < Test::Unit::TestCase
         prov.filetype = :ram
         prov.default_target = :first
 
-        # Make two models, one that starts on disk and one that doesn't
-        ondisk = mkmodel "ondisk", :target => :first
-        notdisk = mkmodel "notdisk", :target => :first
+        # Make two resources, one that starts on disk and one that doesn't
+        ondisk = mkresource "ondisk", :target => :first
+        notdisk = mkresource "notdisk", :target => :first
 
         prov.target_object(:first).write "ondisk a c\n"
         prov.prefetch
@@ -496,7 +496,7 @@ class TestParsedFile < Test::Unit::TestCase
         assert(prov.target_object(:first).read =~ /^ondisk/,
             "Lost object on disk")
 
-        # Make sure our on-disk model behaves appropriately.
+        # Make sure our on-disk resource behaves appropriately.
         assert_equal(:present, ondisk.provider.ensure)
 
         # Now destroy the object
@@ -575,7 +575,7 @@ class TestParsedFile < Test::Unit::TestCase
                "bill's value for 'one' disappeared")
     end
 
-    # Make sure that creating a new model finds existing records in memory
+    # Make sure that creating a new resource finds existing records in memory
     def test_initialize_finds_records
         prov = mkprovider
         prov.default_target = :yayness
@@ -584,7 +584,7 @@ class TestParsedFile < Test::Unit::TestCase
 
         prov.prefetch
 
-        # Now make a model
+        # Now make a resource
         bill = nil
         assert_nothing_raised do
             bill = @type.create :name => "bill"

@@ -114,7 +114,7 @@ module Puppet
             # large UIDs instead of negative ones.  This isn't a Ruby bug,
             # it's an OS X bug, since it shows up in perl, too.
             if currentvalue > 120000
-                self.warning "current state is silly: %s" % is
+                self.warning "current state is silly: %s" % currentvalue
                 currentvalue = :silly
             end
 

@@ -150,7 +150,7 @@ class Puppet::Type
             Puppet::Type::Provider
         end
 
-        options[:model] ||= self
+        options[:resource_type] ||= self
 
         self.providify
 
@@ -171,7 +171,6 @@ class Puppet::Type
     # are providers.
     def self.providify
         return if @paramhash.has_key? :provider
-        model = self
 
         mkprovider_list()
         newparam(:provider) do

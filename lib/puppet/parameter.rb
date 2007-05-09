@@ -327,11 +327,6 @@ class Puppet::Parameter < Puppet::Element
         return tmp
     end
 
-    def parent
-        puts caller
-        raise "called parent"
-    end
-
     # return the full path to us, for logging and rollback; not currently
     # used
     def pathbuilder

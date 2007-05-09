@@ -30,7 +30,7 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
     end
 
     def autogen_comment
-        return @model[:name].capitalize
+        return @resource[:name].capitalize
     end
 
     # The list of all groups the user is a member of.  Different
@@ -38,7 +38,7 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
     def groups
         groups = []
 
-        user = @model[:name]
+        user = @resource[:name]
         # Retrieve them all from netinfo
         open("| #{command(:nireport)} / /groups name users") do |file|
             file.each do |line|
@@ -84,7 +84,7 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
             end
         end
 
-        user = @model[:name]
+        user = @resource[:name]
         data.each do |name, members|
             if members.include? user and groups.include? name
                 # I'm in the group and should be

@@ -47,7 +47,7 @@ Puppet::Type.type(:package).provide :rpm do
     # a hash with entries :instance => fully versioned package name, and 
     # :ensure => version-release
     def query
-        cmd = ["-q", @model[:name], "--nosignature", "--nodigest", "--qf", "#{NVRFORMAT} #{VERSIONSTRING}\n"]
+        cmd = ["-q", @resource[:name], "--nosignature", "--nodigest", "--qf", "#{NVRFORMAT} #{VERSIONSTRING}\n"]
 
         begin
             output = rpm(*cmd)
@@ -75,29 +75,29 @@ Puppet::Type.type(:package).provide :rpm do
 
     # Here we just retrieve the version from the file specified in the source.
     def latest
-        unless source = @model[:source]
-            @model.fail "RPMs must specify a package source"
+        unless source = @resource[:source]
+            @resource.fail "RPMs must specify a package source"
         end
         
-        cmd = [command(:rpm), "-q", "--qf", "#{VERSIONSTRING}", "-p", "#{@model[:source]}"]
+        cmd = [command(:rpm), "-q", "--qf", "#{VERSIONSTRING}", "-p", "#{@resource[:source]}"]
         version = execfail(cmd, Puppet::Error)
         return version
     end
 
     def install
         source = nil
-        unless source = @model[:source]
-            @model.fail "RPMs must specify a package source"
+        unless source = @resource[:source]
+            @resource.fail "RPMs must specify a package source"
         end
-        if @model.should(:ensure) == @model.is(:ensure) ||
-           @model.should(:ensure) == :latest && @model.is(:ensure) == latest
+        if @resource.should(:ensure) == @resource.is(:ensure) ||
+           @resource.should(:ensure) == :latest && @resource.is(:ensure) == latest
             # RPM gets pissy if you try to install an already 
             # installed package
             return
         end
 
         flag = "-i"
-        if @model.is(:ensure) != :absent
+        if @resource.is(:ensure) != :absent
             flag = "-U"
         end
 

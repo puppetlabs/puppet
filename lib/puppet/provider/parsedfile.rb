@@ -8,7 +8,7 @@ require 'puppet/util/fileparsing'
 # on the provider instance.  At this point, the file is written once
 # for every provider instance.
 #
-# Once the provider prefetches the data, it's the model's job to copy
+# Once the provider prefetches the data, it's the resource's job to copy
 # that data over to the @is variables.
 class Puppet::Provider::ParsedFile < Puppet::Provider
     extend Puppet::Util::FileParsing
@@ -70,7 +70,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
         flushed = []
         @modified.sort { |a,b| a.to_s <=> b.to_s }.uniq.each do |target|
-            Puppet.debug "Flushing %s provider target %s" % [@model.name, target]
+            Puppet.debug "Flushing %s provider target %s" % [@resource_type.name, target]
             flush_target(target)
             flushed << target
         end
@@ -119,46 +119,46 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     end
 
     # Override the default method with a lot more functionality.
-    def self.mkmodelmethods
-        [model.validproperties, model.parameters].flatten.each do |attr|
+    def self.mk_resource_methods
+        [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
             attr = symbolize(attr)
             define_method(attr) do
                 # If it's not a valid field for this record type (which can happen
                 # when different platforms support different fields), then just
-                # return the should value, so the model shuts up.
+                # return the should value, so the resource shuts up.
                 if @property_hash[attr] or self.class.valid_attr?(self.class.name, attr)
                     @property_hash[attr] || :absent
                 else
-                    @model.should(attr)
+                    @resource.should(attr)
                 end
             end
 
             define_method(attr.to_s + "=") do |val|
                 # Mark that this target was modified.
-                modeltarget = @model.should(:target) || self.class.default_target
+                resourcetarget = @resource.should(:target) || self.class.default_target
 
                 # If they're the same, then just mark that one as modified
-                if @property_hash[:target] and @property_hash[:target] == modeltarget
-                    self.class.modified(modeltarget)
+                if @property_hash[:target] and @property_hash[:target] == resourcetarget
+                    self.class.modified(resourcetarget)
                 else
-                    # Always mark the modeltarget as modified, and if there's
+                    # Always mark the resourcetarget as modified, and if there's
                     # and old property_hash target, mark it as modified and replace
                     # it.
-                    self.class.modified(modeltarget)
+                    self.class.modified(resourcetarget)
                     if @property_hash[:target]
                         self.class.modified(@property_hash[:target])
                     end
-                    @property_hash[:target] = modeltarget
+                    @property_hash[:target] = resourcetarget
                 end
                 @property_hash[attr] = val
             end
         end
     end
 
-    # Always make the model methods.
-    def self.model=(model)
+    # Always make the resource methods.
+    def self.resource_type=(resource)
         super
-        mkmodelmethods()
+        mk_resource_methods()
     end
 
     # Mark a target as modified so we know to flush it.  This only gets
@@ -170,11 +170,11 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     # Retrieve all of the data from disk.  There are three ways to know
     # while files to retrieve:  We might have a list of file objects already
-    # set up, there might be instances of our associated model and they
+    # set up, there might be instances of our associated resource and they
     # will have a path parameter set, and we will have a default path
     # set.  We need to turn those three locations into a list of files,
     # prefetch each one, and make sure they're associated with each appropriate
-    # model instance.
+    # resource instance.
     def self.prefetch
         # Reset the record list.
         @records = []
@@ -204,8 +204,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
         # Set current property on any existing resource instances.
         target_records(target).find_all { |i| i.is_a?(Hash) }.each do |record|
-            # Find any model instances whose names match our instances.
-            if instance = self.model[record[:name]]
+            # Find any resource instances whose names match our instances.
+            if instance = self.resource_type[record[:name]]
                 next unless instance.provider.is_a?(self)
                 instance.provider.property_hash = record
             elsif respond_to?(:match)
@@ -267,14 +267,14 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         # Then get each of the file objects
         targets += @target_objects.keys
 
-        # Lastly, check the file from any model instances
-        self.model.each do |model|
-            targets << model.value(:target)
+        # Lastly, check the file from any resource instances
+        self.resource_type.each do |resource|
+            targets << resource.value(:target)
 
             # This is only the case for properties, and targets should always
             # be properties.
-            #if model.respond_to?(:is)
-            #    targets << model.is(:target)
+            #if resource.respond_to?(:is)
+            #    targets << resource.is(:target)
             #end
         end
 
@@ -288,19 +288,19 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
 
     def create
-        @model.class.validproperties.each do |property|
-            if value = @model.should(property)
+        @resource.class.validproperties.each do |property|
+            if value = @resource.should(property)
                 @property_hash[property] = value
             end
         end
         self.class.modified(@property_hash[:target] || self.class.default_target)
-        return (@model.class.name.to_s + "_created").intern
+        return (@resource.class.name.to_s + "_created").intern
     end
 
     def destroy
         # We use the method here so it marks the target as modified.
         self.ensure = :absent
-        return (@model.class.name.to_s + "_deleted").intern
+        return (@resource.class.name.to_s + "_deleted").intern
     end
 
     def exists?
@@ -318,15 +318,15 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         # If the target isn't set, then this is our first modification, so
         # mark it for flushing.
         unless @property_hash[:target]
-            @property_hash[:target] = @model.should(:target) || self.class.default_target
+            @property_hash[:target] = @resource.should(:target) || self.class.default_target
             self.class.modified(@property_hash[:target])
         end
-        @property_hash[:name] ||= @model.name
+        @property_hash[:name] ||= @resource.name
 
         self.class.flush(@property_hash)
     end
 
-    def initialize(model)
+    def initialize(resource)
         super
 
         # See if there's already a matching property_hash in the records list;
@@ -334,7 +334,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         # We provide a default for 'ensure' here, because the provider will
         # override it if the thing exists, but it won't touch it if it doesn't
         # exist.
-        @property_hash = self.class.record?(model[:name]) ||
+        @property_hash = self.class.record?(resource[:name]) ||
             {:record_type => self.class.name, :ensure => :absent}
     end
 end

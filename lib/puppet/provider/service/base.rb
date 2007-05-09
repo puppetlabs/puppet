@@ -11,16 +11,16 @@ Puppet::Type.type(:service).provide :base do
     # Get the process ID for a running process. Requires the 'pattern'
     # parameter.
     def getpid
-        unless @model[:pattern]
-            @model.fail "Either a stop command or a pattern must be specified"
+        unless @resource[:pattern]
+            @resource.fail "Either a stop command or a pattern must be specified"
         end
         ps = Facter["ps"].value
         unless ps and ps != ""
-            @model.fail(
+            @resource.fail(
                 "You must upgrade Facter to a version that includes 'ps'"
             )
         end
-        regex = Regexp.new(@model[:pattern])
+        regex = Regexp.new(@resource[:pattern])
         self.debug "Executing '#{ps}'"
         IO.popen(ps) { |table|
             table.each { |line|
@@ -36,7 +36,7 @@ Puppet::Type.type(:service).provide :base do
 
     # How to restart the process.
     def restart
-        if @model[:restart] or self.respond_to?(:restartcmd)
+        if @resource[:restart] or self.respond_to?(:restartcmd)
             ucommand(:restart)
         else
             self.stop
@@ -50,7 +50,7 @@ Puppet::Type.type(:service).provide :base do
     # happen if, for instance, it has an init script (and thus responds to
     # 'statuscmd') but does not have 'hasstatus' enabled.
     def status
-        if @model[:status] or (
+        if @resource[:status] or (
             self.respond_to?(:statuscmd) and self.statuscmd
         )
             # Don't fail when the exit status is not 0.
@@ -79,8 +79,8 @@ Puppet::Type.type(:service).provide :base do
     # The command used to start.  Generated if the 'binary' argument
     # is passed.
     def startcmd
-        if @model[:binary]
-            return @model[:binary]
+        if @resource[:binary]
+            return @resource[:binary]
         else
             raise Puppet::Error,
                 "Services must specify a start command or a binary"
@@ -93,7 +93,7 @@ Puppet::Type.type(:service).provide :base do
     # for the process in the process table.
     # This method will generally not be overridden by submodules.
     def stop
-        if @model[:stop] or self.respond_to?(:stopcmd)
+        if @resource[:stop] or self.respond_to?(:stopcmd)
             ucommand(:stop)
         else
             pid = getpid
@@ -104,7 +104,7 @@ Puppet::Type.type(:service).provide :base do
             begin
                 output = kill pid
             rescue Puppet::ExecutionFailure => detail
-                @model.fail "Could not kill %s, PID %s: %s" %
+                @resource.fail "Could not kill %s, PID %s: %s" %
                         [self.name, pid, output]
             end
             return true
@@ -117,14 +117,14 @@ Puppet::Type.type(:service).provide :base do
             # #565: Services generally produce no output, so squelch them.
             execute(command, :failonfail => fof, :squelch => true)
         rescue Puppet::ExecutionFailure => detail
-            @model.fail "Could not %s %s: %s" % [type, @model.ref, detail]
+            @resource.fail "Could not %s %s: %s" % [type, @resource.ref, detail]
         end
         return nil
     end
 
     # Use either a specified command or the default for our provider.
     def ucommand(type, fof = true)
-        if c = @model[type]
+        if c = @resource[type]
             cmd = [c]
         else
             cmd = self.send("%scmd" % type)

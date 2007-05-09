@@ -43,19 +43,19 @@ Puppet::Type.type(:package).provide :darwinport do
     end
 
     def install
-        should = @model.should(:ensure)
+        should = @resource.should(:ensure)
 
         # Seems like you can always say 'upgrade'
-        output = port "upgrade", @model[:name]
+        output = port "upgrade", @resource[:name]
         if output =~ /^Error: No port/
-            raise Puppet::ExecutionFailure, "Could not find package %s" % @model[:name]
+            raise Puppet::ExecutionFailure, "Could not find package %s" % @resource[:name]
         end
     end
 
     def query
         version = nil
         self.class.eachpkgashash do |hash|
-            if hash[:name] == @model[:name]
+            if hash[:name] == @resource[:name]
                 return hash
             end
         end
@@ -64,7 +64,7 @@ Puppet::Type.type(:package).provide :darwinport do
     end
 
     def latest
-        info = port :search, "^#{@model[:name]}$"
+        info = port :search, "^#{@resource[:name]}$"
 
         if $? != 0 or info =~ /^Error/
             return nil
@@ -77,7 +77,7 @@ Puppet::Type.type(:package).provide :darwinport do
     end
 
     def uninstall
-        port :uninstall, @model[:name]
+        port :uninstall, @resource[:name]
     end
 
     def update

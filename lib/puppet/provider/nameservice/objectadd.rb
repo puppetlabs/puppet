@@ -12,7 +12,7 @@ class ObjectAdd < Puppet::Provider::NameService
     end
     
     def deletecmd
-        [command(:delete), @model[:name]]
+        [command(:delete), @resource[:name]]
     end
 
     # Determine the flag to pass to our command.
@@ -25,10 +25,10 @@ class ObjectAdd < Puppet::Provider::NameService
         cmd = [command(:modify),
             flag(param),
             value]
-        if @model[:allowdupe]  == :true
+        if @resource[:allowdupe]  == :true
             cmd << "-o"
         end
-        cmd << @model[:name]
+        cmd << @resource[:name]
 
         return cmd
     end

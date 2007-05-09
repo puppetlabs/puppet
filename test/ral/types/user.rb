@@ -13,7 +13,7 @@ class TestUser < Test::Unit::TestCase
         apimethods
         def create
             @ensure = :present
-            @model.eachproperty do |property|
+            @resource.send(:properties).each do |property|
                 next if property.name == :ensure
                 property.sync
             end
@@ -21,7 +21,7 @@ class TestUser < Test::Unit::TestCase
 
         def delete
             @ensure = :absent
-            @model.eachproperty do |property|
+            @resource.send(:properties).each do |property|
                 send(property.name.to_s + "=", :absent)
             end
         end

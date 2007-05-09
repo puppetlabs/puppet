@@ -87,12 +87,12 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         if defined? @initscript
             return @initscript
         else
-            @initscript = self.search(@model[:name])
+            @initscript = self.search(@resource[:name])
         end
     end
 
     def restart
-        if @model[:hasrestart] == :true
+        if @resource[:hasrestart] == :true
             command = [self.initscript, :restart]
             texecute("restart", command)
         else
@@ -101,7 +101,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     end
 
     def search(name)
-        @model[:path].each { |path|
+        @resource[:path].each { |path|
             fqname = File.join(path,name)
             begin
                 stat = File.stat(fqname)
@@ -126,7 +126,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     # we just return that; otherwise, we return false, which causes it to
     # fallback to other mechanisms.
     def statuscmd
-        if @model[:hasstatus]
+        if @resource[:hasstatus]
             return [self.initscript, :status]
         else
             return false

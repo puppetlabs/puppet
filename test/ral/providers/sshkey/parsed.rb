@@ -38,9 +38,9 @@ class TestParsedSSHKey < Test::Unit::TestCase
             :ensure => :present
         }
 
-        fakemodel = fakemodel(:sshkey, args[:name])
+        fakeresource = fakeresource(:sshkey, args[:name])
 
-        key = @provider.new(fakemodel)
+        key = @provider.new(fakeresource)
         args.each do |p,v|
             key.send(p.to_s + "=", v)
         end

@@ -86,28 +86,28 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
     end
 
     def install
-        pkgget "-f", :install, @model[:name]
+        pkgget "-f", :install, @resource[:name]
     end
 
     # Retrieve the version from the current package file.
     def latest
-        hash = self.class.blastlist(:justme => @model[:name])
+        hash = self.class.blastlist(:justme => @resource[:name])
         hash[:avail]
     end
 
     def query
-        hash = self.class.blastlist(:justme => @model[:name])
+        hash = self.class.blastlist(:justme => @resource[:name])
 
         {:ensure => hash[:ensure]}
     end
 
     # Remove the old package, and install the new one
     def update
-        pkgget "-f", :upgrade, @model[:name]
+        pkgget "-f", :upgrade, @resource[:name]
     end
 
     def uninstall
-        pkgget "-f", :remove, @model[:name]
+        pkgget "-f", :remove, @resource[:name]
     end
 end
 

@@ -23,7 +23,7 @@ Puppet::Type.type(:package).provide :aptitude, :parent => :apt do
     end
 
     def purge
-        aptitude '-y', 'purge', @model[:name]
+        aptitude '-y', 'purge', @resource[:name]
 	end
 end
 

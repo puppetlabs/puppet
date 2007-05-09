@@ -14,15 +14,15 @@ module Puppet::Provider::Mount
         if self.options and self.options != :absent
             args << "-o" << self.options
         end
-        args << @model[:name]
+        args << @resource[:name]
 
         mountcmd(*args)
     end
 
     def remount
         info "Remounting"
-        if @model[:remounts] == :true
-            mountcmd "-o", "remount", @model[:name]
+        if @resource[:remounts] == :true
+            mountcmd "-o", "remount", @resource[:name]
         else
             unmount()
             mount()
@@ -31,7 +31,7 @@ module Puppet::Provider::Mount
 
     # This only works when the mount point is synced to the fstab.
     def unmount
-        umount @model[:name]
+        umount @resource[:name]
     end
 
     # Is the mount currently mounted?
@@ -45,10 +45,10 @@ module Puppet::Provider::Mount
         execute(df).split("\n").find do |line|
             fs = line.split(/\s+/)[-1]
             if platform == "Darwin"
-                fs == "/private/var/automount" + @model[:name] or
-                    fs == @model[:name]
+                fs == "/private/var/automount" + @resource[:name] or
+                    fs == @resource[:name]
             else
-                fs == @model[:name]
+                fs == @resource[:name]
             end
         end
     end

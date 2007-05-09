@@ -20,17 +20,17 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     end
 
     def addcmd
-        cmd = [command(:pw), "useradd", @model[:name]]
-        @model.class.validproperties.each do |property|
+        cmd = [command(:pw), "useradd", @resource[:name]]
+        @resource.class.validproperties.each do |property|
             next if property == :ensure
             # the value needs to be quoted, mostly because -c might
             # have spaces in it
-            if value = @model.should(property) and value != ""
+            if value = @resource.should(property) and value != ""
                 cmd << flag(property) << value
             end
         end
 
-        if @model[:allowdupe] == :true
+        if @resource[:allowdupe] == :true
             cmd << "-o"
         end
 

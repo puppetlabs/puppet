@@ -85,7 +85,7 @@ Puppet::Type.type(:cron).provide(:crontab,
 
     # See if we can match the hash against an existing cron job.
     def self.match(hash)
-        model.find_all { |obj|
+        resource_type.find_all { |obj|
             obj.value(:user) == hash[:user] and obj.value(:command) == hash[:command]
         }.each do |obj|
             # we now have a cron job whose command exactly matches

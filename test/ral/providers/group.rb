@@ -30,13 +30,13 @@ class TestGroupProvider < Test::Unit::TestCase
     end
 
     def mkgroup(name, hash = {})
-        fakemodel = fakemodel(:group, name)
+        fakeresource = fakeresource(:group, name)
         group = nil
         assert_nothing_raised {
-            group = @provider.new(fakemodel)
+            group = @provider.new(fakeresource)
         }
         hash.each do |name, val|
-            fakemodel[name] = val
+            fakeresource[name] = val
         end
         assert(group, "Could not create provider group")
 
@@ -167,9 +167,9 @@ class TestGroupProvider < Test::Unit::TestCase
         groupnames().each { |group|
             gobj = nil
             comp = nil
-            fakemodel = fakemodel(:group, group)
+            fakeresource = fakeresource(:group, group)
             assert_nothing_raised {
-                gobj = @provider.new(fakemodel)
+                gobj = @provider.new(fakeresource)
             }
 
             assert(gobj.gid, "Failed to retrieve gid")
@@ -223,7 +223,7 @@ class TestGroupProvider < Test::Unit::TestCase
             # Not all OSes fail here, so we can't test that it doesn't work with
             # it off, only that it does work with it on.
             assert_nothing_raised {
-                group2.model[:allowdupe] = :true
+                group2.resource[:allowdupe] = :true
             }
 
             # Now create the second group

@@ -6,11 +6,11 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm do
 
     def install
 
-        should = @model.should(:ensure)
-	self.debug "Ensuring => #{should}"
-	wanted = @model[:name]
+        should = @resource.should(:ensure)
+        self.debug "Ensuring => #{should}"
+        wanted = @resource[:name]
 
-	# XXX: We don't actually deal with epochs here.
+        # XXX: We don't actually deal with epochs here.
         case should
         when true, false, Symbol
             # pass
@@ -30,14 +30,14 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm do
 
     # What's the latest package version available?
     def latest
-        output = yum "-d", "0", "-e", "0", :list, :available, @model[:name]
+        output = yum "-d", "0", "-e", "0", :list, :available, @resource[:name]
 
-        if output =~ /^#{@model[:name]}\S+\s+(\S+)\s/
+        if output =~ /^#{@resource[:name]}\S+\s+(\S+)\s/
             return $1
         else
             # Yum didn't find updates, pretend the current
             # version is the latest
-            return @model[:ensure]
+            return @resource[:ensure]
         end
     end
 

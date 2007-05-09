@@ -1,3 +1,13 @@
+    Renamed some poorly named internal variables:
+        @models in providers are now either @resource or
+        @resource_type (#605).
+
+        @children is no longer used except by components (#606).
+
+        @parent is now @resource within parameters (#607).
+
+    The old variables are still set for backward compatibility.
+
     Significantly reworking configuration parsing.  Executables all now
     look for 'puppet.conf' (#206), although they will parse the old-style
     configuration files if they are present, although they throw a deprecation

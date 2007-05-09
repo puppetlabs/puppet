@@ -19,17 +19,17 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd do
         # -p: create a package
         # -N: install if the package is missing, otherwise upgrade
         # -P: prefer binary packages
-        cmd = %w{-p -N -P} << @model[:name]
+        cmd = %w{-p -N -P} << @resource[:name]
 
         output = portupgrade(*cmd)
         if output =~ /\*\* No such /
-            raise Puppet::ExecutionFailure, "Could not find package %s" % @model[:name]
+            raise Puppet::ExecutionFailure, "Could not find package %s" % @resource[:name]
         end
     end
 
     # If there are multiple packages, we only use the last one
     def latest
-        cmd = ["-v", @model[:name]]
+        cmd = ["-v", @resource[:name]]
 
         begin
             output = portversion(*cmd)
@@ -75,7 +75,7 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd do
     def query
         self.class.list
 
-        if @model.is(:ensure) and @model.is(:ensure) != :absent
+        if @resource.is(:ensure) and @resource.is(:ensure) != :absent
             return :listed
         else
             return nil
@@ -83,7 +83,7 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd do
     end
 
     def uninstall
-        portuninstall @model[:name]
+        portuninstall @resource[:name]
     end
 
     def update

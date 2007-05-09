@@ -81,7 +81,7 @@ class TestPackageProvider < Test::Unit::TestCase
         assert((result == :listed or result.is_a?(Hash)),
             "query did not return hash or :listed")
         if result == :listed
-            assert(provider.model.is(:ensure) != :absent, msg)
+            assert(provider.resource.is(:ensure) != :absent, msg)
         else
             assert(result[:ensure] != :absent, msg)
         end

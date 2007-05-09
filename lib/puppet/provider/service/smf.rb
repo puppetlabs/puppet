@@ -27,20 +27,20 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     end
 
     def restartcmd
-        [command(:adm), :restart, @model[:name]]
+        [command(:adm), :restart, @resource[:name]]
     end
 
     def startcmd
-        [command(:adm), :enable, @model[:name]]
+        [command(:adm), :enable, @resource[:name]]
     end
 
     def status
-        if @model[:status]
+        if @resource[:status]
             super
             return
         end
         begin
-            output = svcs "-l", @model[:name]
+            output = svcs "-l", @resource[:name]
         rescue Puppet::ExecutionFailure
             warning "Could not get status on service %s" % self.name
             return :stopped
@@ -78,7 +78,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     end
 
     def stopcmd
-        [command(:adm), :disable, @model[:name]]
+        [command(:adm), :disable, @resource[:name]]
     end
 end
 

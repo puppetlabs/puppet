@@ -11,9 +11,9 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm do
     # Install a package using 'apt-get'.  This function needs to support
     # installing a specific version.
     def install
-        should = @model.should(:ensure)
+        should = @resource.should(:ensure)
 
-        str = @model[:name]
+        str = @resource[:name]
         case should
         when true, false, Symbol
             # pass
@@ -30,7 +30,7 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm do
 
     # What's the latest package version available?
     def latest
-        output = aptcache :showpkg,  @model[:name]
+        output = aptcache :showpkg,  @resource[:name]
 
         if output =~ /Versions:\s*\n((\n|.)+)^$/
             versions = $1
@@ -64,11 +64,11 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm do
     end
 
     def uninstall
-        aptget "-y", "-q", 'remove', @model[:name]
+        aptget "-y", "-q", 'remove', @resource[:name]
     end
 
     def purge
-        aptget '-y', '-q', 'remove', '--purge', @model[:name]
+        aptget '-y', '-q', 'remove', '--purge', @resource[:name]
      end
 
     def versionable?

@@ -128,11 +128,11 @@ class TestUserProvider < Test::Unit::TestCase
         end
     end
 
-    def fakemodel(*args)
-        model = super
+    def fakeresource(*args)
+        resource = super
 
         # Set boolean methods as necessary.
-        class << model
+        class << resource
             def allowdupe?
                 self[:allowdupe]
             end
@@ -140,14 +140,14 @@ class TestUserProvider < Test::Unit::TestCase
                 self[:managehome]
             end
         end
-        model
+        resource
     end
 
     def mkuser(name)
-        fakemodel = fakemodel(:user, name)
+        fakeresource = fakeresource(:user, name)
         user = nil
         assert_nothing_raised {
-            user = @provider.new(fakemodel)
+            user = @provider.new(fakeresource)
         }
         assert(user, "Could not create provider user")
 
@@ -175,11 +175,11 @@ class TestUserProvider < Test::Unit::TestCase
     end
 
     def test_infocollection
-        fakemodel = fakemodel(:user, @me)
+        fakeresource = fakeresource(:user, @me)
 
         user = nil
         assert_nothing_raised {
-            user = @provider.new(fakemodel)
+            user = @provider.new(fakeresource)
         }
         assert(user, "Could not create user provider")
 
@@ -392,7 +392,7 @@ class TestUserProvider < Test::Unit::TestCase
 
         # Now add some of them to our user
         assert_nothing_raised {
-            user.model[:groups] = extra.join(",")
+            user.resource[:groups] = extra.join(",")
         }
 
         # Some tests to verify that groups work correctly startig from nothing
@@ -428,7 +428,7 @@ class TestUserProvider < Test::Unit::TestCase
 
             eachproperty do |property|
                 if val = fakedata(user.name, property)
-                    user.model[property] = val
+                    user.resource[property] = val
                 end
             end
 
@@ -459,7 +459,7 @@ class TestUserProvider < Test::Unit::TestCase
 
             eachproperty do |property|
                 if val = fakedata(user.name, property)
-                    user.model[property] = val
+                    user.resource[property] = val
                 end
             end
 
@@ -494,7 +494,7 @@ class TestUserProvider < Test::Unit::TestCase
             user1.create
             user1.uid = 125
             user2 = mkuser("user2")
-            user2.model[:uid] = 125
+            user2.resource[:uid] = 125
 
             cleanup do
                 user1.ensure = :absent
@@ -504,7 +504,7 @@ class TestUserProvider < Test::Unit::TestCase
             # Not all OSes fail here, so we can't test that it doesn't work with
             # it off, only that it does work with it on.
             assert_nothing_raised {
-                user2.model[:allowdupe] = :true
+                user2.resource[:allowdupe] = :true
             }
             assert_nothing_raised { user2.create }
             assert_equal(:present, user2.ensure,
@@ -524,8 +524,8 @@ class TestUserProvider < Test::Unit::TestCase
 
         user = nil
         assert_nothing_raised {
-            fakemodel = fakemodel(:user, @me)
-            user = useradd.new(fakemodel)
+            fakeresource = fakeresource(:user, @me)
+            user = useradd.new(fakeresource)
         }
 
         assert_equal("-d", user.send(:flag, :home),

@@ -85,7 +85,7 @@ Puppet::Type.type(:package).provide :sun do
         if device
             cmd += " -d #{device}"
         end
-        cmd += " #{@model[:name]}"
+        cmd += " #{@resource[:name]}"
 
         begin
             # list out all of the packages
@@ -115,28 +115,28 @@ Puppet::Type.type(:package).provide :sun do
     end
 
     def install
-        unless @model[:source]
+        unless @resource[:source]
             raise Puppet::Error, "Sun packages must specify a package source"
         end
         cmd = []
         
-        if @model[:adminfile]
-            cmd << "-a" << @model[:adminfile]
+        if @resource[:adminfile]
+            cmd << "-a" << @resource[:adminfile]
         end
 
-        if @model[:responsefile]
-            cmd << "-r" << @model[:responsefile]
+        if @resource[:responsefile]
+            cmd << "-r" << @resource[:responsefile]
         end
 
-        cmd << "-d" << @model[:source]
-        cmd << "-n" << @model[:name]
+        cmd << "-d" << @resource[:source]
+        cmd << "-n" << @resource[:name]
 
         pkgadd cmd
     end
 
     # Retrieve the version from the current package file.
     def latest
-        hash = info2hash(@model[:source])
+        hash = info2hash(@resource[:source])
         hash[:ensure]
     end
 
@@ -147,18 +147,18 @@ Puppet::Type.type(:package).provide :sun do
     def uninstall
         command  = ["-n"]
 
-        if @model[:adminfile]
-            command << "-a" << @model[:adminfile]
+        if @resource[:adminfile]
+            command << "-a" << @resource[:adminfile]
         end
 
-        command << @model[:name]
+        command << @resource[:name]
         pkgrm command
     end
 
     # Remove the old package, and install the new one.  This will probably
     # often fail.
     def update
-        if @model.is(:ensure) != :absent
+        if @resource.is(:ensure) != :absent
             self.uninstall
         end
         self.install

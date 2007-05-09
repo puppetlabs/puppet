@@ -12,15 +12,15 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
 
     def addcmd
         cmd = [command(:add)]
-        if gid = @model.should(:gid)
+        if gid = @resource.should(:gid)
             unless gid == :absent
                 cmd << flag(:gid) << gid
             end
         end
-        if @model[:allowdupe] == :true
+        if @resource[:allowdupe] == :true
             cmd << "-o"
         end
-        cmd << @model[:name]
+        cmd << @resource[:name]
 
         return cmd
     end

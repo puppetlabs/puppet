@@ -21,7 +21,7 @@ class TestPackages < Test::Unit::TestCase
         @type.provide :fake, :parent => PuppetTest::FakeProvider do
             apimethods :ensure
             def install
-                self.ensure = @model.should(:ensure)
+                self.ensure = @resource.should(:ensure)
             end
 
             def uninstall

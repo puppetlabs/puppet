@@ -29,12 +29,12 @@ class Puppet::Provider::NameService < Puppet::Provider
             objects = []
             listbyname do |name|
                 obj = nil
-                check = model.validproperties
-                if obj = model[name]
+                check = resource_type.validproperties
+                if obj = resource_type[name]
                     obj[:check] = check
                 else
                     # unless it exists, create it as an unmanaged object
-                    obj = model.create(:name => name, :check => check)
+                    obj = resource_type.create(:name => name, :check => check)
                 end
 
                 next unless obj # In case there was an error somewhere
@@ -56,9 +56,9 @@ class Puppet::Provider::NameService < Puppet::Provider
         end
 
         def options(name, hash)
-            unless model.validattr?(name)
+            unless resource_type.validattr?(name)
                 raise Puppet::DevError, "%s is not a valid attribute for %s" %
-                    [name, model.name]
+                    [name, resource_type.name]
             end
             @options ||= {}
             @options[name] ||= {}
@@ -89,9 +89,9 @@ class Puppet::Provider::NameService < Puppet::Provider
             return names
         end
 
-        def model=(model)
+        def resource_type=(resource_type)
             super
-            @model.validproperties.each do |prop|
+            @resource_type.validproperties.each do |prop|
                 next if prop == :ensure
                 unless public_method_defined?(prop)
                     define_method(prop) { get(prop) || :absent}
@@ -105,13 +105,13 @@ class Puppet::Provider::NameService < Puppet::Provider
         # This is annoying, but there really aren't that many options,
         # and this *is* built into Ruby.
         def section
-            unless defined? @model
+            unless defined? @resource_type
                 raise Puppet::DevError,
-                    "Cannot determine Etc section without a model"
+                    "Cannot determine Etc section without a resource type"
 
             end
 
-            if @model.name == :group
+            if @resource_type.name == :group
                 "gr"
             else
                 "pw"
@@ -146,7 +146,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     def autogen(field)
         field = symbolize(field)
         id_generators = {:user => :uid, :group => :gid}
-        if id_generators[@model.class.name] == field
+        if id_generators[@resource.class.name] == field
             return autogen_id(field)
         else
             if value = self.class.autogen_default(field)
@@ -165,11 +165,11 @@ class Puppet::Provider::NameService < Puppet::Provider
         highest = 0
 
         group = method = nil
-        case @model.class.name
+        case @resource.class.name
         when :user: group = :passwd; method = :uid
         when :group: group = :group; method = :gid
         else
-            raise Puppet::DevError, "Invalid model name %s" % model
+            raise Puppet::DevError, "Invalid resource name %s" % resource
         end
         
         # Make sure we don't use the same value multiple times
@@ -239,7 +239,7 @@ class Puppet::Provider::NameService < Puppet::Provider
             execute(cmd)
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error, "Could not %s %s %s: %s" %
-                [type, @model.class.name, @model.name, detail]
+                [type, @resource.class.name, @resource.name, detail]
         end
     end
 
@@ -266,7 +266,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         if @objectinfo.nil? or refresh == true
             @etcmethod ||= ("get" + self.class.section().to_s + "nam").intern
             begin
-                @objectinfo = Etc.send(@etcmethod, @model[:name])
+                @objectinfo = Etc.send(@etcmethod, @resource[:name])
             rescue ArgumentError => detail
                 @objectinfo = nil
             end
@@ -288,7 +288,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         # Reset our group list
         Etc.setgrent
 
-        user = @model[:name]
+        user = @resource[:name]
 
         # Now iterate across all of the groups, adding each one our
         # user is a member of
@@ -310,7 +310,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     # Convert the Etc struct into a hash.
     def info2hash(info)
         hash = {}
-        self.class.model.validproperties.each do |param|
+        self.class.resource_type.validproperties.each do |param|
             method = posixmethod(param)
             if info.respond_to? method
                 hash[param] = info.send(posixmethod(param))
@@ -320,7 +320,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         return hash
     end
 
-    def initialize(model)
+    def initialize(resource)
         super
 
         @objectinfo = nil
@@ -336,7 +336,7 @@ class Puppet::Provider::NameService < Puppet::Provider
             execute(cmd)
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error, "Could not set %s on %s[%s]: %s" %
-                [param, @model.class.name, @model.name, detail]
+                [param, @resource.class.name, @resource.name, detail]
         end
     end
 end

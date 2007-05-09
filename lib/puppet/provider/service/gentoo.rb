@@ -10,7 +10,7 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
 
     def disable
         begin
-            output = update :del, @model[:name], :default
+            output = update :del, @resource[:name], :default
         rescue Puppet::ExecutionFailure
             raise Puppet::Error, "Could not disable %s: %s" %
                 [self.name, output]
@@ -24,12 +24,12 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
             return :false
         end
 
-        line = output.split(/\n/).find { |l| l.include?(@model[:name]) }
+        line = output.split(/\n/).find { |l| l.include?(@resource[:name]) }
 
         return :false unless line
 
         # If it's enabled then it will print output showing service | runlevel
-        if output =~ /#{@model[:name]}\s*|\s*default/
+        if output =~ /#{@resource[:name]}\s*|\s*default/
             return :true
         else
             return :false
@@ -38,7 +38,7 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
 
     def enable
         begin
-            output = update :add, @model[:name], :default
+            output = update :add, @resource[:name], :default
         rescue Puppet::ExecutionFailure
             raise Puppet::Error, "Could not enable %s: %s" %
                 [self.name, output]

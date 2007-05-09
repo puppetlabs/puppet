@@ -9,7 +9,7 @@ Puppet.type(:package).provide :up2date, :parent => :rpm do
 
     # Install a package using 'up2date'.
     def install
-        up2date "-u", @model[:name]
+        up2date "-u", @resource[:name]
 
         unless self.query
             raise Puppet::ExecutionFailure.new(
@@ -23,12 +23,12 @@ Puppet.type(:package).provide :up2date, :parent => :rpm do
         #up2date can only get a list of *all* available packages?
         output = up2date "--show-available"
 
-        if output =~ /#{@model[:name]}-(\d+.*)\.\w+/
+        if output =~ /#{@resource[:name]}-(\d+.*)\.\w+/
             return $1
         else
             # up2date didn't find updates, pretend the current
             # version is the latest
-            return @model.is(:ensure)
+            return @resource.is(:ensure)
         end
     end
 

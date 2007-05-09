@@ -53,9 +53,9 @@ class TestParsedHostProvider < Test::Unit::TestCase
     def mkhost
         hash = mkhosthash()
 
-        fakemodel = fakemodel(:host, hash[:name])
+        fakeresource = fakeresource(:host, hash[:name])
 
-        host = @provider.new(fakemodel)
+        host = @provider.new(fakeresource)
 
         assert(host, "Could not create provider host")
         hash.each do |name, val|
@@ -214,7 +214,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
 
         # And verify that we have data for everything
         hosts.each { |host|
-            name = host.model[:name]
+            name = host.resource[:name]
             assert(text.include?(name), "Host %s is not in file" % name)
             hash = host.property_hash
             assert(! hash.empty?, "Could not find host %s" % name)

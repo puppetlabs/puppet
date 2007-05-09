@@ -31,7 +31,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
             end
         end
 
-        if @@checkedforcdrom and @model[:allowcdrom] != :true
+        if @@checkedforcdrom and @resource[:allowcdrom] != :true
             raise Puppet::Error,
                 "/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure."
         end
@@ -40,14 +40,14 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     # Install a package using 'apt-get'.  This function needs to support
     # installing a specific version.
     def install
-        if @model[:responsefile]
+        if @resource[:responsefile]
             self.run_preseed
         end
-        should = @model.should(:ensure)
+        should = @resource.should(:ensure)
 
         checkforcdrom()
 
-        str = @model[:name]
+        str = @resource[:name]
         case should
         when true, false, Symbol
             # pass
@@ -58,7 +58,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
         cmd = %w{-q -y}
 
         keep = ""
-        if config = @model[:configfiles]
+        if config = @resource[:configfiles]
             case config
             when :keep
                 cmd << "-o" << 'DPkg::Options::=--force-confold'
@@ -76,7 +76,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
 
     # What's the latest package version available?
     def latest
-        output = aptcache :policy,  @model[:name]
+        output = aptcache :policy,  @resource[:name]
 
         if output =~ /Candidate:\s+(\S+)\s/
             return $1
@@ -90,7 +90,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
 	# preseeds answers to dpkg-set-selection from the "responsefile"
 	#
     def run_preseed
-        if response = @model[:responsefile] and FileTest.exists?(response)
+        if response = @resource[:responsefile] and FileTest.exists?(response)
             self.info("Preseeding %s to debconf-set-selections" % response)
 
             preseed response
@@ -104,11 +104,11 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg do
     end
 
     def uninstall
-        aptget "-y", "-q", :remove, @model[:name]
+        aptget "-y", "-q", :remove, @resource[:name]
     end
 
     def purge
-        aptget '-y', '-q', 'remove', '--purge', @model[:name]
+        aptget '-y', '-q', 'remove', '--purge', @resource[:name]
      end
 
     def versionable?

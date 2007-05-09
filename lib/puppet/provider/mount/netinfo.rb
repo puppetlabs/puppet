@@ -19,18 +19,18 @@ require 'puppet/provider/mount'
 # 
 #     defaultfor :operatingsystem => :darwin
 #     
-#     def initialize(model)
+#     def initialize(resource)
 #         warning "The NetInfo mount provider is highly experimental.  Use at your own risk."
 #         super
 #     end
 #     
 #     def mount
 #         cmd = []
-#         if opts = @model.should(:options)
+#         if opts = @resource.should(:options)
 #             cmd << opts
 #         end
-#         cmd << @model.should(:device)
-#         cmd << @model[:name]
+#         cmd << @resource.should(:device)
+#         cmd << @resource[:name]
 #         mountcmd cmd
 #     end
 # end

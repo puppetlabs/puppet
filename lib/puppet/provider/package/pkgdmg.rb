@@ -97,8 +97,8 @@ Puppet::Type.type(:package).provide :pkgdmg do
     end # def self.installpkgdmg
 
     def query
-        if FileTest.exists?("/var/db/.puppet_pkgdmg_installed_#{@model[:name]}")
-            return {:name => @model[:name], :ensure => :present}
+        if FileTest.exists?("/var/db/.puppet_pkgdmg_installed_#{@resource[:name]}")
+            return {:name => @resource[:name], :ensure => :present}
         else
             return nil
         end
@@ -106,10 +106,10 @@ Puppet::Type.type(:package).provide :pkgdmg do
 
     def install
         source = nil
-        unless source = @model[:source]
+        unless source = @resource[:source]
             self.fail "Mac OS X PKG DMG's must specify a package source."
         end
-        unless name = @model[:name]
+        unless name = @resource[:name]
             self.fail "Mac OS X PKG DMG's must specify a package name."
         end
         self.class.installpkgdmg(source,name)

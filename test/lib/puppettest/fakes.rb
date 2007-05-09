@@ -5,12 +5,12 @@ module PuppetTest
     class FakeModel
         include Puppet::Util
         class << self
-            attr_accessor :name, :realmodel
-            @name = :fakemodel
+            attr_accessor :name, :realresource
+            @name = :fakeresource
         end
 
         def self.namevar
-            @realmodel.namevar
+            @realresource.namevar
         end
 
         def self.validproperties
@@ -26,7 +26,7 @@ module PuppetTest
         end
 
         def [](param)
-            if @realmodel.attrtype(param) == :property
+            if @realresource.attrtype(param) == :property
                 @is[param]
             else
                 @params[param]
@@ -35,11 +35,11 @@ module PuppetTest
 
         def []=(param, value)
             param = symbolize(param)
-            unless @realmodel.validattr?(param)
+            unless @realresource.validattr?(param)
                 raise Puppet::DevError, "Invalid attribute %s for %s" %
-                    [param, @realmodel.name]
+                    [param, @realresource.name]
             end
-            if @realmodel.attrtype(param) == :property
+            if @realresource.attrtype(param) == :property
                 @should[param] = value
             else
                 @params[param] = value
@@ -47,12 +47,12 @@ module PuppetTest
         end
 
         def initialize(name)
-            @realmodel = Puppet::Type.type(self.class.name)
-            raise "Could not find type #{self.class.name}" unless @realmodel
+            @realresource = Puppet::Type.type(self.class.name)
+            raise "Could not find type #{self.class.name}" unless @realresource
             @is = {}
             @should = {}
             @params = {}
-            self[@realmodel.namevar] = name
+            self[@realresource.namevar] = name
         end
 
         def inspect
@@ -83,9 +83,9 @@ module PuppetTest
     end
 
     class FakeProvider
-        attr_accessor :model
+        attr_accessor :resource
         class << self
-            attr_accessor :name, :model, :methods
+            attr_accessor :name, :resource_type, :methods
         end
 
         # A very low number, so these never show up as defaults via the standard
@@ -96,7 +96,7 @@ module PuppetTest
 
         # Set up methods to fake things
         def self.apimethods(*ary)
-            @model.validproperties.each do |property|
+            @resource_type.validproperties.each do |property|
                 ary << property unless ary.include? property
             end
             attr_accessor(*ary)
@@ -123,11 +123,11 @@ module PuppetTest
         end
 
         def clear
-            @model = nil
+            @resource = nil
         end
 
-        def initialize(model)
-            @model = model
+        def initialize(resource)
+            @resource = resource
         end
     end
 
@@ -154,30 +154,30 @@ module PuppetTest
         end
     end
 
-    @@fakemodels = {}
+    @@fakeresources = {}
     @@fakeproviders = {}
 
-    def fakemodel(type, name, options = {})
+    def fakeresource(type, name, options = {})
         type = type.intern if type.is_a? String
-        unless @@fakemodels.include? type
-            @@fakemodels[type] = Class.new(FakeModel)
-            @@fakemodels[type].name = type
+        unless @@fakeresources.include? type
+            @@fakeresources[type] = Class.new(FakeModel)
+            @@fakeresources[type].name = type
 
-            model = Puppet::Type.type(type)
-            raise("Could not find type %s" % type) unless model
-            @@fakemodels[type].realmodel = model
+            resource = Puppet::Type.type(type)
+            raise("Could not find type %s" % type) unless resource
+            @@fakeresources[type].realresource = resource
         end
 
-        obj = @@fakemodels[type].new(name)
+        obj = @@fakeresources[type].new(name)
         options.each do |name, val|
             obj[name] = val
         end
         obj
     end
 
-    module_function :fakemodel
+    module_function :fakeresource
 
-    def fakeprovider(type, model)
+    def fakeprovider(type, resource)
         type = type.intern if type.is_a? String
         unless @@fakeproviders.include? type
             @@fakeproviders[type] = Class.new(FakeModel) do
@@ -185,7 +185,7 @@ module PuppetTest
             end
         end
 
-        @@fakeproviders[type].new(model)
+        @@fakeproviders[type].new(resource)
     end
 
     module_function :fakeprovider

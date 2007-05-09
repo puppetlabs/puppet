@@ -32,7 +32,7 @@ class NetInfo < Puppet::Provider::NameService
         if defined? @netinfodir
             return @netinfodir
         else
-            return @model.name.to_s + "s"
+            return @resource_type.name.to_s + "s"
         end
     end
 
@@ -62,8 +62,8 @@ class NetInfo < Puppet::Provider::NameService
     end
     
     def self.list
-        report(@model.validproperties).collect do |hash|
-            @model.hash2obj(hash)
+        report(@resource_type.validproperties).collect do |hash|
+            @resource_type.hash2obj(hash)
         end
     end
     
@@ -118,7 +118,7 @@ class NetInfo < Puppet::Provider::NameService
         cmd = [command(:niutil)]
         cmd << arg
 
-        cmd << "/" << "/%s/%s" % [self.class.netinfodir(), @model[:name]]
+        cmd << "/" << "/%s/%s" % [self.class.netinfodir(), @resource[:name]]
         return cmd
     end
 
@@ -136,9 +136,9 @@ class NetInfo < Puppet::Provider::NameService
         # Because our stupid type can't create the whole thing at once,
         # we have to do this hackishness.  Yay.
         if arg == :present
-            @model.class.validproperties.each do |name|
+            @resource.class.validproperties.each do |name|
                 next if name == :ensure
-                next unless val = @model.should(name) || autogen(name)
+                next unless val = @resource.should(name) || autogen(name)
                 self.send(name.to_s + "=", val)
             end
         end
@@ -157,7 +157,7 @@ class NetInfo < Puppet::Provider::NameService
     # Retrieve everything about this object at once, instead of separately.
     def getinfo(refresh = false)
         if refresh or (! defined? @infohash or ! @infohash)
-            properties = [:name] + self.class.model.validproperties
+            properties = [:name] + self.class.resource_type.validproperties
             properties.delete(:ensure) if properties.include? :ensure
             @infohash = single_report(*properties)
         end
@@ -171,7 +171,7 @@ class NetInfo < Puppet::Provider::NameService
         #     warning "Netinfo providers cannot currently handle multiple values"
         # end
 
-        cmd << "-createprop" << "/" << "/%s/%s" % [self.class.netinfodir, @model[:name]]
+        cmd << "-createprop" << "/" << "/%s/%s" % [self.class.netinfodir, @resource[:name]]
 
         value = [value] unless value.is_a?(Array)
         if key = netinfokey(param)
@@ -192,7 +192,7 @@ class NetInfo < Puppet::Provider::NameService
     
     # Get a report for a single resource, not the whole table
     def single_report(*properties)
-        self.class.report(*properties).find do |hash| hash[:name] == @model[:name] end
+        self.class.report(*properties).find do |hash| hash[:name] == @resource[:name] end
     end
 
     def setuserlist(group, list)
