@@ -353,13 +353,17 @@ class Type < Puppet::Element
 
         trans = TransObject.new(self.title, self.class.name)
 
-        properties().each do |property|
-            trans[property.name] = property.is
+        values = retrieve()
+        values.each do |name, value|
+            trans[name.name] = value
         end
 
         @parameters.each do |name, param|
             # Avoid adding each instance name as both the name and the namevar
             next if param.class.isnamevar? and param.value == self.title
+
+            # We've already got property values
+            next if param.is_a?(Puppet::Property)
             trans[name] = param.value
         end
 

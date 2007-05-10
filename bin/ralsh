@@ -113,7 +113,7 @@ result.each { |opt,arg|
         end
         exit
     else
-        raise "Invalid option '#{opt}'"
+        # Anything else is handled by the config stuff
     end
 }
 
@@ -141,7 +141,7 @@ unless typeobj = Puppet::Type.type(type)
     raise "Could not find type %s" % type
 end
 
-states = typeobj.states.collect { |s| s.name }
+properties = typeobj.properties.collect { |s| s.name }
 
 format = proc {|trans|
     trans.dup.collect do |param, value|
@@ -149,7 +149,7 @@ format = proc {|trans|
             trans.delete(param)
         end
 
-        unless states.include?(param) or extra_params.include?(param)
+        unless properties.include?(param) or extra_params.include?(param)
             trans.delete(param)
         end
     end
@@ -174,10 +174,16 @@ text = if host
     end
     transbucket.sort { |a,b| a.name <=> b.name }.collect(&format)
 else
-    typeobj.list.collect do |obj|
-        next if ARGV.length > 0 and ! ARGV.include? obj.name
-        trans = obj.to_trans(true)
-        format.call(trans)
+    if name
+        obj = typeobj.create(:name => name, :check => properties)
+        vals = obj.retrieve
+        [format.call(obj.to_trans(true))]
+    else
+        typeobj.list.collect do |obj|
+            next if ARGV.length > 0 and ! ARGV.include? obj.name
+            trans = obj.to_trans(true)
+            format.call(trans)
+        end
     end
 end.compact.join("\n")
 

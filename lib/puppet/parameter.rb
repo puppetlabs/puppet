@@ -419,7 +419,7 @@ class Puppet::Parameter < Puppet::Element
             if self.should
                 return self.should
             else
-                return self.is
+                return self.retrieve
             end
         else
             if defined? @value
