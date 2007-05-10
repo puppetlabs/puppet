@@ -200,7 +200,7 @@ module Puppet
     def self.parse_config(oldconfig = nil)
         # First look for the old configuration file.
         oldconfig ||= File.join(Puppet[:confdir], Puppet[:name].to_s + ".conf")
-        if FileTest.exists?(oldconfig)
+        if FileTest.exists?(oldconfig) and Puppet[:name] != "puppet"
             Puppet.warning "Individual config files are deprecated; remove %s and use puppet.conf" % oldconfig
             Puppet.config.old_parse(oldconfig)
             return
