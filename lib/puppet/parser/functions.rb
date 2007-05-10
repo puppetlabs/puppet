@@ -142,7 +142,7 @@ module Functions
     # specified tags are unset, we return false.
     newfunction(:tagged, :type => :rvalue, :doc => "A boolean function that
     tells you whether the current container is tagged with the specified tags.
-    The tags are ANDed, so thta all of the specified tags must be included for
+    The tags are ANDed, so that all of the specified tags must be included for
     the function to return true.") do |vals|
         classlist = self.classlist
 
@@ -196,9 +196,12 @@ module Functions
     end
 
     newfunction(:template, :type => :rvalue, :doc => "Evaluate a template and
-    return its value.  See [the templating docs](/trac/puppet/wiki/PuppetTemplating)
+    return its value.  See `the templating docs`_
     for more information.  Note that if multiple templates are specified, their
-    output is all concatenated and returned as the output of the function.") do |vals|
+    output is all concatenated and returned as the output of the function.
+    
+    .. _the templating docs: /trac/puppet/wiki/PuppetTemplating
+    ") do |vals|
         require 'erb'
 
         vals.collect do |file|
