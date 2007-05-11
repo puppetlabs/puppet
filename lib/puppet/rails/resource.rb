@@ -1,5 +1,4 @@
 require 'puppet'
-require 'puppet/rails/external/tagging/init'
 require 'puppet/rails/param_name'
 require 'puppet/util/rails/collection_merger'
 
@@ -10,13 +9,6 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     has_many :param_names, :dependent => :destroy
     belongs_to :source_file
     belongs_to :host
-
-    acts_as_taggable
-    
-    def tags=(tags)
-        #puts "setting tags %s" % tags.inspect
-        self.tag_with(tags.join(","))
-    end
 
     def file
         if f = self.source_file

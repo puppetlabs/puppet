@@ -17,8 +17,6 @@ class Puppet::Rails::Host < ActiveRecord::Base
         :include => [ :param_names, :param_values ],
         :dependent => :destroy
 
-    acts_as_taggable
-
     # If the host already exists, get rid of its objects
     def self.clean(host)
         if obj = self.find_by_name(host)
@@ -71,12 +69,6 @@ class Puppet::Rails::Host < ActiveRecord::Base
         end
 
         return host
-    end
-
-    def tags=(tags)
-        tags.each do |tag|   
-            self.tag_with tag
-        end
     end
 
     # Return the value of a fact.

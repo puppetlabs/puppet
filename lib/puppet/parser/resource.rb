@@ -294,11 +294,9 @@ class Puppet::Parser::Resource
             resource = host.resources.build(args)
         end
 
-        # Handle file and tags specially
-        [:file, :tags].each do |param|
-            if self.send(param) and (!resource.send(param) or resource.send(param) != self.send(param))
-                resource.send(param.to_s + "=", self.send(param))
-            end
+        # Handle file specially
+        if self.file and (!resource.file or resource.file != self.file)
+            resource.file = self.file
         end
 
         # Either way, now add our parameters
