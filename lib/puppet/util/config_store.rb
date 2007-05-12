@@ -51,6 +51,11 @@ module Puppet::Util
         def store(client, config)
             raise Puppet::DevError, "%s has not overridden store" % self.class.name
         end
+
+        def collect_exported(client, conditions)
+            raise Puppet::DevError, "%s has not overridden collect_exported" % self.class.name
+        end   
+          
     end
 end
 
