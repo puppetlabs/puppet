@@ -43,12 +43,13 @@ Puppet::Util::ConfigStore.newstore(:rest) do
     # Can we use a thread here? Probably needs to be the caller's thread.
     def collect_exported(client, conditions)
         begin
-            @http = Net::HTTP.new(@host, @port)
             # Gotta be a better way... seems goofy to me.
             # maybe using a nested rails rest route...
-            url = "/#{client}/resources?restype=exported"
+           
+            # filterhost so we don't get exported resources for the current client
+            url = "/resources?restype=exported&filterhost=#{client}"
             conditions.each_pair {|k,v| url << "&#{k}=#{v}"}
-            res = http.get(url)
+            res = @http.get(url)
         rescue => detail
             Puppet.err("ERROR: collect_exported failed: ", detail.to_s)
         end
