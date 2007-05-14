@@ -483,6 +483,8 @@ class Puppet::Type
         end
 
         if obj = @parameters[name]
+            # We throw a failure here, because this method is too
+            # ambiguous when used with properties.
             if obj.is_a?(Puppet::Type::Property)
                 fail "[] called on a property"
             else

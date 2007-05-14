@@ -47,7 +47,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm do
     end
 
     def versionable?
-	true
+        true
     end
 end
 

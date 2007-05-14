@@ -152,7 +152,9 @@ module Puppet
                                 @latest = provider.latest
                                 @lateststamp = Time.now.to_i
                             rescue => detail
-                                self.fail "Could not get latest version: %s" % detail
+                                error = Puppet::Error.new("Could not get latest version: %s" % detail.to_s)
+                                error.set_backtrace(detail.backtrace)
+                                raise error
                             end
                         end
 
