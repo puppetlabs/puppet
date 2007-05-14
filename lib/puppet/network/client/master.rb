@@ -483,11 +483,11 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
     
     def self.timeout
-        @timeout = Puppet[:configtimeout]
-        case @timeout
+        timeout = Puppet[:configtimeout]
+        case timeout
         when String:
-            if @timeout =~ /^\d+$/
-                @timeout = Integer(@timeout)
+            if timeout =~ /^\d+$/
+                timeout = Integer(timeout)
             else
                 raise ArgumentError, "Configuration timeout must be an integer"
             end
@@ -495,6 +495,8 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         else
             raise ArgumentError, "Configuration timeout must be an integer"
         end
+
+        return timeout
     end
     
     # Send off the transaction report.

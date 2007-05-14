@@ -622,6 +622,24 @@ end
         assert(! master.send(:lockfile).locked?,
             "Master is still locked after failure")
     end
+
+    # Make sure we get a value for timeout
+    def test_config_timeout
+        master = Puppet::Network::Client.client(:master)
+        time = Integer(Puppet[:configtimeout])
+        assert_equal(time, master.timeout, "Did not get default value for timeout")
+        assert_equal(time, master.timeout, "Did not get default value for timeout on second run")
+
+        # Reset it
+        Puppet[:configtimeout] = "50"
+        assert_equal(50, master.timeout, "Did not get changed default value for timeout")
+        assert_equal(50, master.timeout, "Did not get changed default value for timeout on second run")
+
+        # Now try an integer
+        Puppet[:configtimeout] = 100
+        assert_equal(100, master.timeout, "Did not get changed integer default value for timeout")
+        assert_equal(100, master.timeout, "Did not get changed integer default value for timeout on second run")
+    end
 end
 
 # $Id$
