@@ -669,12 +669,12 @@ module Puppet
         # path names, rather than including the full parent's title each
         # time.
         def pathbuilder
-            if defined? @resource
+            if defined? @parent
                 # We only need to behave specially when our parent is also
                 # a file
-                if @resource.is_a?(self.class)
+                if @parent.is_a?(self.class)
                     # Remove the parent file name
-                    list = @resource.pathbuilder
+                    list = @parent.pathbuilder
                     list.pop # remove the parent's path info
                     return list << self.ref
                 else
