@@ -19,7 +19,7 @@ class Puppet::Parser::AST
 
             # We don't have to worry about the declarativeness of node parentage,
             # because the entry point is always a single node definition.
-            if parent = self.parentclass
+            if parent = self.parentobj
                 scope = parent.safeevaluate :scope => scope
             end
 
@@ -53,12 +53,10 @@ class Puppet::Parser::AST
             end
         end
 
-        def parentclass
-            parentobj do |name|
-                @interp.nodesearch(name)
-            end
-
-            @parentclass
+        private
+        # Search for the object matching our parent class.
+        def find_parentclass
+            @interp.nodesearch(parentclass)
         end
     end
 end

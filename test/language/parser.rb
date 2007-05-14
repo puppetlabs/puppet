@@ -397,7 +397,7 @@ file { "/tmp/yayness":
         }
         sub = interp.findclass("", "container::deep::sub")
         assert(sub, "Could not find sub")
-        assert_equal("base", sub.parentclass.classname)
+        assert_equal("base", sub.parentobj.classname)
         
         # Now try it with a parent class being a fq class
         assert_nothing_raised {
@@ -405,7 +405,7 @@ file { "/tmp/yayness":
         }
         sub = interp.findclass("", "container::one")
         assert(sub, "Could not find one")
-        assert_equal("container::deep::sub", sub.parentclass.classname)
+        assert_equal("container::deep::sub", sub.parentobj.classname)
         
         # Finally, try including a qualified class
         assert_nothing_raised("Could not include fully qualified class") {

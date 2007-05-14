@@ -21,6 +21,8 @@ class Puppet::Parser::AST
         # These are retrieved when looking up the superclass
         attr_accessor :name
 
+        attr_reader :parentclass
+
         def child_of?(klass)
             false
         end
@@ -132,10 +134,8 @@ class Puppet::Parser::AST
             end
         end
 
-        def parentclass
-            parentobj do |name|
-                @interp.findclass(namespace, name)
-            end
+        def find_parentclass
+            @interp.findclass(namespace, parentclass)
         end
 
         # Set our parent class, with a little check to avoid some potential
@@ -152,8 +152,8 @@ class Puppet::Parser::AST
         def parentobj
             if @parentclass
                 # Cache our result, since it should never change.
-                unless @parentclass.is_a?(AST::HostClass)
-                    unless tmp = yield(@parentclass)
+                unless defined?(@parentobj)
+                    unless tmp = find_parentclass
                         parsefail "Could not find %s %s" % [self.class.name, @parentclass]
                     end
 
@@ -161,9 +161,9 @@ class Puppet::Parser::AST
                         parsefail "Parent classes must have dissimilar names"
                     end
 
-                    @parentclass = tmp
+                    @parentobj = tmp
                 end
-                @parentclass
+                @parentobj
             else
                 nil
             end

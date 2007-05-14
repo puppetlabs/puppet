@@ -12,10 +12,10 @@ class Puppet::Parser::AST
         def child_of?(klass)
             return false unless self.parentclass
 
-            if klass == self.parentclass
+            if klass == self.parentobj
                 return true
             else
-                return self.parentclass.child_of?(klass)
+                return self.parentobj.child_of?(klass)
             end
         end
 
@@ -31,15 +31,11 @@ class Puppet::Parser::AST
             end
 
             pnames = nil
-            if @parentclass
-                if pklass = self.parentclass
-                    pklass.safeevaluate :scope => scope
+            if pklass = self.parentobj
+                pklass.safeevaluate :scope => scope
 
-                    scope = parent_scope(scope, pklass)
-                    pnames = scope.namespaces
-                else
-                    parsefail "Could not find class %s" % @parentclass
-                end
+                scope = parent_scope(scope, pklass)
+                pnames = scope.namespaces
             end
 
             unless hash[:nosubscope]

@@ -379,14 +379,14 @@ class TestInterpreter < Test::Unit::TestCase
 
         # Make sure trying to get the parentclass throws an error
         assert_raise(Puppet::ParseError) do
-            interp.nodesearch_code("simplenode").parentclass
+            interp.nodesearch_code("simplenode").parentobj
         end
 
         # Now define the parent node
         interp.newnode(:foo)
 
         # And make sure we get things back correctly
-        assert_equal("foo", interp.nodesearch_code("simplenode").parentclass.classname)
+        assert_equal("foo", interp.nodesearch_code("simplenode").parentobj.classname)
         assert_nil(interp.nodesearch_code("simplenode").code)
 
         # Now make sure that trying to redefine it throws an error.
@@ -402,7 +402,7 @@ class TestInterpreter < Test::Unit::TestCase
 
         names.each do |name|
             assert_equal(:yay, interp.nodesearch_code(name).code)
-            assert_equal("foo", interp.nodesearch_code(name).parentclass.name)
+            assert_equal("foo", interp.nodesearch_code(name).parentobj.name)
             # Now make sure that trying to redefine it throws an error.
             assert_raise(Puppet::ParseError) {
                 interp.newnode(name, {})
@@ -655,9 +655,11 @@ class TestInterpreter < Test::Unit::TestCase
             interp.newclass("sub", :parent => "base1")
         }
 
-        # Make sure we get the right parent class, and make sure it's an object.
-        assert_equal(interp.findclass("", "base1"),
+        # Make sure we get the right parent class, and make sure it's not an object.
+        assert_equal("base1",
                     interp.findclass("", "sub").parentclass)
+        assert_equal(interp.findclass("", "base1"),
+                    interp.findclass("", "sub").parentobj)
 
         # Now make sure we get a failure if we try to conflict.
         assert_raise(Puppet::ParseError) {
@@ -666,13 +668,13 @@ class TestInterpreter < Test::Unit::TestCase
 
         # Make sure that failure didn't screw us up in any way.
         assert_equal(interp.findclass("", "base1"),
-                    interp.findclass("", "sub").parentclass)
+                    interp.findclass("", "sub").parentobj)
         # But make sure we can create a class with a fq parent
         assert_nothing_raised {
             interp.newclass("another", :parent => "one::two::three")
         }
         assert_equal(interp.findclass("", "one::two::three"),
-                    interp.findclass("", "another").parentclass)
+                    interp.findclass("", "another").parentobj)
 
     end
 
