@@ -43,6 +43,16 @@ Puppet::Type.type(:package).provide :rpm do
         return packages
     end
 
+    # Get rid of our cached values.
+    def flush
+        @current_values = {}
+    end
+
+    def initialize(*args)
+        super
+        @current_values = {}
+    end
+
     # Find the fully versioned package name and the version alone. Returns
     # a hash with entries :instance => fully versioned package name, and 
     # :ensure => version-release
@@ -70,6 +80,8 @@ Puppet::Type.type(:package).provide :rpm do
 
         @nvr = hash[:instance]
 
+        @current_values = hash
+
         return hash
     end
 
@@ -89,15 +101,15 @@ Puppet::Type.type(:package).provide :rpm do
         unless source = @resource[:source]
             @resource.fail "RPMs must specify a package source"
         end
-        if @resource.should(:ensure) == @resource.is(:ensure) ||
-           @resource.should(:ensure) == :latest && @resource.is(:ensure) == latest
-            # RPM gets pissy if you try to install an already 
-            # installed package
+        # RPM gets pissy if you try to install an already 
+        # installed package
+        if @resource.should(:ensure) == @current_values[:ensure] or
+            @resource.should(:ensure) == :latest && @current_values[:ensure] == latest
             return
         end
 
         flag = "-i"
-        if @resource.is(:ensure) != :absent
+        if @current_values[:ensure] and @current_values[:ensure] != :absent
             flag = "-U"
         end
 
