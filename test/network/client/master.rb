@@ -640,6 +640,40 @@ end
         assert_equal(100, master.timeout, "Did not get changed integer default value for timeout")
         assert_equal(100, master.timeout, "Did not get changed integer default value for timeout on second run")
     end
+
+    # #569 -- Make sure we can ignore dynamic facts.
+    def test_dynamic_facts
+        client = mkclient 
+
+        assert_equal(%w{memorysize memoryfree swapsize swapfree}, client.class.dynamic_facts,
+            "Did not get correct defaults for dynamic facts")
+
+        # Cache some values for comparison
+        cached = {"one" => "yep", "two" => "nope"}
+        Puppet::Util::Storage.cache(:configuration)[:facts] = cached
+
+        assert(! client.send(:facts_changed?, cached), "Facts incorrectly considered to be changed")
+
+        # Now add some values to the passed result and make sure we get a positive
+        newfacts = cached.dup
+        newfacts["changed"] = "something"
+
+        assert(client.send(:facts_changed?, newfacts), "Did not catch changed fact")
+
+        # Now add a dynamic fact and make sure it's ignored
+        newfacts = cached.dup
+        newfacts["memorysize"] = "something"
+
+        assert(! client.send(:facts_changed?, newfacts), "Dynamic facts resulted in a false positive")
+
+        # And try it with both
+        cached["memorysize"] = "something else"
+        assert(! client.send(:facts_changed?, newfacts), "Dynamic facts resulted in a false positive")
+
+        # And finally, with only in the cache
+        newfacts.delete("memorysize")
+        assert(! client.send(:facts_changed?, newfacts), "Dynamic facts resulted in a false positive")
+    end
 end
 
 # $Id$

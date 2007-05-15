@@ -41,6 +41,11 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         facts
     end
 
+    # Return the list of dynamic facts as an array of symbols
+    def self.dynamic_facts
+        Puppet.config[:dynamicfacts].split(/\s*,\s*/).collect { |fact| fact.downcase }
+    end
+
     # This method actually applies the configuration.
     def apply(tags = nil, ignoreschedules = false)
         unless defined? @objects
@@ -536,13 +541,17 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
 
     loadfacts()
-    
-    private
 
     # Have the facts changed since we last compiled?
     def facts_changed?(facts)
-        oldfacts = Puppet::Util::Storage.cache(:configuration)[:facts]
-        newfacts = facts
+        oldfacts = Puppet::Util::Storage.cache(:configuration)[:facts].dup
+        newfacts = facts.dup
+        self.class.dynamic_facts.each do |fact|
+            [oldfacts, newfacts].each do |facthash|
+                facthash.delete(fact) if facthash.include?(fact)
+            end
+        end
+
         if oldfacts == newfacts
             return false
         else

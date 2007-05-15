@@ -396,7 +396,11 @@ module Puppet
             change or if the server changes."
         ],
         :downcasefacts => [false,
-            "Whether facts should be made all lowercase when sent to the server."]
+            "Whether facts should be made all lowercase when sent to the server."],
+        :dynamicfacts => ["memorysize,memoryfree,swapsize,swapfree",
+            "Facts that are dynamic; these facts will be ignored when deciding whether
+            changed facts should result in a recompile.  Multiple facts should be
+            comma-separated."]
     )
 
     self.setdefaults(:puppetd,
