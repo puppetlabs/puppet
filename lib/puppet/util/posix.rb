@@ -3,6 +3,9 @@ module Puppet::Util::POSIX
     # Retrieve a field from a POSIX Etc object.  The id can be either an integer
     # or a name.  This only works for users and groups.
     def get_posix_field(space, field, id)
+        unless id
+            raise ArgumentError, "Did not get id"
+        end
         if id =~ /^\d+$/
             id = Integer(id)
         end
@@ -37,7 +40,7 @@ module Puppet::Util::POSIX
         obj = typeklass.find { |obj|
             if id =~ /^\d+$/
                 obj.should(chkfield).to_s == id ||
-                    obj.is(chkfield).to_s == id
+                    obj.provider.send(chkfield) == id
             else 
                 obj[:name] == id
             end                    

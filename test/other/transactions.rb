@@ -248,8 +248,9 @@ class TestTransactions < Test::Unit::TestCase
 
         assert_nothing_raised() {
             check.each { |property|
-                assert(file[property])
-                properties[property] = file[property]
+                value = file.value(property)
+                assert(value)
+                properties[property] = value
             }
         }
 
@@ -277,7 +278,7 @@ class TestTransactions < Test::Unit::TestCase
         }
         properties.each { |property,value|
             assert_equal(
-                value,file.is(property), "File %s remained %s" % [property, file.is(property)]
+                value, file.value(property), "File %s remained %s" % [property, file.value(property)]
             )
         }
     end
@@ -310,7 +311,7 @@ class TestTransactions < Test::Unit::TestCase
         }
 
         check.each { |property|
-            properties[property] = file[property]
+            properties[property] = file.value(property)
         }
         assert_nothing_raised() {
             file[:mode] = "755"
@@ -766,7 +767,7 @@ class TestTransactions < Test::Unit::TestCase
         type = mkreducer do
             def evaluate
                 return Puppet::PropertyChange.new(Fakeprop.new(
-                    :path => :path, :is => :is, :should => :should, :name => self.name, :parent => "a parent"), :is)
+                    :path => :path, :is => :is, :should => :should, :name => self.name, :resource => "a parent"), :is)
             end
         end
         
@@ -778,7 +779,7 @@ class TestTransactions < Test::Unit::TestCase
         assert_nothing_raised do
             trans.eval_resource(resource)
         end
-        
+
         changes = trans.instance_variable_get("@changes")
         
         assert(changes.length > 0, "did not get any changes")

@@ -2,7 +2,6 @@ require 'etc'
 require 'facter'
 require 'puppet/type/property'
 require 'puppet/util/filetype'
-require 'puppet/type/parsedtype'
 
 Puppet::Type.newtype(:cron) do
     @doc = "Installs and manages cron jobs.  All fields except the command 
@@ -29,9 +28,7 @@ Puppet::Type.newtype(:cron) do
     ensurable
 
     # A base class for all of the Cron parameters, since they all have
-    # similar argument checking going on.  We're stealing the base class
-    # from parsedtype, and we should probably subclass Cron from there,
-    # but it was just too annoying to do.
+    # similar argument checking going on.
     class CronParam < Puppet::Property
         class << self
             attr_accessor :boundaries, :default

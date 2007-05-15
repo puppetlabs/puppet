@@ -1,5 +1,3 @@
-require 'puppet/type/parsedtype'
-
 module Puppet
     # We want the mount to refresh when it changes.
     newtype(:mount, :self_refresh => true) do

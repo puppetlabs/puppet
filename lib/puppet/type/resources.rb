@@ -124,6 +124,8 @@ Puppet::Type.newtype(:resources) do
         @resource_type
     end
     
+    # Make sure we don't purge users below a certain uid, if the check
+    # is enabled.
     def user_check(resource)
         return true unless self[:name] == "user"
         return true unless self[:unless_system_user]
@@ -134,6 +136,8 @@ Puppet::Type.newtype(:resources) do
         if system_users().include?(resource[:name])
             return false
         end
+
+        resource.info current_values.inspect
         
         if current_values[resource.property(:uid)] <= self[:unless_system_user]
             return false

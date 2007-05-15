@@ -90,8 +90,9 @@ class TestPosixUtil < Test::Unit::TestCase
                 :check => [:gid]
             )
             obj.setdefaults
-            obj.retrieve
-            id = obj.is(:gid)
+            current = obj.retrieve
+            id = nil
+            current.find { |prop, value| id = value if prop.name == :gid }
             gid = nil
             assert_nothing_raised {
                 gid = Puppet::Util.gid(id)
@@ -146,7 +147,7 @@ class TestPosixUtil < Test::Unit::TestCase
         )
         obj.setdefaults
         obj.retrieve
-        id = obj.is(:uid)
+        id = obj.provider.uid
         uid = nil
         assert_nothing_raised {
             uid = Puppet::Util.uid(id)

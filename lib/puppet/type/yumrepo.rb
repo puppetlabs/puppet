@@ -2,7 +2,6 @@
 
 require 'puppet/propertychange'
 require 'puppet/util/inifile'
-require 'puppet/type/parsedtype'
 
 module Puppet
     # A property for one entry in a .ini-style file

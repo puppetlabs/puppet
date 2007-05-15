@@ -65,7 +65,7 @@ class Puppet::Network::Handler
         # List each of the reports.
         def self.reports
             instance_loader(:report).loadall
-            @reports.keys
+            loaded_instances(:report)
         end
 
         def initialize(*args)

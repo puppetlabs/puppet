@@ -89,9 +89,8 @@ class TestResourceServer < Test::Unit::TestCase
                     assert_events([:file_created], object)
                 else
                     assert_nothing_raised {
-                        object.retrieve
+                        assert(object.insync?(object.retrieve), "Object was not in sync")
                     }
-                    assert(object.insync?, "Object was not in sync")
                 end
 
                 assert(FileTest.exists?(file), "File did not get recreated")

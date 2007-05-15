@@ -544,7 +544,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
     # Have the facts changed since we last compiled?
     def facts_changed?(facts)
-        oldfacts = Puppet::Util::Storage.cache(:configuration)[:facts].dup
+        oldfacts = (Puppet::Util::Storage.cache(:configuration)[:facts] || {}).dup
         newfacts = facts.dup
         self.class.dynamic_facts.each do |fact|
             [oldfacts, newfacts].each do |facthash|

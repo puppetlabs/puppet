@@ -10,7 +10,7 @@ require 'puppettest'
 class TestPropertyChange < Test::Unit::TestCase
 	include PuppetTest
 	class FakeProperty < Puppet::Type::Property
-	    attr_accessor :is, :should, :parent
+	    attr_accessor :is, :should, :resource
 	    attr_reader :noop
 	    def change_to_s(currentvalue, newvalue)
 	        "fake change"
@@ -52,10 +52,10 @@ class TestPropertyChange < Test::Unit::TestCase
     end
     
     def mkchange
-        property = FakeProperty.new :parent => "fakeparent"
+        property = FakeProperty.new :resource => "fakeparent"
         property.is = :start
         property.should = :finish
-        property.parent = :parent
+        property.resource = :parent
         change = nil
         assert_nothing_raised do
             change = Puppet::PropertyChange.new(property, :start)
@@ -125,7 +125,6 @@ class TestPropertyChange < Test::Unit::TestCase
         Puppet[:noop] = true
 
         change.property.noop = true
-        p change.property.noop
         assert(change.noop, "did not set noop")
         assert(change.skip?, "setting noop did not mark change for skipping")
 

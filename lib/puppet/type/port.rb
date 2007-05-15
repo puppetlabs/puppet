@@ -1,5 +1,3 @@
-require 'puppet/type/parsedtype'
-
 #module Puppet
 #    newtype(:port) do
 #        @doc = "Installs and manages port entries.  For most systems, these

@@ -1,5 +1,3 @@
-require 'puppet/type/parsedtype'
-
 module Puppet
     newtype(:host) do
         ensurable
