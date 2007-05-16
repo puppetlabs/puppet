@@ -193,6 +193,7 @@ if edit
         File.open(file, "w") do |f|
             f.puts text
         end
+        ENV["EDITOR"] ||= "vi"
         system(ENV["EDITOR"], file)
         system("puppet -v " + file)
     ensure
