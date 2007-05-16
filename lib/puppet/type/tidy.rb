@@ -272,7 +272,7 @@ module Puppet
             end
 
             # only allow backing up into filebuckets
-            unless self[:backup].is_a? Puppet::Network::Client::Dipper
+            unless self[:backup].is_a? Puppet::Network::Client.dipper
                 self[:backup] = false
             end
         end
