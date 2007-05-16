@@ -2,8 +2,8 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
 require 'puppettest'
+require 'mocha'
 
 class TestPuppetUtil < Test::Unit::TestCase
     include PuppetTest

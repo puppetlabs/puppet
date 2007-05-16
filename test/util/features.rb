@@ -13,11 +13,14 @@ class TestFeatures < Test::Unit::TestCase
 	
 	def setup
 	    super
-	    libdir = tempfile()
-	    @features = Puppet::Util::Feature.new(libdir)
+	    @libdir = tempfile()
+        Puppet[:libdir] = @libdir
+        @path = File.join(@libdir, "features")
+	    @features = Puppet::Util::Feature.new("features")
     end
 	
 	def test_new
+        redirect
 	    assert_nothing_raised do
 	        @features.add(:failer) do
 	            raise ArgumentError, "nopes"
@@ -65,8 +68,8 @@ class TestFeatures < Test::Unit::TestCase
         $features = @features
         cleanup { $features = nil }
         # Now create a feature and make sure it loads.
-        Dir.mkdir(@features.path)
-        nope = File.join(@features.path, "nope.rb")
+        FileUtils.mkdir_p(@path)
+        nope = File.join(@path, "nope.rb")
         File.open(nope, "w") { |f|
             f.puts "$features.add(:nope, :libs => %w{nosuchlib})"
         }
@@ -79,7 +82,7 @@ class TestFeatures < Test::Unit::TestCase
             assert(! @features.yep?, "'yep' returned true before definition")
         end
 
-        yep = File.join(@features.path, "yep.rb")
+        yep = File.join(@path, "yep.rb")
         File.open(yep, "w") { |f|
             f.puts "$features.add(:yep, :libs => %w{puppet})"
         }

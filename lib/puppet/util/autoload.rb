@@ -18,14 +18,11 @@ class Puppet::Util::Autoload
 
     Puppet::Util.proxy self, :loaded, :clear
 
-    def handle_libdir
-        dir = Puppet[:libdir]
-
-        $: << dir unless $:.include?(dir)
-    end
-
     def initialize(obj, path, options = {})
         @path = path.to_s
+        if @path !~ /^\w/
+            raise ArgumentError, "Autoload paths cannot be fully qualified"
+        end
         @object = obj
 
         self.class[obj] = self
@@ -46,61 +43,76 @@ class Puppet::Util::Autoload
         @loaded = {}
     end
 
+    # Load a single plugin by name.
     def load(name)
-        name = symbolize(name)
-        handle_libdir()
+        path = name.to_s + ".rb"
 
-        path = File.join(@path, name.to_s + ".rb")
-
-        begin
-            Kernel.load path, @wrap
-            @loaded[name] = true
-            return true
-        rescue LoadError => detail
-            # I have no idea what's going on here, but different versions
-            # of ruby are raising different errors on missing files.
-            unless detail.to_s =~ /^no such file/i
-                warn "Could not autoload %s: %s" % [name, detail]
-                if Puppet[:trace]
-                    puts detail.backtrace
+        eachdir do |dir|
+            file = File.join(dir, path)
+            next unless FileTest.exists?(file)
+            begin
+                Kernel.load file, @wrap
+                name = symbolize(name)
+                @loaded[name] = true
+                return true
+            rescue LoadError => detail
+                # I have no idea what's going on here, but different versions
+                # of ruby are raising different errors on missing files.
+                unless detail.to_s =~ /^no such file/i
+                    warn "Could not autoload %s: %s" % [name, detail]
+                    if Puppet[:trace]
+                        puts detail.backtrace
+                    end
                 end
+                return false
             end
-            return false
         end
+        return false
     end
 
+    # Indicate whether the specfied plugin has been loaded.
     def loaded?(name)
-        name = symbolize(name)
-        @loaded[name]
+        @loaded[symbolize(name)]
     end
 
     def loadall
-        handle_libdir()
         # Load every instance of everything we can find.
-        $:.each do |dir|
-            fdir = File.join(dir, @path)
-            if FileTest.exists?(fdir) and FileTest.directory?(fdir)
-                Dir.glob("#{fdir}/*.rb").each do |file|
-                    # Load here, rather than require, so that facts
-                    # can be reloaded.  This has some short-comings, I
-                    # believe, but it works as long as real classes
-                    # aren't used.
-                    name = File.basename(file).sub(".rb", '').intern
-                    next if @loaded.include? name
-                    next if $".include?(File.join(@path, name.to_s + ".rb"))
-                    filepath = File.join(@path, name.to_s + ".rb")
-                    begin
-                        Kernel.require filepath
-                        @loaded[name] = true
-                    rescue => detail
-                        if Puppet[:trace]
-                            puts detail.backtrace
-                        end
-                        warn "Could not autoload %s: %s" % [file.inspect, detail]
+        eachdir do |dir|
+            Dir.glob("#{dir}/*.rb").each do |file|
+                # Load here, rather than require, so that facts
+                # can be reloaded.  This has some short-comings, I
+                # believe, but it works as long as real classes
+                # aren't used.
+                name = File.basename(file).sub(".rb", '').intern
+                next if @loaded.include? name
+                next if $".include?(File.join(@path, name.to_s + ".rb"))
+                filepath = File.join(@path, name.to_s + ".rb")
+                begin
+                    Kernel.require filepath
+                    @loaded[name] = true
+                rescue => detail
+                    if Puppet[:trace]
+                        puts detail.backtrace
                     end
+                    warn "Could not autoload %s: %s" % [file.inspect, detail]
                 end
             end
         end
+    end
+
+    private
+
+    # Yield each subdir in turn.
+    def eachdir
+        searchpath.each do |dir|
+            subdir = File.join(dir, @path)
+            yield subdir if FileTest.directory?(subdir)
+        end
+    end
+
+    # The list of directories to search through for loadable plugins.
+    def searchpath
+        [Puppet[:libdir], $:].flatten
     end
 end
 

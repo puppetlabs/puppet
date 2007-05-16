@@ -74,7 +74,7 @@ TestAutoload.newthing(:#{name.to_s})
         # Now try to actually load it.
         assert_nothing_raised {
             assert_equal(true, loader.load(:mything),
-                        "got incorrect return on failed load")
+                        "got incorrect return on load")
         }
 
         assert(loader.loaded?(:mything), "Not considered loaded")
@@ -103,28 +103,13 @@ TestAutoload.newthing(:#{name.to_s})
 
     # Make sure that autoload dynamically modifies $: with the libdir as
     # appropriate.
-    def test_autoload_uses_libdir
+    def test_searchpath
         dir = Puppet[:libdir]
-        unless FileTest.directory?(dir)
-            Dir.mkdir(dir)
-        end
 
-        loader = File.join(dir, "test")
-        Dir.mkdir(loader)
-        name = "funtest"
-        file = File.join(loader, "funtest.rb")
-        File.open(file, "w") do |f|
-            f.puts "$loaded = true"
-        end
+        loader = Puppet::Util::Autoload.new(self, "testing")
 
-        auto = Puppet::Util::Autoload.new(self, "test")
-
-        # Now make sure autoloading modifies $: as necessary
-        assert(! $:.include?(dir), "search path already includes libdir")
-
-        assert_nothing_raised do
-            assert(auto.load("funtest"), "did not successfully load funtest")
-        end
-        assert($:.include?(dir), "libdir did not get added to search path")
+        assert(loader.send(:searchpath).include?(dir), "searchpath does not include the libdir")
     end
 end
+
+# $Id$

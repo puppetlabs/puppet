@@ -118,6 +118,19 @@ module PuppetTest
         $0 =~ /test_loader/
     end
 
+    # Redirect stdout and stderr
+    def redirect
+        @stderr = tempfile
+        @stdout = tempfile
+        $stderr = File.open(@stderr, "w")
+        $stdout = File.open(@stdout, "w")
+
+        cleanup do
+            $stderr = STDERR
+            $stdout = STDOUT
+        end
+    end
+
     def setup
         @memoryatstart = Puppet::Util.memory
         if defined? @@testcount

@@ -1,3 +1,7 @@
+    Added a 'dynamicfacts' configuration option; any facts in that
+    comma-separated list will be ignored when comparing facts to 
+    see if they have changed and thus whether a recompile is necessary.
+
     Renamed some poorly named internal variables:
         @models in providers are now either @resource or
         @resource_type (#605).
