@@ -556,7 +556,7 @@ argument:     NAME EQUALS rvalue {
 }
 
 nodeparent:       nil
-            | INHERITS nameordefault {
+            | INHERITS hostname {
     result = val[1]
 }
 
@@ -565,7 +565,6 @@ classparent:       nil
     result = val[1]
 }
 
-nameordefault: NAME | DEFAULT
 classnameordefault: classname | DEFAULT
 
 variable:     VARIABLE {
