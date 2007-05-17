@@ -48,26 +48,6 @@ class Puppet::PGraph < GRATR::Digraph
         end
     end
 
-    # Fail in a somewhat informative way if the graph has become cyclic.
-    def check_cycle(sorted)
-        return true if sorted.size == size()
-
-        bad = []
-        vertices.each do |v|
-            bad << v unless sorted.include?(v)
-        end
-
-        if bad.length > 0
-            raise Puppet::Error,
-                "Found dependency cycle involving %s" % bad.collect do |v|
-                    v.to_s
-            end.join(", ")
-        else
-            raise Puppet::Error,
-                "Found dependency cycle but could not find the cause"
-        end
-    end
-
     # Which resources a given resource depends upon.
     def dependents(resource)
         tree_from_vertex2(resource).keys
@@ -183,6 +163,31 @@ class Puppet::PGraph < GRATR::Digraph
         Dir.chdir(path) do
             induced_subgraph(gv).write_to_graphic_file('jpg', name)
         end
+    end
+
+    # Replace the default method, because we want to throw errors on back edges,
+    # not just skip them.
+    def topsort(start = nil, &block)
+        result  = []
+        go      = true 
+        cycles = []
+        back    = Proc.new { |e|
+            cycles << e
+            go = false
+        }
+        push    = Proc.new { |v| result.unshift(v) if go}
+        start   ||= vertices[0]
+        dfs({:exit_vertex => push, :back_edge => back, :start => start})
+        if block_given?
+            result.each {|v| yield(v) }
+        end
+
+        if cycles.length > 0
+            msg = "Found cycles in the following relationships:"
+            cycles.each { |edge| msg += " %s => %s" % [edge.source, edge.target] }
+            raise Puppet::Error, msg
+        end
+        return result
     end
 
     # A different way of walking a tree, and a much faster way than the

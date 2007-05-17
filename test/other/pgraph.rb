@@ -189,10 +189,11 @@ class TestPGraph < Test::Unit::TestCase
             graph.edge_label(:a, :b), "lost label")
     end
 
-    def test_check_cycle
+    def test_fail_on_cycle
         {
-            {:a => :b, :b => :a} => true,
+            {:a => :b, :b => :a, :c => :a, :d => :c} => true, # larger tree involving a smaller cycle
             {:a => :b, :b => :c, :c => :a} => true,
+            {:a => :b, :b => :a, :c => :d, :d => :c} => true,
             {:a => :b, :b => :c} => false,
         }.each do |hash, result|
             graph = Puppet::PGraph.new
@@ -202,11 +203,11 @@ class TestPGraph < Test::Unit::TestCase
 
             if result
                 assert_raise(Puppet::Error, "%s did not fail" % hash.inspect) do
-                    graph.check_cycle(graph.topsort)
+                   graph.topsort
                 end
             else
                 assert_nothing_raised("%s failed" % hash.inspect) do
-                    graph.check_cycle(graph.topsort)
+                    graph.topsort
                 end
             end
         end

@@ -497,10 +497,8 @@ class Transaction
         # Create a relationship graph from our resource graph
         @relgraph = relationship_graph
         
+        # This will throw an error if there are cycles in the graph.
         @sorted_resources = @relgraph.topsort
-
-        # Now make sure no cycles crept into our graph.
-        @relgraph.check_cycle(@sorted_resources)
     end
     
     # Create a graph of all of the relationships in our resource graph.
