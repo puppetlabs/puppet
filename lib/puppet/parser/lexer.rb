@@ -68,7 +68,8 @@ module Puppet
                 "node" => :NODE,
                 "true" => :BOOLEAN,
                 "and"  => :AND,
-                "or"   => :OR
+                "or"   => :OR,
+                "undef"   => :UNDEF
             }
 
             def clear

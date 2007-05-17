@@ -530,6 +530,20 @@ class TestResource < Test::Unit::TestCase
             end
         end
     end
+
+    # part of #629 -- the undef keyword.  Make sure 'undef' params get skipped.
+    def test_undef_and_to_hash
+        res = mkresource :type => "file", :title => "/tmp/testing",
+            :source => @source, :scope => @scope,
+            :params => {:owner => :undef, :mode => "755"}
+
+        hash = nil
+        assert_nothing_raised("Could not convert resource with undef to hash") do
+            hash = res.to_hash
+        end
+
+        assert_nil(hash[:owner], "got a value for an undef parameter")
+    end
 end
 
 # $Id$

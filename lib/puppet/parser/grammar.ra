@@ -9,10 +9,7 @@ token FALSE EQUALS LESSEQUAL NOTEQUAL DOT COLON TYPE LLCOLLECT RRCOLLECT
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSNAME CLASSREF
-token NOT OR AND
-
-# We have 2 shift/reduce conflicts
-#expect 2
+token NOT OR AND UNDEF
 
 rule
 program:    statements {
@@ -261,6 +258,10 @@ resourceinstances:   resourceinst
 endsemi:      # nothing
             | SEMIC
 
+undef:         UNDEF {
+    result = ast AST::Undef, :value => :undef
+}
+
 name:         NAME {
     result = ast AST::Name, :value => val[0]
 }
@@ -328,6 +329,7 @@ rvalue:       quotedtext
             | array
             | resourceref
             | funcrvalue
+            | undef
 
 # We currently require arguments in these functions.
 funcrvalue:   NAME LPAREN namestrings RPAREN {
@@ -446,6 +448,7 @@ selectlhand:  name
             | variable
             | funcrvalue
             | boolean
+            | undef
             | DEFAULT {
     result = ast AST::Default, :value => val[0]
 }

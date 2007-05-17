@@ -763,6 +763,19 @@ file { "/tmp/yayness":
             parser.import("%s/*" % dir)
         end
     end
+
+    # #629 - undef keyword
+    def test_undef
+        parser = mkparser
+        result = nil
+        assert_nothing_raised("Could not parse assignment to undef") {
+            result = parser.parse %{$variable = undef}
+        }
+
+        children = result.children
+        assert_instance_of(AST::VarDef, result.children[0])
+        assert_instance_of(AST::Undef, result.children[0].value)
+    end
 end
 
 # $Id$

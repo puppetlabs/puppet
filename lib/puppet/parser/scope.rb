@@ -48,7 +48,7 @@ class Puppet::Parser::Scope
     # Is the value true?  This allows us to control the definition of truth
     # in one place.
     def self.true?(value)
-        if value == false or value == ""
+        if value == false or value == "" or value == :undef
             return false
         else
             return true
@@ -414,7 +414,11 @@ class Puppet::Parser::Scope
         end
         # We can't use "if @symtable[name]" here because the value might be false
         if @symtable.include?(name)
-            return @symtable[name]
+            if usestring and @symtable[name] == :undef
+                return ""
+            else
+                return @symtable[name]
+            end
         elsif self.parent 
             return @parent.lookupvar(name, usestring)
         elsif usestring

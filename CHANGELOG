@@ -1,3 +1,7 @@
+    Added an 'undef' keyword (#629), which will evaluate to ""
+    within strings but when used as a resource parameter value
+    will cause that parameter to be evaluated as undefined.
+
     Changed the topological sort algorithm (#507) so it will always
     fail on cycles.
 

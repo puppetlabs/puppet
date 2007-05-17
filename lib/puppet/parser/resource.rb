@@ -260,7 +260,10 @@ class Puppet::Parser::Resource
     def to_hash
         @params.inject({}) do |hash, ary|
             param = ary[1]
-            hash[param.name] = param.value
+            # Skip "undef" values.
+            if param.value != :undef
+                hash[param.name] = param.value
+            end
             hash
         end
     end

@@ -445,6 +445,8 @@ class TestScope < Test::Unit::TestCase
             "Empty strings considered true")
         assert_equal(false, Puppet::Parser::Scope.true?(false),
             "false considered true")
+        assert_equal(false, Puppet::Parser::Scope.true?(:undef),
+            "undef considered true")
     end
 
     # Verify scope context is handled correctly.
@@ -744,6 +746,19 @@ Host <<||>>"
         # And another
         scope.add_namespace("b")
         assert_nothing_raised { test.call([["a", "testing"], ["b", "testing"]]) }
+    end
+
+    # #629 - undef should be "" or :undef
+    def test_lookupvar_with_undef
+        scope = mkscope
+
+        scope.setvar("testing", :undef)
+
+        assert_equal(:undef, scope.lookupvar("testing", false),
+            "undef was not returned as :undef when not string")
+
+        assert_equal("", scope.lookupvar("testing", true),
+            "undef was not returned as '' when string")
     end
 end
 

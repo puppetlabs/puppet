@@ -66,6 +66,9 @@ class Puppet::Parser::AST
     # double-colon separated class names
     class ClassName < AST::Leaf; end
 
+    # undef values; equiv to nil
+    class Undef < AST::Leaf; end
+
     # Host names, either fully qualified or just the short name
     class HostName < AST::Leaf
         def initialize(hash)
