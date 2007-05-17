@@ -613,7 +613,7 @@ Host <<||>>"
         end
 
         # Now make sure good tags make it through.
-        tags = %w{good-tag yaytag GoodTag another_tag}
+        tags = %w{good-tag yaytag GoodTag another_tag a ab A}
         tags.each do |tag|
             assert_nothing_raised("Tag #{tag} was considered invalid") do
                 scope.tag tag

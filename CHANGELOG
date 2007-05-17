@@ -1,3 +1,6 @@
+    Tags (and thus definitions and classes) can now be a single
+    character. (#566)
+
     Added an 'undef' keyword (#629), which will evaluate to ""
     within strings but when used as a resource parameter value
     will cause that parameter to be evaluated as undefined.

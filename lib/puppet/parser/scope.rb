@@ -629,7 +629,7 @@ class Puppet::Parser::Scope
                 Puppet.debug "got told to tag with %s" % tag.inspect
                 next
             end
-            unless tag =~ /^\w[-\w]+$/
+            unless tag =~ /^\w[-\w]*$/
                 fail Puppet::ParseError, "Invalid tag %s" % tag.inspect
             end
             tag = tag.to_s
