@@ -111,7 +111,7 @@
 #   useful for interactively running puppetd.
 #
 # serve::
-#   Start another type of server.  By default default, +puppetd+ will start
+#   Start another type of server.  By default, +puppetd+ will start
 #   a service handler that allows authenticated and authorized remote nodes to
 #   trigger the configuration to be pulled down and applied.  You can specify
 #   any handler here that does not require configuration, e.g., filebucket, ca,
