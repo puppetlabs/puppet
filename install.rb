@@ -255,7 +255,7 @@ def install_binfile(from, op_file, target)
     end
   end
 
-  if Config::CONFIG["target_os"] =~ /win/io
+  if Config::CONFIG["target_os"] =~ /win/io and Config::CONFIG["target_os"] !~ /darwin/io
     installed_wrapper = false
 
     if File.exists?("#{from}.bat")
