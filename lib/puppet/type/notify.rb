@@ -11,7 +11,7 @@ module Puppet
             def sync
                 case @resource["withpath"]
                 when :true:
-                    log(self.should)
+                    send(@resource[:loglevel], self.should)
                 else  
                     Puppet.send(@resource[:loglevel], self.should)
                 end
@@ -30,8 +30,7 @@ module Puppet
         end
 
         newparam(:withpath) do 
-            desc "Whether to not to show the full object path.  Sends the
-                message at the current loglevel."
+            desc "Whether to not to show the full object path."
             defaultto :false
 
             newvalues(:true, :false) 

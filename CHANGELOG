@@ -1,3 +1,6 @@
+    Changing the notify type so that it always uses
+    the loglevel.
+
     Fixing #568 - nodes can inherit from quoted node names.
 
     Tags (and thus definitions and classes) can now be a single

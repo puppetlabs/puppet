@@ -22,7 +22,7 @@ module Puppet
             "The provider can modify user passwords, by accepting a password
             hash."
 
-        newproperty(:ensure) do
+        newproperty(:ensure, :parent => Puppet::Property::Ensure) do
             newvalue(:present, :event => :user_created) do
                 provider.create
             end
