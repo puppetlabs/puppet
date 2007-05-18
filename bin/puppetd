@@ -218,6 +218,7 @@ begin
                 # Enable all of the most common test options.
                 Puppet.config.handlearg("--ignorecache")
                 Puppet.config.handlearg("--no-usecacheonfailure")
+                Puppet.config.handlearg("--no-splay")
                 options[:onetime] = true
                 options[:waitforcert] = 0
                 unless Puppet::Util::Log.level == :debug

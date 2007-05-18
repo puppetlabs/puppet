@@ -3,6 +3,7 @@
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
+require 'mocha'
 
 class TestMasterClient < Test::Unit::TestCase
     include PuppetTest::ServerTest
@@ -673,6 +674,37 @@ end
         # And finally, with only in the cache
         newfacts.delete("memorysize")
         assert(! client.send(:facts_changed?, newfacts), "Dynamic facts resulted in a false positive")
+    end
+
+    def test_splay
+        client = mkclient
+
+        # Make sure we default to no splay
+        client.expects(:sleep).never
+
+        assert_nothing_raised("Failed to call splay") do
+            client.send(:splay)
+        end
+
+        # Now set it to true and make sure we get the right value
+        client = mkclient
+        client.expects(:sleep)
+
+        Puppet[:splay] = true
+        assert_nothing_raised("Failed to call sleep when splay is true") do
+            client.send(:splay)
+        end
+
+        time = Puppet::Util::Storage.cache(:configuration)[:splay_time]
+        assert(time, "Splay time was not cached")
+
+        # Now try it again
+        client = mkclient
+        client.expects(:sleep).with(time)
+
+        assert_nothing_raised("Failed to call sleep when splay is true with a cached value") do
+            client.send(:splay)
+        end
     end
 end
 

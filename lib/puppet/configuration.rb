@@ -400,7 +400,13 @@ module Puppet
         :dynamicfacts => ["memorysize,memoryfree,swapsize,swapfree",
             "Facts that are dynamic; these facts will be ignored when deciding whether
             changed facts should result in a recompile.  Multiple facts should be
-            comma-separated."]
+            comma-separated."],
+        :splaylimit => ["$runinterval",
+            "The maximum time to delay before runs.  Defaults to being the same as the
+            run interval."],
+        :splay => [false,
+            "Whether to sleep for a pseudo-random (but consistent) amount of time before
+            a run."]
     )
 
     self.setdefaults(:puppetd,

@@ -293,6 +293,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     # The code that actually runs the configuration.  
     def run(tags = nil, ignoreschedules = false)
         got_lock = false
+        splay
         Puppet::Util.sync(:puppetrun).synchronize(Sync::EX) do
             if !lockfile.lock
                 Puppet.notice "Lock file %s exists; skipping configuration run" %
@@ -662,6 +663,22 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         end
 
         @lockfile
+    end
+
+    # Sleep when splay is enabled; else just return.
+    def splay
+        return unless Puppet[:splay]
+
+        limit = Integer(Puppet[:splaylimit])
+
+        # Pick a splay time and then cache it.
+        unless time = Puppet::Util::Storage.cache(:configuration)[:splay_time]
+            time = rand(limit)
+            Puppet::Util::Storage.cache(:configuration)[:splay_time] = time
+        end
+
+        Puppet.info "Sleeping for %s seconds (splay is enabled)" % time
+        sleep(time)
     end
 end
 

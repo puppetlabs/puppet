@@ -1,3 +1,7 @@
+    Added a splay option (#501).  It's disabled when running under
+    --test in puppetd.  The value is random but cached.  It defaults
+    to the runinterval but can be tuned with --splaylimit
+
     Changing the notify type so that it always uses
     the loglevel.
 
