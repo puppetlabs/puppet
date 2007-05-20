@@ -13,9 +13,16 @@ module PuppetTest::ExeTest
         File.join(basedir, "bin")
     end
 
+    def sbindir
+        File.join(basedir, "sbin")
+    end
+
     def setbindir
         unless ENV["PATH"].split(":").include?(bindir)
             ENV["PATH"] = [bindir, ENV["PATH"]].join(":")
+        end
+        unless ENV["PATH"].split(":").include?(sbindir)
+            ENV["PATH"] = [sbindir, ENV["PATH"]].join(":")
         end
     end
 

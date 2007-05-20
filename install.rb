@@ -61,13 +61,14 @@ def glob(list)
 end
 
 # Set these values to what you want installed.
-bins  = glob(%w{bin/**/*})
-rdoc  = glob(%w{bin/**/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
-ri    = glob(%w(bin/**/*.rb lib/**/*.rb)).reject { |e| e=~ /\.(bat|cmd)$/ }
+sbins = glob(%w{sbin/*})
+bins  = glob(%w{bin/*})
+rdoc  = glob(%w{bin/* sbin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
+ri    = glob(%w(bin/*.rb sbin/* lib/**/*.rb)).reject { |e| e=~ /\.(bat|cmd)$/ }
 libs  = glob(%w{lib/**/*.rb})
 tests = glob(%w{tests/**/*.rb})
 
-def do_bins(bins, target, strip = 'bin/')
+def do_bins(bins, target, strip = 's?bin/')
   bins.each do |bf|
     obf = bf.gsub(/#{strip}/, '')
     install_binfile(bf, obf, target)
@@ -145,37 +146,40 @@ def prepare_installation
     opts.parse!
   end
 
-  bds = [".", ENV['TMP'], ENV['TEMP']]
+  tmpdirs = [".", ENV['TMP'], ENV['TEMP'], "/tmp", "/var/tmp"]
 
   version = [Config::CONFIG["MAJOR"], Config::CONFIG["MINOR"]].join(".")
-  ld = File.join(Config::CONFIG["libdir"], "ruby", version)
+  libdir = File.join(Config::CONFIG["libdir"], "ruby", version)
 
-  sd = Config::CONFIG["sitelibdir"]
-  if sd.nil?
-    sd = $:.find { |x| x =~ /site_ruby/ }
-    if sd.nil?
-      sd = File.join(ld, "site_ruby")
-    elsif sd !~ Regexp.quote(version)
-      sd = File.join(sd, version)
+  sitelibdir = Config::CONFIG["sitelibdir"]
+  if sitelibdir.nil?
+    sitelibdir = $:.find { |x| x =~ /site_ruby/ }
+    if sitelibdir.nil?
+      sitelibdir = File.join(libdir, "site_ruby")
+    elsif sitelibdir !~ Regexp.quote(version)
+      sitelibdir = File.join(sitelibdir, version)
     end
   end
 
   if (destdir = ENV['DESTDIR'])
-    bd = "#{destdir}#{Config::CONFIG['bindir']}"
-    sd = "#{destdir}#{sd}"
-    bds << bd
+    bindir = "#{destdir}#{Config::CONFIG['bindir']}"
+    sbindir = "#{destdir}#{Config::CONFIG['sbindir']}"
+    sitelibdir = "#{destdir}#{sitelibdir}"
+    tmpdirs << bindir
 
-    FileUtils.makedirs(bd)
-    FileUtils.makedirs(sd)
+    FileUtils.makedirs(bindir)
+    FileUtils.makedirs(sbindir)
+    FileUtils.makedirs(sitelibdir)
   else
-    bd = Config::CONFIG['bindir']
-    bds << Config::CONFIG['bindir']
+    bindir = Config::CONFIG['bindir']
+    tmpdirs << Config::CONFIG['bindir']
   end
 
-  InstallOptions.bin_dirs = bds.compact
-  InstallOptions.site_dir = sd
-  InstallOptions.bin_dir  = bd
-  InstallOptions.lib_dir  = ld
+  InstallOptions.tmp_dirs = tmpdirs.compact
+  InstallOptions.site_dir = sitelibdir
+  InstallOptions.bin_dir  = bindir
+  InstallOptions.sbin_dir = sbindir
+  InstallOptions.lib_dir  = libdir
 end
 
 ##
@@ -236,7 +240,7 @@ end
 # windows, we add an '.rb' extension and let file associations do their stuff.
 def install_binfile(from, op_file, target)
   tmp_dir = nil
-  InstallOptions.bin_dirs.each do |t|
+  InstallOptions.tmp_dirs.each do |t|
     if File.directory?(t) and File.writable?(t)
       tmp_dir = t
       break
@@ -251,7 +255,11 @@ def install_binfile(from, op_file, target)
     File.open(tmp_file, "w") do |op|
       ruby = File.join(Config::CONFIG['bindir'], Config::CONFIG['ruby_install_name'])
       op.puts "#!#{ruby}"
-      op.write ip.read
+      contents = ip.readlines
+      if contents[0] =~ /^#!/
+          contents.shift
+      end
+      op.write contents.join()
     end
   end
 
@@ -302,5 +310,6 @@ prepare_installation
 run_tests(tests) if InstallOptions.tests
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
+do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)

@@ -1,3 +1,6 @@
+    Moved puppetd and puppetmasterd to sbin in svn and fixed install.rb
+    to copy them into sbin on the local system appropriately.  (#323)
+
     Added a splay option (#501).  It's disabled when running under
     --test in puppetd.  The value is random but cached.  It defaults
     to the runinterval but can be tuned with --splaylimit
