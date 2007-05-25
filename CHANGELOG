@@ -1,3 +1,8 @@
+    Added some warnings and logs to the service type so
+    users will be encouraged to specify either "ensure"
+    or "enabled" and added debugging to indicate why
+    restarting is skipped when it is.
+
     Changed the location of the classes.txt to the state
     directory.
 

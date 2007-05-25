@@ -307,6 +307,10 @@ module Puppet
             if self.respond_to?(:configchk)
                 self.configchk
             end
+
+            unless @parameters.include?(:ensure) or @parameters.include?(:enable)
+                warning "No properties specified; 'enable' or 'ensure' should be specified"
+            end
         end
 
         # Basically just a synonym for restarting.  Used to respond
