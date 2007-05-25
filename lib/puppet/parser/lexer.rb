@@ -54,6 +54,16 @@ module Puppet
                 %r{\$(\w*::)*\w+} => :VARIABLE
             }
 
+            @@pairs = {
+                "{" => "}",
+                "(" => ")",
+                "[" => "]",
+                "<|" => "|>",
+                "<<|" => "|>>"
+            }
+
+            @@reverse_pairs = @@pairs.inject({}) { |hash, pair| hash[pair[1]] = pair[0]; hash }
+
             @@keywords = {
                 "case" => :CASE,
                 "class" => :CLASS,
@@ -74,6 +84,20 @@ module Puppet
 
             def clear
                 initvars
+            end
+
+            def expected
+                if @expected.empty?
+                    nil
+                else
+                    token = @expected[-1]
+                    @@tokens.each do |value, name|
+                        if token == name
+                            return value
+                        end
+                    end
+                    return token
+                end
             end
 
             # scan the whole file
@@ -130,6 +154,8 @@ module Puppet
 
                 @namestack = []
                 @indefine = false
+
+                @expected = []
             end
 
             # Go up one in the namespace.
@@ -245,6 +271,12 @@ module Puppet
                         ptoken = :DQTEXT
                     when :VARIABLE then
                         value = value.sub(/^\$/, '')
+                    end
+
+                    if match = @@pairs[value] and ptoken != :DQUOTE and ptoken != :SQUOTE
+                        @expected << match
+                    elsif exp = @expected[-1] and exp == value and ptoken != :DQUOTE and ptoken != :SQUOTE
+                        @expected.pop
                     end
 
                     yield [ptoken, value]

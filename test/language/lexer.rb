@@ -242,6 +242,18 @@ class TestLexer < Test::Unit::TestCase
             end
         end
     end
+
+    # Make sure the expected stack works as it should
+    def test_expected
+        @lexer.string = "[a{"
+        expected = @lexer.instance_variable_get("@expected")
+        @lexer.scan {}
+        assert_equal("}", @lexer.expected, "expected value is wrong")
+
+        @lexer.string = "}"
+        @lexer.scan {}
+        assert_equal("]", @lexer.expected, "expected value is wrong after pop")
+    end
 end
 
 # $Id$

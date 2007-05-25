@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id3bb0c917f5', 'grammar.ra', 608
+module_eval <<'..end grammar.ra modeval..idec1116a64f', 'grammar.ra', 608
 require 'puppet/parser/functions'
 
 attr_reader :file, :interp
@@ -80,6 +80,9 @@ end
 
 # Raise a Parse error.
 def error(message)
+    if brace = @lexer.expected
+        message += "; expected '%s'"
+    end
     except = Puppet::ParseError.new(message)
     except.line = @lexer.line
     if @lexer.file
@@ -183,6 +186,10 @@ def on_error(token,value,stack)
     #    [@lexer.line,@lexer.last]
     error = "Syntax error at '%s'" % [value]
 
+    if brace = @lexer.expected
+        error += "; expected '%s'" % brace
+    end
+
     except = Puppet::ParseError.new(error)
     except.line = @lexer.line
     if @lexer.file
@@ -254,7 +261,7 @@ end
 
 # $Id$
 
-..end grammar.ra modeval..id3bb0c917f5
+..end grammar.ra modeval..idec1116a64f
 
 ##### racc 1.4.5 generates ###
 

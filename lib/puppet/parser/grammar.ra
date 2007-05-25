@@ -655,6 +655,9 @@ end
 
 # Raise a Parse error.
 def error(message)
+    if brace = @lexer.expected
+        message += "; expected '%s'"
+    end
     except = Puppet::ParseError.new(message)
     except.line = @lexer.line
     if @lexer.file
@@ -757,6 +760,10 @@ def on_error(token,value,stack)
     #error = "line %s: parse error after '%s'" %
     #    [@lexer.line,@lexer.last]
     error = "Syntax error at '%s'" % [value]
+
+    if brace = @lexer.expected
+        error += "; expected '%s'" % brace
+    end
 
     except = Puppet::ParseError.new(error)
     except.line = @lexer.line

@@ -1,3 +1,5 @@
+    Added better error reporting on unmatched brackets.
+
     Moved puppetd and puppetmasterd to sbin in svn and fixed install.rb
     to copy them into sbin on the local system appropriately.  (#323)
 
