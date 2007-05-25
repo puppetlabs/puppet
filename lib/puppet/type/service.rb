@@ -315,7 +315,9 @@ module Puppet
             # Only restart if we're supposed to be running
             
             if ens = @parameters[:ensure] and ens.should == :running and ens.retrieve == :running
-              provider.restart
+                provider.restart
+            else
+                debug "Skipping restart; 'ensure' is not set to 'running'"
             end
         end
     end
