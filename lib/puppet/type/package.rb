@@ -170,7 +170,7 @@ module Puppet
                                 [is.inspect, @resource.name, @latest.inspect]
                         end
                     when :absent
-                        if is == :absent
+                        if is == :absent or is == :purged
                             return true
                         end
                     when is

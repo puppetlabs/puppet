@@ -61,7 +61,7 @@ Puppet::Type.type(:package).provide :dpkg do
             )
         rescue Puppet::ExecutionFailure
             # dpkg-query exits 1 if the package is not found.
-            return {:ensure => :absent, :status => 'missing',
+            return {:ensure => :purged, :status => 'missing',
                 :name => @resource[:name], :error => 'ok'}
 
         end
