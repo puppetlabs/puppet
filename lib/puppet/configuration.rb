@@ -318,7 +318,7 @@ module Puppet
             :mode => 0660,
             :desc => "Where puppetd caches the local configuration.  An
                 extension indicating the cache format is added automatically."},
-        :classfile => { :default => "$confdir/classes.txt",
+        :classfile => { :default => "$statedir/classes.txt",
             :owner => "root",
             :mode => 0644,
             :desc => "The file in which puppetd stores a list of the classes

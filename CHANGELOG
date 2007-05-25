@@ -1,3 +1,6 @@
+    Changed the location of the classes.txt to the state
+    directory.
+
     Added better error reporting on unmatched brackets.
 
     Moved puppetd and puppetmasterd to sbin in svn and fixed install.rb
