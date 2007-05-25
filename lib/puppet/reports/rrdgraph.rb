@@ -99,10 +99,10 @@ Puppet::Network::Handler.report.newreport(:rrdgraph) do
     def process(time = nil)
         time ||= Time.now.to_i
 
-        unless File.directory?(hostdir)
-            # Some hackishness to create the dir
+        unless File.directory?(hostdir) and File.writeable?(hostdir)
+            # Some hackishness to create the dir with all of the right modes and ownership
             config = Puppet::Util::Config.new
-            config.setdefaults(:reports, :hostdir => [hostdir, "eh"])
+            config.setdefaults(:reports, :hostdir => {:default => hostdir, :owner => Puppet[:user], :mode => 0755, :group => Puppet[:group], :desc => "eh"})
 
             # This creates the dir.
             config.use(:reports)
