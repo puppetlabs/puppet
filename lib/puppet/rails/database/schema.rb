@@ -7,7 +7,7 @@ class Puppet::Rails::Schema
             $stdout = File.open("/dev/null", "w")
             ActiveRecord::Schema.define do
                 create_table :resources do |t|
-                    t.column :title, :string, :null => false
+                    t.column :title, :text, :null => false
                     t.column :restype,  :string, :null => false
                     t.column :host_id, :integer
                     t.column :source_file_id, :integer
