@@ -88,10 +88,6 @@ Puppet::Type.type(:package).provide :openbsd do
     def uninstall
         pkgdelete @resource[:name]
     end
-
-    def versionable?
-      false
-    end
 end
 
 # $Id$

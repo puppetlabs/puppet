@@ -4,6 +4,8 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm do
 
     desc "Package management via ``apt-get`` ported to ``rpm``."
 
+    has_feature :versionable
+
     commands :aptget => "/usr/bin/apt-get"
     commands :aptcache => "/usr/bin/apt-cache"
     commands :rpm => "/usr/bin/rpm"
@@ -69,10 +71,6 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm do
 
     def purge
         aptget '-y', '-q', 'remove', '--purge', @resource[:name]
-     end
-
-    def versionable?
-        true
     end
 end
 

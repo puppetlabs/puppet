@@ -104,10 +104,6 @@ Puppet::Type.type(:package).provide :dpkg do
     def purge
         dpkg "--purge", @resource[:name]
 	 end
-
-    def versionable?
-      false
-    end
 end
 
 # $Id$

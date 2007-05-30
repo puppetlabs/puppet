@@ -1,5 +1,8 @@
 Puppet::Type.type(:package).provide :yum, :parent => :rpm do
     desc "Support via ``yum``."
+
+    has_feature :versionable
+
     commands :yum => "yum", :rpm => "rpm"
 
     defaultfor :operatingsystem => [:fedora, :centos, :redhat]
@@ -47,10 +50,6 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm do
     def update
         # Install in yum can be used for update, too
         self.install
-    end
-
-    def versionable?
-        true
     end
 end
 

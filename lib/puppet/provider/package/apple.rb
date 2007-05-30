@@ -48,10 +48,6 @@ Puppet::Type.type(:package).provide :apple do
 
         installer "-pkg", source, "-target", "/"
     end
-
-    def versionable?
-        false
-    end
 end
 
 # $Id$

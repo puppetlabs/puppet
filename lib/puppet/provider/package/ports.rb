@@ -1,6 +1,7 @@
 Puppet::Type.type(:package).provide :ports, :parent => :freebsd do
     desc "Support for FreeBSD's ports.  Again, this still mixes packages
         and ports."
+
     commands :portupgrade => "/usr/local/sbin/portupgrade",
              :portversion => "/usr/local/sbin/portversion",
              :portuninstall => "/usr/local/sbin/pkg_deinstall",

@@ -163,10 +163,6 @@ Puppet::Type.type(:package).provide :sun do
         end
         self.install
     end
-
-    def versionable?
-        false
-    end
 end
 
 # $Id$

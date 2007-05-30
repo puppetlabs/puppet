@@ -1,6 +1,8 @@
 Puppet::Type.type(:package).provide :portage do
     desc "Provides packaging support for Gentoo's portage system."
 
+    has_feature :versionable
+
     commands :emerge => "/usr/bin/emerge", :eix => "/usr/bin/eix"
 
     defaultfor :operatingsystem => :gentoo
@@ -102,10 +104,6 @@ Puppet::Type.type(:package).provide :portage do
 
     def latest
         return self.query[:version_available]
-    end
-
-    def versionable?
-        true
     end
 end
 

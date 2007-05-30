@@ -1,6 +1,8 @@
 Puppet.type(:package).provide :rug, :parent => :rpm do
     desc "Support for suse ``rug`` package manager."
 
+    has_feature :versionable
+
     commands :rug => "/usr/bin/rug"
     defaultfor :operatingsystem => :suse 
     confine    :operatingsystem => :suse
@@ -45,9 +47,5 @@ Puppet.type(:package).provide :rug, :parent => :rpm do
     def update
         # rug install can be used for update, too
         self.install
-    end
-
-    def versionable?
-        true
     end
 end

@@ -36,10 +36,6 @@ Puppet.type(:package).provide :up2date, :parent => :rpm do
         # Install in up2date can be used for update, too
         self.install
     end
-
-    def versionable?
-        false
-    end
 end
 
 # $Id$

@@ -124,10 +124,6 @@ Puppet::Type.type(:package).provide :rpm do
         self.install
     end
 
-    def versionable?
-        true
-    end
-
     def nvr
         query unless @nvr
         @nvr

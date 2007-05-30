@@ -34,6 +34,10 @@ module Puppet
                 existing configuration files.  This feature is thus destructive
                 and should be used with the utmost care.",
             :methods => [:purge]
+        feature :versionable, "The provider is capable of interrogating the
+                package database for installed version(s), and can select
+                which out of a set of available versions of a package to
+                install if asked."
 
         ensurable do
             desc "What state the package should be in.
@@ -94,7 +98,7 @@ module Puppet
             end
 
             newvalue(/./) do
-                unless provider.versionable?
+                unless provider.class.versionable?
                     self.fail(
                         "Package provider %s does not support specifying versions" %
                         @resource[:provider]

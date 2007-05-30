@@ -114,10 +114,6 @@ Puppet::Type.type(:package).provide :pkgdmg do
         end
         self.class.installpkgdmg(source,name)
     end
-
-    def versionable?
-      false
-    end
 end
 
 # $Id$
