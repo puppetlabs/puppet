@@ -83,6 +83,10 @@ Puppet::Type.type(:package).provide :darwinport do
     def update
         return install()
     end
+
+    def versionable?
+        false
+    end
 end
 
 # $Id$
