@@ -19,12 +19,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
     has_features :manages_homedir, :allows_duplicates
 
-    if Puppet.features.libshadow? and case Facter.value(:kernel)
-        when "Linux": true
-        else
-            false
-        end
-
+    if Puppet.features.libshadow? and (Facter.value(:kernel) == "Linux")
         has_features :manages_passwords
     end
 
