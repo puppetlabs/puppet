@@ -346,6 +346,8 @@ class TestProviderFeatures < Test::Unit::TestCase
 
         assert(provider.respond_to?(:has_features),
             "Provider did not get 'has_features' method added")
+        assert(provider.respond_to?(:has_feature),
+            "Provider did not get the 'has_feature' alias method")
 
         # One with the numeric methods and nothing else
         @type.provide(:numbers) do
@@ -358,17 +360,17 @@ class TestProviderFeatures < Test::Unit::TestCase
             define_method(:one) {}
             define_method(:two) {}
 
-            has_features :alpha
+            has_feature :alpha
         end
         
         # And just the declaration
         @type.provide(:letters) do
-            has_features :alpha
+            has_feature :alpha
         end
 
         # And a provider that declares it has our methodless feature.
         @type.provide(:none) do
-            has_features :nomeths
+            has_feature :nomeths
         end
 
         should = {:nothing => [], :both => [:numeric, :alpha],
@@ -392,7 +394,7 @@ class TestProviderFeatures < Test::Unit::TestCase
 
         # and appropriate providers
         nope = @type.provide(:nope) {}
-        maybe = @type.provide(:maybe) { has_features(:alpha) }
+        maybe = @type.provide(:maybe) { has_feature(:alpha) }
         yep = @type.provide(:yep) { has_features(:alpha, :numeric) }
 
         # Now make sure our providers answer correctly.

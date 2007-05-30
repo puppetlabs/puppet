@@ -254,7 +254,7 @@ class TestTypeAttributes < Test::Unit::TestCase
 
         # Now make similar providers
         nope = type.provide(:nope) {}
-        maybe = type.provide(:maybe) { has_features :fone}
+        maybe = type.provide(:maybe) { has_feature :fone}
         yep = type.provide(:yep) { has_features :fone, :ftwo}
 
         attrs = [:none, :one, :two]

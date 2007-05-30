@@ -19,7 +19,7 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
 
     autogen_defaults :home => "/var/empty", :shell => "/usr/bin/false", :password => '********'
 
-    has_features :manages_passwords
+    has_feature :manages_passwords
 
     verify :gid, "GID must be an integer" do |value|
         value.is_a? Integer

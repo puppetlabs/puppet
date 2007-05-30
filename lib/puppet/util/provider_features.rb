@@ -168,6 +168,8 @@ module Puppet::Util::ProviderFeatures
                     @declared_features << name
                 end
             end
+            # Aaah, grammatical correctness
+            @feature_module.send(:alias_method, :has_feature, :has_features)
         end
         @feature_module
     end

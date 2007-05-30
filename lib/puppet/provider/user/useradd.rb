@@ -20,7 +20,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     has_features :manages_homedir, :allows_duplicates
 
     if Puppet.features.libshadow? and (Facter.value(:kernel) == "Linux")
-        has_features :manages_passwords
+        has_feature :manages_passwords
     end
 
     def addcmd
