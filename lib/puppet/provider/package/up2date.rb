@@ -21,7 +21,7 @@ Puppet.type(:package).provide :up2date, :parent => :rpm do
     # What's the latest package version available?
     def latest
         #up2date can only get a list of *all* available packages?
-        output = up2date "--show-available"
+        output = up2date "--showall"
 
         if output =~ /^#{@resource[:name]}-(\d+.*)\.\w+/
             return $1
