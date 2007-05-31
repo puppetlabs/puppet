@@ -1,3 +1,5 @@
+    Fixed #532 -- reparsing config files now longer throws an exception.
+
     Added some warnings and logs to the service type so
     users will be encouraged to specify either "ensure"
     or "enabled" and added debugging to indicate why

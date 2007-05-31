@@ -108,7 +108,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
 
     def clear
-        @objects.remove(true)
+        @objects.remove(true) if @objects
         Puppet::Type.allclear
         mkdefault_objects
         @objects = nil
@@ -325,6 +325,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     ensure
         # Just make sure we remove the lock file if we set it.
         lockfile.unlock if got_lock and lockfile.locked?
+        clear()
     end
 
     def running?

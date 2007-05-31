@@ -706,6 +706,23 @@ end
             client.send(:splay)
         end
     end
+
+    # This is partially to fix #532, but also to save on memory.
+    def test_remove_objects_after_every_run
+        client = mkclient
+
+        ftype = Puppet::Type.type(:file)
+
+        assert_nil(ftype[@createdfile], "file object already exists")
+        assert(! FileTest.exists?(@createdfile), "File already exists on disk")
+
+        assert_nothing_raised("Could not apply config") do
+            client.run
+        end
+
+        assert(FileTest.exists?(@createdfile), "File does not exist on disk")
+        assert_nil(ftype[@createdfile], "file object was not removed from memory")
+    end
 end
 
 # $Id$
