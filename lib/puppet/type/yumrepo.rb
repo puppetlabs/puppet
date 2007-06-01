@@ -331,6 +331,22 @@ module Puppet
             newvalue(%r{[0-9]+}) { }
         end
 
+        newproperty(:protect, :parent => Puppet::IniProperty) do
+            desc "Enable or disable protection for this repository. Requires 
+                  that the protectbase plugin is installed and enabled.
+                  #{ABSENT_DOC}"
+            newvalue(:absent) { self.should = :absent }
+            newvalue(%r{(0|1)}) { }
+        end
+
+        newproperty(:priority, :parent => Puppet::IniProperty) do
+            desc "Priority of this repository from 1-99. Requires that
+                  the priorities plugin is installed and enabled.
+                  #{ABSENT_DOC}"
+            newvalue(:absent) { self.should = :absent }
+            newvalue(%r{[1-9][0-9]?}) { }
+        end
+
         
         
     end
