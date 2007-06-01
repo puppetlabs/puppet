@@ -110,9 +110,9 @@ class TypeDoc
 
         puts @format.header("Parameters")
         if opts[:parameters]
-            format_attrs(type, [:state, :param])
+            format_attrs(type, [:property, :param])
         else
-            list_attrs(type, [:state, :param])
+            list_attrs(type, [:property, :param])
         end
         
         if opts[:metaparams]
