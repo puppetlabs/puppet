@@ -28,6 +28,15 @@ class TestProvider < Test::Unit::TestCase
         return provider
     end
 
+    def setup
+        super
+        @type = Puppet::Type.newtype(:provider_test) do
+            newparam(:name) {}
+            ensurable
+        end
+        cleanup { Puppet::Type.rmtype(:provider_test) }
+    end
+
     def test_confine
         provider = newprovider
 
@@ -242,6 +251,47 @@ class TestProvider < Test::Unit::TestCase
         assert_raise(Puppet::Error, "Provider did not fail when missing command was called") do
             optional.missing
         end
+    end
+
+    # Disabling, since I might not keep this interface
+    def disabled_test_read_and_each
+        # Create a new provider
+        provider = @type.provide(:testing)
+
+        assert_raise(Puppet::DevError, "Did not fail when :read was not overridden") do
+            provider.read
+        end
+
+        children = [:one, :two]
+        provider.meta_def(:read) do
+            children
+        end
+
+        result = []
+        assert_nothing_raised("could not call 'each' on provider class") do
+            provider.each { |i| result << i }
+        end
+
+        assert_equal(children, result, "did not get correct list from each")
+
+        assert_equal(children, provider.collect { |i| i }, "provider does not include enumerable")
+    end
+
+    def test_source
+        base = @type.provide(:base)
+
+        assert_equal(:base, base.source, "source did not default correctly")
+        assert_equal(:base, base.source, "source did not default correctly")
+
+        sub = @type.provide(:sub, :parent => :base)
+
+        assert_equal(:sub, sub.source, "source did not default correctly for sub class")
+        assert_equal(:sub, sub.source, "source did not default correctly for sub class")
+
+        other = @type.provide(:other, :parent => :base, :source => :base)
+
+        assert_equal(:base, other.source, "source did not override")
+        assert_equal(:base, other.source, "source did not override")
     end
 end
 

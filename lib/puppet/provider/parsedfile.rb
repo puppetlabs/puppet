@@ -169,7 +169,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     end
 
     # Retrieve all of the data from disk.  There are three ways to know
-    # while files to retrieve:  We might have a list of file objects already
+    # which files to retrieve:  We might have a list of file objects already
     # set up, there might be instances of our associated resource and they
     # will have a path parameter set, and we will have a default path
     # set.  We need to turn those three locations into a list of files,

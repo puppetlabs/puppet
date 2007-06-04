@@ -12,6 +12,12 @@ class Puppet::Provider
         include Puppet::Util, Puppet::Util::Docs
         include Puppet::Util::Logging
         attr_accessor :name
+
+        # The source parameter exists so that providers using the same
+        # source can specify this, so reading doesn't attempt to read the
+        # same package multiple times.
+        attr_accessor :source
+
         # LAK 2007-05-09: Keep the model stuff around for backward compatibility
         attr_reader :model
         attr_accessor :resource_type
@@ -180,6 +186,14 @@ class Puppet::Provider
             # Now define the class and instance methods.
             make_command_methods(name)
         end
+    end
+
+    # Retrieve the data source.  Defaults to the provider name.
+    def self.source
+        unless defined? @source
+            @source = self.name
+        end
+        @source
     end
 
     # Check whether this implementation is suitable for our platform.
